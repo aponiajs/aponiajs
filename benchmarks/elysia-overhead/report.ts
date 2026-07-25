@@ -106,25 +106,22 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
   return {
     $schema: "https://vega.github.io/schema/vega-lite/v6.json",
     background: "#000000",
-    padding: 20,
+    padding: 24,
     title: {
-      text: "APONIA / PERFORMANCE LAB",
-      subtitle: [
-        "Elysia overhead · reproducible framework benchmark",
-        "Pure runtime → native registration → application wrapper",
-      ],
+      text: "Aponia × Elysia",
+      subtitle: `${baseline.environment.runtime} · ${baseline.environment.platform} · same process`,
       anchor: "start",
       color: "#ffffff",
       font: "Inter, ui-sans-serif, system-ui",
-      fontSize: 30,
+      fontSize: 24,
       fontWeight: 600,
-      offset: 28,
+      offset: 24,
       subtitleColor: "#9a9aa2",
       subtitleFont: "ui-monospace, SFMono-Regular, Menlo, monospace",
-      subtitleFontSize: 12,
-      subtitlePadding: 10,
+      subtitleFontSize: 11,
+      subtitlePadding: 8,
     },
-    spacing: 34,
+    spacing: 30,
     resolve: {
       scale: {
         color: "independent",
@@ -132,118 +129,22 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
     },
     vconcat: [
       {
-        width: 760,
-        height: 64,
-        data: {
-          values: [
-            {
-              workspace: "aponiajs",
-              file: "elysia-overhead.bench.ts",
-              environment: `${baseline.environment.runtime} · ${baseline.environment.platform}`,
-            },
-          ],
-        },
-        layer: [
-          {
-            mark: { type: "rect", color: "#141416" },
-            encoding: {
-              x: { value: 0 },
-              x2: { value: 760 },
-              y: { value: 0 },
-              y2: { value: 64 },
-            },
-          },
-          {
-            mark: { type: "rect", color: "#1f1f22" },
-            encoding: {
-              x: { value: 16 },
-              x2: { value: 270 },
-              y: { value: 30 },
-              y2: { value: 64 },
-            },
-          },
-          {
-            mark: { type: "rect", color: "#1348dc" },
-            encoding: {
-              x: { value: 16 },
-              x2: { value: 270 },
-              y: { value: 62 },
-              y2: { value: 64 },
-            },
-          },
-          {
-            mark: {
-              type: "text",
-              align: "left",
-              baseline: "middle",
-              color: "#ffffff",
-              font: "ui-monospace, SFMono-Regular, Menlo, monospace",
-              fontSize: 11,
-              fontWeight: 600,
-            },
-            encoding: {
-              x: { value: 16 },
-              y: { value: 16 },
-              text: { field: "workspace", type: "nominal" },
-            },
-          },
-          {
-            mark: {
-              type: "text",
-              align: "right",
-              baseline: "middle",
-              color: "#81818a",
-              font: "ui-monospace, SFMono-Regular, Menlo, monospace",
-              fontSize: 10,
-            },
-            encoding: {
-              x: { value: 744 },
-              y: { value: 16 },
-              text: { field: "environment", type: "nominal" },
-            },
-          },
-          {
-            mark: {
-              type: "text",
-              align: "left",
-              baseline: "middle",
-              color: "#d8d8dc",
-              font: "ui-monospace, SFMono-Regular, Menlo, monospace",
-              fontSize: 11,
-            },
-            encoding: {
-              x: { value: 32 },
-              y: { value: 47 },
-              text: { field: "file", type: "nominal" },
-            },
-          },
-        ],
-      },
-      {
-        width: 760,
-        height: 150,
+        width: 700,
+        height: 120,
         title: {
-          text: "BENCHMARK 01  /  HOT-PATH THROUGHPUT",
-          subtitle: "Higher is better · response body consumed",
+          text: "Throughput",
+          subtitle: "Higher is better · operations per second",
           anchor: "start",
         },
         data: { values: requestMeasurements },
         layer: [
           {
-            mark: { type: "bar", cornerRadiusEnd: 2, height: 20 },
+            mark: { type: "bar", cornerRadiusEnd: 3, height: 18 },
             encoding: {
               x: {
                 field: "throughput",
                 type: "quantitative",
-                axis: {
-                  title: "operations per second",
-                  domainColor: "#333338",
-                  gridColor: "#252529",
-                  gridDash: [1, 5],
-                  labelColor: "#8d8d96",
-                  tickColor: "#333338",
-                  titleColor: "#8d8d96",
-                },
+                axis: null,
               },
               y: requestYAxis,
               color: sharedColor,
@@ -268,30 +169,22 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
         ],
       },
       {
-        width: 760,
-        height: 150,
+        width: 700,
+        height: 120,
         title: {
-          text: "BENCHMARK 02  /  HOT-PATH MEAN LATENCY",
-          subtitle: "Lower is better · same request and response",
+          text: "Request latency",
+          subtitle: "Lower is better · mean microseconds",
           anchor: "start",
         },
         data: { values: requestMeasurements },
         layer: [
           {
-            mark: { type: "bar", cornerRadiusEnd: 2, height: 20 },
+            mark: { type: "bar", cornerRadiusEnd: 3, height: 18 },
             encoding: {
               x: {
                 field: "latencyMicroseconds",
                 type: "quantitative",
-                axis: {
-                  title: "microseconds",
-                  domainColor: "#333338",
-                  gridColor: "#252529",
-                  gridDash: [1, 5],
-                  labelColor: "#8d8d96",
-                  tickColor: "#333338",
-                  titleColor: "#8d8d96",
-                },
+                axis: null,
               },
               y: requestYAxis,
               color: sharedColor,
@@ -316,30 +209,22 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
         ],
       },
       {
-        width: 760,
-        height: 105,
+        width: 700,
+        height: 80,
         title: {
-          text: "BENCHMARK 03  /  APPLICATION STARTUP",
-          subtitle: "Route registration vs module graph and container initialization",
+          text: "Startup",
+          subtitle: "Lower is better · mean milliseconds",
           anchor: "start",
         },
         data: { values: startupMeasurements },
         layer: [
           {
-            mark: { type: "bar", cornerRadiusEnd: 2, height: 20 },
+            mark: { type: "bar", cornerRadiusEnd: 3, height: 18 },
             encoding: {
               x: {
                 field: "latencyMilliseconds",
                 type: "quantitative",
-                axis: {
-                  title: "milliseconds",
-                  domainColor: "#333338",
-                  gridColor: "#252529",
-                  gridDash: [1, 5],
-                  labelColor: "#8d8d96",
-                  tickColor: "#333338",
-                  titleColor: "#8d8d96",
-                },
+                axis: null,
               },
               y: startupYAxis,
               color: {
@@ -371,60 +256,6 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
           },
         ],
       },
-      {
-        width: 760,
-        height: 30,
-        data: {
-          values: [
-            {
-              status: "CI REPRODUCIBLE",
-              detail: "same runner · same process · report artifact retained 14 days",
-            },
-          ],
-        },
-        layer: [
-          {
-            mark: { type: "rect", color: "#1348dc" },
-            encoding: {
-              x: { value: 0 },
-              x2: { value: 760 },
-              y: { value: 0 },
-              y2: { value: 30 },
-            },
-          },
-          {
-            mark: {
-              type: "text",
-              align: "left",
-              baseline: "middle",
-              color: "#ffffff",
-              font: "ui-monospace, SFMono-Regular, Menlo, monospace",
-              fontSize: 10,
-              fontWeight: 600,
-            },
-            encoding: {
-              x: { value: 14 },
-              y: { value: 15 },
-              text: { field: "status", type: "nominal" },
-            },
-          },
-          {
-            mark: {
-              type: "text",
-              align: "right",
-              baseline: "middle",
-              color: "#ffffff",
-              font: "ui-monospace, SFMono-Regular, Menlo, monospace",
-              fontSize: 10,
-            },
-            encoding: {
-              x: { value: 746 },
-              y: { value: 15 },
-              text: { field: "detail", type: "nominal" },
-            },
-          },
-        ],
-      },
     ],
     config: {
       axis: {
@@ -433,8 +264,8 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
       },
       title: {
         color: "#ffffff",
-        font: "ui-monospace, SFMono-Regular, Menlo, monospace",
-        fontSize: 13,
+        font: "Inter, ui-sans-serif, system-ui",
+        fontSize: 15,
         fontWeight: 600,
         subtitleColor: "#8d8d96",
         subtitleFont: "ui-monospace, SFMono-Regular, Menlo, monospace",
@@ -442,7 +273,7 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
         subtitlePadding: 5,
       },
       view: {
-        cornerRadius: 0,
+        cornerRadius: 6,
         fill: "#101012",
         stroke: "#29292e",
         strokeWidth: 1,
@@ -501,7 +332,7 @@ function createImplementationAxis(order: readonly string[]): PositionFieldDef<st
     axis: {
       title: null,
       labelColor: "#d8d8dc",
-      labelFontSize: 13,
+      labelFontSize: 12,
       labelFontWeight: 500,
       labelPadding: 10,
       ticks: false,
