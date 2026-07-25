@@ -66,10 +66,11 @@ jobs:
           bun pm pack --cwd packages/create-aponia --filename release-artifacts/05-create-aponia.tgz
 
       - name: Publish packages in dependency order
+        working-directory: ${{ runner.temp }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_TAG: ${{ inputs.tag || 'latest' }}
         run: |
-          for archive in release-artifacts/*.tgz; do
+          for archive in "$GITHUB_WORKSPACE"/release-artifacts/*.tgz; do
             npm publish "$archive" --access public --tag "$NPM_TAG" --provenance
           done
