@@ -24,7 +24,7 @@ describe("benchmark reporting", () => {
     expect(comparison.startupLatencyOverheadPercent).toBe(100);
   });
 
-  test("builds a reproducible grouped relative-performance chart", () => {
+  test("builds a reproducible grouped raw-unit chart", () => {
     const baseline: BenchmarkBaseline = {
       schemaVersion: 1,
       measuredAt: "2026-07-25T00:00:00.000Z",
@@ -45,14 +45,18 @@ describe("benchmark reporting", () => {
     const chart = createChartSpec(baseline);
     const serializedChart = JSON.stringify(chart);
 
-    expect("layer" in chart ? chart.layer : []).toHaveLength(2);
+    expect("facet" in chart).toBe(true);
     expect(chart.background).toBe("#ffffff");
     expect(serializedChart).toContain("Elysia vs Aponia");
-    expect(serializedChart).toContain("Elysia baseline = 100");
-    expect(serializedChart).toContain("Request latency");
+    expect(serializedChart).toContain("req/µs");
+    expect(serializedChart).toContain("Request latency · µs");
+    expect(serializedChart).toContain("Startup · ms");
     expect(serializedChart).not.toContain("Aponia native");
     expect(serializedChart).not.toContain("CI REPRODUCIBLE");
-    expect(serializedChart).toContain('"scoreLabel":"83.3"');
+    expect(serializedChart).not.toContain("Elysia baseline = 100");
+    expect(serializedChart).toContain("0.090 req/µs");
+    expect(serializedChart).toContain("12.000 µs");
+    expect(serializedChart).toContain("0.200 ms");
     expect(serializedChart).toContain("#4665ff");
   });
 });
