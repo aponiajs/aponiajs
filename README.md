@@ -97,7 +97,7 @@ measured separately from the hot request path.
 
 <img
   src="./assets/benchmarks/elysia-overhead-editor.svg"
-  alt="Throughput in requests per microsecond, request latency in microseconds, and startup in milliseconds for Elysia and Aponia"
+  alt="Median throughput, p50 and p99 request latency, and median startup latency for Elysia and Aponia with interquartile ranges"
   width="820"
 />
 
@@ -106,16 +106,16 @@ measured separately from the hot request path.
 Results are a machine-specific baseline, not a universal performance claim.
 On the committed Bun 1.3.14 baseline:
 
-| Comparison                            | Result                                |
-| ------------------------------------- | ------------------------------------- |
-| Wrapper vs Aponia native latency      | `+1.71%`                              |
-| Full Aponia vs pure Elysia latency    | `+30.63%`                             |
-| Full Aponia vs pure Elysia throughput | `-24.11%`                             |
-| Aponia vs Elysia startup              | `0.017 ms` vs `0.005 ms` (`+268.30%`) |
+| Comparison                              | Result                                |
+| --------------------------------------- | ------------------------------------- |
+| Wrapper vs Aponia native p50 latency    | `-0.55%`                              |
+| Full Aponia vs pure Elysia p50 latency  | `+32.29%`                             |
+| Full Aponia vs pure Elysia throughput   | `-24.41%`                             |
+| Aponia vs Elysia median startup latency | `0.009 ms` vs `0.002 ms` (`+256.42%`) |
 
 The forwarding wrapper itself is small; most measured hot-path difference is
 present before that final method call. Startup has a larger percentage change
-but remains a one-time difference measured in hundredths of a millisecond.
+but remains a one-time difference measured in thousandths of a millisecond.
 
 Review the [methodology and reproduction commands](./benchmarks/README.md) or
 the [JSON baseline](./.ecc/benchmarks/elysia-overhead.json).
