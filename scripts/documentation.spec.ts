@@ -18,3 +18,25 @@ describe("CLI documentation", () => {
     }
   });
 });
+
+describe("benchmark documentation", () => {
+  test("uses only the versioned CI benchmark in the public README", async () => {
+    const [readme, benchmarkReadme, workspaceManifest] = await Promise.all([
+      Bun.file("README.md").text(),
+      Bun.file("benchmarks/README.md").text(),
+      Bun.file("package.json").json() as Promise<{ readonly version: string }>,
+    ]);
+
+    const versionedChart = `benchmark-results/elysia-overhead.svg?v=${workspaceManifest.version}`;
+    const versionedJson = `benchmark-results/elysia-overhead.json?v=${workspaceManifest.version}`;
+
+    expect(readme).toContain(versionedChart);
+    expect(readme).toContain(versionedJson);
+    expect(benchmarkReadme).toContain(versionedChart);
+    expect(benchmarkReadme).toContain(versionedJson);
+    expect(readme).not.toContain("assets/benchmarks/elysia-overhead-editor.svg");
+    expect(readme).not.toContain(".ecc/benchmarks/elysia-overhead.json");
+    expect(await Bun.file("assets/benchmarks/elysia-overhead-editor.svg").exists()).toBe(false);
+    expect(await Bun.file(".ecc/benchmarks/elysia-overhead.json").exists()).toBe(false);
+  });
+});

@@ -40,11 +40,14 @@ APONIA_BENCH_MIN_SAMPLES=5 \
 bun run benchmark:elysia
 ```
 
-Each run updates:
+Each run writes ignored local output for inspection:
 
-- `.ecc/benchmarks/elysia-overhead.json` with raw summary statistics and
+- `.benchmark-output/elysia-overhead.json` with raw summary statistics and
   environment metadata;
-- `assets/benchmarks/elysia-overhead-editor.svg` with a Vega-rendered report.
+- `.benchmark-output/elysia-overhead.svg` with a Vega-rendered report.
+
+These files are not committed and are not used by the repository README. The
+public report always comes from the benchmark executed by GitHub Actions.
 
 The report keeps throughput as the primary visual comparison and includes a
 compact evidence grid with request `p50`, `p95`, and `p99`, startup `p50`,
@@ -84,12 +87,12 @@ implementation on the same runner in the same process. CI runs six
 order-balanced trials with longer per-case measurement time. The JSON and SVG
 reports are retained as workflow artifacts for 14 days.
 
-After a successful push to `main`, the same job publishes the generated report
-to the orphan `benchmark-results` branch. The repository README loads the SVG
-from that stable branch instead of displaying a developer-machine artifact:
+After a successful push to `main`, the same job publishes `.benchmark-output`
+directly to the orphan `benchmark-results` branch. The repository README loads
+the SVG from that stable branch with the workspace version as a cache key:
 
-- [Latest CI chart](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.svg)
-- [Latest CI JSON](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.json)
+- [Latest CI chart](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.svg?v=0.3.16)
+- [Latest CI JSON](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.json?v=0.3.16)
 
 Pull requests still generate and upload their own reports for review, but they
 cannot replace the public result. Publishing uses the workflow-scoped GitHub

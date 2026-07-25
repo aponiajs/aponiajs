@@ -96,7 +96,7 @@ measured separately from the hot request path.
 <div align="center">
 
 <img
-  src="https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.svg"
+  src="https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.svg?v=0.3.16"
   alt="CI benchmark comparing Elysia and Aponia throughput, request latency percentiles, startup latency, stability, and sample size"
   width="960"
 />
@@ -107,22 +107,13 @@ Results are a machine-specific baseline, not a universal performance claim.
 GitHub Actions regenerates the report from a clean Linux runner after every
 successful push to `main`. The chart reports throughput, request `p50`, `p95`,
 and `p99`, startup `p50`, coefficient of variation, and measured iterations.
-On the committed Bun 1.3.14 local baseline:
-
-| Comparison                              | Result                                |
-| --------------------------------------- | ------------------------------------- |
-| Wrapper vs Aponia native p50 latency    | `-0.55%`                              |
-| Full Aponia vs pure Elysia p50 latency  | `+32.29%`                             |
-| Full Aponia vs pure Elysia throughput   | `-24.41%`                             |
-| Aponia vs Elysia median startup latency | `0.009 ms` vs `0.002 ms` (`+256.42%`) |
-
-The forwarding wrapper itself is small; most measured hot-path difference is
-present before that final method call. Startup has a larger percentage change
-but remains a one-time difference measured in thousandths of a millisecond.
+The versioned image URL invalidates GitHub's image cache after each release.
+Only the CI result is presented here; developer-machine output is never used as
+the public benchmark.
 
 Review the [methodology and reproduction commands](./benchmarks/README.md), the
-[latest CI JSON report](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.json),
-or the [committed local baseline](./.ecc/benchmarks/elysia-overhead.json).
+[latest CI JSON report](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.json?v=0.3.16),
+or the corresponding GitHub Actions artifact.
 
 ## Generate
 

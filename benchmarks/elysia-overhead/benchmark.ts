@@ -117,8 +117,8 @@ const baseline: BenchmarkBaseline = {
 
 await writeBenchmarkArtifacts(
   baseline,
-  ".ecc/benchmarks/elysia-overhead.json",
-  "assets/benchmarks/elysia-overhead-editor.svg",
+  ".benchmark-output/elysia-overhead.json",
+  ".benchmark-output/elysia-overhead.svg",
 );
 await aponiaApplication.close();
 
@@ -146,8 +146,8 @@ console.table({
     baseline.comparison.startupMedianLatencyOverheadPercent,
   ),
 });
-console.log("Wrote .ecc/benchmarks/elysia-overhead.json");
-console.log("Wrote assets/benchmarks/elysia-overhead-editor.svg");
+console.log("Wrote .benchmark-output/elysia-overhead.json");
+console.log("Wrote .benchmark-output/elysia-overhead.svg");
 
 async function runBalancedTrials(
   group: BenchmarkMeasurement["group"],
