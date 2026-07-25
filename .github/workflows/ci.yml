@@ -94,19 +94,10 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: elysia-overhead-${{ github.run_id }}
-          path: |
-            .ecc/benchmarks/elysia-overhead.json
-            assets/benchmarks/elysia-overhead-editor.svg
+          path: .benchmark-output/
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 14
-
-      - name: Prepare benchmark publication
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          mkdir -p .benchmark-publication
-          cp .ecc/benchmarks/elysia-overhead.json .benchmark-publication/elysia-overhead.json
-          cp assets/benchmarks/elysia-overhead-editor.svg .benchmark-publication/elysia-overhead.svg
 
       - name: Publish benchmark report
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -114,6 +105,6 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: benchmark-results
-          publish_dir: ./.benchmark-publication
+          publish_dir: ./.benchmark-output
           force_orphan: true
           full_commit_message: "chore(benchmark): publish ${{ github.sha }}"

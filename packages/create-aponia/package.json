@@ -1,6 +1,6 @@
 {
   "name": "create-aponia",
-  "version": "0.3.15",
+  "version": "0.3.16",
   "description": "Create a Bun-first Aponia application.",
   "homepage": "https://github.com/aponiajs/aponiajs#readme",
   "bugs": {
