@@ -122,12 +122,46 @@ export function summarizeTrials(
 export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
   const pureRequest = findMeasurement(baseline.measurements, "request", "Pure Elysia");
   const aponiaRequest = findMeasurement(baseline.measurements, "request", "Aponia wrapper");
+  const pureStartup = findMeasurement(baseline.measurements, "startup", "Pure Elysia");
+  const aponiaStartup = findMeasurement(baseline.measurements, "startup", "Aponia factory");
   const throughputRetentionPercent = Math.round(
     (aponiaRequest.throughputMedianOps / pureRequest.throughputMedianOps) * 100,
   );
   const chartMeasurements = [
     createChartMeasurement("Elysia", pureRequest.throughputMedianOps),
     createChartMeasurement("Aponia", aponiaRequest.throughputMedianOps),
+  ];
+  const detailMeasurements = [
+    ...createDetailMeasurements(
+      "Request p50 · µs ↓",
+      formatMicroseconds(pureRequest.latencyP50Ms),
+      formatMicroseconds(aponiaRequest.latencyP50Ms),
+    ),
+    ...createDetailMeasurements(
+      "Request p95 · µs ↓",
+      formatMicroseconds(pureRequest.latencyP95Ms),
+      formatMicroseconds(aponiaRequest.latencyP95Ms),
+    ),
+    ...createDetailMeasurements(
+      "Request p99 · µs ↓",
+      formatMicroseconds(pureRequest.latencyP99Ms),
+      formatMicroseconds(aponiaRequest.latencyP99Ms),
+    ),
+    ...createDetailMeasurements(
+      "Startup p50 · µs ↓",
+      formatMicroseconds(pureStartup.latencyP50Ms),
+      formatMicroseconds(aponiaStartup.latencyP50Ms),
+    ),
+    ...createDetailMeasurements(
+      "Request CV · % ↓",
+      pureRequest.coefficientOfVariationPercent.toFixed(2),
+      aponiaRequest.coefficientOfVariationPercent.toFixed(2),
+    ),
+    ...createDetailMeasurements(
+      "Request iterations",
+      pureRequest.iterations.toLocaleString("en-US"),
+      aponiaRequest.iterations.toLocaleString("en-US"),
+    ),
   ];
 
   return {
@@ -141,7 +175,12 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
     },
     title: {
       text: `${throughputRetentionPercent}% Throughput Retained`,
-      subtitle: `Aponia vs pure Elysia · ${baseline.environment.runtime} · ${baseline.configuration.rounds} balanced trials`,
+      subtitle: [
+        `Aponia vs pure Elysia · ${baseline.environment.runtime} · ${baseline.configuration.rounds} balanced trials`,
+        `Mitata ${baseline.tool.version} · ${baseline.environment.platform} · ${baseline.environment.logicalCores} logical cores · ${baseline.environment.ci ? "GitHub Actions" : "Local run"}`,
+        baseline.environment.cpu,
+        `Request ${baseline.configuration.requestTimeMsPerCase} ms/case · startup ${baseline.configuration.startupTimeMsPerCase} ms/case · ${baseline.measuredAt.slice(0, 10)} UTC`,
+      ],
       anchor: "start",
       color: "#f4f4ef",
       font: "Inter, ui-sans-serif, system-ui",
@@ -151,16 +190,18 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
       offset: 90,
       subtitleColor: "#b7b7b2",
       subtitleFont: "Inter, ui-sans-serif, system-ui",
-      subtitleFontSize: 26,
+      subtitleFontSize: 22,
       subtitleFontWeight: 400,
+      subtitleLineHeight: 31,
       subtitlePadding: 22,
     },
+    spacing: 72,
     vconcat: [
       {
         width: 1400,
         height: 520,
         title: {
-          text: "Requests/sec",
+          text: "Requests/sec · higher is better",
           anchor: "middle",
           color: "#f4f4ef",
           font: "Inter, ui-sans-serif, system-ui",
@@ -241,6 +282,94 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
           },
         ],
       },
+      {
+        width: 1400,
+        height: 360,
+        title: {
+          text: "Latency & stability",
+          subtitle: "Individual iterations · lower is better where marked ↓",
+          anchor: "start",
+          color: "#f4f4ef",
+          font: "Inter, ui-sans-serif, system-ui",
+          fontSize: 38,
+          fontWeight: 400,
+          offset: 28,
+          subtitleColor: "#b7b7b2",
+          subtitleFont: "Inter, ui-sans-serif, system-ui",
+          subtitleFontSize: 22,
+          subtitleFontWeight: 400,
+          subtitlePadding: 12,
+        },
+        data: {
+          values: detailMeasurements,
+        },
+        mark: {
+          type: "text",
+          baseline: "middle",
+          font: "Inter, ui-sans-serif, system-ui",
+          fontSize: 26,
+          fontWeight: 500,
+        },
+        encoding: {
+          x: {
+            field: "implementation",
+            type: "nominal",
+            sort: ["Elysia", "Aponia"],
+            scale: {
+              padding: 0.5,
+            },
+            axis: {
+              title: null,
+              orient: "top",
+              domain: false,
+              ticks: false,
+              labelAngle: 0,
+              labelColor: "#f4f4ef",
+              labelFont: "Inter, ui-sans-serif, system-ui",
+              labelFontSize: 25,
+              labelFontWeight: 400,
+              labelPadding: 18,
+            },
+          },
+          y: {
+            field: "metric",
+            type: "nominal",
+            sort: [
+              "Request p50 · µs ↓",
+              "Request p95 · µs ↓",
+              "Request p99 · µs ↓",
+              "Startup p50 · µs ↓",
+              "Request CV · % ↓",
+              "Request iterations",
+            ],
+            axis: {
+              title: null,
+              domain: false,
+              ticks: false,
+              labelColor: "#d6d6d1",
+              labelFont: "Inter, ui-sans-serif, system-ui",
+              labelFontSize: 23,
+              labelFontWeight: 400,
+              labelLimit: 340,
+              labelPadding: 24,
+            },
+          },
+          text: {
+            field: "valueLabel",
+            type: "nominal",
+          },
+          color: {
+            field: "implementation",
+            type: "nominal",
+            sort: ["Elysia", "Aponia"],
+            scale: {
+              domain: ["Elysia", "Aponia"],
+              range: ["#6f86f7", "#ffb84d"],
+            },
+            legend: null,
+          },
+        },
+      },
     ],
     config: {
       view: {
@@ -301,4 +430,23 @@ function createChartMeasurement(implementation: "Elysia" | "Aponia", value: numb
     valueLabel: Math.round(value).toLocaleString("en-US"),
     labelPosition: value * 0.45,
   };
+}
+
+function createDetailMeasurements(metric: string, elysiaValue: string, aponiaValue: string) {
+  return [
+    {
+      metric,
+      implementation: "Elysia",
+      valueLabel: elysiaValue,
+    },
+    {
+      metric,
+      implementation: "Aponia",
+      valueLabel: aponiaValue,
+    },
+  ];
+}
+
+function formatMicroseconds(milliseconds: number): string {
+  return (milliseconds * 1_000).toFixed(3);
 }

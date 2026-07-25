@@ -39,7 +39,7 @@ describe("benchmark reporting", () => {
     expect(measurement.iterations).toBe(3_000);
   });
 
-  test("builds a focused throughput comparison chart", () => {
+  test("builds a complete benchmark comparison chart", () => {
     const baseline: BenchmarkBaseline = {
       schemaVersion: 2,
       measuredAt: "2026-07-25T00:00:00.000Z",
@@ -77,9 +77,16 @@ describe("benchmark reporting", () => {
     expect(serializedChart).toContain("75,000");
     expect(serializedChart).toContain("Aponia vs pure Elysia");
     expect(serializedChart).not.toContain("Aponia native");
-    expect(serializedChart).not.toContain("Request p50");
-    expect(serializedChart).not.toContain("Request p99");
-    expect(serializedChart).not.toContain("Startup p50");
+    expect(serializedChart).toContain("Request p50 · µs");
+    expect(serializedChart).toContain("Request p95 · µs");
+    expect(serializedChart).toContain("Request p99 · µs");
+    expect(serializedChart).toContain("Startup p50 · µs");
+    expect(serializedChart).toContain("Request CV · %");
+    expect(serializedChart).toContain("Request iterations");
+    expect(serializedChart).toContain("10.000");
+    expect(serializedChart).toContain("12.000");
+    expect(serializedChart).toContain("100.000");
+    expect(serializedChart).toContain("200.000");
     expect(serializedChart).not.toContain("IQR whiskers");
     expect(serializedChart).toContain("#6f86f7");
     expect(serializedChart).toContain("#ffb84d");
