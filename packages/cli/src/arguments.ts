@@ -1,3 +1,6 @@
+import { pascalCase } from "change-case";
+import parseCliArguments from "yargs-parser";
+
 export interface NewCommandOptions {
   readonly command: "new";
   readonly name: string;
@@ -5,10 +8,103 @@ export interface NewCommandOptions {
   readonly skipInstall: boolean;
 }
 
+export const generateSchematics = [
+  "app",
+  "library",
+  "class",
+  "controller",
+  "decorator",
+  "filter",
+  "gateway",
+  "guard",
+  "interface",
+  "interceptor",
+  "middleware",
+  "module",
+  "pipe",
+  "provider",
+  "resolver",
+  "resource",
+  "service",
+] as const;
+
+export type GenerateSchematic = (typeof generateSchematics)[number];
+
+export type ResourceTransport =
+  | "rest"
+  | "graphql-code-first"
+  | "graphql-schema-first"
+  | "microservice"
+  | "ws";
+
+export interface GenerateCommandOptions {
+  readonly command: "generate";
+  readonly schematic: GenerateSchematic;
+  readonly name: string;
+  readonly dryRun: boolean;
+  readonly flat?: boolean;
+  readonly spec?: boolean;
+  readonly skipImport: boolean;
+  readonly path?: string;
+  readonly module?: string;
+  readonly project?: string;
+  readonly crud: boolean;
+  readonly type: ResourceTransport;
+}
+
 export type CliCommand =
   | NewCommandOptions
+  | GenerateCommandOptions
   | { readonly command: "help" }
   | { readonly command: "version" };
+
+const schematicAliases: Readonly<Record<string, GenerateSchematic>> = {
+  app: "app",
+  application: "app",
+  lib: "library",
+  library: "library",
+  cl: "class",
+  class: "class",
+  co: "controller",
+  controller: "controller",
+  route: "controller",
+  router: "controller",
+  routes: "controller",
+  d: "decorator",
+  decorator: "decorator",
+  f: "filter",
+  filter: "filter",
+  ga: "gateway",
+  gateway: "gateway",
+  gu: "guard",
+  guard: "guard",
+  itf: "interface",
+  interface: "interface",
+  itc: "interceptor",
+  interceptor: "interceptor",
+  mi: "middleware",
+  middleware: "middleware",
+  mo: "module",
+  module: "module",
+  pi: "pipe",
+  pipe: "pipe",
+  pr: "provider",
+  provider: "provider",
+  r: "resolver",
+  resolver: "resolver",
+  res: "resource",
+  resource: "resource",
+  s: "service",
+  service: "service",
+};
+
+const resourceTransports = new Set<ResourceTransport>([
+  "rest",
+  "graphql-code-first",
+  "graphql-schema-first",
+  "microservice",
+  "ws",
+]);
 
 export function parseArguments(arguments_: readonly string[]): CliCommand {
   const [command = "help", ...rest] = arguments_;
@@ -21,27 +117,145 @@ export function parseArguments(arguments_: readonly string[]): CliCommand {
     return { command: "version" };
   }
 
-  if (command !== "new" && command !== "n") {
-    throw new Error(`Unknown command "${command}".`);
+  if (command === "new" || command === "n") {
+    return parseNewCommand(rest);
   }
 
-  const name = rest.find((argument) => !argument.startsWith("-"));
+  if (command === "generate" || command === "g") {
+    return parseGenerateCommand(rest);
+  }
+
+  throw new Error(`Unknown command "${command}".`);
+}
+
+function parseNewCommand(arguments_: readonly string[]): NewCommandOptions {
+  const parsed = parseOptions(arguments_);
+  const [name, ...extraPositionals] = parsed._;
   if (!name) {
     throw new Error("Project name is required.");
   }
-
-  const supportedOptions = new Set(["--dry-run", "-d", "--skip-install", "-s"]);
-  const unknownOption = rest.find(
-    (argument) => argument.startsWith("-") && !supportedOptions.has(argument),
-  );
-  if (unknownOption) {
-    throw new Error(`Unknown option "${unknownOption}".`);
+  if (extraPositionals.length > 0) {
+    throw new Error(`Unexpected argument "${extraPositionals[0]}".`);
   }
+
+  assertKnownOptions(parsed, ["dry-run", "skip-install"]);
 
   return {
     command: "new",
     name,
-    dryRun: rest.includes("--dry-run") || rest.includes("-d"),
-    skipInstall: rest.includes("--skip-install") || rest.includes("-s"),
+    dryRun: readBooleanOption(parsed, "dry-run", false),
+    skipInstall: readBooleanOption(parsed, "skip-install", false),
   };
+}
+
+function parseGenerateCommand(arguments_: readonly string[]): GenerateCommandOptions {
+  const parsed = parseOptions(arguments_);
+  const [schematicName, name, ...extraPositionals] = parsed._;
+  if (!schematicName) {
+    throw new Error("Schematic name is required.");
+  }
+
+  const schematic = schematicAliases[schematicName];
+  if (!schematic) {
+    throw new Error(
+      `Unknown schematic "${schematicName}". Available schematics: ${generateSchematics.join(", ")}.`,
+    );
+  }
+  if (!name) {
+    throw new Error(`${pascalCase(schematic)} name is required.`);
+  }
+  if (extraPositionals.length > 0) {
+    throw new Error(`Unexpected argument "${extraPositionals[0]}".`);
+  }
+
+  assertKnownOptions(parsed, [
+    "crud",
+    "dry-run",
+    "flat",
+    "module",
+    "path",
+    "project",
+    "skip-import",
+    "spec",
+    "type",
+  ]);
+
+  const type = readStringOption(parsed, "type") ?? "rest";
+  if (!resourceTransports.has(type as ResourceTransport)) {
+    throw new Error(`Unknown resource transport "${type}".`);
+  }
+
+  return {
+    command: "generate",
+    schematic,
+    name,
+    dryRun: readBooleanOption(parsed, "dry-run", false),
+    flat: readOptionalBooleanOption(parsed, "flat"),
+    spec: readOptionalBooleanOption(parsed, "spec"),
+    skipImport: readBooleanOption(parsed, "skip-import", false),
+    path: readStringOption(parsed, "path"),
+    module: readStringOption(parsed, "module"),
+    project: readStringOption(parsed, "project"),
+    crud: readBooleanOption(parsed, "crud", true),
+    type: type as ResourceTransport,
+  };
+}
+
+interface ParsedOptions extends Readonly<Record<string, unknown>> {
+  readonly _: readonly string[];
+}
+
+function parseOptions(arguments_: readonly string[]): ParsedOptions {
+  return parseCliArguments([...arguments_], {
+    alias: {
+      "dry-run": ["d"],
+      project: ["p"],
+      "skip-install": ["s"],
+    },
+    boolean: ["crud", "dry-run", "flat", "skip-import", "skip-install", "spec"],
+    string: ["module", "path", "project", "type"],
+    configuration: {
+      "camel-case-expansion": false,
+      "dot-notation": false,
+      "duplicate-arguments-array": false,
+      "parse-numbers": false,
+      "parse-positional-numbers": false,
+      "short-option-groups": false,
+      "strip-aliased": true,
+    },
+  }) as ParsedOptions;
+}
+
+function assertKnownOptions(options: ParsedOptions, supportedOptions: readonly string[]): void {
+  const supported = new Set(supportedOptions);
+  const unknown = Object.keys(options).find((option) => option !== "_" && !supported.has(option));
+  if (unknown) {
+    throw new Error(`Unknown option "--${unknown}".`);
+  }
+}
+
+function readBooleanOption(options: ParsedOptions, name: string, fallback: boolean): boolean {
+  return readOptionalBooleanOption(options, name) ?? fallback;
+}
+
+function readOptionalBooleanOption(options: ParsedOptions, name: string): boolean | undefined {
+  const value = options[name];
+  if (value === undefined) {
+    return undefined;
+  }
+  if (typeof value !== "boolean") {
+    throw new Error(`Option "--${name}" does not accept a value.`);
+  }
+  return value;
+}
+
+function readStringOption(options: ParsedOptions, name: string): string | undefined {
+  const value = options[name];
+  if (value === undefined) {
+    return undefined;
+  }
+  if (typeof value !== "string") {
+    throw new Error(`Option "--${name}" requires a value.`);
+  }
+  return value;
 }

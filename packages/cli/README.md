@@ -16,12 +16,23 @@ bun add --dev @aponiajs/cli
 bunx aponia new my-api
 bunx aponia n my-api --dry-run
 bunx aponia new my-api --skip-install
+bunx aponia generate controller users
+bunx aponia g s users
+bunx aponia g resource users --type rest
+bunx aponia g router health --no-spec
 bunx aponia --version
 ```
 
-The initial CLI implements the standard application generator. Component and
-resource schematics will be added behind the same command architecture after
-their module-registration transforms are safe and testable.
+The generate command supports the complete built-in Nest schematic catalog:
+application, library, class, controller, decorator, filter, gateway, guard,
+interface, interceptor, middleware, module, pipe, provider, resolver, resource,
+and service. Nest aliases are supported, and `router`, `routers`, and `route`
+map to Aponia controllers.
+
+Generated controllers, providers, services, modules, and resources are
+registered in the nearest Aponia module unless `--skip-import` is used.
+Resource transports include REST, GraphQL code-first, GraphQL schema-first,
+microservices, and WebSockets.
 
 For one-command project creation, use the separately published
 [`create-aponia`](https://www.npmjs.com/package/create-aponia) entrypoint:
