@@ -131,34 +131,34 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
     createChartMeasurement("Elysia", pureRequest.throughputMedianOps),
     createChartMeasurement("Aponia", aponiaRequest.throughputMedianOps),
   ];
-  const detailMeasurements = [
-    ...createDetailMeasurements(
+  const metricCards = [
+    createMetricCard(
       "Request p50 · µs ↓",
       formatMicroseconds(pureRequest.latencyP50Ms),
       formatMicroseconds(aponiaRequest.latencyP50Ms),
     ),
-    ...createDetailMeasurements(
+    createMetricCard(
       "Request p95 · µs ↓",
       formatMicroseconds(pureRequest.latencyP95Ms),
       formatMicroseconds(aponiaRequest.latencyP95Ms),
     ),
-    ...createDetailMeasurements(
+    createMetricCard(
       "Request p99 · µs ↓",
       formatMicroseconds(pureRequest.latencyP99Ms),
       formatMicroseconds(aponiaRequest.latencyP99Ms),
     ),
-    ...createDetailMeasurements(
+    createMetricCard(
       "Startup p50 · µs ↓",
       formatMicroseconds(pureStartup.latencyP50Ms),
       formatMicroseconds(aponiaStartup.latencyP50Ms),
     ),
-    ...createDetailMeasurements(
+    createMetricCard(
       "Request CV · % ↓",
       pureRequest.coefficientOfVariationPercent.toFixed(2),
       aponiaRequest.coefficientOfVariationPercent.toFixed(2),
     ),
-    ...createDetailMeasurements(
-      "Request iterations",
+    createMetricCard(
+      "Measured iterations",
       pureRequest.iterations.toLocaleString("en-US"),
       aponiaRequest.iterations.toLocaleString("en-US"),
     ),
@@ -168,46 +168,46 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
     $schema: "https://vega.github.io/schema/vega-lite/v6.json",
     background: "#121212",
     padding: {
-      top: 62,
-      right: 72,
-      bottom: 64,
-      left: 72,
+      top: 48,
+      right: 56,
+      bottom: 52,
+      left: 56,
     },
     title: {
       text: `${throughputRetentionPercent}% Throughput Retained`,
-      subtitle: [
-        `Aponia vs pure Elysia · ${baseline.environment.runtime} · ${baseline.configuration.rounds} balanced trials`,
-        `Mitata ${baseline.tool.version} · ${baseline.environment.platform} · ${baseline.environment.logicalCores} logical cores · ${baseline.environment.ci ? "GitHub Actions" : "Local run"}`,
-        baseline.environment.cpu,
-        `Request ${baseline.configuration.requestTimeMsPerCase} ms/case · startup ${baseline.configuration.startupTimeMsPerCase} ms/case · ${baseline.measuredAt.slice(0, 10)} UTC`,
-      ],
+      subtitle: `Aponia vs Elysia · ${baseline.environment.runtime} · ${baseline.configuration.rounds} trials · ${baseline.environment.ci ? "CI" : "local"}`,
       anchor: "start",
       color: "#f4f4ef",
-      font: "Inter, ui-sans-serif, system-ui",
-      fontSize: 72,
+      font: "SF Pro Display, Geist Sans, Helvetica Neue, ui-sans-serif, system-ui",
+      fontSize: 66,
       fontWeight: 400,
-      limit: 1400,
-      offset: 90,
+      limit: 1280,
+      offset: 66,
       subtitleColor: "#b7b7b2",
-      subtitleFont: "Inter, ui-sans-serif, system-ui",
-      subtitleFontSize: 22,
+      subtitleFont: "SF Pro Display, Geist Sans, Helvetica Neue, ui-sans-serif, system-ui",
+      subtitleFontSize: 24,
       subtitleFontWeight: 400,
-      subtitleLineHeight: 31,
-      subtitlePadding: 22,
+      subtitlePadding: 18,
     },
-    spacing: 72,
+    spacing: 52,
     vconcat: [
       {
-        width: 1400,
-        height: 520,
+        width: 1280,
+        height: 560,
         title: {
-          text: "Requests/sec · higher is better",
-          anchor: "middle",
+          text: "Throughput",
+          subtitle: "Requests/sec · higher is better",
+          anchor: "start",
           color: "#f4f4ef",
-          font: "Inter, ui-sans-serif, system-ui",
-          fontSize: 48,
+          font: "SF Pro Display, Geist Sans, Helvetica Neue, ui-sans-serif, system-ui",
+          fontSize: 36,
           fontWeight: 400,
-          offset: 28,
+          offset: 24,
+          subtitleColor: "#999995",
+          subtitleFont: "SF Pro Display, Geist Sans, Helvetica Neue, ui-sans-serif, system-ui",
+          subtitleFontSize: 20,
+          subtitleFontWeight: 400,
+          subtitlePadding: 8,
         },
         data: {
           values: chartMeasurements,
@@ -216,7 +216,7 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
           {
             mark: {
               type: "bar",
-              size: 260,
+              size: 300,
             },
             encoding: {
               x: {
@@ -229,10 +229,10 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
                   ticks: false,
                   labelAngle: 0,
                   labelColor: "#f4f4ef",
-                  labelFont: "Inter, ui-sans-serif, system-ui",
-                  labelFontSize: 30,
+                  labelFont: "SF Pro Display, Geist Sans, Helvetica Neue, ui-sans-serif, system-ui",
+                  labelFontSize: 28,
                   labelFontWeight: 400,
-                  labelPadding: 22,
+                  labelPadding: 18,
                 },
               },
               y: {
@@ -260,9 +260,9 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
               type: "text",
               baseline: "middle",
               color: "#121212",
-              font: "Inter, ui-sans-serif, system-ui",
-              fontSize: 32,
-              fontWeight: 500,
+              font: "SF Pro Display, Geist Sans, Helvetica Neue, ui-sans-serif, system-ui",
+              fontSize: 36,
+              fontWeight: 600,
             },
             encoding: {
               x: {
@@ -283,99 +283,39 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
         ],
       },
       {
-        width: 1400,
-        height: 360,
         title: {
-          text: "Latency & stability",
+          text: "Latency & reliability",
           subtitle: "Individual iterations · lower is better where marked ↓",
           anchor: "start",
           color: "#f4f4ef",
-          font: "Inter, ui-sans-serif, system-ui",
-          fontSize: 38,
+          font: "SF Pro Display, Geist Sans, Helvetica Neue, ui-sans-serif, system-ui",
+          fontSize: 32,
           fontWeight: 400,
-          offset: 28,
-          subtitleColor: "#b7b7b2",
-          subtitleFont: "Inter, ui-sans-serif, system-ui",
-          subtitleFontSize: 22,
+          offset: 22,
+          subtitleColor: "#999995",
+          subtitleFont: "SF Pro Display, Geist Sans, Helvetica Neue, ui-sans-serif, system-ui",
+          subtitleFontSize: 19,
           subtitleFontWeight: 400,
-          subtitlePadding: 12,
+          subtitlePadding: 8,
         },
-        data: {
-          values: detailMeasurements,
-        },
-        mark: {
-          type: "text",
-          baseline: "middle",
-          font: "Inter, ui-sans-serif, system-ui",
-          fontSize: 26,
-          fontWeight: 500,
-        },
-        encoding: {
-          x: {
-            field: "implementation",
-            type: "nominal",
-            sort: ["Elysia", "Aponia"],
-            scale: {
-              padding: 0.5,
-            },
-            axis: {
-              title: null,
-              orient: "top",
-              domain: false,
-              ticks: false,
-              labelAngle: 0,
-              labelColor: "#f4f4ef",
-              labelFont: "Inter, ui-sans-serif, system-ui",
-              labelFontSize: 25,
-              labelFontWeight: 400,
-              labelPadding: 18,
-            },
+        spacing: 16,
+        vconcat: [
+          {
+            spacing: 16,
+            hconcat: metricCards.slice(0, 3),
           },
-          y: {
-            field: "metric",
-            type: "nominal",
-            sort: [
-              "Request p50 · µs ↓",
-              "Request p95 · µs ↓",
-              "Request p99 · µs ↓",
-              "Startup p50 · µs ↓",
-              "Request CV · % ↓",
-              "Request iterations",
-            ],
-            axis: {
-              title: null,
-              domain: false,
-              ticks: false,
-              labelColor: "#d6d6d1",
-              labelFont: "Inter, ui-sans-serif, system-ui",
-              labelFontSize: 23,
-              labelFontWeight: 400,
-              labelLimit: 340,
-              labelPadding: 24,
-            },
+          {
+            spacing: 16,
+            hconcat: metricCards.slice(3),
           },
-          text: {
-            field: "valueLabel",
-            type: "nominal",
-          },
-          color: {
-            field: "implementation",
-            type: "nominal",
-            sort: ["Elysia", "Aponia"],
-            scale: {
-              domain: ["Elysia", "Aponia"],
-              range: ["#6f86f7", "#ffb84d"],
-            },
-            legend: null,
-          },
-        },
+        ],
       },
     ],
     config: {
       view: {
         fill: "#121212",
-        stroke: "#e8e8e2",
-        strokeWidth: 1.25,
+        stroke: "#3f3f3c",
+        strokeWidth: 1,
       },
     },
   };
@@ -432,19 +372,74 @@ function createChartMeasurement(implementation: "Elysia" | "Aponia", value: numb
   };
 }
 
-function createDetailMeasurements(metric: string, elysiaValue: string, aponiaValue: string) {
-  return [
-    {
-      metric,
-      implementation: "Elysia",
-      valueLabel: elysiaValue,
+function createMetricCard(title: string, elysiaValue: string, aponiaValue: string) {
+  return {
+    width: 416,
+    height: 124,
+    title: {
+      text: title,
+      anchor: "start" as const,
+      color: "#d6d6d1",
+      font: "SF Pro Display, Geist Sans, Helvetica Neue, ui-sans-serif, system-ui",
+      fontSize: 21,
+      fontWeight: 400 as const,
+      offset: 16,
     },
-    {
-      metric,
-      implementation: "Aponia",
-      valueLabel: aponiaValue,
+    data: {
+      values: [
+        {
+          implementation: "Elysia",
+          valueLabel: elysiaValue,
+        },
+        {
+          implementation: "Aponia",
+          valueLabel: aponiaValue,
+        },
+      ],
     },
-  ];
+    mark: {
+      type: "text" as const,
+      baseline: "middle" as const,
+      font: "SF Pro Display, Geist Sans, Helvetica Neue, ui-sans-serif, system-ui",
+      fontSize: 30,
+      fontWeight: 600 as const,
+    },
+    encoding: {
+      x: {
+        field: "implementation",
+        type: "nominal" as const,
+        sort: ["Elysia", "Aponia"],
+        scale: {
+          padding: 0.55,
+        },
+        axis: {
+          title: null,
+          domain: false,
+          ticks: false,
+          labelAngle: 0,
+          labelColor: "#999995",
+          labelFont: "SF Pro Display, Geist Sans, Helvetica Neue, ui-sans-serif, system-ui",
+          labelFontSize: 17,
+          labelFontWeight: 400 as const,
+          labelPadding: 14,
+        },
+      },
+      text: {
+        field: "valueLabel",
+        type: "nominal" as const,
+      },
+      color: {
+        field: "implementation",
+        type: "nominal" as const,
+        sort: ["Elysia", "Aponia"],
+        scale: {
+          domain: ["Elysia", "Aponia"],
+          range: ["#6f86f7", "#ffb84d"],
+        },
+        legend: null,
+      },
+    },
+  };
 }
 
 function formatMicroseconds(milliseconds: number): string {

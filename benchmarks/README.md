@@ -47,7 +47,7 @@ Each run updates:
 - `assets/benchmarks/elysia-overhead-editor.svg` with a Vega-rendered report.
 
 The report keeps throughput as the primary visual comparison and includes a
-compact evidence table with request `p50`, `p95`, and `p99`, startup `p50`,
+compact evidence grid with request `p50`, `p95`, and `p99`, startup `p50`,
 coefficient of variation (`CV%`), and measured iterations. Lower latency and CV
 are better; a lower CV indicates more stable trial-to-trial results.
 
