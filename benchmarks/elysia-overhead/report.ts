@@ -1,38 +1,61 @@
 import { mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
+import { coefficientOfVariation, median, quantile } from "simple-statistics";
 import { parse, View } from "vega";
 import { compile, type TopLevelSpec } from "vega-lite";
+
+export interface BenchmarkTrial {
+  readonly round: number;
+  readonly order: number;
+  readonly latencyMeanMs: number;
+  readonly latencyP50Ms: number;
+  readonly latencyP95Ms: number;
+  readonly latencyP99Ms: number;
+  readonly throughputOps: number;
+  readonly iterations: number;
+}
 
 export interface BenchmarkMeasurement {
   readonly group: "request" | "startup";
   readonly implementation: string;
   readonly latencyMeanMs: number;
   readonly latencyP50Ms: number;
+  readonly latencyP95Ms: number;
   readonly latencyP99Ms: number;
-  readonly throughputMeanOps: number;
-  readonly relativeMarginOfError: number;
-  readonly samples: number;
+  readonly throughputMedianOps: number;
+  readonly coefficientOfVariationPercent: number;
+  readonly iterations: number;
+  readonly trials: readonly BenchmarkTrial[];
 }
 
 export interface BenchmarkComparison {
-  readonly requestLatencyOverheadPercent: number;
-  readonly requestThroughputDeltaPercent: number;
-  readonly wrapperOnlyLatencyOverheadPercent: number;
-  readonly startupLatencyOverheadPercent: number;
+  readonly requestMedianLatencyOverheadPercent: number;
+  readonly requestMedianThroughputDeltaPercent: number;
+  readonly wrapperOnlyMedianLatencyOverheadPercent: number;
+  readonly startupMedianLatencyOverheadPercent: number;
 }
 
 export interface BenchmarkBaseline {
-  readonly schemaVersion: 1;
+  readonly schemaVersion: 2;
   readonly measuredAt: string;
+  readonly tool: {
+    readonly name: "mitata";
+    readonly version: string;
+  };
   readonly environment: {
     readonly runtime: string;
     readonly platform: string;
     readonly cpu: string;
+    readonly logicalCores: number;
+    readonly ci: boolean;
   };
   readonly configuration: {
-    readonly requestTimeMs: number;
-    readonly startupTimeMs: number;
-    readonly warmupTimeMs: number;
+    readonly rounds: number;
+    readonly requestTimeMsPerCase: number;
+    readonly startupTimeMsPerCase: number;
+    readonly warmupSamples: number;
+    readonly minimumSamples: number;
+    readonly batching: false;
   };
   readonly measurements: readonly BenchmarkMeasurement[];
   readonly comparison: BenchmarkComparison;
@@ -48,22 +71,51 @@ export function calculateComparison(
   const aponiaStartup = findMeasurement(measurements, "startup", "Aponia factory");
 
   return {
-    requestLatencyOverheadPercent: percentChange(
-      pureRequest.latencyMeanMs,
-      wrapperRequest.latencyMeanMs,
+    requestMedianLatencyOverheadPercent: percentChange(
+      pureRequest.latencyP50Ms,
+      wrapperRequest.latencyP50Ms,
     ),
-    requestThroughputDeltaPercent: percentChange(
-      pureRequest.throughputMeanOps,
-      wrapperRequest.throughputMeanOps,
+    requestMedianThroughputDeltaPercent: percentChange(
+      pureRequest.throughputMedianOps,
+      wrapperRequest.throughputMedianOps,
     ),
-    wrapperOnlyLatencyOverheadPercent: percentChange(
-      nativeRequest.latencyMeanMs,
-      wrapperRequest.latencyMeanMs,
+    wrapperOnlyMedianLatencyOverheadPercent: percentChange(
+      nativeRequest.latencyP50Ms,
+      wrapperRequest.latencyP50Ms,
     ),
-    startupLatencyOverheadPercent: percentChange(
-      pureStartup.latencyMeanMs,
-      aponiaStartup.latencyMeanMs,
+    startupMedianLatencyOverheadPercent: percentChange(
+      pureStartup.latencyP50Ms,
+      aponiaStartup.latencyP50Ms,
     ),
+  };
+}
+
+export function summarizeTrials(
+  group: BenchmarkMeasurement["group"],
+  implementation: string,
+  trials: readonly BenchmarkTrial[],
+): BenchmarkMeasurement {
+  if (trials.length === 0) {
+    throw new Error(`Cannot summarize ${implementation} without benchmark trials.`);
+  }
+
+  const latencyMeanMs = median(trials.map((trial) => trial.latencyMeanMs));
+  const latencyP50Ms = median(trials.map((trial) => trial.latencyP50Ms));
+
+  return {
+    group,
+    implementation,
+    latencyMeanMs,
+    latencyP50Ms,
+    latencyP95Ms: median(trials.map((trial) => trial.latencyP95Ms)),
+    latencyP99Ms: median(trials.map((trial) => trial.latencyP99Ms)),
+    throughputMedianOps: median(trials.map((trial) => trial.throughputOps)),
+    coefficientOfVariationPercent:
+      trials.length === 1
+        ? 0
+        : coefficientOfVariation(trials.map((trial) => trial.latencyP50Ms)) * 100,
+    iterations: trials.reduce((total, trial) => total + trial.iterations, 0),
+    trials,
   };
 }
 
@@ -76,38 +128,58 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
     createChartMeasurement(
       "Throughput · req/µs ↑",
       "Elysia",
-      pureRequest.throughputMeanOps / 1_000_000,
-      `${(pureRequest.throughputMeanOps / 1_000_000).toFixed(3)} req/µs`,
+      pureRequest.throughputMedianOps / 1_000_000,
+      `${(pureRequest.throughputMedianOps / 1_000_000).toFixed(3)} req/µs`,
+      pureRequest.trials.map((trial) => trial.throughputOps / 1_000_000),
     ),
     createChartMeasurement(
       "Throughput · req/µs ↑",
       "Aponia",
-      aponiaRequest.throughputMeanOps / 1_000_000,
-      `${(aponiaRequest.throughputMeanOps / 1_000_000).toFixed(3)} req/µs`,
+      aponiaRequest.throughputMedianOps / 1_000_000,
+      `${(aponiaRequest.throughputMedianOps / 1_000_000).toFixed(3)} req/µs`,
+      aponiaRequest.trials.map((trial) => trial.throughputOps / 1_000_000),
     ),
     createChartMeasurement(
-      "Request latency · µs ↓",
+      "Request p50 · µs ↓",
       "Elysia",
-      pureRequest.latencyMeanMs * 1_000,
-      `${(pureRequest.latencyMeanMs * 1_000).toFixed(3)} µs`,
+      pureRequest.latencyP50Ms * 1_000,
+      `${(pureRequest.latencyP50Ms * 1_000).toFixed(3)} µs`,
+      pureRequest.trials.map((trial) => trial.latencyP50Ms * 1_000),
     ),
     createChartMeasurement(
-      "Request latency · µs ↓",
+      "Request p50 · µs ↓",
       "Aponia",
-      aponiaRequest.latencyMeanMs * 1_000,
-      `${(aponiaRequest.latencyMeanMs * 1_000).toFixed(3)} µs`,
+      aponiaRequest.latencyP50Ms * 1_000,
+      `${(aponiaRequest.latencyP50Ms * 1_000).toFixed(3)} µs`,
+      aponiaRequest.trials.map((trial) => trial.latencyP50Ms * 1_000),
     ),
     createChartMeasurement(
-      "Startup · ms ↓",
+      "Request p99 · µs ↓",
       "Elysia",
-      pureStartup.latencyMeanMs,
-      `${pureStartup.latencyMeanMs.toFixed(3)} ms`,
+      pureRequest.latencyP99Ms * 1_000,
+      `${(pureRequest.latencyP99Ms * 1_000).toFixed(3)} µs`,
+      pureRequest.trials.map((trial) => trial.latencyP99Ms * 1_000),
     ),
     createChartMeasurement(
-      "Startup · ms ↓",
+      "Request p99 · µs ↓",
       "Aponia",
-      aponiaStartup.latencyMeanMs,
-      `${aponiaStartup.latencyMeanMs.toFixed(3)} ms`,
+      aponiaRequest.latencyP99Ms * 1_000,
+      `${(aponiaRequest.latencyP99Ms * 1_000).toFixed(3)} µs`,
+      aponiaRequest.trials.map((trial) => trial.latencyP99Ms * 1_000),
+    ),
+    createChartMeasurement(
+      "Startup p50 · ms ↓",
+      "Elysia",
+      pureStartup.latencyP50Ms,
+      `${pureStartup.latencyP50Ms.toFixed(3)} ms`,
+      pureStartup.trials.map((trial) => trial.latencyP50Ms),
+    ),
+    createChartMeasurement(
+      "Startup p50 · ms ↓",
+      "Aponia",
+      aponiaStartup.latencyP50Ms,
+      `${aponiaStartup.latencyP50Ms.toFixed(3)} ms`,
+      aponiaStartup.trials.map((trial) => trial.latencyP50Ms),
     ),
   ];
 
@@ -117,7 +189,7 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
     padding: 24,
     title: {
       text: "Elysia vs Aponia",
-      subtitle: "Measured values · ↑ higher is better · ↓ lower is better",
+      subtitle: `Median bars · IQR whiskers · ${baseline.configuration.rounds} order-balanced trials`,
       anchor: "start",
       color: "#242424",
       font: "Georgia, Times New Roman, serif",
@@ -134,7 +206,12 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
       column: {
         field: "metric",
         type: "nominal",
-        sort: ["Throughput · req/µs ↑", "Request latency · µs ↓", "Startup · ms ↓"],
+        sort: [
+          "Throughput · req/µs ↑",
+          "Request p50 · µs ↓",
+          "Request p99 · µs ↓",
+          "Startup p50 · ms ↓",
+        ],
         header: {
           title: null,
           labelColor: "#242424",
@@ -146,7 +223,7 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
       },
     },
     spec: {
-      width: 210,
+      width: 168,
       height: 300,
       layer: [
         {
@@ -198,6 +275,67 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
         },
         {
           mark: {
+            type: "rule",
+            color: "#242424",
+            strokeWidth: 2,
+          },
+          encoding: {
+            x: {
+              field: "implementation",
+              type: "nominal",
+              sort: ["Elysia", "Aponia"],
+            },
+            y: {
+              field: "lowerQuartile",
+              type: "quantitative",
+            },
+            y2: {
+              field: "upperQuartile",
+            },
+          },
+        },
+        {
+          mark: {
+            type: "tick",
+            orient: "horizontal",
+            color: "#242424",
+            size: 14,
+            thickness: 2,
+          },
+          encoding: {
+            x: {
+              field: "implementation",
+              type: "nominal",
+              sort: ["Elysia", "Aponia"],
+            },
+            y: {
+              field: "lowerQuartile",
+              type: "quantitative",
+            },
+          },
+        },
+        {
+          mark: {
+            type: "tick",
+            orient: "horizontal",
+            color: "#242424",
+            size: 14,
+            thickness: 2,
+          },
+          encoding: {
+            x: {
+              field: "implementation",
+              type: "nominal",
+              sort: ["Elysia", "Aponia"],
+            },
+            y: {
+              field: "upperQuartile",
+              type: "quantitative",
+            },
+          },
+        },
+        {
+          mark: {
             type: "text",
             baseline: "bottom",
             dy: -5,
@@ -213,7 +351,7 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
               sort: ["Elysia", "Aponia"],
             },
             y: {
-              field: "value",
+              field: "upperQuartile",
               type: "quantitative",
             },
             text: {
@@ -286,11 +424,14 @@ function createChartMeasurement(
   implementation: "Elysia" | "Aponia",
   value: number,
   valueLabel: string,
+  trialValues: readonly number[],
 ) {
   return {
     metric,
     implementation,
     value,
     valueLabel,
+    lowerQuartile: quantile(trialValues, 0.25),
+    upperQuartile: quantile(trialValues, 0.75),
   };
 }

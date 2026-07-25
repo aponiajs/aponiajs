@@ -81,13 +81,15 @@ jobs:
 
       - name: Compare Elysia and Aponia
         env:
-          APONIA_BENCH_REQUEST_MS: 3000
-          APONIA_BENCH_STARTUP_MS: 1500
-          APONIA_BENCH_WARMUP_MS: 500
+          APONIA_BENCH_REQUEST_MS: 1000
+          APONIA_BENCH_STARTUP_MS: 500
+          APONIA_BENCH_ROUNDS: 6
+          APONIA_BENCH_WARMUP_SAMPLES: 8
+          APONIA_BENCH_MIN_SAMPLES: 20
         run: bun run benchmark:elysia:run
 
       - name: Upload benchmark report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: elysia-overhead-${{ github.run_id }}
           path: |

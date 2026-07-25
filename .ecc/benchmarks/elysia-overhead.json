@@ -1,72 +1,396 @@
 {
-  "schemaVersion": 1,
-  "measuredAt": "2026-07-25T11:46:10.745Z",
+  "schemaVersion": 2,
+  "measuredAt": "2026-07-25T13:54:41.887Z",
+  "tool": {
+    "name": "mitata",
+    "version": "1.0.34"
+  },
   "environment": {
     "runtime": "Bun 1.3.14",
     "platform": "linux x64",
-    "cpu": "Intel(R) Core(TM) i3-1005G1 CPU @ 1.20GHz"
+    "cpu": "Intel(R) Core(TM) i3-1005G1 CPU @ 1.20GHz",
+    "logicalCores": 4,
+    "ci": false
   },
   "configuration": {
-    "requestTimeMs": 1500,
-    "startupTimeMs": 750,
-    "warmupTimeMs": 250
+    "rounds": 6,
+    "requestTimeMsPerCase": 500,
+    "startupTimeMsPerCase": 250,
+    "warmupSamples": 8,
+    "minimumSamples": 20,
+    "batching": false
   },
   "measurements": [
     {
       "group": "request",
       "implementation": "Pure Elysia",
-      "latencyMeanMs": 0.0015265064642451891,
-      "latencyP50Ms": 0.0015330000001085864,
-      "latencyP99Ms": 0.0060866499999520105,
-      "throughputMeanOps": 831379.2538034874,
-      "relativeMarginOfError": 1.0148171294829251,
-      "samples": 982636
+      "latencyMeanMs": 0.0008647132811209408,
+      "latencyP50Ms": 0.0005434999999999999,
+      "latencyP95Ms": 0.001281,
+      "latencyP99Ms": 0.006133099999999976,
+      "throughputMedianOps": 1156455.5568413383,
+      "coefficientOfVariationPercent": 1.3731185045009202,
+      "iterations": 3357194,
+      "trials": [
+        {
+          "round": 1,
+          "order": 1,
+          "latencyMeanMs": 0.0008660747640601679,
+          "latencyP50Ms": 0.000535,
+          "latencyP95Ms": 0.001302,
+          "latencyP99Ms": 0.0061871599999999164,
+          "throughputOps": 1154634.7284292052,
+          "iterations": 574193
+        },
+        {
+          "round": 2,
+          "order": 3,
+          "latencyMeanMs": 0.0008295975274404386,
+          "latencyP50Ms": 0.000542,
+          "latencyP95Ms": 0.001179,
+          "latencyP99Ms": 0.005895120000000112,
+          "throughputOps": 1205403.7854781281,
+          "iterations": 599298
+        },
+        {
+          "round": 3,
+          "order": 2,
+          "latencyMeanMs": 0.0008140316212146562,
+          "latencyP50Ms": 0.000539,
+          "latencyP95Ms": 0.001151,
+          "latencyP99Ms": 0.005607469999999972,
+          "throughputOps": 1228453.5071350809,
+          "iterations": 609654
+        },
+        {
+          "round": 4,
+          "order": 1,
+          "latencyMeanMs": 0.0009645373778050133,
+          "latencyP50Ms": 0.000551,
+          "latencyP95Ms": 0.001362,
+          "latencyP99Ms": 0.006807659999999974,
+          "throughputOps": 1036766.4571752404,
+          "iterations": 514035
+        },
+        {
+          "round": 5,
+          "order": 3,
+          "latencyMeanMs": 0.001017412133869669,
+          "latencyP50Ms": 0.000555,
+          "latencyP95Ms": 0.001422,
+          "latencyP99Ms": 0.006817,
+          "throughputOps": 982885.8598300348,
+          "iterations": 485517
+        },
+        {
+          "round": 6,
+          "order": 2,
+          "latencyMeanMs": 0.0008633517981817138,
+          "latencyP50Ms": 0.000545,
+          "latencyP95Ms": 0.00126,
+          "latencyP99Ms": 0.006079040000000037,
+          "throughputOps": 1158276.3852534713,
+          "iterations": 574497
+        }
+      ]
     },
     {
       "group": "request",
       "implementation": "Aponia native",
-      "latencyMeanMs": 0.001960616480147283,
-      "latencyP50Ms": 0.0019149999998262501,
-      "latencyP99Ms": 0.00802335000012133,
-      "throughputMeanOps": 647156.4725198135,
-      "relativeMarginOfError": 1.422474225772443,
-      "samples": 765066
+      "latencyMeanMs": 0.0011538696387447325,
+      "latencyP50Ms": 0.000723,
+      "latencyP95Ms": 0.0016875,
+      "latencyP99Ms": 0.0072817999999999885,
+      "throughputMedianOps": 866893.51151134,
+      "coefficientOfVariationPercent": 0.9076708592715003,
+      "iterations": 2580064,
+      "trials": [
+        {
+          "round": 1,
+          "order": 2,
+          "latencyMeanMs": 0.0011107427508463025,
+          "latencyP50Ms": 0.000715,
+          "latencyP95Ms": 0.001647,
+          "latencyP99Ms": 0.007161,
+          "throughputOps": 900298.470764788,
+          "iterations": 447535
+        },
+        {
+          "round": 2,
+          "order": 1,
+          "latencyMeanMs": 0.00122456941971881,
+          "latencyP50Ms": 0.000729,
+          "latencyP95Ms": 0.001781,
+          "latencyP99Ms": 0.007606,
+          "throughputOps": 816613.56546828,
+          "iterations": 405562
+        },
+        {
+          "round": 3,
+          "order": 3,
+          "latencyMeanMs": 0.0010748549104877558,
+          "latencyP50Ms": 0.000714,
+          "latencyP95Ms": 0.001564,
+          "latencyP99Ms": 0.0069925999999999764,
+          "throughputOps": 930358.1257736566,
+          "iterations": 463121
+        },
+        {
+          "round": 4,
+          "order": 2,
+          "latencyMeanMs": 0.0012313265767442323,
+          "latencyP50Ms": 0.000729,
+          "latencyP95Ms": 0.0017373499999999767,
+          "latencyP99Ms": 0.00736,
+          "throughputOps": 812132.231112979,
+          "iterations": 403014
+        },
+        {
+          "round": 5,
+          "order": 1,
+          "latencyMeanMs": 0.0011344920686446858,
+          "latencyP50Ms": 0.000722,
+          "latencyP95Ms": 0.001653,
+          "latencyP99Ms": 0.007203599999999977,
+          "throughputOps": 881451.733016207,
+          "iterations": 437441
+        },
+        {
+          "round": 6,
+          "order": 3,
+          "latencyMeanMs": 0.0011732472088447795,
+          "latencyP50Ms": 0.000724,
+          "latencyP95Ms": 0.001722,
+          "latencyP99Ms": 0.0074221999999999535,
+          "throughputOps": 852335.290006473,
+          "iterations": 423391
+        }
+      ]
     },
     {
       "group": "request",
       "implementation": "Aponia wrapper",
-      "latencyMeanMs": 0.0019941161531157924,
-      "latencyP50Ms": 0.0019550000006347545,
-      "latencyP99Ms": 0.008136869999880213,
-      "throughputMeanOps": 630954.4256064858,
-      "relativeMarginOfError": 1.2365175646943285,
-      "samples": 752214
+      "latencyMeanMs": 0.001144186609640079,
+      "latencyP50Ms": 0.000719,
+      "latencyP95Ms": 0.0016784999999999999,
+      "latencyP99Ms": 0.007237074999999983,
+      "throughputMedianOps": 874115.5762595918,
+      "coefficientOfVariationPercent": 1.9235707294537057,
+      "iterations": 2559911,
+      "trials": [
+        {
+          "round": 1,
+          "order": 3,
+          "latencyMeanMs": 0.0013777981001130686,
+          "latencyP50Ms": 0.000752,
+          "latencyP95Ms": 0.00196,
+          "latencyP99Ms": 0.008439,
+          "throughputOps": 725795.7460660856,
+          "iterations": 359074
+        },
+        {
+          "round": 2,
+          "order": 2,
+          "latencyMeanMs": 0.0011198882110254782,
+          "latencyP50Ms": 0.000719,
+          "latencyP95Ms": 0.001634,
+          "latencyP99Ms": 0.007059669999999984,
+          "throughputOps": 892946.2692390546,
+          "iterations": 444534
+        },
+        {
+          "round": 3,
+          "order": 1,
+          "latencyMeanMs": 0.0010521315816737534,
+          "latencyP50Ms": 0.000714,
+          "latencyP95Ms": 0.001562,
+          "latencyP99Ms": 0.006953,
+          "throughputOps": 950451.46198271,
+          "iterations": 472961
+        },
+        {
+          "round": 4,
+          "order": 3,
+          "latencyMeanMs": 0.0011582612553309199,
+          "latencyP50Ms": 0.000719,
+          "latencyP95Ms": 0.001678,
+          "latencyP99Ms": 0.007188039999999979,
+          "throughputOps": 863363.075815133,
+          "iterations": 428397
+        },
+        {
+          "round": 5,
+          "order": 2,
+          "latencyMeanMs": 0.0011301119639492384,
+          "latencyP50Ms": 0.000719,
+          "latencyP95Ms": 0.001679,
+          "latencyP99Ms": 0.007286109999999986,
+          "throughputOps": 884868.0767040508,
+          "iterations": 440490
+        },
+        {
+          "round": 6,
+          "order": 1,
+          "latencyMeanMs": 0.0011963762917566443,
+          "latencyP50Ms": 0.000729,
+          "latencyP95Ms": 0.00181,
+          "latencyP99Ms": 0.007587,
+          "throughputOps": 835857.4195178138,
+          "iterations": 414455
+        }
+      ]
     },
     {
       "group": "startup",
       "implementation": "Pure Elysia",
-      "latencyMeanMs": 0.004562592020972658,
-      "latencyP50Ms": 0.003991999999925611,
-      "latencyP99Ms": 0.012655200000153924,
-      "throughputMeanOps": 278878.43083722563,
-      "relativeMarginOfError": 2.5533506874602483,
-      "samples": 164381
+      "latencyMeanMs": 0.003432462021512729,
+      "latencyP50Ms": 0.0024530000000000003,
+      "latencyP95Ms": 0.005429924999999995,
+      "latencyP99Ms": 0.01633983,
+      "throughputMedianOps": 291344.1976176192,
+      "coefficientOfVariationPercent": 5.511121852616503,
+      "iterations": 428974,
+      "trials": [
+        {
+          "round": 1,
+          "order": 1,
+          "latencyMeanMs": 0.004091176089986064,
+          "latencyP50Ms": 0.002589,
+          "latencyP95Ms": 0.00767175,
+          "latencyP99Ms": 0.02539275,
+          "throughputOps": 244428.49146671814,
+          "iterations": 60276
+        },
+        {
+          "round": 2,
+          "order": 2,
+          "latencyMeanMs": 0.0036086868552945976,
+          "latencyP50Ms": 0.002497,
+          "latencyP95Ms": 0.00599925,
+          "latencyP99Ms": 0.01839049999999994,
+          "throughputOps": 277109.1092408915,
+          "iterations": 68636
+        },
+        {
+          "round": 3,
+          "order": 1,
+          "latencyMeanMs": 0.003314979448386665,
+          "latencyP50Ms": 0.002368,
+          "latencyP95Ms": 0.005258550000000003,
+          "latencyP99Ms": 0.016349,
+          "throughputOps": 301660.99536052335,
+          "iterations": 74690
+        },
+        {
+          "round": 4,
+          "order": 2,
+          "latencyMeanMs": 0.0030506287915143906,
+          "latencyP50Ms": 0.0022,
+          "latencyP95Ms": 0.004878,
+          "latencyP99Ms": 0.01435083999999991,
+          "throughputOps": 327801.27257095114,
+          "iterations": 81267
+        },
+        {
+          "round": 5,
+          "order": 1,
+          "latencyMeanMs": 0.0034143339639316193,
+          "latencyP50Ms": 0.002422,
+          "latencyP95Ms": 0.005328149999999994,
+          "latencyP99Ms": 0.016330660000000004,
+          "throughputOps": 292882.89035689295,
+          "iterations": 72418
+        },
+        {
+          "round": 6,
+          "order": 2,
+          "latencyMeanMs": 0.0034505900790938386,
+          "latencyP50Ms": 0.002484,
+          "latencyP95Ms": 0.005531699999999997,
+          "latencyP99Ms": 0.015845259999999996,
+          "throughputOps": 289805.50487834547,
+          "iterations": 71687
+        }
+      ]
     },
     {
       "group": "startup",
       "implementation": "Aponia factory",
-      "latencyMeanMs": 0.01680397416709694,
-      "latencyP50Ms": 0.014798999998674844,
-      "latencyP99Ms": 0.04115927999962879,
-      "throughputMeanOps": 75142.45489277905,
-      "relativeMarginOfError": 4.886825741189866,
-      "samples": 44633
+      "latencyMeanMs": 0.012567022978660143,
+      "latencyP50Ms": 0.008743,
+      "latencyP95Ms": 0.024155974999999996,
+      "latencyP99Ms": 0.06382771999999994,
+      "throughputMedianOps": 79632.93450105019,
+      "coefficientOfVariationPercent": 11.744449263819229,
+      "iterations": 114393,
+      "trials": [
+        {
+          "round": 1,
+          "order": 2,
+          "latencyMeanMs": 0.01730976905246892,
+          "latencyP50Ms": 0.01128,
+          "latencyP95Ms": 0.038062399999999906,
+          "latencyP99Ms": 0.10491071999999958,
+          "throughputOps": 57770.84587141666,
+          "iterations": 14237
+        },
+        {
+          "round": 2,
+          "order": 1,
+          "latencyMeanMs": 0.012910807961185308,
+          "latencyP50Ms": 0.00884,
+          "latencyP95Ms": 0.02579339999999992,
+          "latencyP99Ms": 0.07234163999999998,
+          "throughputOps": 77454.48642767919,
+          "iterations": 19168
+        },
+        {
+          "round": 3,
+          "order": 2,
+          "latencyMeanMs": 0.012223237996134978,
+          "latencyP50Ms": 0.008646,
+          "latencyP95Ms": 0.02317,
+          "latencyP99Ms": 0.057563199999999995,
+          "throughputOps": 81811.38257442118,
+          "iterations": 20181
+        },
+        {
+          "round": 4,
+          "order": 1,
+          "latencyMeanMs": 0.012156872463768115,
+          "latencyP50Ms": 0.008582,
+          "latencyP95Ms": 0.023270499999999996,
+          "latencyP99Ms": 0.05489413999999986,
+          "throughputOps": 82257.99875587758,
+          "iterations": 20355
+        },
+        {
+          "round": 5,
+          "order": 2,
+          "latencyMeanMs": 0.013232072705857157,
+          "latencyP50Ms": 0.008883,
+          "latencyP95Ms": 0.025041449999999993,
+          "latencyP99Ms": 0.07009223999999988,
+          "throughputOps": 75573.94991922555,
+          "iterations": 18678
+        },
+        {
+          "round": 6,
+          "order": 1,
+          "latencyMeanMs": 0.011398022963167082,
+          "latencyP50Ms": 0.008473,
+          "latencyP95Ms": 0.021394799999999988,
+          "latencyP99Ms": 0.055138230000000156,
+          "throughputOps": 87734.5135407709,
+          "iterations": 21774
+        }
+      ]
     }
   ],
   "comparison": {
-    "requestLatencyOverheadPercent": 30.632670075316188,
-    "requestThroughputDeltaPercent": -24.10750897139609,
-    "wrapperOnlyLatencyOverheadPercent": 1.7086295717555493,
-    "startupLatencyOverheadPercent": 268.29885490210125
+    "requestMedianLatencyOverheadPercent": 32.290708371665154,
+    "requestMedianThroughputDeltaPercent": -24.41425257645958,
+    "wrapperOnlyMedianLatencyOverheadPercent": -0.5532503457814646,
+    "startupMedianLatencyOverheadPercent": 256.4207093355075
   }
 }

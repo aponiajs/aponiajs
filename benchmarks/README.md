@@ -1,8 +1,8 @@
 # Benchmarks
 
 AponiaJS benchmarks are reproducible diagnostics, not universal performance
-claims. Results depend on the CPU, operating system, Bun version, background
-load, and benchmark duration.
+claims. Results depend on the CPU, operating system, Bun version, power mode,
+background load, and benchmark duration.
 
 ## Elysia request overhead
 
@@ -19,18 +19,24 @@ It also compares direct Elysia application creation with
 and dependency-container initialization happen once rather than on every
 request.
 
-Run the full benchmark:
+Run the standard local profile:
 
 ```bash
 bun run benchmark:elysia
 ```
 
-Use shorter durations for a smoke run:
+The profile runs six independent trials. Trial order rotates deterministically,
+so every implementation occupies each position equally and no implementation
+always benefits from running first or last.
+
+Use shorter durations and fewer trials for a smoke run:
 
 ```bash
-APONIA_BENCH_REQUEST_MS=250 \
-APONIA_BENCH_STARTUP_MS=150 \
-APONIA_BENCH_WARMUP_MS=50 \
+APONIA_BENCH_REQUEST_MS=100 \
+APONIA_BENCH_STARTUP_MS=50 \
+APONIA_BENCH_ROUNDS=2 \
+APONIA_BENCH_WARMUP_SAMPLES=2 \
+APONIA_BENCH_MIN_SAMPLES=5 \
 bun run benchmark:elysia
 ```
 
@@ -41,30 +47,60 @@ Each run updates:
 - `assets/benchmarks/elysia-overhead-editor.svg` with a Vega-rendered report.
 
 The public chart reports raw measurements with an independent scale for each
-metric: throughput in requests per microsecond (`req/µs`), request latency in
-microseconds (`µs`), and startup in milliseconds (`ms`). Direction arrows show
-whether higher or lower values are better. The native-registration diagnostic
-remains available in the JSON report.
+metric:
+
+- median sequential throughput in requests per microsecond (`req/µs`);
+- median request latency (`p50`) in microseconds (`µs`);
+- tail request latency (`p99`) in microseconds;
+- median startup latency in milliseconds (`ms`).
+
+Direction arrows show whether higher or lower values are better. The JSON
+report also retains `p95`, the coefficient of variation (`CV%`), total
+iterations, every independent trial, execution order, tool version, and
+environment metadata. Lower CV indicates more stable trial-to-trial results.
+The native-registration diagnostic remains in JSON even though the public chart
+focuses on the user-facing wrapper.
+
+## Methodology
+
+The benchmark uses [Mitata](https://github.com/evanwashere/mitata), the
+microbenchmark tool recommended by
+[Bun's benchmarking guide](https://bun.sh/docs/project/benchmarking). Mitata
+provides high-resolution timing, automatic batching, warmup, garbage-collection
+control, and raw samples. `simple-statistics` calculates interpolated
+percentiles and cross-trial medians instead of relying on handwritten
+statistical utilities.
+
+Each implementation performs identical work and is validated before timing.
+The request benchmark consumes the complete response body and checks the same
+HTTP status and body. Startup trials create fresh applications, and every
+Aponia instance is closed within its trial. Results are summarized as the
+median across independent trials because the median is less sensitive to a
+single noisy run than the arithmetic mean. Automatic operation batching is
+disabled so `p50`, `p95`, and `p99` describe individual timed iterations rather
+than averages of large batches.
 
 ## Continuous integration
 
 The `Elysia overhead` job in the existing `CI` GitHub Actions workflow runs on
 every pull request, every push, and manual dispatches. It installs the frozen
 lockfile, pins Bun 1.3.14, builds the workspace once, and runs every
-implementation on the same runner in the same process. The JSON and SVG reports
-are retained as workflow artifacts for 14 days.
+implementation on the same runner in the same process. CI runs six
+order-balanced trials with longer per-case measurement time. The JSON and SVG
+reports are retained as workflow artifacts for 14 days.
 
 CI does not enforce a fixed performance threshold. GitHub-hosted runners are
 shared infrastructure, so their absolute timings fluctuate. The workflow
 instead provides a consistent comparison environment and preserves each report
 for review; functional mismatches and benchmark failures still fail the job.
 
-The request benchmark consumes the response body and validates identical HTTP
-status and body values before measuring. Tinybench performs warmup and
-statistical sampling. Run on an otherwise idle machine, use the same power
-profile, and compare results produced on equivalent hardware.
+For serious before/after analysis, compare repeated runs from the same runner
+class and inspect both the delta and CV. Run locally on an otherwise idle
+machine with a fixed power profile. Do not compare absolute values produced on
+different hardware.
 
 This is an in-process dispatch microbenchmark using each application's
 `handle()` method. It intentionally excludes sockets, HTTP parsing, network
 latency, and external load-generator overhead, so it isolates framework
-dispatch costs rather than predicting production request rates.
+dispatch costs rather than predicting production request rates. Use a dedicated
+HTTP load generator and a representative application for capacity planning.
