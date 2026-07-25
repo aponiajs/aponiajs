@@ -1,5 +1,9 @@
 # Releasing npm Packages
 
+AponiaJS uses a synchronized version for every workspace package. Releases
+follow [Semantic Versioning 2.0.0](https://semver.org), with
+[bumpp](https://github.com/antfu/bumpp) managing version changes.
+
 The release workflow publishes the five usable workspace packages in dependency
 order:
 
@@ -11,12 +15,51 @@ order:
 
 The `aponiajs` facade remains private until it exports the public framework API.
 
-## Before a Release
+## Version Policy
 
-1. Update all package versions and internal dependency ranges together.
-2. Run `bun run release:dry-run` and inspect every package archive.
-3. Run `vp check`, `bun test`, `vp test`, and `bun run build`.
-4. Merge the release changes into `main`.
+- `0.y.z` identifies initial development. The public API is not stable.
+- `fix:` commits produce a patch release.
+- `feat:` commits produce a minor release.
+- a `!` after the commit type or a `BREAKING CHANGE:` footer produces a major
+  release.
+- `1.0.0` will declare the first stable public API.
+
+Package versions, Git tags, and GitHub releases use the same version. Git tags
+use the conventional `v` prefix, for example `v0.2.1`; the package version
+remains `0.2.1`.
+
+## Required Version Bump
+
+Every push must increase the workspace version. Choose the smallest valid
+SemVer increment before pushing:
+
+```bash
+bun run version:patch
+bun run version:minor
+bun run version:major
+```
+
+These commands update every package manifest, refresh Bun's dependency
+lockfile, and verify that package versions remain synchronized. Commit the
+generated changes with the rest of the work.
+
+CI compares the pushed version with the previous push (or pull request base) and
+fails when it is unchanged, lower, invalid, or inconsistent. Configure the
+repository's branch protection rules to require the **CI / verify** check before
+merging into `main`.
+
+## Automated Release Flow
+
+1. Select a patch, minor, or major increment with the matching `version:*`
+   command.
+2. Run `bun run release:dry-run` when package contents changed.
+3. Push the commit and let CI validate the SemVer increase.
+4. Merge the pull request into `main`.
+5. The release workflow creates the matching `vX.Y.Z` tag and GitHub release.
+6. The npm publish workflow verifies, builds, packs, and publishes the five
+   usable packages in dependency order.
+
+Do not edit package versions or create release tags by hand.
 
 ## npm Authentication
 
@@ -38,10 +81,10 @@ an `npm` GitHub environment, add an `NPM_TOKEN` environment secret, run the
 workflow once, configure trusted publishing for every package, and then remove
 the token.
 
-## Triggering a Release
+## Manual Publishing
 
-Publish from the GitHub Actions page with the **Publish npm packages** workflow,
-or publish a GitHub release after the package versions have been updated.
+The **Publish npm packages** workflow remains available for recovery. Enter the
+expected package version so the workflow can reject an accidental mismatch.
 
 Use the `next` distribution tag for prereleases and `latest` for stable
 releases. The workflow runs the full quality gate, packs each workspace, and

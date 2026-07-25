@@ -1,3 +1,4 @@
+import cliManifest from "../package.json" with { type: "json" };
 import { parseArguments } from "./arguments.ts";
 import { generateProject } from "./project-generator.ts";
 
@@ -18,7 +19,7 @@ export async function runCli(arguments_: readonly string[]): Promise<number> {
     }
 
     if (command.command === "version") {
-      console.log("0.0.0");
+      console.log(cliManifest.version);
       return 0;
     }
 

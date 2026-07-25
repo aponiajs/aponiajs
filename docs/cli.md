@@ -1,5 +1,25 @@
 # Aponia CLI
 
+The CLI is published on npm as
+[`@aponiajs/cli`](https://www.npmjs.com/package/@aponiajs/cli). The matching
+[`create-aponia`](https://www.npmjs.com/package/create-aponia) package provides
+the `bun create` entrypoint.
+
+## Install
+
+Create a project without adding a dependency:
+
+```bash
+bun create aponia my-api
+```
+
+Or pin the CLI in an existing workspace:
+
+```bash
+bun add --dev @aponiajs/cli
+bunx aponia --version
+```
+
 ## Design reference
 
 The Aponia CLI follows the parts of the Nest CLI contract that fit a Bun-first
@@ -25,10 +45,10 @@ Official Nest references:
 ## Commands
 
 ```text
-aponia new <name> [options]
-aponia n <name> [options]
-aponia help
-aponia version
+bunx aponia new <name> [options]
+bunx aponia n <name> [options]
+bunx aponia help
+bunx aponia version
 ```
 
 Project names must use lowercase kebab-case:
@@ -115,3 +135,6 @@ aponia generate resource <name>
 The current CLI does not claim these commands yet. A resource generator must
 atomically generate the module, controller, service, schemas, and tests, then
 register the module without text-fragile source rewriting.
+
+See the [published package catalog](./packages.md) for all AponiaJS npm
+packages.

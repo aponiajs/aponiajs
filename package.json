@@ -1,5 +1,6 @@
 {
   "name": "aponiajs-workspace",
+  "version": "0.1.0",
   "private": true,
   "description": "Bun-first application architecture powered by Elysia.",
   "license": "MIT",
@@ -19,6 +20,12 @@
     "test": "bun run --workspaces test",
     "test:vite-plus": "vp test",
     "check": "vp check",
+    "version:bump": "bumpp package.json packages/aponiajs/package.json packages/cli/package.json packages/common/package.json packages/core/package.json packages/create-aponia/package.json packages/platform-elysia/package.json --all --no-commit --no-tag --no-push --execute \"bun run version:sync\"",
+    "version:patch": "bun run version:bump -- --release patch --yes",
+    "version:minor": "bun run version:bump -- --release minor --yes",
+    "version:major": "bun run version:bump -- --release major --yes",
+    "version:sync": "bun install --lockfile-only && bun run release:verify",
+    "release:verify": "bun scripts/verify-release.ts",
     "release:dry-run": "for package in common core platform-elysia cli create-aponia; do bun pm pack --cwd packages/$package --dry-run; done",
     "prepare": "bunx --bun vp config"
   },

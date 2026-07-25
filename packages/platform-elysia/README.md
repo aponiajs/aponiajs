@@ -1,5 +1,13 @@
 # @aponiajs/platform-elysia
 
+[![npm](https://img.shields.io/npm/v/%40aponiajs%2Fplatform-elysia)](https://www.npmjs.com/package/@aponiajs/platform-elysia)
+
+## Install
+
+```bash
+bun add @aponiajs/common @aponiajs/platform-elysia elysia
+```
+
 The first Elysia platform slice for Aponia:
 
 - `AponiaFactory.create(AppModule)` application bootstrap;
@@ -21,3 +29,17 @@ composing existing Elysia plugins without rewriting them.
 
 See `docs/logging.md` for logger configuration, JSON output, level filtering,
 and custom logger integration.
+
+```ts
+import { Module } from "@aponiajs/common";
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+
+@Module({})
+class AppModule {}
+
+const application = await AponiaFactory.create(AppModule);
+await application.listen(3000);
+```
+
+[npm package](https://www.npmjs.com/package/@aponiajs/platform-elysia) ·
+[complete package catalog](../../docs/packages.md)

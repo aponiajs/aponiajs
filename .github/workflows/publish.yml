@@ -1,6 +1,16 @@
 name: Publish npm packages
 
 on:
+  workflow_call:
+    inputs:
+      tag:
+        description: npm distribution tag
+        required: true
+        type: string
+      version:
+        description: Expected package version
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       tag:
@@ -11,6 +21,10 @@ on:
         options:
           - latest
           - next
+      version:
+        description: Expected package version (optional)
+        required: false
+        type: string
   release:
     types:
       - published
@@ -55,6 +69,11 @@ jobs:
           bun test
           bun run test:vite-plus
           bun run build
+
+      - name: Verify release version
+        env:
+          RELEASE_VERSION: ${{ inputs.version || github.event.release.tag_name }}
+        run: bun run release:verify
 
       - name: Pack publishable workspaces
         run: |
