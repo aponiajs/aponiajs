@@ -78,6 +78,12 @@ Create every feature on a dedicated branch from the latest `main`, named
 `feature/<short-kebab-description>`. Do not add feature work directly to
 `main`, a documentation branch, or an unrelated feature branch.
 
+After every successful push to a feature branch, ensure that an open pull
+request targets `main`. Create the pull request immediately when none exists;
+otherwise confirm that the existing pull request includes the pushed commit.
+The pull request title must follow Conventional Commits, and its description
+must summarize the intent, affected areas, and validation results.
+
 The repository has no established commit history yet. Use concise Conventional
 Commit subjects, for example `feat(cli): align starter layout with Nest`.
 Pull requests should explain intent, list affected packages, link relevant

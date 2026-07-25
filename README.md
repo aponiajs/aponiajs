@@ -1,57 +1,42 @@
 <div align="center">
 
 <img
-  src="./assets/aponia-character.jpg"
-  alt="Aponia from Honkai Impact 3rd with in-game combat footage"
-  width="820"
+  src="./assets/branding/aponiajs-banner.png"
+  alt="AponiaJS banner featuring Apo, the celestial moth-rabbit mascot"
+  width="100%"
 />
 
-# AponiaJS
+### AponiaJS
 
-### Nest-inspired structure. Elysia-native runtime. Bun from end to end.
+Structured applications for Bun
 
-A small TypeScript framework for building modular Bun applications with
-controllers, dependency injection, and direct access to Elysia.
+[Documentation](./docs/architecture-and-style.md) ·
+[CLI](./docs/cli.md) ·
+[Packages](./docs/packages.md) ·
+[Roadmap](./plans/npm-package-architecture-roadmap.md)
 
 [![CI](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml/badge.svg)](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcommon?label=npm&color=e9d5ff)](https://www.npmjs.com/package/@aponiajs/common)
-[![Bun](https://img.shields.io/badge/Bun-1.3.14-fbf0df?logo=bun&logoColor=14151a)](https://bun.sh)
-[![Elysia](https://img.shields.io/badge/Elysia-1.4-ccb9f6)](https://elysiajs.com)
-[![License](https://img.shields.io/badge/License-MIT-e9d5ff)](./LICENSE)
+[![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcommon?label=npm&color=baa9d1)](https://www.npmjs.com/package/@aponiajs/common)
+[![Bun](https://img.shields.io/badge/Bun-1.3.14-f8eddd?logo=bun&logoColor=24232d)](https://bun.sh)
+[![Elysia](https://img.shields.io/badge/Elysia-1.4-d9ccea)](https://elysiajs.com)
+[![License](https://img.shields.io/badge/License-MIT-e8b9b5)](./LICENSE)
 
-[Get started](#get-started) · [CLI](#cli) · [Packages](#packages) ·
-[Documentation](#documentation)
+Nest-inspired TypeScript architecture with dependency injection, decorated
+controllers, and direct access to Elysia. Supercharged by Bun.
 
-<sub>Experimental · Not recommended for production yet</sub>
+<img
+  src="./assets/branding/aponiajs-mascot-cover.png"
+  alt="Apo assembling an AponiaJS module graph"
+  width="100%"
+/>
+
+<sub>Experimental software · Not recommended for production yet</sub>
 
 </div>
 
-## Why AponiaJS?
+## Start
 
-AponiaJS combines the application structure familiar from
-[NestJS](https://nestjs.com) with the lightweight Bun-native runtime of
-[Elysia](https://elysiajs.com).
-
-- **Organized by design** — modules, controllers, services, and explicit
-  dependency boundaries.
-- **Bun-first** — Bun is the runtime, package manager, test runner, and
-  documented toolchain.
-- **Elysia-native** — decorated routes compile directly to Elysia, while native
-  plugins remain available.
-- **Small public surface** — framework packages have focused responsibilities
-  and synchronized versions.
-- **Useful diagnostics** — module cycles, missing exports, duplicate providers,
-  and ambiguous dependencies fail with clear errors.
-
-## Get started
-
-### Requirements
-
-- [Bun 1.3.14](https://bun.sh) or a compatible newer release.
-- TypeScript with decorators enabled. Generated projects include the required
-  configuration.
-
-Create and run a new application:
+Create a Bun application:
 
 ```bash
 bun create aponia my-api
@@ -59,15 +44,11 @@ cd my-api
 bun run dev
 ```
 
-The generated application starts on `http://localhost:3000`.
-
-To install the framework into an existing Bun project:
+Or add AponiaJS to an existing project:
 
 ```bash
 bun add @aponiajs/common @aponiajs/platform-elysia elysia
 ```
-
-## A complete application
 
 ```ts
 import { Controller, Get, Injectable, Module } from "@aponiajs/common";
@@ -97,25 +78,23 @@ class GreetingController {
 class AppModule {}
 
 const application = await AponiaFactory.create(AppModule);
-await application.listen(Number(Bun.env.PORT ?? 3000));
+await application.listen(3000);
 ```
 
-```bash
-curl http://localhost:3000/greetings
-```
+## Why AponiaJS?
 
-```text
-Hello, AponiaJS!
-```
+- **Familiar structure** — modules, controllers, services, and explicit
+  dependency boundaries inspired by NestJS.
+- **Bun from end to end** — runtime, package manager, test runner, and every
+  public command use Bun.
+- **Elysia without a wall** — decorated routes map to Elysia while native
+  schemas, hooks, state, and plugins remain available.
+- **Actionable diagnostics** — module cycles, missing exports, duplicate
+  providers, and ambiguous dependencies fail clearly.
 
-Supported route decorators are `@Get()`, `@Post()`, `@Put()`, `@Patch()`, and
-`@Delete()`. Providers may be classes, values, factories, or aliases, with
-explicit tokens available for interfaces and configuration.
+## Generate
 
-## CLI
-
-The published CLI follows the built-in Nest generator catalog while producing
-Aponia-specific Bun applications.
+Install the published CLI and generate components with Nest-style commands:
 
 ```bash
 bun add --dev @aponiajs/cli
@@ -127,7 +106,7 @@ bunx aponia generate service users
 bunx aponia generate resource users --type rest
 ```
 
-Short aliases are supported:
+Short aliases work too:
 
 ```bash
 bunx aponia g mo users
@@ -136,88 +115,49 @@ bunx aponia g s users
 bunx aponia g res users
 ```
 
-The CLI includes application, library, class, controller, decorator, filter,
-gateway, guard, interface, interceptor, middleware, module, pipe, provider,
-resolver, resource, and service generators. `router`, `routers`, and `route`
-are aliases for `controller`.
-
-See the [CLI guide](./docs/cli.md) for project selection, module registration,
-resource transports, dry runs, and generator defaults.
-
-## Architecture
-
-```text
-@aponiajs/common
-        │
-        ▼
- @aponiajs/core
-        │
-        ▼
-@aponiajs/platform-elysia ───▶ Elysia
-```
-
-- `common` defines decorators, provider contracts, tokens, errors, and logging.
-- `core` compiles the module graph and resolves singleton dependencies.
-- `platform-elysia` maps controllers to HTTP routes and owns application
-  lifecycle.
-
-When a route needs native Elysia schemas, hooks, state, decorators, or plugins,
-use `defineElysiaController()` as the platform escape hatch. The framework does
-not hide the underlying Elysia application.
+The catalog includes application, library, class, controller, decorator,
+filter, gateway, guard, interface, interceptor, middleware, module, pipe,
+provider, resolver, resource, and service generators. `router`, `routers`, and
+`route` are controller aliases. See the [complete CLI reference](./docs/cli.md)
+for options, module registration, transports, and dry runs.
 
 ## Packages
 
-All public packages are published to npm with synchronized versions. The badges
-below resolve directly from the registry.
+| Package                                                                                | Version                                                                                                                       | Purpose                                    |
+| -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| [`@aponiajs/common`](https://www.npmjs.com/package/@aponiajs/common)                   | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcommon)](https://www.npmjs.com/package/@aponiajs/common)                   | Decorators, contracts, tokens, and logging |
+| [`@aponiajs/core`](https://www.npmjs.com/package/@aponiajs/core)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcore)](https://www.npmjs.com/package/@aponiajs/core)                       | Module graph and dependency injection      |
+| [`@aponiajs/platform-elysia`](https://www.npmjs.com/package/@aponiajs/platform-elysia) | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fplatform-elysia)](https://www.npmjs.com/package/@aponiajs/platform-elysia) | Elysia adapter and application lifecycle   |
+| [`@aponiajs/cli`](https://www.npmjs.com/package/@aponiajs/cli)                         | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcli)](https://www.npmjs.com/package/@aponiajs/cli)                         | Project and component generators           |
+| [`create-aponia`](https://www.npmjs.com/package/create-aponia)                         | [![npm](https://img.shields.io/npm/v/create-aponia)](https://www.npmjs.com/package/create-aponia)                             | `bun create` entrypoint                    |
 
-| Package                                                                                | Latest                                                                                                                        | Purpose                                    | Install                                    |
-| -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------ |
-| [`@aponiajs/common`](https://www.npmjs.com/package/@aponiajs/common)                   | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcommon)](https://www.npmjs.com/package/@aponiajs/common)                   | Decorators, contracts, tokens, and logging | `bun add @aponiajs/common`                 |
-| [`@aponiajs/core`](https://www.npmjs.com/package/@aponiajs/core)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcore)](https://www.npmjs.com/package/@aponiajs/core)                       | Module graph and dependency injection      | `bun add @aponiajs/core`                   |
-| [`@aponiajs/platform-elysia`](https://www.npmjs.com/package/@aponiajs/platform-elysia) | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fplatform-elysia)](https://www.npmjs.com/package/@aponiajs/platform-elysia) | Elysia adapter and application lifecycle   | `bun add @aponiajs/platform-elysia elysia` |
-| [`@aponiajs/cli`](https://www.npmjs.com/package/@aponiajs/cli)                         | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcli)](https://www.npmjs.com/package/@aponiajs/cli)                         | Project and component generators           | `bun add --dev @aponiajs/cli`              |
-| [`create-aponia`](https://www.npmjs.com/package/create-aponia)                         | [![npm](https://img.shields.io/npm/v/create-aponia)](https://www.npmjs.com/package/create-aponia)                             | `bun create` entrypoint                    | `bun create aponia my-api`                 |
+All public packages use synchronized versions. The reserved `aponiajs` facade
+is private and should not be installed.
 
-The reserved `aponiajs` facade is private and should not be installed. See the
-[package catalog](./docs/packages.md) for exports and package boundaries.
+## Current scope
 
-## Project status
+AponiaJS currently supports decorated modules and HTTP controllers, singleton
+dependency injection, class/value/factory/alias providers, explicit tokens,
+module imports and exports, lifecycle management, structured logging, project
+generators, and an Elysia-native controller escape hatch.
 
-AponiaJS currently provides:
+Request decorators, validation pipes, runtime guards and interceptors,
+middleware, exception filters, provider scopes, testing modules, OpenAPI,
+authentication, WebSockets, and microservice transports are not implemented
+yet. Review the [roadmap](./plans/npm-package-architecture-roadmap.md) before
+adopting the framework for long-lived workloads.
 
-- decorated modules, controllers, services, and constructor injection;
-- HTTP route mapping and an Elysia-native controller escape hatch;
-- singleton class, value, factory, alias, and explicit-token providers;
-- module imports, provider exports, lifecycle management, and structured
-  logging;
-- project, component, and resource generators;
-- Bun and Vite+ compatibility test lanes.
+## Develop
 
-The following areas are not implemented yet:
-
-- request parameter decorators and validation pipes;
-- guards, interceptors, middleware, and exception filters at runtime;
-- request and transient provider scopes;
-- testing modules and provider overrides;
-- OpenAPI, authentication, WebSockets, and microservice transports.
-
-Review the [roadmap](./plans/npm-package-architecture-roadmap.md) before adopting
-the framework for long-lived or production workloads.
-
-## Development
+The repository uses Bun 1.3.14, managed through mise:
 
 ```bash
+mise install
 bun install
 bun run check
 bun test
 bun run test:vite-plus
 bun run build
-```
-
-Run the repository example with:
-
-```bash
-bun run example:basic
 ```
 
 Every push must include a synchronized
@@ -229,31 +169,12 @@ bun run version:patch
 # or: bun run version:major
 ```
 
-See [AGENTS.md](./AGENTS.md) for repository rules and
-[the release guide](./docs/releasing.md) for the complete release workflow.
+Read the [release guide](./docs/releasing.md) for the enforced hook and CI
+workflow. Repository conventions live in [AGENTS.md](./AGENTS.md).
 
-## Documentation
-
-- [Architecture and style](./docs/architecture-and-style.md)
-- [CLI reference](./docs/cli.md)
-- [Logging](./docs/logging.md)
-- [Package catalog](./docs/packages.md)
-- [Releasing](./docs/releasing.md)
-
-## Contributing and security
-
-Contributions are welcome. Use a dedicated feature branch, keep repository
-content in English, prefer maintained libraries over handwritten
-general-purpose utilities, and add tests for behavioral changes.
-
-AponiaJS has not completed a production security review. It does not currently
-provide authentication, authorization, input validation, rate limiting, secret
-management, or hardened production defaults.
-
-## License and credits
+## License
 
 AponiaJS is available under the [MIT License](./LICENSE).
 
-The header uses in-game imagery of Aponia from _Honkai Impact 3rd_. All game
-imagery belongs to its respective copyright holders. AponiaJS is independently
-developed and is not affiliated with HoYoverse, miHoYo, NestJS, or Elysia.
+The AponiaJS banner and Apo mascot are original project artwork. AponiaJS is
+independently developed and is not affiliated with Bun, Elysia, or NestJS.
