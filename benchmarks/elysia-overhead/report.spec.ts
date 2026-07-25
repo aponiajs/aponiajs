@@ -47,8 +47,9 @@ describe("benchmark reporting", () => {
 
     expect("vconcat" in chart ? chart.vconcat : []).toHaveLength(3);
     expect(chart.background).toBe("#000000");
-    expect(serializedChart).toContain("Aponia × Elysia");
+    expect(serializedChart).toContain("Elysia vs Aponia");
     expect(serializedChart).toContain("Request latency");
+    expect(serializedChart).not.toContain("Aponia native");
     expect(serializedChart).not.toContain("CI REPRODUCIBLE");
     expect(serializedChart).toContain("#1348dc");
   });

@@ -1,6 +1,6 @@
 {
   "name": "aponiajs",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "private": true,
   "description": "Public convenience facade for the Aponia framework.",
   "homepage": "https://github.com/aponiajs/aponiajs#readme",
