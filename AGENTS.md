@@ -41,6 +41,29 @@ All repository content, including comments and documentation, must be English.
 Before finishing file changes, scan for Thai characters with
 `rg -nP '[\x{0E00}-\x{0E7F}]' --glob '!node_modules/**' --glob '!dist/**' .`.
 
+### Reuse Before Build
+
+Search for a maintained library before implementing general-purpose behavior.
+Use existing packages for concerns such as CLI parsing, AST manipulation,
+validation, globbing, case conversion, inflection, and SemVer. Prefer packages
+with active maintenance, TypeScript declarations, a compatible license, and
+verified Bun support. Do not duplicate a library's behavior with handwritten
+utilities. Write custom code only for Aponia-specific domain behavior when no
+suitable maintained package exists, and document that decision in the pull
+request or an architecture decision record.
+
+### Clean Code
+
+- Keep modules and functions focused on one responsibility.
+- Use descriptive names and explicit types; do not use `any`.
+- Prefer small pure functions, immutable data, and early returns.
+- Apply KISS, DRY, and YAGNI; avoid speculative abstractions and duplicated logic.
+- Keep framework-specific templates separate from parsing, naming, filesystem,
+  and source-transformation concerns.
+- Make dependency boundaries explicit and wrap third-party APIs only where the
+  wrapper expresses Aponia domain behavior.
+- Add focused tests for success, failure, and edge cases whenever behavior changes.
+
 ## Testing Guidelines
 
 Add tests for every behavioral change. Bun owns the primary suite; Vite+ tests

@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/cli",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Bun-native project generator and command-line interface for Aponia.",
   "homepage": "https://github.com/aponiajs/aponiajs#readme",
   "bugs": {
@@ -35,5 +35,15 @@
     "test": "bun test",
     "check": "bunx --bun vp check",
     "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "change-case": "^5.4.4",
+    "fast-glob": "^3.3.3",
+    "inflection": "^3.0.2",
+    "ts-morph": "^28.0.0",
+    "yargs-parser": "^22.0.0"
+  },
+  "devDependencies": {
+    "@types/yargs-parser": "^21.0.3"
   }
 }

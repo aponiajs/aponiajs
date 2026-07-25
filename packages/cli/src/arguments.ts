@@ -1,3 +1,6 @@
+import { pascalCase } from "change-case";
+import parseCliArguments from "yargs-parser";
+
 export interface NewCommandOptions {
   readonly command: "new";
   readonly name: string;
@@ -126,8 +129,8 @@ export function parseArguments(arguments_: readonly string[]): CliCommand {
 }
 
 function parseNewCommand(arguments_: readonly string[]): NewCommandOptions {
-  const { options, positionals } = tokenize(arguments_);
-  const [name, ...extraPositionals] = positionals;
+  const parsed = parseOptions(arguments_);
+  const [name, ...extraPositionals] = parsed._;
   if (!name) {
     throw new Error("Project name is required.");
   }
@@ -135,19 +138,19 @@ function parseNewCommand(arguments_: readonly string[]): NewCommandOptions {
     throw new Error(`Unexpected argument "${extraPositionals[0]}".`);
   }
 
-  assertKnownOptions(options, ["dry-run", "skip-install"]);
+  assertKnownOptions(parsed, ["dry-run", "skip-install"]);
 
   return {
     command: "new",
     name,
-    dryRun: readBooleanOption(options, "dry-run", false),
-    skipInstall: readBooleanOption(options, "skip-install", false),
+    dryRun: readBooleanOption(parsed, "dry-run", false),
+    skipInstall: readBooleanOption(parsed, "skip-install", false),
   };
 }
 
 function parseGenerateCommand(arguments_: readonly string[]): GenerateCommandOptions {
-  const { options, positionals } = tokenize(arguments_);
-  const [schematicName, name, ...extraPositionals] = positionals;
+  const parsed = parseOptions(arguments_);
+  const [schematicName, name, ...extraPositionals] = parsed._;
   if (!schematicName) {
     throw new Error("Schematic name is required.");
   }
@@ -159,13 +162,13 @@ function parseGenerateCommand(arguments_: readonly string[]): GenerateCommandOpt
     );
   }
   if (!name) {
-    throw new Error(`${titleCase(schematic)} name is required.`);
+    throw new Error(`${pascalCase(schematic)} name is required.`);
   }
   if (extraPositionals.length > 0) {
     throw new Error(`Unexpected argument "${extraPositionals[0]}".`);
   }
 
-  assertKnownOptions(options, [
+  assertKnownOptions(parsed, [
     "crud",
     "dry-run",
     "flat",
@@ -177,7 +180,7 @@ function parseGenerateCommand(arguments_: readonly string[]): GenerateCommandOpt
     "type",
   ]);
 
-  const type = readStringOption(options, "type") ?? "rest";
+  const type = readStringOption(parsed, "type") ?? "rest";
   if (!resourceTransports.has(type as ResourceTransport)) {
     throw new Error(`Unknown resource transport "${type}".`);
   }
@@ -186,109 +189,57 @@ function parseGenerateCommand(arguments_: readonly string[]): GenerateCommandOpt
     command: "generate",
     schematic,
     name,
-    dryRun: readBooleanOption(options, "dry-run", false),
-    flat: readOptionalBooleanOption(options, "flat"),
-    spec: readOptionalBooleanOption(options, "spec"),
-    skipImport: readBooleanOption(options, "skip-import", false),
-    path: readStringOption(options, "path"),
-    module: readStringOption(options, "module"),
-    project: readStringOption(options, "project"),
-    crud: readBooleanOption(options, "crud", true),
+    dryRun: readBooleanOption(parsed, "dry-run", false),
+    flat: readOptionalBooleanOption(parsed, "flat"),
+    spec: readOptionalBooleanOption(parsed, "spec"),
+    skipImport: readBooleanOption(parsed, "skip-import", false),
+    path: readStringOption(parsed, "path"),
+    module: readStringOption(parsed, "module"),
+    project: readStringOption(parsed, "project"),
+    crud: readBooleanOption(parsed, "crud", true),
     type: type as ResourceTransport,
   };
 }
 
-interface TokenizedArguments {
-  readonly options: ReadonlyMap<string, string | boolean>;
-  readonly positionals: readonly string[];
+interface ParsedOptions extends Readonly<Record<string, unknown>> {
+  readonly _: readonly string[];
 }
 
-function tokenize(arguments_: readonly string[]): TokenizedArguments {
-  const options = new Map<string, string | boolean>();
-  const positionals: string[] = [];
-
-  for (let index = 0; index < arguments_.length; index += 1) {
-    const argument = arguments_[index];
-    if (!argument?.startsWith("-")) {
-      if (argument) {
-        positionals.push(argument);
-      }
-      continue;
-    }
-
-    const normalized = normalizeOption(argument);
-    if (normalized.inlineValue !== undefined) {
-      options.set(normalized.name, normalized.inlineValue);
-      continue;
-    }
-
-    if (normalized.negated) {
-      options.set(normalized.name, false);
-      continue;
-    }
-
-    const next = arguments_[index + 1];
-    if (isValueOption(normalized.name) && next && !next.startsWith("-")) {
-      options.set(normalized.name, next);
-      index += 1;
-      continue;
-    }
-
-    options.set(normalized.name, true);
-  }
-
-  return { options, positionals };
+function parseOptions(arguments_: readonly string[]): ParsedOptions {
+  return parseCliArguments([...arguments_], {
+    alias: {
+      "dry-run": ["d"],
+      project: ["p"],
+      "skip-install": ["s"],
+    },
+    boolean: ["crud", "dry-run", "flat", "skip-import", "skip-install", "spec"],
+    string: ["module", "path", "project", "type"],
+    configuration: {
+      "camel-case-expansion": false,
+      "dot-notation": false,
+      "duplicate-arguments-array": false,
+      "parse-numbers": false,
+      "parse-positional-numbers": false,
+      "short-option-groups": false,
+      "strip-aliased": true,
+    },
+  }) as ParsedOptions;
 }
 
-function normalizeOption(argument: string): {
-  readonly name: string;
-  readonly negated: boolean;
-  readonly inlineValue?: string;
-} {
-  const aliases: Readonly<Record<string, string>> = {
-    "-d": "dry-run",
-    "-p": "project",
-    "-s": "skip-install",
-  };
-  const [rawName, inlineValue] = argument.split("=", 2);
-  const withoutPrefix = aliases[rawName ?? ""] ?? rawName?.replace(/^--/, "");
-  const negated = withoutPrefix?.startsWith("no-") ?? false;
-
-  return {
-    name: negated ? withoutPrefix!.slice(3) : (withoutPrefix ?? ""),
-    negated,
-    inlineValue,
-  };
-}
-
-function isValueOption(name: string): boolean {
-  return name === "module" || name === "path" || name === "project" || name === "type";
-}
-
-function assertKnownOptions(
-  options: ReadonlyMap<string, string | boolean>,
-  supportedOptions: readonly string[],
-): void {
+function assertKnownOptions(options: ParsedOptions, supportedOptions: readonly string[]): void {
   const supported = new Set(supportedOptions);
-  const unknown = [...options.keys()].find((option) => !supported.has(option));
+  const unknown = Object.keys(options).find((option) => option !== "_" && !supported.has(option));
   if (unknown) {
     throw new Error(`Unknown option "--${unknown}".`);
   }
 }
 
-function readBooleanOption(
-  options: ReadonlyMap<string, string | boolean>,
-  name: string,
-  fallback: boolean,
-): boolean {
+function readBooleanOption(options: ParsedOptions, name: string, fallback: boolean): boolean {
   return readOptionalBooleanOption(options, name) ?? fallback;
 }
 
-function readOptionalBooleanOption(
-  options: ReadonlyMap<string, string | boolean>,
-  name: string,
-): boolean | undefined {
-  const value = options.get(name);
+function readOptionalBooleanOption(options: ParsedOptions, name: string): boolean | undefined {
+  const value = options[name];
   if (value === undefined) {
     return undefined;
   }
@@ -298,11 +249,8 @@ function readOptionalBooleanOption(
   return value;
 }
 
-function readStringOption(
-  options: ReadonlyMap<string, string | boolean>,
-  name: string,
-): string | undefined {
-  const value = options.get(name);
+function readStringOption(options: ParsedOptions, name: string): string | undefined {
+  const value = options[name];
   if (value === undefined) {
     return undefined;
   }
@@ -310,8 +258,4 @@ function readStringOption(
     throw new Error(`Option "--${name}" requires a value.`);
   }
   return value;
-}
-
-function titleCase(value: string): string {
-  return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
 }

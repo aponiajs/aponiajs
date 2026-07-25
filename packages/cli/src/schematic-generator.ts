@@ -1,6 +1,14 @@
+import { pascalCase } from "change-case";
+import findFiles from "fast-glob";
 import { mkdir, readdir } from "node:fs/promises";
-import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { dirname, join, relative, resolve, sep } from "node:path";
 import type { GenerateCommandOptions, GenerateSchematic, ResourceTransport } from "./arguments.ts";
+import {
+  createComponentNames,
+  normalizeNameSegments,
+  type ComponentNames,
+} from "./component-names.ts";
+import { registerInModule, type ModuleRegistrationKind } from "./module-registration.ts";
 import { generateProject } from "./project-generator.ts";
 
 export interface GenerateSchematicOptions extends GenerateCommandOptions {
@@ -43,22 +51,11 @@ interface GenerateDefaults {
   readonly spec?: boolean | Readonly<Partial<Record<GenerateSchematic, boolean>>>;
 }
 
-interface ComponentNames {
-  readonly fileName: string;
-  readonly className: string;
-  readonly propertyName: string;
-  readonly singularFileName: string;
-  readonly singularClassName: string;
-  readonly routePath: string;
-}
-
-type RegistrationKind = "controllers" | "imports" | "providers";
-
 interface SchematicDefinition {
   readonly defaultFlat: boolean;
   readonly spec: boolean;
   readonly suffix: string;
-  readonly registration?: RegistrationKind;
+  readonly registration?: ModuleRegistrationKind;
 }
 
 const definitions: Readonly<
@@ -99,7 +96,7 @@ export async function generateSchematic(
   options: GenerateSchematicOptions,
 ): Promise<GenerateSchematicResult> {
   const projectRoot = resolve(options.cwd ?? process.cwd());
-  const names = createNames(options.name);
+  const names = createComponentNames(options.name);
 
   if (options.schematic === "app") {
     return generateApplication(projectRoot, names.fileName, options);
@@ -144,7 +141,7 @@ export async function generateSchematic(
       const original = await Bun.file(moduleFile).text();
       const symbol = symbolFor(options.schematic, names);
       const importPath = toImportPath(moduleFile, primary.path);
-      const updated = updateModuleSource(original, registration, symbol, importPath);
+      const updated = registerInModule(original, registration, symbol, importPath);
       if (updated !== original) {
         files.push({ path: moduleFile, content: updated, kind: "UPDATE" });
       }
@@ -163,7 +160,7 @@ function createComponentFiles(
   const schematic = options.schematic as Exclude<GenerateSchematic, "app" | "library" | "resource">;
   const definition = definitions[schematic];
   const flat = options.flat ?? definition.defaultFlat;
-  const parentSegments = normalizedNameSegments(options.name).slice(0, -1);
+  const parentSegments = normalizeNameSegments(options.name).slice(0, -1);
   const directory = join(basePath, ...parentSegments, ...(flat ? [] : [names.fileName]));
   const stem = definition.suffix ? `${names.fileName}.${definition.suffix}` : names.fileName;
   const files: PendingFile[] = [
@@ -192,7 +189,7 @@ function createResourceFiles(
   specEnabled: boolean,
 ): PendingFile[] {
   const flat = options.flat ?? false;
-  const parentSegments = normalizedNameSegments(options.name).slice(0, -1);
+  const parentSegments = normalizeNameSegments(options.name).slice(0, -1);
   const directory = join(basePath, ...parentSegments, ...(flat ? [] : [names.fileName]));
   const transportStem = resourceTransportStem(options.type);
   const dtoSuffix = options.type.startsWith("graphql") ? "input" : "dto";
@@ -415,7 +412,7 @@ function renderSimpleSpec(importPath: string, className: string): string {
 }
 
 function renderResourceModule(names: ComponentNames, transportStem: string): string {
-  const transportClass = `${names.className}${titleCase(transportStem)}`;
+  const transportClass = `${names.className}${pascalCase(transportStem)}`;
   const metadata =
     transportStem === "controller"
       ? `controllers: [${transportClass}],\n  providers: [${names.className}Service],`
@@ -438,17 +435,17 @@ function renderResourceService(
   if (!crud) {
     return `import { Injectable } from "@aponiajs/common";\n\n@Injectable()\nexport class ${names.className}Service {}\n`;
   }
-  const typeSuffix = dtoSuffix === "input" ? "Input" : "Dto";
+  const typeSuffix = pascalCase(dtoSuffix);
   return `import { Injectable } from "@aponiajs/common";\nimport type { Create${names.singularClassName}${typeSuffix} } from "./dto/create-${names.singularFileName}.${dtoSuffix}.ts";\nimport type { Update${names.singularClassName}${typeSuffix} } from "./dto/update-${names.singularFileName}.${dtoSuffix}.ts";\nimport type { ${names.singularClassName} } from "./entities/${names.singularFileName}.entity.ts";\n\n@Injectable()\nexport class ${names.className}Service {\n  private readonly items: ${names.singularClassName}[] = [];\n\n  create(input: Create${names.singularClassName}${typeSuffix}): ${names.singularClassName} {\n    const item = { id: crypto.randomUUID(), ...input };\n    this.items.push(item);\n    return item;\n  }\n\n  findAll(): readonly ${names.singularClassName}[] {\n    return this.items;\n  }\n\n  findOne(id: string): ${names.singularClassName} | undefined {\n    return this.items.find((item) => item.id === id);\n  }\n\n  update(id: string, input: Update${names.singularClassName}${typeSuffix}): ${names.singularClassName} | undefined {\n    const item = this.findOne(id);\n    if (!item) return undefined;\n    Object.assign(item, input);\n    return item;\n  }\n\n  remove(id: string): boolean {\n    const index = this.items.findIndex((item) => item.id === id);\n    if (index < 0) return false;\n    this.items.splice(index, 1);\n    return true;\n  }\n}\n`;
 }
 
 function renderCreateDto(names: ComponentNames, suffix: "dto" | "input"): string {
-  const typeSuffix = suffix === "input" ? "Input" : "Dto";
+  const typeSuffix = pascalCase(suffix);
   return `export class Create${names.singularClassName}${typeSuffix} {\n  name = "";\n}\n`;
 }
 
 function renderUpdateDto(names: ComponentNames, suffix: "dto" | "input"): string {
-  const typeSuffix = suffix === "input" ? "Input" : "Dto";
+  const typeSuffix = pascalCase(suffix);
   return `import type { Create${names.singularClassName}${typeSuffix} } from "./create-${names.singularFileName}.${suffix}.ts";\n\nexport type Update${names.singularClassName}${typeSuffix} = Partial<Create${names.singularClassName}${typeSuffix}>;\n`;
 }
 
@@ -462,7 +459,7 @@ function renderResourceTransport(
   crud: boolean,
 ): string {
   const stem = resourceTransportStem(type);
-  const className = `${names.className}${titleCase(stem)}`;
+  const className = `${names.className}${pascalCase(stem)}`;
   const method = crud
     ? `\n  findAll() {\n    return this.${names.propertyName}Service.findAll();\n  }\n`
     : "";
@@ -474,65 +471,15 @@ function renderResourceServiceSpec(names: ComponentNames): string {
 }
 
 function renderResourceTransportSpec(names: ComponentNames, stem: string): string {
-  const className = `${names.className}${titleCase(stem)}`;
+  const className = `${names.className}${pascalCase(stem)}`;
   return `import { expect, test } from "bun:test";\nimport { ${className} } from "./${names.fileName}.${stem}.ts";\nimport { ${names.className}Service } from "./${names.fileName}.service.ts";\n\ntest("${className} is defined", () => {\n  expect(new ${className}(new ${names.className}Service())).toBeDefined();\n});\n`;
-}
-
-function createNames(input: string): ComponentNames {
-  const segments = normalizedNameSegments(input);
-  const fileName = segments.at(-1)!;
-  const singularFileName = singularize(fileName);
-  return {
-    fileName,
-    className: classify(fileName),
-    propertyName: camelize(fileName),
-    singularFileName,
-    singularClassName: classify(singularFileName),
-    routePath: fileName,
-  };
-}
-
-function normalizedNameSegments(input: string): string[] {
-  if (isAbsolute(input) || input.includes("..")) {
-    throw new Error("Generated names must be relative and cannot contain parent traversal.");
-  }
-  const segments = input.replaceAll("\\", "/").split("/").filter(Boolean).map(dasherize);
-  if (segments.length === 0 || segments.some((segment) => !/^[a-z][a-z0-9-]*$/.test(segment))) {
-    throw new Error("Generated names must contain letters and use kebab-case paths.");
-  }
-  return segments;
-}
-
-function dasherize(value: string): string {
-  return value
-    .trim()
-    .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
-    .replace(/[^A-Za-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .toLowerCase();
-}
-
-function classify(value: string): string {
-  return value.split("-").filter(Boolean).map(titleCase).join("");
-}
-
-function camelize(value: string): string {
-  const classified = classify(value);
-  return `${classified.charAt(0).toLowerCase()}${classified.slice(1)}`;
-}
-
-function singularize(value: string): string {
-  if (value.endsWith("ies")) return `${value.slice(0, -3)}y`;
-  if (value.endsWith("ses")) return value.slice(0, -2);
-  if (value.endsWith("s") && !value.endsWith("ss")) return value.slice(0, -1);
-  return value;
 }
 
 function classSuffix(schematic: keyof typeof definitions): string {
   if (schematic === "class" || schematic === "provider" || schematic === "interface") {
     return "";
   }
-  return titleCase(schematic);
+  return pascalCase(schematic);
 }
 
 function symbolFor(schematic: GenerateSchematic, names: ComponentNames): string {
@@ -540,7 +487,7 @@ function symbolFor(schematic: GenerateSchematic, names: ComponentNames): string 
   return `${names.className}${classSuffix(schematic as keyof typeof definitions)}`;
 }
 
-function registrationFor(schematic: GenerateSchematic): RegistrationKind | undefined {
+function registrationFor(schematic: GenerateSchematic): ModuleRegistrationKind | undefined {
   if (schematic === "resource") return "imports";
   if (schematic === "app" || schematic === "library") return undefined;
   return definitions[schematic].registration;
@@ -655,15 +602,11 @@ async function findModuleFile(options: {
 }
 
 async function listModuleFiles(directory: string): Promise<string[]> {
-  const entries = await readdir(directory, { withFileTypes: true });
-  const files = await Promise.all(
-    entries.map(async (entry) => {
-      const path = join(directory, entry.name);
-      if (entry.isDirectory()) return listModuleFiles(path);
-      return entry.name.endsWith(".module.ts") ? [path] : [];
-    }),
-  );
-  return files.flat();
+  return findFiles("**/*.module.ts", {
+    absolute: true,
+    cwd: directory,
+    onlyFiles: true,
+  });
 }
 
 async function safeReadDirectory(directory: string): Promise<string[]> {
@@ -674,122 +617,8 @@ async function safeReadDirectory(directory: string): Promise<string[]> {
   }
 }
 
-function updateModuleSource(
-  source: string,
-  propertyName: RegistrationKind,
-  symbol: string,
-  importPath: string,
-): string {
-  if (
-    source.includes(`{ ${symbol} } from "${importPath}"`) ||
-    source.includes(`{${symbol}} from "${importPath}"`)
-  ) {
-    return source;
-  }
-
-  const decoratorStart = source.search(/@Module\s*\(/);
-  if (decoratorStart < 0) {
-    throw new Error("The declaring module does not contain a @Module() metadata object.");
-  }
-
-  const objectStart = source.indexOf("{", decoratorStart);
-  if (objectStart < 0) {
-    throw new Error("The declaring module does not contain a @Module() metadata object.");
-  }
-  const objectEnd = findClosingDelimiter(source, objectStart, "{", "}");
-  const metadata = source.slice(objectStart, objectEnd + 1);
-  const propertyPattern = new RegExp(`(?:^|[,{]\\s*)${propertyName}\\s*:\\s*\\[`, "m");
-  const propertyMatch = propertyPattern.exec(metadata);
-  let updatedMetadata: string;
-
-  if (propertyMatch) {
-    const arrayStart = objectStart + propertyMatch.index + propertyMatch[0].lastIndexOf("[");
-    const arrayEnd = findClosingDelimiter(source, arrayStart, "[", "]");
-    const existingItems = source.slice(arrayStart + 1, arrayEnd).trim();
-    const insertion = existingItems.length === 0 ? symbol : `, ${symbol}`;
-    updatedMetadata =
-      source.slice(objectStart, arrayEnd) + insertion + source.slice(arrayEnd, objectEnd + 1);
-  } else {
-    const content = source.slice(objectStart + 1, objectEnd).trim();
-    const insertion =
-      content.length === 0
-        ? `\n  ${propertyName}: [${symbol}],\n`
-        : `\n  ${propertyName}: [${symbol}],`;
-    updatedMetadata =
-      source.slice(objectStart, objectEnd) + insertion + source.slice(objectEnd, objectEnd + 1);
-  }
-
-  const withMetadata = source.slice(0, objectStart) + updatedMetadata + source.slice(objectEnd + 1);
-  return `import { ${symbol} } from "${importPath}";\n${withMetadata}`;
-}
-
-function findClosingDelimiter(
-  source: string,
-  start: number,
-  opening: "{" | "[",
-  closing: "}" | "]",
-): number {
-  let depth = 0;
-  let quote: "'" | '"' | "`" | undefined;
-  let escaped = false;
-  let lineComment = false;
-  let blockComment = false;
-
-  for (let index = start; index < source.length; index += 1) {
-    const character = source[index]!;
-    const next = source[index + 1];
-
-    if (lineComment) {
-      if (character === "\n") lineComment = false;
-      continue;
-    }
-    if (blockComment) {
-      if (character === "*" && next === "/") {
-        blockComment = false;
-        index += 1;
-      }
-      continue;
-    }
-    if (quote) {
-      if (escaped) {
-        escaped = false;
-      } else if (character === "\\") {
-        escaped = true;
-      } else if (character === quote) {
-        quote = undefined;
-      }
-      continue;
-    }
-    if (character === "/" && next === "/") {
-      lineComment = true;
-      index += 1;
-      continue;
-    }
-    if (character === "/" && next === "*") {
-      blockComment = true;
-      index += 1;
-      continue;
-    }
-    if (character === "'" || character === '"' || character === "`") {
-      quote = character;
-      continue;
-    }
-    if (character === opening) depth += 1;
-    if (character === closing) {
-      depth -= 1;
-      if (depth === 0) return index;
-    }
-  }
-
-  throw new Error(`Unclosed "${opening}" in the declaring module.`);
-}
-
 function toImportPath(moduleFile: string, generatedFile: string): string {
   let path = relative(dirname(moduleFile), generatedFile).replaceAll("\\", "/");
   if (!path.startsWith(".")) path = `./${path}`;
   return path;
-}
-
-function titleCase(value: string): string {
-  return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
 }
