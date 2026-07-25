@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/cli",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Bun-native project generator and command-line interface for Aponia.",
   "homepage": "https://github.com/aponiajs/aponiajs#readme",
   "bugs": {
