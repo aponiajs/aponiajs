@@ -97,7 +97,7 @@ measured separately from the hot request path.
 
 <img
   src="./assets/benchmarks/elysia-overhead-editor.svg"
-  alt="Relative throughput, request latency, and startup performance for Elysia and Aponia"
+  alt="Throughput in requests per microsecond, request latency in microseconds, and startup in milliseconds for Elysia and Aponia"
   width="820"
 />
 

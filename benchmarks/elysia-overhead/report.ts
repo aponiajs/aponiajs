@@ -72,24 +72,42 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
   const aponiaRequest = findMeasurement(baseline.measurements, "request", "Aponia wrapper");
   const pureStartup = findMeasurement(baseline.measurements, "startup", "Pure Elysia");
   const aponiaStartup = findMeasurement(baseline.measurements, "startup", "Aponia factory");
-  const relativeMeasurements = [
-    createRelativeMeasurement("Throughput", "Elysia", 100),
-    createRelativeMeasurement(
-      "Throughput",
-      "Aponia",
-      (aponiaRequest.throughputMeanOps / pureRequest.throughputMeanOps) * 100,
+  const chartMeasurements = [
+    createChartMeasurement(
+      "Throughput · req/µs ↑",
+      "Elysia",
+      pureRequest.throughputMeanOps / 1_000_000,
+      `${(pureRequest.throughputMeanOps / 1_000_000).toFixed(3)} req/µs`,
     ),
-    createRelativeMeasurement("Request latency", "Elysia", 100),
-    createRelativeMeasurement(
-      "Request latency",
+    createChartMeasurement(
+      "Throughput · req/µs ↑",
       "Aponia",
-      (pureRequest.latencyMeanMs / aponiaRequest.latencyMeanMs) * 100,
+      aponiaRequest.throughputMeanOps / 1_000_000,
+      `${(aponiaRequest.throughputMeanOps / 1_000_000).toFixed(3)} req/µs`,
     ),
-    createRelativeMeasurement("Startup", "Elysia", 100),
-    createRelativeMeasurement(
-      "Startup",
+    createChartMeasurement(
+      "Request latency · µs ↓",
+      "Elysia",
+      pureRequest.latencyMeanMs * 1_000,
+      `${(pureRequest.latencyMeanMs * 1_000).toFixed(3)} µs`,
+    ),
+    createChartMeasurement(
+      "Request latency · µs ↓",
       "Aponia",
-      (pureStartup.latencyMeanMs / aponiaStartup.latencyMeanMs) * 100,
+      aponiaRequest.latencyMeanMs * 1_000,
+      `${(aponiaRequest.latencyMeanMs * 1_000).toFixed(3)} µs`,
+    ),
+    createChartMeasurement(
+      "Startup · ms ↓",
+      "Elysia",
+      pureStartup.latencyMeanMs,
+      `${pureStartup.latencyMeanMs.toFixed(3)} ms`,
+    ),
+    createChartMeasurement(
+      "Startup · ms ↓",
+      "Aponia",
+      aponiaStartup.latencyMeanMs,
+      `${aponiaStartup.latencyMeanMs.toFixed(3)} ms`,
     ),
   ];
 
@@ -99,7 +117,7 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
     padding: 24,
     title: {
       text: "Elysia vs Aponia",
-      subtitle: "Relative performance · Elysia baseline = 100 · higher is better",
+      subtitle: "Measured values · ↑ higher is better · ↓ lower is better",
       anchor: "start",
       color: "#242424",
       font: "Georgia, Times New Roman, serif",
@@ -111,108 +129,106 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
       subtitleFontSize: 12,
       subtitlePadding: 7,
     },
-    width: 680,
-    height: 350,
-    data: { values: relativeMeasurements },
-    layer: [
-      {
-        mark: { type: "bar", size: 72 },
-        encoding: {
-          x: {
-            field: "metric",
-            type: "nominal",
-            sort: ["Throughput", "Request latency", "Startup"],
-            axis: {
-              title: null,
-              labelAngle: 0,
-              labelColor: "#242424",
-              labelFont: "Georgia, Times New Roman, serif",
-              labelFontSize: 14,
-              labelFontWeight: 700,
-              labelPadding: 12,
-            },
-          },
-          xOffset: {
-            field: "implementation",
-            sort: ["Elysia", "Aponia"],
-          },
-          y: {
-            field: "score",
-            type: "quantitative",
-            scale: { domain: [0, 105] },
-            axis: {
-              title: "Relative performance (%)",
-              values: [0, 20, 40, 60, 80, 100],
-              domain: false,
-              grid: true,
-              gridColor: "#dddddd",
-              gridWidth: 1,
-              labelColor: "#4f4f4f",
-              labelFont: "Inter, ui-sans-serif, system-ui",
-              labelFontSize: 11,
-              tickColor: "#b8b8b8",
-              titleColor: "#242424",
-              titleFont: "Georgia, Times New Roman, serif",
-              titleFontSize: 13,
-              titleFontWeight: 700,
-              titlePadding: 12,
-            },
-          },
-          color: {
-            field: "implementation",
-            type: "nominal",
-            sort: ["Elysia", "Aponia"],
-            scale: {
-              domain: ["Elysia", "Aponia"],
-              range: ["#c7c7c7", "#4665ff"],
-            },
-            legend: {
-              title: null,
-              orient: "top",
-              direction: "horizontal",
-              labelColor: "#242424",
-              labelFont: "Georgia, Times New Roman, serif",
-              labelFontSize: 13,
-              labelFontWeight: 700,
-              symbolSize: 180,
-              symbolType: "square",
-              offset: 12,
-            },
-          },
+    data: { values: chartMeasurements },
+    facet: {
+      column: {
+        field: "metric",
+        type: "nominal",
+        sort: ["Throughput · req/µs ↑", "Request latency · µs ↓", "Startup · ms ↓"],
+        header: {
+          title: null,
+          labelColor: "#242424",
+          labelFont: "Georgia, Times New Roman, serif",
+          labelFontSize: 14,
+          labelFontWeight: 700,
+          labelPadding: 12,
         },
       },
-      {
-        mark: {
-          type: "text",
-          baseline: "bottom",
-          dy: -5,
-          color: "#242424",
-          font: "Georgia, Times New Roman, serif",
-          fontSize: 12,
-          fontWeight: 700,
+    },
+    spec: {
+      width: 210,
+      height: 300,
+      layer: [
+        {
+          mark: { type: "bar", size: 68 },
+          encoding: {
+            x: {
+              field: "implementation",
+              type: "nominal",
+              sort: ["Elysia", "Aponia"],
+              axis: null,
+            },
+            y: {
+              field: "value",
+              type: "quantitative",
+              axis: {
+                title: null,
+                domain: false,
+                grid: true,
+                gridColor: "#dddddd",
+                gridWidth: 1,
+                labelColor: "#4f4f4f",
+                labelFont: "Inter, ui-sans-serif, system-ui",
+                labelFontSize: 10,
+                tickColor: "#b8b8b8",
+              },
+            },
+            color: {
+              field: "implementation",
+              type: "nominal",
+              sort: ["Elysia", "Aponia"],
+              scale: {
+                domain: ["Elysia", "Aponia"],
+                range: ["#c7c7c7", "#4665ff"],
+              },
+              legend: {
+                title: null,
+                orient: "top",
+                direction: "horizontal",
+                labelColor: "#242424",
+                labelFont: "Georgia, Times New Roman, serif",
+                labelFontSize: 13,
+                labelFontWeight: 700,
+                symbolSize: 180,
+                symbolType: "square",
+                offset: 12,
+              },
+            },
+          },
         },
-        encoding: {
-          x: {
-            field: "metric",
-            type: "nominal",
-            sort: ["Throughput", "Request latency", "Startup"],
+        {
+          mark: {
+            type: "text",
+            baseline: "bottom",
+            dy: -5,
+            color: "#242424",
+            font: "Georgia, Times New Roman, serif",
+            fontSize: 11,
+            fontWeight: 700,
           },
-          xOffset: {
-            field: "implementation",
-            sort: ["Elysia", "Aponia"],
-          },
-          y: {
-            field: "score",
-            type: "quantitative",
-            scale: { domain: [0, 105] },
-          },
-          text: {
-            field: "scoreLabel",
-            type: "nominal",
+          encoding: {
+            x: {
+              field: "implementation",
+              type: "nominal",
+              sort: ["Elysia", "Aponia"],
+            },
+            y: {
+              field: "value",
+              type: "quantitative",
+            },
+            text: {
+              field: "valueLabel",
+              type: "nominal",
+            },
           },
         },
+      ],
+    },
+    resolve: {
+      scale: {
+        y: "independent",
       },
-    ],
+    },
     config: {
       view: {
         fill: "#ffffff",
@@ -265,15 +281,16 @@ function percentChange(baseline: number, candidate: number): number {
   return ((candidate - baseline) / baseline) * 100;
 }
 
-function createRelativeMeasurement(
+function createChartMeasurement(
   metric: string,
   implementation: "Elysia" | "Aponia",
-  score: number,
+  value: number,
+  valueLabel: string,
 ) {
   return {
     metric,
     implementation,
-    score,
-    scoreLabel: score.toFixed(1),
+    value,
+    valueLabel,
   };
 }

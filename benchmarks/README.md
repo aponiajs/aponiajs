@@ -40,11 +40,11 @@ Each run updates:
   environment metadata;
 - `assets/benchmarks/elysia-overhead-editor.svg` with a Vega-rendered report.
 
-The public chart follows a single relative-performance scale. Pure Elysia is
-the `100` baseline for each metric. Throughput uses the direct ratio, while
-request latency and startup use inverse ratios so higher bars consistently mean
-better performance. Raw measurements and the native-registration diagnostic
-remain available in the JSON report.
+The public chart reports raw measurements with an independent scale for each
+metric: throughput in requests per microsecond (`req/µs`), request latency in
+microseconds (`µs`), and startup in milliseconds (`ms`). Direction arrows show
+whether higher or lower values are better. The native-registration diagnostic
+remains available in the JSON report.
 
 ## Continuous integration
 
