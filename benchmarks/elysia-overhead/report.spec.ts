@@ -39,7 +39,7 @@ describe("benchmark reporting", () => {
     expect(measurement.iterations).toBe(3_000);
   });
 
-  test("builds a reproducible grouped raw-unit chart", () => {
+  test("builds a focused throughput comparison chart", () => {
     const baseline: BenchmarkBaseline = {
       schemaVersion: 2,
       measuredAt: "2026-07-25T00:00:00.000Z",
@@ -69,25 +69,20 @@ describe("benchmark reporting", () => {
     const chart = createChartSpec(baseline);
     const serializedChart = JSON.stringify(chart);
 
-    expect("facet" in chart).toBe(true);
-    expect(chart.background).toBe("#ffffff");
-    expect(serializedChart).toContain("Elysia vs Aponia");
-    expect(serializedChart).toContain("req/µs");
-    expect(serializedChart).toContain("Request p50 · µs");
-    expect(serializedChart).toContain("Request p99 · µs");
-    expect(serializedChart).toContain("Startup p50 · ms");
-    expect(serializedChart).toContain("order-balanced trials");
-    expect(serializedChart).toContain("IQR whiskers");
-    expect(serializedChart).toContain("lowerQuartile");
-    expect(serializedChart).toContain("upperQuartile");
+    expect("vconcat" in chart).toBe(true);
+    expect(chart.background).toBe("#121212");
+    expect(serializedChart).toContain("83% Throughput Retained");
+    expect(serializedChart).toContain("Requests/sec");
+    expect(serializedChart).toContain("90,000");
+    expect(serializedChart).toContain("75,000");
+    expect(serializedChart).toContain("Aponia vs pure Elysia");
     expect(serializedChart).not.toContain("Aponia native");
-    expect(serializedChart).not.toContain("CI REPRODUCIBLE");
-    expect(serializedChart).not.toContain("Elysia baseline = 100");
-    expect(serializedChart).toContain("0.075 req/µs");
-    expect(serializedChart).toContain("12.000 µs");
-    expect(serializedChart).toContain("18.000 µs");
-    expect(serializedChart).toContain("0.200 ms");
-    expect(serializedChart).toContain("#4665ff");
+    expect(serializedChart).not.toContain("Request p50");
+    expect(serializedChart).not.toContain("Request p99");
+    expect(serializedChart).not.toContain("Startup p50");
+    expect(serializedChart).not.toContain("IQR whiskers");
+    expect(serializedChart).toContain("#6f86f7");
+    expect(serializedChart).toContain("#ffb84d");
   });
 });
 

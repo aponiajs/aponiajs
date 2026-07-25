@@ -97,14 +97,16 @@ measured separately from the hot request path.
 
 <img
   src="./assets/benchmarks/elysia-overhead-editor.svg"
-  alt="Median throughput, p50 and p99 request latency, and median startup latency for Elysia and Aponia with interquartile ranges"
+  alt="Requests per second comparison between pure Elysia and Aponia"
   width="820"
 />
 
 </div>
 
 Results are a machine-specific baseline, not a universal performance claim.
-On the committed Bun 1.3.14 baseline:
+The headline chart keeps the comparison intentionally simple; detailed latency
+and startup measurements remain below and in the raw report. On the committed
+Bun 1.3.14 baseline:
 
 | Comparison                              | Result                                |
 | --------------------------------------- | ------------------------------------- |
