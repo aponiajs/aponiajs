@@ -3,6 +3,11 @@
     "target": "ESNext",
     "module": "Preserve",
     "moduleResolution": "Bundler",
+    "paths": {
+      "@aponiajs/common": ["./packages/common/src/index.ts"],
+      "@aponiajs/core": ["./packages/core/src/index.ts"],
+      "@aponiajs/platform-elysia": ["./packages/platform-elysia/src/index.ts"]
+    },
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "allowImportingTsExtensions": true,
