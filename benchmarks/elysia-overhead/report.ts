@@ -70,9 +70,11 @@ export function calculateComparison(
 
 export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
   const requestMeasurements = baseline.measurements
-    .filter(({ group }) => group === "request")
+    .filter(
+      ({ group, implementation }) => group === "request" && implementation !== "Aponia native",
+    )
     .map((measurement) => ({
-      implementation: measurement.implementation,
+      implementation: toPublicImplementationName(measurement.implementation),
       latencyMicroseconds: measurement.latencyMeanMs * 1_000,
       latencyLabel: `${(measurement.latencyMeanMs * 1_000).toFixed(1)} µs`,
       throughput: measurement.throughputMeanOps,
@@ -81,12 +83,12 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
   const startupMeasurements = baseline.measurements
     .filter(({ group }) => group === "startup")
     .map((measurement) => ({
-      implementation: measurement.implementation,
+      implementation: toPublicImplementationName(measurement.implementation),
       latencyMilliseconds: measurement.latencyMeanMs,
       latencyLabel: `${measurement.latencyMeanMs.toFixed(3)} ms`,
     }));
 
-  const colors = ["#73737b", "#8ba2ff", "#1348dc"];
+  const colors = ["#73737b", "#1348dc"];
   const sharedColor = {
     field: "implementation",
     type: "nominal" as const,
@@ -108,12 +110,12 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
     background: "#000000",
     padding: 24,
     title: {
-      text: "Aponia × Elysia",
-      subtitle: `${baseline.environment.runtime} · ${baseline.environment.platform} · same process`,
+      text: "Benchmark",
+      subtitle: "Elysia vs Aponia",
       anchor: "start",
       color: "#ffffff",
       font: "Inter, ui-sans-serif, system-ui",
-      fontSize: 24,
+      fontSize: 22,
       fontWeight: 600,
       offset: 24,
       subtitleColor: "#9a9aa2",
@@ -121,7 +123,7 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
       subtitleFontSize: 11,
       subtitlePadding: 8,
     },
-    spacing: 30,
+    spacing: 24,
     resolve: {
       scale: {
         color: "independent",
@@ -129,17 +131,19 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
     },
     vconcat: [
       {
-        width: 700,
-        height: 120,
+        width: 560,
+        height: 58,
         title: {
-          text: "Throughput",
-          subtitle: "Higher is better · operations per second",
+          text: `Throughput  ${formatPercentDelta(
+            baseline.comparison.requestThroughputDeltaPercent,
+          )}`,
+          subtitle: "Higher is better",
           anchor: "start",
         },
         data: { values: requestMeasurements },
         layer: [
           {
-            mark: { type: "bar", cornerRadiusEnd: 3, height: 18 },
+            mark: { type: "bar", cornerRadiusEnd: 2, height: 12 },
             encoding: {
               x: {
                 field: "throughput",
@@ -157,6 +161,7 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
               baseline: "middle",
               dx: 8,
               font: "ui-monospace, SFMono-Regular, Menlo, monospace",
+              fontSize: 10,
               fontWeight: 600,
             },
             encoding: {
@@ -169,17 +174,19 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
         ],
       },
       {
-        width: 700,
-        height: 120,
+        width: 560,
+        height: 58,
         title: {
-          text: "Request latency",
-          subtitle: "Lower is better · mean microseconds",
+          text: `Request latency  ${formatPercentDelta(
+            baseline.comparison.requestLatencyOverheadPercent,
+          )}`,
+          subtitle: "Lower is better",
           anchor: "start",
         },
         data: { values: requestMeasurements },
         layer: [
           {
-            mark: { type: "bar", cornerRadiusEnd: 3, height: 18 },
+            mark: { type: "bar", cornerRadiusEnd: 2, height: 12 },
             encoding: {
               x: {
                 field: "latencyMicroseconds",
@@ -197,6 +204,7 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
               baseline: "middle",
               dx: 8,
               font: "ui-monospace, SFMono-Regular, Menlo, monospace",
+              fontSize: 10,
               fontWeight: 600,
             },
             encoding: {
@@ -209,17 +217,17 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
         ],
       },
       {
-        width: 700,
-        height: 80,
+        width: 560,
+        height: 58,
         title: {
-          text: "Startup",
-          subtitle: "Lower is better · mean milliseconds",
+          text: `Startup  ${formatPercentDelta(baseline.comparison.startupLatencyOverheadPercent)}`,
+          subtitle: "Lower is better",
           anchor: "start",
         },
         data: { values: startupMeasurements },
         layer: [
           {
-            mark: { type: "bar", cornerRadiusEnd: 3, height: 18 },
+            mark: { type: "bar", cornerRadiusEnd: 2, height: 12 },
             encoding: {
               x: {
                 field: "latencyMilliseconds",
@@ -245,6 +253,7 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
               baseline: "middle",
               dx: 8,
               font: "ui-monospace, SFMono-Regular, Menlo, monospace",
+              fontSize: 10,
               fontWeight: 600,
             },
             encoding: {
@@ -259,13 +268,13 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
     ],
     config: {
       axis: {
-        labelFont: "ui-monospace, SFMono-Regular, Menlo, monospace",
+        labelFont: "Inter, ui-sans-serif, system-ui",
         titleFont: "ui-monospace, SFMono-Regular, Menlo, monospace",
       },
       title: {
         color: "#ffffff",
         font: "Inter, ui-sans-serif, system-ui",
-        fontSize: 15,
+        fontSize: 14,
         fontWeight: 600,
         subtitleColor: "#8d8d96",
         subtitleFont: "ui-monospace, SFMono-Regular, Menlo, monospace",
@@ -273,10 +282,8 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
         subtitlePadding: 5,
       },
       view: {
-        cornerRadius: 6,
-        fill: "#101012",
-        stroke: "#29292e",
-        strokeWidth: 1,
+        fill: "#000000",
+        strokeWidth: 0,
       },
     },
   };
@@ -322,6 +329,15 @@ function percentChange(baseline: number, candidate: number): number {
     throw new Error("Cannot calculate a percentage from a zero baseline.");
   }
   return ((candidate - baseline) / baseline) * 100;
+}
+
+function formatPercentDelta(value: number): string {
+  const sign = value > 0 ? "+" : value < 0 ? "−" : "";
+  return `${sign}${Math.abs(value).toFixed(1)}%`;
+}
+
+function toPublicImplementationName(implementation: string): string {
+  return implementation === "Pure Elysia" ? "Elysia" : "Aponia";
 }
 
 function createImplementationAxis(order: readonly string[]): PositionFieldDef<string> {

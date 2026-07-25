@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/core",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "description": "Module graph and dependency injection runtime for Aponia.",
   "homepage": "https://github.com/aponiajs/aponiajs#readme",
   "bugs": {
