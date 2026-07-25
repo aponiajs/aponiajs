@@ -7,17 +7,11 @@ the `bun create` entrypoint.
 
 ## Install
 
-Create a project without adding a dependency:
+Install the CLI globally with Bun, then invoke `aponia` directly:
 
 ```bash
-bun create aponia my-api
-```
-
-Or pin the CLI in an existing workspace:
-
-```bash
-bun add --dev @aponiajs/cli
-bunx aponia --version
+bun add --global @aponiajs/cli
+aponia --version
 ```
 
 ## Design reference
@@ -47,12 +41,12 @@ Official Nest references:
 ## Commands
 
 ```text
-bunx aponia new <name> [options]
-bunx aponia n <name> [options]
-bunx aponia generate <schematic> <name> [options]
-bunx aponia g <schematic> <name> [options]
-bunx aponia help
-bunx aponia version
+aponia new <name> [options]
+aponia n <name> [options]
+aponia generate <schematic> <name> [options]
+aponia g <schematic> <name> [options]
+aponia help
+aponia version
 ```
 
 Project names must use lowercase kebab-case:
@@ -94,11 +88,11 @@ by the Nest CLI command reference:
 Aponia controllers own the Elysia route declarations.
 
 ```bash
-bunx aponia g module users
-bunx aponia g controller users
-bunx aponia g service users
-bunx aponia g router health --no-spec
-bunx aponia g resource users --type rest
+aponia g module users
+aponia g controller users
+aponia g service users
+aponia g router health --no-spec
+aponia g resource users --type rest
 ```
 
 Component options follow Nest conventions:
@@ -128,14 +122,12 @@ without changing a module, or `--module <name>` to select the declaring module.
 The update is computed before any file is written, and the generator refuses to
 overwrite an existing file.
 
-## Bun create
-
-The `create-aponia` package delegates to the same tested generator:
+## Create an application
 
 ```bash
-bun create aponia my-api
-bun create aponia my-api --skip-install
-bun create aponia my-api --dry-run
+aponia new my-api
+aponia new my-api --skip-install
+aponia new my-api --dry-run
 ```
 
 ## Generated project

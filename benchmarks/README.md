@@ -40,6 +40,12 @@ Each run updates:
   environment metadata;
 - `assets/benchmarks/elysia-overhead-editor.svg` with a Vega-rendered report.
 
+The public chart follows a single relative-performance scale. Pure Elysia is
+the `100` baseline for each metric. Throughput uses the direct ratio, while
+request latency and startup use inverse ratios so higher bars consistently mean
+better performance. Raw measurements and the native-registration diagnostic
+remain available in the JSON report.
+
 ## Continuous integration
 
 The `Elysia overhead` job in the existing `CI` GitHub Actions workflow runs on
