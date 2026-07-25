@@ -130,7 +130,7 @@ const baseline: BenchmarkBaseline = {
 await writeBenchmarkArtifacts(
   baseline,
   ".ecc/benchmarks/elysia-overhead.json",
-  "assets/benchmarks/elysia-overhead.svg",
+  "assets/benchmarks/elysia-overhead-editor.svg",
 );
 await aponiaApplication.close();
 
@@ -143,7 +143,7 @@ console.table({
   "Startup latency overhead": formatDelta(baseline.comparison.startupLatencyOverheadPercent),
 });
 console.log("Wrote .ecc/benchmarks/elysia-overhead.json");
-console.log("Wrote assets/benchmarks/elysia-overhead.svg");
+console.log("Wrote assets/benchmarks/elysia-overhead-editor.svg");
 
 function toMeasurements(
   group: BenchmarkMeasurement["group"],

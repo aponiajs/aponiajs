@@ -95,7 +95,7 @@ measured separately from the hot request path.
 <div align="center">
 
 <img
-  src="./assets/benchmarks/elysia-overhead.svg"
+  src="./assets/benchmarks/elysia-overhead-editor.svg"
   alt="Elysia and AponiaJS request throughput, latency, and startup benchmark"
   width="820"
 />
