@@ -63,6 +63,8 @@ jobs:
     name: Elysia overhead
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: write
 
     steps:
       - name: Check out repository
@@ -98,3 +100,20 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 14
+
+      - name: Prepare benchmark publication
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          mkdir -p .benchmark-publication
+          cp .ecc/benchmarks/elysia-overhead.json .benchmark-publication/elysia-overhead.json
+          cp assets/benchmarks/elysia-overhead-editor.svg .benchmark-publication/elysia-overhead.svg
+
+      - name: Publish benchmark report
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v4.0.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: benchmark-results
+          publish_dir: ./.benchmark-publication
+          force_orphan: true
+          full_commit_message: "chore(benchmark): publish ${{ github.sha }}"

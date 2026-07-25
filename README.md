@@ -96,17 +96,18 @@ measured separately from the hot request path.
 <div align="center">
 
 <img
-  src="./assets/benchmarks/elysia-overhead-editor.svg"
-  alt="Requests per second comparison between pure Elysia and Aponia"
+  src="https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.svg"
+  alt="CI benchmark comparing Elysia and Aponia throughput, request latency percentiles, startup latency, stability, and sample size"
   width="820"
 />
 
 </div>
 
 Results are a machine-specific baseline, not a universal performance claim.
-The headline chart keeps the comparison intentionally simple; detailed latency
-and startup measurements remain below and in the raw report. On the committed
-Bun 1.3.14 baseline:
+GitHub Actions regenerates the report from a clean Linux runner after every
+successful push to `main`. The chart reports throughput, request `p50`, `p95`,
+and `p99`, startup `p50`, coefficient of variation, and measured iterations.
+On the committed Bun 1.3.14 local baseline:
 
 | Comparison                              | Result                                |
 | --------------------------------------- | ------------------------------------- |
@@ -119,8 +120,9 @@ The forwarding wrapper itself is small; most measured hot-path difference is
 present before that final method call. Startup has a larger percentage change
 but remains a one-time difference measured in thousandths of a millisecond.
 
-Review the [methodology and reproduction commands](./benchmarks/README.md) or
-the [JSON baseline](./.ecc/benchmarks/elysia-overhead.json).
+Review the [methodology and reproduction commands](./benchmarks/README.md), the
+[latest CI JSON report](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.json),
+or the [committed local baseline](./.ecc/benchmarks/elysia-overhead.json).
 
 ## Generate
 

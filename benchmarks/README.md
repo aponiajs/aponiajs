@@ -46,16 +46,15 @@ Each run updates:
   environment metadata;
 - `assets/benchmarks/elysia-overhead-editor.svg` with a Vega-rendered report.
 
-The public chart is deliberately limited to one question: how many sequential
-requests per second pure Elysia and the public Aponia wrapper complete. It uses
-one pair of labeled bars and a plain-language throughput-retention headline.
+The report keeps throughput as the primary visual comparison and includes a
+compact evidence table with request `p50`, `p95`, and `p99`, startup `p50`,
+coefficient of variation (`CV%`), and measured iterations. Lower latency and CV
+are better; a lower CV indicates more stable trial-to-trial results.
 
-The JSON report retains the detailed evidence: request and startup `p50`,
-`p95`, and `p99`, the coefficient of variation (`CV%`), total iterations, every
-independent trial, execution order, tool version, and environment metadata.
-Lower CV indicates more stable trial-to-trial results. The native-registration
-diagnostic also remains in JSON even though the public chart focuses on the
-user-facing wrapper.
+The JSON retains every independent trial, execution order, tool version,
+environment metadata, and the native-registration diagnostic. The chart
+compares the public Aponia wrapper with pure Elysia, while the additional
+diagnostic remains available for deeper analysis.
 
 ## Methodology
 
@@ -84,6 +83,17 @@ lockfile, pins Bun 1.3.14, builds the workspace once, and runs every
 implementation on the same runner in the same process. CI runs six
 order-balanced trials with longer per-case measurement time. The JSON and SVG
 reports are retained as workflow artifacts for 14 days.
+
+After a successful push to `main`, the same job publishes the generated report
+to the orphan `benchmark-results` branch. The repository README loads the SVG
+from that stable branch instead of displaying a developer-machine artifact:
+
+- [Latest CI chart](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.svg)
+- [Latest CI JSON](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.json)
+
+Pull requests still generate and upload their own reports for review, but they
+cannot replace the public result. Publishing uses the workflow-scoped GitHub
+token and only grants write access to the benchmark job.
 
 CI does not enforce a fixed performance threshold. GitHub-hosted runners are
 shared infrastructure, so their absolute timings fluctuate. The workflow
