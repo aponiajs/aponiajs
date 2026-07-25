@@ -29,6 +29,8 @@ Elysia application:
 - `n` is its short alias;
 - `--dry-run` and `-d` report changes without writing;
 - `--skip-install` and `-s` create files without installing dependencies;
+- `generate` and `g` expose the complete built-in Nest schematic catalog;
+- generated declarations are registered in the nearest module by default;
 - generated projects use a canonical source root and a small bootstrap file;
 - project metadata lives in `aponia.json`, analogous to the organizational role
   of `nest-cli.json`.
@@ -47,6 +49,8 @@ Official Nest references:
 ```text
 bunx aponia new <name> [options]
 bunx aponia n <name> [options]
+bunx aponia generate <schematic> <name> [options]
+bunx aponia g <schematic> <name> [options]
 bunx aponia help
 bunx aponia version
 ```
@@ -60,6 +64,69 @@ internal-tools
 ```
 
 The generator refuses to overwrite an existing target directory.
+
+## Generate
+
+The published `@aponiajs/cli` package supports every built-in schematic listed
+by the Nest CLI command reference:
+
+| Schematic     | Alias | Output                |
+| ------------- | ----- | --------------------- |
+| `app`         | —     | workspace application |
+| `library`     | `lib` | workspace library     |
+| `class`       | `cl`  | plain class           |
+| `controller`  | `co`  | HTTP controller       |
+| `decorator`   | `d`   | custom decorator      |
+| `filter`      | `f`   | exception filter      |
+| `gateway`     | `ga`  | WebSocket gateway     |
+| `guard`       | `gu`  | request guard         |
+| `interface`   | `itf` | TypeScript interface  |
+| `interceptor` | `itc` | request interceptor   |
+| `middleware`  | `mi`  | middleware            |
+| `module`      | `mo`  | Aponia module         |
+| `pipe`        | `pi`  | transformation pipe   |
+| `provider`    | `pr`  | injectable provider   |
+| `resolver`    | `r`   | GraphQL resolver      |
+| `resource`    | `res` | complete resource     |
+| `service`     | `s`   | injectable service    |
+
+`router`, `routers`, and `route` are convenience aliases for `controller`, since
+Aponia controllers own the Elysia route declarations.
+
+```bash
+bunx aponia g module users
+bunx aponia g controller users
+bunx aponia g service users
+bunx aponia g router health --no-spec
+bunx aponia g resource users --type rest
+```
+
+Component options follow Nest conventions:
+
+```text
+--dry-run, -d
+--flat / --no-flat
+--spec / --no-spec
+--skip-import
+--module <name>
+--project, -p <name>
+--path <path>
+```
+
+Resources additionally support `--crud` / `--no-crud` and these transports:
+`rest`, `graphql-code-first`, `graphql-schema-first`, `microservice`, and `ws`.
+REST resources generate a controller; GraphQL resources generate a resolver;
+WebSocket resources generate a gateway.
+
+CLI flags override project-specific `generateOptions`, which override global
+`generateOptions` in `aponia.json`. Both `spec` and `flat` defaults are
+supported. `spec` may be a boolean or a map keyed by schematic name.
+
+Controllers are added to `controllers`, services and providers to `providers`,
+and modules and resources to `imports`. Use `--skip-import` to create files
+without changing a module, or `--module <name>` to select the declaring module.
+The update is computed before any file is written, and the generator refuses to
+overwrite an existing file.
 
 ## Bun create
 
@@ -107,9 +174,9 @@ own routes. Services own application behavior. Generated application code does
 not import Elysia or low-level runtime descriptors.
 
 This is standard mode and intentionally matches the flat starter structure
-created by `nest new`. Future generated resources belong directly under
-`src/<resource>` and are then imported by `AppModule`; the CLI does not create
-an artificial `src/modules/app` directory.
+created by `nest new`. Generated resources belong directly under
+`src/<resource>` and are imported by `AppModule`; the CLI does not create an
+artificial `src/modules/app` directory.
 
 ## Safety behavior
 
@@ -119,22 +186,6 @@ an artificial `src/modules/app` directory.
 - Process arguments are passed to `Bun.spawn` as an array.
 - Installation uses the Bun executable and inherits terminal streams.
 - Installation failure returns a nonzero CLI result.
-
-## Planned generator boundary
-
-Nest supports many component schematics. Aponia will add these incrementally
-after AST-safe module registration exists:
-
-```text
-aponia generate module <name>
-aponia generate controller <name>
-aponia generate service <name>
-aponia generate resource <name>
-```
-
-The current CLI does not claim these commands yet. A resource generator must
-atomically generate the module, controller, service, schemas, and tests, then
-register the module without text-fragile source rewriting.
 
 See the [published package catalog](./packages.md) for all AponiaJS npm
 packages.

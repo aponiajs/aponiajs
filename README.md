@@ -255,6 +255,9 @@ Use the local CLI while developing the framework:
 ```bash
 bun packages/cli/bin/aponia.ts new my-api --skip-install
 bun packages/cli/bin/aponia.ts new my-api --dry-run
+bun packages/cli/bin/aponia.ts g controller users
+bun packages/cli/bin/aponia.ts g service users
+bun packages/cli/bin/aponia.ts g resource users --type rest
 ```
 
 </details>
@@ -271,7 +274,7 @@ bun packages/cli/bin/aponia.ts new my-api --dry-run
 - cycle, duplicate, missing-export, and ambiguous-provider diagnostics;
 - Elysia request handling, listening, shutdown, and URL discovery;
 - configurable text and JSON logging;
-- Bun-native project generation;
+- Bun-native project, component, and resource generation;
 - Bun and Vite+ test lanes.
 
 ### Still ahead
@@ -281,7 +284,6 @@ bun packages/cli/bin/aponia.ts new my-api --dry-run
 - request and transient provider scopes;
 - testing modules and provider overrides;
 - OpenAPI, WebSockets, microservices, and authentication;
-- CLI resource generation;
 - a composite Eden client type.
 
 </details>
@@ -290,11 +292,11 @@ bun packages/cli/bin/aponia.ts new my-api --dry-run
 
 | Command                   | Purpose                              |
 | ------------------------- | ------------------------------------ |
-| `vp install`              | Install workspace dependencies       |
+| `bun install`             | Install workspace dependencies       |
 | `bun run example:basic`   | Run the example application          |
-| `vp check`                | Format, lint, and type-check         |
+| `bun run check`           | Format, lint, and type-check         |
 | `bun test`                | Run the Bun test suite               |
-| `vp test`                 | Run the Vite+ compatibility tests    |
+| `bun run test:vite-plus`  | Run the Vite+ compatibility tests    |
 | `bun run build`           | Build all workspace packages         |
 | `bun run release:dry-run` | Inspect publishable package archives |
 

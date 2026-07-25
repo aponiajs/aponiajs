@@ -17,21 +17,21 @@ applications follow Nest's flat starter layout, while later resources belong in
 
 ## Build, Test, and Development Commands
 
-- `vp install`: install workspace dependencies through Vite+ and Bun.
+- `bun install`: install workspace dependencies.
 - `bun run example:basic`: run the Elysia example on its configured port.
 - `bun run build`: build every workspace package.
 - `bun test`: run the Bun test suite.
-- `vp test`: run the Vite+ compatibility lane.
-- `vp check`: format, lint, and type-check the repository.
-- `vp env doctor`: diagnose toolchain or package-manager problems.
+- `bun run test:vite-plus`: run the compatibility lane.
+- `bun run check`: format, lint, and type-check the repository.
+- `bun run doctor`: diagnose toolchain or package-manager problems.
 
-Use Bun exclusively for runtime and package management. Keep Vite+ configuration
-and commands in place.
+Use Bun exclusively for documented commands, runtime, and package management.
+Keep internal Vite+ configuration behind Bun package scripts.
 
 ## Coding Style & Naming Conventions
 
 Write strict TypeScript using ESM, two-space indentation, and explicit `.ts`
-extensions for local imports. Oxfmt and Oxlint, invoked by `vp check`, define the
+extensions for local imports. Oxfmt and Oxlint, invoked by `bun run check`, define the
 canonical formatting and lint rules. Use PascalCase for classes and modules,
 camelCase for functions and variables, and descriptive suffixes such as
 `.module.ts`, `.controller.ts`, and `.service.ts`. Controllers should delegate
@@ -46,10 +46,14 @@ Before finishing file changes, scan for Thai characters with
 Add tests for every behavioral change. Bun owns the primary suite; Vite+ tests
 protect toolchain compatibility. No coverage threshold is currently enforced,
 so prioritize module boundaries, dependency resolution, route mapping, CLI
-output, and failure cases. Run `vp check`, `bun test`, and `vp test` before
-submitting.
+output, and failure cases. Run `bun run check`, `bun test`, and
+`bun run test:vite-plus` before submitting.
 
 ## Commit & Pull Request Guidelines
+
+Create every feature on a dedicated branch from the latest `main`, named
+`feature/<short-kebab-description>`. Do not add feature work directly to
+`main`, a documentation branch, or an unrelated feature branch.
 
 The repository has no established commit history yet. Use concise Conventional
 Commit subjects, for example `feat(cli): align starter layout with Nest`.
