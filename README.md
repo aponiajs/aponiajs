@@ -96,7 +96,7 @@ measured separately from the hot request path.
 <div align="center">
 
 <img
-  src="https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.svg?v=0.3.16"
+  src="https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.svg?v=0.3.17"
   alt="CI benchmark comparing Elysia and Aponia throughput, request latency percentiles, startup latency, stability, and sample size"
   width="960"
 />
@@ -112,7 +112,7 @@ Only the CI result is presented here; developer-machine output is never used as
 the public benchmark.
 
 Review the [methodology and reproduction commands](./benchmarks/README.md), the
-[latest CI JSON report](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.json?v=0.3.16),
+[latest CI JSON report](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.json?v=0.3.17),
 or the corresponding GitHub Actions artifact.
 
 ## Generate
@@ -167,7 +167,9 @@ generators, and an Elysia-native controller escape hatch.
 Request decorators, validation pipes, runtime guards and interceptors,
 middleware, exception filters, provider scopes, testing modules, OpenAPI,
 authentication, WebSockets, and microservice transports are not implemented
-yet. Review the [roadmap](./plans/npm-package-architecture-roadmap.md) before
+yet. Use the [machine-readable roadmap](./roadmap/roadmap.json) and its
+[JSON Schema](./roadmap/roadmap.schema.json) for tracker integrations. Review
+the [architecture roadmap](./plans/npm-package-architecture-roadmap.md) before
 adopting the framework for long-lived workloads.
 
 ## Develop
