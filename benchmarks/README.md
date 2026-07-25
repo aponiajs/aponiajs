@@ -42,11 +42,11 @@ Each run updates:
 
 ## Continuous integration
 
-The `Benchmark` GitHub Actions workflow runs on every pull request, every push
-to `main`, and manual dispatches. It installs the frozen lockfile, pins Bun
-1.3.14, builds the workspace once, and runs every implementation on the same
-runner in the same process. The JSON and SVG reports are retained as workflow
-artifacts for 14 days.
+The `Elysia overhead` job in the existing `CI` GitHub Actions workflow runs on
+every pull request, every push, and manual dispatches. It installs the frozen
+lockfile, pins Bun 1.3.14, builds the workspace once, and runs every
+implementation on the same runner in the same process. The JSON and SVG reports
+are retained as workflow artifacts for 14 days.
 
 CI does not enforce a fixed performance threshold. GitHub-hosted runners are
 shared infrastructure, so their absolute timings fluctuate. The workflow
