@@ -24,7 +24,7 @@ describe("benchmark reporting", () => {
     expect(comparison.startupLatencyOverheadPercent).toBe(100);
   });
 
-  test("builds a reproducible three-panel Vega-Lite chart", () => {
+  test("builds a reproducible grouped relative-performance chart", () => {
     const baseline: BenchmarkBaseline = {
       schemaVersion: 1,
       measuredAt: "2026-07-25T00:00:00.000Z",
@@ -45,13 +45,15 @@ describe("benchmark reporting", () => {
     const chart = createChartSpec(baseline);
     const serializedChart = JSON.stringify(chart);
 
-    expect("vconcat" in chart ? chart.vconcat : []).toHaveLength(3);
-    expect(chart.background).toBe("#000000");
+    expect("layer" in chart ? chart.layer : []).toHaveLength(2);
+    expect(chart.background).toBe("#ffffff");
     expect(serializedChart).toContain("Elysia vs Aponia");
+    expect(serializedChart).toContain("Elysia baseline = 100");
     expect(serializedChart).toContain("Request latency");
     expect(serializedChart).not.toContain("Aponia native");
     expect(serializedChart).not.toContain("CI REPRODUCIBLE");
-    expect(serializedChart).toContain("#1348dc");
+    expect(serializedChart).toContain('"scoreLabel":"83.3"');
+    expect(serializedChart).toContain("#4665ff");
   });
 });
 

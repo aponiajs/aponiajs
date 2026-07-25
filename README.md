@@ -33,7 +33,8 @@ controllers, and direct access to Elysia. Supercharged by Bun.
 Create a Bun application:
 
 ```bash
-bun create aponia my-api
+bun add --global @aponiajs/cli
+aponia new my-api
 cd my-api
 bun run dev
 ```
@@ -96,7 +97,7 @@ measured separately from the hot request path.
 
 <img
   src="./assets/benchmarks/elysia-overhead-editor.svg"
-  alt="Elysia and AponiaJS request throughput, latency, and startup benchmark"
+  alt="Relative throughput, request latency, and startup performance for Elysia and Aponia"
   width="820"
 />
 
@@ -124,22 +125,22 @@ the [JSON baseline](./.ecc/benchmarks/elysia-overhead.json).
 Install the published CLI and generate components with Nest-style commands:
 
 ```bash
-bun add --dev @aponiajs/cli
+bun add --global @aponiajs/cli
 
-bunx aponia new my-api
-bunx aponia generate module users
-bunx aponia generate controller users
-bunx aponia generate service users
-bunx aponia generate resource users --type rest
+aponia new my-api
+aponia generate module users
+aponia generate controller users
+aponia generate service users
+aponia generate resource users --type rest
 ```
 
 Short aliases work too:
 
 ```bash
-bunx aponia g mo users
-bunx aponia g co users
-bunx aponia g s users
-bunx aponia g res users
+aponia g mo users
+aponia g co users
+aponia g s users
+aponia g res users
 ```
 
 The catalog includes application, library, class, controller, decorator,

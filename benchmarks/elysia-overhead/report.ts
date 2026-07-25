@@ -2,7 +2,6 @@ import { mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
 import { parse, View } from "vega";
 import { compile, type TopLevelSpec } from "vega-lite";
-import type { PositionFieldDef } from "vega-lite/types_unstable/channeldef.js";
 
 export interface BenchmarkMeasurement {
   readonly group: "request" | "startup";
@@ -69,221 +68,156 @@ export function calculateComparison(
 }
 
 export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
-  const requestMeasurements = baseline.measurements
-    .filter(
-      ({ group, implementation }) => group === "request" && implementation !== "Aponia native",
-    )
-    .map((measurement) => ({
-      implementation: toPublicImplementationName(measurement.implementation),
-      latencyMicroseconds: measurement.latencyMeanMs * 1_000,
-      latencyLabel: `${(measurement.latencyMeanMs * 1_000).toFixed(1)} µs`,
-      throughput: measurement.throughputMeanOps,
-      throughputLabel: `${Math.round(measurement.throughputMeanOps).toLocaleString("en-US")} ops/s`,
-    }));
-  const startupMeasurements = baseline.measurements
-    .filter(({ group }) => group === "startup")
-    .map((measurement) => ({
-      implementation: toPublicImplementationName(measurement.implementation),
-      latencyMilliseconds: measurement.latencyMeanMs,
-      latencyLabel: `${measurement.latencyMeanMs.toFixed(3)} ms`,
-    }));
-
-  const colors = ["#73737b", "#1348dc"];
-  const sharedColor = {
-    field: "implementation",
-    type: "nominal" as const,
-    scale: {
-      domain: requestMeasurements.map(({ implementation }) => implementation),
-      range: colors,
-    },
-    legend: null,
-  };
-  const requestYAxis = createImplementationAxis(
-    requestMeasurements.map(({ implementation }) => implementation),
-  );
-  const startupYAxis = createImplementationAxis(
-    startupMeasurements.map(({ implementation }) => implementation),
-  );
+  const pureRequest = findMeasurement(baseline.measurements, "request", "Pure Elysia");
+  const aponiaRequest = findMeasurement(baseline.measurements, "request", "Aponia wrapper");
+  const pureStartup = findMeasurement(baseline.measurements, "startup", "Pure Elysia");
+  const aponiaStartup = findMeasurement(baseline.measurements, "startup", "Aponia factory");
+  const relativeMeasurements = [
+    createRelativeMeasurement("Throughput", "Elysia", 100),
+    createRelativeMeasurement(
+      "Throughput",
+      "Aponia",
+      (aponiaRequest.throughputMeanOps / pureRequest.throughputMeanOps) * 100,
+    ),
+    createRelativeMeasurement("Request latency", "Elysia", 100),
+    createRelativeMeasurement(
+      "Request latency",
+      "Aponia",
+      (pureRequest.latencyMeanMs / aponiaRequest.latencyMeanMs) * 100,
+    ),
+    createRelativeMeasurement("Startup", "Elysia", 100),
+    createRelativeMeasurement(
+      "Startup",
+      "Aponia",
+      (pureStartup.latencyMeanMs / aponiaStartup.latencyMeanMs) * 100,
+    ),
+  ];
 
   return {
     $schema: "https://vega.github.io/schema/vega-lite/v6.json",
-    background: "#000000",
+    background: "#ffffff",
     padding: 24,
     title: {
-      text: "Benchmark",
-      subtitle: "Elysia vs Aponia",
+      text: "Elysia vs Aponia",
+      subtitle: "Relative performance · Elysia baseline = 100 · higher is better",
       anchor: "start",
-      color: "#ffffff",
-      font: "Inter, ui-sans-serif, system-ui",
-      fontSize: 22,
-      fontWeight: 600,
-      offset: 24,
-      subtitleColor: "#9a9aa2",
-      subtitleFont: "ui-monospace, SFMono-Regular, Menlo, monospace",
-      subtitleFontSize: 11,
-      subtitlePadding: 8,
+      color: "#242424",
+      font: "Georgia, Times New Roman, serif",
+      fontSize: 24,
+      fontWeight: 700,
+      offset: 20,
+      subtitleColor: "#5e5e5e",
+      subtitleFont: "Inter, ui-sans-serif, system-ui",
+      subtitleFontSize: 12,
+      subtitlePadding: 7,
     },
-    spacing: 24,
-    resolve: {
-      scale: {
-        color: "independent",
-      },
-    },
-    vconcat: [
+    width: 680,
+    height: 350,
+    data: { values: relativeMeasurements },
+    layer: [
       {
-        width: 560,
-        height: 58,
-        title: {
-          text: `Throughput  ${formatPercentDelta(
-            baseline.comparison.requestThroughputDeltaPercent,
-          )}`,
-          subtitle: "Higher is better",
-          anchor: "start",
+        mark: { type: "bar", size: 72 },
+        encoding: {
+          x: {
+            field: "metric",
+            type: "nominal",
+            sort: ["Throughput", "Request latency", "Startup"],
+            axis: {
+              title: null,
+              labelAngle: 0,
+              labelColor: "#242424",
+              labelFont: "Georgia, Times New Roman, serif",
+              labelFontSize: 14,
+              labelFontWeight: 700,
+              labelPadding: 12,
+            },
+          },
+          xOffset: {
+            field: "implementation",
+            sort: ["Elysia", "Aponia"],
+          },
+          y: {
+            field: "score",
+            type: "quantitative",
+            scale: { domain: [0, 105] },
+            axis: {
+              title: "Relative performance (%)",
+              values: [0, 20, 40, 60, 80, 100],
+              domain: false,
+              grid: true,
+              gridColor: "#dddddd",
+              gridWidth: 1,
+              labelColor: "#4f4f4f",
+              labelFont: "Inter, ui-sans-serif, system-ui",
+              labelFontSize: 11,
+              tickColor: "#b8b8b8",
+              titleColor: "#242424",
+              titleFont: "Georgia, Times New Roman, serif",
+              titleFontSize: 13,
+              titleFontWeight: 700,
+              titlePadding: 12,
+            },
+          },
+          color: {
+            field: "implementation",
+            type: "nominal",
+            sort: ["Elysia", "Aponia"],
+            scale: {
+              domain: ["Elysia", "Aponia"],
+              range: ["#c7c7c7", "#4665ff"],
+            },
+            legend: {
+              title: null,
+              orient: "top",
+              direction: "horizontal",
+              labelColor: "#242424",
+              labelFont: "Georgia, Times New Roman, serif",
+              labelFontSize: 13,
+              labelFontWeight: 700,
+              symbolSize: 180,
+              symbolType: "square",
+              offset: 12,
+            },
+          },
         },
-        data: { values: requestMeasurements },
-        layer: [
-          {
-            mark: { type: "bar", cornerRadiusEnd: 2, height: 12 },
-            encoding: {
-              x: {
-                field: "throughput",
-                type: "quantitative",
-                axis: null,
-              },
-              y: requestYAxis,
-              color: sharedColor,
-            },
-          },
-          {
-            mark: {
-              type: "text",
-              align: "left",
-              baseline: "middle",
-              dx: 8,
-              font: "ui-monospace, SFMono-Regular, Menlo, monospace",
-              fontSize: 10,
-              fontWeight: 600,
-            },
-            encoding: {
-              x: { field: "throughput", type: "quantitative" },
-              y: requestYAxis,
-              text: { field: "throughputLabel", type: "nominal" },
-              color: { value: "#f4f4f5" },
-            },
-          },
-        ],
-      },
-      {
-        width: 560,
-        height: 58,
-        title: {
-          text: `Request latency  ${formatPercentDelta(
-            baseline.comparison.requestLatencyOverheadPercent,
-          )}`,
-          subtitle: "Lower is better",
-          anchor: "start",
-        },
-        data: { values: requestMeasurements },
-        layer: [
-          {
-            mark: { type: "bar", cornerRadiusEnd: 2, height: 12 },
-            encoding: {
-              x: {
-                field: "latencyMicroseconds",
-                type: "quantitative",
-                axis: null,
-              },
-              y: requestYAxis,
-              color: sharedColor,
-            },
-          },
-          {
-            mark: {
-              type: "text",
-              align: "left",
-              baseline: "middle",
-              dx: 8,
-              font: "ui-monospace, SFMono-Regular, Menlo, monospace",
-              fontSize: 10,
-              fontWeight: 600,
-            },
-            encoding: {
-              x: { field: "latencyMicroseconds", type: "quantitative" },
-              y: requestYAxis,
-              text: { field: "latencyLabel", type: "nominal" },
-              color: { value: "#f4f4f5" },
-            },
-          },
-        ],
       },
       {
-        width: 560,
-        height: 58,
-        title: {
-          text: `Startup  ${formatPercentDelta(baseline.comparison.startupLatencyOverheadPercent)}`,
-          subtitle: "Lower is better",
-          anchor: "start",
+        mark: {
+          type: "text",
+          baseline: "bottom",
+          dy: -5,
+          color: "#242424",
+          font: "Georgia, Times New Roman, serif",
+          fontSize: 12,
+          fontWeight: 700,
         },
-        data: { values: startupMeasurements },
-        layer: [
-          {
-            mark: { type: "bar", cornerRadiusEnd: 2, height: 12 },
-            encoding: {
-              x: {
-                field: "latencyMilliseconds",
-                type: "quantitative",
-                axis: null,
-              },
-              y: startupYAxis,
-              color: {
-                field: "implementation",
-                type: "nominal",
-                scale: {
-                  domain: startupMeasurements.map(({ implementation }) => implementation),
-                  range: ["#73737b", "#1348dc"],
-                },
-                legend: null,
-              },
-            },
+        encoding: {
+          x: {
+            field: "metric",
+            type: "nominal",
+            sort: ["Throughput", "Request latency", "Startup"],
           },
-          {
-            mark: {
-              type: "text",
-              align: "left",
-              baseline: "middle",
-              dx: 8,
-              font: "ui-monospace, SFMono-Regular, Menlo, monospace",
-              fontSize: 10,
-              fontWeight: 600,
-            },
-            encoding: {
-              x: { field: "latencyMilliseconds", type: "quantitative" },
-              y: startupYAxis,
-              text: { field: "latencyLabel", type: "nominal" },
-              color: { value: "#f4f4f5" },
-            },
+          xOffset: {
+            field: "implementation",
+            sort: ["Elysia", "Aponia"],
           },
-        ],
+          y: {
+            field: "score",
+            type: "quantitative",
+            scale: { domain: [0, 105] },
+          },
+          text: {
+            field: "scoreLabel",
+            type: "nominal",
+          },
+        },
       },
     ],
     config: {
-      axis: {
-        labelFont: "Inter, ui-sans-serif, system-ui",
-        titleFont: "ui-monospace, SFMono-Regular, Menlo, monospace",
-      },
-      title: {
-        color: "#ffffff",
-        font: "Inter, ui-sans-serif, system-ui",
-        fontSize: 14,
-        fontWeight: 600,
-        subtitleColor: "#8d8d96",
-        subtitleFont: "ui-monospace, SFMono-Regular, Menlo, monospace",
-        subtitleFontSize: 11,
-        subtitlePadding: 5,
-      },
       view: {
-        fill: "#000000",
-        strokeWidth: 0,
+        fill: "#ffffff",
+        stroke: "#cccccc",
+        strokeWidth: 1,
       },
     },
   };
@@ -331,28 +265,15 @@ function percentChange(baseline: number, candidate: number): number {
   return ((candidate - baseline) / baseline) * 100;
 }
 
-function formatPercentDelta(value: number): string {
-  const sign = value > 0 ? "+" : value < 0 ? "−" : "";
-  return `${sign}${Math.abs(value).toFixed(1)}%`;
-}
-
-function toPublicImplementationName(implementation: string): string {
-  return implementation === "Pure Elysia" ? "Elysia" : "Aponia";
-}
-
-function createImplementationAxis(order: readonly string[]): PositionFieldDef<string> {
+function createRelativeMeasurement(
+  metric: string,
+  implementation: "Elysia" | "Aponia",
+  score: number,
+) {
   return {
-    field: "implementation",
-    type: "nominal" as const,
-    sort: [...order],
-    axis: {
-      title: null,
-      labelColor: "#d8d8dc",
-      labelFontSize: 12,
-      labelFontWeight: 500,
-      labelPadding: 10,
-      ticks: false,
-      domain: false,
-    },
+    metric,
+    implementation,
+    score,
+    scoreLabel: score.toFixed(1),
   };
 }

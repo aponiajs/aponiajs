@@ -7,20 +7,20 @@ The Bun-native Aponia command-line interface.
 ## Install
 
 ```bash
-bun add --dev @aponiajs/cli
+bun add --global @aponiajs/cli
 ```
 
 ## Commands
 
 ```bash
-bunx aponia new my-api
-bunx aponia n my-api --dry-run
-bunx aponia new my-api --skip-install
-bunx aponia generate controller users
-bunx aponia g s users
-bunx aponia g resource users --type rest
-bunx aponia g router health --no-spec
-bunx aponia --version
+aponia new my-api
+aponia n my-api --dry-run
+aponia new my-api --skip-install
+aponia generate controller users
+aponia g s users
+aponia g resource users --type rest
+aponia g router health --no-spec
+aponia --version
 ```
 
 The generate command supports the complete built-in Nest schematic catalog:
@@ -34,12 +34,10 @@ registered in the nearest Aponia module unless `--skip-import` is used.
 Resource transports include REST, GraphQL code-first, GraphQL schema-first,
 microservices, and WebSockets.
 
-For one-command project creation, use the separately published
-[`create-aponia`](https://www.npmjs.com/package/create-aponia) entrypoint:
-
-```bash
-bun create aponia my-api
-```
+The separately published
+[`create-aponia`](https://www.npmjs.com/package/create-aponia) package delegates
+to the same generator. The documented CLI workflow uses the globally installed
+`aponia` command consistently.
 
 [npm package](https://www.npmjs.com/package/@aponiajs/cli) ·
 [complete CLI guide](../../docs/cli.md) ·

@@ -9,7 +9,7 @@ published version.
 | [`@aponiajs/common`](https://www.npmjs.com/package/@aponiajs/common)                   | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcommon)](https://www.npmjs.com/package/@aponiajs/common)                   | `bun add @aponiajs/common`                 |
 | [`@aponiajs/core`](https://www.npmjs.com/package/@aponiajs/core)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcore)](https://www.npmjs.com/package/@aponiajs/core)                       | `bun add @aponiajs/core`                   |
 | [`@aponiajs/platform-elysia`](https://www.npmjs.com/package/@aponiajs/platform-elysia) | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fplatform-elysia)](https://www.npmjs.com/package/@aponiajs/platform-elysia) | `bun add @aponiajs/platform-elysia elysia` |
-| [`@aponiajs/cli`](https://www.npmjs.com/package/@aponiajs/cli)                         | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcli)](https://www.npmjs.com/package/@aponiajs/cli)                         | `bun add --dev @aponiajs/cli`              |
+| [`@aponiajs/cli`](https://www.npmjs.com/package/@aponiajs/cli)                         | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcli)](https://www.npmjs.com/package/@aponiajs/cli)                         | `bun add --global @aponiajs/cli`           |
 | [`create-aponia`](https://www.npmjs.com/package/create-aponia)                         | [![npm](https://img.shields.io/npm/v/create-aponia)](https://www.npmjs.com/package/create-aponia)                             | `bun create aponia <name>`                 |
 
 The reserved `aponiajs` facade is private in this workspace and is not
@@ -75,22 +75,17 @@ application.
 
 ## Project creation and CLI
 
-For a new application, the shortest path is the published `create-aponia`
-entrypoint:
+Install the published CLI globally with Bun and invoke its `aponia` binary
+directly:
 
 ```bash
-bun create aponia my-api
+bun add --global @aponiajs/cli
+aponia new my-api
+aponia --version
 ```
 
-For a pinned local development dependency, install the CLI directly:
-
-```bash
-bun add --dev @aponiajs/cli
-bunx aponia new my-api
-bunx aponia --version
-```
-
-Both entrypoints call the same project generator. See the
+The global CLI and the separately published `create-aponia` entrypoint call the
+same project generator. See the
 [complete CLI guide](./cli.md), the
 [`@aponiajs/cli` npm page](https://www.npmjs.com/package/@aponiajs/cli), and the
 [`create-aponia` npm page](https://www.npmjs.com/package/create-aponia).
