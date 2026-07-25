@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "measuredAt": "2026-07-25T11:46:10.745Z",
+  "environment": {
+    "runtime": "Bun 1.3.14",
+    "platform": "linux x64",
+    "cpu": "Intel(R) Core(TM) i3-1005G1 CPU @ 1.20GHz"
+  },
+  "configuration": {
+    "requestTimeMs": 1500,
+    "startupTimeMs": 750,
+    "warmupTimeMs": 250
+  },
+  "measurements": [
+    {
+      "group": "request",
+      "implementation": "Pure Elysia",
+      "latencyMeanMs": 0.0015265064642451891,
+      "latencyP50Ms": 0.0015330000001085864,
+      "latencyP99Ms": 0.0060866499999520105,
+      "throughputMeanOps": 831379.2538034874,
+      "relativeMarginOfError": 1.0148171294829251,
+      "samples": 982636
+    },
+    {
+      "group": "request",
+      "implementation": "Aponia native",
+      "latencyMeanMs": 0.001960616480147283,
+      "latencyP50Ms": 0.0019149999998262501,
+      "latencyP99Ms": 0.00802335000012133,
+      "throughputMeanOps": 647156.4725198135,
+      "relativeMarginOfError": 1.422474225772443,
+      "samples": 765066
+    },
+    {
+      "group": "request",
+      "implementation": "Aponia wrapper",
+      "latencyMeanMs": 0.0019941161531157924,
+      "latencyP50Ms": 0.0019550000006347545,
+      "latencyP99Ms": 0.008136869999880213,
+      "throughputMeanOps": 630954.4256064858,
+      "relativeMarginOfError": 1.2365175646943285,
+      "samples": 752214
+    },
+    {
+      "group": "startup",
+      "implementation": "Pure Elysia",
+      "latencyMeanMs": 0.004562592020972658,
+      "latencyP50Ms": 0.003991999999925611,
+      "latencyP99Ms": 0.012655200000153924,
+      "throughputMeanOps": 278878.43083722563,
+      "relativeMarginOfError": 2.5533506874602483,
+      "samples": 164381
+    },
+    {
+      "group": "startup",
+      "implementation": "Aponia factory",
+      "latencyMeanMs": 0.01680397416709694,
+      "latencyP50Ms": 0.014798999998674844,
+      "latencyP99Ms": 0.04115927999962879,
+      "throughputMeanOps": 75142.45489277905,
+      "relativeMarginOfError": 4.886825741189866,
+      "samples": 44633
+    }
+  ],
+  "comparison": {
+    "requestLatencyOverheadPercent": 30.632670075316188,
+    "requestThroughputDeltaPercent": -24.10750897139609,
+    "wrapperOnlyLatencyOverheadPercent": 1.7086295717555493,
+    "startupLatencyOverheadPercent": 268.29885490210125
+  }
+}
