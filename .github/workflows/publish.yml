@@ -59,11 +59,11 @@ jobs:
       - name: Pack publishable workspaces
         run: |
           mkdir release-artifacts
-          bun pm pack --cwd packages/common --filename ../../release-artifacts/01-common.tgz
-          bun pm pack --cwd packages/core --filename ../../release-artifacts/02-core.tgz
-          bun pm pack --cwd packages/platform-elysia --filename ../../release-artifacts/03-platform-elysia.tgz
-          bun pm pack --cwd packages/cli --filename ../../release-artifacts/04-cli.tgz
-          bun pm pack --cwd packages/create-aponia --filename ../../release-artifacts/05-create-aponia.tgz
+          bun pm pack --cwd packages/common --filename release-artifacts/01-common.tgz
+          bun pm pack --cwd packages/core --filename release-artifacts/02-core.tgz
+          bun pm pack --cwd packages/platform-elysia --filename release-artifacts/03-platform-elysia.tgz
+          bun pm pack --cwd packages/cli --filename release-artifacts/04-cli.tgz
+          bun pm pack --cwd packages/create-aponia --filename release-artifacts/05-create-aponia.tgz
 
       - name: Publish packages in dependency order
         env:
