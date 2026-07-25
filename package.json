@@ -1,6 +1,6 @@
 {
   "name": "aponiajs-workspace",
-  "version": "0.3.2",
+  "version": "0.3.5",
   "private": true,
   "description": "Bun-first application architecture powered by Elysia.",
   "license": "MIT",
@@ -14,7 +14,8 @@
     "examples/*"
   ],
   "scripts": {
-    "benchmark:elysia": "bun run build && bun benchmarks/elysia-overhead/benchmark.ts",
+    "benchmark:elysia": "bun run build && bun run benchmark:elysia:run",
+    "benchmark:elysia:run": "bun benchmarks/elysia-overhead/benchmark.ts",
     "build": "bun run --workspaces build",
     "dev": "bun run --filter aponiajs dev",
     "example:basic": "bun run --cwd examples/basic-foundation start",
