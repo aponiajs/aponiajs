@@ -1,0 +1,26 @@
+{
+  "name": "{{PROJECT_NAME}}",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/main.ts",
+    "start": "bun src/main.ts",
+    "build": "bun build ./src/main.ts --outdir ./dist --target bun",
+    "test": "bun test",
+    "test:e2e": "bun test ./test/app.e2e-spec.ts",
+    "check": "vp check"
+  },
+  "dependencies": {
+    "@aponiajs/common": "latest",
+    "@aponiajs/core": "latest",
+    "@aponiajs/platform-elysia": "latest",
+    "elysia": "^1.4.29"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14",
+    "typescript": "^7.0.2",
+    "vite-plus": "^0.2.4"
+  },
+  "packageManager": "bun@1.3.14"
+}

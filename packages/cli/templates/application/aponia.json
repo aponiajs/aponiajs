@@ -1,0 +1,9 @@
+{
+  "sourceRoot": "src",
+  "entryFile": "main",
+  "platform": "elysia",
+  "language": "typescript",
+  "generateOptions": {
+    "spec": true
+  }
+}

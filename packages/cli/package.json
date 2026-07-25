@@ -1,0 +1,29 @@
+{
+  "name": "@aponiajs/cli",
+  "version": "0.0.0",
+  "description": "Bun-native project generator and command-line interface for Aponia.",
+  "license": "MIT",
+  "bin": {
+    "aponia": "./bin/aponia.ts"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "src",
+    "templates"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "bunx --bun vp pack",
+    "test": "bun test",
+    "check": "bunx --bun vp check",
+    "prepublishOnly": "bun run build"
+  }
+}

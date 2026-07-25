@@ -1,0 +1,35 @@
+{
+  "name": "@aponiajs/platform-elysia",
+  "version": "0.0.0",
+  "description": "Minimal Elysia application platform for Aponia modules and controllers.",
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "bunx --bun vp pack",
+    "dev": "bunx --bun vp pack --watch",
+    "test": "bun test",
+    "test:vite-plus": "vp test",
+    "check": "bunx --bun vp check",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "@aponiajs/common": "workspace:*",
+    "@aponiajs/core": "workspace:*"
+  },
+  "devDependencies": {
+    "elysia": "^1.4.29"
+  },
+  "peerDependencies": {
+    "elysia": "^1.4.29"
+  }
+}

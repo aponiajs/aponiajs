@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install frozen dependencies
+        run: bun ci
+
+      - name: Run Vite+ checks through Bun
+        run: bun run check
+
+      - name: Run Bun tests
+        run: bun test
+
+      - name: Run Vite+ conformance tests
+        run: bun run test:vite-plus
+
+      - name: Build workspace packages
+        run: bun run build

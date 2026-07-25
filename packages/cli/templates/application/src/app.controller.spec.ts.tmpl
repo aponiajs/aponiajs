@@ -1,0 +1,11 @@
+import { describe, expect, test } from "bun:test";
+import { AppController } from "./app.controller.ts";
+import { AppService } from "./app.service.ts";
+
+describe("AppController", () => {
+  test("returns the application greeting", () => {
+    const controller = new AppController(new AppService());
+
+    expect(controller.getGreeting()).toBe("Hello from {{PROJECT_NAME}}!");
+  });
+});

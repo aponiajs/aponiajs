@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["ESNext"],
+    "moduleDetection": "force",
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "types": ["bun"],
+    "strict": true,
+    "noUnusedLocals": true,
+    "declaration": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "paths": {
+      "@aponiajs/common": ["../common/src/index.ts"]
+    }
+  }
+}

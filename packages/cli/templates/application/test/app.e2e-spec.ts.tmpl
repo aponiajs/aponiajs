@@ -1,0 +1,12 @@
+import { expect, test } from "bun:test";
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "../src/app.module.ts";
+
+test("GET / routes through AppController and AppService", async () => {
+  const application = await AponiaFactory.create(AppModule, { logger: false });
+  const response = await application.handle(new Request("http://localhost/"));
+
+  expect(response.status).toBe(200);
+  expect(await response.text()).toBe("Hello from {{PROJECT_NAME}}!");
+  await application.close();
+});
