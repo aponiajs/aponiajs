@@ -86,7 +86,7 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
       latencyLabel: `${measurement.latencyMeanMs.toFixed(3)} ms`,
     }));
 
-  const colors = ["#8f79ad", "#d29aaa", "#e1b96f"];
+  const colors = ["#6f7078", "#5f7cf4", "#1348dc"];
   const sharedColor = {
     field: "implementation",
     type: "nominal" as const,
@@ -105,21 +105,23 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
 
   return {
     $schema: "https://vega.github.io/schema/vega-lite/v6.json",
-    background: "#fff9fc",
+    background: "#09090b",
     padding: 24,
     title: {
-      text: "AponiaJS overhead garden  ✦",
+      text: "benchmark / elysia-overhead",
       subtitle: [
         "Pure Elysia vs Aponia-registered native route vs Aponia wrapper",
-        `${baseline.environment.runtime} · ${baseline.environment.platform} · lower latency is better`,
+        `${baseline.environment.runtime}  ·  ${baseline.environment.platform}  ·  same process`,
       ],
       anchor: "start",
-      color: "#3e3349",
-      fontSize: 28,
-      fontWeight: 800,
+      color: "#f4f4f5",
+      font: "Inter, ui-sans-serif, system-ui",
+      fontSize: 25,
+      fontWeight: 600,
       offset: 24,
-      subtitleColor: "#786a84",
-      subtitleFontSize: 13,
+      subtitleColor: "#8f8f98",
+      subtitleFont: "ui-monospace, SFMono-Regular, Menlo, monospace",
+      subtitleFontSize: 12,
       subtitlePadding: 8,
     },
     spacing: 26,
@@ -133,24 +135,26 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
         width: 700,
         height: 150,
         title: {
-          text: "✿ Hot-path throughput",
+          text: "01 / hot-path throughput",
           subtitle: "Higher is better · response body consumed",
           anchor: "start",
         },
         data: { values: requestMeasurements },
         layer: [
           {
-            mark: { type: "bar", cornerRadiusEnd: 12, height: 26 },
+            mark: { type: "bar", cornerRadiusEnd: 4, height: 24 },
             encoding: {
               x: {
                 field: "throughput",
                 type: "quantitative",
                 axis: {
                   title: "operations per second",
-                  gridColor: "#eee5f2",
-                  gridDash: [3, 5],
-                  labelColor: "#786a84",
-                  titleColor: "#786a84",
+                  domainColor: "#303036",
+                  gridColor: "#242429",
+                  gridDash: [2, 6],
+                  labelColor: "#8f8f98",
+                  tickColor: "#303036",
+                  titleColor: "#8f8f98",
                 },
               },
               y: requestYAxis,
@@ -158,12 +162,19 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
             },
           },
           {
-            mark: { type: "text", align: "left", baseline: "middle", dx: 8, fontWeight: 800 },
+            mark: {
+              type: "text",
+              align: "left",
+              baseline: "middle",
+              dx: 8,
+              font: "ui-monospace, SFMono-Regular, Menlo, monospace",
+              fontWeight: 600,
+            },
             encoding: {
               x: { field: "throughput", type: "quantitative" },
               y: requestYAxis,
               text: { field: "throughputLabel", type: "nominal" },
-              color: { value: "#4b4057" },
+              color: { value: "#f4f4f5" },
             },
           },
         ],
@@ -172,24 +183,26 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
         width: 700,
         height: 150,
         title: {
-          text: "♡ Hot-path mean latency",
+          text: "02 / hot-path mean latency",
           subtitle: "Lower is better · same request and response",
           anchor: "start",
         },
         data: { values: requestMeasurements },
         layer: [
           {
-            mark: { type: "bar", cornerRadiusEnd: 12, height: 26 },
+            mark: { type: "bar", cornerRadiusEnd: 4, height: 24 },
             encoding: {
               x: {
                 field: "latencyMicroseconds",
                 type: "quantitative",
                 axis: {
                   title: "microseconds",
-                  gridColor: "#eee5f2",
-                  gridDash: [3, 5],
-                  labelColor: "#786a84",
-                  titleColor: "#786a84",
+                  domainColor: "#303036",
+                  gridColor: "#242429",
+                  gridDash: [2, 6],
+                  labelColor: "#8f8f98",
+                  tickColor: "#303036",
+                  titleColor: "#8f8f98",
                 },
               },
               y: requestYAxis,
@@ -197,12 +210,19 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
             },
           },
           {
-            mark: { type: "text", align: "left", baseline: "middle", dx: 8, fontWeight: 800 },
+            mark: {
+              type: "text",
+              align: "left",
+              baseline: "middle",
+              dx: 8,
+              font: "ui-monospace, SFMono-Regular, Menlo, monospace",
+              fontWeight: 600,
+            },
             encoding: {
               x: { field: "latencyMicroseconds", type: "quantitative" },
               y: requestYAxis,
               text: { field: "latencyLabel", type: "nominal" },
-              color: { value: "#4b4057" },
+              color: { value: "#f4f4f5" },
             },
           },
         ],
@@ -211,24 +231,26 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
         width: 700,
         height: 105,
         title: {
-          text: "☾ Application startup",
+          text: "03 / application startup",
           subtitle: "Route registration vs module graph and container initialization",
           anchor: "start",
         },
         data: { values: startupMeasurements },
         layer: [
           {
-            mark: { type: "bar", cornerRadiusEnd: 12, height: 26 },
+            mark: { type: "bar", cornerRadiusEnd: 4, height: 24 },
             encoding: {
               x: {
                 field: "latencyMilliseconds",
                 type: "quantitative",
                 axis: {
                   title: "milliseconds",
-                  gridColor: "#eee5f2",
-                  gridDash: [3, 5],
-                  labelColor: "#786a84",
-                  titleColor: "#786a84",
+                  domainColor: "#303036",
+                  gridColor: "#242429",
+                  gridDash: [2, 6],
+                  labelColor: "#8f8f98",
+                  tickColor: "#303036",
+                  titleColor: "#8f8f98",
                 },
               },
               y: startupYAxis,
@@ -237,19 +259,26 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
                 type: "nominal",
                 scale: {
                   domain: startupMeasurements.map(({ implementation }) => implementation),
-                  range: ["#8f79ad", "#d29aaa"],
+                  range: ["#6f7078", "#1348dc"],
                 },
                 legend: null,
               },
             },
           },
           {
-            mark: { type: "text", align: "left", baseline: "middle", dx: 8, fontWeight: 800 },
+            mark: {
+              type: "text",
+              align: "left",
+              baseline: "middle",
+              dx: 8,
+              font: "ui-monospace, SFMono-Regular, Menlo, monospace",
+              fontWeight: 600,
+            },
             encoding: {
               x: { field: "latencyMilliseconds", type: "quantitative" },
               y: startupYAxis,
               text: { field: "latencyLabel", type: "nominal" },
-              color: { value: "#4b4057" },
+              color: { value: "#f4f4f5" },
             },
           },
         ],
@@ -257,24 +286,24 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
     ],
     config: {
       axis: {
-        labelFont: "Nunito, ui-rounded, system-ui",
-        titleFont: "Nunito, ui-rounded, system-ui",
+        labelFont: "ui-monospace, SFMono-Regular, Menlo, monospace",
+        titleFont: "ui-monospace, SFMono-Regular, Menlo, monospace",
       },
       title: {
-        color: "#4b4057",
-        font: "Nunito, ui-rounded, system-ui",
-        fontSize: 17,
-        fontWeight: 800,
-        subtitleColor: "#8b7d94",
-        subtitleFont: "Nunito, ui-rounded, system-ui",
+        color: "#f4f4f5",
+        font: "Inter, ui-sans-serif, system-ui",
+        fontSize: 15,
+        fontWeight: 600,
+        subtitleColor: "#8f8f98",
+        subtitleFont: "ui-monospace, SFMono-Regular, Menlo, monospace",
         subtitleFontSize: 12,
         subtitlePadding: 5,
       },
       view: {
-        cornerRadius: 18,
-        fill: "#fffefe",
-        stroke: "#eadff0",
-        strokeWidth: 1.5,
+        cornerRadius: 6,
+        fill: "#111114",
+        stroke: "#2a2a30",
+        strokeWidth: 1,
       },
     },
   };
@@ -329,9 +358,9 @@ function createImplementationAxis(order: readonly string[]): PositionFieldDef<st
     sort: [...order],
     axis: {
       title: null,
-      labelColor: "#4b4057",
-      labelFontSize: 14,
-      labelFontWeight: 700,
+      labelColor: "#d4d4d8",
+      labelFontSize: 13,
+      labelFontWeight: 500,
       labelPadding: 10,
       ticks: false,
       domain: false,

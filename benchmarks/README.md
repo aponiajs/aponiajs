@@ -40,6 +40,19 @@ Each run updates:
   environment metadata;
 - `assets/benchmarks/elysia-overhead.svg` with a Vega-rendered report.
 
+## Continuous integration
+
+The `Benchmark` GitHub Actions workflow runs on every pull request, every push
+to `main`, and manual dispatches. It installs the frozen lockfile, pins Bun
+1.3.14, builds the workspace once, and runs every implementation on the same
+runner in the same process. The JSON and SVG reports are retained as workflow
+artifacts for 14 days.
+
+CI does not enforce a fixed performance threshold. GitHub-hosted runners are
+shared infrastructure, so their absolute timings fluctuate. The workflow
+instead provides a consistent comparison environment and preserves each report
+for review; functional mismatches and benchmark failures still fail the job.
+
 The request benchmark consumes the response body and validates identical HTTP
 status and body values before measuring. Tinybench performs warmup and
 statistical sampling. Run on an otherwise idle machine, use the same power

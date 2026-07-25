@@ -45,7 +45,7 @@ describe("benchmark reporting", () => {
     const chart = createChartSpec(baseline);
 
     expect("vconcat" in chart ? chart.vconcat : []).toHaveLength(3);
-    expect(chart.background).toBe("#fff9fc");
+    expect(chart.background).toBe("#09090b");
   });
 });
 

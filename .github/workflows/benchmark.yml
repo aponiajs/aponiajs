@@ -1,0 +1,54 @@
+name: Benchmark
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: benchmark-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  elysia-overhead:
+    name: Elysia overhead
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install frozen dependencies
+        run: bun ci
+
+      - name: Build workspace packages
+        run: bun run build
+
+      - name: Compare Elysia and Aponia
+        env:
+          APONIA_BENCH_REQUEST_MS: 3000
+          APONIA_BENCH_STARTUP_MS: 1500
+          APONIA_BENCH_WARMUP_MS: 500
+        run: bun run benchmark:elysia:run
+
+      - name: Upload benchmark report
+        uses: actions/upload-artifact@v4
+        with:
+          name: elysia-overhead-${{ github.run_id }}
+          path: |
+            .ecc/benchmarks/elysia-overhead.json
+            assets/benchmarks/elysia-overhead.svg
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
