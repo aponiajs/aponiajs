@@ -46,20 +46,16 @@ Each run updates:
   environment metadata;
 - `assets/benchmarks/elysia-overhead-editor.svg` with a Vega-rendered report.
 
-The public chart reports raw measurements with an independent scale for each
-metric:
+The public chart is deliberately limited to one question: how many sequential
+requests per second pure Elysia and the public Aponia wrapper complete. It uses
+one pair of labeled bars and a plain-language throughput-retention headline.
 
-- median sequential throughput in requests per microsecond (`req/µs`);
-- median request latency (`p50`) in microseconds (`µs`);
-- tail request latency (`p99`) in microseconds;
-- median startup latency in milliseconds (`ms`).
-
-Direction arrows show whether higher or lower values are better. The JSON
-report also retains `p95`, the coefficient of variation (`CV%`), total
-iterations, every independent trial, execution order, tool version, and
-environment metadata. Lower CV indicates more stable trial-to-trial results.
-The native-registration diagnostic remains in JSON even though the public chart
-focuses on the user-facing wrapper.
+The JSON report retains the detailed evidence: request and startup `p50`,
+`p95`, and `p99`, the coefficient of variation (`CV%`), total iterations, every
+independent trial, execution order, tool version, and environment metadata.
+Lower CV indicates more stable trial-to-trial results. The native-registration
+diagnostic also remains in JSON even though the public chart focuses on the
+user-facing wrapper.
 
 ## Methodology
 
