@@ -1,6 +1,12 @@
 {
   "name": "aponiajs-workspace",
   "private": true,
+  "description": "Bun-first application architecture powered by Elysia.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aponiajs/aponiajs.git"
+  },
   "workspaces": [
     "packages/*",
     "apps/*",
@@ -13,6 +19,7 @@
     "test": "bun run --workspaces test",
     "test:vite-plus": "vp test",
     "check": "vp check",
+    "release:dry-run": "for package in common core platform-elysia cli create-aponia; do bun pm pack --cwd packages/$package --dry-run; done",
     "prepare": "bunx --bun vp config"
   },
   "devDependencies": {

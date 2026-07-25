@@ -2,7 +2,17 @@
   "name": "@aponiajs/core",
   "version": "0.0.0",
   "description": "Module graph and dependency injection runtime for Aponia.",
+  "homepage": "https://github.com/aponiajs/aponiajs#readme",
+  "bugs": {
+    "url": "https://github.com/aponiajs/aponiajs/issues"
+  },
   "license": "MIT",
+  "author": "AponiaJS contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aponiajs/aponiajs.git",
+    "directory": "packages/core"
+  },
   "files": [
     "dist"
   ],
