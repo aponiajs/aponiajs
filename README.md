@@ -1,12 +1,12 @@
 <div align="center">
 
 <img
-  src="./assets/branding/aponiajs-banner.png"
-  alt="AponiaJS banner featuring Apo, the celestial moth-rabbit mascot"
+  src="./assets/aponia-character.jpg"
+  alt="Aponia from Honkai Impact 3rd with in-game combat footage"
   width="100%"
 />
 
-### AponiaJS
+# AponiaJS
 
 Structured applications for Bun
 
@@ -23,12 +23,6 @@ Structured applications for Bun
 
 Nest-inspired TypeScript architecture with dependency injection, decorated
 controllers, and direct access to Elysia. Supercharged by Bun.
-
-<img
-  src="./assets/branding/aponiajs-mascot-cover.png"
-  alt="Apo assembling an AponiaJS module graph"
-  width="100%"
-/>
 
 <sub>Experimental software · Not recommended for production yet</sub>
 
@@ -91,6 +85,39 @@ await application.listen(3000);
   schemas, hooks, state, and plugins remain available.
 - **Actionable diagnostics** — module cycles, missing exports, duplicate
   providers, and ambiguous dependencies fail clearly.
+
+## Performance, measured
+
+The benchmark separates the cost of Aponia route registration from the
+near-zero forwarding cost of `AponiaElysiaApplication.handle()`. Startup is
+measured separately from the hot request path.
+
+<div align="center">
+
+<img
+  src="./assets/benchmarks/elysia-overhead.svg"
+  alt="Elysia and AponiaJS request throughput, latency, and startup benchmark"
+  width="820"
+/>
+
+</div>
+
+Results are a machine-specific baseline, not a universal performance claim.
+On the committed Bun 1.3.14 baseline:
+
+| Comparison                            | Result                                |
+| ------------------------------------- | ------------------------------------- |
+| Wrapper vs Aponia native latency      | `+1.71%`                              |
+| Full Aponia vs pure Elysia latency    | `+30.63%`                             |
+| Full Aponia vs pure Elysia throughput | `-24.11%`                             |
+| Aponia vs Elysia startup              | `0.017 ms` vs `0.005 ms` (`+268.30%`) |
+
+The forwarding wrapper itself is small; most measured hot-path difference is
+present before that final method call. Startup has a larger percentage change
+but remains a one-time difference measured in hundredths of a millisecond.
+
+Review the [methodology and reproduction commands](./benchmarks/README.md) or
+the [JSON baseline](./.ecc/benchmarks/elysia-overhead.json).
 
 ## Generate
 
@@ -176,5 +203,6 @@ workflow. Repository conventions live in [AGENTS.md](./AGENTS.md).
 
 AponiaJS is available under the [MIT License](./LICENSE).
 
-The AponiaJS banner and Apo mascot are original project artwork. AponiaJS is
-independently developed and is not affiliated with Bun, Elysia, or NestJS.
+The header features Aponia from _Honkai Impact 3rd_. Game imagery belongs to its
+respective copyright holders. AponiaJS is independently developed and is not
+affiliated with HoYoverse, miHoYo, Bun, Elysia, or NestJS.
