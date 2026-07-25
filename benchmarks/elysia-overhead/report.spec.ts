@@ -45,10 +45,11 @@ describe("benchmark reporting", () => {
     const chart = createChartSpec(baseline);
     const serializedChart = JSON.stringify(chart);
 
-    expect("vconcat" in chart ? chart.vconcat : []).toHaveLength(5);
+    expect("vconcat" in chart ? chart.vconcat : []).toHaveLength(3);
     expect(chart.background).toBe("#000000");
-    expect(serializedChart).toContain("elysia-overhead.bench.ts");
-    expect(serializedChart).toContain("CI REPRODUCIBLE");
+    expect(serializedChart).toContain("Aponia × Elysia");
+    expect(serializedChart).toContain("Request latency");
+    expect(serializedChart).not.toContain("CI REPRODUCIBLE");
     expect(serializedChart).toContain("#1348dc");
   });
 });
