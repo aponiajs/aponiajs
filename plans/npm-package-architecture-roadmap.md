@@ -731,7 +731,8 @@ Additional requirements:
 - Add explicit subpath exports only when they are intentionally public.
 - Use peer dependencies for Elysia and optional infrastructure clients.
 - Validate packed files, ESM imports, type declarations, and tree shaking.
-- Each library defines `"build": "bunx --bun vp pack"`.
+- Each library exposes `bun run build`; the package script may delegate to
+  internal packaging tooling.
 - Each package `vite.config.ts` defines its entry, ESM output, declarations,
   clean output, externals, and sourcemaps.
 - Publish SBOM and verified provenance artifacts.
@@ -1326,10 +1327,10 @@ stable contract, tests, documentation, and a real reference application.
 Every package pull request must pass:
 
 ```bash
-vp install --frozen-lockfile
-vp check
+bun install --frozen-lockfile
+bun run check
 bun test
-vp test
+bun run test:vite-plus
 bun run build
 bun --cwd packages/<changed-package> pm pack --dry-run
 bun --cwd packages/<changed-package> publish --dry-run

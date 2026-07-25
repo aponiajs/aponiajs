@@ -43,8 +43,7 @@ familiar application architecture  +  a small Bun-native runtime
 
 ## Quick start
 
-You need [Bun 1.3.14](https://bun.sh) and
-[Vite+ 0.2.x](https://viteplus.dev).
+You need [Bun 1.3.14](https://bun.sh).
 
 ```bash
 bun create aponia my-api
@@ -55,7 +54,7 @@ bun run dev
 Or explore the example in this repository:
 
 ```bash
-vp install
+bun install
 bun run example:basic
 ```
 
@@ -272,7 +271,7 @@ bun packages/cli/bin/aponia.ts new my-api --dry-run
 - Elysia request handling, listening, shutdown, and URL discovery;
 - configurable text and JSON logging;
 - Bun-native project generation;
-- Bun and Vite+ test lanes.
+- Bun-managed quality and compatibility test lanes.
 
 ### Still ahead
 
@@ -290,11 +289,11 @@ bun packages/cli/bin/aponia.ts new my-api --dry-run
 
 | Command                   | Purpose                              |
 | ------------------------- | ------------------------------------ |
-| `vp install`              | Install workspace dependencies       |
+| `bun install`             | Install workspace dependencies       |
 | `bun run example:basic`   | Run the example application          |
-| `vp check`                | Format, lint, and type-check         |
-| `bun test`                | Run the Bun test suite               |
-| `vp test`                 | Run the Vite+ compatibility tests    |
+| `bun run check`           | Format, lint, and type-check         |
+| `bun test`                | Run the primary test suite           |
+| `bun run test:vite-plus`  | Run the compatibility tests          |
 | `bun run build`           | Build all workspace packages         |
 | `bun run release:dry-run` | Inspect publishable package archives |
 
@@ -335,8 +334,9 @@ lockfile. CI rejects a push when its version does not increase. A push to
 
 ## Contributing
 
-Use Bun for runtime and package management, retain Vite+, keep repository
-content in English, and add tests for behavioral changes.
+Use Bun for every documented command, keep repository content in English, and
+add tests for behavioral changes. Internal build tooling stays behind Bun
+package scripts.
 
 ## Security
 

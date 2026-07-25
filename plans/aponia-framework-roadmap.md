@@ -301,16 +301,16 @@ confidence intervals.
 Every pull request runs:
 
 ```bash
-vp install --frozen-lockfile
-vp check
+bun install --frozen-lockfile
+bun run check
 bun test
-vp test
+bun run test:vite-plus
 bun run build
 ```
 
-`vp test` remains a small Vite+ conformance lane. Bun test owns the main DI,
-HTTP, integration, and security suites. Libraries use `vp pack`; applications
-use `vp build`.
+`bun run test:vite-plus` remains a small compatibility lane. Bun test owns the
+main DI, HTTP, integration, and security suites. Bun package scripts encapsulate
+internal library packing and application builds.
 
 ## 10. Delivery roadmap
 
@@ -362,7 +362,8 @@ Tasks:
 - Add positive and negative compile fixtures and declaration snapshots.
 - Add a rule against exported `any`.
 
-Verify: `bun test packages/common`, `bun run test:types`, and `vp pack`.  
+Verify: `bun test packages/common`, `bun run test:types`, and
+`bun run --cwd packages/common build`.
 Exit: The canonical type example infers completely and invalid compositions fail.  
 Rollback: Revert descriptors before they have runtime consumers.
 
@@ -441,7 +442,8 @@ Tasks:
 - Test thrown errors, short circuits, native responses, streams, and aborts.
 - Classify managed, isolated, and unsafe escape hatches.
 
-Verify: Adapter conformance tests and the `vp test` conformance lane.  
+Verify: Adapter conformance tests and the `bun run test:vite-plus` conformance
+lane.
 Exit: The phase and scope matrix passes with no undocumented order dependence.  
 Rollback: Retain the minimal Step 6 route and remove advanced mappings.
 
