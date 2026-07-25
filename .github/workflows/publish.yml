@@ -1,0 +1,75 @@
+name: Publish npm packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: npm distribution tag
+        required: true
+        default: latest
+        type: choice
+        options:
+          - latest
+          - next
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Verify and publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: npm
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Set up Node for npm trusted publishing
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Install frozen dependencies
+        run: bun ci
+
+      - name: Verify workspace
+        run: |
+          bun run check
+          bun test
+          bun run test:vite-plus
+          bun run build
+
+      - name: Pack publishable workspaces
+        run: |
+          mkdir release-artifacts
+          bun pm pack --cwd packages/common --filename ../../release-artifacts/01-common.tgz
+          bun pm pack --cwd packages/core --filename ../../release-artifacts/02-core.tgz
+          bun pm pack --cwd packages/platform-elysia --filename ../../release-artifacts/03-platform-elysia.tgz
+          bun pm pack --cwd packages/cli --filename ../../release-artifacts/04-cli.tgz
+          bun pm pack --cwd packages/create-aponia --filename ../../release-artifacts/05-create-aponia.tgz
+
+      - name: Publish packages in dependency order
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TAG: ${{ inputs.tag || 'latest' }}
+        run: |
+          for archive in release-artifacts/*.tgz; do
+            npm publish "$archive" --access public --tag "$NPM_TAG" --provenance
+          done

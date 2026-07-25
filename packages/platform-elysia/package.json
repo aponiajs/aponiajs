@@ -2,7 +2,17 @@
   "name": "@aponiajs/platform-elysia",
   "version": "0.0.0",
   "description": "Minimal Elysia application platform for Aponia modules and controllers.",
+  "homepage": "https://github.com/aponiajs/aponiajs#readme",
+  "bugs": {
+    "url": "https://github.com/aponiajs/aponiajs/issues"
+  },
   "license": "MIT",
+  "author": "AponiaJS contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aponiajs/aponiajs.git",
+    "directory": "packages/platform-elysia"
+  },
   "files": [
     "dist"
   ],

@@ -2,7 +2,17 @@
   "name": "@aponiajs/cli",
   "version": "0.0.0",
   "description": "Bun-native project generator and command-line interface for Aponia.",
+  "homepage": "https://github.com/aponiajs/aponiajs#readme",
+  "bugs": {
+    "url": "https://github.com/aponiajs/aponiajs/issues"
+  },
   "license": "MIT",
+  "author": "AponiaJS contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aponiajs/aponiajs.git",
+    "directory": "packages/cli"
+  },
   "bin": {
     "aponia": "./bin/aponia.ts"
   },

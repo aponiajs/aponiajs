@@ -2,14 +2,32 @@
   "name": "create-aponia",
   "version": "0.0.0",
   "description": "Create a Bun-first Aponia application.",
+  "homepage": "https://github.com/aponiajs/aponiajs#readme",
+  "bugs": {
+    "url": "https://github.com/aponiajs/aponiajs/issues"
+  },
   "license": "MIT",
+  "author": "AponiaJS contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aponiajs/aponiajs.git",
+    "directory": "packages/create-aponia"
+  },
   "bin": {
-    "create-aponia": "./bin/create-aponia.ts"
+    "create-aponia": "./dist/create-aponia.mjs"
   },
   "files": [
-    "bin"
+    "dist"
   ],
   "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "bun build ./bin/create-aponia.ts --target=bun --external @aponiajs/cli --outfile=dist/create-aponia.mjs",
+    "test": "bun test",
+    "prepublishOnly": "bun run build"
+  },
   "dependencies": {
     "@aponiajs/cli": "workspace:*"
   }
