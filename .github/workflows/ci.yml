@@ -92,7 +92,7 @@ jobs:
           name: elysia-overhead-${{ github.run_id }}
           path: |
             .ecc/benchmarks/elysia-overhead.json
-            assets/benchmarks/elysia-overhead.svg
+            assets/benchmarks/elysia-overhead-editor.svg
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 14

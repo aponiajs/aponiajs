@@ -38,7 +38,7 @@ Each run updates:
 
 - `.ecc/benchmarks/elysia-overhead.json` with raw summary statistics and
   environment metadata;
-- `assets/benchmarks/elysia-overhead.svg` with a Vega-rendered report.
+- `assets/benchmarks/elysia-overhead-editor.svg` with a Vega-rendered report.
 
 ## Continuous integration
 

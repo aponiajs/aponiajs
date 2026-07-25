@@ -86,7 +86,7 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
       latencyLabel: `${measurement.latencyMeanMs.toFixed(3)} ms`,
     }));
 
-  const colors = ["#6f7078", "#5f7cf4", "#1348dc"];
+  const colors = ["#73737b", "#8ba2ff", "#1348dc"];
   const sharedColor = {
     field: "implementation",
     type: "nominal" as const,
@@ -105,26 +105,26 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
 
   return {
     $schema: "https://vega.github.io/schema/vega-lite/v6.json",
-    background: "#09090b",
-    padding: 24,
+    background: "#000000",
+    padding: 20,
     title: {
-      text: "benchmark / elysia-overhead",
+      text: "APONIA / PERFORMANCE LAB",
       subtitle: [
-        "Pure Elysia vs Aponia-registered native route vs Aponia wrapper",
-        `${baseline.environment.runtime}  ·  ${baseline.environment.platform}  ·  same process`,
+        "Elysia overhead · reproducible framework benchmark",
+        "Pure runtime → native registration → application wrapper",
       ],
       anchor: "start",
-      color: "#f4f4f5",
+      color: "#ffffff",
       font: "Inter, ui-sans-serif, system-ui",
-      fontSize: 25,
+      fontSize: 30,
       fontWeight: 600,
-      offset: 24,
-      subtitleColor: "#8f8f98",
+      offset: 28,
+      subtitleColor: "#9a9aa2",
       subtitleFont: "ui-monospace, SFMono-Regular, Menlo, monospace",
       subtitleFontSize: 12,
-      subtitlePadding: 8,
+      subtitlePadding: 10,
     },
-    spacing: 26,
+    spacing: 34,
     resolve: {
       scale: {
         color: "independent",
@@ -132,29 +132,117 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
     },
     vconcat: [
       {
-        width: 700,
+        width: 760,
+        height: 64,
+        data: {
+          values: [
+            {
+              workspace: "aponiajs",
+              file: "elysia-overhead.bench.ts",
+              environment: `${baseline.environment.runtime} · ${baseline.environment.platform}`,
+            },
+          ],
+        },
+        layer: [
+          {
+            mark: { type: "rect", color: "#141416" },
+            encoding: {
+              x: { value: 0 },
+              x2: { value: 760 },
+              y: { value: 0 },
+              y2: { value: 64 },
+            },
+          },
+          {
+            mark: { type: "rect", color: "#1f1f22" },
+            encoding: {
+              x: { value: 16 },
+              x2: { value: 270 },
+              y: { value: 30 },
+              y2: { value: 64 },
+            },
+          },
+          {
+            mark: { type: "rect", color: "#1348dc" },
+            encoding: {
+              x: { value: 16 },
+              x2: { value: 270 },
+              y: { value: 62 },
+              y2: { value: 64 },
+            },
+          },
+          {
+            mark: {
+              type: "text",
+              align: "left",
+              baseline: "middle",
+              color: "#ffffff",
+              font: "ui-monospace, SFMono-Regular, Menlo, monospace",
+              fontSize: 11,
+              fontWeight: 600,
+            },
+            encoding: {
+              x: { value: 16 },
+              y: { value: 16 },
+              text: { field: "workspace", type: "nominal" },
+            },
+          },
+          {
+            mark: {
+              type: "text",
+              align: "right",
+              baseline: "middle",
+              color: "#81818a",
+              font: "ui-monospace, SFMono-Regular, Menlo, monospace",
+              fontSize: 10,
+            },
+            encoding: {
+              x: { value: 744 },
+              y: { value: 16 },
+              text: { field: "environment", type: "nominal" },
+            },
+          },
+          {
+            mark: {
+              type: "text",
+              align: "left",
+              baseline: "middle",
+              color: "#d8d8dc",
+              font: "ui-monospace, SFMono-Regular, Menlo, monospace",
+              fontSize: 11,
+            },
+            encoding: {
+              x: { value: 32 },
+              y: { value: 47 },
+              text: { field: "file", type: "nominal" },
+            },
+          },
+        ],
+      },
+      {
+        width: 760,
         height: 150,
         title: {
-          text: "01 / hot-path throughput",
+          text: "BENCHMARK 01  /  HOT-PATH THROUGHPUT",
           subtitle: "Higher is better · response body consumed",
           anchor: "start",
         },
         data: { values: requestMeasurements },
         layer: [
           {
-            mark: { type: "bar", cornerRadiusEnd: 4, height: 24 },
+            mark: { type: "bar", cornerRadiusEnd: 2, height: 20 },
             encoding: {
               x: {
                 field: "throughput",
                 type: "quantitative",
                 axis: {
                   title: "operations per second",
-                  domainColor: "#303036",
-                  gridColor: "#242429",
-                  gridDash: [2, 6],
-                  labelColor: "#8f8f98",
-                  tickColor: "#303036",
-                  titleColor: "#8f8f98",
+                  domainColor: "#333338",
+                  gridColor: "#252529",
+                  gridDash: [1, 5],
+                  labelColor: "#8d8d96",
+                  tickColor: "#333338",
+                  titleColor: "#8d8d96",
                 },
               },
               y: requestYAxis,
@@ -180,29 +268,29 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
         ],
       },
       {
-        width: 700,
+        width: 760,
         height: 150,
         title: {
-          text: "02 / hot-path mean latency",
+          text: "BENCHMARK 02  /  HOT-PATH MEAN LATENCY",
           subtitle: "Lower is better · same request and response",
           anchor: "start",
         },
         data: { values: requestMeasurements },
         layer: [
           {
-            mark: { type: "bar", cornerRadiusEnd: 4, height: 24 },
+            mark: { type: "bar", cornerRadiusEnd: 2, height: 20 },
             encoding: {
               x: {
                 field: "latencyMicroseconds",
                 type: "quantitative",
                 axis: {
                   title: "microseconds",
-                  domainColor: "#303036",
-                  gridColor: "#242429",
-                  gridDash: [2, 6],
-                  labelColor: "#8f8f98",
-                  tickColor: "#303036",
-                  titleColor: "#8f8f98",
+                  domainColor: "#333338",
+                  gridColor: "#252529",
+                  gridDash: [1, 5],
+                  labelColor: "#8d8d96",
+                  tickColor: "#333338",
+                  titleColor: "#8d8d96",
                 },
               },
               y: requestYAxis,
@@ -228,29 +316,29 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
         ],
       },
       {
-        width: 700,
+        width: 760,
         height: 105,
         title: {
-          text: "03 / application startup",
+          text: "BENCHMARK 03  /  APPLICATION STARTUP",
           subtitle: "Route registration vs module graph and container initialization",
           anchor: "start",
         },
         data: { values: startupMeasurements },
         layer: [
           {
-            mark: { type: "bar", cornerRadiusEnd: 4, height: 24 },
+            mark: { type: "bar", cornerRadiusEnd: 2, height: 20 },
             encoding: {
               x: {
                 field: "latencyMilliseconds",
                 type: "quantitative",
                 axis: {
                   title: "milliseconds",
-                  domainColor: "#303036",
-                  gridColor: "#242429",
-                  gridDash: [2, 6],
-                  labelColor: "#8f8f98",
-                  tickColor: "#303036",
-                  titleColor: "#8f8f98",
+                  domainColor: "#333338",
+                  gridColor: "#252529",
+                  gridDash: [1, 5],
+                  labelColor: "#8d8d96",
+                  tickColor: "#333338",
+                  titleColor: "#8d8d96",
                 },
               },
               y: startupYAxis,
@@ -259,7 +347,7 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
                 type: "nominal",
                 scale: {
                   domain: startupMeasurements.map(({ implementation }) => implementation),
-                  range: ["#6f7078", "#1348dc"],
+                  range: ["#73737b", "#1348dc"],
                 },
                 legend: null,
               },
@@ -283,6 +371,60 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
           },
         ],
       },
+      {
+        width: 760,
+        height: 30,
+        data: {
+          values: [
+            {
+              status: "CI REPRODUCIBLE",
+              detail: "same runner · same process · report artifact retained 14 days",
+            },
+          ],
+        },
+        layer: [
+          {
+            mark: { type: "rect", color: "#1348dc" },
+            encoding: {
+              x: { value: 0 },
+              x2: { value: 760 },
+              y: { value: 0 },
+              y2: { value: 30 },
+            },
+          },
+          {
+            mark: {
+              type: "text",
+              align: "left",
+              baseline: "middle",
+              color: "#ffffff",
+              font: "ui-monospace, SFMono-Regular, Menlo, monospace",
+              fontSize: 10,
+              fontWeight: 600,
+            },
+            encoding: {
+              x: { value: 14 },
+              y: { value: 15 },
+              text: { field: "status", type: "nominal" },
+            },
+          },
+          {
+            mark: {
+              type: "text",
+              align: "right",
+              baseline: "middle",
+              color: "#ffffff",
+              font: "ui-monospace, SFMono-Regular, Menlo, monospace",
+              fontSize: 10,
+            },
+            encoding: {
+              x: { value: 746 },
+              y: { value: 15 },
+              text: { field: "detail", type: "nominal" },
+            },
+          },
+        ],
+      },
     ],
     config: {
       axis: {
@@ -290,19 +432,19 @@ export function createChartSpec(baseline: BenchmarkBaseline): TopLevelSpec {
         titleFont: "ui-monospace, SFMono-Regular, Menlo, monospace",
       },
       title: {
-        color: "#f4f4f5",
-        font: "Inter, ui-sans-serif, system-ui",
-        fontSize: 15,
+        color: "#ffffff",
+        font: "ui-monospace, SFMono-Regular, Menlo, monospace",
+        fontSize: 13,
         fontWeight: 600,
-        subtitleColor: "#8f8f98",
+        subtitleColor: "#8d8d96",
         subtitleFont: "ui-monospace, SFMono-Regular, Menlo, monospace",
-        subtitleFontSize: 12,
+        subtitleFontSize: 11,
         subtitlePadding: 5,
       },
       view: {
-        cornerRadius: 6,
-        fill: "#111114",
-        stroke: "#2a2a30",
+        cornerRadius: 0,
+        fill: "#101012",
+        stroke: "#29292e",
         strokeWidth: 1,
       },
     },
@@ -358,7 +500,7 @@ function createImplementationAxis(order: readonly string[]): PositionFieldDef<st
     sort: [...order],
     axis: {
       title: null,
-      labelColor: "#d4d4d8",
+      labelColor: "#d8d8dc",
       labelFontSize: 13,
       labelFontWeight: 500,
       labelPadding: 10,
