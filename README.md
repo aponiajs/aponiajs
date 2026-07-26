@@ -87,24 +87,6 @@ await application.listen(3000);
 - **Actionable diagnostics** — module cycles, missing exports, duplicate
   providers, and ambiguous dependencies fail clearly.
 
-## Performance study
-
-Aponia is evaluated with
-[`SaltyAom/bun-http-framework-benchmark`](https://github.com/SaltyAom/bun-http-framework-benchmark)
-as the primary HTTP benchmark. The study retains the upstream runner,
-Bombardier configuration, correctness checks, and three workloads: a static
-response, path-and-query extraction, and JSON parsing.
-
-The CI publication contains no generated charts or images. Inspect the
-[raw comparison table](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/bun-http-framework-benchmark/results/results.md?v=0.3.21),
-the [raw Aponia runner output](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/bun-http-framework-benchmark/results/bun/aponia.txt?v=0.3.21),
-and the [experimental environment](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/bun-http-framework-benchmark/environment.json?v=0.3.21).
-Absolute throughput is machine-specific; interpret comparisons only when both
-treatments were measured in the same run.
-
-The [research protocol](./benchmarks/README.md) documents the question,
-experimental design, reproduction procedure, raw variables, and limitations.
-
 ## Generate
 
 Install the published CLI and generate components with Nest-style commands:

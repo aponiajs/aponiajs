@@ -1,8 +1,6 @@
 node_modules
 dist
 .tmp
-.benchmark-output/
-.benchmark-work/
 *.log
 .DS_Store
 !.vscode/

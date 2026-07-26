@@ -8,7 +8,7 @@
     "description": "A Bun-first, Nest-inspired application framework built around Elysia.",
     "repository": "https://github.com/aponiajs/aponiajs",
     "defaultBranch": "main",
-    "currentVersion": "0.3.21",
+    "currentVersion": "0.3.22",
     "runtime": "Bun 1.3.14",
     "packageManager": "Bun 1.3.14",
     "sourceCommit": "8e14611f2ccdeaccbe6fb5eac82e2b04ee36f770"
@@ -34,11 +34,11 @@
     }
   },
   "summary": {
-    "total": 29,
-    "completed": 12,
+    "total": 28,
+    "completed": 11,
     "inProgress": 2,
     "planned": 15,
-    "completionPercent": 45.17
+    "completionPercent": 43.21
   },
   "milestones": [
     {
@@ -77,13 +77,12 @@
     {
       "id": "milestone-release-quality",
       "title": "Release quality",
-      "description": "Repeatable performance evidence, dependency maintenance, foundation hardening, and release-candidate gates.",
+      "description": "Dependency maintenance, foundation hardening, and release-candidate gates.",
       "order": 3,
       "status": "in_progress",
-      "progressPercent": 52.5,
+      "progressPercent": 36.67,
       "targetVersion": "0.5.0",
       "itemIds": [
-        "ci-benchmark-publication",
         "foundation-stabilization",
         "dependency-maintenance",
         "foundation-release-candidate"
@@ -456,41 +455,6 @@
       "tags": ["npm", "semver", "release"]
     },
     {
-      "id": "ci-benchmark-publication",
-      "milestoneId": "milestone-release-quality",
-      "title": "Upstream HTTP benchmark and raw publication",
-      "description": "Compare Elysia and Aponia with the SaltyAom bun-http-framework-benchmark protocol and publish raw text plus environment metadata from CI.",
-      "status": "completed",
-      "progressPercent": 100,
-      "priority": "high",
-      "category": "quality",
-      "packages": ["@aponiajs/platform-elysia"],
-      "dependencies": ["minimal-elysia-adapter", "automated-version-and-publish-flow"],
-      "deliverables": [
-        "Upstream Ping, Query, and Body workloads",
-        "Raw upstream and Bombardier output",
-        "Versioned environment metadata and raw comparison table"
-      ],
-      "evidence": [
-        {
-          "kind": "pull_request",
-          "label": "CI-only benchmark artifacts",
-          "ref": "https://github.com/aponiajs/aponiajs/pull/25"
-        },
-        {
-          "kind": "workflow",
-          "label": "Benchmark CI job",
-          "ref": ".github/workflows/ci.yml"
-        }
-      ],
-      "acceptanceCriteria": [
-        "A successful main-branch CI run publishes raw Aponia and Elysia results without generated benchmark images."
-      ],
-      "nextActions": [],
-      "updatedAt": "2026-07-26",
-      "tags": ["benchmark", "ci", "bombardier"]
-    },
-    {
       "id": "published-package-documentation",
       "milestoneId": "milestone-developer-experience",
       "title": "Published package documentation",
@@ -636,9 +600,7 @@
           "ref": "https://github.com/aponiajs/aponiajs/pull/21"
         }
       ],
-      "acceptanceCriteria": [
-        "Dependency pull requests pass version, test, build, and benchmark checks."
-      ],
+      "acceptanceCriteria": ["Dependency pull requests pass version, test, and build checks."],
       "nextActions": [
         "Resolve the missing version bump in PR 21.",
         "Review the bumpp major update in PR 3 before merge."

@@ -789,8 +789,7 @@ packages/
 apps/
 |-- examples-basic/
 |-- examples-auth/
-|-- examples-openapi/
-`-- benchmarks/
+`-- examples-openapi/
 ```
 
 Every package contains:
@@ -1257,7 +1256,7 @@ Context: Syntax sugar cannot add runtime capabilities.
 
 Tasks: Emit immutable functional descriptors for modules, providers, controllers,
 routes, injection, and lifecycle.  
-Verify: Functional parity, declarations, and bootstrap benchmark.  
+Verify: Functional parity, declarations, and bootstrap tests.
 Exit: No runtime reflection scan and no decorator-only behavior.  
 Rollback: Do not publish the optional package.
 
@@ -1298,7 +1297,7 @@ Context: Publish the stable HTTP foundation before additional transports.
 
 Tasks: Run API signature, compatibility, native Elysia plugin, security,
 performance, registry, provenance, and clean-consumer reviews.  
-Verify: Registry smoke tests, SBOM, attestation, audits, and benchmark thresholds.  
+Verify: Registry smoke tests, SBOM, attestation, and audits.
 Exit: No unresolved critical or high finding and no package graph violation.  
 Rollback: Keep release-candidate tags and do not promote stable.
 
