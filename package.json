@@ -1,6 +1,6 @@
 {
   "name": "aponiajs-workspace",
-  "version": "0.3.21",
+  "version": "0.3.22",
   "private": true,
   "description": "Bun-first application architecture powered by Elysia.",
   "license": "MIT",
