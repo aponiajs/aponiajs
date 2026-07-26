@@ -11,6 +11,7 @@
         "ajv": "^8.20.0",
         "bumpp": "^11.1.0",
         "elysia": "^1.4.29",
+        "jsonc-parser": "^3.3.1",
         "mitata": "^1.0.34",
         "simple-statistics": "^7.9.3",
         "typescript": "^7.0.2",
@@ -32,11 +33,11 @@
     },
     "packages/aponiajs": {
       "name": "aponiajs",
-      "version": "0.3.16",
+      "version": "0.3.18",
     },
     "packages/cli": {
       "name": "@aponiajs/cli",
-      "version": "0.3.16",
+      "version": "0.3.18",
       "bin": {
         "aponia": "./bin/aponia.ts",
       },
@@ -53,21 +54,21 @@
     },
     "packages/common": {
       "name": "@aponiajs/common",
-      "version": "0.3.16",
+      "version": "0.3.18",
       "dependencies": {
         "reflect-metadata": "^0.2.2",
       },
     },
     "packages/core": {
       "name": "@aponiajs/core",
-      "version": "0.3.16",
+      "version": "0.3.18",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
       },
     },
     "packages/create-aponia": {
       "name": "create-aponia",
-      "version": "0.3.16",
+      "version": "0.3.18",
       "bin": {
         "create-aponia": "./bin/create-aponia.ts",
       },
@@ -77,7 +78,7 @@
     },
     "packages/platform-elysia": {
       "name": "@aponiajs/platform-elysia",
-      "version": "0.3.16",
+      "version": "0.3.18",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/core": "workspace:*",

@@ -7,6 +7,7 @@ import {
   provideClass,
   provideFactory,
   provideValue,
+  type ControllerDefinition,
   type ModuleDefinition,
 } from "@aponiajs/common";
 import { compileModuleGraph, createContainer } from "../src/index.ts";
@@ -99,6 +100,62 @@ describe("@aponiajs/core module graph", () => {
       expect.objectContaining({ code: "AMBIGUOUS_PROVIDER" }),
     );
   });
+
+  test("deduplicates diamond exports by source module", () => {
+    const value = createToken<number>("diamond-value");
+    const source = defineModule({
+      id: "diamond-source",
+      providers: [provideValue(value, 1)],
+      exports: [value],
+    });
+    const left = defineModule({
+      id: "diamond-left",
+      imports: [source],
+      exports: [value],
+    });
+    const right = defineModule({
+      id: "diamond-right",
+      imports: [source],
+      exports: [value],
+    });
+    const result = createToken<number>("diamond-result");
+    const root = defineModule({
+      id: "diamond-root",
+      imports: [left, right],
+      providers: [provideFactory(result, [value] as const, (item) => item)],
+      exports: [result],
+    });
+
+    const graph = compileModuleGraph(root);
+
+    expect(graph.locate(root, value).module).toBe(source);
+    expect(createContainer(root).get(result)).toBe(1);
+  });
+
+  test("treats a shared provider descriptor in two modules as ambiguous", () => {
+    const value = createToken<number>("shared-descriptor-value");
+    const sharedProvider = provideValue(value, 1);
+    const left = defineModule({
+      id: "shared-descriptor-left",
+      providers: [sharedProvider],
+      exports: [value],
+    });
+    const right = defineModule({
+      id: "shared-descriptor-right",
+      providers: [sharedProvider],
+      exports: [value],
+    });
+    const result = createToken<number>("shared-descriptor-result");
+    const root = defineModule({
+      id: "shared-descriptor-root",
+      imports: [left, right],
+      providers: [provideFactory(result, [value] as const, (item) => item)],
+    });
+
+    expect(() => compileModuleGraph(root)).toThrow(
+      expect.objectContaining({ code: "AMBIGUOUS_PROVIDER" }),
+    );
+  });
 });
 
 describe("@aponiajs/core singleton container", () => {
@@ -163,5 +220,53 @@ describe("@aponiajs/core singleton container", () => {
     expect(() => createContainer(module).get(first)).toThrow(
       expect.objectContaining({ code: "PROVIDER_CYCLE" }),
     );
+  });
+
+  test("keeps shared provider and controller definitions local to each module", () => {
+    const localValue = createToken<string>("local-value");
+    const result = createToken<{ readonly value: string }>("result");
+    const sharedProvider = provideFactory(result, [localValue] as const, (value) => ({
+      value,
+    }));
+
+    class SharedController {
+      constructor(readonly resultValue: { readonly value: string }) {}
+    }
+
+    const sharedController: ControllerDefinition = {
+      kind: "test",
+      token: SharedController,
+      inject: [result],
+      useClass: SharedController as never,
+    };
+    const left = defineModule({
+      id: "left-local",
+      providers: [provideValue(localValue, "left"), sharedProvider],
+      controllers: [sharedController],
+    });
+    const right = defineModule({
+      id: "right-local",
+      providers: [provideValue(localValue, "right"), sharedProvider],
+      controllers: [sharedController],
+    });
+    const root = defineModule({
+      id: "shared-definitions-root",
+      imports: [left, right],
+    });
+
+    const container = createContainer(root);
+    const leftController = container.instantiateController<SharedController>(
+      left,
+      sharedController,
+    );
+    const rightController = container.instantiateController<SharedController>(
+      right,
+      sharedController,
+    );
+
+    expect(leftController).not.toBe(rightController);
+    expect(leftController.resultValue).not.toBe(rightController.resultValue);
+    expect(leftController.resultValue.value).toBe("left");
+    expect(rightController.resultValue.value).toBe("right");
   });
 });

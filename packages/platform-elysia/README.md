@@ -20,12 +20,12 @@ The first Elysia platform slice for Aponia:
 - `handle`, `listen`, and `close` application methods.
 
 This package intentionally does not yet implement request scopes, lifecycle
-enhancers, schema aggregation, or the complete native-plugin compatibility
+enhancers, schema aggregation, or the complete module-level native-plugin
 contract from the roadmap.
 
-The decorator API is the default application authoring surface. The
-`defineElysiaController` API remains available as a low-level escape hatch for
-composing existing Elysia plugins without rewriting them.
+The decorator API is the default application authoring surface.
+`defineElysiaController` remains available as a low-level escape hatch for
+controller factories.
 
 See `docs/logging.md` for logger configuration, JSON output, level filtering,
 and custom logger integration.
@@ -40,6 +40,28 @@ class AppModule {}
 const application = await AponiaFactory.create(AppModule);
 await application.listen(3000);
 ```
+
+## Native Elysia plugins
+
+Use existing Elysia plugins without an Aponia adapter:
+
+```bash
+bun add @elysiajs/cors
+```
+
+```ts
+import { cors } from "@elysiajs/cors";
+
+const application = await AponiaFactory.create(AppModule, {
+  configureNative: (elysia) => elysia.use(cors()),
+});
+```
+
+`configureNative` receives the real Elysia application before Aponia mounts its
+controllers. Use Elysia's own `.use()` API for instance, functional, array, and
+lazy plugins; no adapter or route copying is involved. Return the same
+application so Elysia's plugin types remain available from
+`application.getNativeApplication()`.
 
 [npm package](https://www.npmjs.com/package/@aponiajs/platform-elysia) ·
 [complete package catalog](../../docs/packages.md)

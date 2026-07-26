@@ -16,8 +16,8 @@ import {
 export class AponiaContainer {
   readonly graph: ModuleGraph;
 
-  readonly #instances = new Map<Provider, unknown>();
-  readonly #controllers = new Map<ControllerDefinition, unknown>();
+  readonly #instances = new Map<ModuleDefinition, Map<Provider, unknown>>();
+  readonly #controllers = new Map<ModuleDefinition, Map<ControllerDefinition, unknown>>();
   readonly #resolving: ProviderLocation[] = [];
 
   constructor(graph: ModuleGraph) {
@@ -36,24 +36,28 @@ export class AponiaContainer {
   }
 
   instantiateController<T>(module: ModuleDefinition, controller: ControllerDefinition): T {
-    if (this.#controllers.has(controller)) {
-      return this.#controllers.get(controller) as T;
+    const moduleControllers = this.#controllers.get(module);
+    if (moduleControllers?.has(controller)) {
+      return moduleControllers.get(controller) as T;
     }
 
     const dependencies = controller.inject.map((dependency) =>
       this.#resolve(this.graph.locate(module, dependency)),
     );
     const instance = Reflect.construct(controller.useClass, dependencies) as T;
-    this.#controllers.set(controller, instance);
+    this.#moduleCache(this.#controllers, module).set(controller, instance);
     return instance;
   }
 
   #resolve(location: ProviderLocation): unknown {
-    if (this.#instances.has(location.provider)) {
-      return this.#instances.get(location.provider);
+    const moduleInstances = this.#instances.get(location.module);
+    if (moduleInstances?.has(location.provider)) {
+      return moduleInstances.get(location.provider);
     }
 
-    const cycleIndex = this.#resolving.findIndex((item) => item.provider === location.provider);
+    const cycleIndex = this.#resolving.findIndex(
+      (item) => item.module === location.module && item.provider === location.provider,
+    );
     if (cycleIndex >= 0) {
       const cycle = [...this.#resolving.slice(cycleIndex), location].map(
         (item) => `${item.module.id}:${tokenName(item.provider.provide)}`,
@@ -71,11 +75,23 @@ export class AponiaContainer {
         this.#resolve(this.graph.locate(location.module, dependency)),
       );
       const instance = instantiate(location.provider, dependencies);
-      this.#instances.set(location.provider, instance);
+      this.#moduleCache(this.#instances, location.module).set(location.provider, instance);
       return instance;
     } finally {
       this.#resolving.pop();
     }
+  }
+
+  #moduleCache<TKey extends object>(
+    cache: Map<ModuleDefinition, Map<TKey, unknown>>,
+    module: ModuleDefinition,
+  ): Map<TKey, unknown> {
+    let moduleCache = cache.get(module);
+    if (!moduleCache) {
+      moduleCache = new Map();
+      cache.set(module, moduleCache);
+    }
+    return moduleCache;
   }
 }
 

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { updateBenchmarkVersionReferences } from "./sync-version-references.ts";
 
 const cliDocumentation = [
   "README.md",
@@ -20,6 +21,15 @@ describe("CLI documentation", () => {
 });
 
 describe("benchmark documentation", () => {
+  test("synchronizes both benchmark links without changing other content", () => {
+    const document =
+      "chart: benchmark-results/elysia-overhead.svg?v=0.3.17\njson: benchmark-results/elysia-overhead.json?v=0.3.17\n";
+
+    expect(updateBenchmarkVersionReferences(document, "0.3.18")).toBe(
+      "chart: benchmark-results/elysia-overhead.svg?v=0.3.18\njson: benchmark-results/elysia-overhead.json?v=0.3.18\n",
+    );
+  });
+
   test("uses only the versioned CI benchmark in the public README", async () => {
     const [readme, benchmarkReadme, workspaceManifest] = await Promise.all([
       Bun.file("README.md").text(),
