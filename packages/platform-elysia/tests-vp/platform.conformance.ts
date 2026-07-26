@@ -1,5 +1,6 @@
 import { Controller, Get, Injectable, Module } from "@aponiajs/common";
-import { AponiaFactory } from "../src/index.ts";
+import { Elysia } from "elysia";
+import { AponiaFactory, type ConfiguredAponiaApplicationOptions } from "../src/index.ts";
 
 type VitePlusTest = typeof import("vite-plus/test");
 
@@ -35,10 +36,19 @@ class HealthServicesModule {}
 })
 class HealthModule {}
 
+function configureNative(nativeApplication: Elysia) {
+  return nativeApplication.state("aponiaVersion", "typed" as const);
+}
+
 test("the Vite+ lane mounts a controller from module metadata", async () => {
-  const application = await AponiaFactory.create(HealthModule, { logger: false });
+  const options: ConfiguredAponiaApplicationOptions<ReturnType<typeof configureNative>> = {
+    logger: false,
+    configureNative,
+  };
+  const application = await AponiaFactory.create(HealthModule, options);
   const response = await application.handle(new Request("http://localhost/health"));
 
   expect(await response.text()).toBe("ok");
+  expect(application.getNativeApplication().store.aponiaVersion).toBe("typed");
   await application.close();
 });

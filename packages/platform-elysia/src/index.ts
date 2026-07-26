@@ -2,6 +2,8 @@ export {
   AponiaElysiaApplication,
   AponiaFactory,
   type AponiaApplicationOptions,
+  type ConfiguredAponiaApplicationOptions,
+  type NativeElysiaConfigurator,
 } from "./application.ts";
 export { compileRootModule, type AponiaRootModule } from "./decorated-module.ts";
 export {
