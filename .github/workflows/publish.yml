@@ -69,6 +69,7 @@ jobs:
           bun test
           bun run test:vite-plus
           bun run build
+          bun run test:generated-app
 
       - name: Verify release version
         env:
@@ -77,12 +78,12 @@ jobs:
 
       - name: Pack publishable workspaces
         run: |
-          mkdir release-artifacts
-          bun pm pack --cwd packages/common --filename release-artifacts/01-common.tgz
-          bun pm pack --cwd packages/core --filename release-artifacts/02-core.tgz
-          bun pm pack --cwd packages/platform-elysia --filename release-artifacts/03-platform-elysia.tgz
-          bun pm pack --cwd packages/cli --filename release-artifacts/04-cli.tgz
-          bun pm pack --cwd packages/create-aponia --filename release-artifacts/05-create-aponia.tgz
+          mkdir -p release-artifacts/{01-common,02-core,03-platform-elysia,04-cli,05-create-aponia}
+          bun pm pack --cwd packages/common --destination "$GITHUB_WORKSPACE/release-artifacts/01-common"
+          bun pm pack --cwd packages/core --destination "$GITHUB_WORKSPACE/release-artifacts/02-core"
+          bun pm pack --cwd packages/platform-elysia --destination "$GITHUB_WORKSPACE/release-artifacts/03-platform-elysia"
+          bun pm pack --cwd packages/cli --destination "$GITHUB_WORKSPACE/release-artifacts/04-cli"
+          bun pm pack --cwd packages/create-aponia --destination "$GITHUB_WORKSPACE/release-artifacts/05-create-aponia"
 
       - name: Publish packages in dependency order
         working-directory: ${{ runner.temp }}
@@ -90,6 +91,6 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_TAG: ${{ inputs.tag || 'latest' }}
         run: |
-          for archive in "$GITHUB_WORKSPACE"/release-artifacts/*.tgz; do
+          for archive in "$GITHUB_WORKSPACE"/release-artifacts/*/*.tgz; do
             npm publish "$archive" --access public --tag "$NPM_TAG" --provenance
           done

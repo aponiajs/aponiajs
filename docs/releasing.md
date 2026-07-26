@@ -40,7 +40,8 @@ bun run version:major
 ```
 
 These commands update every package manifest, refresh Bun's dependency
-lockfile, and verify that package versions remain synchronized. Commit the
+lockfile, synchronize the versions Bun uses when packing internal workspace
+dependencies, and verify that package versions remain synchronized. Commit the
 generated changes with the rest of the work.
 
 CI compares the pushed version with the previous push (or pull request base) and
@@ -53,10 +54,12 @@ merging into `main`.
 1. Select a patch, minor, or major increment with the matching `version:*`
    command.
 2. Run `bun run release:dry-run` when package contents changed.
-3. Push the commit and let CI validate the SemVer increase.
-4. Merge the pull request into `main`.
-5. The release workflow creates the matching `vX.Y.Z` tag and GitHub release.
-6. The npm publish workflow verifies, builds, packs, and publishes the five
+3. Run `bun run test:generated-app` to verify the packed CLI and generated
+   application lifecycle.
+4. Push the commit and let CI validate the SemVer increase.
+5. Merge the pull request into `main`.
+6. The release workflow creates the matching `vX.Y.Z` tag and GitHub release.
+7. The npm publish workflow verifies, builds, packs, and publishes the five
    usable packages in dependency order.
 
 Do not edit package versions or create release tags by hand.

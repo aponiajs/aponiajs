@@ -1,4 +1,5 @@
 import { applyEdits, modify } from "jsonc-parser";
+import { updateWorkspaceLockVersions } from "./workspace-versions.ts";
 
 const benchmarkVersionPattern =
   /(benchmark-results\/elysia-overhead\.(?:svg|json)\?v=)[0-9A-Za-z.+-]+/g;
@@ -32,6 +33,7 @@ export async function synchronizeVersionReferences(
   manifestPath = "package.json",
   roadmapPath = "roadmap/roadmap.json",
   readmePaths: readonly string[] = ["README.md", "benchmarks/README.md"],
+  lockfilePath = "bun.lock",
 ): Promise<void> {
   const manifest = (await Bun.file(manifestPath).json()) as {
     readonly version?: unknown;
@@ -47,6 +49,9 @@ export async function synchronizeVersionReferences(
     const readme = await Bun.file(readmePath).text();
     await Bun.write(readmePath, updateBenchmarkVersionReferences(readme, manifest.version));
   }
+
+  const lockfile = await Bun.file(lockfilePath).text();
+  await Bun.write(lockfilePath, updateWorkspaceLockVersions(lockfile, manifest.version));
 
   console.log(`Synchronized release references for ${manifest.version}.`);
 }

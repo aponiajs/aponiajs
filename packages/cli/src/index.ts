@@ -1,7 +1,7 @@
-import cliManifest from "../package.json" with { type: "json" };
 import { parseArguments } from "./arguments.ts";
 import { generateProject } from "./project-generator.ts";
 import { generateSchematic } from "./schematic-generator.ts";
+import { aponiaVersion } from "./version.ts";
 
 export {
   generateSchematics,
@@ -33,7 +33,7 @@ export async function runCli(arguments_: readonly string[]): Promise<number> {
     }
 
     if (command.command === "version") {
-      console.log(cliManifest.version);
+      console.log(aponiaVersion);
       return 0;
     }
 

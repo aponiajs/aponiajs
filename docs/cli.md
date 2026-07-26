@@ -58,6 +58,8 @@ internal-tools
 ```
 
 The generator refuses to overwrite an existing target directory.
+Generated manifests pin Aponia runtime packages to the CLI version so decorators
+and runtime packages cannot drift to different releases.
 
 ## Generate
 
@@ -177,7 +179,8 @@ artificial `src/modules/app` directory.
 - Template output is deterministic and sorted.
 - Process arguments are passed to `Bun.spawn` as an array.
 - Installation uses the Bun executable and inherits terminal streams.
-- Installation failure returns a nonzero CLI result.
+- Installation failure returns a nonzero CLI result and removes the incomplete
+  generated directory.
 
 See the [published package catalog](./packages.md) for all AponiaJS npm
 packages.

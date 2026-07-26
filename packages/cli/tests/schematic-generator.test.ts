@@ -1,13 +1,27 @@
-import { expect, test } from "bun:test";
-import { mkdtemp, mkdir } from "node:fs/promises";
-import { join } from "node:path";
+import { afterEach, expect, test } from "bun:test";
+import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
   generateSchematic,
   generateSchematics,
   parseArguments,
   type GenerateSchematic,
 } from "../src/index.ts";
+import { aponiaVersion } from "../src/version.ts";
+
+const temporaryDirectories: string[] = [];
+
+afterEach(async () => {
+  await Promise.all(
+    temporaryDirectories.splice(0).map((directory) =>
+      rm(directory, {
+        recursive: true,
+        force: true,
+      }),
+    ),
+  );
+});
 
 const expectedPrimaryFiles: Readonly<
   Record<Exclude<GenerateSchematic, "app" | "library">, string>
@@ -90,6 +104,46 @@ test("generates every component and resource schematic", async () => {
     expect(result.changes.map((change) => change.path)).toContain(expectedFile);
     expect(await Bun.file(join(projectRoot, expectedFile)).exists()).toBe(true);
   }
+});
+
+test("generates application and library workspaces with synchronized dependencies", async () => {
+  const projectRoot = await createProjectRoot("aponia-workspace-schematics-");
+
+  await generateSchematic({
+    command: "generate",
+    schematic: "app",
+    name: "admin-api",
+    dryRun: false,
+    skipImport: false,
+    crud: true,
+    type: "rest",
+    cwd: projectRoot,
+  });
+  await generateSchematic({
+    command: "generate",
+    schematic: "library",
+    name: "shared-utils",
+    dryRun: false,
+    skipImport: false,
+    crud: true,
+    type: "rest",
+    cwd: projectRoot,
+  });
+
+  const applicationManifest = (await Bun.file(
+    join(projectRoot, "apps/admin-api/package.json"),
+  ).json()) as {
+    readonly dependencies: Readonly<Record<string, string>>;
+  };
+  const libraryManifest = (await Bun.file(
+    join(projectRoot, "packages/shared-utils/package.json"),
+  ).json()) as {
+    readonly dependencies: Readonly<Record<string, string>>;
+  };
+
+  expect(applicationManifest.dependencies["@aponiajs/common"]).toBe(aponiaVersion);
+  expect(applicationManifest.dependencies["@aponiajs/platform-elysia"]).toBe(aponiaVersion);
+  expect(libraryManifest.dependencies["@aponiajs/common"]).toBe(aponiaVersion);
 });
 
 test("registers controllers, providers, and feature modules in the nearest module", async () => {
@@ -286,6 +340,7 @@ test("dry-run reports changes without modifying files", async () => {
 
 async function createProjectRoot(prefix: string): Promise<string> {
   const projectRoot = await mkdtemp(join(tmpdir(), prefix));
+  temporaryDirectories.push(projectRoot);
   await mkdir(join(projectRoot, "src"), { recursive: true });
   await Bun.write(
     join(projectRoot, "aponia.json"),

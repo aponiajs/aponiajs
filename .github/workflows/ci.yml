@@ -59,6 +59,9 @@ jobs:
       - name: Build workspace packages
         run: bun run build
 
+      - name: Verify a packaged generated application
+        run: bun run test:generated-app
+
   benchmark:
     name: Elysia overhead
     runs-on: ubuntu-latest
