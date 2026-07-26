@@ -46,3 +46,40 @@ describe("@aponiajs/common", () => {
     expect(logger.isLevelEnabled("log")).toBe(false);
   });
 });
+
+test("shares decorator metadata across separate common package instances", async () => {
+  type DecoratorsModule = typeof import("../src/decorators.ts");
+
+  const decoratorsUrl = new URL("../src/decorators.ts", import.meta.url);
+  const first = (await import(`${decoratorsUrl.href}?instance=first`)) as DecoratorsModule;
+  const second = (await import(`${decoratorsUrl.href}?instance=second`)) as DecoratorsModule;
+
+  class SharedModule {}
+  class SharedController {
+    handle(): string {
+      return "ok";
+    }
+  }
+  class SharedDependency {}
+  class SharedConsumer {}
+
+  first.Module({ controllers: [SharedController] })(SharedModule);
+  first.Controller("shared")(SharedController);
+  first.Get("health")(
+    SharedController.prototype,
+    "handle",
+    Object.getOwnPropertyDescriptor(SharedController.prototype, "handle")!,
+  );
+  first.Inject(SharedDependency)(SharedConsumer, undefined, 0);
+
+  expect(second.getModuleMetadata(SharedModule)?.controllers).toEqual([SharedController]);
+  expect(second.getControllerMetadata(SharedController)?.path).toBe("shared");
+  expect(second.getRouteMetadata(SharedController)).toEqual([
+    {
+      method: "GET",
+      path: "health",
+      propertyKey: "handle",
+    },
+  ]);
+  expect(second.getConstructorDependencies(SharedConsumer)).toEqual([SharedDependency]);
+});

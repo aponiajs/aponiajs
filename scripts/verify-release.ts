@@ -1,18 +1,10 @@
-const packageFiles = [
-  "package.json",
-  "packages/aponiajs/package.json",
-  "packages/cli/package.json",
-  "packages/common/package.json",
-  "packages/core/package.json",
-  "packages/create-aponia/package.json",
-  "packages/platform-elysia/package.json",
-] as const;
+import { assertWorkspaceLockVersions, versionedPackageFiles } from "./workspace-versions.ts";
 
 const semverPattern =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
 
 const versions = await Promise.all(
-  packageFiles.map(async (file) => {
+  versionedPackageFiles.map(async (file) => {
     const manifest = (await Bun.file(file).json()) as { version?: unknown };
     if (typeof manifest.version !== "string") {
       throw new Error(`${file} does not declare a version.`);
@@ -32,6 +24,8 @@ const [version] = uniqueVersions;
 if (!version || !semverPattern.test(version)) {
   throw new Error(`${version ?? "undefined"} is not a valid SemVer version.`);
 }
+
+assertWorkspaceLockVersions(await Bun.file("bun.lock").text(), version);
 
 const expectedVersion = Bun.env.RELEASE_VERSION?.replace(/^v/, "");
 if (expectedVersion && version !== expectedVersion) {

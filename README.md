@@ -96,7 +96,7 @@ measured separately from the hot request path.
 <div align="center">
 
 <img
-  src="https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.svg?v=0.3.19"
+  src="https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.svg?v=0.3.20"
   alt="CI benchmark comparing Elysia and Aponia throughput, request latency percentiles, startup latency, stability, and sample size"
   width="960"
 />
@@ -112,7 +112,7 @@ Only the CI result is presented here; developer-machine output is never used as
 the public benchmark.
 
 Review the [methodology and reproduction commands](./benchmarks/README.md), the
-[latest CI JSON report](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.json?v=0.3.19),
+[latest CI JSON report](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.json?v=0.3.20),
 or the corresponding GitHub Actions artifact.
 
 ## Generate

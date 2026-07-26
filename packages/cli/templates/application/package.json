@@ -12,9 +12,8 @@
     "check": "vp check"
   },
   "dependencies": {
-    "@aponiajs/common": "latest",
-    "@aponiajs/core": "latest",
-    "@aponiajs/platform-elysia": "latest",
+    "@aponiajs/common": "{{APONIA_VERSION}}",
+    "@aponiajs/platform-elysia": "{{APONIA_VERSION}}",
     "elysia": "^1.4.29"
   },
   "devDependencies": {

@@ -1,6 +1,6 @@
 {
   "name": "aponiajs-workspace",
-  "version": "0.3.19",
+  "version": "0.3.20",
   "private": true,
   "description": "Bun-first application architecture powered by Elysia.",
   "license": "MIT",
@@ -21,6 +21,7 @@
     "example:basic": "bun run --cwd examples/basic-foundation start",
     "roadmap:validate": "bun test scripts/roadmap.spec.ts",
     "test": "bun run --workspaces test",
+    "test:generated-app": "bun test ./packages/cli/e2e/generated-application.e2e.ts",
     "test:vite-plus": "vp test",
     "check": "vp check",
     "doctor": "vp env doctor",

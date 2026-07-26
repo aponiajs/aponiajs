@@ -10,6 +10,7 @@ import {
 } from "./component-names.ts";
 import { registerInModule, type ModuleRegistrationKind } from "./module-registration.ts";
 import { generateProject } from "./project-generator.ts";
+import { aponiaVersion } from "./version.ts";
 
 export interface GenerateSchematicOptions extends GenerateCommandOptions {
   readonly cwd?: string;
@@ -310,7 +311,7 @@ async function generateLibrary(
             test: "bun test",
           },
           dependencies: {
-            "@aponiajs/common": "latest",
+            "@aponiajs/common": aponiaVersion,
           },
         },
         undefined,
