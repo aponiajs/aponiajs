@@ -1,6 +1,6 @@
 {
   "name": "aponiajs-workspace",
-  "version": "0.3.20",
+  "version": "0.3.21",
   "private": true,
   "description": "Bun-first application architecture powered by Elysia.",
   "license": "MIT",
@@ -14,8 +14,8 @@
     "examples/*"
   ],
   "scripts": {
-    "benchmark:elysia": "bun run build && bun run benchmark:elysia:run",
-    "benchmark:elysia:run": "bun benchmarks/elysia-overhead/benchmark.ts",
+    "benchmark:upstream": "bun run build && bun run benchmark:upstream:run",
+    "benchmark:upstream:run": "bun benchmarks/bun-http-framework-benchmark/run.ts",
     "build": "bun run --workspaces build",
     "dev": "bun run --filter aponiajs dev",
     "example:basic": "bun run --cwd examples/basic-foundation start",
@@ -42,11 +42,8 @@
     "bumpp": "^11.1.0",
     "elysia": "^1.4.29",
     "jsonc-parser": "^3.3.1",
-    "mitata": "^1.0.34",
-    "simple-statistics": "^7.9.3",
+    "kill-port": "^2.0.1",
     "typescript": "^7.0.2",
-    "vega": "^6.3.1",
-    "vega-lite": "^6.4.3",
     "vite": "npm:@voidzero-dev/vite-plus-core@0.2.6",
     "vite-plus": "^0.2.4"
   },

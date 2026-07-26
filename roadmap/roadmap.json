@@ -8,7 +8,7 @@
     "description": "A Bun-first, Nest-inspired application framework built around Elysia.",
     "repository": "https://github.com/aponiajs/aponiajs",
     "defaultBranch": "main",
-    "currentVersion": "0.3.20",
+    "currentVersion": "0.3.21",
     "runtime": "Bun 1.3.14",
     "packageManager": "Bun 1.3.14",
     "sourceCommit": "8e14611f2ccdeaccbe6fb5eac82e2b04ee36f770"
@@ -458,8 +458,8 @@
     {
       "id": "ci-benchmark-publication",
       "milestoneId": "milestone-release-quality",
-      "title": "CI benchmark and public report",
-      "description": "Compare pure Elysia and Aponia with balanced trials, publish SVG and JSON from CI, and display only the CI image.",
+      "title": "Upstream HTTP benchmark and raw publication",
+      "description": "Compare Elysia and Aponia with the SaltyAom bun-http-framework-benchmark protocol and publish raw text plus environment metadata from CI.",
       "status": "completed",
       "progressPercent": 100,
       "priority": "high",
@@ -467,9 +467,9 @@
       "packages": ["@aponiajs/platform-elysia"],
       "dependencies": ["minimal-elysia-adapter", "automated-version-and-publish-flow"],
       "deliverables": [
-        "Mitata request and startup benchmark",
-        "Latency, throughput, variance, and environment JSON",
-        "Versioned public CI chart"
+        "Upstream Ping, Query, and Body workloads",
+        "Raw upstream and Bombardier output",
+        "Versioned environment metadata and raw comparison table"
       ],
       "evidence": [
         {
@@ -484,11 +484,11 @@
         }
       ],
       "acceptanceCriteria": [
-        "The README image is produced by a successful main-branch CI run and raw trial data remains downloadable."
+        "A successful main-branch CI run publishes raw Aponia and Elysia results without generated benchmark images."
       ],
       "nextActions": [],
-      "updatedAt": "2026-07-25",
-      "tags": ["benchmark", "ci", "vega"]
+      "updatedAt": "2026-07-26",
+      "tags": ["benchmark", "ci", "bombardier"]
     },
     {
       "id": "published-package-documentation",

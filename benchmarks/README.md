@@ -1,115 +1,119 @@
-# Benchmarks
+# HTTP Benchmark Research Protocol
 
-AponiaJS benchmarks are reproducible diagnostics, not universal performance
-claims. Results depend on the CPU, operating system, Bun version, power mode,
-background load, and benchmark duration.
+## Abstract
 
-## Elysia request overhead
+This study measures AponiaJS HTTP throughput relative to Elysia under the
+standard protocol maintained by
+[`SaltyAom/bun-http-framework-benchmark`](https://github.com/SaltyAom/bun-http-framework-benchmark).
+It publishes raw text and environment metadata rather than generated charts.
+The purpose is reproducible comparison under controlled conditions, not a
+universal ranking or a production-capacity claim.
 
-The Elysia overhead benchmark compares:
+## Research question
 
-1. **Pure Elysia** — a direct Elysia route.
-2. **Aponia native** — the same response through an Aponia-registered
-   controller, dispatched by the underlying Elysia application.
-3. **Aponia wrapper** — the same registered route through
-   `AponiaElysiaApplication.handle()`.
+How many requests per second does an Aponia application complete relative to a
+direct Elysia application when both implement the same upstream workloads on
+the same Bun runtime and machine?
 
-It also compares direct Elysia application creation with
-`AponiaFactory.create()`. Startup is reported separately because module graph
-and dependency-container initialization happen once rather than on every
-request.
+The direct Elysia implementation is the control treatment. The Aponia adapter
+is the experimental treatment. Average requests per second reported by
+Bombardier is the primary outcome.
 
-Run the standard local profile:
+## Experimental design
+
+The upstream `main` branch is cloned at the start of each run. Its exact commit
+is recorded in `environment.json`. Aponia contributes one adapter at
+`src/bun/aponia.ts`. The integration adds an explicit plain-text header to the
+upstream Elysia ping route because current Elysia releases no longer infer that
+header for the original static-string declaration. Route behavior and timed
+work remain unchanged. The runner is configured to execute only these two Bun
+treatments.
+
+| Controlled variable    | Value                                   |
+| ---------------------- | --------------------------------------- |
+| Runtime                | Same Bun executable for both treatments |
+| Port                   | `3000`                                  |
+| Load generator         | Bombardier with `fasthttp`              |
+| Concurrent connections | `500`                                   |
+| Duration               | `10 seconds` per workload               |
+| Process model          | One framework server at a time          |
+| Environment            | `NODE_ENV=production`                   |
+
+The upstream runner validates response bodies, content types, and the required
+`x-powered-by` header before measurement. A treatment that fails validation is
+excluded rather than assigned a throughput value.
+
+## Workloads
+
+| Workload | Request              | Required behavior                                            |
+| -------- | -------------------- | ------------------------------------------------------------ |
+| Ping     | `GET /`              | Return `Hi` as plain text                                    |
+| Query    | `GET /id/1?name=bun` | Dynamically return `1 bun` and set `x-powered-by: benchmark` |
+| Body     | `POST /json`         | Parse and serialize `{ "hello": "world" }` as JSON           |
+
+The Aponia adapter also tests query extraction with reordered or absent
+parameters so the measured route cannot rely on a hard-coded URL index.
+
+## Procedure
+
+Install Bombardier and workspace dependencies, then run:
 
 ```bash
-bun run benchmark:elysia
+go install github.com/codesenberg/bombardier@v1.2.6
+bun install
+bun run benchmark:upstream
 ```
 
-The profile runs six independent trials. Trial order rotates deterministically,
-so every implementation occupies each position equally and no implementation
-always benefits from running first or last.
-
-Use shorter durations and fewer trials for a smoke run:
+Set `APONIA_BENCHMARK_UPSTREAM_REF` to a commit when reproducing a historical
+run:
 
 ```bash
-APONIA_BENCH_REQUEST_MS=100 \
-APONIA_BENCH_STARTUP_MS=50 \
-APONIA_BENCH_ROUNDS=2 \
-APONIA_BENCH_WARMUP_SAMPLES=2 \
-APONIA_BENCH_MIN_SAMPLES=5 \
-bun run benchmark:elysia
+APONIA_BENCHMARK_UPSTREAM_REF=<commit> bun run benchmark:upstream
 ```
 
-Each run writes ignored local output for inspection:
+The command builds the workspace, clones the upstream suite into an ignored
+working directory, injects the Aponia adapter, executes the upstream runner,
+copies the raw results, records the environment, and removes the temporary
+clone.
 
-- `.benchmark-output/elysia-overhead.json` with raw summary statistics and
-  environment metadata;
-- `.benchmark-output/elysia-overhead.svg` with a Vega-rendered report.
+## Raw data
 
-These files are not committed and are not used by the repository README. The
-public report always comes from the benchmark executed by GitHub Actions.
+Each run writes only text and JSON under
+`.benchmark-output/bun-http-framework-benchmark/`:
 
-The report keeps throughput as the primary visual comparison and includes a
-compact evidence grid with request `p50`, `p95`, and `p99`, startup `p50`,
-coefficient of variation (`CV%`), and measured iterations. Lower latency and CV
-are better; a lower CV indicates more stable trial-to-trial results.
+- `results/results.md`: upstream requests-per-second table;
+- `results/bun/aponia.txt`: upstream requests-per-second captures for Aponia;
+- `results/bun/elysia.txt`: upstream requests-per-second captures for Elysia;
+- `benchmark.log`: complete upstream and Bombardier console transcript;
+- `environment.json`: runtime, hardware, runner, workload, and upstream commit
+  metadata.
 
-The JSON retains every independent trial, execution order, tool version,
-environment metadata, and the native-registration diagnostic. The chart
-compares the public Aponia wrapper with pure Elysia, while the additional
-diagnostic remains available for deeper analysis.
+CI publishes the same files after a successful push to `main`:
 
-## Methodology
+- [Raw comparison table](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/bun-http-framework-benchmark/results/results.md?v=0.3.21)
+- [Raw Aponia output](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/bun-http-framework-benchmark/results/bun/aponia.txt?v=0.3.21)
+- [Experimental environment](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/bun-http-framework-benchmark/environment.json?v=0.3.21)
 
-The benchmark uses [Mitata](https://github.com/evanwashere/mitata), the
-microbenchmark tool recommended by
-[Bun's benchmarking guide](https://bun.sh/docs/project/benchmarking). Mitata
-provides high-resolution timing, automatic batching, warmup, garbage-collection
-control, and raw samples. `simple-statistics` calculates interpolated
-percentiles and cross-trial medians instead of relying on handwritten
-statistical utilities.
+Pull-request runs retain their raw files as workflow artifacts for 14 days but
+cannot replace the public dataset.
 
-Each implementation performs identical work and is validated before timing.
-The request benchmark consumes the complete response body and checks the same
-HTTP status and body. Startup trials create fresh applications, and every
-Aponia instance is closed within its trial. Results are summarized as the
-median across independent trials because the median is less sensitive to a
-single noisy run than the arithmetic mean. Automatic operation batching is
-disabled so `p50`, `p95`, and `p99` describe individual timed iterations rather
-than averages of large batches.
+## Interpretation
 
-## Continuous integration
+Compare Aponia and Elysia only within the same `results/results.md` file.
+Differences across machines, runner images, Bun versions, upstream commits, or
+background load are confounded and should not be treated as framework effects.
+The three workload values are reported independently; their arithmetic average
+is a descriptive summary, not a confidence interval.
 
-The `Elysia overhead` job in the existing `CI` GitHub Actions workflow runs on
-every pull request, every push, and manual dispatches. It installs the frozen
-lockfile, pins Bun 1.3.14, builds the workspace once, and runs every
-implementation on the same runner in the same process. CI runs six
-order-balanced trials with longer per-case measurement time. The JSON and SVG
-reports are retained as workflow artifacts for 14 days.
+## Limitations
 
-After a successful push to `main`, the same job publishes `.benchmark-output`
-directly to the orphan `benchmark-results` branch. The repository README loads
-the SVG from that stable branch with the workspace version as a cache key:
+The protocol uses one timed observation per workload and treatment, so it does
+not estimate sampling uncertainty or support significance testing. GitHub
+hosted runners use shared infrastructure and may vary between runs. The
+workloads are intentionally small, omit application I/O, and measure synthetic
+maximum throughput. They do not predict latency, tail behavior, memory use, or
+capacity for a production application.
 
-- [Latest CI chart](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.svg?v=0.3.20)
-- [Latest CI JSON](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.json?v=0.3.20)
-
-Pull requests still generate and upload their own reports for review, but they
-cannot replace the public result. Publishing uses the workflow-scoped GitHub
-token and only grants write access to the benchmark job.
-
-CI does not enforce a fixed performance threshold. GitHub-hosted runners are
-shared infrastructure, so their absolute timings fluctuate. The workflow
-instead provides a consistent comparison environment and preserves each report
-for review; functional mismatches and benchmark failures still fail the job.
-
-For serious before/after analysis, compare repeated runs from the same runner
-class and inspect both the delta and CV. Run locally on an otherwise idle
-machine with a fixed power profile. Do not compare absolute values produced on
-different hardware.
-
-This is an in-process dispatch microbenchmark using each application's
-`handle()` method. It intentionally excludes sockets, HTTP parsing, network
-latency, and external load-generator overhead, so it isolates framework
-dispatch costs rather than predicting production request rates. Use a dedicated
-HTTP load generator and a representative application for capacity planning.
+CI rejects a run when either treatment is absent or any timed workload reports
+non-2xx responses. This integrity gate prevents an incomplete table from being
+published as a valid comparison.
