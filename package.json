@@ -14,8 +14,6 @@
     "examples/*"
   ],
   "scripts": {
-    "benchmark:upstream": "bun run build && bun run benchmark:upstream:run",
-    "benchmark:upstream:run": "bun benchmarks/bun-http-framework-benchmark/run.ts",
     "build": "bun run --workspaces build",
     "dev": "bun run --filter aponiajs dev",
     "example:basic": "bun run --cwd examples/basic-foundation start",
@@ -42,7 +40,6 @@
     "bumpp": "^11.1.0",
     "elysia": "^1.4.29",
     "jsonc-parser": "^3.3.1",
-    "kill-port": "^2.0.1",
     "typescript": "^7.0.2",
     "vite": "npm:@voidzero-dev/vite-plus-core@0.2.6",
     "vite-plus": "^0.2.4"

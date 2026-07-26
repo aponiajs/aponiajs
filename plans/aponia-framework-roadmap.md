@@ -97,8 +97,7 @@ Bootstrap has two stages:
 aponiajs/
 |-- apps/
 |   |-- examples-basic/
-|   |-- examples-auth/
-|   `-- benchmarks/
+|   `-- examples-auth/
 |-- packages/
 |   |-- common/
 |   |-- core/
@@ -270,7 +269,7 @@ Aponia, and application boundaries from Step 0.
   authorization, and dependency failures.
 - `aponia doctor` diagnostics.
 
-## 9. Testing and performance strategy
+## 9. Testing strategy
 
 - Bun test is the canonical test runner.
 - Unit tests cover the DI graph and lifecycle compiler.
@@ -280,14 +279,6 @@ Aponia, and application boundaries from Step 0.
 - Fuzz and property tests cover graph compilation and parsers.
 - The compatibility matrix covers current and previous Bun stable releases and
   a pinned Elysia version range.
-- Benchmarks compare bare Elysia and Aponia for startup, throughput, p50/p95/p99,
-  idle and loaded memory, DI compilation, and request-scope allocation.
-- Initial performance budget: no more than 10% throughput overhead and no more
-  than 1 ms p95 overhead for a representative JSON endpoint.
-
-Benchmark protocols pin hardware, runtime settings, warm-up, sample count,
-concurrency, and payload. Reports include raw artifacts and variance or
-confidence intervals.
 
 ### Tool ownership and mandatory verification
 
@@ -327,12 +318,11 @@ Tasks:
 - Create one Bun workspace app, one raw Elysia route, and one explicit value provider.
 - Record ADRs for lifecycle phases, typed descriptors, DI ownership, and tool ownership.
 - Document the proxy-to-application threat boundary.
-- Establish the bare-Elysia benchmark protocol and raw artifact.
 
-Verify: Baseline commands plus `bun run benchmark:baseline`.  
+Verify: Baseline test, check, and build commands.
 Exit: The route, tests, and build pass; lifecycle ADR covers errors, short
-circuits, streams, and aborts; benchmark methodology is reproducible.  
-Rollback: Remove the example and benchmark without affecting a published API.
+circuits, streams, and aborts.
+Rollback: Remove the example without affecting a published API.
 
 ### Step 1: Minimal workspace boundaries
 
@@ -423,10 +413,9 @@ Tasks:
 - Add bootstrap, init, listen, and close without global signal handlers.
 - Implement one controller backed by a value provider.
 - Add a managed native-plugin escape hatch.
-- Compare performance with Step 0.
 
-Verify: Adapter vertical tests and `bun run benchmark:compare`.  
-Exit: Runtime and type tests pass within the performance budget.  
+Verify: Adapter vertical tests and workspace checks.
+Exit: Runtime and type tests pass.
 Rollback: Remove the isolated adapter package and retain the raw example.
 
 ### Step 7: Elysia lifecycle and scope conformance
@@ -615,9 +604,9 @@ Tasks:
 
 - Emit the same immutable descriptors as the functional API.
 - Prohibit reflection scans on request paths.
-- Add parity, type, declaration, and performance tests.
+- Add parity, type, and declaration tests.
 
-Verify: Functional-versus-decorator golden tests and benchmarks.  
+Verify: Functional-versus-decorator golden tests.
 Exit: Decorators expose no capability unavailable to the functional API.  
 Rollback: Remove the optional package without changing the core.
 
@@ -628,14 +617,14 @@ Context: Enforce production gates before version 1.
 
 Tasks:
 
-- Add compatibility, performance, and security CI matrices.
+- Add compatibility and security CI matrices.
 - Add documentation, migration, deprecation, and reference applications.
 - Add SBOM, provenance, signed releases, and `SECURITY.md`.
 - Define beta soak load, duration, and API signature approval.
 
-Verify: Full baseline, security audit, benchmark thresholds, and deployment smoke tests.  
+Verify: Full baseline, security audit, and deployment smoke tests.
 Exit: No unresolved critical or high finding; medium findings require approved
-exceptions; performance and soak criteria pass.  
+exceptions; soak criteria pass.
 Rollback: Retain a release candidate and do not promote it to stable.
 
 ### Step 20: Post-version-1 ecosystem
