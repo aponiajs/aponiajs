@@ -1,6 +1,10 @@
 import { Controller, Get, Injectable, Module } from "@aponiajs/common";
 import { Elysia } from "elysia";
-import { AponiaFactory, type ConfiguredAponiaApplicationOptions } from "../src/index.ts";
+import {
+  AponiaFactory,
+  ElysiaPluginModule,
+  type ConfiguredAponiaApplicationOptions,
+} from "../src/index.ts";
 
 type VitePlusTest = typeof import("vite-plus/test");
 
@@ -36,6 +40,20 @@ class HealthServicesModule {}
 })
 class HealthModule {}
 
+@Module({
+  imports: [
+    HealthServicesModule,
+    ElysiaPluginModule.registerAsync({
+      imports: [HealthServicesModule],
+      inject: [HealthService] as const,
+      useFactory: (healthService) =>
+        new Elysia().get("/native-health", () => healthService.getStatus()),
+    }),
+  ],
+  controllers: [HealthController],
+})
+class NativeHealthModule {}
+
 function configureNative(nativeApplication: Elysia) {
   return nativeApplication.state("aponiaVersion", "typed" as const);
 }
@@ -50,5 +68,15 @@ test("the Vite+ lane mounts a controller from module metadata", async () => {
 
   expect(await response.text()).toBe("ok");
   expect(application.getNativeApplication().store.aponiaVersion).toBe("typed");
+  await application.close();
+});
+
+test("the Vite+ lane resolves native plugin factories from module imports", async () => {
+  const application = await AponiaFactory.create(NativeHealthModule, {
+    logger: false,
+  });
+  const response = await application.handle(new Request("http://localhost/native-health"));
+
+  expect(await response.text()).toBe("ok");
   await application.close();
 });

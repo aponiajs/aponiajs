@@ -14,6 +14,7 @@ export {
   getModuleMetadata,
   getRouteMetadata,
   type ControllerMetadata,
+  type DynamicModule,
   type ModuleClass,
   type ModuleImport,
   type ModuleMetadata,

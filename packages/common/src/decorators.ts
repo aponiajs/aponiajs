@@ -4,7 +4,7 @@ import type { Provider } from "./provider.ts";
 import type { ClassToken, Token } from "./token.ts";
 
 export type ModuleClass = ClassToken<unknown>;
-export type ModuleImport = ModuleClass | ModuleDefinition;
+export type ModuleImport = ModuleClass | ModuleDefinition | DynamicModule;
 export type ModuleProvider = ClassToken<unknown> | Provider;
 
 export interface ModuleMetadata {
@@ -12,6 +12,12 @@ export interface ModuleMetadata {
   readonly controllers?: readonly ClassToken<unknown>[];
   readonly providers?: readonly ModuleProvider[];
   readonly exports?: readonly Token<unknown>[];
+}
+
+export interface DynamicModule extends ModuleMetadata {
+  readonly module: ModuleClass;
+  readonly id: string;
+  readonly instanceId: symbol;
 }
 
 export interface ControllerMetadata {

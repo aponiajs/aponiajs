@@ -7,63 +7,92 @@ import {
   type ClassToken,
   type Constructor,
   type ControllerDefinition,
+  type DynamicModule,
   type ModuleClass,
   type ModuleDefinition,
+  type ModuleImport,
+  type ModuleMetadata,
   type ModuleProvider,
   type Provider,
 } from "@aponiajs/common";
 import { Elysia } from "elysia";
 import { ELYSIA_CONTROLLER, type RuntimeElysiaController } from "./controller.ts";
 
-export type AponiaRootModule = ModuleClass | ModuleDefinition;
+export type AponiaRootModule = ModuleImport;
 
 export function compileRootModule(rootModule: AponiaRootModule): ModuleDefinition {
-  if (typeof rootModule !== "function") {
+  if (isModuleDefinition(rootModule)) {
     return rootModule;
   }
 
-  const compiled = new Map<ModuleClass, ModuleDefinition>();
-  const visiting: ModuleClass[] = [];
+  const compiledClasses = new Map<ModuleClass, ModuleDefinition>();
+  const compiledDynamicModules = new Map<DynamicModule, ModuleDefinition>();
+  const visiting: ModuleImport[] = [];
 
-  const compile = (moduleClass: ModuleClass): ModuleDefinition => {
-    const cached = compiled.get(moduleClass);
+  const compile = (moduleImport: ModuleImport): ModuleDefinition => {
+    if (typeof moduleImport === "function") {
+      return compileClass(moduleImport);
+    }
+    if (isModuleDefinition(moduleImport)) {
+      return moduleImport;
+    }
+    return compileDynamicModule(moduleImport);
+  };
+
+  const compileClass = (moduleClass: ModuleClass): ModuleDefinition => {
+    const cached = compiledClasses.get(moduleClass);
     if (cached) {
       return cached;
     }
 
-    const cycleIndex = visiting.indexOf(moduleClass);
-    if (cycleIndex >= 0) {
-      const cycle = [...visiting.slice(cycleIndex), moduleClass].map((item) => item.name);
-      throw new AponiaError(
-        "MODULE_CYCLE",
-        `Module import cycle detected: ${cycle.join(" -> ")}.`,
-        { cycle },
-      );
-    }
-
+    assertNoModuleCycle(moduleClass, visiting);
     const metadata = getModuleMetadata(moduleClass);
     if (!metadata) {
-      throw new AponiaError(
-        "INVALID_MODULE",
-        `Class "${moduleClass.name}" is missing the @Module() decorator.`,
-        { module: moduleClass.name },
-      );
+      throw missingModuleDecorator(moduleClass);
     }
 
     visiting.push(moduleClass);
     try {
       const definition: ModuleDefinition = Object.freeze({
         id: moduleClass.name,
-        imports: Object.freeze(
-          (metadata.imports ?? []).map((moduleImport) =>
-            typeof moduleImport === "function" ? compile(moduleImport) : moduleImport,
-          ),
-        ),
+        imports: Object.freeze((metadata.imports ?? []).map(compile)),
         controllers: Object.freeze((metadata.controllers ?? []).map(compileDecoratedController)),
         providers: Object.freeze((metadata.providers ?? []).map(compileProvider)),
         exports: Object.freeze([...(metadata.exports ?? [])]),
       });
-      compiled.set(moduleClass, definition);
+      compiledClasses.set(moduleClass, definition);
+      return definition;
+    } finally {
+      visiting.pop();
+    }
+  };
+
+  const compileDynamicModule = (dynamicModule: DynamicModule): ModuleDefinition => {
+    const cached = compiledDynamicModules.get(dynamicModule);
+    if (cached) {
+      return cached;
+    }
+
+    assertNoModuleCycle(dynamicModule, visiting);
+    const metadata = getModuleMetadata(dynamicModule.module);
+    if (!metadata) {
+      throw missingModuleDecorator(dynamicModule.module);
+    }
+
+    const mergedMetadata = mergeModuleMetadata(metadata, dynamicModule);
+    visiting.push(dynamicModule);
+    try {
+      const definition: ModuleDefinition = Object.freeze({
+        id: dynamicModule.id,
+        instanceId: dynamicModule.instanceId,
+        imports: Object.freeze((mergedMetadata.imports ?? []).map(compile)),
+        controllers: Object.freeze(
+          (mergedMetadata.controllers ?? []).map(compileDecoratedController),
+        ),
+        providers: Object.freeze((mergedMetadata.providers ?? []).map(compileProvider)),
+        exports: Object.freeze([...(mergedMetadata.exports ?? [])]),
+      });
+      compiledDynamicModules.set(dynamicModule, definition);
       return definition;
     } finally {
       visiting.pop();
@@ -71,6 +100,56 @@ export function compileRootModule(rootModule: AponiaRootModule): ModuleDefinitio
   };
 
   return compile(rootModule);
+}
+
+function isModuleDefinition(moduleImport: ModuleImport): moduleImport is ModuleDefinition {
+  return (
+    typeof moduleImport !== "function" &&
+    "controllers" in moduleImport &&
+    !("module" in moduleImport)
+  );
+}
+
+function moduleImportName(moduleImport: ModuleImport): string {
+  if (typeof moduleImport === "function") {
+    return moduleImport.name;
+  }
+  return moduleImport.id;
+}
+
+function assertNoModuleCycle(moduleImport: ModuleImport, visiting: readonly ModuleImport[]): void {
+  const cycleIndex = visiting.indexOf(moduleImport);
+  if (cycleIndex < 0) {
+    return;
+  }
+
+  const cycle = [...visiting.slice(cycleIndex), moduleImport].map(moduleImportName);
+  throw new AponiaError("MODULE_CYCLE", `Module import cycle detected: ${cycle.join(" -> ")}.`, {
+    cycle,
+  });
+}
+
+function missingModuleDecorator(moduleClass: ModuleClass): AponiaError {
+  return new AponiaError(
+    "INVALID_MODULE",
+    `Class "${moduleClass.name}" is missing the @Module() decorator.`,
+    { module: moduleClass.name },
+  );
+}
+
+function mergeModuleMetadata(
+  metadata: Readonly<ModuleMetadata>,
+  dynamicModule: DynamicModule,
+): ModuleMetadata {
+  return Object.freeze({
+    imports: Object.freeze([...(metadata.imports ?? []), ...(dynamicModule.imports ?? [])]),
+    controllers: Object.freeze([
+      ...(metadata.controllers ?? []),
+      ...(dynamicModule.controllers ?? []),
+    ]),
+    providers: Object.freeze([...(metadata.providers ?? []), ...(dynamicModule.providers ?? [])]),
+    exports: Object.freeze([...(metadata.exports ?? []), ...(dynamicModule.exports ?? [])]),
+  });
 }
 
 function compileProvider(provider: ModuleProvider): Provider {

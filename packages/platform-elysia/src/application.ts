@@ -9,6 +9,7 @@ import { createContainer } from "@aponiajs/core";
 import { Elysia, type AnyElysia } from "elysia";
 import { isElysiaController } from "./controller.ts";
 import { compileRootModule, type AponiaRootModule } from "./decorated-module.ts";
+import { getElysiaPlugin, isElysiaPluginModule } from "./plugin-module.ts";
 
 export class AponiaElysiaApplication<TNativeApplication extends AnyElysia = Elysia> {
   readonly #nativeApplication: TNativeApplication;
@@ -102,6 +103,9 @@ export class AponiaFactory {
 
     for (const module of container.graph.modules) {
       container.initializeModule(module);
+      if (isElysiaPluginModule(module)) {
+        nativeApplication.use(getElysiaPlugin(container, module));
+      }
       logger?.log(`${module.id} dependencies initialized`, "InstanceLoader");
     }
 
