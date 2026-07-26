@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import Ajv2020, { type AnySchema } from "ajv/dist/2020.js";
+import { updateRoadmapVersion } from "./sync-version-references.ts";
 
 type RoadmapStatus = "completed" | "in_progress" | "planned";
 
@@ -35,6 +36,15 @@ interface RoadmapData {
 const statuses = ["completed", "in_progress", "planned"] as const;
 
 describe("roadmap data", () => {
+  test("synchronizes the current project version without changing roadmap data", () => {
+    const roadmap =
+      '{\n  "project": {\n    "currentVersion": "0.3.17",\n    "name": "AponiaJS"\n  },\n  "tags": ["compact", "array"]\n}\n';
+
+    expect(updateRoadmapVersion(roadmap, "0.3.18")).toBe(
+      '{\n  "project": {\n    "currentVersion": "0.3.18",\n    "name": "AponiaJS"\n  },\n  "tags": ["compact", "array"]\n}\n',
+    );
+  });
+
   test("matches its JSON Schema and relational invariants", async () => {
     const [schema, rawRoadmap, workspaceManifest] = await Promise.all([
       Bun.file("roadmap/roadmap.schema.json").json() as Promise<AnySchema>,
