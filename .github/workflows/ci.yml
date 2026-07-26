@@ -63,9 +63,11 @@ jobs:
         run: bun run test:generated-app
 
   benchmark:
-    name: Elysia overhead
+    name: Upstream HTTP benchmark
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      APONIA_BENCHMARK_BOMBARDIER_VERSION: v1.2.6
     permissions:
       contents: write
 
@@ -78,31 +80,35 @@ jobs:
         with:
           bun-version: 1.3.14
 
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: stable
+
+      - name: Install Bombardier
+        run: |
+          go install github.com/codesenberg/bombardier@v1.2.6
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
       - name: Install frozen dependencies
         run: bun ci
 
       - name: Build workspace packages
         run: bun run build
 
-      - name: Compare Elysia and Aponia
-        env:
-          APONIA_BENCH_REQUEST_MS: 1000
-          APONIA_BENCH_STARTUP_MS: 500
-          APONIA_BENCH_ROUNDS: 6
-          APONIA_BENCH_WARMUP_SAMPLES: 8
-          APONIA_BENCH_MIN_SAMPLES: 20
-        run: bun run benchmark:elysia:run
+      - name: Run the upstream Aponia and Elysia treatments
+        run: bun run benchmark:upstream:run
 
-      - name: Upload benchmark report
+      - name: Upload raw benchmark data
         uses: actions/upload-artifact@v7
         with:
-          name: elysia-overhead-${{ github.run_id }}
+          name: bun-http-framework-benchmark-${{ github.run_id }}
           path: .benchmark-output/
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 14
 
-      - name: Publish benchmark report
+      - name: Publish raw benchmark data
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v4.0.0
         with:

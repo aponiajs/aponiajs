@@ -21,32 +21,44 @@ describe("CLI documentation", () => {
 });
 
 describe("benchmark documentation", () => {
-  test("synchronizes both benchmark links without changing other content", () => {
-    const document =
-      "chart: benchmark-results/elysia-overhead.svg?v=0.3.17\njson: benchmark-results/elysia-overhead.json?v=0.3.17\n";
+  test("synchronizes every raw benchmark link without changing other content", () => {
+    const document = [
+      "table: benchmark-results/bun-http-framework-benchmark/results/results.md?v=0.3.17",
+      "raw: benchmark-results/bun-http-framework-benchmark/results/bun/aponia.txt?v=0.3.17",
+      "environment: benchmark-results/bun-http-framework-benchmark/environment.json?v=0.3.17",
+      "",
+    ].join("\n");
 
     expect(updateBenchmarkVersionReferences(document, "0.3.18")).toBe(
-      "chart: benchmark-results/elysia-overhead.svg?v=0.3.18\njson: benchmark-results/elysia-overhead.json?v=0.3.18\n",
+      [
+        "table: benchmark-results/bun-http-framework-benchmark/results/results.md?v=0.3.18",
+        "raw: benchmark-results/bun-http-framework-benchmark/results/bun/aponia.txt?v=0.3.18",
+        "environment: benchmark-results/bun-http-framework-benchmark/environment.json?v=0.3.18",
+        "",
+      ].join("\n"),
     );
   });
 
-  test("uses only the versioned CI benchmark in the public README", async () => {
+  test("uses only versioned raw data from the upstream benchmark", async () => {
     const [readme, benchmarkReadme, workspaceManifest] = await Promise.all([
       Bun.file("README.md").text(),
       Bun.file("benchmarks/README.md").text(),
       Bun.file("package.json").json() as Promise<{ readonly version: string }>,
     ]);
 
-    const versionedChart = `benchmark-results/elysia-overhead.svg?v=${workspaceManifest.version}`;
-    const versionedJson = `benchmark-results/elysia-overhead.json?v=${workspaceManifest.version}`;
+    const artifacts = [
+      "bun-http-framework-benchmark/results/results.md",
+      "bun-http-framework-benchmark/results/bun/aponia.txt",
+      "bun-http-framework-benchmark/environment.json",
+    ];
+    for (const artifact of artifacts) {
+      const versionedReference = `benchmark-results/${artifact}?v=${workspaceManifest.version}`;
+      expect(readme).toContain(versionedReference);
+      expect(benchmarkReadme).toContain(versionedReference);
+    }
 
-    expect(readme).toContain(versionedChart);
-    expect(readme).toContain(versionedJson);
-    expect(benchmarkReadme).toContain(versionedChart);
-    expect(benchmarkReadme).toContain(versionedJson);
-    expect(readme).not.toContain("assets/benchmarks/elysia-overhead-editor.svg");
-    expect(readme).not.toContain(".ecc/benchmarks/elysia-overhead.json");
-    expect(await Bun.file("assets/benchmarks/elysia-overhead-editor.svg").exists()).toBe(false);
-    expect(await Bun.file(".ecc/benchmarks/elysia-overhead.json").exists()).toBe(false);
+    expect(readme).not.toMatch(/\.(?:svg|png|webp)\?v=/);
+    expect(benchmarkReadme).not.toMatch(/\.(?:svg|png|webp)\?v=/);
+    expect(await Bun.file("benchmarks/elysia-overhead").exists()).toBe(false);
   });
 });

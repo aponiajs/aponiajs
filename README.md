@@ -87,33 +87,23 @@ await application.listen(3000);
 - **Actionable diagnostics** — module cycles, missing exports, duplicate
   providers, and ambiguous dependencies fail clearly.
 
-## Performance, measured
+## Performance study
 
-The benchmark separates the cost of Aponia route registration from the
-near-zero forwarding cost of `AponiaElysiaApplication.handle()`. Startup is
-measured separately from the hot request path.
+Aponia is evaluated with
+[`SaltyAom/bun-http-framework-benchmark`](https://github.com/SaltyAom/bun-http-framework-benchmark)
+as the primary HTTP benchmark. The study retains the upstream runner,
+Bombardier configuration, correctness checks, and three workloads: a static
+response, path-and-query extraction, and JSON parsing.
 
-<div align="center">
+The CI publication contains no generated charts or images. Inspect the
+[raw comparison table](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/bun-http-framework-benchmark/results/results.md?v=0.3.21),
+the [raw Aponia runner output](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/bun-http-framework-benchmark/results/bun/aponia.txt?v=0.3.21),
+and the [experimental environment](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/bun-http-framework-benchmark/environment.json?v=0.3.21).
+Absolute throughput is machine-specific; interpret comparisons only when both
+treatments were measured in the same run.
 
-<img
-  src="https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.svg?v=0.3.20"
-  alt="CI benchmark comparing Elysia and Aponia throughput, request latency percentiles, startup latency, stability, and sample size"
-  width="960"
-/>
-
-</div>
-
-Results are a machine-specific baseline, not a universal performance claim.
-GitHub Actions regenerates the report from a clean Linux runner after every
-successful push to `main`. The chart reports throughput, request `p50`, `p95`,
-and `p99`, startup `p50`, coefficient of variation, and measured iterations.
-The versioned image URL invalidates GitHub's image cache after each release.
-Only the CI result is presented here; developer-machine output is never used as
-the public benchmark.
-
-Review the [methodology and reproduction commands](./benchmarks/README.md), the
-[latest CI JSON report](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.json?v=0.3.20),
-or the corresponding GitHub Actions artifact.
+The [research protocol](./benchmarks/README.md) documents the question,
+experimental design, reproduction procedure, raw variables, and limitations.
 
 ## Generate
 

@@ -1,8 +1,11 @@
 import { applyEdits, modify } from "jsonc-parser";
 import { updateWorkspaceLockVersions } from "./workspace-versions.ts";
 
-const benchmarkVersionPattern =
-  /(benchmark-results\/elysia-overhead\.(?:svg|json)\?v=)[0-9A-Za-z.+-]+/g;
+const benchmarkArtifacts = [
+  "bun-http-framework-benchmark/results/results.md",
+  "bun-http-framework-benchmark/results/bun/aponia.txt",
+  "bun-http-framework-benchmark/environment.json",
+] as const;
 
 export function updateRoadmapVersion(roadmap: string, version: string): string {
   const edits = modify(roadmap, ["project", "currentVersion"], version, {
@@ -16,17 +19,22 @@ export function updateRoadmapVersion(roadmap: string, version: string): string {
 }
 
 export function updateBenchmarkVersionReferences(document: string, version: string): string {
-  const references = document.match(benchmarkVersionPattern);
-  if (!references || references.length !== 2) {
-    throw new Error(
-      `Expected exactly two Elysia benchmark version references, found ${references?.length ?? 0}.`,
+  let updated = document;
+  for (const artifact of benchmarkArtifacts) {
+    const pattern = new RegExp(
+      `(benchmark-results/${escapeRegularExpression(artifact)}\\?v=)[0-9A-Za-z.+-]+`,
+      "g",
     );
+    const references = updated.match(pattern);
+    if (references?.length !== 1) {
+      throw new Error(
+        `Expected exactly one ${artifact} version reference, found ${references?.length ?? 0}.`,
+      );
+    }
+    updated = updated.replace(pattern, (_reference, prefix: string) => `${prefix}${version}`);
   }
 
-  return document.replace(
-    benchmarkVersionPattern,
-    (_reference, prefix: string) => `${prefix}${version}`,
-  );
+  return updated;
 }
 
 export async function synchronizeVersionReferences(
@@ -58,4 +66,8 @@ export async function synchronizeVersionReferences(
 
 if (import.meta.main) {
   await synchronizeVersionReferences();
+}
+
+function escapeRegularExpression(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
