@@ -29,6 +29,17 @@ export class AponiaContainer {
     return this.#resolve(location) as T;
   }
 
+  /**
+   * Framework platform SPI for resolving a provider in its owning module.
+   * Application code should use get(), which enforces root-module visibility.
+   *
+   * @internal
+   */
+  resolveModuleProvider<T>(module: ModuleDefinition, token: Token<T>): T {
+    const location = this.graph.locate(module, token);
+    return this.#resolve(location) as T;
+  }
+
   initializeModule(module: ModuleDefinition): void {
     for (const provider of module.providers) {
       this.#resolve({ module, provider });

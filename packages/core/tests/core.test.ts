@@ -255,6 +255,8 @@ describe("@aponiajs/core singleton container", () => {
     });
 
     const container = createContainer(root);
+    expect(container.resolveModuleProvider(left, localValue)).toBe("left");
+    expect(container.resolveModuleProvider(right, localValue)).toBe("right");
     const leftController = container.instantiateController<SharedController>(
       left,
       sharedController,

@@ -11,3 +11,9 @@ export {
   defineElysiaController,
   type ElysiaControllerDefinition,
 } from "./controller.ts";
+export {
+  ElysiaPluginModule,
+  type AsyncElysiaPluginModuleOptions,
+  type ElysiaPluginModuleOptions,
+  type NativeElysiaPlugin,
+} from "./plugin-module.ts";

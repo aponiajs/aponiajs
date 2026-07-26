@@ -4,6 +4,7 @@ import type { Token } from "./token.ts";
 
 export interface ModuleDefinition {
   readonly id: string;
+  readonly instanceId?: symbol;
   readonly imports: readonly ModuleDefinition[];
   readonly controllers: readonly ControllerDefinition[];
   readonly providers: readonly Provider[];
@@ -12,6 +13,7 @@ export interface ModuleDefinition {
 
 export interface ModuleOptions {
   readonly id: string;
+  readonly instanceId?: symbol;
   readonly imports?: readonly ModuleDefinition[];
   readonly controllers?: readonly ControllerDefinition[];
   readonly providers?: readonly Provider[];

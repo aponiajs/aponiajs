@@ -164,12 +164,13 @@ export class ModuleGraph {
 
 export function compileModuleGraph(root: ModuleDefinition): ModuleGraph {
   const modules: ModuleDefinition[] = [];
-  const modulesById = new Map<string, ModuleDefinition>();
+  const modulesByIdentity = new Map<string | symbol, ModuleDefinition>();
   const visiting: ModuleDefinition[] = [];
   const visited = new Set<ModuleDefinition>();
 
   const visit = (module: ModuleDefinition): void => {
-    const registered = modulesById.get(module.id);
+    const identity = module.instanceId ?? module.id;
+    const registered = modulesByIdentity.get(identity);
     if (registered && registered !== module) {
       throw new AponiaError(
         "DUPLICATE_MODULE",
@@ -177,7 +178,7 @@ export function compileModuleGraph(root: ModuleDefinition): ModuleGraph {
         { module: module.id },
       );
     }
-    modulesById.set(module.id, module);
+    modulesByIdentity.set(identity, module);
 
     const cycleIndex = visiting.indexOf(module);
     if (cycleIndex >= 0) {

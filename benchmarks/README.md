@@ -91,8 +91,8 @@ After a successful push to `main`, the same job publishes `.benchmark-output`
 directly to the orphan `benchmark-results` branch. The repository README loads
 the SVG from that stable branch with the workspace version as a cache key:
 
-- [Latest CI chart](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.svg?v=0.3.18)
-- [Latest CI JSON](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.json?v=0.3.18)
+- [Latest CI chart](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.svg?v=0.3.19)
+- [Latest CI JSON](https://raw.githubusercontent.com/aponiajs/aponiajs/benchmark-results/elysia-overhead.json?v=0.3.19)
 
 Pull requests still generate and upload their own reports for review, but they
 cannot replace the public result. Publishing uses the workflow-scoped GitHub

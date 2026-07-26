@@ -32,7 +32,7 @@ and custom logger integration.
 
 ```ts
 import { Module } from "@aponiajs/common";
-import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AponiaFactory, ElysiaPluginModule } from "@aponiajs/platform-elysia";
 
 @Module({})
 class AppModule {}
@@ -43,25 +43,56 @@ await application.listen(3000);
 
 ## Native Elysia plugins
 
-Use existing Elysia plugins without an Aponia adapter:
+Use existing Elysia plugins through Nest-style module imports:
 
 ```bash
-bun add @elysiajs/cors
+bun add @elysiajs/cors @elysiajs/jwt
 ```
 
 ```ts
 import { cors } from "@elysiajs/cors";
+import { jwt } from "@elysiajs/jwt";
 
-const application = await AponiaFactory.create(AppModule, {
-  configureNative: (elysia) => elysia.use(cors()),
-});
+@Module({
+  imports: [
+    ElysiaPluginModule.register(cors(), {
+      key: "cors",
+    }),
+  ],
+})
+class AppModule {}
 ```
 
-`configureNative` receives the real Elysia application before Aponia mounts its
-controllers. Use Elysia's own `.use()` API for instance, functional, array, and
-lazy plugins; no adapter or route copying is involved. Return the same
-application so Elysia's plugin types remain available from
-`application.getNativeApplication()`.
+The plugin is passed unchanged to Elysia's native `.use()` implementation. For
+plugins that depend on an injectable service, use an async registration:
+
+```ts
+@Module({
+  imports: [
+    ElysiaPluginModule.registerAsync({
+      key: "jwt",
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) =>
+        jwt({
+          name: "jwt",
+          secret: config.get("JWT_SECRET"),
+        }),
+    }),
+  ],
+})
+class AuthModule {}
+```
+
+Imported plugins are installed in dependency order before controllers and a
+shared configured module is installed once across diamond imports. A stable
+`key` keeps module diagnostics deterministic and prevents duplicate
+registrations with the same key.
+
+`configureNative` remains available as an application-level escape hatch. It
+preserves Elysia's accumulated plugin types on `getNativeApplication()`.
+Module-imported plugin state and decorators are available at runtime, but do
+not yet flow into decorated controller parameter types.
 
 [npm package](https://www.npmjs.com/package/@aponiajs/platform-elysia) ·
 [complete package catalog](../../docs/packages.md)

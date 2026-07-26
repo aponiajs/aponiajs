@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { Controller, Get, Injectable, Module, type LoggerService } from "@aponiajs/common";
 import { Elysia } from "elysia";
-import { AponiaFactory } from "../src/index.ts";
+import { AponiaFactory, ElysiaPluginModule } from "../src/index.ts";
 
 class MemoryLogger implements LoggerService {
   readonly records: { readonly context: string; readonly message: string }[] = [];
@@ -48,6 +48,74 @@ class MessageServicesModule {}
   controllers: [MessageController],
 })
 class MessageModule {}
+
+const modulePluginEvents: string[] = [];
+let asyncPluginFactoryCalls = 0;
+let sharedPluginRegistrations = 0;
+
+@Injectable()
+class NativePluginConfig {
+  readonly route = "/native-from-service";
+}
+
+@Module({
+  providers: [NativePluginConfig],
+  exports: [NativePluginConfig],
+})
+class NativePluginConfigModule {}
+
+const sharedPluginModule = ElysiaPluginModule.register((nativeApplication: Elysia) => {
+  sharedPluginRegistrations += 1;
+  return nativeApplication.get("/native-shared", () => "shared");
+});
+
+@Module({
+  imports: [sharedPluginModule],
+})
+class LeftPluginFeatureModule {}
+
+@Module({
+  imports: [sharedPluginModule],
+})
+class RightPluginFeatureModule {}
+
+@Module({
+  imports: [
+    MessageServicesModule,
+    ElysiaPluginModule.register(
+      new Elysia().get("/native-module-instance", () => "module-instance"),
+    ),
+    ElysiaPluginModule.register([new Elysia().get("/native-module-array", () => "module-array")]),
+    ElysiaPluginModule.register(
+      Promise.resolve({
+        default: (nativeApplication: Elysia) =>
+          nativeApplication.get("/native-module-lazy", () => "module-lazy"),
+      }),
+    ),
+    ElysiaPluginModule.register((nativeApplication: Elysia) =>
+      nativeApplication.onRequest(() => {
+        modulePluginEvents.push("first");
+      }),
+    ),
+    ElysiaPluginModule.register((nativeApplication: Elysia) =>
+      nativeApplication.onRequest(() => {
+        modulePluginEvents.push("second");
+      }),
+    ),
+    ElysiaPluginModule.registerAsync({
+      imports: [NativePluginConfigModule],
+      inject: [NativePluginConfig] as const,
+      useFactory: async (configuration) => {
+        asyncPluginFactoryCalls += 1;
+        return new Elysia().get(configuration.route, () => "module-service");
+      },
+    }),
+    LeftPluginFeatureModule,
+    RightPluginFeatureModule,
+  ],
+  controllers: [MessageController],
+})
+class NativePluginImportsModule {}
 
 test("imports modules and injects their exported services into controllers", async () => {
   const logger = new MemoryLogger();
@@ -179,4 +247,52 @@ test("rejects a native configurator that replaces the application", async () => 
       code: "INVALID_NATIVE_APPLICATION",
     }),
   );
+});
+
+test("loads unchanged Elysia plugins through Nest-style module imports", async () => {
+  modulePluginEvents.length = 0;
+  asyncPluginFactoryCalls = 0;
+  sharedPluginRegistrations = 0;
+
+  const application = await AponiaFactory.create(NativePluginImportsModule, {
+    logger: false,
+  });
+
+  const instanceResponse = await application.handle(
+    new Request("http://localhost/native-module-instance"),
+  );
+  const serviceResponse = await application.handle(
+    new Request("http://localhost/native-from-service"),
+  );
+  const arrayResponse = await application.handle(
+    new Request("http://localhost/native-module-array"),
+  );
+  const lazyResponse = await application.handle(new Request("http://localhost/native-module-lazy"));
+  const sharedResponse = await application.handle(new Request("http://localhost/native-shared"));
+  const controllerResponse = await application.handle(new Request("http://localhost/messages"));
+
+  expect(await instanceResponse.text()).toBe("module-instance");
+  expect(await serviceResponse.text()).toBe("module-service");
+  expect(await arrayResponse.text()).toBe("module-array");
+  expect(await lazyResponse.text()).toBe("module-lazy");
+  expect(await sharedResponse.text()).toBe("shared");
+  expect(await controllerResponse.text()).toBe("Hello from service");
+  expect(asyncPluginFactoryCalls).toBe(1);
+  expect(sharedPluginRegistrations).toBe(1);
+  expect(modulePluginEvents).toEqual([
+    "first",
+    "second",
+    "first",
+    "second",
+    "first",
+    "second",
+    "first",
+    "second",
+    "first",
+    "second",
+    "first",
+    "second",
+  ]);
+
+  await application.close();
 });
