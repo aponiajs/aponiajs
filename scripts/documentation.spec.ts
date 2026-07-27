@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { updateRoadmapVersion } from "./sync-version-references.ts";
 
 const cliDocumentation = [
   "README.md",
@@ -16,5 +17,30 @@ describe("CLI documentation", () => {
       expect(content).not.toContain("bun add --dev @aponiajs/cli");
       expect(content).toContain("bun add --global @aponiajs/cli");
     }
+  });
+});
+
+describe("roadmap", () => {
+  test("declares the workspace version", async () => {
+    const [roadmap, manifest] = await Promise.all([
+      Bun.file("ROADMAP.md").text(),
+      Bun.file("package.json").json() as Promise<{ readonly version: string }>,
+    ]);
+
+    expect(roadmap).toContain(`- **Current version:** ${manifest.version}`);
+  });
+
+  test("rewrites only the current version line", () => {
+    const roadmap = "# Roadmap\n\n- **Current version:** 0.4.0\n- **Runtime:** Bun 1.3.14\n";
+
+    expect(updateRoadmapVersion(roadmap, "0.5.0")).toBe(
+      "# Roadmap\n\n- **Current version:** 0.5.0\n- **Runtime:** Bun 1.3.14\n",
+    );
+  });
+
+  test("fails when the version line is missing", () => {
+    expect(() => updateRoadmapVersion("# Roadmap\n", "0.5.0")).toThrow(
+      "ROADMAP.md does not declare a current version",
+    );
   });
 });

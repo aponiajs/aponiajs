@@ -18,6 +18,10 @@ The `aponiajs` facade remains private until it exports the public framework API.
 ## Version Policy
 
 - `0.y.z` identifies initial development. The public API is not stable.
+- Until `1.0.0`, every release is a prerelease. Cut `alpha` by default, move to
+  `beta` when a version is feature complete, and to `rc` when it is frozen. A
+  stable `X.Y.Z` — which npm serves as `latest` to everyone who types
+  `bun add @aponiajs/common` — needs explicit sign-off, not a routine bump.
 - `fix:` commits produce a patch release.
 - `feat:` commits produce a minor release.
 - a `!` after the commit type or a `BREAKING CHANGE:` footer produces a major

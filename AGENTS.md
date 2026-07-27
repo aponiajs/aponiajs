@@ -18,7 +18,8 @@ Bun workspace. Framework packages live in `packages/`:
 | `aponiajs`                  | Reserved public facade, private and unpublished           | —                                                                    |
 
 Supporting directories: `examples/` for executable examples, `docs/` for
-published documentation, `plans/` and `roadmap/` for scope tracking, `scripts/`
+published documentation, `ROADMAP.md` for milestones and architecture plans,
+`scripts/`
 for release and documentation guards, `packages/cli/templates/` for generated
 application sources.
 
@@ -49,7 +50,6 @@ Narrower runs:
 - `bun test -t "resolves exported providers"`: one Bun test by name.
 - `bun run --filter @aponiajs/cli test`: one package's Bun suite.
 - `vp test packages/core/tests-vp/core.conformance.ts`: one conformance file.
-- `bun test scripts/roadmap.spec.ts`: validate `roadmap/roadmap.json`.
 - `bun test scripts/documentation.spec.ts`: validate CLI documentation wording.
 
 Use Bun exclusively for documented commands, runtime, and package management.
@@ -192,7 +192,7 @@ imports and exports, lifecycle, structured logging, generators, native Elysia
 escape hatches. Not implemented: guards, interceptors, middleware, exception filters, Problem Details errors,
 non-singleton scopes, testing modules, OpenAPI, authentication, WebSockets,
 microservice transports. Check
-`roadmap/roadmap.json` before assuming a feature belongs somewhere.
+`ROADMAP.md` before assuming a feature belongs somewhere.
 
 ## Coding Style & Naming Conventions
 
@@ -259,7 +259,7 @@ generated application, so it is slow and excluded from the default lanes.
 Prefer exercising public entrypoints: build an application with
 `AponiaFactory.create` and assert through `application.handle(new Request(...))`,
 and assert `AponiaError.code` rather than message text. `scripts/*.spec.ts` are
-guard tests over documentation wording, roadmap data, and version
+guard tests over documentation wording and version
 synchronization — a documentation edit can fail the suite.
 
 ## Commit & Pull Request Guidelines
@@ -276,6 +276,11 @@ summarize the intent, affected areas, and validation results.
 
 Use concise Conventional Commit subjects, for example
 `feat(cli): align starter layout with Nest`.
+
+The framework is pre-1.0 and not production ready, so every release is a
+prerelease: bump with `version:alpha` (or `version:beta` / `version:rc`) and
+never cut a bare `X.Y.Z`, which npm would serve as `latest`, without explicit
+sign-off.
 
 Every push must raise the synchronized workspace version. The root manifest and
 all publishable packages share one version; run the smallest valid
