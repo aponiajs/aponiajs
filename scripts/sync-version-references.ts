@@ -1,20 +1,18 @@
-import { applyEdits, modify } from "jsonc-parser";
 import { updateWorkspaceLockVersions } from "./workspace-versions.ts";
 
+const roadmapVersionPattern = /^(- \*\*Current version:\*\* ).+$/m;
+
 export function updateRoadmapVersion(roadmap: string, version: string): string {
-  const edits = modify(roadmap, ["project", "currentVersion"], version, {
-    formattingOptions: {
-      insertSpaces: true,
-      tabSize: 2,
-      eol: "\n",
-    },
-  });
-  return applyEdits(roadmap, edits);
+  if (!roadmapVersionPattern.test(roadmap)) {
+    throw new Error("ROADMAP.md does not declare a current version.");
+  }
+
+  return roadmap.replace(roadmapVersionPattern, `$1${version}`);
 }
 
 export async function synchronizeVersionReferences(
   manifestPath = "package.json",
-  roadmapPath = "roadmap/roadmap.json",
+  roadmapPath = "ROADMAP.md",
   lockfilePath = "bun.lock",
 ): Promise<void> {
   const manifest = (await Bun.file(manifestPath).json()) as {
