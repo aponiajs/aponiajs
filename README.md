@@ -152,20 +152,31 @@ visibility, and the error codes raised when a graph is wrong.
 
 ## Bootstrap
 
-`main.ts` owns the root module and the process. The factory compiles the module
-graph, validates it, builds the container, and mounts every controller as an
-Elysia plugin:
+The root module composes the feature modules, and `main.ts` owns the process.
+The factory compiles the module graph, validates it, builds the container, and
+mounts every controller as an Elysia plugin:
 
 ```ts
+// src/app.module.ts
 import { Module } from "@aponiajs/common";
-import { AponiaFactory } from "@aponiajs/platform-elysia";
 import { UserModule } from "./user/user.module.ts";
 
 @Module({ imports: [UserModule] })
-class AppModule {}
+export class AppModule {}
+```
 
-const application = await AponiaFactory.create(AppModule);
-await application.listen(3000);
+```ts
+// src/main.ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+
+async function bootstrap(): Promise<void> {
+  const application = await AponiaFactory.create(AppModule);
+  const port = Number(Bun.env.PORT ?? 3000);
+  await application.listen(port);
+}
+
+await bootstrap();
 ```
 
 Module cycles, missing exports, duplicate providers, and ambiguous dependencies

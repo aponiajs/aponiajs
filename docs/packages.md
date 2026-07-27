@@ -39,8 +39,12 @@ class AppController {
 @Module({ controllers: [AppController] })
 class AppModule {}
 
-const application = await AponiaFactory.create(AppModule);
-await application.listen(3000);
+async function bootstrap(): Promise<void> {
+  const application = await AponiaFactory.create(AppModule);
+  await application.listen(3000);
+}
+
+await bootstrap();
 ```
 
 ### `@aponiajs/common`
