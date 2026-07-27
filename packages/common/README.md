@@ -44,5 +44,34 @@ class GreetingController {
 export class GreetingModule {}
 ```
 
+## Route validation
+
+Every HTTP method decorator accepts a schema declared with
+[Standard Schema](https://standardschema.dev), so Zod, ArkType, Valibot, and
+platform-native TypeBox validators all work. Validation runs before the handler,
+and `RouteContext` types the validated slots.
+
+```ts
+import { Post, type RouteContext } from "@aponiajs/common";
+import { z } from "zod";
+
+const createUser = {
+  body: z.object({
+    name: z.string().min(2),
+  }),
+} as const;
+
+@Controller("users")
+class UserController {
+  @Post("/", createUser)
+  create(context: RouteContext<typeof createUser>): string {
+    return context.body.name;
+  }
+}
+```
+
+`body`, `query`, `params`, `headers`, and `response` are the available slots.
+A rejected request never reaches the handler.
+
 [npm package](https://www.npmjs.com/package/@aponiajs/common) ·
 [complete package catalog](../../docs/packages.md)

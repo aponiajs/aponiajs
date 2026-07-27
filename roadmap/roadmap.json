@@ -36,9 +36,9 @@
   "summary": {
     "total": 28,
     "completed": 11,
-    "inProgress": 2,
-    "planned": 15,
-    "completionPercent": 43.21
+    "inProgress": 3,
+    "planned": 14,
+    "completionPercent": 44.11
   },
   "milestones": [
     {
@@ -93,8 +93,8 @@
       "title": "Runtime maturity",
       "description": "Provider lifecycles, package boundaries, native plugin inference, phase conformance, and response contracts.",
       "order": 4,
-      "status": "planned",
-      "progressPercent": 0,
+      "status": "in_progress",
+      "progressPercent": 5,
       "targetVersion": "0.7.0",
       "itemIds": [
         "async-lifecycle-and-scopes",
@@ -745,8 +745,8 @@
       "milestoneId": "milestone-runtime-maturity",
       "title": "Validation, errors, and serialization",
       "description": "Add typed input and status-specific response contracts, RFC 9457 errors, coercion policy, and safe serialization.",
-      "status": "planned",
-      "progressPercent": 0,
+      "status": "in_progress",
+      "progressPercent": 25,
       "priority": "high",
       "category": "http",
       "packages": ["@aponiajs/http", "@aponiajs/validation", "@aponiajs/serialization"],
@@ -761,16 +761,21 @@
           "kind": "plan",
           "label": "Framework roadmap step 8",
           "ref": "plans/aponia-framework-roadmap.md#step-8-validation-errors-and-response-contracts"
+        },
+        {
+          "kind": "file",
+          "label": "Standard Schema route validation",
+          "ref": "packages/platform-elysia/tests/route-schema.test.ts"
         }
       ],
       "acceptanceCriteria": [
         "Runtime validation and generated types agree for success and error responses."
       ],
       "nextActions": [
-        "Define the schema metadata boundary.",
-        "Add Problem Details and response validation fixtures."
+        "Add Problem Details error responses.",
+        "Define the serialization and unknown-field policy."
       ],
-      "updatedAt": "2026-07-25",
+      "updatedAt": "2026-07-27",
       "tags": ["validation", "errors", "serialization"]
     },
     {

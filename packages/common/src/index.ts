@@ -20,7 +20,9 @@ export {
   type ModuleMetadata,
   type ModuleProvider,
   type RequestMethod,
+  type RouteDecoratorFactory,
   type RouteMetadata,
+  type RouteMethodDecorator,
 } from "./decorators.ts";
 export { AponiaError, type AponiaErrorCode } from "./error.ts";
 export {
@@ -43,6 +45,17 @@ export {
   type ProviderScope,
   type ValueProvider,
 } from "./provider.ts";
+export {
+  isStandardSchema,
+  routeSchemaSlots,
+  type InferValidatorOutput,
+  type NativeSchema,
+  type RouteContext,
+  type RouteResponseSettings,
+  type RouteSchema,
+  type RouteSchemaSlot,
+  type RouteValidator,
+} from "./route-schema.ts";
 export {
   createToken,
   tokenName,

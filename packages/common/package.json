@@ -33,6 +33,7 @@
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
+    "@standard-schema/spec": "^1.1.0",
     "reflect-metadata": "^0.2.2"
   }
 }

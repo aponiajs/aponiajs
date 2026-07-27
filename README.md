@@ -84,6 +84,9 @@ await application.listen(3000);
   public command use Bun.
 - **Elysia without a wall** — decorated routes map to Elysia while native
   schemas, hooks, state, and plugins remain available.
+- **Validation you already know** — route decorators accept any
+  [Standard Schema](https://standardschema.dev) validator, including Zod,
+  ArkType, Valibot, and TypeBox.
 - **Actionable diagnostics** — module cycles, missing exports, duplicate
   providers, and ambiguous dependencies fail clearly.
 
@@ -131,13 +134,14 @@ is private and should not be installed.
 
 ## Current scope
 
-AponiaJS currently supports decorated modules and HTTP controllers, singleton
-dependency injection, class/value/factory/alias providers, explicit tokens,
-module imports and exports, lifecycle management, structured logging, project
-generators, and an Elysia-native controller escape hatch.
+AponiaJS currently supports decorated modules and HTTP controllers, Standard
+Schema route validation, singleton dependency injection,
+class/value/factory/alias providers, explicit tokens, module imports and
+exports, lifecycle management, structured logging, project generators, and an
+Elysia-native controller escape hatch.
 
-Request decorators, validation pipes, runtime guards and interceptors,
-middleware, exception filters, provider scopes, testing modules, OpenAPI,
+Request decorators, runtime guards and interceptors, middleware, exception
+filters, Problem Details errors, provider scopes, testing modules, OpenAPI,
 authentication, WebSockets, and microservice transports are not implemented
 yet. Use the [machine-readable roadmap](./roadmap/roadmap.json) and its
 [JSON Schema](./roadmap/roadmap.schema.json) for tracker integrations. Review

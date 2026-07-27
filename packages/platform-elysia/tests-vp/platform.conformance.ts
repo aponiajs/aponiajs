@@ -1,5 +1,6 @@
-import { Controller, Get, Injectable, Module } from "@aponiajs/common";
+import { Controller, Get, Injectable, Module, Post, type RouteContext } from "@aponiajs/common";
 import { Elysia } from "elysia";
+import { z } from "zod";
 import {
   AponiaFactory,
   ElysiaPluginModule,
@@ -78,5 +79,46 @@ test("the Vite+ lane resolves native plugin factories from module imports", asyn
   const response = await application.handle(new Request("http://localhost/native-health"));
 
   expect(await response.text()).toBe("ok");
+  await application.close();
+});
+
+const createUserSchema = {
+  body: z.object({
+    name: z.string().min(2),
+  }),
+} as const;
+
+@Controller("conformance-users")
+class ConformanceUserController {
+  @Post("/", createUserSchema)
+  createUser(context: RouteContext<typeof createUserSchema>): { name: string } {
+    return { name: context.body.name };
+  }
+}
+
+@Module({
+  controllers: [ConformanceUserController],
+})
+class ConformanceUserModule {}
+
+test("the Vite+ lane validates route input with a Standard Schema validator", async () => {
+  const application = await AponiaFactory.create(ConformanceUserModule, { logger: false });
+  const accepted = await application.handle(
+    new Request("http://localhost/conformance-users", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "Ada" }),
+    }),
+  );
+  const rejected = await application.handle(
+    new Request("http://localhost/conformance-users", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "A" }),
+    }),
+  );
+
+  expect(await accepted.json()).toEqual({ name: "Ada" });
+  expect(rejected.status).toBe(422);
   await application.close();
 });
