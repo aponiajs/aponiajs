@@ -41,7 +41,7 @@
     "@aponiajs/common": "workspace:*",
     "@aponiajs/platform-elysia": "workspace:*",
     "@types/bun": "^1.3.14",
-    "bumpp": "^11.1.0",
+    "bumpp": "^12.0.0",
     "elysia": "^1.4.29",
     "jsonc-parser": "^3.3.1",
     "typescript": "^7.0.2",
