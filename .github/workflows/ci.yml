@@ -44,6 +44,9 @@ jobs:
           base_version="$(git show "$base_sha:package.json" | jq -r '.version // "0.0.0"')"
           BASE_VERSION="$base_version" bun run release:verify
 
+      - name: Report the distribution tag this version would publish to
+        run: bun run release:tag
+
       - name: Install frozen dependencies
         run: bun ci
 
