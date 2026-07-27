@@ -55,6 +55,9 @@ Rules enforced by `bun run release:verify` and the publish workflow:
   Any other identifier fails the release gate.
 - `next` is only ever applied as an alias after a successful `alpha`, `beta`, or
   `rc` publication. Nothing is published to `next` directly.
+- Every npm command in the workflows runs outside the repository checkout. npm
+  refuses to run inside it because the workspace declares Bun through
+  `devEngines.packageManager`.
 - `canary` never receives the `next` alias and is never promoted to another tag.
   Promote by cutting a real `alpha`, `beta`, or `rc`.
 - A GitHub release for any non-`latest` tag is marked as a prerelease.
