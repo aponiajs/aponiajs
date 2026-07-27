@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import type { ModuleDefinition } from "./module.ts";
 import type { Provider } from "./provider.ts";
+import type { RouteContext, RouteSchema } from "./route-schema.ts";
 import type { ClassToken, Token } from "./token.ts";
 
 export type ModuleClass = ClassToken<unknown>;
@@ -30,6 +31,21 @@ export interface RouteMetadata {
   readonly method: RequestMethod;
   readonly path: string;
   readonly propertyKey: string | symbol;
+  readonly schema: RouteSchema | undefined;
+}
+
+export type RouteMethodDecorator<TSchema extends RouteSchema> = <
+  THandler extends (context: RouteContext<TSchema>) => unknown,
+>(
+  target: object,
+  propertyKey: string | symbol,
+  descriptor: TypedPropertyDescriptor<THandler>,
+) => void;
+
+export interface RouteDecoratorFactory {
+  <const TSchema extends RouteSchema>(path: string, schema: TSchema): RouteMethodDecorator<TSchema>;
+  <const TSchema extends RouteSchema>(schema: TSchema): RouteMethodDecorator<TSchema>;
+  (path?: string): RouteMethodDecorator<RouteSchema>;
 }
 
 const moduleMetadataKey = Symbol.for("aponia.module.metadata");
@@ -115,19 +131,31 @@ export function getConstructorDependencies(target: ClassToken<unknown>): readonl
   );
 }
 
-function createRouteDecorator(method: RequestMethod) {
-  return (path = ""): MethodDecorator =>
-    (target, propertyKey) => {
+function createRouteDecorator(method: RequestMethod): RouteDecoratorFactory {
+  return ((pathOrSchema?: string | RouteSchema, maybeSchema?: RouteSchema) => {
+    const path = typeof pathOrSchema === "string" ? pathOrSchema : "";
+    const schema = typeof pathOrSchema === "string" ? maybeSchema : pathOrSchema;
+
+    return (target: object, propertyKey: string | symbol) => {
       const controllerRoutes =
         (Reflect.getOwnMetadata(routeMetadataKey, target) as
           | readonly RouteMetadata[]
           | undefined) ?? [];
       Reflect.defineMetadata(
         routeMetadataKey,
-        Object.freeze([...controllerRoutes, Object.freeze({ method, path, propertyKey })]),
+        Object.freeze([
+          ...controllerRoutes,
+          Object.freeze({
+            method,
+            path,
+            propertyKey,
+            schema: schema ? Object.freeze({ ...schema }) : undefined,
+          }),
+        ]),
         target,
       );
     };
+  }) as RouteDecoratorFactory;
 }
 
 function asToken(value: unknown, target: ClassToken<unknown>): Token<unknown> {

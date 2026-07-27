@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/common",
-  "version": "0.3.22",
+  "version": "0.4.0",
   "description": "Platform-neutral contracts for Aponia modules and dependency injection.",
   "homepage": "https://github.com/aponiajs/aponiajs#readme",
   "bugs": {
@@ -33,6 +33,7 @@
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
+    "@standard-schema/spec": "^1.1.0",
     "reflect-metadata": "^0.2.2"
   }
 }

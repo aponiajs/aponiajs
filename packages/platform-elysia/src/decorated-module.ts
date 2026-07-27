@@ -4,6 +4,7 @@ import {
   getControllerMetadata,
   getModuleMetadata,
   getRouteMetadata,
+  isStandardSchema,
   type ClassToken,
   type Constructor,
   type ControllerDefinition,
@@ -14,8 +15,10 @@ import {
   type ModuleMetadata,
   type ModuleProvider,
   type Provider,
+  type RouteSchema,
+  type RouteValidator,
 } from "@aponiajs/common";
-import { Elysia } from "elysia";
+import { Elysia, type AnySchema, type InputSchema, type TSchema } from "elysia";
 import { ELYSIA_CONTROLLER, type RuntimeElysiaController } from "./controller.ts";
 
 export type AponiaRootModule = ModuleImport;
@@ -196,8 +199,11 @@ function compileDecoratedController(controller: ClassToken<unknown>): Controller
           );
         }
 
-        plugin.route(route.method, joinPaths(metadata.path, route.path), () =>
-          Reflect.apply(handler, instance, []),
+        plugin.route(
+          route.method,
+          joinPaths(metadata.path, route.path),
+          (context) => Reflect.apply(handler, instance, [context]),
+          toRouteHook(route.schema),
         );
       }
 
@@ -206,6 +212,31 @@ function compileDecoratedController(controller: ClassToken<unknown>): Controller
   });
 
   return definition;
+}
+
+function toRouteHook(schema: RouteSchema | undefined): InputSchema<never> | undefined {
+  if (!schema) {
+    return undefined;
+  }
+
+  const hook: InputSchema<never> = {
+    ...(schema.body ? { body: toElysiaSchema(schema.body) } : {}),
+    ...(schema.query ? { query: toElysiaSchema(schema.query) } : {}),
+    ...(schema.params ? { params: toElysiaSchema(schema.params) } : {}),
+    ...(schema.headers ? { headers: toElysiaSchema(schema.headers) } : {}),
+    ...(schema.response ? { response: toElysiaSchema(schema.response) } : {}),
+  };
+
+  return Object.keys(hook).length === 0 ? undefined : hook;
+}
+
+/**
+ * Standard Schema validators pass through unchanged. Platform-native TypeBox
+ * validators reach the platform through the neutral `NativeSchema` contract,
+ * which cannot describe TypeBox's `Kind` symbol, so they are restored here.
+ */
+function toElysiaSchema(validator: RouteValidator): AnySchema {
+  return isStandardSchema(validator) ? validator : (validator as unknown as TSchema);
 }
 
 function joinPaths(controllerPath: string, routePath: string): string {

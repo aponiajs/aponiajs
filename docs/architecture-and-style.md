@@ -184,6 +184,43 @@ The controller remains thin. The Elysia platform translates controller and
 method metadata into native routes while Aponia owns controller construction
 and service injection.
 
+## Route validation pattern
+
+Route decorators accept an optional schema after the path. Validators follow the
+[Standard Schema](https://standardschema.dev) specification, so Zod, ArkType, and
+Valibot work directly, and platform-native TypeBox validators are accepted as
+well:
+
+```ts
+import { Controller, Post, type RouteContext } from "@aponiajs/common";
+import { z } from "zod";
+
+const createUser = {
+  body: z.object({
+    name: z.string().min(2),
+  }),
+} as const;
+
+@Controller("users")
+export class UserController {
+  constructor(private readonly userService: UserService) {}
+
+  @Post("/", createUser)
+  createUser(context: RouteContext<typeof createUser>): User {
+    return this.userService.createUser(context.body);
+  }
+}
+```
+
+The schema may also be passed alone when the route has no path suffix, as in
+`@Post(createUser)`. Available slots are `body`, `query`, `params`, `headers`,
+and `response`. Validation runs before the handler, so a rejected request never
+reaches controller code, and declaring the schema in a `const` object keeps
+`RouteContext<typeof schema>` inference available.
+
+Keep schemas beside the feature they belong to. A schema shared by several
+routes belongs in the feature directory, not in a global module.
+
 ## Bootstrap pattern
 
 Keep bootstrap equivalent to the normal NestJS factory pattern:

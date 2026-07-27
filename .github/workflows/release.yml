@@ -14,7 +14,8 @@ jobs:
     permissions:
       contents: write
     outputs:
-      version: ${{ steps.version.outputs.value }}
+      version: ${{ steps.distribution.outputs.version }}
+      tag: ${{ steps.distribution.outputs.tag }}
 
     steps:
       - name: Check out repository
@@ -34,23 +35,29 @@ jobs:
           base_version="$(git show "$BEFORE_SHA:package.json" | jq -r '.version // "0.0.0"')"
           BASE_VERSION="$base_version" bun run release:verify
 
-      - name: Read release version
-        id: version
-        run: echo "value=$(jq -r '.version' package.json)" >> "$GITHUB_OUTPUT"
+      - name: Resolve release version and distribution tag
+        id: distribution
+        run: bun run release:tag
 
       - name: Create tag and GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.version.outputs.value }}
+          VERSION: ${{ steps.distribution.outputs.version }}
+          TAG: ${{ steps.distribution.outputs.tag }}
         run: |
           if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION"; then
             echo "Tag v$VERSION already exists."
             exit 1
           fi
+          prerelease=""
+          if [ "$TAG" != "latest" ]; then
+            prerelease="--prerelease"
+          fi
           gh release create "v$VERSION" \
             --target "$GITHUB_SHA" \
             --title "AponiaJS v$VERSION" \
-            --generate-notes
+            --generate-notes \
+            $prerelease
 
   publish:
     name: Publish release
@@ -60,6 +67,6 @@ jobs:
       id-token: write
     uses: ./.github/workflows/publish.yml
     with:
-      tag: latest
+      tag: ${{ needs.release.outputs.tag }}
       version: ${{ needs.release.outputs.version }}
     secrets: inherit

@@ -1,0 +1,76 @@
+name: Publish canary build
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 1-5"
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: npm-canary
+  cancel-in-progress: true
+
+jobs:
+  canary:
+    name: Stamp and publish a canary build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: npm
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Set up Node for npm trusted publishing
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Install frozen dependencies
+        run: bun ci
+
+      - name: Stamp the canary version
+        id: canary
+        run: bun run release:canary
+
+      - name: Verify workspace
+        run: |
+          bun run check
+          bun test
+          bun run test:vite-plus
+          bun run build
+
+      - name: Verify the stamped version
+        env:
+          RELEASE_VERSION: ${{ steps.canary.outputs.version }}
+          RELEASE_TAG: canary
+        run: bun run release:verify
+
+      - name: Pack publishable workspaces
+        run: |
+          mkdir -p canary-artifacts/{01-common,02-core,03-platform-elysia,04-cli,05-create-aponia}
+          bun pm pack --cwd packages/common --destination "$GITHUB_WORKSPACE/canary-artifacts/01-common"
+          bun pm pack --cwd packages/core --destination "$GITHUB_WORKSPACE/canary-artifacts/02-core"
+          bun pm pack --cwd packages/platform-elysia --destination "$GITHUB_WORKSPACE/canary-artifacts/03-platform-elysia"
+          bun pm pack --cwd packages/cli --destination "$GITHUB_WORKSPACE/canary-artifacts/04-cli"
+          bun pm pack --cwd packages/create-aponia --destination "$GITHUB_WORKSPACE/canary-artifacts/05-create-aponia"
+
+      - name: Publish packages in dependency order
+        working-directory: ${{ runner.temp }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          for archive in "$GITHUB_WORKSPACE"/canary-artifacts/*/*.tgz; do
+            npm publish "$archive" --access public --tag canary --provenance
+          done

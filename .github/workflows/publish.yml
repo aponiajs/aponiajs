@@ -4,8 +4,9 @@ on:
   workflow_call:
     inputs:
       tag:
-        description: npm distribution tag
-        required: true
+        description: npm distribution tag, or auto to derive it from the version
+        required: false
+        default: auto
         type: string
       version:
         description: Expected package version
@@ -16,11 +17,16 @@ on:
       tag:
         description: npm distribution tag
         required: true
-        default: latest
+        default: auto
         type: choice
         options:
+          - auto
           - latest
+          - alpha
+          - beta
+          - rc
           - next
+          - canary
       version:
         description: Expected package version (optional)
         required: false
@@ -63,6 +69,29 @@ jobs:
       - name: Install frozen dependencies
         run: bun ci
 
+      - name: Resolve distribution tags
+        id: distribution
+        run: bun run release:tag
+
+      - name: Reject a distribution tag the version does not allow
+        env:
+          REQUESTED_TAG: ${{ inputs.tag || 'auto' }}
+          RESOLVED_TAG: ${{ steps.distribution.outputs.tag }}
+          ALIAS_TAGS: ${{ steps.distribution.outputs.aliases }}
+          VERSION: ${{ steps.distribution.outputs.version }}
+        run: |
+          if [ "$REQUESTED_TAG" = "auto" ]; then
+            echo "Publishing $VERSION to $RESOLVED_TAG."
+            exit 0
+          fi
+          for allowed in $RESOLVED_TAG $ALIAS_TAGS; do
+            if [ "$REQUESTED_TAG" = "$allowed" ]; then
+              exit 0
+            fi
+          done
+          echo "Version $VERSION may only be published under: $RESOLVED_TAG $ALIAS_TAGS." >&2
+          exit 1
+
       - name: Verify workspace
         run: |
           bun run check
@@ -74,6 +103,7 @@ jobs:
       - name: Verify release version
         env:
           RELEASE_VERSION: ${{ inputs.version || github.event.release.tag_name }}
+          RELEASE_TAG: ${{ steps.distribution.outputs.tag }}
         run: bun run release:verify
 
       - name: Pack publishable workspaces
@@ -89,8 +119,21 @@ jobs:
         working-directory: ${{ runner.temp }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_TAG: ${{ inputs.tag || 'latest' }}
+          NPM_TAG: ${{ steps.distribution.outputs.tag }}
         run: |
           for archive in "$GITHUB_WORKSPACE"/release-artifacts/*/*.tgz; do
             npm publish "$archive" --access public --tag "$NPM_TAG" --provenance
+          done
+
+      - name: Point alias tags at the published version
+        if: steps.distribution.outputs.aliases != ''
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          ALIAS_TAGS: ${{ steps.distribution.outputs.aliases }}
+          VERSION: ${{ steps.distribution.outputs.version }}
+        run: |
+          for package in @aponiajs/common @aponiajs/core @aponiajs/platform-elysia @aponiajs/cli create-aponia; do
+            for alias in $ALIAS_TAGS; do
+              npm dist-tag add "$package@$VERSION" "$alias"
+            done
           done

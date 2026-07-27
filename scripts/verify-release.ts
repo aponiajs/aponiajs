@@ -1,7 +1,5 @@
+import { assertPublishable, resolveDistribution, semverPattern } from "./distribution-tag.ts";
 import { assertWorkspaceLockVersions, versionedPackageFiles } from "./workspace-versions.ts";
-
-const semverPattern =
-  /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
 
 const versions = await Promise.all(
   versionedPackageFiles.map(async (file) => {
@@ -25,6 +23,8 @@ if (!version || !semverPattern.test(version)) {
   throw new Error(`${version ?? "undefined"} is not a valid SemVer version.`);
 }
 
+const distribution = resolveDistribution(version);
+
 assertWorkspaceLockVersions(await Bun.file("bun.lock").text(), version);
 
 const expectedVersion = Bun.env.RELEASE_VERSION?.replace(/^v/, "");
@@ -32,6 +32,11 @@ if (expectedVersion && version !== expectedVersion) {
   throw new Error(
     `Release version ${expectedVersion} does not match workspace version ${version}.`,
   );
+}
+
+const expectedTag = Bun.env.RELEASE_TAG;
+if (expectedTag) {
+  assertPublishable(version, expectedTag);
 }
 
 const baseVersion = Bun.env.BASE_VERSION?.replace(/^v/, "");
@@ -46,5 +51,10 @@ if (baseVersion) {
 }
 
 console.log(`Verified synchronized release version ${version}.`);
+console.log(
+  distribution.aliases.length > 0
+    ? `Distribution tag: ${distribution.tag} (alias: ${distribution.aliases.join(", ")}).`
+    : `Distribution tag: ${distribution.tag}.`,
+);
 
 export {};

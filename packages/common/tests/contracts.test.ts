@@ -79,6 +79,7 @@ test("shares decorator metadata across separate common package instances", async
       method: "GET",
       path: "health",
       propertyKey: "handle",
+      schema: undefined,
     },
   ]);
   expect(second.getConstructorDependencies(SharedConsumer)).toEqual([SharedDependency]);
