@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/common",
-  "version": "0.3.22",
+  "version": "0.4.0",
   "description": "Platform-neutral contracts for Aponia modules and dependency injection.",
   "homepage": "https://github.com/aponiajs/aponiajs#readme",
   "bugs": {
