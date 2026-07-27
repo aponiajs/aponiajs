@@ -40,8 +40,9 @@ type InferSlot<
 > = TSchema[TSlot] extends RouteValidator ? InferValidatorOutput<TSchema[TSlot]> : TFallback;
 
 export interface RouteResponseSettings {
-  status?: number;
-  headers: Record<string, string>;
+  /** A status code, or a platform-recognized status name such as "Not Found". */
+  status?: number | string;
+  headers: Record<string, string | number | undefined>;
   redirect?: string;
 }
 

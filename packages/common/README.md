@@ -49,29 +49,54 @@ export class GreetingModule {}
 Every HTTP method decorator accepts a schema declared with
 [Standard Schema](https://standardschema.dev), so Zod, ArkType, Valibot, and
 platform-native TypeBox validators all work. Validation runs before the handler,
-and `RouteContext` types the validated slots.
+so a rejected request never reaches controller code.
 
 ```ts
-import { Post, type RouteContext } from "@aponiajs/common";
+import { Body, Controller, Get, Param, Post } from "@aponiajs/common";
 import { z } from "zod";
 
-const createUser = {
-  body: z.object({
-    name: z.string().min(2),
-  }),
-} as const;
+const CreateUser = z.object({
+  name: z.string().min(2),
+});
+type CreateUser = z.infer<typeof CreateUser>;
 
 @Controller("users")
 class UserController {
-  @Post("/", createUser)
-  create(context: RouteContext<typeof createUser>): string {
-    return context.body.name;
+  @Post("/", { body: CreateUser })
+  createUser(@Body() body: CreateUser): CreateUser {
+    return body;
+  }
+
+  @Get(":id")
+  findUser(@Param("id") id: string): { id: string } {
+    return { id };
   }
 }
 ```
 
-`body`, `query`, `params`, `headers`, and `response` are the available slots.
-A rejected request never reaches the handler.
+`body`, `query`, `params`, `headers`, and `response` are the available schema
+slots.
+
+## Request parameters
+
+Parameter decorators inject one piece of the request, and an optional name
+selects a single property:
+
+| Decorator                | Injects                                |
+| ------------------------ | -------------------------------------- |
+| `@Body()` / `@Body("k")` | The validated request body             |
+| `@Query()`               | The parsed query string                |
+| `@Param("id")`           | Path parameters                        |
+| `@Headers("x-agent")`    | Request headers                        |
+| `@Cookie("session")`     | Request cookies, or one cookie's value |
+| `@Req()`                 | The native `Request`                   |
+| `@Res()`                 | The mutable response settings          |
+| `@Ctx()`                 | The whole platform context             |
+
+A handler without parameter decorators receives the context as its only
+argument, typed platform-neutrally by `RouteContext<typeof schema>`. An Elysia
+application can annotate it with `ElysiaRouteContext<typeof schema>` from
+`@aponiajs/platform-elysia` to keep Elysia's own context types.
 
 [npm package](https://www.npmjs.com/package/@aponiajs/common) ·
 [complete package catalog](../../docs/packages.md)
