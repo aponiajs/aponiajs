@@ -13,10 +13,10 @@ Structured applications for Bun
 [Documentation](./docs/architecture-and-style.md) ·
 [CLI](./docs/cli.md) ·
 [Packages](./docs/packages.md) ·
-[Roadmap](./plans/npm-package-architecture-roadmap.md)
+[Roadmap](./ROADMAP.md)
 
 [![CI](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml/badge.svg)](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcommon?label=npm&color=baa9d1)](https://www.npmjs.com/package/@aponiajs/common)
+[![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcommon/alpha?label=npm&color=baa9d1)](https://www.npmjs.com/package/@aponiajs/common)
 [![Bun](https://img.shields.io/badge/Bun-1.3.14-f8eddd?logo=bun&logoColor=24232d)](https://bun.sh)
 [![Elysia](https://img.shields.io/badge/Elysia-1.4-d9ccea)](https://elysiajs.com)
 [![License](https://img.shields.io/badge/License-MIT-e8b9b5)](./LICENSE)
@@ -30,8 +30,6 @@ controllers, and direct access to Elysia. Supercharged by Bun.
 
 ## Start
 
-Create a Bun application:
-
 ```bash
 bun add --global @aponiajs/cli
 aponia new my-api
@@ -42,7 +40,7 @@ bun run dev
 Or add AponiaJS to an existing project:
 
 ```bash
-bun add @aponiajs/common @aponiajs/platform-elysia elysia
+bun add @aponiajs/common@alpha @aponiajs/platform-elysia@alpha elysia
 ```
 
 ```ts
@@ -108,30 +106,9 @@ class UserController {
 ```
 
 `@Body()`, `@Query()`, `@Param()`, `@Headers()`, and `@Cookie()` inject one piece
-of the request, with an optional name for a single property. Need the whole
-Elysia context — `status`, `set`, `cookie`, `store`, `redirect`, plugin
-decorators? Take it with `@Ctx()`:
-
-```ts
-import { Controller, Ctx, Post } from "@aponiajs/common";
-import { type ElysiaRouteContext } from "@aponiajs/platform-elysia";
-import { z } from "zod";
-
-const createUser = {
-  body: z.object({ name: z.string().min(2) }),
-};
-
-@Controller("users")
-class UserController {
-  @Post("/", createUser)
-  createUser(@Ctx() context: ElysiaRouteContext<typeof createUser>) {
-    context.set.headers["x-created"] = "1";
-    return context.body.name === "root"
-      ? context.status(403, "forbidden")
-      : { name: context.body.name };
-  }
-}
-```
+of the request, each accepting an optional property name. `@Ctx()` hands over
+Elysia's own context — `status`, `set`, `cookie`, `store`, `redirect`, and plugin
+decorators — typed by the declared schema.
 
 ## Why AponiaJS?
 
@@ -141,74 +118,51 @@ class UserController {
   public command use Bun.
 - **Elysia without a wall** — decorated routes map to Elysia while native
   schemas, hooks, state, and plugins remain available.
-- **Validation you already know** — routes accept any
-  [Standard Schema](https://standardschema.dev) validator, including Zod,
-  ArkType, Valibot, and TypeBox, with the validated context typed for you.
 - **Actionable diagnostics** — module cycles, missing exports, duplicate
   providers, and ambiguous dependencies fail clearly.
 
 ## Generate
 
-Install the published CLI and generate components with Nest-style commands:
-
 ```bash
-bun add --global @aponiajs/cli
-
 aponia new my-api
 aponia generate module users
-aponia generate controller users
-aponia generate service users
 aponia generate resource users --type rest
-```
 
-Short aliases work too:
-
-```bash
 aponia g mo users
-aponia g co users
-aponia g s users
 aponia g res users
 ```
 
-The catalog includes application, library, class, controller, decorator,
-filter, gateway, guard, interface, interceptor, middleware, module, pipe,
-provider, resolver, resource, and service generators. `router`, `routers`, and
-`route` are controller aliases. See the [complete CLI reference](./docs/cli.md)
-for options, module registration, transports, and dry runs.
+Every Nest schematic is available, from `class` and `controller` to `resource`
+and `gateway`. See the [CLI reference](./docs/cli.md) for the full catalog,
+aliases, options, and module registration.
 
 ## Packages
 
-| Package                                                                                | Version                                                                                                                       | Purpose                                    |
-| -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| [`@aponiajs/common`](https://www.npmjs.com/package/@aponiajs/common)                   | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcommon)](https://www.npmjs.com/package/@aponiajs/common)                   | Decorators, contracts, tokens, and logging |
-| [`@aponiajs/core`](https://www.npmjs.com/package/@aponiajs/core)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcore)](https://www.npmjs.com/package/@aponiajs/core)                       | Module graph and dependency injection      |
-| [`@aponiajs/platform-elysia`](https://www.npmjs.com/package/@aponiajs/platform-elysia) | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fplatform-elysia)](https://www.npmjs.com/package/@aponiajs/platform-elysia) | Elysia adapter and application lifecycle   |
-| [`@aponiajs/cli`](https://www.npmjs.com/package/@aponiajs/cli)                         | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcli)](https://www.npmjs.com/package/@aponiajs/cli)                         | Project and component generators           |
-| [`create-aponia`](https://www.npmjs.com/package/create-aponia)                         | [![npm](https://img.shields.io/npm/v/create-aponia)](https://www.npmjs.com/package/create-aponia)                             | `bun create` entrypoint                    |
+| Package                                                                                | Purpose                                    |
+| -------------------------------------------------------------------------------------- | ------------------------------------------ |
+| [`@aponiajs/common`](https://www.npmjs.com/package/@aponiajs/common)                   | Decorators, contracts, tokens, and logging |
+| [`@aponiajs/core`](https://www.npmjs.com/package/@aponiajs/core)                       | Module graph and dependency injection      |
+| [`@aponiajs/platform-elysia`](https://www.npmjs.com/package/@aponiajs/platform-elysia) | Elysia adapter and application lifecycle   |
+| [`@aponiajs/cli`](https://www.npmjs.com/package/@aponiajs/cli)                         | Project and component generators           |
+| [`create-aponia`](https://www.npmjs.com/package/create-aponia)                         | `bun create` entrypoint                    |
 
-All public packages use synchronized versions. The reserved `aponiajs` facade
-is private and should not be installed.
+All public packages share one version and are published to the `alpha` channel;
+`latest` is reserved for the first stable release.
 
 ## Current scope
 
-AponiaJS currently supports decorated modules and HTTP controllers, Standard
-Schema route validation, request parameter decorators, singleton dependency
-injection,
+Implemented: decorated modules and HTTP controllers, Standard Schema route
+validation, request parameter decorators, singleton dependency injection,
 class/value/factory/alias providers, explicit tokens, module imports and
 exports, lifecycle management, structured logging, project generators, and an
 Elysia-native controller escape hatch.
 
-Runtime guards and interceptors, middleware, exception
-filters, Problem Details errors, provider scopes, testing modules, OpenAPI,
-authentication, WebSockets, and microservice transports are not implemented
-yet. Use the [machine-readable roadmap](./roadmap/roadmap.json) and its
-[JSON Schema](./roadmap/roadmap.schema.json) for tracker integrations. Review
-the [architecture roadmap](./plans/npm-package-architecture-roadmap.md) before
-adopting the framework for long-lived workloads.
+Not implemented yet: guards, interceptors, middleware, exception filters,
+Problem Details errors, provider scopes, testing modules, OpenAPI,
+authentication, WebSockets, and microservice transports. The
+[roadmap](./ROADMAP.md) tracks every milestone and the plans behind it.
 
 ## Develop
-
-The repository uses Bun 1.3.14, managed through mise:
 
 ```bash
 mise install
@@ -219,17 +173,9 @@ bun run test:vite-plus
 bun run build
 ```
 
-Every push must include a synchronized
-[Semantic Version](https://semver.org) increase:
-
-```bash
-bun run version:patch
-# or: bun run version:minor
-# or: bun run version:major
-```
-
-Read the [release guide](./docs/releasing.md) for the enforced hook and CI
-workflow. Repository conventions live in [AGENTS.md](./AGENTS.md).
+Every push must raise the synchronized version with `bun run version:alpha`.
+Read the [release guide](./docs/releasing.md) for channels and the publish flow;
+repository conventions live in [AGENTS.md](./AGENTS.md).
 
 ## License
 
