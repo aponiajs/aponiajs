@@ -4,6 +4,7 @@ import {
   getControllerMetadata,
   getModuleMetadata,
   getRouteMetadata,
+  getRouteParameterMetadata,
   isStandardSchema,
   type ClassToken,
   type Constructor,
@@ -15,6 +16,8 @@ import {
   type ModuleMetadata,
   type ModuleProvider,
   type Provider,
+  type RouteContext,
+  type RouteParameterMetadata,
   type RouteSchema,
   type RouteValidator,
 } from "@aponiajs/common";
@@ -199,10 +202,11 @@ function compileDecoratedController(controller: ClassToken<unknown>): Controller
           );
         }
 
+        const parameters = getRouteParameterMetadata(controller, route.propertyKey);
         plugin.route(
           route.method,
           joinPaths(metadata.path, route.path),
-          (context) => Reflect.apply(handler, instance, [context]),
+          (context) => handler.call(instance, ...bindParameters(parameters, context)),
           toRouteHook(route.schema),
         );
       }
@@ -212,6 +216,54 @@ function compileDecoratedController(controller: ClassToken<unknown>): Controller
   });
 
   return definition;
+}
+
+/**
+ * Builds the handler arguments described by parameter decorators. A handler
+ * without them receives the whole context, which keeps `@Ctx()` optional for
+ * single-argument handlers.
+ */
+function bindParameters(
+  parameters: readonly RouteParameterMetadata[],
+  context: RouteContext,
+): readonly unknown[] {
+  if (parameters.length === 0) {
+    return [context];
+  }
+
+  const size = Math.max(...parameters.map((parameter) => parameter.index)) + 1;
+  const bound = Array.from({ length: size }, () => undefined as unknown);
+  for (const parameter of parameters) {
+    bound[parameter.index] = resolveParameter(parameter, context);
+  }
+  return bound;
+}
+
+function resolveParameter(parameter: RouteParameterMetadata, context: RouteContext): unknown {
+  const source = parameterSource(parameter, context);
+  if (parameter.property === undefined) {
+    return source;
+  }
+  if (typeof source !== "object" || source === null) {
+    return undefined;
+  }
+
+  const value = (source as Record<string, unknown>)[parameter.property];
+  return parameter.kind === "cookie" ? (value as { value?: unknown } | undefined)?.value : value;
+}
+
+function parameterSource(parameter: RouteParameterMetadata, context: RouteContext): unknown {
+  const contextRecord = context as unknown as Record<string, unknown>;
+  switch (parameter.kind) {
+    case "context":
+      return context;
+    case "set":
+      return context.set;
+    case "request":
+      return context.request;
+    default:
+      return contextRecord[parameter.kind];
+  }
 }
 
 function toRouteHook(schema: RouteSchema | undefined): InputSchema<never> | undefined {

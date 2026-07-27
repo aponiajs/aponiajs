@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import type { ModuleDefinition } from "./module.ts";
 import type { Provider } from "./provider.ts";
-import type { RouteContext, RouteSchema } from "./route-schema.ts";
+import type { RouteSchema } from "./route-schema.ts";
 import type { ClassToken, Token } from "./token.ts";
 
 export type ModuleClass = ClassToken<unknown>;
@@ -25,7 +25,7 @@ export interface ControllerMetadata {
   readonly path: string;
 }
 
-export type RequestMethod = "DELETE" | "GET" | "PATCH" | "POST" | "PUT";
+export type RequestMethod = "DELETE" | "GET" | "HEAD" | "OPTIONS" | "PATCH" | "POST" | "PUT";
 
 export interface RouteMetadata {
   readonly method: RequestMethod;
@@ -34,18 +34,21 @@ export interface RouteMetadata {
   readonly schema: RouteSchema | undefined;
 }
 
-export type RouteMethodDecorator<TSchema extends RouteSchema> = <
-  THandler extends (context: RouteContext<TSchema>) => unknown,
->(
+/**
+ * A handler's arguments are supplied by the platform from its parameter
+ * decorators, and their types come from the handler's own annotations, so the
+ * decorator accepts any callable member.
+ */
+export type RouteMethodDecorator = <THandler extends (...parameters: never[]) => unknown>(
   target: object,
   propertyKey: string | symbol,
   descriptor: TypedPropertyDescriptor<THandler>,
 ) => void;
 
 export interface RouteDecoratorFactory {
-  <const TSchema extends RouteSchema>(path: string, schema: TSchema): RouteMethodDecorator<TSchema>;
-  <const TSchema extends RouteSchema>(schema: TSchema): RouteMethodDecorator<TSchema>;
-  (path?: string): RouteMethodDecorator<RouteSchema>;
+  (path: string, schema: RouteSchema): RouteMethodDecorator;
+  (schema: RouteSchema): RouteMethodDecorator;
+  (path?: string): RouteMethodDecorator;
 }
 
 const moduleMetadataKey = Symbol.for("aponia.module.metadata");
@@ -91,6 +94,8 @@ export function Inject(token: Token<unknown>): ParameterDecorator {
 
 export const Delete = createRouteDecorator("DELETE");
 export const Get = createRouteDecorator("GET");
+export const Head = createRouteDecorator("HEAD");
+export const Options = createRouteDecorator("OPTIONS");
 export const Patch = createRouteDecorator("PATCH");
 export const Post = createRouteDecorator("POST");
 export const Put = createRouteDecorator("PUT");

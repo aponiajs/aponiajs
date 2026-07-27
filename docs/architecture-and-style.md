@@ -60,6 +60,7 @@ src/
     |-- greeting.controller.spec.ts
     |-- greeting.controller.ts
     |-- greeting.module.ts
+    |-- greeting.schema.ts
     |-- greeting.service.spec.ts
     `-- greeting.service.ts
 ```
@@ -99,6 +100,7 @@ explicitly; `aponia new` remains standard mode.
 | `.module.ts`     | Imports, providers, exports, and module identity              |
 | `.service.ts`    | Business rules and reusable application behavior              |
 | `.controller.ts` | Route ownership and transport-to-service delegation           |
+| `.schema.ts`     | Route validation schemas for the owning feature               |
 | `.tokens.ts`     | Named public injection tokens                                 |
 | `.spec.ts`       | Unit tests colocated with the owning controller or service    |
 | `.e2e-spec.ts`   | End-to-end tests under the top-level `test` directory         |
@@ -192,22 +194,21 @@ Valibot work directly, and platform-native TypeBox validators are accepted as
 well:
 
 ```ts
-import { Controller, Post, type RouteContext } from "@aponiajs/common";
+import { Body, Controller, Post } from "@aponiajs/common";
 import { z } from "zod";
 
-const createUser = {
-  body: z.object({
-    name: z.string().min(2),
-  }),
-} as const;
+const CreateUser = z.object({
+  name: z.string().min(2),
+});
+type CreateUser = z.infer<typeof CreateUser>;
 
 @Controller("users")
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Post("/", createUser)
-  createUser(context: RouteContext<typeof createUser>): User {
-    return this.userService.createUser(context.body);
+  @Post("/", { body: CreateUser })
+  createUser(@Body() body: CreateUser): User {
+    return this.userService.createUser(body);
   }
 }
 ```
@@ -215,11 +216,42 @@ export class UserController {
 The schema may also be passed alone when the route has no path suffix, as in
 `@Post(createUser)`. Available slots are `body`, `query`, `params`, `headers`,
 and `response`. Validation runs before the handler, so a rejected request never
-reaches controller code, and declaring the schema in a `const` object keeps
-`RouteContext<typeof schema>` inference available.
+reaches controller code.
 
-Keep schemas beside the feature they belong to. A schema shared by several
-routes belongs in the feature directory, not in a global module.
+### Request parameters
+
+Parameter decorators inject one piece of the request, exactly as they do in
+Nest, and the handler's own annotations provide the types:
+
+```ts
+import { Body, Controller, Get, Param, Post } from "@aponiajs/common";
+
+@Controller("users")
+export class UserController {
+  constructor(private readonly userService: UserService) {}
+
+  @Post("/", { body: CreateUser })
+  createUser(@Body() body: CreateUser): User {
+    return this.userService.createUser(body);
+  }
+
+  @Get(":id")
+  findUser(@Param("id") id: string): User {
+    return this.userService.findUser(id);
+  }
+}
+```
+
+`@Body()`, `@Query()`, `@Param()`, `@Headers()`, and `@Cookie()` accept an
+optional property name that selects a single value. `@Req()` injects the native
+`Request`, `@Res()` the mutable response settings, and `@Ctx()` the whole
+platform context.
+
+A handler declared without parameter decorators receives the context as its only
+argument. Annotate it with `RouteContext<typeof schema>` to stay
+platform-neutral, or with `ElysiaRouteContext<typeof schema>` from
+`@aponiajs/platform-elysia` to keep `status`, `set`, `cookie`, `store`,
+`redirect`, and plugin decorators typed by Elysia itself.
 
 ## Bootstrap pattern
 

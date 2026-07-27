@@ -140,17 +140,24 @@ TypeBox type at that single boundary. Slots are `body`, `query`, `params`,
 `headers`, and `response`; keep `routeSchemaSlots`, `RouteContext`, and the
 platform hook builder in sync when adding one.
 
-### Escape hatches to preserve
+Handlers receive their input through parameter decorators
+(`packages/common/src/route-parameters.ts`): `@Body`, `@Query`, `@Param`,
+`@Headers`, `@Cookie`, `@Req`, `@Res`, `@Ctx`, each optionally naming a single
+property. Metadata is stored per method under
+`Symbol.for("aponia.route-parameters.metadata")`, and `bindParameters` in
+`decorated-module.ts` maps the context onto the argument list at request time. A
+handler with no parameter decorators receives the whole context as its only
+argument, so `RouteContext` and the platform's `ElysiaRouteContext` stay useful
+annotations. TypeScript cannot contextually type a decorated method's
+parameters, which is why types come from the handler's own annotations rather
+than from schema inference — do not reintroduce an inference-based route API to
+work around it.
 
-- `defineElysiaController` — hand-built Elysia plugin as a controller.
-- `ElysiaPluginModule.register` / `.registerAsync` — native Elysia plugin as a
-  module. Identity is `Symbol.for(...)` when `key` is given so the same plugin
-  imported by several modules mounts once, and a fresh `Symbol()` otherwise so
-  unkeyed registrations stay distinct.
-- `AponiaFactory.create(root, { configureNative })` and
-  `application.getNativeApplication()` — direct Elysia access.
-
-Any change to route mapping or bootstrap must keep these working.
+Elysia compiles handlers by statically reading their source (sucrose), so a route
+handler must receive the context as a direct call argument, as in
+`handler.call(instance, ...bindParameters(parameters, context))`. Hiding it
+behind `Reflect.apply(handler, instance, [context])` makes Elysia skip building
+and applying parts of the context, and `set.headers` silently stops working.
 
 ### Errors
 
@@ -172,16 +179,17 @@ schematic alias table; `component-names.ts` derives names with `change-case` and
 renders `templates/application`; `schematic-generator.ts` owns schematic
 definitions, `aponia.json` configuration, and flat/spec resolution;
 `module-registration.ts` rewrites `@Module()` metadata in generated sources with
-`ts-morph`. `runCli` prints `CREATE`/`UPDATE` change lines and returns an exit
+`ts-morph`. A REST CRUD resource also emits `<name>.schema.ts`, which owns the
+route schemas the generated controller passes to its decorators and from which
+both DTOs derive their types with `Static<typeof …>`. `runCli` prints `CREATE`/`UPDATE` change lines and returns an exit
 code — it never throws.
 
 ### Current scope
 
 Implemented: decorated modules and HTTP controllers, Standard Schema route
-validation, singleton DI, class/value/factory/alias providers, explicit tokens,
+validation, request parameter decorators, singleton DI, class/value/factory/alias providers, explicit tokens,
 imports and exports, lifecycle, structured logging, generators, native Elysia
-escape hatches. Not implemented: request parameter decorators, guards,
-interceptors, middleware, exception filters, Problem Details errors,
+escape hatches. Not implemented: guards, interceptors, middleware, exception filters, Problem Details errors,
 non-singleton scopes, testing modules, OpenAPI, authentication, WebSockets,
 microservice transports. Check
 `roadmap/roadmap.json` before assuming a feature belongs somewhere.

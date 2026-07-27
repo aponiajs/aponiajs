@@ -6,6 +6,7 @@ export {
   type NativeElysiaConfigurator,
 } from "./application.ts";
 export { compileRootModule, type AponiaRootModule } from "./decorated-module.ts";
+export type { ElysiaRouteContext } from "./route-context.ts";
 export {
   ELYSIA_CONTROLLER,
   defineElysiaController,

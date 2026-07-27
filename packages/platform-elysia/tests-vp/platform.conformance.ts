@@ -1,4 +1,15 @@
-import { Controller, Get, Injectable, Module, Post, type RouteContext } from "@aponiajs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Res,
+  Injectable,
+  Module,
+  Post,
+  type RouteContext,
+  type RouteResponseSettings,
+} from "@aponiajs/common";
 import { Elysia } from "elysia";
 import { z } from "zod";
 import {
@@ -86,7 +97,7 @@ const createUserSchema = {
   body: z.object({
     name: z.string().min(2),
   }),
-} as const;
+};
 
 @Controller("conformance-users")
 class ConformanceUserController {
@@ -120,5 +131,56 @@ test("the Vite+ lane validates route input with a Standard Schema validator", as
 
   expect(await accepted.json()).toEqual({ name: "Ada" });
   expect(rejected.status).toBe(422);
+  await application.close();
+});
+
+const conformanceParameterSchema = { body: z.object({ name: z.string().min(2) }) };
+
+@Controller("conformance-parameters")
+class ConformanceParameterController {
+  @Post("/", conformanceParameterSchema)
+  createUser(
+    @Body() body: { name: string },
+    @Res() set: RouteResponseSettings,
+  ): {
+    name: string;
+  } {
+    set.headers["x-source"] = "parameters";
+    return { name: body.name };
+  }
+
+  @Get(":id")
+  findUser(@Param("id") id: string): { id: string } {
+    return { id };
+  }
+}
+
+@Module({
+  controllers: [ConformanceParameterController],
+})
+class ConformanceParameterModule {}
+
+test("the Vite+ lane injects decorated route parameters", async () => {
+  const application = await AponiaFactory.create(ConformanceParameterModule, { logger: false });
+  const created = await application.handle(
+    new Request("http://localhost/conformance-parameters", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "Ada" }),
+    }),
+  );
+  const rejected = await application.handle(
+    new Request("http://localhost/conformance-parameters", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "A" }),
+    }),
+  );
+  const found = await application.handle(new Request("http://localhost/conformance-parameters/42"));
+
+  expect(created.headers.get("x-source")).toBe("parameters");
+  expect(await created.json()).toEqual({ name: "Ada" });
+  expect(rejected.status).toBe(422);
+  expect(await found.json()).toEqual({ id: "42" });
   await application.close();
 });

@@ -3,9 +3,11 @@ export {
   Controller,
   Delete,
   Get,
+  Head,
   Inject,
   Injectable,
   Module,
+  Options,
   Patch,
   Post,
   Put,
@@ -45,6 +47,20 @@ export {
   type ProviderScope,
   type ValueProvider,
 } from "./provider.ts";
+export {
+  Body,
+  Cookie,
+  Ctx,
+  Headers,
+  Param,
+  Query,
+  Req,
+  Res,
+  getRouteParameterMetadata,
+  routeParameterKinds,
+  type RouteParameterKind,
+  type RouteParameterMetadata,
+} from "./route-parameters.ts";
 export {
   isStandardSchema,
   routeSchemaSlots,

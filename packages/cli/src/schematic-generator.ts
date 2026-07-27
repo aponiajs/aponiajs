@@ -207,17 +207,22 @@ function createResourceFiles(
     ),
   ];
 
+  const validated = options.crud && options.type === "rest";
+  if (validated) {
+    files.push(createFile(directory, `${names.fileName}.schema.ts`, renderResourceSchema(names)));
+  }
+
   if (options.crud) {
     files.push(
       createFile(
         join(directory, "dto"),
         `create-${names.singularFileName}.${dtoSuffix}.ts`,
-        renderCreateDto(names, dtoSuffix),
+        renderCreateDto(names, dtoSuffix, validated),
       ),
       createFile(
         join(directory, "dto"),
         `update-${names.singularFileName}.${dtoSuffix}.ts`,
-        renderUpdateDto(names, dtoSuffix),
+        renderUpdateDto(names, dtoSuffix, validated),
       ),
       createFile(
         join(directory, "entities"),
@@ -425,7 +430,9 @@ function renderResourceController(names: ComponentNames, crud: boolean): string 
   if (!crud) {
     return `import { Controller } from "@aponiajs/common";\nimport { ${names.className}Service } from "./${names.fileName}.service.ts";\n\n@Controller("${names.routePath}")\nexport class ${names.className}Controller {\n  constructor(private readonly ${names.propertyName}Service: ${names.className}Service) {}\n}\n`;
   }
-  return `import { Controller, Delete, Get, Patch, Post } from "@aponiajs/common";\nimport type { Create${names.singularClassName}Dto } from "./dto/create-${names.singularFileName}.dto.ts";\nimport type { Update${names.singularClassName}Dto } from "./dto/update-${names.singularFileName}.dto.ts";\nimport { ${names.className}Service } from "./${names.fileName}.service.ts";\n\n@Controller("${names.routePath}")\nexport class ${names.className}Controller {\n  constructor(private readonly ${names.propertyName}Service: ${names.className}Service) {}\n\n  @Post()\n  create(input: Create${names.singularClassName}Dto) {\n    return this.${names.propertyName}Service.create(input);\n  }\n\n  @Get()\n  findAll() {\n    return this.${names.propertyName}Service.findAll();\n  }\n\n  @Get(":id")\n  findOne(id: string) {\n    return this.${names.propertyName}Service.findOne(id);\n  }\n\n  @Patch(":id")\n  update(id: string, input: Update${names.singularClassName}Dto) {\n    return this.${names.propertyName}Service.update(id, input);\n  }\n\n  @Delete(":id")\n  remove(id: string) {\n    return this.${names.propertyName}Service.remove(id);\n  }\n}\n`;
+
+  const single = names.singularClassName;
+  return `import { Body, Controller, Delete, Get, Param, Patch, Post } from "@aponiajs/common";\nimport type { Create${single}Dto } from "./dto/create-${names.singularFileName}.dto.ts";\nimport type { Update${single}Dto } from "./dto/update-${names.singularFileName}.dto.ts";\nimport {\n  create${single}Route,\n  find${single}Route,\n  update${single}Route,\n} from "./${names.fileName}.schema.ts";\nimport { ${names.className}Service } from "./${names.fileName}.service.ts";\n\n@Controller("${names.routePath}")\nexport class ${names.className}Controller {\n  constructor(private readonly ${names.propertyName}Service: ${names.className}Service) {}\n\n  @Post("/", create${single}Route)\n  create(@Body() input: Create${single}Dto) {\n    return this.${names.propertyName}Service.create(input);\n  }\n\n  @Get()\n  findAll() {\n    return this.${names.propertyName}Service.findAll();\n  }\n\n  @Get(":id", find${single}Route)\n  findOne(@Param("id") id: string) {\n    return this.${names.propertyName}Service.findOne(id);\n  }\n\n  @Patch(":id", update${single}Route)\n  update(@Param("id") id: string, @Body() input: Update${single}Dto) {\n    return this.${names.propertyName}Service.update(id, input);\n  }\n\n  @Delete(":id", find${single}Route)\n  remove(@Param("id") id: string) {\n    return this.${names.propertyName}Service.remove(id);\n  }\n}\n`;
 }
 
 function renderResourceService(
@@ -440,13 +447,31 @@ function renderResourceService(
   return `import { Injectable } from "@aponiajs/common";\nimport type { Create${names.singularClassName}${typeSuffix} } from "./dto/create-${names.singularFileName}.${dtoSuffix}.ts";\nimport type { Update${names.singularClassName}${typeSuffix} } from "./dto/update-${names.singularFileName}.${dtoSuffix}.ts";\nimport type { ${names.singularClassName} } from "./entities/${names.singularFileName}.entity.ts";\n\n@Injectable()\nexport class ${names.className}Service {\n  private readonly items: ${names.singularClassName}[] = [];\n\n  create(input: Create${names.singularClassName}${typeSuffix}): ${names.singularClassName} {\n    const item = { id: crypto.randomUUID(), ...input };\n    this.items.push(item);\n    return item;\n  }\n\n  findAll(): readonly ${names.singularClassName}[] {\n    return this.items;\n  }\n\n  findOne(id: string): ${names.singularClassName} | undefined {\n    return this.items.find((item) => item.id === id);\n  }\n\n  update(id: string, input: Update${names.singularClassName}${typeSuffix}): ${names.singularClassName} | undefined {\n    const item = this.findOne(id);\n    if (!item) return undefined;\n    Object.assign(item, input);\n    return item;\n  }\n\n  remove(id: string): boolean {\n    const index = this.items.findIndex((item) => item.id === id);\n    if (index < 0) return false;\n    this.items.splice(index, 1);\n    return true;\n  }\n}\n`;
 }
 
-function renderCreateDto(names: ComponentNames, suffix: "dto" | "input"): string {
+function renderResourceSchema(names: ComponentNames): string {
+  return `import { t } from "elysia";\n\nexport const create${names.singularClassName}Schema = t.Object({\n  name: t.String({ minLength: 1 }),\n});\n\nexport const update${names.singularClassName}Schema = t.Partial(create${names.singularClassName}Schema);\n\nexport const ${names.singularClassName.toLowerCase()}ParamsSchema = t.Object({\n  id: t.String(),\n});\n\nexport const create${names.singularClassName}Route = {\n  body: create${names.singularClassName}Schema,\n};\n\nexport const find${names.singularClassName}Route = {\n  params: ${names.singularClassName.toLowerCase()}ParamsSchema,\n};\n\nexport const update${names.singularClassName}Route = {\n  params: ${names.singularClassName.toLowerCase()}ParamsSchema,\n  body: update${names.singularClassName}Schema,\n};\n`;
+}
+
+function renderCreateDto(
+  names: ComponentNames,
+  suffix: "dto" | "input",
+  validated: boolean,
+): string {
   const typeSuffix = pascalCase(suffix);
+  if (validated) {
+    return `import type { Static } from "elysia";\nimport type { create${names.singularClassName}Schema } from "../${names.fileName}.schema.ts";\n\nexport type Create${names.singularClassName}${typeSuffix} = Static<typeof create${names.singularClassName}Schema>;\n`;
+  }
   return `export class Create${names.singularClassName}${typeSuffix} {\n  name = "";\n}\n`;
 }
 
-function renderUpdateDto(names: ComponentNames, suffix: "dto" | "input"): string {
+function renderUpdateDto(
+  names: ComponentNames,
+  suffix: "dto" | "input",
+  validated: boolean,
+): string {
   const typeSuffix = pascalCase(suffix);
+  if (validated) {
+    return `import type { Static } from "elysia";\nimport type { update${names.singularClassName}Schema } from "../${names.fileName}.schema.ts";\n\nexport type Update${names.singularClassName}${typeSuffix} = Static<typeof update${names.singularClassName}Schema>;\n`;
+  }
   return `import type { Create${names.singularClassName}${typeSuffix} } from "./create-${names.singularFileName}.${suffix}.ts";\n\nexport type Update${names.singularClassName}${typeSuffix} = Partial<Create${names.singularClassName}${typeSuffix}>;\n`;
 }
 

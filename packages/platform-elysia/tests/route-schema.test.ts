@@ -9,19 +9,19 @@ const createUserSchema = {
   body: z.object({
     name: z.string().min(2),
   }),
-} as const;
+};
 
 const searchSchema = {
   query: type({
     term: "string",
   }),
-} as const;
+};
 
 const typeBoxSchema = {
   body: t.Object({
     quantity: t.Number(),
   }),
-} as const;
+};
 
 @Controller("users")
 class UserController {

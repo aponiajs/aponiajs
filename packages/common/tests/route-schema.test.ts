@@ -13,7 +13,7 @@ const nameSchema: StandardSchemaV1<unknown, { name: string }> = {
   },
 };
 
-const bodySchema = { body: nameSchema } as const;
+const bodySchema = { body: nameSchema };
 
 class UserController {
   createUser(): string {
