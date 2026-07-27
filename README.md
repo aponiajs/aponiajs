@@ -11,8 +11,9 @@
 Structured applications for Bun
 
 [Documentation](./docs/architecture-and-style.md) ·
+[Dependency injection](./docs/dependency-injection.md) ·
+[Testing](./docs/testing.md) ·
 [CLI](./docs/cli.md) ·
-[Packages](./docs/packages.md) ·
 [Roadmap](./ROADMAP.md)
 
 [![CI](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml/badge.svg)](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml)
@@ -43,36 +44,169 @@ Or add AponiaJS to an existing project:
 bun add @aponiajs/common@alpha @aponiajs/platform-elysia@alpha elysia
 ```
 
+## Services
+
+A service holds business behavior. `@Injectable()` marks it for constructor
+injection:
+
 ```ts
-import { Controller, Get, Injectable, Module } from "@aponiajs/common";
-import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { Injectable } from "@aponiajs/common";
 
 @Injectable()
-class GreetingService {
-  greet(): string {
-    return "Hello, AponiaJS!";
+export class UserService {
+  private readonly users = new Map<string, { id: string; name: string }>();
+
+  create(name: string) {
+    const user = { id: crypto.randomUUID(), name };
+    this.users.set(user.id, user);
+    return user;
+  }
+
+  findOne(id: string) {
+    return this.users.get(id);
   }
 }
+```
 
-@Controller("greetings")
-class GreetingController {
-  constructor(private readonly greetingService: GreetingService) {}
+## Controllers
 
-  @Get()
-  getGreeting(): string {
-    return this.greetingService.greet();
+A controller owns routes and delegates to services. Dependencies arrive through
+the constructor:
+
+```ts
+import { Controller, Get, Param } from "@aponiajs/common";
+import { UserService } from "./user.service.ts";
+
+@Controller("users")
+export class UserController {
+  constructor(private readonly userService: UserService) {}
+
+  @Get(":id")
+  findUser(@Param("id") id: string) {
+    return this.userService.findOne(id);
   }
 }
+```
+
+`@Get`, `@Post`, `@Put`, `@Patch`, `@Delete`, `@Head`, and `@Options` map to the
+matching HTTP method. Paths join with the controller prefix, so this route
+answers `GET /users/:id`.
+
+## Modules
+
+A module wires controllers and providers together and declares what it shares.
+Only exported providers are visible to modules that import it:
+
+```ts
+import { Module } from "@aponiajs/common";
+import { UserController } from "./user.controller.ts";
+import { UserService } from "./user.service.ts";
 
 @Module({
-  controllers: [GreetingController],
-  providers: [GreetingService],
+  controllers: [UserController],
+  providers: [UserService],
+  exports: [UserService],
 })
+export class UserModule {}
+```
+
+`UserService` is visible to any module that imports `UserModule`; a provider
+left out of `exports` stays private to its own module.
+
+## Providers
+
+A class provider is the common case, and the descriptor helpers cover values,
+factories, and aliases. Anything that is not a class needs an explicit token:
+
+```ts
+import {
+  Inject,
+  Injectable,
+  Module,
+  createToken,
+  provideFactory,
+  provideValue,
+} from "@aponiajs/common";
+
+export const APP_NAME = createToken<string>("APP_NAME");
+export const GREETING = createToken<string>("GREETING");
+
+@Module({
+  providers: [
+    provideValue(APP_NAME, "my-api"),
+    provideFactory(GREETING, [APP_NAME], (name) => `Hello from ${name}`),
+  ],
+  exports: [GREETING],
+})
+export class ConfigModule {}
+
+@Injectable()
+export class GreetingService {
+  constructor(@Inject(GREETING) private readonly greeting: string) {}
+}
+```
+
+`provideClass` and `provideAlias` complete the set. Providers are singletons.
+The [dependency injection guide](./docs/dependency-injection.md) covers tokens,
+visibility, and the error codes raised when a graph is wrong.
+
+## Bootstrap
+
+`main.ts` owns the root module and the process. The factory compiles the module
+graph, validates it, builds the container, and mounts every controller as an
+Elysia plugin:
+
+```ts
+import { Module } from "@aponiajs/common";
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { UserModule } from "./user/user.module.ts";
+
+@Module({ imports: [UserModule] })
 class AppModule {}
 
 const application = await AponiaFactory.create(AppModule);
 await application.listen(3000);
 ```
+
+Module cycles, missing exports, duplicate providers, and ambiguous dependencies
+fail here, before the server listens. Application logging is configurable —
+`{ logger: false }` silences it, an array of levels filters it, and a
+`LoggerService` replaces it. See the [logging guide](./docs/logging.md).
+
+## Request parameters
+
+Parameter decorators inject one piece of the request. Each accepts an optional
+name that selects a single property:
+
+| Decorator             | Injects                        |
+| --------------------- | ------------------------------ |
+| `@Body()`             | The validated request body     |
+| `@Query("term")`      | The parsed query string        |
+| `@Param("id")`        | Path parameters                |
+| `@Headers("x-agent")` | Request headers                |
+| `@Cookie("session")`  | Cookies, or one cookie's value |
+| `@Req()`              | The native `Request`           |
+| `@Res()`              | The mutable response settings  |
+| `@Ctx()`              | The whole Elysia context       |
+
+```ts
+import { Body, Controller, Get, Headers, Param, Post, Query } from "@aponiajs/common";
+
+@Controller("users")
+export class UserController {
+  @Post()
+  create(@Body() body: { name: string }, @Headers("x-tenant") tenant: string) {
+    return { tenant, name: body.name };
+  }
+
+  @Get(":id")
+  findOne(@Param("id") id: string, @Query("expand") expand: string | undefined) {
+    return { id, expand };
+  }
+}
+```
+
+Types come from the annotation you write, exactly as in NestJS.
 
 ## Validate
 
@@ -81,7 +215,7 @@ Declare a schema on the route and invalid requests never reach the handler. Any
 Valibot — as do TypeBox and Elysia's `t`:
 
 ```ts
-import { Body, Controller, Get, Param, Post } from "@aponiajs/common";
+import { Body, Controller, Post } from "@aponiajs/common";
 import { z } from "zod";
 
 const CreateUser = z.object({
@@ -90,36 +224,111 @@ const CreateUser = z.object({
 type CreateUser = z.infer<typeof CreateUser>;
 
 @Controller("users")
-class UserController {
-  constructor(private readonly userService: UserService) {}
-
+export class UserController {
   @Post("/", { body: CreateUser })
-  createUser(@Body() body: CreateUser) {
-    return this.userService.createUser(body);
-  }
-
-  @Get(":id")
-  findUser(@Param("id") id: string) {
-    return this.userService.findUser(id);
+  create(@Body() body: CreateUser) {
+    return body;
   }
 }
 ```
 
-`@Body()`, `@Query()`, `@Param()`, `@Headers()`, and `@Cookie()` inject one piece
-of the request, each accepting an optional property name. `@Ctx()` hands over
-Elysia's own context — `status`, `set`, `cookie`, `store`, `redirect`, and plugin
-decorators — typed by the declared schema.
+`body`, `query`, `params`, `headers`, and `response` are the available slots. A
+rejected request returns `422` without running the handler.
 
-## Why AponiaJS?
+Need Elysia's own context — `status`, `set`, `cookie`, `store`, `redirect`,
+plugin decorators? Take it with `@Ctx()`, typed by the declared schema:
 
-- **Familiar structure** — modules, controllers, services, and explicit
-  dependency boundaries inspired by NestJS.
-- **Bun from end to end** — runtime, package manager, test runner, and every
-  public command use Bun.
-- **Elysia without a wall** — decorated routes map to Elysia while native
-  schemas, hooks, state, and plugins remain available.
-- **Actionable diagnostics** — module cycles, missing exports, duplicate
-  providers, and ambiguous dependencies fail clearly.
+```ts
+import { Controller, Ctx, Post } from "@aponiajs/common";
+import { type ElysiaRouteContext } from "@aponiajs/platform-elysia";
+import { z } from "zod";
+
+const createUser = { body: z.object({ name: z.string().min(2) }) };
+
+@Controller("users")
+export class UserController {
+  @Post("/", createUser)
+  create(@Ctx() context: ElysiaRouteContext<typeof createUser>) {
+    context.set.headers["x-created"] = "1";
+    return context.body.name === "root"
+      ? context.status(403, "forbidden")
+      : { name: context.body.name };
+  }
+}
+```
+
+## Native Elysia plugins
+
+Existing Elysia plugins install as module imports and reach Elysia's `.use()`
+unchanged:
+
+```bash
+bun add @elysiajs/cors @elysiajs/jwt
+```
+
+```ts
+import { Module } from "@aponiajs/common";
+import { ElysiaPluginModule } from "@aponiajs/platform-elysia";
+import { cors } from "@elysiajs/cors";
+
+@Module({
+  imports: [ElysiaPluginModule.register(cors(), { key: "cors" })],
+})
+export class AppModule {}
+```
+
+A plugin that needs configuration resolves it from the container first:
+
+```ts
+import { Module } from "@aponiajs/common";
+import { ElysiaPluginModule } from "@aponiajs/platform-elysia";
+import { jwt } from "@elysiajs/jwt";
+import { ConfigModule, ConfigService } from "./config/config.module.ts";
+
+@Module({
+  imports: [
+    ElysiaPluginModule.registerAsync({
+      key: "jwt",
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => jwt({ name: "jwt", secret: config.get("JWT_SECRET") }),
+    }),
+  ],
+})
+export class AuthModule {}
+```
+
+A stable `key` keeps a plugin imported by several modules installed once.
+`AponiaFactory.create(AppModule, { configureNative })` and
+`application.getNativeApplication()` hand back the Elysia instance itself when a
+plugin needs it.
+
+## Test
+
+An application answers a `Request` without binding a port, so tests exercise the
+real graph and routes:
+
+```ts
+import { expect, test } from "bun:test";
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "../src/app.module.ts";
+
+test("creates a user", async () => {
+  const application = await AponiaFactory.create(AppModule, { logger: false });
+  const response = await application.handle(
+    new Request("http://localhost/users", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "Ada" }),
+    }),
+  );
+
+  expect(response.status).toBe(200);
+});
+```
+
+More patterns, including asserting validation failures and `AponiaError` codes,
+are in the [testing guide](./docs/testing.md).
 
 ## Generate
 
@@ -133,8 +342,9 @@ aponia g res users
 ```
 
 Every Nest schematic is available, from `class` and `controller` to `resource`
-and `gateway`. See the [CLI reference](./docs/cli.md) for the full catalog,
-aliases, options, and module registration.
+and `gateway`. A REST resource also generates `users.schema.ts` holding its route
+validation, with both DTOs derived from it. See the
+[CLI reference](./docs/cli.md) for the full catalog, aliases, and options.
 
 ## Packages
 
@@ -154,8 +364,8 @@ All public packages share one version and are published to the `alpha` channel;
 Implemented: decorated modules and HTTP controllers, Standard Schema route
 validation, request parameter decorators, singleton dependency injection,
 class/value/factory/alias providers, explicit tokens, module imports and
-exports, lifecycle management, structured logging, project generators, and an
-Elysia-native controller escape hatch.
+exports, lifecycle management, structured logging, project generators, and
+native Elysia escape hatches.
 
 Not implemented yet: guards, interceptors, middleware, exception filters,
 Problem Details errors, provider scopes, testing modules, OpenAPI,

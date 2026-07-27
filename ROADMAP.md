@@ -2,7 +2,7 @@
 
 A Bun-first, Nest-inspired application framework built around Elysia.
 
-- **Current version:** 0.6.0-alpha.1
+- **Current version:** 0.6.0-alpha.3
 - **Runtime:** Bun 1.3.14
 - **Package manager:** Bun 1.3.14
 - **Repository:** https://github.com/aponiajs/aponiajs
