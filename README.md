@@ -11,8 +11,9 @@
 Structured applications for Bun
 
 [Documentation](./docs/architecture-and-style.md) ·
+[Dependency injection](./docs/dependency-injection.md) ·
+[Testing](./docs/testing.md) ·
 [CLI](./docs/cli.md) ·
-[Packages](./docs/packages.md) ·
 [Roadmap](./ROADMAP.md)
 
 [![CI](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml/badge.svg)](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml)
@@ -109,8 +110,51 @@ import { UserService } from "./user.service.ts";
 export class UserModule {}
 ```
 
-The root module is handed to the factory, which compiles the module graph,
-validates it, and starts Elysia:
+`UserService` is visible to any module that imports `UserModule`; a provider
+left out of `exports` stays private to its own module.
+
+## Providers
+
+A class provider is the common case, and the descriptor helpers cover values,
+factories, and aliases. Anything that is not a class needs an explicit token:
+
+```ts
+import {
+  Inject,
+  Injectable,
+  Module,
+  createToken,
+  provideFactory,
+  provideValue,
+} from "@aponiajs/common";
+
+export const APP_NAME = createToken<string>("APP_NAME");
+export const GREETING = createToken<string>("GREETING");
+
+@Module({
+  providers: [
+    provideValue(APP_NAME, "my-api"),
+    provideFactory(GREETING, [APP_NAME], (name) => `Hello from ${name}`),
+  ],
+  exports: [GREETING],
+})
+export class ConfigModule {}
+
+@Injectable()
+export class GreetingService {
+  constructor(@Inject(GREETING) private readonly greeting: string) {}
+}
+```
+
+`provideClass` and `provideAlias` complete the set. Providers are singletons.
+The [dependency injection guide](./docs/dependency-injection.md) covers tokens,
+visibility, and the error codes raised when a graph is wrong.
+
+## Bootstrap
+
+`main.ts` owns the root module and the process. The factory compiles the module
+graph, validates it, builds the container, and mounts every controller as an
+Elysia plugin:
 
 ```ts
 import { Module } from "@aponiajs/common";
@@ -125,7 +169,9 @@ await application.listen(3000);
 ```
 
 Module cycles, missing exports, duplicate providers, and ambiguous dependencies
-fail before the server listens.
+fail here, before the server listens. Application logging is configurable —
+`{ logger: false }` silences it, an array of levels filters it, and a
+`LoggerService` replaces it. See the [logging guide](./docs/logging.md).
 
 ## Request parameters
 
@@ -256,6 +302,33 @@ A stable `key` keeps a plugin imported by several modules installed once.
 `AponiaFactory.create(AppModule, { configureNative })` and
 `application.getNativeApplication()` hand back the Elysia instance itself when a
 plugin needs it.
+
+## Test
+
+An application answers a `Request` without binding a port, so tests exercise the
+real graph and routes:
+
+```ts
+import { expect, test } from "bun:test";
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "../src/app.module.ts";
+
+test("creates a user", async () => {
+  const application = await AponiaFactory.create(AppModule, { logger: false });
+  const response = await application.handle(
+    new Request("http://localhost/users", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "Ada" }),
+    }),
+  );
+
+  expect(response.status).toBe(200);
+});
+```
+
+More patterns, including asserting validation failures and `AponiaError` codes,
+are in the [testing guide](./docs/testing.md).
 
 ## Generate
 
