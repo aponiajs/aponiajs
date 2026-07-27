@@ -76,6 +76,63 @@ const application = await AponiaFactory.create(AppModule);
 await application.listen(3000);
 ```
 
+## Validate
+
+Declare a schema on the route and invalid requests never reach the handler. Any
+[Standard Schema](https://standardschema.dev) validator works — Zod, ArkType,
+Valibot — as do TypeBox and Elysia's `t`:
+
+```ts
+import { Body, Controller, Get, Param, Post } from "@aponiajs/common";
+import { z } from "zod";
+
+const CreateUser = z.object({
+  name: z.string().min(2),
+});
+type CreateUser = z.infer<typeof CreateUser>;
+
+@Controller("users")
+class UserController {
+  constructor(private readonly userService: UserService) {}
+
+  @Post("/", { body: CreateUser })
+  createUser(@Body() body: CreateUser) {
+    return this.userService.createUser(body);
+  }
+
+  @Get(":id")
+  findUser(@Param("id") id: string) {
+    return this.userService.findUser(id);
+  }
+}
+```
+
+`@Body()`, `@Query()`, `@Param()`, `@Headers()`, and `@Cookie()` inject one piece
+of the request, with an optional name for a single property. Need the whole
+Elysia context — `status`, `set`, `cookie`, `store`, `redirect`, plugin
+decorators? Take it with `@Ctx()`:
+
+```ts
+import { Controller, Ctx, Post } from "@aponiajs/common";
+import { type ElysiaRouteContext } from "@aponiajs/platform-elysia";
+import { z } from "zod";
+
+const createUser = {
+  body: z.object({ name: z.string().min(2) }),
+};
+
+@Controller("users")
+class UserController {
+  @Post("/", createUser)
+  createUser(@Ctx() context: ElysiaRouteContext<typeof createUser>) {
+    context.set.headers["x-created"] = "1";
+    return context.body.name === "root"
+      ? context.status(403, "forbidden")
+      : { name: context.body.name };
+  }
+}
+```
+
 ## Why AponiaJS?
 
 - **Familiar structure** — modules, controllers, services, and explicit
@@ -84,9 +141,9 @@ await application.listen(3000);
   public command use Bun.
 - **Elysia without a wall** — decorated routes map to Elysia while native
   schemas, hooks, state, and plugins remain available.
-- **Validation you already know** — route decorators accept any
+- **Validation you already know** — routes accept any
   [Standard Schema](https://standardschema.dev) validator, including Zod,
-  ArkType, Valibot, and TypeBox.
+  ArkType, Valibot, and TypeBox, with the validated context typed for you.
 - **Actionable diagnostics** — module cycles, missing exports, duplicate
   providers, and ambiguous dependencies fail clearly.
 
@@ -135,12 +192,13 @@ is private and should not be installed.
 ## Current scope
 
 AponiaJS currently supports decorated modules and HTTP controllers, Standard
-Schema route validation, singleton dependency injection,
+Schema route validation, request parameter decorators, singleton dependency
+injection,
 class/value/factory/alias providers, explicit tokens, module imports and
 exports, lifecycle management, structured logging, project generators, and an
 Elysia-native controller escape hatch.
 
-Request decorators, runtime guards and interceptors, middleware, exception
+Runtime guards and interceptors, middleware, exception
 filters, Problem Details errors, provider scopes, testing modules, OpenAPI,
 authentication, WebSockets, and microservice transports are not implemented
 yet. Use the [machine-readable roadmap](./roadmap/roadmap.json) and its

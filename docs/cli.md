@@ -114,6 +114,53 @@ Resources additionally support `--crud` / `--no-crud` and these transports:
 REST resources generate a controller; GraphQL resources generate a resolver;
 WebSocket resources generate a gateway.
 
+A REST CRUD resource also generates `<name>.schema.ts`, which owns the route
+validation for that resource:
+
+```text
+src/users/
+|-- dto/
+|   |-- create-user.dto.ts
+|   `-- update-user.dto.ts
+|-- entities/
+|   `-- user.entity.ts
+|-- users.controller.ts
+|-- users.module.ts
+|-- users.schema.ts
+`-- users.service.ts
+```
+
+`users.schema.ts` exports the per-slot validators and the route schemas the
+controller passes to its decorators, and both DTOs derive their types from those
+schemas, so a field is declared once:
+
+```ts
+export const createUserSchema = t.Object({
+  name: t.String({ minLength: 1 }),
+});
+
+export const createUserRoute = {
+  body: createUserSchema,
+};
+```
+
+```ts
+export type CreateUserDto = Static<typeof createUserSchema>;
+```
+
+The generated controller consumes them with parameter decorators:
+
+```ts
+@Post("/", createUserRoute)
+create(@Body() input: CreateUserDto) {
+  return this.usersService.create(input);
+}
+```
+
+Schemas use Elysia's `t` builder, which ships with the platform peer dependency.
+Swap in any [Standard Schema](https://standardschema.dev) validator — Zod,
+ArkType, Valibot — by editing that one file.
+
 CLI flags override project-specific `generateOptions`, which override global
 `generateOptions` in `aponia.json`. Both `spec` and `flat` defaults are
 supported. `spec` may be a boolean or a map keyed by schematic name.
