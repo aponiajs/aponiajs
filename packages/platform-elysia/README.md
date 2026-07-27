@@ -41,8 +41,12 @@ import { AponiaFactory, ElysiaPluginModule } from "@aponiajs/platform-elysia";
 @Module({})
 class AppModule {}
 
-const application = await AponiaFactory.create(AppModule);
-await application.listen(3000);
+async function bootstrap(): Promise<void> {
+  const application = await AponiaFactory.create(AppModule);
+  await application.listen(3000);
+}
+
+await bootstrap();
 ```
 
 ## Routes with the native Elysia context
