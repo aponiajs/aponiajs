@@ -127,6 +127,7 @@ jobs:
 
       - name: Point alias tags at the published version
         if: steps.distribution.outputs.aliases != ''
+        working-directory: ${{ runner.temp }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           ALIAS_TAGS: ${{ steps.distribution.outputs.aliases }}
