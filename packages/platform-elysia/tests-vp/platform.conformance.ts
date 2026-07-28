@@ -16,6 +16,7 @@ import { z } from "zod";
 import {
   AponiaFactory,
   ElysiaPluginModule,
+  defineElysiaPlugin,
   type ConfiguredAponiaApplicationOptions,
   type ElysiaRouteContext,
 } from "../src/index.ts";
@@ -230,5 +231,37 @@ test("the Vite+ lane types and exposes native plugin context", async () => {
     requests: 1,
     pluginOnly: null,
   });
+  await application.close();
+});
+
+const conformanceCachePlugin = defineElysiaPlugin(
+  new Elysia({ name: "conformance-cache" }).decorate("cache", {
+    read: (key: string) => `cached:${key}`,
+  }),
+  { key: "conformance-cache" },
+);
+type conformanceCachePlugin = typeof conformanceCachePlugin;
+
+@Controller("conformance-defined-plugin")
+class ConformanceDefinedPluginController {
+  @Get()
+  read(@Ctx() context: ElysiaRouteContext<conformanceCachePlugin>): { cached: string } {
+    return { cached: context.cache.read("users") };
+  }
+}
+
+@Module({
+  imports: [conformanceCachePlugin],
+  controllers: [ConformanceDefinedPluginController],
+})
+class ConformanceDefinedPluginModule {}
+
+test("the Vite+ lane mounts and types a defined native plugin", async () => {
+  const application = await AponiaFactory.create(ConformanceDefinedPluginModule, { logger: false });
+  const response = await application.handle(
+    new Request("http://localhost/conformance-defined-plugin"),
+  );
+
+  expect(await response.json()).toEqual({ cached: "cached:users" });
   await application.close();
 });

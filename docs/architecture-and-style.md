@@ -255,9 +255,17 @@ platform-neutral, or with `ElysiaRouteContext<typeof schema>` from
 
 Compiling a decorated controller erases the plugin instances its module imports,
 so a native plugin's additions are present at runtime but untyped by default.
-Name the plugins in the second type argument to type them:
-`ElysiaRouteContext<typeof schema, typeof clock>`, or
-`ElysiaRouteContext<{}, [typeof clock, typeof jwt]>` for several. The mapping
+Name the plugins to type them: `ElysiaRouteContext<typeof clock>` when the route
+has no schema, `ElysiaRouteContext<[typeof clock, typeof jwt]>` for several, and
+`ElysiaRouteContext<typeof schema, typeof clock>` when both matter. An
+application that always mounts the same plugins declares
+`type AppContext<TSchema extends ElysiaInputSchema = {}> = ElysiaRouteContext<TSchema, AppPlugins>`
+once and annotates handlers with `AppContext` or `AppContext<typeof schema>`.
+`defineElysiaPlugin` goes further: it converts a native plugin into a module
+import that carries its own type, so `imports: [clock]` mounts it and
+`e<clock>` — `ElysiaRouteContext` renamed on import — types it without a
+`typeof`, provided the plugin is exported as a value and a same-named type.
+The mapping
 mirrors Elysia's `.use()`: `decorate`, `state`, `resolve`, and `global` derives
 and resolves are typed, together with `scoped` derives and resolves;
 plugin-local derives are not, because they never reach the controller.

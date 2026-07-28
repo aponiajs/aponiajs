@@ -157,20 +157,94 @@ export const clock = new Elysia({ name: "clock" })
 @Controller("health")
 class HealthController {
   @Get()
-  read(@Ctx() context: ElysiaRouteContext<{}, typeof clock>) {
+  read(@Ctx() context: ElysiaRouteContext<typeof clock>) {
     context.store.requests += 1;
     return { now: context.now(), traceId: context.traceId };
   }
 }
 ```
 
-Pass a tuple for several plugins, and combine both arguments to keep the schema
-and the plugins typed at once:
+The first argument takes either the plugins or a route schema, so a handler
+without a schema never writes an empty one. A tuple covers several plugins, and
+the second argument is only needed when both are typed:
 
 ```ts
-ElysiaRouteContext<{}, [typeof clock, typeof cache]>;
+ElysiaRouteContext<[typeof clock, typeof cache]>;
 ElysiaRouteContext<typeof createUser, typeof clock>;
 ```
+
+An application that always mounts the same plugins declares the pairing once and
+keeps every handler short:
+
+```ts
+// src/app.context.ts
+import { type ElysiaInputSchema, type ElysiaRouteContext } from "@aponiajs/platform-elysia";
+import { cache } from "./cache.plugin.ts";
+import { clock } from "./clock.plugin.ts";
+
+export type AppContext<TSchema extends ElysiaInputSchema = {}> = ElysiaRouteContext<
+  TSchema,
+  [typeof clock, typeof cache]
+>;
+```
+
+```ts
+@Get()
+read(@Ctx() context: AppContext) {}
+
+@Post("/", createUser)
+create(@Ctx() context: AppContext<typeof createUser>) {}
+```
+
+### Dropping `typeof`
+
+`defineElysiaPlugin` converts a native plugin into a module import that also
+carries the plugin type. Export it beside a same-named type and the plugin is
+usable in both a value and a type position:
+
+```ts
+// src/clock.plugin.ts
+import { defineElysiaPlugin } from "@aponiajs/platform-elysia";
+import { Elysia } from "elysia";
+
+export const clock = defineElysiaPlugin(
+  new Elysia({ name: "clock" }).decorate("now", () => new Date().toISOString()),
+  { key: "clock" },
+);
+export type clock = typeof clock;
+```
+
+The import goes straight into `imports`, with no `ElysiaPluginModule.register`
+around it, and the annotation needs no `typeof`. Rename the context type on
+import for the shortest form:
+
+```ts
+import { Controller, Ctx, Get, Module } from "@aponiajs/common";
+import { type ElysiaRouteContext as e } from "@aponiajs/platform-elysia";
+import { cache } from "./cache.plugin.ts";
+import { clock } from "./clock.plugin.ts";
+
+@Controller("health")
+class HealthController {
+  @Get()
+  read(@Ctx() context: e<clock>) {
+    return { now: context.now() };
+  }
+
+  @Get("cached")
+  readCached(@Ctx() context: e<[clock, cache]>) {
+    return { cached: context.cache.read("health") };
+  }
+}
+
+@Module({ imports: [clock, cache], controllers: [HealthController] })
+class HealthModule {}
+```
+
+`ElysiaPluginModule.register` and `registerAsync` stay available and unchanged;
+`defineElysiaPlugin` is `register` plus the plugin it installs, and the context
+type accepts either form. The plugin instance itself remains reachable as
+`clock.plugin`.
 
 The mapping follows Elysia's own `.use()` rule, so what is typed is exactly what
 arrives at runtime: `decorate`, `state`, `resolve`, and `derive` declared

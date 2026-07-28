@@ -1,8 +1,13 @@
 import { expect, test } from "bun:test";
-import { Controller, Ctx, Get, Injectable, Module, Post } from "@aponiajs/common";
+import { Controller, Ctx, Get, Injectable, Module, Param, Post } from "@aponiajs/common";
 import { Elysia } from "elysia";
 import { z } from "zod";
-import { AponiaFactory, ElysiaPluginModule, type ElysiaRouteContext } from "../src/index.ts";
+import {
+  AponiaFactory,
+  ElysiaPluginModule,
+  type ElysiaInputSchema,
+  type ElysiaRouteContext,
+} from "../src/index.ts";
 
 type Equals<TLeft, TRight> =
   (<T>() => T extends TLeft ? 1 : 2) extends <T>() => T extends TRight ? 1 : 2 ? true : false;
@@ -31,6 +36,12 @@ class SecretService {
 }
 
 const createUserSchema = { body: z.object({ name: z.string().min(2) }) };
+
+/** The alias an application declares once for the plugins it always mounts. */
+type ApplicationContext<TSchema extends ElysiaInputSchema = {}> = ElysiaRouteContext<
+  TSchema,
+  [typeof clockPlugin, typeof cachePlugin]
+>;
 
 @Controller("context")
 class ContextController {
@@ -66,11 +77,24 @@ class ContextController {
   }
 
   @Get("many")
-  readMany(@Ctx() context: ElysiaRouteContext<{}, [typeof clockPlugin, typeof cachePlugin]>): {
+  readMany(@Ctx() context: ElysiaRouteContext<[typeof clockPlugin, typeof cachePlugin]>): {
     now: string;
     cached: string;
   } {
     return { now: context.now(), cached: context.cache.read("users") };
+  }
+
+  @Get("short")
+  readShort(@Ctx() context: ElysiaRouteContext<typeof clockPlugin>): { now: string } {
+    return { now: context.now() };
+  }
+
+  @Get("alias/:id")
+  readThroughAlias(
+    @Param("id") id: string,
+    @Ctx() context: ApplicationContext,
+  ): { id: string; now: string; cached: string } {
+    return { id, now: context.now(), cached: context.cache.read(id) };
   }
 
   @Post("schema", createUserSchema)
@@ -226,7 +250,9 @@ interface SecretSingleton {
 }
 
 type ClockContext = ElysiaRouteContext<{}, typeof clockPlugin>;
-type ManyContext = ElysiaRouteContext<{}, [typeof clockPlugin, typeof cachePlugin]>;
+type ManyContext = ElysiaRouteContext<[typeof clockPlugin, typeof cachePlugin]>;
+type ShortContext = ElysiaRouteContext<typeof clockPlugin>;
+type AliasedSchemaContext = ApplicationContext<typeof createUserSchema>;
 type BareContext = ElysiaRouteContext;
 type SchemaContext = ElysiaRouteContext<typeof createUserSchema, typeof clockPlugin>;
 
@@ -250,25 +276,36 @@ type PluginTypeAssertions = [
   Expect<Equals<"cache" extends keyof ClockContext ? true : false, false>>,
   Expect<Equals<SchemaContext["body"], { name: string }>>,
   Expect<Equals<SchemaContext["now"], () => "2026-07-28T00:00:00.000Z">>,
+  Expect<Equals<ShortContext["now"], ClockContext["now"]>>,
+  Expect<Equals<ShortContext["traceId"], "trace-1">>,
+  Expect<Equals<ShortContext["body"], unknown>>,
+  Expect<Equals<AliasedSchemaContext["body"], { name: string }>>,
+  Expect<Equals<AliasedSchemaContext["cache"], ManyContext["cache"]>>,
 ];
 
 test("keeps the plugin context type assertions referenced", () => {
-  const assertions: PluginTypeAssertions = [
-    true,
-    true,
-    true,
-    true,
-    true,
-    true,
-    true,
-    true,
-    true,
-    true,
-    true,
-    true,
-    true,
-    true,
-  ];
+  const assertions: PluginTypeAssertions = Array.from(
+    { length: 19 },
+    () => true,
+  ) as PluginTypeAssertions;
 
-  expect(assertions).toHaveLength(14);
+  expect(assertions).toHaveLength(19);
+});
+
+test("types plugins passed in the first argument", async () => {
+  const response = await get("/context/short");
+
+  expect(response.status).toBe(200);
+  expect(await response.json()).toEqual({ now: "2026-07-28T00:00:00.000Z" });
+});
+
+test("serves a handler annotated with an application context alias", async () => {
+  const response = await get("/context/alias/42");
+
+  expect(response.status).toBe(200);
+  expect(await response.json()).toEqual({
+    id: "42",
+    now: "2026-07-28T00:00:00.000Z",
+    cached: "cached:42",
+  });
 });

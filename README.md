@@ -327,14 +327,48 @@ export const clock = new Elysia({ name: "clock" }).decorate("now", () => new Dat
 @Controller("health")
 export class HealthController {
   @Get()
-  read(@Ctx() context: ElysiaRouteContext<{}, typeof clock>) {
+  read(@Ctx() context: ElysiaRouteContext<typeof clock>) {
     return { now: context.now() };
   }
 }
 ```
 
-A tuple types several plugins at once, and the first argument still carries the
-route schema: `ElysiaRouteContext<typeof createUser, [typeof clock, typeof jwt]>`.
+A tuple types several plugins at once, and the second argument is only needed
+when a route schema comes first:
+`ElysiaRouteContext<typeof createUser, [typeof clock, typeof jwt]>`.
+
+`defineElysiaPlugin` removes the ceremony entirely. It converts a native plugin
+into a module import that carries its own type, so the plugin mounts directly
+and annotates without `typeof`:
+
+```ts
+// src/clock.plugin.ts
+export const clock = defineElysiaPlugin(
+  new Elysia({ name: "clock" }).decorate("now", () => new Date().toISOString()),
+  { key: "clock" },
+);
+export type clock = typeof clock;
+```
+
+```ts
+import { type ElysiaRouteContext as e } from "@aponiajs/platform-elysia";
+import { clock } from "./clock.plugin.ts";
+
+@Controller("health")
+export class HealthController {
+  @Get()
+  read(@Ctx() context: e<clock>) {
+    return { now: context.now() };
+  }
+}
+
+@Module({ imports: [clock], controllers: [HealthController] })
+export class HealthModule {}
+```
+
+The [adapter README](./packages/platform-elysia/README.md) covers both forms and
+the `AppContext<TSchema>` alias for applications that always mount the same
+plugins.
 
 ## Test
 

@@ -1,13 +1,23 @@
 import type { AnyElysia, Context, InputSchema, SingletonBase, UnwrapRoute } from "elysia";
 
 /**
- * One native Elysia plugin, or every plugin whose types a handler depends on.
+ * One plugin a handler reads from: a native Elysia instance, or the module
+ * import `defineElysiaPlugin` produces for it.
  */
-export type ElysiaPluginTypes = AnyElysia | readonly AnyElysia[];
+export type ElysiaPluginSource = AnyElysia | { readonly plugin: AnyElysia };
 
-type PluginUnion<TPlugins extends ElysiaPluginTypes> = TPlugins extends readonly (infer TPlugin)[]
+/**
+ * One plugin, or every plugin whose types a handler depends on.
+ */
+export type ElysiaPluginTypes = ElysiaPluginSource | readonly ElysiaPluginSource[];
+
+type ResolvePlugin<TSource> = TSource extends { readonly plugin: infer TPlugin extends AnyElysia }
   ? TPlugin
-  : TPlugins;
+  : TSource;
+
+type PluginUnion<TPlugins extends ElysiaPluginTypes> = ResolvePlugin<
+  TPlugins extends readonly (infer TSource)[] ? TSource : TPlugins
+>;
 
 type UnionToIntersection<TUnion> = (
   TUnion extends unknown ? (value: TUnion) => void : never
@@ -44,14 +54,45 @@ type MountedSingleton<TPlugins extends ElysiaPluginTypes> = {
  * fully typed.
  *
  * Compiling a decorated controller erases the plugin instances a module
- * imports, so name them in the second type argument to type what they add:
+ * imports, so name the plugins a handler reads from. The first argument takes
+ * either a route schema or the plugins, so a handler without a schema never
+ * writes an empty one:
  *
  * ```ts
- * create(@Ctx() context: ElysiaRouteContext<typeof createUser, typeof jwtPlugin>) {}
- * create(@Ctx() context: ElysiaRouteContext<{}, [typeof jwtPlugin, typeof cachePlugin]>) {}
+ * read(@Ctx() context: ElysiaRouteContext<typeof clock>) {}
+ * read(@Ctx() context: ElysiaRouteContext<[typeof clock, typeof cache]>) {}
+ * create(@Ctx() context: ElysiaRouteContext<typeof createUser, typeof clock>) {}
+ * ```
+ *
+ * A plugin exported through `defineElysiaPlugin` alongside a same-named type
+ * drops the `typeof`, which reads best under a short import alias:
+ *
+ * ```ts
+ * import { type ElysiaRouteContext as e } from "@aponiajs/platform-elysia";
+ *
+ * read(@Ctx() context: e<clock>) {}
+ * ```
+ *
+ * An application that always mounts the same plugins declares the pairing once
+ * and keeps its handlers short:
+ *
+ * ```ts
+ * export type AppContext<TSchema extends ElysiaInputSchema = {}> =
+ *   ElysiaRouteContext<TSchema, [typeof clock, typeof cache]>;
  * ```
  */
 export type ElysiaRouteContext<
-  TSchema extends InputSchema = {},
+  TSchemaOrPlugins extends InputSchema | ElysiaPluginTypes = {},
   TPlugins extends ElysiaPluginTypes = never,
-> = Context<UnwrapRoute<TSchema, {}, string>, MountedSingleton<TPlugins>>;
+> = TSchemaOrPlugins extends ElysiaPluginTypes
+  ? Context<UnwrapRoute<{}, {}, string>, MountedSingleton<TSchemaOrPlugins>>
+  : Context<
+      UnwrapRoute<TSchemaOrPlugins extends InputSchema ? TSchemaOrPlugins : {}, {}, string>,
+      MountedSingleton<TPlugins>
+    >;
+
+/**
+ * Elysia's own route schema shape, re-exported so an application can write its
+ * own context alias without importing from `elysia` directly.
+ */
+export type ElysiaInputSchema = InputSchema;
