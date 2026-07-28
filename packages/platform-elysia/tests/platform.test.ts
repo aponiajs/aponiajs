@@ -8,7 +8,7 @@ import {
   type LoggerService,
 } from "@aponiajs/common";
 import { Elysia } from "elysia";
-import { AponiaFactory, ElysiaPluginModule } from "../src/index.ts";
+import { AponiaFactory, ElysiaPluginModule, defineElysiaController } from "../src/index.ts";
 
 class MemoryLogger implements LoggerService {
   readonly records: { readonly context: string; readonly message: string }[] = [];
@@ -55,6 +55,43 @@ class MessageServicesModule {}
   controllers: [MessageController],
 })
 class MessageModule {}
+
+let registeredControllerCalls = 0;
+let pluginControllerCalls = 0;
+const registeredApplicationNames: (string | undefined)[] = [];
+
+class RegisteredDescriptorController {
+  read(): string {
+    return "registered";
+  }
+}
+
+class PluginDescriptorController {
+  read(): string {
+    return "plugin";
+  }
+}
+
+const registeredDescriptorController = defineElysiaController(RegisteredDescriptorController, {
+  inject: [] as const,
+  path: "/descriptor-registered",
+  registerRoutes: (application, controller) => {
+    registeredControllerCalls += 1;
+    registeredApplicationNames.push(application.config.name);
+    application.get("/descriptor-registered", () => controller.read());
+  },
+});
+const pluginDescriptorController = defineElysiaController(PluginDescriptorController, {
+  inject: [] as const,
+  buildPlugin: (controller) => {
+    pluginControllerCalls += 1;
+    return new Elysia().get("/descriptor-plugin", () => controller.read());
+  },
+});
+const descriptorControllerModule = defineModule({
+  id: "DescriptorControllerModule",
+  controllers: [registeredDescriptorController, pluginDescriptorController],
+});
 
 const modulePluginEvents: string[] = [];
 let asyncPluginFactoryCalls = 0;
@@ -254,6 +291,89 @@ test("rejects a native configurator that replaces the application", async () => 
       code: "INVALID_NATIVE_APPLICATION",
     }),
   );
+});
+
+test("passes explicit Elysia AOT and precompile policy to the root application", async () => {
+  const precompile = Object.freeze({ compose: true, schema: true });
+  const observedConfigurations: {
+    readonly aot: boolean | undefined;
+    readonly name: string | undefined;
+    readonly precompile: unknown;
+  }[] = [];
+
+  const application = await AponiaFactory.create(MessageModule, {
+    logger: false,
+    elysia: {
+      aot: true,
+      // Runtime callers cannot replace the framework-owned application name.
+      name: "IgnoredName",
+      precompile,
+    } as never,
+    configureNative: (nativeApplication) => {
+      observedConfigurations.push({
+        aot: nativeApplication.config.aot,
+        name: nativeApplication.config.name,
+        precompile: nativeApplication.config.precompile,
+      });
+      return nativeApplication;
+    },
+  });
+  const response = await application.handle(new Request("http://localhost/messages"));
+
+  expect(observedConfigurations).toEqual([
+    {
+      aot: true,
+      name: "MessageModule",
+      precompile,
+    },
+  ]);
+  expect(await response.text()).toBe("Hello from service");
+  await application.close();
+});
+
+test("supports Elysia dynamic composition as an explicit compatibility policy", async () => {
+  const application = await AponiaFactory.create(MessageModule, {
+    logger: false,
+    elysia: {
+      aot: false,
+      precompile: false,
+    },
+  });
+  const response = await application.handle(new Request("http://localhost/messages"));
+
+  expect(application.getNativeApplication().config.aot).toBe(false);
+  expect(application.getNativeApplication().config.precompile).toBe(false);
+  expect(await response.text()).toBe("Hello from service");
+  await application.close();
+});
+
+test("mounts registered descriptors directly and preserves buildPlugin fallback", async () => {
+  registeredControllerCalls = 0;
+  pluginControllerCalls = 0;
+  registeredApplicationNames.length = 0;
+  const application = await AponiaFactory.create(descriptorControllerModule, {
+    logger: false,
+  });
+  const registered = await application.handle(
+    new Request("http://localhost/descriptor-registered"),
+  );
+  const plugin = await application.handle(new Request("http://localhost/descriptor-plugin"));
+
+  expect(await registered.text()).toBe("registered");
+  expect(await plugin.text()).toBe("plugin");
+  expect(registeredControllerCalls).toBe(1);
+  expect(pluginControllerCalls).toBe(1);
+  expect(registeredApplicationNames).toEqual(["DescriptorControllerModule"]);
+  expect(Object.isFrozen(registeredDescriptorController)).toBe(true);
+  expect(Object.isFrozen(registeredDescriptorController.inject)).toBe(true);
+
+  const fallback = registeredDescriptorController.buildPlugin(new RegisteredDescriptorController());
+  const fallbackResponse = await fallback.handle(
+    new Request("http://localhost/descriptor-registered"),
+  );
+  expect(await fallbackResponse.text()).toBe("registered");
+  expect(registeredControllerCalls).toBe(2);
+  await application.close();
 });
 
 test("classifies a controller factory with a non-Elysia result as invalid", async () => {

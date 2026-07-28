@@ -8,14 +8,16 @@ specific to this package.
 `aponia new` and `aponia generate`. It is independent of the runtime packages and
 driven by libraries rather than hand-rolled parsing.
 
-| File                     | Owns                                                                |
-| ------------------------ | ------------------------------------------------------------------- |
-| `arguments.ts`           | `yargs-parser` invocation and the schematic alias table             |
-| `component-names.ts`     | Name derivation with `change-case` and `inflection`, path rejection |
-| `project-generator.ts`   | Rendering `templates/application`                                   |
-| `schematic-generator.ts` | Schematic definitions, `aponia.json`, flat and spec resolution      |
-| `module-registration.ts` | Rewriting `@Module()` metadata in generated sources with `ts-morph` |
-| `version.ts`             | The version stamped into generated manifests                        |
+| Domain        | Owns                                                                        |
+| ------------- | --------------------------------------------------------------------------- |
+| `commands/`   | Argument parsing, command contracts, help output, and `runCli`              |
+| `generation/` | Naming, project discovery, file planning, renderers, module updates, writes |
+| `version.ts`  | The version stamped into generated manifests                                |
+| `templates/`  | The canonical application starter input                                     |
+
+`generation/schematic-generator.ts` only orchestrates. Configuration lookup,
+file planning, rendering, module registration, and filesystem writes remain
+separate focused modules. `src/index.ts` is the only public barrel.
 
 ## Invariants
 
@@ -25,7 +27,8 @@ driven by libraries rather than hand-rolled parsing.
   never throws.
 - Argument and generator input mistakes use plain `Error`/`TypeError`, not
   `AponiaError`.
-- Absolute paths and traversing paths are rejected in `component-names.ts`.
+- Absolute paths and traversing paths are rejected in
+  `generation/component-names.ts`.
 - Generated applications follow Nest's flat starter layout; later resources
   belong in `src/<resource>/`.
 - A REST CRUD resource also emits `<name>.schema.ts`. It owns the route schemas

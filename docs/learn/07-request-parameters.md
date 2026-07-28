@@ -30,8 +30,8 @@ findOne(@Param("id") id: string, @Query("expand") expand: string | undefined) {
 
 ## Taking the whole context
 
-A handler with no parameter decorators receives the context as its only
-argument, and `@Ctx()` does the same explicitly. Annotate it with
+A handler with no parameter decorators may declare one unannotated parameter to
+receive the context, and `@Ctx()` does the same explicitly. Annotate it with
 `RouteContext<typeof schema>` to stay platform-neutral, or with
 `ElysiaRouteContext<typeof schema>` to keep Elysia's own `status`, `set`,
 `cookie`, `store`, and `redirect` typed:

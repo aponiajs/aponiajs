@@ -6,17 +6,18 @@ Read the [repository guide](../AGENTS.md) first.
 
 The published documentation set:
 
-| File                        | Covers                                                        |
-| --------------------------- | ------------------------------------------------------------- |
-| `architecture-and-style.md` | Application layout, naming, and the patterns Aponia expects   |
-| `dependency-injection.md`   | Tokens, visibility, providers, and the error codes on failure |
-| `native-plugins.md`         | Mounting native Elysia plugins and typing what they add       |
-| `logging.md`                | Logger configuration and the bootstrap log lines              |
-| `testing.md`                | Testing applications through `application.handle`             |
-| `cli.md`                    | The generator catalog, aliases, and options                   |
-| `packages.md`               | The published package catalog                                 |
-| `releasing.md`              | Channels, the version gate, and the publish flow              |
-| `learn/`                    | The ordered chapters that teach the same material in sequence |
+| File                        | Covers                                                          |
+| --------------------------- | --------------------------------------------------------------- |
+| `architecture-and-style.md` | Application and framework layout, naming, and expected patterns |
+| `dependency-injection.md`   | Tokens, visibility, providers, and the error codes on failure   |
+| `native-plugins.md`         | Mounting native Elysia plugins and typing what they add         |
+| `eden-treaty.md`            | Native-style application types consumed through Eden Treaty     |
+| `logging.md`                | Logger configuration and the bootstrap log lines                |
+| `testing.md`                | Testing applications through `application.handle`               |
+| `cli.md`                    | The generator catalog, aliases, and options                     |
+| `packages.md`               | The published package catalog                                   |
+| `releasing.md`              | Channels, the version gate, and the publish flow                |
+| `learn/`                    | The ordered chapters that teach the same material in sequence   |
 
 ## The learning path
 

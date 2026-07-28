@@ -9,17 +9,19 @@ The contract layer every other package depends on: decorators, descriptors,
 tokens, providers, errors, and logging. Its only runtime dependency is
 `reflect-metadata`.
 
-| File                  | Owns                                                                       |
-| --------------------- | -------------------------------------------------------------------------- |
-| `decorators.ts`       | `@Module`, `@Controller`, `@Injectable`, `@Inject`, HTTP method decorators |
-| `route-parameters.ts` | `@Body`, `@Query`, `@Param`, `@Headers`, `@Cookie`, `@Req`, `@Res`, `@Ctx` |
-| `route-schema.ts`     | `RouteSchema`, `RouteValidator`, `RouteContext`, `routeSchemaSlots`        |
-| `module.ts`           | `ModuleDefinition`, `DynamicModule`, `defineModule`                        |
-| `provider.ts`         | `provideValue`, `provideFactory`, `provideClass`, `provideAlias`           |
-| `token.ts`            | `createToken`, `Token`, `TokenValues`                                      |
-| `controller.ts`       | The platform-neutral controller descriptor                                 |
-| `error.ts`            | `AponiaError` and the closed `AponiaErrorCode` union                       |
-| `logger.ts`           | `LoggerService` and the default structured logger                          |
+| Domain         | Owns                                                                       |
+| -------------- | -------------------------------------------------------------------------- |
+| `decorators/`  | `@Module`, `@Controller`, `@Injectable`, `@Inject`, HTTP method decorators |
+| `routing/`     | Request decorators, route schemas, validators, and `RouteContext`          |
+| `modules/`     | `ModuleDefinition`, `DynamicModule`, and `defineModule`                    |
+| `providers/`   | Provider contracts and descriptor factories                                |
+| `tokens/`      | Injection token contracts and helpers                                      |
+| `controllers/` | The platform-neutral controller descriptor                                 |
+| `errors/`      | `AponiaError` and the closed `AponiaErrorCode` union                       |
+| `logging/`     | `LoggerService` and the default structured logger                          |
+
+Runtime implementation and `*.types.ts` contracts stay beside each other in
+their owning domain. `src/index.ts` is the package's only public barrel.
 
 ## Invariants
 

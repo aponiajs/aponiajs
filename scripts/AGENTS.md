@@ -11,6 +11,7 @@ and documentation guards that CI enforces.
 | `sync-version-references.ts` | Version references in the roadmap and lockfile                           |
 | `workspace-versions.ts`      | The list of manifests that must share one version                        |
 | `canary-version.ts`          | Stamping `X.Y.Z-canary.<stamp>.<sha>` in CI, never committed             |
+| `source-layout.spec.ts`      | Package owner directories, barrels, type-only modules, local imports     |
 | `*.spec.ts`                  | Guard tests over the above and over documentation wording                |
 
 ## Invariants
@@ -31,6 +32,8 @@ and documentation guards that CI enforces.
 - Guard specs make documentation part of the test suite. A wording edit in
   `README.md`, `docs/cli.md`, `docs/packages.md`, or `packages/cli/README.md`
   can fail `bun test`.
+- `source-layout.spec.ts` protects the domain-first package layout. Update the
+  guide and guard together when a real new source domain is introduced.
 - Every push must raise the synchronized workspace version. Run the smallest
   valid `bun run version:*` and commit its output.
 

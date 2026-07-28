@@ -99,3 +99,17 @@ const application = await AponiaFactory.create(AppModule, {
 
 expect(application.getNativeApplication().store.version).toBe("test");
 ```
+
+For Eden Treaty, return that native surface directly and pass it to Treaty:
+
+```ts
+import { treaty } from "@elysia/eden";
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "../src/app.module.ts";
+
+const app = await AponiaFactory.createNative(AppModule, { logger: false });
+const api = treaty(app);
+```
+
+This keeps statically composed route types and performs no network I/O. See the
+[Eden Treaty guide](./eden-treaty.md) for the complete fixture.

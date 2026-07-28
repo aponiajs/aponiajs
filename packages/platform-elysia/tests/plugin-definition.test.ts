@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { Controller, Ctx, Get, Module } from "@aponiajs/common";
+import { Controller, Ctx, Get, Module, defineModule } from "@aponiajs/common";
 import { Elysia } from "elysia";
 import { AponiaFactory, defineElysiaPlugin, type ElysiaRouteContext as e } from "../src/index.ts";
 
@@ -19,6 +19,15 @@ const cache = defineElysiaPlugin(
   { key: "cache" },
 );
 type cache = typeof cache;
+
+const descriptorPlugin = defineElysiaPlugin(
+  new Elysia({ name: "descriptor-plugin" }).get("/defined-descriptor", () => "descriptor"),
+  { key: "descriptor-plugin" },
+);
+const descriptorModule = defineModule({
+  id: "DefinedDescriptorModule",
+  imports: [descriptorPlugin],
+});
 
 @Controller("defined")
 class DefinedController {
@@ -67,6 +76,19 @@ test("keeps the native plugin reachable on the import it produces", () => {
   expect(clock.plugin).toBeInstanceOf(Elysia);
   expect(clock.id).toBe("ElysiaPluginModule[clock]");
   expect(Object.isFrozen(clock)).toBe(true);
+});
+
+test("mounts a defined plugin from a descriptor-authored module", async () => {
+  const application = await AponiaFactory.createNative(descriptorModule, {
+    logger: false,
+  });
+  const response = await application.handle(new Request("http://localhost/defined-descriptor"));
+
+  expect(await response.text()).toBe("descriptor");
+  expect(descriptorPlugin.imports).toEqual([]);
+  expect(descriptorPlugin.controllers).toEqual([]);
+  expect(descriptorPlugin.exports).toEqual([]);
+  expect(Object.isFrozen(descriptorPlugin.providers)).toBe(true);
 });
 
 test("rejects an empty key exactly as register does", () => {

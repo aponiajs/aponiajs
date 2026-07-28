@@ -1,8 +1,4 @@
-export { AponiaContainer, createContainer } from "./container.ts";
-export {
-  ModuleGraph,
-  compileModuleGraph,
-  type GraphInspection,
-  type ModuleInspection,
-  type ProviderLocation,
-} from "./graph.ts";
+export { AponiaContainer, createContainer } from "./container/container.ts";
+export { compileModuleGraph } from "./graph/graph-compiler.ts";
+export type { GraphInspection, ModuleInspection, ProviderLocation } from "./graph/graph.types.ts";
+export { ModuleGraph } from "./graph/module-graph.ts";

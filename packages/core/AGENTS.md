@@ -8,10 +8,14 @@ specific to this package.
 The runtime that consumes descriptors: the module graph, visibility rules, and
 the dependency injection container. It depends on `@aponiajs/common` only.
 
-| File           | Owns                                                             |
-| -------------- | ---------------------------------------------------------------- |
-| `graph.ts`     | `compileModuleGraph`, `ModuleGraph`, all compile-time validation |
-| `container.ts` | `createContainer`, `AponiaContainer`, instance caching           |
+| Domain       | Owns                                                                  |
+| ------------ | --------------------------------------------------------------------- |
+| `graph/`     | Graph types, `ModuleGraph`, compilation, dependency and export checks |
+| `container/` | `createContainer`, `AponiaContainer`, instance and controller caching |
+
+`src/index.ts` is the only public barrel. Keep graph compilation separate from
+graph lookup so each can evolve without turning one file into a second
+container.
 
 ## Invariants
 

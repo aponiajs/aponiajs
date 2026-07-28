@@ -31,6 +31,17 @@ import { clock } from "./clock.plugin.ts";
 export class AppModule {}
 ```
 
+The same value is also a complete descriptor import:
+
+```ts
+import { defineModule } from "@aponiajs/common";
+
+export const AppModule = defineModule({
+  id: "AppModule",
+  imports: [clock],
+});
+```
+
 A published plugin is mounted the same way:
 
 ```ts
@@ -171,7 +182,17 @@ runtime — the values are still in the context, only untyped.
 
 ## Reaching Elysia directly
 
-Two escape hatches remain for work no module import expresses:
+Return the native application directly when Elysia or Eden should own the
+calling surface:
+
+```ts
+const native = await AponiaFactory.createNative(AppModule, {
+  configureNative: (application) =>
+    application.onError(({ error }) => ({ message: String(error) })),
+});
+```
+
+The managed lifecycle facade remains available:
 
 ```ts
 const application = await AponiaFactory.create(AppModule, {
@@ -181,8 +202,9 @@ const application = await AponiaFactory.create(AppModule, {
 const native = application.getNativeApplication();
 ```
 
-`configureNative` must return the instance it receives. `getNativeApplication`
-keeps the accumulated Elysia types of whatever `configureNative` returned.
+`configureNative` must return the instance it receives. Both `createNative` and
+`getNativeApplication` keep the accumulated Elysia types of whatever
+`configureNative` returned.
 
 ## Testing a plugin-backed route
 
@@ -208,5 +230,6 @@ test("exposes the clock decorator", async () => {
 assertions that fail `bun run check` when a plugin type is lost or widened.
 
 [Architecture and style](./architecture-and-style.md) ·
+[Eden Treaty](./eden-treaty.md) ·
 [Testing](./testing.md) ·
 [Adapter README](../packages/platform-elysia/README.md)

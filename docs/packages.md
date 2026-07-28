@@ -71,10 +71,12 @@ and standalone container integrations may install it directly.
 ### `@aponiajs/platform-elysia`
 
 The Elysia adapter, application lifecycle, decorated route mapper, and native
-plugin escape hatch. `elysia` is a peer dependency and must be installed by the
-application.
+plugin escape hatch. `AponiaFactory.createNative` exposes a statically composed
+module as the exact Elysia application type for native tooling and Eden Treaty.
+`elysia` is a peer dependency and must be installed by the application.
 
 [Package README](../packages/platform-elysia/README.md) ·
+[Eden Treaty](./eden-treaty.md) ·
 [npm](https://www.npmjs.com/package/@aponiajs/platform-elysia)
 
 ## Project creation and CLI

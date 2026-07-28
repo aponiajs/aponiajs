@@ -23,6 +23,12 @@ const typeBoxSchema = {
   }),
 };
 
+const responseSchema = {
+  response: z.object({
+    name: z.string(),
+  }),
+};
+
 @Controller("users")
 class UserController {
   @Post("/", createUserSchema)
@@ -43,6 +49,16 @@ class UserController {
   @Get()
   listUsers(): readonly string[] {
     return ["ada"];
+  }
+
+  @Get("validated-response", responseSchema)
+  readValidatedResponse(): { name: string } {
+    return { name: "Ada" };
+  }
+
+  @Get("invalid-response", responseSchema)
+  readInvalidResponse(): unknown {
+    return { name: 42 };
   }
 }
 
@@ -104,4 +120,17 @@ test("keeps routes without a schema working", async () => {
 
   expect(response.status).toBe(200);
   expect(await response.json()).toEqual(["ada"]);
+});
+
+test("validates successful and rejected handler responses", async () => {
+  const application = await createApplication();
+  const accepted = await application.handle(
+    new Request("http://localhost/users/validated-response"),
+  );
+  const rejected = await application.handle(new Request("http://localhost/users/invalid-response"));
+
+  expect(accepted.status).toBe(200);
+  expect(await accepted.json()).toEqual({ name: "Ada" });
+  expect(rejected.status).toBe(422);
+  await application.close();
 });

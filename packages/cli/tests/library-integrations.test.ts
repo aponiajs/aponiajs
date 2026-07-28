@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
-import { parseArguments } from "../src/arguments.ts";
-import { createComponentNames } from "../src/component-names.ts";
-import { registerInModule } from "../src/module-registration.ts";
+import { parseArguments } from "../src/commands/arguments.ts";
+import { createComponentNames } from "../src/generation/component-names.ts";
+import { registerInModule } from "../src/generation/module-registration.ts";
 
 test("yargs-parser handles aliases, inline values, and boolean negation", () => {
   expect(

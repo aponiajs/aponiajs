@@ -7,6 +7,12 @@ dist
 !.vscode/settings.json
 !.vscode/extensions.json
 
+# Local agent tooling and generated research inputs
+.agents/
+.claude/
+skills-lock.json
+research.md
+
 # dotenv environment variable files
 .env
 .env.*

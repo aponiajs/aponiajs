@@ -2,13 +2,13 @@
 
 A Bun-first, Nest-inspired application framework built around Elysia.
 
-- **Current version:** 0.6.0-alpha.14
+- **Current version:** 0.6.0-alpha.15
 - **Runtime:** Bun 1.3.14
 - **Package manager:** Bun 1.3.14
 - **Repository:** https://github.com/aponiajs/aponiajs
 - **Default branch:** `main`
 
-**Progress:** 10 completed, 4 in progress, 13 planned of 27 items (43.89% overall).
+**Progress:** 10 completed, 4 in progress, 13 planned of 27 items (44.81% overall).
 
 Status meanings:
 
@@ -23,7 +23,7 @@ Status meanings:
 | Foundation alpha        | `0.3.0`  | Completed   | 100%     | 6     |
 | Developer experience    | `0.3.17` | Completed   | 100%     | 4     |
 | Release quality         | `0.5.0`  | In progress | 36.67%   | 3     |
-| Runtime maturity        | `0.7.0`  | In progress | 15%      | 5     |
+| Runtime maturity        | `0.7.0`  | In progress | 20%      | 5     |
 | Production capabilities | `1.0.0`  | Planned     | 0%       | 8     |
 | Post-1.0 ecosystem      | `1.1.0`  | Planned     | 0%       | 1     |
 
@@ -109,7 +109,7 @@ Acceptance criteria:
 
 Evidence:
 
-- Graph implementation (`packages/core/src/graph.ts`)
+- Graph implementation (`packages/core/src/graph/graph-compiler.ts`)
 - Core graph tests (`packages/core/tests/core.test.ts`)
 
 ### Singleton dependency injection
@@ -136,7 +136,7 @@ Acceptance criteria:
 
 Evidence:
 
-- Container implementation (`packages/core/src/container.ts`)
+- Container implementation (`packages/core/src/container/container.ts`)
 - Container tests (`packages/core/tests/core.test.ts`)
 
 ### Minimal Elysia adapter
@@ -163,7 +163,7 @@ Acceptance criteria:
 
 Evidence:
 
-- Application implementation (`packages/platform-elysia/src/application.ts`)
+- Application implementation (`packages/platform-elysia/src/application/aponia-factory.ts`)
 - Platform integration tests (`packages/platform-elysia/tests/platform.test.ts`)
 
 ### Logging foundation
@@ -191,7 +191,7 @@ Acceptance criteria:
 Evidence:
 
 - Logging guide (`docs/logging.md`)
-- Logger implementation (`packages/common/src/logger.ts`)
+- Logger implementation (`packages/common/src/logging/console-logger.ts`)
 
 ## 2. Developer experience
 
@@ -223,7 +223,7 @@ Acceptance criteria:
 
 Evidence:
 
-- Project generator (`packages/cli/src/project-generator.ts`)
+- Project generator (`packages/cli/src/generation/project-generator.ts`)
 - CLI guide (`docs/cli.md`)
 
 ### Nest-style schematic catalog
@@ -412,7 +412,7 @@ Evidence:
 
 Provider lifecycles, package boundaries, native plugin inference, phase conformance, and response contracts.
 
-Target `0.7.0` · In progress · 5% complete.
+Target `0.7.0` · In progress · 20% complete.
 
 ### Async lifecycle and provider scopes
 
@@ -480,7 +480,7 @@ Evidence:
 
 Preserve exact Elysia plugin inputs, accumulated context, deferred readiness, and Eden-compatible route types.
 
-- **Status:** In progress (50%)
+- **Status:** In progress (75%)
 - **Priority:** critical
 - **Category:** http
 - **Packages:** `@aponiajs/platform-elysia`
@@ -491,6 +491,7 @@ Preserve exact Elysia plugin inputs, accumulated context, deferred readiness, an
 Deliverables:
 
 - Tuple-preserving native plugin registration
+- Native application bootstrap with statically composed Eden route types
 - Compiled Aponia module as a native Elysia plugin
 - Positive and negative inference fixtures
 
@@ -500,13 +501,15 @@ Acceptance criteria:
 
 Next actions:
 
-- Compile an Aponia module as a native Elysia plugin.
+- Extend route inference to build-time compiled decorated modules.
 - Add bearer, CORS, JWT, OpenAPI, and deferred plugin fixtures.
 
 Evidence:
 
-- Plugin context implementation (`packages/platform-elysia/src/route-context.ts`)
+- Plugin context implementation (`packages/platform-elysia/src/routing/route-context.types.ts`)
 - Plugin context tests (`packages/platform-elysia/tests/plugin-context.test.ts`)
+- Native Eden application tests (`packages/platform-elysia/tests/eden-contract.test.ts`)
+- [Eden Treaty guide](docs/eden-treaty.md)
 - [Native Elysia compatibility invariant](#30-native-elysia-compatibility-invariant)
 
 ### Elysia lifecycle conformance
