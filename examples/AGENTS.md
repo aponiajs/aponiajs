@@ -11,14 +11,16 @@ Executable applications that must keep working against the workspace packages.
 | `basic-foundation` | The smallest application: one module, one controller, one service | `bun run example:basic`        |
 | `feature-tour`     | Every implemented use case, each covered by an end-to-end test    | `bun run example:feature-tour` |
 
-`feature-tour/README.md` maps each use case to the file that demonstrates it.
-A new public feature belongs there, with a case in
-`test/feature-tour.e2e-spec.ts`, in the same pull request that ships it.
+`feature-tour` numbers its source directories and test files by use case, so a
+file name states what it demonstrates. A new public feature belongs there, in a
+new numbered directory with a matching numbered suite, in the same pull request
+that ships it. `basic-foundation` keeps the flat names `aponia new` generates —
+renaming it would misrepresent the generated layout.
 
 Bun's default test glob matches `*.spec.ts` but not `*.e2e-spec.ts`, so an
 end-to-end file under `test/` never runs during a bare `bun test`.
-`bun run test:examples` runs both suites explicitly and CI calls it. Add a new
-example's suite to that script or it will silently never run.
+`bun run test:examples` globs `examples/*/test/*.e2e-spec.ts` and CI calls it, so
+a new suite is picked up as long as it lives there and ends in `.e2e-spec.ts`.
 
 ## Invariants
 

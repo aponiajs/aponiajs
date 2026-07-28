@@ -1,16 +1,25 @@
 import { Module } from "@aponiajs/common";
-import { CatalogModule } from "./catalog/catalog.module.ts";
-import { ConfigModule } from "./config/config.module.ts";
-import { metricsModule } from "./descriptors/metrics.module.ts";
-import { ParametersController } from "./parameters/parameters.controller.ts";
-import { PluginsModule } from "./plugins/plugins.module.ts";
+import { ProvidersModule } from "./01-providers/providers.module.ts";
+import { SettingsController } from "./01-providers/settings.controller.ts";
+import { ValidationModule } from "./03-validation/validation.module.ts";
+import { HttpMethodsModule } from "./04-http-methods/http-methods.module.ts";
+import { RequestParametersModule } from "./05-request-parameters/request-parameters.module.ts";
+import { NativePluginsModule } from "./06-native-plugins/native-plugins.module.ts";
+import { metricsModule } from "./07-descriptors/metrics.descriptors.ts";
 
 /**
- * Use case: a root module composing decorated modules, a hand-written
- * descriptor module, and native plugin modules in one graph.
+ * The root module composes decorated feature modules, a hand-written descriptor
+ * module, and native plugin modules into one graph.
  */
 @Module({
-  imports: [ConfigModule, CatalogModule, PluginsModule, metricsModule],
-  controllers: [ParametersController],
+  imports: [
+    ProvidersModule,
+    ValidationModule,
+    HttpMethodsModule,
+    RequestParametersModule,
+    NativePluginsModule,
+    metricsModule,
+  ],
+  controllers: [SettingsController],
 })
 export class AppModule {}

@@ -13,11 +13,14 @@ import {
   type RouteResponseSettings,
 } from "@aponiajs/common";
 import { type ElysiaRouteContext } from "@aponiajs/platform-elysia";
-import { createItemSchema, type CreateItem } from "../catalog/catalog.schema.ts";
+import { createItemSchema, type CreateItem } from "../03-validation/item.schema.ts";
 
-/** Use case: every request parameter decorator, named and unnamed. */
+/**
+ * Use case 05 — every parameter decorator, both whole and named. A decorator
+ * with a name selects one property; without one it injects the whole part.
+ */
 @Controller("parameters")
-export class ParametersController {
+export class RequestParametersController {
   @Post("body", createItemSchema)
   readBody(
     @Body() body: CreateItem,
@@ -35,17 +38,23 @@ export class ParametersController {
   }
 
   @Get("params/:id")
-  readParams(@Param("id") id: string): { id: string } {
-    return { id };
+  readParams(
+    @Param("id") id: string,
+    @Param() params: Record<string, string>,
+  ): {
+    id: string;
+    params: Record<string, string>;
+  } {
+    return { id, params };
   }
 
   @Get("headers")
-  readHeaders(@Headers("x-tenant") tenant: string | undefined): { tenant: string | undefined } {
-    return { tenant };
+  readHeaders(@Headers("x-tenant") tenant: string | undefined): { tenant: string | null } {
+    return { tenant: tenant ?? null };
   }
 
   @Get("cookies")
-  readCookies(@Cookie("session") session: unknown): { session: unknown } {
+  readCookies(@Cookie("session") session: unknown): { session: string | null } {
     return { session: session === undefined ? null : String(session) };
   }
 
@@ -62,6 +71,11 @@ export class ParametersController {
 
   @Get("context")
   readContext(@Ctx() context: ElysiaRouteContext): { path: string } {
+    return { path: context.path };
+  }
+
+  @Get("whole-context")
+  readWholeContext(context: ElysiaRouteContext): { path: string } {
     return { path: context.path };
   }
 }

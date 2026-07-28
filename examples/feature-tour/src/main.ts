@@ -2,8 +2,8 @@ import { AponiaFactory } from "@aponiajs/platform-elysia";
 import { AppModule } from "./app.module.ts";
 
 /**
- * Use case: bootstrap with an application-level escape hatch.
- * `configureNative` receives the root Elysia instance and must return it.
+ * Bootstrap with the application-level escape hatch: `configureNative` receives
+ * the root Elysia instance and must return the same one.
  */
 export async function bootstrap(): Promise<void> {
   const application = await AponiaFactory.create(AppModule, {

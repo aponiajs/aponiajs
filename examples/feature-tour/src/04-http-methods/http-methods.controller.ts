@@ -11,35 +11,30 @@ import {
   Put,
   Query,
 } from "@aponiajs/common";
-import { CatalogService, type Item } from "./catalog.service.ts";
-import { createItemSchema, searchItemsSchema, type CreateItem } from "./catalog.schema.ts";
+import { CatalogService, type CatalogItem } from "../02-modules/catalog.service.ts";
+import { createItemSchema, type CreateItem } from "../03-validation/item.schema.ts";
 
 /**
- * Use case: validated routes across every HTTP method decorator, with the
- * handler's own annotations providing the types.
+ * Use case 04 — one controller covering every HTTP method decorator. Paths join
+ * the controller prefix, so `@Get(":id")` answers `GET /items/:id`.
  */
 @Controller("items")
-export class CatalogController {
+export class HttpMethodsController {
   constructor(private readonly catalogService: CatalogService) {}
 
   @Post("/", createItemSchema)
-  create(@Body() body: CreateItem): Item {
+  create(@Body() body: CreateItem): CatalogItem {
     return this.catalogService.create(body);
   }
 
-  @Get("search", searchItemsSchema)
-  search(@Query("term") term: string, @Query("take") take: number | undefined): readonly Item[] {
-    return this.catalogService.search(term, take ?? 10);
-  }
-
   @Get(":id")
-  findOne(@Param("id") id: string): Item | { message: string } {
+  findOne(@Param("id") id: string): CatalogItem | { message: string } {
     return this.catalogService.findOne(id) ?? { message: "not found" };
   }
 
   @Put(":id", createItemSchema)
-  replace(@Param("id") id: string, @Body() body: CreateItem): Item {
-    return { id, ...body };
+  replace(@Param("id") id: string, @Body() body: CreateItem): CatalogItem {
+    return this.catalogService.replace(id, body);
   }
 
   @Patch(":id")
@@ -49,7 +44,7 @@ export class CatalogController {
 
   @Delete(":id")
   remove(@Param("id") id: string): { id: string; removed: boolean } {
-    return { id, removed: true };
+    return { id, removed: this.catalogService.remove(id) };
   }
 
   @Head()

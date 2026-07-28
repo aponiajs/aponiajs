@@ -1,10 +1,10 @@
-import { defineModule, provideClass, provideValue, createToken } from "@aponiajs/common";
+import { createToken, defineModule, provideClass, provideValue } from "@aponiajs/common";
 import { defineElysiaController } from "@aponiajs/platform-elysia";
 import { Elysia } from "elysia";
 
 /**
- * Use case: the descriptor authoring layer. No decorators anywhere — this
- * module is the frozen shape the runtime consumes, written by hand.
+ * Use case 07 — the descriptor authoring layer. No decorators anywhere: this is
+ * the frozen shape the runtime consumes, written by hand.
  */
 const METRICS_NAMESPACE = createToken<string>("METRICS_NAMESPACE");
 
