@@ -1,18 +1,18 @@
 import { Module } from "@aponiajs/common";
 import { ElysiaPluginModule } from "@aponiajs/platform-elysia";
 import { Elysia } from "elysia";
-import { ConfigModule } from "../config/config.module.ts";
-import { REQUEST_BUDGET } from "../config/config.tokens.ts";
+import { ProvidersModule } from "../01-providers/providers.module.ts";
+import { REQUEST_BUDGET } from "../01-providers/provider-tokens.ts";
 
 /**
- * Use case: a plugin whose configuration comes from the container. The factory
- * resolves `REQUEST_BUDGET` from the modules listed in `imports`.
+ * A plugin whose configuration comes from the container: the factory resolves
+ * `REQUEST_BUDGET` against the modules listed in `imports`.
  */
 @Module({
   imports: [
     ElysiaPluginModule.registerAsync({
       key: "budget",
-      imports: [ConfigModule],
+      imports: [ProvidersModule],
       inject: [REQUEST_BUDGET],
       useFactory: (budget: number) => new Elysia({ name: "budget" }).decorate("budget", budget),
     }),

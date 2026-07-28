@@ -1,9 +1,9 @@
 import { Inject, Injectable } from "@aponiajs/common";
-import { APPLICATION_NAME, GREETING_PREFIX } from "./config.tokens.ts";
+import { APPLICATION_NAME, GREETING_PREFIX } from "./provider-tokens.ts";
 
-/** Use case: a class provider that receives token-identified values. */
+/** A class provider whose dependencies arrive through tokens. */
 @Injectable()
-export class ConfigService {
+export class SettingsService {
   constructor(
     @Inject(APPLICATION_NAME) private readonly applicationName: string,
     @Inject(GREETING_PREFIX) private readonly greetingPrefix: string,

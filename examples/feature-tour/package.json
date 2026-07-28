@@ -7,7 +7,7 @@
     "start": "bun run src/main.ts",
     "build": "bun build ./src/main.ts --outdir ./dist --target bun",
     "test": "bun run test:e2e",
-    "test:e2e": "bun test ./test/feature-tour.e2e-spec.ts",
+    "test:e2e": "bun test ../../examples/feature-tour/test/*.e2e-spec.ts",
     "check": "vp check"
   },
   "dependencies": {
