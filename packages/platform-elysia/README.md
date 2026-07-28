@@ -256,4 +256,5 @@ costs nothing at runtime — the values are still there, only untyped.
 preserves Elysia's accumulated plugin types on `getNativeApplication()`.
 
 [npm package](https://www.npmjs.com/package/@aponiajs/platform-elysia) ·
+[native plugin guide](../../docs/native-plugins.md) ·
 [complete package catalog](../../docs/packages.md)

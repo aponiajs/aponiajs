@@ -264,7 +264,8 @@ once and annotates handlers with `AppContext` or `AppContext<typeof schema>`.
 `defineElysiaPlugin` goes further: it converts a native plugin into a module
 import that carries its own type, so `imports: [clock]` mounts it and
 `e<clock>` — `ElysiaRouteContext` renamed on import — types it without a
-`typeof`, provided the plugin is exported as a value and a same-named type.
+`typeof`, provided the plugin is exported as a value and a same-named type. The
+[native plugin guide](./native-plugins.md) is the complete reference.
 The mapping
 mirrors Elysia's `.use()`: `decorate`, `state`, `resolve`, and `global` derives
 and resolves are typed, together with `scoped` derives and resolves;

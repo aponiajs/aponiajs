@@ -12,6 +12,7 @@ Structured applications for Bun
 
 [Documentation](./docs/architecture-and-style.md) ·
 [Dependency injection](./docs/dependency-injection.md) ·
+[Native plugins](./docs/native-plugins.md) ·
 [Testing](./docs/testing.md) ·
 [CLI](./docs/cli.md) ·
 [Roadmap](./ROADMAP.md)
@@ -366,9 +367,9 @@ export class HealthController {
 export class HealthModule {}
 ```
 
-The [adapter README](./packages/platform-elysia/README.md) covers both forms and
-the `AppContext<TSchema>` alias for applications that always mount the same
-plugins.
+The [native plugin guide](./docs/native-plugins.md) covers both forms, the
+`AppContext<TSchema>` alias, and exactly which plugin declarations reach a
+controller.
 
 ## Test
 
