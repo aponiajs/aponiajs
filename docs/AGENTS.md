@@ -16,6 +16,19 @@ The published documentation set:
 | `cli.md`                    | The generator catalog, aliases, and options                   |
 | `packages.md`               | The published package catalog                                 |
 | `releasing.md`              | Channels, the version gate, and the publish flow              |
+| `learn/`                    | The ordered chapters that teach the same material in sequence |
+
+## The learning path
+
+`learn/` is the ordered walkthrough: numbered chapters, each opening with the
+case it applies to and closing with a link to its successor and to the reference
+document that covers it in depth. It teaches; `docs/` proper is the reference.
+
+Adding a chapter means keeping the numbering contiguous, listing it in
+`learn/README.md`, and chaining it from its predecessor.
+`scripts/learning-path.spec.ts` enforces all three. Renumbering an existing
+chapter breaks inbound links, so append rather than insert unless the order is
+genuinely wrong.
 
 ## Invariants
 
