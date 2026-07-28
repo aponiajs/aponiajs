@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+      - release/alpha
+      - release/beta
+      - release/rc
 
 permissions: {}
 
@@ -38,6 +41,9 @@ jobs:
       - name: Resolve release version and distribution tag
         id: distribution
         run: bun run release:tag
+
+      - name: Verify release branch matches the distribution tag
+        run: bun run release:branch
 
       - name: Create tag and GitHub release
         env:

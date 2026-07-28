@@ -36,10 +36,22 @@ The framework is pre-1.0, so every release is a prerelease. Cutting a bare
 
 ## Branch and pull request
 
-Branch from the latest `main` as `feature/<short-kebab-description>`, open a pull
-request against `main` after the first push, and use Conventional Commit
-subjects. Public behavior changes ship with their documentation in the same pull
-request.
+Branch from the release channel the work targets and open the pull request back
+into that same branch. Routine prerelease work currently starts from
+`release/alpha`; `release/beta`, `release/rc`, and `main` accept progressively
+more mature promotion or fix work. Every push must carry a greater synchronized
+workspace version.
+
+| Branch          | Version         | npm tag  |
+| --------------- | --------------- | -------- |
+| `release/alpha` | `X.Y.Z-alpha.N` | `alpha`  |
+| `release/beta`  | `X.Y.Z-beta.N`  | `beta`   |
+| `release/rc`    | `X.Y.Z-rc.N`    | `rc`     |
+| `main`          | stable `X.Y.Z`  | `latest` |
+
+Promotions move forward through those branches in order. `next` is only an npm
+alias, and canary versions exist only inside CI, so neither has a Git branch.
+Public behavior changes ship with their documentation in the same pull request.
 
 Deep dive: [releasing](../releasing.md) ·
 [repository guidelines](../../AGENTS.md)

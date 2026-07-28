@@ -1,5 +1,12 @@
 import { expect, test } from "bun:test";
-import { Controller, Get, Injectable, Module, type LoggerService } from "@aponiajs/common";
+import {
+  Controller,
+  Get,
+  Injectable,
+  Module,
+  defineModule,
+  type LoggerService,
+} from "@aponiajs/common";
 import { Elysia } from "elysia";
 import { AponiaFactory, ElysiaPluginModule } from "../src/index.ts";
 
@@ -245,6 +252,31 @@ test("rejects a native configurator that replaces the application", async () => 
   expect(error).toEqual(
     expect.objectContaining({
       code: "INVALID_NATIVE_APPLICATION",
+    }),
+  );
+});
+
+test("classifies a controller factory with a non-Elysia result as invalid", async () => {
+  const invalidModule = defineModule({
+    id: "InvalidControllerModule",
+    controllers: [
+      {
+        kind: "aponia.elysia.controller",
+        token: class BrokenController {},
+        inject: [],
+        useClass: class BrokenController {},
+        buildPlugin: () => ({}),
+      } as never,
+    ],
+  });
+  const error = await AponiaFactory.create(invalidModule, { logger: false }).then(
+    () => undefined,
+    (reason: unknown) => reason,
+  );
+
+  expect(error).toEqual(
+    expect.objectContaining({
+      code: "INVALID_CONTROLLER",
     }),
   );
 });

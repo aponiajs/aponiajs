@@ -56,6 +56,6 @@ test("rejects a controller whose factory does not return an Elysia instance", ()
   });
 
   expect(AponiaFactory.create(invalidModule, { logger: false })).rejects.toThrow(
-    expect.objectContaining({ code: "UNSUPPORTED_CONTROLLER" }),
+    expect.objectContaining({ code: "INVALID_CONTROLLER" }),
   );
 });

@@ -124,7 +124,7 @@ export class AponiaFactory {
         const plugin = Reflect.apply(controller.buildPlugin, undefined, [instance]);
         if (!(plugin instanceof Elysia)) {
           throw new AponiaError(
-            "UNSUPPORTED_CONTROLLER",
+            "INVALID_CONTROLLER",
             `Controller "${tokenName(controller.token)}" did not build an Elysia plugin.`,
             { module: module.id, controller: tokenName(controller.token) },
           );

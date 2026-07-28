@@ -2,13 +2,13 @@
 
 A Bun-first, Nest-inspired application framework built around Elysia.
 
-- **Current version:** 0.6.0-alpha.12
+- **Current version:** 0.6.0-alpha.14
 - **Runtime:** Bun 1.3.14
 - **Package manager:** Bun 1.3.14
 - **Repository:** https://github.com/aponiajs/aponiajs
 - **Default branch:** `main`
 
-**Progress:** 11 completed, 3 in progress, 14 planned of 28 items (44.11% overall).
+**Progress:** 10 completed, 4 in progress, 13 planned of 27 items (43.89% overall).
 
 Status meanings:
 
@@ -21,9 +21,9 @@ Status meanings:
 | Milestone               | Target   | Status      | Progress | Items |
 | ----------------------- | -------- | ----------- | -------- | ----- |
 | Foundation alpha        | `0.3.0`  | Completed   | 100%     | 6     |
-| Developer experience    | `0.3.17` | Completed   | 100%     | 5     |
+| Developer experience    | `0.3.17` | Completed   | 100%     | 4     |
 | Release quality         | `0.5.0`  | In progress | 36.67%   | 3     |
-| Runtime maturity        | `0.7.0`  | In progress | 5%       | 5     |
+| Runtime maturity        | `0.7.0`  | In progress | 15%      | 5     |
 | Production capabilities | `1.0.0`  | Planned     | 0%       | 8     |
 | Post-1.0 ecosystem      | `1.1.0`  | Planned     | 0%       | 1     |
 
@@ -195,7 +195,7 @@ Evidence:
 
 ## 2. Developer experience
 
-Application generation, Nest-style schematics, package documentation, and tracker-ready roadmap data.
+Application generation, Nest-style schematics, and package documentation.
 
 Target `0.3.17` · Completed · 100% complete.
 
@@ -307,32 +307,6 @@ Evidence:
 - Package catalog (`docs/packages.md`)
 - Global CLI workflow (`https://github.com/aponiajs/aponiajs/pull/18`)
 
-### Machine-readable roadmap
-
-Publish normalized JSON and a JSON Schema for a roadmap tracking website.
-
-- **Status:** Completed (100%)
-- **Priority:** high
-- **Category:** documentation
-- **Depends on:** Published package documentation
-- **Updated:** 2026-07-25
-- **Tags:** roadmap, json, tracker
-
-Deliverables:
-
-- Roadmap JSON
-- JSON Schema 2020-12 contract
-- Ajv validation and relational tests
-
-Acceptance criteria:
-
-- A consumer can render milestones and status columns without parsing Markdown.
-
-Evidence:
-
-- Roadmap data (`roadmap/roadmap.json`)
-- Roadmap schema (`roadmap/roadmap.schema.json`)
-
 ## 3. Release quality
 
 Dependency maintenance, foundation hardening, and release-candidate gates.
@@ -369,8 +343,8 @@ Next actions:
 
 Evidence:
 
-- Framework delivery roadmap (`plans/aponia-framework-roadmap.md`)
-- Package architecture roadmap (`plans/npm-package-architecture-roadmap.md`)
+- [Framework blueprint](#framework-blueprint)
+- [Package architecture](#package-architecture)
 
 ### Dependency maintenance
 
@@ -432,7 +406,7 @@ Next actions:
 
 Evidence:
 
-- Package roadmap step 29 (`plans/npm-package-architecture-roadmap.md#step-29-foundation-release-candidate`)
+- [Release hardening blueprint](#step-19-release-hardening)
 
 ## 4. Runtime maturity
 
@@ -469,7 +443,7 @@ Next actions:
 
 Evidence:
 
-- Framework roadmap steps 5 and 6 (`plans/aponia-framework-roadmap.md#step-5-async-lifecycle-and-provider-scopes`)
+- [Async lifecycle and provider scopes blueprint](#step-5-async-lifecycle-and-provider-scopes)
 
 ### Platform and HTTP package split
 
@@ -500,18 +474,18 @@ Next actions:
 
 Evidence:
 
-- Package roadmap steps 7 and 8 (`plans/npm-package-architecture-roadmap.md#step-7-extract-aponiajsplatform`)
+- [Platform and HTTP package blueprints](#package-architecture)
 
 ### Native Elysia plugin type inference
 
 Preserve exact Elysia plugin inputs, accumulated context, deferred readiness, and Eden-compatible route types.
 
-- **Status:** Planned (0%)
+- **Status:** In progress (50%)
 - **Priority:** critical
 - **Category:** http
 - **Packages:** `@aponiajs/platform-elysia`
 - **Depends on:** Platform and HTTP package split, Async lifecycle and provider scopes
-- **Updated:** 2026-07-25
+- **Updated:** 2026-07-28
 - **Tags:** elysia, type-inference, plugins
 
 Deliverables:
@@ -526,12 +500,14 @@ Acceptance criteria:
 
 Next actions:
 
-- Pin the supported Elysia plugin input contract.
+- Compile an Aponia module as a native Elysia plugin.
 - Add bearer, CORS, JWT, OpenAPI, and deferred plugin fixtures.
 
 Evidence:
 
-- Native Elysia compatibility invariant (`plans/npm-package-architecture-roadmap.md#30-native-elysia-compatibility-invariant`)
+- Plugin context implementation (`packages/platform-elysia/src/route-context.ts`)
+- Plugin context tests (`packages/platform-elysia/tests/plugin-context.test.ts`)
+- [Native Elysia compatibility invariant](#30-native-elysia-compatibility-invariant)
 
 ### Elysia lifecycle conformance
 
@@ -562,7 +538,7 @@ Next actions:
 
 Evidence:
 
-- Framework roadmap step 7 (`plans/aponia-framework-roadmap.md#step-7-elysia-lifecycle-and-scope-conformance`)
+- [Elysia lifecycle blueprint](#step-7-elysia-lifecycle-and-scope-conformance)
 
 ### Validation, errors, and serialization
 
@@ -593,7 +569,7 @@ Next actions:
 
 Evidence:
 
-- Framework roadmap step 8 (`plans/aponia-framework-roadmap.md#step-8-validation-errors-and-response-contracts`)
+- [Validation and response contracts blueprint](#step-8-validation-errors-and-response-contracts)
 - Standard Schema route validation (`packages/platform-elysia/tests/route-schema.test.ts`)
 
 ## 5. Production capabilities
@@ -631,7 +607,7 @@ Next actions:
 
 Evidence:
 
-- Framework roadmap step 9 (`plans/aponia-framework-roadmap.md#step-9-configuration-secrets-logging-and-redaction`)
+- [Configuration and redaction blueprint](#step-9-configuration-secrets-logging-and-redaction)
 
 ### HTTP admission and security hardening
 
@@ -662,7 +638,7 @@ Next actions:
 
 Evidence:
 
-- Framework security baseline (`plans/aponia-framework-roadmap.md#7-security-baseline`)
+- [Framework security baseline](#7-security-baseline)
 
 ### Authentication and authorization
 
@@ -693,7 +669,7 @@ Next actions:
 
 Evidence:
 
-- Framework roadmap step 11 (`plans/aponia-framework-roadmap.md#step-11-authentication-and-authorization`)
+- [Authentication and authorization blueprint](#step-11-authentication-and-authorization)
 
 ### Rate limiting
 
@@ -724,7 +700,7 @@ Next actions:
 
 Evidence:
 
-- Framework roadmap step 12 (`plans/aponia-framework-roadmap.md#step-12-rate-limiting`)
+- [Rate limiting blueprint](#step-12-rate-limiting)
 
 ### Testing packages
 
@@ -755,7 +731,7 @@ Next actions:
 
 Evidence:
 
-- Package roadmap testing packages (`plans/npm-package-architecture-roadmap.md#46-aponiajstesting`)
+- [Testing package blueprint](#step-13-testing-package)
 
 ### Observability and health
 
@@ -786,7 +762,7 @@ Next actions:
 
 Evidence:
 
-- Framework observability plan (`plans/aponia-framework-roadmap.md#8-observability-and-operations`)
+- [Observability and health blueprint](#step-14-observability-and-health)
 
 ### OpenAPI and Eden Treaty compatibility
 
@@ -817,7 +793,7 @@ Next actions:
 
 Evidence:
 
-- Framework roadmap step 17 (`plans/aponia-framework-roadmap.md#step-17-openapi-and-eden-treaty`)
+- [OpenAPI and Eden Treaty blueprint](#step-17-openapi-and-eden-treaty)
 
 ### Optional decorators package
 
@@ -848,7 +824,7 @@ Next actions:
 
 Evidence:
 
-- Package roadmap decorators package (`plans/npm-package-architecture-roadmap.md#48-aponiajsdecorators`)
+- [Optional decorators blueprint](#step-18-optional-decorators)
 
 ## 6. Post-1.0 ecosystem
 
@@ -885,7 +861,7 @@ Next actions:
 
 Evidence:
 
-- Framework roadmap post-version-1 ecosystem (`plans/aponia-framework-roadmap.md#step-20-post-version-1-ecosystem`)
+- [Post-version-1 ecosystem blueprint](#step-20-post-version-1-ecosystem)
 
 ## Architecture blueprint
 
@@ -1006,7 +982,7 @@ aponiajs/
 |   |-- decorators/
 |   |-- cli/
 |   `-- create-aponia/
-|-- plans/
+|-- ROADMAP.md
 |-- package.json
 |-- bun.lock
 `-- vite.config.ts
