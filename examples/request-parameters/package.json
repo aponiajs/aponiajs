@@ -1,19 +1,19 @@
 {
-  "name": "@aponiajs/example-basic-foundation",
+  "name": "@aponiajs/example-request-parameters",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "bun run src/main.ts",
     "build": "bun build ./src/main.ts --outdir ./dist --target bun",
-    "test": "bun test",
-    "test:e2e": "bun test ./test/app.e2e-spec.ts",
+    "test": "bun test ../../examples/request-parameters/test/*.e2e-spec.ts",
     "check": "vp check"
   },
   "dependencies": {
     "@aponiajs/common": "workspace:*",
     "@aponiajs/core": "workspace:*",
     "@aponiajs/platform-elysia": "workspace:*",
-    "elysia": "^1.4.29"
+    "elysia": "^1.4.29",
+    "zod": "^4.4.3"
   }
 }

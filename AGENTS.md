@@ -31,13 +31,38 @@ layout; later resources belong in `src/<resource>/`.
 `AGENTS.md` is the real file; `CLAUDE.md` and `GEMINI.md` are symlinks to it.
 Edit `AGENTS.md`.
 
+Every package and supporting directory carries its own `AGENTS.md` with the
+invariants that apply there. Read this file first, then the one next to the code
+being changed:
+
+| Guide                                                            | Covers                                                  |
+| ---------------------------------------------------------------- | ------------------------------------------------------- |
+| [`packages/common`](packages/common/AGENTS.md)                   | Decorators, descriptors, tokens, errors, logging        |
+| [`packages/core`](packages/core/AGENTS.md)                       | Module graph, visibility, container                     |
+| [`packages/platform-elysia`](packages/platform-elysia/AGENTS.md) | Bootstrap, route mapping, native plugins, context types |
+| [`packages/cli`](packages/cli/AGENTS.md)                         | Schematics, templates, generated layout                 |
+| [`packages/create-aponia`](packages/create-aponia/AGENTS.md)     | The `bun create aponia` entrypoint                      |
+| [`packages/aponiajs`](packages/aponiajs/AGENTS.md)               | The reserved, still-private facade                      |
+| [`scripts`](scripts/AGENTS.md)                                   | Release channel derivation and documentation guards     |
+| [`docs`](docs/AGENTS.md)                                         | The published documentation set and what guards it      |
+| [`docs/learn`](docs/learn/README.md)                             | The ordered chapters that teach the framework           |
+| [`examples`](examples/AGENTS.md)                                 | Executable applications built with the framework        |
+
+`scripts/agent-guides.spec.ts` keeps that list and the symlinks honest, and
+`scripts/learning-path.spec.ts` keeps the numbered chapters in `docs/learn/`
+contiguous, indexed, and chained.
+
 ## Build, Test, and Development Commands
 
 - `bun install`: install workspace dependencies.
-- `bun run example:basic`: run the Elysia example on its configured port.
+- `bun run example:basic`: run the minimal Elysia example on its configured port.
+  Each other example has its own `example:<name>` script; `examples/README.md`
+  lists them.
 - `bun run build`: build every workspace package (`vp pack` per package).
 - `bun test`: run the Bun suite across workspaces.
 - `bun run test:vite-plus`: run the Vite+ conformance lane.
+- `bun run test:examples`: run both example applications end to end. Bun's
+  default glob skips `*.e2e-spec.ts`, so this script is how they reach CI.
 - `bun run check`: Oxfmt, Oxlint, and type-aware checking for the repository.
 - `bun run doctor`: diagnose toolchain or package-manager problems.
 - `bun run test:generated-app`: pack the CLI and boot a generated application.

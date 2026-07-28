@@ -1,4 +1,4 @@
-# Basic foundation example
+# Basic
 
 This executable HTTP example composes the Aponia foundation packages:
 
@@ -38,3 +38,5 @@ curl http://localhost:3000/greetings
 
 The request flows through `GreetingModule`, `GreetingController`, and
 `GreetingService`. `main.ts` only creates and listens to the application.
+
+[Every example](../README.md)
