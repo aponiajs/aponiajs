@@ -26,13 +26,24 @@
         "elysia": "^1.4.29",
       },
     },
+    "examples/feature-tour": {
+      "name": "@aponiajs/example-feature-tour",
+      "version": "0.0.0",
+      "dependencies": {
+        "@aponiajs/common": "workspace:*",
+        "@aponiajs/core": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
+        "elysia": "^1.4.29",
+        "zod": "^4.4.3",
+      },
+    },
     "packages/aponiajs": {
       "name": "aponiajs",
-      "version": "0.6.0-alpha.8",
+      "version": "0.6.0-alpha.9",
     },
     "packages/cli": {
       "name": "@aponiajs/cli",
-      "version": "0.6.0-alpha.8",
+      "version": "0.6.0-alpha.9",
       "bin": {
         "aponia": "./bin/aponia.ts",
       },
@@ -49,7 +60,7 @@
     },
     "packages/common": {
       "name": "@aponiajs/common",
-      "version": "0.6.0-alpha.8",
+      "version": "0.6.0-alpha.9",
       "dependencies": {
         "@standard-schema/spec": "^1.1.0",
         "reflect-metadata": "^0.2.2",
@@ -57,14 +68,14 @@
     },
     "packages/core": {
       "name": "@aponiajs/core",
-      "version": "0.6.0-alpha.8",
+      "version": "0.6.0-alpha.9",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
       },
     },
     "packages/create-aponia": {
       "name": "create-aponia",
-      "version": "0.6.0-alpha.8",
+      "version": "0.6.0-alpha.9",
       "bin": {
         "create-aponia": "./bin/create-aponia.ts",
       },
@@ -74,7 +85,7 @@
     },
     "packages/platform-elysia": {
       "name": "@aponiajs/platform-elysia",
-      "version": "0.6.0-alpha.8",
+      "version": "0.6.0-alpha.9",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/core": "workspace:*",
@@ -101,6 +112,8 @@
     "@aponiajs/core": ["@aponiajs/core@workspace:packages/core"],
 
     "@aponiajs/example-basic-foundation": ["@aponiajs/example-basic-foundation@workspace:examples/basic-foundation"],
+
+    "@aponiajs/example-feature-tour": ["@aponiajs/example-feature-tour@workspace:examples/feature-tour"],
 
     "@aponiajs/platform-elysia": ["@aponiajs/platform-elysia@workspace:packages/platform-elysia"],
 

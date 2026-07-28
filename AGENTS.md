@@ -55,10 +55,13 @@ contiguous, indexed, and chained.
 ## Build, Test, and Development Commands
 
 - `bun install`: install workspace dependencies.
-- `bun run example:basic`: run the Elysia example on its configured port.
+- `bun run example:basic`: run the minimal Elysia example on its configured port.
+- `bun run example:feature-tour`: run the example covering every use case.
 - `bun run build`: build every workspace package (`vp pack` per package).
 - `bun test`: run the Bun suite across workspaces.
 - `bun run test:vite-plus`: run the Vite+ conformance lane.
+- `bun run test:examples`: run both example applications end to end. Bun's
+  default glob skips `*.e2e-spec.ts`, so this script is how they reach CI.
 - `bun run check`: Oxfmt, Oxlint, and type-aware checking for the repository.
 - `bun run doctor`: diagnose toolchain or package-manager problems.
 - `bun run test:generated-app`: pack the CLI and boot a generated application.

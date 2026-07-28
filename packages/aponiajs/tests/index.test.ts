@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
-import { fn } from "../src/index.ts";
+import * as facade from "../src/index.ts";
 
-test("fn", () => {
-  expect(fn()).toBe("Hello, tsdown!");
+test("exports nothing until the facade is designed", () => {
+  expect(Object.keys(facade)).toEqual([]);
 });
