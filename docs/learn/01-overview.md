@@ -43,8 +43,8 @@ authentication, WebSockets, microservice transports. Check
 [`ROADMAP.md`](../../ROADMAP.md) before assuming a feature exists.
 
 Every chapter that follows has a runnable counterpart in
-[`examples/feature-tour`](../../examples/feature-tour/README.md), which maps each
-use case to the file that demonstrates it.
+[`examples/`](../../examples/README.md): one application per topic, each with
+end-to-end tests asserting what the chapter describes.
 
 Next: [02 · Install and generate](./02-install-and-generate.md) ·
 Deep dive: [architecture and style](../architecture-and-style.md)

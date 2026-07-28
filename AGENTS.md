@@ -56,7 +56,8 @@ contiguous, indexed, and chained.
 
 - `bun install`: install workspace dependencies.
 - `bun run example:basic`: run the minimal Elysia example on its configured port.
-- `bun run example:feature-tour`: run the example covering every use case.
+  Each other example has its own `example:<name>` script; `examples/README.md`
+  lists them.
 - `bun run build`: build every workspace package (`vp pack` per package).
 - `bun test`: run the Bun suite across workspaces.
 - `bun run test:vite-plus`: run the Vite+ conformance lane.

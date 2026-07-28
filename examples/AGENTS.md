@@ -4,23 +4,16 @@ Read the [repository guide](../AGENTS.md) first.
 
 ## What this directory owns
 
-Executable applications that must keep working against the workspace packages.
+One runnable application per topic, each named after what it demonstrates:
+`basic`, `multiple-routers`, `dependency-injection`, `validation`,
+`request-parameters`, `native-plugins`, `descriptors`. `examples/README.md` is
+the index, with the port and command for each.
 
-| Example            | Purpose                                                           | Command                        |
-| ------------------ | ----------------------------------------------------------------- | ------------------------------ |
-| `basic-foundation` | The smallest application: one module, one controller, one service | `bun run example:basic`        |
-| `feature-tour`     | Every implemented use case, each covered by an end-to-end test    | `bun run example:feature-tour` |
-
-`feature-tour` numbers its source directories and test files by use case, so a
-file name states what it demonstrates. A new public feature belongs there, in a
-new numbered directory with a matching numbered suite, in the same pull request
-that ships it. `basic-foundation` keeps the flat names `aponia new` generates —
-renaming it would misrepresent the generated layout.
-
-Bun's default test glob matches `*.spec.ts` but not `*.e2e-spec.ts`, so an
-end-to-end file under `test/` never runs during a bare `bun test`.
-`bun run test:examples` globs `examples/*/test/*.e2e-spec.ts` and CI calls it, so
-a new suite is picked up as long as it lives there and ends in `.e2e-spec.ts`.
+Every example keeps the same shape — `src/app.module.ts`, `src/main.ts`,
+`test/application.ts` for the request helpers, `test/*.e2e-spec.ts` for the
+assertions — so moving between them costs nothing. `basic` keeps the flat
+`app.*` names `aponia new` generates; renaming it would misrepresent the
+generator.
 
 ## Invariants
 
@@ -32,5 +25,8 @@ a new suite is picked up as long as it lives there and ends in `.e2e-spec.ts`.
 - An example demonstrates a supported feature. When a public API changes, update
   the example in the same pull request; `bun run build` builds examples too, so
   a stale example breaks the build.
+- A new feature gets a new example directory when it is a topic of its own, or a
+  case in the closest existing one. Add its `example:<name>` script and a row in
+  `examples/README.md`.
 - Keep examples small enough to read in one sitting. A feature that needs a long
   explanation belongs in `docs/`.
