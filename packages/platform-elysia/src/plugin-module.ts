@@ -10,7 +10,7 @@ import {
   type TokenValues,
 } from "@aponiajs/common";
 import type { AponiaContainer } from "@aponiajs/core";
-import type { Elysia } from "elysia";
+import type { AnyElysia, Elysia } from "elysia";
 
 export type NativeElysiaPlugin = Parameters<Elysia["use"]>[0];
 
@@ -57,6 +57,33 @@ export class ElysiaPluginModule {
       options.key,
     );
   }
+}
+
+/**
+ * A module import that carries the native plugin it installs, so the plugin is
+ * both mountable and usable as a context type without a separate reference.
+ */
+export interface ElysiaPluginImport<TPlugin extends AnyElysia> extends DynamicModule {
+  readonly plugin: TPlugin;
+}
+
+/**
+ * Convert a native Elysia plugin into a module import. The result goes straight
+ * into `imports` and doubles as the plugin type an `ElysiaRouteContext` reads:
+ *
+ * ```ts
+ * export const clock = defineElysiaPlugin(new Elysia({ name: "clock" }), { key: "clock" });
+ * export type clock = typeof clock;
+ * ```
+ */
+export function defineElysiaPlugin<const TPlugin extends AnyElysia>(
+  plugin: TPlugin,
+  options: ElysiaPluginModuleOptions = {},
+): ElysiaPluginImport<TPlugin> {
+  return Object.freeze({
+    ...ElysiaPluginModule.register(plugin, options),
+    plugin,
+  });
 }
 
 export function isElysiaPluginModule(module: ModuleDefinition): boolean {

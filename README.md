@@ -314,6 +314,62 @@ A stable `key` keeps a plugin imported by several modules installed once.
 `application.getNativeApplication()` hand back the Elysia instance itself when a
 plugin needs it.
 
+What a plugin decorates, stores, or derives is available in every handler at
+runtime. Name the plugin to type it too:
+
+```ts
+import { Controller, Ctx, Get } from "@aponiajs/common";
+import { type ElysiaRouteContext } from "@aponiajs/platform-elysia";
+import { Elysia } from "elysia";
+
+export const clock = new Elysia({ name: "clock" }).decorate("now", () => new Date().toISOString());
+
+@Controller("health")
+export class HealthController {
+  @Get()
+  read(@Ctx() context: ElysiaRouteContext<typeof clock>) {
+    return { now: context.now() };
+  }
+}
+```
+
+A tuple types several plugins at once, and the second argument is only needed
+when a route schema comes first:
+`ElysiaRouteContext<typeof createUser, [typeof clock, typeof jwt]>`.
+
+`defineElysiaPlugin` removes the ceremony entirely. It converts a native plugin
+into a module import that carries its own type, so the plugin mounts directly
+and annotates without `typeof`:
+
+```ts
+// src/clock.plugin.ts
+export const clock = defineElysiaPlugin(
+  new Elysia({ name: "clock" }).decorate("now", () => new Date().toISOString()),
+  { key: "clock" },
+);
+export type clock = typeof clock;
+```
+
+```ts
+import { type ElysiaRouteContext as e } from "@aponiajs/platform-elysia";
+import { clock } from "./clock.plugin.ts";
+
+@Controller("health")
+export class HealthController {
+  @Get()
+  read(@Ctx() context: e<clock>) {
+    return { now: context.now() };
+  }
+}
+
+@Module({ imports: [clock], controllers: [HealthController] })
+export class HealthModule {}
+```
+
+The [adapter README](./packages/platform-elysia/README.md) covers both forms and
+the `AppContext<TSchema>` alias for applications that always mount the same
+plugins.
+
 ## Test
 
 An application answers a `Request` without binding a port, so tests exercise the

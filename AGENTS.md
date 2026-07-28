@@ -153,6 +153,34 @@ parameters, which is why types come from the handler's own annotations rather
 than from schema inference — do not reintroduce an inference-based route API to
 work around it.
 
+### Native plugin context types
+
+Compiling a decorated controller erases the plugin instances a module imports, so
+nothing statically links `ElysiaPluginModule.register(plugin)` to a handler.
+`ElysiaRouteContext<TSchemaOrPlugins, TPlugins>` in
+`packages/platform-elysia/src/route-context.ts` closes that gap explicitly: it
+accepts one Elysia instance type or a tuple of them and builds the `Singleton`
+that `Context` needs. The first argument holds either a route schema or the
+plugins — an all-optional `InputSchema` also matches an Elysia instance, so the
+conditional tests for the plugin shape first and only then treats the argument as
+a schema. Applications shorten the annotation with their own
+`AppContext<TSchema extends ElysiaInputSchema = {}>` alias rather than a
+framework-level registry; ambient plugin registration through declaration
+merging was rejected because it leaks across a whole compilation.
+
+`defineElysiaPlugin` in `plugin-module.ts` is `ElysiaPluginModule.register` plus
+the plugin it installs, exposed as a real `plugin` property rather than a phantom
+type, so `ElysiaPluginSource` accepts both an Elysia instance and that import.
+Exporting the result as a value beside a same-named type is what lets an
+annotation drop `typeof`; TypeScript has no other way to name a value in a type
+position. The merge mirrors Elysia's own `.use()` signature —
+`~Singleton` for `decorator`, `store`, `derive`, and `resolve`, plus `~Ephemeral`
+derives and resolves, which are the `scoped` ones. `~Volatile` is excluded because
+a plugin-local derive never reaches a controller mounted beside the plugin.
+Keep the type and that runtime behavior in step; `tests/plugin-context.test.ts`
+asserts both, and its compile-time assertions fail `bun run check` when the
+mapping widens or drops a plugin type.
+
 Elysia compiles handlers by statically reading their source (sucrose), so a route
 handler must receive the context as a direct call argument, as in
 `handler.call(instance, ...bindParameters(parameters, context))`. Hiding it
