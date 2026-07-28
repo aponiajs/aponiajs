@@ -5,8 +5,20 @@ Read the [repository guide](../AGENTS.md) first.
 ## What this directory owns
 
 Executable applications that must keep working against the workspace packages.
-`basic-foundation` is the reference application: `bun run example:basic` boots it
-on its configured port.
+
+| Example            | Purpose                                                           | Command                        |
+| ------------------ | ----------------------------------------------------------------- | ------------------------------ |
+| `basic-foundation` | The smallest application: one module, one controller, one service | `bun run example:basic`        |
+| `feature-tour`     | Every implemented use case, each covered by an end-to-end test    | `bun run example:feature-tour` |
+
+`feature-tour/README.md` maps each use case to the file that demonstrates it.
+A new public feature belongs there, with a case in
+`test/feature-tour.e2e-spec.ts`, in the same pull request that ships it.
+
+Bun's default test glob matches `*.spec.ts` but not `*.e2e-spec.ts`, so an
+end-to-end file under `test/` never runs during a bare `bun test`.
+`bun run test:examples` runs both suites explicitly and CI calls it. Add a new
+example's suite to that script or it will silently never run.
 
 ## Invariants
 

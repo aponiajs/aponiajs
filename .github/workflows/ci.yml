@@ -56,6 +56,9 @@ jobs:
       - name: Run Bun tests
         run: bun test
 
+      - name: Run the example end-to-end suites
+        run: bun run test:examples
+
       - name: Run Vite+ conformance tests
         run: bun run test:vite-plus
 
