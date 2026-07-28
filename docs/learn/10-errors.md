@@ -32,8 +32,10 @@ try {
 | `INVALID_NATIVE_APPLICATION` | `configureNative` returned a different instance              |
 | `APPLICATION_NOT_LISTENING`  | `getUrl()` was called before `listen()`                      |
 
-Everything above the last two is raised at compile time, before any instance
-exists, which is why a broken graph never reaches a listening port.
+Graph errors through `MISSING_PROVIDER` are raised while the module graph
+compiles. Provider cycles are detected while singletons initialize, and
+controller or platform diagnostics are raised while routes mount. All happen
+during `AponiaFactory.create`, before the application can listen.
 
 Route validation failures are different: they are Elysia's own, and answer `422`
 without throwing.

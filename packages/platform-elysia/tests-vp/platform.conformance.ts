@@ -8,6 +8,7 @@ import {
   Injectable,
   Module,
   Post,
+  defineModule,
   type RouteContext,
   type RouteResponseSettings,
 } from "@aponiajs/common";
@@ -94,6 +95,31 @@ test("the Vite+ lane resolves native plugin factories from module imports", asyn
 
   expect(await response.text()).toBe("ok");
   await application.close();
+});
+
+test("the Vite+ lane classifies a non-Elysia controller result as invalid", async () => {
+  const invalidModule = defineModule({
+    id: "InvalidControllerModule",
+    controllers: [
+      {
+        kind: "aponia.elysia.controller",
+        token: class BrokenController {},
+        inject: [],
+        useClass: class BrokenController {},
+        buildPlugin: () => ({}),
+      } as never,
+    ],
+  });
+  const error = await AponiaFactory.create(invalidModule, { logger: false }).then(
+    () => undefined,
+    (reason: unknown) => reason,
+  );
+
+  expect(error).toEqual(
+    expect.objectContaining({
+      code: "INVALID_CONTROLLER",
+    }),
+  );
 });
 
 const createUserSchema = {

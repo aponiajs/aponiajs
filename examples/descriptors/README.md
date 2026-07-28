@@ -14,6 +14,6 @@ bun run example:descriptors
 bun run --cwd examples/descriptors test
 ```
 
-`test/descriptors.e2e-spec.ts` asserts the served route, singleton identity, frozen results, and the `UNSUPPORTED_CONTROLLER` failure when a controller factory returns something that is not an Elysia instance.
+`test/descriptors.e2e-spec.ts` asserts the served route, singleton identity, frozen results, and the `INVALID_CONTROLLER` failure when a controller factory returns something that is not an Elysia instance.
 
 [Every example](../README.md)

@@ -255,6 +255,14 @@ costs nothing at runtime — the values are still there, only untyped.
 `configureNative` remains available as an application-level escape hatch. It
 preserves Elysia's accumulated plugin types on `getNativeApplication()`.
 
+## Bootstrap diagnostics
+
+A controller descriptor with a platform kind other than
+`aponia.elysia.controller` fails with `UNSUPPORTED_CONTROLLER`. A recognized
+Elysia controller whose `buildPlugin` factory returns something other than an
+Elysia instance fails with `INVALID_CONTROLLER`. Both are reported during
+`AponiaFactory.create`, before the application can listen.
+
 [npm package](https://www.npmjs.com/package/@aponiajs/platform-elysia) ·
 [native plugin guide](../../docs/native-plugins.md) ·
 [complete package catalog](../../docs/packages.md)

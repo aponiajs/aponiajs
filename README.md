@@ -436,10 +436,14 @@ class/value/factory/alias providers, explicit tokens, module imports and
 exports, lifecycle management, structured logging, project generators, and
 native Elysia escape hatches.
 
-Not implemented yet: guards, interceptors, middleware, exception filters,
-Problem Details errors, provider scopes, testing modules, OpenAPI,
-authentication, WebSockets, and microservice transports. The
-[roadmap](./ROADMAP.md) tracks every milestone and the plans behind it.
+Not implemented yet: async provider lifecycle, request and transient scopes,
+platform-neutral HTTP packages, full Elysia phase conformance, status-specific
+response contracts, Problem Details and serialization policy, configuration and
+secret redaction, HTTP admission hardening, guards, interceptors, middleware,
+exception filters, authentication and authorization, rate limiting, testing
+packages, observability and health, OpenAPI and Eden integration, WebSockets,
+and microservice transports. The [roadmap](./ROADMAP.md) tracks those
+capabilities and their dependencies.
 
 ## Develop
 
