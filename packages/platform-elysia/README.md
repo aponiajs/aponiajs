@@ -138,10 +138,48 @@ shared configured module is installed once across diamond imports. A stable
 `key` keeps module diagnostics deterministic and prevents duplicate
 registrations with the same key.
 
+### Typing what a plugin adds
+
+Compiling a decorated controller erases the plugin instances its module imports,
+so no plugin type reaches a handler on its own. Name the plugins in the second
+type argument of `ElysiaRouteContext` and the context types what they add:
+
+```ts
+import { Controller, Ctx, Get } from "@aponiajs/common";
+import { type ElysiaRouteContext } from "@aponiajs/platform-elysia";
+import { Elysia } from "elysia";
+
+export const clock = new Elysia({ name: "clock" })
+  .decorate("now", () => new Date().toISOString())
+  .state("requests", 0)
+  .derive({ as: "global" }, () => ({ traceId: crypto.randomUUID() }));
+
+@Controller("health")
+class HealthController {
+  @Get()
+  read(@Ctx() context: ElysiaRouteContext<{}, typeof clock>) {
+    context.store.requests += 1;
+    return { now: context.now(), traceId: context.traceId };
+  }
+}
+```
+
+Pass a tuple for several plugins, and combine both arguments to keep the schema
+and the plugins typed at once:
+
+```ts
+ElysiaRouteContext<{}, [typeof clock, typeof cache]>;
+ElysiaRouteContext<typeof createUser, typeof clock>;
+```
+
+The mapping follows Elysia's own `.use()` rule, so what is typed is exactly what
+arrives at runtime: `decorate`, `state`, `resolve`, and `derive` declared
+`global`, plus `scoped` derives and resolves. A plugin-local derive stays inside
+the plugin and is absent from both the type and the context. Naming no plugin
+costs nothing at runtime — the values are still there, only untyped.
+
 `configureNative` remains available as an application-level escape hatch. It
 preserves Elysia's accumulated plugin types on `getNativeApplication()`.
-Module-imported plugin state and decorators are available at runtime, but do
-not yet flow into decorated controller parameter types.
 
 [npm package](https://www.npmjs.com/package/@aponiajs/platform-elysia) ·
 [complete package catalog](../../docs/packages.md)

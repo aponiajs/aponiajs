@@ -153,6 +153,21 @@ parameters, which is why types come from the handler's own annotations rather
 than from schema inference — do not reintroduce an inference-based route API to
 work around it.
 
+### Native plugin context types
+
+Compiling a decorated controller erases the plugin instances a module imports, so
+nothing statically links `ElysiaPluginModule.register(plugin)` to a handler.
+`ElysiaRouteContext<TSchema, TPlugins>` in
+`packages/platform-elysia/src/route-context.ts` closes that gap explicitly: it
+accepts one Elysia instance type or a tuple of them and builds the `Singleton`
+that `Context` needs. The merge mirrors Elysia's own `.use()` signature —
+`~Singleton` for `decorator`, `store`, `derive`, and `resolve`, plus `~Ephemeral`
+derives and resolves, which are the `scoped` ones. `~Volatile` is excluded because
+a plugin-local derive never reaches a controller mounted beside the plugin.
+Keep the type and that runtime behavior in step; `tests/plugin-context.test.ts`
+asserts both, and its compile-time assertions fail `bun run check` when the
+mapping widens or drops a plugin type.
+
 Elysia compiles handlers by statically reading their source (sucrose), so a route
 handler must receive the context as a direct call argument, as in
 `handler.call(instance, ...bindParameters(parameters, context))`. Hiding it

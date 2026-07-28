@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Ctx,
   Get,
   Param,
   Res,
@@ -16,6 +17,7 @@ import {
   AponiaFactory,
   ElysiaPluginModule,
   type ConfiguredAponiaApplicationOptions,
+  type ElysiaRouteContext,
 } from "../src/index.ts";
 
 type VitePlusTest = typeof import("vite-plus/test");
@@ -182,5 +184,51 @@ test("the Vite+ lane injects decorated route parameters", async () => {
   expect(await created.json()).toEqual({ name: "Ada" });
   expect(rejected.status).toBe(422);
   expect(await found.json()).toEqual({ id: "42" });
+  await application.close();
+});
+
+const conformanceClockPlugin = new Elysia({ name: "conformance-clock" })
+  .decorate("now", () => "2026-07-28T00:00:00.000Z")
+  .state("requests", 0)
+  .derive({ as: "global" }, () => ({ traceId: "trace-1" }))
+  .derive(() => ({ pluginOnly: "local" }));
+
+@Controller("conformance-plugin-context")
+class ConformancePluginContextController {
+  @Get()
+  read(@Ctx() context: ElysiaRouteContext<{}, typeof conformanceClockPlugin>): {
+    now: string;
+    traceId: string;
+    requests: number;
+    pluginOnly: unknown;
+  } {
+    context.store.requests += 1;
+    return {
+      now: context.now(),
+      traceId: context.traceId,
+      requests: context.store.requests,
+      pluginOnly: (context as Record<string, unknown>).pluginOnly ?? null,
+    };
+  }
+}
+
+@Module({
+  imports: [ElysiaPluginModule.register(conformanceClockPlugin, { key: "conformance-clock" })],
+  controllers: [ConformancePluginContextController],
+})
+class ConformancePluginContextModule {}
+
+test("the Vite+ lane types and exposes native plugin context", async () => {
+  const application = await AponiaFactory.create(ConformancePluginContextModule, { logger: false });
+  const response = await application.handle(
+    new Request("http://localhost/conformance-plugin-context"),
+  );
+
+  expect(await response.json()).toEqual({
+    now: "2026-07-28T00:00:00.000Z",
+    traceId: "trace-1",
+    requests: 1,
+    pluginOnly: null,
+  });
   await application.close();
 });

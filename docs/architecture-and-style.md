@@ -250,8 +250,17 @@ platform context.
 A handler declared without parameter decorators receives the context as its only
 argument. Annotate it with `RouteContext<typeof schema>` to stay
 platform-neutral, or with `ElysiaRouteContext<typeof schema>` from
-`@aponiajs/platform-elysia` to keep `status`, `set`, `cookie`, `store`,
-`redirect`, and plugin decorators typed by Elysia itself.
+`@aponiajs/platform-elysia` to keep `status`, `set`, `cookie`, `store`, and
+`redirect` typed by Elysia itself.
+
+Compiling a decorated controller erases the plugin instances its module imports,
+so a native plugin's additions are present at runtime but untyped by default.
+Name the plugins in the second type argument to type them:
+`ElysiaRouteContext<typeof schema, typeof clock>`, or
+`ElysiaRouteContext<{}, [typeof clock, typeof jwt]>` for several. The mapping
+mirrors Elysia's `.use()`: `decorate`, `state`, `resolve`, and `global` derives
+and resolves are typed, together with `scoped` derives and resolves;
+plugin-local derives are not, because they never reach the controller.
 
 ## Bootstrap pattern
 

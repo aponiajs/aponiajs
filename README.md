@@ -314,6 +314,28 @@ A stable `key` keeps a plugin imported by several modules installed once.
 `application.getNativeApplication()` hand back the Elysia instance itself when a
 plugin needs it.
 
+What a plugin decorates, stores, or derives is available in every handler at
+runtime. Name the plugin to type it too:
+
+```ts
+import { Controller, Ctx, Get } from "@aponiajs/common";
+import { type ElysiaRouteContext } from "@aponiajs/platform-elysia";
+import { Elysia } from "elysia";
+
+export const clock = new Elysia({ name: "clock" }).decorate("now", () => new Date().toISOString());
+
+@Controller("health")
+export class HealthController {
+  @Get()
+  read(@Ctx() context: ElysiaRouteContext<{}, typeof clock>) {
+    return { now: context.now() };
+  }
+}
+```
+
+A tuple types several plugins at once, and the first argument still carries the
+route schema: `ElysiaRouteContext<typeof createUser, [typeof clock, typeof jwt]>`.
+
 ## Test
 
 An application answers a `Request` without binding a port, so tests exercise the
