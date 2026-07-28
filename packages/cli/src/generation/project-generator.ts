@@ -13,7 +13,9 @@ export async function generateProject(
 
   const workingDirectory = options.cwd ?? process.cwd();
   const projectDirectory = join(workingDirectory, options.name);
-  const templateDirectory = fileURLToPath(new URL("../../templates/application", import.meta.url));
+  const templateDirectory = fileURLToPath(
+    new URL("./templates/application/", import.meta.resolve("@aponiajs/cli/package.json")),
+  );
   const templateFiles = await listFiles(templateDirectory);
   const relativeFiles = templateFiles
     .map((file) => outputPath(relative(templateDirectory, file)))
