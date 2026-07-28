@@ -10,6 +10,7 @@
 
 Structured applications for Bun
 
+[Learning path](./docs/learn/README.md) ·
 [Documentation](./docs/architecture-and-style.md) ·
 [Dependency injection](./docs/dependency-injection.md) ·
 [Native plugins](./docs/native-plugins.md) ·

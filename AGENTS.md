@@ -45,9 +45,12 @@ being changed:
 | [`packages/aponiajs`](packages/aponiajs/AGENTS.md)               | The reserved, still-private facade                      |
 | [`scripts`](scripts/AGENTS.md)                                   | Release channel derivation and documentation guards     |
 | [`docs`](docs/AGENTS.md)                                         | The published documentation set and what guards it      |
+| [`docs/learn`](docs/learn/README.md)                             | The ordered chapters that teach the framework           |
 | [`examples`](examples/AGENTS.md)                                 | Executable applications built with the framework        |
 
-`scripts/agent-guides.spec.ts` keeps that list and the symlinks honest.
+`scripts/agent-guides.spec.ts` keeps that list and the symlinks honest, and
+`scripts/learning-path.spec.ts` keeps the numbered chapters in `docs/learn/`
+contiguous, indexed, and chained.
 
 ## Build, Test, and Development Commands
 
