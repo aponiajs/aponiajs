@@ -16,8 +16,8 @@
         "vite-plus": "^0.2.4",
       },
     },
-    "examples/basic-foundation": {
-      "name": "@aponiajs/example-basic-foundation",
+    "examples/basic": {
+      "name": "@aponiajs/example-basic",
       "version": "0.0.0",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
@@ -26,8 +26,59 @@
         "elysia": "^1.4.29",
       },
     },
-    "examples/feature-tour": {
-      "name": "@aponiajs/example-feature-tour",
+    "examples/dependency-injection": {
+      "name": "@aponiajs/example-dependency-injection",
+      "version": "0.0.0",
+      "dependencies": {
+        "@aponiajs/common": "workspace:*",
+        "@aponiajs/core": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
+        "elysia": "^1.4.29",
+      },
+    },
+    "examples/descriptors": {
+      "name": "@aponiajs/example-descriptors",
+      "version": "0.0.0",
+      "dependencies": {
+        "@aponiajs/common": "workspace:*",
+        "@aponiajs/core": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
+        "elysia": "^1.4.29",
+      },
+    },
+    "examples/multiple-routers": {
+      "name": "@aponiajs/example-multiple-routers",
+      "version": "0.0.0",
+      "dependencies": {
+        "@aponiajs/common": "workspace:*",
+        "@aponiajs/core": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
+        "elysia": "^1.4.29",
+      },
+    },
+    "examples/native-plugins": {
+      "name": "@aponiajs/example-native-plugins",
+      "version": "0.0.0",
+      "dependencies": {
+        "@aponiajs/common": "workspace:*",
+        "@aponiajs/core": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
+        "elysia": "^1.4.29",
+      },
+    },
+    "examples/request-parameters": {
+      "name": "@aponiajs/example-request-parameters",
+      "version": "0.0.0",
+      "dependencies": {
+        "@aponiajs/common": "workspace:*",
+        "@aponiajs/core": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
+        "elysia": "^1.4.29",
+        "zod": "^4.4.3",
+      },
+    },
+    "examples/validation": {
+      "name": "@aponiajs/example-validation",
       "version": "0.0.0",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
@@ -39,11 +90,11 @@
     },
     "packages/aponiajs": {
       "name": "aponiajs",
-      "version": "0.6.0-alpha.10",
+      "version": "0.6.0-alpha.11",
     },
     "packages/cli": {
       "name": "@aponiajs/cli",
-      "version": "0.6.0-alpha.10",
+      "version": "0.6.0-alpha.11",
       "bin": {
         "aponia": "./bin/aponia.ts",
       },
@@ -60,7 +111,7 @@
     },
     "packages/common": {
       "name": "@aponiajs/common",
-      "version": "0.6.0-alpha.10",
+      "version": "0.6.0-alpha.11",
       "dependencies": {
         "@standard-schema/spec": "^1.1.0",
         "reflect-metadata": "^0.2.2",
@@ -68,14 +119,14 @@
     },
     "packages/core": {
       "name": "@aponiajs/core",
-      "version": "0.6.0-alpha.10",
+      "version": "0.6.0-alpha.11",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
       },
     },
     "packages/create-aponia": {
       "name": "create-aponia",
-      "version": "0.6.0-alpha.10",
+      "version": "0.6.0-alpha.11",
       "bin": {
         "create-aponia": "./bin/create-aponia.ts",
       },
@@ -85,7 +136,7 @@
     },
     "packages/platform-elysia": {
       "name": "@aponiajs/platform-elysia",
-      "version": "0.6.0-alpha.10",
+      "version": "0.6.0-alpha.11",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/core": "workspace:*",
@@ -111,9 +162,19 @@
 
     "@aponiajs/core": ["@aponiajs/core@workspace:packages/core"],
 
-    "@aponiajs/example-basic-foundation": ["@aponiajs/example-basic-foundation@workspace:examples/basic-foundation"],
+    "@aponiajs/example-basic": ["@aponiajs/example-basic@workspace:examples/basic"],
 
-    "@aponiajs/example-feature-tour": ["@aponiajs/example-feature-tour@workspace:examples/feature-tour"],
+    "@aponiajs/example-dependency-injection": ["@aponiajs/example-dependency-injection@workspace:examples/dependency-injection"],
+
+    "@aponiajs/example-descriptors": ["@aponiajs/example-descriptors@workspace:examples/descriptors"],
+
+    "@aponiajs/example-multiple-routers": ["@aponiajs/example-multiple-routers@workspace:examples/multiple-routers"],
+
+    "@aponiajs/example-native-plugins": ["@aponiajs/example-native-plugins@workspace:examples/native-plugins"],
+
+    "@aponiajs/example-request-parameters": ["@aponiajs/example-request-parameters@workspace:examples/request-parameters"],
+
+    "@aponiajs/example-validation": ["@aponiajs/example-validation@workspace:examples/validation"],
 
     "@aponiajs/platform-elysia": ["@aponiajs/platform-elysia@workspace:packages/platform-elysia"],
 

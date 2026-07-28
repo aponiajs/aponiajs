@@ -1,0 +1,18 @@
+{
+  "name": "@aponiajs/example-multiple-routers",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/main.ts",
+    "build": "bun build ./src/main.ts --outdir ./dist --target bun",
+    "test": "bun test ../../examples/multiple-routers/test/*.e2e-spec.ts",
+    "check": "vp check"
+  },
+  "dependencies": {
+    "@aponiajs/common": "workspace:*",
+    "@aponiajs/core": "workspace:*",
+    "@aponiajs/platform-elysia": "workspace:*",
+    "elysia": "^1.4.29"
+  }
+}
