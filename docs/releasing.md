@@ -38,14 +38,14 @@ Every published version lands on exactly one npm distribution tag, derived from
 the version itself. `scripts/distribution-tag.ts` owns that mapping, and both CI
 and the publish workflows read it, so a channel is never chosen by hand.
 
-| Tag      | Version shape                | Meaning                                                                     | Install                           |
-| -------- | ---------------------------- | --------------------------------------------------------------------------- | --------------------------------- |
-| `latest` | `X.Y.Z`                      | Stable release. The default install for everyone.                           | `bun add @aponiajs/common`        |
-| `rc`     | `X.Y.Z-rc.N`                 | Release candidate. Feature frozen; only release-blocking fixes remain.      | `bun add @aponiajs/common@rc`     |
-| `beta`   | `X.Y.Z-beta.N`               | Feature complete for the target version, still collecting field feedback.   | `bun add @aponiajs/common@beta`   |
-| `alpha`  | `X.Y.Z-alpha.N`              | Early preview. The public API may still change without a major bump.        | `bun add @aponiajs/common@alpha`  |
-| `next`   | alias                        | Always points at the newest `alpha`, `beta`, or `rc`. Never a stable build. | `bun add @aponiajs/common@next`   |
-| `canary` | `X.Y.Z-canary.<stamp>.<sha>` | Automated build of `main`. Unreviewed, disposable, never promoted.          | `bun add @aponiajs/common@canary` |
+| Tag      | Version shape                | Persistent branch | Meaning                                                                     | Install                           |
+| -------- | ---------------------------- | ----------------- | --------------------------------------------------------------------------- | --------------------------------- |
+| `latest` | `X.Y.Z`                      | `main`            | Stable release. The default install for everyone.                           | `bun add @aponiajs/common`        |
+| `rc`     | `X.Y.Z-rc.N`                 | `release/rc`      | Release candidate. Feature frozen; only release-blocking fixes remain.      | `bun add @aponiajs/common@rc`     |
+| `beta`   | `X.Y.Z-beta.N`               | `release/beta`    | Feature complete for the target version, still collecting field feedback.   | `bun add @aponiajs/common@beta`   |
+| `alpha`  | `X.Y.Z-alpha.N`              | `release/alpha`   | Early preview. The public API may still change without a major bump.        | `bun add @aponiajs/common@alpha`  |
+| `next`   | alias                        | —                 | Always points at the newest `alpha`, `beta`, or `rc`. Never a stable build. | `bun add @aponiajs/common@next`   |
+| `canary` | `X.Y.Z-canary.<stamp>.<sha>` | —                 | Automated build of `main`. Unreviewed, disposable, never promoted.          | `bun add @aponiajs/common@canary` |
 
 Rules enforced by `bun run release:verify` and the publish workflow:
 
@@ -62,6 +62,38 @@ Rules enforced by `bun run release:verify` and the publish workflow:
   Promote by cutting a real `alpha`, `beta`, or `rc`.
 - A GitHub release for any non-`latest` tag is marked as a prerelease.
 - All five packages share one version, so all five move to the same tag together.
+
+## Release Branches
+
+Every persistent release branch owns exactly one primary npm distribution tag:
+
+- `release/alpha` accepts only `X.Y.Z-alpha.N`.
+- `release/beta` accepts only `X.Y.Z-beta.N`.
+- `release/rc` accepts only `X.Y.Z-rc.N`.
+- `main` accepts only stable `X.Y.Z` releases after explicit sign-off.
+
+`bun run release:branch` enforces that mapping in the release workflow. A
+version-derived dist-tag remains the source of truth; the branch is an
+additional guard and can never override the version.
+
+Feature and fix branches start from the release branch they target and open a
+pull request back into it. During the current prerelease phase,
+`release/alpha` is the default. Promote forward with a dedicated branch and
+version transition:
+
+```text
+release/alpha -> release/beta -> release/rc -> main
+```
+
+For example, branch from `release/alpha`, run `bun run version:beta`, and open
+the promotion pull request into `release/beta`. Apply a fix first to the least
+mature affected channel, then forward-port it through every more mature channel
+that also needs it. Do not back-merge a less mature channel into a more mature
+one without the matching version transition.
+
+Protect all four release branches with the **CI / verify** check. `next` has no
+branch because it is an alias, and canary versions have no branch because CI
+stamps them without committing them.
 
 ## Required Version Bump
 
@@ -107,7 +139,7 @@ bun run release:tag 0.4.0-rc.2
 CI compares the pushed version with the previous push (or pull request base) and
 fails when it is unchanged, lower, invalid, or inconsistent. Configure the
 repository's branch protection rules to require the **CI / verify** check before
-merging into `main`.
+merging into any persistent release branch.
 
 ## Automated Release Flow
 
@@ -117,15 +149,17 @@ merging into `main`.
    application lifecycle.
 4. Push the commit and let CI validate the SemVer increase and report the
    distribution tag the version resolves to.
-5. Merge the pull request into `main`.
+5. Merge the pull request into the matching release branch.
 6. The release workflow creates the matching `vX.Y.Z` tag and GitHub release,
    marking it as a prerelease for every non-`latest` channel.
 7. The npm publish workflow verifies, builds, packs, and publishes the five
    usable packages in dependency order under the resolved tag, then moves the
    `next` alias when the channel is `alpha`, `beta`, or `rc`.
 
-Do not edit package versions, create release tags, or move distribution tags by
-hand.
+The release workflow runs only for `release/alpha`, `release/beta`,
+`release/rc`, and `main`, and rejects a version whose derived tag does not match
+the branch. Do not edit package versions, create release tags, or move
+distribution tags by hand.
 
 ## Canary Flow
 

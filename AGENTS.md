@@ -317,23 +317,46 @@ synchronization — a documentation edit can fail the suite.
 
 ## Commit & Pull Request Guidelines
 
-Create every feature on a dedicated branch from the latest `main`, named
-`feature/<short-kebab-description>`. Do not add feature work directly to `main`,
-a documentation branch, or an unrelated feature branch.
+Persistent release branches follow npm's primary distribution channels:
 
-After every successful push to a feature branch, ensure that an open pull request
-targets `main`. Create the pull request immediately when none exists; otherwise
-confirm that the existing pull request includes the pushed commit. The pull
-request title must follow Conventional Commits, and its description must
-summarize the intent, affected areas, and validation results.
+| Branch          | Required version | Primary dist-tag |
+| --------------- | ---------------- | ---------------- |
+| `release/alpha` | `X.Y.Z-alpha.N`  | `alpha`          |
+| `release/beta`  | `X.Y.Z-beta.N`   | `beta`           |
+| `release/rc`    | `X.Y.Z-rc.N`     | `rc`             |
+| `main`          | stable `X.Y.Z`   | `latest`         |
+
+`next` is an npm alias over the newest alpha, beta, or rc and never owns a
+branch. Canary versions are stamped and published by CI without being committed,
+so there is no canary branch either.
+
+Create every feature or fix on a dedicated branch from the release branch it is
+intended for, named `feature/<short-kebab-description>` or
+`fix/<short-kebab-description>`. During the current prerelease phase,
+`release/alpha` is the default base and pull-request target. Do not add work
+directly to a release branch, a documentation branch, or an unrelated feature
+branch.
+
+After every successful push, ensure that an open pull request targets the same
+release branch the work started from. Create the pull request immediately when
+none exists; otherwise confirm that the existing pull request includes the
+pushed commit. The pull request title must follow Conventional Commits, and its
+description must summarize the intent, affected areas, and validation results.
+
+Promote a release forward only: `release/alpha` → `release/beta` →
+`release/rc` → `main`. Create a dedicated promotion branch from the source
+channel, run the matching `version:beta`, `version:rc`, or `version:promote`
+command, and open a pull request into the next channel. Never merge a less
+mature channel directly into a more mature branch without the matching version
+transition.
 
 Use concise Conventional Commit subjects, for example
 `feat(cli): align starter layout with Nest`.
 
-The framework is pre-1.0 and not production ready, so every release is a
-prerelease: bump with `version:alpha` (or `version:beta` / `version:rc`) and
-never cut a bare `X.Y.Z`, which npm would serve as `latest`, without explicit
-sign-off.
+The framework is pre-1.0 and not production ready, so routine work targets
+`release/alpha` and bumps with `version:alpha`. Use `version:beta` and
+`version:rc` only on matching promotion work. Never promote a bare `X.Y.Z` into
+`main`, which npm would serve as `latest`, without explicit sign-off.
 
 Every push must raise the synchronized workspace version. The root manifest and
 all publishable packages share one version; run the smallest valid

@@ -456,9 +456,11 @@ bun run test:vite-plus
 bun run build
 ```
 
-Every push must raise the synchronized version with `bun run version:alpha`.
-Read the [release guide](./docs/releasing.md) for channels and the publish flow;
-repository conventions live in [AGENTS.md](./AGENTS.md).
+Every push must raise the synchronized version. Routine work currently targets
+`release/alpha` and uses `bun run version:alpha`; promotion work uses the command
+matching its destination channel. Read the [release guide](./docs/releasing.md)
+for branches, channels, and the publish flow; repository conventions live in
+[AGENTS.md](./AGENTS.md).
 
 ## License
 

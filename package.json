@@ -1,6 +1,6 @@
 {
   "name": "aponiajs-workspace",
-  "version": "0.6.0-alpha.13",
+  "version": "0.6.0-alpha.14",
   "private": true,
   "description": "Bun-first application architecture powered by Elysia.",
   "license": "MIT",
@@ -40,6 +40,7 @@
     "version:sync": "bun scripts/sync-version-references.ts && bun install --lockfile-only && bun run release:verify",
     "release:verify": "bun scripts/verify-release.ts",
     "release:tag": "bun scripts/distribution-tag.ts",
+    "release:branch": "bun scripts/release-branch.ts",
     "release:canary": "bun scripts/canary-version.ts",
     "release:dry-run": "for package in common core platform-elysia cli create-aponia; do bun pm pack --cwd packages/$package --dry-run; done",
     "prepare": "bunx --bun vp config"

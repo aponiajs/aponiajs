@@ -6,6 +6,7 @@ and documentation guards that CI enforces.
 | File                         | Owns                                                                     |
 | ---------------------------- | ------------------------------------------------------------------------ |
 | `distribution-tag.ts`        | The single mapping from a version to its npm channel, plus canary stamps |
+| `release-branch.ts`          | The enforced mapping from persistent release branches to primary tags    |
 | `verify-release.ts`          | The release gate: synchronized version, valid SemVer, allowed tag        |
 | `sync-version-references.ts` | Version references in the roadmap and lockfile                           |
 | `workspace-versions.ts`      | The list of manifests that must share one version                        |
@@ -20,6 +21,10 @@ and documentation guards that CI enforces.
   `alpha`, `beta`, or `rc`. Any other prerelease identifier fails the gate.
 - A prerelease can never take `latest`, and a stable version can never take a
   prerelease tag. Both directions are tested.
+- Persistent release branches map one-to-one to primary tags: `main` →
+  `latest`, `release/alpha` → `alpha`, `release/beta` → `beta`, and
+  `release/rc` → `rc`. `next` is an alias and canary versions are ephemeral, so
+  neither gets a branch.
 - `verify-release.ts` prints `Verified synchronized release version X.`
   verbatim; `verify-release.spec.ts` asserts that line. Add new output on new
   lines instead of rewording it.
