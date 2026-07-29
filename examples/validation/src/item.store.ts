@@ -1,5 +1,5 @@
 import { Injectable } from "@aponiajs/common";
-import type { CreateItem } from "./item.schema.ts";
+import type { CreateItem } from "./item.model.ts";
 
 export interface StoredItem extends CreateItem {
   readonly id: string;

@@ -1,8 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import {
   ConsoleLogger,
+  Controller,
+  Inject,
+  Module,
   createToken,
   defineModule,
+  getConstructorDependencies,
+  getControllerMetadata,
+  getModuleMetadata,
   provideFactory,
   provideValue,
   tokenName,
@@ -44,6 +50,44 @@ describe("@aponiajs/common", () => {
     expect(logger.isLevelEnabled("error")).toBe(true);
     expect(logger.isLevelEnabled("warn")).toBe(true);
     expect(logger.isLevelEnabled("log")).toBe(false);
+  });
+
+  test("combines reflected constructor types with explicit injection tokens", () => {
+    class ReflectedDependency {}
+    class Consumer {}
+    const explicitDependency = createToken<string>("explicit-dependency");
+    Reflect.defineMetadata(
+      "design:paramtypes",
+      [ReflectedDependency, ReflectedDependency],
+      Consumer,
+    );
+    Inject(explicitDependency)(Consumer, undefined, 1);
+
+    expect(getConstructorDependencies(Consumer)).toEqual([ReflectedDependency, explicitDependency]);
+    expect(Object.isFrozen(getConstructorDependencies(Consumer))).toBe(true);
+  });
+
+  test("rejects constructor metadata that cannot become an injection token", () => {
+    class InvalidConsumer {}
+    Reflect.defineMetadata("design:paramtypes", [undefined], InvalidConsumer);
+
+    expect(() => getConstructorDependencies(InvalidConsumer)).toThrow(
+      'Cannot resolve a constructor dependency for "InvalidConsumer". Use @Inject(token) for non-class tokens.',
+    );
+  });
+
+  test("keeps module and controller metadata owned by the decorated class", () => {
+    class ParentModule {}
+    class ChildModule extends ParentModule {}
+    class ParentController {}
+    class ChildController extends ParentController {}
+    Module({})(ParentModule);
+    Controller("parent")(ParentController);
+
+    expect(getModuleMetadata(ParentModule)).toBeDefined();
+    expect(getModuleMetadata(ChildModule)).toBeUndefined();
+    expect(getControllerMetadata(ParentController)?.path).toBe("parent");
+    expect(getControllerMetadata(ChildController)).toBeUndefined();
   });
 });
 

@@ -10,6 +10,7 @@ import {
   Post,
   Query,
   defineModule,
+  type ControllerDefinition,
   type RouteContext,
   type RouteResponseSettings,
 } from "@aponiajs/common";
@@ -18,6 +19,7 @@ import { z } from "zod";
 import {
   AponiaFactory,
   ElysiaPluginModule,
+  compileRootModule,
   defineElysiaController,
   defineElysiaPlugin,
   type ConfiguredAponiaApplicationOptions,
@@ -219,6 +221,68 @@ test("the Vite+ lane classifies a non-Elysia controller result as invalid", asyn
       code: "INVALID_CONTROLLER",
     }),
   );
+});
+
+test("the Vite+ lane rejects missing decorator metadata", async () => {
+  class UndecoratedModule {}
+  const moduleError = await AponiaFactory.create(UndecoratedModule, { logger: false }).then(
+    () => undefined,
+    (reason: unknown) => reason,
+  );
+
+  class UndecoratedController {}
+  class InvalidControllerModule {}
+  Module({ controllers: [UndecoratedController] })(InvalidControllerModule);
+  const controllerError = await AponiaFactory.create(InvalidControllerModule, {
+    logger: false,
+  }).then(
+    () => undefined,
+    (reason: unknown) => reason,
+  );
+
+  expect(moduleError).toEqual(expect.objectContaining({ code: "INVALID_MODULE" }));
+  expect(controllerError).toEqual(expect.objectContaining({ code: "INVALID_CONTROLLER" }));
+});
+
+test("the Vite+ lane rejects static module cycles and reuses repeated imports", () => {
+  class FirstModule {}
+  class SecondModule {}
+  Module({ imports: [SecondModule] })(FirstModule);
+  Module({ imports: [FirstModule] })(SecondModule);
+
+  expect(() => compileRootModule(FirstModule)).toThrow(
+    expect.objectContaining({ code: "MODULE_CYCLE" }),
+  );
+
+  class SharedModule {}
+  class RootModule {}
+  const descriptor = defineModule({ id: "DescriptorImport" });
+  Module({})(SharedModule);
+  Module({ imports: [descriptor, SharedModule, SharedModule] })(RootModule);
+
+  const compiled = compileRootModule(RootModule);
+  expect(compiled.imports[0]).toBe(descriptor);
+  expect(compiled.imports[1]).toBe(compiled.imports[2]);
+});
+
+test("the Vite+ lane rejects foreign controller descriptors", async () => {
+  class ForeignController {}
+  const controller: ControllerDefinition = {
+    kind: "foreign.controller",
+    token: ForeignController,
+    inject: [],
+    useClass: ForeignController,
+  };
+  const module = defineModule({
+    id: "ForeignControllerModule",
+    controllers: [controller],
+  });
+  const error = await AponiaFactory.create(module, { logger: false }).then(
+    () => undefined,
+    (reason: unknown) => reason,
+  );
+
+  expect(error).toEqual(expect.objectContaining({ code: "UNSUPPORTED_CONTROLLER" }));
 });
 
 const createUserSchema = {

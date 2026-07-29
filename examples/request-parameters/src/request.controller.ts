@@ -13,7 +13,7 @@ import {
   type RouteResponseSettings,
 } from "@aponiajs/common";
 import { type ElysiaRouteContext } from "@aponiajs/platform-elysia";
-import { createItemSchema, type CreateItem } from "./item.schema.ts";
+import { createItemSchema, type CreateItem } from "./item.model.ts";
 
 /**
  * Every parameter decorator, both whole and named. A decorator with a name

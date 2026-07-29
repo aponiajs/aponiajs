@@ -20,6 +20,7 @@ export function registerInModule(
     manipulationSettings: {
       indentationText: IndentationText.TwoSpaces,
       quoteKind: QuoteKind.Double,
+      useTrailingCommas: true,
     },
   });
   const sourceFile = project.createSourceFile("module.ts", source);

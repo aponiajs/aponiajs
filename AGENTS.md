@@ -74,6 +74,8 @@ contiguous, indexed, and chained.
   lists them.
 - `bun run build`: build every workspace package (`vp pack` per package).
 - `bun test`: run the Bun suite across workspaces.
+- `bun run test:coverage`: run the complete Bun lane and enforce the repository's
+  95% line and function coverage floor.
 - `bun run test:vite-plus`: run the Vite+ conformance lane.
 - `bun run test:examples`: run both example applications end to end. Bun's
   default glob skips `*.e2e-spec.ts`, so this script is how they reach CI.
@@ -260,9 +262,9 @@ hand-rolled parsing. `commands/arguments.ts` parses with `yargs-parser`;
 configuration, planning, rendering, module registration, and writes through
 focused collaborators in the same directory.
 `generation/module-registration.ts` rewrites `@Module()` metadata with
-`ts-morph`. A REST CRUD resource also emits `<name>.schema.ts`, which owns the
-route schemas the generated controller passes to its decorators and from which
-both DTOs derive their types with `Static<typeof …>`. `runCli` prints
+`ts-morph`. A REST CRUD resource also emits `<name>.model.ts`; that model owns
+the route schemas the generated controller passes to its decorators and from
+which both DTOs derive their types with `Static<typeof …>`. `runCli` prints
 `CREATE`/`UPDATE` change lines and returns an exit code — it never throws.
 
 ### Current scope

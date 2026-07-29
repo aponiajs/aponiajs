@@ -5,7 +5,7 @@ import {
   searchItemsSchema,
   tenantHeaderSchema,
   type CreateItem,
-} from "./item.schema.ts";
+} from "./item.model.ts";
 
 /**
  * A rejected request answers 422 and never reaches the handler. Types come from

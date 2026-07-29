@@ -1,10 +1,4 @@
-import type { ControllerDefinition, Provider, Token } from "@aponiajs/common";
-
-export function controllerDependencies(
-  controller: ControllerDefinition,
-): readonly Token<unknown>[] {
-  return controller.inject;
-}
+import type { Provider, Token } from "@aponiajs/common";
 
 export function providerDependencies(provider: Provider): readonly Token<unknown>[] {
   switch (provider.kind) {

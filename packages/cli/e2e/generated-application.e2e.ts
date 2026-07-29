@@ -60,10 +60,8 @@ test("packed workspaces generate an application that installs, validates, builds
       )}\n`,
     );
     await run(["bun", "install"], runnerDirectory);
-    const versionResult = await run(
-      ["bun", join(runnerDirectory, "node_modules/@aponiajs/cli/bin/aponia.ts"), "--version"],
-      runnerDirectory,
-    );
+    const cliEntryPoint = join(runnerDirectory, "node_modules/@aponiajs/cli/bin/aponia.ts");
+    const versionResult = await run(["bun", cliEntryPoint, "--version"], runnerDirectory);
     expect(versionResult.stdout.trim()).toBe(workspaceManifest.version);
     await assertPackageDependency(
       join(runnerDirectory, "node_modules/create-aponia/package.json"),
@@ -81,6 +79,16 @@ test("packed workspaces generate an application that installs, validates, builds
     );
 
     const projectDirectory = join(runnerDirectory, "generated-app");
+    const resourceResult = await run(
+      ["bun", cliEntryPoint, "generate", "resource", "users", "--type", "rest"],
+      projectDirectory,
+    );
+    expect(resourceResult.stdout).toContain("CREATE src/users/users.model.ts");
+    expect(await Bun.file(join(projectDirectory, "src/users/users.model.ts")).exists()).toBe(true);
+    expect(await Bun.file(join(projectDirectory, "src/users/users.schema.ts")).exists()).toBe(
+      false,
+    );
+
     const generatedManifestPath = join(projectDirectory, "package.json");
     const generatedManifest = (await Bun.file(generatedManifestPath).json()) as {
       readonly dependencies: Readonly<Record<string, string>>;

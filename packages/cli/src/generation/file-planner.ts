@@ -7,8 +7,8 @@ import {
   renderCreateDto,
   renderEntity,
   renderResourceController,
+  renderResourceModel,
   renderResourceModule,
-  renderResourceSchema,
   renderResourceService,
   renderResourceServiceSpec,
   renderResourceTransport,
@@ -73,7 +73,7 @@ export function createResourceFiles(
 
   const validated = options.crud && options.type === "rest";
   if (validated) {
-    files.push(createFile(directory, `${names.fileName}.schema.ts`, renderResourceSchema(names)));
+    files.push(createFile(directory, `${names.fileName}.model.ts`, renderResourceModel(names)));
   }
 
   if (options.crud) {
