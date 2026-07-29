@@ -1,6 +1,10 @@
 # Descriptors
 
-The same framework with no decorators anywhere. `defineModule`, `provideValue`, `provideClass`, and `defineElysiaController` build the frozen descriptors the runtime consumes — the API a tool or another platform adapter would target.
+The same framework with no decorators anywhere. `defineModule`, `provideValue`,
+`provideClass`, and `defineElysiaController` build the frozen descriptors the
+runtime consumes — the API a tool or build-time source emitter would target.
+The controller uses `registerRoutes` to write directly to the root Elysia
+application without constructing an intermediate plugin.
 
 ## Run
 

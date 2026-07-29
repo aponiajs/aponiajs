@@ -11,6 +11,8 @@ bun add @aponiajs/common @aponiajs/platform-elysia elysia
 The first Elysia platform slice for Aponia:
 
 - `AponiaFactory.create(AppModule)` application bootstrap;
+- `AponiaFactory.createNative(AppModule)` for the exact composed Elysia
+  application and Eden Treaty inference;
 - module-owned controller discovery;
 - constructor-injected controllers;
 - Nest-style `@Module()`, `@Controller()`, route, and `@Injectable()` metadata;
@@ -21,11 +23,12 @@ The first Elysia platform slice for Aponia:
   `@Headers()`, `@Cookie()`, `@Req()`, `@Res()`, and `@Ctx()`;
 - Nest-style startup logging for module initialization and route mapping;
 - controller factories that return native Elysia plugins;
+- explicit Elysia AOT, lazy-composition, and startup-precompile policy;
 - `handle`, `listen`, and `close` application methods.
 
 This package intentionally does not yet implement request scopes, lifecycle
-enhancers, schema aggregation, or the complete module-level native-plugin
-contract from the roadmap.
+enhancers, schema aggregation, or decorator-wide static route inference from
+the roadmap.
 
 The decorator API is the default application authoring surface.
 `defineElysiaController` remains available as a low-level escape hatch for
@@ -48,6 +51,103 @@ async function bootstrap(): Promise<void> {
 
 await bootstrap();
 ```
+
+## Native application and Eden Treaty
+
+`createNative` returns the real composed Elysia instance. A statically declared
+module retains route types from `defineElysiaPlugin`, typed controller plugins,
+imported descriptor modules, and `configureNative`:
+
+```ts
+import { defineModule } from "@aponiajs/common";
+import { AponiaFactory, defineElysiaPlugin } from "@aponiajs/platform-elysia";
+import { Elysia, t } from "elysia";
+
+const routes = defineElysiaPlugin(
+  new Elysia({ name: "routes" }).get("/health", () => ({ status: "ok" as const }), {
+    response: t.Object({ status: t.Literal("ok") }),
+  }),
+  { key: "routes" },
+);
+
+const AppModule = defineModule({
+  id: "AppModule",
+  imports: [routes],
+});
+
+export const app = await AponiaFactory.createNative(AppModule);
+export type App = typeof app;
+
+app.listen(3000);
+```
+
+The client stays identical to native Eden:
+
+```ts
+import { treaty } from "@elysia/eden";
+import type { App } from "@backend/server.ts";
+
+export const api = treaty<App>("http://localhost:3000");
+```
+
+Tests can call `treaty(app)` directly without opening a port. No contract
+adapter, assertion, or custom fetcher is required. Decorated routes still run
+normally, but their runtime metadata cannot contribute TypeScript route
+generics without the planned build-time compiler. See the
+[Eden Treaty guide](../../docs/eden-treaty.md) for controller injection, tests,
+and the exact inference boundary.
+
+## Route compilation policy
+
+Aponia compiles decorator metadata and parameter binding once during bootstrap.
+The generated controller invoker exposes only the context fields used by that
+route, keeps synchronous handlers synchronous, and registers decorated routes
+directly on the root Elysia application.
+
+Use the `elysia` option to control Elysia's own route composition:
+
+```ts
+const application = await AponiaFactory.create(AppModule, {
+  elysia: {
+    aot: true,
+    precompile: {
+      compose: true,
+      schema: true,
+    },
+  },
+});
+```
+
+`aot: true` enables Elysia's route-specific JavaScript composition.
+`precompile: true`, or the granular object above, moves that composition before
+the application starts accepting traffic. Leaving `precompile` disabled keeps
+Elysia composition lazy. Set `aot: false` only when the generic dynamic Elysia
+dispatcher is required for compatibility.
+
+These settings are not native machine-code AOT. Elysia generates JavaScript,
+and JavaScriptCore remains responsible for interpreter and machine-code JIT
+tiers. They are also distinct from a future Aponia build-time source emitter.
+
+### Direct descriptor registration
+
+Build tools and descriptor-authored applications can emit registrations that
+skip both decorator reflection and an intermediate controller plugin:
+
+```ts
+const healthController = defineElysiaController(HealthController, {
+  inject: [HealthService] as const,
+  path: "/health",
+  registerRoutes: (application, controller) => {
+    application.get("/health", () => controller.read());
+  },
+});
+```
+
+`registerRoutes` receives the root Elysia application after native plugin
+modules have been mounted. The returned controller definition is frozen and
+also carries an automatically generated `buildPlugin` fallback. Existing
+`defineElysiaController(..., { buildPlugin })` calls remain supported for
+controllers that intentionally own an isolated native plugin.
 
 ## Routes with the native Elysia context
 
@@ -83,6 +183,11 @@ class UserController {
 `ElysiaRouteContext<typeof schema>` is Elysia's own context type narrowed by the
 declared schema, so `status`, `set`, `cookie`, `store`, `redirect`, and plugin
 decorators behave exactly as they do in a plain Elysia handler.
+
+Keep a route method parameterless when it needs no request data; the adapter
+leaves unused context fields off that hot path. On a method with no parameter
+decorators, a single unannotated parameter receives the whole context, as does
+`@Ctx()` explicitly.
 
 ## Native Elysia plugins
 
@@ -253,7 +358,8 @@ the plugin and is absent from both the type and the context. Naming no plugin
 costs nothing at runtime — the values are still there, only untyped.
 
 `configureNative` remains available as an application-level escape hatch. It
-preserves Elysia's accumulated plugin types on `getNativeApplication()`.
+preserves Elysia's accumulated plugin types on `createNative()` and
+`getNativeApplication()`.
 
 ## Bootstrap diagnostics
 
@@ -265,4 +371,5 @@ Elysia instance fails with `INVALID_CONTROLLER`. Both are reported during
 
 [npm package](https://www.npmjs.com/package/@aponiajs/platform-elysia) ·
 [native plugin guide](../../docs/native-plugins.md) ·
+[Eden Treaty guide](../../docs/eden-treaty.md) ·
 [complete package catalog](../../docs/packages.md)

@@ -48,9 +48,9 @@ describe("@aponiajs/common", () => {
 });
 
 test("shares decorator metadata across separate common package instances", async () => {
-  type DecoratorsModule = typeof import("../src/decorators.ts");
+  type DecoratorsModule = typeof import("../src/decorators/decorators.ts");
 
-  const decoratorsUrl = new URL("../src/decorators.ts", import.meta.url);
+  const decoratorsUrl = new URL("../src/decorators/decorators.ts", import.meta.url);
   const first = (await import(`${decoratorsUrl.href}?instance=first`)) as DecoratorsModule;
   const second = (await import(`${decoratorsUrl.href}?instance=second`)) as DecoratorsModule;
 

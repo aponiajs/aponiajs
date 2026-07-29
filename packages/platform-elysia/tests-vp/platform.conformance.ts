@@ -8,6 +8,7 @@ import {
   Injectable,
   Module,
   Post,
+  Query,
   defineModule,
   type RouteContext,
   type RouteResponseSettings,
@@ -17,6 +18,7 @@ import { z } from "zod";
 import {
   AponiaFactory,
   ElysiaPluginModule,
+  defineElysiaController,
   defineElysiaPlugin,
   type ConfiguredAponiaApplicationOptions,
   type ElysiaRouteContext,
@@ -56,6 +58,35 @@ class HealthServicesModule {}
 })
 class HealthModule {}
 
+@Controller("ambiguous-promise")
+class AmbiguousPromiseController {
+  @Get()
+  read(): unknown {
+    return Promise.resolve("resolved");
+  }
+}
+
+@Module({ controllers: [AmbiguousPromiseController] })
+class AmbiguousPromiseModule {}
+
+class RegisteredHealthController {
+  read(): string {
+    return "registered";
+  }
+}
+
+const registeredHealthController = defineElysiaController(RegisteredHealthController, {
+  inject: [] as const,
+  path: "/registered-health",
+  registerRoutes: (application, controller) => {
+    application.get("/registered-health", () => controller.read());
+  },
+});
+const registeredHealthModule = defineModule({
+  id: "RegisteredHealthModule",
+  controllers: [registeredHealthController],
+});
+
 @Module({
   imports: [
     HealthServicesModule,
@@ -77,13 +108,81 @@ function configureNative(nativeApplication: Elysia) {
 test("the Vite+ lane mounts a controller from module metadata", async () => {
   const options: ConfiguredAponiaApplicationOptions<ReturnType<typeof configureNative>> = {
     logger: false,
+    elysia: {
+      aot: true,
+      precompile: {
+        compose: true,
+        schema: true,
+      },
+    },
     configureNative,
   };
   const application = await AponiaFactory.create(HealthModule, options);
   const response = await application.handle(new Request("http://localhost/health"));
+  const healthRoute = application
+    .getNativeApplication()
+    .compile()
+    .router.history.find((route) => route.path === "/health");
+  const healthHandlerSource = healthRoute?.handler.toString() ?? "";
+  const compiledHealthRoute = healthRoute?.compile().toString();
 
   expect(await response.text()).toBe("ok");
   expect(application.getNativeApplication().store.aponiaVersion).toBe("typed");
+  expect(application.getNativeApplication().config.aot).toBe(true);
+  expect(application.getNativeApplication().config.precompile).toEqual({
+    compose: true,
+    schema: true,
+  });
+  expect(healthHandlerSource.startsWith("()=>")).toBe(true);
+  expect(compiledHealthRoute).not.toContain("await handler(c)");
+  await application.close();
+});
+
+test("the Vite+ lane supports explicit dynamic Elysia composition", async () => {
+  const application = await AponiaFactory.create(HealthModule, {
+    logger: false,
+    elysia: {
+      aot: false,
+      precompile: false,
+    },
+  });
+  const response = await application.handle(new Request("http://localhost/health"));
+
+  expect(application.getNativeApplication().config.aot).toBe(false);
+  expect(await response.text()).toBe("ok");
+  await application.close();
+});
+
+test("the Vite+ lane awaits ambiguous Promise results before after-handle hooks", async () => {
+  let observedResponse: unknown;
+  const application = await AponiaFactory.create(AmbiguousPromiseModule, {
+    logger: false,
+    configureNative: (nativeApplication) =>
+      nativeApplication.onAfterHandle(({ response }) => {
+        observedResponse = response;
+      }),
+  });
+  const nativeApplication = application.getNativeApplication().compile();
+  const compiledRoute = nativeApplication.router.history
+    .find((route) => route.path === "/ambiguous-promise")
+    ?.compile()
+    .toString();
+  const response = await application.handle(new Request("http://localhost/ambiguous-promise"));
+
+  expect(await response.text()).toBe("resolved");
+  expect(observedResponse).toBe("resolved");
+  expect(observedResponse).not.toBeInstanceOf(Promise);
+  expect(compiledRoute).toContain("await handler(c)");
+  await application.close();
+});
+
+test("the Vite+ lane mounts a directly registered controller descriptor", async () => {
+  const application = await AponiaFactory.create(registeredHealthModule, {
+    logger: false,
+  });
+  const response = await application.handle(new Request("http://localhost/registered-health"));
+
+  expect(await response.text()).toBe("registered");
   await application.close();
 });
 
@@ -182,6 +281,20 @@ class ConformanceParameterController {
   findUser(@Param("id") id: string): { id: string } {
     return { id };
   }
+
+  @Get("async/:id")
+  async findUserAsync(
+    @Param("id") id: string,
+    _unused: unknown,
+    @Query("name") name: string | undefined,
+  ): Promise<{ id: string; name: string | undefined; unused: boolean }> {
+    return { id, name, unused: _unused === undefined };
+  }
+
+  @Post("escaped")
+  selectEscapedBodyProperty(@Body('quoted"key') value: string): { value: string } {
+    return { value };
+  }
 }
 
 @Module({
@@ -206,11 +319,34 @@ test("the Vite+ lane injects decorated route parameters", async () => {
     }),
   );
   const found = await application.handle(new Request("http://localhost/conformance-parameters/42"));
+  const foundAsync = await application.handle(
+    new Request("http://localhost/conformance-parameters/async/42?name=Ada"),
+  );
+  const escaped = await application.handle(
+    new Request("http://localhost/conformance-parameters/escaped", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ 'quoted"key': "value" }),
+    }),
+  );
+  const asyncRouteSource = application
+    .getNativeApplication()
+    .compile()
+    .router.history.find((route) => route.path === "/conformance-parameters/async/:id")
+    ?.compile()
+    .toString();
 
   expect(created.headers.get("x-source")).toBe("parameters");
   expect(await created.json()).toEqual({ name: "Ada" });
   expect(rejected.status).toBe(422);
   expect(await found.json()).toEqual({ id: "42" });
+  expect(await foundAsync.json()).toEqual({
+    id: "42",
+    name: "Ada",
+    unused: true,
+  });
+  expect(await escaped.json()).toEqual({ value: "value" });
+  expect(asyncRouteSource).toContain("await handler(c)");
   await application.close();
 });
 

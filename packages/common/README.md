@@ -93,9 +93,10 @@ selects a single property:
 | `@Res()`                 | The mutable response settings          |
 | `@Ctx()`                 | The whole platform context             |
 
-A handler without parameter decorators receives the context as its only
-argument, typed platform-neutrally by `RouteContext<typeof schema>`. An Elysia
-application can annotate it with `ElysiaRouteContext<typeof schema>` from
+A handler with no parameter decorators may declare one unannotated parameter to
+receive the context, typed platform-neutrally by
+`RouteContext<typeof schema>`. An Elysia application can annotate it with
+`ElysiaRouteContext<typeof schema>` from
 `@aponiajs/platform-elysia` to keep Elysia's own context types.
 
 [npm package](https://www.npmjs.com/package/@aponiajs/common) ·

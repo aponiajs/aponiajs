@@ -14,6 +14,7 @@ Structured applications for Bun
 [Documentation](./docs/architecture-and-style.md) ·
 [Dependency injection](./docs/dependency-injection.md) ·
 [Native plugins](./docs/native-plugins.md) ·
+[Eden Treaty](./docs/eden-treaty.md) ·
 [Testing](./docs/testing.md) ·
 [CLI](./docs/cli.md) ·
 [Roadmap](./ROADMAP.md)
@@ -186,6 +187,34 @@ fail here, before the server listens. Application logging is configurable —
 `{ logger: false }` silences it, an array of levels filters it, and a
 `LoggerService` replaces it. See the [logging guide](./docs/logging.md).
 
+For native Elysia tooling and Eden Treaty, keep native routes in the module
+graph and bootstrap the Elysia instance itself:
+
+```ts
+import { defineModule } from "@aponiajs/common";
+import { AponiaFactory, defineElysiaPlugin } from "@aponiajs/platform-elysia";
+import { Elysia } from "elysia";
+
+const routes = defineElysiaPlugin(
+  new Elysia({ name: "routes" }).get("/health", () => ({ status: "ok" as const })),
+  { key: "routes" },
+);
+const NativeAppModule = defineModule({
+  id: "NativeAppModule",
+  imports: [routes],
+});
+
+export const app = await AponiaFactory.createNative(NativeAppModule);
+export type App = typeof app;
+
+app.listen(3000);
+```
+
+The client uses `treaty<App>(url)`, and tests use `treaty(app)` without a
+contract adapter or custom fetcher. The [Eden guide](./docs/eden-treaty.md)
+shows typed controllers, module composition, and why decorator metadata remains
+a runtime-only contract until build-time compilation lands.
+
 ## Request parameters
 
 Parameter decorators inject one piece of the request. Each accepts an optional
@@ -312,8 +341,9 @@ export class AuthModule {}
 ```
 
 A stable `key` keeps a plugin imported by several modules installed once.
-`AponiaFactory.create(AppModule, { configureNative })` and
-`application.getNativeApplication()` hand back the Elysia instance itself when a
+`AponiaFactory.createNative(AppModule)` returns the composed Elysia instance
+directly. `AponiaFactory.create(AppModule, { configureNative })` and
+`application.getNativeApplication()` retain the managed lifecycle facade when a
 plugin needs it.
 
 What a plugin decorates, stores, or derives is available in every handler at
@@ -434,16 +464,17 @@ Implemented: decorated modules and HTTP controllers, Standard Schema route
 validation, request parameter decorators, singleton dependency injection,
 class/value/factory/alias providers, explicit tokens, module imports and
 exports, lifecycle management, structured logging, project generators, and
-native Elysia escape hatches.
+native Elysia escape hatches. Statically declared descriptor modules also expose
+their composed Elysia route type directly to Eden Treaty.
 
 Not implemented yet: async provider lifecycle, request and transient scopes,
 platform-neutral HTTP packages, full Elysia phase conformance, status-specific
 response contracts, Problem Details and serialization policy, configuration and
 secret redaction, HTTP admission hardening, guards, interceptors, middleware,
 exception filters, authentication and authorization, rate limiting, testing
-packages, observability and health, OpenAPI and Eden integration, WebSockets,
-and microservice transports. The [roadmap](./ROADMAP.md) tracks those
-capabilities and their dependencies.
+packages, observability and health, OpenAPI generation, WebSockets,
+decorator-wide Eden inference, and microservice transports. The
+[roadmap](./ROADMAP.md) tracks those capabilities and their dependencies.
 
 ## Develop
 

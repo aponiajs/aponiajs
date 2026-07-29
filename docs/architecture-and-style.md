@@ -93,6 +93,39 @@ Nest monorepo mode instead uses `apps/*` for applications and `libs/*` for
 workspace libraries. A future Aponia monorepo generator may expose that mode
 explicitly; `aponia new` remains standard mode.
 
+### Framework package source
+
+Published package internals use a domain-first layout. Each directory owns one
+conceptual boundary, and `src/index.ts` is the only public barrel:
+
+```text
+packages/<package>/src/
+|-- <domain>/
+|   |-- <capability>.ts
+|   `-- <capability>.types.ts
+`-- index.ts
+```
+
+Type-only contracts stay beside their owning implementation. Do not create a
+package-wide `types/` directory: it hides ownership and attracts unrelated
+contracts. Use `*.constants.ts` only for runtime values shared by an
+implementation and its type contracts.
+
+The current package boundaries are:
+
+| Package                     | Source domains                                                                |
+| --------------------------- | ----------------------------------------------------------------------------- |
+| `@aponiajs/common`          | controllers, decorators, errors, logging, modules, providers, routing, tokens |
+| `@aponiajs/core`            | container, graph                                                              |
+| `@aponiajs/platform-elysia` | application, controllers, modules, plugins, routing                           |
+| `@aponiajs/cli`             | commands, generation                                                          |
+
+Keep package tests at `tests/*.test.ts` and Vite+ conformance tests at
+`tests-vp/*.conformance.ts`; those flat locations are part of the configured
+test discovery. `scripts/source-layout.spec.ts` prevents source modules from
+drifting back into package roots and verifies that `*.types.ts` files remain
+type-only.
+
 ## File responsibilities
 
 | File suffix      | Responsibility                                                |
@@ -102,6 +135,8 @@ explicitly; `aponia new` remains standard mode.
 | `.controller.ts` | Route ownership and transport-to-service delegation           |
 | `.schema.ts`     | Route validation schemas for the owning feature               |
 | `.tokens.ts`     | Named public injection tokens                                 |
+| `.types.ts`      | Type-only contracts colocated with their framework owner      |
+| `.constants.ts`  | Runtime constants shared across implementation/type modules   |
 | `.spec.ts`       | Unit tests colocated with the owning controller or service    |
 | `.e2e-spec.ts`   | End-to-end tests under the top-level `test` directory         |
 | `main.ts`        | Container creation, platform bootstrap, and process ownership |
@@ -247,10 +282,10 @@ optional property name that selects a single value. `@Req()` injects the native
 `Request`, `@Res()` the mutable response settings, and `@Ctx()` the whole
 platform context.
 
-A handler declared without parameter decorators receives the context as its only
-argument. Annotate it with `RouteContext<typeof schema>` to stay
-platform-neutral, or with `ElysiaRouteContext<typeof schema>` from
-`@aponiajs/platform-elysia` to keep `status`, `set`, `cookie`, `store`, and
+A handler with no parameter decorators may declare one parameter to receive the
+context. Annotate it with `RouteContext<typeof schema>` to stay platform-neutral,
+or with `ElysiaRouteContext<typeof schema>` from `@aponiajs/platform-elysia` to
+keep `status`, `set`, `cookie`, `store`, and
 `redirect` typed by Elysia itself.
 
 Compiling a decorated controller erases the plugin instances its module imports,
@@ -286,3 +321,49 @@ await bootstrap();
 
 Application logic, controller construction, and service lookup do not belong in
 `main.ts`.
+
+When native Elysia is the intended calling surface, use the parallel bootstrap
+entrypoint:
+
+```ts
+export const app = await AponiaFactory.createNative(AppModule);
+export type App = typeof app;
+```
+
+The returned value is the composed Elysia instance. Static `defineModule`
+imports preserve typed controller and native plugin routes for Eden Treaty;
+decorated routes remain runtime-only until the build-time compiler can emit
+their route generics. See the [Eden Treaty guide](./eden-treaty.md).
+
+### Elysia compilation policy
+
+The platform lowers decorated routes into immutable plans during bootstrap,
+generates fixed-arity controller invokers, and registers them directly on the
+root Elysia application. Parameter extraction is therefore not interpreted on
+every request.
+
+Production applications that prefer predictable first-hit behavior may ask
+Elysia to compose routes and schemas before listening:
+
+```ts
+const application = await AponiaFactory.create(AppModule, {
+  elysia: {
+    aot: true,
+    precompile: {
+      compose: true,
+      schema: true,
+    },
+  },
+});
+```
+
+Without `precompile`, Elysia performs its JavaScript route composition lazily.
+`aot: false` selects Elysia's generic dynamic dispatcher. Neither option
+produces native machine code: JavaScriptCore still owns machine-code JIT
+compilation, and build-time Aponia source generation is a separate concern.
+
+A build tool can target the same direct-registration path without decorators by
+emitting `defineElysiaController(..., { registerRoutes })` descriptors.
+Hand-authored descriptors may use it as well. The older `buildPlugin` form
+remains the compatibility escape hatch for a controller that deliberately owns
+an isolated Elysia plugin.

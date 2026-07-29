@@ -1,6 +1,5 @@
 import { createToken, defineModule, provideClass, provideValue } from "@aponiajs/common";
 import { defineElysiaController } from "@aponiajs/platform-elysia";
-import { Elysia } from "elysia";
 
 /**
  * The descriptor authoring layer. No decorators anywhere: `defineModule`,
@@ -25,10 +24,10 @@ const metricsController = defineElysiaController(
   },
   {
     inject: [MetricsService],
-    buildPlugin: (controller) =>
-      new Elysia({ name: "metrics-controller" }).get("/metrics", () =>
-        controller.metricsService.record(),
-      ),
+    path: "/metrics",
+    registerRoutes: (application, controller) => {
+      application.get("/metrics", () => controller.metricsService.record());
+    },
   },
 );
 
