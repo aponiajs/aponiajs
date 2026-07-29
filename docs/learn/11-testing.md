@@ -38,8 +38,10 @@ service with no transport concern is still a plain unit test.
 
 Two mirrored lanes: Bun owns `packages/*/tests/*.test.ts`, Vite+ owns
 `packages/*/tests-vp/*.conformance.ts`, and new framework behavior normally
-needs a case in both. `bun test`, `bun run test:vite-plus`, and `bun run check`
-run before submitting. `packages/cli/e2e/` packs the CLI and boots a generated
-application, so it is slow and excluded from the default lanes.
+needs a case in both. `bun test`, `bun run test:coverage`,
+`bun run test:vite-plus`, and `bun run check` run before submitting. The
+coverage lane enforces a 95% floor for both lines and functions.
+`packages/cli/e2e/` packs the CLI and boots a generated application, so it is
+slow and excluded from the default lanes.
 
 Next: [12 · Releasing](./12-releasing.md) · Deep dive: [testing](../testing.md)

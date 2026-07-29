@@ -11,6 +11,7 @@ and documentation guards that CI enforces.
 | `sync-version-references.ts` | Version references in the roadmap and lockfile                           |
 | `workspace-versions.ts`      | The list of manifests that must share one version                        |
 | `canary-version.ts`          | Stamping `X.Y.Z-canary.<stamp>.<sha>` in CI, never committed             |
+| `coverage-gate.ts`           | Aggregate LCOV floor and runtime-source completeness                     |
 | `source-layout.spec.ts`      | Package owner directories, barrels, type-only modules, local imports     |
 | `*.spec.ts`                  | Guard tests over the above and over documentation wording                |
 

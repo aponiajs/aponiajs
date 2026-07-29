@@ -34,6 +34,10 @@ registered in the nearest Aponia module unless `--skip-import` is used.
 Resource transports include REST, GraphQL code-first, GraphQL schema-first,
 microservices, and WebSockets.
 
+A REST CRUD resource also generates `<name>.model.ts`. The model owns the route
+validators passed to the controller decorators, and the generated DTOs derive
+their types from those same validators.
+
 The separately published
 [`create-aponia`](https://www.npmjs.com/package/create-aponia) package delegates
 to the same generator. The documented CLI workflow uses the globally installed

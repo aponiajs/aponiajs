@@ -441,7 +441,7 @@ aponia g res users
 ```
 
 Every Nest schematic is available, from `class` and `controller` to `resource`
-and `gateway`. A REST resource also generates `users.schema.ts` holding its route
+and `gateway`. A REST resource also generates `users.model.ts` holding its route
 validation, with both DTOs derived from it. See the
 [CLI reference](./docs/cli.md) for the full catalog, aliases, and options.
 
@@ -483,6 +483,7 @@ mise install
 bun install
 bun run check
 bun test
+bun run test:coverage
 bun run test:vite-plus
 bun run build
 ```

@@ -1,17 +1,25 @@
-import { expect, test } from "bun:test";
+import { expect, spyOn, test } from "bun:test";
 import {
   Controller,
   Get,
   Injectable,
   Module,
   defineModule,
+  type ControllerDefinition,
   type LoggerService,
 } from "@aponiajs/common";
 import { Elysia } from "elysia";
-import { AponiaFactory, ElysiaPluginModule, defineElysiaController } from "../src/index.ts";
+import {
+  AponiaElysiaApplication,
+  AponiaFactory,
+  ElysiaPluginModule,
+  compileRootModule,
+  defineElysiaController,
+} from "../src/index.ts";
 
 class MemoryLogger implements LoggerService {
   readonly records: { readonly context: string; readonly message: string }[] = [];
+  readonly errors: unknown[] = [];
 
   log(message: unknown, context?: unknown): void {
     this.records.push({
@@ -22,7 +30,9 @@ class MemoryLogger implements LoggerService {
 
   fatal(): void {}
 
-  error(): void {}
+  error(message: unknown): void {
+    this.errors.push(message);
+  }
 
   warn(): void {}
 }
@@ -293,6 +303,137 @@ test("rejects a native configurator that replaces the application", async () => 
   );
 });
 
+test("rejects classes with missing module or controller metadata", async () => {
+  class UndecoratedModule {}
+  const moduleError = await AponiaFactory.create(UndecoratedModule, { logger: false }).then(
+    () => undefined,
+    (reason: unknown) => reason,
+  );
+
+  class UndecoratedDynamicModule {}
+  const dynamicModuleError = await AponiaFactory.create(
+    {
+      module: UndecoratedDynamicModule,
+      id: "UndecoratedDynamicModule",
+      instanceId: Symbol("undecorated-dynamic-module"),
+    },
+    { logger: false },
+  ).then(
+    () => undefined,
+    (reason: unknown) => reason,
+  );
+
+  class UndecoratedController {}
+  @Module({ controllers: [UndecoratedController] })
+  class InvalidControllerModule {}
+  const controllerError = await AponiaFactory.create(InvalidControllerModule, {
+    logger: false,
+  }).then(
+    () => undefined,
+    (reason: unknown) => reason,
+  );
+
+  expect(moduleError).toEqual(
+    expect.objectContaining({
+      code: "INVALID_MODULE",
+      details: { module: "UndecoratedModule" },
+    }),
+  );
+  expect(dynamicModuleError).toEqual(
+    expect.objectContaining({
+      code: "INVALID_MODULE",
+      details: { module: "UndecoratedDynamicModule" },
+    }),
+  );
+  expect(controllerError).toEqual(
+    expect.objectContaining({
+      code: "INVALID_CONTROLLER",
+      details: { controller: "UndecoratedController" },
+    }),
+  );
+});
+
+test("rejects a cycle formed only from decorated module classes", () => {
+  class FirstModule {}
+  class SecondModule {}
+  Module({ imports: [SecondModule] })(FirstModule);
+  Module({ imports: [FirstModule] })(SecondModule);
+
+  expect(() => compileRootModule(FirstModule)).toThrow(
+    expect.objectContaining({
+      code: "MODULE_CYCLE",
+      details: { cycle: ["FirstModule", "SecondModule", "FirstModule"] },
+    }),
+  );
+});
+
+test("reuses compiled class imports and accepts nested descriptor modules", () => {
+  const descriptor = defineModule({ id: "DescriptorImport" });
+
+  @Module({
+    imports: [descriptor, MessageServicesModule, MessageServicesModule],
+  })
+  class MixedImportsModule {}
+
+  const compiled = compileRootModule(MixedImportsModule);
+
+  expect(compiled.imports[0]).toBe(descriptor);
+  expect(compiled.imports[1]).toBe(compiled.imports[2]);
+});
+
+test("rejects controller descriptors owned by another platform", async () => {
+  class ForeignController {}
+  const controller: ControllerDefinition = {
+    kind: "foreign.controller",
+    token: ForeignController,
+    inject: [],
+    useClass: ForeignController,
+  };
+  const module = defineModule({
+    id: "ForeignControllerModule",
+    controllers: [controller],
+  });
+  const error = await AponiaFactory.create(module, { logger: false }).then(
+    () => undefined,
+    (reason: unknown) => reason,
+  );
+
+  expect(error).toEqual(
+    expect.objectContaining({
+      code: "UNSUPPORTED_CONTROLLER",
+      details: {
+        module: "ForeignControllerModule",
+        controller: "ForeignController",
+      },
+    }),
+  );
+});
+
+test("accepts an empty default logger policy without emitting bootstrap output", async () => {
+  const application = await AponiaFactory.create(MessageModule, { logger: [] });
+  const response = await application.handle(new Request("http://localhost/messages"));
+
+  expect(await response.text()).toBe("Hello from service");
+  await application.close();
+});
+
+test.serial("logs and rethrows native listen failures", async () => {
+  const nativeApplication = new Elysia();
+  const logger = new MemoryLogger();
+  const application = new AponiaElysiaApplication(nativeApplication, logger);
+  const failure = new Error("listen failed");
+  const listen = spyOn(nativeApplication, "listen").mockImplementation(() => {
+    throw failure;
+  });
+
+  try {
+    expect(application.listen(3_000)).rejects.toBe(failure);
+    expect(logger.errors).toEqual([failure]);
+  } finally {
+    listen.mockRestore();
+  }
+});
+
 test("passes explicit Elysia AOT and precompile policy to the root application", async () => {
   const precompile = Object.freeze({ compose: true, schema: true });
   const observedConfigurations: {
@@ -373,6 +514,37 @@ test("mounts registered descriptors directly and preserves buildPlugin fallback"
   );
   expect(await fallbackResponse.text()).toBe("registered");
   expect(registeredControllerCalls).toBe(2);
+  await application.close();
+});
+
+test("retains the plugin fallback on a compiled decorated controller", async () => {
+  const [controller] = compileRootModule(MessageModule)
+    .controllers as readonly (ControllerDefinition & {
+    readonly buildPlugin: (instance: unknown) => Elysia;
+  })[];
+  const plugin = controller?.buildPlugin(new MessageController(new MessageService()));
+  const response = await plugin?.handle(new Request("http://localhost/messages"));
+
+  expect(await response?.text()).toBe("Hello from service");
+});
+
+test("logs the root path for a directly registered controller with no routes", async () => {
+  class EmptyController {}
+  const controller = defineElysiaController(EmptyController, {
+    inject: [] as const,
+    registerRoutes: () => {},
+  });
+  const module = defineModule({
+    id: "EmptyControllerModule",
+    controllers: [controller],
+  });
+  const logger = new MemoryLogger();
+  const application = await AponiaFactory.create(module, { logger });
+
+  expect(logger.records).toContainEqual({
+    context: "RoutesResolver",
+    message: "EmptyController {/}:",
+  });
   await application.close();
 });
 

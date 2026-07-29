@@ -59,8 +59,8 @@ src/
     |   `-- greeting.entity.ts
     |-- greeting.controller.spec.ts
     |-- greeting.controller.ts
+    |-- greeting.model.ts
     |-- greeting.module.ts
-    |-- greeting.schema.ts
     |-- greeting.service.spec.ts
     `-- greeting.service.ts
 ```
@@ -128,18 +128,18 @@ type-only.
 
 ## File responsibilities
 
-| File suffix      | Responsibility                                                |
-| ---------------- | ------------------------------------------------------------- |
-| `.module.ts`     | Imports, providers, exports, and module identity              |
-| `.service.ts`    | Business rules and reusable application behavior              |
-| `.controller.ts` | Route ownership and transport-to-service delegation           |
-| `.schema.ts`     | Route validation schemas for the owning feature               |
-| `.tokens.ts`     | Named public injection tokens                                 |
-| `.types.ts`      | Type-only contracts colocated with their framework owner      |
-| `.constants.ts`  | Runtime constants shared across implementation/type modules   |
-| `.spec.ts`       | Unit tests colocated with the owning controller or service    |
-| `.e2e-spec.ts`   | End-to-end tests under the top-level `test` directory         |
-| `main.ts`        | Container creation, platform bootstrap, and process ownership |
+| File suffix      | Responsibility                                                 |
+| ---------------- | -------------------------------------------------------------- |
+| `.module.ts`     | Imports, providers, exports, and module identity               |
+| `.service.ts`    | Business rules and reusable application behavior               |
+| `.controller.ts` | Route ownership and transport-to-service delegation            |
+| `.model.ts`      | Route validators, route schemas, and their derived input types |
+| `.tokens.ts`     | Named public injection tokens                                  |
+| `.types.ts`      | Type-only contracts colocated with their framework owner       |
+| `.constants.ts`  | Runtime constants shared across implementation/type modules    |
+| `.spec.ts`       | Unit tests colocated with the owning controller or service     |
+| `.e2e-spec.ts`   | End-to-end tests under the top-level `test` directory          |
+| `main.ts`        | Container creation, platform bootstrap, and process ownership  |
 
 ## Naming
 

@@ -49,7 +49,7 @@ aponia g mo users
 aponia g res users
 ```
 
-A REST resource also writes `users.schema.ts`, which owns the route schemas the
+A REST resource also writes `users.model.ts`, which owns the route schemas the
 controller passes to its decorators and from which both DTOs derive their types.
 
 Next: [03 · Modules](./03-modules.md) · Deep dive: [CLI reference](../cli.md)

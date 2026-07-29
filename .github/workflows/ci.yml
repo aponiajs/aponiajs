@@ -53,8 +53,8 @@ jobs:
       - name: Run Vite+ checks through Bun
         run: bun run check
 
-      - name: Run Bun tests
-        run: bun test
+      - name: Run Bun tests with coverage
+        run: bun run test:coverage
 
       - name: Run the example end-to-end suites
         run: bun run test:examples

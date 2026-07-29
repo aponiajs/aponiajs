@@ -28,6 +28,15 @@ test("change-case and inflection normalize compound and irregular names", () => 
     singularClassName: "HttpPerson",
     routePath: "http-people",
   });
+  expect(() => createComponentNames("../users")).toThrow(
+    "Generated names must be relative and cannot contain parent traversal.",
+  );
+  expect(() => createComponentNames("/absolute/users")).toThrow(
+    "Generated names must be relative and cannot contain parent traversal.",
+  );
+  expect(() => createComponentNames("123")).toThrow(
+    "Generated names must contain letters and use kebab-case paths.",
+  );
 });
 
 test("ts-morph safely registers symbols in structured module metadata", () => {
@@ -51,4 +60,5 @@ export class AppModule {
   expect(updated).toContain("ExistingService");
   expect(updated).toContain("UsersService");
   expect(updated).toContain('text: "a } bracket in a string"');
+  expect(updated).toContain("UsersService,\n  ],");
 });

@@ -84,6 +84,16 @@ test("supports the complete Nest generate schematic catalog and aliases", () => 
   });
 });
 
+test.each([
+  [["generate"], "Schematic name is required."],
+  [["generate", "unknown", "sample"], 'Unknown schematic "unknown". Available schematics:'],
+  [["generate", "service"], "Service name is required."],
+  [["generate", "service", "users", "extra"], 'Unexpected argument "extra".'],
+  [["generate", "resource", "users", "--type", "smtp"], 'Unknown resource transport "smtp".'],
+] as const)("rejects invalid generate command arguments", (arguments_, message) => {
+  expect(() => parseArguments(arguments_)).toThrow(message);
+});
+
 test("generates every component and resource schematic", async () => {
   for (const schematic of generateSchematics) {
     if (schematic === "app" || schematic === "library") continue;
@@ -209,7 +219,7 @@ test("resource generates CRUD building blocks and registers its module", async (
       "src/users/users.controller.spec.ts",
       "src/users/users.service.ts",
       "src/users/users.service.spec.ts",
-      "src/users/users.schema.ts",
+      "src/users/users.model.ts",
       "src/users/dto/create-user.dto.ts",
       "src/users/dto/update-user.dto.ts",
       "src/users/entities/user.entity.ts",
@@ -217,12 +227,14 @@ test("resource generates CRUD building blocks and registers its module", async (
     ]),
   );
   expect(await Bun.file(join(projectRoot, "src/app.module.ts")).text()).toContain(
-    "imports: [UsersModule]",
+    "imports: [UsersModule],",
   );
+  expect(result.changes.map((change) => change.path)).not.toContain("src/users/users.schema.ts");
+  expect(await Bun.file(join(projectRoot, "src/users/users.schema.ts")).exists()).toBe(false);
 });
 
-test("resource generates route validation schemas wired into the controller", async () => {
-  const projectRoot = await createProjectRoot("aponia-resource-schema-");
+test("REST resource generates a model wired into its controller and DTOs", async () => {
+  const projectRoot = await createProjectRoot("aponia-resource-model-");
   await generateSchematic({
     command: "generate",
     schematic: "resource",
@@ -234,21 +246,35 @@ test("resource generates route validation schemas wired into the controller", as
     cwd: projectRoot,
   });
 
-  const schema = await Bun.file(join(projectRoot, "src/users/users.schema.ts")).text();
-  expect(schema).toContain('import { t } from "elysia";');
-  expect(schema).toContain("export const createUserSchema = t.Object({");
-  expect(schema).toContain("export const createUserRoute = {");
-  expect(schema).toContain("export const updateUserRoute = {");
+  const model = await Bun.file(join(projectRoot, "src/users/users.model.ts")).text();
+  expect(model).toContain('import { t } from "elysia";');
+  expect(model).toContain("export const createUserSchema = t.Object({");
+  expect(model).toContain("export const updateUserSchema = t.Partial(createUserSchema);");
+  expect(model).toContain("export const createUserRoute = {");
+  expect(model).toContain("export const findUserRoute = {");
+  expect(model).toContain("export const updateUserRoute = {");
 
   const controller = await Bun.file(join(projectRoot, "src/users/users.controller.ts")).text();
-  expect(controller).toContain("import { Body, Controller, Delete, Get, Param, Patch, Post }");
+  expect(controller).toContain(
+    'import { Body, Controller, Delete, Get, Param, Patch, Post } from "@aponiajs/common";',
+  );
+  expect(controller).toContain(
+    'import { createUserRoute, findUserRoute, updateUserRoute } from "./users.model.ts";',
+  );
   expect(controller).toContain('@Post("/", createUserRoute)');
   expect(controller).toContain("create(@Body() input: CreateUserDto)");
   expect(controller).toContain('@Get(":id", findUserRoute)');
   expect(controller).toContain('findOne(@Param("id") id: string)');
 
   const createDto = await Bun.file(join(projectRoot, "src/users/dto/create-user.dto.ts")).text();
+  expect(createDto).toContain('from "../users.model.ts";');
   expect(createDto).toContain("Static<typeof createUserSchema>");
+
+  const updateDto = await Bun.file(join(projectRoot, "src/users/dto/update-user.dto.ts")).text();
+  expect(updateDto).toContain('from "../users.model.ts";');
+  expect(updateDto).toContain("Static<typeof updateUserSchema>");
+
+  expect(await Bun.file(join(projectRoot, "src/users/users.schema.ts")).exists()).toBe(false);
 });
 
 test("resource keeps plain DTO classes for non-REST transports", async () => {
@@ -264,9 +290,29 @@ test("resource keeps plain DTO classes for non-REST transports", async () => {
     cwd: projectRoot,
   });
 
-  expect(await Bun.file(join(projectRoot, "src/users/users.schema.ts")).exists()).toBe(false);
+  expect(await Bun.file(join(projectRoot, "src/users/users.model.ts")).exists()).toBe(false);
   expect(await Bun.file(join(projectRoot, "src/users/dto/create-user.dto.ts")).text()).toContain(
     "export class CreateUserDto",
+  );
+});
+
+test("REST resource without CRUD does not generate or import a model", async () => {
+  const projectRoot = await createProjectRoot("aponia-resource-no-crud-");
+  const result = await generateSchematic({
+    command: "generate",
+    schematic: "resource",
+    name: "events",
+    dryRun: false,
+    skipImport: false,
+    crud: false,
+    type: "rest",
+    cwd: projectRoot,
+  });
+
+  expect(result.changes.map((change) => change.path)).not.toContain("src/events/events.model.ts");
+  expect(await Bun.file(join(projectRoot, "src/events/events.model.ts")).exists()).toBe(false);
+  expect(await Bun.file(join(projectRoot, "src/events/events.controller.ts")).text()).not.toContain(
+    ".model.ts",
   );
 });
 
@@ -386,6 +432,27 @@ test("dry-run reports changes without modifying files", async () => {
   expect(result.changes.map((change) => change.path)).toContain("src/reports/reports.service.ts");
   expect(await Bun.file(join(projectRoot, "src/reports/reports.service.ts")).exists()).toBe(false);
   expect(await Bun.file(join(projectRoot, "src/app.module.ts")).text()).toBe(before);
+});
+
+test("refuses to overwrite an existing schematic file", async () => {
+  const projectRoot = await createProjectRoot("aponia-existing-schematic-");
+  const existingFile = join(projectRoot, "src/reports/reports.service.ts");
+  await mkdir(join(projectRoot, "src/reports"), { recursive: true });
+  await Bun.write(existingFile, "user content\n");
+
+  expect(
+    generateSchematic({
+      command: "generate",
+      schematic: "service",
+      name: "reports",
+      dryRun: false,
+      skipImport: false,
+      crud: true,
+      type: "rest",
+      cwd: projectRoot,
+    }),
+  ).rejects.toThrow('File "src/reports/reports.service.ts" already exists.');
+  expect(await Bun.file(existingFile).text()).toBe("user content\n");
 });
 
 async function createProjectRoot(prefix: string): Promise<string> {

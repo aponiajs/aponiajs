@@ -47,9 +47,11 @@ jobs:
       - name: Verify workspace
         run: |
           bun run check
-          bun test
+          bun run test:coverage
+          bun run test:examples
           bun run test:vite-plus
           bun run build
+          bun run test:generated-app
 
       - name: Verify the stamped version
         env:

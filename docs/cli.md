@@ -114,8 +114,8 @@ Resources additionally support `--crud` / `--no-crud` and these transports:
 REST resources generate a controller; GraphQL resources generate a resolver;
 WebSocket resources generate a gateway.
 
-A REST CRUD resource also generates `<name>.schema.ts`, which owns the route
-validation for that resource:
+A REST CRUD resource also generates `<name>.model.ts`, which owns the route
+validation model for that resource:
 
 ```text
 src/users/
@@ -126,13 +126,13 @@ src/users/
 |   `-- user.entity.ts
 |-- users.controller.ts
 |-- users.module.ts
-|-- users.schema.ts
+|-- users.model.ts
 `-- users.service.ts
 ```
 
-`users.schema.ts` exports the per-slot validators and the route schemas the
-controller passes to its decorators, and both DTOs derive their types from those
-schemas, so a field is declared once:
+`users.model.ts` exports the per-slot validators and the route schemas the
+controller passes to its decorators, and both DTOs derive their types from
+those schemas, so a field is declared once:
 
 ```ts
 export const createUserSchema = t.Object({
