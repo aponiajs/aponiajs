@@ -26,20 +26,28 @@ lowers one into the other. Dependencies run one way:
 `common ← core ← platform-elysia`.
 
 Descriptors are also a public API. An application can call `defineModule`,
-`defineElysiaController`, and the `provide*` helpers and skip decorators
-entirely. Both paths stay supported.
+`elysiaController`, and the `provide*` helpers and skip decorators entirely.
+The concise controller callback keeps native Elysia request inference without a
+manual context type or `typeof`. `defineElysiaController` remains the advanced
+descriptor form. Both paths stay supported.
 
 ## What exists today
 
-Implemented: decorated modules and HTTP controllers, Standard Schema route
-validation, request parameter decorators, singleton dependency injection,
+Implemented: decorated modules and HTTP controllers, one-schema validation
+models over Standard Schema and native validators, request parameter decorators,
+singleton dependency injection,
 class/value/factory/alias providers, explicit tokens, module imports and
 exports, lifecycle, structured logging, generators, and native Elysia escape
-hatches.
+hatches, RFC 9457 application errors for every supported HTTP error status, and
+provider-registered WebSocket gateways backed by native Elysia sockets.
 
 Not implemented yet: guards, interceptors, middleware, exception filters,
-Problem Details errors, non-singleton scopes, testing modules, OpenAPI,
-authentication, WebSockets, microservice transports. Check
+automatic mapping of native framework and validation errors to Problem Details,
+non-singleton scopes, testing modules, OpenAPI, authentication, production
+WebSocket policies and transport extraction, and microservice transports. The
+implemented WebSocket gateway preview does not yet include the planned
+transport-neutral adapter, handshake policies, or per-message schema layer.
+Check
 [`ROADMAP.md`](../../ROADMAP.md) before assuming a feature exists.
 
 Every chapter that follows has a runnable counterpart in

@@ -40,6 +40,22 @@ describe("@aponiajs/common", () => {
     expect(module.providers).toHaveLength(2);
   });
 
+  test("normalizes omitted module collections without widening declared tuples", () => {
+    const emptyModule = defineModule({ id: "empty" });
+    const first = defineModule({ id: "first" });
+    const second = defineModule({ id: "second" });
+    const root = defineModule({
+      id: "root",
+      imports: [first, second],
+    });
+    const exactImports: readonly [typeof first, typeof second] = root.imports;
+    const exactEmptyImports: readonly [] = emptyModule.imports;
+
+    expect(exactImports).toEqual([first, second]);
+    expect(exactEmptyImports).toEqual([]);
+    expect(Object.isFrozen(emptyModule.imports)).toBe(true);
+  });
+
   test("uses cascading Nest-style log levels", () => {
     const logger = new ConsoleLogger({
       colors: false,

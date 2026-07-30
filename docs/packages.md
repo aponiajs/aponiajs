@@ -52,8 +52,8 @@ await bootstrap();
 The platform-neutral public authoring API:
 
 - module, controller, route, injection, and logging contracts;
-- `@Module()`, `@Controller()`, HTTP method decorators, `@Injectable()`, and
-  `@Inject()`;
+- `@Module()`, `@Controller()`, `@Validation()`, HTTP method decorators,
+  `@Injectable()`, `@Inject()`, and WebSocket gateway decorators;
 - provider helpers and explicit injection tokens.
 
 [Package README](../packages/common/README.md) ·
@@ -70,13 +70,15 @@ and standalone container integrations may install it directly.
 
 ### `@aponiajs/platform-elysia`
 
-The Elysia adapter, application lifecycle, decorated route mapper, and native
-plugin escape hatch. `AponiaFactory.createNative` exposes a statically composed
-module as the exact Elysia application type for native tooling and Eden Treaty.
-`elysia` is a peer dependency and must be installed by the application.
+The Elysia adapter, application lifecycle, decorated route mapper, native
+WebSocket gateway runtime, and native plugin escape hatch.
+`AponiaFactory.createNative` exposes a statically composed module as the exact
+Elysia application type for native tooling and Eden Treaty. `elysia` is a peer
+dependency and must be installed by the application.
 
 [Package README](../packages/platform-elysia/README.md) ·
 [Eden Treaty](./eden-treaty.md) ·
+[WebSockets](./websockets.md) ·
 [npm](https://www.npmjs.com/package/@aponiajs/platform-elysia)
 
 ## Project creation and CLI

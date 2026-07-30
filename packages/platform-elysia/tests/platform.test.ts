@@ -5,6 +5,7 @@ import {
   Injectable,
   Module,
   defineModule,
+  provideClass,
   type ControllerDefinition,
   type LoggerService,
 } from "@aponiajs/common";
@@ -15,6 +16,7 @@ import {
   ElysiaPluginModule,
   compileRootModule,
   defineElysiaController,
+  elysiaController,
 } from "../src/index.ts";
 
 class MemoryLogger implements LoggerService {
@@ -88,7 +90,7 @@ const registeredDescriptorController = defineElysiaController(RegisteredDescript
   registerRoutes: (application, controller) => {
     registeredControllerCalls += 1;
     registeredApplicationNames.push(application.config.name);
-    application.get("/descriptor-registered", () => controller.read());
+    return application.get("/descriptor-registered", () => controller.read());
   },
 });
 const pluginDescriptorController = defineElysiaController(PluginDescriptorController, {
@@ -434,6 +436,23 @@ test.serial("logs and rethrows native listen failures", async () => {
   }
 });
 
+test("closes active native connections by default and permits caller-managed draining", async () => {
+  const closePolicies: boolean[] = [];
+  const nativeApplication = {
+    server: {},
+    async stop(closeActiveConnections?: boolean) {
+      closePolicies.push(closeActiveConnections ?? false);
+      return this;
+    },
+  } as unknown as Elysia;
+  const application = new AponiaElysiaApplication(nativeApplication, undefined);
+
+  await application.close();
+  await application.close(false);
+
+  expect(closePolicies).toEqual([true, false]);
+});
+
 test("passes explicit Elysia AOT and precompile policy to the root application", async () => {
   const precompile = Object.freeze({ compose: true, schema: true });
   const observedConfigurations: {
@@ -548,6 +567,50 @@ test("logs the root path for a directly registered controller with no routes", a
   await application.close();
 });
 
+test("registers an inferred controller without an options object or tuple assertion", async () => {
+  class CompactService {
+    read(): { readonly source: "compact" } {
+      return { source: "compact" };
+    }
+  }
+
+  class CompactController {
+    constructor(readonly service: CompactService) {}
+  }
+
+  const controller = elysiaController(
+    CompactController,
+    [CompactService],
+    (application, instance) =>
+      application.get("/compact-controller", () => instance.service.read()),
+  );
+  const module = defineModule({
+    id: "CompactControllerModule",
+    controllers: [controller],
+    providers: [provideClass(CompactService, [])],
+  });
+  const application = await AponiaFactory.create(module, { logger: false });
+  const response = await application.handle(new Request("http://localhost/compact-controller"));
+
+  expect(await response.json()).toEqual({ source: "compact" });
+  expect(controller.inject).toEqual([CompactService]);
+  expect(Object.isFrozen(controller)).toBe(true);
+  expect(Object.isFrozen(controller.inject)).toBe(true);
+  await application.close();
+});
+
+test("rejects the dependency form when its registration callback is missing", () => {
+  class MissingRegistrationController {}
+  const callWithoutRegistration = elysiaController as unknown as (
+    useClass: typeof MissingRegistrationController,
+    inject: readonly [],
+  ) => unknown;
+
+  expect(() => callWithoutRegistration(MissingRegistrationController, [])).toThrow(
+    "elysiaController requires a route registration callback.",
+  );
+});
+
 test("classifies a controller factory with a non-Elysia result as invalid", async () => {
   const invalidModule = defineModule({
     id: "InvalidControllerModule",
@@ -570,6 +633,34 @@ test("classifies a controller factory with a non-Elysia result as invalid", asyn
     expect.objectContaining({
       code: "INVALID_CONTROLLER",
     }),
+  );
+});
+
+test("rejects direct route registration that returns a different Elysia application", async () => {
+  class ReplacedApplicationController {}
+  const controller = defineElysiaController(ReplacedApplicationController, {
+    inject: [] as const,
+    registerRoutes: () => new Elysia(),
+  });
+  const module = defineModule({
+    id: "ReplacedApplicationModule",
+    controllers: [controller],
+  });
+  const error = await AponiaFactory.create(module, { logger: false }).then(
+    () => undefined,
+    (reason: unknown) => reason,
+  );
+
+  expect(error).toEqual(
+    expect.objectContaining({
+      code: "INVALID_CONTROLLER",
+      details: {
+        controller: "ReplacedApplicationController",
+      },
+    }),
+  );
+  expect(() => controller.buildPlugin(new ReplacedApplicationController())).toThrow(
+    expect.objectContaining({ code: "INVALID_CONTROLLER" }),
   );
 });
 

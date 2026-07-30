@@ -67,27 +67,32 @@ export function createResourceFiles(
     createFile(
       directory,
       `${names.fileName}.service.ts`,
-      renderResourceService(names, options.crud, dtoSuffix),
+      renderResourceService(names, options.crud, options.type),
     ),
   ];
 
-  const validated = options.crud && options.type === "rest";
-  if (validated) {
+  const restCrud = options.crud && options.type === "rest";
+  if (restCrud) {
     files.push(createFile(directory, `${names.fileName}.model.ts`, renderResourceModel(names)));
   }
 
-  if (options.crud) {
+  if (options.crud && !restCrud) {
     files.push(
       createFile(
         join(directory, "dto"),
         `create-${names.singularFileName}.${dtoSuffix}.ts`,
-        renderCreateDto(names, dtoSuffix, validated),
+        renderCreateDto(names, dtoSuffix),
       ),
       createFile(
         join(directory, "dto"),
         `update-${names.singularFileName}.${dtoSuffix}.ts`,
-        renderUpdateDto(names, dtoSuffix, validated),
+        renderUpdateDto(names, dtoSuffix),
       ),
+    );
+  }
+
+  if (options.crud) {
+    files.push(
       createFile(
         join(directory, "entities"),
         `${names.singularFileName}.entity.ts`,
@@ -126,7 +131,7 @@ export function createResourceFiles(
       createFile(
         directory,
         `${names.fileName}.${transportStem}.spec.ts`,
-        renderResourceTransportSpec(names, transportStem),
+        renderResourceTransportSpec(names, transportStem, options.crud),
       ),
     );
   }

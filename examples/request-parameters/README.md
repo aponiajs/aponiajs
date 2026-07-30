@@ -1,6 +1,10 @@
 # Request parameters
 
-Every parameter decorator: `@Body`, `@Query`, `@Param`, `@Headers`, `@Cookie`, `@Req`, `@Res`, and `@Ctx`, each shown both whole and selecting a single property, plus a handler that takes the context with no decorator at all.
+Request parameter decorators for validated input, cookies, the native request,
+mutable response settings, the typed status helper, and the whole Elysia
+context. The example includes both Nest-style `@Res()` and native-named
+`@Set()`/`@Status()` usage, plus a handler that receives the context without a
+decorator.
 
 ## Run
 

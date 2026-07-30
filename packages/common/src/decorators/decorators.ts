@@ -1,4 +1,5 @@
 import "reflect-metadata";
+import { isRouteResponseSchemaMap } from "../routing/route-schema.ts";
 import type { RouteSchema } from "../routing/route-schema.types.ts";
 import type { ClassToken, Token } from "../tokens/token.types.ts";
 import type {
@@ -113,13 +114,23 @@ function createRouteDecorator(method: RequestMethod): RouteDecoratorFactory {
             method,
             path,
             propertyKey,
-            schema: schema ? Object.freeze({ ...schema }) : undefined,
+            schema: schema ? freezeRouteSchema(schema) : undefined,
           }),
         ]),
         target,
       );
     };
   }) as RouteDecoratorFactory;
+}
+
+function freezeRouteSchema(schema: RouteSchema): Readonly<RouteSchema> {
+  const response = schema.response;
+  return Object.freeze({
+    ...schema,
+    ...(response && isRouteResponseSchemaMap(response)
+      ? { response: Object.freeze({ ...response }) }
+      : {}),
+  });
 }
 
 function asToken(value: unknown, target: ClassToken<unknown>): Token<unknown> {

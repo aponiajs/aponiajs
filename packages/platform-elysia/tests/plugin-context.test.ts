@@ -1,5 +1,16 @@
 import { expect, test } from "bun:test";
-import { Controller, Ctx, Get, Injectable, Module, Param, Post } from "@aponiajs/common";
+import {
+  Controller,
+  Ctx,
+  Get,
+  Injectable,
+  Module,
+  Param,
+  Post,
+  Set,
+  Status,
+  Store,
+} from "@aponiajs/common";
 import { Elysia } from "elysia";
 import { z } from "zod";
 import {
@@ -7,6 +18,9 @@ import {
   ElysiaPluginModule,
   type ElysiaInputSchema,
   type ElysiaRouteContext,
+  type ElysiaSet,
+  type ElysiaStatus,
+  type ElysiaStore,
 } from "../src/index.ts";
 
 type Equals<TLeft, TRight> =
@@ -108,6 +122,17 @@ class ContextController {
   @Get("untyped")
   readUntyped(@Ctx() context: ElysiaRouteContext): { now: unknown } {
     return { now: (context as Record<string, unknown>).now === undefined ? null : "present" };
+  }
+
+  @Get("parts")
+  readNativeParts(
+    @Store() store: ElysiaStore<typeof clockPlugin>,
+    @Set() set: ElysiaSet,
+    @Status() status: ElysiaStatus,
+  ): unknown {
+    store.requests += 1;
+    set.headers["x-context-source"] = "parts";
+    return status(202, { requests: store.requests });
   }
 }
 
@@ -281,15 +306,18 @@ type PluginTypeAssertions = [
   Expect<Equals<ShortContext["body"], unknown>>,
   Expect<Equals<AliasedSchemaContext["body"], { name: string }>>,
   Expect<Equals<AliasedSchemaContext["cache"], ManyContext["cache"]>>,
+  Expect<Equals<ElysiaStore<typeof clockPlugin>, ClockContext["store"]>>,
+  Expect<Equals<ElysiaSet, ClockContext["set"]>>,
+  Expect<Equals<ElysiaStatus, ClockContext["status"]>>,
 ];
 
 test("keeps the plugin context type assertions referenced", () => {
   const assertions: PluginTypeAssertions = Array.from(
-    { length: 19 },
+    { length: 22 },
     () => true,
   ) as PluginTypeAssertions;
 
-  expect(assertions).toHaveLength(19);
+  expect(assertions).toHaveLength(22);
 });
 
 test("types plugins passed in the first argument", async () => {
@@ -308,4 +336,26 @@ test("serves a handler annotated with an application context alias", async () =>
     now: "2026-07-28T00:00:00.000Z",
     cached: "cached:42",
   });
+});
+
+test("injects typed store, set, and status parts without materializing the whole context", async () => {
+  const application = await AponiaFactory.create(ContextModule, { logger: false });
+  const routeHandlerSource =
+    application
+      .getNativeApplication()
+      .router.history.find((route) => route.path === "/context/parts")
+      ?.handler.toString() ?? "";
+  const first = await application.handle(new Request("http://localhost/context/parts"));
+  const second = await application.handle(new Request("http://localhost/context/parts"));
+
+  expect(routeHandlerSource).toContain("context.store");
+  expect(routeHandlerSource).toContain("context.set");
+  expect(routeHandlerSource).toContain("context.status");
+  expect(routeHandlerSource).not.toContain("handler.call(instance,context)");
+  expect(first.status).toBe(202);
+  expect(first.headers.get("x-context-source")).toBe("parts");
+  expect(await first.json()).toEqual({ requests: 1 });
+  expect(second.status).toBe(202);
+  expect(await second.json()).toEqual({ requests: 2 });
+  await application.close();
 });

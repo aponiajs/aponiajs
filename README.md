@@ -13,6 +13,7 @@ Structured applications for Bun
 [Learning path](./docs/learn/README.md) ·
 [Documentation](./docs/architecture-and-style.md) ·
 [Dependency injection](./docs/dependency-injection.md) ·
+[WebSockets](./docs/websockets.md) ·
 [Native plugins](./docs/native-plugins.md) ·
 [Eden Treaty](./docs/eden-treaty.md) ·
 [Testing](./docs/testing.md) ·
@@ -116,6 +117,33 @@ export class UserModule {}
 `UserService` is visible to any module that imports `UserModule`; a provider
 left out of `exports` stays private to its own module.
 
+## WebSocket gateways
+
+Gateways use the same provider container as services while Elysia handles the
+native WebSocket connection:
+
+```ts
+import { MessageBody, Module, SubscribeMessage, WebSocketGateway } from "@aponiajs/common";
+
+@WebSocketGateway("/events")
+class EventsGateway {
+  @SubscribeMessage("events.echo")
+  echo(@MessageBody() message: unknown): unknown {
+    return message;
+  }
+}
+
+@Module({ providers: [EventsGateway] })
+class EventsModule {}
+```
+
+Clients send `{ "event": "events.echo", "data": value }`. An ordinary return
+value is wrapped with the subscribed event; returning a `WsResponse` selects a
+different event. `@ConnectedSocket()` exposes the native Elysia socket, and
+`@WebSocketServer()` plus the gateway lifecycle interfaces cover initialization,
+connection, and disconnection. See the
+[WebSocket gateway guide](./docs/websockets.md).
+
 ## Providers
 
 A class provider is the common case, and the descriptor helpers cover values,
@@ -215,6 +243,42 @@ contract adapter or custom fetcher. The [Eden guide](./docs/eden-treaty.md)
 shows typed controllers, module composition, and why decorator metadata remains
 a runtime-only contract until build-time compilation lands.
 
+## Native-inferred controllers
+
+Use `elysiaController` when you want Aponia dependency injection with native
+Elysia route inference and minimal syntax:
+
+```ts
+import { defineModule, provideClass } from "@aponiajs/common";
+import { elysiaController } from "@aponiajs/platform-elysia";
+import { t } from "elysia";
+
+class NativeUsersController {
+  constructor(readonly users: UserService) {}
+
+  create(name: string) {
+    return this.users.create(name);
+  }
+}
+
+const usersController = elysiaController(NativeUsersController, [UserService], (app, controller) =>
+  app.post("/users", ({ body, status }) => status(201, controller.create(body.name)), {
+    body: t.Object({ name: t.String() }),
+  }),
+);
+
+export const UsersModule = defineModule({
+  id: "UsersModule",
+  controllers: [usersController],
+  providers: [provideClass(UserService, [])],
+});
+```
+
+Elysia infers `body`, `query`, `params`, `store`, `set`, and `status` in the
+callback. There is no options object, `as const`, manual context annotation, or
+`typeof`. Decorated controllers remain available when Nest-shaped classes are
+the better fit.
+
 ## Request parameters
 
 Parameter decorators inject one piece of the request. Each accepts an optional
@@ -227,8 +291,10 @@ name that selects a single property:
 | `@Param("id")`        | Path parameters                |
 | `@Headers("x-agent")` | Request headers                |
 | `@Cookie("session")`  | Cookies, or one cookie's value |
+| `@Store()`            | The native application store   |
 | `@Req()`              | The native `Request`           |
-| `@Res()`              | The mutable response settings  |
+| `@Set()` / `@Res()`   | The mutable response settings  |
+| `@Status()`           | Elysia's typed status helper   |
 | `@Ctx()`              | The whole Elysia context       |
 
 ```ts
@@ -252,18 +318,21 @@ Types come from the annotation you write, exactly as in NestJS.
 
 ## Validate
 
-Declare a schema on the route and invalid requests never reach the handler. Any
-[Standard Schema](https://standardschema.dev) validator works — Zod, ArkType,
-Valibot — as do TypeBox and Elysia's `t`:
+Wrap one complete validator in one `@Validation()` class and invalid requests
+never reach the handler. Any [Standard Schema](https://standardschema.dev)
+validator works — Zod, ArkType, Valibot — as do TypeBox and Elysia's `t`:
 
 ```ts
-import { Body, Controller, Post } from "@aponiajs/common";
+import { Body, Controller, Post, Validation, type InferValidatorOutput } from "@aponiajs/common";
 import { z } from "zod";
 
-const CreateUser = z.object({
+const createUserSchema = z.object({
   name: z.string().min(2),
 });
-type CreateUser = z.infer<typeof CreateUser>;
+
+@Validation(createUserSchema)
+export class CreateUser {}
+export interface CreateUser extends InferValidatorOutput<typeof createUserSchema> {}
 
 @Controller("users")
 export class UserController {
@@ -274,11 +343,33 @@ export class UserController {
 }
 ```
 
-`body`, `query`, `params`, `headers`, and `response` are the available slots. A
-rejected request returns `422` without running the handler.
+Create, update, and path-parameter contracts use separate model classes.
+`body`, `query`, `params`, `headers`, `cookie`, and `response` are the available
+slots. A rejected request returns `422` without running the handler. Raw
+validators remain available for low-level integrations.
 
-Need Elysia's own context — `status`, `set`, `cookie`, `store`, `redirect`,
-plugin decorators? Take it with `@Ctx()`, typed by the declared schema:
+## Application errors
+
+Default application failures are one expression and serialize as RFC 9457
+Problem Details:
+
+```ts
+import { httpErrors } from "@aponiajs/platform-elysia";
+
+throw httpErrors.notFound("User 42 does not exist.", {
+  code: "USER_NOT_FOUND",
+});
+```
+
+`httpErrors` includes every 4xx and 5xx status supported by Elysia. Each response
+uses `application/problem+json`; optional causes stay server-side and stacks are
+never serialized. Use `httpError(422, detail, options)` when a numeric status is
+clearer. See the [errors chapter](./docs/learn/10-errors.md).
+
+Need Elysia's whole context in a decorated method? Take it with `@Ctx()`, typed
+by the declared schema. This explicit annotation is the advanced decorator
+path; `elysiaController` above needs no context type. Model-backed schemas work
+here too, including response-aware `context.status`:
 
 ```ts
 import { Controller, Ctx, Post } from "@aponiajs/common";
@@ -369,9 +460,9 @@ A tuple types several plugins at once, and the second argument is only needed
 when a route schema comes first:
 `ElysiaRouteContext<typeof createUser, [typeof clock, typeof jwt]>`.
 
-`defineElysiaPlugin` removes the ceremony entirely. It converts a native plugin
-into a module import that carries its own type, so the plugin mounts directly
-and annotates without `typeof`:
+`defineElysiaPlugin` converts a native plugin into a module import that carries
+its own type. For decorated methods, declare one same-named type alias at the
+export boundary so every handler annotation can omit `typeof`:
 
 ```ts
 // src/clock.plugin.ts
@@ -398,8 +489,11 @@ export class HealthController {
 export class HealthModule {}
 ```
 
-The [native plugin guide](./docs/native-plugins.md) covers both forms, the
-`AppContext<TSchema>` alias, and exactly which plugin declarations reach a
+TypeScript cannot contextually type a decorated method from decorator metadata,
+which is why that one alias exists. A native `elysiaController` callback can
+instead call `.use(plugin)` and infer the resulting context directly with no
+alias. The [native plugin guide](./docs/native-plugins.md) covers both forms,
+the `AppContext<TSchema>` alias, and exactly which plugin declarations reach a
 controller.
 
 ## Test
@@ -441,8 +535,9 @@ aponia g res users
 ```
 
 Every Nest schematic is available, from `class` and `controller` to `resource`
-and `gateway`. A REST resource also generates `users.model.ts` holding its route
-validation, with both DTOs derived from it. See the
+and `gateway`. A REST resource also generates `users.model.ts` with separate
+create, partial-update, and path-parameter validation classes used directly by
+its controller and service. See the
 [CLI reference](./docs/cli.md) for the full catalog, aliases, and options.
 
 ## Packages
@@ -460,19 +555,26 @@ All public packages share one version and are published to the `alpha` channel;
 
 ## Current scope
 
-Implemented: decorated modules and HTTP controllers, Standard Schema route
-validation, request parameter decorators, singleton dependency injection,
-class/value/factory/alias providers, explicit tokens, module imports and
-exports, lifecycle management, structured logging, project generators, and
-native Elysia escape hatches. Statically declared descriptor modules also expose
-their composed Elysia route type directly to Eden Treaty.
+Implemented: decorated modules and HTTP controllers, Standard Schema input and
+status-specific response validation, one-schema validation-model classes,
+request parameter decorators, singleton dependency injection,
+class/value/factory/alias providers, explicit tokens,
+module imports and exports, lifecycle management, structured logging, project
+generators, and native Elysia escape hatches. Concise controllers preserve
+native callback inference without manual context types, and application errors
+cover every supported 4xx and 5xx status with RFC 9457 responses. Statically
+declared descriptor modules also expose their composed Elysia route type
+directly to Eden Treaty. Provider-registered WebSocket gateways expose
+Nest-style message and lifecycle decorators over Elysia's native socket
+runtime.
 
 Not implemented yet: async provider lifecycle, request and transient scopes,
-platform-neutral HTTP packages, full Elysia phase conformance, status-specific
-response contracts, Problem Details and serialization policy, configuration and
-secret redaction, HTTP admission hardening, guards, interceptors, middleware,
-exception filters, authentication and authorization, rate limiting, testing
-packages, observability and health, OpenAPI generation, WebSockets,
+platform-neutral HTTP packages, full Elysia phase conformance, automatic Problem
+Details mapping for native validation and framework failures, serialization
+policy, configuration and secret redaction, HTTP admission hardening, guards,
+interceptors, middleware, exception filters, authentication and authorization,
+rate limiting, testing packages, observability and health, OpenAPI generation,
+production WebSocket policies and the transport-neutral adapter package,
 decorator-wide Eden inference, and microservice transports. The
 [roadmap](./ROADMAP.md) tracks those capabilities and their dependencies.
 

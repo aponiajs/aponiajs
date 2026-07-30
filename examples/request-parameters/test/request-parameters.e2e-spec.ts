@@ -77,6 +77,14 @@ test("@Res writes response settings the client observes", async () => {
   expect(await response.json()).toEqual({ written: true });
 });
 
+test("@Set and @Status expose native Elysia response parts", async () => {
+  const response = await get(application, "/parameters/native-response");
+
+  expect(response.status).toBe(202);
+  expect(response.headers.get("x-source")).toBe("native-parts");
+  expect(await response.json()).toEqual({ written: true });
+});
+
 test("@Ctx injects the whole platform context", async () => {
   expect(await (await get(application, "/parameters/context")).json()).toEqual({
     path: "/parameters/context",

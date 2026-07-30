@@ -116,6 +116,34 @@ test("generates every component and resource schematic", async () => {
   }
 });
 
+test("generates a provider-registered WebSocket gateway", async () => {
+  const projectRoot = await createProjectRoot("aponia-websocket-gateway-");
+  await generateSchematic({
+    command: "generate",
+    schematic: "gateway",
+    name: "events",
+    dryRun: false,
+    skipImport: false,
+    crud: true,
+    type: "ws",
+    cwd: projectRoot,
+  });
+
+  const gateway = await Bun.file(join(projectRoot, "src/events.gateway.ts")).text();
+  const gatewaySpec = await Bun.file(join(projectRoot, "src/events.gateway.spec.ts")).text();
+  const module = await Bun.file(join(projectRoot, "src/app.module.ts")).text();
+
+  expect(gateway).toBe(
+    'import { WebSocketGateway } from "@aponiajs/common";\n\n@WebSocketGateway("/events")\nexport class EventsGateway {}\n',
+  );
+  expect(gatewaySpec).toContain('import { getWebSocketGatewayMetadata } from "@aponiajs/common";');
+  expect(gatewaySpec).toContain(
+    'expect(getWebSocketGatewayMetadata(EventsGateway)?.path).toBe("/events");',
+  );
+  expect(module).toContain('import { EventsGateway } from "./events.gateway.ts";');
+  expect(module).toContain("providers: [EventsGateway]");
+});
+
 test("generates application and library workspaces with synchronized dependencies", async () => {
   const projectRoot = await createProjectRoot("aponia-workspace-schematics-");
 
@@ -220,12 +248,17 @@ test("resource generates CRUD building blocks and registers its module", async (
       "src/users/users.service.ts",
       "src/users/users.service.spec.ts",
       "src/users/users.model.ts",
-      "src/users/dto/create-user.dto.ts",
-      "src/users/dto/update-user.dto.ts",
       "src/users/entities/user.entity.ts",
       "src/app.module.ts",
     ]),
   );
+  expect(result.changes.map((change) => change.path)).not.toEqual(
+    expect.arrayContaining([
+      "src/users/dto/create-user.dto.ts",
+      "src/users/dto/update-user.dto.ts",
+    ]),
+  );
+  expect(await Bun.file(join(projectRoot, "src/users/dto")).exists()).toBe(false);
   expect(await Bun.file(join(projectRoot, "src/app.module.ts")).text()).toContain(
     "imports: [UsersModule],",
   );
@@ -233,7 +266,7 @@ test("resource generates CRUD building blocks and registers its module", async (
   expect(await Bun.file(join(projectRoot, "src/users/users.schema.ts")).exists()).toBe(false);
 });
 
-test("REST resource generates a model wired into its controller and DTOs", async () => {
+test("REST CRUD resource uses separate validation model classes without DTO files", async () => {
   const projectRoot = await createProjectRoot("aponia-resource-model-");
   await generateSchematic({
     command: "generate",
@@ -247,34 +280,90 @@ test("REST resource generates a model wired into its controller and DTOs", async
   });
 
   const model = await Bun.file(join(projectRoot, "src/users/users.model.ts")).text();
+  expect(model).toContain(
+    'import { Validation, type InferValidatorOutput } from "@aponiajs/common";',
+  );
   expect(model).toContain('import { t } from "elysia";');
-  expect(model).toContain("export const createUserSchema = t.Object({");
-  expect(model).toContain("export const updateUserSchema = t.Partial(createUserSchema);");
-  expect(model).toContain("export const createUserRoute = {");
-  expect(model).toContain("export const findUserRoute = {");
-  expect(model).toContain("export const updateUserRoute = {");
+  expect(model).toContain(
+    "Validation models are metadata tokens for Elysia-validated plain objects",
+  );
+  expect(model).toContain("const createUserSchema = t.Object({");
+  expect(model).toContain("@Validation(createUserSchema)");
+  expect(model).toContain("export class CreateUser {}");
+  expect(model).toContain(
+    "export interface CreateUser extends InferValidatorOutput<typeof createUserSchema> {}",
+  );
+  expect(model).toContain("const updateUserSchema = t.Partial(createUserSchema);");
+  expect(model).toContain("@Validation(updateUserSchema)");
+  expect(model).toContain("export class UpdateUser {}");
+  expect(model).toContain(
+    "export interface UpdateUser extends InferValidatorOutput<typeof updateUserSchema> {}",
+  );
+  expect(model).toContain("const userParamsSchema = t.Object({");
+  expect(model).toContain("@Validation(userParamsSchema)");
+  expect(model).toContain("export class UserParams {}");
+  expect(model).toContain(
+    "export interface UserParams extends InferValidatorOutput<typeof userParamsSchema> {}",
+  );
+  expect(model).not.toContain("export const");
+  expect(model).not.toContain("Route =");
+  expect(model).not.toContain("Static<");
 
   const controller = await Bun.file(join(projectRoot, "src/users/users.controller.ts")).text();
   expect(controller).toContain(
     'import { Body, Controller, Delete, Get, Param, Patch, Post } from "@aponiajs/common";',
   );
   expect(controller).toContain(
-    'import { createUserRoute, findUserRoute, updateUserRoute } from "./users.model.ts";',
+    'import { CreateUser, UpdateUser, UserParams } from "./users.model.ts";',
   );
-  expect(controller).toContain('@Post("/", createUserRoute)');
-  expect(controller).toContain("create(@Body() input: CreateUserDto)");
-  expect(controller).toContain('@Get(":id", findUserRoute)');
-  expect(controller).toContain('findOne(@Param("id") id: string)');
+  expect(controller).toContain('@Post("/", { body: CreateUser })');
+  expect(controller).toContain("create(@Body() input: CreateUser)");
+  expect(controller).toContain('@Get(":id", { params: UserParams })');
+  expect(controller).toContain("findOne(@Param() params: UserParams)");
+  expect(controller).toContain('@Patch(":id", { params: UserParams, body: UpdateUser })');
+  expect(controller).toContain("update(@Param() params: UserParams, @Body() input: UpdateUser)");
+  expect(controller).toContain('@Delete(":id", { params: UserParams })');
+  expect(controller).toContain("remove(@Param() params: UserParams)");
+  expect(controller).not.toContain("Route");
+  expect(controller).not.toContain("Dto");
 
-  const createDto = await Bun.file(join(projectRoot, "src/users/dto/create-user.dto.ts")).text();
-  expect(createDto).toContain('from "../users.model.ts";');
-  expect(createDto).toContain("Static<typeof createUserSchema>");
+  const service = await Bun.file(join(projectRoot, "src/users/users.service.ts")).text();
+  expect(service).toContain('import type { CreateUser, UpdateUser } from "./users.model.ts";');
+  expect(service).toContain("create(input: CreateUser): User");
+  expect(service).toContain("const item = { id: crypto.randomUUID(), name: input.name };");
+  expect(service).toContain("update(id: string, input: UpdateUser): User | undefined");
+  expect(service).not.toContain("./dto/");
 
-  const updateDto = await Bun.file(join(projectRoot, "src/users/dto/update-user.dto.ts")).text();
-  expect(updateDto).toContain('from "../users.model.ts";');
-  expect(updateDto).toContain("Static<typeof updateUserSchema>");
+  expect(await Bun.file(join(projectRoot, "src/users/dto/create-user.dto.ts")).exists()).toBe(
+    false,
+  );
+  expect(await Bun.file(join(projectRoot, "src/users/dto/update-user.dto.ts")).exists()).toBe(
+    false,
+  );
 
   expect(await Bun.file(join(projectRoot, "src/users/users.schema.ts")).exists()).toBe(false);
+});
+
+test("REST model preserves camel-case schema identifiers for compound resources", async () => {
+  const projectRoot = await createProjectRoot("aponia-compound-resource-model-");
+  await generateSchematic({
+    command: "generate",
+    schematic: "resource",
+    name: "blog-posts",
+    dryRun: false,
+    skipImport: false,
+    crud: true,
+    type: "rest",
+    cwd: projectRoot,
+  });
+
+  const model = await Bun.file(join(projectRoot, "src/blog-posts/blog-posts.model.ts")).text();
+  expect(model).toContain("const blogPostParamsSchema = t.Object({");
+  expect(model).toContain("@Validation(blogPostParamsSchema)");
+  expect(model).toContain(
+    "export interface BlogPostParams extends InferValidatorOutput<typeof blogPostParamsSchema> {}",
+  );
+  expect(model).not.toContain("blogpostParamsSchema");
 });
 
 test("resource keeps plain DTO classes for non-REST transports", async () => {
@@ -294,6 +383,37 @@ test("resource keeps plain DTO classes for non-REST transports", async () => {
   expect(await Bun.file(join(projectRoot, "src/users/dto/create-user.dto.ts")).text()).toContain(
     "export class CreateUserDto",
   );
+  expect(await Bun.file(join(projectRoot, "src/users/dto/update-user.dto.ts")).text()).toContain(
+    "export type UpdateUserDto = Partial<CreateUserDto>",
+  );
+  expect(await Bun.file(join(projectRoot, "src/users/users.service.ts")).text()).toContain(
+    'import type { CreateUserDto } from "./dto/create-user.dto.ts";',
+  );
+
+  const gateway = await Bun.file(join(projectRoot, "src/users/users.gateway.ts")).text();
+  const gatewaySpec = await Bun.file(join(projectRoot, "src/users/users.gateway.spec.ts")).text();
+  const module = await Bun.file(join(projectRoot, "src/users/users.module.ts")).text();
+
+  expect(gateway).toContain(
+    'import { MessageBody, SubscribeMessage, WebSocketGateway } from "@aponiajs/common";',
+  );
+  expect(gateway).toContain('@WebSocketGateway("/users")');
+  expect(gateway).toContain('@SubscribeMessage("users.create")');
+  expect(gateway).toContain("create(@MessageBody() input: CreateUserDto)");
+  expect(gateway).toContain('@SubscribeMessage("users.findAll")');
+  expect(gateway).toContain('@SubscribeMessage("users.findOne")');
+  expect(gateway).toContain('findOne(@MessageBody("id") id: string)');
+  expect(gateway).toContain('@SubscribeMessage("users.update")');
+  expect(gateway).toContain(
+    'update(@MessageBody("id") id: string, @MessageBody("input") input: UpdateUserDto)',
+  );
+  expect(gateway).toContain('@MessageBody("input") input: UpdateUserDto');
+  expect(gateway).toContain('@SubscribeMessage("users.remove")');
+  expect(gatewaySpec).toContain(
+    'expect(getWebSocketGatewayMetadata(UsersGateway)?.path).toBe("/users");',
+  );
+  expect(gatewaySpec).toContain('"users.findAll"');
+  expect(module).toContain("providers: [UsersGateway, UsersService]");
 });
 
 test("REST resource without CRUD does not generate or import a model", async () => {
@@ -311,6 +431,7 @@ test("REST resource without CRUD does not generate or import a model", async () 
 
   expect(result.changes.map((change) => change.path)).not.toContain("src/events/events.model.ts");
   expect(await Bun.file(join(projectRoot, "src/events/events.model.ts")).exists()).toBe(false);
+  expect(await Bun.file(join(projectRoot, "src/events/dto")).exists()).toBe(false);
   expect(await Bun.file(join(projectRoot, "src/events/events.controller.ts")).text()).not.toContain(
     ".model.ts",
   );
@@ -350,6 +471,9 @@ test("resource honors transport and CRUD choices", async () => {
   });
 
   expect(await Bun.file(join(noCrudRoot, "src/events/events.gateway.ts")).exists()).toBe(true);
+  expect(await Bun.file(join(noCrudRoot, "src/events/events.gateway.ts")).text()).toContain(
+    '@WebSocketGateway("/events")',
+  );
   expect(await Bun.file(join(noCrudRoot, "src/events/dto")).exists()).toBe(false);
   expect(await Bun.file(join(noCrudRoot, "src/events/entities")).exists()).toBe(false);
   expect(await Bun.file(join(noCrudRoot, "src/events/events.service.ts")).text()).not.toContain(

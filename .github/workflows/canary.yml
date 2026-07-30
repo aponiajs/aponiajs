@@ -52,6 +52,8 @@ jobs:
           bun run test:vite-plus
           bun run build
           bun run test:generated-app
+          bun run release:dry-run
+          bun audit --audit-level=high
 
       - name: Verify the stamped version
         env:

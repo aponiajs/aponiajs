@@ -1,3 +1,8 @@
+import type {
+  RouteSchema as AponiaRouteSchema,
+  RouteValidatorInput,
+  ValidationModelClass,
+} from "@aponiajs/common";
 import type { AnyElysia, Context, InputSchema, SingletonBase, UnwrapRoute } from "elysia";
 
 /**
@@ -48,6 +53,48 @@ type MountedSingleton<TPlugins extends ElysiaPluginTypes> = {
   : never;
 
 /**
+ * A type-only Standard Schema projection lets Elysia infer a validation
+ * model's instance shape without exposing or reconstructing its runtime
+ * validator. Runtime lowering remains owned by the route compiler.
+ */
+interface ValidationModelSchema<TOutput> {
+  readonly "~standard": {
+    readonly types: {
+      readonly input: unknown;
+      readonly output: TOutput;
+    };
+  };
+}
+
+type LowerValidationModel<TValidator> =
+  TValidator extends ValidationModelClass<infer TInstance>
+    ? ValidationModelSchema<TInstance>
+    : TValidator;
+
+type LowerResponseSchema<TResponse> =
+  TResponse extends ValidationModelClass<infer TInstance>
+    ? ValidationModelSchema<TInstance>
+    : TResponse extends Readonly<Record<number, RouteValidatorInput>>
+      ? {
+          readonly [TStatus in keyof TResponse]: LowerValidationModel<TResponse[TStatus]>;
+        }
+      : TResponse;
+
+type LowerAponiaRouteSchema<TSchema extends AponiaRouteSchema> = {
+  readonly [TSlot in keyof TSchema]: TSlot extends "response"
+    ? LowerResponseSchema<TSchema[TSlot]>
+    : LowerValidationModel<TSchema[TSlot]>;
+};
+
+type ResolveElysiaInputSchema<TSchema> = TSchema extends InputSchema
+  ? TSchema
+  : TSchema extends AponiaRouteSchema
+    ? LowerAponiaRouteSchema<TSchema> extends infer TLowered extends InputSchema
+      ? TLowered
+      : {}
+    : {};
+
+/**
  * The native Elysia request context for a declared route schema. Handlers that
  * take the whole context — through `@Ctx()` or a single unannotated parameter —
  * keep `status`, `set`, `cookie`, `store`, `redirect`, and plugin decorators
@@ -82,17 +129,30 @@ type MountedSingleton<TPlugins extends ElysiaPluginTypes> = {
  * ```
  */
 export type ElysiaRouteContext<
-  TSchemaOrPlugins extends InputSchema | ElysiaPluginTypes = {},
+  TSchemaOrPlugins extends ElysiaInputSchema | ElysiaPluginTypes = {},
   TPlugins extends ElysiaPluginTypes = never,
 > = TSchemaOrPlugins extends ElysiaPluginTypes
   ? Context<UnwrapRoute<{}, {}, string>, MountedSingleton<TSchemaOrPlugins>>
   : Context<
-      UnwrapRoute<TSchemaOrPlugins extends InputSchema ? TSchemaOrPlugins : {}, {}, string>,
+      UnwrapRoute<ResolveElysiaInputSchema<TSchemaOrPlugins>, {}, string>,
       MountedSingleton<TPlugins>
     >;
 
+/** The exact mutable response settings exposed as `context.set`. */
+export type ElysiaSet = ElysiaRouteContext["set"];
+
+/** The exact application state contributed by one plugin or a plugin tuple. */
+export type ElysiaStore<TPlugins extends ElysiaPluginTypes = never> = [TPlugins] extends [never]
+  ? ElysiaRouteContext["store"]
+  : ElysiaRouteContext<TPlugins>["store"];
+
+/** The response-schema-aware status helper exposed as `context.status`. */
+export type ElysiaStatus<TSchema extends ElysiaInputSchema = {}> =
+  ElysiaRouteContext<TSchema>["status"];
+
 /**
- * Elysia's own route schema shape, re-exported so an application can write its
- * own context alias without importing from `elysia` directly.
+ * A raw Elysia input schema or an Aponia route schema containing validation
+ * model classes. Re-exported so an application can write one context alias
+ * without importing either framework's internal schema types.
  */
-export type ElysiaInputSchema = InputSchema;
+export type ElysiaInputSchema = InputSchema | AponiaRouteSchema;

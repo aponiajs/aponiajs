@@ -32,11 +32,16 @@ map to Aponia controllers.
 Generated controllers, providers, services, modules, and resources are
 registered in the nearest Aponia module unless `--skip-import` is used.
 Resource transports include REST, GraphQL code-first, GraphQL schema-first,
-microservices, and WebSockets.
+microservices, and WebSockets. Gateway schematics emit
+`@WebSocketGateway("/<resource>")`; CRUD WebSocket resources also emit
+`@SubscribeMessage()` handlers for create, read, update, and remove events with
+`@MessageBody()` input binding.
 
-A REST CRUD resource also generates `<name>.model.ts`. The model owns the route
-validators passed to the controller decorators, and the generated DTOs derive
-their types from those same validators.
+A REST CRUD resource also generates `<name>.model.ts` with separate validated
+classes for create bodies, update bodies, and path parameters. Controllers use
+those classes directly in route decorators and parameter annotations, while
+services share the create and update types. REST CRUD resources do not generate
+DTO files; other transports retain their DTO or input scaffolds.
 
 The separately published
 [`create-aponia`](https://www.npmjs.com/package/create-aponia) package delegates

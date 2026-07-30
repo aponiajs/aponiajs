@@ -10,6 +10,7 @@ The published documentation set:
 | --------------------------- | --------------------------------------------------------------- |
 | `architecture-and-style.md` | Application and framework layout, naming, and expected patterns |
 | `dependency-injection.md`   | Tokens, visibility, providers, and the error codes on failure   |
+| `websockets.md`             | Nest-style gateways over native Elysia WebSockets               |
 | `native-plugins.md`         | Mounting native Elysia plugins and typing what they add         |
 | `eden-treaty.md`            | Native-style application types consumed through Eden Treaty     |
 | `logging.md`                | Logger configuration and the bootstrap log lines                |

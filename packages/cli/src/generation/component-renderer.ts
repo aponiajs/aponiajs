@@ -12,6 +12,8 @@ export function renderComponent(schematic: ComponentSchematic, names: ComponentN
     case "service":
     case "provider":
       return `import { Injectable } from "@aponiajs/common";\n\n@Injectable()\nexport class ${className} {}\n`;
+    case "gateway":
+      return `import { WebSocketGateway } from "@aponiajs/common";\n\n@WebSocketGateway("/${names.routePath}")\nexport class ${className} {}\n`;
     case "decorator":
       return `export function ${className}(): MethodDecorator {\n  return () => undefined;\n}\n`;
     case "interface":
@@ -36,6 +38,11 @@ export function renderComponentSpec(
   names: ComponentNames,
   stem: string,
 ): string {
+  if (schematic === "gateway") {
+    const className = `${names.className}${classSuffix(schematic)}`;
+    return `import { expect, test } from "bun:test";\nimport { getWebSocketGatewayMetadata } from "@aponiajs/common";\nimport { ${className} } from "./${stem}.ts";\n\ntest("${className} exposes its WebSocket path", () => {\n  expect(getWebSocketGatewayMetadata(${className})?.path).toBe("/${names.routePath}");\n});\n`;
+  }
+
   return renderSimpleSpec(`./${stem}.ts`, `${names.className}${classSuffix(schematic)}`);
 }
 

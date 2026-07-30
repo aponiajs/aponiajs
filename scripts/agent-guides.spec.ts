@@ -28,6 +28,13 @@ describe("agent guides", () => {
     }
   });
 
+  test("loads the repository rules on every agent turn", async () => {
+    expect(await Bun.file("RULES.md").exists()).toBe(true);
+    expect(rootGuide).toContain("At the start of every agent turn");
+    expect(rootGuide).toContain("Read [`RULES.md`](RULES.md) completely");
+    expect(rootGuide).toContain("Do not rely on memory from a previous turn");
+  });
+
   test("each guide points back at the repository guide", async () => {
     for (const directory of guideDirectories) {
       const guide = await Bun.file(`${directory}/AGENTS.md`).text();

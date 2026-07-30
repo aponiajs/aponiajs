@@ -22,5 +22,6 @@ afterwards.
 
 Reference documents live one directory up: [architecture and style](../architecture-and-style.md),
 [dependency injection](../dependency-injection.md),
-[native plugins](../native-plugins.md), [logging](../logging.md),
+[WebSocket gateways](../websockets.md), [native plugins](../native-plugins.md),
+[logging](../logging.md),
 [testing](../testing.md), [CLI](../cli.md), [releasing](../releasing.md).

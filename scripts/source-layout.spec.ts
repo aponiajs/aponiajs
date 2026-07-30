@@ -21,6 +21,7 @@ const packageLayouts: readonly PackageLayout[] = [
       "providers",
       "routing",
       "tokens",
+      "websockets",
     ],
   },
   {
@@ -31,7 +32,15 @@ const packageLayouts: readonly PackageLayout[] = [
   {
     sourceRoot: "packages/platform-elysia/src",
     files: ["index.ts"],
-    directories: ["application", "controllers", "modules", "plugins", "routing"],
+    directories: [
+      "application",
+      "controllers",
+      "errors",
+      "modules",
+      "plugins",
+      "routing",
+      "websockets",
+    ],
   },
   {
     sourceRoot: "packages/cli/src",

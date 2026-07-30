@@ -10,8 +10,10 @@ context.
 | `@Param("id")`        | Path parameters                |
 | `@Headers("x-agent")` | Request headers                |
 | `@Cookie("session")`  | Cookies, or one cookie's value |
+| `@Store()`            | Typed application state        |
 | `@Req()`              | The native `Request`           |
-| `@Res()`              | The mutable response settings  |
+| `@Set()` / `@Res()`   | Mutable response settings      |
+| `@Status()`           | The typed status helper        |
 | `@Ctx()`              | The whole Elysia context       |
 
 Each accepts an optional name that selects a single property:
@@ -27,6 +29,11 @@ findOne(@Param("id") id: string, @Query("expand") expand: string | undefined) {
   return { id, expand };
 }
 ```
+
+`@Store()`, `@Set()`, and `@Status()` are the native Elysia names. Annotate
+them with `ElysiaStore<AppPlugins>`, `ElysiaSet`, and
+`ElysiaStatus<typeof schema>` when exact plugin or response types matter.
+`@Res()` remains an alias for teams that prefer Nest terminology.
 
 ## Taking the whole context
 

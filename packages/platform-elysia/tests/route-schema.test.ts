@@ -3,7 +3,7 @@ import { Controller, Get, Module, Post, type RouteContext } from "@aponiajs/comm
 import { type } from "arktype";
 import { t } from "elysia";
 import { z } from "zod";
-import { AponiaFactory } from "../src/index.ts";
+import { AponiaFactory, type ElysiaRouteContext, type ElysiaStatus } from "../src/index.ts";
 
 const createUserSchema = {
   body: z.object({
@@ -27,6 +27,26 @@ const responseSchema = {
   response: z.object({
     name: z.string(),
   }),
+};
+
+const cookieSchema = {
+  cookie: t.Cookie({
+    session: t.String({ minLength: 3 }),
+  }),
+};
+
+const statusResponseSchema = {
+  params: t.Object({
+    id: t.Numeric(),
+  }),
+  response: {
+    200: t.Object({
+      id: t.Number(),
+    }),
+    404: t.Object({
+      code: t.Literal("USER_NOT_FOUND"),
+    }),
+  },
 };
 
 @Controller("users")
@@ -59,6 +79,18 @@ class UserController {
   @Get("invalid-response", responseSchema)
   readInvalidResponse(): unknown {
     return { name: 42 };
+  }
+
+  @Get("session", cookieSchema)
+  readSession(context: ElysiaRouteContext<typeof cookieSchema>): { session: string } {
+    return { session: context.cookie.session.value };
+  }
+
+  @Get("status/:id", statusResponseSchema)
+  readStatus(context: ElysiaRouteContext<typeof statusResponseSchema>) {
+    return context.params.id === 0
+      ? context.status(404, { code: "USER_NOT_FOUND" })
+      : { id: context.params.id };
   }
 }
 
@@ -133,4 +165,61 @@ test("validates successful and rejected handler responses", async () => {
   expect(await accepted.json()).toEqual({ name: "Ada" });
   expect(rejected.status).toBe(422);
   await application.close();
+});
+
+test("validates and types cookies through Elysia's native cookie context", async () => {
+  const application = await createApplication();
+  const accepted = await application.handle(
+    new Request("http://localhost/users/session", {
+      headers: { cookie: "session=abc" },
+    }),
+  );
+  const rejected = await application.handle(
+    new Request("http://localhost/users/session", {
+      headers: { cookie: "session=x" },
+    }),
+  );
+
+  expect(accepted.status).toBe(200);
+  expect(await accepted.json()).toEqual({ session: "abc" });
+  expect(rejected.status).toBe(422);
+  await application.close();
+});
+
+test("validates status-specific response schemas and preserves response status", async () => {
+  const application = await createApplication();
+  const found = await application.handle(new Request("http://localhost/users/status/42"));
+  const missing = await application.handle(new Request("http://localhost/users/status/0"));
+
+  expect(found.status).toBe(200);
+  expect(await found.json()).toEqual({ id: 42 });
+  expect(missing.status).toBe(404);
+  expect(await missing.json()).toEqual({ code: "USER_NOT_FOUND" });
+  await application.close();
+});
+
+type StatusContext = ElysiaRouteContext<typeof statusResponseSchema>;
+type CookieContext = ElysiaRouteContext<typeof cookieSchema>;
+type Equals<TLeft, TRight> =
+  (<T>() => T extends TLeft ? 1 : 2) extends <T>() => T extends TRight ? 1 : 2 ? true : false;
+type Expect<TAssertion extends true> = TAssertion;
+type RouteSchemaTypeAssertions = [
+  Expect<Equals<CookieContext["cookie"]["session"]["value"], string>>,
+  Expect<Equals<ElysiaStatus<typeof statusResponseSchema>, StatusContext["status"]>>,
+];
+
+function assertStatusSchemaSafety(status: ElysiaStatus<typeof statusResponseSchema>): void {
+  status(200, { id: 1 });
+  status(404, { code: "USER_NOT_FOUND" });
+  // @ts-expect-error Status 404 requires the declared not-found body.
+  status(404, { id: 1 });
+  // @ts-expect-error Status 418 is absent from the route response contract.
+  status(418, "teapot");
+}
+
+test("keeps cookie and response status type assertions referenced", () => {
+  const assertions: RouteSchemaTypeAssertions = [true, true];
+
+  expect(assertions).toEqual([true, true]);
+  expect(assertStatusSchemaSafety).toBeFunction();
 });

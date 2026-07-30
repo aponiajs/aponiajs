@@ -112,13 +112,14 @@ void api.users({ id: 42 }).post();
 ## Use Aponia controllers and dependency injection
 
 Controller descriptors can contribute their native Elysia route types to the
-same application. Return the fluent Elysia plugin from `buildPlugin`, then place
-the descriptor in a `defineModule` controller tuple:
+same application. The concise path is `elysiaController`: its callback gets
+Elysia's normal request inference, its dependency tuple needs no assertion, and
+returning the fluent chain preserves the Eden contract:
 
 ```ts
 import { defineModule, provideClass } from "@aponiajs/common";
-import { AponiaFactory, defineElysiaController } from "@aponiajs/platform-elysia";
-import { Elysia, t } from "elysia";
+import { AponiaFactory, elysiaController } from "@aponiajs/platform-elysia";
+import { t } from "elysia";
 
 class UsersService {
   find(id: number) {
@@ -130,31 +131,54 @@ class UsersController {
   constructor(readonly users: UsersService) {}
 }
 
-const usersController = defineElysiaController(UsersController, {
-  inject: [UsersService] as const,
-  buildPlugin: (controller) =>
-    new Elysia({ name: "users-controller" }).get(
-      "/users/:id",
-      ({ params }) => controller.users.find(params.id),
-      {
-        params: t.Object({ id: t.Number() }),
-        response: t.Object({
-          id: t.Number(),
-          name: t.String(),
-        }),
-      },
-    ),
-});
+const usersController = elysiaController(UsersController, [UsersService], (app, controller) =>
+  app.get("/users/:id", ({ params }) => controller.users.find(params.id), {
+    params: t.Object({ id: t.Number() }),
+    response: t.Object({
+      id: t.Number(),
+      name: t.String(),
+    }),
+  }),
+);
 
 const AppModule = defineModule({
   id: "AppModule",
-  providers: [provideClass(UsersService, [] as const)],
+  providers: [provideClass(UsersService, [])],
   controllers: [usersController],
 });
 
 export const app = await AponiaFactory.createNative(AppModule);
 export type App = typeof app;
 ```
+
+No route context annotation or `typeof` is needed in that controller. The
+single `typeof app` names a value's inferred type for a separate frontend
+compilation; TypeScript requires that operation at the process boundary.
+In-process tests can call `treaty(app)` directly and need no exported alias.
+
+The explicit descriptor form remains available for generators and advanced
+plugin ownership:
+
+```ts
+import { defineElysiaController } from "@aponiajs/platform-elysia";
+import { Elysia } from "elysia";
+
+const usersController = defineElysiaController(UsersController, {
+  inject: [UsersService],
+  buildPlugin: (controller) =>
+    new Elysia({ name: "users-controller" }).get(
+      "/users/:id",
+      ({ params }) => controller.users.find(params.id),
+      { params: t.Object({ id: t.Number() }) },
+    ),
+});
+```
+
+`defineElysiaController(..., { registerRoutes })` is also retained. Returning
+nothing remains runtime-compatible for existing direct registrations, but
+TypeScript then has no route chain to add to the exported Eden contract.
+Returning another Elysia instance is rejected during bootstrap because its
+routes would not be mounted on the application that Aponia exposes.
 
 Imported descriptor modules and `defineElysiaPlugin` imports are traversed in
 the same order as runtime bootstrap. Routes added by `configureNative` are also
@@ -211,10 +235,17 @@ Aponia lifecycle facade, startup logging, `getUrl`, or `close` is more useful.
 TypeScript can preserve routes that are visible in source:
 
 - native applications wrapped by `defineElysiaPlugin`;
+- `elysiaController` registrations that return their fluent Elysia chain;
 - `defineElysiaController` descriptors whose `buildPlugin` returns a typed
   Elysia plugin;
-- statically declared imports and controllers in `defineModule`;
+- `defineElysiaController` direct registrations that return their fluent
+  Elysia chain;
+- all statically declared imports and controllers in a `defineModule` tuple;
 - native routes accumulated by `configureNative`.
+
+`defineModule` retains those tuples exactly, so composing several controller
+styles and native plugins does not require `as const` and does not collapse the
+Treaty client to a widened application type.
 
 Decorator metadata and asynchronous plugin factories are discovered only at
 runtime. TypeScript cannot inspect them, so their routes still work but are not

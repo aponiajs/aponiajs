@@ -10,9 +10,15 @@ import {
   Query,
   Req,
   Res,
+  Set,
+  Status,
   type RouteResponseSettings,
 } from "@aponiajs/common";
-import { type ElysiaRouteContext } from "@aponiajs/platform-elysia";
+import {
+  type ElysiaRouteContext,
+  type ElysiaSet,
+  type ElysiaStatus,
+} from "@aponiajs/platform-elysia";
 import { createItemSchema, type CreateItem } from "./item.model.ts";
 
 /**
@@ -54,8 +60,8 @@ export class RequestController {
   }
 
   @Get("cookies")
-  readCookies(@Cookie("session") session: unknown): { session: string | null } {
-    return { session: session === undefined ? null : String(session) };
+  readCookies(@Cookie("session") session: string | undefined): { session: string | null } {
+    return { session: session ?? null };
   }
 
   @Get("request")
@@ -67,6 +73,12 @@ export class RequestController {
   writeResponse(@Res() response: RouteResponseSettings): { written: boolean } {
     response.headers["x-source"] = "parameters";
     return { written: true };
+  }
+
+  @Get("native-response")
+  writeNativeResponse(@Set() set: ElysiaSet, @Status() status: ElysiaStatus): unknown {
+    set.headers["x-source"] = "native-parts";
+    return status(202, { written: true });
   }
 
   @Get("context")

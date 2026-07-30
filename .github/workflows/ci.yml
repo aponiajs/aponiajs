@@ -13,9 +13,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  verify:
+  version:
+    name: Version policy
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
 
     steps:
       - name: Check out repository
@@ -27,6 +28,9 @@ jobs:
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.14
+
+      - name: Install frozen dependencies
+        run: bun ci
 
       - name: Require a version bump
         env:
@@ -47,23 +51,167 @@ jobs:
       - name: Report the distribution tag this version would publish to
         run: bun run release:tag
 
+  quality:
+    name: Format, lint, and types
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
       - name: Install frozen dependencies
         run: bun ci
 
       - name: Run Vite+ checks through Bun
         run: bun run check
 
+  bun_tests:
+    name: Bun tests and coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install frozen dependencies
+        run: bun ci
+
       - name: Run Bun tests with coverage
         run: bun run test:coverage
+
+  conformance:
+    name: Vite+ conformance
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install frozen dependencies
+        run: bun ci
+
+      - name: Run Vite+ conformance tests
+        run: bun run test:vite-plus
+
+  integration:
+    name: Example applications
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install frozen dependencies
+        run: bun ci
 
       - name: Run the example end-to-end suites
         run: bun run test:examples
 
-      - name: Run Vite+ conformance tests
-        run: bun run test:vite-plus
+  packaging:
+    name: Build and package
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install frozen dependencies
+        run: bun ci
 
       - name: Build workspace packages
         run: bun run build
 
       - name: Verify a packaged generated application
         run: bun run test:generated-app
+
+      - name: Verify publishable package contents
+        run: bun run release:dry-run
+
+  security:
+    name: Dependency security
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install frozen dependencies
+        run: bun ci
+
+      - name: Reject high-severity dependency advisories
+        run: bun audit --audit-level=high
+
+      - name: Review dependency changes
+        if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@v5
+        with:
+          fail-on-severity: high
+
+  verify:
+    name: Verify
+    if: always()
+    needs:
+      - version
+      - quality
+      - bun_tests
+      - conformance
+      - integration
+      - packaging
+      - security
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Require every CI lane to pass
+        env:
+          VERSION_RESULT: ${{ needs.version.result }}
+          QUALITY_RESULT: ${{ needs.quality.result }}
+          BUN_TESTS_RESULT: ${{ needs.bun_tests.result }}
+          CONFORMANCE_RESULT: ${{ needs.conformance.result }}
+          INTEGRATION_RESULT: ${{ needs.integration.result }}
+          PACKAGING_RESULT: ${{ needs.packaging.result }}
+          SECURITY_RESULT: ${{ needs.security.result }}
+        run: |
+          test "$VERSION_RESULT" = "success"
+          test "$QUALITY_RESULT" = "success"
+          test "$BUN_TESTS_RESULT" = "success"
+          test "$CONFORMANCE_RESULT" = "success"
+          test "$INTEGRATION_RESULT" = "success"
+          test "$PACKAGING_RESULT" = "success"
+          test "$SECURITY_RESULT" = "success"

@@ -49,7 +49,8 @@ aponia g mo users
 aponia g res users
 ```
 
-A REST resource also writes `users.model.ts`, which owns the route schemas the
-controller passes to its decorators and from which both DTOs derive their types.
+A REST resource also writes `users.model.ts`, which owns separate
+`@Validation()` classes for create input, partial update input, and shared path
+parameters. The controller and service use those classes directly.
 
 Next: [03 · Modules](./03-modules.md) · Deep dive: [CLI reference](../cli.md)

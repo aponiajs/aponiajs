@@ -1,11 +1,18 @@
 import { AponiaError, Logger, tokenName, type LoggerService } from "@aponiajs/common";
 import { createContainer } from "@aponiajs/core";
 import { Elysia, type AnyElysia } from "elysia";
-import { isElysiaController } from "../controllers/controller-definition.ts";
+import {
+  isElysiaController,
+  registerElysiaControllerRoutes,
+} from "../controllers/controller-definition.ts";
 import type { RuntimeElysiaController } from "../controllers/controller.types.ts";
 import { compileRootModule } from "../modules/module-compiler.ts";
 import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
 import { getElysiaPlugin, isElysiaPluginModule } from "../plugins/plugin-module.ts";
+import {
+  compileElysiaWebSocketGateways,
+  registerElysiaWebSocketGateways,
+} from "../websockets/websocket-gateway.ts";
 import type { ApplicationBootstrapResult } from "./application-bootstrap.types.ts";
 import type {
   AponiaApplicationOptions,
@@ -26,6 +33,7 @@ export async function bootstrapAponiaApplication(
 
   const compiledRootModule = compileRootModule(rootModule);
   const container = createContainer(compiledRootModule);
+  const webSocketGateways = compileElysiaWebSocketGateways(container.graph.modules);
   const baseApplication = new Elysia({
     ...options.elysia,
     name: compiledRootModule.id,
@@ -61,7 +69,7 @@ export async function bootstrapAponiaApplication(
       const instance = container.instantiateController(module, controller);
       if (typeof controller.registerRoutes === "function") {
         const routeStart = nativeApplication.routes.length;
-        Reflect.apply(controller.registerRoutes, undefined, [nativeApplication, instance]);
+        registerElysiaControllerRoutes(controller, nativeApplication, instance);
         logControllerRoutes(logger, controller, nativeApplication.routes.slice(routeStart));
         continue;
       }
@@ -77,6 +85,15 @@ export async function bootstrapAponiaApplication(
 
       logControllerRoutes(logger, controller, plugin.routes);
       nativeApplication.use(plugin);
+    }
+  }
+
+  await nativeApplication.modules;
+  await registerElysiaWebSocketGateways(nativeApplication, container, webSocketGateways);
+  for (const gateway of webSocketGateways) {
+    logger?.log(`${gateway.gatewayName} {${gateway.path}}:`, "WebSocketsController");
+    for (const handler of gateway.handlers) {
+      logger?.log(`Subscribed to "${handler.event}" message`, "WebSocketsController");
     }
   }
 

@@ -112,16 +112,26 @@ Component options follow Nest conventions:
 Resources additionally support `--crud` / `--no-crud` and these transports:
 `rest`, `graphql-code-first`, `graphql-schema-first`, `microservice`, and `ws`.
 REST resources generate a controller; GraphQL resources generate a resolver;
-WebSocket resources generate a gateway.
+WebSocket resources generate a provider-registered gateway. A CRUD WebSocket
+resource maps `<resource>.create`, `.findAll`, `.findOne`, `.update`, and
+`.remove` through `@SubscribeMessage()` and injects event data with
+`@MessageBody()`. A standalone gateway is immediately mountable:
+
+```ts
+import { WebSocketGateway } from "@aponiajs/common";
+
+@WebSocketGateway("/events")
+export class EventsGateway {}
+```
+
+See the [WebSocket gateway guide](./websockets.md) for the event envelope and
+runtime behavior.
 
 A REST CRUD resource also generates `<name>.model.ts`, which owns the route
 validation model for that resource:
 
 ```text
 src/users/
-|-- dto/
-|   |-- create-user.dto.ts
-|   `-- update-user.dto.ts
 |-- entities/
 |   `-- user.entity.ts
 |-- users.controller.ts
@@ -130,36 +140,58 @@ src/users/
 `-- users.service.ts
 ```
 
-`users.model.ts` exports the per-slot validators and the route schemas the
-controller passes to its decorators, and both DTOs derive their types from
-those schemas, so a field is declared once:
+`users.model.ts` keeps each raw validator beside one exported validation-model
+class. The same-named interfaces derive their fields from those validators, so
+each field is declared once and controller methods use the classes directly:
 
 ```ts
-export const createUserSchema = t.Object({
+import { Validation, type InferValidatorOutput } from "@aponiajs/common";
+import { t } from "elysia";
+
+const createUserSchema = t.Object({
   name: t.String({ minLength: 1 }),
 });
 
-export const createUserRoute = {
-  body: createUserSchema,
-};
+const updateUserSchema = t.Partial(createUserSchema);
+const userParamsSchema = t.Object({ id: t.String() });
+
+@Validation(createUserSchema)
+export class CreateUser {}
+export interface CreateUser extends InferValidatorOutput<typeof createUserSchema> {}
+
+@Validation(updateUserSchema)
+export class UpdateUser {}
+export interface UpdateUser extends InferValidatorOutput<typeof updateUserSchema> {}
+
+@Validation(userParamsSchema)
+export class UserParams {}
+export interface UserParams extends InferValidatorOutput<typeof userParamsSchema> {}
 ```
 
-```ts
-export type CreateUserDto = Static<typeof createUserSchema>;
-```
-
-The generated controller consumes them with parameter decorators:
+The generated controller consumes those classes directly:
 
 ```ts
-@Post("/", createUserRoute)
-create(@Body() input: CreateUserDto) {
+@Post("/", { body: CreateUser })
+create(@Body() input: CreateUser) {
   return this.usersService.create(input);
+}
+
+@Patch(":id", { params: UserParams, body: UpdateUser })
+update(@Param() params: UserParams, @Body() input: UpdateUser) {
+  return this.usersService.update(params.id, input);
+}
+
+@Delete(":id", { params: UserParams })
+remove(@Param() params: UserParams) {
+  return this.usersService.remove(params.id);
 }
 ```
 
 Schemas use Elysia's `t` builder, which ships with the platform peer dependency.
 Swap in any [Standard Schema](https://standardschema.dev) validator — Zod,
-ArkType, Valibot — by editing that one file.
+ArkType, Valibot — by editing that one file. Each class owns exactly one complete
+validator; create, update, and path-parameter contracts are intentionally
+separate. Non-REST transports continue to generate ordinary DTO files.
 
 CLI flags override project-specific `generateOptions`, which override global
 `generateOptions` in `aponia.json`. Both `spec` and `flat` defaults are

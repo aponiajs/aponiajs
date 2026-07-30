@@ -2,13 +2,13 @@
 
 A Bun-first, Nest-inspired application framework built around Elysia.
 
-- **Current version:** 0.6.0-alpha.17
+- **Current version:** 0.6.0-alpha.18
 - **Runtime:** Bun 1.3.14
 - **Package manager:** Bun 1.3.14
 - **Repository:** https://github.com/aponiajs/aponiajs
 - **Default branch:** `main`
 
-**Progress:** 10 completed, 4 in progress, 13 planned of 27 items (44.81% overall).
+**Progress:** 11 completed, 4 in progress, 13 planned of 28 items (47.50% overall).
 
 Status meanings:
 
@@ -23,7 +23,7 @@ Status meanings:
 | Foundation alpha        | `0.3.0`  | Completed   | 100%     | 6     |
 | Developer experience    | `0.3.17` | Completed   | 100%     | 4     |
 | Release quality         | `0.5.0`  | In progress | 36.67%   | 3     |
-| Runtime maturity        | `0.7.0`  | In progress | 20%      | 5     |
+| Runtime maturity        | `0.7.0`  | In progress | 36.67%   | 6     |
 | Production capabilities | `1.0.0`  | Planned     | 0%       | 8     |
 | Post-1.0 ecosystem      | `1.1.0`  | Planned     | 0%       | 1     |
 
@@ -412,7 +412,7 @@ Evidence:
 
 Provider lifecycles, package boundaries, native plugin inference, phase conformance, and response contracts.
 
-Target `0.7.0` · In progress · 20% complete.
+Target `0.7.0` · In progress · 36.67% complete.
 
 ### Async lifecycle and provider scopes
 
@@ -512,6 +512,49 @@ Evidence:
 - [Eden Treaty guide](docs/eden-treaty.md)
 - [Native Elysia compatibility invariant](#30-native-elysia-compatibility-invariant)
 
+### Elysia WebSocket gateway preview
+
+Provide the familiar Nest gateway authoring model over Elysia and Bun's native
+WebSocket runtime without introducing Socket.IO semantics.
+
+- **Status:** Completed (100%)
+- **Priority:** high
+- **Category:** transport
+- **Packages:** `@aponiajs/common`, `@aponiajs/platform-elysia`, `@aponiajs/cli`
+- **Depends on:** Singleton dependency injection, Elysia application bootstrap
+- **Updated:** 2026-07-30
+- **Tags:** websocket, gateway, elysia, bun
+
+Deliverables:
+
+- Provider-registered gateways with constructor injection
+- Message, socket, server, and lifecycle decorators
+- Native Elysia upgrade and socket runtime
+- Promise and iterator response handling with safe error envelopes
+- Gateway and WebSocket resource schematics
+
+Acceptance criteria:
+
+- Gateways use the existing module provider instance rather than a second
+  container.
+- Named messages dispatch through the documented `{ event, data }` envelope.
+- Startup failures and client-visible errors have stable, tested codes.
+- Bun, Vite+, CLI, and executable WebSocket example coverage protect the public
+  contract.
+
+Evidence:
+
+- Gateway metadata (`packages/common/src/websockets/websocket-gateway.ts`)
+- Elysia gateway runtime
+  (`packages/platform-elysia/src/websockets/websocket-gateway.ts`)
+- WebSocket example (`examples/websockets/src/chat.gateway.ts`)
+- [WebSocket guide](docs/websockets.md)
+
+This preview does not complete the post-1.0 transport architecture. Per-message
+schema policies, handshake authentication, origin and connection limits,
+request scopes, bounded outbound queues, and a transport-neutral adapter SPI
+remain in the additional-transports milestone.
+
 ### Elysia lifecycle conformance
 
 Map request phases, scope propagation, short circuits, errors, responses, cleanup, streams, and aborts.
@@ -547,12 +590,12 @@ Evidence:
 
 Add typed input and status-specific response contracts, RFC 9457 errors, coercion policy, and safe serialization.
 
-- **Status:** In progress (25%)
+- **Status:** In progress (45%)
 - **Priority:** high
 - **Category:** http
 - **Packages:** `@aponiajs/http`, `@aponiajs/validation`, `@aponiajs/serialization`
 - **Depends on:** Elysia lifecycle conformance
-- **Updated:** 2026-07-27
+- **Updated:** 2026-07-30
 - **Tags:** validation, errors, serialization
 
 Deliverables:
@@ -567,13 +610,21 @@ Acceptance criteria:
 
 Next actions:
 
-- Add Problem Details error responses.
+- Map native validation and framework failures to safe Problem Details without
+  weakening Elysia lifecycle or Eden response contracts.
 - Define the serialization and unknown-field policy.
 
 Evidence:
 
 - [Validation and response contracts blueprint](#step-8-validation-errors-and-response-contracts)
 - Standard Schema route validation (`packages/platform-elysia/tests/route-schema.test.ts`)
+- Complete typed application-error factories and RFC 9457 responses
+  (`packages/platform-elysia/tests/http-error.test.ts`)
+
+Interim ownership: application HTTP errors remain in
+`@aponiajs/platform-elysia` while `@aponiajs/common` stays transport-neutral.
+The planned HTTP package split must preserve the adapter re-export when moving
+that public contract.
 
 ## 5. Production capabilities
 
@@ -837,7 +888,9 @@ Target `1.1.0` · Planned · 0% complete.
 
 ### Additional transports and architecture patterns
 
-Add GraphQL, WebSockets, microservices, queues, scheduling, CQRS, events, and cache integrations after the HTTP core stabilizes.
+Graduate the WebSocket preview into transport-neutral packages and add GraphQL,
+microservices, queues, scheduling, CQRS, events, and cache integrations after
+the HTTP core stabilizes.
 
 - **Status:** Planned (0%)
 - **Priority:** low
@@ -859,8 +912,11 @@ Acceptance criteria:
 
 Next actions:
 
-- Do not start until the foundation release candidate is accepted.
-- Prioritize integrations from demonstrated application demand.
+- Do not extract the full transport package set or claim production readiness
+  until the foundation release candidate is accepted.
+- Harden the demonstrated WebSocket demand against the remaining contract
+  requirements before package extraction.
+- Prioritize other integrations from demonstrated application demand.
 
 Evidence:
 
@@ -2432,7 +2488,7 @@ Every documented NestJS capability receives an explicit disposition:
 | Caching, events, scheduling, queues       | Later packages                     | Release wave B                                                       |
 | Logging, tracing, metrics, health         | Version 1                          | `observability`, `observability-otel`, `health`                      |
 | OpenAPI                                   | Version 1                          | `openapi`                                                            |
-| WebSockets                                | Post-version-1                     | `websockets`, Elysia WebSocket subpath                               |
+| WebSockets                                | Developer preview; hardening later | Current common/platform API, then `websockets` and Elysia subpath    |
 | Microservices, TCP, MQTT, brokers, gRPC   | Post-version-1                     | `microservices` and transport packages                               |
 | GraphQL and CQRS                          | Post-version-1                     | Optional packages                                                    |
 | ORM and database integrations             | Intentionally external-first       | Lifecycle contracts only; ORM adapters remain optional               |

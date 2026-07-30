@@ -128,18 +128,19 @@ type-only.
 
 ## File responsibilities
 
-| File suffix      | Responsibility                                                 |
-| ---------------- | -------------------------------------------------------------- |
-| `.module.ts`     | Imports, providers, exports, and module identity               |
-| `.service.ts`    | Business rules and reusable application behavior               |
-| `.controller.ts` | Route ownership and transport-to-service delegation            |
-| `.model.ts`      | Route validators, route schemas, and their derived input types |
-| `.tokens.ts`     | Named public injection tokens                                  |
-| `.types.ts`      | Type-only contracts colocated with their framework owner       |
-| `.constants.ts`  | Runtime constants shared across implementation/type modules    |
-| `.spec.ts`       | Unit tests colocated with the owning controller or service     |
-| `.e2e-spec.ts`   | End-to-end tests under the top-level `test` directory          |
-| `main.ts`        | Container creation, platform bootstrap, and process ownership  |
+| File suffix      | Responsibility                                                |
+| ---------------- | ------------------------------------------------------------- |
+| `.module.ts`     | Imports, providers, exports, and module identity              |
+| `.service.ts`    | Business rules and reusable application behavior              |
+| `.controller.ts` | Route ownership and transport-to-service delegation           |
+| `.gateway.ts`    | WebSocket message ownership and service delegation            |
+| `.model.ts`      | One-schema validation classes and their derived input types   |
+| `.tokens.ts`     | Named public injection tokens                                 |
+| `.types.ts`      | Type-only contracts colocated with their framework owner      |
+| `.constants.ts`  | Runtime constants shared across implementation/type modules   |
+| `.spec.ts`       | Unit tests colocated with the owning controller or service    |
+| `.e2e-spec.ts`   | End-to-end tests under the top-level `test` directory         |
+| `main.ts`        | Container creation, platform bootstrap, and process ownership |
 
 ## Naming
 
@@ -159,7 +160,7 @@ type-only.
 - Do not add Elysia, HTTP, or Bun runtime APIs to `@aponiajs/common`.
 - Keep provider creation synchronous until async lifecycle support is available.
 
-## Module, controller, and service flow
+## Module, controller, gateway, and service flow
 
 Normal HTTP applications follow this ownership chain:
 
@@ -167,8 +168,9 @@ Normal HTTP applications follow this ownership chain:
 main.ts
   -> AponiaFactory.create(AppModule)
   -> AppModule imports feature modules
-  -> feature modules register controllers and providers
+  -> feature modules register controllers, gateways, and providers
   -> controllers own route plugins and call services
+  -> gateways own socket messages and call services
   -> services execute business behavior
 ```
 
@@ -221,21 +223,49 @@ The controller remains thin. The Elysia platform translates controller and
 method metadata into native routes while Aponia owns controller construction
 and service injection.
 
-## Route validation pattern
+## WebSocket gateway pattern
 
-Route decorators accept an optional schema after the path. Validators follow the
-[Standard Schema](https://standardschema.dev) specification, so Zod, ArkType, and
-Valibot work directly, and platform-native TypeBox validators are accepted as
-well:
+Gateways are providers, not controllers:
 
 ```ts
-import { Body, Controller, Post } from "@aponiajs/common";
+import { MessageBody, SubscribeMessage, WebSocketGateway } from "@aponiajs/common";
+
+@WebSocketGateway("/greetings")
+export class GreetingGateway {
+  constructor(private readonly greetingService: GreetingService) {}
+
+  @SubscribeMessage("greetings.create")
+  create(@MessageBody("name") name: string): string {
+    return `${name}: ${this.greetingService.createGreeting()}`;
+  }
+}
+```
+
+Add `GreetingGateway` to its feature module's `providers`. Keep socket
+coordination in the gateway and reusable behavior in services, exactly as HTTP
+controllers keep request coordination out of business logic. The
+[WebSocket guide](./websockets.md) documents the native socket and wire
+contract.
+
+## Route validation pattern
+
+Route decorators accept an optional schema after the path. The normal
+application path wraps each complete validator in its own `@Validation()` class.
+Validators follow the [Standard Schema](https://standardschema.dev)
+specification, so Zod, ArkType, and Valibot work directly, and platform-native
+TypeBox validators are accepted as well:
+
+```ts
+import { Body, Controller, Post, Validation, type InferValidatorOutput } from "@aponiajs/common";
 import { z } from "zod";
 
-const CreateUser = z.object({
+const createUserSchema = z.object({
   name: z.string().min(2),
 });
-type CreateUser = z.infer<typeof CreateUser>;
+
+@Validation(createUserSchema)
+export class CreateUser {}
+export interface CreateUser extends InferValidatorOutput<typeof createUserSchema> {}
 
 @Controller("users")
 export class UserController {
@@ -248,10 +278,13 @@ export class UserController {
 }
 ```
 
-The schema may also be passed alone when the route has no path suffix, as in
-`@Post(createUser)`. Available slots are `body`, `query`, `params`, `headers`,
-and `response`. Validation runs before the handler, so a rejected request never
-reaches controller code.
+Create, update, and params validators become separate classes. A PATCH route
+combines `{ params: UserParams, body: UpdateUser }`; a DELETE route normally
+uses `{ params: UserParams }` without a body model. `@Validation()` takes one
+validator and never composes unrelated schemas. Available slots are `body`,
+`query`, `params`, `headers`, `cookie`, and `response`. Validation runs before
+the handler, so a rejected request never reaches controller code. Raw validators
+remain supported as the low-level escape hatch.
 
 ### Request parameters
 
@@ -277,16 +310,18 @@ export class UserController {
 }
 ```
 
-`@Body()`, `@Query()`, `@Param()`, `@Headers()`, and `@Cookie()` accept an
-optional property name that selects a single value. `@Req()` injects the native
-`Request`, `@Res()` the mutable response settings, and `@Ctx()` the whole
-platform context.
+`@Body()`, `@Query()`, `@Param()`, `@Headers()`, `@Cookie()`, and `@Store()`
+accept an optional property name that selects a single value. `@Req()` injects
+the native `Request`, `@Set()` the mutable response settings, `@Status()` the
+typed status helper, and `@Ctx()` the whole platform context. `@Res()` is the
+Nest-style alias of `@Set()`.
 
 A handler with no parameter decorators may declare one parameter to receive the
 context. Annotate it with `RouteContext<typeof schema>` to stay platform-neutral,
 or with `ElysiaRouteContext<typeof schema>` from `@aponiajs/platform-elysia` to
 keep `status`, `set`, `cookie`, `store`, and
-`redirect` typed by Elysia itself.
+`redirect` typed by Elysia itself. Both context helpers accept schemas whose
+slots and response maps contain validation-model classes.
 
 Compiling a decorated controller erases the plugin instances its module imports,
 so a native plugin's additions are present at runtime but untyped by default.
@@ -364,6 +399,7 @@ compilation, and build-time Aponia source generation is a separate concern.
 
 A build tool can target the same direct-registration path without decorators by
 emitting `defineElysiaController(..., { registerRoutes })` descriptors.
-Hand-authored descriptors may use it as well. The older `buildPlugin` form
-remains the compatibility escape hatch for a controller that deliberately owns
-an isolated Elysia plugin.
+Hand-authored code normally uses the concise `elysiaController(...)` facade so
+Elysia contextually infers route input without a manual context type or
+`typeof`. The older `buildPlugin` form remains the compatibility escape hatch
+for a controller that deliberately owns an isolated Elysia plugin.

@@ -59,6 +59,40 @@ The `key` is the plugin's identity in the module graph. Two modules importing
 the same keyed plugin install it once; two different plugins sharing one key
 raise `DUPLICATE_MODULE` at compile time, before the server listens.
 
+## The no-annotation path
+
+When a plugin belongs to one controller, compose it in an
+`elysiaController(...)` callback exactly as native Elysia does:
+
+```ts
+import { defineModule } from "@aponiajs/common";
+import { elysiaController } from "@aponiajs/platform-elysia";
+import { Elysia } from "elysia";
+
+const clock = new Elysia({ name: "clock" })
+  .decorate("now", () => new Date().toISOString())
+  .state("requests", 0);
+
+class HealthController {}
+
+const healthController = elysiaController(HealthController, (app) =>
+  app.use(clock).get("/health", ({ now, store }) => {
+    store.requests += 1;
+    return { now: now(), requests: store.requests };
+  }),
+);
+
+export const HealthModule = defineModule({
+  id: "HealthModule",
+  controllers: [healthController],
+});
+```
+
+The callback is contextually typed by Elysia, so plugin decorators and store
+arrive without a manual context type, `typeof`, or a local alias. Use the module
+imports below when a plugin is shared by several controllers or needs injected
+configuration.
+
 ## Plugins that need injected configuration
 
 `ElysiaPluginModule.registerAsync` builds the plugin from the container, so it
@@ -120,8 +154,10 @@ without a schema never writes an empty one:
 
 A plugin exported through `defineElysiaPlugin` beside a same-named type is
 usable in a type position directly, which is why the examples above need no
-`typeof`. TypeScript has no other way to name a value in a type position, so a
-plugin exported only as a `const` is written `ElysiaRouteContext<typeof clock>`.
+`typeof` at each use site. TypeScript cannot contextually type a decorated
+method parameter from decorator metadata, so the export declares the alias
+once. A plugin exported only as a `const` is written
+`ElysiaRouteContext<typeof clock>`.
 
 Rename the context type on import when the annotation should be shorter still:
 

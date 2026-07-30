@@ -42,9 +42,9 @@ export class AponiaElysiaApplication<TNativeApplication extends AnyElysia = Elys
     return server.url.origin;
   }
 
-  async close(): Promise<void> {
+  async close(closeActiveConnections = true): Promise<void> {
     if (this.#nativeApplication.server) {
-      await this.#nativeApplication.stop();
+      await this.#nativeApplication.stop(closeActiveConnections);
     }
   }
 }

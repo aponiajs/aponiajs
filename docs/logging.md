@@ -7,6 +7,8 @@ sequence:
 ```text
 [Aponia] 4210 - 07/25/2026, 10:30:00 AM     LOG [AponiaFactory] Starting Aponia application...
 [Aponia] 4210 - 07/25/2026, 10:30:00 AM     LOG [InstanceLoader] GreetingModule dependencies initialized +2ms
+[Aponia] 4210 - 07/25/2026, 10:30:00 AM     LOG [WebSocketsController] ChatGateway {/chat}: +0ms
+[Aponia] 4210 - 07/25/2026, 10:30:00 AM     LOG [WebSocketsController] Subscribed to "chat.send" message +0ms
 [Aponia] 4210 - 07/25/2026, 10:30:00 AM     LOG [RoutesResolver] GreetingController {/greetings}: +1ms
 [Aponia] 4210 - 07/25/2026, 10:30:00 AM     LOG [RouterExplorer] Mapped {/greetings, GET} route +0ms
 [Aponia] 4210 - 07/25/2026, 10:30:00 AM     LOG [AponiaApplication] Aponia application successfully started +3ms
@@ -18,6 +20,8 @@ The lifecycle contexts intentionally mirror the responsibilities in Nest:
 - `AponiaFactory` reports bootstrap start;
 - `InstanceLoader` reports each initialized module after its providers have
   been instantiated;
+- `WebSocketsController` reports each gateway path and subscribed message
+  event;
 - `RoutesResolver` reports each controller and its base path;
 - `RouterExplorer` reports every mapped HTTP method and complete path;
 - `AponiaApplication` reports readiness after the server starts listening.
