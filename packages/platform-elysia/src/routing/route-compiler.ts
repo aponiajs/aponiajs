@@ -2,12 +2,15 @@ import {
   AponiaError,
   getRouteMetadata,
   getRouteParameterMetadata,
+  isRouteResponseSchemaMap,
   isStandardSchema,
+  resolveRouteValidator,
   type ClassToken,
   type RouteContext,
   type RouteParameterMetadata,
+  type RouteResponseSchema,
   type RouteSchema,
-  type RouteValidator,
+  type RouteValidatorInput,
 } from "@aponiajs/common";
 import { type AnySchema, type Elysia, type InputSchema, type TSchema } from "elysia";
 import type { CompiledElysiaRoute } from "./route-compiler.types.ts";
@@ -276,19 +279,38 @@ function toRouteHook(schema: RouteSchema | undefined): InputSchema<never> | unde
     ...(schema.query ? { query: toElysiaSchema(schema.query) } : {}),
     ...(schema.params ? { params: toElysiaSchema(schema.params) } : {}),
     ...(schema.headers ? { headers: toElysiaSchema(schema.headers) } : {}),
-    ...(schema.response ? { response: toElysiaSchema(schema.response) } : {}),
+    ...(schema.cookie ? { cookie: toElysiaSchema(schema.cookie) } : {}),
+    ...(schema.response ? { response: toElysiaResponseSchema(schema.response) } : {}),
   };
 
   return Object.keys(hook).length === 0 ? undefined : hook;
 }
 
 /**
- * Standard Schema validators pass through unchanged. Platform-native TypeBox
- * validators reach the platform through the neutral `NativeSchema` contract,
- * which cannot describe TypeBox's `Kind` symbol, so they are restored here.
+ * Validation models unwrap once during route registration. Standard Schema
+ * validators pass through unchanged. Platform-native TypeBox validators reach
+ * the platform through the neutral `NativeSchema` contract, which cannot
+ * describe TypeBox's `Kind` symbol, so they are restored here.
  */
-function toElysiaSchema(validator: RouteValidator): AnySchema {
-  return isStandardSchema(validator) ? validator : (validator as unknown as TSchema);
+function toElysiaSchema(validator: RouteValidatorInput): AnySchema {
+  const resolvedValidator = resolveRouteValidator(validator);
+  return isStandardSchema(resolvedValidator)
+    ? resolvedValidator
+    : (resolvedValidator as unknown as TSchema);
+}
+
+function toElysiaResponseSchema(
+  schema: RouteResponseSchema,
+): NonNullable<InputSchema<never>["response"]> {
+  if (!isRouteResponseSchemaMap(schema)) {
+    return toElysiaSchema(schema);
+  }
+
+  const responses: Record<number, AnySchema> = {};
+  for (const [status, validator] of Object.entries(schema)) {
+    responses[Number(status)] = toElysiaSchema(validator);
+  }
+  return responses;
 }
 
 /**

@@ -4,12 +4,17 @@ import {
   Inject,
   Module,
   Post,
+  Set,
+  Status,
+  Store,
   createToken,
   defineModule,
   getConstructorDependencies,
   getControllerMetadata,
   getModuleMetadata,
+  getRouteParameterMetadata,
   getRouteMetadata,
+  isRouteResponseSchemaMap,
   isStandardSchema,
   provideValue,
 } from "../src/index.ts";
@@ -30,6 +35,18 @@ test("common contracts work in the Vite+ lane", () => {
   expect(module.id).toBe("common-conformance");
 });
 
+test("the Vite+ lane preserves exact module collection tuples", () => {
+  const first = defineModule({ id: "first-conformance" });
+  const second = defineModule({ id: "second-conformance" });
+  const module = defineModule({
+    id: "root-conformance",
+    imports: [first, second],
+  });
+  const exactImports: readonly [typeof first, typeof second] = module.imports;
+
+  expect(exactImports).toEqual([first, second]);
+});
+
 test("the Vite+ lane records route schemas declared on decorators", () => {
   const nameSchema: StandardSchemaV1<unknown, { name: string }> = {
     "~standard": {
@@ -45,7 +62,14 @@ test("the Vite+ lane records route schemas declared on decorators", () => {
     }
   }
 
-  Post("/", { body: nameSchema })(
+  Post("/", {
+    body: nameSchema,
+    cookie: nameSchema,
+    response: {
+      200: nameSchema,
+      404: nameSchema,
+    },
+  })(
     ConformanceController.prototype,
     "createUser",
     Object.getOwnPropertyDescriptor(ConformanceController.prototype, "createUser")!,
@@ -55,7 +79,29 @@ test("the Vite+ lane records route schemas declared on decorators", () => {
 
   expect(route?.method).toBe("POST");
   expect(route?.schema?.body).toBe(nameSchema);
+  expect(route?.schema?.cookie).toBe(nameSchema);
+  const response = route?.schema?.response;
+  expect(response).toBeDefined();
+  expect(response ? isRouteResponseSchemaMap(response) : false).toBe(true);
   expect(isStandardSchema(nameSchema)).toBe(true);
+});
+
+test("the Vite+ lane records native context parameter decorators", () => {
+  class NativeContextController {
+    read(_store: unknown, _set: unknown, _status: unknown): string {
+      return "ok";
+    }
+  }
+
+  Store()(NativeContextController.prototype, "read", 0);
+  Set()(NativeContextController.prototype, "read", 1);
+  Status()(NativeContextController.prototype, "read", 2);
+
+  expect(getRouteParameterMetadata(NativeContextController, "read")).toEqual([
+    { index: 0, kind: "store", property: undefined },
+    { index: 1, kind: "set", property: undefined },
+    { index: 2, kind: "status", property: undefined },
+  ]);
 });
 
 test("the Vite+ lane preserves explicit dependencies and own decorator metadata", () => {

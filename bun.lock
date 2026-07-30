@@ -88,13 +88,23 @@
         "zod": "^4.4.3",
       },
     },
+    "examples/websockets": {
+      "name": "@aponiajs/example-websockets",
+      "version": "0.0.0",
+      "dependencies": {
+        "@aponiajs/common": "workspace:*",
+        "@aponiajs/core": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
+        "elysia": "^1.4.29",
+      },
+    },
     "packages/aponiajs": {
       "name": "aponiajs",
-      "version": "0.6.0-alpha.17",
+      "version": "0.6.0-alpha.18",
     },
     "packages/cli": {
       "name": "@aponiajs/cli",
-      "version": "0.6.0-alpha.17",
+      "version": "0.6.0-alpha.18",
       "bin": {
         "aponia": "./bin/aponia.ts",
       },
@@ -111,7 +121,7 @@
     },
     "packages/common": {
       "name": "@aponiajs/common",
-      "version": "0.6.0-alpha.17",
+      "version": "0.6.0-alpha.18",
       "dependencies": {
         "@standard-schema/spec": "^1.1.0",
         "reflect-metadata": "^0.2.2",
@@ -119,14 +129,14 @@
     },
     "packages/core": {
       "name": "@aponiajs/core",
-      "version": "0.6.0-alpha.17",
+      "version": "0.6.0-alpha.18",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
       },
     },
     "packages/create-aponia": {
       "name": "create-aponia",
-      "version": "0.6.0-alpha.17",
+      "version": "0.6.0-alpha.18",
       "bin": {
         "create-aponia": "./dist/create-aponia.mjs",
       },
@@ -136,7 +146,7 @@
     },
     "packages/platform-elysia": {
       "name": "@aponiajs/platform-elysia",
-      "version": "0.6.0-alpha.17",
+      "version": "0.6.0-alpha.18",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/core": "workspace:*",
@@ -176,6 +186,8 @@
     "@aponiajs/example-request-parameters": ["@aponiajs/example-request-parameters@workspace:examples/request-parameters"],
 
     "@aponiajs/example-validation": ["@aponiajs/example-validation@workspace:examples/validation"],
+
+    "@aponiajs/example-websockets": ["@aponiajs/example-websockets@workspace:examples/websockets"],
 
     "@aponiajs/platform-elysia": ["@aponiajs/platform-elysia@workspace:packages/platform-elysia"],
 

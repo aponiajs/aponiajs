@@ -7,6 +7,8 @@ const releaseGateCommands = [
   "bun run test:vite-plus",
   "bun run build",
   "bun run test:generated-app",
+  "bun run release:dry-run",
+  "bun audit --audit-level=high",
 ] as const;
 
 test("every publish path runs the complete validation matrix", async () => {
@@ -22,6 +24,32 @@ test("every publish path runs the complete validation matrix", async () => {
       expect(workflow, `${path} must run ${command}`).toContain(command);
     }
   }
+});
+
+test("CI isolates failures while preserving one required verify gate", async () => {
+  const workflow = await Bun.file(".github/workflows/ci.yml").text();
+  const requiredLanes = [
+    "version",
+    "quality",
+    "bun_tests",
+    "conformance",
+    "integration",
+    "packaging",
+    "security",
+  ] as const;
+
+  for (const lane of requiredLanes) {
+    expect(workflow).toContain(`  ${lane}:`);
+    expect(workflow).toContain(`      - ${lane}`);
+    expect(workflow).toContain(`needs.${lane}.result`);
+  }
+
+  expect(workflow).toContain("  verify:");
+  expect(workflow).toContain("if: always()");
+  expect(workflow).toContain("needs:\n      - version");
+  expect(workflow).toContain("uses: actions/dependency-review-action@v5");
+  expect(workflow).toContain("if: github.event_name == 'pull_request'");
+  expect(workflow).toContain("fail-on-severity: high");
 });
 
 test("coverage tooling protects both line and function regressions", async () => {

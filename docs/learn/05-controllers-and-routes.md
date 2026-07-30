@@ -21,6 +21,33 @@ export class UserController {
 matching HTTP method. The route path joins the controller prefix, so this answers
 `GET /users/:id`.
 
+## Native inference with less syntax
+
+Use `elysiaController` when the shortest type-safe route is more useful than
+decorator metadata:
+
+```ts
+import { defineModule, provideClass } from "@aponiajs/common";
+import { elysiaController } from "@aponiajs/platform-elysia";
+import { t } from "elysia";
+
+const usersController = elysiaController(UserController, [UserService], (app, controller) =>
+  app.get("/users/:id", ({ params }) => controller.findUser(params.id), {
+    params: t.Object({ id: t.String() }),
+  }),
+);
+
+export const UsersModule = defineModule({
+  id: "UsersModule",
+  controllers: [usersController],
+  providers: [provideClass(UserService, [])],
+});
+```
+
+The Elysia callback infers its request fields directly. It needs no options
+object, tuple assertion, context annotation, or `typeof`, and its returned chain
+remains available to Eden Treaty.
+
 ## How a request arrives
 
 The platform compiles each controller into a native Elysia plugin and mounts it

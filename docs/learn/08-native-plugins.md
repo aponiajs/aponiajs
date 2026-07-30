@@ -3,7 +3,19 @@
 **Use when:** reusing an existing Elysia plugin, or adding something to the
 request context that every controller can read.
 
-Convert the plugin into a module import once, then mount it:
+For a plugin owned by one controller, use the native callback path and let
+Elysia infer everything:
+
+```ts
+const healthController = elysiaController(HealthController, (app) =>
+  app.use(clock).get("/health", ({ now }) => ({ now: now() })),
+);
+```
+
+That form needs no manual context type or `typeof`.
+
+For a plugin shared by several controllers, convert it into a module import once
+and mount it:
 
 ```ts
 // src/clock.plugin.ts

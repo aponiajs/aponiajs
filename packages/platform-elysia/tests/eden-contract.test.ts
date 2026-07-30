@@ -2,7 +2,12 @@ import { expect, test } from "bun:test";
 import { Controller, Get, Module, defineModule } from "@aponiajs/common";
 import { treaty, type Treaty } from "@elysia/eden";
 import { Elysia, t } from "elysia";
-import { AponiaFactory, defineElysiaController, defineElysiaPlugin } from "../src/index.ts";
+import {
+  AponiaFactory,
+  defineElysiaController,
+  defineElysiaPlugin,
+  elysiaController,
+} from "../src/index.ts";
 
 type Equals<TLeft, TRight> =
   (<T>() => T extends TLeft ? 1 : 2) extends <T>() => T extends TRight ? 1 : 2 ? true : false;
@@ -126,6 +131,33 @@ class RuntimeOnlyController {
 @Module({ controllers: [RuntimeOnlyController] })
 class RuntimeOnlyModule {}
 
+class RegisteredEdenController {
+  read(id: number): { id: number; source: "registered" } {
+    return { id, source: "registered" };
+  }
+}
+
+const registeredEdenController = elysiaController(
+  RegisteredEdenController,
+  (application, controller) =>
+    application.get("/registered-eden/:id", ({ params }) => controller.read(params.id), {
+      params: t.Object({ id: t.Number() }),
+      response: t.Object({
+        id: t.Number(),
+        source: t.Literal("registered"),
+      }),
+    }),
+);
+const registeredEdenModule = defineModule({
+  id: "RegisteredEdenModule",
+  controllers: [registeredEdenController],
+});
+const combinedEdenModule = defineModule({
+  id: "CombinedEdenModule",
+  imports: [nativeVersionImport],
+  controllers: [edenUsersController, registeredEdenController],
+});
+
 function createNativeEdenApplication() {
   return AponiaFactory.createNative(edenRootModule, {
     logger: false,
@@ -136,6 +168,19 @@ function createNativeEdenApplication() {
 function createRuntimeOnlyApplication() {
   return AponiaFactory.createNative(RuntimeOnlyModule, {
     logger: false,
+  });
+}
+
+function createRegisteredEdenApplication() {
+  return AponiaFactory.createNative(registeredEdenModule, {
+    logger: false,
+  });
+}
+
+function createCombinedEdenApplication() {
+  return AponiaFactory.createNative(combinedEdenModule, {
+    logger: false,
+    configureNative: (application) => application.use(nativeHealthPlugin),
   });
 }
 
@@ -151,6 +196,13 @@ type NativeGetUser = NativeUsersPath["get"];
 type NativeGetVersion = NativeEdenClient["version"]["get"];
 type RuntimeOnlyApplication = Awaited<ReturnType<typeof createRuntimeOnlyApplication>>;
 type RuntimeOnlyClient = Treaty.Create<RuntimeOnlyApplication>;
+type RegisteredEdenApplication = Awaited<ReturnType<typeof createRegisteredEdenApplication>>;
+type RegisteredEdenClient = Treaty.Create<RegisteredEdenApplication>;
+type RegisteredEdenPath = ReturnType<RegisteredEdenClient["registered-eden"]>;
+type CombinedEdenApplication = Awaited<ReturnType<typeof createCombinedEdenApplication>>;
+type CombinedEdenClient = Treaty.Create<CombinedEdenApplication>;
+type CombinedUserPath = ReturnType<CombinedEdenClient["users"]>;
+type CombinedRegisteredPath = ReturnType<CombinedEdenClient["registered-eden"]>;
 type GetUserData = Treaty.Data<typeof getUser>;
 type GetUserError = Treaty.Error<typeof getUser>;
 type CreateUserData = Treaty.Data<typeof createUser>;
@@ -180,6 +232,11 @@ type EdenTypeAssertions = [
   Expect<Equals<"users" extends keyof NativeEdenClient ? true : false, true>>,
   Expect<Equals<"version" extends keyof NativeEdenClient ? true : false, true>>,
   Expect<Equals<"runtime-only" extends keyof RuntimeOnlyClient ? true : false, false>>,
+  Expect<Equals<Treaty.Data<RegisteredEdenPath["get"]>, { id: number; source: "registered" }>>,
+  Expect<Equals<Treaty.Data<CombinedUserPath["get"]>, { id: number; name: string }>>,
+  Expect<Equals<Treaty.Data<CombinedRegisteredPath["get"]>, { id: number; source: "registered" }>>,
+  Expect<Equals<Treaty.Data<CombinedEdenClient["health"]["get"]>, { status: "ok" }>>,
+  Expect<Equals<Treaty.Data<CombinedEdenClient["version"]["get"]>, { channel: "alpha" }>>,
 ];
 
 function assertInvalidEdenCallsAreRejected(client: typeof edenClient): void {
@@ -204,15 +261,32 @@ function assertInvalidNativeEdenCallsAreRejected(client: NativeEdenClient): void
   void client.version.post();
 }
 
+function assertInvalidRegisteredEdenCallsAreRejected(client: RegisteredEdenClient): void {
+  // @ts-expect-error The registered route requires a numeric path parameter.
+  void client["registered-eden"]({ id: true }).get();
+  // @ts-expect-error The registered route only exposes GET.
+  void client["registered-eden"]({ id: 1 }).post();
+}
+
+function assertInvalidRegistrationResultsAreRejected(): void {
+  elysiaController(
+    RegisteredEdenController,
+    // @ts-expect-error A direct registration may only return its Elysia chain or void.
+    () => 42,
+  );
+}
+
 test("keeps the Eden request and response type assertions referenced", () => {
   const assertions: EdenTypeAssertions = Array.from(
-    { length: 13 },
+    { length: 18 },
     () => true,
   ) as EdenTypeAssertions;
 
-  expect(assertions).toHaveLength(13);
+  expect(assertions).toHaveLength(18);
   expect(assertInvalidEdenCallsAreRejected).toBeFunction();
   expect(assertInvalidNativeEdenCallsAreRejected).toBeFunction();
+  expect(assertInvalidRegisteredEdenCallsAreRejected).toBeFunction();
+  expect(assertInvalidRegistrationResultsAreRejected).toBeFunction();
 });
 
 test("calls a parameterized Aponia controller route through Eden Treaty", async () => {
@@ -309,4 +383,29 @@ test("runs decorated routes without inventing a static Eden contract", async () 
   const response = await application.handle(new Request("http://localhost/runtime-only"));
 
   expect(await response.json()).toEqual({ source: "decorator" });
+});
+
+test("preserves a direct registration chain as a native Eden contract", async () => {
+  const application = await createRegisteredEdenApplication();
+  const client = treaty(application);
+  const result = await client["registered-eden"]({ id: 42 }).get();
+
+  expect(result.error).toBeNull();
+  expect(result.data).toEqual({ id: 42, source: "registered" });
+});
+
+test("preserves every Eden route across multiple controller styles and plugins", async () => {
+  const application = await createCombinedEdenApplication();
+  const client = treaty(application);
+  const [user, registered, health, version] = await Promise.all([
+    client.users({ id: 9 }).get(),
+    client["registered-eden"]({ id: 10 }).get(),
+    client.health.get(),
+    client.version.get(),
+  ]);
+
+  expect(user.data).toEqual({ id: 9, name: "user-9" });
+  expect(registered.data).toEqual({ id: 10, source: "registered" });
+  expect(health.data).toEqual({ status: "ok" });
+  expect(version.data).toEqual({ channel: "alpha" });
 });

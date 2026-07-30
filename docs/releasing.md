@@ -139,7 +139,10 @@ bun run release:tag 0.4.0-rc.2
 CI compares the pushed version with the previous push (or pull request base) and
 fails when it is unchanged, lower, invalid, or inconsistent. Configure the
 repository's branch protection rules to require the **CI / verify** check before
-merging into any persistent release branch.
+merging into any persistent release branch. That final gate aggregates isolated
+version, quality, coverage, Vite+ conformance, example integration, packaging,
+and dependency-security jobs so one failure does not hide results from the
+other lanes.
 
 ## Automated Release Flow
 
@@ -147,8 +150,9 @@ merging into any persistent release branch.
 2. Run `bun run release:dry-run` when package contents changed.
 3. Run `bun run test:generated-app` to verify the packed CLI and generated
    application lifecycle.
-4. Push the commit and let CI validate the SemVer increase and report the
-   distribution tag the version resolves to.
+4. Push the commit and let CI validate the SemVer increase, package contents,
+   high-severity dependency advisories, and the distribution tag the version
+   resolves to.
 5. Merge the pull request into the matching release branch.
 6. The release workflow creates the matching `vX.Y.Z` tag and GitHub release,
    marking it as a prerelease for every non-`latest` channel.

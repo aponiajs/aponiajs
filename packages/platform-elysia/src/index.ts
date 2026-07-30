@@ -14,14 +14,34 @@ export type {
   ElysiaPluginSource,
   ElysiaPluginTypes,
   ElysiaRouteContext,
+  ElysiaSet,
+  ElysiaStatus,
+  ElysiaStore,
 } from "./routing/route-context.types.ts";
-export { ELYSIA_CONTROLLER, defineElysiaController } from "./controllers/controller-definition.ts";
+export {
+  ELYSIA_CONTROLLER,
+  defineElysiaController,
+  elysiaController,
+} from "./controllers/controller-definition.ts";
 export type {
+  ElysiaControllerRegistrationResult,
   ElysiaControllerDefinition,
   ElysiaControllerPluginOptions,
   ElysiaControllerRegistrationOptions,
   RegisteredElysiaControllerDefinition,
+  RegisteredElysiaApplication,
 } from "./controllers/controller.types.ts";
+export { HttpError, httpError, httpErrors } from "./errors/http-error.ts";
+export type { HttpErrorFactories } from "./errors/http-error.ts";
+export type {
+  HttpErrorFactory,
+  HttpErrorOptions,
+  HttpErrorStatus,
+  HttpErrorStatusCode,
+  HttpErrorStatusName,
+  ProblemDetails,
+  ResolveHttpErrorStatus,
+} from "./errors/http-error.types.ts";
 export { ElysiaPluginModule, defineElysiaPlugin } from "./plugins/plugin-module.ts";
 export type {
   AsyncElysiaPluginModuleOptions,
@@ -29,3 +49,7 @@ export type {
   ElysiaPluginModuleOptions,
   NativeElysiaPlugin,
 } from "./plugins/plugin.types.ts";
+export type {
+  ElysiaWebSocket,
+  ElysiaWebSocketServer,
+} from "./websockets/websocket-gateway.types.ts";

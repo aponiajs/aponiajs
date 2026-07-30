@@ -85,9 +85,27 @@ test("packed workspaces generate an application that installs, validates, builds
     );
     expect(resourceResult.stdout).toContain("CREATE src/users/users.model.ts");
     expect(await Bun.file(join(projectDirectory, "src/users/users.model.ts")).exists()).toBe(true);
+    expect(
+      await Bun.file(join(projectDirectory, "src/users/dto/create-user.dto.ts")).exists(),
+    ).toBe(false);
+    expect(
+      await Bun.file(join(projectDirectory, "src/users/dto/update-user.dto.ts")).exists(),
+    ).toBe(false);
     expect(await Bun.file(join(projectDirectory, "src/users/users.schema.ts")).exists()).toBe(
       false,
     );
+
+    const webSocketResourceResult = await run(
+      ["bun", cliEntryPoint, "generate", "resource", "events", "--type", "ws"],
+      projectDirectory,
+    );
+    expect(webSocketResourceResult.stdout).toContain("CREATE src/events/events.gateway.ts");
+    const generatedGateway = await Bun.file(
+      join(projectDirectory, "src/events/events.gateway.ts"),
+    ).text();
+    expect(generatedGateway).toContain('@WebSocketGateway("/events")');
+    expect(generatedGateway).toContain('@SubscribeMessage("events.create")');
+    expect(generatedGateway).toContain('@SubscribeMessage("events.remove")');
 
     const generatedManifestPath = join(projectDirectory, "package.json");
     const generatedManifest = (await Bun.file(generatedManifestPath).json()) as {

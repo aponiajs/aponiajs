@@ -31,9 +31,14 @@ separate focused modules. `src/index.ts` is the only public barrel.
   `generation/component-names.ts`.
 - Generated applications follow Nest's flat starter layout; later resources
   belong in `src/<resource>/`.
-- A REST CRUD resource also emits `<name>.model.ts`. That model owns the route
-  schemas the generated controller passes to its decorators, and both DTOs
-  derive their types from it with `Static<typeof …>`.
+- A REST CRUD resource emits `<name>.model.ts` with separate `@Validation`
+  classes for create bodies, update bodies, and shared path parameters.
+  Controllers and services consume those classes directly, and REST CRUD does
+  not emit DTO files. Non-REST transports retain their DTO or input scaffolds.
+- Gateway schematics emit `@WebSocketGateway()` classes and register them as
+  providers. WebSocket CRUD resources use stable
+  `<resource>.create|findAll|findOne|update|remove` message events and
+  `@MessageBody()` bindings; keep REST and GraphQL output unchanged.
 - Documentation wording is guarded: `scripts/documentation.spec.ts` requires
   `bun add --global @aponiajs/cli` and forbids `bunx aponia` across `README.md`,
   `docs/cli.md`, `docs/packages.md`, and this package's README.

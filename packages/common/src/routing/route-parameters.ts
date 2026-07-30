@@ -8,9 +8,11 @@ export const routeParameterKinds = [
   "params",
   "headers",
   "cookie",
+  "store",
   "context",
   "request",
   "set",
+  "status",
 ] as const;
 
 const routeParametersMetadataKey = Symbol.for("aponia.route-parameters.metadata");
@@ -25,12 +27,18 @@ export const Param = createParameterDecorator("params");
 export const Headers = createParameterDecorator("headers");
 /** Injects the request cookies, or the value of a single named cookie. */
 export const Cookie = createParameterDecorator("cookie");
+/** Injects application state, or one named state value. */
+export const Store = createParameterDecorator("store");
 /** Injects the whole platform request context. */
 export const Ctx = createParameterDecorator("context");
 /** Injects the native `Request`. */
 export const Req = createParameterDecorator("request");
-/** Injects the mutable response settings. */
-export const Res = createParameterDecorator("set");
+/** Injects the mutable response settings using the platform context name. */
+export const Set = createParameterDecorator("set");
+/** Nest-style alias for `Set`. */
+export const Res = Set;
+/** Injects the platform's type-narrowing response status helper. */
+export const Status = createParameterDecorator("status");
 
 export function getRouteParameterMetadata(
   target: ClassToken<unknown>,

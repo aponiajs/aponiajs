@@ -12,6 +12,8 @@ and documentation guards that CI enforces.
 | `workspace-versions.ts`      | The list of manifests that must share one version                        |
 | `canary-version.ts`          | Stamping `X.Y.Z-canary.<stamp>.<sha>` in CI, never committed             |
 | `coverage-gate.ts`           | Aggregate LCOV floor and runtime-source completeness                     |
+| `agent-guides.spec.ts`       | Guide inventory, aliases, and mandatory per-turn `RULES.md` loading      |
+| `ci-workflows.spec.ts`       | Complete CI, publish, packaging, and dependency-security command matrix  |
 | `source-layout.spec.ts`      | Package owner directories, barrels, type-only modules, local imports     |
 | `*.spec.ts`                  | Guard tests over the above and over documentation wording                |
 
@@ -33,6 +35,8 @@ and documentation guards that CI enforces.
 - Guard specs make documentation part of the test suite. A wording edit in
   `README.md`, `docs/cli.md`, `docs/packages.md`, or `packages/cli/README.md`
   can fail `bun test`.
+- `agent-guides.spec.ts` prevents removal of the root guide's mandatory
+  per-turn `RULES.md` loading sequence.
 - `source-layout.spec.ts` protects the domain-first package layout. Update the
   guide and guard together when a real new source domain is introduced.
 - Every push must raise the synchronized workspace version. Run the smallest

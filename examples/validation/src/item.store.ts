@@ -11,7 +11,11 @@ export class ItemStore {
   readonly #items = new Map<string, StoredItem>();
 
   create(item: CreateItem): StoredItem {
-    const created: StoredItem = { id: String(this.#items.size + 1), ...item };
+    const created: StoredItem = {
+      id: String(this.#items.size + 1),
+      name: item.name,
+      quantity: item.quantity,
+    };
     this.#items.set(created.id, created);
     return created;
   }

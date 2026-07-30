@@ -115,6 +115,7 @@ assertions never depend on message text:
 | `INVALID_MODULE`             | A class is used as a module without `@Module()`                             |
 | `INVALID_CONTROLLER`         | A controller is missing `@Controller()`, or a route handler is not callable |
 | `UNSUPPORTED_CONTROLLER`     | A controller cannot be mounted by the platform                              |
+| `INVALID_VALIDATION_MODEL`   | A route uses a class without `@Validation()`                                |
 | `INVALID_NATIVE_APPLICATION` | `configureNative` returned a different Elysia instance                      |
 | `APPLICATION_NOT_LISTENING`  | `getUrl()` is called before `listen()`                                      |
 

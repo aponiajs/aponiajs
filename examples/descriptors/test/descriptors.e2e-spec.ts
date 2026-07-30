@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import { defineModule, provideValue, createToken } from "@aponiajs/common";
-import { AponiaFactory, type AponiaElysiaApplication } from "@aponiajs/platform-elysia";
-import { createApplication, get } from "./application.ts";
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { createApplication, get, type DescriptorApplication } from "./application.ts";
 
-let application: AponiaElysiaApplication;
+let application: DescriptorApplication;
 
 beforeAll(async () => {
   application = await createApplication();
@@ -25,6 +25,20 @@ test("keeps descriptor state in one singleton instance", async () => {
   const second = (await (await get(application, "/metrics")).json()) as { hits: number };
 
   expect(second.hits).toBe(first.hits + 1);
+});
+
+test("returns a default Problem Details application error", async () => {
+  const response = await get(application, "/metrics/missing");
+
+  expect(response.status).toBe(404);
+  expect(response.headers.get("content-type")).toBe("application/problem+json");
+  expect(await response.json()).toEqual({
+    type: "about:blank",
+    title: "Not Found",
+    status: 404,
+    detail: "The requested metric does not exist.",
+    code: "METRIC_NOT_FOUND",
+  });
 });
 
 test("freezes what a descriptor helper returns", () => {

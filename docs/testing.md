@@ -31,7 +31,9 @@ levels, or a `LoggerService`, when a test asserts on log output — see the
 [logging guide](./logging.md).
 
 `handle` never binds a port, so nothing needs to be closed. Call
-`application.close()` only after `application.listen(port)`.
+`application.close()` only after `application.listen(port)`. Closing terminates
+active native connections by default; `application.close(false)` opts into
+caller-managed draining.
 
 ## Asserting validation
 
@@ -66,6 +68,26 @@ await expect(AponiaFactory.create(BrokenModule, { logger: false })).rejects.toMa
 The full list of codes is in the
 [dependency injection guide](./dependency-injection.md).
 
+Application HTTP errors are observable response contracts. Assert the status,
+media type, and complete Problem Details body:
+
+```ts
+const response = await application.handle(new Request("http://localhost/users/missing"));
+
+expect(response.status).toBe(404);
+expect(response.headers.get("content-type")).toBe("application/problem+json");
+expect(await response.json()).toEqual({
+  type: "about:blank",
+  title: "Not Found",
+  status: 404,
+  detail: "The requested user does not exist.",
+  code: "USER_NOT_FOUND",
+});
+```
+
+The [errors chapter](./learn/10-errors.md) covers every default factory and
+custom extension.
+
 ## Unit testing a service
 
 A service has no framework dependency, so construct it directly rather than
@@ -85,6 +107,55 @@ test("stores a created user", () => {
 
 A controller is an ordinary class too: pass a stub service to its constructor
 when the assertion is about controller behavior rather than routing.
+
+## Testing a WebSocket gateway
+
+An upgrade requires a listener, so WebSocket integration tests use an ephemeral
+port and always close both resources:
+
+```ts
+import { expect, test } from "bun:test";
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { createServer } from "node:net";
+import { AppModule } from "../src/app.module.ts";
+
+test("echoes a gateway message", async () => {
+  const application = await AponiaFactory.create(AppModule, { logger: false });
+  const reservation = createServer();
+  await new Promise<void>((resolve) => {
+    reservation.listen(0, "127.0.0.1", resolve);
+  });
+  const address = reservation.address();
+  if (!address || typeof address === "string") throw new Error("No test port");
+  const port = address.port;
+  await new Promise<void>((resolve) => reservation.close(() => resolve()));
+  await application.listen(port);
+  const socket = new WebSocket(`${application.getUrl().replace("http://", "ws://")}/events`);
+
+  try {
+    await new Promise<void>((resolve) => {
+      socket.addEventListener("open", () => resolve(), { once: true });
+    });
+    const response = new Promise<MessageEvent>((resolve) => {
+      socket.addEventListener("message", resolve, { once: true });
+    });
+
+    socket.send(JSON.stringify({ event: "events.echo", data: "hello" }));
+
+    expect(JSON.parse(String((await response).data))).toEqual({
+      event: "events.echo",
+      data: "hello",
+    });
+  } finally {
+    socket.close();
+    await application.close();
+  }
+});
+```
+
+Unit tests can inspect frozen gateway metadata without opening a port. The
+[WebSocket guide](./websockets.md) lists the metadata getters and error-frame
+contract.
 
 ## Escape hatches
 

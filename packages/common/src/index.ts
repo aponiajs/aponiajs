@@ -33,7 +33,7 @@ export type { AponiaErrorCode } from "./errors/aponia-error.types.ts";
 export { ConsoleLogger, Logger } from "./logging/console-logger.ts";
 export type { ConsoleLoggerOptions, LoggerService, LogLevel } from "./logging/logger.types.ts";
 export { defineModule } from "./modules/module.ts";
-export type { ModuleDefinition, ModuleOptions } from "./modules/module.types.ts";
+export type { DefinedModule, ModuleDefinition, ModuleOptions } from "./modules/module.types.ts";
 export { provideAlias, provideClass, provideFactory, provideValue } from "./providers/provider.ts";
 export type {
   AliasProvider,
@@ -52,6 +52,9 @@ export {
   Query,
   Req,
   Res,
+  Set,
+  Status,
+  Store,
   getRouteParameterMetadata,
   routeParameterKinds,
 } from "./routing/route-parameters.ts";
@@ -59,16 +62,29 @@ export type {
   RouteParameterKind,
   RouteParameterMetadata,
 } from "./routing/route-parameters.types.ts";
-export { isStandardSchema, routeSchemaSlots } from "./routing/route-schema.ts";
+export {
+  isRouteResponseSchemaMap,
+  isStandardSchema,
+  routeSchemaSlots,
+} from "./routing/route-schema.ts";
 export type {
   InferValidatorOutput,
   NativeSchema,
+  RouteCookie,
   RouteContext,
+  RouteResponseSchema,
+  RouteResponseSchemaMap,
   RouteResponseSettings,
   RouteSchema,
   RouteSchemaSlot,
   RouteValidator,
 } from "./routing/route-schema.types.ts";
+export { Validation, getValidationMetadata, resolveRouteValidator } from "./routing/validation.ts";
+export type {
+  RouteValidatorInput,
+  ValidationMetadata,
+  ValidationModelClass,
+} from "./routing/validation.types.ts";
 export { createToken, tokenName } from "./tokens/token.ts";
 export type {
   ClassToken,
@@ -78,3 +94,25 @@ export type {
   TokenValue,
   TokenValues,
 } from "./tokens/token.types.ts";
+export {
+  ConnectedSocket,
+  MessageBody,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
+  getWebSocketGatewayMetadata,
+  getWebSocketMessageMetadata,
+  getWebSocketParameterMetadata,
+  getWebSocketServerProperties,
+} from "./websockets/websocket-gateway.ts";
+export type {
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  OnGatewayInit,
+  WebSocketGatewayMetadata,
+  WebSocketGatewayOptions,
+  WebSocketMessageMetadata,
+  WebSocketParameterKind,
+  WebSocketParameterMetadata,
+  WsResponse,
+} from "./websockets/websocket-gateway.types.ts";

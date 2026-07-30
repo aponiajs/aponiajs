@@ -1,6 +1,14 @@
 import { expect, test } from "bun:test";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import { Get, Post, getRouteMetadata, isStandardSchema } from "../src/index.ts";
+import {
+  Get,
+  Post,
+  getRouteMetadata,
+  isRouteResponseSchemaMap,
+  isStandardSchema,
+  routeSchemaSlots,
+  type RouteContext,
+} from "../src/index.ts";
 
 const nameSchema: StandardSchemaV1<unknown, { name: string }> = {
   "~standard": {
@@ -66,4 +74,62 @@ test("freezes recorded route schemas", () => {
 test("detects Standard Schema validators", () => {
   expect(isStandardSchema(nameSchema)).toBe(true);
   expect(isStandardSchema({ static: 0, params: [] })).toBe(false);
+});
+
+const responseSchemas: Record<number, typeof nameSchema> = {
+  200: nameSchema,
+  404: nameSchema,
+};
+
+class ResponseController {
+  readUser(): string {
+    return "read";
+  }
+}
+
+Get({
+  cookie: nameSchema,
+  response: responseSchemas,
+})(
+  ResponseController.prototype,
+  "readUser",
+  Object.getOwnPropertyDescriptor(ResponseController.prototype, "readUser")!,
+);
+
+const [responseRoute] = getRouteMetadata(ResponseController);
+
+test("records cookie and status-specific response schemas", () => {
+  expect(routeSchemaSlots).toEqual(["body", "query", "params", "headers", "cookie", "response"]);
+  expect(responseRoute?.schema?.cookie).toBe(nameSchema);
+  expect(responseRoute?.schema?.response).toEqual({
+    200: nameSchema,
+    404: nameSchema,
+  });
+  expect(isRouteResponseSchemaMap(responseSchemas)).toBe(true);
+  expect(isRouteResponseSchemaMap(nameSchema)).toBe(false);
+  expect(
+    isRouteResponseSchemaMap({
+      static: undefined,
+      params: [],
+    }),
+  ).toBe(false);
+});
+
+test("copies and freezes a status-specific response schema map", () => {
+  responseSchemas[500] = nameSchema;
+
+  expect(responseRoute?.schema?.response).not.toHaveProperty("500");
+  expect(Object.isFrozen(responseRoute?.schema?.response)).toBe(true);
+});
+
+type Equals<TLeft, TRight> =
+  (<T>() => T extends TLeft ? 1 : 2) extends <T>() => T extends TRight ? 1 : 2 ? true : false;
+type Expect<TAssertion extends true> = TAssertion;
+type CookieContext = RouteContext<{ cookie: typeof nameSchema }>;
+type RouteSchemaTypeAssertions = [Expect<Equals<CookieContext["cookie"]["name"]["value"], string>>];
+
+test("keeps route schema type assertions referenced", () => {
+  const assertions: RouteSchemaTypeAssertions = [true];
+
+  expect(assertions).toEqual([true]);
 });
