@@ -1,6 +1,7 @@
 import type { Constructor, ControllerDefinition, Token, TokenValues } from "@aponiajs/common";
 import type { AnyElysia, Elysia } from "elysia";
 import type { CompiledElysiaRoute } from "../routing/route-compiler.types.ts";
+import type { ElysiaRoutePlan } from "../routing/route-plan.types.ts";
 import type { ELYSIA_CONTROLLER } from "./controller.constants.ts";
 
 export interface ElysiaControllerDefinition<
@@ -50,6 +51,34 @@ export interface ElysiaControllerRegistrationOptions<
   readonly inject: TDependencies;
   readonly path?: string;
   readonly registerRoutes: (application: Elysia, controller: TController) => TRegistrationResult;
+}
+
+/** What `defineElysiaControllerRoutes` accepts. */
+export interface ElysiaControllerRoutesOptions<
+  TDependencies extends readonly Token<unknown>[] = readonly Token<unknown>[],
+> {
+  /** The controller's own path, joined onto each route plan's path. */
+  readonly path?: string;
+  /** The controller's constructor dependencies, as `defineElysiaController` takes them. */
+  readonly inject?: TDependencies;
+  /** The routes this controller declares. */
+  readonly routes: readonly ElysiaRoutePlan[];
+}
+
+/**
+ * A controller defined from route plans instead of decorators.
+ *
+ * `compiledRoutes` is what lets bootstrap register the controller with the same
+ * path a decorated one takes — including preferring a generated invoker for each
+ * handler — rather than through `registerRoutes` or `buildPlugin`.
+ *
+ * @internal
+ */
+export interface DeclaredElysiaControllerDefinition<
+  TController,
+  TDependencies extends readonly Token<unknown>[],
+> extends RegisteredElysiaControllerDefinition<TController, TDependencies> {
+  readonly compiledRoutes: readonly CompiledElysiaRoute[];
 }
 
 export interface RuntimeElysiaController extends ControllerDefinition {

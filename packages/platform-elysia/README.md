@@ -221,6 +221,48 @@ a symbol-keyed handler are all compiled from decorator metadata exactly as they
 are when the option is omitted. The supplied maps are read only, and an entry
 for a token no controller uses is ignored.
 
+### Declared routes
+
+A controller can declare its routes as data instead of through decorators. This is
+the descriptor path's counterpart to `@Controller()`, and it is what build-time
+descriptor generation targets: the plans are compiled through the same lowering a
+decorated controller uses, so the controller reaches the same native version
+guard, the same duplicate-route check, the same startup logging, and the same
+generated-invoker lookup.
+
+```ts
+import { defineModule, provideClass } from "@aponiajs/common";
+import { defineElysiaControllerRoutes } from "@aponiajs/platform-elysia";
+
+const module = defineModule({
+  id: "UsersModule",
+  providers: [provideClass(UsersService, [])],
+  controllers: [
+    defineElysiaControllerRoutes(UsersController, {
+      path: "/users",
+      inject: [UsersService],
+      routes: [
+        {
+          method: "GET",
+          path: ":id",
+          propertyKey: "read",
+          parameters: [{ index: 0, kind: "params", property: "id" }],
+        },
+      ],
+    }),
+  ],
+});
+```
+
+Two facts a decorator reads out of emitted metadata are declared instead, because
+a plan has no class to reflect on: `takesContext` decides whether a handler with
+no decorated parameter receives the whole context, and `promiseCapable` decides
+whether the route awaits a returned Promise. Omitting `takesContext` means the
+handler receives nothing; omitting `promiseCapable` means Promise-capable, which
+costs at most one already-settled `await` and cannot change what a lifecycle hook
+observes. A plan never registers itself on Elysia — the platform's own route
+compiler does, so the native version guard stays in one place.
+
 ### The shortest type-safe controller
 
 `elysiaController` skips decorator reflection and gives its callback Elysia's

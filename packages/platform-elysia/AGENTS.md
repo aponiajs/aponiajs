@@ -92,6 +92,19 @@ runtime boundary it describes.
   `routing/native-route.ts`'s structural guard, and reading an installed
   manifest at bootstrap would add a resolution this package does not otherwise
   need.
+- `defineElysiaControllerRoutes` is the descriptor path's counterpart to
+  `@Controller()` and its route decorators: it compiles `ElysiaRoutePlan` values
+  through the same lowering a decorated controller uses, so a declared
+  controller reaches the same native version guard, duplicate-route check,
+  startup logging, and `invokers` lookup. A plan never registers itself on
+  Elysia — `routing/native-route.ts` stays the only module that calls the native
+  route API. The two facts decorators read from emitted metadata are declared
+  instead: `takesContext` (omitted means the handler receives nothing) and
+  `promiseCapable` (omitted means Promise-capable, the direction that cannot
+  change what a lifecycle hook observes). `compileElysiaRoutePlan` synthesizes
+  `declaredParameterCount` rather than leaving it undefined, because
+  `undefined` sends the runtime's whole-context fallback back to reading the
+  handler's own source, which is the inference this path removes.
 - `registerCompiledElysiaRoutes` rejects a route handler that is a class
   constructor with `INVALID_CONTROLLER` while the controller mounts. A class
   passes the callable check and then throws a raw engine message on every

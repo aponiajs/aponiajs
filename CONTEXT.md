@@ -318,6 +318,19 @@ Acceptance for each stage:
   same route table;
 - measured throughput stays inside the 95% floor with the artifact in place.
 
+Stage 3's runtime half is in place: `defineElysiaControllerRoutes` accepts a
+controller's routes as `ElysiaRoutePlan` data and compiles them through the same
+lowering a decorated controller uses, so a declared controller reaches the
+native version guard, the duplicate-route check, the startup logging, and the
+generated-invoker lookup. A plan never calls Elysia itself, which keeps
+`routing/native-route.ts` the only module that touches the native route API. What
+is still missing is the emitter: `analyzeModuleDescriptors` reads module,
+injectable, and gateway declarations but `controller-routes.ts` does not yet
+report each route's schema, so `aponia build` cannot write the descriptor module
+that would let `reflect-metadata` leave the production path. The schema is the
+piece that has to come next, because a route's validators are the one part of a
+plan the analysis cannot currently name.
+
 Stage 2's analyzer and emitter are both in place. The analyzer,
 `packages/cli/src/generation/controller-routes.ts`, reads a controller file with
 `ts-morph` and returns its routes, paths, parameter bindings, and whether each

@@ -33,6 +33,8 @@ export type {
   AponiaRouteInvoker,
 } from "./routing/route-compiler.types.ts";
 export type { AponiaInvokerArtifact } from "./routing/invoker-artifact.types.ts";
+export type { ElysiaRoutePlan } from "./routing/route-plan.types.ts";
+export { defineElysiaControllerRoutes } from "./controllers/controller-definition.ts";
 export {
   ELYSIA_CONTROLLER,
   defineElysiaController,
@@ -43,6 +45,8 @@ export type {
   ElysiaControllerDefinition,
   ElysiaControllerPluginOptions,
   ElysiaControllerRegistrationOptions,
+  ElysiaControllerRoutesOptions,
+  DeclaredElysiaControllerDefinition,
   RegisteredElysiaControllerDefinition,
   RegisteredElysiaApplication,
 } from "./controllers/controller.types.ts";
