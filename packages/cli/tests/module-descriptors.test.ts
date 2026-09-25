@@ -26,9 +26,11 @@ export class UsersModule {}
           providers: [{ expression: "UsersService", unreadable: undefined }],
           exports: [{ expression: "UsersService", unreadable: undefined }],
           dependencies: [],
+          collectionUnreadable: [],
           unreadable: [],
         },
       ],
+      controllers: [],
       injectables: [],
       gateways: [],
     });
@@ -49,6 +51,7 @@ export class EmptyModule {}
         providers: [],
         exports: [],
         dependencies: [],
+        collectionUnreadable: [],
         unreadable: [],
       },
     ]);
@@ -253,6 +256,7 @@ class UncalledGateway {}
 
     expect(analyzeModuleDescriptors(source, "uncalled.ts")).toStrictEqual({
       modules: [],
+      controllers: [],
       injectables: [],
       gateways: [],
     });
@@ -267,6 +271,7 @@ export class Unrelated {}
 
     expect(analyzeModuleDescriptors(source, "unrelated.ts")).toStrictEqual({
       modules: [],
+      controllers: [],
       injectables: [],
       gateways: [],
     });
@@ -364,6 +369,11 @@ export class MixedModule {}
         },
       ],
       dependencies: [],
+      collectionUnreadable: [
+        "@Module in mixed.module.ts spreads a collection element, which this analysis cannot read.",
+        "@Module in mixed.module.ts declares an expression this analysis cannot read statically.",
+        "@Module in mixed.module.ts names a token this analysis cannot read statically; use a class reference or createToken(...).",
+      ],
       unreadable: [
         "@Module in mixed.module.ts spreads a collection element, which this analysis cannot read.",
         "@Module in mixed.module.ts declares an expression this analysis cannot read statically.",
@@ -395,6 +405,7 @@ export class MethodModule {}
         providers: [],
         exports: [],
         dependencies: [],
+        collectionUnreadable: [],
         unreadable: [],
       },
       {
@@ -404,6 +415,9 @@ export class MethodModule {}
         providers: [],
         exports: [],
         dependencies: [],
+        collectionUnreadable: [
+          "@Module in misspelled.module.ts declares an option this analysis cannot read statically.",
+        ],
         unreadable: [
           "@Module in misspelled.module.ts declares an option this analysis cannot read statically.",
         ],
@@ -415,6 +429,9 @@ export class MethodModule {}
         providers: [],
         exports: [],
         dependencies: [],
+        collectionUnreadable: [
+          "@Module in misspelled.module.ts declares an option this analysis cannot read statically.",
+        ],
         unreadable: [
           "@Module in misspelled.module.ts declares an option this analysis cannot read statically.",
         ],

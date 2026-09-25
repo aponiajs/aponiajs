@@ -86,6 +86,16 @@ export interface AnalyzedModule {
   /** The constructor's dependencies, ordered by parameter index. */
   readonly dependencies: readonly AnalyzedConstructorDependency[];
   /**
+   * Why the collections the decorator declares cannot be lowered, in the order
+   * the analysis found them; empty when every one of them was read.
+   *
+   * It carries the reason a collection that is not an array literal caused and
+   * the reason each unreadable element carries, so a consumer that only lowers
+   * the collections never has to inspect the entries and never mistakes an
+   * omission for a module that declares nothing.
+   */
+  readonly collectionUnreadable: readonly string[];
+  /**
    * Every reason this declaration cannot be lowered into a module descriptor, in
    * the order the analysis found them.
    *
@@ -93,6 +103,22 @@ export interface AnalyzedModule {
    * consumer that only checks this list never misses one. An empty list means
    * the whole declaration was read.
    */
+  readonly unreadable: readonly string[];
+}
+
+/**
+ * A class a source file decorates with `@Controller()`.
+ *
+ * The route analysis reads the same class's path and routes. What only a module
+ * declaration needs is how the container builds it, so this record carries the
+ * constructor dependencies and nothing else.
+ */
+export interface AnalyzedControllerDeclaration {
+  /** The class name exactly as declared, or `""` for an anonymous class. */
+  readonly className: string;
+  /** The constructor's dependencies, ordered by parameter index. */
+  readonly dependencies: readonly AnalyzedConstructorDependency[];
+  /** Every reason this declaration cannot be lowered, or empty when it can. */
   readonly unreadable: readonly string[];
 }
 
@@ -125,6 +151,7 @@ export interface AnalyzedGateway {
 /** Everything one source file declares, in declaration order. */
 export interface AnalyzedModuleDescriptors {
   readonly modules: readonly AnalyzedModule[];
+  readonly controllers: readonly AnalyzedControllerDeclaration[];
   readonly injectables: readonly AnalyzedInjectable[];
   readonly gateways: readonly AnalyzedGateway[];
 }

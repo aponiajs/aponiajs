@@ -264,15 +264,19 @@ artificial `src/modules/app` directory.
 ## Build
 
 ```bash
-aponia build            # write the invoker module
-aponia build --dry-run  # report the file without writing it
+aponia build            # write the generated modules
+aponia build --dry-run  # report the files without writing them
 ```
 
-`aponia build` reads every controller under the configured source root and writes
-`<sourceRoot>/invokers.generated.ts`. That module holds the route invokers the
-runtime would otherwise build at startup, rewritten as literal source, so the
-application no longer compiles them from the handler's own text or calls
-`new Function` to do it.
+`aponia build` reads every source file under the configured source root and
+writes up to two modules.
+
+### Route invokers
+
+`<sourceRoot>/invokers.generated.ts` holds the route invokers the runtime would
+otherwise build at startup, rewritten as literal source, so the application no
+longer compiles them from the handler's own text or calls `new Function` to do
+it.
 
 Pass it to the factory from your entrypoint:
 
@@ -297,10 +301,56 @@ the application works whether or not every handler was generated and whether or
 not the file exists. Nothing is required: omitting the option is still the
 default, and the runtime behaves exactly as before.
 
+### Module descriptors
+
+`<sourceRoot>/descriptors.generated.ts` holds the application's module graph as
+data — `defineModule` calls with declared controllers and providers — so the
+application can boot without lowering decorated classes at all. It is written
+only when at least one `@Module()` could be read, so a project whose modules are
+all built at run time still gets its invoker module.
+
+Boot from it by naming the root module's descriptor instead of the class:
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { moduleDescriptors } from "./descriptors.generated.ts";
+
+const application = await AponiaFactory.create(moduleDescriptors.AppModule);
+```
+
+The generated module exports `moduleDescriptors`, one entry per module it could
+declare, keyed by the module class name. A module that is missing from it is one
+the build declined and reported, and it keeps booting from its own decorators, so
+the fallback is per module rather than per application.
+
+Two things still read decorator metadata at run time, and a generated module does
+not change that:
+
+- WebSocket gateway discovery reads `@WebSocketGateway()` and `@SubscribeMessage()`
+  off the provider class, so a gateway in a generated module is discovered
+  exactly as a decorated one is.
+- A `@Validation()` model is resolved to the validator it was declared with while
+  its routes mount. The generated module names the model class, not the
+  validator, so the metadata read stays.
+
+Anything the build cannot read is reported rather than guessed at. Each decline
+prints its own line, which is not a change line:
+
+```text
+CREATE src/invokers.generated.ts
+DECLINED module UsersModule: @Module in /app/src/users/users.module.ts must declare "providers" as an array literal to be read statically.
+```
+
+A declined module is left out of `moduleDescriptors` whole; a declined route also
+sinks the module that declares it, because a controller is declared whole and
+emitting it without a route would leave the application answering a 404 where it
+used to answer with the handler. Fix what the line names and build again.
+
 The command only reads source, so it never starts the application, never
 connects to anything, and never runs provider factories. Run it again whenever a
-controller changes. It is separate from `bun run build`, which bundles the
-application for deployment.
+controller or a module changes; a descriptor module that names a module the
+application no longer declares is stale until you do. It is separate from
+`bun run build`, which bundles the application for deployment.
 
 ## Safety behavior
 

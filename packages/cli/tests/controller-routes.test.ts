@@ -49,6 +49,8 @@ export class UsersController {
             promiseCapable: false,
             declaresParameters: true,
             usesArgumentsObject: false,
+            declaresSynchronousReturn: false,
+            schema: undefined,
             parameters: [{ index: 0, kind: "body", property: undefined }],
           },
           {
@@ -58,6 +60,8 @@ export class UsersController {
             promiseCapable: false,
             declaresParameters: true,
             usesArgumentsObject: false,
+            declaresSynchronousReturn: false,
+            schema: undefined,
             parameters: [{ index: 0, kind: "query", property: undefined }],
           },
           {
@@ -67,6 +71,8 @@ export class UsersController {
             promiseCapable: false,
             declaresParameters: true,
             usesArgumentsObject: false,
+            declaresSynchronousReturn: false,
+            schema: undefined,
             parameters: [{ index: 0, kind: "params", property: "id" }],
           },
           {
@@ -76,6 +82,8 @@ export class UsersController {
             promiseCapable: false,
             declaresParameters: true,
             usesArgumentsObject: false,
+            declaresSynchronousReturn: false,
+            schema: undefined,
             parameters: [
               { index: 0, kind: "params", property: "id" },
               { index: 1, kind: "body", property: undefined },
@@ -88,6 +96,8 @@ export class UsersController {
             promiseCapable: false,
             declaresParameters: true,
             usesArgumentsObject: false,
+            declaresSynchronousReturn: false,
+            schema: undefined,
             parameters: [{ index: 0, kind: "params", property: undefined }],
           },
         ],
@@ -287,6 +297,8 @@ export default class {
             promiseCapable: false,
             declaresParameters: false,
             usesArgumentsObject: false,
+            declaresSynchronousReturn: false,
+            schema: undefined,
             parameters: [],
           },
         ],
@@ -322,6 +334,8 @@ export class UsersController {
             promiseCapable: false,
             declaresParameters: false,
             usesArgumentsObject: false,
+            declaresSynchronousReturn: false,
+            schema: undefined,
             parameters: [],
           },
         ],
@@ -387,6 +401,8 @@ export class AliasesController {
         promiseCapable: false,
         declaresParameters: false,
         usesArgumentsObject: false,
+        declaresSynchronousReturn: false,
+        schema: undefined,
         parameters: [],
       },
       {
@@ -396,6 +412,8 @@ export class AliasesController {
         promiseCapable: false,
         declaresParameters: false,
         usesArgumentsObject: false,
+        declaresSynchronousReturn: false,
+        schema: undefined,
         parameters: [],
       },
     ]);
@@ -444,6 +462,8 @@ export class NamespacedController {
             promiseCapable: false,
             declaresParameters: false,
             usesArgumentsObject: false,
+            declaresSynchronousReturn: false,
+            schema: undefined,
             parameters: [],
           },
         ],
@@ -461,6 +481,8 @@ export class NamespacedController {
             promiseCapable: false,
             declaresParameters: true,
             usesArgumentsObject: false,
+            declaresSynchronousReturn: false,
+            schema: undefined,
             parameters: [{ index: 0, kind: "query", property: undefined }],
           },
         ],
@@ -513,6 +535,8 @@ export class MixedController {
             promiseCapable: false,
             declaresParameters: true,
             usesArgumentsObject: false,
+            declaresSynchronousReturn: false,
+            schema: undefined,
             parameters: [],
           },
         ],
@@ -553,6 +577,145 @@ export class NotesController {
     expect(Object.isFrozen(first?.routes[0])).toBe(true);
     expect(Object.isFrozen(first?.routes[0]?.parameters)).toBe(true);
     expect(Object.isFrozen(binding)).toBe(true);
+  });
+
+  test("reads every schema slot as the expression the decorator wrote", () => {
+    const source = `import { Controller, Get, Post } from "@aponiajs/common";
+import { t } from "elysia";
+import { CreateUser, ListUsers, ResponseMap, RouteParams, UserHeaders, UserCookies } from "./users.model.ts";
+
+@Controller("users")
+export class UsersController {
+  @Post("/", {
+    headers: UserHeaders,
+    params: RouteParams,
+    response: { 201: ResponseMap },
+    cookie: UserCookies,
+    query: t.Object({ page: t.String() }),
+    body: CreateUser,
+  })
+  create() {}
+
+  @Get({ query: ListUsers })
+  list() {}
+}
+`;
+
+    const [controller] = analyzeControllerRoutes(source, "users.controller.ts");
+    const [create, list] = controller?.routes ?? [];
+
+    // The slots come back in the framework's order, not the order the options
+    // object wrote them in, and each value is the source text verbatim: a
+    // validation model by class name, an inline validator by its own text, and a
+    // status-keyed response map by the object literal that declares it.
+    expect(create?.schema?.slots).toStrictEqual([
+      { slot: "body", expression: "CreateUser", unreadable: undefined },
+      { slot: "query", expression: "t.Object({ page: t.String() })", unreadable: undefined },
+      { slot: "params", expression: "RouteParams", unreadable: undefined },
+      { slot: "headers", expression: "UserHeaders", unreadable: undefined },
+      { slot: "cookie", expression: "UserCookies", unreadable: undefined },
+      { slot: "response", expression: "{ 201: ResponseMap }", unreadable: undefined },
+    ]);
+    expect(create?.schema?.unreadable).toBeUndefined();
+    expect(list?.schema?.slots).toStrictEqual([
+      { slot: "query", expression: "ListUsers", unreadable: undefined },
+    ]);
+  });
+
+  test("reads a schema slot declared as an inline validator and a slot declared twice", () => {
+    const source = `import { Controller, Post } from "@aponiajs/common";
+import { t } from "elysia";
+
+@Controller("notes")
+export class NotesController {
+  @Post("/", { body: t.Object({ title: t.String({ minLength: 1 }) }), body: t.Object({}) })
+  create() {}
+}
+`;
+
+    const [controller] = analyzeControllerRoutes(source, "notes.controller.ts");
+
+    // The last declaration of a slot wins, because that is the value the runtime
+    // reads from the same object literal.
+    expect(controller?.routes[0]?.schema?.slots).toStrictEqual([
+      { slot: "body", expression: "t.Object({})", unreadable: undefined },
+    ]);
+  });
+
+  test("reports a schema slot that cannot be read, keeping the slots that can", () => {
+    const source = `import { Controller, Get, Post, Put } from "@aponiajs/common";
+import { extraSlots } from "./users.model.ts";
+import { CreateUser } from "./users.model.ts";
+
+@Controller("users")
+export class UsersController {
+  @Post("/", { ...extraSlots, body: CreateUser })
+  spread() {}
+
+  @Post("/", { [slotName]: CreateUser })
+  computed() {}
+
+  @Post("/", { body: CreateUser, query() {} })
+  method() {}
+
+  @Post("/", { body: CreateUser, query: })
+  missingValue() {}
+
+  @Put("/", { body: CreateUser, query: Missing })
+  missingName() {}
+}
+`;
+
+    const [controller] = analyzeControllerRoutes(source, "users.controller.ts");
+    const [spread, computed, method, missingValue, missingName] = controller?.routes ?? [];
+
+    expect(spread?.schema?.unreadable).toBe(
+      "@Post in users.controller.ts spreads its schema, which may declare slots this analysis cannot read.",
+    );
+    // The slots that were read before the spread are still reported.
+    expect(spread?.schema?.slots).toStrictEqual([
+      { slot: "body", expression: "CreateUser", unreadable: undefined },
+    ]);
+    expect(computed?.schema?.slots).toStrictEqual([]);
+    expect(computed?.schema?.unreadable).toBe(
+      "@Post in users.controller.ts declares a schema slot this analysis cannot read statically.",
+    );
+    expect(method?.schema?.slots).toStrictEqual([
+      { slot: "body", expression: "CreateUser", unreadable: undefined },
+    ]);
+    expect(method?.schema?.unreadable).toBe(
+      "@Post in users.controller.ts declares a schema slot this analysis cannot read statically.",
+    );
+    expect(missingValue?.schema?.slots).toStrictEqual([
+      { slot: "body", expression: "CreateUser", unreadable: undefined },
+    ]);
+    expect(missingValue?.schema?.unreadable).toBe(
+      '@Post in users.controller.ts declares its "query" schema slot with no value.',
+    );
+    expect(missingName?.schema?.unreadable).toBe(
+      '@Put in users.controller.ts\'s "query" schema reads "Missing", which is not an import or an export of the file it was written in, so a generated module cannot name it.',
+    );
+    expect(missingName?.schema?.slots[1]?.unreadable).toBe(missingName?.schema?.unreadable);
+  });
+
+  test("reports a schema argument that is not an object literal", () => {
+    const source = `import { Controller, Post } from "@aponiajs/common";
+
+const schema = { body: CreateUser };
+
+@Controller("users")
+export class UsersController {
+  @Post("/", schema)
+  create() {}
+}
+`;
+
+    const [controller] = analyzeControllerRoutes(source, "users.controller.ts");
+
+    expect(controller?.routes[0]?.schema?.unreadable).toBe(
+      "@Post in users.controller.ts must declare its schema as an object literal to be read statically.",
+    );
+    expect(controller?.routes[0]?.schema?.slots).toStrictEqual([]);
   });
 
   test("throws when a decorator argument cannot be read statically", () => {

@@ -16,6 +16,55 @@ export type AnalyzedRequestMethod =
   | "PUT";
 
 /**
+ * The validation slots a route decorator's schema can declare.
+ *
+ * Mirrors `routeSchemaSlots` in `@aponiajs/common`
+ * (`packages/common/src/routing/route-schema.ts`). The CLI is independent of the
+ * runtime packages, so the union is declared locally and must be kept in step
+ * with that source by hand.
+ */
+export type AnalyzedRouteSchemaSlotName =
+  | "body"
+  | "cookie"
+  | "headers"
+  | "params"
+  | "query"
+  | "response";
+
+/**
+ * One slot of a route's validation schema.
+ *
+ * The expression is kept exactly as the decorator wrote it, because the runtime
+ * hands a slot's value to the platform unchanged: a validation model class is
+ * emitted by its class name, an inline `t.Object({ ... })` by its own text, and a
+ * status-specific response map by the object literal that declares it. Nothing
+ * here interprets a validator.
+ *
+ * A slot whose value the analysis cannot reproduce is reported rather than
+ * dropped, so a consumer declines the route instead of emitting a schema the
+ * application did not write.
+ */
+export interface AnalyzedRouteSchemaSlot {
+  readonly slot: AnalyzedRouteSchemaSlotName;
+  /** The slot's value exactly as the decorator wrote it. */
+  readonly expression: string;
+  /** Why the slot cannot be reproduced in generated source, or `undefined` when it can. */
+  readonly unreadable: string | undefined;
+}
+
+/** The validation schema one route decorator declares. */
+export interface AnalyzedRouteSchema {
+  /** The slots the decorator declares, in the canonical slot order rather than in source order. */
+  readonly slots: readonly AnalyzedRouteSchemaSlot[];
+  /**
+   * The first reason the whole schema cannot be reproduced — a reason of its
+   * own, such as a spread or a computed slot name, or the reason any one slot
+   * carries. An empty schema is readable and has none.
+   */
+  readonly unreadable: string | undefined;
+}
+
+/**
  * The request values a route handler parameter can bind to.
  *
  * Mirrors `RouteParameterKind` in `@aponiajs/common`
@@ -64,6 +113,23 @@ export interface AnalyzedRoute {
   /** Whether the handler is declared `async` or annotated with `Promise<...>`. */
   readonly promiseCapable: boolean;
   /**
+   * Whether the handler's declared return type proves a synchronous return.
+   *
+   * The runtime reads this from emitted `design:returntype`: a handler is
+   * Promise-capable unless that metadata names a constructor other than
+   * `Promise`, `Object`, or `undefined`. A primitive annotation — `string`,
+   * `number`, `boolean`, `bigint`, `symbol` — is the only source text that
+   * proves which constructor the metadata will name, so it is the only shape
+   * reported here. An annotation naming a class does not: it may also name an
+   * interface or a type alias, both of which reach the runtime as `Object`.
+   *
+   * A consumer that declares a route instead of decorating one states this
+   * fact, and must omit it whenever it is `false`, because a route that is
+   * Promise-capable merely costs one settled `await` while a route that wrongly
+   * claims to be synchronous exposes a raw Promise to the lifecycle.
+   */
+  readonly declaresSynchronousReturn: boolean;
+  /**
    * Whether the handler declares at least one parameter.
    *
    * The runtime gives a handler that has no decorated parameter but declares at
@@ -82,6 +148,14 @@ export interface AnalyzedRoute {
   readonly usesArgumentsObject: boolean;
   /** The handler's decorated parameters, ordered by parameter index. */
   readonly parameters: readonly AnalyzedRouteParameter[];
+  /**
+   * The validation schema the decorator declares, or `undefined` when it
+   * declares none.
+   *
+   * The schema is reported per decorator, because a method may carry more than
+   * one route decorator and each declares its own.
+   */
+  readonly schema: AnalyzedRouteSchema | undefined;
 }
 
 /** One `@Controller()` class and the routes it declares. */

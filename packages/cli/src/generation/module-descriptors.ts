@@ -10,6 +10,7 @@ import {
 } from "ts-morph";
 import type {
   AnalyzedConstructorDependency,
+  AnalyzedControllerDeclaration,
   AnalyzedGateway,
   AnalyzedInjectable,
   AnalyzedModule,
@@ -19,6 +20,7 @@ import type {
 } from "./module-descriptors.types.ts";
 
 const aponiaModuleSpecifier = "@aponiajs/common";
+const controllerDecoratorName = "Controller";
 const moduleDecoratorName = "Module";
 const injectableDecoratorName = "Injectable";
 const injectDecoratorName = "Inject";
@@ -45,6 +47,7 @@ type ModuleCollectionName = (typeof moduleCollectionNames)[number];
 
 const noDescriptors: AnalyzedModuleDescriptors = Object.freeze({
   modules: Object.freeze([]),
+  controllers: Object.freeze([]),
   injectables: Object.freeze([]),
   gateways: Object.freeze([]),
 });
@@ -108,10 +111,12 @@ interface DependencyReading {
  * lower.
  *
  * Analysis is static and exact: it parses `source` with `ts-morph` and never
- * evaluates it, so a module, provider, or gateway that only exists after a side
- * effect is invisible to it. Decorators are matched against the
+ * evaluates it, so a module, controller, provider, or gateway that only exists
+ * after a side effect is invisible to it. Decorators are matched against the
  * `@aponiajs/common` import of the same file, results follow declaration order,
- * and every returned object is frozen.
+ * and every returned object is frozen. Controllers are read for their
+ * constructor dependencies alone; their routes belong to
+ * `analyzeControllerRoutes`.
  *
  * Readable means the analysis can write the same thing again: an identifier, a
  * property access, a `createToken(...)` call, or an array literal of them. A
@@ -142,6 +147,7 @@ export function analyzeModuleDescriptors(
   }
 
   const modules: AnalyzedModule[] = [];
+  const controllers: AnalyzedControllerDeclaration[] = [];
   const injectables: AnalyzedInjectable[] = [];
   const gateways: AnalyzedGateway[] = [];
 
@@ -151,6 +157,11 @@ export function analyzeModuleDescriptors(
     const moduleUse = uses.find((use) => use.name === moduleDecoratorName);
     if (moduleUse) {
       modules.push(analyzeModule(declaration, moduleUse, bindings, filePath));
+    }
+
+    const controllerUse = uses.find((use) => use.name === controllerDecoratorName);
+    if (controllerUse) {
+      controllers.push(analyzeControllerDeclaration(declaration, bindings, filePath));
     }
 
     const injectableUse = uses.find((use) => use.name === injectableDecoratorName);
@@ -166,8 +177,32 @@ export function analyzeModuleDescriptors(
 
   return Object.freeze({
     modules: Object.freeze(modules),
+    controllers: Object.freeze(controllers),
     injectables: Object.freeze(injectables),
     gateways: Object.freeze(gateways),
+  });
+}
+
+/**
+ * Reads one class into a controller declaration when Aponia's `@Controller`
+ * decorates it.
+ *
+ * The path and the routes belong to the route analysis, which owns the decorator
+ * shapes that declare them. All this reads is what the container needs to build
+ * the class, so a file whose controller declares no constructor is reported as
+ * having no dependencies rather than being left out.
+ */
+function analyzeControllerDeclaration(
+  declaration: ClassDeclaration,
+  bindings: AponiaDecoratorBindings,
+  filePath: string,
+): AnalyzedControllerDeclaration {
+  const dependencies = readDependencies(declaration, bindings, filePath);
+
+  return Object.freeze({
+    className: readClassName(declaration),
+    dependencies: dependencies.dependencies,
+    unreadable: dependencies.reasons,
   });
 }
 
@@ -250,6 +285,7 @@ function analyzeModule(
     providers: collections.providers,
     exports: collections.exports,
     dependencies: dependencies.dependencies,
+    collectionUnreadable: collections.reasons,
     unreadable: Object.freeze([...collections.reasons, ...dependencies.reasons]),
   });
 }

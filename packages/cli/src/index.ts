@@ -9,9 +9,21 @@ export type {
 export { runCli } from "./commands/run-cli.ts";
 export { analyzeControllerRoutes } from "./generation/controller-routes.ts";
 export { emitControllerInvokers } from "./generation/controller-invokers.ts";
+export {
+  descriptorModuleFileName,
+  emitModuleDescriptors,
+} from "./generation/descriptor-emitter.ts";
+export type {
+  DeclinedDescriptor,
+  DeclinedModuleDescriptor,
+  DeclinedRouteDescriptor,
+  DescriptorSourceFile,
+  EmittedModuleDescriptors,
+} from "./generation/descriptor-emitter.types.ts";
 export { analyzeModuleDescriptors } from "./generation/module-descriptors.ts";
 export type {
   AnalyzedConstructorDependency,
+  AnalyzedControllerDeclaration,
   AnalyzedGateway,
   AnalyzedInjectedDependency,
   AnalyzedInjectable,
@@ -43,7 +55,18 @@ export type {
   AnalyzedRoute,
   AnalyzedRouteParameter,
   AnalyzedRouteParameterKind,
+  AnalyzedRouteSchema,
+  AnalyzedRouteSchemaSlot,
+  AnalyzedRouteSchemaSlotName,
 } from "./generation/controller-routes.types.ts";
+export { collectSourceImports, parseSourceExpression } from "./generation/source-imports.ts";
+export type {
+  SourceImport,
+  SourceImportForm,
+  SourceImportKind,
+  SourceImports,
+  SourceImportsReading,
+} from "./generation/source-imports.types.ts";
 export { generateProject } from "./generation/project-generator.ts";
 export type {
   GenerateProjectOptions,

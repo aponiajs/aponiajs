@@ -2,14 +2,18 @@ import { join, relative, resolve } from "node:path";
 import findFiles from "fast-glob";
 import { analyzeControllerRoutes } from "./controller-routes.ts";
 import { emitControllerInvokers } from "./controller-invokers.ts";
+import { descriptorModuleFileName, emitModuleDescriptors } from "./descriptor-emitter.ts";
 import { writePendingFiles } from "./file-writer.ts";
+import { analyzeModuleDescriptors } from "./module-descriptors.ts";
 import {
   readConfiguration,
   resolveInside,
   resolveProject,
   toImportPath,
 } from "./project-configuration.ts";
+import { collectSourceImports } from "./source-imports.ts";
 import type { AnalyzedController } from "./controller-routes.types.ts";
+import type { DescriptorSourceFile } from "./descriptor-emitter.types.ts";
 import type { GenerateInvokersOptions, GenerateInvokersResult } from "./invoker-generator.types.ts";
 import type { PendingFile } from "./schematic.types.ts";
 import { aponiaVersion } from "../version.ts";
@@ -21,14 +25,20 @@ import { aponiaVersion } from "../version.ts";
 export const invokerModuleFileName = "invokers.generated.ts";
 
 /**
- * Reads every controller under the configured source root and writes a module
- * whose route invokers are literal source.
+ * Reads every source file under the configured source root and writes the two
+ * modules a build generates.
  *
- * The runtime otherwise builds each invoker with `new Function` and infers a
- * handler's bindings from its own source. The written module replaces that for
- * every handler the analysis could prove, and a handler it declined stays on the
- * runtime's compile path — so a partially generated application is a supported
- * state and this never has to fail because one handler was unusual.
+ * The invoker module is literal route binding: the runtime otherwise builds each
+ * invoker with `new Function` and infers a handler's bindings from its own
+ * source. The descriptor module is the application's module graph as data, so it
+ * can boot without lowering decorated classes at all.
+ *
+ * Both emitters cover what they can prove and decline the rest, so a partially
+ * generated application is a supported state and this never has to fail because
+ * one declaration was unusual: a declined handler stays on the runtime's compile
+ * path, and a declined module keeps booting from its decorators. The descriptor
+ * module is only written when at least one module could be declared, so a
+ * project that has controllers but no `@Module()` still gets its invokers.
  *
  * Nothing here runs the application. The analysis reads source, which is why a
  * controller that only exists after some side effect is invisible to it.
@@ -44,19 +54,34 @@ export async function generateInvokers(
     project.sourceRoot ?? configuration.sourceRoot ?? "src",
   );
   const outputPath = join(sourceRoot, invokerModuleFileName);
+  const descriptorPath = join(sourceRoot, descriptorModuleFileName);
 
   const sourceFiles = await findFiles("**/*.ts", {
     cwd: sourceRoot,
     absolute: true,
-    ignore: ["**/*.spec.ts", "**/*.test.ts", `**/${invokerModuleFileName}`],
+    ignore: [
+      "**/*.spec.ts",
+      "**/*.test.ts",
+      `**/${invokerModuleFileName}`,
+      `**/${descriptorModuleFileName}`,
+    ],
   });
 
   const found: { readonly controller: AnalyzedController; readonly file: string }[] = [];
+  const analyzed: DescriptorSourceFile[] = [];
   for (const file of sourceFiles.toSorted()) {
-    const controllers = analyzeControllerRoutes(await Bun.file(file).text(), file);
+    const source = await Bun.file(file).text();
+    const controllers = analyzeControllerRoutes(source, file);
     for (const controller of controllers) {
       found.push({ controller, file });
     }
+
+    analyzed.push({
+      file,
+      imports: collectSourceImports(source, file),
+      descriptors: analyzeModuleDescriptors(source, file),
+      controllers,
+    });
   }
 
   if (found.length === 0) {
@@ -90,17 +115,28 @@ export async function generateInvokers(
     );
   }
 
-  const files: PendingFile[] = [
+  const descriptors = emitModuleDescriptors(analyzed, descriptorPath);
+  // Regenerating is the normal case, so a file is replaced rather than refused
+  // when it is already there. The descriptor module is written only when
+  // something could be declared for it: every application that reaches this
+  // command has controllers, and not all of them declare modules.
+  const pending: PendingFile[] = [
     {
       path: outputPath,
       content: emitted.source,
-      // Regenerating is the normal case, so the file is replaced rather than
-      // refused when it is already there.
       kind: (await Bun.file(outputPath).exists()) ? "UPDATE" : "CREATE",
     },
   ];
+  if (descriptors.source !== undefined) {
+    pending.push({
+      path: descriptorPath,
+      content: descriptors.source,
+      kind: (await Bun.file(descriptorPath).exists()) ? "UPDATE" : "CREATE",
+    });
+  }
 
-  return writePendingFiles(projectRoot, files, options.dryRun);
+  const result = await writePendingFiles(projectRoot, pending, options.dryRun);
+  return { ...result, declined: descriptors.declined };
 }
 
 /**

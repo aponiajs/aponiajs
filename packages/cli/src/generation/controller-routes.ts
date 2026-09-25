@@ -6,18 +6,39 @@ import {
   type Decorator,
   type Expression,
   type MethodDeclaration,
+  type ObjectLiteralExpression,
   type SourceFile,
 } from "ts-morph";
+import { readExpressionImports, readSourceImports } from "./source-imports.ts";
+import type { SourceImports } from "./source-imports.types.ts";
 import type {
   AnalyzedController,
   AnalyzedRequestMethod,
   AnalyzedRoute,
   AnalyzedRouteParameter,
   AnalyzedRouteParameterKind,
+  AnalyzedRouteSchema,
+  AnalyzedRouteSchemaSlot,
+  AnalyzedRouteSchemaSlotName,
 } from "./controller-routes.types.ts";
 
 const aponiaModuleSpecifier = "@aponiajs/common";
 const controllerDecoratorName = "Controller";
+
+/**
+ * The schema slots a route decorator reads, in the order the analysis reports
+ * them. The order is the framework's own (`routeSchemaSlots` in
+ * `packages/common/src/routing/route-schema.ts`), not the order the decorator
+ * wrote them in, so a reordered options object reads the same.
+ */
+const routeSchemaSlotNames: readonly AnalyzedRouteSchemaSlotName[] = [
+  "body",
+  "query",
+  "params",
+  "headers",
+  "cookie",
+  "response",
+];
 
 /**
  * The HTTP method decorators of `@aponiajs/common`, keyed by the name the
@@ -90,10 +111,14 @@ interface AponiaDecoratorUse {
  * its path must pass its schema as an inline object literal. Any other argument
  * shape cannot be read statically and throws a plain `Error`, because the
  * generated invoker would otherwise bind the wrong arguments. The trailing
- * schema of the `(path, schema)` arity is not interpreted: the runtime passes it
- * to the platform unchanged. A bare `@Get` or `@Controller` that is never called
- * is ignored, because the framework's decorator factories must be invoked to
- * record anything.
+ * schema of the `(path, schema)` arity is read as the source expression to emit
+ * again — a validation model by class name, an inline validator by its own text,
+ * a status-keyed response map by the literal that declares it — together with the
+ * names that expression reads, which a generated module has to import. A slot
+ * whose value the analysis cannot reproduce is reported in `unreadable` rather
+ * than dropped. A bare `@Get` or `@Controller` that is never called is ignored,
+ * because the framework's decorator factories must be invoked to record
+ * anything.
  *
  * @param source - The full text of one controller source file.
  * @param filePath - The file's path, used only to describe failures.
@@ -111,9 +136,10 @@ export function analyzeControllerRoutes(
 
   assertParameterDecoratorsDecorateMethods(sourceFile, bindings, filePath);
 
+  const imports = readSourceImports(sourceFile);
   const controllers = sourceFile
     .getClasses()
-    .flatMap((declaration) => analyzeController(declaration, bindings, filePath));
+    .flatMap((declaration) => analyzeController(declaration, bindings, imports, filePath));
   return Object.freeze(controllers);
 }
 
@@ -154,6 +180,7 @@ function collectAponiaDecoratorBindings(sourceFile: SourceFile): AponiaDecorator
 function analyzeController(
   declaration: ClassDeclaration,
   bindings: AponiaDecoratorBindings,
+  imports: SourceImports,
   filePath: string,
 ): readonly AnalyzedController[] {
   const controllerUse = declaration
@@ -173,7 +200,7 @@ function analyzeController(
   const path = pathArgument === undefined ? "" : readStringLiteral(pathArgument, description);
   const routes = declaration
     .getMethods()
-    .flatMap((method) => analyzeRouteMethod(method, bindings, filePath));
+    .flatMap((method) => analyzeRouteMethod(method, bindings, imports, filePath));
 
   return [
     Object.freeze({
@@ -192,6 +219,7 @@ function analyzeController(
 function analyzeRouteMethod(
   method: MethodDeclaration,
   bindings: AponiaDecoratorBindings,
+  imports: SourceImports,
   filePath: string,
 ): readonly AnalyzedRoute[] {
   const routes = method.getDecorators().flatMap((decorator) => {
@@ -206,6 +234,7 @@ function analyzeRouteMethod(
   const parameters = readRouteParameters(method, bindings, filePath);
   const methodName = method.getName();
   const promiseCapable = returnsPromise(method);
+  const declaresSynchronousReturn = readsSynchronousReturn(method);
   const declaresParameters = method.getParameters().length > 0;
   const usesArgumentsObject = readsArgumentsObject(method);
 
@@ -216,9 +245,11 @@ function analyzeRouteMethod(
         path: readRoutePath(use, filePath),
         methodName,
         promiseCapable,
+        declaresSynchronousReturn,
         declaresParameters,
         usesArgumentsObject,
         parameters,
+        schema: readRouteSchema(use, imports, filePath),
       }),
     ),
   );
@@ -352,6 +383,171 @@ function returnsPromise(method: MethodDeclaration): boolean {
     Node.isTypeReference(returnType) &&
     returnType.getTypeName().getText() === "Promise"
   );
+}
+
+/**
+ * Whether the handler's declared return type proves a synchronous return.
+ *
+ * TypeScript emits `design:returntype` from the annotation, and the runtime
+ * classifies `Promise` as Promise-capable while `Object` and `undefined` prove
+ * nothing. Of the annotations whose text settles that constructor, only the
+ * primitive keywords do: they are always emitted as `String`, `Number`,
+ * `Boolean`, `BigInt`, or `Symbol`. An annotation naming a class may reach the
+ * runtime as that class, but it may equally name an interface or a type alias,
+ * which reach it as `Object` — so it is not proof and is reported as no proof.
+ */
+function readsSynchronousReturn(method: MethodDeclaration): boolean {
+  if (method.isAsync()) {
+    return false;
+  }
+
+  const returnType = method.getReturnTypeNode();
+  return (
+    returnType !== undefined &&
+    (Node.isStringKeyword(returnType) ||
+      Node.isNumberKeyword(returnType) ||
+      Node.isBooleanKeyword(returnType) ||
+      returnType.getKind() === SyntaxKind.BigIntKeyword ||
+      Node.isSymbolKeyword(returnType))
+  );
+}
+
+/**
+ * Reads the validation schema one route decorator declares, or `undefined` when
+ * it declares none.
+ *
+ * The documented arities carry the schema in one of two places: the second
+ * argument of `(path, schema)`, or the only argument of `(schema)`, where the
+ * object literal itself is the schema and the path is empty. Which argument
+ * holds the schema therefore follows from the shape the path reader accepts, and
+ * a decorator that declares neither a path nor a schema has none.
+ */
+function readRouteSchema(
+  use: AponiaDecoratorUse,
+  imports: SourceImports,
+  filePath: string,
+): AnalyzedRouteSchema | undefined {
+  const description = describeDecoratorUse(use, filePath);
+  const argument = schemaArgument(use);
+  if (argument === undefined) {
+    return undefined;
+  }
+
+  if (!Node.isObjectLiteralExpression(argument)) {
+    return Object.freeze({
+      slots: Object.freeze([]),
+      unreadable: `${description} must declare its schema as an object literal to be read statically.`,
+    });
+  }
+
+  return readRouteSchemaSlots(argument, imports, description);
+}
+
+function schemaArgument(use: AponiaDecoratorUse): Node | undefined {
+  const [, schema] = use.arguments;
+  if (schema !== undefined) {
+    return schema;
+  }
+
+  const [only] = use.arguments;
+  return use.arguments.length === 1 && Node.isObjectLiteralExpression(only) ? only : undefined;
+}
+
+/**
+ * Reads each slot of a schema object literal.
+ *
+ * Only a property assignment names a slot the analysis can act on. A spread may
+ * declare any slot, and a computed key, a method, or an accessor assigns a value
+ * this analysis cannot see the slot name for, so both are reported: treating
+ * them as absent would make a schema look like one that declares nothing. A key
+ * that is not a slot at all is ignored, because the runtime drops it too.
+ *
+ * A property assignment whose value is missing entirely — `{ body: }` — is
+ * reported as well, because there is no expression to copy and the runtime reads
+ * the slot as `undefined` rather than as absent.
+ *
+ * A slot declared twice keeps the last value, which is what the runtime reads
+ * from the same object literal.
+ */
+function readRouteSchemaSlots(
+  argument: ObjectLiteralExpression,
+  imports: SourceImports,
+  description: string,
+): AnalyzedRouteSchema {
+  const slots = new Map<AnalyzedRouteSchemaSlotName, AnalyzedRouteSchemaSlot>();
+  let unreadable: string | undefined;
+
+  for (const property of argument.getProperties()) {
+    if (Node.isSpreadAssignment(property)) {
+      unreadable ??= `${description} spreads its schema, which may declare slots this analysis cannot read.`;
+      continue;
+    }
+    if (!Node.isPropertyAssignment(property)) {
+      unreadable ??= `${description} declares a schema slot this analysis cannot read statically.`;
+      continue;
+    }
+
+    const nameNode = property.getNameNode();
+    if (Node.isComputedPropertyName(nameNode)) {
+      unreadable ??= `${description} declares a schema slot this analysis cannot read statically.`;
+      continue;
+    }
+
+    const name = Node.isStringLiteral(nameNode) ? nameNode.getLiteralValue() : nameNode.getText();
+    if (!isRouteSchemaSlotName(name)) {
+      continue;
+    }
+
+    const initializer = property.getInitializer();
+    if (initializer === undefined || initializer.getText().length === 0) {
+      // A property assignment with no value at all: `{ body: }`. The runtime
+      // hands `undefined` to the platform, so there is nothing to emit again.
+      unreadable ??= `${description} declares its "${name}" schema slot with no value.`;
+      continue;
+    }
+
+    const slot = readRouteSchemaSlot(initializer, name, imports, description);
+    slots.set(name, slot);
+    unreadable ??= slot.unreadable;
+  }
+
+  return Object.freeze({
+    slots: Object.freeze(
+      routeSchemaSlotNames.flatMap((name) => {
+        const slot = slots.get(name);
+        return slot === undefined ? [] : [slot];
+      }),
+    ),
+    unreadable,
+  });
+}
+
+/**
+ * Reads one slot's value as the expression to emit again.
+ *
+ * Reading is all this does: the value is kept exactly as written, and whether it
+ * can be reproduced in generated source is decided by the names it reads, which
+ * a generated module has to import. An emitter reads those names from the
+ * expression again through the same rule.
+ */
+function readRouteSchemaSlot(
+  initializer: Node,
+  slot: AnalyzedRouteSchemaSlotName,
+  imports: SourceImports,
+  description: string,
+): AnalyzedRouteSchemaSlot {
+  const reading = readExpressionImports(initializer, imports, `${description}'s "${slot}" schema`);
+
+  return Object.freeze({
+    slot,
+    expression: initializer.getText(),
+    unreadable: reading.unreadable,
+  });
+}
+
+/** Whether a key names a slot a route schema declares. */
+function isRouteSchemaSlotName(name: string): name is AnalyzedRouteSchemaSlotName {
+  return routeSchemaSlotNames.some((slot) => slot === name);
 }
 
 function readDecoratorUse(

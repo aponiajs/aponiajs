@@ -1,8 +1,14 @@
 import { afterEach, expect, spyOn, test } from "bun:test";
-import { mkdir, mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { generateInvokers, invokerModuleFileName, parseArguments, runCli } from "../src/index.ts";
+import {
+  descriptorModuleFileName,
+  generateInvokers,
+  invokerModuleFileName,
+  parseArguments,
+  runCli,
+} from "../src/index.ts";
 
 const temporaryDirectories: string[] = [];
 const initialWorkingDirectory = process.cwd();
@@ -38,8 +44,35 @@ export class UsersController {
 }
 `;
 
+const moduleSource = `import { Module } from "@aponiajs/common";
+import { UsersController } from "./users.controller.ts";
+import { UsersService } from "./users.service.ts";
+
+@Module({
+  controllers: [UsersController],
+  providers: [UsersService],
+  exports: [UsersService],
+})
+export class UsersModule {}
+`;
+
+const serviceSource = `import { Injectable } from "@aponiajs/common";
+
+@Injectable()
+export class UsersService {
+  read(id: string): string {
+    return id;
+  }
+}
+`;
+
 async function createProject(
-  options: { readonly sourceRoot?: string; readonly controllers?: string } = {},
+  options: {
+    readonly sourceRoot?: string;
+    readonly controllers?: string;
+    readonly module?: string;
+    readonly service?: string;
+  } = {},
 ): Promise<string> {
   const projectRoot = await createTemporaryDirectory("aponia-build-");
   const sourceRoot = options.sourceRoot ?? "src";
@@ -52,6 +85,13 @@ async function createProject(
     join(projectRoot, sourceRoot, "users", "users.controller.ts"),
     options.controllers ?? controllerSource,
   );
+  if (options.module !== undefined) {
+    await Bun.write(join(projectRoot, sourceRoot, "users", "users.module.ts"), options.module);
+    await Bun.write(
+      join(projectRoot, sourceRoot, "users", "users.service.ts"),
+      options.service ?? serviceSource,
+    );
+  }
   return projectRoot;
 }
 
@@ -86,6 +126,77 @@ test("writes nothing on a dry run", async () => {
 
   expect(result.dryRun).toBe(true);
   expect(await Bun.file(join(projectRoot, "src", invokerModuleFileName)).exists()).toBe(false);
+});
+
+test("writes a descriptor module beside the invoker module", async () => {
+  const projectRoot = await createProject({ module: moduleSource });
+
+  const result = await generateInvokers({ cwd: projectRoot, dryRun: false });
+
+  expect(result.changes).toEqual([
+    { kind: "CREATE", path: join("src", invokerModuleFileName) },
+    { kind: "CREATE", path: join("src", descriptorModuleFileName) },
+  ]);
+  expect(result.declined).toEqual([]);
+
+  const generated = await Bun.file(join(projectRoot, "src", descriptorModuleFileName)).text();
+  expect(generated).toContain('import { UsersController } from "./users/users.controller.ts";');
+  expect(generated).toContain('  id: "UsersModule",');
+  expect(generated).toContain("provideClass(UsersService, [])");
+  expect(generated).toContain("UsersModule: UsersModuleDescriptor,");
+});
+
+test("replaces the descriptor module on a second run rather than refusing", async () => {
+  const projectRoot = await createProject({ module: moduleSource });
+  await generateInvokers({ cwd: projectRoot, dryRun: false });
+
+  const result = await generateInvokers({ cwd: projectRoot, dryRun: false });
+
+  expect(result.changes).toEqual([
+    { kind: "UPDATE", path: join("src", invokerModuleFileName) },
+    { kind: "UPDATE", path: join("src", descriptorModuleFileName) },
+  ]);
+});
+
+test("writes no descriptor module when the project declares no @Module()", async () => {
+  const projectRoot = await createProject();
+
+  const result = await generateInvokers({ cwd: projectRoot, dryRun: false });
+
+  expect(result.changes).toEqual([{ kind: "CREATE", path: join("src", invokerModuleFileName) }]);
+  expect(result.declined).toEqual([]);
+  expect(await Bun.file(join(projectRoot, "src", descriptorModuleFileName)).exists()).toBe(false);
+});
+
+test("reports a declined module and still writes the invoker module", async () => {
+  const projectRoot = await createProject({
+    controllers: controllerSource,
+    module: `import { Module } from "@aponiajs/common";
+import { UsersController } from "./users.controller.ts";
+import { UsersService } from "./users.service.ts";
+
+const providers = [UsersService];
+
+@Module({ controllers: [UsersController], providers })
+export class UsersModule {}
+`,
+  });
+
+  const result = await generateInvokers({ cwd: projectRoot, dryRun: false });
+
+  expect(result.changes).toEqual([{ kind: "CREATE", path: join("src", invokerModuleFileName) }]);
+  expect(result.declined).toEqual([
+    {
+      kind: "module",
+      module: "UsersModule",
+      reason:
+        "@Module in " +
+        join(projectRoot, "src", "users", "users.module.ts") +
+        ' declares "providers" outside its options literal.',
+    },
+  ]);
+  expect(await Bun.file(join(projectRoot, "src", invokerModuleFileName)).exists()).toBe(true);
+  expect(await Bun.file(join(projectRoot, "src", descriptorModuleFileName)).exists()).toBe(false);
 });
 
 test("honours the configured source root", async () => {
@@ -144,6 +255,39 @@ test("reports the change and the next step through runCli", async () => {
     `CREATE ${join("src", invokerModuleFileName)}`,
     "Next: import it in your entrypoint and pass its controllerInvokers to AponiaFactory.create.",
   ]);
+});
+
+test("reports both generated modules and a decline through runCli", async () => {
+  const projectRoot = await createProject({
+    module: `import { Module } from "@aponiajs/common";
+import { UsersController } from "./users.controller.ts";
+
+const providers = [];
+
+@Module({ controllers: [UsersController], providers })
+export class UsersModule {}
+`,
+  });
+  process.chdir(projectRoot);
+  const output: string[] = [];
+  const log = spyOn(console, "log").mockImplementation((message) => {
+    output.push(String(message));
+  });
+
+  try {
+    expect(await runCli(["build"])).toBe(0);
+  } finally {
+    log.mockRestore();
+  }
+
+  expect(output).toHaveLength(3);
+  expect(output[0]).toBe(`CREATE ${join("src", invokerModuleFileName)}`);
+  expect(output[1]).toBe(
+    `DECLINED module UsersModule: @Module in ${join(await realpath(projectRoot), "src", "users", "users.module.ts")} declares "providers" outside its options literal.`,
+  );
+  expect(output[2]).toBe(
+    "Next: import it in your entrypoint and pass its controllerInvokers to AponiaFactory.create.",
+  );
 });
 
 test("fails outside an Aponia project without throwing", async () => {

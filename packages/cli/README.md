@@ -20,8 +20,19 @@ aponia generate controller users
 aponia g s users
 aponia g resource users --type rest
 aponia g router health --no-spec
+aponia build
 aponia --version
 ```
+
+The build command generates code from an application's own source. It parses
+every file under the configured source root and writes two modules beside it:
+`invokers.generated.ts`, which holds the route invokers the runtime would
+otherwise compile at startup, and `descriptors.generated.ts`, which declares the
+module graph as data so the application can boot without its decorators being
+lowered. Both cover what they can prove and report what they cannot, so an
+application chooses how far to go: pass the invoker artifact to
+`AponiaFactory.create`, boot from `moduleDescriptors.<Module>`, or ignore both
+files and keep booting exactly as before.
 
 The generate command supports the complete built-in Nest schematic catalog:
 application, library, class, controller, decorator, filter, gateway, guard,
