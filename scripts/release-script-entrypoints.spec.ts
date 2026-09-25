@@ -227,10 +227,6 @@ async function writeVersionedWorkspace(
   }
 
   await Bun.write(
-    join(directory, "ROADMAP.md"),
-    `# Roadmap\n\n- **Current version:** ${referenceVersion}\n`,
-  );
-  await Bun.write(
     join(directory, "bun.lock"),
     `${JSON.stringify(
       {
@@ -523,9 +519,12 @@ describe("canary version entry point", () => {
       };
       expect(manifest.version).toBe(canaryVersion);
     }
-    expect(await Bun.file(join(directory, "ROADMAP.md")).text()).toContain(
-      `- **Current version:** ${canaryVersion}`,
-    );
+    const lockfile = (await Bun.file(join(directory, "bun.lock")).json()) as {
+      readonly workspaces: Readonly<Record<string, { readonly version: string }>>;
+    };
+    for (const workspacePath of versionedWorkspacePaths) {
+      expect(lockfile.workspaces[workspacePath]?.version).toBe(canaryVersion);
+    }
   });
 
   test.serial("creates the GitHub output file when the path does not exist yet", async () => {
@@ -651,7 +650,7 @@ describe("canary version entry point", () => {
 });
 
 describe("synchronize version references entry point", () => {
-  test("rewrites the stale roadmap and lockfile references as a process", async () => {
+  test("rewrites the stale lockfile references as a process", async () => {
     const directory = await createTemporaryDirectory("aponia-entry-sync-");
     await writeVersionedWorkspace(directory, "0.7.0", "0.6.0");
 

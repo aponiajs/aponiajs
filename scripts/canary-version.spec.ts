@@ -41,7 +41,6 @@ test.serial("stamps every manifest and synchronized release reference", async ()
     const manifest = (await Bun.file(file).json()) as { readonly version: string };
     expect(manifest.version).toBe(version);
   }
-  expect(await Bun.file("ROADMAP.md").text()).toContain(`- **Current version:** ${version}`);
   const lockfile = (await Bun.file("bun.lock").json()) as {
     readonly workspaces: Readonly<Record<string, { readonly version: string }>>;
   };
@@ -80,10 +79,6 @@ async function writeWorkspace(directory: string, version: string): Promise<void>
     await mkdir(dirname(path), { recursive: true });
     await Bun.write(path, `${JSON.stringify({ name: file, version }, undefined, 2)}\n`);
   }
-  await Bun.write(
-    join(directory, "ROADMAP.md"),
-    `# Roadmap\n\n- **Current version:** ${version}\n`,
-  );
   await Bun.write(
     join(directory, "bun.lock"),
     `${JSON.stringify(

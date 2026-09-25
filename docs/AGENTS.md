@@ -39,8 +39,8 @@ genuinely wrong.
 - A public behavior change ships with its documentation in the same pull
   request, in `docs/` and in the affected package README.
 - Documentation is guarded by tests. `scripts/documentation.spec.ts` requires
-  `bun add --global @aponiajs/cli` and forbids `bunx aponia`; `ROADMAP.md` must
-  carry the current version line. A wording edit can fail `bun test`.
+  `bun add --global @aponiajs/cli` and forbids `bunx aponia`. A wording edit can
+  fail `bun test`.
 - Every example in a document must compile against the current API. Prefer
   copying from a passing test over writing fresh snippets.
 - All content is English. Scan before finishing:

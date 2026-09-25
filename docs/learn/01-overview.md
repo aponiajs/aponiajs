@@ -47,8 +47,7 @@ non-singleton scopes, testing modules, OpenAPI, authentication, production
 WebSocket policies and transport extraction, and microservice transports. The
 implemented WebSocket gateway preview does not yet include the planned
 transport-neutral adapter, handshake policies, or per-message schema layer.
-Check
-[`ROADMAP.md`](../../ROADMAP.md) before assuming a feature exists.
+Treat the lists above as the scope of record before assuming a feature exists.
 
 Every chapter that follows has a runnable counterpart in
 [`examples/`](../../examples/README.md): one application per topic, each with

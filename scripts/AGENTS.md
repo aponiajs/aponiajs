@@ -8,7 +8,7 @@ and documentation guards that CI enforces.
 | `distribution-tag.ts`        | The single mapping from a version to its npm channel, plus canary stamps |
 | `release-branch.ts`          | The enforced mapping from persistent release branches to primary tags    |
 | `verify-release.ts`          | The release gate: synchronized version, valid SemVer, allowed tag        |
-| `sync-version-references.ts` | Version references in the roadmap and lockfile                           |
+| `sync-version-references.ts` | Version references in the Bun lockfile                                   |
 | `workspace-versions.ts`      | The list of manifests that must share one version                        |
 | `canary-version.ts`          | Stamping `X.Y.Z-canary.<stamp>.<sha>` in CI, never committed             |
 | `coverage-gate.ts`           | Aggregate LCOV floor and runtime-source completeness                     |

@@ -32,8 +32,7 @@ Bun workspace. Framework packages live in `packages/`:
 | `aponiajs`                  | Reserved public facade, private and unpublished              | —                                                                    |
 
 Supporting directories: `examples/` for executable examples, `docs/` for
-published documentation, `ROADMAP.md` for milestones and architecture plans,
-`scripts/`
+published documentation, `scripts/`
 for release and documentation guards, `packages/cli/templates/` for generated
 application sources.
 
@@ -361,8 +360,8 @@ errors, and provider-registered Elysia WebSocket gateways. Not implemented:
 guards, interceptors, middleware,
 exception filters, automatic Problem Details mapping for native errors,
 non-singleton scopes, testing modules, OpenAPI, authentication, production
-WebSocket policies and transport extraction, and microservice transports. Check
-`ROADMAP.md` before assuming a feature belongs somewhere.
+WebSocket policies and transport extraction, and microservice transports. Treat
+the two lists above as the scope of record for the current release.
 
 ## Coding Style & Naming Conventions
 

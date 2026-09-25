@@ -18,13 +18,11 @@ afterEach(async () => {
   );
 });
 
-test.serial("synchronizes the roadmap and Bun lockfile from a manifest", async () => {
+test.serial("synchronizes the Bun lockfile from a manifest", async () => {
   const directory = await createTemporaryDirectory();
   const manifestPath = join(directory, "package.json");
-  const roadmapPath = join(directory, "ROADMAP.md");
   const lockfilePath = join(directory, "bun.lock");
   await Bun.write(manifestPath, JSON.stringify({ version: "0.7.0-alpha.1" }));
-  await Bun.write(roadmapPath, "- **Current version:** 0.6.0-alpha.1\n");
   await Bun.write(lockfilePath, lockfileFixture("0.6.0-alpha.1"));
   const output: string[] = [];
   const log = spyOn(console, "log").mockImplementation((message) => {
@@ -32,12 +30,11 @@ test.serial("synchronizes the roadmap and Bun lockfile from a manifest", async (
   });
 
   try {
-    await synchronizeVersionReferences(manifestPath, roadmapPath, lockfilePath);
+    await synchronizeVersionReferences(manifestPath, lockfilePath);
   } finally {
     log.mockRestore();
   }
 
-  expect(await Bun.file(roadmapPath).text()).toBe("- **Current version:** 0.7.0-alpha.1\n");
   const lockfile = (await Bun.file(lockfilePath).json()) as {
     readonly workspaces: Readonly<Record<string, { readonly version: string }>>;
   };
@@ -52,13 +49,9 @@ test("rejects a manifest without a string version", async () => {
   const manifestPath = join(directory, "package.json");
   await Bun.write(manifestPath, JSON.stringify({ version: 7 }));
 
-  expect(
-    synchronizeVersionReferences(
-      manifestPath,
-      join(directory, "ROADMAP.md"),
-      join(directory, "bun.lock"),
-    ),
-  ).rejects.toThrow(`${manifestPath} does not declare a version.`);
+  expect(synchronizeVersionReferences(manifestPath, join(directory, "bun.lock"))).rejects.toThrow(
+    `${manifestPath} does not declare a version.`,
+  );
 });
 
 async function createTemporaryDirectory(): Promise<string> {

@@ -19,8 +19,7 @@ Structured applications for Bun
 [Elysia compatibility](./docs/elysia-compatibility.md) ·
 [Eden Treaty](./docs/eden-treaty.md) ·
 [Testing](./docs/testing.md) ·
-[CLI](./docs/cli.md) ·
-[Roadmap](./ROADMAP.md)
+[CLI](./docs/cli.md)
 
 [![CI](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml/badge.svg)](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcommon/alpha?label=npm&color=baa9d1)](https://www.npmjs.com/package/@aponiajs/common)
@@ -577,8 +576,8 @@ policy, configuration and secret redaction, HTTP admission hardening, guards,
 interceptors, middleware, exception filters, authentication and authorization,
 rate limiting, testing packages, observability and health, OpenAPI generation,
 production WebSocket policies and the transport-neutral adapter package,
-decorator-wide Eden inference, and microservice transports. The
-[roadmap](./ROADMAP.md) tracks those capabilities and their dependencies.
+decorator-wide Eden inference, and microservice transports. Treat that list as
+the scope of record for the current release.
 
 ## Develop
 
