@@ -12,8 +12,10 @@ import {
   AponiaFactory,
   type AponiaApplicationOptions,
   type AponiaControllerInvokerFactory,
+  type AponiaInvokerArtifact,
   type AponiaRouteInvoker,
 } from "../src/index.ts";
+import { aponiaVersion } from "../src/version.ts";
 
 type VitePlusTest = typeof import("vite-plus/test");
 type Equals<TLeft, TRight> =
@@ -49,8 +51,12 @@ class ConformanceInvokerController {
 class ConformanceInvokerModule {}
 
 type InvokersOption = NonNullable<AponiaApplicationOptions["invokers"]>;
-type InvokersOptionAssertion = Expect<
-  Equals<InvokersOption, ReadonlyMap<ClassToken<unknown>, AponiaControllerInvokerFactory>>
+type InvokersOptionAssertion = Expect<Equals<InvokersOption, AponiaInvokerArtifact>>;
+type InvokerMapAssertion = Expect<
+  Equals<
+    InvokersOption["invokers"],
+    ReadonlyMap<ClassToken<unknown>, AponiaControllerInvokerFactory>
+  >
 >;
 type RouteInvokerAssertion = Expect<Equals<AponiaRouteInvoker, (context: RouteContext) => unknown>>;
 
@@ -67,18 +73,29 @@ const conformanceInvokers: AponiaControllerInvokerFactory = (
     ["createItem", (context) => instance.createItem(context.body as { name: string })],
   ]);
 
+function conformanceArtifact(
+  invokers: ReadonlyMap<ClassToken<unknown>, AponiaControllerInvokerFactory>,
+  framework: string = aponiaVersion,
+): AponiaInvokerArtifact {
+  return Object.freeze({ framework, elysia: "1.4.30", invokers });
+}
+
 const conformanceOptions: AponiaApplicationOptions = {
   logger: false,
-  invokers: new Map<ClassToken<unknown>, AponiaControllerInvokerFactory>([
-    [ConformanceInvokerController, conformanceInvokers],
-  ]),
+  invokers: conformanceArtifact(
+    new Map<ClassToken<unknown>, AponiaControllerInvokerFactory>([
+      [ConformanceInvokerController, conformanceInvokers],
+    ]),
+  ),
 };
 
 test("the Vite+ lane types the invokers option and its invoker contracts", () => {
   const optionAssertion: InvokersOptionAssertion = true;
+  const invokerMapAssertion: InvokerMapAssertion = true;
   const routeInvokerAssertion: RouteInvokerAssertion = true;
 
   expect(optionAssertion).toBe(true);
+  expect(invokerMapAssertion).toBe(true);
   expect(routeInvokerAssertion).toBe(true);
 });
 
@@ -121,7 +138,27 @@ test("the Vite+ lane answers identically when generated invokers are supplied", 
 test("the Vite+ lane compiles a handler whose property key has no invoker", async () => {
   const application = await AponiaFactory.create(ConformanceInvokerModule, {
     logger: false,
-    invokers: new Map(),
+    invokers: conformanceArtifact(new Map()),
+  });
+  const response = await application.handle(new Request("http://localhost/conformance-invokers"));
+
+  expect(await response.text()).toBe("compiled");
+  await application.close();
+});
+
+test("the Vite+ lane refuses an artifact from another framework release", async () => {
+  const application = await AponiaFactory.create(ConformanceInvokerModule, {
+    logger: false,
+    invokers: conformanceArtifact(
+      new Map<ClassToken<unknown>, AponiaControllerInvokerFactory>([
+        [
+          ConformanceInvokerController,
+          () =>
+            new Map<string | symbol, AponiaRouteInvoker>([["ping", () => "from-another-release"]]),
+        ],
+      ]),
+      "0.0.0",
+    ),
   });
   const response = await application.handle(new Request("http://localhost/conformance-invokers"));
 

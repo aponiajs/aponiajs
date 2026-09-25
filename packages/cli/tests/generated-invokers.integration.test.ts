@@ -1,8 +1,14 @@
 import { afterEach, expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
-import { AponiaFactory, type AponiaControllerInvokerFactory } from "@aponiajs/platform-elysia";
+import {
+  AponiaFactory,
+  type AponiaApplicationOptions,
+  type AponiaControllerInvokerFactory,
+  type AponiaInvokerArtifact,
+} from "@aponiajs/platform-elysia";
 import { analyzeControllerRoutes, emitControllerInvokers } from "../src/index.ts";
+import { aponiaVersion } from "../src/version.ts";
 
 /**
  * The acceptance criterion for build-time route code generation: an application
@@ -56,7 +62,7 @@ interface Fixture {
 
 async function generateBesideFixture(source: string): Promise<{
   readonly fixture: Fixture;
-  readonly invokers: ReadonlyMap<unknown, AponiaControllerInvokerFactory>;
+  readonly invokers: AponiaApplicationOptions["invokers"];
 }> {
   const directory = await mkdtemp(
     join(import.meta.dir, "..", "node_modules", ".aponia-generated-"),
@@ -65,9 +71,14 @@ async function generateBesideFixture(source: string): Promise<{
 
   const fixturePath = join(directory, "users.controller.ts");
   const generatedPath = join(directory, "invokers.generated.ts");
-  const emitted = emitControllerInvokers(analyzeControllerRoutes(source, fixturePath), {
-    UsersController: "./users.controller.ts",
-  });
+  // The workspace keeps one synchronized version, so stamping the CLI's own
+  // version is what makes the platform accept this artifact — the same reason a
+  // generated application accepts the one `aponia build` writes for it.
+  const emitted = emitControllerInvokers(
+    analyzeControllerRoutes(source, fixturePath),
+    { UsersController: "./users.controller.ts" },
+    { framework: aponiaVersion, elysia: "1.4.30" },
+  );
   if (emitted.source === undefined) {
     throw new Error("The emitter declined every handler in the fixture.");
   }
@@ -79,9 +90,9 @@ async function generateBesideFixture(source: string): Promise<{
     fixture: (await import(fixturePath)) as Fixture,
     invokers: (
       (await import(generatedPath)) as {
-        readonly controllerInvokers: ReadonlyMap<unknown, AponiaControllerInvokerFactory>;
+        readonly controllerInvokerArtifact: AponiaApplicationOptions["invokers"];
       }
-    ).controllerInvokers,
+    ).controllerInvokerArtifact,
   };
 }
 
@@ -92,11 +103,11 @@ interface Answer {
 
 async function answers(
   rootModule: unknown,
-  options: { readonly invokers?: ReadonlyMap<unknown, unknown> } = {},
+  options: { readonly invokers?: AponiaApplicationOptions["invokers"] } = {},
 ): Promise<readonly Answer[]> {
   const application = await AponiaFactory.create(rootModule as never, {
     logger: false,
-    invokers: options.invokers as never,
+    invokers: options.invokers,
   });
 
   try {
@@ -137,12 +148,19 @@ test("a generated invoker module answers exactly as the compiled path does", asy
 
 test("a supplied invoker replaces the compiled binding for its handler", async () => {
   const { fixture } = await generateBesideFixture(controllerSource);
-  const replaced = new Map([
-    [
-      fixture.UsersController,
-      (() => new Map([["read", () => "replaced"]])) as unknown as AponiaControllerInvokerFactory,
-    ],
-  ]);
+  // The fixture is a dynamic import, so its classes are `unknown` to the checker
+  // while being the real class tokens at run time — which is what the lookup
+  // below depends on.
+  const replaced = {
+    framework: aponiaVersion,
+    elysia: "1.4.30",
+    invokers: new Map<unknown, AponiaControllerInvokerFactory>([
+      [
+        fixture.UsersController,
+        (() => new Map([["read", () => "replaced"]])) as unknown as AponiaControllerInvokerFactory,
+      ],
+    ]),
+  } as unknown as AponiaInvokerArtifact;
 
   const [read] = await answers(fixture.UsersModule, { invokers: replaced });
 

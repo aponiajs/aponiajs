@@ -32,6 +32,7 @@ export type {
   AponiaControllerInvokerFactory,
   AponiaRouteInvoker,
 } from "./routing/route-compiler.types.ts";
+export type { AponiaInvokerArtifact } from "./routing/invoker-artifact.types.ts";
 export {
   ELYSIA_CONTROLLER,
   defineElysiaController,

@@ -278,11 +278,19 @@ Pass it to the factory from your entrypoint:
 
 ```ts
 import { AponiaFactory } from "@aponiajs/platform-elysia";
-import { controllerInvokers } from "./invokers.generated.ts";
+import { controllerInvokerArtifact } from "./invokers.generated.ts";
 import { AppModule } from "./app.module.ts";
 
-const application = await AponiaFactory.create(AppModule, { invokers: controllerInvokers });
+const application = await AponiaFactory.create(AppModule, {
+  invokers: controllerInvokerArtifact,
+});
 ```
+
+The generated file also records the AponiaJS and Elysia versions it was built
+against. The runtime refuses an artifact from another framework release and
+compiles every route from decorator metadata instead, so a file that was not
+regenerated after an upgrade costs a slower cold start rather than a wrong
+binding. The startup log names both versions when that happens.
 
 A handler the analysis cannot prove stays on the runtime's own compile path, so
 the application works whether or not every handler was generated and whether or

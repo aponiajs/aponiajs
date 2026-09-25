@@ -31,7 +31,7 @@ const packageLayouts: readonly PackageLayout[] = [
   },
   {
     sourceRoot: "packages/platform-elysia/src",
-    files: ["index.ts"],
+    files: ["index.ts", "version.ts"],
     directories: [
       "application",
       "controllers",

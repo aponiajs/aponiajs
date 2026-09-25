@@ -7,6 +7,9 @@ type RouteInvoker = (context: never) => unknown;
 type ControllerInvokerFactory = (instance: never) => ReadonlyMap<string | symbol, RouteInvoker>;
 type InvokerFactories = Map<unknown, ControllerInvokerFactory>;
 
+/** Fixed provenance, so an emitted-module assertion does not move with a release. */
+const provenance = Object.freeze({ framework: "1.2.3", elysia: "1.4.30" });
+
 const temporaryDirectories: string[] = [];
 
 afterEach(async () => {
@@ -65,7 +68,11 @@ function emit(
   source: string,
   imports: Readonly<Record<string, string>> = { UsersController: "./users.controller.ts" },
 ) {
-  return emitControllerInvokers(analyzeControllerRoutes(source, "users.controller.ts"), imports);
+  return emitControllerInvokers(
+    analyzeControllerRoutes(source, "users.controller.ts"),
+    imports,
+    provenance,
+  );
 }
 
 /**
@@ -81,9 +88,11 @@ async function loadGenerated(source: string): Promise<{
   const directory = await createResolvableDirectory(".aponia-invokers-");
   const fixturePath = join(directory, "users.controller.ts");
   const generatedPath = join(directory, "invokers.generated.ts");
-  const emitted = emitControllerInvokers(analyzeControllerRoutes(source, fixturePath), {
-    UsersController: "./users.controller.ts",
-  });
+  const emitted = emitControllerInvokers(
+    analyzeControllerRoutes(source, fixturePath),
+    { UsersController: "./users.controller.ts" },
+    provenance,
+  );
 
   await Bun.write(fixturePath, source);
   if (emitted.source !== undefined) {
@@ -93,8 +102,11 @@ async function loadGenerated(source: string): Promise<{
   const factories =
     emitted.source === undefined
       ? undefined
-      : ((await import(generatedPath)) as { controllerInvokers: InvokerFactories })
-          .controllerInvokers;
+      : (
+          (await import(generatedPath)) as {
+            controllerInvokerArtifact: { readonly invokers: InvokerFactories };
+          }
+        ).controllerInvokerArtifact.invokers;
   const controller = ((await import(fixturePath)) as { UsersController: Function }).UsersController;
 
   return { emitted, factories, controller };

@@ -30,6 +30,7 @@ export type {
 } from "./generation/invoker-generator.types.ts";
 export type {
   ControllerImportSpecifiers,
+  ControllerInvokerProvenance,
   DeclinedControllerHandler,
   EmittedControllerInvokers,
   EmittableControllerHandler,

@@ -281,10 +281,32 @@ stable; the fragile part was inferring bindings from source that the author wrot
 for other reasons.
 
 Keep the verification contract from the recommendation above. The generated file
-carries the framework version, the Elysia version, and a content hash; the runtime
-refuses a stale artifact and compiles from descriptors instead. Both authoring
-paths, `configureNative`, plugin modules, and the native escape hatches must
-behave identically with and without the artifact.
+carries the provenance that decides whether the running framework may use it:
+`aponia build` stamps the AponiaJS version it was built by and the Elysia version
+it resolved from the project, and bootstrap compares the framework version
+against its own before any controller mounts. A mismatch is refused whole — every
+route is compiled from decorator metadata, exactly as it is when the option is
+omitted — and reported through the system logger with both versions. Refusing is
+never an error, so an artifact can cost a cold start but can never turn a bootable
+application into a failing one. Both authoring paths, `configureNative`, plugin
+modules, and the native escape hatches behave identically with and without the
+artifact.
+
+A content hash is deliberately not emitted yet, because nothing can verify one at
+run time. The artifact is functions rather than text, so the only recomputable
+value would be a fingerprint over class tokens and handler keys — and class names
+do not survive the minification this feature exists to support. A hash becomes
+worth carrying when it has a verifier: a `--check` mode that reports a stale file
+without writing, or stage 4's bundler plugin, which holds both the old and the new
+output while it runs. It belongs with that stage rather than here.
+
+Stage 2 also departs from the wording above in how it reads the application. The
+recommendation says a build step imports the root module and runs the existing
+compiler; the implementation instead parses controller source with `ts-morph` and
+never runs the application, so `aponia build` cannot execute a provider factory,
+open a socket, or depend on a side effect having happened first. The cost is the
+one recorded in `packages/cli/AGENTS.md`: a controller that only exists after a
+side effect is invisible to the analyzer.
 
 Acceptance for each stage:
 
@@ -296,11 +318,13 @@ Acceptance for each stage:
   same route table;
 - measured throughput stays inside the 95% floor with the artifact in place.
 
-Stage 2's analyzer is already in place:
-`packages/cli/src/generation/controller-routes.ts` reads a controller file with
+Stage 2's analyzer and emitter are both in place. The analyzer,
+`packages/cli/src/generation/controller-routes.ts`, reads a controller file with
 `ts-morph` and returns its routes, paths, parameter bindings, and whether each
-handler is Promise-capable. The emitter is not written yet, and the question
-that held it up now has an answer.
+handler is Promise-capable. The emitter,
+`packages/cli/src/generation/controller-invokers.ts`, writes the invokers that
+`aponia build` puts in `<sourceRoot>/invokers.generated.ts`. The question that
+held the emitter up now has an answer.
 
 An emitted invoker passes context values into a handler the application typed,
 so `instance.create(context.body)` has to typecheck against whatever `create`

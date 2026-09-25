@@ -5,6 +5,7 @@ import type {
 } from "./controller-routes.types.ts";
 import type {
   ControllerImportSpecifiers,
+  ControllerInvokerProvenance,
   DeclinedControllerHandler,
   EmittedControllerInvokers,
   EmittableRouteParameter,
@@ -22,10 +23,16 @@ import type {
  * emitting something it cannot type: every declined handler stays on the
  * runtime's existing compile path, so a partially generated application is a
  * supported state, not a broken one.
+ *
+ * `provenance` names the release and Elysia the module was built against. The
+ * platform refuses an artifact whose framework version is not the one running,
+ * so this travels with the invokers rather than being left to the application to
+ * keep in step.
  */
 export function emitControllerInvokers(
   controllers: readonly AnalyzedController[],
   imports: ControllerImportSpecifiers,
+  provenance: ControllerInvokerProvenance,
 ): EmittedControllerInvokers {
   const declined: DeclinedControllerHandler[] = [];
   const emitted: RenderedController[] = [];
@@ -68,7 +75,7 @@ export function emitControllerInvokers(
 
   const withHandlers = emitted.filter((entry) => entry.source.length > 0);
   return Object.freeze({
-    source: withHandlers.length === 0 ? undefined : renderModule(withHandlers),
+    source: withHandlers.length === 0 ? undefined : renderModule(withHandlers, provenance),
     declined: Object.freeze(declined),
   });
 }
@@ -252,7 +259,10 @@ interface RenderedController {
   readonly source: string;
 }
 
-function renderModule(entries: readonly RenderedController[]): string {
+function renderModule(
+  entries: readonly RenderedController[],
+  provenance: ControllerInvokerProvenance,
+): string {
   // A value import, not `import type`: the controller class is the map's key at
   // runtime, and the analysis is only safe because the same class is the one the
   // application registers.
@@ -274,12 +284,27 @@ function renderModule(entries: readonly RenderedController[]): string {
     " * Route invokers the runtime uses instead of compiling its own. A handler",
     " * with no entry here is compiled as usual.",
     " */",
-    "export const controllerInvokers = new Map<",
+    "const controllerInvokers = new Map<",
     "  unknown,",
     "  (instance: never) => ReadonlyMap<string | symbol, RouteInvoker>",
     ">([",
     body,
     "]);",
+    "",
+    "/**",
+    " * What the platform consumes. An artifact from another AponiaJS release is",
+    " * refused whole and every route is compiled from decorator metadata instead,",
+    " * so a stale file is never used to serve a request.",
+    " *",
+    " * `elysia` is the version this file was generated against, or `null` when",
+    " * `aponia build` could not resolve an installed one. It is reported with the",
+    " * refusal so a mismatch names both sides.",
+    " */",
+    "export const controllerInvokerArtifact = Object.freeze({",
+    `  framework: ${JSON.stringify(provenance.framework)},`,
+    `  elysia: ${JSON.stringify(provenance.elysia)},`,
+    "  invokers: controllerInvokers,",
+    "});",
     "",
   ].join("\n");
 }

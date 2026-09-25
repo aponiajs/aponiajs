@@ -27,6 +27,20 @@ export interface EmittedControllerInvokers {
 }
 
 /**
+ * What produced a generated invoker module.
+ *
+ * The platform refuses an artifact from another framework release and compiles
+ * the routes itself, so the generated file has to say which release and which
+ * Elysia it was built against. `elysia` is `null` when no installed Elysia could
+ * be resolved at generation time, which the platform reports rather than
+ * treats as a match.
+ */
+export interface ControllerInvokerProvenance {
+  readonly framework: string;
+  readonly elysia: string | null;
+}
+
+/**
  * A parameter binding the emitter can reproduce without the platform's types.
  *
  * `context` is excluded on purpose: a handler that takes the whole context

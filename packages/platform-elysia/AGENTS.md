@@ -9,16 +9,17 @@ The Elysia adapter: it lowers decorated classes into descriptors, bootstraps the
 application, maps HTTP routes and WebSocket gateways, and mounts native plugins.
 It depends on `common` and `core`, with `elysia` as a peer.
 
-| Domain         | Owns                                                                          |
-| -------------- | ----------------------------------------------------------------------------- |
-| `application/` | Factory orchestration, application lifecycle wrapper, public option contracts |
-| `modules/`     | `compileRootModule` and decorator-to-descriptor lowering                      |
-| `controllers/` | Controller descriptors, direct registration, `ELYSIA_CONTROLLER`              |
-| `errors/`      | Typed HTTP errors and RFC 9457 Problem Details responses                      |
-| `inspection/`  | Read-only projection of a compiled application for build-time consumers       |
-| `plugins/`     | Native plugin module registration and plugin contracts                        |
-| `routing/`     | Route plans, compiled invokers, schemas, and native context types             |
-| `websockets/`  | Provider discovery, gateway plans, message dispatch, and native socket types  |
+| Domain         | Owns                                                                                             |
+| -------------- | ------------------------------------------------------------------------------------------------ |
+| `application/` | Factory orchestration, application lifecycle wrapper, public option contracts                    |
+| `modules/`     | `compileRootModule` and decorator-to-descriptor lowering                                         |
+| `controllers/` | Controller descriptors, direct registration, `ELYSIA_CONTROLLER`                                 |
+| `errors/`      | Typed HTTP errors and RFC 9457 Problem Details responses                                         |
+| `inspection/`  | Read-only projection of a compiled application for build-time consumers                          |
+| `plugins/`     | Native plugin module registration and plugin contracts                                           |
+| `routing/`     | Route plans, compiled invokers, schemas, and native context types                                |
+| `websockets/`  | Provider discovery, gateway plans, message dispatch, and native socket types                     |
+| `version.ts`   | The package's own version, read from its manifest, which generated artifacts are checked against |
 
 `src/index.ts` is the only public barrel. Keep `*.types.ts` colocated with the
 runtime boundary it describes.
@@ -71,13 +72,26 @@ runtime boundary it describes.
   their source (sucrose): `Reflect.apply` hides required fields, while
   forwarding context through a generic mapper makes Elysia materialize every
   optional field on every request.
-- `AponiaApplicationOptions.invokers` substitutes build-time generated invokers
-  for the platform's own compilation. It is keyed by controller class token, and
-  each factory builds a map keyed by handler property key once the container has
-  created the controller instance. A controller without an entry, a property key
-  missing from a supplied map, and a symbol-keyed handler all fall back to
-  compiled binding, and an entry for a token no controller uses is ignored. The
-  option is never mutated.
+- `AponiaApplicationOptions.invokers` accepts the artifact `aponia build`
+  writes. Its invokers are keyed by controller class token, and each factory
+  builds a map keyed by handler property key once the container has created the
+  controller instance. A controller without an entry, a property key missing
+  from a supplied map, and a symbol-keyed handler all fall back to compiled
+  binding, and an entry for a token no controller uses is ignored. The option is
+  never mutated.
+- `routing/invoker-artifact.ts` refuses an artifact whose `framework` is not
+  `version.ts`'s own version, and one that carries no invoker map, before any
+  controller mounts. A refusal is not an error: the fallback is the compilation
+  the platform would have done without the option, so a stale or hand-edited
+  file costs a cold start rather than a wrong binding, and supplying an artifact
+  can never make a bootable application fail. The refusal is reported through
+  the system logger under `RoutesResolver` and names both framework versions and
+  the Elysia the artifact was generated against. `elysia` is recorded as
+  provenance rather than re-read at run time: the supported Elysia range is
+  already enforced by the peer dependency and by
+  `routing/native-route.ts`'s structural guard, and reading an installed
+  manifest at bootstrap would add a resolution this package does not otherwise
+  need.
 - `registerCompiledElysiaRoutes` rejects a route handler that is a class
   constructor with `INVALID_CONTROLLER` while the controller mounts. A class
   passes the callable check and then throws a raw engine message on every

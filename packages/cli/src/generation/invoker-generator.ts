@@ -12,6 +12,7 @@ import {
 import type { AnalyzedController } from "./controller-routes.types.ts";
 import type { GenerateInvokersOptions, GenerateInvokersResult } from "./invoker-generator.types.ts";
 import type { PendingFile } from "./schematic.types.ts";
+import { aponiaVersion } from "../version.ts";
 
 /**
  * The file a build writes, relative to the configured source root. It is a
@@ -80,6 +81,7 @@ export async function generateInvokers(
   const emitted = emitControllerInvokers(
     found.map((entry) => entry.controller),
     imports,
+    Object.freeze({ framework: aponiaVersion, elysia: await resolveElysiaVersion(projectRoot) }),
   );
   if (emitted.source === undefined) {
     const [first] = emitted.declined;
@@ -99,4 +101,23 @@ export async function generateInvokers(
   ];
 
   return writePendingFiles(projectRoot, files, options.dryRun);
+}
+
+/**
+ * The Elysia version the project has installed, or `null` when none resolves.
+ *
+ * The generated artifact records this as provenance, and the platform reports it
+ * when it refuses the artifact, so a version mismatch names both sides. The
+ * lookup is deliberately best-effort: this command reads a project's source, and
+ * requiring an installed Elysia would make it fail on a checkout that has not
+ * been installed yet, which is not a fault in the project being built.
+ */
+async function resolveElysiaVersion(projectRoot: string): Promise<string | null> {
+  try {
+    const manifestPath = Bun.resolveSync("elysia/package.json", projectRoot);
+    const manifest = (await Bun.file(manifestPath).json()) as { version?: unknown };
+    return typeof manifest.version === "string" ? manifest.version : null;
+  } catch {
+    return null;
+  }
 }

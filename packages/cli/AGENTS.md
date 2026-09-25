@@ -56,6 +56,15 @@ separate focused modules. `src/index.ts` is the only public barrel.
   entries are keyed by the handler's property key, never by route index: an
   invoker depends only on the handler, and the runtime's metadata order does not
   match a source walk when decorators are stacked.
+- The emitted module exports one artifact holding the invokers beside the
+  AponiaJS version from `version.ts` and the Elysia version resolved from the
+  project, because the platform refuses an artifact built by another release and
+  compiles every route itself instead. The Elysia lookup is best-effort: it
+  resolves through `Bun.resolveSync` from the project root and records `null`
+  when nothing resolves, so `aponia build` still runs on a checkout that has not
+  been installed. Keep `ControllerInvokerProvenance` and the platform's
+  `AponiaInvokerArtifact` in step by hand, the same way the route parameter
+  kinds are kept in step.
 - `aponia build` only reads source: it never runs the application, so a
   controller that only exists after a side effect is invisible to it. It
   regenerates `<sourceRoot>/invokers.generated.ts` in place on every run and
