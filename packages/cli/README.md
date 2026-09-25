@@ -33,8 +33,10 @@ lowered. Both cover what they can prove and report what they cannot, so an
 application chooses how far to go: pass the invoker artifact to
 `AponiaFactory.create`, boot from `moduleDescriptors.<Module>`, or ignore both
 files and keep booting exactly as before. What it writes is laid out by the
-project's own formatter, so both modules are committed application source a
-`vp check` accepts rather than build output to hide from it.
+formatter your project already uses when it has one, and by the `oxfmt` this
+package depends on at an exact version when it does not, so both modules are
+committed application source a `vp check` accepts rather than build output to
+hide from it.
 
 The same generation is available as a Bun plugin, so a bundle cannot serve a
 stale artifact:

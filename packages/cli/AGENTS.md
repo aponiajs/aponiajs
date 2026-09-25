@@ -20,7 +20,7 @@ packages and driven by libraries rather than hand-rolled parsing.
 | `generation/descriptor-emitter.ts`         | Emits the module graph as `defineModule` calls for the Elysia platform      |
 | `generation/source-imports.ts`             | Which names a file can read, and which one expression reads                 |
 | `generation/invoker-generator.ts`          | The `aponia build` command: scans a project and writes both modules         |
-| `generation/generated-source-formatter.ts` | Lays the written modules out with the project's formatter                   |
+| `generation/generated-source-formatter.ts` | Lays the written modules out with the project's formatter, else this one's  |
 | `generation/build-report.ts`               | The `CREATE`/`UPDATE`/`DECLINED` lines both entrypoints print               |
 | `version.ts`                               | The version stamped into generated manifests                                |
 | `templates/`                               | The canonical application starter input                                     |
@@ -209,18 +209,33 @@ separate focused modules. `src/index.ts` is the only public barrel.
   field is resolved from what the project has installed — a fact about the
   machine — while the framework stamp and the invokers are decided here.
 - `generation/generated-source-formatter.ts` is the only place generated source
-  is laid out, and it calls the project's formatter rather than imitating it. The
-  emitters used to hand-wrap their own output and drifted from `oxfmt`; the
-  committed modules are read by the application's own `vp check`, so a layout
-  that is merely close fails. The formatter is resolved at run time instead of
-  declared, and the project's copy is preferred because `vite-plus` pins the
-  exact `oxfmt` it formats with — the same reasoning that makes a second copy
-  here wrong rather than merely redundant. `Bun.resolveSync` answers from Bun's
-  global install cache when a directory has no `node_modules`, which is why the
-  project is only asked when it has installed the package itself: the cache
-  holds unrelated releases, and formatting with one writes a file the project's
-  own check rejects. A checkout with no toolchain is not an error — the emitters'
-  output is valid TypeScript, so both modules are still generated.
+  is laid out, and it calls a formatter rather than imitating one. The emitters
+  used to hand-wrap their own output and drifted from `oxfmt`; the committed
+  modules are read by the application's own `vp check`, so a layout that is
+  merely close fails.
+- `@aponiajs/cli` declares `oxfmt` as a runtime dependency, at an **exact**
+  version. Owning the formatter rather than reaching through `vite-plus` or
+  hoping to find one is deliberate: this package formats the code it generates,
+  so it needs the formatter the way it needs `ts-morph`. The version is pinned
+  rather than ranged because the layout of a committed module has to be a
+  property of this package and the sources it read, not of which release
+  resolved on the machine that ran the build; a range would let the same sources
+  produce different bytes on someone else's install, which is the drift this
+  seam exists to remove. `tests/generated-source-formatter.test.ts` asserts the
+  manifest entry is an exact version, and
+  `tests/starter-artifact-freshness.test.ts` is what notices when the pinned copy
+  and the project's copy stop agreeing on the layout.
+- That dependency is the fallback, not the first choice. A project's own
+  `vite-plus/fmt` is preferred whenever the project has installed `vite-plus`:
+  that is the copy whose `vp check` will read the file, so it stays the authority
+  even when it is a release this package never saw, and its `fmt` entry is a
+  re-export of this same `format`, so preferring it is not a second opinion.
+  `Bun.resolveSync` answers from Bun's global install cache when a directory has
+  no `node_modules`, which is why the project is only asked when it installed the
+  package itself: the cache holds unrelated releases, and formatting with one
+  writes a file the project's own check rejects. A checkout where neither copy
+  loads is not an error — the emitters' output is valid TypeScript, so both
+  modules are still generated, in the layout the emitter wrote them.
 - `aponia build` writes what the formatter returns, and a formatter that cannot
   parse the emitted source throws rather than writing it out unformatted. That is
   a fault in this package, not in the project being built, and the message names

@@ -414,14 +414,14 @@ freshly generated application serves through generated route invokers from its
 first `bun run dev`, `bun start`, or `bun test` — no build required. Each build
 refreshes them in place and reports `UPDATE` rather than `CREATE`.
 
-Both modules are laid out by the project's own formatter, so they are ordinary
-application source: your `vp check` reads them, lint and format rules apply to
-them, and they belong in version control. `@aponiajs/cli` does not reimplement
-that layout — it calls the `oxfmt` behind `vite-plus`, which pins the exact
-version it formats with, and a project's own copy is preferred over the machine's
-so the file a build writes is the file the check accepts. A checkout with no
-toolchain installed is not an error: the modules are still generated, in the
-layout the emitter wrote them.
+Both modules are laid out by a formatter that `@aponiajs/cli` calls rather than
+imitates, so they are ordinary application source: your `vp check` reads them,
+lint and format rules apply to them, and they belong in version control. If your
+project has installed `vite-plus`, its copy of `oxfmt` formats the modules, which
+is what makes the file a build writes the file your check accepts. If it has not,
+the CLI's own `oxfmt` does, declared at an exact version so that the same sources
+always produce the same bytes. A checkout where neither can be loaded is not an
+error: the modules are still generated, in the layout the emitter wrote them.
 
 A build that does not register the plugin behaves exactly as before, and
 `aponia build` remains the way to generate without bundling.

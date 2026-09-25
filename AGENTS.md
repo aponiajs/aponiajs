@@ -22,14 +22,14 @@ it satisfies both this guide and `RULES.md`.
 
 Bun workspace. Framework packages live in `packages/`:
 
-| Package                     | Owns                                                         | Runtime dependencies                                                 |
-| --------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------- |
-| `@aponiajs/common`          | Decorators, contracts, tokens, providers, errors, WebSockets | `reflect-metadata` only                                              |
-| `@aponiajs/core`            | Module graph, visibility rules, dependency injection         | `@aponiajs/common`                                                   |
-| `@aponiajs/platform-elysia` | Elysia adapter, HTTP routes, WebSocket gateways, plugins     | `common`, `core`, peer `elysia`                                      |
-| `@aponiajs/cli`             | `aponia new` and `aponia generate` schematics                | `change-case`, `ts-morph`, `yargs-parser`, `fast-glob`, `inflection` |
-| `create-aponia`             | `bun create aponia` entrypoint into the same generator       | `@aponiajs/cli`                                                      |
-| `aponiajs`                  | Reserved public facade, private and unpublished              | —                                                                    |
+| Package                     | Owns                                                         | Runtime dependencies                                                                  |
+| --------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| `@aponiajs/common`          | Decorators, contracts, tokens, providers, errors, WebSockets | `reflect-metadata` only                                                               |
+| `@aponiajs/core`            | Module graph, visibility rules, dependency injection         | `@aponiajs/common`                                                                    |
+| `@aponiajs/platform-elysia` | Elysia adapter, HTTP routes, WebSocket gateways, plugins     | `common`, `core`, peer `elysia`                                                       |
+| `@aponiajs/cli`             | `aponia new` and `aponia generate` schematics                | `change-case`, `ts-morph`, `yargs-parser`, `fast-glob`, `inflection`, `oxfmt` (exact) |
+| `create-aponia`             | `bun create aponia` entrypoint into the same generator       | `@aponiajs/cli`                                                                       |
+| `aponiajs`                  | Reserved public facade, private and unpublished              | —                                                                                     |
 
 Supporting directories: `examples/` for executable examples, `docs/` for
 published documentation, `scripts/`

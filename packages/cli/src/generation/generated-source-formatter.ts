@@ -2,20 +2,32 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
 /**
- * The formatter entry the generated modules are laid out by, and the only one
- * this package reads.
+ * The formatter entry the project itself installs, and the one asked for first.
  *
- * `vite-plus` is the toolchain behind `bun run check` and `vp check`, and the
+ * `vite-plus` is the toolchain behind `bun run check` and `vp check`, and this
  * subpath is its published formatter entry, which re-exports `oxfmt`'s own
  * `format` unchanged.
  */
-const formatterSpecifier = "vite-plus/fmt";
+const projectFormatterSpecifier = "vite-plus/fmt";
 
 /**
- * The package the specifier above belongs to, checked for where it is installed
- * rather than resolved, because resolving it always succeeds.
+ * The package that entry belongs to, checked for where it is installed rather
+ * than resolved, because resolving it always succeeds.
  */
-const toolchainPackage = "vite-plus";
+const projectToolchainPackage = "vite-plus";
+
+/**
+ * The formatter this package declares, and the one used when the project has
+ * none of its own.
+ *
+ * It is the same formatter as the project's copy rather than a second opinion —
+ * `vite-plus` re-exports this package's `format` — so a project that installs
+ * both still gets one layout. The dependency is pinned to an exact version for
+ * the reason the whole seam exists: the layout of a committed module is then
+ * decided by this package rather than by whatever a floating range resolved to
+ * on the machine that ran the build. See `packages/cli/AGENTS.md`.
+ */
+const ownFormatterSpecifier = "oxfmt";
 
 /** What this package needs from the resolved formatter. */
 type GeneratedSourceFormatter = (
@@ -34,8 +46,8 @@ type GeneratedSourceFormatter = (
  * formatter is called instead.
  *
  * Losing the lookup is not a failure. The emitters' own output is valid
- * TypeScript, so a checkout with no toolchain installed still generates both
- * modules; they are simply laid out the way the emitters wrote them.
+ * TypeScript, so a checkout whose formatter cannot be loaded still generates
+ * both modules; they are simply laid out the way the emitters wrote them.
  */
 export async function formatGeneratedSource(
   projectRoot: string,
@@ -76,28 +88,30 @@ function describe(error: unknown): string {
 }
 
 /**
- * The formatter to lay generated source out with, or `undefined` when none is
- * installed.
+ * The formatter to lay generated source out with, or `undefined` when neither
+ * this package's nor the project's can be loaded.
  *
  * The project is asked first, because that is the copy whose `vp check` will
- * read the file: `vite-plus` pins the exact `oxfmt` it formats with, so the copy
- * the project already has is what keeps a build from writing a file that fails
- * the check following it. The directory this module lives in is the fallback,
- * which is what covers a project that has not been installed yet — including
- * this repository's own tests, which render a template into a temporary
- * directory — and an application the CLI was installed into.
+ * read the file: `vite-plus` pins the exact `oxfmt` it formats with, so a
+ * project that has installed it is the authority on the layout its own check
+ * accepts, even when its toolchain is a release this package never saw. The
+ * formatter this package declares is the fallback, and it is what covers the
+ * project that has no toolchain at all — including this repository's own tests,
+ * which render a template into a temporary directory — so a project with
+ * nothing installed still gets source laid out by the same formatter rather
+ * than the emitter's own wrapping.
  */
 async function resolveFormatter(
   projectRoot: string,
 ): Promise<GeneratedSourceFormatter | undefined> {
   if (await hasOwnToolchain(projectRoot)) {
-    const formatter = await importFormatter(projectRoot);
-    if (formatter !== undefined) {
-      return formatter;
+    const projectFormatter = await importFormatter(projectFormatterSpecifier, projectRoot);
+    if (projectFormatter !== undefined) {
+      return projectFormatter;
     }
   }
 
-  return importFormatter(import.meta.dir);
+  return importFormatter(ownFormatterSpecifier, import.meta.dir);
 }
 
 /**
@@ -111,21 +125,35 @@ async function resolveFormatter(
  * there, resolution finds it before the cache is ever consulted.
  */
 async function hasOwnToolchain(projectRoot: string): Promise<boolean> {
-  return Bun.file(join(projectRoot, "node_modules", toolchainPackage, "package.json")).exists();
+  return Bun.file(
+    join(projectRoot, "node_modules", projectToolchainPackage, "package.json"),
+  ).exists();
 }
 
-async function importFormatter(directory: string): Promise<GeneratedSourceFormatter | undefined> {
+/**
+ * The formatter a specifier names, resolved from a directory, or `undefined`
+ * when that directory cannot provide it.
+ *
+ * The package is resolved rather than imported by name because the two answers
+ * come from different places: the project's copy has to be found from the
+ * project, and a specifier that resolves from nowhere must be reported as
+ * nothing rather than as a module-resolution failure of this file.
+ */
+async function importFormatter(
+  specifier: string,
+  directory: string,
+): Promise<GeneratedSourceFormatter | undefined> {
   try {
-    const module = (await import(
-      pathToFileURL(Bun.resolveSync(formatterSpecifier, directory)).href
-    )) as { readonly format?: unknown };
+    const module = (await import(pathToFileURL(Bun.resolveSync(specifier, directory)).href)) as {
+      readonly format?: unknown;
+    };
 
     return typeof module.format === "function"
       ? (module.format as GeneratedSourceFormatter)
       : undefined;
   } catch {
-    // A directory that cannot resolve the toolchain is the documented case, not
-    // a fault: the emitters' own output is valid without it.
+    // A directory that cannot resolve a formatter is the documented case, not a
+    // fault: the emitters' own output is valid without one.
     return undefined;
   }
 }
