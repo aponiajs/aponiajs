@@ -10,7 +10,9 @@ bun run build
 
 `bun run build` bundles the application into `dist` and regenerates
 `src/invokers.generated.ts` and `src/descriptors.generated.ts` first. Both are
-generated files, ignored by git and rewritten on every build.
+committed: `src/main.ts` passes the generated route invokers to
+`AponiaFactory.create`, so `bun run dev`, `bun start`, and `bun test` use them
+without a build having run, and each build refreshes them in place.
 
 The generated request flow is:
 
@@ -32,6 +34,8 @@ src/
 |-- app.controller.ts
 |-- app.module.ts
 |-- app.service.ts
+|-- descriptors.generated.ts
+|-- invokers.generated.ts
 `-- main.ts
 test/
 `-- app.e2e-spec.ts

@@ -609,8 +609,13 @@ function renderRoute(
         "parameters",
         route.parameters.map(
           (parameter) =>
-            `{ index: ${parameter.index}, kind: ${JSON.stringify(parameter.kind)}` +
-            `${parameter.property === undefined ? "" : `, property: ${JSON.stringify(parameter.property)}`} }`,
+            // `property` is required by the platform's parameter metadata even
+            // when the decorator named no property, so it is written as
+            // `undefined` rather than left out. Omitting it would make the
+            // generated module fail the application's own type check, and the
+            // runtime reads the same `undefined` either way.
+            `{ index: ${parameter.index}, kind: ${JSON.stringify(parameter.kind)}, property: ` +
+            `${parameter.property === undefined ? "undefined" : JSON.stringify(parameter.property)} }`,
         ),
       ),
     );

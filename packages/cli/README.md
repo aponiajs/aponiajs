@@ -32,7 +32,9 @@ module graph as data so the application can boot without its decorators being
 lowered. Both cover what they can prove and report what they cannot, so an
 application chooses how far to go: pass the invoker artifact to
 `AponiaFactory.create`, boot from `moduleDescriptors.<Module>`, or ignore both
-files and keep booting exactly as before.
+files and keep booting exactly as before. What it writes is laid out by the
+project's own formatter, so both modules are committed application source a
+`vp check` accepts rather than build output to hide from it.
 
 The same generation is available as a Bun plugin, so a bundle cannot serve a
 stale artifact:
@@ -53,10 +55,12 @@ if (!result.success) process.exit(1);
 It runs both generators in Bun's `onStart` hook — before the bundler resolves
 anything — prints the same change lines `aponia build` prints, and fails the
 build when generation fails. A project created by `aponia new` ships that script
-as `scripts/build.ts` and ignores both generated modules in `.gitignore`, so its
-`bun run build` always regenerates them. Registering it is opt-in for an
-application you already have, and `aponia build` still generates without
-bundling.
+as `scripts/build.ts`, and both generated modules are committed, so a freshly
+generated application passes `controllerInvokerArtifact` to `AponiaFactory.create`
+from its own `src/main.ts` and serves through generated invokers before any build
+has run. `bun run build` then refreshes them rather than creating them.
+Registering it is opt-in for an application you already have, and `aponia build`
+still generates without bundling.
 
 The generate command supports the complete built-in Nest schematic catalog:
 application, library, class, controller, decorator, filter, gateway, guard,

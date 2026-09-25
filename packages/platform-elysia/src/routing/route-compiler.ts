@@ -118,11 +118,19 @@ export function registerCompiledElysiaRoutes(
       );
     }
 
+    // `AponiaRouteInvoker` is declared with a `never` parameter because an
+    // invoker is written against its own route's annotations, so an artifact's
+    // invoker is widened back to the annotation this platform calls one with.
+    // The two are the same function at run time; only the variance differs, and
+    // the compiler's own handler needs no widening.
+    const suppliedInvoker = invokers?.get(route.propertyKey);
     registerNativeRoute(
       application,
       route.method,
       route.path,
-      invokers?.get(route.propertyKey) ?? createRouteHandler(callableHandler, instance, route),
+      suppliedInvoker === undefined
+        ? createRouteHandler(callableHandler, instance, route)
+        : (suppliedInvoker as (context: RouteContext) => unknown),
       toRouteHook(route.schema),
     );
   }

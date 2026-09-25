@@ -58,11 +58,27 @@ type InvokerMapAssertion = Expect<
     ReadonlyMap<ClassToken<unknown>, AponiaControllerInvokerFactory>
   >
 >;
-type RouteInvokerAssertion = Expect<Equals<AponiaRouteInvoker, (context: RouteContext) => unknown>>;
+type RouteInvokerAssertion = Expect<Equals<AponiaRouteInvoker, (context: never) => unknown>>;
+
+/**
+ * The shape `aponia build` emits: each invoker's parameter is built from the
+ * application's own parameter annotations, so it names the fields that route
+ * reads and is assignable to `AponiaRouteInvoker` without a cast. This is what
+ * the artifact's whole purpose rests on, so it is asserted rather than assumed.
+ */
+type GeneratedRouteInvoker = (context: { readonly body: { readonly name: string } }) => unknown;
+type GeneratedRouteInvokerAssertion = Expect<
+  GeneratedRouteInvoker extends AponiaRouteInvoker ? true : false
+>;
 
 /**
  * Declares the factory with a concrete instance type. The option type accepts
  * it without a cast because the factory parameter is `never`.
+ *
+ * The invoker's parameter is annotated, because `never` accepts every function
+ * shape and therefore offers no context to infer one from. A hand-written
+ * invoker that reads the context names it, exactly as a generated one is
+ * written against its own route's annotations.
  */
 const conformanceInvokers: AponiaControllerInvokerFactory = (
   instance: ConformanceInvokerController,
@@ -70,7 +86,10 @@ const conformanceInvokers: AponiaControllerInvokerFactory = (
   new Map<string | symbol, AponiaRouteInvoker>([
     ["ping", () => instance.ping()],
     ["readPromise", async () => instance.readPromise()],
-    ["createItem", (context) => instance.createItem(context.body as { name: string })],
+    [
+      "createItem",
+      (context: RouteContext) => instance.createItem(context.body as { name: string }),
+    ],
   ]);
 
 function conformanceArtifact(
@@ -89,14 +108,38 @@ const conformanceOptions: AponiaApplicationOptions = {
   ),
 };
 
+/**
+ * The artifact shape the platform README documents: a map literal with no
+ * explicit type arguments, which is what a reader copies. It has to be accepted
+ * exactly as written, and it has to be the invoker that answers.
+ */
+const documentedOptions: AponiaApplicationOptions = {
+  logger: false,
+  invokers: Object.freeze({
+    framework: aponiaVersion,
+    elysia: "1.4.30",
+    invokers: new Map([
+      [
+        ConformanceInvokerController,
+        (instance: ConformanceInvokerController) =>
+          new Map<string | symbol, AponiaRouteInvoker>([
+            ["ping", () => `${instance.ping()}-documented`],
+          ]),
+      ],
+    ]),
+  }),
+};
+
 test("the Vite+ lane types the invokers option and its invoker contracts", () => {
   const optionAssertion: InvokersOptionAssertion = true;
   const invokerMapAssertion: InvokerMapAssertion = true;
   const routeInvokerAssertion: RouteInvokerAssertion = true;
+  const generatedRouteInvokerAssertion: GeneratedRouteInvokerAssertion = true;
 
   expect(optionAssertion).toBe(true);
   expect(invokerMapAssertion).toBe(true);
   expect(routeInvokerAssertion).toBe(true);
+  expect(generatedRouteInvokerAssertion).toBe(true);
 });
 
 test("the Vite+ lane answers identically when generated invokers are supplied", async () => {
@@ -133,6 +176,14 @@ test("the Vite+ lane answers identically when generated invokers are supplied", 
 
   await compiled.close();
   await supplied.close();
+});
+
+test("the Vite+ lane accepts the artifact shape the README documents", async () => {
+  const application = await AponiaFactory.create(ConformanceInvokerModule, documentedOptions);
+  const response = await application.handle(new Request("http://localhost/conformance-invokers"));
+
+  expect(await response.text()).toBe("compiled-documented");
+  await application.close();
 });
 
 test("the Vite+ lane compiles a handler whose property key has no invoker", async () => {

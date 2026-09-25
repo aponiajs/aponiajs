@@ -1,6 +1,5 @@
 import type {
   RequestMethod,
-  RouteContext,
   RouteParameterKind,
   RouteParameterMetadata,
   RouteSchema,
@@ -12,8 +11,17 @@ import type {
  *
  * Elysia reads handler source statically, so an invoker must name every context
  * field it uses directly instead of forwarding the context to a generic helper.
+ *
+ * The context parameter is `never` for the same reason the factory's instance
+ * parameter is: an invoker is written against the application's own
+ * annotations — `@Body() body: CreateUser` — rather than against `RouteContext`,
+ * and a parameter that accepts nothing is the one type every such function is
+ * assignable to. A generated artifact therefore declares its invokers without a
+ * cast, and a hand-written one may still annotate the parameter `RouteContext`
+ * to read the context it is given. Only the platform calls an invoker, and it
+ * passes the real route context.
  */
-export type AponiaRouteInvoker = (context: RouteContext) => unknown;
+export type AponiaRouteInvoker = (context: never) => unknown;
 
 /**
  * Builds the invokers of one controller once its instance exists, keyed by the

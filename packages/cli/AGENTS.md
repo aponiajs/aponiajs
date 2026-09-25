@@ -9,20 +9,21 @@ specific to this package.
 runs the build generators during a bundle. It is independent of the runtime
 packages and driven by libraries rather than hand-rolled parsing.
 
-| Domain                              | Owns                                                                        |
-| ----------------------------------- | --------------------------------------------------------------------------- |
-| `bundler/`                          | The opt-in Bun plugin that generates before a bundle resolves anything      |
-| `commands/`                         | Argument parsing, command contracts, help output, and `runCli`              |
-| `generation/`                       | Naming, project discovery, file planning, renderers, module updates, writes |
-| `generation/controller-routes.ts`   | Build-time route analysis of controller source                              |
-| `generation/controller-invokers.ts` | Emits route invokers as literal source for the Elysia platform              |
-| `generation/module-descriptors.ts`  | Build-time analysis of module, injectable, and gateway source               |
-| `generation/descriptor-emitter.ts`  | Emits the module graph as `defineModule` calls for the Elysia platform      |
-| `generation/source-imports.ts`      | Which names a file can read, and which one expression reads                 |
-| `generation/invoker-generator.ts`   | The `aponia build` command: scans a project and writes both modules         |
-| `generation/build-report.ts`        | The `CREATE`/`UPDATE`/`DECLINED` lines both entrypoints print               |
-| `version.ts`                        | The version stamped into generated manifests                                |
-| `templates/`                        | The canonical application starter input                                     |
+| Domain                                     | Owns                                                                        |
+| ------------------------------------------ | --------------------------------------------------------------------------- |
+| `bundler/`                                 | The opt-in Bun plugin that generates before a bundle resolves anything      |
+| `commands/`                                | Argument parsing, command contracts, help output, and `runCli`              |
+| `generation/`                              | Naming, project discovery, file planning, renderers, module updates, writes |
+| `generation/controller-routes.ts`          | Build-time route analysis of controller source                              |
+| `generation/controller-invokers.ts`        | Emits route invokers as literal source for the Elysia platform              |
+| `generation/module-descriptors.ts`         | Build-time analysis of module, injectable, and gateway source               |
+| `generation/descriptor-emitter.ts`         | Emits the module graph as `defineModule` calls for the Elysia platform      |
+| `generation/source-imports.ts`             | Which names a file can read, and which one expression reads                 |
+| `generation/invoker-generator.ts`          | The `aponia build` command: scans a project and writes both modules         |
+| `generation/generated-source-formatter.ts` | Lays the written modules out with the project's formatter                   |
+| `generation/build-report.ts`               | The `CREATE`/`UPDATE`/`DECLINED` lines both entrypoints print               |
+| `version.ts`                               | The version stamped into generated manifests                                |
+| `templates/`                               | The canonical application starter input                                     |
 
 `generation/schematic-generator.ts` only orchestrates. Configuration lookup,
 file planning, rendering, module registration, and filesystem writes remain
@@ -70,6 +71,24 @@ separate focused modules. `src/index.ts` is the only public barrel.
   been installed. Keep `ControllerInvokerProvenance` and the platform's
   `AponiaInvokerArtifact` in step by hand, the same way the route parameter
   kinds are kept in step.
+- The emitted module has to be assignable to `AponiaApplicationOptions`
+  `["invokers"]` and readable by the application's own `check`, because it is
+  committed source rather than a build output. Two consequences hold it there.
+  Its invoker map is keyed `ClassToken<unknown>` and its invokers declare the
+  context parameter `never`, which is what the platform's option accepts — a
+  type import from `@aponiajs/common` for the first, and the platform's own
+  `never` contract for the second. Each emitted argument is asserted to
+  `Parameters<Controller["method"]>[index]`, the annotation the application
+  wrote: a guarded property read leaves `undefined` in the alternative and a
+  parameter no decorator named is passed `undefined`, and both are exactly what
+  the platform's own binding passes, so the annotation is the application's
+  promise about its own handler rather than something this emitter can prove.
+  `tests/controller-invokers.test.ts` pins the assertion and the token import.
+- `generation/descriptor-emitter.ts` always writes a parameter's `property`,
+  as the literal `undefined` when the decorator named none. The platform's
+  metadata requires the field, so omitting it makes the generated module fail
+  the application's own type check; the runtime reads the same `undefined`
+  either way.
 - `bundler/aponia-build-plugin.ts` is a thin seam over `generateInvokers`, not a
   second generator: it passes `cwd` and `project` through and prints
   `generation/build-report.ts`. Anything the plugin needs to do differently
@@ -168,15 +187,44 @@ separate focused modules. `src/index.ts` is the only public barrel.
   `aponiaBuildPlugin()`, so both generated modules are rewritten before the
   bundler resolves the entrypoint that would read them. `@aponiajs/cli` is a
   starter devDependency for that, and the packed lane installs it into the
-  generated project. `src/main.ts` imports neither generated module: the
-  artifacts exist to be adopted by passing `controllerInvokerArtifact` or booting
-  from `moduleDescriptors.AppModule`, and `bun run dev`, `bun start`, and
-  `bun test` still run on a checkout that has never been built.
-- The starter's `.gitignore` lists both generated modules, and that is
-  load-bearing rather than housekeeping: the emitter's line wrapping is not
-  oxfmt-canonical, so a check that read the artifacts would fail on formatting
-  the build itself wrote, and `vp check` skips an ignored path the way it skips
-  `node_modules`.
+  generated project.
+- The starter commits both generated modules and `src/main.ts` adopts the
+  invoker artifact, so a freshly generated application serves through generated
+  route invokers before any build has run. `bun run dev`, `bun start`, and
+  `bun test` therefore work on a checkout that has never been built, and now run
+  with the optimization rather than without it. The template holds them as
+  `src/invokers.generated.ts.tmpl` and
+  `src/descriptors.generated.ts.tmpl`, which is what gives the invoker module its
+  `{{APONIA_VERSION}}` stamp and the descriptor module its name back on render.
+  The framework stamp is the one field that must be substituted rather than
+  literal: the runtime compares it with the release that is running, so a literal
+  version would make every artifact a fresh application ships refuse itself. A
+  build reports both as `UPDATE`, which is the one place this package's change
+  lines do not mean "did not exist before".
+- `tests/starter-artifact-freshness.test.ts` regenerates the starter's own
+  sources and fails when what it produces differs from the committed modules.
+  That guard protects the optimization rather than safety: a stale artifact is
+  refused by `routing/invoker-artifact.ts` and costs a cold start, so losing it
+  is silent. The comparison normalizes `elysia` and nothing else, because that
+  field is resolved from what the project has installed — a fact about the
+  machine — while the framework stamp and the invokers are decided here.
+- `generation/generated-source-formatter.ts` is the only place generated source
+  is laid out, and it calls the project's formatter rather than imitating it. The
+  emitters used to hand-wrap their own output and drifted from `oxfmt`; the
+  committed modules are read by the application's own `vp check`, so a layout
+  that is merely close fails. The formatter is resolved at run time instead of
+  declared, and the project's copy is preferred because `vite-plus` pins the
+  exact `oxfmt` it formats with — the same reasoning that makes a second copy
+  here wrong rather than merely redundant. `Bun.resolveSync` answers from Bun's
+  global install cache when a directory has no `node_modules`, which is why the
+  project is only asked when it has installed the package itself: the cache
+  holds unrelated releases, and formatting with one writes a file the project's
+  own check rejects. A checkout with no toolchain is not an error — the emitters'
+  output is valid TypeScript, so both modules are still generated.
+- `aponia build` writes what the formatter returns, and a formatter that cannot
+  parse the emitted source throws rather than writing it out unformatted. That is
+  a fault in this package, not in the project being built, and the message names
+  the file.
 - The earlier finding that this wiring broke the packed lane named the wrong
   cause, and the corrected one matters: the generated application's `check` does
   **not** type-check the packed CLI's `src/`. The CLI ships `src/` because
@@ -188,9 +236,11 @@ separate focused modules. `src/index.ts` is the only public barrel.
   stages a packed workspace cannot reach a consumer's check. That is a lane
   detail and stays in the lane: no starter ignore glob may name a test lane.
   `bun run test:generated-app` is the acceptance test for the wiring — the packed
-  CLI's plugin runs inside a generated application's real build, reports `CREATE`
+  CLI's plugin runs inside a generated application's real build, reports `UPDATE`
   for both modules, and that application's own `check`, `test`, `test:e2e`, and
-  bundle all pass.
+  bundle all pass. It also boots `src/main.ts` before the build and `dist/main.js`
+  after it, because a starter that shipped the modules but never adopted them
+  would pass every other assertion in that lane.
 - A REST CRUD resource emits `<name>.model.ts` with separate `@Validation`
   classes for create bodies, update bodies, and shared path parameters.
   Controllers and services consume those classes directly, and REST CRUD does

@@ -135,6 +135,13 @@ test("generates an entry per handler that declares a decorated parameter", () =>
   expect(result.source).toContain('"noop"');
   expect(result.source).not.toContain('"takers"');
   expect(result.source).toContain('import { UsersController } from "./users.controller.ts";');
+  expect(result.source).toContain('import type { ClassToken } from "@aponiajs/common";');
+  // A read is guarded against a context field that is not an object, which
+  // leaves `undefined` in the alternative, so it is asserted to the type the
+  // application annotated that parameter with. The runtime value is unchanged;
+  // what the assertion buys is a generated module that passes the application's
+  // own type check.
+  expect(result.source).toContain('as Parameters<UsersController["create"]>[0]');
 });
 
 test("declines a handler whose bindings it cannot reproduce, naming the reason", () => {
@@ -262,7 +269,7 @@ test("reads a selected cookie property and tolerates a missing one", async () =>
 });
 
 test("fills a gap below a decorated parameter with undefined", async () => {
-  const { factories, controller } = await loadGenerated(`
+  const { emitted, factories, controller } = await loadGenerated(`
 import { Body, Controller, Post } from "@aponiajs/common";
 
 @Controller("gaps")
@@ -286,6 +293,12 @@ export class UsersController {
 
   expect(invoker!({ body: { name: "aponia" } } as never)).toBe("gapped");
   expect(received).toEqual([[undefined, { name: "aponia" }]]);
+
+  // The gap is `undefined` at run time while the application annotated that
+  // parameter `string`, so the argument is asserted to the annotation. The
+  // platform's own binding passes the same value, and the committed module is
+  // source in the application's own type check.
+  expect(emitted.source).toContain('undefined as Parameters<UsersController["create"]>[0]');
 });
 
 test("gives a handler with no decorated parameter what the runtime gives it", async () => {

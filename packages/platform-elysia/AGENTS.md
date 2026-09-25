@@ -79,6 +79,19 @@ runtime boundary it describes.
   from a supplied map, and a symbol-keyed handler all fall back to compiled
   binding, and an entry for a token no controller uses is ignored. The option is
   never mutated.
+- `AponiaRouteInvoker` declares its context parameter `never`, for the same
+  reason `AponiaControllerInvokerFactory` does with its instance parameter: an
+  invoker is written against its own route's annotations
+  (`@Body() body: CreateUser`), which `RouteContext` cannot describe, and a
+  parameter that accepts nothing is the one type every such function is
+  assignable to. A generated module therefore needs no cast for the artifact to
+  be assignable to the option, and a hand-written invoker annotates the
+  parameter itself when it reads the context. `registerCompiledElysiaRoutes` is
+  the single place a supplied invoker is widened to the annotation the platform
+  calls one with; the compiler's own handler needs no widening, and only the
+  platform ever calls an invoker. Testing this contract is what
+  `tests-vp/route-invokers.conformance.ts` is for: it pins the type, pins the
+  generated shape's assignability, and boots the README's own map literal.
 - `routing/invoker-artifact.ts` refuses an artifact whose `framework` is not
   `version.ts`'s own version, and one that carries no invoker map, before any
   controller mounts. A refusal is not an error: the fallback is the compilation

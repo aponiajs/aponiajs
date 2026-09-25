@@ -4,6 +4,7 @@ import { analyzeControllerRoutes } from "./controller-routes.ts";
 import { emitControllerInvokers } from "./controller-invokers.ts";
 import { descriptorModuleFileName, emitModuleDescriptors } from "./descriptor-emitter.ts";
 import { writePendingFiles } from "./file-writer.ts";
+import { formatGeneratedSource } from "./generated-source-formatter.ts";
 import { analyzeModuleDescriptors } from "./module-descriptors.ts";
 import {
   readConfiguration,
@@ -39,6 +40,11 @@ export const invokerModuleFileName = "invokers.generated.ts";
  * path, and a declined module keeps booting from its decorators. The descriptor
  * module is only written when at least one module could be declared, so a
  * project that has controllers but no `@Module()` still gets its invokers.
+ *
+ * Both modules are written through the project's own formatter, so the file that
+ * lands is one the application's `vp check` accepts rather than one that merely
+ * looks close to it. `generated-source-formatter.ts` owns that lookup and
+ * records why it is resolved at run time instead of declared.
  *
  * Nothing here runs the application. The analysis reads source, which is why a
  * controller that only exists after some side effect is invisible to it.
@@ -123,14 +129,18 @@ export async function generateInvokers(
   const pending: PendingFile[] = [
     {
       path: outputPath,
-      content: emitted.source,
+      content: await formatGeneratedSource(projectRoot, invokerModuleFileName, emitted.source),
       kind: (await Bun.file(outputPath).exists()) ? "UPDATE" : "CREATE",
     },
   ];
   if (descriptors.source !== undefined) {
     pending.push({
       path: descriptorPath,
-      content: descriptors.source,
+      content: await formatGeneratedSource(
+        projectRoot,
+        descriptorModuleFileName,
+        descriptors.source,
+      ),
       kind: (await Bun.file(descriptorPath).exists()) ? "UPDATE" : "CREATE",
     });
   }

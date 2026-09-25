@@ -4,7 +4,3 @@ dist
 .env.*
 !.env.example
 *.log
-
-# Written by `bun run build` and by `aponia build`.
-src/invokers.generated.ts
-src/descriptors.generated.ts

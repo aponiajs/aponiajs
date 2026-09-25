@@ -155,7 +155,10 @@ export class UsersModule {}
         '          path: ":id",',
         '          propertyKey: "read",',
         "          parameters: [",
-        '            { index: 0, kind: "params" },',
+        // `property` is written even when no decorator named one: the platform's
+        // metadata requires the field, and a generated module is source in the
+        // application's own type check.
+        '            { index: 0, kind: "params", property: undefined },',
         "          ],",
         "          promiseCapable: false,",
         "        },",

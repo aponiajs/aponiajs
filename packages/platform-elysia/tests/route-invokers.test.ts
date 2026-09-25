@@ -7,6 +7,7 @@ import {
   Post,
   type ClassToken,
   type LoggerService,
+  type RouteContext,
 } from "@aponiajs/common";
 import { t } from "elysia";
 import {
@@ -64,7 +65,14 @@ const mirroringInvokers: AponiaControllerInvokerFactory = (instance: InvokerCont
   new Map<string | symbol, AponiaRouteInvoker>([
     ["ping", () => instance.ping()],
     ["promise", async () => instance.readPromise()],
-    ["createItem", (context) => instance.createItem(context.body as { name: string })],
+    [
+      "createItem",
+      // The parameter is annotated because `AponiaRouteInvoker` declares it as
+      // `never`: the type accepts every invoker shape, so it offers none to
+      // infer from. A generated invoker is written the same way, against the
+      // fields its own route reads.
+      (context: RouteContext) => instance.createItem(context.body as { name: string }),
+    ],
   ]);
 
 /**

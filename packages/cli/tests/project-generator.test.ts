@@ -45,7 +45,7 @@ test("generates a module-controller-service application", async () => {
 
   expect(result.installed).toBe(false);
   expect(await Bun.file(join(projectDirectory, "src/main.ts")).text()).toContain(
-    "AponiaFactory.create(AppModule)",
+    "AponiaFactory.create(AppModule, {",
   );
   expect(await Bun.file(join(projectDirectory, ".gitignore")).exists()).toBe(true);
   expect(await Bun.file(join(projectDirectory, "src/app.module.ts")).text()).toContain(
@@ -104,7 +104,7 @@ test("ships a runnable inspection script wired into the manifest", async () => {
   expect(manifest.scripts.inspect).toBe("bun run scripts/inspect.ts");
 });
 
-test("wires the build script to the build plugin and ignores what it writes", async () => {
+test("wires the build script to the build plugin and commits what it writes", async () => {
   const temporaryDirectory = await createTemporaryDirectory("aponia-build-");
   await generateProject({ name: "sample-api", cwd: temporaryDirectory, skipInstall: true });
   const projectDirectory = join(temporaryDirectory, "sample-api");
@@ -121,11 +121,15 @@ test("wires the build script to the build plugin and ignores what it writes", as
   expect(script).toContain('entrypoints: ["./src/main.ts"]');
   expect(manifest.scripts.build).toBe("bun run scripts/build.ts");
   expect(manifest.devDependencies["@aponiajs/cli"]).toBe(aponiaVersion);
-  // The build writes both modules beside the application's own sources, so the
-  // starter has to ignore them: what a build wrote must not turn up in
-  // `git status` or in the project's own `bun run check`.
-  expect(ignore).toContain("src/invokers.generated.ts");
-  expect(ignore).toContain("src/descriptors.generated.ts");
+  // The build rewrites both modules beside the application's own sources, and
+  // the starter ships them: they are application source that a build refreshes,
+  // not build output that a build creates, so they belong in version control and
+  // in the project's own `bun run check`.
+  expect(ignore).not.toContain("generated.ts");
+  expect(await Bun.file(join(projectDirectory, "src/invokers.generated.ts")).exists()).toBe(true);
+  expect(await Bun.file(join(projectDirectory, "src/descriptors.generated.ts")).exists()).toBe(
+    true,
+  );
 });
 
 test("boots and tests the starter without running a build first", async () => {
@@ -134,13 +138,15 @@ test("boots and tests the starter without running a build first", async () => {
   const projectDirectory = join(temporaryDirectory, "sample-api");
 
   // `bun run dev`, `bun start`, and `bun test` import the sources directly, so
-  // they must not need the generated modules the build script writes.
-  expect(await Bun.file(join(projectDirectory, "src/main.ts")).text()).not.toContain(
-    "generated.ts",
-  );
-  expect(await Bun.file(join(projectDirectory, "src/invokers.generated.ts")).exists()).toBe(false);
+  // they must not need a build to have run. The entrypoint adopts the invoker
+  // artifact, which it can only do because the starter commits the module the
+  // build would otherwise be the first thing to write.
+  const main = await Bun.file(join(projectDirectory, "src/main.ts")).text();
+  expect(main).toContain('import { controllerInvokerArtifact } from "./invokers.generated.ts";');
+  expect(main).toContain("invokers: controllerInvokerArtifact,");
+  expect(await Bun.file(join(projectDirectory, "src/invokers.generated.ts")).exists()).toBe(true);
   expect(await Bun.file(join(projectDirectory, "src/descriptors.generated.ts")).exists()).toBe(
-    false,
+    true,
   );
 });
 

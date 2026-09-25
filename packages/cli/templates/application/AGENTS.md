@@ -50,6 +50,8 @@ src/
 |-- app.controller.ts
 |-- app.module.ts
 |-- app.service.ts
+|-- descriptors.generated.ts
+|-- invokers.generated.ts
 `-- main.ts
 test/
 `-- app.e2e-spec.ts
@@ -58,11 +60,18 @@ test/
 Every later feature is a directory under `src/<resource>/`, holding its module,
 controller, service, models, and tests together.
 
-`bun run build` writes `src/invokers.generated.ts` and
-`src/descriptors.generated.ts` beside those sources and ignores them in git.
-Nothing imports them yet: pass `controllerInvokerArtifact` to
-`AponiaFactory.create` to adopt the generated route invokers, or boot from
-`moduleDescriptors.AppModule` instead of the class.
+`src/invokers.generated.ts` and `src/descriptors.generated.ts` sit beside those
+sources and are committed. `src/main.ts` passes `controllerInvokerArtifact` to
+`AponiaFactory.create`, so the application serves through generated route
+invokers from `bun run dev`, `bun start`, and `bun test` without a build having
+run. `bun run build` regenerates both in place, which is why a controller or a
+module change is not live in the generated binding until the next build.
+
+The invoker module is stamped with the framework release that wrote it, and a
+mismatch is refused rather than used: the runtime compiles every route from
+decorator metadata instead, which is slower but never wrong. That is what a
+stale file costs, and it is the only cost — nothing needs repairing by hand.
+`aponia build` writes the same two modules without bundling.
 
 ## Authoring rules
 

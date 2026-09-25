@@ -237,6 +237,8 @@ my-api/
 |   |-- app.controller.ts
 |   |-- app.module.ts
 |   |-- app.service.ts
+|   |-- descriptors.generated.ts
+|   |-- invokers.generated.ts
 |   `-- main.ts
 `-- test/
     `-- app.e2e-spec.ts
@@ -246,15 +248,20 @@ The generated runtime flow is:
 
 ```text
 main.ts
-  -> AponiaFactory.create(AppModule)
+  -> AponiaFactory.create(AppModule, { invokers: controllerInvokerArtifact })
   -> AppModule
   -> AppController
   -> AppService
 ```
 
-`main.ts` owns only bootstrap configuration and `listen`. Decorated controllers
-own routes. Services own application behavior. Generated application code does
-not import Elysia or low-level runtime descriptors.
+`main.ts` owns only bootstrap configuration, the generated invoker artifact, and
+`listen`. Decorated controllers own routes. Services own application behavior.
+Generated application code does not import Elysia or low-level runtime
+descriptors.
+
+The starter ships both generated modules, so a freshly generated application
+serves through generated route invokers without a build having run.
+`bun run build` refreshes them instead of creating them.
 
 This is standard mode and intentionally matches the flat starter structure
 created by `nest new`. Generated resources belong directly under
@@ -399,13 +406,31 @@ completes, so the file on disk is untouched when that happens.
 
 Registering it is opt-in for an application you already have. A project created
 by `aponia new` starts with it registered: its `bun run build` runs
-`scripts/build.ts`, which is the script above. The starter ignores both generated
-modules in its `.gitignore`, so what a build writes beside its sources never
-reaches `git status` or `bun run check`. Its `src/main.ts` still imports neither
-module, so `bun run dev`, `bun start`, and `bun test` work on a checkout that has
-never been built; adopting them is the one-line change shown above. A build that
-does not register the plugin behaves exactly as before, and `aponia build`
-remains the way to generate without bundling.
+`scripts/build.ts`, which is the script above.
+
+The starter commits both generated modules and its `src/main.ts` imports
+`controllerInvokerArtifact` and passes it to `AponiaFactory.create`, so a
+freshly generated application serves through generated route invokers from its
+first `bun run dev`, `bun start`, or `bun test` — no build required. Each build
+refreshes them in place and reports `UPDATE` rather than `CREATE`.
+
+Both modules are laid out by the project's own formatter, so they are ordinary
+application source: your `vp check` reads them, lint and format rules apply to
+them, and they belong in version control. `@aponiajs/cli` does not reimplement
+that layout — it calls the `oxfmt` behind `vite-plus`, which pins the exact
+version it formats with, and a project's own copy is preferred over the machine's
+so the file a build writes is the file the check accepts. A checkout with no
+toolchain installed is not an error: the modules are still generated, in the
+layout the emitter wrote them.
+
+A build that does not register the plugin behaves exactly as before, and
+`aponia build` remains the way to generate without bundling.
+
+The committed modules go stale when a controller or a module changes, and a
+stale one is refused by the runtime rather than used: `invokers.generated.ts`
+records the framework release it was built against, and an artifact from another
+release costs a slower cold start — never a wrong binding — until the next build
+rewrites it.
 
 ## Safety behavior
 

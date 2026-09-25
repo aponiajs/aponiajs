@@ -190,16 +190,29 @@ test("packed workspaces generate an application that installs, validates, builds
     await run(["bun", "test"], projectDirectory, bunTemporaryDirectory);
     await run(["bun", "run", "test:e2e"], projectDirectory, bunTemporaryDirectory);
 
-    const buildResult = await run(["bun", "run", "build"], projectDirectory, bunTemporaryDirectory);
+    // The starter commits both generated modules, so the application has been
+    // serving through generated route invokers since before this build: the
+    // checks above, and the e2e suite inside them, ran on a project no build had
+    // touched. Booting the sources here is what asserts that rather than
+    // assuming it.
     for (const artifact of generatedArtifacts) {
-      expect(buildResult.stdout).toContain(`CREATE ${artifact}`);
+      expect(await Bun.file(join(projectDirectory, artifact)).exists()).toBe(true);
+    }
+    await expectServer(projectDirectory, "src/main.ts");
+
+    const buildResult = await run(["bun", "run", "build"], projectDirectory, bunTemporaryDirectory);
+    // Regenerating is what a build does to modules that are already there, so
+    // both are reported as updates rather than as creations. The change line is
+    // what fails when the build stops regenerating them at all.
+    for (const artifact of generatedArtifacts) {
+      expect(buildResult.stdout).toContain(`UPDATE ${artifact}`);
       expect(await Bun.file(join(projectDirectory, artifact)).exists()).toBe(true);
     }
     // A build writes the generated modules beside the application's sources, so
     // the application's own check has to stay green afterwards.
     await run(["bun", "run", "check"], projectDirectory, bunTemporaryDirectory);
 
-    await expectBuiltServer(projectDirectory);
+    await expectServer(projectDirectory, "dist/main.js");
   } finally {
     await rm(temporaryDirectory, { recursive: true, force: true });
   }
@@ -268,7 +281,7 @@ async function assertPackageDependency(
   expect(manifest.dependencies[dependency]).toBe(version);
 }
 
-async function expectBuiltServer(projectDirectory: string): Promise<void> {
+async function expectServer(projectDirectory: string, entrypoint: string): Promise<void> {
   const reservation = Bun.serve({
     port: 0,
     fetch: () => new Response("reserved"),
@@ -276,7 +289,7 @@ async function expectBuiltServer(projectDirectory: string): Promise<void> {
   const port = reservation.port;
   await reservation.stop(true);
 
-  const server = Bun.spawn([process.execPath, "dist/main.js"], {
+  const server = Bun.spawn([process.execPath, entrypoint], {
     cwd: projectDirectory,
     env: {
       ...Bun.env,
@@ -304,7 +317,7 @@ async function expectBuiltServer(projectDirectory: string): Promise<void> {
     }
 
     throw new Error(
-      `Generated application did not start successfully.\nstdout:\n${await stdout}\nstderr:\n${await stderr}`,
+      `Generated application did not start successfully from "${entrypoint}".\nstdout:\n${await stdout}\nstderr:\n${await stderr}`,
     );
   } finally {
     server.kill();
