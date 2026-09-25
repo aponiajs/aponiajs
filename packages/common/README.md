@@ -50,6 +50,13 @@ collections for omitted options and preserves each declared collection as an
 exact tuple. Multiple native plugins and controller descriptors therefore keep
 their individual route contracts without requiring `as const`.
 
+Constructor dependencies follow the constructor that actually runs. A subclass
+that declares no constructor of its own resolves the parent's reflected
+parameter types and `@Inject()` tokens; one that declares its own constructor
+reads its own metadata. The
+[dependency injection guide](../../docs/dependency-injection.md) covers token
+and visibility rules in full.
+
 ## Route validation
 
 Every HTTP method decorator accepts either a validation-model class or a raw
@@ -127,6 +134,11 @@ receive the context, typed platform-neutrally by
 `ElysiaRouteContext<typeof schema>` from
 `@aponiajs/platform-elysia` to keep Elysia's own context types. `@Res()` remains
 the Nest-style alias of the native-named `@Set()`.
+
+`@Set()` and `@Res()` expose the mutable response settings — a status and
+headers. Redirects are not a response setting: return the platform's inline
+`redirect(url)` helper from the handler, because an assigned redirect on the
+response settings is ignored by the platform.
 
 ## WebSocket gateways
 

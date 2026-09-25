@@ -1,4 +1,4 @@
-import { dirname, resolve } from "node:path";
+import { dirname, relative, resolve } from "node:path";
 import { createComponentNames } from "./component-names.ts";
 import { createComponentFiles, createResourceFiles } from "./file-planner.ts";
 import { writePendingFiles } from "./file-writer.ts";
@@ -59,14 +59,21 @@ export async function generateSchematic(
       requestedModule: options.module,
       excludedFile: options.schematic === "module" ? primary.path : undefined,
     });
-    if (moduleFile) {
-      const original = await Bun.file(moduleFile).text();
-      const symbol = symbolFor(options.schematic, names);
-      const importPath = toImportPath(moduleFile, primary.path);
-      const updated = registerInModule(original, registration, symbol, importPath);
-      if (updated !== original) {
-        files.push({ path: moduleFile, content: updated, kind: "UPDATE" });
-      }
+    if (!moduleFile) {
+      // Registration was asked for, so skipping it silently would report success
+      // for a run that only wrote half the files. Fail before anything is written.
+      throw new Error(
+        `Could not find a module to register "${relative(projectRoot, primary.path)}" ` +
+          `inside "${relative(projectRoot, sourceRoot)}". Generate there, or pass ` +
+          '"--skip-import" to create the files without registering them.',
+      );
+    }
+    const original = await Bun.file(moduleFile).text();
+    const symbol = symbolFor(options.schematic, names);
+    const importPath = toImportPath(moduleFile, primary.path);
+    const updated = registerInModule(original, registration, symbol, importPath);
+    if (updated !== original) {
+      files.push({ path: moduleFile, content: updated, kind: "UPDATE" });
     }
   }
 

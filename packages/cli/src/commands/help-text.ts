@@ -5,6 +5,7 @@ Usage:
   aponia n <name> [options]
   aponia generate <schematic> <name> [options]
   aponia g <schematic> <name> [options]
+  aponia build [options]
 
 Options:
   -d, --dry-run       Report files without writing them

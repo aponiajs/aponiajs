@@ -86,6 +86,19 @@ class AmbiguousPromiseController {
 @Module({ controllers: [AmbiguousPromiseController] })
 class AmbiguousPromiseModule {}
 
+@Controller("conformance-deferred")
+class ConformanceDeferredController {
+  readonly pendingLookup: Promise<string> = Promise.resolve("deferred");
+
+  @Get()
+  read(): string | Promise<string> | undefined {
+    return this.pendingLookup;
+  }
+}
+
+@Module({ controllers: [ConformanceDeferredController] })
+class ConformanceDeferredModule {}
+
 class RegisteredHealthController {
   read(): string {
     return "registered";
@@ -190,6 +203,33 @@ test("the Vite+ lane awaits ambiguous Promise results before after-handle hooks"
 
   expect(await response.text()).toBe("resolved");
   expect(observedResponse).toBe("resolved");
+  expect(observedResponse).not.toBeInstanceOf(Promise);
+  expect(compiledRoute).toContain("await handler(c)");
+  await application.close();
+});
+
+test("the Vite+ lane awaits a Promise returned without a call expression before after-handle hooks", async () => {
+  let observedResponse: unknown;
+  const application = await AponiaFactory.create(ConformanceDeferredModule, {
+    logger: false,
+    configureNative: (nativeApplication) =>
+      nativeApplication.onAfterHandle(({ response }) => {
+        observedResponse = response;
+      }),
+  });
+  const compiledRoute = application
+    .getNativeApplication()
+    .compile()
+    .router.history.find((route) => route.path === "/conformance-deferred")
+    ?.compile()
+    .toString();
+  const response = await application.handle(new Request("http://localhost/conformance-deferred"));
+
+  // The union return type leaves design:returntype as Object, and the handler
+  // returns the Promise through an identifier, so nothing can prove the
+  // handler synchronous.
+  expect(await response.text()).toBe("deferred");
+  expect(observedResponse).toBe("deferred");
   expect(observedResponse).not.toBeInstanceOf(Promise);
   expect(compiledRoute).toContain("await handler(c)");
   await application.close();

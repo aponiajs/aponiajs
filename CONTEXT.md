@@ -1,6 +1,7 @@
 # AponiaJS AOT and Pseudo-JIT Feasibility Research
 
 - Generated: 2026-07-28
+- Re-measured: 2026-09-25
 - Question type: technical feasibility and performance ceiling
 - Confidence: high for the warmed steady-state ceiling; medium for startup projections
 - Scope: a single process on the same hardware, runtime, and workloads
@@ -13,7 +14,7 @@ The current working implementation now provides:
 - cached fixed-arity controller invokers with direct context-property access and
   no request-time argument arrays or descriptor traversal;
 - separate synchronous and Promise-capable handler shapes, using emitted
-  decorator return metadata before conservative source inference;
+  decorator return metadata, and never from the handler's own source;
 - direct root registration for decorated controllers and
   `defineElysiaController(..., { registerRoutes })` descriptors, while retaining
   `buildPlugin` as the native compatibility path;
@@ -25,6 +26,44 @@ A general build-time TypeScript source emitter, semantic-island selector, route
 clustering, and PGO remain future work. Final throughput, latency, allocation,
 startup, and memory measurements are intentionally left to the pinned external
 benchmark run; no implementation claim should be derived from code shape alone.
+
+### Re-measurement, 2026-09-25
+
+The compiled invokers closed the gap this document was written to open. Measured
+on Apple Silicon with Bun 1.3.14 and the Elysia 1.4.29 the workspace pinned at
+the time, over 200 keep-alive connections, reporting the `median` of five
+interleaved three-second rounds:
+
+| Workload                   |  Elysia | AponiaJS | AponiaJS / Elysia |
+| -------------------------- | ------: | -------: | ----------------: |
+| Ping `GET /`               | 247,575 |  238,908 |             96.5% |
+| Query `GET /id/:id?name=`  | 232,653 |  229,054 |             98.5% |
+| Body `POST /json` + schema | 192,039 |  191,370 |             99.7% |
+
+`AponiaFactory.create` costs 1–3 ms over raw Elysia bootstrap.
+
+The baseline is Elysia under its default compilation policy. Every workload
+therefore reaches or exceeds the 95% floor this document set as its acceptance
+range. The remaining Ping difference is consistent with the one extra call frame
+the compiled invoker needs to reach a controller method through
+`handler.call(instance, ...)`; that frame is what routing to an arbitrary method
+costs, and removing it would mean giving up controller methods entirely.
+
+Two caveats keep this from being a published claim. The run used a local harness
+rather than the pinned upstream benchmark, and it compares against default
+Elysia rather than an explicitly labelled AOT build — the supplied results below
+show those differ by 0.05–1.216%, so the comparison is close, but the pinned
+harness rerun is still what a published number requires.
+
+The workspace subsequently moved its Elysia pin to `^1.4.30`, a patch release
+that leaves this comparison unchanged; re-run the numbers if a future bump
+touches the request path.
+
+The practical conclusion is that warmed throughput is no longer the open
+problem. Optimization effort should move to startup and deployment work, and to
+replacing the `Function()`-based invoker in
+`packages/platform-elysia/src/routing/route-compiler.ts`, which is fragile for
+reasons other than speed.
 
 ## Executive conclusion
 
@@ -108,6 +147,10 @@ bootstrap or build time rather than repeatedly optimizing graph and container
 work that is not on the hot path.
 
 ## Local empirical evidence
+
+Superseded by the 2026-09-25 re-measurement above; the figures below record the
+experiment that motivated the compiled invoker and predate it. Ping in
+particular has since moved from 90.4% to 96.5%.
 
 A controlled experiment with a specialized compiled parameter binder reached
 approximately 97.2% of direct Elysia throughput across Ping, Query, and Body
@@ -199,10 +242,124 @@ Use precise terminology in the public API and documentation:
 
 Do not describe Bun `--compile` or bytecode caching as true native AOT.
 
+### Build-time route codegen
+
+The measurements above rule throughput out as a reason to generate code. AponiaJS
+already matches a hand-written method-dispatch closure, which is the floor for any
+framework whose handlers are controller methods, so a faster compiler does not
+exist to be written. The case for codegen is correctness and deployment instead:
+
+- the compiled invoker is built with `new Function`, which any Content Security
+  Policy without `unsafe-eval` blocks;
+- whether a handler is async, and whether it wants the context at all, is inferred
+  by scanning `Function.prototype.toString` output with regular expressions, so
+  minification, bundling, `bind`, and class-field arrows can each change the
+  answer;
+- both run at bootstrap, on every cold start, in every process.
+
+Emitting the invoker as source removes all three. Stage it so each step ships on
+its own:
+
+1. **Introspection.** `@aponiajs/platform-elysia` projects a root module into
+   frozen, JSON-serializable data. It generates nothing; it is the read model the
+   later stages, the inspection script, and the package tooling all share.
+2. **Route codegen.** A build step imports the application's root module, runs the
+   existing compiler, and emits a source file whose route registration is written
+   as literal functions. This deletes `new Function` and every source heuristic
+   from the request path while decorators still run.
+3. **Descriptor codegen.** The same step also emits explicit `defineModule` and
+   `defineElysiaController` calls, so `reflect-metadata` leaves the production
+   path. Decorators stay the authoring surface in source.
+4. **Bun plugin.** Stages 2 and 3 run from the bundler instead of a separate
+   command.
+
+The generated artifact is **source, not a serialized manifest**: it imports the
+application's own classes and validators, so it cannot drift from them, and Elysia
+can still read each generated handler's source for its own compilation. Reading a
+handler's source stays acceptable because the generated functions are literal and
+stable; the fragile part was inferring bindings from source that the author wrote
+for other reasons.
+
+Keep the verification contract from the recommendation above. The generated file
+carries the framework version, the Elysia version, and a content hash; the runtime
+refuses a stale artifact and compiles from descriptors instead. Both authoring
+paths, `configureNative`, plugin modules, and the native escape hatches must
+behave identically with and without the artifact.
+
+Acceptance for each stage:
+
+- an application with and without the generated artifact answers identically,
+  including validation failures, error responses, and gateway behaviour;
+- no generated path calls `new Function` or infers a binding from an author's
+  source;
+- a stale or mismatched artifact is refused and the descriptor path produces the
+  same route table;
+- measured throughput stays inside the 95% floor with the artifact in place.
+
+Stage 2's analyzer is already in place:
+`packages/cli/src/generation/controller-routes.ts` reads a controller file with
+`ts-morph` and returns its routes, paths, parameter bindings, and whether each
+handler is Promise-capable. The emitter is not written yet, and the question
+that held it up now has an answer.
+
+An emitted invoker passes context values into a handler the application typed,
+so `instance.create(context.body)` has to typecheck against whatever `create`
+declared, and the analyzer reports only each binding's _kind_ and _property_, not
+the declared type of the parameter it fills. Typing the emitted context as
+`unknown` fails under this repository's strict settings, and casting the value at
+the call site is the untyped escape the style rules forbid.
+
+**Type each bound value from the handler's own signature.** The emitted module
+imports the controller it is generating for and reads the parameter type back
+out of it:
+
+```ts
+import type { UsersController } from "./users.controller.ts";
+
+type CreateContext = { readonly body: Parameters<UsersController["create"]>[0] };
+
+export const controllerInvokers = Object.freeze({
+  UsersController: (instance: UsersController) =>
+    Object.freeze([
+      (context: CreateContext) => {
+        const result = instance.create(context.body);
+        return result;
+      },
+    ]),
+});
+```
+
+This needs no analyzer change, no second import for the parameter's type, and no
+cast: `Parameters<...>[index]` is the application's own annotation, resolved by
+the type checker rather than by source text, so aliases, unions, and generics
+follow for free. The one property it does not give is the shape of the container
+the value is read from — `context.params`, `context.query` — which the emitter
+declares itself from the binding kinds the analyzer already reports. `@Ctx()`,
+`@Req()`, `@Set()`, and `@Status()` bind a platform value rather than a field, so
+their parameters keep the platform's own type.
+
+The emitted JavaScript is unchanged by any of this; the annotations exist so the
+generated module compiles against the application that produced it.
+
+Generated invokers must keep the synchronous and Promise-capable shapes the
+route compiler already emits. Collapsing them into one synchronous invoker looks
+free and is not. Elysia awaits a returned Promise when it builds the response, so
+the response body is correct either way — measured across both handler kinds the
+synchronous invoker was never slower (257,907 to 263,379 requests per second over
+four combinations). What breaks is the lifecycle: with a synchronous invoker
+`onAfterHandle` observes the raw `Promise` instead of the resolved value, because
+nothing awaited it before the hook ran. `tests/route-dispatch.test.ts` asserts
+the resolved value, and it fails on the collapsed shape. The split costs about
+1.4% on a route whose handler is synchronous but classified Promise-capable,
+which is the price of correct hook semantics.
+
 ## Acceptance and benchmarking gates
 
 - Each of Ping, Query, Body, and Video should reach at least 95% of direct Elysia
-  AOT under the identical harness; 98% is the stretch target.
+  AOT under the identical harness; 98% is the stretch target. The 2026-09-25
+  re-measurement reaches 96.5%, 98.5%, and 99.7% on Ping, Query, and Body, but
+  under a local harness and without a Video workload, so the gate is met on
+  evidence rather than closed.
 - Responses must preserve status, body, headers, validation, dynamic query and
   parameter extraction, error behavior, and streamed video behavior.
 - The hot path should not allocate an AponiaJS argument array or invoke a

@@ -2,13 +2,13 @@
 
 A Bun-first, Nest-inspired application framework built around Elysia.
 
-- **Current version:** 0.6.0-alpha.18
+- **Current version:** 0.6.0-alpha.19
 - **Runtime:** Bun 1.3.14
 - **Package manager:** Bun 1.3.14
 - **Repository:** https://github.com/aponiajs/aponiajs
 - **Default branch:** `main`
 
-**Progress:** 11 completed, 4 in progress, 13 planned of 28 items (47.50% overall).
+**Progress:** 11 completed, 5 in progress, 13 planned of 29 items (46.72% overall).
 
 Status meanings:
 
@@ -475,6 +475,45 @@ Next actions:
 Evidence:
 
 - [Platform and HTTP package blueprints](#package-architecture)
+
+### Build-time route code generation
+
+Emit route invokers and module descriptors as source during a build, so the
+production path carries no `new Function`, no inference from an author's handler
+source, and no `reflect-metadata` at runtime.
+
+- **Status:** In progress (25%)
+- **Priority:** high
+- **Category:** runtime
+- **Packages:** `@aponiajs/platform-elysia`, `@aponiajs/cli`
+- **Depends on:** Foundation stabilization
+- **Updated:** 2026-09-25
+- **Tags:** aot, codegen, runtime
+
+Deliverables:
+
+- Application introspection as a frozen, instance-free read model
+- Route code generation emitting literal invokers
+- Descriptor code generation replacing decorator metadata in production
+- A bundler plugin that runs both during a build
+
+Acceptance criteria:
+
+- An application with and without the generated artifact answers identically,
+  including validation failures, error responses, and gateway behaviour.
+- A stale or mismatched artifact is refused, and the descriptor path produces
+  the same route table.
+- Measured throughput stays inside the floor recorded in `CONTEXT.md`.
+
+Next actions:
+
+- Emit route registration source for a controller and consume it at runtime.
+- Add the version and content-hash verification the contract requires.
+
+Evidence:
+
+- [`CONTEXT.md`](CONTEXT.md)
+- [`packages/platform-elysia/src/inspection/application-inspection.ts`](packages/platform-elysia/src/inspection/application-inspection.ts)
 
 ### Native Elysia plugin type inference
 

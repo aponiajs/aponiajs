@@ -31,6 +31,4 @@ export async function synchronizeVersionReferences(
   console.log(`Synchronized release references for ${manifest.version}.`);
 }
 
-if (import.meta.main) {
-  await synchronizeVersionReferences();
-}
+if (import.meta.main) await synchronizeVersionReferences();

@@ -15,6 +15,8 @@ Structured applications for Bun
 [Dependency injection](./docs/dependency-injection.md) ·
 [WebSockets](./docs/websockets.md) ·
 [Native plugins](./docs/native-plugins.md) ·
+[Introspection](./docs/introspection.md) ·
+[Elysia compatibility](./docs/elysia-compatibility.md) ·
 [Eden Treaty](./docs/eden-treaty.md) ·
 [Testing](./docs/testing.md) ·
 [CLI](./docs/cli.md) ·

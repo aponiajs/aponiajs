@@ -15,6 +15,7 @@ It depends on `common` and `core`, with `elysia` as a peer.
 | `modules/`     | `compileRootModule` and decorator-to-descriptor lowering                      |
 | `controllers/` | Controller descriptors, direct registration, `ELYSIA_CONTROLLER`              |
 | `errors/`      | Typed HTTP errors and RFC 9457 Problem Details responses                      |
+| `inspection/`  | Read-only projection of a compiled application for build-time consumers       |
 | `plugins/`     | Native plugin module registration and plugin contracts                        |
 | `routing/`     | Route plans, compiled invokers, schemas, and native context types             |
 | `websockets/`  | Provider discovery, gateway plans, message dispatch, and native socket types  |
@@ -34,14 +35,53 @@ runtime boundary it describes.
 - Decorated controllers register their compiled route plans directly on the
   root Elysia instance. Low-level controller descriptors retain `buildPlugin`
   as their compatibility and escape-hatch path.
+- `routing/native-route.ts` is the only module that calls Elysia's route
+  registration API. A version that moves it fails there as
+  `UNSUPPORTED_ELYSIA_VERSION` instead of as a bare `TypeError` from inside a
+  compiled dependency. Do not call `.route()` anywhere else.
+- `modules/route-uniqueness.ts` rejects a route two different declarations
+  claim, raising `DUPLICATE_ROUTE` from `compileRootModule` with the method,
+  path, both modules, both controllers, and both handler keys. Elysia would
+  otherwise resolve a repeated `(method, path)` by whichever registration wins
+  under `elysia.aot`, so the answering handler would follow a compiler flag.
+  The check reasons over the modules reachable from the compiled root by
+  `imports` — the set `compileModuleGraph` mounts — because the module
+  compiler's working maps also hold definitions the root never reaches. One
+  `(controller, handler)` declaration reached through two of those modules, as
+  a dynamic module merged onto a decorated class produces, repeats one route
+  rather than claiming it twice, and stays supported. Routes a native plugin
+  provides stay outside the check: plugins mount through `use()`, and a
+  controller overriding one is Elysia's documented behavior. A low-level
+  controller descriptor builds its routes in a callback that needs an instance,
+  so it carries no route plan and, like inspection, contributes nothing to the
+  check. `compileRootModule` is where the check lives so
+  `inspectAponiaApplication`, which lowers through it, raises the same code for
+  the same application.
 - Route parameter binding is compiled once while the controller is mounted.
   Generated invokers must expose each used context field directly and call the
-  controller with `handler.call(instance, ...)`. Synchronous handlers must not
-  be promoted to Elysia's async composition path; declared or inferred Promise
-  handlers must remain awaited. Elysia compiles handlers by statically reading
+  controller with `handler.call(instance, ...)`. A route keeps the synchronous
+  invoker only when the handler's own function kind or its emitted
+  `design:returntype` metadata proves a synchronous return; nothing else can
+  prove one, so every other route is compiled Promise-capable, which costs at
+  most one already-settled `await` per request. The handler source is never
+  consulted: a Promise returned without a call expression
+  (`return this.pendingLookup`) leaves no trace to match, and a synchronous
+  invoker runs `onAfterHandle` before Elysia awaits that Promise, exposing the
+  raw Promise to the lifecycle. Elysia compiles handlers by statically reading
   their source (sucrose): `Reflect.apply` hides required fields, while
   forwarding context through a generic mapper makes Elysia materialize every
   optional field on every request.
+- `AponiaApplicationOptions.invokers` substitutes build-time generated invokers
+  for the platform's own compilation. It is keyed by controller class token, and
+  each factory builds a map keyed by handler property key once the container has
+  created the controller instance. A controller without an entry, a property key
+  missing from a supplied map, and a symbol-keyed handler all fall back to
+  compiled binding, and an entry for a token no controller uses is ignored. The
+  option is never mutated.
+- `registerCompiledElysiaRoutes` rejects a route handler that is a class
+  constructor with `INVALID_CONTROLLER` while the controller mounts. A class
+  passes the callable check and then throws a raw engine message on every
+  request, so the guard must run before an invoker is selected for that route.
 - `toElysiaSchema` is the single boundary where a `NativeSchema` is restored to
   a TypeBox `TSchema`. Cookie validators and every member of a status-specific
   response map pass through that boundary. Nothing else in the workspace may
@@ -90,6 +130,48 @@ runtime boundary it describes.
   `@WebSocketServer()` receives the root Elysia application before
   `afterInit`; connection and disconnection lifecycle return values are never
   sent to clients.
+- `inspectAponiaApplication` is a projection, never a second compiler. It runs
+  bootstrap's own lowering (`compileRootModule`, then `createContainer`, then
+  `compileElysiaWebSocketGateways`) and reads the resulting descriptors, so it
+  constructs no provider and no controller instance and raises the same
+  `AponiaError` codes bootstrap raises for the same application. Give it new
+  data by reading a descriptor, never by re-deriving compilation.
+- Inspection output is plain, deeply frozen, and JSON-serializable: no
+  validator, function, class instance, or raw symbol may reach it. Symbol
+  module identities and symbol handler property keys are projected with
+  `String(symbol)`, which keeps the `Symbol(description)` marker readable.
+- Inspection ordering is part of the contract. Modules keep graph order,
+  providers and gateway events keep declaration order, routes sort by path,
+  method, controller, handler, and module, and gateways sort by canonical path.
+  Comparisons stay code-unit based so every runtime orders identically.
+- A controller mounted through the low-level descriptor path builds its routes
+  in a callback that needs an instance, so it is listed in its module's
+  `controllers` and contributes no `routes` entry. Controllers bootstrap would
+  refuse still fail inspection with `UNSUPPORTED_CONTROLLER`.
+- Inspection reads each provider's dependencies through `providerDependencies`
+  from `@aponiajs/core`, the same function the container resolves through. Never
+  restate that switch here; a new provider kind must land in one place.
+
+## Elysia version compatibility
+
+The peer range is `^1.4.29`; every workspace manifest must declare the same
+range. Two ranges that disagree make Bun install two copies, and a controller
+typed against one is not assignable to the other.
+
+Elysia 2 is a prerelease on the `next` dist-tag and is not supported. Its
+incompatibilities were verified by running `2.0.0-beta.19`, not by reading the
+release notes, because the published docs are still 1.x:
+
+| Call site                                                                     | Elysia 2                                                                                 |
+| ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `routing/native-route.ts`                                                     | `route(...)` removed; `method(method, path, hook, handler)` swaps the last two arguments |
+| `routing/route-compiler.ts` (`TSchema`)                                       | no longer root-exported; import from `typebox`                                           |
+| `routing/route-context.types.ts` (`SingletonBase`)                            | no longer root-exported; import from `elysia/types`                                      |
+| `routing/route-context.types.ts` (`~Singleton`/`~Ephemeral` `resolve` keys)   | `resolve` removed; its timing folded into `derive`                                       |
+| `errors/http-error.ts` and `errors/http-error.types.ts` (`InvertedStatusMap`) | renamed to `StatusMapBack`                                                               |
+
+`docs/elysia-compatibility.md` is the user-facing half of this. Update both
+together, and re-verify against a real install rather than the blog post.
 
 ## Tests
 
@@ -106,3 +188,8 @@ mapping changes, and document behavior in
 WebSocket behavior belongs in `tests/websocket-gateway.test.ts`, with the public
 contract mirrored in `tests-vp/websocket-gateway.conformance.ts` and a real
 socket path in `examples/websockets/`.
+
+Inspection behavior belongs in `tests/inspection.test.ts`, mirrored in
+`tests-vp/inspection.conformance.ts`. Cover shapes, ordering, frozen-ness,
+serialization, and the `AponiaError` codes inspection shares with bootstrap;
+assert on codes, never on message text.

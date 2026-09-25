@@ -1,0 +1,27 @@
+# {{PROJECT_NAME}}
+
+> An AponiaJS application: Nest-style modules, controllers, and dependency
+> injection on Bun, with Elysia as the HTTP layer.
+
+Working instructions for this repository, including its commands and authoring
+rules, are in [`AGENTS.md`](AGENTS.md).
+
+## Framework documentation
+
+- [Architecture and style](https://github.com/aponiajs/aponiajs/blob/main/docs/architecture-and-style.md): application layout, naming, and expected patterns
+- [Modules and dependency injection](https://github.com/aponiajs/aponiajs/blob/main/docs/dependency-injection.md): tokens, visibility, providers, and the error codes raised on failure
+- [Controllers and routes](https://github.com/aponiajs/aponiajs/blob/main/docs/learn/05-controllers-and-routes.md): declaring routes and reading request input
+- [Validation](https://github.com/aponiajs/aponiajs/blob/main/docs/learn/06-validation.md): route schemas and one-schema-per-class validation models
+- [WebSocket gateways](https://github.com/aponiajs/aponiajs/blob/main/docs/websockets.md): the message envelope and gateway lifecycle
+- [Native Elysia plugins](https://github.com/aponiajs/aponiajs/blob/main/docs/native-plugins.md): mounting a plugin and typing what it adds
+- [Errors](https://github.com/aponiajs/aponiajs/blob/main/docs/learn/10-errors.md): the closed error-code union and HTTP problem responses
+- [Elysia compatibility](https://github.com/aponiajs/aponiajs/blob/main/docs/elysia-compatibility.md): which Elysia versions this framework supports
+- [CLI reference](https://github.com/aponiajs/aponiajs/blob/main/docs/cli.md): the full schematic catalog, aliases, and options
+- [Learning path](https://github.com/aponiajs/aponiajs/blob/main/docs/learn/README.md): the same material as ordered chapters
+
+## Packages
+
+- [@aponiajs/common](https://www.npmjs.com/package/@aponiajs/common): decorators, descriptors, tokens, and errors
+- [@aponiajs/core](https://www.npmjs.com/package/@aponiajs/core): module graph and dependency injection container
+- [@aponiajs/platform-elysia](https://www.npmjs.com/package/@aponiajs/platform-elysia): bootstrap, HTTP routes, WebSocket gateways, and typed HTTP errors
+- [@aponiajs/cli](https://www.npmjs.com/package/@aponiajs/cli): the `aponia new` and `aponia generate` commands

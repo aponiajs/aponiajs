@@ -301,9 +301,11 @@ mapping widens or drops a plugin type.
 Elysia compiles handlers by statically reading their source (sucrose), so
 generated route invokers must expose every context field they use directly and
 call the controller with `handler.call(instance, ...)`. Binding is compiled and
-cached during bootstrap, and synchronous handlers must stay off Elysia's async
-composition path while declared or inferred Promise handlers remain awaited;
-never forward every request through a generic context mapper. Hiding context
+cached during bootstrap. Synchronous handlers must stay off Elysia's async
+composition path, and any handler whose function kind and emitted
+`design:returntype` cannot prove a synchronous return stays Promise-capable;
+the handler's own source is never consulted. Never forward every request
+through a generic context mapper. Hiding context
 behind `Reflect.apply`, or passing the whole context to a generic helper,
 respectively drops required fields or makes Elysia materialize every optional
 field. Both break the route contract or its hot path.
@@ -315,7 +317,7 @@ in `packages/common/src/errors/aponia-error.types.ts` (`MODULE_CYCLE`, `DUPLICAT
 `DUPLICATE_PROVIDER`, `INVALID_EXPORT`, `AMBIGUOUS_PROVIDER`, `MISSING_PROVIDER`,
 `PROVIDER_CYCLE`, `INVALID_CONTROLLER`, `INVALID_MODULE`,
 `INVALID_NATIVE_APPLICATION`, `APPLICATION_NOT_LISTENING`,
-`UNSUPPORTED_CONTROLLER`, `INVALID_VALIDATION_MODEL`,
+`UNSUPPORTED_CONTROLLER`, `DUPLICATE_ROUTE`, `INVALID_VALIDATION_MODEL`,
 `INVALID_WEBSOCKET_GATEWAY`, `DUPLICATE_WEBSOCKET_GATEWAY`,
 `DUPLICATE_WEBSOCKET_HANDLER`, `INVALID_WEBSOCKET_MESSAGE`,
 `UNKNOWN_WEBSOCKET_EVENT`, `WEBSOCKET_HANDLER_ERROR`) plus frozen structured

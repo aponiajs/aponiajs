@@ -137,6 +137,44 @@ class AmbiguousPromiseController {
 @Module({ controllers: [AmbiguousPromiseController] })
 class AmbiguousPromiseModule {}
 
+interface CachedValue {
+  readonly value: string;
+}
+
+@Controller("cached")
+class CachedController {
+  readonly pendingLookup: Promise<string> = Promise.resolve("deferred");
+
+  @Get()
+  readCached(): string | Promise<string> | undefined {
+    return this.pendingLookup;
+  }
+
+  @Get("interface")
+  readInterface(): CachedValue {
+    return { value: "interface" };
+  }
+}
+
+@Module({ controllers: [CachedController] })
+class CachedModule {}
+
+@Controller("async-handler")
+class AsyncHandlerController {
+  @Get()
+  async read(): Promise<string> {
+    return "async-handler";
+  }
+}
+
+// TypeScript always emits Promise for an `async` handler, so the misleading
+// design:returntype is written explicitly. It pins the signal order: the
+// handler's own function kind is read before any declared return kind.
+Reflect.defineMetadata("design:returntype", String, AsyncHandlerController.prototype, "read");
+
+@Module({ controllers: [AsyncHandlerController] })
+class AsyncHandlerModule {}
+
 class MetadataFreeController {
   readLiteral(): string {
     return "literal";
@@ -402,7 +440,7 @@ test("freezes deterministic route plans before controller registration", () => {
   ).toBe(true);
 });
 
-test("falls back to function source when decorator design metadata is absent", async () => {
+test("compiles a route Promise-capable when decorator metadata cannot prove a synchronous handler", async () => {
   const application = await AponiaFactory.create(MetadataFreeModule, {
     logger: false,
   });
@@ -425,9 +463,86 @@ test("falls back to function source when decorator design metadata is absent", a
   expect(await promised.text()).toBe("promise");
   expect(await requiredContext.text()).toBe("/metadata-free/required-context");
   expect(await context.text()).toBe("/metadata-free/context");
-  expect(compiledRoutes.get("/metadata-free/literal")).not.toContain("await handler(c)");
-  expect(compiledRoutes.get("/metadata-free/async-literal")).not.toContain("await handler(c)");
+  // Manually applied decorators record no design:returntype, and none of these
+  // handlers is an async function, so nothing proves a synchronous return.
+  expect(compiledRoutes.get("/metadata-free/literal")).toContain("await handler(c)");
+  expect(compiledRoutes.get("/metadata-free/async-literal")).toContain("await handler(c)");
   expect(compiledRoutes.get("/metadata-free/promise")).toContain("await handler(c)");
+  await application.close();
+});
+
+test("awaits a Promise returned without a call expression before after-handle hooks observe it", async () => {
+  let observedResponse: unknown;
+  const application = await AponiaFactory.create(CachedModule, {
+    logger: false,
+    configureNative: (nativeApplication) =>
+      nativeApplication.onAfterHandle(({ response }) => {
+        observedResponse = response;
+      }),
+  });
+  const compiledRoute = application
+    .getNativeApplication()
+    .compile()
+    .router.history.find((route) => route.path === "/cached")
+    ?.compile()
+    .toString();
+  const response = await application.handle(new Request("http://localhost/cached"));
+
+  expect(await response.text()).toBe("deferred");
+  expect(observedResponse).toBe("deferred");
+  expect(observedResponse).not.toBeInstanceOf(Promise);
+  expect(compiledRoute).toContain("await handler(c)");
+  await application.close();
+});
+
+test("compiles interface and union return types as Promise-capable", async () => {
+  const application = await AponiaFactory.create(CachedModule, { logger: false });
+  const compiledRoutes = new Map(
+    application
+      .getNativeApplication()
+      .compile()
+      .router.history.map((route) => [route.path, route.compile().toString()]),
+  );
+  const cached = await application.handle(new Request("http://localhost/cached"));
+  const interfaceResponse = await application.handle(
+    new Request("http://localhost/cached/interface"),
+  );
+
+  expect(await cached.text()).toBe("deferred");
+  expect(await interfaceResponse.json()).toEqual({ value: "interface" });
+  expect(compiledRoutes.get("/cached")).toContain("await handler(c)");
+  expect(compiledRoutes.get("/cached/interface")).toContain("await handler(c)");
+  await application.close();
+});
+
+test("treats an async handler as Promise-capable when its design metadata names a synchronous type", async () => {
+  let observedResponse: unknown;
+  const definition = compileRootModule(AsyncHandlerModule);
+  const controller = definition.controllers[0] as (typeof definition.controllers)[number] & {
+    readonly compiledRoutes?: readonly { readonly declaredReturnKind?: string }[];
+  };
+  const application = await AponiaFactory.create(AsyncHandlerModule, {
+    logger: false,
+    configureNative: (nativeApplication) =>
+      nativeApplication.onAfterHandle(({ response }) => {
+        observedResponse = response;
+      }),
+  });
+  const compiledRoute = application
+    .getNativeApplication()
+    .compile()
+    .router.history.find((route) => route.path === "/async-handler")
+    ?.compile()
+    .toString();
+  const response = await application.handle(new Request("http://localhost/async-handler"));
+
+  // The misleading metadata really is in place, so the Promise-capable
+  // classification can only come from the handler's own function kind.
+  expect(controller.compiledRoutes?.[0]?.declaredReturnKind).toBe("synchronous");
+  expect(await response.text()).toBe("async-handler");
+  expect(observedResponse).toBe("async-handler");
+  expect(observedResponse).not.toBeInstanceOf(Promise);
+  expect(compiledRoute).toContain("await handler(c)");
   await application.close();
 });
 

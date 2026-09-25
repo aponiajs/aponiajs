@@ -9,6 +9,16 @@ export type {
 export type { AponiaNativeApplication } from "./application/native-application.types.ts";
 export { compileRootModule } from "./modules/module-compiler.ts";
 export type { AponiaRootModule } from "./modules/module-compiler.types.ts";
+export { inspectAponiaApplication } from "./inspection/application-inspection.ts";
+export type {
+  AponiaApplicationInspection,
+  AponiaGatewayInspection,
+  AponiaInspectedProviderKind,
+  AponiaModuleInspection,
+  AponiaProviderInspection,
+  AponiaRouteInspection,
+  AponiaRouteParameterInspection,
+} from "./inspection/application-inspection.types.ts";
 export type {
   ElysiaInputSchema,
   ElysiaPluginSource,
@@ -18,6 +28,10 @@ export type {
   ElysiaStatus,
   ElysiaStore,
 } from "./routing/route-context.types.ts";
+export type {
+  AponiaControllerInvokerFactory,
+  AponiaRouteInvoker,
+} from "./routing/route-compiler.types.ts";
 export {
   ELYSIA_CONTROLLER,
   defineElysiaController,

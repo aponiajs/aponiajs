@@ -1,3 +1,5 @@
+import { appendFile } from "node:fs/promises";
+
 export const distributionTags = ["latest", "alpha", "beta", "rc", "next", "canary"] as const;
 
 export type DistributionTag = (typeof distributionTags)[number];
@@ -128,21 +130,47 @@ function assertPrereleaseIdentifier(version: string, prerelease: string): Prerel
   return identifier as PrereleaseIdentifier;
 }
 
-if (import.meta.main) {
+export interface DistributionTagEntryOptions {
+  readonly log?: (message: string) => void;
+  readonly manifestPath?: string;
+  readonly outputPath?: string;
+  readonly version?: string | undefined;
+}
+
+/**
+ * Resolves the distribution tag of the version passed on the command line, or of
+ * the workspace manifest when the pipeline passes none, and appends the result
+ * to the GitHub Actions output file when `GITHUB_OUTPUT` is set. Appending
+ * creates that file, because a pipeline may run the script before the file
+ * exists; a path whose directory is missing or unwritable still fails.
+ */
+export async function resolveDistributionEntry(
+  options: DistributionTagEntryOptions = {},
+): Promise<ResolvedDistribution> {
   const version =
-    Bun.argv[2] ?? ((await Bun.file("package.json").json()) as { version: string }).version;
+    options.version ?? (await readManifestVersion(options.manifestPath ?? "package.json"));
   const distribution = resolveDistribution(version);
-  const outputPath = Bun.env.GITHUB_OUTPUT;
+  const outputPath = options.outputPath ?? Bun.env.GITHUB_OUTPUT;
 
   if (outputPath) {
-    await Bun.write(
+    await appendFile(
       outputPath,
-      `${await Bun.file(outputPath).text()}version=${distribution.version}\ntag=${distribution.tag}\naliases=${distribution.aliases.join(" ")}\n`,
+      `version=${distribution.version}\ntag=${distribution.tag}\naliases=${distribution.aliases.join(" ")}\n`,
     );
   }
 
-  console.log(`${distribution.version} publishes to "${distribution.tag}".`);
+  const log = options.log ?? console.log;
+  log(`${distribution.version} publishes to "${distribution.tag}".`);
   if (distribution.aliases.length > 0) {
-    console.log(`Alias tags: ${distribution.aliases.join(", ")}.`);
+    log(`Alias tags: ${distribution.aliases.join(", ")}.`);
   }
+
+  return distribution;
 }
+
+async function readManifestVersion(path: string): Promise<string> {
+  const manifest = (await Bun.file(path).json()) as { version: string };
+  return manifest.version;
+}
+
+if (import.meta.main) await resolveDistributionEntry({ version: Bun.argv[2] });

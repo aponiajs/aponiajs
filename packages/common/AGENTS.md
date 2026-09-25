@@ -34,7 +34,12 @@ their owning domain. `src/index.ts` is the package's only public barrel.
   container. `@Injectable()` stays a no-op that exists for
   `emitDecoratorMetadata`.
 - Metadata is read with `Reflect.getOwnMetadata`, so a subclass never inherits a
-  parent's module or controller metadata. Keep it that way.
+  parent's module or controller metadata. Keep it that way. Constructor
+  dependencies are the deliberate exception: `design:paramtypes` and the
+  explicit `@Inject()` token map are both read with `Reflect.getMetadata`,
+  because a subclass without its own constructor runs the parent's constructor
+  and must resolve the parent's declared tokens. Own metadata still wins, so a
+  subclass that declares its own constructor keeps its own tokens.
 - `@Validation()` records one raw `RouteValidator` under
   `Symbol.for("aponia.validation.metadata")`. Validation-model metadata is
   own-only and immutable, and resolving it preserves the original validator

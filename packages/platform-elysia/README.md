@@ -142,8 +142,15 @@ and the exact inference boundary.
 
 Aponia compiles decorator metadata and parameter binding once during bootstrap.
 The generated controller invoker exposes only the context fields used by that
-route, keeps synchronous handlers synchronous, and registers decorated routes
-directly on the root Elysia application.
+route and registers decorated routes directly on the root Elysia application.
+
+A handler is compiled as Promise-capable unless its function kind or its emitted
+`design:returntype` proves it returns synchronously. That matters because a
+synchronous invoker returning a Promise gives `onAfterHandle` the raw `Promise`
+rather than the resolved value, so the conservative default is the correct one.
+The handler's own source is never inspected — minification and bundling can
+change it, and a handler that merely returns a stored Promise carries no call
+expression to recognize.
 
 Use the `elysia` option to control Elysia's own route composition:
 
@@ -167,7 +174,42 @@ dispatcher is required for compatibility.
 
 These settings are not native machine-code AOT. Elysia generates JavaScript,
 and JavaScriptCore remains responsible for interpreter and machine-code JIT
-tiers. They are also distinct from a future Aponia build-time source emitter.
+tiers.
+
+### Build-time generated invokers
+
+The `invokers` option lets a build step emit the route invokers instead of
+letting bootstrap compile them. It maps each controller class token to a factory
+that receives the container's controller instance and returns invokers keyed by
+handler property key:
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { UsersController, usersInvokers } from "./generated/users.invokers.ts";
+
+const application = await AponiaFactory.create(AppModule, {
+  invokers: new Map([[UsersController, usersInvokers]]),
+});
+```
+
+```ts
+// generated/users.invokers.ts
+export const usersInvokers = (instance: UsersController) =>
+  new Map([
+    ["ping", () => instance.ping()],
+    ["readItem", (context) => instance.readItem(context.params.id)],
+  ]);
+```
+
+The factory parameter is `never`, so a factory declared with a concrete
+controller type is accepted without a cast. Class tokens and property keys are
+used rather than names, so both survive minification and renamed files.
+
+Supplying invokers is a substitution, never a requirement: a controller without
+an entry, a handler whose property key is absent from its controller's map, and
+a symbol-keyed handler are all compiled from decorator metadata exactly as they
+are when the option is omitted. The supplied maps are read only, and an entry
+for a token no controller uses is ignored.
 
 ### The shortest type-safe controller
 
@@ -564,6 +606,38 @@ A controller descriptor with a platform kind other than
 Elysia controller whose `buildPlugin` factory returns something other than an
 Elysia instance fails with `INVALID_CONTROLLER`. Both are reported during
 `AponiaFactory.create`, before the application can listen.
+
+A route that two different declarations claim — two controllers, or two handlers
+of one controller — fails with `DUPLICATE_ROUTE` while the module graph
+compiles, naming the method, the path, and both claimants. Elysia would
+otherwise resolve the repeat by whichever registration wins under `elysia.aot`,
+so the handler that answered would depend on a compilation flag. One declaration
+reached through two modules is not a collision: a dynamic module merged onto a
+decorated class reaches the controller twice and still registers one route. A
+route a native plugin provides is outside the check, because a plugin mounts
+through `use()` and a controller deliberately overriding one is Elysia's own
+behavior.
+
+## Inspecting an application
+
+`inspectAponiaApplication` projects a root module into frozen, JSON-serializable
+data — the module graph, every provider and its dependencies, every decorated
+route with its parameter bindings, and every gateway:
+
+```ts
+import { inspectAponiaApplication } from "@aponiajs/platform-elysia";
+import { AppModule } from "./src/app.module.ts";
+
+const inspection = inspectAponiaApplication(AppModule);
+console.log(inspection.routes.map((route) => `${route.method} ${route.path}`));
+```
+
+It compiles the graph without constructing a single instance, so it is safe to
+run against providers that open connections. Routes registered by
+`elysiaController` and `defineElysiaController` callbacks are not included,
+because their routes only exist once the callback runs; build the application and
+read `getNativeApplication().routes` for the complete native route table. See
+the [introspection guide](../../docs/introspection.md) for the full contract.
 
 [npm package](https://www.npmjs.com/package/@aponiajs/platform-elysia) ·
 [native plugin guide](../../docs/native-plugins.md) ·

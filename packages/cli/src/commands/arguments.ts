@@ -2,6 +2,7 @@ import { pascalCase } from "change-case";
 import parseCliArguments from "yargs-parser";
 import { generateSchematics } from "./command.constants.ts";
 import type {
+  BuildCommandOptions,
   CliCommand,
   GenerateCommandOptions,
   GenerateSchematic,
@@ -76,7 +77,27 @@ export function parseArguments(arguments_: readonly string[]): CliCommand {
     return parseGenerateCommand(rest);
   }
 
+  if (command === "build") {
+    return parseBuildCommand(rest);
+  }
+
   throw new Error(`Unknown command "${command}".`);
+}
+
+function parseBuildCommand(arguments_: readonly string[]): BuildCommandOptions {
+  const parsed = parseOptions(arguments_);
+  const [extraPositional] = parsed._;
+  if (extraPositional !== undefined) {
+    throw new Error(`Unexpected argument "${extraPositional}".`);
+  }
+
+  assertKnownOptions(parsed, ["dry-run", "project"]);
+
+  return {
+    command: "build",
+    dryRun: readBooleanOption(parsed, "dry-run", false),
+    project: readStringOption(parsed, "project"),
+  };
 }
 
 function parseNewCommand(arguments_: readonly string[]): NewCommandOptions {
@@ -156,14 +177,57 @@ interface ParsedOptions extends Readonly<Record<string, unknown>> {
   readonly _: readonly string[];
 }
 
+// The options that take no value. Declaring them in yargs-parser's `boolean`
+// list keeps a bare flag, its short alias, and `--no-<flag>` meaning what they
+// mean, and it keeps `aponia new --dry-run app` reading `app` as the project
+// name: a declared boolean never consumes the token after it.
+const valueLessOptions = [
+  "crud",
+  "dry-run",
+  "flat",
+  "skip-import",
+  "skip-install",
+  "spec",
+] as const;
+
+const optionAliases: Readonly<Record<string, string[]>> = {
+  "dry-run": ["d"],
+  project: ["p"],
+  "skip-install": ["s"],
+};
+
+// The option a spelling names, when that option takes no value.
+function valueLessOptionFor(spelling: string): string | undefined {
+  return valueLessOptions.find((option) => {
+    const aliases: readonly string[] = optionAliases[option] ?? [];
+    return option === spelling || aliases.includes(spelling);
+  });
+}
+
+// Declaring a boolean also makes yargs-parser coerce the value attached to it:
+// `--dry-run=abc` used to arrive as `dryRun: false`. The attached spelling is
+// rejected here, before the parser reads it, while the space form is left alone
+// so a flag in any position keeps its meaning.
+function assertNoAttachedValue(arguments_: readonly string[]): void {
+  for (const argument of arguments_) {
+    const attached = /^--?([^=]+)=([\s\S]*)$/.exec(argument);
+    if (attached === null) {
+      continue;
+    }
+    const option = valueLessOptionFor(attached[1]);
+    if (option !== undefined) {
+      // The attached text is a value, which this option does not accept.
+      readBooleanFlagValue(option, attached[2]);
+    }
+  }
+}
+
 function parseOptions(arguments_: readonly string[]): ParsedOptions {
+  assertNoAttachedValue(arguments_);
+
   return parseCliArguments([...arguments_], {
-    alias: {
-      "dry-run": ["d"],
-      project: ["p"],
-      "skip-install": ["s"],
-    },
-    boolean: ["crud", "dry-run", "flat", "skip-import", "skip-install", "spec"],
+    alias: optionAliases,
+    boolean: [...valueLessOptions],
     string: ["module", "path", "project", "type"],
     configuration: {
       "camel-case-expansion": false,
@@ -189,15 +253,20 @@ function readBooleanOption(options: ParsedOptions, name: string, fallback: boole
   return readOptionalBooleanOption(options, name) ?? fallback;
 }
 
-function readOptionalBooleanOption(options: ParsedOptions, name: string): boolean | undefined {
-  const value = options[name];
-  if (value === undefined) {
-    return undefined;
-  }
+// An option that takes no value yields a boolean, and any other value is one it
+// rejects by name. `assertNoAttachedValue` feeds this the attached spelling and
+// `readOptionalBooleanOption` feeds it what the parser produced, so the rule and
+// its message live in one place.
+function readBooleanFlagValue(option: string, value: unknown): boolean {
   if (typeof value !== "boolean") {
-    throw new Error(`Option "--${name}" does not accept a value.`);
+    throw new Error(`Option "--${option}" does not accept a value.`);
   }
   return value;
+}
+
+function readOptionalBooleanOption(options: ParsedOptions, name: string): boolean | undefined {
+  const value = options[name];
+  return value === undefined ? undefined : readBooleanFlagValue(name, value);
 }
 
 function readStringOption(options: ParsedOptions, name: string): string | undefined {

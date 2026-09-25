@@ -45,6 +45,7 @@ aponia new <name> [options]
 aponia n <name> [options]
 aponia generate <schematic> <name> [options]
 aponia g <schematic> <name> [options]
+aponia build [options]
 aponia help
 aponia version
 ```
@@ -108,6 +109,13 @@ Component options follow Nest conventions:
 --project, -p <name>
 --path <path>
 ```
+
+The flags that take no value — `--dry-run`, `--skip-install`, `--flat`,
+`--spec`, `--skip-import`, `--crud`, and the short aliases `-d` and `-s` — reject
+an attached value instead of ignoring it, so `--dry-run=true` exits non-zero and
+writes nothing. Negate one with `--no-flat`, `--no-spec`, or `--no-crud`. A flag
+does not consume the argument after it, so `aponia new --dry-run my-api` reads
+`my-api` as the project name.
 
 Resources additionally support `--crud` / `--no-crud` and these transports:
 `rest`, `graphql-code-first`, `graphql-schema-first`, `microservice`, and `ws`.
@@ -200,8 +208,10 @@ supported. `spec` may be a boolean or a map keyed by schematic name.
 Controllers are added to `controllers`, services and providers to `providers`,
 and modules and resources to `imports`. Use `--skip-import` to create files
 without changing a module, or `--module <name>` to select the declaring module.
-The update is computed before any file is written, and the generator refuses to
-overwrite an existing file.
+Registration only searches the configured source root, so `--path` pointing
+outside it leaves no module to update; that run fails with a non-zero exit code
+and writes nothing. The update is computed before any file is written, and the
+generator refuses to overwrite an existing file.
 
 ## Create an application
 
@@ -250,6 +260,39 @@ This is standard mode and intentionally matches the flat starter structure
 created by `nest new`. Generated resources belong directly under
 `src/<resource>` and are imported by `AppModule`; the CLI does not create an
 artificial `src/modules/app` directory.
+
+## Build
+
+```bash
+aponia build            # write the invoker module
+aponia build --dry-run  # report the file without writing it
+```
+
+`aponia build` reads every controller under the configured source root and writes
+`<sourceRoot>/invokers.generated.ts`. That module holds the route invokers the
+runtime would otherwise build at startup, rewritten as literal source, so the
+application no longer compiles them from the handler's own text or calls
+`new Function` to do it.
+
+Pass it to the factory from your entrypoint:
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { controllerInvokers } from "./invokers.generated.ts";
+import { AppModule } from "./app.module.ts";
+
+const application = await AponiaFactory.create(AppModule, { invokers: controllerInvokers });
+```
+
+A handler the analysis cannot prove stays on the runtime's own compile path, so
+the application works whether or not every handler was generated and whether or
+not the file exists. Nothing is required: omitting the option is still the
+default, and the runtime behaves exactly as before.
+
+The command only reads source, so it never starts the application, never
+connects to anything, and never runs provider factories. Run it again whenever a
+controller changes. It is separate from `bun run build`, which bundles the
+application for deployment.
 
 ## Safety behavior
 

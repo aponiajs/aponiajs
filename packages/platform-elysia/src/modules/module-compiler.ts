@@ -23,12 +23,17 @@ import {
   registerCompiledElysiaRoutes,
 } from "../routing/route-compiler.ts";
 import type { AponiaRootModule } from "./module-compiler.types.ts";
+import { assertUniqueElysiaRoutes } from "./route-uniqueness.ts";
 
 export function compileRootModule(rootModule: AponiaRootModule): ModuleDefinition {
-  if (isModuleDefinition(rootModule)) {
-    return rootModule;
-  }
+  const compiledRoot = isModuleDefinition(rootModule)
+    ? rootModule
+    : compileModuleImports(rootModule);
+  assertUniqueElysiaRoutes(compiledRoot);
+  return compiledRoot;
+}
 
+function compileModuleImports(rootModule: ModuleImport): ModuleDefinition {
   const compiledClasses = new Map<ModuleClass, ModuleDefinition>();
   const compiledDynamicModules = new Map<DynamicModule, ModuleDefinition>();
   const visiting: ModuleImport[] = [];

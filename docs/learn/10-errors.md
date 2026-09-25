@@ -100,12 +100,15 @@ try {
 | `INVALID_MODULE`             | A module descriptor or decorated class is malformed          |
 | `INVALID_CONTROLLER`         | A controller factory returns something that is not an Elysia |
 | `UNSUPPORTED_CONTROLLER`     | A controller shape the platform cannot mount                 |
+| `DUPLICATE_ROUTE`            | Two controllers claim one method and path                    |
 | `INVALID_VALIDATION_MODEL`   | A route uses a class without `@Validation()`                 |
 | `INVALID_NATIVE_APPLICATION` | `configureNative` returned a different instance              |
+| `UNSUPPORTED_ELYSIA_VERSION` | The installed Elysia moved the route API this platform calls |
 | `APPLICATION_NOT_LISTENING`  | `getUrl()` was called before `listen()`                      |
 
 Graph errors through `MISSING_PROVIDER` are raised while the module graph
-compiles. Provider cycles are detected while singletons initialize, and
+compiles, and so is `DUPLICATE_ROUTE`, which decides ownership before any route
+registers. Provider cycles are detected while singletons initialize, and
 controller or platform diagnostics are raised while routes mount. All happen
 during `AponiaFactory.create`, before the application can listen.
 

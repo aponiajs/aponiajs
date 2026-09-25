@@ -83,7 +83,12 @@ export function getRouteMetadata(target: ClassToken<unknown>): readonly RouteMet
 export function getConstructorDependencies(target: ClassToken<unknown>): readonly Token<unknown>[] {
   const reflected =
     (Reflect.getMetadata("design:paramtypes", target) as readonly unknown[] | undefined) ?? [];
-  const explicit = Reflect.getOwnMetadata(injectedTokensMetadataKey, target) as
+  // Explicit tokens deliberately share the reach of `design:paramtypes`: a
+  // subclass without its own constructor runs the parent's constructor, so it
+  // must resolve the parent's declared tokens. Reading this map own-only would
+  // keep the inherited reflected types but silently drop the inherited tokens.
+  // Own metadata still wins, because it shadows the inherited entry.
+  const explicit = Reflect.getMetadata(injectedTokensMetadataKey, target) as
     | ReadonlyMap<number, Token<unknown>>
     | undefined;
   const explicitLength = explicit

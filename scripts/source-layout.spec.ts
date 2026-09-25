@@ -36,6 +36,7 @@ const packageLayouts: readonly PackageLayout[] = [
       "application",
       "controllers",
       "errors",
+      "inspection",
       "modules",
       "plugins",
       "routing",

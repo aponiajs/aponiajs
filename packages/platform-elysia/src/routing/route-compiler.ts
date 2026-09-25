@@ -13,7 +13,8 @@ import {
   type RouteValidatorInput,
 } from "@aponiajs/common";
 import { type AnySchema, type Elysia, type InputSchema, type TSchema } from "elysia";
-import type { CompiledElysiaRoute } from "./route-compiler.types.ts";
+import { registerNativeRoute } from "./native-route.ts";
+import type { AponiaRouteInvoker, CompiledElysiaRoute } from "./route-compiler.types.ts";
 
 /**
  * Lowers every decorated route into a stable plan shared by child-plugin and
@@ -76,14 +77,19 @@ function classifyDeclaredReturnKind(
     return "promise";
   }
 
-  // TypeScript emits Object for unknown, object, interfaces, and unions. Those
-  // categories may still contain a Promise and require conservative inference.
+  // TypeScript emits Object for unknown, object, interfaces, and unions. None
+  // of those categories can prove a synchronous return.
   return returnType === undefined || returnType === Object ? "unknown" : "synchronous";
 }
 
 /**
  * Registers compiled routes without constructing an intermediate Elysia
  * instance for the controller.
+ *
+ * Supplied `invokers` replace the platform's own parameter binding for the
+ * property keys they cover. Every other route is compiled exactly as it is in
+ * their absence, so hand-written descriptors, symbol-keyed handlers, and a
+ * controller without an entry keep working.
  *
  * @internal
  */
@@ -92,6 +98,7 @@ export function registerCompiledElysiaRoutes(
   controller: ClassToken<unknown>,
   instance: unknown,
   routes: readonly CompiledElysiaRoute[],
+  invokers?: ReadonlyMap<string | symbol, AponiaRouteInvoker>,
 ): void {
   for (const route of routes) {
     const handler = (instance as Record<PropertyKey, unknown>)[route.propertyKey];
@@ -102,14 +109,33 @@ export function registerCompiledElysiaRoutes(
         { controller: controller.name, handler: String(route.propertyKey) },
       );
     }
+    const callableHandler = handler as (...arguments_: unknown[]) => unknown;
+    if (isClassConstructor(callableHandler)) {
+      throw new AponiaError(
+        "INVALID_CONTROLLER",
+        `Route handler "${String(route.propertyKey)}" is a class constructor, not a method.`,
+        { controller: controller.name, handler: String(route.propertyKey) },
+      );
+    }
 
-    application.route(
+    registerNativeRoute(
+      application,
       route.method,
       route.path,
-      createRouteHandler(handler as (...arguments_: unknown[]) => unknown, instance, route),
+      invokers?.get(route.propertyKey) ?? createRouteHandler(callableHandler, instance, route),
       toRouteHook(route.schema),
     );
   }
+}
+
+/**
+ * Class constructors pass a `typeof` check and then throw when called without
+ * `new`, which would surface as a raw engine message on every request. The
+ * class definition's own source is the reliable signal: a class is only ever
+ * written as `class ...`, and minifiers keep that leading keyword.
+ */
+function isClassConstructor(handler: (...arguments_: unknown[]) => unknown): boolean {
+  return /^class[\s{/]/.test(Function.prototype.toString.call(handler).trimStart());
 }
 
 /**
@@ -225,8 +251,19 @@ function compileRouteHandler(argumentsSource: string, possiblyAsync: boolean): R
   return factory;
 }
 
-const possiblyAsyncFunction = /(?:return|=>)\s?\S+\(|\b(?:async|await)\b|\bnew\s+Promise\s*\(/;
-
+/**
+ * Only two signals can settle the classification: the handler's own function
+ * kind, and the return type TypeScript emitted beside its decorators. Anything
+ * else is treated as Promise-capable.
+ *
+ * The handler source is deliberately never consulted. A Promise returned
+ * through an expression that is not a call (`return this.pendingLookup`) leaves
+ * no trace in the source, so a source pattern that misses it compiles a
+ * synchronous invoker, and Elysia then runs `onAfterHandle` before it awaits
+ * the Promise, exposing the raw Promise to the lifecycle. Classifying an
+ * unprovable route as Promise-capable costs one already-settled `await`; the
+ * opposite mistake breaks the route contract.
+ */
 function isPossiblyAsync(
   handler: (...arguments_: unknown[]) => unknown,
   declaredReturnKind: CompiledElysiaRoute["declaredReturnKind"],
@@ -237,11 +274,8 @@ function isPossiblyAsync(
   ) {
     return true;
   }
-  if (declaredReturnKind !== "unknown") {
-    return declaredReturnKind === "promise";
-  }
 
-  return possiblyAsyncFunction.test(maskNonCode(Function.prototype.toString.call(handler)));
+  return declaredReturnKind !== "synchronous";
 }
 
 function parameterExpression(parameter: RouteParameterMetadata): string {

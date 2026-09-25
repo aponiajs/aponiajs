@@ -70,10 +70,25 @@ export async function verifyRelease(options: VerifyReleaseOptions = {}): Promise
   );
 }
 
-if (import.meta.main) {
+export interface VerifyReleaseEntryOptions {
+  readonly baseVersion?: string | undefined;
+  readonly log?: (message: string) => void;
+  readonly releaseTag?: string | undefined;
+  readonly releaseVersion?: string | undefined;
+}
+
+/**
+ * Runs the release gate against the process release environment. CI exports
+ * `BASE_VERSION`, `RELEASE_TAG`, and `RELEASE_VERSION`, so the entry point reads
+ * them here and any explicit option wins over the environment.
+ */
+export async function verifyReleaseEntry(options: VerifyReleaseEntryOptions = {}): Promise<void> {
   await verifyRelease({
-    baseVersion: Bun.env.BASE_VERSION,
-    releaseTag: Bun.env.RELEASE_TAG,
-    releaseVersion: Bun.env.RELEASE_VERSION,
+    baseVersion: options.baseVersion ?? Bun.env.BASE_VERSION,
+    log: options.log ?? console.log,
+    releaseTag: options.releaseTag ?? Bun.env.RELEASE_TAG,
+    releaseVersion: options.releaseVersion ?? Bun.env.RELEASE_VERSION,
   });
 }
+
+if (import.meta.main) await verifyReleaseEntry();

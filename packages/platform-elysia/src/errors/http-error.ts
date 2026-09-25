@@ -173,7 +173,11 @@ function resolveStatus(status: HttpErrorStatus): {
 } {
   const statusCode = typeof status === "number" ? status : StatusMap[status];
   const title = typeof status === "number" ? InvertedStatusMap[status] : status;
-  if (title === undefined || statusCode < 400 || statusCode >= 600) {
+  // A string argument is its own title, so `title === undefined` never fires for
+  // one and an unrecognized status name leaves `statusCode` undefined. Both
+  // comparisons against undefined then fail, and the failure would be served as
+  // a 200 carrying a problem document.
+  if (statusCode === undefined || title === undefined || statusCode < 400 || statusCode >= 600) {
     throw new TypeError(`HttpError requires a known 4xx or 5xx status; received ${status}.`);
   }
 

@@ -15,6 +15,7 @@ and documentation guards that CI enforces.
 | `agent-guides.spec.ts`       | Guide inventory, aliases, and mandatory per-turn `RULES.md` loading      |
 | `ci-workflows.spec.ts`       | Complete CI, publish, packaging, and dependency-security command matrix  |
 | `source-layout.spec.ts`      | Package owner directories, barrels, type-only modules, local imports     |
+| `package-llms.spec.ts`       | The `llms.txt` every published package ships and lists in `files`        |
 | `*.spec.ts`                  | Guard tests over the above and over documentation wording                |
 
 ## Invariants
@@ -32,6 +33,15 @@ and documentation guards that CI enforces.
 - `verify-release.ts` prints `Verified synchronized release version X.`
   verbatim; `verify-release.spec.ts` asserts that line. Add new output on new
   lines instead of rewording it.
+- Every release script keeps its `if (import.meta.main)` block a single call of
+  an exported entry function, and that function returns its result instead of
+  exiting. `scripts/*.spec.ts` calls the function directly so the coverage lane
+  records the entry body, and keeps a subprocess case only for what the process
+  itself proves: the exit code and the output that reaches the terminal.
+- A release script appends to the GitHub Actions output file named by
+  `GITHUB_OUTPUT`, which creates the file when a pipeline runs the script before
+  the file exists. The append replaces a read-then-rewrite, so a path whose
+  directory is missing or unwritable still fails instead of being ignored.
 - Guard specs make documentation part of the test suite. A wording edit in
   `README.md`, `docs/cli.md`, `docs/packages.md`, or `packages/cli/README.md`
   can fail `bun test`.
@@ -39,6 +49,11 @@ and documentation guards that CI enforces.
   per-turn `RULES.md` loading sequence.
 - `source-layout.spec.ts` protects the domain-first package layout. Update the
   guide and guard together when a real new source domain is introduced.
+- `package-llms.spec.ts` requires every published package to ship an `llms.txt`
+  listed in its manifest `files` array, opening with an `H1` naming the package,
+  a blockquote summary, and links that resolve. It discovers packages from the
+  workspace, so a new published package is covered without editing the guard;
+  `packages/aponiajs` is the pinned private exception.
 - Every push must raise the synchronized workspace version. Run the smallest
   valid `bun run version:*` and commit its output.
 

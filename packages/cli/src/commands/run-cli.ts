@@ -1,3 +1,4 @@
+import { generateInvokers } from "../generation/invoker-generator.ts";
 import { generateProject } from "../generation/project-generator.ts";
 import { generateSchematic } from "../generation/schematic-generator.ts";
 import { aponiaVersion } from "../version.ts";
@@ -22,6 +23,19 @@ export async function runCli(arguments_: readonly string[]): Promise<number> {
       const result = await generateSchematic(command);
       for (const change of result.changes) {
         console.log(`${change.kind} ${change.path}`);
+      }
+      return 0;
+    }
+
+    if (command.command === "build") {
+      const result = await generateInvokers(command);
+      for (const change of result.changes) {
+        console.log(`${change.kind} ${change.path}`);
+      }
+      if (!result.dryRun) {
+        console.log(
+          "Next: import it in your entrypoint and pass its controllerInvokers to AponiaFactory.create.",
+        );
       }
       return 0;
     }

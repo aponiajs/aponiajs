@@ -1,4 +1,10 @@
-import { AponiaError, Logger, tokenName, type LoggerService } from "@aponiajs/common";
+import {
+  AponiaError,
+  Logger,
+  tokenName,
+  type ClassToken,
+  type LoggerService,
+} from "@aponiajs/common";
 import { createContainer } from "@aponiajs/core";
 import { Elysia, type AnyElysia } from "elysia";
 import {
@@ -9,6 +15,7 @@ import type { RuntimeElysiaController } from "../controllers/controller.types.ts
 import { compileRootModule } from "../modules/module-compiler.ts";
 import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
 import { getElysiaPlugin, isElysiaPluginModule } from "../plugins/plugin-module.ts";
+import { registerCompiledElysiaRoutes } from "../routing/route-compiler.ts";
 import {
   compileElysiaWebSocketGateways,
   registerElysiaWebSocketGateways,
@@ -69,7 +76,7 @@ export async function bootstrapAponiaApplication(
       const instance = container.instantiateController(module, controller);
       if (typeof controller.registerRoutes === "function") {
         const routeStart = nativeApplication.routes.length;
-        registerElysiaControllerRoutes(controller, nativeApplication, instance);
+        registerControllerRoutes(controller, nativeApplication, instance, options.invokers);
         logControllerRoutes(logger, controller, nativeApplication.routes.slice(routeStart));
         continue;
       }
@@ -99,6 +106,38 @@ export async function bootstrapAponiaApplication(
 
   await nativeApplication.modules;
   return Object.freeze({ nativeApplication, logger });
+}
+
+/**
+ * Registers one controller on the root application, preferring build-time
+ * generated invokers when the application supplied a factory for its token.
+ *
+ * Only decorated controllers carry a compiled route plan, so an entry for any
+ * other controller token is ignored rather than treated as an error.
+ */
+function registerControllerRoutes(
+  controller: RuntimeElysiaController,
+  application: Elysia,
+  instance: unknown,
+  invokers: AponiaApplicationOptions["invokers"],
+): void {
+  const compiledRoutes = controller.compiledRoutes;
+  // Elysia controllers are always class-backed, which is what makes the token
+  // safe as a minification-proof key.
+  const controllerToken = controller.token as ClassToken<unknown>;
+  const createInvokers = invokers?.get(controllerToken);
+  if (!compiledRoutes || !createInvokers) {
+    registerElysiaControllerRoutes(controller, application, instance);
+    return;
+  }
+
+  registerCompiledElysiaRoutes(
+    application,
+    controllerToken,
+    instance,
+    compiledRoutes,
+    createInvokers(instance as never),
+  );
 }
 
 function createSystemLogger(
