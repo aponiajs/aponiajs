@@ -163,16 +163,34 @@ separate focused modules. `src/index.ts` is the only public barrel.
   which the source-layout guard then rejects and a `git add -A` will commit.
 - Generated applications follow Nest's flat starter layout; later resources
   belong in `src/<resource>/`.
-- The application starter deliberately does not register the build plugin. Doing
-  so means the starter depends on `@aponiajs/cli` at build time, and the packed
-  lane installs the CLI into the generated project: `bun run test:generated-app`
-  then fails in the generated application's own `bun run check`, which
-  type-checks the packed CLI's `src/` as it is staged under the project
-  (`BUN_TMPDIR`), where the CLI's newer language features are newer than the
-  starter's `lib`. A starter has no generated artifacts to keep current anyway —
-  wiring the plugin there would regenerate files nothing consumes. Do not
-  re-attempt the wiring without first making the packed CLI's source invisible to
-  a consumer's `check`.
+- The application starter registers the build plugin. `bun run build` runs
+  `scripts/build.ts`, which bundles through `Bun.build` with
+  `aponiaBuildPlugin()`, so both generated modules are rewritten before the
+  bundler resolves the entrypoint that would read them. `@aponiajs/cli` is a
+  starter devDependency for that, and the packed lane installs it into the
+  generated project. `src/main.ts` imports neither generated module: the
+  artifacts exist to be adopted by passing `controllerInvokerArtifact` or booting
+  from `moduleDescriptors.AppModule`, and `bun run dev`, `bun start`, and
+  `bun test` still run on a checkout that has never been built.
+- The starter's `.gitignore` lists both generated modules, and that is
+  load-bearing rather than housekeeping: the emitter's line wrapping is not
+  oxfmt-canonical, so a check that read the artifacts would fail on formatting
+  the build itself wrote, and `vp check` skips an ignored path the way it skips
+  `node_modules`.
+- The earlier finding that this wiring broke the packed lane named the wrong
+  cause, and the corrected one matters: the generated application's `check` does
+  **not** type-check the packed CLI's `src/`. The CLI ships `src/` because
+  `bin/aponia.ts` imports it, but a consumer never reads it, because a check
+  excludes `node_modules`. What failed was a second copy Bun had staged under the
+  project's own `BUN_TMPDIR` — `<project>/.tmp/.<hash>.cli/src/...` — which
+  `vp check` walks precisely because it is not `node_modules`. The lane now keeps
+  `BUN_TMPDIR` outside every directory it runs a check in, so where the lane
+  stages a packed workspace cannot reach a consumer's check. That is a lane
+  detail and stays in the lane: no starter ignore glob may name a test lane.
+  `bun run test:generated-app` is the acceptance test for the wiring — the packed
+  CLI's plugin runs inside a generated application's real build, reports `CREATE`
+  for both modules, and that application's own `check`, `test`, `test:e2e`, and
+  bundle all pass.
 - A REST CRUD resource emits `<name>.model.ts` with separate `@Validation`
   classes for create bodies, update bodies, and shared path parameters.
   Controllers and services consume those classes directly, and REST CRUD does

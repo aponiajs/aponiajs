@@ -104,6 +104,46 @@ test("ships a runnable inspection script wired into the manifest", async () => {
   expect(manifest.scripts.inspect).toBe("bun run scripts/inspect.ts");
 });
 
+test("wires the build script to the build plugin and ignores what it writes", async () => {
+  const temporaryDirectory = await createTemporaryDirectory("aponia-build-");
+  await generateProject({ name: "sample-api", cwd: temporaryDirectory, skipInstall: true });
+  const projectDirectory = join(temporaryDirectory, "sample-api");
+
+  const script = await Bun.file(join(projectDirectory, "scripts/build.ts")).text();
+  const manifest = (await Bun.file(join(projectDirectory, "package.json")).json()) as {
+    readonly scripts: Readonly<Record<string, string>>;
+    readonly devDependencies: Readonly<Record<string, string>>;
+  };
+  const ignore = await Bun.file(join(projectDirectory, ".gitignore")).text();
+
+  expect(script).toContain('import { aponiaBuildPlugin } from "@aponiajs/cli"');
+  expect(script).toContain("plugins: [aponiaBuildPlugin()]");
+  expect(script).toContain('entrypoints: ["./src/main.ts"]');
+  expect(manifest.scripts.build).toBe("bun run scripts/build.ts");
+  expect(manifest.devDependencies["@aponiajs/cli"]).toBe(aponiaVersion);
+  // The build writes both modules beside the application's own sources, so the
+  // starter has to ignore them: what a build wrote must not turn up in
+  // `git status` or in the project's own `bun run check`.
+  expect(ignore).toContain("src/invokers.generated.ts");
+  expect(ignore).toContain("src/descriptors.generated.ts");
+});
+
+test("boots and tests the starter without running a build first", async () => {
+  const temporaryDirectory = await createTemporaryDirectory("aponia-no-build-");
+  await generateProject({ name: "sample-api", cwd: temporaryDirectory, skipInstall: true });
+  const projectDirectory = join(temporaryDirectory, "sample-api");
+
+  // `bun run dev`, `bun start`, and `bun test` import the sources directly, so
+  // they must not need the generated modules the build script writes.
+  expect(await Bun.file(join(projectDirectory, "src/main.ts")).text()).not.toContain(
+    "generated.ts",
+  );
+  expect(await Bun.file(join(projectDirectory, "src/invokers.generated.ts")).exists()).toBe(false);
+  expect(await Bun.file(join(projectDirectory, "src/descriptors.generated.ts")).exists()).toBe(
+    false,
+  );
+});
+
 test("indexes framework documentation that exists beside this template", async () => {
   const repositoryRoot = fileURLToPath(new URL("../../../", import.meta.url));
   const index = await Bun.file(

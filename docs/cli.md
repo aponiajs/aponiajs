@@ -397,8 +397,15 @@ naming the declaration that has to change, rather than the bundle quietly
 carrying the previous release's artifact. It writes nothing unless generation
 completes, so the file on disk is untouched when that happens.
 
-Registering it is opt-in. A build that does not register it behaves exactly as
-before, and `aponia build` remains the way to generate without bundling.
+Registering it is opt-in for an application you already have. A project created
+by `aponia new` starts with it registered: its `bun run build` runs
+`scripts/build.ts`, which is the script above. The starter ignores both generated
+modules in its `.gitignore`, so what a build writes beside its sources never
+reaches `git status` or `bun run check`. Its `src/main.ts` still imports neither
+module, so `bun run dev`, `bun start`, and `bun test` work on a checkout that has
+never been built; adopting them is the one-line change shown above. A build that
+does not register the plugin behaves exactly as before, and `aponia build`
+remains the way to generate without bundling.
 
 ## Safety behavior
 

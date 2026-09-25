@@ -14,6 +14,7 @@ bun run dev        # start with watch mode
 bun start          # start once
 bun test           # unit tests
 bun run test:e2e   # end-to-end tests through application.handle
+bun run build      # bundle into dist, regenerating the generated modules first
 bun run inspect    # print the module graph, providers, routes, and gateways
 bun run check      # format, lint, and type-check
 ```
@@ -56,6 +57,12 @@ test/
 
 Every later feature is a directory under `src/<resource>/`, holding its module,
 controller, service, models, and tests together.
+
+`bun run build` writes `src/invokers.generated.ts` and
+`src/descriptors.generated.ts` beside those sources and ignores them in git.
+Nothing imports them yet: pass `controllerInvokerArtifact` to
+`AponiaFactory.create` to adopt the generated route invokers, or boot from
+`moduleDescriptors.AppModule` instead of the class.
 
 ## Authoring rules
 

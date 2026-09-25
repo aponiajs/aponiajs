@@ -6,6 +6,15 @@ import { applyEdits, modify } from "jsonc-parser";
 
 const workspaceDirectory = resolve(import.meta.dir, "../../..");
 
+/**
+ * The generated modules a bundle writes beside the application's own sources.
+ *
+ * Spelled out rather than imported from the package: this lane exercises the
+ * packed CLI the way an application does, and an application names these files
+ * from the documentation, not from the package's own constants.
+ */
+const generatedArtifacts = ["src/invokers.generated.ts", "src/descriptors.generated.ts"] as const;
+
 interface CommandResult {
   readonly stdout: string;
   readonly stderr: string;
@@ -13,6 +22,12 @@ interface CommandResult {
 
 test("packed workspaces generate an application that installs, validates, builds, and starts", async () => {
   const temporaryDirectory = await mkdtemp(join(tmpdir(), "aponia-generated-e2e-"));
+  // Bun resolves a `file:` install into `BUN_TMPDIR` before it moves the
+  // package into `node_modules`, and a package it leaves behind there is
+  // type-checked as part of whatever directory it was staged under. Keeping the
+  // temp directory outside every directory this lane runs a check in is what
+  // keeps a packed workspace's own sources out of the application's check.
+  const bunTemporaryDirectory = join(temporaryDirectory, "bun-tmp");
 
   try {
     const archiveDirectory = join(temporaryDirectory, "archives");
@@ -23,18 +38,30 @@ test("packed workspaces generate an application that installs, validates, builds
     ]);
 
     const archives = {
-      common: await packWorkspace("packages/common", archiveDirectory, "01-common"),
-      core: await packWorkspace("packages/core", archiveDirectory, "02-core"),
+      common: await packWorkspace(
+        "packages/common",
+        archiveDirectory,
+        "01-common",
+        bunTemporaryDirectory,
+      ),
+      core: await packWorkspace(
+        "packages/core",
+        archiveDirectory,
+        "02-core",
+        bunTemporaryDirectory,
+      ),
       platformElysia: await packWorkspace(
         "packages/platform-elysia",
         archiveDirectory,
         "03-platform-elysia",
+        bunTemporaryDirectory,
       ),
-      cli: await packWorkspace("packages/cli", archiveDirectory, "04-cli"),
+      cli: await packWorkspace("packages/cli", archiveDirectory, "04-cli", bunTemporaryDirectory),
       createAponia: await packWorkspace(
         "packages/create-aponia",
         archiveDirectory,
         "05-create-aponia",
+        bunTemporaryDirectory,
       ),
     } as const;
     const workspaceManifest = (await Bun.file(join(workspaceDirectory, "package.json")).json()) as {
@@ -59,9 +86,13 @@ test("packed workspaces generate an application that installs, validates, builds
         2,
       )}\n`,
     );
-    await run(["bun", "install"], runnerDirectory);
+    await run(["bun", "install"], runnerDirectory, bunTemporaryDirectory);
     const cliEntryPoint = join(runnerDirectory, "node_modules/@aponiajs/cli/bin/aponia.ts");
-    const versionResult = await run(["bun", cliEntryPoint, "--version"], runnerDirectory);
+    const versionResult = await run(
+      ["bun", cliEntryPoint, "--version"],
+      runnerDirectory,
+      bunTemporaryDirectory,
+    );
     expect(versionResult.stdout.trim()).toBe(workspaceManifest.version);
     await assertPackageDependency(
       join(runnerDirectory, "node_modules/create-aponia/package.json"),
@@ -76,12 +107,14 @@ test("packed workspaces generate an application that installs, validates, builds
         "--skip-install",
       ],
       runnerDirectory,
+      bunTemporaryDirectory,
     );
 
     const projectDirectory = join(runnerDirectory, "generated-app");
     const resourceResult = await run(
       ["bun", cliEntryPoint, "generate", "resource", "users", "--type", "rest"],
       projectDirectory,
+      bunTemporaryDirectory,
     );
     expect(resourceResult.stdout).toContain("CREATE src/users/users.model.ts");
     expect(await Bun.file(join(projectDirectory, "src/users/users.model.ts")).exists()).toBe(true);
@@ -98,6 +131,7 @@ test("packed workspaces generate an application that installs, validates, builds
     const webSocketResourceResult = await run(
       ["bun", cliEntryPoint, "generate", "resource", "events", "--type", "ws"],
       projectDirectory,
+      bunTemporaryDirectory,
     );
     expect(webSocketResourceResult.stdout).toContain("CREATE src/events/events.gateway.ts");
     const generatedGateway = await Bun.file(
@@ -110,6 +144,7 @@ test("packed workspaces generate an application that installs, validates, builds
     const generatedManifestPath = join(projectDirectory, "package.json");
     const generatedManifest = (await Bun.file(generatedManifestPath).json()) as {
       readonly dependencies: Readonly<Record<string, string>>;
+      readonly devDependencies: Readonly<Record<string, string>>;
     };
 
     expect(generatedManifest.dependencies["@aponiajs/common"]).toBe(workspaceManifest.version);
@@ -117,18 +152,22 @@ test("packed workspaces generate an application that installs, validates, builds
       workspaceManifest.version,
     );
     expect(generatedManifest.dependencies["@aponiajs/core"]).toBeUndefined();
+    // The starter's build script registers the packed plugin, so the CLI is a
+    // build-time dependency of every generated application.
+    expect(generatedManifest.devDependencies["@aponiajs/cli"]).toBe(workspaceManifest.version);
 
     const localPackages = [
-      ["@aponiajs/common", archives.common],
-      ["@aponiajs/core", archives.core],
-      ["@aponiajs/platform-elysia", archives.platformElysia],
+      ["@aponiajs/common", "dependencies", archives.common],
+      ["@aponiajs/core", "dependencies", archives.core],
+      ["@aponiajs/platform-elysia", "dependencies", archives.platformElysia],
+      ["@aponiajs/cli", "devDependencies", archives.cli],
     ] as const;
     let localManifest = await Bun.file(generatedManifestPath).text();
-    for (const section of ["dependencies", "overrides"] as const) {
-      for (const [packageName, archive] of localPackages) {
+    for (const [packageName, section, archive] of localPackages) {
+      for (const target of [section, "overrides"] as const) {
         localManifest = applyEdits(
           localManifest,
-          modify(localManifest, [section, packageName], `file:${archive}`, {
+          modify(localManifest, [target, packageName], `file:${archive}`, {
             formattingOptions: {
               eol: "\n",
               insertSpaces: true,
@@ -140,16 +179,26 @@ test("packed workspaces generate an application that installs, validates, builds
     }
     await Bun.write(generatedManifestPath, localManifest);
 
-    await run(["bun", "install"], projectDirectory);
+    await run(["bun", "install"], projectDirectory, bunTemporaryDirectory);
     await assertInstalledPackageGraph(projectDirectory, workspaceManifest.version);
     await run(
       [join(projectDirectory, "node_modules/.bin/vp"), "fmt", "package.json"],
       projectDirectory,
+      bunTemporaryDirectory,
     );
-    await run(["bun", "run", "check"], projectDirectory);
-    await run(["bun", "test"], projectDirectory);
-    await run(["bun", "run", "test:e2e"], projectDirectory);
-    await run(["bun", "run", "build"], projectDirectory);
+    await run(["bun", "run", "check"], projectDirectory, bunTemporaryDirectory);
+    await run(["bun", "test"], projectDirectory, bunTemporaryDirectory);
+    await run(["bun", "run", "test:e2e"], projectDirectory, bunTemporaryDirectory);
+
+    const buildResult = await run(["bun", "run", "build"], projectDirectory, bunTemporaryDirectory);
+    for (const artifact of generatedArtifacts) {
+      expect(buildResult.stdout).toContain(`CREATE ${artifact}`);
+      expect(await Bun.file(join(projectDirectory, artifact)).exists()).toBe(true);
+    }
+    // A build writes the generated modules beside the application's sources, so
+    // the application's own check has to stay green afterwards.
+    await run(["bun", "run", "check"], projectDirectory, bunTemporaryDirectory);
+
     await expectBuiltServer(projectDirectory);
   } finally {
     await rm(temporaryDirectory, { recursive: true, force: true });
@@ -160,6 +209,7 @@ async function packWorkspace(
   workspacePath: string,
   archiveDirectory: string,
   orderDirectory: string,
+  bunTemporaryDirectory: string,
 ): Promise<string> {
   const destination = join(archiveDirectory, orderDirectory);
   await mkdir(destination, { recursive: true });
@@ -176,6 +226,7 @@ async function packWorkspace(
       "--quiet",
     ],
     workspaceDirectory,
+    bunTemporaryDirectory,
   );
 
   const archives = (await readdir(destination)).filter((file) => file.endsWith(".tgz"));
@@ -261,8 +312,11 @@ async function expectBuiltServer(projectDirectory: string): Promise<void> {
   }
 }
 
-async function run(command: readonly string[], cwd: string): Promise<CommandResult> {
-  const bunTemporaryDirectory = join(cwd, ".tmp");
+async function run(
+  command: readonly string[],
+  cwd: string,
+  bunTemporaryDirectory: string,
+): Promise<CommandResult> {
   await mkdir(bunTemporaryDirectory, { recursive: true });
   const executableCommand =
     command[0] === "bun" ? [process.execPath, ...command.slice(1)] : [...command];

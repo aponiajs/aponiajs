@@ -52,8 +52,11 @@ if (!result.success) process.exit(1);
 
 It runs both generators in Bun's `onStart` hook — before the bundler resolves
 anything — prints the same change lines `aponia build` prints, and fails the
-build when generation fails. Registering it is opt-in, and `aponia build` still
-generates without bundling.
+build when generation fails. A project created by `aponia new` ships that script
+as `scripts/build.ts` and ignores both generated modules in `.gitignore`, so its
+`bun run build` always regenerates them. Registering it is opt-in for an
+application you already have, and `aponia build` still generates without
+bundling.
 
 The generate command supports the complete built-in Nest schematic catalog:
 application, library, class, controller, decorator, filter, gateway, guard,
