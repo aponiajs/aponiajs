@@ -16,8 +16,7 @@ import type {
  *
  * The runtime otherwise builds each invoker with `new Function` and infers a
  * handler's bindings from its source. Generating them at build time removes
- * both from the request path. See `CONTEXT.md`, "Build-time route code
- * generation".
+ * both from the request path.
  *
  * The emitter covers what it can prove and declines the rest rather than
  * emitting something it cannot type: every declined handler stays on the

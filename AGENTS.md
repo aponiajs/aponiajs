@@ -53,11 +53,6 @@ these boundaries.
 `AGENTS.md` is the real file; `CLAUDE.md` and `GEMINI.md` are symlinks to it.
 Edit `AGENTS.md`.
 
-For performance, AOT, pseudo-JIT, and benchmark work, read
-[`CONTEXT.md`](CONTEXT.md) before changing runtime paths. It records the measured
-baseline, theoretical ceilings, terminology, architecture recommendation, and
-acceptance gates.
-
 Every package and supporting directory carries its own `AGENTS.md` with the
 invariants that apply there. Read this file first, then the one next to the code
 being changed:
