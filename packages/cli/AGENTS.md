@@ -5,11 +5,13 @@ specific to this package.
 
 ## What this package owns
 
-`aponia new`, `aponia generate`, and `aponia build`. It is independent of the
-runtime packages and driven by libraries rather than hand-rolled parsing.
+`aponia new`, `aponia generate`, `aponia build`, and the Bun build plugin that
+runs the build generators during a bundle. It is independent of the runtime
+packages and driven by libraries rather than hand-rolled parsing.
 
 | Domain                              | Owns                                                                        |
 | ----------------------------------- | --------------------------------------------------------------------------- |
+| `bundler/`                          | The opt-in Bun plugin that generates before a bundle resolves anything      |
 | `commands/`                         | Argument parsing, command contracts, help output, and `runCli`              |
 | `generation/`                       | Naming, project discovery, file planning, renderers, module updates, writes |
 | `generation/controller-routes.ts`   | Build-time route analysis of controller source                              |
@@ -18,6 +20,7 @@ runtime packages and driven by libraries rather than hand-rolled parsing.
 | `generation/descriptor-emitter.ts`  | Emits the module graph as `defineModule` calls for the Elysia platform      |
 | `generation/source-imports.ts`      | Which names a file can read, and which one expression reads                 |
 | `generation/invoker-generator.ts`   | The `aponia build` command: scans a project and writes both modules         |
+| `generation/build-report.ts`        | The `CREATE`/`UPDATE`/`DECLINED` lines both entrypoints print               |
 | `version.ts`                        | The version stamped into generated manifests                                |
 | `templates/`                        | The canonical application starter input                                     |
 
@@ -67,6 +70,26 @@ separate focused modules. `src/index.ts` is the only public barrel.
   been installed. Keep `ControllerInvokerProvenance` and the platform's
   `AponiaInvokerArtifact` in step by hand, the same way the route parameter
   kinds are kept in step.
+- `bundler/aponia-build-plugin.ts` is a thin seam over `generateInvokers`, not a
+  second generator: it passes `cwd` and `project` through and prints
+  `generation/build-report.ts`. Anything the plugin needs to do differently
+  belongs in the generator, so `aponia build` and a bundle cannot drift apart.
+  It runs in Bun's `onStart` hook because that is the only hook Bun awaits before
+  it resolves the first import: `onLoad` is reached only after resolution has
+  already failed on the missing module, `onResolve` sees one specifier at a time
+  and cannot know which generated names to produce, and `onEnd` runs after
+  everything. `bun build` on the command line takes no plugin flag, which is why
+  registration is a script that calls `Bun.build`. The plugin's return type is
+  the ambient `Bun.BunPlugin`: `bun-types` declares it in the global namespace and
+  exports no matching name from the `"bun"` module, so importing it would be
+  re-emitted into this package's declarations and fail the declaration build.
+  Registration is opt-in, and a build that does not register the plugin must
+  behave exactly as it did before.
+- A generation failure rejects the build rather than being reported and skipped.
+  `generateInvokers` writes nothing unless it completes, so the previous
+  artifact is still on disk; a build that continued would bundle it, which is
+  what the artifact's version stamp exists to catch. The plugin surfaces the
+  generator's own error, which already names the declaration to change.
 - `aponia build` only reads source: it never runs the application, so a
   controller that only exists after a side effect is invisible to it. It
   regenerates `<sourceRoot>/invokers.generated.ts` and
@@ -140,6 +163,16 @@ separate focused modules. `src/index.ts` is the only public barrel.
   which the source-layout guard then rejects and a `git add -A` will commit.
 - Generated applications follow Nest's flat starter layout; later resources
   belong in `src/<resource>/`.
+- The application starter deliberately does not register the build plugin. Doing
+  so means the starter depends on `@aponiajs/cli` at build time, and the packed
+  lane installs the CLI into the generated project: `bun run test:generated-app`
+  then fails in the generated application's own `bun run check`, which
+  type-checks the packed CLI's `src/` as it is staged under the project
+  (`BUN_TMPDIR`), where the CLI's newer language features are newer than the
+  starter's `lib`. A starter has no generated artifacts to keep current anyway —
+  wiring the plugin there would regenerate files nothing consumes. Do not
+  re-attempt the wiring without first making the packed CLI's source invisible to
+  a consumer's `check`.
 - A REST CRUD resource emits `<name>.model.ts` with separate `@Validation`
   classes for create bodies, update bodies, and shared path parameters.
   Controllers and services consume those classes directly, and REST CRUD does

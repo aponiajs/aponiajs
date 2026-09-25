@@ -352,6 +352,54 @@ controller or a module changes; a descriptor module that names a module the
 application no longer declares is stale until you do. It is separate from
 `bun run build`, which bundles the application for deployment.
 
+### Generating during a bundle
+
+Because the two are separate, nothing forces an application to rebuild after a
+controller changes, and an entrypoint that imports `invokers.generated.ts` only
+bundles _correctly_ while that file is current. Register the build plugin in
+whatever calls `Bun.build` to move the generation into the bundle itself:
+
+```ts
+// scripts/build.ts
+import { aponiaBuildPlugin } from "@aponiajs/cli";
+
+const result = await Bun.build({
+  entrypoints: ["./src/main.ts"],
+  outdir: "./dist",
+  target: "bun",
+  plugins: [aponiaBuildPlugin()],
+});
+if (!result.success) process.exit(1);
+```
+
+```bash
+bun run scripts/build.ts
+```
+
+The plugin runs both generators with the same discovery the command uses, so it
+finds the project through `aponia.json` the same way. Its options are passed
+straight through:
+
+| Option    | Meaning                                                             |
+| --------- | ------------------------------------------------------------------- |
+| `cwd`     | Directory to resolve the project from. Defaults to `process.cwd()`. |
+| `project` | A named project from `aponia.json`, for a multi-project repository. |
+
+Generation runs in the plugin's `onStart` hook, which Bun awaits before it
+resolves the first import. That ordering is the whole point: the artifacts have
+to exist before the bundler looks for the module that imports them. `bun build`
+on the command line accepts no plugin flag, so registration is a script of your
+own, as above.
+
+The plugin prints the same `CREATE`/`UPDATE`/`DECLINED` lines the command prints,
+and a generation failure fails the build: the generator's own error rejects it,
+naming the declaration that has to change, rather than the bundle quietly
+carrying the previous release's artifact. It writes nothing unless generation
+completes, so the file on disk is untouched when that happens.
+
+Registering it is opt-in. A build that does not register it behaves exactly as
+before, and `aponia build` remains the way to generate without bundling.
+
 ## Safety behavior
 
 - Dry-run performs template discovery and name validation without writing.

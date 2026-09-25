@@ -34,6 +34,27 @@ application chooses how far to go: pass the invoker artifact to
 `AponiaFactory.create`, boot from `moduleDescriptors.<Module>`, or ignore both
 files and keep booting exactly as before.
 
+The same generation is available as a Bun plugin, so a bundle cannot serve a
+stale artifact:
+
+```ts
+// scripts/build.ts
+import { aponiaBuildPlugin } from "@aponiajs/cli";
+
+const result = await Bun.build({
+  entrypoints: ["./src/main.ts"],
+  outdir: "./dist",
+  target: "bun",
+  plugins: [aponiaBuildPlugin()],
+});
+if (!result.success) process.exit(1);
+```
+
+It runs both generators in Bun's `onStart` hook — before the bundler resolves
+anything — prints the same change lines `aponia build` prints, and fails the
+build when generation fails. Registering it is opt-in, and `aponia build` still
+generates without bundling.
+
 The generate command supports the complete built-in Nest schematic catalog:
 application, library, class, controller, decorator, filter, gateway, guard,
 interface, interceptor, middleware, module, pipe, provider, resolver, resource,

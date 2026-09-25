@@ -46,7 +46,7 @@ const packageLayouts: readonly PackageLayout[] = [
   {
     sourceRoot: "packages/cli/src",
     files: ["index.ts", "version.ts"],
-    directories: ["commands", "generation"],
+    directories: ["bundler", "commands", "generation"],
   },
   {
     sourceRoot: "packages/aponiajs/src",
