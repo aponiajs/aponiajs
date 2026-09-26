@@ -4,7 +4,7 @@
 
 **Goal:** Ship `@aponiajs/devtools` — an opt-in runtime plugin that serves a read-only HTTP API on a forced loopback address, so a consumer can build its own UI against a versioned payload contract.
 
-**Architecture:** Two platform changes land first, each independently shippable: `inspectAponiaApplication` learns to resolve artifacts, and bootstrap exposes the boot decision plus the compiled graph through an `@internal` seam. The package follows: an `ElysiaPluginModule` whose plugin starts a `Bun.serve` on `127.0.0.1` at `onStart`, serving six `GET` endpoints under `/__devtools`.
+**Architecture:** Two platform changes land first, each independently shippable: `inspectAponiaApplication` learns to resolve artifacts, and bootstrap exposes the boot decision plus the compiled graph through an `@internal` seam. The package follows: an `ElysiaPluginModule` whose plugin starts a `Bun.serve` on `127.0.0.1` at `onStart`, serving seven `GET` endpoints under `/__devtools`.
 
 **Tech Stack:** Bun (`Bun.serve`), TypeScript (strict, ESM, explicit `.ts` extensions), Elysia 1.4.x, `@aponiajs/platform-elysia`, `@aponiajs/common`, and — lazily, for one endpoint — `@aponiajs/cli`.
 
@@ -16,6 +16,7 @@
   `rg -nP '[\x{0E00}-\x{0E7F}]' --glob '!node_modules/**' --glob '!dist/**' .`
 - The bind address is **not configurable**: `127.0.0.1` always. There is no `host` option.
 - `enabled` is required and is the application's decision. The framework never reads an environment variable on the application's behalf.
+- Requests are captured by default, with their headers and body. Every `capture` option is an opt-out, not a permission: this is a development tool, and it shows a developer everything until the developer says otherwise.
 - Every endpoint is a `GET`. Any other method answers `405`; an unknown path answers `404`.
 - Every response is frozen, JSON-serializable, and deterministically ordered.
 - A debugging aid must never fail a boot: a bound port logs under `Devtools` and the application continues.
@@ -35,7 +36,7 @@ Inputs and conditions the spec implies but whose handling no single task's tests
 2. **An application that only calls `handle()` and never `listen()`s.** `onStart` does not fire, so nothing is published, and the application must be unaffected. Owned by Task 3.
 3. **A request for a path under `/__devtools` that no endpoint serves, and one outside the prefix entirely.** Both answer `404` rather than crashing the server or falling through to the application. Owned by Task 4.
 4. **`since` beyond the retained window.** The log endpoint returns what is retained rather than an error, and the cursor it returns is usable. Owned by Task 8.
-5. **`@aponiajs/cli` fails to import** — absent, slow, or throwing. `/aot` must still serve the framework facts it has, degrading one field group rather than the endpoint. Owned by Task 9.
+5. **`@aponiajs/cli` fails to import** — absent, slow, or throwing. `/aot` must still serve the framework facts it has, degrading one field group rather than the endpoint. Owned by Task 10.
 
 ---
 
@@ -667,7 +668,366 @@ git commit -m "feat(devtools): publish a bounded log stream"
 
 ---
 
-### Task 9: `/__devtools/aot`, with the analysis imported lazily
+### Task 9: `/__devtools/requests`
+
+The other half of the question. Every endpoint before this one publishes what the application **is**; this one publishes what it **did**. It comes straight after `/logs` because it is the same bounded ring buffer and the same cursor over a different record, and the two are what a developer reads together when a request misbehaves.
+
+**Files:**
+
+- Create: `packages/devtools/src/buffer/ring-buffer.ts`, `packages/devtools/src/buffer/ring-buffer.types.ts`
+- Modify: `packages/devtools/src/logging/log-buffer.ts` (build the log buffer on the shared ring)
+- Create: `packages/devtools/src/requests/request-buffer.ts`, `packages/devtools/src/requests/request-buffer.types.ts`
+- Create: `packages/devtools/src/requests/request-capture.ts`
+- Create: `packages/devtools/src/endpoints/requests.ts`
+- Modify: `packages/devtools/src/endpoints/payloads.types.ts` (add this endpoint's payload type)
+- Modify: `packages/devtools/src/module/devtools-module.ts`, `packages/devtools/src/module/devtools-module.types.ts` (add `capture` to `DevtoolsOptions` and contribute the capture hook)
+- Modify: `packages/devtools/src/server/devtools-server.ts` (serve the endpoint from the buffer)
+- Modify: `scripts/source-layout.spec.ts` (add the package's new domain directories)
+- Test: `packages/devtools/tests/requests.test.ts`
+
+**Interfaces:**
+
+- Consumes: `DevtoolsOptions.capture` (Task 3), the plugin instance Task 3 and Task 4 give the server, and Task 8's buffer shape.
+- Produces: `createRingBuffer<TItem>(capacity): RingBuffer<TItem>`, where `RingBuffer<TItem>` = `{ write(item: TItem): void; since(cursor: number): { cursor: number; entries: readonly TItem[] } }`;
+  `createRequestBuffer(capacity): RequestBuffer`, a `RingBuffer<RequestRecord>`, where `RequestRecord` = `{ method: string; path: string; url: string; status: number; durationMs: number; timestamp: string; error?: string; headers?: Readonly<Record<string, string>>; body?: string }`;
+  `resolveCapture(capture: DevtoolsOptions["capture"]): ResolvedCapture` and `toRequestRecord(context, capture, arrival, serves): Promise<RequestRecord>`, where `RequestArrival` = `{ timestamp: string; startedAt: number }`;
+  `buildRequestsPayload(buffer, since): AponiaRequestsPayload`.
+
+The ring is extracted rather than copied: `/logs` and `/requests` are one bounded cursor buffer with two item types, and a second copy under `requests/` would be the same mechanics written twice. Task 8's own tests must keep passing unchanged after the move, which Step 11 runs.
+
+**A closed module adds nothing to the request path.** The hook below belongs to the plugin, so the absent case is the one **Task 3** already proves: a disabled `DevtoolsModule` returns an inert module with no plugin registered, so no hook, no buffer, and no record exist and the request path is exactly what it would be without the package. Nothing here re-tests that, because there is nothing to observe — a plugin that is not mounted contributes nothing to a request.
+
+- [ ] **Step 1: Write the failing test for the buffer and the cursor contract**
+
+```ts
+test("the buffer keeps its capacity and its cursor never goes backwards", () => {
+  const buffer = createRequestBuffer(2);
+  const entry = (url: string): RequestRecord => ({
+    method: "GET",
+    path: url,
+    url,
+    status: 200,
+    durationMs: 1,
+    timestamp: "2026-09-26T00:00:00.000Z",
+  });
+
+  buffer.write(entry("/one"));
+  buffer.write(entry("/two"));
+  buffer.write(entry("/three"));
+
+  // The oldest past capacity is gone, and the cursor counts what was written.
+  expect(buffer.since(0).entries.map((record) => record.url)).toEqual(["/two", "/three"]);
+  expect(buffer.since(0).cursor).toBe(3);
+
+  // A cursor beyond the write count returns nothing rather than an error.
+  expect(buffer.since(999).entries).toEqual([]);
+  expect(buffer.since(999).cursor).toBe(3);
+});
+```
+
+- [ ] **Step 2: Write the entry-shape case: the pattern in `path`, the query string in `url`**
+
+```ts
+test("an entry reports the route pattern and the URL that arrived", async () => {
+  await fetch(`${applicationUrl}/users/42?expand=true`, { headers: { "x-trace-id": "abc" } });
+
+  const payload = await (await fetch(`${url}/__devtools/requests`)).json();
+  const entry = payload.entries.find((record: { path: string }) => record.path === "/users/:id");
+
+  expect(entry.method).toBe("GET");
+  expect(entry.url).toBe("/users/42?expand=true");
+  expect(entry.status).toBe(200);
+  expect(typeof entry.durationMs).toBe("number");
+  expect(new Date(entry.timestamp).toISOString()).toBe(entry.timestamp);
+  expect(entry.headers["x-trace-id"]).toBe("abc");
+  // The route parses no body, so the record carries none.
+  expect(Object.hasOwn(entry, "body")).toBe(false);
+});
+```
+
+`url` is the path and query string, never an origin: a consumer joins it to the application's own base.
+
+- [ ] **Step 3: Write the no-route case**
+
+```ts
+test("a request that matched no route is recorded without a route identity", async () => {
+  await fetch(`${applicationUrl}/nope?x=1`);
+
+  const payload = await (await fetch(`${url}/__devtools/requests`)).json();
+  const entry = payload.entries.find((record: { url: string }) => record.url === "/nope?x=1");
+  const routes = await (await fetch(`${url}/__devtools/routes`)).json();
+
+  expect(entry.status).toBe(404);
+  expect(entry.path).toBe("/nope");
+  // The path that arrived is not a pattern the table serves.
+  expect(routes.routes.some((route: { path: string }) => route.path === entry.path)).toBe(false);
+});
+```
+
+Cover both refusals the spec names: a path nothing serves, and one a plugin's own `onRequest` refuses.
+
+- [ ] **Step 4: Write the opt-out cases**
+
+```ts
+test("capture false records nothing", async () => {
+  await fetch(`${applicationUrl}/users/42`);
+
+  const payload = await (await fetch(`${url}/__devtools/requests`)).json();
+
+  expect(payload.entries).toEqual([]);
+  expect(payload.cursor).toBe(0);
+});
+
+test("headers false and body false leave their field out of the entry", async () => {
+  await fetch(`${applicationUrl}/users`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-trace-id": "abc" },
+    body: JSON.stringify({ name: "ada" }),
+  });
+
+  const payload = await (await fetch(`${url}/__devtools/requests`)).json();
+  const entry = payload.entries[0];
+
+  expect(Object.hasOwn(entry, "headers")).toBe(false);
+  expect(Object.hasOwn(entry, "body")).toBe(false);
+  // The fields that are not captured are not optional metadata: the rest of the
+  // entry is unchanged, so a consumer reads it the same way either way.
+  expect(entry.method).toBe("POST");
+  expect(entry.status).toBe(201);
+});
+```
+
+Boot one application per option set; `capture: false` must leave the module otherwise working, with `/requests` answering an empty buffer rather than `404`.
+
+- [ ] **Step 5: Write the truncation and redaction cases**
+
+```ts
+test("a body longer than bodyLimit is cut and marked", async () => {
+  await fetch(`${applicationUrl}/users`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ name: "ada" }),
+  });
+
+  const payload = await (await fetch(`${url}/__devtools/requests`)).json();
+  const entry = payload.entries[0];
+
+  expect(entry.body.endsWith("[truncated]")).toBe(true);
+  // The limit governs the body; the marker is appended to the stored value.
+  expect(entry.body).toHaveLength(16 + "[truncated]".length);
+});
+
+test("redact replaces a named header with the literal, whatever its case", async () => {
+  await fetch(`${applicationUrl}/users/42`, {
+    headers: { authorization: "Bearer secret", "x-trace-id": "abc" },
+  });
+
+  const payload = await (await fetch(`${url}/__devtools/requests`)).json();
+  const entry = payload.entries[0];
+
+  // The options name the header in its canonical case; it arrives lowercased.
+  expect(entry.headers.authorization).toBe("[redacted]");
+  expect(entry.headers["x-trace-id"]).toBe("abc");
+});
+```
+
+Boot the first with `capture: { bodyLimit: 16 }` and the second with `capture: { redact: ["Authorization"] }`, and assert the header is present-and-redacted rather than absent.
+
+- [ ] **Step 6: Write the failure case**
+
+```ts
+test("a failure carries the message the answer published, and an answer carries none", async () => {
+  await fetch(`${applicationUrl}/explodes`);
+  await fetch(`${applicationUrl}/nope`);
+
+  const payload = await (await fetch(`${url}/__devtools/requests`)).json();
+  const failed = payload.entries.find((record: { url: string }) => record.url === "/explodes");
+  const missing = payload.entries.find((record: { url: string }) => record.url === "/nope");
+
+  expect(failed.status).toBe(500);
+  expect(failed.error).toBe("The database is unreachable.");
+  // A 4xx is an answer rather than a failure.
+  expect(missing.status).toBe(404);
+  expect(Object.hasOwn(missing, "error")).toBe(false);
+});
+```
+
+The `/explodes` handler in the fixture throws `httpErrors.internalServerError("The database is unreachable.")`, so the assertion pins an application's own message rather than the platform's wording for an unhandled failure.
+
+- [ ] **Step 7: Verify what the hooks can see, before writing them**
+
+Write a scratch probe — one `.ts` file run with `bun`, never committed — that mounts a plugin carrying `.onRequest` and `.onAfterResponse` the way `ElysiaPluginModule.register` mounts the devtools plugin, beside a route on the root instance, a route that throws, and a path nothing serves. Answer these three, and put the answers in the commit body of Step 12 rather than in a comment:
+
+1. **Do the plugin's hooks run for a route the plugin does not own?** The devtools plugin is mounted before the controllers' routes, and the record has to cover all of them. If the default scope does not reach them, use the option the installed Elysia exposes — `MacroOptions.stack` is `'global' | 'local'` in 1.4.30 — rather than registering anything on the root application, which this package does not do.
+2. **What does the after-response context carry for a failure?** The status, and the value the published message is read from. `error` comes from the answer and never from the exception, because this package registers no error hooks.
+3. **Does the after-response hook run for a request that matched no route?** If it does, the entry is completed exactly like any other and the probe settles the question. If it does not, the entry is what the arrival hook witnessed — method, the path that arrived, the headers, and the status the answer carried — and if even that cannot be reached without mocking the lifecycle under test, say so in the report rather than adding a second mechanism to guess at it.
+
+Also confirm the pair never changes a request: a route that reads its body must behave identically with the hooks registered, which is the claim `/requests` makes about itself.
+
+- [ ] **Step 8: Run it to verify it fails**
+
+Run: `bun test packages/devtools/tests/requests.test.ts`
+Expected: FAIL — the endpoint answers `404` and the buffer does not exist.
+
+- [ ] **Step 9: Extract the ring, and build both buffers on it**
+
+```ts
+// buffer/ring-buffer.ts
+export function createRingBuffer<TItem>(capacity: number): RingBuffer<TItem> {
+  const items: TItem[] = [];
+  let written = 0;
+
+  return {
+    write(item) {
+      items.push(item);
+      written += 1;
+      if (items.length > capacity) {
+        items.shift();
+      }
+    },
+    since(cursor) {
+      // The cursor of the oldest retained item: a caller older than it reads
+      // what is retained rather than an error, and never a cursor that went back.
+      const oldest = written - items.length;
+      const from = Math.max(cursor - oldest, 0);
+
+      return Object.freeze({
+        cursor: written,
+        entries: Object.freeze(items.slice(from)),
+      });
+    },
+  };
+}
+```
+
+`logging/log-buffer.ts` becomes that call with `LogEntry`, `requests/request-buffer.ts` the same with `RequestRecord`, and both keep the exact shape Task 8 published. No behavior changes: a log buffer that dropped or duplicated an entry on the way would be caught by Task 8's tests, which Step 11 runs.
+
+- [ ] **Step 10: Write the capture policy and the endpoint**
+
+```ts
+// requests/request-capture.ts
+const redactedValue = "[redacted]";
+const truncatedMarker = "[truncated]";
+const defaultBodyLimit = 16384;
+
+export function resolveCapture(capture: DevtoolsOptions["capture"]): ResolvedCapture {
+  if (capture === false) {
+    return Object.freeze({
+      enabled: false,
+      headers: false,
+      body: false,
+      bodyLimit: 0,
+      redact: Object.freeze([]),
+    });
+  }
+
+  const options = capture ?? {};
+
+  return Object.freeze({
+    enabled: options.enabled ?? true,
+    headers: options.headers ?? true,
+    body: options.body ?? true,
+    bodyLimit: options.bodyLimit ?? defaultBodyLimit,
+    redact: Object.freeze((options.redact ?? []).map((name) => name.toLowerCase())),
+  });
+}
+
+function captureHeaders(
+  headers: Headers,
+  redact: readonly string[],
+): Readonly<Record<string, string>> {
+  const captured: Record<string, string> = {};
+
+  for (const [name, value] of headers) {
+    captured[name] = redact.includes(name) ? redactedValue : value;
+  }
+
+  return Object.freeze(captured);
+}
+
+function captureBody(body: unknown, limit: number): string | undefined {
+  if (typeof body === "string") {
+    return body.length > limit ? `${body.slice(0, limit)}${truncatedMarker}` : body;
+  }
+  if (body === undefined || body === null) {
+    return undefined;
+  }
+
+  const serialized = JSON.stringify(body) ?? "";
+  return serialized.length > limit ? `${serialized.slice(0, limit)}${truncatedMarker}` : serialized;
+}
+```
+
+`toRequestRecord` assembles the entry from the after-response context: `method` and the headers from `context.request`, `url` as `pathname + search` from that request's own URL, `status` from the context, `durationMs` against the arrival stamp, `timestamp` as that arrival's ISO 8601 string, and the three optional fields added only when there is something to add — never written as `undefined`, which is what makes an opt-out observable on the wire. `set.status` may carry a status name rather than a number, and the record stores the number the answer went out with.
+
+`path` is the pattern when the application mounted one and the path that arrived when it did not, which is what Step 7 settles: Elysia answers a request nothing matched through its own path, where `route` is not a route this application serves, so the mounted table is the test.
+
+```ts
+// requests/request-capture.ts
+/** The message the answer published, and never the exception's. */
+async function failureMessage(context: AfterResponseContext): Promise<string | undefined> {
+  const status = context.set.status;
+  if (typeof status !== "number" || status < 500) {
+    return undefined;
+  }
+
+  // Step 7 settles which of the two the installed Elysia hands this hook: the
+  // value the answer carried, or the `Response` the mapping returned.
+  const answer =
+    context.responseValue instanceof Response
+      ? await context.responseValue.clone().json()
+      : context.responseValue;
+  const detail = (answer as { readonly detail?: unknown } | null | undefined)?.detail;
+
+  return typeof detail === "string" ? detail : undefined;
+}
+
+export async function toRequestRecord(
+  context: AfterResponseContext,
+  capture: ResolvedCapture,
+  arrival: RequestArrival,
+  serves: (route: string) => boolean,
+): Promise<RequestRecord> {
+  const url = new URL(context.request.url);
+  const matched = context.route !== "" && serves(context.route);
+  const body = capture.body ? captureBody(context.body, capture.bodyLimit) : undefined;
+  const error = await failureMessage(context);
+
+  return Object.freeze({
+    method: context.request.method,
+    path: matched ? context.route : url.pathname,
+    url: `${url.pathname}${url.search}`,
+    status: typeof context.set.status === "number" ? context.set.status : 200,
+    durationMs: performance.now() - arrival.startedAt,
+    timestamp: arrival.timestamp,
+    ...(capture.headers
+      ? { headers: captureHeaders(context.request.headers, capture.redact) }
+      : {}),
+    ...(body === undefined ? {} : { body }),
+    ...(error === undefined ? {} : { error }),
+  });
+}
+```
+
+`endpoints/requests.ts` is `buildRequestsPayload(buffer, since)` — the buffer's `since`, wrapped in the frozen payload `/logs` already returns in the same situation — and `devtools-server.ts` gains it in the same handlers record as every other endpoint.
+
+- [ ] **Step 11: Contribute the hook from the plugin, and run it**
+
+The plugin created in Task 3 gains the pair `request-capture.ts` returns, and hands the same buffer the server reads to `startDevtoolsServer`. The arrival hook stamps the request in a `WeakMap` keyed by the arriving `Request` — no mutation of the request, and nothing retained past the response — and the after-response hook writes the entry when the policy's `enabled` is true. A request the arrival hook never saw, and a response the after-response hook never reaches, leave nothing rather than a partial entry.
+
+Run: `bun test packages/devtools/tests/requests.test.ts packages/devtools/tests/logs.test.ts`
+Expected: PASS. The logs case passing unchanged is what says the ring extraction changed nothing.
+
+- [ ] **Step 12: Commit**
+
+```bash
+git add packages/devtools/src packages/devtools/tests/requests.test.ts scripts/source-layout.spec.ts
+git commit -m "feat(devtools): record the requests the application answers" -m "<the three answers Step 7 established>"
+```
+
+---
+
+### Task 10: `/__devtools/aot`, with the analysis imported lazily
 
 **Files:**
 
@@ -743,7 +1103,7 @@ git commit -m "feat(devtools): report the build-time verdicts behind a lazy impo
 
 ---
 
-### Task 10: Documentation and repository gates
+### Task 11: Documentation and repository gates
 
 **Files:**
 
@@ -754,7 +1114,7 @@ git commit -m "feat(devtools): report the build-time verdicts behind a lazy impo
 
 - [ ] **Step 1: Write `docs/devtools.md`**
 
-Cover: what the package is and is not; registration and the `enabled` decision; the forced loopback address and why it is not configurable; the six endpoints and the `contract` field; the log cursor; the accepted limitations, copied from the spec rather than restated; and that the consumer builds the UI.
+Cover: what the package is and is not; registration and the `enabled` decision; the forced loopback address and why it is not configurable; the seven endpoints and the `contract` field; the log cursor; what the request record captures by default and the opt-outs that turn it off, including `capture.redact`; the accepted limitations, copied from the spec rather than restated; and that the consumer builds the UI.
 
 - [ ] **Step 2: Write the conformance file**
 

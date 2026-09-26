@@ -25,7 +25,8 @@ In scope:
   whether it is registered;
 - a read-only HTTP server on a forced loopback address, serving the compiled
   module graph, the mounted route table, each route's per-request stages as a
-  graph, the build-time codegen verdicts, and the application's log stream;
+  graph, the build-time codegen verdicts, the application's log stream, and the
+  requests it answered;
 - the data contract itself, versioned, because a consumer builds a UI against
   it;
 - two changes in `@aponiajs/platform-elysia` that the above requires.
@@ -320,6 +321,99 @@ long-lived connection is a resource the consumer must manage, and polling a
 cursor is the shape that survives a page reload. The buffer is bounded so a
 forgotten consumer cannot grow the process.
 
+`GET /__devtools/requests?since=<cursor>`
+
+```ts
+{
+  cursor: number;                        // pass back as `since`
+  entries: readonly {
+    method: string;
+    path: string;                        // the route pattern that matched — "/users/:id"
+    url: string;                         // the path with its query string, as it arrived
+    status: number;
+    durationMs: number;
+    timestamp: string;                   // ISO 8601, when the request arrived
+    error?: string;                      // the message the answer published, on a failure
+    headers?: Readonly<Record<string, string>>;
+    body?: string;                       // cut at `capture.bodyLimit`, marked when it was cut
+  }[];
+}
+```
+
+The same bounded ring buffer, polled with the same cursor, never SSE and never a
+WebSocket, for the reasons `/logs` gives. Every other endpoint publishes what the
+application **is**; this one publishes what it **did**.
+
+**Everything is captured by default.** A registered module records, for every
+request the application answers: its method; the route pattern that matched; the
+URL as it arrived, query string included; the status; the duration; the arrival
+time; the request's headers; and the request body the route parsed. `capture` is
+how a developer turns parts of that off, and every one of its options is an
+opt-out rather than a permission:
+
+```ts
+interface DevtoolsCaptureOptions {
+  /** Record requests at all. Default true. */
+  readonly enabled?: boolean;
+  /** Include request headers. Default true. */
+  readonly headers?: boolean;
+  /** Include the parsed request body. Default true. */
+  readonly body?: boolean;
+  /** Maximum characters stored for a body. Default 16384. */
+  readonly bodyLimit?: number;
+  /**
+   * Header names to replace with the literal "[redacted]" before an entry is
+   * stored. Empty by default: the tool shows what arrived. Set it when the
+   * application is pointed at data that is not yours.
+   */
+  readonly redact?: readonly string[];
+}
+```
+
+`capture: false` is shorthand for `{ enabled: false }`. `redact` matches a header
+name case-insensitively, because a header name is, and it keeps the header in
+place with the literal `[redacted]` as its value, so a consumer can see that one
+was sent and that the tool was told not to show it. A `bodyLimit` that cut a body
+appends the literal `[truncated]` to the stored value.
+
+**`path` and `url` are both published, and they answer different questions.**
+`path` is the pattern the request matched, so it names the route that answered;
+`url` is the path and query string that arrived, which a pattern never carries.
+**A token passed as a query parameter is captured in `url`.** That is a fact
+about the record rather than a defect in it: an application that carries a secret
+in a query string and points this module at that traffic is showing it to whoever
+reads this endpoint, and `capture.redact` is the answer for exactly that case.
+
+**An unmatched request is recorded, and the record says so.** A request refused
+before a route matched — by a plugin's `onRequest`, or by the answer for a path
+nothing serves — is not dropped: `path` carries the path that arrived rather than
+a pattern, and no route, controller, or module is named. `/routes` is the table
+that says which of the two a `path` is, because a pattern the application
+mounted is in it and a path that arrived without matching one is not.
+
+**Response bodies are not captured.** Buffering every answer costs in proportion
+to the traffic rather than to the question being asked, and the request is
+usually what is being debugged. An application whose answers are worth recording
+has `application.handle` and its own tests.
+
+**`error` is what the answer published, never the exception.** The field is
+present only when there was a failure — a `5xx` — and carries the message the
+answer published for it. An unhandled failure therefore reads the platform's own
+sentence here rather than the exception's message, because a response
+deliberately never repeats the exception to its client; the exception is reported
+where it always was, in the log stream under `ExceptionsHandler`, which `/logs`
+serves. A `4xx` is an answer rather than a failure: a validation `422`, a `404`,
+and an `HttpError` a route threw on purpose all carry no `error`.
+
+**The record is written by the plugin, not by the application.** The module
+contributes the hook that writes it, and it observes rather than participates: it
+cannot change what a route receives, and it cannot change the answer. An
+application that did not register the module has nothing on its request path at
+all. The data is in memory, per boot, and bounded, like every other payload this
+package serves: a restart is a new record, and the buffer's capacity is what a
+forgotten consumer can cost. The devtools server is its own server, so polling
+the record never adds to it.
+
 ## Security
 
 The threat is a debugging surface that exposes an application's internals, and
@@ -335,10 +429,21 @@ the failure mode is it being reachable when it should not be.
 - **Read-only.** Every endpoint is `GET`; any other method is `405`.
 - **Announced.** A started server logs its URL at `Devtools` level, so an
   application that published one says so in its own startup output.
-- **Bounded.** The log buffer has a fixed capacity. `since` outside the buffer
-  returns what is retained rather than an error.
+- **Bounded.** The log and request buffers have a fixed capacity. `since`
+  outside either buffer returns what is retained rather than an error.
 - **No execution.** There is no endpoint that evaluates code, and none that
   mutates application state.
+- **The request record is the application's own data.** Headers and bodies are
+  captured in full by default, because a development tool that hides what a
+  request carried is one nobody opens. An application pointed at traffic that is
+  not a development environment's — a shared staging service, a colleague's
+  browser session — is the case `capture.redact` exists for: it names the headers
+  to replace before an entry is stored. Everything else about the record is what
+  it is: in memory, per boot, never on disk. No default guards it, for the same
+  reason `enabled` is the application's decision: the module is already opt-in
+  and the socket is already loopback-bound, and a framework that hides data the
+  developer asked to see is the same mistake as one that guesses about the
+  environment.
 
 ## Platform changes
 
@@ -406,6 +511,12 @@ running `bun run inspect` on an application they have also pointed at
 - **`elysiaController` callback routes appear in `/routes` but contribute no
   symbol-keyed handler name.** They are read off the mounted application, which
   knows the path and method but not the class property that built them.
+- **The request record is not complete.** A request refused before a route
+  matched has no route identity: the entry carries the path it asked for and
+  names no controller, module, or handler. A request the runtime never reached —
+  one the server itself rejected, or one whose client disconnected before an
+  answer — is not recorded at all. The record says what the application answered,
+  not everything that was asked of it.
 
 ## One open question this design does not settle
 
@@ -430,10 +541,12 @@ is ever built. They land first, with their own tests, so that the package is
 built on facts rather than on a seam that arrives with it.
 
 The package follows: module and registration, then the server and `/meta`, then
-`/graph` and `/routes`, then `/flow`, then `/logs`, then `/aot` with its lazy
-import. Each endpoint is independently testable, so the order is also the order
-a reviewer can check. `/flow` follows `/routes` because it is keyed by the same
-route identities and reads the same mounted application.
+`/graph` and `/routes`, then `/flow`, then `/logs`, then `/requests`, then `/aot`
+with its lazy import. Each endpoint is independently testable, so the order is
+also the order a reviewer can check. `/flow` follows `/routes` because it is
+keyed by the same route identities and reads the same mounted application, and
+`/requests` follows `/logs` because it is the same buffer and the same cursor
+over a different record.
 
 ## Testing
 
