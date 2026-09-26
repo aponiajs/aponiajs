@@ -1,6 +1,10 @@
 import { expect, spyOn, test } from "bun:test";
 import { Controller, Get, Module } from "@aponiajs/common";
-import { AponiaFactory, type AponiaInvokerArtifact } from "@aponiajs/platform-elysia";
+import {
+  AponiaFactory,
+  type AponiaElysiaApplication,
+  type AponiaInvokerArtifact,
+} from "@aponiajs/platform-elysia";
 import { DevtoolsModule, aponiaVersion, type AponiaMetaPayload } from "../src/index.ts";
 
 // `0` is the standard "no fixed port" sentinel. The plugin now binds it, and
@@ -132,8 +136,9 @@ test.serial("a listening disabled application mounts no plugin", async () => {
 
 test.serial("an enabled module mounts its plugin, which serves the address it bound", async () => {
   const output = captureOutput();
+  let application: AponiaElysiaApplication | undefined;
   try {
-    const application = await AponiaFactory.create(EnabledModule);
+    application = await AponiaFactory.create(EnabledModule);
     await application.listen(0);
 
     expect(output.rows().join("")).toContain(
@@ -151,9 +156,11 @@ test.serial("an enabled module mounts its plugin, which serves the address it bo
 
     expect(response.status).toBe(200);
     expect(((await response.json()) as AponiaMetaPayload).contract).toBe(1);
-
-    await application.close();
   } finally {
+    // Closing in the `finally` rather than after the last assertion: a failing
+    // assertion would otherwise leave the application and the devtools socket
+    // it started listening for the rest of the process.
+    await application?.close();
     output.restore();
   }
 });
@@ -170,6 +177,34 @@ async function answers(address: string): Promise<boolean> {
     return false;
   }
 }
+
+test.serial("a second listen replaces the devtools socket instead of losing it", async () => {
+  const output = captureOutput();
+  let application: AponiaElysiaApplication | undefined;
+  try {
+    application = await AponiaFactory.create(EnabledModule);
+    await application.listen(0);
+
+    const firstAddress = reportedAddress(devtoolsReports(output)[0] ?? "");
+
+    // A second `listen()` re-runs the plugin's `onStart` with the first socket
+    // still held, which is already broken at the application level. What the
+    // plugin must not add to that is a socket nothing can stop: the one it
+    // replaces is stopped as it is replaced, and the handle names the one it
+    // holds, which is what `close()` stops. A handle overwritten by a start
+    // that failed — or by a second socket — is the leak this pins.
+    await application.listen(0);
+
+    expect(await answers(firstAddress)).toBe(false);
+
+    const secondAddress = reportedAddress(devtoolsReports(output)[1] ?? "");
+    expect(secondAddress).not.toBe(firstAddress);
+    expect(await answers(secondAddress)).toBe(true);
+  } finally {
+    await application?.close();
+    output.restore();
+  }
+});
 
 test.serial("closing the application stops the devtools socket it started", async () => {
   const output = captureOutput();
@@ -215,6 +250,7 @@ test.serial("an enabled module reports the loopback port it defaults to", async 
 
 test.serial("the report describes the boot the plugin's own application carries", async () => {
   const output = captureOutput();
+  let application: AponiaElysiaApplication | undefined;
   try {
     const acceptedInvokers: AponiaInvokerArtifact = {
       framework: aponiaVersion,
@@ -222,7 +258,7 @@ test.serial("the report describes the boot the plugin's own application carries"
       invokers: new Map(),
     };
 
-    const application = await AponiaFactory.create(EnabledModule, {
+    application = await AponiaFactory.create(EnabledModule, {
       logger: false,
       invokers: acceptedInvokers,
     });
@@ -236,9 +272,8 @@ test.serial("the report describes the boot the plugin's own application carries"
     // `null`, which is exactly what the record's absence proves.
     expect(meta.framework).toBe(aponiaVersion);
     expect(meta.artifacts.invokers).toBe(aponiaVersion);
-
-    await application.close();
   } finally {
+    await application?.close();
     output.restore();
   }
 });

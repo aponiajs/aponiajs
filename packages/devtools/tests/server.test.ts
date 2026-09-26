@@ -228,6 +228,36 @@ test("meta falls back to the release serving it when no boot produced the applic
   }
 });
 
+test("a record from a copy of the platform older than the artifact stamps answers null", async () => {
+  // The record is read through a registry-global symbol key, so a boot run by an
+  // older copy of `@aponiajs/platform-elysia` in this process is reachable from
+  // here — and that copy's record has no `artifacts` at all. This attaches the
+  // record the way an older bootstrap did. The handler build runs inside the
+  // plugin's `onStart`, where a throw takes `listen()` with it, so the read has
+  // to answer `null`, the way it does for an artifact the boot did not adopt,
+  // rather than fail a boot that is otherwise fine.
+  const application = new Elysia();
+  Object.defineProperty(application, Symbol.for("aponia.application.diagnostics"), {
+    value: {
+      framework: "0.0.0-older",
+      graph: "decorated",
+      invokers: { accepted: false, reason: undefined },
+    },
+    enumerable: false,
+  });
+
+  const server = serveLoopback(application);
+
+  try {
+    const meta = await readMeta(server);
+
+    expect(meta.framework).toBe("0.0.0-older");
+    expect(meta.artifacts).toEqual({ invokers: null, descriptors: null });
+  } finally {
+    server.stop();
+  }
+});
+
 test("a port that is already bound is refused, and the caller continues", async () => {
   const blocker = Bun.serve({
     hostname: "127.0.0.1",

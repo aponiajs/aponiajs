@@ -75,17 +75,25 @@ function createDevtoolsPlugin(options: DevtoolsOptions): Elysia {
 
   return new Elysia({ name: devtoolsPluginName })
     .onStart((application) => {
-      server = startDevtoolsServer({
+      const started = startDevtoolsServer({
         application,
         port: options.port,
         logger: devtoolsLogger,
       });
 
-      if (server === undefined) {
+      // A second `listen()` re-runs `onStart` while the socket the first one
+      // started is still held, so only a start that succeeded becomes the
+      // handle: assigning the `undefined` a refused bind answers would leave the
+      // running socket with nothing left to stop it. The socket being replaced
+      // is stopped as it is replaced, so the plugin owns exactly one devtools
+      // server at a time and `onStop` always stops the live one.
+      if (started === undefined) {
         return;
       }
 
-      devtoolsLogger.log(`Aponia devtools is enabled for ${server.url}.`);
+      server?.stop();
+      server = started;
+      devtoolsLogger.log(`Aponia devtools is enabled for ${started.url}.`);
     })
     .onStop(() => {
       // The handle is dropped as well as stopped, so a later `listen()` starts a

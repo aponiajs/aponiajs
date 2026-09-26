@@ -45,11 +45,26 @@ runtime boundary it describes.
   reported under `Devtools` with the reason, `startDevtoolsServer` returns
   `undefined`, and the application continues. The plugin's `onStart` reports
   nothing further when it sees that, so one refused bind is one row.
+- The handler build runs inside that `onStart`, which Elysia neither awaits nor
+  catches, so nothing it does may throw — a throw would take `listen()` with it.
+  That makes every read of a boot record a read of data this package did not
+  write: the record arrives through a registry-global symbol key, and a copy of
+  `@aponiajs/platform-elysia` older than this release answers the same key with a
+  record that has no `artifacts` at all. The stamp read is an optional chain that
+  answers `null` — what an artifact the boot did not adopt reads as — rather than
+  a dereference that would fail the boot it is describing.
 - The plugin holds the server handle and stops it at `onStop`, which Elysia
   fires on `close()` for a plugin as much as for the application that mounted it.
   A devtools socket that outlived its application would hold the port across the
   next boot and answer for an application that is gone; the handle belongs to the
   plugin because the plugin is what opened the socket.
+- The plugin owns one devtools socket at a time. A second `listen()` re-runs
+  `onStart` while the socket the first one started is still held, so only a start
+  that succeeded becomes the handle — assigning the `undefined` a refused bind
+  answers would leave the live socket with nothing left to stop it — and the
+  socket being replaced is stopped as the replacement starts. Losing the handle
+  to a start that failed, or replacing it without stopping the socket it named,
+  is the leak this prevents.
 - The socket binds port `0` happily, and the report then names the address the
   socket took — never the port the registration asked for. A report that echoed
   the configuration would be indistinguishable from one that never bound.
@@ -113,7 +128,16 @@ answering its own routes.
 The socket's lifetime is asserted over HTTP too: a case polls the address while
 the application listens, closes the application, and polls again, because a
 devtools server that survived `close()` is indistinguishable from a working one
-until a second boot cannot take the port.
+until a second boot cannot take the port. A second `listen()` is asserted the
+same way: the address the first socket took stops answering once the second boot
+replaces it, and the address the second one took answers, so the plugin is shown
+to hold one socket rather than to have lost track of the first.
+
+The handler build is asserted against a record this release did not write: a case
+attaches a boot record with no `artifacts` — what a copy of the platform older
+than the artifact stamps leaves behind — and requires `/meta` to answer `null`
+stamps rather than throw, because that build runs where a throw takes `listen()`
+with it.
 
 The Elysia read is asserted for what it refuses: the workspace's own install
 answers its version, and a throwaway project that installed nothing answers

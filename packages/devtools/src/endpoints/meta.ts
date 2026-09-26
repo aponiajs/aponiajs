@@ -25,6 +25,15 @@ export const devtoolsContractVersion = 1;
  *   `ModuleDefinition` a caller passed compiles as declared data, but no build
  *   emitted it, so its stamp stays `null` and this endpoint never invents one.
  *
+ * `artifacts` is read through an optional chain although the record's type
+ * declares the field, because the record is read through a registry-global
+ * symbol key: a boot run by a copy of `@aponiajs/platform-elysia` older than
+ * this release answers the same key with a record that has no `artifacts` at
+ * all. A record missing the field reads the way one that adopted nothing does —
+ * `null` — rather than throwing, because this builder runs inside the plugin's
+ * `onStart`, which Elysia neither awaits nor catches, so a throw here takes
+ * `listen()` with it.
+ *
  * The payload is frozen and built once: every request of one boot is answered
  * from the same report, so a poll cannot observe a half-changed one.
  */
@@ -40,8 +49,8 @@ export function buildMetaPayload(facts: {
     framework,
     elysia: facts.elysia,
     artifacts: Object.freeze({
-      invokers: facts.diagnostics?.artifacts.invokers ?? null,
-      descriptors: facts.diagnostics?.artifacts.descriptors ?? null,
+      invokers: facts.diagnostics?.artifacts?.invokers ?? null,
+      descriptors: facts.diagnostics?.artifacts?.descriptors ?? null,
     }),
     startedAt: facts.startedAt,
   });
