@@ -6,6 +6,7 @@ import {
   isRouteResponseSchemaMap,
   isStandardSchema,
   resolveRouteValidator,
+  type AponiaInterceptor,
   type ArgumentsHost,
   type CanActivate,
   type ClassToken,
@@ -29,6 +30,7 @@ import type {
   AponiaRouteInvoker,
   CompiledElysiaRoute,
   ElysiaErrorHook,
+  ElysiaRouteAfterHandleContext,
   ElysiaRouteHook,
 } from "./route-compiler.types.ts";
 
@@ -189,6 +191,7 @@ export function registerCompiledElysiaRoutes(
         controller,
         callableHandler,
         routeGuards(mountedEnhancers, route),
+        routeInterceptors(mountedEnhancers, route),
         routeExceptionHooks(mountedEnhancers, route),
       ),
     );
@@ -213,6 +216,27 @@ function routeGuards(
   }
 
   return Object.freeze([...mountedEnhancers.global.guards, ...declared]);
+}
+
+/**
+ * The interceptors one route runs, in the order their before halves run: the
+ * application's own declaration first, then the ones the route declares, each
+ * scope in the order it declared them.
+ *
+ * A route that declares no interceptor of its own runs the application's
+ * declaration itself, so a route that declares no interceptor at all merges
+ * nothing and allocates nothing.
+ */
+function routeInterceptors(
+  mountedEnhancers: MountedRouteEnhancers,
+  route: CompiledElysiaRoute,
+): readonly AponiaInterceptor[] {
+  const declared = mountedEnhancers.controller.forRoute(route.enhancers).interceptors;
+  if (declared.length === 0) {
+    return mountedEnhancers.global.interceptors;
+  }
+
+  return Object.freeze([...mountedEnhancers.global.interceptors, ...declared]);
 }
 
 /**
@@ -471,57 +495,134 @@ function contextSource(parameter: RouteParameterMetadata): string {
   }
 }
 
+/** The lifecycle members of `ElysiaRouteHook` this platform compiles from enhancers. */
+type RouteLifecycleHook = Pick<ElysiaRouteHook, "beforeHandle" | "afterHandle">;
+
 /**
  * Builds the hook object one route is registered with: the validators its schema
- * declares, the guards it runs before its handler, and the `error` array it
- * answers a failure through.
+ * declares, the lifecycle its enhancers run around its handler, and the `error`
+ * array it answers a failure through.
  *
- * A route that declares no guard mounts the schema hook itself rather than a
- * copy of it, so a controller with no enhancers gains no `beforeHandle` and no
- * `ExecutionContext` is ever built for one.
+ * A route that declares no enhancer mounts the schema hook itself rather than a
+ * copy of it, so a controller with no enhancers gains no `beforeHandle`, no
+ * `afterHandle`, and no `ExecutionContext` is ever built for one.
  */
 function toRouteHook(
   route: CompiledElysiaRoute,
   controller: ClassToken<unknown>,
   handler: (...arguments_: unknown[]) => unknown,
   guards: readonly CanActivate[],
+  interceptors: readonly AponiaInterceptor[],
   exceptionHooks: ElysiaErrorHook[] | undefined,
 ): ElysiaRouteHook | undefined {
   const schemaHook = toSchemaHook(route.schema);
-  if (guards.length === 0 && exceptionHooks === undefined) {
+  const lifecycleHook = createLifecycleHook(route, controller, handler, guards, interceptors);
+  if (lifecycleHook === undefined && exceptionHooks === undefined) {
     return schemaHook;
   }
 
   const errorHook = exceptionHooks === undefined ? {} : { error: exceptionHooks };
-  if (guards.length === 0) {
-    return { ...schemaHook, ...errorHook };
+
+  return { ...schemaHook, ...errorHook, ...lifecycleHook };
+}
+
+/**
+ * The lifecycle members one route runs around its handler, or `undefined` when
+ * it runs none.
+ *
+ * Every enhancer kind is answered for here, and each half for itself: a route
+ * mounts a `beforeHandle` when it has a guard or a before half to run, and an
+ * `afterHandle` when it has an after half to run. The gate that decided this
+ * once tested guards alone, which says the same thing only while nothing else
+ * runs — a route carrying an interceptor and no guard would have taken the
+ * schema hook on its own and mounted neither half.
+ *
+ * Guards and before halves share one `beforeHandle` because they run in one
+ * order: a route's guards, then its interceptors' before halves, in the order
+ * the route declared them. Registering them as two hooks would leave that order
+ * to Elysia's registration rather than stating it here.
+ */
+function createLifecycleHook(
+  route: CompiledElysiaRoute,
+  controller: ClassToken<unknown>,
+  handler: (...arguments_: unknown[]) => unknown,
+  guards: readonly CanActivate[],
+  interceptors: readonly AponiaInterceptor[],
+): RouteLifecycleHook | undefined {
+  const runsBefore =
+    guards.length > 0 ||
+    interceptors.some((interceptor) => interceptor.interceptBefore !== undefined);
+  const runsAfter = interceptors.some((interceptor) => interceptor.interceptAfter !== undefined);
+  if (!runsBefore && !runsAfter) {
+    return undefined;
   }
 
   // The route a request was handled by never changes, so the value `getRoute`
   // answers with is frozen once here rather than on every call.
   const routeDescription = Object.freeze({ method: route.method, path: route.path });
+  // The after halves run over the whole list the route runs, reversed — the
+  // application's declaration, the controller's, and the handler's, as one list
+  // rather than each scope on its own. Reversing per scope would put the
+  // application's interceptor inside a route's, which is the opposite of the
+  // order their before halves ran in.
+  const afterInterceptors = Object.freeze([...interceptors].reverse());
 
   return {
-    ...schemaHook,
-    ...errorHook,
-    // Refusal is the throw and nothing else: Elysia answers an error carrying
-    // `toResponse()` through its own native path, so the response is already
-    // Problem Details with a 403 before any hook this task adds could shape it.
-    async beforeHandle(context: RouteContext): Promise<void> {
-      const executionContext = createExecutionContext(
-        routeDescription,
-        controller,
-        handler,
-        context,
-      );
-      for (const guard of guards) {
-        if ((await guard.canActivate(executionContext)) === false) {
-          throw httpErrors.forbidden("A guard refused this request.");
-        }
-      }
+    ...(runsBefore
+      ? {
+          // Refusal is the throw and nothing else: Elysia answers an error
+          // carrying `toResponse()` through its own native path, so the response
+          // is already Problem Details with a 403 before any hook this route
+          // carries could shape it.
+          async beforeHandle(context: RouteContext): Promise<void> {
+            const executionContext = createExecutionContext(
+              routeDescription,
+              controller,
+              handler,
+              context,
+            );
+            for (const guard of guards) {
+              if ((await guard.canActivate(executionContext)) === false) {
+                throw httpErrors.forbidden("A guard refused this request.");
+              }
+            }
+            // A before half cannot short-circuit: Elysia's behavior when a
+            // `beforeHandle` returns a value while `afterHandle` hooks are also
+            // registered for the same route is not established, so what one
+            // answers is not read.
+            for (const interceptor of interceptors) {
+              await interceptor.interceptBefore?.(executionContext);
+            }
 
-      return undefined;
-    },
+            return undefined;
+          },
+        }
+      : {}),
+    ...(runsAfter
+      ? {
+          async afterHandle(context: ElysiaRouteAfterHandleContext): Promise<unknown> {
+            const executionContext = createExecutionContext(
+              routeDescription,
+              controller,
+              handler,
+              context,
+            );
+            // `undefined` is the one answer that leaves the response as it is,
+            // so the value a half answers with is what the next one receives and
+            // a half that answers nothing keeps what the response carries.
+            // `null`, `false`, and `0` are responses, not absences.
+            let response = context.response;
+            for (const interceptor of afterInterceptors) {
+              const answered = await interceptor.interceptAfter?.(executionContext, response);
+              if (answered !== undefined) {
+                response = answered;
+              }
+            }
+
+            return response;
+          },
+        }
+      : {}),
   };
 }
 

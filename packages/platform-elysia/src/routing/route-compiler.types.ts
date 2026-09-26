@@ -62,6 +62,21 @@ export interface ElysiaRouteErrorContext extends RouteContext {
 export type ElysiaErrorHook = (context: ElysiaRouteErrorContext) => unknown;
 
 /**
+ * What a route-local `afterHandle` hook is given: the request's own context with
+ * the handler's result on it.
+ *
+ * Elysia sets `response` on the context before the hook runs, and to whatever a
+ * returning hook ahead of it answered, so an after half reads the current
+ * response from here rather than receiving it as an argument.
+ *
+ * @internal
+ */
+export interface ElysiaRouteAfterHandleContext extends RouteContext {
+  /** The handler's result, or what an earlier after half answered with. */
+  readonly response: unknown;
+}
+
+/**
  * The hook object one route is registered with.
  *
  * Elysia splits it across two types — `InputSchema` holds the validators, while
@@ -74,6 +89,12 @@ export type ElysiaErrorHook = (context: ElysiaRouteErrorContext) => unknown;
 export interface ElysiaRouteHook extends InputSchema<never> {
   /** Runs before the handler, and answers the request instead of it when it throws. */
   beforeHandle?(context: RouteContext): Promise<void>;
+  /**
+   * Runs after the handler, and answers with what the response should carry.
+   * Elysia replaces the response with a value this returns, and keeps the
+   * handler's own when it answers `undefined`.
+   */
+  afterHandle?(context: ElysiaRouteAfterHandleContext): Promise<unknown>;
   /**
    * Runs when the handler or one of the route's own hooks threw. The declared
    * filters come first and the Problem Details mapping last, so a filter ahead
