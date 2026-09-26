@@ -6,6 +6,8 @@ import type { RequestBuffer, RequestRecord } from "./request-buffer.types.ts";
 const redactedValue = "[redacted]";
 /** The literal appended to a body the limit cut. */
 const truncatedMarker = "[truncated]";
+/** The literal a body this package cannot serialize is stored as. */
+const unserializableMarker = "[unserializable]";
 /** How many characters of a body are stored when a registration names no limit. */
 const defaultBodyLimit = 16384;
 
@@ -257,9 +259,13 @@ export function createRequestCapture(capture: DevtoolsOptions["capture"]): Reque
  *
  * The request-side fields come from the arrival stamp rather than from
  * `context.request`, which no longer states them by this phase. Every fact the
- * context does state is read before the one `await` below, because the context
- * is Elysia's for the duration of the hook; the answer's body is the one fact
- * that has to be read across a microtask.
+ * context does state — and the duration, which is measured rather than read — is
+ * taken before the one `await` below, because the context is Elysia's for the
+ * duration of the hook and the answer's body is the only fact that has to be read
+ * across a microtask. The duration is stamped with those facts rather than after
+ * them, because a readable `5xx` spends that microtask on this package's own read
+ * of the answer, and a duration that included it would report work the
+ * application never did.
  *
  * @internal
  */
@@ -271,6 +277,7 @@ export async function toRequestRecord(
   const route = routePattern(context.route);
   const status = answerStatus(context);
   const body = capture.body ? captureBody(context.body, capture.bodyLimit) : undefined;
+  const durationMs = performance.now() - arrival.startedAt;
   const error = await failureMessage(status, context.answer);
 
   return Object.freeze({
@@ -278,7 +285,7 @@ export async function toRequestRecord(
     path: route ?? arrival.pathname,
     url: `${arrival.pathname}${arrival.search}`,
     status,
-    durationMs: performance.now() - arrival.startedAt,
+    durationMs,
     timestamp: arrival.timestamp,
     ...(arrival.headers === undefined ? {} : { headers: arrival.headers }),
     ...(body === undefined ? {} : { body }),
@@ -334,6 +341,14 @@ function captureHeaders(
  * A body the limit cut keeps its first `limit` characters and states that it was
  * cut: a record that silently dropped the rest would read as the whole body, and
  * one that stored nothing would lose the part a developer was looking for.
+ *
+ * A body this package cannot serialize — one that refers to itself, or one
+ * carrying a `BigInt`, both of which `JSON.stringify` refuses — is stored as the
+ * literal rather than left out, because `undefined` is reserved for the request
+ * that carried nothing: a missing `body` would read as a request with no body,
+ * which is a claim about the request rather than an absence to leave out. This
+ * hook may not throw, and a throw here is a failed request, so the record states
+ * what it could not read instead of failing the answer it describes.
  */
 function captureBody(body: unknown, limit: number): string | undefined {
   if (typeof body === "string") {
@@ -344,7 +359,13 @@ function captureBody(body: unknown, limit: number): string | undefined {
     return undefined;
   }
 
-  const serialized = JSON.stringify(body) ?? "";
+  let serialized: string;
+
+  try {
+    serialized = JSON.stringify(body) ?? "";
+  } catch {
+    return unserializableMarker;
+  }
 
   return serialized.length > limit ? `${serialized.slice(0, limit)}${truncatedMarker}` : serialized;
 }

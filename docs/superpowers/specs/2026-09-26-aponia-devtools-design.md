@@ -374,7 +374,13 @@ interface DevtoolsCaptureOptions {
 name case-insensitively, because a header name is, and it keeps the header in
 place with the literal `[redacted]` as its value, so a consumer can see that one
 was sent and that the tool was told not to show it. A `bodyLimit` that cut a body
-appends the literal `[truncated]` to the stored value.
+appends the literal `[truncated]` to the stored value. A body this package cannot
+serialize — one that refers to itself, or one carrying a `BigInt`, both of which
+`JSON.stringify` refuses — is stored as the literal `[unserializable]` rather
+than left out, because a missing `body` would read as a request that carried
+none. The wire never carries such a body: an application's own validation
+transform or parse hook is what makes one, and the record states what it could
+not read rather than failing the answer it describes.
 
 **`path` and `url` are both published, and they answer different questions.**
 `path` is the pattern the request matched, so it names the route that answered;
@@ -384,12 +390,17 @@ about the record rather than a defect in it: an application that carries a secre
 in a query string and points this module at that traffic is showing it to whoever
 reads this endpoint, and `capture.redact` is the answer for exactly that case.
 
-**An unmatched request is recorded, and the record says so.** A request refused
-before a route matched — by a plugin's `onRequest`, or by the answer for a path
-nothing serves — is not dropped: `path` carries the path that arrived rather than
-a pattern, and no route, controller, or module is named. `/routes` is the table
-that says which of the two a `path` is, because a pattern the application
-mounted is in it and a path that arrived without matching one is not.
+**An unmatched request is recorded, and the record says so.** A request that
+reaches the route table without matching a route — a path nothing serves, or one
+a plugin's `onRequest` threw for — is not dropped: `path` carries the path that
+arrived rather than a pattern, and no route, controller, or module is named.
+`/routes` is the table that says which of the two a `path` is, because a pattern
+the application mounted is in it and a path that arrived without matching one is
+not. One refusal produces no entry at all: an `onRequest` that returns a
+`Response` before matching runs no later phase, so the hook the record is written
+from never runs and its status is never learned. An entry written at arrival
+instead would have to invent that status, and this package states what it
+observed rather than what it guessed.
 
 **Response bodies are not captured.** Buffering every answer costs in proportion
 to the traffic rather than to the question being asked, and the request is
@@ -397,13 +408,16 @@ usually what is being debugged. An application whose answers are worth recording
 has `application.handle` and its own tests.
 
 **`error` is what the answer published, never the exception.** The field is
-present only when there was a failure — a `5xx` — and carries the message the
-answer published for it. An unhandled failure therefore reads the platform's own
-sentence here rather than the exception's message, because a response
-deliberately never repeats the exception to its client; the exception is reported
-where it always was, in the log stream under `ExceptionsHandler`, which `/logs`
-serves. A `4xx` is an answer rather than a failure: a validation `422`, a `404`,
-and an `HttpError` a route threw on purpose all carry no `error`.
+present on a `5xx` whose answer still carries a Problem Details body this hook can
+read — the `HttpError` path — and it carries that body's `detail`. Wherever there
+is nothing to read it is absent, and the absence is stated rather than filled with
+the exception's message: an unhandled failure is answered by the platform's own
+mapping, whose `Response` is never assigned to the context, and a `5xx` a handler
+built itself is the answer the client already holds, so its body cannot be read a
+second time. The exception is reported where it always was, in the log stream
+under `ExceptionsHandler`, which `/logs` serves. A `4xx` is an answer rather than
+a failure: a validation `422`, a `404`, and an `HttpError` a route threw on
+purpose all carry no `error`.
 
 **The record is written by the plugin, not by the application.** The module
 contributes the hook that writes it, and it observes rather than participates: it

@@ -150,6 +150,34 @@ class LimitedBodyModule {}
 class RedactingModule {}
 
 /**
+ * A validation model whose transform yields a `BigInt`, so the body the record
+ * is handed is one `JSON.stringify` refuses. The wire carries ordinary JSON — the
+ * unserializable value is made by the application's own validation, which is what
+ * makes it a body a real application can reach rather than one a test invented.
+ */
+const bigintBody = {
+  "~standard": {
+    version: 1 as const,
+    vendor: "aponia-devtools-test",
+    validate: () => ({ value: { id: BigInt(7) } }),
+  },
+};
+
+@Controller("/bigint")
+class UnserializableController {
+  @Post("/", { body: bigintBody })
+  create(): { created: true } {
+    return { created: true };
+  }
+}
+
+@Module({
+  imports: [DevtoolsModule.register({ enabled: true, port: ephemeralPort })],
+  controllers: [UnserializableController],
+})
+class UnserializableModule {}
+
+/**
  * A plugin that refuses two different ways, because the record's boundary
  * between them is a fact about the installed Elysia rather than a preference.
  */
@@ -445,6 +473,29 @@ test.serial("a body that arrived as text is stored as text, and cut like any oth
   }
 });
 
+test.serial("a body this package cannot serialize is stated as unreadable", async () => {
+  const { application, address } = await bootApplication(UnserializableModule);
+  try {
+    const answered = await fetch(`${application.getUrl()}/bigint`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: '{"id":1}',
+    });
+
+    // The application is unaffected: the body is unserializable only for this
+    // package's own read of it, never for the client or the route.
+    expect(answered.status).toBe(200);
+
+    const entry = onlyEntry(await readRequests(address));
+
+    // A missing `body` would read as a request that carried none, which is a
+    // claim about the request rather than an absence to leave out.
+    expect(entry.body).toBe("[unserializable]");
+  } finally {
+    await application.close();
+  }
+});
+
 test.serial("redact replaces a named header with the literal, whatever its case", async () => {
   const { application, address } = await bootApplication(RedactingModule);
   try {
@@ -536,6 +587,37 @@ test.serial("a failure whose answer the client already holds carries no message"
     // is already disturbed here and no published message can be read from it.
     expect(Object.hasOwn(entry, "error")).toBe(false);
   } finally {
+    await application.close();
+  }
+});
+
+test.serial("the duration does not include this package's own read of the answer", async () => {
+  const { application, address } = await bootApplication(CapturedModule);
+  let read = false;
+  const clock = spyOn(performance, "now").mockImplementation(() => (read ? 1000 : 5));
+  const originalJson = Response.prototype.json;
+  const json = spyOn(Response.prototype, "json").mockImplementation(
+    async function (this: Response) {
+      read = true;
+
+      return await originalJson.call(this);
+    },
+  );
+
+  try {
+    await fetch(`${application.getUrl()}/explodes`);
+
+    const payload = await readRequests(address);
+    const entry = findEntry(payload, (record) => record.url === "/explodes");
+
+    expect(entry.error).toBe("The database is unreachable.");
+    // The clock reads `5` until something reads the answer's body and `1000`
+    // after it: a duration stamped once that read resolved would report this
+    // package's own work as time the application spent answering.
+    expect(entry.durationMs).toBe(0);
+  } finally {
+    json.mockRestore();
+    clock.mockRestore();
     await application.close();
   }
 });

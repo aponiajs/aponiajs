@@ -294,12 +294,25 @@ runtime boundary it describes.
   query string, and the headers the policy kept, and the completion reads the
   route, the status, the parsed body, and the message the answer published — every
   one of them before the single `await` that reads the answer's body, because the
-  context is Elysia's for the duration of the hook. The stamp is keyed by the
+  context is Elysia's for the duration of the hook. The duration is stamped with
+  them rather than after them, because a readable `5xx` spends that microtask on
+  this package's own read of the answer, and a duration that included it would
+  report work the application never did. The stamp is keyed by the
   `Request` object in a `WeakMap` and spent by the completion that reads it, so a
   request this registration never saw, and one whose answer never reached the
   hook, leave nothing rather than a partial entry. `arrive` also refuses to stamp
   while the policy records nothing, and while no boot has opened a record for the
   application that received the request.
+- A body is read through one serializer with one guard, and a body the serializer
+  refuses is stated rather than dropped: `JSON.stringify` throws on a body that
+  refers to itself or carries a `BigInt`, both of which an application's own
+  validation transform or parse hook can hand a route, and the hook this record is
+  written from may not throw. The entry stores the literal `[unserializable]` for
+  that body, because `undefined` is reserved for the request that carried none: a
+  missing `body` would read as a request with no body, which is a claim about the
+  request rather than an absence to leave out. Dropping the guard fails the answer
+  the record describes, and dropping the literal turns a body the tool could not
+  read into a request that never had one.
 - The pair of hooks is two answers a maintainer may not merge, narrow, or make
   return: the arrival hook rides the request phase, which Elysia merges from a used
   plugin unfiltered, while the completion hook is declared `{ as: "global" }`,

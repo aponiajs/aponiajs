@@ -110,9 +110,14 @@ export class AppModule {}
   `method`, the `path` (the route pattern that matched, or the path that arrived
   when none did), the `url` as it arrived, the `status`, the `durationMs`, the
   `timestamp`, the request's `headers`, and the `body` the route parsed, truncated
-  at `capture.bodyLimit`; `error` is what the answer published and never the
-  exception, so it is present on a `5xx` the tool can read and absent on a `4xx`,
-  which is an answer rather than a failure. Everything is recorded by default —
+  at `capture.bodyLimit`, while a body this package cannot serialize — a cyclic
+  one, or one carrying a `BigInt`, which an application's own validation can make
+  — is stored as `[unserializable]` rather than left out, because a missing `body`
+  would read as a request that carried none; `error` is what the answer published
+  and never the exception, so it is present on a `5xx` whose Problem Details body
+  the tool can read, absent on a `4xx`, which is an answer rather than a failure,
+  and absent where there is nothing to read — an unhandled failure the platform
+  mapped, and a `5xx` a handler built itself. Everything is recorded by default —
   `capture` is an opt-out on each field, never a permission, because a tool that
   needed two opt-ins before it showed a header is one nobody opens. Two facts are
   stated rather than softened: a token passed as a query parameter is captured in
