@@ -37,10 +37,30 @@ export interface DevtoolsOptions {
    */
   readonly enabled: boolean;
   /**
-   * The loopback port the devtools server binds once it starts. Defaults to
-   * `8000`. The bind address is not configurable; it is always `127.0.0.1`.
+   * The port the devtools server binds once it starts. Defaults to `8000`, on
+   * the address `host` names.
    */
   readonly port?: number;
+  /**
+   * The address the devtools server binds once it starts. Defaults to
+   * `127.0.0.1`, because a debugging aid should not be reachable by default.
+   *
+   * The option exists because loopback is not always where the reader is: a
+   * container that publishes its port, a remote development box, and a phone on
+   * the same network are all real cases, and none of them is served by a bind
+   * only the machine itself can reach.
+   *
+   * Widening the bind is permitted and never silent. The start reports one row
+   * under `Devtools` naming this option, the address it bound, and `/requests`,
+   * because that endpoint records request headers and bodies **by default**:
+   * binding it where the network can reach it puts credentials on the network,
+   * and a row that said only "reachable from the network" would leave the
+   * reader to guess that. `127.0.0.1`, any `127.x.x.x`, `::1`, and
+   * `localhost` are the loopback spellings the warning is skipped for — the
+   * check names them rather than resolving anything, so a hostname that points
+   * at loopback still warns.
+   */
+  readonly host?: string;
   /**
    * The logger whose lines `/__devtools/logs` records: pass the **same** value
    * the application gives `AponiaFactory.create`.

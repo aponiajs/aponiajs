@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship `@aponiajs/devtools` — an opt-in runtime plugin that serves a read-only HTTP API on a forced loopback address, so a consumer can build its own UI against a versioned payload contract.
+**Goal:** Ship `@aponiajs/devtools` — an opt-in runtime plugin that serves a read-only HTTP API on a loopback address by default, so a consumer can build its own UI against a versioned payload contract.
 
-**Architecture:** Two platform changes land first, each independently shippable: `inspectAponiaApplication` learns to resolve artifacts, and bootstrap exposes the boot decision plus the compiled graph through an `@internal` seam. The package follows: an `ElysiaPluginModule` whose plugin starts a `Bun.serve` on `127.0.0.1` at `onStart`, serving seven `GET` endpoints under `/__devtools`.
+**Architecture:** Two platform changes land first, each independently shippable: `inspectAponiaApplication` learns to resolve artifacts, and bootstrap exposes the boot decision plus the compiled graph through an `@internal` seam. The package follows: an `ElysiaPluginModule` whose plugin starts a `Bun.serve` on `127.0.0.1` — or on the host the registration names, which is reported — at `onStart`, serving seven `GET` endpoints under `/__devtools`.
 
 **Tech Stack:** Bun (`Bun.serve`), TypeScript (strict, ESM, explicit `.ts` extensions), Elysia 1.4.x, `@aponiajs/platform-elysia`, `@aponiajs/common`, and — lazily, for one endpoint — `@aponiajs/cli`.
 
@@ -14,7 +14,7 @@
 
 - All repository content is English. Before finishing, scan:
   `rg -nP '[\x{0E00}-\x{0E7F}]' --glob '!node_modules/**' --glob '!dist/**' .`
-- The bind address is **not configurable**: `127.0.0.1` always. There is no `host` option.
+- The bind address defaults to loopback: `127.0.0.1` unless the registration names a `host`. A bind outside loopback is permitted and reported once under `Devtools`, naming the `host` option, the address the socket took, and `/requests`; a loopback spelling (`127.0.0.1`, any `127.x.x.x`, `::1`, `localhost`) reports nothing.
 - `enabled` is required and is the application's decision. The framework never reads an environment variable on the application's behalf.
 - Requests are captured by default, with their headers and body. Every `capture` option is an opt-out, not a permission: this is a development tool, and it shows a developer everything until the developer says otherwise.
 - Every endpoint is a `GET`. Any other method answers `405`; an unknown path answers `404`.
@@ -338,7 +338,7 @@ Expected: FAIL — no server exists.
 
 - [ ] **Step 4: Implement the server and the dispatcher**
 
-`Bun.serve({ hostname: "127.0.0.1", port, fetch: handler })`. The hostname is a literal, not read from options. `startDevtoolsServer` catches a bind failure, logs it under `Devtools`, and returns `undefined` so the plugin can continue — the boot must survive a taken port.
+`Bun.serve({ hostname, port, fetch: handler })`, where `hostname` is the `host` option or the loopback default, and the loopback spellings are the only ones that bind silently. `startDevtoolsServer` catches a bind failure, logs it under `Devtools`, and returns `undefined` so the plugin can continue — the boot must survive a taken port.
 
 `routeRequest` takes the `Request` and a record of `GET` handlers keyed by the path suffix after `/__devtools`, and returns a `Response`. A method other than `GET` returns `405` before any path lookup; an unknown suffix or a path outside the prefix returns `404`.
 
@@ -1114,7 +1114,7 @@ git commit -m "feat(devtools): report the build-time verdicts behind a lazy impo
 
 - [ ] **Step 1: Write `docs/devtools.md`**
 
-Cover: what the package is and is not; registration and the `enabled` decision; the forced loopback address and why it is not configurable; the seven endpoints and the `contract` field; the log cursor; what the request record captures by default and the opt-outs that turn it off, including `capture.redact`; the accepted limitations, copied from the spec rather than restated; and that the consumer builds the UI.
+Cover: what the package is and is not; registration and the `enabled` decision; the loopback default, the `host` option that moves it, and why a widening is reported rather than refused; the seven endpoints and the `contract` field; the log cursor; what the request record captures by default and the opt-outs that turn it off, including `capture.redact`; the accepted limitations, copied from the spec rather than restated; and that the consumer builds the UI.
 
 - [ ] **Step 2: Write the conformance file**
 

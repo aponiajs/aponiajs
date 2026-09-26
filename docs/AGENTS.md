@@ -6,23 +6,23 @@ Read the [repository guide](../AGENTS.md) first.
 
 The published documentation set:
 
-| File                        | Covers                                                                  |
-| --------------------------- | ----------------------------------------------------------------------- |
-| `architecture-and-style.md` | Application and framework layout, naming, and expected patterns         |
-| `dependency-injection.md`   | Tokens, visibility, providers, and the error codes on failure           |
-| `websockets.md`             | Nest-style gateways over native Elysia WebSockets                       |
-| `native-plugins.md`         | Mounting native Elysia plugins and typing what they add                 |
-| `eden-treaty.md`            | Native-style application types consumed through Eden Treaty             |
-| `elysia-compatibility.md`   | Supported Elysia versions and how a mismatch fails                      |
-| `introspection.md`          | Projecting a compiled application into frozen, serializable data        |
-| `enhancers.md`              | Guards, interceptors, and exception filters on a route's hooks          |
-| `logging.md`                | Logger configuration and the bootstrap log lines                        |
-| `testing.md`                | Testing applications through `application.handle`                       |
-| `cli.md`                    | The generator catalog, aliases, and options                             |
-| `devtools.md`               | The opt-in loopback API and what each endpoint does and does not report |
-| `packages.md`               | The published package catalog                                           |
-| `releasing.md`              | Channels, the version gate, and the publish flow                        |
-| `learn/`                    | The ordered chapters that teach the same material in sequence           |
+| File                        | Covers                                                                                        |
+| --------------------------- | --------------------------------------------------------------------------------------------- |
+| `architecture-and-style.md` | Application and framework layout, naming, and expected patterns                               |
+| `dependency-injection.md`   | Tokens, visibility, providers, and the error codes on failure                                 |
+| `websockets.md`             | Nest-style gateways over native Elysia WebSockets                                             |
+| `native-plugins.md`         | Mounting native Elysia plugins and typing what they add                                       |
+| `eden-treaty.md`            | Native-style application types consumed through Eden Treaty                                   |
+| `elysia-compatibility.md`   | Supported Elysia versions and how a mismatch fails                                            |
+| `introspection.md`          | Projecting a compiled application into frozen, serializable data                              |
+| `enhancers.md`              | Guards, interceptors, and exception filters on a route's hooks                                |
+| `logging.md`                | Logger configuration and the bootstrap log lines                                              |
+| `testing.md`                | Testing applications through `application.handle`                                             |
+| `cli.md`                    | The generator catalog, aliases, and options                                                   |
+| `devtools.md`               | The opt-in devtools API, loopback by default, and what each endpoint does and does not report |
+| `packages.md`               | The published package catalog                                                                 |
+| `releasing.md`              | Channels, the version gate, and the publish flow                                              |
+| `learn/`                    | The ordered chapters that teach the same material in sequence                                 |
 
 ## The learning path
 

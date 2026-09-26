@@ -4,7 +4,8 @@
  * The package is a leaf: nothing in the framework depends on it, and an
  * application imports it deliberately. `DevtoolsModule.register({ enabled })`
  * is the whole opt-in — a disabled registration mounts nothing at all, while an
- * enabled one serves the loopback API the rest of this barrel describes.
+ * enabled one serves, on loopback unless the registration names another host,
+ * the API the rest of this barrel describes.
  */
 export { DevtoolsModule } from "./module/devtools-module.ts";
 export type { DevtoolsCaptureOptions, DevtoolsOptions } from "./module/devtools-module.types.ts";

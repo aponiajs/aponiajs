@@ -131,6 +131,7 @@ function createDevtoolsPlugin(options: DevtoolsOptions): Elysia {
       const started = startDevtoolsServer({
         application,
         port: options.port,
+        host: options.host,
         logger: devtoolsLogger,
         logs,
         requests: capture.beginBoot(application.store),

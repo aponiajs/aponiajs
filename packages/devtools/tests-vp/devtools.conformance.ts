@@ -85,6 +85,7 @@ interface AponiaRequestRecordFields {
 const conformanceOptions: DevtoolsOptions = {
   enabled: true,
   port: 8000,
+  host: "127.0.0.1",
   logger: false,
   capture: {
     enabled: true,
@@ -137,6 +138,7 @@ test("the options surface accepts the documented capture policy", () => {
   });
   expect(conformanceCapture.enabled).toBe(false);
   expect(conformanceOptions.logger).toBe(false);
+  expect(conformanceOptions.host).toBe("127.0.0.1");
 });
 
 test("every endpoint payload is constructible from the published types", () => {

@@ -3,8 +3,9 @@
 **Use when:** you want to see what the running application compiled and what it
 answered, without adding a route to it or a log line to a handler.
 
-`@aponiajs/devtools` starts a second HTTP server beside the application, on
-loopback, and serves what the boot compiled and what the application did. It is
+`@aponiajs/devtools` starts a second HTTP server beside the application — on
+loopback unless the registration names another host — and serves what the boot
+compiled and what the application did. It is
 a leaf package an application installs deliberately, and it is not part of the
 runtime: removing it changes nothing about how an application answers.
 
@@ -61,9 +62,20 @@ keeping is not what a `200` should say.
 | Option    | Meaning                                                     |
 | --------- | ----------------------------------------------------------- |
 | `enabled` | Whether the devtools mount at all. Required.                |
-| `port`    | The loopback port to bind. Defaults to `8000`.              |
+| `port`    | The port to bind. Defaults to `8000`.                       |
+| `host`    | The address to bind. Defaults to `127.0.0.1`.               |
 | `logger`  | The logger `/logs` records, or `false`.                     |
 | `capture` | What `/requests` records: an opt-out per field, or `false`. |
+
+The default address is loopback because a debugging aid should not be reachable
+by default. `host` exists because a container that publishes its port, a remote
+development box, and a phone on the same network are all real cases — and a bind
+outside loopback is never silent: the start reports one row under `Devtools`
+naming the `host` option, the address the socket took, and `/requests`, which
+records request headers and bodies by default. `127.0.0.1`, anything in
+`127.x.x.x`, `::1`, and `localhost` are the loopback spellings the row is
+skipped for; the check is syntactic and resolves nothing, so a host name that
+points at loopback still reports.
 
 ## Read it
 
@@ -115,9 +127,9 @@ The full list, including what the record leaves out on purpose, is in
 
 No UI, no assets, no browser bundle: the payloads are the product and a consumer
 renders them. No route on the application. Nothing it serves mutates application
-state — every endpoint is a read. The address is always `127.0.0.1`, with no
-option to widen it, and a port it cannot take is reported under `Devtools` and
-leaves the application running.
+state — every endpoint is a read. The address is `127.0.0.1` unless you name a
+`host`, and a port it cannot take is reported under `Devtools` and leaves the
+application running.
 
 Next: nothing — this is the last chapter. ·
 Deep dive: [devtools](../devtools.md)

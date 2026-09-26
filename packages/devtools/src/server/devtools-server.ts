@@ -26,18 +26,44 @@ import type {
 } from "./devtools-server.types.ts";
 import { routeRequest } from "./request-router.ts";
 
-/** The only address the devtools socket ever binds. */
-const devtoolsHostname = "127.0.0.1";
+/** The address a registration that names none binds. */
+const defaultDevtoolsHostname = "127.0.0.1";
+
+/**
+ * The loopback spellings this package stays silent for: the `localhost` name
+ * with an optional root dot, the IPv6 loopback, and any address in
+ * `127.0.0.0/8` written as four dotted octets.
+ *
+ * The check is syntactic and resolves nothing, and that direction is the safe
+ * one: a name that happens to point at loopback still warns, and a spelling the
+ * pattern cannot be sure of is reported rather than assumed. The octets after
+ * `127` are not range-checked because an address outside an interface's range
+ * cannot bind at all — there is nothing to expose — while a spelling that is
+ * rejected for the wrong reason would go silent.
+ */
+const loopbackHostPattern = /^(?:localhost\.?|::1|127(?:\.\d{1,3}){3})$/i;
+
+/** Whether a host names the loopback interface, so a bind to it exposes nothing. */
+function isLoopbackHost(host: string): boolean {
+  return loopbackHostPattern.test(host);
+}
 
 /** The port an application that names none binds. */
 const defaultDevtoolsPort = 8000;
 
 /**
- * Starts the loopback devtools server for one boot.
+ * Starts the devtools server for one boot.
  *
  * Synchronous on purpose. Elysia invokes a plugin's `onStart` without awaiting
  * it, so nothing here may be a promise that has to settle before the first
  * request is served — including the read that resolves the installed Elysia.
+ *
+ * The bind address is the caller's, and the default is loopback because a
+ * debugging aid should not be reachable by default. A bind outside loopback is
+ * permitted and never silent: one row names the address it bound and
+ * `/requests`, because that endpoint records request headers and bodies by
+ * default, so the reader is told what the bind exposed rather than left to
+ * infer it.
  *
  * A refused bind is this package's problem and never the application's: the
  * reason is reported under `Devtools`, with the address it could not take, and
@@ -46,6 +72,7 @@ const defaultDevtoolsPort = 8000;
  */
 export function startDevtoolsServer(options: DevtoolsServerOptions): DevtoolsServer | undefined {
   const port = options.port ?? defaultDevtoolsPort;
+  const host = options.host ?? defaultDevtoolsHostname;
   const handlers = createHandlers(
     options.application,
     options.logs,
@@ -55,15 +82,32 @@ export function startDevtoolsServer(options: DevtoolsServerOptions): DevtoolsSer
 
   try {
     const server = Bun.serve({
-      hostname: devtoolsHostname,
+      hostname: host,
       port,
       fetch: (request) => routeRequest(request, handlers),
     });
+    const url = server.url.origin;
 
-    return Object.freeze({ url: server.url.origin, stop: () => void server.stop(true) });
+    // Reported after the socket exists, so the row names the address that was
+    // taken rather than one that was asked for — the port is the socket's, not
+    // the registration's. A bind that never happened states its own refusal
+    // below instead, so a failed widening is one row and not two.
+    if (!isLoopbackHost(host)) {
+      options.logger.warn(
+        `Aponia devtools is bound to ${url} because the registration set host, so /requests — ` +
+          "which records request headers and bodies by default — is reachable from outside this machine.",
+      );
+    }
+
+    return Object.freeze({ url, stop: () => void server.stop(true) });
   } catch (error) {
+    // An IPv6 host is bracketed the way a URL needs it here: the socket never
+    // started, so the address is the one the registration asked for.
+    const refusedAddress = host.includes(":")
+      ? `http://[${host}]:${port}`
+      : `http://${host}:${port}`;
     options.logger.warn(
-      `Aponia devtools could not listen on http://${devtoolsHostname}:${port} (${oneLine(error)}); the application continues without it.`,
+      `Aponia devtools could not listen on ${refusedAddress} (${oneLine(error)}); the application continues without it.`,
     );
 
     return undefined;

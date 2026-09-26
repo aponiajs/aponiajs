@@ -39,8 +39,16 @@ export class AppModule {}
   `DECLINED module` line a build prints.
 - **`onStart` requires `listen()`.** An application that only calls `handle()`
   publishes nothing and is otherwise unaffected.
-- **Loopback only.** The devtools server binds `127.0.0.1` on `port` (default
-  `8000`), with no way to widen the address.
+- **Loopback by default.** The devtools server binds `127.0.0.1` on `port`
+  (default `8000`) unless `host` names another address, which a container that
+  publishes its port, a remote development box, and a phone on the same network
+  may all need. A bind outside loopback is never silent: the start reports one
+  row under `Devtools` naming the `host` option, the address the socket took,
+  and `/requests` — which records request headers and bodies by default, so the
+  row states what is now reachable rather than leaving the reader to infer it.
+  `127.0.0.1`, any `127.x.x.x`, `::1`, and `localhost` are the loopback
+  spellings the warning is skipped for; the check is this package's own and
+  resolves nothing, so a host name that points at loopback still warns.
 - **The log stream is the application's own, and it is handed over twice.** Pass
   the same logger to `DevtoolsModule.register` and to `AponiaFactory.create`:
   registration patches that object **in place**, so every line it writes — the

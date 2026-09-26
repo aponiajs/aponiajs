@@ -3,7 +3,7 @@ import type { Elysia } from "elysia";
 import type { LogBuffer } from "../logging/log-buffer.types.ts";
 import type { RequestBuffer } from "../requests/request-buffer.types.ts";
 
-/** The loopback HTTP surface one devtools boot publishes. */
+/** The HTTP surface one devtools boot publishes. */
 export interface DevtoolsServer {
   /** The origin the socket bound, for example `http://127.0.0.1:51234`. */
   readonly url: string;
@@ -19,9 +19,15 @@ export interface DevtoolsServerOptions {
    * reported as one rather than refused.
    */
   readonly application: Elysia;
-  /** The loopback port to bind. Defaults to the devtools default port. */
+  /** The port to bind. Defaults to the devtools default port. */
   readonly port?: number;
-  /** Where a refused bind is reported, so a boot cannot swallow the reason. */
+  /**
+   * The address to bind. Defaults to the devtools default host, which is
+   * loopback; a host outside loopback is permitted and reported once, because
+   * `/requests` records request headers and bodies by default.
+   */
+  readonly host?: string;
+  /** Where a refused bind and an exposed bind are reported. */
   readonly logger: LoggerService;
   /**
    * The application's log stream, when the caller has one to publish.

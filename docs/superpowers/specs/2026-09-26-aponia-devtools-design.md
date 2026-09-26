@@ -23,7 +23,8 @@ In scope:
 
 - a runtime plugin installed by the application, enabled or disabled by
   whether it is registered;
-- a read-only HTTP server on a forced loopback address, serving the compiled
+- a read-only HTTP server, loopback by default and moved off loopback only
+  when the registration names a host, serving the compiled
   module graph, the mounted route table, each route's per-request stages as a
   graph, the build-time codegen verdicts, the application's log stream, and the
   requests it answered;
@@ -433,9 +434,19 @@ the record never adds to it.
 The threat is a debugging surface that exposes an application's internals, and
 the failure mode is it being reachable when it should not be.
 
-- **The bind address is not configurable.** `127.0.0.1` always. There is no
-  `host` option to set to `0.0.0.0` by accident, and an application listening on
-  a public interface does not thereby publish its devtools.
+- **The bind address defaults to loopback and widening it is reported.**
+  `127.0.0.1` unless the registration names a `host`, because a debugging aid
+  should not be reachable by default and an application listening on a public
+  interface does not thereby publish its devtools. The option exists because a
+  container that publishes its port, a remote development box, and a phone on
+  the same network are real cases the default would otherwise make unreachable.
+  A bind outside loopback is permitted and never silent: the start reports one
+  row under `Devtools` naming the `host` option, the address the socket took,
+  and `/requests` — which records request headers and bodies by default — so the
+  reader learns the concrete exposure rather than the abstraction. `127.0.0.1`,
+  any `127.x.x.x`, `::1`, and `localhost` are the loopback spellings
+  the row is skipped for. The check is syntactic and resolves nothing, which is
+  the safe direction: a host name that points at loopback still reports.
 - **No environment inference.** `enabled` is required and is the application's
   decision. The framework does not read `NODE_ENV`, because an environment
   variable is not a security boundary and a framework that guesses on the
@@ -455,7 +466,8 @@ the failure mode is it being reachable when it should not be.
   to replace before an entry is stored. Everything else about the record is what
   it is: in memory, per boot, never on disk. No default guards it, for the same
   reason `enabled` is the application's decision: the module is already opt-in
-  and the socket is already loopback-bound, and a framework that hides data the
+  and the socket is loopback-bound unless the application itself moved it, and a
+  framework that hides data the
   developer asked to see is the same mistake as one that guesses about the
   environment.
 
@@ -570,7 +582,10 @@ conformance lane mirrors the public contract in
 
 - Boot an application with the plugin registered and query the server over
   `fetch`. Do not test handlers directly; the contract is HTTP.
-- Cover: the disabled module opening no socket; the forced loopback address;
+- Cover: the disabled module opening no socket; the default loopback bind
+  reporting nothing; each loopback spelling reporting nothing; a host outside
+  loopback binding, answering, and reporting once under `Devtools`; a widened
+  bind that cannot be taken reporting the address it could not take;
   a non-`GET` method answered `405`; an unknown path answered `404`; each
   endpoint's shape, ordering, frozen-ness, and serializability; the cursor
   contract including `since` beyond the retained window; `/aot` before and

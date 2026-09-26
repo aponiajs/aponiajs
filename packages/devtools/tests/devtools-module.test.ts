@@ -32,6 +32,13 @@ class EnabledModule {}
 @Module({ imports: [DevtoolsModule.register({ enabled: true })] })
 class DefaultPortModule {}
 
+/** A registration that widens the bind, which is permitted and reported. */
+@Module({
+  imports: [DevtoolsModule.register({ enabled: true, port: ephemeralPort, host: "0.0.0.0" })],
+  controllers: [HealthController],
+})
+class WidenedHostModule {}
+
 interface CapturedOutput {
   readonly rows: () => readonly string[];
   readonly restore: () => void;
@@ -247,6 +254,32 @@ test.serial("an enabled module reports the loopback port it defaults to", async 
     output.restore();
   }
 });
+
+test.serial(
+  "a host outside loopback is reported once under Devtools, naming what it exposed",
+  async () => {
+    const output = captureOutput();
+    let application: AponiaElysiaApplication | undefined;
+    try {
+      application = await AponiaFactory.create(WidenedHostModule);
+      await application.listen(0);
+
+      // `devtoolsReports` is what makes this the row a developer reads: it keeps
+      // only the lines written under the `Devtools` context. The enabled line
+      // names the address too, so the filter is `/requests` — the endpoint whose
+      // record the widening puts on the network — and it must match exactly one
+      // row.
+      const exposed = devtoolsReports(output).filter((row) => row.includes("/requests"));
+
+      expect(exposed).toHaveLength(1);
+      expect(exposed[0]).toContain("0.0.0.0");
+      expect(exposed[0]).toContain("host");
+    } finally {
+      await application?.close();
+      output.restore();
+    }
+  },
+);
 
 test.serial("the report describes the boot the plugin's own application carries", async () => {
   const output = captureOutput();

@@ -36,6 +36,27 @@ const silentLogger: LoggerService = {
   warn: () => {},
 };
 
+/**
+ * A logger that keeps what was written through it, so a case can state what a
+ * start reported rather than only what it returned.
+ */
+function recordingLogger(): {
+  readonly logger: LoggerService;
+  readonly warnings: readonly string[];
+} {
+  const warnings: string[] = [];
+  const logger: LoggerService = {
+    log: () => {},
+    fatal: () => {},
+    error: () => {},
+    warn: (message) => {
+      warnings.push(String(message));
+    },
+  };
+
+  return { logger, warnings };
+}
+
 /** Binds the loopback socket on port `0` and reads the address it took. */
 function serveLoopback(
   application: Elysia,
@@ -258,6 +279,85 @@ test("a record from a copy of the platform older than the artifact stamps answer
   }
 });
 
+test("a registration that names no host binds loopback and reports nothing", () => {
+  const { logger, warnings } = recordingLogger();
+  const server = startDevtoolsServer({ application: new Elysia(), port: 0, logger });
+
+  try {
+    expect(server?.url.startsWith("http://127.0.0.1:")).toBe(true);
+    expect(warnings).toEqual([]);
+  } finally {
+    server?.stop();
+  }
+});
+
+test("the loopback spellings a registration can name report nothing", () => {
+  const results: {
+    readonly host: string;
+    readonly url: string | undefined;
+    readonly warnings: readonly string[];
+  }[] = [];
+
+  for (const host of ["127.0.0.1", "localhost", "LOCALHOST", "::1"]) {
+    const { logger, warnings } = recordingLogger();
+    const server = startDevtoolsServer({ application: new Elysia(), host, port: 0, logger });
+
+    try {
+      results.push({ host, url: server?.url, warnings });
+    } finally {
+      server?.stop();
+    }
+  }
+
+  // The name, its case-insensitive form, and the IPv6 loopback are the
+  // spellings the check must accept beside the `127.x.x.x` form; the
+  // default case above pins that branch.
+  expect(results.map((result) => [result.host, result.warnings])).toEqual([
+    ["127.0.0.1", []],
+    ["localhost", []],
+    ["LOCALHOST", []],
+    ["::1", []],
+  ]);
+  expect(results.every((result) => result.url !== undefined)).toBe(true);
+});
+
+test("a host outside loopback binds it, answers, and reports once what it exposed", async () => {
+  const { logger, warnings } = recordingLogger();
+  const server = startDevtoolsServer({
+    application: new Elysia(),
+    host: "0.0.0.0",
+    port: 0,
+    logger,
+  });
+
+  if (server === undefined) {
+    throw new Error("the devtools server refused to bind the widened socket");
+  }
+
+  try {
+    // The socket bound the address the registration named rather than the
+    // default...
+    expect(server.url.startsWith("http://0.0.0.0:")).toBe(true);
+
+    // ...and it answers: `0.0.0.0` is every interface, loopback included, and
+    // the port is read from the address Bun reported rather than guessed.
+    const boundPort = new URL(server.url).port;
+    const response = await fetch(`http://127.0.0.1:${boundPort}/__devtools/meta`);
+    expect(response.status).toBe(200);
+
+    // One row states the address that was bound and what is reachable through
+    // it: `/requests` records request headers and bodies by default, so the
+    // reader is told what the widening costs rather than that it happened.
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain("0.0.0.0");
+    expect(warnings[0]).toContain("host");
+    expect(warnings[0]).toContain("/requests");
+    expect(warnings[0]).not.toContain("\n");
+  } finally {
+    server.stop();
+  }
+});
+
 test("a port that is already bound is refused, and the caller continues", async () => {
   const blocker = Bun.serve({
     hostname: "127.0.0.1",
@@ -285,6 +385,31 @@ test("a port that is already bound is refused, and the caller continues", async 
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toContain(`http://127.0.0.1:${blocker.port}`);
     expect(warnings[0]).not.toContain("\n");
+  } finally {
+    await blocker.stop(true);
+  }
+});
+
+test("a widened host that cannot bind reports the address it could not take", async () => {
+  const blocker = Bun.serve({ hostname: "::1", port: 0, fetch: () => new Response("taken") });
+  const { logger, warnings } = recordingLogger();
+
+  try {
+    const server = startDevtoolsServer({
+      application: new Elysia(),
+      host: "::1",
+      port: blocker.port,
+      logger,
+    });
+
+    expect(server).toBeUndefined();
+
+    // One row, and it is the refusal: a bind that never happened exposed
+    // nothing, so no exposure row joins it. The address is bracketed the way a
+    // URL needs an IPv6 host.
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain(`http://[::1]:${blocker.port}`);
+    expect(warnings[0]).not.toContain("/requests");
   } finally {
     await blocker.stop(true);
   }

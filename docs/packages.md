@@ -84,8 +84,9 @@ dependency and must be installed by the application.
 
 ### `@aponiajs/devtools`
 
-The opt-in devtools surface for a running application: a loopback HTTP API that
-reports the compiled graph, the routes the server answers, the stages each route
+The opt-in devtools surface for a running application: an HTTP API — loopback by
+default, and widened only by naming a `host` — that reports the compiled graph,
+the routes the server answers, the stages each route
 passes through, the log stream, the requests the application answered, and what
 a build decided about the project's invokers. It is a leaf package — nothing in
 the framework depends on it — and it is enabled by an application's own

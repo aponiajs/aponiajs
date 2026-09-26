@@ -7,16 +7,16 @@ specific to this package.
 
 The opt-in devtools surface for a running application: the module an application
 imports, the plugin that runs at `onStart`, and (from the tasks that build it)
-the loopback HTTP API that reports what the running application actually is. The
-package is a leaf — nothing in the framework depends on it, and an application
-installs it deliberately. It is not dependency-free itself: `@aponiajs/cli` is
+the HTTP API that reports what the running application actually is — loopback by
+default, and widened only by naming a host. The package is a leaf — nothing in
+the framework depends on it, and an application installs it deliberately. It is not dependency-free itself: `@aponiajs/cli` is
 what `/aot`'s build verdicts are read through, and that import is deferred to the
 first request so an application that never polls the endpoint never loads it.
 
 | Domain       | Owns                                                                                                                    |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------- |
 | `module/`    | `DevtoolsModule.register`, `DevtoolsOptions`, the plugin                                                                |
-| `server/`    | `startDevtoolsServer`, the loopback socket, `routeRequest`, the dispatcher                                              |
+| `server/`    | `startDevtoolsServer`, the socket and the loopback check, `routeRequest`, the dispatcher                                |
 | `endpoints/` | One payload builder and its wire contract per endpoint, `/meta` first, and the cursor reader the cursor endpoints share |
 | `buffer/`    | The bounded cursor buffer `/logs` and `/requests` share, and nothing else                                               |
 | `logging/`   | The log stream: its record, its bound, the tap that fills it from a logger, and the one-line form of a thrown reason    |
@@ -43,9 +43,20 @@ runtime boundary it describes.
 - `onStart` fires on `listen()`. An application that only calls `handle()`
   publishes nothing and must be unaffected — that is accepted behavior, not a
   defect to work around.
-- The bind address is `127.0.0.1`, always, and there is no `host` option to set
-  to `0.0.0.0` by accident. A debugging aid that reaches a public interface is
-  the failure mode this package exists not to have.
+- The bind address defaults to `127.0.0.1` and `host` is what moves it. Loopback
+  stays the default because a debugging aid should not be reachable by default;
+  the option exists because a container that publishes its port, a remote
+  development box, and a phone on the same network are all real cases. A bind
+  outside loopback is permitted and never silent, and the row names the concrete
+  exposure rather than the abstraction: the `host` option, the address the
+  socket took, and `/requests`, because that endpoint records request headers
+  and bodies by default. `127.0.0.1`, any `127.x.x.x`, `::1`, and
+  `localhost` are the spellings the warning is skipped for. The check is this
+  package's own and resolves nothing, so a host name that points at loopback
+  still warns; that direction is the safe one, because a spelling the pattern
+  cannot be sure of is reported rather than assumed. A debugging aid that
+  reaches a public interface silently is the failure mode this package exists
+  not to have.
 - A debugging aid must never fail a boot: a port that is already bound is
   reported under `Devtools` with the reason, `startDevtoolsServer` returns
   `undefined`, and the application continues. The plugin's `onStart` reports
@@ -508,6 +519,15 @@ whose devtools points at the port the blocker took — and the pair is what make
 the two reports distinguishable: the ephemeral case names an address that
 answers, the refused case states it could not listen and leaves the application
 answering its own routes.
+
+The bind address is asserted through what a start reports, not through what it
+returns: the default names `127.0.0.1` and reports no row, each loopback
+spelling a registration can name — the address, `localhost`, its other case, and
+`::1` — binds without a row, and a host outside loopback binds the address it
+named, answers on it, and reports exactly one row naming the `host` option, that
+address, and `/requests`. A widened bind that is refused reports the refusal and
+no exposure row, because a socket that never started exposed nothing; that case
+is also what pins the bracketed form of an IPv6 address.
 
 `/aot`'s analysis is a project on disk, so its cases write one into a temporary
 directory and `process.chdir` into it, restoring the working directory after each

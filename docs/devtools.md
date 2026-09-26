@@ -1,7 +1,8 @@
 # Devtools
 
-`@aponiajs/devtools` publishes a loopback HTTP API that answers what a running
-application **is** and what it **did**: the module graph it compiled, the routes
+`@aponiajs/devtools` publishes an HTTP API — loopback by default, and widened
+only by naming a host — that answers what a running application **is** and what
+it **did**: the module graph it compiled, the routes
 it actually answers, the stages each route passes through, the lines its logger
 wrote, the requests it answered, and what a build decides about its invokers.
 
@@ -35,12 +36,13 @@ import { DevtoolsModule } from "@aponiajs/devtools";
 export class AppModule {}
 ```
 
-| Option    | Meaning                                                                    |
-| --------- | -------------------------------------------------------------------------- |
-| `enabled` | Whether the devtools mount at all. Required, and the only required option. |
-| `port`    | The loopback port to bind. Defaults to `8000`.                             |
-| `logger`  | The logger `/logs` records, or `false`. See [the log stream](#logs).       |
-| `capture` | What `/requests` records: an opt-out per field, or `false` for none of it. |
+| Option    | Meaning                                                                                                    |
+| --------- | ---------------------------------------------------------------------------------------------------------- |
+| `enabled` | Whether the devtools mount at all. Required, and the only required option.                                 |
+| `port`    | The port to bind. Defaults to `8000`.                                                                      |
+| `host`    | The address to bind. Defaults to `127.0.0.1`; anything outside loopback is reported once under `Devtools`. |
+| `logger`  | The logger `/logs` records, or `false`. See [the log stream](#logs).                                       |
+| `capture` | What `/requests` records: an opt-out per field, or `false` for none of it.                                 |
 
 `enabled: false` is not a plugin that does nothing. It is an inert module — no
 provider, no native plugin, and therefore no socket — so a boot that mounts it
@@ -64,10 +66,19 @@ cost is a registration that does not mount at all.
 
 Three facts about the socket:
 
-- **The address is always `127.0.0.1`.** There is no `host` option to set to
-  `0.0.0.0` by accident. A debugging aid that reaches a public interface is the
-  failure mode this package exists not to have, so widening the bind is not a
-  configuration this package offers.
+- **The address defaults to `127.0.0.1`, and `host` is what moves it.** A
+  debugging aid should not be reachable by default, so a registration that names
+  no host gets loopback; the option exists because a container that publishes
+  its port, a remote development box, and a phone on the same network are all
+  real cases. Widening the bind is permitted and never silent: the start reports
+  one row under `Devtools` naming the `host` option, the address the socket
+  took, and `/requests` — which records request headers and bodies by default,
+  so binding it where the network can reach it puts credentials on the network.
+  A row that said only "reachable from the network" would leave the reader to
+  guess that. `127.0.0.1`, any `127.x.x.x`, `::1`, and `localhost` are
+  the loopback spellings the warning is skipped for; the check names them rather
+  than resolving anything, so a host name that points at loopback still warns
+  and every other value — `0.0.0.0` included — is reported.
 - **A taken port never fails a boot.** The refused bind is reported under the
   `Devtools` context with the reason, and the application continues without the
   devtools server. Only a start that succeeded becomes the socket the plugin

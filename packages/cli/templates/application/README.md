@@ -33,8 +33,9 @@ main.ts
 
 Open `http://localhost:3000/` after starting the application.
 
-`@aponiajs/devtools` serves a loopback API on `http://127.0.0.1:8000/__devtools`
-while an application that registers it listens: `meta`, `graph`, `routes`,
+`@aponiajs/devtools` serves an API on `http://127.0.0.1:8000/__devtools` —
+loopback unless its registration names a `host` — while an application that
+registers it listens: `meta`, `graph`, `routes`,
 `flow`, `logs`, `requests`, and `aot`. This starter does not register it, because
 registering it means importing a dynamic module, and `aponia build` reports a
 root module that imports one as `DECLINED` — the committed
