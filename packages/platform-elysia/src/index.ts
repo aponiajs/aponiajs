@@ -1,5 +1,11 @@
 export { AponiaElysiaApplication } from "./application/aponia-elysia-application.ts";
 export { AponiaFactory } from "./application/aponia-factory.ts";
+export { readApplicationDiagnostics } from "./application/application-diagnostics.ts";
+export type {
+  AponiaApplicationDiagnostics,
+  AponiaCompiledRouteDiagnostics,
+  AponiaInvokerDiagnostics,
+} from "./application/application-diagnostics.types.ts";
 export type {
   AponiaApplicationOptions,
   ConfiguredAponiaApplicationOptions,

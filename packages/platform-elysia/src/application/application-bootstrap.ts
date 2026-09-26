@@ -3,6 +3,7 @@ import {
   Logger,
   tokenName,
   type ClassToken,
+  type EnhancerMetadata,
   type LoggerService,
 } from "@aponiajs/common";
 import { createContainer } from "@aponiajs/core";
@@ -32,6 +33,10 @@ import {
   registerElysiaWebSocketGateways,
 } from "../websockets/websocket-gateway.ts";
 import { aponiaVersion } from "../version.ts";
+import {
+  attachApplicationDiagnostics,
+  createApplicationDiagnostics,
+} from "./application-diagnostics.ts";
 import type { ApplicationBootstrapResult } from "./application-bootstrap.types.ts";
 import type {
   AponiaApplicationOptions,
@@ -51,15 +56,29 @@ export async function bootstrapAponiaApplication(
   logger?.log("Starting Aponia application...", "AponiaFactory");
 
   // Resolved once, before any controller mounts, so a refused artifact costs a
-  // single log line rather than one lookup per controller.
-  const generatedInvokers = selectInvokerArtifact(options.invokers, aponiaVersion, logger);
+  // single log line rather than one lookup per controller. The decision is kept
+  // whole, because a boot has to be able to say not only that it compiled its
+  // own binding but why the artifact could not supply one.
+  const invokerSelection = selectInvokerArtifact(options.invokers, aponiaVersion, logger);
 
   // The generated descriptors are the whole module graph, so the root is chosen
   // once, before anything is compiled: a refused artifact leaves the application
   // it named in place.
-  const compiledRootModule = compileRootModule(
-    selectRootModuleDescriptor(options.descriptors, rootModule, aponiaVersion, logger),
+  const selectedRootModule = selectRootModuleDescriptor(
+    options.descriptors,
+    rootModule,
+    aponiaVersion,
+    logger,
   );
+  const compiledRootModule = compileRootModule(selectedRootModule);
+  // Which graph served the application is read from what the selector returned,
+  // never by re-reading the artifact: a class it left in place was lowered from
+  // its decorators, while a descriptor it substituted — and a root the caller
+  // declared as a descriptor or a dynamic module — is data the boot served.
+  const graph: "declared" | "decorated" =
+    selectedRootModule === rootModule && typeof rootModule === "function"
+      ? "decorated"
+      : "declared";
   const container = createContainer(compiledRootModule);
   const webSocketGateways = compileElysiaWebSocketGateways(container.graph.modules);
   const baseApplication = new Elysia({
@@ -91,14 +110,18 @@ export async function bootstrapAponiaApplication(
   // enhancer is constructed after the providers it may depend on, and it happens
   // whether or not any controller mounts: an application that declares a global
   // enhancer it cannot resolve is refused at boot, not at its first request.
+  // The declaration is kept as data beside the resolution it lowers into,
+  // because the boot's record publishes it: a plan states what its route
+  // declares, and the declaration is the other half of the hook a route runs.
+  const globalEnhancerDeclarations: EnhancerMetadata = Object.freeze({
+    guards: Object.freeze([...(options.guards ?? [])]),
+    interceptors: Object.freeze([...(options.interceptors ?? [])]),
+    filters: Object.freeze([...(options.filters ?? [])]),
+  });
   const globalEnhancers: ResolvedEnhancers = resolveEnhancers(
     container,
     container.graph.root,
-    Object.freeze({
-      guards: Object.freeze([...(options.guards ?? [])]),
-      interceptors: Object.freeze([...(options.interceptors ?? [])]),
-      filters: Object.freeze([...(options.filters ?? [])]),
-    }),
+    globalEnhancerDeclarations,
   );
 
   // Elysia runs a route's own `error` array only while composing routes ahead of
@@ -165,7 +188,7 @@ export async function bootstrapAponiaApplication(
           controller,
           nativeApplication,
           instance,
-          generatedInvokers,
+          invokerSelection.invokers,
           mountedEnhancers,
         );
         logControllerRoutes(logger, controller, nativeApplication.routes.slice(routeStart));
@@ -185,6 +208,29 @@ export async function bootstrapAponiaApplication(
       nativeApplication.use(plugin);
     }
   }
+
+  // The boot's own record, attached to the application it returns: which root
+  // the container compiled, what it decided about the invoker artifact, the
+  // compiled root, every plan the controllers mounted from, and the
+  // application's own enhancer declaration. Those are the facts a consumer
+  // cannot recover from the mounted application — a route keeps its method and
+  // path, never the module or controller that declared it — and the record is
+  // attached here, once the container holds every plan, rather than after the
+  // gateway work, which mounts through its own path.
+  attachApplicationDiagnostics(
+    nativeApplication,
+    createApplicationDiagnostics({
+      framework: aponiaVersion,
+      graph,
+      invokers: {
+        accepted: invokerSelection.invokers !== undefined,
+        reason: invokerSelection.reason,
+      },
+      rootModule: compiledRootModule,
+      modules: container.graph.modules,
+      globalEnhancers: globalEnhancerDeclarations,
+    }),
+  );
 
   await nativeApplication.modules;
   await registerElysiaWebSocketGateways(nativeApplication, container, webSocketGateways);

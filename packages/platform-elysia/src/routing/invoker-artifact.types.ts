@@ -22,3 +22,20 @@ export interface AponiaInvokerArtifact {
   /** Invokers keyed by controller class token. */
   readonly invokers: ReadonlyMap<ClassToken<unknown>, AponiaControllerInvokerFactory>;
 }
+
+/**
+ * What the boot may use, and why when it may use nothing.
+ *
+ * The reason is the decision's own words rather than a second explanation
+ * written by a consumer: the selector is the only place the refusal rules
+ * exist, so it is the only place that can state why one applied, and the boot
+ * reports the same sentence on its log channel and in the record it publishes.
+ *
+ * @internal
+ */
+export interface AponiaInvokerSelection {
+  /** The invokers the boot may use, or `undefined` when it compiles its own. */
+  readonly invokers: ReadonlyMap<ClassToken<unknown>, AponiaControllerInvokerFactory> | undefined;
+  /** Why the artifact was refused, or `undefined` when it was adopted. */
+  readonly reason: string | undefined;
+}

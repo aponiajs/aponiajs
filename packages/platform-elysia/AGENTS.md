@@ -180,9 +180,11 @@ runtime boundary it describes.
   file costs a cold start rather than a wrong binding, and supplying an artifact
   can never make a bootable application fail. The refusal is reported through
   the system logger under `RoutesResolver` and names both framework versions and
-  the Elysia the artifact was generated against. `elysia` is recorded as
-  provenance rather than re-read at run time: the supported Elysia range is
-  already enforced by the peer dependency and by
+  the Elysia the artifact was generated against; the selector returns that
+  decision — the invokers or the reason for their absence — so the boot publishes
+  the same sentence in its own record instead of restating the rule. `elysia` is
+  recorded as provenance rather than re-read at run time: the supported Elysia
+  range is already enforced by the peer dependency and by
   `routing/native-route.ts`'s structural guard, and reading an installed
   manifest at bootstrap would add a resolution this package does not otherwise
   need.
@@ -207,6 +209,25 @@ runtime boundary it describes.
   guards the selected entry structurally rather than trusting the option's type:
   a JavaScript caller has no type checker, and a truncated descriptor reaching
   the graph compiler is the one outcome this option must never cause.
+- `bootstrapAponiaApplication` attaches one boot record to the native application
+  it returns, under `Symbol.for("aponia.application.diagnostics")`, and
+  `readApplicationDiagnostics` is its only reader. The property is non-enumerable,
+  non-writable, and non-configurable, and the record is frozen: this is a seam,
+  not shape, because Elysia composes by walking an instance's keys, and an
+  application no boot produced — a plain `Elysia`, a plugin instance — must read
+  as `undefined` rather than as an empty record. The record is attached once the
+  container holds every plan and before the gateway work, and it states what the
+  boot decided and mounted: the release, whether the graph it served was
+  `"declared"` or `"decorated"` — read off what `selectRootModuleDescriptor`
+  returned, never by re-reading the artifact, and `"declared"` for a root the
+  caller itself passed as a descriptor or a dynamic module — the invoker
+  artifact's verdict with the selector's own reason, the root `compileRootModule`
+  returned, every compiled plan its controllers mounted (a controller mounted
+  through the low-level descriptor path built its routes in a callback and
+  contributes none), and the application's own enhancer declaration, which no
+  plan carries because a plan states only what its route declares. Consumers
+  project this record; they never re-apply a selector's rule to reach the same
+  answer.
 - `defineElysiaControllerRoutes` is the descriptor path's counterpart to
   `@Controller()` and its route decorators: it compiles `ElysiaRoutePlan` values
   through the same lowering a decorated controller uses, so a declared
