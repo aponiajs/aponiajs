@@ -32,15 +32,20 @@ export class AppModule {}
   publishes nothing and is otherwise unaffected.
 - **Loopback only.** The devtools server binds `127.0.0.1` on `port` (default
   `8000`), with no way to widen the address.
-- **The log stream is the application's own.** The boot record names the logger
-  the application logs through — the object the factory built or the one it was
-  handed, whichever the application asked for — and starting the devtools server
-  patches that object **in place** so every line it writes is recorded without
-  the application handing anything over twice. The patch is a mutation of a
-  logger the platform and the application both hold, and it is the only way to
-  see the lines: a wrapper would see only what goes through the wrapper. The
-  stream holds what was written through that one object, and the container hands
-  no logger to a provider, so a provider's own logger is not part of it.
+- **The log stream is the application's own, and it is handed over twice.** Pass
+  the same logger to `DevtoolsModule.register` and to `AponiaFactory.create`:
+  registration patches that object **in place**, so every line it writes — the
+  framework's and the application's — is recorded without anything being replaced,
+  and the stream starts there, before the boot writes, so the lines a boot reports
+  about itself are in it. That is the condition this option states rather than
+  hides: the framework never exposes the logger it builds for itself, so an
+  application that names a level array (or nothing at all) has no object to record
+  from, and a registration that names one of those serves no `/logs` rather than an
+  empty stream that would read as "nothing is being logged". The patch is a
+  mutation of a logger the application holds too, and the stream holds the lines
+  written through that one object — the platform's own, and an application's where
+  it logs through the same reference, because the container hands no logger to a
+  provider.
 - **A taken port never fails a boot.** The refused bind is reported under
   `Devtools`, and the application continues without the devtools server.
 - **The socket stops with the application.** `close()` stops the devtools server
@@ -81,16 +86,16 @@ export class AppModule {}
   filters are a list beside the stages rather than a stage in the chain, ordered
   as its own `error` array is, with the Problem Details mapping last.
 - **`GET /__devtools/logs?since=<cursor>` streams what the application logged.**
-  The stream is the logger the boot decided on, read from the boot record and
-  recorded from the moment the socket starts — so the lines the application
-  writes while it serves are the lines this answers, whatever it named at the
-  factory: a `LoggerService`, a list of levels, or nothing at all. `logger: false`
-  publishes the stream empty, and an application no boot produced serves no
-  `/logs`. Each poll names the cursor the previous answer carried and is answered
-  with `{ cursor, entries }`, where an entry is
-  `{ level, context, message, timestamp }`. A cursor older than the retained
-  window is answered with what is retained and one ahead of every write with
-  nothing: neither is an error, and the cursor never goes backwards.
+  The registration takes the logger the application also gives
+  `AponiaFactory.create`, patches it in place, and records every line into a
+  bounded buffer from the moment the module registers — `logger: false` publishes
+  that stream empty, and a registration with no logger object to record from,
+  because it named none or named something that is not one, serves no `/logs`.
+  Each poll names the cursor the previous answer carried and is answered with
+  `{ cursor, entries }`, where an entry is `{ level, context, message, timestamp }`.
+  A cursor older than the retained window is answered with what is retained and
+  one ahead of every write with nothing: neither is an error, and the cursor never
+  goes backwards.
 - Every endpoint is a `GET`: any other method answers `405` before the path is
   read, and a path the server does not serve answers `404`.
 

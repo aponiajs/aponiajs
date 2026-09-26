@@ -21,9 +21,9 @@ const recordableLevels = [
  * A logger is a live object the application owns, so tapping one twice would
  * wrap the wrapper: every line would be recorded twice and printed twice. The
  * map makes a second tap answer with the stream that is already recording — one
- * logger, one stream — which is also what keeps a second `listen()`, and the
- * second devtools server it starts, publishing the stream the logger writes to
- * rather than a fresh one nothing writes into.
+ * logger, one stream — so a registration that names a logger another one already
+ * named publishes the stream a client is already polling rather than a fresh one
+ * nothing writes into.
  */
 const tappedLoggers = new WeakMap<object, LogBuffer>();
 
@@ -31,11 +31,11 @@ const tappedLoggers = new WeakMap<object, LogBuffer>();
  * Whether this package can record the lines a value writes: an object with at
  * least one callable `LoggerService` method.
  *
- * The value comes from a boot record this package did not write, so it is
- * checked rather than trusted. A value that fails the check records nothing, and
- * the endpoint that would publish it is not registered at all, because an empty
- * stream claims the application logs nothing — the one answer that must not be
- * given when it is not true.
+ * The value arrives from an option, and a JavaScript caller has no type checker,
+ * so it is checked rather than trusted. A value that fails the check records
+ * nothing, and the endpoint that would publish it is not registered at all,
+ * because an empty stream claims the application logs nothing — the one answer
+ * that must not be given when it is not true.
  *
  * @internal
  */
@@ -116,8 +116,8 @@ export function tapLogBuffer(logger: LoggerService, buffer: LogBuffer): LogBuffe
  * package could not patch is still a logger it has answered for, and a second
  * caller gets the same answer rather than a second stream that records nothing.
  *
- * A value that cannot be keyed — a foreign record can hold anything — is simply
- * not remembered, because the stream handed over is the answer either way.
+ * A value that cannot be keyed — a JavaScript caller can pass anything — is
+ * simply not remembered, because the stream handed over is the answer either way.
  */
 function rememberTap(logger: LoggerService, buffer: LogBuffer): void {
   try {

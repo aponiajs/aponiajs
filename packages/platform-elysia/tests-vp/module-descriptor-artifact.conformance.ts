@@ -4,7 +4,6 @@ import {
   Module,
   defineModule,
   provideClass,
-  type LoggerService,
   type ModuleDefinition,
 } from "@aponiajs/common";
 import { z } from "zod";
@@ -120,13 +119,6 @@ type ArtifactsAssertion = Expect<
   Equals<AponiaApplicationDiagnostics["artifacts"], AponiaArtifactProvenance>
 >;
 /**
- * The logger a boot decided on. `null` is the application's own decision to log
- * nothing, so it belongs to the type rather than to a consumer's guess, and the
- * field is never optional: a record written before it existed is a different
- * thing from a boot that disabled its logging.
- */
-type LoggerAssertion = Expect<Equals<AponiaApplicationDiagnostics["logger"], LoggerService | null>>;
-/**
  * The two stamps a consumer reports as provenance. `null` is a first-class
  * answer — "no artifact supplied this", including a descriptor a caller wrote by
  * hand — so it belongs to the type rather than to a rule a consumer re-applies.
@@ -203,33 +195,6 @@ test("the Vite+ lane types the binding each route of a boot record reports", () 
   expect(sourceAssertion).toBe(true);
   expect(callbackRouteAssertion).toBe(true);
   expect(callbackRoutesAssertion).toBe(true);
-});
-
-test("the Vite+ lane types the logger a boot record carries", () => {
-  const loggerAssertion: LoggerAssertion = true;
-
-  expect(loggerAssertion).toBe(true);
-});
-
-test("the Vite+ lane reads the logger a boot decided on", async () => {
-  const suppliedLogger: LoggerService = {
-    log: () => {},
-    fatal: () => {},
-    error: () => {},
-    warn: () => {},
-  };
-  const supplied = await AponiaFactory.create(ConformanceDescriptorModule, {
-    logger: suppliedLogger,
-  });
-
-  // The object the application handed over, not a copy of it: the record states
-  // which logger the boot chose, and this is the one its own lines reached.
-  expect(readApplicationDiagnostics(supplied.getNativeApplication())?.logger).toBe(suppliedLogger);
-  await supplied.close();
-
-  const disabled = await AponiaFactory.create(ConformanceDescriptorModule, { logger: false });
-  expect(readApplicationDiagnostics(disabled.getNativeApplication())?.logger).toBeNull();
-  await disabled.close();
 });
 
 test("the Vite+ lane reads the binding each mounted plan reports", async () => {

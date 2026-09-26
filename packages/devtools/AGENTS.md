@@ -189,51 +189,44 @@ runtime boundary it describes.
   route ends with — because the first entry that answers is the one that decides.
   A route no plan describes carries no list at all: the platform compiles that
   array only for the routes it mounts from a plan.
-- The log stream comes from the boot record, and the logger it names is patched
-  in place rather than replaced. The logger is a boot decision the platform
-  already made — the object `AponiaFactory.create` built or was handed — so
-  reading it from the record is what makes the endpoint answer for an
-  application that named nothing, which is the default and the state a
-  registration-time handover could not cover. Recording means patching that
-  object's methods: it is the logger the application and the platform already
-  hold references to, so a wrapper would see only the lines that went through the
-  wrapper and a replacement would be one neither of them writes to. The patch is
-  a mutation of a platform-owned object, and this package states it as such
-  because `/logs` would otherwise claim a completeness it does not have. Every
-  call is recorded, whatever the logger's own level filter would print, because
-  `LoggerService` has no notion of an enabled level and re-applying a rule this
-  package cannot read would be enforcing a filter it does not own. A logger it
-  cannot patch is left as it is; a tap is this package's convenience and never
-  the application's contract. The stream holds the lines written through that one
-  object — the platform's own, and an application's where it logs through the
-  same reference, because the container hands no logger to a provider — so
-  nothing reaches `/logs` that the application did not route through the logger
-  it booted with.
-- One logger records into one stream: the tap answers a second caller — a second
-  `listen()` starting a second devtools server over the same application — with
-  the stream that is already recording, so the lines a client polls and the lines
-  the logger writes cannot drift apart. A logger the tap could not patch is
-  remembered the same way, because it is a logger this package has already
-  answered for.
-- The stream begins when the socket starts, which is when the server reads the
-  record, so the lines a boot writes about itself are not in it. That is the
-  cost of reading the logger from the boot record instead of being handed one at
-  registration, and it is accepted rather than worked around: the alternative is
-  an endpoint that serves an empty stream for every application that named no
-  logger, which is the silence this endpoint exists to remove. The line the
-  application writes while it serves is the line this states.
-- The record's `logger` field has four states and each is an answer. A logger is
-  tapped and its stream published. `null` — the value the application passed as
-  `logger: false` — is a decision, and the stream is published empty rather than
-  absent, because an empty stream is what that decision looks like from a client.
-  A field the record does not carry at all is a record written before this field
-  existed, or an application no boot produced, and it serves no `/logs`: the
-  endpoint states a stream and this server has none to state, the way a record
-  with no compiled root serves no `/graph`. A value that is not a logger at all
-  reads the same way, because a foreign record may hold anything and an empty
-  stream would claim the application logs nothing while it logs normally.
-  Nothing here accepts a logger from the registration: whatever the application
-  gave the factory is what it logs through, and the record is where that is read.
+- The log stream is built when the module is registered, not when the socket
+  starts, and the logger is patched in place rather than replaced. Registration is
+  the only moment this package holds the application's logger before the boot
+  writes, so a stream that began at `onStart` would have none of the lines the
+  boot reports about itself — the graph it served, the modules it initialized, the
+  routes it resolved — which are most of what a log stream is worth. That timing
+  is a rule and not an arrangement: a tap moved into the server for tidiness
+  silently drops those lines. The logger is the object the application and the
+  platform both hold, so a wrapper would be a logger the framework never uses and
+  a replacement one the application never sees: patching its methods keeps one
+  object, still prints every line it printed before, and records every call
+  whatever the logger's own level filter would print, because `LoggerService` has
+  no notion of an enabled level and re-applying a rule this package cannot read
+  would be enforcing a filter it does not own. A logger it cannot patch is left as
+  it is; a tap is this package's convenience and never the application's contract.
+  One logger records into one stream: a logger this package has already answered
+  for is answered with the stream that is recording rather than a second one
+  nothing writes into, and that includes a logger it could not patch, because the
+  answer is the stream either way. The stream holds the lines written through that
+  one object — the platform's own, and an application's where it logs through the
+  same reference, because the container hands no logger to a provider, so nothing
+  reaches `/logs` that the application did not route through the logger it handed
+  over.
+- `DevtoolsOptions.logger` is the application's handover, and its four states are
+  four answers. A `LoggerService` is tapped and records. `false` — the value that
+  turns the application's logging off — publishes the stream empty rather than
+  absent, because the application decided and an empty stream is what that
+  decision looks like from a client. Omitting the option publishes no `/logs` at
+  all, the way a record with no compiled root serves no `/graph`, because the
+  endpoint states a stream and this registration has none to state. A value that
+  is not a logger is that same fourth answer however it arrived — a JavaScript
+  caller has no type checker — because an empty stream would claim the application
+  logs nothing while it logs normally. The handover is a condition this package
+  states rather than hides: the framework never exposes the logger it builds for
+  itself, so an array of levels tells the platform to build a logger of its own
+  and an application that names one has nothing to hand over. The option doc, the
+  README, and `llms.txt` all say so, because the consequence is a silent absence
+  otherwise.
 - The log buffer is bounded at a capacity this package chooses, because the spec
   bounds the buffer and names no number. One value lives in the logging domain and
   is stated once; the capacity is not a per-call decision, so it is not repeated
@@ -362,20 +355,15 @@ The tap is asserted against a logger the case owns, because what it must not
 change is the object: the case keeps its own record of the calls it received and
 writes through its own reference, so a tap that swallowed a line, wrapped the
 logger instead of patching it, or failed to write through is visible, and the
-second-tap case pins that one logger answers with one stream.
-
-The stream is asserted over real boots, one per state the record can be in, and
-the decisive case is the one the factory was given nothing for: an application
-that named no logger at all must still answer `/logs`, which a handover through
-`DevtoolsOptions` could not cover. A list of levels is the other shape that has
-no logger object to hand over, and a supplied `LoggerService` is the case where
-the application's own next line must arrive after the cursor the previous answer
-carried. A boot writes its own lines before the socket starts, so the boot-lines
-case is asserted the other way round: the stream holds `AponiaApplication` and
-not `InstanceLoader`, which is the accepted cost of reading the logger from the
-record. `logger: false` is asserted as the empty stream it is, and a record with
-no `logger` field, a record whose field is not a logger, and an application no
-boot produced are asserted as the three that serve no endpoint at all.
+second-tap case pins that one logger answers with one stream. The stream is then
+asserted over a real boot, where the lines the boot wrote before `onStart` must
+appear — the case a tap installed when the socket starts would fail, and the
+assertion that says why the tap belongs to the registration — and where the
+application's own next line must arrive after the cursor the previous answer
+carried. `logger: false` is asserted as the empty stream it is, and a registration
+that named no logger at all and one that named a level array — the value the
+option does not accept, which a JavaScript caller can still pass — are asserted as
+the two registrations that serve no endpoint rather than an empty stream.
 
 The Elysia read is asserted for what it refuses: the workspace's own install
 answers its version, and a throwaway project that installed nothing answers

@@ -1,4 +1,4 @@
-import type { EnhancerMetadata, LoggerService, ModuleDefinition } from "@aponiajs/common";
+import type { EnhancerMetadata, ModuleDefinition } from "@aponiajs/common";
 import type { CompiledElysiaRoute } from "../routing/route-compiler.types.ts";
 
 /**
@@ -104,36 +104,16 @@ export interface AponiaCallbackRouteDiagnostics {
  * `bootstrapAponiaApplication` produces one, `readApplicationDiagnostics` is
  * the only reader, and an application no boot produced reads as `undefined`.
  * Each fact is one bootstrap already decided — the graph the root selector
- * served, the system logger it built, the invoker artifact's verdict, the release
- * each adopted artifact came from, the compiled root, the plans the controllers
- * mounted from and the routes they mounted themselves, and the application's own
- * enhancer declaration — so a consumer reports what the runtime did instead of
- * re-applying its rules.
+ * served, the invoker artifact's verdict, the release each adopted artifact came
+ * from, the compiled root, the plans the controllers mounted from and the routes
+ * they mounted themselves, and the application's own enhancer declaration — so a
+ * consumer reports what the runtime did instead of re-applying its rules.
  *
  * @internal
  */
 export interface AponiaApplicationDiagnostics {
   /** The AponiaJS release that booted the application. */
   readonly framework: string;
-  /**
-   * The system logger this boot built, which is the object the platform, the
-   * application facade, and the default exception mapping all write through — or
-   * `null` when the application disabled its logging with `logger: false`.
-   *
-   * It is the object itself rather than a description of one, and it is the only
-   * one there is: a boot handed a `LoggerService` records that same object, and
-   * one handed nothing or a list of levels records the logger it built, so there
-   * is no state in which an application logs normally and this field names
-   * something else. Reading it is what lets a consumer observe a boot's own lines
-   * without the application handing its logger over a second time.
-   *
-   * The record does not freeze it, and cannot: the logger is a live object the
-   * application holds too, and a record may not make another owner's object
-   * immutable. A consumer that patches it is patching that object, which is
-   * exactly what makes a stream of the application's lines possible — and also
-   * why a consumer that does it has to say so.
-   */
-  readonly logger: LoggerService | null;
   /**
    * Which root the container compiled: `"declared"` when that root is a
    * `ModuleDefinition` — the artifact's descriptor, or one the caller passed —
