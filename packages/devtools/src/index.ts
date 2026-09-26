@@ -7,12 +7,13 @@
  * enabled one serves the loopback API the rest of this barrel describes.
  */
 export { DevtoolsModule } from "./module/devtools-module.ts";
-export type { DevtoolsOptions } from "./module/devtools-module.types.ts";
+export type { DevtoolsCaptureOptions, DevtoolsOptions } from "./module/devtools-module.types.ts";
 export { resolveElysiaVersion, startDevtoolsServer } from "./server/devtools-server.ts";
 export { devtoolsPathPrefix, routeRequest } from "./server/request-router.ts";
 export { devtoolsContractVersion } from "./endpoints/meta.ts";
 export { createLogBuffer, defaultLogBufferCapacity } from "./logging/log-buffer.ts";
 export { tapLogBuffer } from "./logging/log-tap.ts";
+export { createRequestBuffer, defaultRequestBufferCapacity } from "./requests/request-buffer.ts";
 export { aponiaVersion } from "./version.ts";
 export type {
   DevtoolsHandlers,
@@ -27,9 +28,11 @@ export type {
   AponiaMetaPayload,
   AponiaMountedRoute,
   AponiaRouteSource,
+  AponiaRequestsPayload,
   AponiaRoutesPayload,
 } from "./endpoints/payloads.types.ts";
 export type { LogBuffer, LogEntry } from "./logging/log-buffer.types.ts";
+export type { RequestBuffer, RequestRecord } from "./requests/request-buffer.types.ts";
 export type {
   AponiaFlowFilter,
   AponiaFlowPayload,

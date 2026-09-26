@@ -11,13 +11,14 @@ the loopback HTTP API that reports what the running application actually is. The
 package is a leaf — nothing in the framework depends on it, and an application
 installs it deliberately.
 
-| Domain       | Owns                                                                           |
-| ------------ | ------------------------------------------------------------------------------ |
-| `module/`    | `DevtoolsModule.register`, `DevtoolsOptions`, the plugin                       |
-| `server/`    | `startDevtoolsServer`, the loopback socket, `routeRequest`, the dispatcher     |
-| `endpoints/` | One payload builder and its wire contract per endpoint, `/meta` first          |
-| `buffer/`    | The bounded cursor buffer `/logs` and `/requests` share, and nothing else      |
-| `logging/`   | The log stream: its record, its bound, and the tap that fills it from a logger |
+| Domain       | Owns                                                                                                                    |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| `module/`    | `DevtoolsModule.register`, `DevtoolsOptions`, the plugin                                                                |
+| `server/`    | `startDevtoolsServer`, the loopback socket, `routeRequest`, the dispatcher                                              |
+| `endpoints/` | One payload builder and its wire contract per endpoint, `/meta` first, and the cursor reader the cursor endpoints share |
+| `buffer/`    | The bounded cursor buffer `/logs` and `/requests` share, and nothing else                                               |
+| `logging/`   | The log stream: its record, its bound, and the tap that fills it from a logger                                          |
+| `requests/`  | The request record: its entry, its bound, and the capture that fills it                                                 |
 
 `src/index.ts` is the only public barrel. Keep `*.types.ts` colocated with the
 runtime boundary it describes.
@@ -247,18 +248,96 @@ runtime boundary it describes.
   which is what keeps it monotonic across the drops. A `since` older than the
   window slides to the front of it, one ahead of every write answers nothing, and
   neither is an error: the answer always carries the cursor to poll from next, and
-  that cursor never goes backwards. `/logs` reads its cursor from the query string
-  through `URL`, and a `since` that is not a safe integer reads as no cursor at
-  all rather than as a `400` a poller cannot act on. A negative one is handed to
-  the buffer as it is: the clamp that makes a cursor older than the window read
-  what is retained lives there and only there, so the endpoint does not restate a
-  rule the buffer already answers.
+  that cursor never goes backwards. The two cursor endpoints read their cursor
+  from the query string through `URL` with one reader between them, because one
+  rule with two copies is two rules the day one changes, and a `since` that is not
+  a safe integer reads as no cursor at all rather than as a `400` a poller cannot
+  act on. A negative one is handed to the buffer as it is: the clamp that makes a
+  cursor older than the window read what is retained lives there and only there,
+  so the endpoints do not restate a rule the buffer already answers.
 - An entry is projected to text when the line is written, never when a request
   reads it: a logger's arguments are `unknown`, and an `Error` or a value that
   refers to itself would otherwise fail the payload on the request that asked for
   it. The projection never publishes a stack — a stream a page reads is no place
   for one — and never guesses a logger's own configured context, which is private
   to it; the context is the last string argument the caller named, or empty.
+- `/requests` is the one endpoint that publishes what the application **did**
+  rather than what it **is**, and everything it records is recorded by default:
+  every option under `capture` is an opt-out, because a development tool that
+  required two opt-ins before it showed a header is one nobody opens. `false` is
+  the shorthand for `{ enabled: false }`, and it is not the `logger` case: the
+  requests are the application's own, so a registration that captures nothing
+  still serves `/requests` answering an empty record rather than no endpoint, and
+  "this registration was told to record nothing" is itself a fact the record
+  states.
+- A record is opened by the boot that serves it, one per application, and never at
+  registration. The platform hands one registration to every boot of the module
+  class that declared it, so a record built when the module registered would be
+  one window for every application in the process, and each application's socket
+  would serve the traffic of the others. What files one application's record apart
+  from another's is the application's own object — `application.store` at
+  `onStart`, `context.store` in a hook — which is the one value both halves see
+  that belongs to the application rather than to the registration, and its shape
+  is Elysia's: this package files by its identity and never reads it. The spec
+  states the same boundary from the other side, that the record is in memory per
+  boot and a restart is a new record, so a second `listen()` serves a new empty
+  window rather than extending one a socket that is gone was serving. That is the
+  one place the record parts company with the log stream, whose lines span sockets
+  because the object it records does.
+- The request-side facts are read at arrival and the answer-side facts at
+  completion, and the split is a fact about the installed Elysia rather than a
+  preference: by the after-response phase the socket's request no longer states
+  its header list — a probe reads an empty `Headers` there, and the six headers a
+  client sent as soon as the request phase iterated them — so an entry assembled
+  entirely from that context would state that the application answered requests
+  carrying no headers at all. The arrival stamp holds the method, the path, the
+  query string, and the headers the policy kept, and the completion reads the
+  route, the status, the parsed body, and the message the answer published — every
+  one of them before the single `await` that reads the answer's body, because the
+  context is Elysia's for the duration of the hook. The stamp is keyed by the
+  `Request` object in a `WeakMap` and spent by the completion that reads it, so a
+  request this registration never saw, and one whose answer never reached the
+  hook, leave nothing rather than a partial entry. `arrive` also refuses to stamp
+  while the policy records nothing, and while no boot has opened a record for the
+  application that received the request.
+- The pair of hooks is two answers a maintainer may not merge, narrow, or make
+  return: the arrival hook rides the request phase, which Elysia merges from a used
+  plugin unfiltered, while the completion hook is declared `{ as: "global" }`,
+  which is the option the installed Elysia reads for an after-response hook to
+  reach routes the plugin does not own — with the local scope the record stays
+  empty however many requests the application answers. A hook that returned a
+  truthy value would be the answer itself, which is the one thing `/requests`
+  claims it cannot change. A request a plugin refuses by returning a `Response`
+  from its own `onRequest` leaves no entry, and that absence is not a gap to close:
+  no later phase runs at all, and the fallback that would fill it — writing an
+  entry when the request arrives — is what the case rules out.
+- `path` is the pattern when a route matched and the path that arrived when none
+  did, and `/routes` is the table that tells the two apart: a pattern the
+  application mounted is in it and a path that arrived without matching one is not.
+  The check for a matched route is for a string, because the installed Elysia
+  leaves `route` unset rather than empty for everything that matched nothing —
+  including a request a plugin refused before matching, which is why a refusal that
+  reached the after-response phase is recorded like any other answer. `url` states
+  the path and query string as they arrived, so a token passed as a query parameter
+  is captured in it: that is a fact about the record rather than a defect in it,
+  `url` is what joined to the pattern in `path` tells a consumer what was asked
+  for, and `redact` — empty by default — is the answer for an application pointed
+  at traffic that is not a development environment's. Redaction replaces a named
+  header with the literal and keeps its place, so a consumer can see that one was
+  sent and that the tool was told not to show it.
+- `error` is what the answer published and never the exception: it is present on a
+  `5xx` whose Problem Details body this after-response hook can still read, and
+  absent otherwise, because a `4xx` is an answer rather than a failure. A `404`, a
+  validation `422`, and an `HttpError` a route threw on purpose carry none. Two
+  `5xx` answers carry none either, and both state the absence rather than repeat
+  the exception: the platform's mapping for an unhandled failure, whose `Response`
+  is not on the after-response context, and a `5xx` a handler built itself, whose
+  body is the one the client already holds. The message is read from the answer and
+  never from the context's `error`, because this package registers no error hooks
+  and reports an exception where it always was, under `ExceptionsHandler` in the
+  log stream. `status` is the status the client received: `set.status` is a number
+  for every answer Elysia composed, while an answer a handler built leaves it at
+  the default and carries the real status on its own `Response`.
 - The report describes the boot the _plugin's own_ application carries: Elysia
   hands `onStart` the root application, which is the one bootstrap attached the
   record to.
@@ -384,6 +463,34 @@ pass, and a logger whose first assignment refuses the patch — so the rule is
 asserted at each end a caller reaches it from rather than by one path, and the
 other end — a partly patched logger whose stream must be served — is pinned the
 same way.
+
+`/requests` is asserted over the socket, and its cases are the decisions the record
+makes rather than the fields it carries. The pair of hooks is pinned where it is a
+boundary rather than a style: the scope decision is the case that would leave the
+record empty, and the refusal case pins the absence a fallback mechanism would
+fill — a request a plugin answers by returning a `Response` from its own
+`onRequest` leaves no entry while a request in the same window is recorded, so
+the absence is one request's rather than a broken capture. The record's ownership
+is asserted from both ends a process can reach: two registrations keep one window
+each, and two applications built from one module class — one registration, one
+plugin, two applications — keep the first application's traffic out of the second
+one's window, which is the case a record held in one variable fails. A second
+`listen()` is asserted to serve a new empty window, because the record belongs to
+the boot. The policy is asserted at the ends a caller reaches it from: `capture:
+false` answers `{ cursor: 0, entries: [] }`, the two opt-outs leave their field
+out of the entry rather than present and empty, a redacted header keeps its place
+with the literal, and a body past `bodyLimit` is cut and marked. What the record
+states about an answer is asserted against the answer rather than the exception: a
+thrown `HttpError` carries the message the platform published, a `404` and a
+handler's own `5xx` carry none, and a handler's own `Response` states the status
+the client received rather than the one `set.status` still reads. A request that
+matched no route is recorded with the path that arrived and shown not to be in
+`/routes`, and a request a plugin refused before matching is recorded the same way
+with the status its answer carried. Polling is asserted not to add to the record:
+the second answer is read from the cursor the first one carried and holds nothing.
+The arrival facts are pinned where they are read rather than where they are
+written, because the two moments differ: an entry built from the after-response
+context alone is the case the header assertions fail.
 
 The Elysia read is asserted for what it refuses: the workspace's own install
 answers its version, and a throwaway project that installed nothing answers

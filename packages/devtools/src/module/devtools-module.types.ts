@@ -1,6 +1,32 @@
 import type { LoggerService } from "@aponiajs/common";
 
 /**
+ * What one registration records about the requests the application answers.
+ *
+ * Every option is an opt-out rather than a permission: a registration that names
+ * none of them records the method, the route pattern that matched, the URL as it
+ * arrived, the status, the duration, the arrival time, the request's headers, and
+ * the request body the route parsed. A development tool that required two opt-ins
+ * before it showed a header is one nobody opens.
+ */
+export interface DevtoolsCaptureOptions {
+  /** Record requests at all. Default true. */
+  readonly enabled?: boolean;
+  /** Include request headers. Default true. */
+  readonly headers?: boolean;
+  /** Include the parsed request body. Default true. */
+  readonly body?: boolean;
+  /** Maximum characters stored for a body. Default 16384. */
+  readonly bodyLimit?: number;
+  /**
+   * Header names to replace with the literal "[redacted]" before an entry is
+   * stored. Empty by default: the tool shows what arrived. Set it when the
+   * application is pointed at data that is not yours.
+   */
+  readonly redact?: readonly string[];
+}
+
+/**
  * The application's opt-in decision for `@aponiajs/devtools`.
  */
 export interface DevtoolsOptions {
@@ -61,4 +87,31 @@ export interface DevtoolsOptions {
    * root for serves no `/graph`.
    */
   readonly logger?: false | LoggerService;
+  /**
+   * What this registration records about the requests the application answers.
+   * Every option is an opt-out; `false` is shorthand for `{ enabled: false }`.
+   *
+   * The record is the application's own traffic, and two facts about it are
+   * stated rather than softened:
+   *
+   * - A token passed as a query parameter is captured in `url`. That is a fact
+   *   about the record rather than a defect in it — `url` is the path and query
+   *   string as they arrived, because a pattern never carries one — and `redact`
+   *   is the answer for an application pointed at traffic that is not a
+   *   development environment's.
+   * - A request refused before a route matched is recorded, and the record says
+   *   so: `path` carries the path that arrived rather than a pattern, and
+   *   `/routes` is the table that tells the two apart.
+   *
+   * Unlike `logger`, there is no value here the registration cannot reach: the
+   * requests are the application's own, so a registration that captures nothing
+   * still serves `/requests`, answering an empty record with cursor `0` rather
+   * than no endpoint. "This registration was told to record nothing" is itself a
+   * fact the record states.
+   *
+   * The record is one boot's: it opens when the boot starts and holds what that
+   * boot answers, so a second `listen()` begins a new one rather than extending a
+   * window whose socket is gone.
+   */
+  readonly capture?: false | DevtoolsCaptureOptions;
 }

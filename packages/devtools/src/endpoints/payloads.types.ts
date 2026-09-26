@@ -4,6 +4,7 @@ import type {
   AponiaRouteParameterInspection,
 } from "@aponiajs/platform-elysia";
 import type { LogEntry } from "../logging/log-buffer.types.ts";
+import type { RequestRecord } from "../requests/request-buffer.types.ts";
 
 /**
  * Which release supplied each artifact a boot adopted.
@@ -154,4 +155,26 @@ export interface AponiaLogsPayload {
   readonly cursor: number;
   /** The retained entries written after the requested cursor, oldest first. */
   readonly entries: readonly LogEntry[];
+}
+
+/**
+ * The payload `/__devtools/requests` answers with: the requests the application
+ * answered, read from one cursor, and the cursor the next poll asks from.
+ *
+ * It is `/logs`' shape over a different record, down to the cursor's meaning —
+ * which counts every entry the record has written, including the ones dropped
+ * since — so a client that polls one endpoint already knows how to poll the
+ * other, and a `since` outside the retained window is answered with what is
+ * retained rather than an error.
+ *
+ * Every other endpoint publishes what the application **is**; this one publishes
+ * what it **did**. The record is in memory, per boot, and bounded like every
+ * other payload here: a restart is a new record, and the capacity is what a
+ * forgotten consumer can cost.
+ */
+export interface AponiaRequestsPayload {
+  /** The cursor to pass back as `since` on the next poll. */
+  readonly cursor: number;
+  /** The retained entries recorded after the requested cursor, oldest first. */
+  readonly entries: readonly RequestRecord[];
 }

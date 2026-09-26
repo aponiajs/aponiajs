@@ -4,6 +4,7 @@ import { Elysia } from "elysia";
 import { createLogBuffer, defaultLogBufferCapacity } from "../logging/log-buffer.ts";
 import type { LogBuffer } from "../logging/log-buffer.types.ts";
 import { isRecordableLogger, tapLogBuffer } from "../logging/log-tap.ts";
+import { createRequestCapture } from "../requests/request-capture.ts";
 import { startDevtoolsServer } from "../server/devtools-server.ts";
 import type { DevtoolsServer } from "../server/devtools-server.types.ts";
 import type { DevtoolsOptions } from "./devtools-module.types.ts";
@@ -80,18 +81,59 @@ function createInertModule(): DynamicModule {
  * server that outlived its application would keep the port bound for a restart
  * that cannot take it, and the handle is the plugin's because the plugin is what
  * opened the socket.
+ *
+ * The request record is contributed by the same plugin, and its pair of hooks is
+ * built at the same moment for the same reason: registration is what mounts the
+ * plugin, and the plugin is what observes a request. The pair is two hooks on
+ * this instance rather than anything the root application holds — this package
+ * registers nothing on the root — so the arrival hook rides the request phase,
+ * which Elysia merges from a used plugin unfiltered, and the completion hook is
+ * declared `{ as: "global" }`, which is the option the installed Elysia reads for
+ * an after-response hook to reach routes this plugin does not own. The two are
+ * separate answers and neither is a tidiness a maintainer may drop: with the
+ * local scope the after-response hook never runs for a controller's route, and
+ * the record then stays empty however many requests the application answers.
+ *
+ * The records the pair fills are opened here instead, at `onStart` and one per
+ * application, and that is the one place this parts company with the log stream:
+ * the stream has to start before the boot writes, while a record states the
+ * traffic of one application and belongs to the socket that serves it. A boot
+ * reuses the dynamic module a module class was decorated with, so one plugin
+ * serves every application built from that class, and a record held in one
+ * variable would be one window for all of them: each application's socket would
+ * serve the others' traffic. The application's own object — its `store`, which
+ * Elysia hands this callback and hands every hook — is what files one
+ * application's record apart from another's.
+ *
+ * Neither hook returns a value, and that is a rule rather than a style: a hook
+ * that returns a truthy one is the answer, so the pair would change what every
+ * route receives — the one thing `/requests` claims it cannot do.
  */
 function createDevtoolsPlugin(options: DevtoolsOptions): Elysia {
   let server: DevtoolsServer | undefined;
   const logs = createLogStream(options.logger);
+  const capture = createRequestCapture(options.capture);
 
   return new Elysia({ name: devtoolsPluginName })
+    .onRequest((context) => {
+      capture.arrive(context.request, context.store);
+    })
+    .onAfterResponse({ as: "global" }, async (context) => {
+      await capture.complete({
+        request: context.request,
+        route: context.route,
+        body: context.body,
+        status: context.set.status,
+        answer: context.responseValue,
+      });
+    })
     .onStart((application) => {
       const started = startDevtoolsServer({
         application,
         port: options.port,
         logger: devtoolsLogger,
         logs,
+        requests: capture.beginBoot(application.store),
       });
 
       // A second `listen()` re-runs `onStart` while the socket the first one

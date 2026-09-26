@@ -1,6 +1,7 @@
 import type { LoggerService } from "@aponiajs/common";
 import type { Elysia } from "elysia";
 import type { LogBuffer } from "../logging/log-buffer.types.ts";
+import type { RequestBuffer } from "../requests/request-buffer.types.ts";
 
 /** The loopback HTTP surface one devtools boot publishes. */
 export interface DevtoolsServer {
@@ -34,6 +35,17 @@ export interface DevtoolsServerOptions {
    * answer for a path the handler record does not own.
    */
   readonly logs?: LogBuffer;
+  /**
+   * The application's request record, when the caller has one to publish.
+   *
+   * Like the log stream, it is the caller's, because the object has to be the one
+   * the other half of the pair holds: the capture's hooks fill the buffer the
+   * boot opened, so the object the hooks write and the object this server reads
+   * have to be the same one, and the boot is what opened it. A server handed none
+   * serves no `/requests` at all, the way one handed no stream serves no `/logs`:
+   * the endpoint states a record and this one has none to state.
+   */
+  readonly requests?: RequestBuffer;
 }
 
 /**

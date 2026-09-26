@@ -4,10 +4,13 @@ import { readApplicationDiagnostics } from "@aponiajs/platform-elysia";
 import type { Elysia } from "elysia";
 import { buildFlowPayload, devtoolsFlowPath } from "../endpoints/flow.ts";
 import { buildGraphPayload, devtoolsGraphPath } from "../endpoints/graph.ts";
-import { buildLogsPayload, devtoolsLogsPath, readLogsCursor } from "../endpoints/logs.ts";
+import { readSinceCursor } from "../endpoints/cursor.ts";
+import { buildLogsPayload, devtoolsLogsPath } from "../endpoints/logs.ts";
 import { buildMetaPayload, devtoolsMetaPath } from "../endpoints/meta.ts";
+import { buildRequestsPayload, devtoolsRequestsPath } from "../endpoints/requests.ts";
 import { buildRoutesPayload, devtoolsRoutesPath } from "../endpoints/routes.ts";
 import type { LogBuffer } from "../logging/log-buffer.types.ts";
+import type { RequestBuffer } from "../requests/request-buffer.types.ts";
 import type {
   DevtoolsHandlers,
   DevtoolsServer,
@@ -35,7 +38,7 @@ const defaultDevtoolsPort = 8000;
  */
 export function startDevtoolsServer(options: DevtoolsServerOptions): DevtoolsServer | undefined {
   const port = options.port ?? defaultDevtoolsPort;
-  const handlers = createHandlers(options.application, options.logs);
+  const handlers = createHandlers(options.application, options.logs, options.requests);
 
   try {
     const server = Bun.serve({
@@ -131,17 +134,21 @@ function findInstalledElysiaManifest(baseDirectory: string): string | undefined 
  * package's answer on its own; a route no record describes is reported with the
  * facts a record would have supplied left empty.
  *
- * `/logs` is the one endpoint whose source is passed in rather than read off the
- * application: it is registered only for a server that was handed a stream, and
- * its cursor is the request's, because two pollers read the same stream from two
- * different positions.
+ * `/logs` and `/requests` are the endpoints whose source is passed in rather than
+ * read off the application: each is registered only for a server that was handed
+ * the buffer it states, and each reads its cursor from the request, because two
+ * pollers read one buffer from two different positions.
  *
  * Every builder it calls is total — a record this release cannot project is one
  * of the cases they answer rather than throw for — because this runs before the
  * bind's `try`, where a failure would be reported as a refused listen, a cause
  * this package never observed.
  */
-function createHandlers(application: Elysia, logs: LogBuffer | undefined): DevtoolsHandlers {
+function createHandlers(
+  application: Elysia,
+  logs: LogBuffer | undefined,
+  requests: RequestBuffer | undefined,
+): DevtoolsHandlers {
   const diagnostics = readApplicationDiagnostics(application);
   const meta = buildMetaPayload({
     diagnostics,
@@ -166,7 +173,16 @@ function createHandlers(application: Elysia, logs: LogBuffer | undefined): Devto
       ? {}
       : {
           [devtoolsLogsPath]: (request: Request) =>
-            jsonResponse(buildLogsPayload(logs, readLogsCursor(request))),
+            jsonResponse(buildLogsPayload(logs, readSinceCursor(request))),
+        }),
+    // The request record is passed in for `/logs`' reason, and a registration
+    // that captures nothing still hands one over: an empty record with a live
+    // cursor is a fact about the registration, not an absence to infer.
+    ...(requests === undefined
+      ? {}
+      : {
+          [devtoolsRequestsPath]: (request: Request) =>
+            jsonResponse(buildRequestsPayload(requests, readSinceCursor(request))),
         }),
   });
 }

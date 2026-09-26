@@ -101,6 +101,25 @@ export class AppModule {}
   A cursor older than the retained window is answered with what is retained and
   one ahead of every write with nothing: neither is an error, and the cursor never
   goes backwards.
+- **`GET /__devtools/requests?since=<cursor>` reports the requests the
+  application answered.** The record is the `/logs` shape over a different fact —
+  every other endpoint says what the application _is_, this one says what it
+  _did_ — so each poll names the cursor the previous answer carried and is
+  answered with `{ cursor, entries }` under the same rules, including an empty
+  record when a registration was told to capture nothing. An entry carries the
+  `method`, the `path` (the route pattern that matched, or the path that arrived
+  when none did), the `url` as it arrived, the `status`, the `durationMs`, the
+  `timestamp`, the request's `headers`, and the `body` the route parsed, truncated
+  at `capture.bodyLimit`; `error` is what the answer published and never the
+  exception, so it is present on a `5xx` the tool can read and absent on a `4xx`,
+  which is an answer rather than a failure. Everything is recorded by default —
+  `capture` is an opt-out on each field, never a permission, because a tool that
+  needed two opt-ins before it showed a header is one nobody opens. Two facts are
+  stated rather than softened: a token passed as a query parameter is captured in
+  `url`, which is what `capture.redact` is for, and a request that matched no
+  route has no pattern to report — `path` carries the path that arrived, and
+  `/routes` is the table that tells the two apart. The record belongs to one
+  application and one boot, so a second `listen()` begins a new one.
 - Every endpoint is a `GET`: any other method answers `405` before the path is
   read, and a path the server does not serve answers `404`.
 
