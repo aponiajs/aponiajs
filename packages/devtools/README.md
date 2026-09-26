@@ -30,8 +30,19 @@ export class AppModule {}
   table a boot-time provider cannot.
 - **`onStart` requires `listen()`.** An application that only calls `handle()`
   publishes nothing and is otherwise unaffected.
-- **Loopback only.** When the server lands it binds `127.0.0.1` on `port`
-  (default `8000`), with no way to widen the address.
+- **Loopback only.** The devtools server binds `127.0.0.1` on `port` (default
+  `8000`), with no way to widen the address.
+- **A taken port never fails a boot.** The refused bind is reported under
+  `Devtools`, and the application continues without the devtools server.
+- **`GET /__devtools/meta` is the contract.** It answers the devtools contract
+  version, the release that booted the application, the Elysia release it
+  resolved, which release supplied each artifact the boot adopted, and when the
+  server started. Every endpoint is a `GET`: any other method answers `405`, and
+  an unknown path answers `404`.
+
+```bash
+curl http://127.0.0.1:8000/__devtools/meta
+```
 
 ## Documentation
 
