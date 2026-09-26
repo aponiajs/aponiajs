@@ -11,8 +11,10 @@ import {
   Set,
   SubscribeMessage,
   UseFilters,
+  UseGuards,
   WebSocketGateway,
   type ArgumentsHost,
+  type CanActivate,
   type LoggerService,
   type RouteContext,
   type RouteResponseSettings,
@@ -116,6 +118,42 @@ class HttpController {
   @Get()
   forbidden(): string {
     throw httpErrors.forbidden("no");
+  }
+}
+
+@Injectable()
+class RefusingGuard implements CanActivate {
+  canActivate(): boolean {
+    return false;
+  }
+}
+
+/** Declines by returning `null`, the other value Elysia's error path reads as no answer. */
+@Catch()
+@Injectable()
+class NullFilter {
+  catch(): unknown {
+    return null;
+  }
+}
+
+@Controller("refused")
+@UseGuards(RefusingGuard)
+@UseFilters(CatchAllFilter)
+class RefusedController {
+  @Get()
+  read(): string {
+    return "the guard never allowed this";
+  }
+}
+
+@Controller("null-declined")
+@UseGuards(RefusingGuard)
+@UseFilters(NullFilter)
+class NullDeclinedController {
+  @Get()
+  read(): string {
+    return "the guard never allowed this";
   }
 }
 
@@ -239,6 +277,8 @@ class NativeController {
     BrokenController,
     AsyncController,
     HttpController,
+    RefusedController,
+    NullDeclinedController,
     ProbeController,
     ValidatedController,
     NativeController,
@@ -250,6 +290,8 @@ class NativeController {
     UndecidedFilter,
     BrokenFilter,
     AsyncAnsweringFilter,
+    RefusingGuard,
+    NullFilter,
     ProbeFilter,
   ],
 })
@@ -361,6 +403,33 @@ describe("exception filters", () => {
     const response = await application.handle(new Request("http://localhost/http"));
 
     expect(response.status).toBe(403);
+    await application.close();
+  });
+
+  test("a declared filter answers a guard's refusal before the mapping does", async () => {
+    const application = await AponiaFactory.create(AppModule, { logger: false });
+
+    const response = await application.handle(new Request("http://localhost/refused"));
+
+    // The refusal is the guard's thrown `HttpError`, and the route's own filter
+    // runs before the mapping and matches it like any other exception: the
+    // catch-all answers its `503`, not the `403` the mapping would leave.
+    expect([response.status, await response.text()]).toEqual([503, "caught anything"]);
+    await application.close();
+  });
+
+  test("a filter returning null declines, so the refusal answers instead", async () => {
+    const application = await AponiaFactory.create(AppModule, { logger: false });
+
+    const response = await application.handle(new Request("http://localhost/null-declined"));
+    const body = await response.text();
+
+    // `null` is the second value Elysia's error path reads as no answer: the
+    // filter decided nothing, so the refusal reaches the mapping, which declines
+    // the `HttpError` and leaves Elysia's own `403` Problem Details.
+    expect(response.status).toBe(403);
+    expect(response.headers.get("content-type")).toContain("application/problem+json");
+    expect(body).toContain("A guard refused this request.");
     await application.close();
   });
 
