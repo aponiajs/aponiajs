@@ -543,16 +543,22 @@ test.serial(
   },
 );
 
-test.serial("an application that disabled its logging serves an empty stream", async () => {
+test.serial("an application that disabled its logging serves no logs endpoint", async () => {
   const output = captureOutput();
   let application: AponiaElysiaApplication | undefined;
   try {
     application = await AponiaFactory.create(DisabledLoggingModule, { logger: false });
     await application.listen(0);
 
-    // `false` is a decision, not an absence: the endpoint answers, and what it
-    // answers is that nothing is being logged.
-    expect(await readLogsAt(reportedAddress(output))).toEqual({ cursor: 0, entries: [] });
+    const address = reportedAddress(output);
+
+    // `false` states that the application has no logger object to hand over, and
+    // this registration cannot tell that from the logger the factory built for
+    // the application it was not given: an empty window would announce that
+    // nothing is being logged, which is false whenever the factory was handed a
+    // logger of its own. Absence is the one answer that is true either way.
+    expect((await fetch(`${address}/__devtools/logs`)).status).toBe(404);
+    expect((await fetch(`${address}/__devtools/meta`)).status).toBe(200);
   } finally {
     await application?.close();
     output.restore();

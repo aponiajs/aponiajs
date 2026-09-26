@@ -212,21 +212,24 @@ runtime boundary it describes.
   same reference, because the container hands no logger to a provider, so nothing
   reaches `/logs` that the application did not route through the logger it handed
   over.
-- `DevtoolsOptions.logger` is the application's handover, and its four states are
-  four answers. A `LoggerService` is tapped and records. `false` — the value that
-  turns the application's logging off — publishes the stream empty rather than
-  absent, because the application decided and an empty stream is what that
-  decision looks like from a client. Omitting the option publishes no `/logs` at
-  all, the way a record with no compiled root serves no `/graph`, because the
-  endpoint states a stream and this registration has none to state. A value that
-  is not a logger is that same fourth answer however it arrived — a JavaScript
-  caller has no type checker — because an empty stream would claim the application
-  logs nothing while it logs normally. The handover is a condition this package
-  states rather than hides: the framework never exposes the logger it builds for
-  itself, so an array of levels tells the platform to build a logger of its own
-  and an application that names one has nothing to hand over. The option doc, the
-  README, and `llms.txt` all say so, because the consequence is a silent absence
-  otherwise.
+- `DevtoolsOptions.logger` is the application's handover, and however many values
+  arrive at it there are two outcomes. A `LoggerService` is tapped and records.
+  Everything else publishes no `/logs` at all: the option omitted, `false`, and a
+  value that is not a logger, which a JavaScript caller can pass whatever the type
+  says. The endpoint states a stream and a registration with none to state serves
+  no endpoint, the way a record with no compiled root serves no `/graph`, so the
+  dispatcher's `404` is the answer. `false` is not the empty window it once
+  answered: it states that the application has no logger object to hand over,
+  which is not the fact "nothing is being logged" — an application that passes
+  `false` here and a logger to `AponiaFactory.create`, which is what forwarding an
+  option value looks like, logs normally, and a registration cannot tell that
+  logger from one the factory built for itself. Absence is true in every one of
+  those configurations and an empty window is true in only one. The handover is a
+  condition this package states rather than hides: the framework never exposes the
+  logger it builds for itself, so an array of levels tells the platform to build a
+  logger of its own and an application that names one has nothing to hand over.
+  The option doc, the README, and `llms.txt` all say so, because the consequence
+  is a silent absence otherwise.
 - The log buffer is bounded at a capacity this package chooses, because the spec
   bounds the buffer and names no number. One value lives in the logging domain and
   is stated once; the capacity is not a per-call decision, so it is not repeated
@@ -360,10 +363,11 @@ asserted over a real boot, where the lines the boot wrote before `onStart` must
 appear — the case a tap installed when the socket starts would fail, and the
 assertion that says why the tap belongs to the registration — and where the
 application's own next line must arrive after the cursor the previous answer
-carried. `logger: false` is asserted as the empty stream it is, and a registration
-that named no logger at all and one that named a level array — the value the
-option does not accept, which a JavaScript caller can still pass — are asserted as
-the two registrations that serve no endpoint rather than an empty stream.
+carried. A registration that names no logger object is asserted to serve no
+endpoint rather than an empty stream, and the three ways of arriving there are
+pinned separately — an omitted option, `false`, and a level array, the value the
+option does not accept and a JavaScript caller can still pass — so the rule is
+asserted at each end a caller reaches it from rather than by one path.
 
 The Elysia read is asserted for what it refuses: the workspace's own install
 answers its version, and a throwaway project that installed nothing answers

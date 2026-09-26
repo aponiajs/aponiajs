@@ -39,9 +39,10 @@ export class AppModule {}
   and the stream starts there, before the boot writes, so the lines a boot reports
   about itself are in it. That is the condition this option states rather than
   hides: the framework never exposes the logger it builds for itself, so an
-  application that names a level array (or nothing at all) has no object to record
-  from, and a registration that names one of those serves no `/logs` rather than an
-  empty stream that would read as "nothing is being logged". The patch is a
+  application that names `false`, names a level array, or names nothing at all has
+  no object to record from, and a registration that names one of those serves no
+  `/logs` rather than an empty stream that would read as "nothing is being logged".
+  The patch is a
   mutation of a logger the application holds too, and the stream holds the lines
   written through that one object — the platform's own, and an application's where
   it logs through the same reference, because the container hands no logger to a
@@ -88,9 +89,9 @@ export class AppModule {}
 - **`GET /__devtools/logs?since=<cursor>` streams what the application logged.**
   The registration takes the logger the application also gives
   `AponiaFactory.create`, patches it in place, and records every line into a
-  bounded buffer from the moment the module registers — `logger: false` publishes
-  that stream empty, and a registration with no logger object to record from,
-  because it named none or named something that is not one, serves no `/logs`.
+  bounded buffer from the moment the module registers — and a registration with no
+  logger object to record from, because it named none, named `false`, or named
+  something that is not one, serves no `/logs` rather than an empty stream.
   Each poll names the cursor the previous answer carried and is answered with
   `{ cursor, entries }`, where an entry is `{ level, context, message, timestamp }`.
   A cursor older than the retained window is answered with what is retained and

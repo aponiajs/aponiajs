@@ -128,28 +128,27 @@ function createDevtoolsPlugin(options: DevtoolsOptions): Elysia {
  * runs, so a tap installed when the socket starts records none of them, and they
  * are most of what this stream is worth.
  *
- * Four states are four answers. A logger is tapped in place and its stream is
- * published. `false` builds the stream without tapping anything: the application
- * said it has no logger, which is a decision, and a decided stream is published
- * empty rather than not at all, so a client reads "nothing is being logged"
- * instead of asking a server that answers nothing for it. Omitting the option
- * states that the application published no logger at all. A value that is not a
- * logger is that same statement however it arrived, because a JavaScript caller
- * has no type checker. Those last two serve no `/logs` at all, the way a boot the
- * record holds no compiled root for serves no `/graph`: the endpoint states a
- * stream, and this registration has none to state. An empty stream would claim
- * the application logs nothing while it logs normally.
+ * Two outcomes, however many values arrive at the first one. A logger object is
+ * tapped in place and its stream is published. Everything else publishes no
+ * `/logs` at all: the option omitted, `false`, and any value that is not a logger
+ * — which a JavaScript caller can pass whatever the type says. The endpoint
+ * states a stream, and a registration with none to state serves no endpoint, so
+ * the dispatcher's `404` is the answer, the way a boot the record holds no
+ * compiled root for serves no `/graph`.
+ *
+ * `false` is not the empty stream it once answered, and the difference is the
+ * whole reason: it states that the application has no logger object to hand over,
+ * which is not the fact "nothing is being logged". An application that passes
+ * `false` here and a logger to `AponiaFactory.create` — type-legal, and what
+ * forwarding an option value looks like — logs normally, and a registration
+ * cannot tell that logger from one the factory built for itself. An empty window
+ * would announce the silence in exactly that case; absence is true in every one
+ * of them.
  */
 function createLogStream(source: DevtoolsOptions["logger"]): LogBuffer | undefined {
-  if (source === undefined) {
+  if (!isRecordableLogger(source)) {
     return undefined;
   }
 
-  const logs = createLogBuffer(defaultLogBufferCapacity);
-
-  if (source === false) {
-    return logs;
-  }
-
-  return isRecordableLogger(source) ? tapLogBuffer(source, logs) : undefined;
+  return tapLogBuffer(source, createLogBuffer(defaultLogBufferCapacity));
 }

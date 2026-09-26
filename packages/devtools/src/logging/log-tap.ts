@@ -2,9 +2,10 @@ import type { LoggerService, LogLevel } from "@aponiajs/common";
 import type { LogBuffer, LogEntry } from "./log-buffer.types.ts";
 
 /**
- * The `LoggerService` methods a tap records, in the order the interface declares
- * them. `debug` and `verbose` are optional on it, so a logger that omits them is
- * tapped for the levels it has.
+ * The `LoggerService` methods a tap records: every level the interface declares,
+ * and `debug` and `verbose` are optional on it, so a logger that omits them is
+ * tapped for the levels it has. This order is the package's own and decides
+ * nothing — each level's method is patched on its own.
  */
 const recordableLevels = [
   "log",
@@ -66,12 +67,13 @@ export function isRecordableLogger(value: unknown): value is LoggerService {
  * may make for itself, and re-applying a rule this package cannot read would be
  * enforcing a filter it does not own.
  *
- * A logger this package cannot patch — a frozen object, or a property that
- * refuses the assignment — is left exactly as it was and the stream handed over
- * records nothing for it, because a debugging aid that failed a boot over its own
- * tap would be the failure mode this package exists not to have. A logger it has
- * tapped before is answered with the stream already recording it, so the two
- * cannot disagree about where a line went.
+ * A patch that fails — a frozen logger, or one property that refuses the
+ * assignment — leaves the methods it could not patch exactly as they were, and
+ * the stream handed over records the lines written through the methods it did
+ * patch, because a debugging aid that failed a boot over its own tap would be the
+ * failure mode this package exists not to have. A logger it has tapped before is
+ * answered with the stream already recording it, so the two cannot disagree about
+ * where a line went.
  */
 export function tapLogBuffer(logger: LoggerService, buffer: LogBuffer): LogBuffer {
   try {
@@ -102,8 +104,12 @@ export function tapLogBuffer(logger: LoggerService, buffer: LogBuffer): LogBuffe
       };
     }
   } catch {
-    // Nothing was recorded and the logger keeps the methods it had, because the
-    // tap is this package's convenience and never the application's contract.
+    // What holds afterwards is per level: the levels patched before the failure
+    // record, the one that refused keeps the method it had — a frozen logger
+    // refuses the first assignment, so it is left exactly as it was — and the
+    // stream is still the answer below, because the tap is this package's
+    // convenience and never the application's contract. A boot does not fail
+    // over it, which is the failure mode this package exists not to have.
   }
 
   rememberTap(logger, buffer);

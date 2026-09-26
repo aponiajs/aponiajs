@@ -32,18 +32,25 @@ export interface DevtoolsOptions {
    * anything, so the lines a boot reports about itself — the graph it served, the
    * modules it initialized, the routes it resolved — are in it.
    *
-   * `false` — the value that turns the application's logging off — states that
-   * there is no logging to record. `/logs` then answers an empty stream rather
-   * than being absent, because the application has decided, and an empty stream
-   * is what that decision looks like from a client. Omitting the option states
-   * that no logger was published at all, and the devtools server serves no
-   * `/logs`: the endpoint states a stream, and this registration has none to
-   * hand over.
+   * A logger object earns the stream, and every other value serves no `/logs` at
+   * all rather than an empty one, because absence is true in all of those cases
+   * and an empty window is true in only one of them:
    *
-   * An array of levels — the other value the factory accepts — is not accepted
-   * here: it tells the platform to build a logger of its own, which the
-   * application never holds, so an application that asks for one serves no
-   * `/logs` rather than a stream that would be empty however loudly it logs.
+   * - `false` — the value that turns the application's logging off — states that
+   *   the application has no logger object to hand over. That is not the same
+   *   fact as "nothing is being logged"; an application that passes `false` here
+   *   and a logger to `AponiaFactory.create` logs normally, and this registration
+   *   cannot tell that logger from one the factory built for itself.
+   * - Omitting the option states the same absence.
+   * - An array of levels — the other value the factory accepts — tells the
+   *   platform to build a logger of its own, which the application never holds,
+   *   so an application that names one has nothing to hand over either. The type
+   *   does not accept it; a JavaScript caller can pass it anyway, which is why
+   *   the value is checked rather than trusted.
+   *
+   * The endpoint states a stream, and a registration with none to state serves no
+   * endpoint — the dispatcher's `404`, the way a boot the record holds no compiled
+   * root for serves no `/graph`.
    */
   readonly logger?: false | LoggerService;
 }

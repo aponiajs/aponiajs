@@ -29,7 +29,7 @@ export type {
   AponiaRouteSource,
   AponiaRoutesPayload,
 } from "./endpoints/payloads.types.ts";
-export type { LogBuffer, LogBufferRead, LogEntry } from "./logging/log-buffer.types.ts";
+export type { LogBuffer, LogEntry } from "./logging/log-buffer.types.ts";
 export type {
   AponiaFlowFilter,
   AponiaFlowPayload,
