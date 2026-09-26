@@ -49,10 +49,9 @@ type EnhancerContractAssertions = [
       (context: ExecutionContext) => void | Promise<void>
     >
   >,
-  // `unknown` already contains a promise, so the contract's declared
-  // `unknown | Promise<unknown>` is this exact type. That an asynchronous
-  // implementation is accepted is proven by the classes below, not by spelling
-  // the redundant constituent a second time here.
+  // `unknown` already contains a promise, so the return type states the awaited
+  // case in its JSDoc instead of through a redundant union constituent. That an
+  // asynchronous implementation is accepted is proven by the classes below.
   Expect<
     Equals<
       NonNullable<AponiaInterceptor["interceptAfter"]>,

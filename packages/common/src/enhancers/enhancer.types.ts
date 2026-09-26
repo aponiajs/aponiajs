@@ -46,9 +46,19 @@ export interface CanActivate {
  */
 export interface AponiaInterceptor {
   interceptBefore?(context: ExecutionContext): void | Promise<void>;
-  interceptAfter?(context: ExecutionContext, response: unknown): unknown | Promise<unknown>;
+
+  /**
+   * Receives the handler's result and returns what the response should carry,
+   * including `undefined` to leave it unchanged. A returned Promise is awaited,
+   * so an asynchronous interceptor is supported.
+   */
+  interceptAfter?(context: ExecutionContext, response: unknown): unknown;
 }
 
 export interface ExceptionFilter {
-  catch(exception: unknown, host: ArgumentsHost): unknown | Promise<unknown>;
+  /**
+   * Answers the exception, or returns `undefined` to decline it. A returned
+   * Promise is awaited, so an asynchronous filter is supported.
+   */
+  catch(exception: unknown, host: ArgumentsHost): unknown;
 }
