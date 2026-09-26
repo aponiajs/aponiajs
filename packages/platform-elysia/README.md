@@ -423,19 +423,22 @@ exported by the supported Elysia version, including
 `serviceUnavailable`. Numeric codes and standard status names are both
 accepted by `httpError`.
 
-Every `HttpError` answers with `application/problem+json` carrying `type`,
-`title`, `status`, `detail`, and a stable `code` extension. Optional `instance`,
-headers, custom extensions, and a server-side `cause` are supported. The
-response never serializes the error stack or cause, and reserved Problem Details
-members cannot be replaced through extensions.
+Every `HttpError` is handled by Elysia's native `toResponse()` path and returns
+`application/problem+json` with `type`, `title`, `status`, `detail`, and a stable
+`code` extension. Optional `instance`, headers, custom extensions, and a
+server-side `cause` are supported. The response never serializes the error
+stack or cause, and reserved Problem Details members cannot be replaced through
+extensions.
 
 Errors a handler throws that no exception filter answers do not escape as a
 stack trace either: every route carries a default Problem Details mapping last
 in its own error path, so they answer `500` `application/problem+json` with a
 fixed `detail` and are reported through the system logger under
-`ExceptionsHandler`. Elysia's own validation, parse, and other status-bearing
-responses are deliberately left as they are rather than translated, so a
-rejected request still answers the native `422`.
+`ExceptionsHandler`. An answer Elysia's own error path already decided is
+declined rather than translated, so a rejected request still answers the native
+`422`, a failed `t.Transform` decode keeps its `422` and the decode error's
+message, a thrown `status(...)` keeps its response, and an `HttpError` keeps its
+own.
 
 ## Routes with the native Elysia context
 

@@ -335,11 +335,12 @@ Elysia's supported `StatusMap`; responses use RFC 9457
 `application/problem+json` and never serialize the stack or cause. These are
 deliberate application failures. Anything else a handler throws becomes a `500`
 Problem Details response, reported through the system logger, unless a declared
-exception filter answers it first or it already carries its own answer: every
-route compiles a default Problem Details mapping last in its own `error` array,
-behind the filters it declares, and that mapping declines Elysia's own
-validation, parse, and status-bearing errors so their native responses are
-preserved.
+exception filter answers it first or Elysia's own error path already answers it:
+every route compiles a default Problem Details mapping last in its own `error`
+array, behind the filters it declares, and that mapping declines an exception
+carrying its own `status` or `toResponse()` and every status Elysia already
+decided, so validation `422`s, parse `400`s, a failed transform decode,
+`status()`, and `HttpError` keep the responses Elysia gives them.
 
 ### CLI
 

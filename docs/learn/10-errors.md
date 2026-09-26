@@ -88,9 +88,10 @@ throws that no filter answers answers `500` `application/problem+json`:
 
 The thrown value is never repeated to the client — a message is written for
 whoever reads the log — and the boot's system logger records the failure under
-`ExceptionsHandler`. An exception that already states its own answer keeps it:
-Elysia's validation, parse, and other status-bearing responses, anything
-throwing `status(...)`, and any exception carrying its own `toResponse()`.
+`ExceptionsHandler`. An answer Elysia's own error path already decided is left
+alone rather than translated: a validation `422`, a parse `400`, a failed
+`t.Transform` decode (a `422` carrying the decode error's message), anything
+throwing `status(...)`, and every `HttpError` through its own `toResponse()`.
 
 ## Framework errors
 

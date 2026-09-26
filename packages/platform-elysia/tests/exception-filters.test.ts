@@ -8,10 +8,12 @@ import {
   MessageBody,
   Module,
   Post,
+  Set,
   SubscribeMessage,
   UseFilters,
   WebSocketGateway,
   type LoggerService,
+  type RouteResponseSettings,
 } from "@aponiajs/common";
 import { t, status } from "elysia";
 import { AponiaFactory, httpErrors } from "../src/index.ts";
@@ -123,6 +125,48 @@ class ValidatedController {
   }
 }
 
+/**
+ * A transform whose decode refuses one value, so the route fails inside
+ * Elysia's own transform-decode path rather than inside a handler: the thrown
+ * value carries neither a status nor a `toResponse()`, and nothing but the
+ * status Elysia decided for it says what the answer is.
+ */
+const whenModel = t
+  .Transform(t.String())
+  .Decode((value: string): string => {
+    if (value === "unreadable") {
+      throw new Error("The when value could not be decoded.");
+    }
+    return value;
+  })
+  .Encode((value) => value);
+
+@Controller("transformed")
+class TransformController {
+  @Post("when", { body: t.Object({ when: whenModel }) })
+  read(@Body() body: { when: string }): { when: string } {
+    return { when: body.when };
+  }
+
+  @Get("decided")
+  decided(@Set() set: RouteResponseSettings): string {
+    set.status = 418;
+    throw new Error("decided before the throw");
+  }
+
+  @Get("named")
+  named(@Set() set: RouteResponseSettings): string {
+    set.status = "I'm a Teapot";
+    throw new Error("named before the throw");
+  }
+
+  @Get("early")
+  early(@Set() set: RouteResponseSettings): string {
+    set.status = 200;
+    throw new Error("decided too early");
+  }
+}
+
 class TeapotError extends Error {
   toResponse(): Response {
     return new Response("teapot body", { status: 418 });
@@ -158,6 +202,7 @@ class NativeController {
     HttpController,
     ValidatedController,
     NativeController,
+    TransformController,
   ],
   providers: [NotFoundFilter, CatchAllFilter, UndecidedFilter, BrokenFilter, AsyncAnsweringFilter],
 })
@@ -322,6 +367,89 @@ describe("what the default mapping declines", () => {
     expect(response.status).toBe(500);
     expect(response.headers.get("content-type")).toContain("application/problem+json");
     expect(body).not.toContain("plain string");
+    await application.close();
+  });
+});
+
+describe("what Elysia's own error path already answers", () => {
+  test("a transform decode failure keeps Elysia's 422 and the decode error's message", async () => {
+    const application = await AponiaFactory.create(AppModule, { logger: false });
+
+    const response = await application.handle(
+      new Request("http://localhost/transformed/when", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ when: "unreadable" }),
+      }),
+    );
+    const body = await response.text();
+
+    // Nothing on the thrown value says what the answer is: the decode function
+    // threw a plain Error, and Elysia had already decided the status when it
+    // coerced the transform failure. The mapping must not replace a client
+    // error with a 500.
+    expect(response.status).toBe(422);
+    expect(body).toContain("The when value could not be decoded.");
+    await application.close();
+  });
+
+  test("a status a handler decided before throwing is the status the client sees", async () => {
+    const application = await AponiaFactory.create(AppModule, { logger: false });
+
+    const response = await application.handle(new Request("http://localhost/transformed/decided"));
+    const body = await response.text();
+
+    expect(response.status).toBe(418);
+    expect(body).toContain("decided before the throw");
+    await application.close();
+  });
+
+  test("a status name a handler decided is left as Elysia answers it", async () => {
+    const application = await AponiaFactory.create(AppModule, { logger: false });
+
+    const response = await application.handle(new Request("http://localhost/transformed/named"));
+    const body = await response.text();
+
+    // Elysia's own error path never overwrites a status it finds in the
+    // context — that is the rule the mapping declines by — and it leaves a
+    // status name alone rather than resolving it: on this version the client
+    // sees the name dropped to 200 with the message Elysia's unknown-error
+    // fallback renders. That is Elysia's answer for the request, unchanged by
+    // the mapping; the mapping must not replace a status already decided with
+    // a Problem Details 500.
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type") ?? "").not.toContain("problem+json");
+    expect(body).toContain("named before the throw");
+    await application.close();
+  });
+
+  test("a status below 300 is not a decision, so the mapping still answers", async () => {
+    const application = await AponiaFactory.create(AppModule, { logger: false });
+
+    const response = await application.handle(new Request("http://localhost/transformed/early"));
+    const body = await response.text();
+
+    // Elysia seeds 500 over any status below 300 it finds, so a handler that
+    // set one before throwing decided nothing: this is an unhandled failure,
+    // and it answers like every other one.
+    expect(response.status).toBe(500);
+    expect(response.headers.get("content-type")).toContain("application/problem+json");
+    expect(body).not.toContain("decided too early");
+    await application.close();
+  });
+
+  test("a successful transform still answers the decoded value", async () => {
+    const application = await AponiaFactory.create(AppModule, { logger: false });
+
+    const response = await application.handle(
+      new Request("http://localhost/transformed/when", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ when: "readable" }),
+      }),
+    );
+
+    expect([response.status, await response.json()]).toEqual([200, { when: "readable" }]);
     await application.close();
   });
 });
