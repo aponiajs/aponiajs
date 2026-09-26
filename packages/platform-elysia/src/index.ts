@@ -3,6 +3,7 @@ export { AponiaFactory } from "./application/aponia-factory.ts";
 export { readApplicationDiagnostics } from "./application/application-diagnostics.ts";
 export type {
   AponiaApplicationDiagnostics,
+  AponiaArtifactProvenance,
   AponiaCompiledRouteDiagnostics,
   AponiaInvokerDiagnostics,
 } from "./application/application-diagnostics.types.ts";

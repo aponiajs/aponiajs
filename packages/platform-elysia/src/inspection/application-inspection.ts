@@ -57,13 +57,13 @@ export function inspectAponiaApplication(
   rootModule: AponiaRootModule,
   options: AponiaInspectionOptions = {},
 ): AponiaApplicationInspection {
-  const resolvedRootModule = selectRootModuleDescriptor(
+  const rootSelection = selectRootModuleDescriptor(
     options.descriptors,
     rootModule,
     aponiaVersion,
     resolveInspectionLogger(options.logger),
   );
-  const container = createContainer(compileRootModule(resolvedRootModule));
+  const container = createContainer(compileRootModule(rootSelection.rootModule));
   const modules = container.graph.modules;
   const gateways = compileElysiaWebSocketGateways(modules);
 

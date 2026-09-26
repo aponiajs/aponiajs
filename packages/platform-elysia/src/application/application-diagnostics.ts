@@ -3,6 +3,7 @@ import type { Elysia } from "elysia";
 import { isElysiaController } from "../controllers/controller-definition.ts";
 import type {
   AponiaApplicationDiagnostics,
+  AponiaArtifactProvenance,
   AponiaCompiledRouteDiagnostics,
   AponiaInvokerDiagnostics,
 } from "./application-diagnostics.types.ts";
@@ -28,10 +29,10 @@ const diagnosticsKey: unique symbol = Symbol.for("aponia.application.diagnostics
  * declaration order, so the record is deterministic.
  *
  * Every fact it is handed is copied before it is frozen — the invoker verdict,
- * the root descriptor, and the enhancer declaration are all the caller's
- * objects — because a record may never be the place its own facts are still
- * mutable. Nothing here relies on the boot having frozen them first: a reader
- * of the record cannot see how the boot kept them.
+ * the artifact provenance, the root descriptor, and the enhancer declaration are
+ * all the caller's objects — because a record may never be the place its own
+ * facts are still mutable. Nothing here relies on the boot having frozen them
+ * first: a reader of the record cannot see how the boot kept them.
  *
  * @internal
  */
@@ -39,6 +40,7 @@ export function createApplicationDiagnostics(facts: {
   readonly framework: string;
   readonly graph: "declared" | "decorated";
   readonly invokers: AponiaInvokerDiagnostics;
+  readonly artifacts: AponiaArtifactProvenance;
   readonly rootModule: ModuleDefinition;
   readonly modules: readonly ModuleDefinition[];
   readonly globalEnhancers: EnhancerMetadata;
@@ -47,6 +49,10 @@ export function createApplicationDiagnostics(facts: {
     framework: facts.framework,
     graph: facts.graph,
     invokers: Object.freeze({ accepted: facts.invokers.accepted, reason: facts.invokers.reason }),
+    artifacts: Object.freeze({
+      invokers: facts.artifacts.invokers,
+      descriptors: facts.artifacts.descriptors,
+    }),
     rootModule: freezeModuleDefinition(facts.rootModule),
     routes: collectCompiledRoutes(facts.modules),
     globalEnhancers: freezeEnhancerMetadata(facts.globalEnhancers),

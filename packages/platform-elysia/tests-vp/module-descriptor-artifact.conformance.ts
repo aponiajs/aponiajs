@@ -10,7 +10,10 @@ import { z } from "zod";
 import {
   AponiaFactory,
   defineElysiaControllerRoutes,
+  readApplicationDiagnostics,
+  type AponiaApplicationDiagnostics,
   type AponiaApplicationOptions,
+  type AponiaArtifactProvenance,
   type AponiaModuleDescriptorArtifact,
 } from "../src/index.ts";
 import { aponiaVersion } from "../src/version.ts";
@@ -110,6 +113,20 @@ type DescriptorsOptionAssertion = Expect<Equals<DescriptorsOption, AponiaModuleD
 type ModulesAssertion = Expect<
   Equals<DescriptorsOption["modules"], Readonly<Record<string, ModuleDefinition>>>
 >;
+type ArtifactsAssertion = Expect<
+  Equals<AponiaApplicationDiagnostics["artifacts"], AponiaArtifactProvenance>
+>;
+/**
+ * The two stamps a consumer reports as provenance. `null` is a first-class
+ * answer — "no artifact supplied this", including a descriptor a caller wrote by
+ * hand — so it belongs to the type rather than to a rule a consumer re-applies.
+ */
+type ArtifactProvenanceAssertion = Expect<
+  Equals<
+    AponiaArtifactProvenance,
+    { readonly invokers: string | null; readonly descriptors: string | null }
+  >
+>;
 
 /**
  * The artifact shape `aponia build` writes and the platform README documents: a
@@ -133,6 +150,33 @@ test("the Vite+ lane types the descriptors option and its artifact contract", ()
 
   expect(descriptorsOptionAssertion).toBe(true);
   expect(modulesAssertion).toBe(true);
+});
+
+test("the Vite+ lane types the artifact provenance a boot record carries", () => {
+  const artifactsAssertion: ArtifactsAssertion = true;
+  const provenanceAssertion: ArtifactProvenanceAssertion = true;
+
+  expect(artifactsAssertion).toBe(true);
+  expect(provenanceAssertion).toBe(true);
+});
+
+test("the Vite+ lane stamps an adopted artifact and leaves declared data unstamped", async () => {
+  const adopted = await AponiaFactory.create(ConformanceDescriptorModule, documentedOptions);
+  const adoptedDiagnostics = readApplicationDiagnostics(adopted.getNativeApplication());
+
+  expect(adoptedDiagnostics?.artifacts.descriptors).toBe(aponiaVersion);
+  expect(adoptedDiagnostics?.artifacts.invokers).toBeNull();
+  await adopted.close();
+
+  // The same distinction from the other side: this root is declared data too,
+  // and no build emitted it, so both stamps stay `null`. "declared" says the
+  // container compiled data; only adoption can name the release that wrote it.
+  const handwritten = await AponiaFactory.create(conformanceDescriptor, { logger: false });
+  const handwrittenDiagnostics = readApplicationDiagnostics(handwritten.getNativeApplication());
+
+  expect(handwrittenDiagnostics?.graph).toBe("declared");
+  expect(handwrittenDiagnostics?.artifacts).toEqual({ invokers: null, descriptors: null });
+  await handwritten.close();
 });
 
 test("the Vite+ lane boots the documented artifact shape", async () => {

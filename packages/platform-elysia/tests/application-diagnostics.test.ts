@@ -139,6 +139,9 @@ test("a booted application exposes its boot decision and compiled routes", async
   expect(diagnostics?.framework).toBe(aponiaVersion);
   expect(diagnostics?.rootModule.id).toBe("DiagnosticsAppModule");
   expect(diagnostics?.routes.map((entry) => entry.route.path)).toContain("/");
+  // No artifact supplied this graph, so nothing stamped it. The record names the
+  // release that wrote an artifact, never the release that is running.
+  expect(diagnostics?.artifacts).toEqual({ invokers: null, descriptors: null });
 
   const createRoute = diagnostics?.routes.find((entry) => entry.route.method === "POST");
   expect(createRoute?.module).toBe("DiagnosticsAppModule");
@@ -162,6 +165,7 @@ test("the record handed out is frozen, one entry at a time", async () => {
   expect(Object.isFrozen(diagnostics)).toBe(true);
   expect(Object.isFrozen(diagnostics?.routes)).toBe(true);
   expect(Object.isFrozen(diagnostics?.invokers)).toBe(true);
+  expect(Object.isFrozen(diagnostics?.artifacts)).toBe(true);
   // The record owns the freeze of what it was handed: the boot's own objects
   // are not the reason these are immutable.
   expect(Object.isFrozen(diagnostics?.rootModule)).toBe(true);
@@ -221,9 +225,11 @@ test("a boot served by the descriptor artifact reports the declared graph", asyn
   const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
 
   // The root the declaration names rather than the class the caller passed, and
-  // the plans that mounted from that same graph.
+  // the plans that mounted from that same graph. The descriptor stamp is the
+  // artifact's own release, which is the fact only adoption can supply.
   expect(diagnostics?.graph).toBe("declared");
   expect(diagnostics?.rootModule.id).toBe("DeclaredDiagnosticsModule");
+  expect(diagnostics?.artifacts.descriptors).toBe(aponiaVersion);
   expect(diagnostics?.routes.map((entry) => entry.route.path)).toEqual(["/declared"]);
   expect(diagnostics?.routes[0]?.module).toBe("DeclaredDiagnosticsModule");
   expect(diagnostics?.routes[0]?.controller).toBe("DeclaredDiagnosticsController");
@@ -243,9 +249,12 @@ test("a class whose descriptor artifact was refused reports the decorated graph"
   // The artifact named a declared graph, and the boot refused it: a stale
   // artifact must never make the record describe a graph the application is not
   // running, so the class the caller passed is what both the record and the
-  // container report.
+  // container report. Its release stamp goes with it — the graph the record now
+  // describes was written by nobody, and `0.0.0` is the artifact's, not this
+  // application's.
   expect(diagnostics?.graph).toBe("decorated");
   expect(diagnostics?.rootModule.id).toBe("DiagnosticsAppModule");
+  expect(diagnostics?.artifacts.descriptors).toBeNull();
   expect(diagnostics?.routes.map((entry) => entry.route.path)).toContain("/");
   await application.close();
 });
@@ -275,9 +284,13 @@ test("a controller mounted through the low-level descriptor path contributes no 
 
   // The route mounted, and the record still reports nothing for it: its
   // callback built the route, so there is no compiled plan to describe. The
-  // root is data the caller declared, which is what that graph is reported as.
+  // root is data the caller declared, which is what that graph is reported as —
+  // and its descriptor stamp stays `null`, because `"declared"` says the
+  // container compiled data, not that a build emitted it. A hand-written
+  // descriptor was emitted by nobody.
   expect(await response.text()).toBe("plugin");
   expect(diagnostics?.graph).toBe("declared");
+  expect(diagnostics?.artifacts.descriptors).toBeNull();
   expect(diagnostics?.routes).toEqual([]);
   await application.close();
 });
@@ -287,6 +300,8 @@ test("a boot that adopts no invoker artifact reports the refusal and why", async
   const absentDiagnostics = readApplicationDiagnostics(absent.getNativeApplication());
   expect(absentDiagnostics?.invokers.accepted).toBe(false);
   expect(absentDiagnostics?.invokers.reason).toBeDefined();
+  // Nothing was adopted, so no release supplied binding this boot ran.
+  expect(absentDiagnostics?.artifacts.invokers).toBeNull();
   await absent.close();
 
   const stale = await AponiaFactory.create(DiagnosticsAppModule, {
@@ -297,6 +312,9 @@ test("a boot that adopts no invoker artifact reports the refusal and why", async
   expect(staleDiagnostics?.invokers.accepted).toBe(false);
   expect(staleDiagnostics?.invokers.reason).toContain("0.0.0");
   expect(staleDiagnostics?.invokers.reason).toContain(aponiaVersion);
+  // The refused artifact names a release that is not running this boot, so its
+  // stamp is not reported either: a refusal leaves no supplied invoker to stamp.
+  expect(staleDiagnostics?.artifacts.invokers).toBeNull();
   await stale.close();
 
   // A JavaScript caller has no type checker, which is the state this states.
@@ -323,5 +341,8 @@ test("a boot that adopts an invoker artifact reports no reason", async () => {
 
   expect(diagnostics?.invokers.accepted).toBe(true);
   expect(diagnostics?.invokers.reason).toBeUndefined();
+  // The artifact's own release, which is what a consumer reports as the
+  // provenance of the binding that served this application.
+  expect(diagnostics?.artifacts.invokers).toBe(aponiaVersion);
   await application.close();
 });

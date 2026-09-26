@@ -17,6 +17,12 @@ import type { AponiaInvokerArtifact, AponiaInvokerSelection } from "./invoker-ar
  * one. The decision travels back to the caller as data — the boot publishes it
  * in the record it attaches to the application — and the refused cases also
  * report the same sentence on the boot's log channel.
+ *
+ * The decision carries the artifact's own release stamp beside the reason, so a
+ * consumer reports which release supplied the invokers without holding the
+ * artifact. Only adoption has one: a refused artifact was built by some other
+ * release by definition, and reporting that number would name the provenance of
+ * binding this boot did not use.
  */
 export function selectInvokerArtifact(
   artifact: AponiaInvokerArtifact | undefined,
@@ -27,6 +33,7 @@ export function selectInvokerArtifact(
     return Object.freeze({
       invokers: undefined,
       reason: "No generated invoker artifact was supplied.",
+      builtBy: null,
     });
   }
 
@@ -44,7 +51,11 @@ export function selectInvokerArtifact(
     );
   }
 
-  return Object.freeze({ invokers: artifact.invokers, reason: undefined });
+  return Object.freeze({
+    invokers: artifact.invokers,
+    reason: undefined,
+    builtBy: artifact.framework,
+  });
 }
 
 /**
@@ -60,5 +71,5 @@ function refuse(reason: string, logger: LoggerService | undefined): AponiaInvoke
     "RoutesResolver",
   );
 
-  return Object.freeze({ invokers: undefined, reason });
+  return Object.freeze({ invokers: undefined, reason, builtBy: null });
 }

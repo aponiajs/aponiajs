@@ -63,19 +63,22 @@ export async function bootstrapAponiaApplication(
 
   // The generated descriptors are the whole module graph, so the root is chosen
   // once, before anything is compiled: a refused artifact leaves the application
-  // it named in place.
-  const selectedRootModule = selectRootModuleDescriptor(
+  // it named in place. The selection carries the artifact's own release stamp,
+  // which is what the record publishes below: "an artifact supplied this graph"
+  // and "the release that wrote it" are two different facts, and only the
+  // selector can state the second.
+  const rootSelection = selectRootModuleDescriptor(
     options.descriptors,
     rootModule,
     aponiaVersion,
     logger,
   );
-  const compiledRootModule = compileRootModule(selectedRootModule);
+  const compiledRootModule = compileRootModule(rootSelection.rootModule);
   // Which graph served the application is decided by the shape of the root the
   // selector resolved, never by re-reading the artifact: a descriptor is data
   // the container compiles as it stands, while a class and a dynamic module both
   // have their decorators read and lowered, so both are the decorated path.
-  const graph: "declared" | "decorated" = isModuleDefinition(selectedRootModule)
+  const graph: "declared" | "decorated" = isModuleDefinition(rootSelection.rootModule)
     ? "declared"
     : "decorated";
   const container = createContainer(compiledRootModule);
@@ -209,13 +212,14 @@ export async function bootstrapAponiaApplication(
   }
 
   // The boot's own record, attached to the application it returns: which root
-  // the container compiled, what it decided about the invoker artifact, the
-  // compiled root, every plan the controllers mounted from, and the
-  // application's own enhancer declaration. Those are the facts a consumer
-  // cannot recover from the mounted application — a route keeps its method and
-  // path, never the module or controller that declared it — and the record is
-  // attached here, once the container holds every plan, rather than after the
-  // gateway work, which mounts through its own path.
+  // the container compiled, what it decided about the invoker artifact, which
+  // release supplied each artifact it adopted, the compiled root, every plan the
+  // controllers mounted from, and the application's own enhancer declaration.
+  // Those are the facts a consumer cannot recover from the mounted application —
+  // a route keeps its method and path, never the module or controller that
+  // declared it — and the record is attached here, once the container holds
+  // every plan, rather than after the gateway work, which mounts through its own
+  // path.
   attachApplicationDiagnostics(
     nativeApplication,
     createApplicationDiagnostics({
@@ -224,6 +228,10 @@ export async function bootstrapAponiaApplication(
       invokers: {
         accepted: invokerSelection.invokers !== undefined,
         reason: invokerSelection.reason,
+      },
+      artifacts: {
+        invokers: invokerSelection.builtBy,
+        descriptors: rootSelection.builtBy,
       },
       rootModule: compiledRootModule,
       modules: container.graph.modules,

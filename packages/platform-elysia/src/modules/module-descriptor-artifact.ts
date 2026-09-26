@@ -1,6 +1,9 @@
 import type { LoggerService, ModuleDefinition } from "@aponiajs/common";
 import type { AponiaRootModule } from "./module-compiler.types.ts";
-import type { AponiaModuleDescriptorArtifact } from "./module-descriptor-artifact.types.ts";
+import type {
+  AponiaModuleDescriptorArtifact,
+  AponiaRootModuleSelection,
+} from "./module-descriptor-artifact.types.ts";
 
 /**
  * The root module bootstrap compiles: the artifact's declared descriptor when it
@@ -21,6 +24,11 @@ import type { AponiaModuleDescriptorArtifact } from "./module-descriptor-artifac
  * is refused, which is what stops a leftover entry from booting a module the
  * application no longer declares.
  *
+ * The decision travels back with the root it selected, and the stamp is the
+ * artifact's own: adoption is the only case that has one, so a consumer can tell
+ * a boot that served generated data from one that lowered a hand-written
+ * descriptor, which no artifact ever emitted.
+ *
  * @internal
  */
 export function selectRootModuleDescriptor(
@@ -28,20 +36,20 @@ export function selectRootModuleDescriptor(
   rootModule: AponiaRootModule,
   frameworkVersion: string,
   logger: LoggerService | undefined,
-): AponiaRootModule {
+): AponiaRootModuleSelection {
   if (artifact === undefined) {
-    return rootModule;
+    return lowered(rootModule);
   }
 
   // An application that hands over a descriptor, or a dynamic module, has already
   // named the graph to boot; there is nothing left to substitute.
   if (typeof rootModule !== "function") {
-    return rootModule;
+    return lowered(rootModule);
   }
 
   const declared = readDeclaredModules(artifact, frameworkVersion, logger);
   if (declared === undefined) {
-    return rootModule;
+    return lowered(rootModule);
   }
 
   const descriptor = Object.hasOwn(declared, rootModule.name)
@@ -53,7 +61,7 @@ export function selectRootModuleDescriptor(
         "from its decorators instead. Run `aponia build` again.",
       "RoutesResolver",
     );
-    return rootModule;
+    return lowered(rootModule);
   }
 
   if (!isModuleDefinition(descriptor)) {
@@ -62,7 +70,7 @@ export function selectRootModuleDescriptor(
         "module descriptor, so it is lowered from its decorators instead. Run `aponia build` again.",
       "RoutesResolver",
     );
-    return rootModule;
+    return lowered(rootModule);
   }
 
   logger?.log(
@@ -70,7 +78,18 @@ export function selectRootModuleDescriptor(
       "application.",
     "RoutesResolver",
   );
-  return descriptor;
+  return Object.freeze({ rootModule: descriptor, builtBy: artifact.framework });
+}
+
+/**
+ * The caller's own root, which no artifact supplied.
+ *
+ * A refusal and a caller-passed descriptor are the same answer here: the graph
+ * being compiled is the one the application named, and there is no artifact
+ * release to report for it.
+ */
+function lowered(rootModule: AponiaRootModule): AponiaRootModuleSelection {
+  return Object.freeze({ rootModule, builtBy: null });
 }
 
 /**

@@ -31,6 +31,11 @@ export interface AponiaInvokerArtifact {
  * exist, so it is the only place that can state why one applied, and the boot
  * reports the same sentence on its log channel and in the record it publishes.
  *
+ * The stamp is the artifact's own `framework`, and `null` whenever no artifact
+ * was adopted — absent, or refused. A refused artifact names a release the
+ * running platform is not, so reporting it would say generated binding served
+ * an application it did not serve.
+ *
  * @internal
  */
 export interface AponiaInvokerSelection {
@@ -38,4 +43,6 @@ export interface AponiaInvokerSelection {
   readonly invokers: ReadonlyMap<ClassToken<unknown>, AponiaControllerInvokerFactory> | undefined;
   /** Why the artifact was refused, or `undefined` when it was adopted. */
   readonly reason: string | undefined;
+  /** The AponiaJS release that emitted the adopted invokers, or `null`. */
+  readonly builtBy: string | null;
 }

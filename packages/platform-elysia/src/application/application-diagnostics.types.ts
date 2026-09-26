@@ -14,6 +14,25 @@ export interface AponiaInvokerDiagnostics {
 }
 
 /**
+ * Which AponiaJS release supplied each artifact a boot adopted.
+ *
+ * This is the one fact a boot cannot state as a verdict. An accepted artifact
+ * says generated binding served the application, and a declared graph says the
+ * container compiled data — neither says *who wrote* that data, and the release
+ * that did is the answer a consumer reports. `null` therefore means "no
+ * artifact was involved": none supplied, one refused, or, for `descriptors`, a
+ * descriptor the caller wrote by hand, which no build ever emitted.
+ *
+ * @internal
+ */
+export interface AponiaArtifactProvenance {
+  /** The release that emitted the adopted invokers, or `null`. */
+  readonly invokers: string | null;
+  /** The release that emitted the adopted module descriptors, or `null`. */
+  readonly descriptors: string | null;
+}
+
+/**
  * One compiled route plan, with the two names that say where it mounted.
  *
  * The plan is the one a controller mounts from, so it carries the schema slots
@@ -41,9 +60,10 @@ export interface AponiaCompiledRouteDiagnostics {
  * `bootstrapAponiaApplication` produces one, `readApplicationDiagnostics` is
  * the only reader, and an application no boot produced reads as `undefined`.
  * Each fact is one bootstrap already decided — the graph the root selector
- * served, the invoker artifact's verdict, the compiled root, the plans the
- * controllers mounted from, and the application's own enhancer declaration —
- * so a consumer reports what the runtime did instead of re-applying its rules.
+ * served, the invoker artifact's verdict, the release each adopted artifact came
+ * from, the compiled root, the plans the controllers mounted from, and the
+ * application's own enhancer declaration — so a consumer reports what the
+ * runtime did instead of re-applying its rules.
  *
  * @internal
  */
@@ -51,13 +71,16 @@ export interface AponiaApplicationDiagnostics {
   /** The AponiaJS release that booted the application. */
   readonly framework: string;
   /**
-   * Which root the container compiled: `"declared"` when the boot served data
-   * — a descriptor artifact, a descriptor root, or a dynamic module — and
-   * `"decorated"` when it lowered the module class the caller passed.
+   * Which root the container compiled: `"declared"` when that root is a
+   * `ModuleDefinition` — the artifact's descriptor, or one the caller passed —
+   * and `"decorated"` when it is a class or a dynamic module, both of which the
+   * boot lowers.
    */
   readonly graph: "declared" | "decorated";
   /** The boot's verdict on the generated invoker artifact. */
   readonly invokers: AponiaInvokerDiagnostics;
+  /** The release that supplied each artifact the boot adopted, or `null`. */
+  readonly artifacts: AponiaArtifactProvenance;
   /** The root `compileRootModule` returned, as the container compiled it. */
   readonly rootModule: ModuleDefinition;
   /**

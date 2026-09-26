@@ -181,8 +181,11 @@ runtime boundary it describes.
   can never make a bootable application fail. The refusal is reported through
   the system logger under `RoutesResolver` and names both framework versions and
   the Elysia the artifact was generated against; the selector returns that
-  decision — the invokers or the reason for their absence — so the boot publishes
-  the same sentence in its own record instead of restating the rule. `elysia` is
+  decision — the invokers or the reason for their absence, and the artifact's own
+  release stamp when it adopted them — so the boot publishes the same sentence in
+  its own record instead of restating the rule. That stamp is `null` for every
+  other case, including a refusal, because a refused artifact names a release
+  this boot is not. `elysia` is
   recorded as provenance rather than re-read at run time: the supported Elysia
   range is already enforced by the peer dependency and by
   `routing/native-route.ts`'s structural guard, and reading an installed
@@ -204,7 +207,11 @@ runtime boundary it describes.
   no entry, so the entry left behind cannot boot a graph the application no
   longer declares. The choice is reported under `RoutesResolver`, once, whichever
   way it went, because an application booting from data has to be able to say
-  which graph served it. A root passed as a descriptor rather than as a class
+  which graph served it. The selection carries the artifact's own release stamp
+  beside it, and that stamp is `null` in every case where no artifact was adopted
+  — refused, absent, or a descriptor the caller passed instead of a class, which
+  names the graph itself and was emitted by no build. A root passed as a
+  descriptor rather than as a class
   names the graph itself, so the artifact is not consulted, and a structural
   `isModuleDefinition` guards the selected entry rather than trusting the option's type:
   a JavaScript caller has no type checker, and a truncated descriptor reaching
@@ -222,7 +229,9 @@ runtime boundary it describes.
   `selectRootModuleDescriptor` resolved, never by re-reading the artifact:
   `"declared"` when that root is a `ModuleDefinition`, and `"decorated"` when it
   is a class or a dynamic module, both of which the boot lowers — the invoker
-  artifact's verdict with the selector's own reason, the root `compileRootModule`
+  artifact's verdict with the selector's own reason, which release supplied each
+  artifact the boot adopted and `null` for one it did not, so a hand-written
+  descriptor is never reported as generated data, the root `compileRootModule`
   returned, every compiled plan its controllers mounted (a controller mounted
   through the low-level descriptor path built its routes in a callback and
   contributes none), and the application's own enhancer declaration, which no
