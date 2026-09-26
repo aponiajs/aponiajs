@@ -63,12 +63,13 @@ jobs:
 
       - name: Pack publishable workspaces
         run: |
-          mkdir -p canary-artifacts/{01-common,02-core,03-platform-elysia,04-cli,05-create-aponia}
+          mkdir -p canary-artifacts/{01-common,02-core,03-platform-elysia,04-cli,05-create-aponia,06-devtools}
           bun pm pack --cwd packages/common --destination "$GITHUB_WORKSPACE/canary-artifacts/01-common"
           bun pm pack --cwd packages/core --destination "$GITHUB_WORKSPACE/canary-artifacts/02-core"
           bun pm pack --cwd packages/platform-elysia --destination "$GITHUB_WORKSPACE/canary-artifacts/03-platform-elysia"
           bun pm pack --cwd packages/cli --destination "$GITHUB_WORKSPACE/canary-artifacts/04-cli"
           bun pm pack --cwd packages/create-aponia --destination "$GITHUB_WORKSPACE/canary-artifacts/05-create-aponia"
+          bun pm pack --cwd packages/devtools --destination "$GITHUB_WORKSPACE/canary-artifacts/06-devtools"
 
       - name: Publish packages in dependency order
         working-directory: ${{ runner.temp }}

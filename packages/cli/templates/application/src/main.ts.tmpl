@@ -2,11 +2,13 @@ import { AponiaFactory } from "@aponiajs/platform-elysia";
 import { moduleDescriptorArtifact } from "./descriptors.generated.ts";
 import { controllerInvokerArtifact } from "./invokers.generated.ts";
 import { AppModule } from "./app.module.ts";
+import { appLogger } from "./logger.ts";
 
 async function bootstrap(): Promise<void> {
   const application = await AponiaFactory.create(AppModule, {
     descriptors: moduleDescriptorArtifact,
     invokers: controllerInvokerArtifact,
+    logger: appLogger,
   });
   const port = Number(Bun.env.PORT ?? 3000);
   await application.listen(port);

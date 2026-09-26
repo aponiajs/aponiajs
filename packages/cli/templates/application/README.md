@@ -33,9 +33,22 @@ main.ts
 
 Open `http://localhost:3000/` after starting the application.
 
+`@aponiajs/devtools` serves a loopback API on `http://127.0.0.1:8000/__devtools`
+while an application that registers it listens: `meta`, `graph`, `routes`,
+`flow`, `logs`, `requests`, and `aot`. This starter does not register it, because
+registering it means importing a dynamic module, and `aponia build` reports a
+root module that imports one as `DECLINED` — the committed
+`src/descriptors.generated.ts` is what lets a fresh checkout boot from the
+declared graph, so the registration is left to the application. The
+[devtools guide](https://github.com/aponiajs/aponiajs/blob/main/docs/devtools.md)
+shows the three lines it takes, the endpoints, and the limitations they state.
+
 The starter follows Nest standard mode:
 
 ```text
+scripts/
+|-- build.ts
+`-- inspect.ts
 src/
 |-- app.controller.spec.ts
 |-- app.controller.ts
@@ -43,10 +56,16 @@ src/
 |-- app.service.ts
 |-- descriptors.generated.ts
 |-- invokers.generated.ts
+|-- logger.ts
 `-- main.ts
 test/
 `-- app.e2e-spec.ts
 ```
+
+`src/logger.ts` holds the application's logger, and `src/main.ts` hands that one
+object to `AponiaFactory.create`, so every bootstrap line is written through the
+logger the application also holds — the half a devtools registration needs from
+the application, since it patches the logger it is given in place.
 
 Add later features under `src/<feature>`, with the feature controller, module,
 service, DTOs, entities, and unit tests kept together.

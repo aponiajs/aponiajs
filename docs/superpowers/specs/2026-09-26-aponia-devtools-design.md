@@ -587,7 +587,11 @@ conformance lane mirrors the public contract in
   request without a route identity, recording nothing when `capture` is false,
   omitting `headers` and `body` when each is turned off, marking a body it cut at
   `bodyLimit`, replacing a `redact`ed header with the literal, and carrying
-  `error` on a `5xx` and on nothing else.
+  `error` with the message the answer published only on a `5xx` whose Problem
+  Details body the hook can still read — absent on a `4xx`, which is an answer
+  rather than a failure, and absent on the two `5xx` whose body cannot be read
+  back, the platform's own mapping for an unhandled failure and an answer a
+  handler built itself.
 - Assert `contract` is `1` and that a consumer reading only `meta` can decide
   whether to proceed.
 - The platform changes carry their own tests in the platform's lanes, including

@@ -377,7 +377,9 @@ imports and exports, lifecycle, structured logging, generators, native Elysia
 escape hatches, concise inferred controller registration, RFC 9457 application
 errors, provider-registered Elysia WebSocket gateways, and guards, interceptors,
 and exception filters compiled into per-route lifecycle hooks, with the default
-Problem Details mapping last in each route's error path. Not implemented:
+Problem Details mapping last in each route's error path, and an opt-in loopback
+devtools package that reports what a boot compiled and what the application
+answered. Not implemented:
 middleware, non-singleton scopes, testing modules, OpenAPI, authentication,
 production WebSocket policies and transport extraction, and microservice
 transports. Treat the two lists above as the scope of record for the current

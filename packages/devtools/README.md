@@ -28,6 +28,15 @@ export class AppModule {}
 - **Enabled is a plugin, not a provider.** The devtools plugin runs at
   `onStart`, after every route has mounted, which is what lets it see the route
   table a boot-time provider cannot.
+- **Registering it costs the root module its generated descriptor.** A
+  registration is a call, and `aponia build` lowers a module only when every
+  `imports` entry is a single identifier, so the module that declares it is
+  reported as `DECLINED module <Root>: …`. An application that hands over that
+  artifact then boots from decorators instead — the registration mounts and the
+  declared-graph boot is given up — and one whose root is the only module a build
+  can lower gets no descriptor written at all, so the artifact on disk keeps
+  serving the graph it already held and the registration does not mount. Read the
+  `DECLINED module` line a build prints.
 - **`onStart` requires `listen()`.** An application that only calls `handle()`
   publishes nothing and is otherwise unaffected.
 - **Loopback only.** The devtools server binds `127.0.0.1` on `port` (default
@@ -45,7 +54,10 @@ export class AppModule {}
   stream to publish serves no `/logs` rather than an empty stream that would read
   as "nothing is being logged". A logger that accepts one level and refuses the
   next is not that case: a level was patched, so the stream is served, and it
-  holds the levels the tap reached.
+  holds the levels the tap reached. The payload does not say which levels are
+  missing — an entry states the level it was written at — so a stream that never
+  carries `debug` cannot be told from one whose `debug` lines were never written,
+  and the two are read together when a level you expect is absent.
   The patch is a mutation of a logger the application holds too, and the stream
   holds the lines written through that one object — the platform's own, and an
   application's where it logs through the same reference, because the container
@@ -88,7 +100,13 @@ export class AppModule {}
   hook stage, and a contributed hook can only be identified — by the checksum
   Elysia stamps, never by a plugin name the route does not carry. The route's
   filters are a list beside the stages rather than a stage in the chain, ordered
-  as its own `error` array is, with the Problem Details mapping last.
+  as its own `error` array is, with the Problem Details mapping last. One
+  limitation is stated rather than hidden: an interceptor half declared as a
+  class field (`interceptBefore = () => {}`) does not appear. The stage a route
+  runs is decided from the class tokens the plan carries, read through their
+  `prototype` — the object an instance's methods resolve through — so a field is
+  run while its stage is omitted. A half declared as a prototype method is
+  reported in full.
 - **`GET /__devtools/logs?since=<cursor>` streams what the application logged.**
   The registration takes the logger the application also gives
   `AponiaFactory.create`, patches it in place, and records every line into a
@@ -125,6 +143,13 @@ export class AppModule {}
   route has no pattern to report — `path` carries the path that arrived, and
   `/routes` is the table that tells the two apart. The record belongs to one
   application and one boot, so a second `listen()` begins a new one.
+  `durationMs` is measured from the moment the request reached this package's
+  arrival hook to a reading taken in the completion hook, after this package has
+  read the route, the status, and the parsed body — so it includes this
+  package's own synchronous reads of the request and the answer, and it is not
+  "the time the application spent on the route". It excludes only the one
+  microtask this package spends reading a readable `5xx` answer's published
+  body, which is why that read happens after the stamp.
 - **`GET /__devtools/aot` reports what a build decided beside what the boot did
   with it.** `graph` and `invokers` are the boot record's: which root the
   container compiled, and the boot's verdict on the generated invoker artifact,
@@ -156,6 +181,8 @@ curl http://127.0.0.1:8000/__devtools/meta
 
 ## Documentation
 
+- [Devtools guide](../../docs/devtools.md): the endpoint contract, the accepted
+  limitations, and how a consumer polls it.
 - [Published packages](../../docs/packages.md): the npm catalog and install
   commands.
 - [Repository guide](../../AGENTS.md): how the framework is organized.

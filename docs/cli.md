@@ -227,9 +227,14 @@ aponia new my-api --dry-run
 my-api/
 |-- .env.example
 |-- .gitignore
+|-- AGENTS.md
 |-- aponia.json
+|-- llms.txt
 |-- package.json
 |-- README.md
+|-- scripts/
+|   |-- build.ts
+|   `-- inspect.ts
 |-- tsconfig.json
 |-- vite.config.ts
 |-- src/
@@ -239,6 +244,7 @@ my-api/
 |   |-- app.service.ts
 |   |-- descriptors.generated.ts
 |   |-- invokers.generated.ts
+|   |-- logger.ts
 |   `-- main.ts
 `-- test/
     `-- app.e2e-spec.ts
@@ -251,16 +257,30 @@ main.ts
   -> AponiaFactory.create(AppModule, {
        descriptors: moduleDescriptorArtifact,
        invokers: controllerInvokerArtifact,
+       logger: appLogger,
      })
   -> AppModule
   -> AppController
   -> AppService
 ```
 
-`main.ts` owns only bootstrap configuration, the two generated artifacts, and
-`listen`. Decorated controllers own routes. Services own application behavior.
-Generated application code does not import Elysia or low-level runtime
-descriptors.
+`main.ts` owns only bootstrap configuration, the two generated artifacts, the
+logger it holds, and `listen`. Decorated controllers own routes. Services own
+application behavior. Generated application code does not import Elysia or
+low-level runtime descriptors.
+
+`src/logger.ts` holds the application's logger, and `src/main.ts` hands that one
+object to `AponiaFactory.create`, so every bootstrap line is written through the
+logger the application also holds.
+
+A [devtools](./devtools.md) registration is added the same way — the import is
+`DevtoolsModule.register({ enabled, logger: appLogger })`, declared in
+`src/app.module.ts` and handed the same logger — but the starter does not make
+it. A registration is a dynamic module, and `aponia build` reports a root module
+that imports one as `DECLINED`, because the committed
+`descriptors.generated.ts` is what lets a fresh checkout boot from the declared
+graph and a run-time registration cannot be lowered into it. The trade-off is
+the application's to make; the [devtools guide](./devtools.md) states it.
 
 The starter ships both generated modules, so a freshly generated application
 serves through generated route invokers and boots from the declared module graph

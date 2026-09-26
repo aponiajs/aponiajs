@@ -45,6 +45,9 @@ rest of the project.
 The starter is flat, and `aponia new` reproduces it exactly:
 
 ```text
+scripts/
+|-- build.ts
+`-- inspect.ts
 src/
 |-- app.controller.spec.ts
 |-- app.controller.ts
@@ -52,6 +55,7 @@ src/
 |-- app.service.ts
 |-- descriptors.generated.ts
 |-- invokers.generated.ts
+|-- logger.ts
 `-- main.ts
 test/
 `-- app.e2e-spec.ts
@@ -83,6 +87,26 @@ it is the only cost: nothing needs repairing by hand. The same applies to a
 descriptor module left behind by a module rename, because the renamed root has no
 entry and the decorated graph answers. `aponia build` writes the same two modules
 without bundling.
+
+## Devtools
+
+This starter does not register `@aponiajs/devtools`, and that is a decision
+rather than an omission. Registering it means importing a _dynamic_ module, and
+`aponia build` lowers a module only when every `imports` entry is a single
+identifier: the module that declares the registration is reported as `DECLINED`.
+Here that module is the root and the only module a build can declare, so no
+`descriptors.generated.ts` is written either, and the committed one keeps
+serving the graph it already held — a graph this starter built without a
+registration in it. Mounting the devtools therefore means giving up the
+declared-graph boot, and that is the application's decision, not the starter's.
+
+`src/logger.ts` holds the application's logger and `src/main.ts` hands it to
+`AponiaFactory.create`, which is the half the devtools needs from the
+application: a registration handed the same object patches it in place rather
+than replacing it, so the lines the boot writes about itself are what
+`/__devtools/logs` serves. Hand it to one and not the other and the stream is
+missing exactly what the other wrote. Both halves of the trade are in the
+[devtools guide](https://github.com/aponiajs/aponiajs/blob/main/docs/devtools.md).
 
 ## Authoring rules
 

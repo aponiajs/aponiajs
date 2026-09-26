@@ -19,7 +19,8 @@ Structured applications for Bun
 [Elysia compatibility](./docs/elysia-compatibility.md) ·
 [Eden Treaty](./docs/eden-treaty.md) ·
 [Testing](./docs/testing.md) ·
-[CLI](./docs/cli.md)
+[CLI](./docs/cli.md) ·
+[Devtools](./docs/devtools.md)
 
 [![CI](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml/badge.svg)](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcommon/alpha?label=npm&color=baa9d1)](https://www.npmjs.com/package/@aponiajs/common)
@@ -558,6 +559,7 @@ its controller and service. See the
 | [`@aponiajs/platform-elysia`](https://www.npmjs.com/package/@aponiajs/platform-elysia) | Elysia adapter and application lifecycle   |
 | [`@aponiajs/cli`](https://www.npmjs.com/package/@aponiajs/cli)                         | Project and component generators           |
 | [`create-aponia`](https://www.npmjs.com/package/create-aponia)                         | `bun create` entrypoint                    |
+| [`@aponiajs/devtools`](https://www.npmjs.com/package/@aponiajs/devtools)               | Opt-in loopback devtools for a running app |
 
 All public packages share one version and are published to the `alpha` channel;
 `latest` is reserved for the first stable release.
@@ -581,6 +583,9 @@ per-route Elysia lifecycle hooks, and an unhandled failure answers an RFC 9457
 mounts from a compiled plan. A controller registered through its own
 `registerRoutes` callback, and a definition mounted through its own
 `buildPlugin`, run no enhancer and answer Elysia's native `500` instead.
+`@aponiajs/devtools` is an opt-in leaf package that serves a loopback HTTP API
+over what a boot compiled and what the application answered; it mounts no route
+on the application and reports rather than changes.
 
 Not implemented yet: async provider lifecycle, request and transient scopes,
 platform-neutral HTTP packages, full Elysia phase conformance, serialization

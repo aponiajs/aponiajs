@@ -156,6 +156,17 @@ runtime boundary it describes.
   one half runs one half, and a stage for the other would state a step the route
   never runs — the same rule that keeps a `bind`, an `invoke`, a `handler`, and a
   validation slot off the routes that do not have them.
+- A half declared as a class **field** is invisible to `/flow`, and that omission
+  is this endpoint's one silent gap. The decision is read off each class token's
+  `prototype` — the object an instance's methods resolve through — so
+  `interceptBefore = () => {}` is an instance property the platform runs and the
+  payload reports no stage for, while a half declared as a prototype method is
+  reported in full. There is nothing to infer from the other side either: by the
+  time a plan is mounted, the platform has lowered the guards and both
+  interceptor halves into one `beforeHandle` and one `afterHandle`, so the parts
+  are legible only through the tokens the plan carries. Do not derive a stage
+  from a token that does not declare one; state the limit where a consumer reads
+  the payload, which is what `docs/devtools.md` and the package README do.
 - The application's own enhancer declaration merges into the routes the platform
   mounted from a plan and into no others. A route a controller's callback mounted,
   and one mounted on the native instance, carry no compiled hook for it to merge
@@ -340,6 +351,16 @@ runtime boundary it describes.
   still serves `/requests` answering an empty record rather than no endpoint, and
   "this registration was told to record nothing" is itself a fact the record
   states.
+- A partly patched logger publishes a stream and does not say what it missed.
+  The refusal boundary is two-sided — the **first** assignment refusing is the
+  absence, a later one is a tap that installed — and the side that publishes is
+  all-or-nothing at the endpoint and never at the level: the stream holds the
+  levels the tap reached, an entry states only the level it was written at, and
+  so an absent `debug` line cannot be told from a `debug` level the tap never
+  reached. Nothing in the payload answers "which levels are missing", so the
+  limitation is stated wherever the endpoint is documented rather than filled in
+  with a guess; a stream and the endpoint that serves it are the whole fact this
+  package has to publish.
 - A record is opened by the boot that serves it, one per application, and never at
   registration. The platform hands one registration to every boot of the module
   class that declared it, so a record built when the module registered would be
@@ -373,6 +394,17 @@ runtime boundary it describes.
   hook, leave nothing rather than a partial entry. `arrive` also refuses to stamp
   while the policy records nothing, and while no boot has opened a record for the
   application that received the request.
+- `durationMs` measures this package's own hooks, and it is documented as what it
+  is rather than as what it would ideally be: the opening stamp is the first
+  statement of `arrive` and the closing one is taken after the completion hook has
+  read the route, the status, and the parsed body, so this package's own
+  synchronous reads of the request and the answer are inside the measurement and
+  the field is not "the time the application spent on the route". It excludes
+  exactly one thing — the microtask spent reading a readable `5xx` answer's
+  published body — and that exclusion is the reason the read happens after the
+  stamp. Narrowing the measurement means moving a stamp past the reads it
+  currently encloses, which changes what the endpoint reports rather than tidying
+  it.
 - A body is read through one serializer with one guard, and a body the serializer
   refuses is stated rather than dropped: `JSON.stringify` throws on a body that
   refers to itself or carries a `BigInt`, both of which an application's own
