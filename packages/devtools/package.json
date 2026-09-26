@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/devtools",
-  "version": "0.6.0-alpha.20",
+  "version": "0.6.0-alpha.21",
   "description": "Opt-in loopback devtools for a running Aponia application.",
   "homepage": "https://github.com/aponiajs/aponiajs#readme",
   "bugs": {

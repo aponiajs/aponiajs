@@ -1,12 +1,12 @@
 import { Logger, Module, type DynamicModule } from "@aponiajs/common";
 import { ElysiaPluginModule } from "@aponiajs/platform-elysia";
 import { Elysia } from "elysia";
+import { startDevtoolsServer } from "../server/devtools-server.ts";
 import type { DevtoolsOptions } from "./devtools-module.types.ts";
 
 const devtoolsPluginName = "aponia.devtools";
 const devtoolsPluginKey = "devtools";
 const devtoolsModuleId = "DevtoolsModule";
-const defaultDevtoolsPort = 8000;
 
 const devtoolsLogger = new Logger("Devtools", { timestamp: true });
 
@@ -52,15 +52,29 @@ function createInertModule(): DynamicModule {
 }
 
 /**
- * The plugin reports itself at `onStart`, which Elysia runs once the server is
- * listening and every route has mounted. That is why the module is a plugin
- * module rather than a plain provider: a provider is constructed before any
- * controller mounts and cannot see the route table.
+ * The plugin starts the devtools server at `onStart`, which Elysia runs once the
+ * application is listening and every route has mounted. That is why the module
+ * is a plugin module rather than a plain provider: a provider is constructed
+ * before any controller mounts and cannot see the route table.
+ *
+ * The application `onStart` receives is the root one, so the boot record it
+ * carries is what the report describes, and the address the plugin reports is
+ * the one the socket actually took rather than the port configuration asked
+ * for. A server that could not bind has already reported why, so the plugin
+ * reports nothing further.
  */
 function createDevtoolsPlugin(options: DevtoolsOptions): Elysia {
-  const port = options.port ?? defaultDevtoolsPort;
+  return new Elysia({ name: devtoolsPluginName }).onStart((application) => {
+    const server = startDevtoolsServer({
+      application,
+      port: options.port,
+      logger: devtoolsLogger,
+    });
 
-  return new Elysia({ name: devtoolsPluginName }).onStart(() => {
-    devtoolsLogger.log(`Aponia devtools is enabled for http://127.0.0.1:${port}.`);
+    if (server === undefined) {
+      return;
+    }
+
+    devtoolsLogger.log(`Aponia devtools is enabled for ${server.url}.`);
   });
 }
