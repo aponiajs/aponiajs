@@ -28,6 +28,15 @@ export type {
   RouteMetadata,
   RouteMethodDecorator,
 } from "./decorators/decorators.types.ts";
+export {
+  Catch,
+  UseFilters,
+  UseGuards,
+  UseInterceptors,
+  getCatchMetadata,
+  getEnhancerMetadata,
+} from "./enhancers/enhancer-decorators.ts";
+export type { EnhancerMetadata } from "./enhancers/enhancer-decorators.types.ts";
 export type {
   AponiaInterceptor,
   ArgumentsHost,
