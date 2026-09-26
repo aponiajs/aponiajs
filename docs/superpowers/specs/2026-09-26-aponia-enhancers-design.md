@@ -235,7 +235,16 @@ or no filter matching at all, falls through to the default below.
 **The default filter.** Always present, at the lowest precedence, and not
 removable. It maps an `HttpError` to its own Problem Details response, and an
 unhandled error to a `500` Problem Details response that serializes neither the
-stack nor the cause. This is the change that closes "automatic Problem Details
+stack nor the cause.
+
+It is registered **once on the root application**, not compiled into each
+route's hook object. That is what keeps the property the Testing section pins:
+a controller that declares no enhancer must mount exactly the hook object it
+mounts today, and a per-route default would put an `onError` on every route in
+every application. Declared filters are route-local hooks and are expected to
+answer first; the ordering between a route-local `onError` and the root one is
+one of the two behaviors this design has not established, and it is verified
+before filters are built. This is the change that closes "automatic Problem Details
 mapping for native errors", which `AGENTS.md` lists as missing today. An
 application overrides it by declaring a filter ahead of it, never by removing
 it: an application that could turn error mapping off could ship a stack trace.
@@ -284,15 +293,25 @@ No new runtime dependency is added to any package.
 
 ## What this does not yet establish
 
-The design assumes that adding hooks to a route leaves the route's own
+Two behaviors. Both are verified by probe before the first line of this design is
+implemented, because each one changes the design rather than merely the tests.
+
+**1. Hooks do not change a route's synchronous classification.** The design
+assumes that adding hooks to a route leaves the route's own
 synchronous-or-async classification alone, so the build-time invoker and the
-runtime's `isPossiblyAsync` decision continue to apply unchanged. The reasoning is
-that hooks are separate functions from the handler and Elysia classifies the
-handler itself. **This was not verified by probe.** If it turns out that
-registering an `afterHandle` hook moves the route onto an asynchronous
-composition path, the cost lands on every route carrying an enhancer and belongs
-in this document rather than in a surprise during implementation. Verify it
-before the first enhancer is mounted.
+runtime's `isPossiblyAsync` decision continue to apply unchanged. The reasoning
+is that hooks are separate functions from the handler and Elysia classifies the
+handler itself. If registering an `afterHandle` hook moves the route onto an
+asynchronous composition path, the cost lands on every route carrying an
+enhancer, and the spec's claim that the AOT invoker is unaffected is wrong.
+
+**2. A route-local `onError` answers before the root application's.** The
+default filter is registered on the root application, so a declared filter can
+only take precedence if a route-local `onError` that returns a value prevents
+the root one from running. If it does not, the default mapping cannot sit
+"behind" declared filters, and the fallback is that the root handler consults
+the matched route's compiled filters itself — a different design, recorded here
+rather than discovered later.
 
 ## Testing
 
