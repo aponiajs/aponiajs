@@ -59,6 +59,14 @@ interface MountedNativeRoute {
  * `scope` and `checksum` are what it stamps on a hook it can identify at all.
  * The platform's own compiled hook carries none of the three, which is how this
  * endpoint tells the two apart.
+ *
+ * That discriminator is a statement about a release this package does not own,
+ * so it is re-checked whenever the Elysia peer range moves: it holds because
+ * Elysia stamps a scope on every hook an instance-level API contributes —
+ * `"local"` when the caller declares none — and a checksum on the hooks of a
+ * named plugin. An Elysia release that stopped stamping a scope on an unscoped
+ * contribution would leave that hook indistinguishable from the compiled one,
+ * and it would drop out of this payload silently.
  */
 interface ContributedHook {
   readonly subType: unknown;
@@ -71,6 +79,9 @@ interface ScopedEnhancer {
   readonly token: ClassToken<unknown>;
   readonly scope: AponiaFlowScope;
 }
+
+/** One half of the interceptor lifecycle, as a stage kind. */
+type InterceptorHalf = "interceptBefore" | "interceptAfter";
 
 /** A stage before the graph wires it: everything but its id and its successor. */
 type StageDraft = Omit<AponiaFlowStage, "id" | "next">;
@@ -164,6 +175,10 @@ export function buildFlowPayload(
  * before the platform's compiled `afterHandle`; and last the after halves over
  * the whole interceptor list reversed, so the outermost interceptor's half runs
  * last.
+ *
+ * Each half is published for the interceptors that declare it and no others: the
+ * platform calls them with an optional call, so a class that implements one half
+ * runs one half.
  */
 function buildStageDrafts(
   mounted: MountedNativeRoute,
@@ -190,7 +205,7 @@ function buildStageDrafts(
   appendContributedStages(drafts, hooks.beforeHandle, "beforeHandle");
   appendEnhancerStages(drafts, scopedEnhancers(inherited.guards, "global"), "guard");
   appendEnhancerStages(drafts, scopedEnhancers(declared.guards, "local"), "guard");
-  appendEnhancerStages(drafts, interceptors, "interceptBefore");
+  appendEnhancerStages(drafts, declaringHalf(interceptors, "interceptBefore"), "interceptBefore");
   appendParameterBinding(drafts, plan);
 
   const described = plan ?? callback;
@@ -200,7 +215,11 @@ function buildStageDrafts(
   }
 
   appendContributedStages(drafts, hooks.afterHandle, "afterHandle");
-  appendEnhancerStages(drafts, Object.freeze([...interceptors].reverse()), "interceptAfter");
+  appendEnhancerStages(
+    drafts,
+    Object.freeze([...declaringHalf(interceptors, "interceptAfter")].reverse()),
+    "interceptAfter",
+  );
 
   return drafts;
 }
@@ -557,6 +576,40 @@ function scopedEnhancers(
   scope: AponiaFlowScope,
 ): readonly ScopedEnhancer[] {
   return tokens.map((token) => Object.freeze({ token, scope }));
+}
+
+/**
+ * The interceptors of one list whose class declares the half a stage states.
+ *
+ * The platform calls both halves with an optional call — `interceptor
+ * .interceptBefore?.(…)` — so an interceptor that declares one half runs one
+ * half, and a stage for the other would state something the route never runs.
+ * The class the plan names is what this reads, which is the class the container
+ * resolved for that token and the object an instance's methods come from.
+ */
+function declaringHalf(
+  enhancers: readonly ScopedEnhancer[],
+  half: InterceptorHalf,
+): readonly ScopedEnhancer[] {
+  return Object.freeze(enhancers.filter(({ token }) => declaresHalf(token, half)));
+}
+
+/**
+ * Whether a class declares one half of the interceptor lifecycle.
+ *
+ * A class token's `prototype` is what an instance resolves its methods through,
+ * so this answers for the object the platform would call. A token that is not a
+ * class — a foreign record may hold anything — declares neither half, and a
+ * stage left out costs a stage rather than the request.
+ */
+function declaresHalf(token: ClassToken<unknown>, half: InterceptorHalf): boolean {
+  const members = (token as { readonly prototype?: unknown }).prototype;
+
+  return (
+    typeof members === "object" &&
+    members !== null &&
+    typeof (members as Record<string, unknown>)[half] === "function"
+  );
 }
 
 /**

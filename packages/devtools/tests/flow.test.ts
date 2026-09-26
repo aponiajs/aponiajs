@@ -122,11 +122,6 @@ function assertStageGraph(route: AponiaFlowRoute): void {
   expect([...reachable].sort()).toEqual([...ids].sort());
 }
 
-/** Compares two strings by code unit, which is the order the payload states. */
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
-}
-
 /**
  * The fixture whose enhancers are the whole point: a guard, an interceptor, and
  * a filter declared on a route, and one validation slot resolved through a
@@ -200,6 +195,11 @@ class GuardedAppModule {}
  * the payload publishes as the hook's identity. It contributes a hook to the
  * after phase as well, so the case states where Elysia's own after hook runs
  * relative to the platform's compiled one.
+ *
+ * The first route also declares an interceptor, which is what puts a contributed
+ * after hook and a compiled after half on one route: without both, the line that
+ * publishes Elysia's after hooks ahead of the after halves could move with every
+ * case still green.
  */
 const flowPlugin = new Elysia({ name: "devtools-flow-fixture" })
   .derive({ as: "global" }, () => ({ requestId: "fixture" }))
@@ -207,9 +207,18 @@ const flowPlugin = new Elysia({ name: "devtools-flow-fixture" })
   .onBeforeHandle({ as: "global" }, () => {})
   .onAfterHandle({ as: "global" }, () => {});
 
+class ContributedInterceptor {
+  interceptBefore(): void {}
+
+  interceptAfter(_context: unknown, response: unknown): unknown {
+    return response;
+  }
+}
+
 @Controller()
 class ContributedController {
   @Get("first")
+  @UseInterceptors(ContributedInterceptor)
   first(): string {
     return "first";
   }
@@ -223,6 +232,7 @@ class ContributedController {
 @Module({
   imports: [ElysiaPluginModule.register(flowPlugin, { key: "flow" })],
   controllers: [ContributedController],
+  providers: [ContributedInterceptor],
 })
 class ContributedAppModule {}
 
@@ -264,6 +274,16 @@ class LocalInterceptor {
   }
 }
 
+class BeforeOnlyInterceptor {
+  interceptBefore(): void {}
+}
+
+class AfterOnlyInterceptor {
+  interceptAfter(_context: unknown, response: unknown): unknown {
+    return response;
+  }
+}
+
 class GlobalFilter {
   catch(): unknown {
     return undefined;
@@ -279,6 +299,10 @@ class LocalFilter {
 class EdgeController {
   one(): string {
     return "one";
+  }
+
+  two(): string {
+    return "two";
   }
 }
 
@@ -302,6 +326,12 @@ const edgeModule: ModuleDefinition = defineModule({
           interceptors: [LocalInterceptor],
           filters: [LocalFilter],
         },
+        {
+          method: "GET",
+          path: "/two",
+          propertyKey: "two",
+          interceptors: [BeforeOnlyInterceptor, AfterOnlyInterceptor],
+        },
       ],
     }),
     elysiaController(CallbackController, (application, controller) => {
@@ -314,6 +344,8 @@ const edgeModule: ModuleDefinition = defineModule({
     provideClass(LocalGuard, []),
     provideClass(GlobalInterceptor, []),
     provideClass(LocalInterceptor, []),
+    provideClass(BeforeOnlyInterceptor, []),
+    provideClass(AfterOnlyInterceptor, []),
     provideClass(GlobalFilter, []),
     provideClass(LocalFilter, []),
   ],
@@ -510,28 +542,39 @@ test("a contributed hook reports an identity and never a plugin name", async () 
     // Elysia runs before the `afterHandle` the platform compiled, so it is
     // published before the after halves rather than last. Each is named by its
     // kind rather than by its plugin, because the plugin that contributed a
-    // hook is not carried on the route.
+    // hook is not carried on the route. The interceptor beside them is the other
+    // side of that rule: the platform resolved that class itself, so its two
+    // halves carry the class name and the contributed hooks carry none.
     expect(first.stages.map((stage) => stage.kind)).toEqual([
       "derive",
       "resolve",
       "hook",
+      "interceptBefore",
       "invoke",
       "handler",
       "hook",
+      "interceptAfter",
     ]);
     expect(first.stages.map((stage) => stage.scope)).toEqual([
       "global",
       "global",
       "global",
+      "local",
       undefined,
       undefined,
       "global",
+      "local",
     ]);
 
-    // No plugin name is reported, because nothing on the route carries one.
+    // No plugin name is reported, because nothing on the route carries one: the
+    // one stage list here that names a class is the interceptor's, which the
+    // plan states rather than Elysia.
     for (const stage of first.stages) {
-      expect(stage.enhancer).toBeUndefined();
+      if (stage.kind === "hook" || stage.kind === "derive" || stage.kind === "resolve") {
+        expect(stage.enhancer).toBeUndefined();
+      }
     }
+    expect(first.stages[3]?.enhancer).toBe("ContributedInterceptor");
 
     // The identity is the phase, the kind, the scope, and the checksum: the
     // checksum is what groups a hook across the routes it reaches, and the
@@ -544,12 +587,99 @@ test("a contributed hook reports an identity and never a plugin name", async () 
       expect.stringMatching(/^beforeHandle:hook:global:-?\d+$/),
       undefined,
       undefined,
+      undefined,
       expect.stringMatching(/^afterHandle:hook:global:-?\d+$/),
+      undefined,
     ]);
 
     // The same hook reaching two routes reports the same identity, which is
-    // what makes the field an identity rather than a per-route label.
-    expect(second.stages.map((stage) => stage.hook)).toEqual(identities);
+    // what makes the field an identity rather than a per-route label. The second
+    // route declares no interceptor, so it runs the stages its own entry and the
+    // plan state alone and carries the same three hook identities in the same
+    // order.
+    expect(second.stages.map((stage) => stage.hook)).toEqual([
+      identities[0],
+      identities[1],
+      identities[2],
+      undefined,
+      undefined,
+      identities[6],
+    ]);
+  } finally {
+    server.stop();
+  }
+});
+
+test("a half an interceptor does not declare is not published as a stage", async () => {
+  const application = await bootEdgeApplication();
+  const server = serveLoopback(application);
+
+  try {
+    const route = routeById(await readFlow(server), "GET /edge/two");
+
+    // The platform calls both halves with an optional call, so an interceptor
+    // that declares one half runs one half. A stage is published only when the
+    // route runs it, which is the rule that governs the binding, the invoker,
+    // and the validation slots too — so each class is a stage in the half it
+    // declares and nothing in the other. The application's own declarations are
+    // in the list beside them, and the after half is published over the whole
+    // list reversed, which puts the half-only class ahead of the global one.
+    expect(route.stages.map((stage) => [stage.kind, stage.enhancer])).toEqual([
+      ["guard", "GlobalGuard"],
+      ["interceptBefore", "GlobalInterceptor"],
+      ["interceptBefore", "BeforeOnlyInterceptor"],
+      ["invoke", undefined],
+      ["handler", undefined],
+      ["interceptAfter", "AfterOnlyInterceptor"],
+      ["interceptAfter", "GlobalInterceptor"],
+    ]);
+  } finally {
+    server.stop();
+  }
+});
+
+test("a hook that declares no scope is published with the scope Elysia stamped", async () => {
+  // Every other fixture declares `as`, so the scope the payload reads would keep
+  // looking right even if Elysia stopped stamping one: this endpoint tells a
+  // contributed hook from the platform's compiled one by that stamp, and a hook
+  // it cannot identify is left out rather than published. A hook that declares
+  // no scope at all is where that rule would go wrong silently, so both shapes
+  // are pinned here.
+  const bare = new Elysia();
+  bare.onBeforeHandle(() => {});
+  bare.get("/", () => "bare");
+  const bareServer = serveLoopback(bare);
+
+  try {
+    // An unnamed instance stamps the default scope and no checksum, so the scope
+    // is the only thing that makes this entry a stage: without it the hook would
+    // be indistinguishable from a compiled one and would vanish from the payload.
+    expect(await readFlow(bareServer)).toEqual({
+      routes: [
+        {
+          id: "GET /",
+          stages: [{ id: "GET /#0", kind: "hook", scope: "local", next: [] }],
+          filters: [],
+        },
+      ],
+    });
+  } finally {
+    bareServer.stop();
+  }
+
+  // The same declaration on a booted application, whose root instance is named:
+  // the scope is still the default Elysia stamps, and the name gives the hook a
+  // checksum, so the identity is published beside it.
+  const application = await AponiaFactory.createNative(GuardedAppModule, { logger: false });
+  application.onBeforeHandle(() => {});
+  application.get("/undeclared", () => "undeclared");
+  const server = serveLoopback(application);
+
+  try {
+    const route = routeById(await readFlow(server), "GET /undeclared");
+
+    expect(route.stages.map((stage) => [stage.kind, stage.scope])).toEqual([["hook", "local"]]);
+    expect(route.stages[0]?.hook).toMatch(/^beforeHandle:hook:local:-?\d+$/);
   } finally {
     server.stop();
   }
@@ -691,24 +821,49 @@ test("flow reports every route the table holds, in one deterministic order", asy
     // The route set is the mounted table's, never a plan's: the table is what
     // the application answers, so a WebSocket route no record describes is
     // reported beside the controller's routes rather than dropped. The order is
-    // by path and then method, so two polls state the same one.
-    const expected = (application.routes as readonly { method: string; path: string }[])
-      .map(({ method, path }) => ({ method: method.toUpperCase(), path }))
-      .sort(
-        (left, right) =>
-          compareText(left.path, right.path) || compareText(left.method, right.method),
-      )
-      .map(({ method, path }) => `${method} ${path}`);
-
-    expect(payload.routes.map((route) => route.id)).toEqual(expected);
+    // the one the payload states, asserted as a literal list rather than
+    // recomputed with the rule it is checking — the WebSocket route sorts first
+    // on its path, although the application mounts it after the two controller
+    // routes.
+    expect(payload.routes.map((route) => route.id)).toEqual([
+      "WS /flow-socket",
+      "GET /guarded",
+      "GET /plain",
+    ]);
     expect(routeById(payload, "WS /flow-socket")).toEqual({
       id: "WS /flow-socket",
       stages: [],
       filters: [],
     });
-    expect((await readFlow(server)).routes.map((route) => route.id)).toEqual(expected);
+    expect((await readFlow(server)).routes.map((route) => route.id)).toEqual([
+      "WS /flow-socket",
+      "GET /guarded",
+      "GET /plain",
+    ]);
   } finally {
     server.stop();
+  }
+
+  // The second key is exercised rather than assumed: the two `/alpha` routes are
+  // mounted `POST` before `GET` while the payload states `GET` first, and
+  // `/zeta`, mounted first, sorts last. The mounted table cannot hold two routes
+  // under one method and path, so path and method are already a total order and
+  // the payload states nothing further to compare — which is why the keys
+  // `/routes` breaks its own ties with are not part of this rule.
+  const ordered = new Elysia();
+  ordered.get("/zeta", () => "zeta");
+  ordered.post("/alpha", () => "alpha");
+  ordered.get("/alpha", () => "alpha");
+  const orderedServer = serveLoopback(ordered);
+
+  try {
+    expect((await readFlow(orderedServer)).routes.map((route) => route.id)).toEqual([
+      "GET /alpha",
+      "POST /alpha",
+      "GET /zeta",
+    ]);
+  } finally {
+    orderedServer.stop();
   }
 });
 

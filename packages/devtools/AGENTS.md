@@ -139,7 +139,18 @@ runtime boundary it describes.
   of one hook keep the order the route declared them in. An entry of a lifecycle
   array this release cannot identify — no scope it knows and no checksum — is not
   published as a stage, which is how the compiled hook stays out of the hook
-  stages rather than being reported as one.
+  stages rather than being reported as one. That rule is read off a release this
+  package does not own, so it is re-checked whenever the Elysia peer range moves:
+  it holds while Elysia stamps a scope on every hook an instance-level API
+  contributes — `"local"` when the caller declares none — and a checksum on the
+  hooks of a named plugin. An Elysia that stopped stamping the scope would make an
+  unscoped contribution indistinguishable from the compiled hook, and it would
+  drop out of the payload silently, which is why a case pins the default stamp.
+- `/flow` publishes an interceptor's half only for the classes that declare it.
+  The platform calls both halves with an optional call, so a class implementing
+  one half runs one half, and a stage for the other would state a step the route
+  never runs — the same rule that keeps a `bind`, an `invoke`, a `handler`, and a
+  validation slot off the routes that do not have them.
 - The application's own enhancer declaration merges into the routes the platform
   mounted from a plan and into no others. A route a controller's callback mounted,
   and one mounted on the native instance, carry no compiled hook for it to merge
