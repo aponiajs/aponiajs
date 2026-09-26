@@ -53,5 +53,6 @@ Promotions move forward through those branches in order. `next` is only an npm
 alias, and canary versions exist only inside CI, so neither has a Git branch.
 Public behavior changes ship with their documentation in the same pull request.
 
+Next: [13 · Enhancers](./13-enhancers.md) ·
 Deep dive: [releasing](../releasing.md) ·
 [repository guidelines](../../AGENTS.md)

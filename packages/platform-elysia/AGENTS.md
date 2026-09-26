@@ -13,7 +13,7 @@ It depends on `common` and `core`, with `elysia` as a peer.
 | -------------- | ------------------------------------------------------------------------------------------------ |
 | `application/` | Factory orchestration, application lifecycle wrapper, public option contracts                    |
 | `modules/`     | `compileRootModule` and decorator-to-descriptor lowering                                         |
-| `controllers/` | Controller descriptors, direct registration, `ELYSIA_CONTROLLER`                                 |
+| `controllers/` | Controller descriptors, direct registration, enhancer resolution, `ELYSIA_CONTROLLER`            |
 | `errors/`      | Typed HTTP errors, RFC 9457 Problem Details responses, and the default mapping                   |
 | `inspection/`  | Read-only projection of a compiled application for build-time consumers                          |
 | `plugins/`     | Native plugin module registration and plugin contracts                                           |
@@ -52,8 +52,21 @@ runtime boundary it describes.
   `registerCompiledElysiaRoutes` takes that resolution as a required parameter
   for the same reason: a mount that merged nothing has to say so at the call
   site rather than omit it.
-- Guards run as a route-local `beforeHandle`, in declaration order, with the
-  application's own declarations before the route's. A guard that refuses throws
+- A route's enhancers compile onto the route-local hooks their kind maps to:
+  guards and an interceptor's `interceptBefore` join one `beforeHandle`, an
+  interceptor's `interceptAfter` is an `afterHandle`, and a filter joins the
+  route's `error` array the next bullet describes. Guards and before halves
+  share one hook function so their order is the one the code states — the guards
+  in declaration order, with the application's own declarations before the
+  route's, then the before halves — rather than the order Elysia's own
+  registration would produce. The after halves run over that whole list
+  reversed, so the outermost interceptor's half runs last; each receives what
+  the previous one returned, and `undefined` is the only answer that leaves the
+  response unchanged, while `null`, `false`, and `0` are responses. An after
+  half never runs when a guard or the handler threw, because Elysia never
+  reaches the hook; the platform adds no check of its own for that. Every
+  compiled hook is an asynchronous function, so a route carrying any enhancer
+  half is Promise-capable whatever its handler is. A guard that refuses throws
   `httpErrors.forbidden(...)`, and that throw is the whole refusal: the throw
   reaches the route's own error path, where the `HttpError` is declined by the
   default mapping below and Elysia answers it through its own `toResponse()`. A
@@ -62,6 +75,11 @@ runtime boundary it describes.
   default mapping. `routing/route-compiler.types.ts` declares the route hook the
   platform mounts, so a lifecycle member is added there rather than by widening
   the native signature.
+- An enhancer named by a decorator, a declared plan, or an option is resolved as
+  a provider while its controller mounts — once per distinct class, never per
+  route or per request — and enhancers are singletons like every other provider.
+  A class the graph cannot reach fails the mount with `MISSING_PROVIDER` rather
+  than leaving a route quietly unguarded, unwrapped, or unfiltered.
 - Every route carries the default Problem Details mapping last in its own
   `error` array, behind the filters it declares, so the array reads
   `[...method, ...controller, ...global, default]`. Declared filters run

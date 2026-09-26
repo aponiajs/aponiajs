@@ -27,12 +27,14 @@ The first Elysia platform slice for Aponia:
 - controller factories that return native Elysia plugins;
 - concise `elysiaController(...)` registration with native callback inference;
 - typed RFC 9457 application errors for every supported 4xx and 5xx status;
+- Nest-style guards, interceptors (`interceptBefore`/`interceptAfter`), and
+  exception filters, compiled into per-route Elysia lifecycle hooks;
 - explicit Elysia AOT, lazy-composition, and startup-precompile policy;
 - `handle`, `listen`, and `close` application methods.
 
-This package intentionally does not yet implement request scopes, lifecycle
-enhancers, schema aggregation, Socket.IO-only gateway semantics, or
-decorator-wide static route inference.
+This package intentionally does not yet implement request scopes, schema
+aggregation, Socket.IO-only gateway semantics, or decorator-wide static route
+inference.
 
 Decorated modules, controllers, and validation models are the normal
 application-authoring surface. Direct raw validators remain supported as a
@@ -242,7 +244,7 @@ versions it was generated against:
 ```ts
 // src/invokers.generated.ts
 export const controllerInvokerArtifact = Object.freeze({
-  framework: "0.6.0-alpha.19",
+  framework: "0.6.0-alpha.20",
   elysia: "1.4.30",
   invokers: new Map([
     [UsersController, (instance: UsersController) => new Map([["ping", () => instance.ping()]])],
@@ -301,7 +303,7 @@ it was generated against:
 ```ts
 // src/descriptors.generated.ts
 export const moduleDescriptorArtifact = Object.freeze({
-  framework: "0.6.0-alpha.19",
+  framework: "0.6.0-alpha.20",
   elysia: "1.4.30",
   modules: Object.freeze({ AppModule: AppModuleDescriptor }),
 });
@@ -351,14 +353,18 @@ const module = defineModule({
 });
 ```
 
-Two facts a decorator reads out of emitted metadata are declared instead, because
-a plan has no class to reflect on: `takesContext` decides whether a handler with
-no decorated parameter receives the whole context, and `promiseCapable` decides
-whether the route awaits a returned Promise. Omitting `takesContext` means the
-handler receives nothing; omitting `promiseCapable` means Promise-capable, which
-costs at most one already-settled `await` and cannot change what a lifecycle hook
-observes. A plan never registers itself on Elysia — the platform's own route
-compiler does, so the native version guard stays in one place.
+Three facts a decorator reads out of emitted metadata are declared instead,
+because a plan has no class to reflect on: `takesContext` decides whether a
+handler with no decorated parameter receives the whole context, `promiseCapable`
+decides whether the route awaits a returned Promise, and `guards`,
+`interceptors`, and `filters` are the enhancers the controller or the handler
+declares. Omitting `takesContext` means the handler receives nothing; omitting
+`promiseCapable` means Promise-capable, which costs at most one already-settled
+`await` and cannot change what a lifecycle hook observes. A plan's enhancer
+arrays are the controller's own declarations — application-wide enhancers merge
+while the route mounts, never into a compiled route. A plan never registers
+itself on Elysia — the platform's own route compiler does, so the native version
+guard stays in one place.
 
 ### The shortest type-safe controller
 
@@ -446,6 +452,88 @@ answers the native `422`, a failed `t.Transform` decode keeps its `422` and the
 decode error's message, a thrown `status(...)` keeps its response, and an
 `HttpError` keeps its own. The mapping is a route-local hook, so it is part of
 what `aot: false` disables.
+
+## Execution enhancers
+
+Guards, interceptors, and exception filters are declared like any other provider
+and compile into the route's own Elysia hooks, so nothing wraps the handler:
+
+```ts
+import {
+  Catch,
+  Controller,
+  Get,
+  Injectable,
+  Module,
+  UseFilters,
+  UseGuards,
+  UseInterceptors,
+  type AponiaInterceptor,
+  type CanActivate,
+  type ExceptionFilter,
+  type ExecutionContext,
+} from "@aponiajs/common";
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+
+@Injectable()
+class AuthGuard implements CanActivate {
+  canActivate(context: ExecutionContext): boolean {
+    return context.switchToHttp().getRequest().headers.authorization === "Bearer secret";
+  }
+}
+
+@Injectable()
+class TimingInterceptor implements AponiaInterceptor {
+  interceptAfter(_context: ExecutionContext, response: unknown): unknown {
+    return response;
+  }
+}
+
+class UserMissingError extends Error {}
+
+@Catch(UserMissingError)
+@Injectable()
+class UserMissingFilter implements ExceptionFilter {
+  catch(): unknown {
+    return new Response("No such user.", { status: 404 });
+  }
+}
+
+@Controller("users")
+@UseGuards(AuthGuard)
+@UseInterceptors(TimingInterceptor)
+export class UsersController {
+  @Get(":id")
+  @UseFilters(UserMissingFilter)
+  read(): string {
+    throw new UserMissingError("no such user");
+  }
+}
+
+@Module({
+  controllers: [UsersController],
+  providers: [AuthGuard, TimingInterceptor, UserMissingFilter],
+})
+class AppModule {}
+
+const application = await AponiaFactory.create(AppModule);
+```
+
+A guard returning `false` refuses the request with a Problem Details `403` and
+never calls the handler. An interceptor declares `interceptBefore` and
+`interceptAfter` instead of Nest's `next.handle()`, and `interceptBefore` cannot
+short-circuit. A filter answers the types its `@Catch()` named — or anything,
+when it names none — and declines by returning `undefined`. Filters run
+most-specific-first, and the default Problem Details mapping is always last: an
+application overrides it by declaring a filter ahead of it, never by removing it.
+
+Every enhancer must be a declared provider in a module the controller's module
+can reach, and an undeclared one fails the boot with `MISSING_PROVIDER`. Global
+enhancers are factory options — `guards`, `interceptors`, and `filters` — rather
+than `useGlobal*` methods, because every route mounts during
+`AponiaFactory.create`; a global enhancer runs before the ones a route declares
+and resolves through the root module. See the
+[enhancers guide](../../docs/enhancers.md).
 
 ## Routes with the native Elysia context
 

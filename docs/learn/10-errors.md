@@ -93,6 +93,24 @@ alone rather than translated: a validation `422`, a parse `400`, a failed
 `t.Transform` decode (a `422` carrying the decode error's message), anything
 throwing `status(...)`, and every `HttpError` through its own `toResponse()`.
 
+A filter that throws or rejects does not answer with what it threw. The throw is
+caught and reported through the system logger under `ExceptionsHandler`, the
+filter is treated as having declined, and the route's error path continues to
+whatever answers next — so a filter that throws an `HttpError` still leaves the
+request to the mapping's `500` rather than answering with that `HttpError`. The
+[enhancers chapter](./13-enhancers.md) covers declaring filters of your own.
+
+Two edges of this path are worth knowing before relying on them. A status _name_
+assigned to `set.status` before a throw is not resolved by Elysia on this path:
+the client sees the name dropped to `200` with the message Elysia's
+unknown-error fallback renders, and the mapping leaves that answer alone the way
+it leaves any status Elysia already decided — write the number, or throw
+`status(...)`, when the status must survive a failure. And the mapping is a
+route-local `error` hook, which Elysia reads only while it composes routes ahead
+of time: under `elysia: { aot: false }` no declared filter and no mapping runs,
+an unhandled failure answers Elysia's native `500` carrying the exception's
+message, and bootstrap warns under `RoutesResolver` about the policy.
+
 ## Framework errors
 
 Framework failures throw `AponiaError` with a code from a closed union and frozen

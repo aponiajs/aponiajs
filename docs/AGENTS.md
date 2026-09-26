@@ -15,6 +15,7 @@ The published documentation set:
 | `eden-treaty.md`            | Native-style application types consumed through Eden Treaty      |
 | `elysia-compatibility.md`   | Supported Elysia versions and how a mismatch fails               |
 | `introspection.md`          | Projecting a compiled application into frozen, serializable data |
+| `enhancers.md`              | Guards, interceptors, and exception filters on a route's hooks   |
 | `logging.md`                | Logger configuration and the bootstrap log lines                 |
 | `testing.md`                | Testing applications through `application.handle`                |
 | `cli.md`                    | The generator catalog, aliases, and options                      |

@@ -365,7 +365,14 @@ throw httpErrors.notFound("User 42 does not exist.", {
 `httpErrors` includes every 4xx and 5xx status supported by Elysia. Each response
 uses `application/problem+json`; optional causes stay server-side and stacks are
 never serialized. Use `httpError(422, detail, options)` when a numeric status is
-clearer. See the [errors chapter](./docs/learn/10-errors.md).
+clearer. Anything else a handler throws answers a Problem Details `500` through
+the default mapping every route carries last, unless an exception filter answers
+it first. That mapping and every declared filter live in a route-local `error`
+array, which Elysia reads only while it composes routes ahead of time: under
+`elysia: { aot: false }` neither runs, and an unhandled failure answers Elysia's
+native `500` carrying the exception's message. See the
+[errors chapter](./docs/learn/10-errors.md) and the
+[enhancers guide](./docs/enhancers.md).
 
 Need Elysia's whole context in a decorated method? Take it with `@Ctx()`, typed
 by the declared schema. This explicit annotation is the advanced decorator
@@ -567,17 +574,18 @@ cover every supported 4xx and 5xx status with RFC 9457 responses. Statically
 declared descriptor modules also expose their composed Elysia route type
 directly to Eden Treaty. Provider-registered WebSocket gateways expose
 Nest-style message and lifecycle decorators over Elysia's native socket
-runtime.
+runtime. Nest-style guards, interceptors, and exception filters compile into
+per-route Elysia lifecycle hooks, and an unhandled failure answers an RFC 9457
+`500` unless a declared filter answers it first.
 
 Not implemented yet: async provider lifecycle, request and transient scopes,
-platform-neutral HTTP packages, full Elysia phase conformance, automatic Problem
-Details mapping for native validation and framework failures, serialization
-policy, configuration and secret redaction, HTTP admission hardening, guards,
-interceptors, middleware, exception filters, authentication and authorization,
-rate limiting, testing packages, observability and health, OpenAPI generation,
-production WebSocket policies and the transport-neutral adapter package,
-decorator-wide Eden inference, and microservice transports. Treat that list as
-the scope of record for the current release.
+platform-neutral HTTP packages, full Elysia phase conformance, serialization
+policy, configuration and secret redaction, HTTP admission hardening,
+middleware, authentication and authorization, rate limiting, testing packages,
+observability and health, OpenAPI generation, production WebSocket policies and
+the transport-neutral adapter package, decorator-wide Eden inference, and
+microservice transports. Treat that list as the scope of record for the current
+release.
 
 ## Develop
 

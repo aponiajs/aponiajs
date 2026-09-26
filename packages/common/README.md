@@ -14,9 +14,9 @@ bun add @aponiajs/common
 ## Public surface
 
 The public application authoring API includes `@Module()`, `@Controller()`,
-HTTP method decorators, WebSocket gateway decorators, `@Injectable()`, and
-`@Inject()`. This package does not depend on Elysia, Bun runtime APIs, or
-another Aponia package.
+HTTP method decorators, WebSocket gateway decorators, `@Injectable()`,
+`@Inject()`, and the guard, interceptor, and filter decorators. This package does
+not depend on Elysia, Bun runtime APIs, or another Aponia package.
 
 ```ts
 import { Controller, Get, Injectable, Module } from "@aponiajs/common";
@@ -139,6 +139,76 @@ the Nest-style alias of the native-named `@Set()`.
 headers. Redirects are not a response setting: return the platform's inline
 `redirect(url)` helper from the handler, because an assigned redirect on the
 response settings is ignored by the platform.
+
+## Execution enhancers
+
+`@UseGuards()`, `@UseInterceptors()`, and `@UseFilters()` declare the classes
+that decide whether a route runs, wrap its result, and answer what it throws.
+`@Catch()` names the error types a filter answers:
+
+```ts
+import {
+  Catch,
+  Controller,
+  Get,
+  Injectable,
+  Module,
+  UseFilters,
+  UseGuards,
+  type CanActivate,
+  type ExceptionFilter,
+  type ExecutionContext,
+} from "@aponiajs/common";
+
+@Injectable()
+class AuthGuard implements CanActivate {
+  canActivate(context: ExecutionContext): boolean {
+    return context.switchToHttp().getRequest().headers.authorization === "Bearer secret";
+  }
+}
+
+class UserMissingError extends Error {}
+
+@Catch(UserMissingError)
+@Injectable()
+class UserMissingFilter implements ExceptionFilter {
+  catch(): unknown {
+    return new Response("No such user.", { status: 404 });
+  }
+}
+
+@Controller("users")
+@UseGuards(AuthGuard)
+export class UsersController {
+  @Get(":id")
+  @UseFilters(UserMissingFilter)
+  read(): string {
+    throw new UserMissingError("no such user");
+  }
+}
+
+@Module({
+  controllers: [UsersController],
+  providers: [AuthGuard, UserMissingFilter],
+})
+export class UsersModule {}
+```
+
+The decorators on a controller class apply to every route it declares; the ones
+on a method apply to that route alone and run after their controller's. A guard
+returning `false` refuses the request with a Problem Details `403`. An
+interceptor declares `interceptBefore` and `interceptAfter` instead of Nest's
+`next.handle()`, and `interceptBefore` cannot short-circuit. A filter that
+returns `undefined` declines, so the next entry in the route's error path is
+consulted. Guards, interceptors, and filters are handed an `ExecutionContext` or
+an `ArgumentsHost` whose `getContext()` and `switchToHttp().getRequest()` answer
+the request's `RouteContext`.
+
+This package records the declarations and publishes the contracts; the platform
+resolves each enhancer as a provider while the controller mounts, so an enhancer
+that is not declared fails the boot with `MISSING_PROVIDER`. The
+[enhancers guide](../../docs/enhancers.md) covers precedence, resolution, and the
+default filter.
 
 ## WebSocket gateways
 

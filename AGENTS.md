@@ -340,7 +340,12 @@ every route compiles a default Problem Details mapping last in its own `error`
 array, behind the filters it declares, and that mapping declines an exception
 carrying its own `status` or `toResponse()` and every status Elysia already
 decided, so validation `422`s, parse `400`s, a failed transform decode,
-`status()`, and `HttpError` keep the responses Elysia gives them.
+`status()`, and `HttpError` keep the responses Elysia gives them. A route-local
+`error` array is read only while Elysia composes routes ahead of time, so
+`elysia: { aot: false }` disables every declared filter and that mapping; an
+unhandled failure then answers Elysia's native `500` carrying the exception's
+message, and `bootstrapAponiaApplication` warns under `RoutesResolver` when the
+option is set.
 
 ### CLI
 
@@ -367,12 +372,13 @@ validation, one-schema validation-model classes, request parameter decorators,
 singleton DI, class/value/factory/alias providers, explicit tokens,
 imports and exports, lifecycle, structured logging, generators, native Elysia
 escape hatches, concise inferred controller registration, RFC 9457 application
-errors, and provider-registered Elysia WebSocket gateways. Not implemented:
-guards, interceptors, middleware,
-exception filters, automatic Problem Details mapping for native errors,
-non-singleton scopes, testing modules, OpenAPI, authentication, production
-WebSocket policies and transport extraction, and microservice transports. Treat
-the two lists above as the scope of record for the current release.
+errors, provider-registered Elysia WebSocket gateways, and guards, interceptors,
+and exception filters compiled into per-route lifecycle hooks, with the default
+Problem Details mapping last in each route's error path. Not implemented:
+middleware, non-singleton scopes, testing modules, OpenAPI, authentication,
+production WebSocket policies and transport extraction, and microservice
+transports. Treat the two lists above as the scope of record for the current
+release.
 
 ## Coding Style & Naming Conventions
 

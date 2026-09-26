@@ -16,6 +16,12 @@ export interface AponiaApplicationOptions {
   /**
    * Controls Elysia's route composition. This is distinct from build-time
    * Aponia source generation and JavaScriptCore's machine-code JIT.
+   *
+   * `aot: false` selects Elysia's generic dynamic dispatcher, which never reads
+   * a route's own `error` array: every declared exception filter and the default
+   * Problem Details mapping live there, so under this policy neither runs and an
+   * unhandled failure answers Elysia's native `500` carrying the exception's
+   * message. Bootstrap warns under `RoutesResolver` when the option is set.
    */
   readonly elysia?: ElysiaCompilationOptions;
   /**
