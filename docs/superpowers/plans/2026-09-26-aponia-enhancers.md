@@ -160,6 +160,7 @@ Type-only public contracts. This task has no runtime behavior, so its evidence i
 - Create: `packages/common/tests-vp/enhancer-contracts.conformance.ts`
 - Modify: `packages/common/src/index.ts` (add exports)
 - Modify: `packages/common/AGENTS.md` (add the `enhancers/` row to the domain table)
+- Modify: `scripts/source-layout.spec.ts` (add `enhancers` to its exact source-layout list; the Bun lane fails without the entry)
 
 **Interfaces:**
 
@@ -218,11 +219,14 @@ export interface CanActivate {
  */
 export interface AponiaInterceptor {
   interceptBefore?(context: ExecutionContext): void | Promise<void>;
-  interceptAfter?(context: ExecutionContext, response: unknown): unknown | Promise<unknown>;
+  // A returned Promise is awaited before the value is used; `unknown` already
+  // absorbs `Promise<unknown>`, so the union would be redundant.
+  interceptAfter?(context: ExecutionContext, response: unknown): unknown;
 }
 
 export interface ExceptionFilter {
-  catch(exception: unknown, host: ArgumentsHost): unknown | Promise<unknown>;
+  // As with `interceptAfter`: the platform awaits a returned Promise.
+  catch(exception: unknown, host: ArgumentsHost): unknown;
 }
 ```
 
@@ -311,7 +315,7 @@ Expected: no errors. A contract that is too narrow for one of the reference impl
 - [ ] **Step 6: Commit**
 
 ```bash
-git add packages/common/src/enhancers/enhancer.types.ts packages/common/src/index.ts packages/common/tests-vp/enhancer-contracts.conformance.ts packages/common/AGENTS.md
+git add packages/common/src/enhancers/enhancer.types.ts packages/common/src/index.ts packages/common/tests-vp/enhancer-contracts.conformance.ts packages/common/AGENTS.md scripts/source-layout.spec.ts
 git commit -m "feat(common): add the enhancer contracts"
 ```
 

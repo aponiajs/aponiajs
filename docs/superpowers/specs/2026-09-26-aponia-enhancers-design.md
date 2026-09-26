@@ -104,13 +104,20 @@ interface CanActivate {
 
 interface AponiaInterceptor {
   interceptBefore?(context: ExecutionContext): void | Promise<void>;
-  interceptAfter?(context: ExecutionContext, response: unknown): unknown | Promise<unknown>;
+  interceptAfter?(context: ExecutionContext, response: unknown): unknown;
 }
 
 interface ExceptionFilter {
-  catch(exception: unknown, host: ArgumentsHost): unknown | Promise<unknown>;
+  catch(exception: unknown, host: ArgumentsHost): unknown;
 }
 ```
+
+`interceptAfter` and `catch` return plain `unknown`, and a `Promise` either of
+them returns is awaited before its value is used. The union
+`unknown | Promise<unknown>` would add nothing to the type, since `unknown`
+already absorbs `Promise<unknown>`. The two unions that remain are not redundant
+in that way — `boolean` does not absorb `Promise<boolean>`, and `void` does not
+absorb `Promise<void>` — so `canActivate` and `interceptBefore` keep theirs.
 
 `ExecutionContext` carries what a route knows about itself:
 
@@ -322,15 +329,19 @@ file at the repository root, run with `bun`, and deleted afterwards.
 The execution row of the mechanism table was re-measured during review, because
 the earlier record supported it only through classification. A follow-up probe
 registered one route with a synchronous `beforeHandle` and `afterHandle`, each
-appending to a log beside the handler:
+appending to a log beside the handler, and a second route whose only hook sat
+under `onError`, the key Elysia does not read:
 
 ```
 { log: ["beforeHandle", "handler", "afterHandle"], status: 200,
   body: "from afterHandle" }
+{ wrongKeyLog: [], status: 200, body: "quiet result" }
 ```
 
-Both hooks ran, in that order around the handler, and the value `afterHandle`
-returned became the response.
+Both hooks on the first route ran, in that order around the handler, and the value
+`afterHandle` returned became the response. The second route never ran its hook and
+still answered `200` with the handler's own body, which is why a `200` observed on
+its own settles nothing about a route-local hook.
 
 **1. Hooks do not change a route's synchronous classification — holds as probed.**
 One instance carried two routes with the same synchronous handler,
