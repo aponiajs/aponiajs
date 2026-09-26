@@ -24,8 +24,8 @@ In scope:
 - a runtime plugin installed by the application, enabled or disabled by
   whether it is registered;
 - a read-only HTTP server on a forced loopback address, serving the compiled
-  module graph, the mounted route table, the build-time codegen verdicts, and
-  the application's log stream;
+  module graph, the mounted route table, each route's per-request stages as a
+  graph, the build-time codegen verdicts, and the application's log stream;
 - the data contract itself, versioned, because a consumer builds a UI against
   it;
 - two changes in `@aponiajs/platform-elysia` that the above requires.
@@ -167,6 +167,55 @@ route is served by a build-time invoker; `compiled` means the runtime compiled
 it. A route whose handler was declined by `aponia build` reads `compiled` here
 and carries its reason in `/aot`.
 
+`GET /__devtools/flow` — the stages each mounted route passes through, as a
+directed graph.
+
+```ts
+{
+  routes: readonly {
+    id: string;                       // "GET /users/:id"
+    stages: readonly {
+      id: string;                     // stable within one response
+      kind: "derive" | "resolve" | "hook" | "validate" | "bind" | "invoke" | "handler";
+      scope?: "global" | "local";     // for the three lifecycle kinds
+      slot?: "body" | "query" | "params" | "headers" | "cookie" | "response";
+      model?: string;                 // the @Validation() class the slot resolved to
+      parameters?: readonly { index: number; kind: string; property: string | undefined }[];
+      hook?: string;                  // a stable identity for a contributed hook
+      source?: "generated" | "compiled";   // on `invoke`
+      controller?: string;            // on `handler`
+      handler?: string;
+      next: readonly string[];        // the stages that run after this one
+    }[];
+  }[];
+}
+```
+
+Read from the running native application, not inferred from source. Verified by
+probe: a mounted route exposes its `transform` hooks (a plugin's `derive`), its
+`beforeHandle` hooks (a plugin's `resolve`, and any local hook), and the lowered
+JSON Schema already bound to `params`, `query`, and `body`. That is enough to
+publish the pipeline as data without re-deriving anything.
+
+**This is not Nest's flow graph, and the difference is the point.** Nest builds
+that view from guards, interceptors, and pipes. Aponia implements none of the
+three, so a faithful translation would publish an empty graph. What Aponia does
+run per request is what the stages above name, and it carries one dimension Nest
+has no equivalent for: `invoke.source` reports whether the route reaches a
+build-time invoker or a runtime-compiled one.
+
+`stages` is a graph rather than a list because a consumer renders it as one.
+Only the validation stages and the invoke stage can branch today, but `id` and
+`next` are stated explicitly so a linear chain is not something a renderer has
+to assume.
+
+**A contributed hook cannot be named.** Elysia identifies a hook by `subType`,
+`scope`, and a `checksum`; the plugin that contributed it is not carried on the
+route. A stage therefore reports `hook` as an identity derived from the
+checksum — which groups the same hook across every route it reaches — and does
+not report a plugin name. Naming it would require Elysia to carry that
+information, which it does not, so the field is absent rather than guessed.
+
 `GET /__devtools/aot` — the build-time verdicts.
 
 ```ts
@@ -249,7 +298,12 @@ both to the native application so a plugin can read them at `onStart`:
 
 - the resolution record, as already computed by
   `routing/invoker-artifact.ts` and `modules/module-descriptor-artifact.ts`;
-- the compiled `ModuleDefinition` root that `compileRootModule` returned.
+- the compiled `ModuleDefinition` root that `compileRootModule` returned;
+- the compiled route plans, whose schemas must retain the name of the
+  `@Validation()` model each slot resolved to. The platform already resolves
+  that model while a route mounts; `/flow` needs the name beside the lowered
+  validator, because the lowered JSON Schema no longer says which class
+  produced it.
 
 This is a **seam, not a new public contract**: the two selectors stay internal
 and their rules stay in one place. The alternative — exporting them and letting
@@ -316,9 +370,10 @@ is ever built. They land first, with their own tests, so that the package is
 built on facts rather than on a seam that arrives with it.
 
 The package follows: module and registration, then the server and `/meta`, then
-`/graph` and `/routes`, then `/logs`, then `/aot` with its lazy import. Each
-endpoint is independently testable, so the order is also the order a reviewer
-can check.
+`/graph` and `/routes`, then `/flow`, then `/logs`, then `/aot` with its lazy
+import. Each endpoint is independently testable, so the order is also the order
+a reviewer can check. `/flow` follows `/routes` because it is keyed by the same
+route identities and reads the same mounted application.
 
 ## Testing
 
@@ -334,7 +389,11 @@ conformance lane mirrors the public contract in
   contract including `since` beyond the retained window; `/aot` before and
   after the lazy import; `/routes` reporting `generated` and `compiled` for the
   two cases; `/graph` describing the compiled root when a descriptor artifact
-  is supplied and the decorated root when it is refused.
+  is supplied and the decorated root when it is refused; `/flow` reporting a
+  plugin `derive` and `resolve`, a local hook, each populated validation slot,
+  the binding, the invoke source, and the handler, with every `next` naming a
+  stage the same route actually declares and no stage unreachable from the
+  first.
 - Assert `contract` is `1` and that a consumer reading only `meta` can decide
   whether to proceed.
 - The platform changes carry their own tests in the platform's lanes, including
