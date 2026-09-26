@@ -40,9 +40,12 @@ export class AppModule {}
   about itself are in it. That is the condition this option states rather than
   hides: the framework never exposes the logger it builds for itself, so an
   application that names `false`, names a level array, or names nothing at all has
-  no object to record from, and a logger this package cannot patch — a frozen one
-  — records nothing either; a registration with no stream to publish serves no
-  `/logs` rather than an empty stream that would read as "nothing is being logged".
+  no object to record from, and a logger whose first level refuses the patch — a
+  frozen one refuses every level — records nothing either; a registration with no
+  stream to publish serves no `/logs` rather than an empty stream that would read
+  as "nothing is being logged". A logger that accepts one level and refuses the
+  next is not that case: a level was patched, so the stream is served, and it
+  holds the levels the tap reached.
   The patch is a mutation of a logger the application holds too, and the stream
   holds the lines written through that one object — the platform's own, and an
   application's where it logs through the same reference, because the container
@@ -91,7 +94,7 @@ export class AppModule {}
   `AponiaFactory.create`, patches it in place, and records every line into a
   bounded buffer from the moment the module registers — and a registration with no
   stream to serve, because it named none, named `false`, named something that is
-  not a logger, or named one whose levels refuse the patch, serves no `/logs`
+  not a logger, or named one whose first level refuses the patch, serves no `/logs`
   rather than an empty stream.
   Each poll names the cursor the previous answer carried and is answered with
   `{ cursor, entries }`, where an entry is `{ level, context, message, timestamp }`.

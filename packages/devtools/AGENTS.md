@@ -202,15 +202,19 @@ runtime boundary it describes.
   object, still prints every line it printed before, and records every call
   whatever the logger's own level filter would print, because `LoggerService` has
   no notion of an enabled level and re-applying a rule this package cannot read
-  would be enforcing a filter it does not own. A logger it cannot patch is left as
-  it is and earns no endpoint — a tap is this package's convenience and never the
-  application's contract, and a stream that recorded nothing would announce a
-  silence that logger is not keeping. One logger records into one stream: a logger
-  this package has already answered for is answered with the stream that is
-  recording rather than a second one nothing writes into. A logger nothing could be
-  installed on has no stream to answer with, so it is answered with the absence
-  again — and, because the tap remembers only what it installed, a later tap
-  retries rather than remembering an absence as a stream. The stream holds the
+  would be enforcing a filter it does not own. A tap that is refused an
+  assignment stops there and the boundary is two-sided: a level patched before
+  the refusal is a tap that installed, so it records and the stream is published,
+  while a logger whose **first** assignment refuses — a frozen one refuses them
+  all — is left as it is and earns no endpoint, because that is the shape where a
+  stream would have nothing to state and would announce a silence the logger is
+  not keeping. A tap is this package's convenience and never the application's
+  contract. One logger records into one stream: a logger this package has already
+  answered for is answered with the stream that is recording rather than a second
+  one nothing writes into. A logger nothing could be installed on has no stream to
+  answer with, so it is answered with the absence again — and, because the tap
+  remembers only what it installed, a later tap retries rather than remembering an
+  absence as a stream. The stream holds the
   lines written through that one object — the platform's own, and an
   application's where it logs through the same reference, because the container
   hands no logger to a provider, so nothing reaches `/logs` that the application
@@ -219,11 +223,11 @@ runtime boundary it describes.
   arrive at it there are two outcomes. A `LoggerService` is tapped and records.
   Everything else publishes no `/logs` at all: the option omitted, `false`, a
   value that is not a logger, which a JavaScript caller can pass whatever the type
-  says, and a logger whose levels refuse the patch — a frozen one — where the tap
-  installs nothing and a published stream would announce a silence that logger is
-  not keeping. The endpoint states a stream and a registration with none to state
-  serves no endpoint, the way a record with no compiled root serves no `/graph`,
-  so the dispatcher's `404` is the answer. `false` is not the empty window it once
+  says, and a logger whose first assignment refuses the patch — a frozen one
+  refuses them all — where the tap installs nothing and a published stream would
+  announce a silence that logger is not keeping. The endpoint states a stream and
+  a registration with none to state serves no endpoint, the way a record with no
+  compiled root serves no `/graph`, so the dispatcher's `404` is the answer. `false` is not the empty window it once
   answered: it states that the application has no logger object to hand over,
   which is not the fact "nothing is being logged" — an application that passes
   `false` here and a logger to `AponiaFactory.create`, which is what forwarding an
@@ -363,19 +367,23 @@ The tap is asserted against a logger the case owns, because what it must not
 change is the object: the case keeps its own record of the calls it received and
 writes through its own reference, so a tap that swallowed a line, wrapped the
 logger instead of patching it, or failed to write through is visible, and the
-second-tap case pins that one logger answers with one stream. A logger that
-refuses the patch — a frozen one, asserted by freezing the case's own logger — is
-pinned as an answer of no stream at all, because that is the answer `/logs` is
-built on. The stream is then asserted over a real boot, where the lines the boot
-wrote before `onStart` must appear — the case a tap installed when the socket
-starts would fail, and the assertion that says why the tap belongs to the
-registration — and where the application's own next line must arrive after the
-cursor the previous answer carried. A registration with no stream to publish is
-asserted to serve no endpoint rather than an empty one, and the four ways of
-arriving there are pinned separately — an omitted option, `false`, a level array,
-the value the option does not accept and a JavaScript caller can still pass, and
-a logger whose levels refuse the patch — so the rule is asserted at each end a
-caller reaches it from rather than by one path.
+second-tap case pins that one logger answers with one stream. The refusal is
+pinned on both sides it can land on: a logger that refuses its **first** assignment
+— a frozen one, asserted by freezing the case's own logger — answers no stream at
+all, and one that accepts a level and then refuses the next is a tap that
+installed, so it records and publishes, with the refusing level keeping its method
+and the levels after it left unreached. The stream is then asserted over a real
+boot, where the lines the boot wrote before `onStart` must appear — the case a tap
+installed when the socket starts would fail, and the assertion that says why the
+tap belongs to the registration — and where the application's own next line must
+arrive after the cursor the previous answer carried. A registration with no stream
+to publish is asserted to serve no endpoint rather than an empty one, and the four
+ways of arriving there are pinned separately — an omitted option, `false`, a level
+array, the value the option does not accept and a JavaScript caller can still
+pass, and a logger whose first assignment refuses the patch — so the rule is
+asserted at each end a caller reaches it from rather than by one path, and the
+other end — a partly patched logger whose stream must be served — is pinned the
+same way.
 
 The Elysia read is asserted for what it refuses: the workspace's own install
 answers its version, and a throwaway project that installed nothing answers

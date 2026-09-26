@@ -132,7 +132,7 @@ function createDevtoolsPlugin(options: DevtoolsOptions): Elysia {
  * tap could install on is tapped in place and its stream is published. Everything
  * else publishes no `/logs` at all: the option omitted, `false`, any value that is
  * not a logger — which a JavaScript caller can pass whatever the type says — and a
- * logger whose levels refuse the patch, where the tap installs nothing and a
+ * logger whose first assignment refuses, where the tap installs nothing and a
  * published stream would record nothing while that logger goes on printing. The
  * endpoint states a stream, and a registration with none to state serves no
  * endpoint, so the dispatcher's `404` is the answer, the way a boot the record

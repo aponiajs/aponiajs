@@ -48,11 +48,13 @@ export interface DevtoolsOptions {
    *   so an application that names one has nothing to hand over either. The type
    *   does not accept it; a JavaScript caller can pass it anyway, which is why
    *   the value is checked rather than trusted.
-   * - A logger object whose levels cannot be patched — a frozen one — is the same
-   *   absence. It is patched in place, so a logger that refuses every assignment
-   *   records nothing, and a published stream would answer
-   *   `{ cursor: 0, entries: [] }` while that logger goes on printing every line:
-   *   the same false silence, so it earns no endpoint either.
+   * - A logger object whose first assignment refuses — a frozen one refuses them
+   *   all — is the same absence. It is patched in place, so a refusal that lands
+   *   before any level was patched means the logger records nothing, and a
+   *   published stream would answer `{ cursor: 0, entries: [] }` while that logger
+   *   goes on printing every line: the same false silence, so it earns no endpoint
+   *   either. A refusal later than that is not this case — a level was patched, so
+   *   the stream is published and records the levels the tap reached.
    *
    * The endpoint states a stream, and a registration with none to state serves no
    * endpoint — the dispatcher's `404`, the way a boot the record holds no compiled

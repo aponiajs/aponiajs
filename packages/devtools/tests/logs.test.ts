@@ -282,7 +282,7 @@ test("one logger records into one stream, so a line is never recorded or printed
   expect(second.since(0).entries).toEqual([]);
 });
 
-test("a logger this package cannot patch is answered with no stream, not an empty one", () => {
+test("a logger that refuses the first patch is answered with no stream, not an empty one", () => {
   const { logger, calls } = fakeLogger();
   const buffer = createLogBuffer(4);
   Object.freeze(logger);
@@ -301,6 +301,44 @@ test("a logger this package cannot patch is answered with no stream, not an empt
   // A logger nothing could be installed on is not remembered as one that has a
   // stream, so a later tap retries and answers the same absence.
   expect(tapLogBuffer(logger, buffer)).toBeUndefined();
+});
+
+test("a logger that refuses one assignment is still recorded and published", () => {
+  const { logger, calls } = fakeLogger();
+  const buffer = createLogBuffer(4);
+  // `fatal` is the level the tap reaches second, and it refuses the assignment:
+  // `log` was patched before the refusal landed, so the tap genuinely installed.
+  // The property is taken as a descriptor rather than read off the logger, because
+  // the method is being redefined, not called.
+  Object.defineProperty(logger, "fatal", {
+    ...Object.getOwnPropertyDescriptor(logger, "fatal"),
+    writable: false,
+  });
+
+  const tapped = tapLogBuffer(logger, buffer);
+
+  // The stream is the answer, and that is the boundary this pins: the absence
+  // belongs to a refusal that lands before any level was patched, not to every
+  // refusal. A logger that accepts one assignment and refuses the next has a tap
+  // the lines through it reach, so handing `undefined` back here would drop lines
+  // this package is recording.
+  expect(tapped).toBe(buffer);
+
+  logger.log("recorded through the patch");
+  // The level the refusal landed on keeps the method it had, and the levels after
+  // it are never reached: the tap stops where the refusal did rather than
+  // covering whichever levels happened to accept it.
+  logger.fatal("written through the method it kept");
+  logger.warn("not reached by the tap");
+
+  expect(calls).toEqual([
+    "log recorded through the patch",
+    "fatal written through the method it kept",
+    "warn not reached by the tap",
+  ]);
+  expect(
+    buffer.since(0).entries.map((item) => [item.level, item.message] satisfies unknown[]),
+  ).toEqual([["log", "recorded through the patch"]]);
 });
 
 /** Binds the loopback socket on port `0` and reads the address it took. */
@@ -488,6 +526,38 @@ const frozenLogger: LoggerService = Object.freeze({
 })
 class FrozenLoggerModule {}
 
+/**
+ * A logger the tap can partly patch: `log` accepts the assignment and `fatal` —
+ * the next level the tap reaches — refuses it. That is the other side of the
+ * boundary `frozenLogger` pins: a refusal that lands **after** a level was
+ * patched, where the tap genuinely installed and the stream is the answer.
+ */
+function createPartlyTappableLogger(): LoggerService {
+  const logger: LoggerService = {
+    log: () => {},
+    fatal: () => {},
+    error: () => {},
+    warn: () => {},
+  };
+  // Defined non-writable, which is how a logger refuses one assignment and accepts
+  // the others: the tap's `log` patch lands and its `fatal` patch is thrown out.
+  Object.defineProperty(logger, "fatal", {
+    ...Object.getOwnPropertyDescriptor(logger, "fatal"),
+    writable: false,
+  });
+
+  return logger;
+}
+
+const partlyTappableLogger: LoggerService = createPartlyTappableLogger();
+
+@Module({
+  imports: [
+    DevtoolsModule.register({ enabled: true, port: ephemeralPort, logger: partlyTappableLogger }),
+  ],
+})
+class PartlyTappableModule {}
+
 interface CapturedOutput {
   readonly rows: () => readonly string[];
   readonly restore: () => void;
@@ -635,7 +705,7 @@ test.serial(
   },
 );
 
-test.serial("a registration whose logger cannot be patched serves no endpoint", async () => {
+test.serial("a registration whose logger refuses the first patch serves no endpoint", async () => {
   const output = captureOutput();
   let application: AponiaElysiaApplication | undefined;
   try {
@@ -655,3 +725,36 @@ test.serial("a registration whose logger cannot be patched serves no endpoint", 
     output.restore();
   }
 });
+
+test.serial(
+  "a registration whose logger refuses one assignment still serves the stream",
+  async () => {
+    const output = captureOutput();
+    let application: AponiaElysiaApplication | undefined;
+    try {
+      application = await AponiaFactory.create(PartlyTappableModule, {
+        logger: partlyTappableLogger,
+      });
+      await application.listen(0);
+
+      const address = reportedAddress(output);
+      const first = await readLogsAt(address);
+
+      // The endpoint is there because a tap genuinely installed: `log` was patched
+      // before the refusal landed, so the lines the boot wrote through that level
+      // are recorded — the same boot lines the fully tappable case asserts, which is
+      // what shows this stream began at registration too.
+      expect(first.entries.map((item) => item.context)).toContain("AponiaFactory");
+
+      partlyTappableLogger.log("after the refusal", "LogsTest");
+
+      const second = await readLogsAt(address, `?since=${first.cursor}`);
+
+      expect(second.entries.map((item) => item.message)).toEqual(["after the refusal"]);
+      expect(second.entries.map((item) => item.context)).toEqual(["LogsTest"]);
+    } finally {
+      await application?.close();
+      output.restore();
+    }
+  },
+);

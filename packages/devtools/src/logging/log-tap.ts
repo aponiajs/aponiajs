@@ -70,16 +70,18 @@ export function isRecordableLogger(value: unknown): value is LoggerService {
  * may make for itself, and re-applying a rule this package cannot read would be
  * enforcing a filter it does not own.
  *
- * A patch that fails part way — one property that refuses the assignment — leaves
- * the methods it could not patch exactly as they were, and the stream handed over
- * records the lines written through the methods it did patch, because a debugging
- * aid that failed a boot over its own tap would be the failure mode this package
- * exists not to have. A logger that refused every assignment — a frozen one — has
- * nothing installed, so the answer is `undefined`: an empty stream would announce
- * that nothing is being logged while that logger goes on printing every line, the
- * same false answer a value that is not a logger is refused. A logger it has
- * tapped before is answered with the stream already recording it, so the two
- * cannot disagree about where a line went.
+ * A patch that fails part way — one property that refuses the assignment — stops
+ * there: the levels patched before it record and the stream is the answer,
+ * because a tap genuinely installed on the logger; the level that refused keeps
+ * its method and the levels after it are never reached. The answer is `undefined`
+ * when the refusing assignment is the first one the tap makes, so no level was
+ * patched: an empty stream would announce that nothing is being logged while that
+ * logger goes on printing every line, the same false answer a value that is not a
+ * logger is refused. That is the whole of the trigger — the first refusal, not a
+ * logger that refuses every assignment — so a logger that refuses only its first
+ * level is answered with `undefined` even though a later level would have
+ * accepted the patch. A logger it has tapped before is answered with the stream
+ * already recording it, so the two cannot disagree about where a line went.
  */
 export function tapLogBuffer(logger: LoggerService, buffer: LogBuffer): LogBuffer | undefined {
   let installed = false;
