@@ -252,7 +252,14 @@ test("aot reports the boot's own decision when no project is on disk to analyze"
     expect(await readAot(server)).toEqual(payload);
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toContain(workingDirectory);
-    expect(warnings[0]).toContain("aponia.json");
+
+    // The fourth sentence this package mirrors, read back the way the other
+    // three are: the configuration this directory does not have. Comparing the
+    // whole parenthetical is the point — the fragment `aponia.json` every
+    // spelling of this refusal would carry could not tell the command's own
+    // wording from a paraphrase that keeps the file's name and changes the rest.
+    const refusal = await commandRefusal(workingDirectory);
+    expect(warnings[0]).toContain(`(${refusal}); /aot answers the boot's record alone.`);
   } finally {
     server.stop();
   }
