@@ -201,7 +201,15 @@ runtime boundary it describes.
   boolean with a reason that is a string or absent — and a record that does not
   carry them serves no `/aot` at all: an application no boot produced, and one a
   copy of the platform this release does not own booted, are the same absence
-  `/graph` answers with the dispatcher's `404`.
+  `/graph` answers with the dispatcher's `404`. That is the endpoint's first
+  degradation axis, and it is an absence rather than a loss: there are no facts to
+  publish, so there is nothing to report, and every other endpoint this server
+  serves — `/meta` included — answers exactly as it did. The second axis is the
+  analysis, which the bullets below state: a record this release can read and a
+  project it cannot still answers, with `controllers` empty and one row under
+  `Devtools`. The two are not to be collapsed — a reader who sees one axis reads a
+  `404` as a surface that failed, and a degraded half as a fact that was never
+  there.
 - `invokers.reason` is published exactly as the record states it, and a record
   that states none publishes no reason key. A reason belongs to a refusal, so an
   artifact the boot adopted is reported with no reason at all rather than with a
@@ -229,7 +237,11 @@ runtime boundary it describes.
   `generation/project-configuration.ts`, with `Bun.Glob` in place of the command's
   `fast-glob` because a runtime package reaches its glob through the runtime. The
   refusal sentences are the command's own, so the row a developer reads here names
-  what a build would say about the same project. Keep the copies in step by hand.
+  what a build would say about the same project, and `tests/aot.test.ts` reads them
+  back out of `generateInvokers` rather than copying them into the case, so a
+  wording change on either side fails there instead of shipping. The default
+  project is the one mirrored, because `/aot` has no way to name another one. Keep
+  the copies in step by hand.
 - A handler's verdict is the emitter's, never re-applied here.
   `emitControllerInvokers` decides which handler is emitted and which is declined,
   and the reason beside a `"compiled"` handler is the sentence that emitter
@@ -463,7 +475,10 @@ proved over HTTP rather than by calling its builder. Its laziness is proved in a
 `Bun.spawnSync` child that reads Bun's module registry before the import, after
 it, and after the first request, because the parent process may already hold the
 analyzer through another test file's imports — a snapshot taken there could only
-ever show that nothing was loaded _again_.
+ever show that nothing was loaded _again_. The refusals this package mirrors are
+asserted against the command's own sentences, which the case reads back by calling
+`generateInvokers` with `dryRun` from the same root: a copy of a sentence inside
+the case, or a prefix of one, could not tell a faithful mirror from a paraphrase.
 
 The socket's lifetime is asserted over HTTP too: a case polls the address while
 the application listens, closes the application, and polls again, because a

@@ -71,6 +71,15 @@ const analyses = new Map<string, Promise<readonly AponiaAotController[]>>();
  * publishes none: an artifact this release adopted is reported with no reason
  * key at all, rather than with a placeholder this package invented or with the
  * selector's sentence restated for a refusal that never happened.
+ *
+ * `/aot` degrades along two axes, and they are not the same failure. This
+ * function is the first: a record that states none of these facts serves no
+ * `/aot` at all, because there is nothing to publish rather than something lost
+ * — the path is not one this server owns, and every other endpoint it serves,
+ * `/meta` included, answers exactly as it did. The second is the analysis: a
+ * record this release can read, a project it cannot, and the endpoint still
+ * answers with the boot's half and an empty controller list. An absent fact is
+ * reported where it is absent; a degraded half is reported under `Devtools`.
  */
 export function readAotFacts(
   diagnostics: AponiaApplicationDiagnostics | undefined,
@@ -184,6 +193,12 @@ async function analyzeProject(
  * dependency on one; the patterns, the order, and the files they leave out are
  * the same.
  *
+ * The default project is the one mirrored, because `/aot` has no way to name
+ * another: `aponia.json` is read the way a build with no `--project` reads it.
+ * The refusal sentences are the command's own words, and `tests/aot.test.ts`
+ * reads them back out of `generateInvokers` rather than copying them into the
+ * case, so a wording change on either side fails there instead of shipping.
+ *
  * The emitter decides and this reports. Which handler is emitted and which is
  * declined comes from `emitControllerInvokers`, and the verdicts are read off
  * the declines it returned rather than re-applied here, so the reason beside a
@@ -225,13 +240,16 @@ async function analyzeControllers(projectRoot: string): Promise<readonly AponiaA
   const specifiers: Record<string, string> = {};
   for (const { controller, file } of found) {
     if (specifiers[controller.className] !== undefined) {
+      // The command's own sentence, word for word: a developer reads one
+      // explanation for one condition, and the case that pins it asks
+      // `generateInvokers` what it says rather than repeating it here.
       // The generated module imports each class by name, so two classes sharing
       // one name cannot both be addressed and the build refuses the whole
       // project. The same refusal is what makes a per-handler verdict
       // unreachable for either of them.
       throw new Error(
         `Two controllers are named "${controller.className}". Rename one; a generated ` +
-          `invoker module imports each class by its class name.`,
+          `invoker module imports each controller by its class name.`,
       );
     }
 

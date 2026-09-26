@@ -99,6 +99,32 @@ function writeProjectFile(projectRoot: string, path: string, source: string): vo
   writeFileSync(file, source);
 }
 
+/**
+ * The sentence `aponia build` refuses one project with, read from the command.
+ *
+ * This endpoint repeats the build's refusals word for word, so the mirroring is
+ * the contract: a case that pinned its own copy of a sentence could not tell a
+ * faithful mirror from a paraphrase, and a prefix could not tell either of them
+ * from a sentence that keeps its opening words and changes the rest. Asking the
+ * command — through the package this endpoint itself imports it by — is what
+ * makes a wording change on either side fail here instead of shipping.
+ *
+ * `dryRun` states the whole of what this case wants from the command: the
+ * refusal, never a written module. Every refusal read here lands before the
+ * first write, and the option holds even if one of them ever moved.
+ */
+async function commandRefusal(projectRoot: string): Promise<string> {
+  const { generateInvokers } = await import("@aponiajs/cli");
+
+  try {
+    await generateInvokers({ cwd: projectRoot, dryRun: true });
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error);
+  }
+
+  throw new Error(`a build accepted a project this case expects it to refuse: ${projectRoot}`);
+}
+
 const projectConfiguration = `{ "sourceRoot": "src" }\n`;
 
 /**
@@ -341,13 +367,7 @@ test("aot leaves the controller list empty for a project a build would refuse", 
   writeProjectFile(controllerless, "aponia.json", projectConfiguration);
   writeProjectFile(controllerless, "src/plain.ts", "export class Plain {}\n");
 
-  const refused: readonly (readonly [string, string])[] = [
-    [duplicateNames, "Two controllers are named"],
-    [escapingRoot, "escapes the project root"],
-    [controllerless, "No class decorated with @Controller()"],
-  ];
-
-  for (const [projectRoot, fragment] of refused) {
+  for (const projectRoot of [duplicateNames, escapingRoot, controllerless]) {
     process.chdir(projectRoot);
     const application = await AponiaFactory.createNative(AppModule, { logger: false });
     const server = serveLoopback(application);
@@ -360,7 +380,13 @@ test("aot leaves the controller list empty for a project a build would refuse", 
       // One row per project per process, however many times it is asked.
       expect((await readAot(server)).controllers).toEqual([]);
       expect(warnings).toHaveLength(1);
-      expect(warnings[0]).toContain(fragment);
+
+      // The row quotes the build's own sentence and nothing else of it, which is
+      // why the whole sentence is compared rather than the opening words every
+      // spelling of it would share. The command is asked what it says, from the
+      // root the endpoint itself read.
+      const refusal = await commandRefusal(process.cwd());
+      expect(warnings[0]).toContain(`(${refusal}); /aot answers the boot's record alone.`);
     } finally {
       server.stop();
     }

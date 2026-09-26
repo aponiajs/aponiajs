@@ -142,7 +142,11 @@ export class AppModule {}
   `Devtools` rather than failing the endpoint or answering it per poll. The
   project root is the process's working directory — the same root `aponia build`
   defaults to — and the endpoint is served only for a record that states the two
-  boot facts it publishes.
+  boot facts it publishes. Two failures are not one: a record that states neither
+  is a path this server does not serve — the dispatcher's `404`, with `/meta` and
+  the rest of the surface answering as they always did — while a project the
+  analysis cannot read still answers, with the boot's half beside an empty
+  controller list.
 - Every endpoint is a `GET`: any other method answers `405` before the path is
   read, and a path the server does not serve answers `404`.
 
