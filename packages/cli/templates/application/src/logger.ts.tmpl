@@ -5,13 +5,13 @@ import { Logger } from "@aponiajs/common";
  *
  * `AponiaFactory.create` writes every bootstrap line — the modules it
  * initialized, the routes it resolved — through the logger it is handed, and
- * `DevtoolsModule.register` patches the logger it is handed in place so
+ * `devtoolsPlugin` patches the logger it is handed in place so
  * `/__devtools/logs` can serve those lines. One object handed to both is what
  * makes that stream carry the boot's own output; a logger that reached only one
  * of them would leave the other with nothing to record or nothing to record
  * from.
  *
- * Pass this to `DevtoolsModule.register` only if you also pass it to
+ * Pass this to `devtoolsPlugin` only if you also pass it to
  * `AponiaFactory.create`, and the other way round. Replace it with your own
  * `LoggerService` when the application should log somewhere else.
  */

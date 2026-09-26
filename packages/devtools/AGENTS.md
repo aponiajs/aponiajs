@@ -15,7 +15,7 @@ first request so an application that never polls the endpoint never loads it.
 
 | Domain       | Owns                                                                                                                    |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| `module/`    | `DevtoolsModule.register`, `DevtoolsOptions`, the plugin                                                                |
+| `module/`    | `DevtoolsModule.register`, `devtoolsPlugin`, `DevtoolsOptions`, the plugin                                              |
 | `server/`    | `startDevtoolsServer`, the socket and the loopback check, `routeRequest`, the dispatcher                                |
 | `endpoints/` | One payload builder and its wire contract per endpoint, `/meta` first, and the cursor reader the cursor endpoints share |
 | `buffer/`    | The bounded cursor buffer `/logs` and `/requests` share, and nothing else                                               |
@@ -30,11 +30,31 @@ runtime boundary it describes.
 - Registration is the opt-in and `enabled` is the switch. The framework never
   reads an environment variable on the application's behalf, because an
   environment variable is not a security boundary.
+- Registration has two spellings that mount one plugin: `DevtoolsModule.register`
+  in a module's `imports`, and `devtoolsPlugin` in `AponiaFactory.create`'s
+  `plugins` option. Both read the same `DevtoolsOptions`, both build the plugin
+  through `createDevtoolsPlugin`, and both are gated by `enabled` — one
+  construction is what makes "the same mounted behaviour" structural rather than
+  a promise two code paths keep. The option path exists because a registration is
+  a call expression and `aponia build` lowers a module only when every `imports`
+  entry is a single identifier: the module path declines the module that wrote
+  it, and where that module is the root the committed descriptor artifact keeps
+  serving a graph the registration is not in. The option path pays a price the
+  module path does not — the plugin is in no module, so it reaches neither the
+  module graph, nor `inspectAponiaApplication`, nor a generated artifact — and
+  both prices are documented where a user reads them. Keep the two spellings in
+  step: a third path is a third surface, not a convenience.
 - A disabled registration mounts nothing: no provider, no native plugin, and so
   no socket — the plugin is the only thing in this package that starts a server,
   so the socket absence follows by construction from the plugin absence. It is
   an inert module rather than a plugin that does nothing, so a boot cannot
-  mistake it for the enabled one.
+  mistake it for the enabled one. The option path states the same decision with
+  the other shape the platform accepts: `devtoolsPlugin` answers `undefined` and
+  the factory mounts nothing for that entry, because a value that mounts nothing
+  is the one thing a boot cannot read as an enabled registration. `enabled` is
+  the switch on both paths rather than whether the call happens, so one options
+  object drives both and an application forwarding its configuration cannot mount
+  a debug surface it did not ask for.
 - The module is an `ElysiaPluginModule` because the plugin has to see the
   mounted route table. A plain provider is constructed before any controller
   mounts and cannot; an Elysia plugin runs at `onStart`, after every route is
@@ -508,6 +528,14 @@ whether the boot mounted the plugin module (the enabled twin reports
 `ElysiaPluginModule[devtools] dependencies initialized`, the disabled twin
 asserts that line and every `Devtools` report absent) and what the plugin
 reported at `onStart`.
+
+`tests/devtools-module.test.ts` covers the module path and
+`tests/devtools-plugin.test.ts` the option path, and the second file is the
+counterpart rather than a copy: it asserts the surface, the log stream, the
+lifecycle, and the disabled absence over the option, because that is what a
+shared construction has to be shown to deliver. Neither file asserts the
+build-time decline rule — that rule is `@aponiajs/cli`'s, and its own lanes hold
+it.
 
 The contract is HTTP, so the socket is asserted over HTTP and never assumed: a
 case binds port `0`, reads the address the report named back out of it, and

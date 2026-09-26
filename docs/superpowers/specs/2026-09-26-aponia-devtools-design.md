@@ -30,7 +30,9 @@ In scope:
   requests it answered;
 - the data contract itself, versioned, because a consumer builds a UI against
   it;
-- two changes in `@aponiajs/platform-elysia` that the above requires.
+- three changes in `@aponiajs/platform-elysia` that the above requires, the
+  third of which is the factory `plugins` option that lets an application mount
+  the plugin without declining its own root module.
 
 Out of scope, deliberately:
 
@@ -70,6 +72,44 @@ Registration is the opt-in. `enabled` is the switch, and it is the
 application's decision: the framework never reads an environment variable on
 the application's behalf. A disabled module registers no provider, mounts no
 plugin, and opens no socket.
+
+There is a second spelling of the same opt-in, for the application that cannot
+put the registration in an `imports` array:
+
+```ts
+// main.ts
+const application = await AponiaFactory.create(AppModule, {
+  plugins: [
+    devtoolsPlugin({
+      enabled: Bun.env.NODE_ENV !== "production",
+      port: Number(Bun.env.DEVTOOLS_PORT ?? 8000),
+      logger: appLogger,
+    }),
+  ],
+});
+```
+
+`devtoolsPlugin` builds the same plugin `DevtoolsModule.register` builds, and
+the factory's `plugins` option mounts it on the root native application, beside
+the plugins the module graph contributes. `enabled` gates this path exactly as
+it gates the module path: a registration that is not enabled answers
+`undefined`, and the option mounts nothing for that value — not an inert plugin,
+so a boot cannot mistake a disabled registration for an enabled one. One options
+object drives both paths, which is why the switch lives in `enabled` rather than
+in whether the call happens.
+
+The reason the spelling exists is `aponia build`'s lowering rule. The descriptor
+emitter reads each `imports` entry as a bare identifier, so a module registered
+as a call expression — `DevtoolsModule.register({ ... })` is one — declines the
+module that wrote it. See the first accepted limitation below for what that
+costs when the module is the root.
+
+The price of the option path is the mirror image, and it is stated in the
+option's own documentation: a plugin mounted there is not in the module graph,
+so nothing about it reaches `compileRootModule`, `inspectAponiaApplication`, or
+the generated descriptor artifact. A plugin whose source a module can name
+belongs in that module's `imports`; the option is for the plugins a module
+cannot declare.
 
 `port` is optional and defaults to `8000`. If the port is already bound, the
 plugin logs the failure under `Devtools` and the application boots normally.
@@ -478,7 +518,7 @@ the failure mode is it being reachable when it should not be.
 
 ## Platform changes
 
-Two, both in `@aponiajs/platform-elysia`.
+Three, all in `@aponiajs/platform-elysia`.
 
 ### 1. Expose the boot decision and the compiled graph
 
@@ -526,7 +566,55 @@ With change 1 in place this package does not depend on the fix, but a user
 running `bun run inspect` on an application they have also pointed at
 `__devtools` would otherwise get two different graphs from the same project.
 
+### 3. A `plugins` option on `AponiaApplicationOptions`
+
+`AponiaFactory.create` accepts `plugins: readonly (NativeElysiaPlugin |
+undefined)[]`, and bootstrap mounts each entry on the root native application
+before the module-graph pass, with the same `use()` that pass makes. An entry
+that is `undefined` mounts nothing.
+
+This is what lets an application mount the devtools without declining its own
+root module: the registration is an option rather than an `imports` entry, and
+the emitter's rule is about `imports` entries. It is deliberately **not** an
+`imports` option on the factory. An option is not in the descriptor — the
+declared graph would be missing it for exactly the reason above, with the
+silence moved from the build to the boot, which is the trade this option exists
+to avoid rather than to relocate.
+
+The option is general rather than devtools-shaped because the constraint is
+general: any plugin a module cannot name with a single identifier has this
+problem, and a factory-level mount is the only place left for it.
+
 ## Accepted limitations
+
+- **Registering the devtools as a module import declines the module, and a
+  declined _root_ leaves a committed artifact serving a graph the registration
+  is not in.** `aponia build` lowers a module only when every `imports` entry
+  names its declaration with a single identifier, and
+  `DevtoolsModule.register({ ... })` is a call expression. The build reports
+  `DECLINED module <Root>` and the root boots from its decorators, which is the
+  supported state it is for every other decline — except that the committed
+  `descriptors.generated.ts` decides the boot, and the build leaves it in one of
+  two shapes:
+
+  - The build still emitted other modules, so the file is rewritten without the
+    root. The runtime refuses an artifact that holds no declaration for the root
+    the application named, so the decorated graph answers and the startup log
+    says so. This is the decline behaving as documented.
+  - The build emitted nothing at all — the single-module project, which is
+    exactly what the starter is — so no descriptor file is written and the
+    committed one keeps the declaration it already had. The runtime accepts it
+    by every rule it can apply, the startup log reports that the declared graph
+    served the application, and the graph it serves is the one the file held:
+    the graph of a build that ran before the registration existed, with the
+    registration not in it. The devtools never mounts and nothing reports the
+    absence.
+
+  The two ways out are to mount the plugin through
+  `AponiaFactory.create`'s `plugins` option — which is not an `imports` entry,
+  so the root stays declarable — or to accept the decorated graph for that root.
+  The consequence is written here because it is a limitation only while it is
+  written down: discovered, it is a defect.
 
 - **Data freshness is per boot.** The server publishes what it read at startup.
   In development `bun --watch` restarts on every save, so this is current; a
@@ -587,6 +675,11 @@ conformance lane mirrors the public contract in
 
 - Boot an application with the plugin registered and query the server over
   `fetch`. Do not test handlers directly; the contract is HTTP.
+- Assert both spellings mount one surface: the same enabled socket serving the
+  same endpoints, the same log stream recording the boot's own lines, and
+  `enabled: false` opening no socket and answering no endpoint on either path.
+  The option path's entry is `undefined` when disabled rather than an inert
+  plugin, and an `undefined` entry mounts nothing.
 - Cover: the disabled module opening no socket; the default loopback bind
   reporting nothing; each loopback spelling reporting nothing; a host outside
   loopback binding, answering, and reporting once under `Devtools`; a widened

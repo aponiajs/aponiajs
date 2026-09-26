@@ -33,16 +33,25 @@ main.ts
 
 Open `http://localhost:3000/` after starting the application.
 
-`@aponiajs/devtools` serves an API on `http://127.0.0.1:8000/__devtools` —
-loopback unless its registration names a `host` — while an application that
-registers it listens: `meta`, `graph`, `routes`,
-`flow`, `logs`, `requests`, and `aot`. This starter does not register it, because
-registering it means importing a dynamic module, and `aponia build` reports a
-root module that imports one as `DECLINED` — the committed
-`src/descriptors.generated.ts` is what lets a fresh checkout boot from the
-declared graph, so the registration is left to the application. The
+`src/main.ts` mounts `@aponiajs/devtools`, which serves an API on
+`http://127.0.0.1:8000/__devtools` — loopback unless `devtoolsPlugin` is given a
+`host`, and `DEVTOOLS_PORT` moves it — while the application listens: `meta`,
+`graph`, `routes`, `flow`, `logs`, `requests`, and `aot`. The surface is served
+unless `NODE_ENV` is `production`, and `devtoolsPlugin({ enabled })` is the
+application's own decision rather than anything the framework reads from the
+environment.
+
+It is mounted through the factory's `plugins` option instead of `AppModule`'s
+`imports`, and that placement is the point: `aponia build` lowers a module only
+when every `imports` entry names its declaration with a single identifier, so
+`DevtoolsModule.register(...)` in the root module would be a call expression and
+the root would be left out of `src/descriptors.generated.ts` — the file that lets
+a fresh checkout boot from the declared graph. A plugin mounted through the
+option is not an `imports` entry, so the two do not compete. Move the
+registration into `imports` when the module graph should carry it, and give up
+the declared-graph boot for that root; the
 [devtools guide](https://github.com/aponiajs/aponiajs/blob/main/docs/devtools.md)
-shows the three lines it takes, the endpoints, and the limitations they state.
+states the trade, the endpoints, and the limitations.
 
 The starter follows Nest standard mode:
 
@@ -64,9 +73,10 @@ test/
 ```
 
 `src/logger.ts` holds the application's logger, and `src/main.ts` hands that one
-object to `AponiaFactory.create`, so every bootstrap line is written through the
-logger the application also holds — the half a devtools registration needs from
-the application, since it patches the logger it is given in place.
+object to both `AponiaFactory.create` and `devtoolsPlugin`, so every bootstrap
+line is written through the logger the application also holds — the half the
+devtools surface needs from the application, since it patches the logger it is
+given in place rather than replacing it.
 
 Add later features under `src/<feature>`, with the feature controller, module,
 service, DTOs, entities, and unit tests kept together.

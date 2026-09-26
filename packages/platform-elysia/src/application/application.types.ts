@@ -1,6 +1,7 @@
 import type { ClassToken, LoggerService, LogLevel } from "@aponiajs/common";
 import type { AnyElysia, Elysia, ElysiaConfig } from "elysia";
 import type { AponiaModuleDescriptorArtifact } from "../modules/module-descriptor-artifact.types.ts";
+import type { NativeElysiaPlugin } from "../plugins/plugin.types.ts";
 import type { AponiaInvokerArtifact } from "../routing/invoker-artifact.types.ts";
 
 export type NativeElysiaConfigurator<TNativeApplication extends AnyElysia> = (
@@ -56,6 +57,39 @@ export interface AponiaApplicationOptions {
    * because the answer decides what a route actually runs.
    */
   readonly descriptors?: AponiaModuleDescriptorArtifact;
+  /**
+   * Native Elysia plugins the application mounts on its own root instance,
+   * beside the ones its modules register through module imports.
+   *
+   * An entry mounts where a module-registered plugin does — the same `use()` on
+   * the same root application, before any controller mounts. It mounts before
+   * the plugins the module graph contributes, and both the request and the
+   * after-response phase run in mount order, so a hook declared here runs
+   * before one a module's plugin declares.
+   *
+   * What it is not is part of the module graph: no module declares it, so
+   * nothing about it reaches `compileRootModule`, `inspectAponiaApplication`,
+   * or the artifacts `aponia build` writes. That is the trade, and it is why a
+   * plugin whose source a module can name belongs in that module's `imports`
+   * (`ElysiaPluginModule.register`, `defineElysiaPlugin`) instead: an import is
+   * what keeps a plugin in the declared graph.
+   *
+   * This option is for the plugins a module cannot declare. `aponia build`
+   * lowers a module only when every `imports` entry names its declaration with
+   * a single identifier, so an entry that is a call expression — as
+   * `DevtoolsModule.register(...)` is — declines the module that wrote it. A
+   * declined root leaves the committed descriptor artifact either holding the
+   * declaration it already had, which serves a graph the registration is not
+   * in, or holding none for that root, which bootstrap refuses. A plugin
+   * mounted here leaves `imports` alone, so the module that would have been
+   * declined stays declarable.
+   *
+   * An entry that is `undefined` mounts nothing. That is the shape a plugin
+   * factory states a decision with: a registration the application chose not to
+   * enable returns `undefined` rather than an inert plugin, so a boot cannot
+   * mistake it for an enabled one. Every other entry reaches Elysia unchanged.
+   */
+  readonly plugins?: readonly (NativeElysiaPlugin | undefined)[];
   /**
    * Guards every route the platform mounts runs, before the ones a controller
    * or a handler declares.

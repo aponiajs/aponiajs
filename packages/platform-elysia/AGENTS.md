@@ -28,12 +28,31 @@ runtime boundary it describes.
 
 - Bootstrap order is load-bearing: logger, compile and create the container,
   create the root Elysia named after the root module id with its explicit
-  compilation policy, first pass mounting plugin modules and eagerly
+  compilation policy, mount the application's own `plugins` entries, first pass
+  mounting plugin modules and eagerly
   instantiating providers, controller mounting, await native plugin composition,
   WebSocket gateway registration and initialization, then await
   `nativeApplication.modules` again.
   `configureNative` must return the instance it receives. The application's own
   enhancer declarations resolve between the first pass and the controller loop.
+- `AponiaApplicationOptions.plugins` mounts native plugins on the root
+  application from the options, beside the module-graph pass and before it, and
+  it is a whole-plugin mount rather than an alternative module registration. An
+  entry is the plugin value itself — nothing resolves from the container on this
+  path, so no entry can fail a boot — and an entry that is `undefined` mounts
+  nothing, which is the shape a plugin factory states a decision with. The
+  element type is `NativeElysiaPlugin | undefined` from `plugins/plugin.types.ts`
+  so an entry is exactly what `.use()` accepts. Both hook phases run in mount
+  order, so a hook declared here runs before one a module's plugin declares;
+  `tests/application-plugins.test.ts` pins that order and the option's three
+  shapes. The option exists for the plugins no module can declare — an `imports`
+  entry that is a call expression declines the module that wrote it, and a
+  declined root leaves the committed descriptor artifact serving a graph the
+  registration is not in — and it is deliberately not an `imports` option on the
+  factory, because an option is not in the descriptor and the declared graph
+  would miss it for the same reason. Nothing about an entry reaches
+  `compileRootModule`, inspection, or a generated artifact, so it is never a
+  substitute for a module registration a module could have made.
 - Decorated controllers register their compiled route plans directly on the
   root Elysia instance. Low-level controller descriptors retain `buildPlugin`
   as their compatibility and escape-hatch path.

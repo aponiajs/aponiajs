@@ -374,7 +374,9 @@ Implemented: decorated modules and HTTP controllers, Standard Schema route
 validation, one-schema validation-model classes, request parameter decorators,
 singleton DI, class/value/factory/alias providers, explicit tokens,
 imports and exports, lifecycle, structured logging, generators, native Elysia
-escape hatches, concise inferred controller registration, RFC 9457 application
+escape hatches, application-owned native plugins mounted through
+`AponiaApplicationOptions.plugins`, concise inferred controller registration,
+RFC 9457 application
 errors, provider-registered Elysia WebSocket gateways, and guards, interceptors,
 and exception filters compiled into per-route lifecycle hooks, with the default
 Problem Details mapping last in each route's error path, and an opt-in devtools

@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@aponiajs/common": "{{APONIA_VERSION}}",
+    "@aponiajs/devtools": "{{APONIA_VERSION}}",
     "@aponiajs/platform-elysia": "{{APONIA_VERSION}}",
     "elysia": "^1.4.30"
   },

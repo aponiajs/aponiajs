@@ -258,6 +258,7 @@ main.ts
        descriptors: moduleDescriptorArtifact,
        invokers: controllerInvokerArtifact,
        logger: appLogger,
+       plugins: [devtoolsPlugin({ enabled, logger: appLogger })],
      })
   -> AppModule
   -> AppController
@@ -265,22 +266,29 @@ main.ts
 ```
 
 `main.ts` owns only bootstrap configuration, the two generated artifacts, the
-logger it holds, and `listen`. Decorated controllers own routes. Services own
-application behavior. Generated application code does not import Elysia or
-low-level runtime descriptors.
+logger it holds, the devtools plugin, and `listen`. Decorated controllers own
+routes. Services own application behavior. Generated application code does not
+import Elysia or low-level runtime descriptors.
 
 `src/logger.ts` holds the application's logger, and `src/main.ts` hands that one
-object to `AponiaFactory.create`, so every bootstrap line is written through the
-logger the application also holds.
+object to both `AponiaFactory.create` and `devtoolsPlugin`, so every bootstrap
+line is written through the logger the application also holds.
 
-A [devtools](./devtools.md) registration is added the same way — it is an entry
-in the root module's `imports`, `DevtoolsModule.register({ enabled, logger: appLogger })`,
-handed the same logger — but the starter does not make it. A registration is a
-dynamic module, and `aponia build` reports a root module that imports one as
-`DECLINED`, because the committed `descriptors.generated.ts` is what lets a fresh
-checkout boot from the declared graph and a run-time registration cannot be
-lowered into it. The trade-off is the application's to make; the
-[devtools guide](./devtools.md) states it.
+The starter mounts [devtools](./devtools.md) itself, through the factory's
+`plugins` option — `devtoolsPlugin({ enabled, logger: appLogger })`, the same
+logger — and it is served unless `NODE_ENV` is `production`, on
+`127.0.0.1:8000` unless `DEVTOOLS_PORT` names another port. The placement is the
+point:
+`DevtoolsModule.register(...)` in the root module's `imports` is a call
+expression, and `aponia build` lowers a module only when every `imports` entry
+names its declaration with a single identifier, so the root — the only module a
+starter build can declare — would be reported as `DECLINED` and the committed
+`descriptors.generated.ts` would keep serving a graph without the registration in
+it. A plugin mounted through the option is not an `imports` entry, so the root
+stays declarable and the application keeps booting from the declared graph. The
+[devtools guide](./devtools.md) states what the option path gives up in exchange:
+nothing about the plugin reaches the module graph, so `bun run inspect` does not
+list it and no generated artifact carries it.
 
 The starter ships both generated modules, so a freshly generated application
 serves through generated route invokers and boots from the declared module graph

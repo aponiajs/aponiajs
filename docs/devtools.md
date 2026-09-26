@@ -64,6 +64,43 @@ worth giving up is the application's decision, and
 [the last limitation below](#accepted-limitations) states the case where the
 cost is a registration that does not mount at all.
 
+### Mounting it without a module import
+
+`devtoolsPlugin` builds the same plugin for the application that cannot put the
+registration in an `imports` array — which is every application that wants to
+keep booting from its committed descriptor artifact:
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { devtoolsPlugin } from "@aponiajs/devtools";
+
+const application = await AponiaFactory.create(AppModule, {
+  logger: appLogger,
+  plugins: [
+    devtoolsPlugin({
+      enabled: Bun.env.NODE_ENV !== "production",
+      port: 8000,
+      logger: appLogger,
+    }),
+  ],
+});
+```
+
+It takes the same options, gates on the same `enabled`, and mounts the same
+thing: the same socket, the same endpoints, the same log stream, beside the
+plugins a module contributes. An entry is an `undefined` rather than an inert
+plugin when the registration is disabled, and the factory mounts nothing for
+that value, so neither path can produce a boot that believes it mounted a
+devtools surface it did not.
+
+The price is the other side of the same coin: no module declares a plugin
+mounted this way, so nothing about it reaches the module graph, `bun run
+inspect`, or the artifact `aponia build` writes. `imports` is where a plugin
+whose source a module can name belongs
+([native plugins](./native-plugins.md#the-plugins-option) documents the option
+itself); this is for the plugin a module cannot declare, and it is what the
+generated application starter does.
+
 Three facts about the socket:
 
 - **The address defaults to `127.0.0.1`, and `host` is what moves it.** A
@@ -429,7 +466,10 @@ These are the boundaries this package states rather than hides.
   lower, no descriptor is written at all, so the artifact on disk keeps serving
   the graph it already held — a graph without the registration — and the
   registration appears to do nothing. That silence is why the `DECLINED module`
-  line a build prints is the one to read.
+  line a build prints is the one to read, and
+  [`devtoolsPlugin`](#mounting-it-without-a-module-import) is the way around the
+  whole limitation: an option is not an `imports` entry, so the root stays
+  declarable and the surface still mounts.
 - **A class-field interceptor half is invisible to `/flow`.** The platform runs
   it; the payload omits its stage. See [`/flow`](#flow).
 - **A partly patched logger's stream does not name the levels it missed.** See

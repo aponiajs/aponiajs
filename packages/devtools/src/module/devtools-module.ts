@@ -32,12 +32,56 @@ export class DevtoolsModule {
    * runs at `onStart`, after every route has mounted.
    */
   static register(options: DevtoolsOptions): DynamicModule {
-    if (!options.enabled) {
+    const plugin = devtoolsPlugin(options);
+    if (plugin === undefined) {
       return createInertModule();
     }
 
-    return ElysiaPluginModule.register(createDevtoolsPlugin(options), { key: devtoolsPluginKey });
+    return ElysiaPluginModule.register(plugin, { key: devtoolsPluginKey });
   }
+}
+
+/**
+ * The devtools plugin, for the application that mounts it through
+ * `AponiaFactory.create`'s `plugins` option rather than through a module:
+ *
+ * ```ts
+ * const application = await AponiaFactory.create(AppModule, {
+ *   plugins: [devtoolsPlugin({ enabled: Bun.env.NODE_ENV !== "production", logger: appLogger })],
+ * });
+ * ```
+ *
+ * Both paths build the same plugin through the same construction, so they mount
+ * the same hooks, open the same socket, and serve the same endpoints. They
+ * differ in what `aponia build` can see. `DevtoolsModule.register` belongs in a
+ * module's `imports`, and `aponia build` lowers a module only when every
+ * `imports` entry names its declaration with a single identifier: an entry that
+ * is a call expression declines the module that wrote it, and a declined root
+ * leaves the committed descriptor artifact serving a graph the registration is
+ * not in. A plugin mounted through this option is not an `imports` entry, so
+ * the module that would have been declined stays declarable.
+ *
+ * The price is stated rather than hidden: a plugin mounted this way is not in
+ * the module graph, so nothing about it reaches the generated descriptor
+ * artifact or the inspection of a compiled application. Mount the plugin
+ * through the module when the graph should carry it.
+ *
+ * `enabled` gates this path exactly as it gates the module path: a registration
+ * that is not enabled returns `undefined`, and the platform mounts no plugin
+ * for that value. It is not an inert plugin, for the same reason
+ * `DevtoolsModule.register({ enabled: false })` is not an inert module — a boot
+ * must not be able to mistake a disabled registration for an enabled one. The
+ * switch stays in the options rather than in whether the call happens, so one
+ * options object drives both paths: an application that forwards its devtools
+ * configuration to this function mounts a debug surface only when it said it
+ * wanted one.
+ */
+export function devtoolsPlugin(options: DevtoolsOptions): Elysia | undefined {
+  if (!options.enabled) {
+    return undefined;
+  }
+
+  return createDevtoolsPlugin(options);
 }
 
 /**

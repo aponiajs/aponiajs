@@ -56,11 +56,17 @@ test("packed workspaces generate an application that installs, validates, builds
         "03-platform-elysia",
         bunTemporaryDirectory,
       ),
-      cli: await packWorkspace("packages/cli", archiveDirectory, "04-cli", bunTemporaryDirectory),
+      devtools: await packWorkspace(
+        "packages/devtools",
+        archiveDirectory,
+        "04-devtools",
+        bunTemporaryDirectory,
+      ),
+      cli: await packWorkspace("packages/cli", archiveDirectory, "05-cli", bunTemporaryDirectory),
       createAponia: await packWorkspace(
         "packages/create-aponia",
         archiveDirectory,
-        "05-create-aponia",
+        "06-create-aponia",
         bunTemporaryDirectory,
       ),
     } as const;
@@ -152,6 +158,9 @@ test("packed workspaces generate an application that installs, validates, builds
       workspaceManifest.version,
     );
     expect(generatedManifest.dependencies["@aponiajs/core"]).toBeUndefined();
+    // The starter's `src/main.ts` mounts the devtools through the factory's
+    // `plugins` option, so the application depends on it at run time.
+    expect(generatedManifest.dependencies["@aponiajs/devtools"]).toBe(workspaceManifest.version);
     // The starter's build script registers the packed plugin, so the CLI is a
     // build-time dependency of every generated application.
     expect(generatedManifest.devDependencies["@aponiajs/cli"]).toBe(workspaceManifest.version);
@@ -160,6 +169,7 @@ test("packed workspaces generate an application that installs, validates, builds
       ["@aponiajs/common", "dependencies", archives.common],
       ["@aponiajs/core", "dependencies", archives.core],
       ["@aponiajs/platform-elysia", "dependencies", archives.platformElysia],
+      ["@aponiajs/devtools", "dependencies", archives.devtools],
       ["@aponiajs/cli", "devDependencies", archives.cli],
     ] as const;
     let localManifest = await Bun.file(generatedManifestPath).text();
@@ -294,18 +304,24 @@ async function assertPackageDependency(
 const descriptorStartupLine = "Booting AppModule from the generated module descriptors";
 
 async function expectServer(projectDirectory: string, entrypoint: string): Promise<void> {
-  const reservation = Bun.serve({
-    port: 0,
-    fetch: () => new Response("reserved"),
-  });
-  const port = reservation.port;
-  await reservation.stop(true);
+  const port = await reservePort();
+  // The starter's devtools binds a second socket, so the lane reserves that port
+  // rather than letting the application take the documented `8000`: the surface
+  // is asserted over HTTP below, and a port another process already holds would
+  // make this case report what this machine had bound rather than what the
+  // starter mounted.
+  const devtoolsPort = await reservePort();
 
   const server = Bun.spawn([process.execPath, entrypoint], {
     cwd: projectDirectory,
     env: {
       ...Bun.env,
       PORT: String(port),
+      DEVTOOLS_PORT: String(devtoolsPort),
+      // The starter serves the devtools unless `NODE_ENV` is `production`, and
+      // this case is asserting that it does. Stated rather than inherited,
+      // because the lane's own environment would otherwise decide it.
+      NODE_ENV: "development",
     },
     stderr: "pipe",
     stdout: "pipe",
@@ -346,10 +362,64 @@ async function expectServer(projectDirectory: string, entrypoint: string): Promi
       await Bun.sleep(20);
     }
     expect(stdout.text()).toContain(descriptorStartupLine);
+
+    // The two assertions above are one promise and this is the other half of it:
+    // a starter that declared the devtools as a module import would decline its
+    // own root and lose the line above, so the surface answering here is what
+    // says the option path mounted it *and* the root stayed declarable. The
+    // endpoint is the devtools' own contract rather than a route this
+    // application wrote, which is what makes it evidence about the plugin.
+    const meta = await waitForAnswer(`http://127.0.0.1:${devtoolsPort}/__devtools/meta`);
+
+    expect(((await meta.json()) as { readonly contract: number }).contract).toBe(1);
   } finally {
     server.kill();
     await server.exited;
   }
+}
+
+/**
+ * A port nothing holds, taken the way the lane takes the application's own. Bun
+ * types a server's port as optional — a unix socket has none — so a case that
+ * needs the number states that it read one rather than defaulting it.
+ */
+async function reservePort(): Promise<number> {
+  const reservation = Bun.serve({
+    port: 0,
+    fetch: () => new Response("reserved"),
+  });
+  const port = reservation.port;
+  await reservation.stop(true);
+
+  if (port === undefined) {
+    throw new Error("the reservation bound no port to take.");
+  }
+
+  return port;
+}
+
+/**
+ * One address, fetched until it answers.
+ *
+ * A socket is started by a process this lane does not control, so the first poll
+ * may arrive before it is listening; the last failure is rethrown rather than a
+ * rewritten message, because it is the one that says why.
+ */
+async function waitForAnswer(url: string): Promise<Response> {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    try {
+      const response = await fetch(url);
+      expect(response.status).toBe(200);
+      return response;
+    } catch (error) {
+      lastError = error;
+      await Bun.sleep(20);
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error(`No answer from ${url}.`);
 }
 
 /**

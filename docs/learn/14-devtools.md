@@ -15,6 +15,23 @@ bun add @aponiajs/devtools
 
 ## Register it
 
+Two spellings mount the same plugin, and the difference is what a build can read
+rather than what runs. The factory option is the one that keeps an application
+booting from its generated descriptor artifact:
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { devtoolsPlugin } from "@aponiajs/devtools";
+import { appLogger } from "./logger.ts";
+
+const application = await AponiaFactory.create(AppModule, {
+  logger: appLogger,
+  plugins: [devtoolsPlugin({ enabled: Bun.env.NODE_ENV !== "production", logger: appLogger })],
+});
+```
+
+The other spelling is a module import:
+
 ```ts
 import { Module } from "@aponiajs/common";
 import { DevtoolsModule } from "@aponiajs/devtools";
@@ -30,28 +47,28 @@ import { DevtoolsModule } from "@aponiajs/devtools";
 export class AppModule {}
 ```
 
-`enabled` is the switch, and it is the application's decision — the framework
-never reads an environment variable on your behalf, because an environment
-variable is not a security boundary.
+`enabled` is the switch on both, and it is the application's decision — the
+framework never reads an environment variable on your behalf, because an
+environment variable is not a security boundary. A registration that is not
+enabled mounts nothing at all on either path: an inert module on one, and an
+`undefined` the factory mounts nothing for on the other.
 
-A registration is a dynamic module, and `aponia build` lowers a module only when
-every `imports` entry is a single identifier: the module that declares one is
-reported as `DECLINED`. So the registration is paid for — an application whose
-other modules are still lowered boots from its decorators instead, and one whose
-every module is declined keeps serving the descriptor artifact it already had,
-which carries no registration. Both cases are in [the guide](../devtools.md),
-and the `DECLINED module` line a build prints is what tells you which one you
-are in.
+The module spelling has a build-time cost. A registration is a call expression,
+and `aponia build` lowers a module only when every `imports` entry names its
+declaration with a single identifier, so the module that declares one is
+reported as `DECLINED`. Where other modules are still lowered the boot then
+compiles the decorated graph instead — the declared-graph boot is given up — and
+where every module is declined the artifact on disk keeps serving the graph it
+already had, which carries no registration, so the devtools never mount and
+nothing says so. The option spelling is the way out of both: it is not an
+`imports` entry, so the root stays declarable. It pays for that with the graph
+instead: no module declares the plugin, so `bun run inspect` does not list it and
+no generated artifact carries it. Both prices are in
+[the guide](../devtools.md), and the `DECLINED module` line a build prints is
+what tells you which case you are in.
 
 `logger` is the application's handover: pass the **same** object you give
-`AponiaFactory.create`.
-
-```ts
-import { AponiaFactory } from "@aponiajs/platform-elysia";
-import { appLogger } from "./logger.ts";
-
-const application = await AponiaFactory.create(AppModule, { logger: appLogger });
-```
+`AponiaFactory.create`, whether you hand it to the module or to `devtoolsPlugin`.
 
 The registration patches that logger in place, so everything it already prints
 it still prints, and the lines the boot reports about itself are in the stream

@@ -90,22 +90,36 @@ without bundling.
 
 ## Devtools
 
-This starter does not register `@aponiajs/devtools`, and that is a decision
-rather than an omission. Registering it means importing a _dynamic_ module, and
-`aponia build` lowers a module only when every `imports` entry is a single
-identifier: the module that declares the registration is reported as `DECLINED`.
-Here that module is the root and the only module a build can declare, so no
-`descriptors.generated.ts` is written either, and the committed one keeps
-serving the graph it already held — a graph this starter built without a
-registration in it. Mounting the devtools therefore means giving up the
-declared-graph boot, and that is the application's decision, not the starter's.
+This starter mounts `@aponiajs/devtools` through `AponiaFactory.create`'s
+`plugins` option in `src/main.ts`, and not through `AppModule`'s `imports`. The
+placement is the decision. `aponia build` lowers a module only when every
+`imports` entry names its declaration with a single identifier, so
+`DevtoolsModule.register(...)` — a call expression — declines the module that
+wrote it, and here that module is the root and the only module a build can
+declare: the committed `src/descriptors.generated.ts` would keep serving a graph
+the registration is not in. A plugin mounted through the option is not an
+`imports` entry, so the root stays declarable and the application keeps booting
+from the declared graph, which the startup log reports. Move the registration
+into `imports` when the module graph should carry it, and give up that boot for
+this root.
 
-`src/logger.ts` holds the application's logger and `src/main.ts` hands it to
-`AponiaFactory.create`, which is the half the devtools needs from the
-application: a registration handed the same object patches it in place rather
-than replacing it, so the lines the boot writes about itself are what
-`/__devtools/logs` serves. Hand it to one and not the other and the stream is
-missing exactly what the other wrote. Both halves of the trade are in the
+The plugin is therefore not in the module graph: `bun run inspect` describes the
+graph the application boots from and lists no devtools entry, because nothing
+about a plugin mounted through the option reaches it.
+
+`src/logger.ts` holds the application's logger and `src/main.ts` hands the same
+object to `AponiaFactory.create` and to `devtoolsPlugin`, which is the half the
+devtools needs from the application: the plugin patches the logger it is given
+in place rather than replacing it, so the lines the boot writes about itself are
+what `/__devtools/logs` serves. Hand it to one and not the other and the stream
+is missing exactly what the other wrote.
+
+The surface is served unless `NODE_ENV` is `production`, on loopback and port
+`8000` unless `DEVTOOLS_PORT` says otherwise, and a `host` given to
+`devtoolsPlugin` moves the bind — which the start reports, because `/requests`
+records headers and bodies. `enabled: false` serves nothing at all: no socket and no endpoint. The
+expression in `src/main.ts` is this starter's choice; the framework never reads
+the environment on the application's behalf. Both halves of the trade are in the
 [devtools guide](https://github.com/aponiajs/aponiajs/blob/main/docs/devtools.md).
 
 ## Authoring rules

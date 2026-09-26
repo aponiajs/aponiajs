@@ -232,6 +232,25 @@ separate focused modules. `src/index.ts` is the only public barrel.
   bundler resolves the entrypoint that would read them. `@aponiajs/cli` is a
   starter devDependency for that, and the packed lane installs it into the
   generated project.
+- The starter mounts `@aponiajs/devtools` through `AponiaFactory.create`'s
+  `plugins` option, never through `AppModule`'s `imports`. A registration is a
+  call expression, so an `imports` entry would decline the root — the starter's
+  only declarable module — and leave `descriptors.generated.ts` serving a graph
+  without the registration in it; the option is not an `imports` entry, so the
+  root stays declarable and the declared-graph boot the template promises is
+  still the one that happens. `tests/starter-artifact-freshness.test.ts` and the
+  packed lane's startup-line assertion are the two guards that would notice, and
+  the packed lane additionally asserts the devtools socket answers, which is what
+  says the option path reached a generated application rather than only being
+  written in it. `@aponiajs/devtools` is therefore a starter **dependency** —
+  `src/main.ts` imports it at run time — while `@aponiajs/cli` stays a
+  devDependency.
+- The starter's own devtools choices, none of which the framework makes for it:
+  the surface is enabled unless `NODE_ENV` is `production`, it binds loopback on
+  `DEVTOOLS_PORT` (default `8000`), and `src/main.ts` hands the **same** logger
+  object to `AponiaFactory.create` and to `devtoolsPlugin`, which is what makes
+  `/__devtools/logs` carry the boot's own lines. They are stated in the
+  template's `AGENTS.md`, `README.md`, `.env.example`, and `src/main.ts`.
 - The starter commits both generated modules and `src/main.ts` adopts both
   artifacts, so a freshly generated application serves through generated route
   invokers and boots from the declared module graph before any build has run.

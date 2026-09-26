@@ -35,6 +35,7 @@ import {
   type ElysiaSet,
   type ElysiaStatus,
   type ElysiaStore,
+  type NativeElysiaPlugin,
 } from "../src/index.ts";
 
 type VitePlusTest = typeof import("vite-plus/test");
@@ -55,6 +56,12 @@ type GlobalInterceptorsOptionAssertion = Expect<
 >;
 type GlobalFiltersOptionAssertion = Expect<
   Equals<AponiaApplicationOptions["filters"], readonly ClassToken<unknown>[] | undefined>
+>;
+type PluginsOptionAssertion = Expect<
+  Equals<
+    AponiaApplicationOptions["plugins"],
+    readonly (NativeElysiaPlugin | undefined)[] | undefined
+  >
 >;
 
 @Injectable()
@@ -185,10 +192,28 @@ test("the Vite+ lane types the global enhancer options", () => {
   const guardsAssertion: GlobalGuardsOptionAssertion = true;
   const interceptorsAssertion: GlobalInterceptorsOptionAssertion = true;
   const filtersAssertion: GlobalFiltersOptionAssertion = true;
+  const pluginsAssertion: PluginsOptionAssertion = true;
 
   expect(guardsAssertion).toBe(true);
   expect(interceptorsAssertion).toBe(true);
   expect(filtersAssertion).toBe(true);
+  expect(pluginsAssertion).toBe(true);
+});
+
+test("the Vite+ lane mounts the plugins option and skips an undefined entry", async () => {
+  const application = await AponiaFactory.create(HealthModule, {
+    logger: false,
+    plugins: [
+      new Elysia({ name: "conformance-option-plugin" }).get("/option-health", () => "ok"),
+      undefined,
+    ],
+  });
+  const mounted = await application.handle(new Request("http://localhost/option-health"));
+  const absent = await application.handle(new Request("http://localhost/skipped-health"));
+
+  expect(await mounted.text()).toBe("ok");
+  expect(absent.status).toBe(404);
+  await application.close();
 });
 
 test("the Vite+ lane supports explicit dynamic Elysia composition", async () => {

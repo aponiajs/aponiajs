@@ -441,9 +441,13 @@ import { ConfigModule, ConfigService } from "./config/config.module.ts";
 export class AuthModule {}
 ```
 
-A stable `key` keeps a plugin imported by several modules installed once.
-`AponiaFactory.createNative(AppModule)` returns the composed Elysia instance
-directly. `AponiaFactory.create(AppModule, { configureNative })` and
+A stable `key` keeps a plugin imported by several modules installed once. An
+application can also mount a plugin itself, through
+`AponiaFactory.create(AppModule, { plugins: [cors()] })`, which takes the same
+`.use()` path before the module graph mounts and reaches no module's `imports`:
+that option is for the plugins a module cannot declare, and it keeps none of
+them in the module graph. `AponiaFactory.createNative(AppModule)` returns the
+composed Elysia instance directly. `AponiaFactory.create(AppModule, { configureNative })` and
 `application.getNativeApplication()` retain the managed lifecycle facade when a
 plugin needs it.
 

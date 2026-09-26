@@ -23,12 +23,37 @@ import { DevtoolsModule } from "@aponiajs/devtools";
 export class AppModule {}
 ```
 
-- **Disabled mounts nothing.** A disabled registration is an inert module: no
-  provider, no plugin, and no socket.
+The second spelling mounts the same plugin through
+`AponiaFactory.create`'s `plugins` option, for the application that cannot put
+the registration in an `imports` array:
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { devtoolsPlugin } from "@aponiajs/devtools";
+
+const application = await AponiaFactory.create(AppModule, {
+  plugins: [
+    devtoolsPlugin({
+      enabled: Bun.env.NODE_ENV !== "production",
+      logger: appLogger,
+    }),
+  ],
+});
+```
+
+- **Both spellings mount the same thing.** The same options object, the same
+  `enabled` gate, the same plugin: the same socket, the same endpoints, the same
+  log stream, beside the plugins a module contributes. `devtoolsPlugin` answers
+  `undefined` when the registration is disabled, and the factory mounts nothing
+  for that value — not an inert plugin — so neither path can produce a boot that
+  believes it mounted a surface it did not.
+- **Disabled mounts nothing.** A disabled registration is an inert module on the
+  module path and an `undefined` entry on the option path: no provider, no
+  plugin, and no socket either way.
 - **Enabled is a plugin, not a provider.** The devtools plugin runs at
   `onStart`, after every route has mounted, which is what lets it see the route
   table a boot-time provider cannot.
-- **Registering it costs the root module its generated descriptor.** A
+- **The module path costs the root module its generated descriptor.** A
   registration is a call, and `aponia build` lowers a module only when every
   `imports` entry is a single identifier, so the module that declares it is
   reported as `DECLINED module <Root>: …`. An application that hands over that
@@ -36,7 +61,13 @@ export class AppModule {}
   declared-graph boot is given up — and one whose root is the only module a build
   can lower gets no descriptor written at all, so the artifact on disk keeps
   serving the graph it already held and the registration does not mount. Read the
-  `DECLINED module` line a build prints.
+  `DECLINED module` line a build prints. `devtoolsPlugin` is the way around the
+  whole limitation: an option is not an `imports` entry, so the root stays
+  declarable.
+- **The option path is not in the module graph.** No module declares the plugin,
+  so nothing about it reaches `bun run inspect` or the artifact
+  `aponia build` writes. That is the price of the bullet above, not a defect in
+  it, and `imports` stays the place for a plugin a module can name.
 - **`onStart` requires `listen()`.** An application that only calls `handle()`
   publishes nothing and is otherwise unaffected.
 - **Loopback by default.** The default is loopback because a debugging aid
@@ -54,7 +85,8 @@ export class AppModule {}
   hosts file that mapped it to one of this machine's public addresses would bind
   it in silence.
 - **The log stream is the application's own, and it is handed over twice.** Pass
-  the same logger to `DevtoolsModule.register` and to `AponiaFactory.create`:
+  the same logger to the registration — `DevtoolsModule.register` or
+  `devtoolsPlugin` — and to `AponiaFactory.create`:
   registration patches that object **in place**, so every line it writes — the
   framework's and the application's — is recorded without anything being replaced,
   and the stream starts there, before the boot writes, so the lines a boot reports

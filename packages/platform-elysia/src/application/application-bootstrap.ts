@@ -98,6 +98,21 @@ export async function bootstrapAponiaApplication(
     );
   }
 
+  // The application's own plugins mount here, beside the module-graph pass and
+  // for the same reason: a plugin contributes routes and request context, so it
+  // is in place before any controller mounts beside it. They mount first
+  // because the application named them, and both hook phases run in mount
+  // order, so a hook they declare runs before one a module's plugin declares.
+  // Nothing resolves from the container on this path — an entry is the plugin
+  // value itself, not a token — so no entry can fail the boot, and one that is
+  // `undefined` mounts nothing at all.
+  for (const plugin of options.plugins ?? []) {
+    if (plugin === undefined) {
+      continue;
+    }
+    nativeApplication.use(plugin);
+  }
+
   for (const module of container.graph.modules) {
     container.initializeModule(module);
     if (isElysiaPluginModule(module)) {

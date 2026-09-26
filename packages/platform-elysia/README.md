@@ -25,6 +25,8 @@ The first Elysia platform slice for Aponia:
   `@Status()`, and `@Ctx()`;
 - Nest-style startup logging for module initialization and route mapping;
 - controller factories that return native Elysia plugins;
+- application-owned native plugins mounted through `AponiaFactory.create`'s
+  `plugins` option, beside the ones a module registers;
 - concise `elysiaController(...)` registration with native callback inference;
 - typed RFC 9457 application errors for every supported 4xx and 5xx status;
 - Nest-style guards, interceptors (`interceptBefore`/`interceptAfter`), and
@@ -734,6 +736,33 @@ Imported plugins are installed in dependency order before controllers and a
 shared configured module is installed once across diamond imports. A stable
 `key` keeps module diagnostics deterministic and prevents duplicate
 registrations with the same key.
+
+### The `plugins` option
+
+An application can also mount a native plugin itself, without a module
+declaring it:
+
+```ts
+const application = await AponiaFactory.create(AppModule, {
+  plugins: [cors()],
+});
+```
+
+Each entry takes the same `.use()` path a module-registered plugin takes, on the
+same root application and at the same point in the boot — before any controller
+mounts. Entries mount before the plugins the module graph contributes, and both
+the request and the after-response phase run in mount order, so a hook an entry
+declares runs before one a module's plugin declares. An entry may be
+`undefined`, which mounts nothing: that is how a factory states a decision the
+application made, and it is not the same as an inert plugin.
+
+Nothing about a plugin mounted this way reaches the module graph — not
+`compileRootModule`, not `inspectAponiaApplication`, not the artifacts
+`aponia build` writes. `imports` is the place for a plugin a module can name,
+and this option is for the ones it cannot: a plugin a call builds, which the
+descriptor emitter declines as an `imports` entry, and a plugin chosen at boot
+from configuration the module does not hold. It never resolves from the
+container, so no entry can fail a boot.
 
 ### Typing what a plugin adds
 
