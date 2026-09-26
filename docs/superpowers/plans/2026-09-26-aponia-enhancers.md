@@ -1419,7 +1419,7 @@ into a second failure.
 - [ ] **Step 6: Run it to verify it passes**
 
 Run: `bun test packages/platform-elysia/tests/exception-filters.test.ts`
-Expected: PASS, four cases.
+Expected: PASS, five cases.
 
 - [ ] **Step 7: Cover a filter that throws, and the native-error mapping for WebSocket gateways**
 
