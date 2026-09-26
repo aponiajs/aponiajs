@@ -52,12 +52,18 @@ Out of scope, deliberately:
 Enhancers are compiled into Elysia's own per-route lifecycle hooks. Nothing
 wraps the handler.
 
-Verified against the supported Elysia release before this design was written:
+Checked against the supported Elysia release. The two hook rows were confirmed
+by probe: route-local `beforeHandle` and `afterHandle` both run, and a route-local
+`error` runs unless a root error hook registered earlier answered first. The
+error row was first marked `holds` from a probe that observed a `200`, which
+proves only that the route mounted, not that a route-local hook ran; the
+correction and its evidence are in "What the probes established".
 
 | Claim                                                                          | Result |
 | ------------------------------------------------------------------------------ | ------ |
 | `route(method, path, handler, hook)` accepts lifecycle hooks in `hook`         | holds  |
-| per-route `beforeHandle`, `afterHandle`, and `onError` all run                 | holds  |
+| per-route `beforeHandle` and `afterHandle` run                                 | holds  |
+| a route-local `error` runs unless a root error hook answered first             | holds  |
 | a route-local validator and a route-local lifecycle hook coexist in one object | holds  |
 | a mounted route keeps its hooks, as `scope: "local"` entries                   | holds  |
 
@@ -72,7 +78,7 @@ hooks therefore adds no route-registration surface, and
 | `CanActivate`                       | `beforeHandle` |
 | `AponiaInterceptor.interceptBefore` | `beforeHandle` |
 | `AponiaInterceptor.interceptAfter`  | `afterHandle`  |
-| `ExceptionFilter`                   | `onError`      |
+| `ExceptionFilter`                   | `error`        |
 
 Ordering inside one hook array is registration order, so the array is built once
 while the controller mounts, in the precedence order below.
@@ -207,7 +213,7 @@ already requires:
 Within one scope, declaration order is preserved. The compiled hook arrays are
 therefore `[...global, ...controller, ...method]` for guards and for
 `interceptBefore`, and `interceptAfter` runs in the reverse of that order, so an
-interceptor's before and after halves bracket the ones it wraps. `onError` keeps
+interceptor's before and after halves bracket the ones it wraps. `error` keeps
 the outward-in order, because the first matching filter should be the most
 specific one.
 
@@ -237,14 +243,26 @@ removable. It maps an `HttpError` to its own Problem Details response, and an
 unhandled error to a `500` Problem Details response that serializes neither the
 stack nor the cause.
 
-It is registered **once on the root application**, not compiled into each
-route's hook object. That is what keeps the property the Testing section pins:
-a controller that declares no enhancer must mount exactly the hook object it
-mounts today, and a per-route default would put an `onError` on every route in
-every application. Declared filters are route-local hooks and are expected to
-answer first; the ordering between a route-local `onError` and the root one is
-one of the two behaviors this design has not established, and it is verified
-before filters are built. This is the change that closes "automatic Problem Details
+It is appended to **each route's own `error` array**, after that route's declared
+filters, while the controller mounts. It is not registered on the root
+application, because a root error hook cannot sit behind declared filters
+whichever way it is ordered. Elysia merges a route's hooks while the route is
+registered and puts the application's handlers first, so a root hook registered
+before controllers mount answers ahead of every declared filter and the declared
+filter never runs, while one registered after reaches no mounted route at all and
+maps nothing. Both orderings were probed; the results are in "What the probes
+established". Compiling the mapping into the route's own array uses only the
+mechanism that was verified — a route-local `error` hook runs when nothing
+earlier answered, and the first responder ends the chain — and needs no route
+pattern at error time, because the filter list is bound where the route is
+mounted.
+
+The cost is recorded rather than hidden: a controller declaring no enhancer no
+longer mounts exactly the hook object it mounted before enhancers existed. It
+gains one synchronous `error` hook and nothing else, which is the form the
+Testing section states the property in.
+
+This is the change that closes "automatic Problem Details
 mapping for native errors", which `AGENTS.md` lists as missing today. An
 application overrides it by declaring a filter ahead of it, never by removing
 it: an application that could turn error mapping off could ship a stack trace.
@@ -273,7 +291,7 @@ an omission.
 
 In `@aponiajs/platform-elysia`:
 
-- the route hook builder emits `beforeHandle`, `afterHandle`, and `onError`
+- the route hook builder emits `beforeHandle`, `afterHandle`, and `error`
   alongside the validators it already emits;
 - `ElysiaRoutePlan` gains `guards`, `interceptors`, and `filters`;
 - `compileElysiaRoutePlan` and the decorated controller path both compile the
@@ -321,7 +339,13 @@ asynchronous path. The same route with `async () => undefined` as its
 interceptor, or filter is therefore Promise-capable whichever way its handler is
 classified.
 
-**2. A route-local `onError` answers before the root application's —
+**Decided: accepted, not worked around.** The contracts keep permitting
+`Promise`-returning enhancers, so a route carrying an async one is Promise-capable
+whatever its handler is. That is a per-route opt-in cost, paid only by the routes
+that declare such an enhancer, and it is recorded against the `AsyncFunction`
+measurement above rather than designed around.
+
+**2. A route-local `error` hook answers before the root application's `onError` —
 contradicted.** Two findings, and the second is the one that changes the design.
 
 The first is a naming defect. `onError` is not a route-local hook key in Elysia
@@ -329,8 +353,15 @@ The first is a naming defect. `onError` is not a route-local hook key in Elysia
 ignores it entirely, leaving Elysia's own `500` to carry the handler's message
 with no hook run at all. The probe as first written passed `{ onError: ... }`, so
 it had no local arm to measure. The findings below use the key Elysia reads,
-`error`, and the "Platform changes" bullet above should be read as naming that
-key.
+`error`. The mechanism table and the "Platform changes" bullet above were
+corrected to name it.
+
+**Decided: the route-local key is `error`, everywhere.** Every route-local use of
+`onError` in this design and in the implementation plan becomes `error`, and the
+plan states the trap in its global constraints so no later task compiles a hook
+nothing reads. An earlier probe of this behavior also concluded wrongly: it
+observed a `200` and read that as proof the hook ran, when a `200` proves only
+that the route mounted.
 
 The second is precedence, which is registration order rather than scope. A route
 whose handler throws `new Error("exploded")`:
@@ -357,11 +388,21 @@ hook while the already-mounted route held none, and with it registered early, th
 route held two in the order `root`, `local`.
 
 The route-local `onError` this design's precedence section assumes does not exist
-as a hook in the supported Elysia. The fallback this design already records — the
-root handler consulting the matched route's compiled filters itself — is
-therefore the design that is required, and it has to be settled before filters
-are built. Everything above this section is left as written rather than adjusted
-to match this result.
+as a hook in the supported Elysia, so no declared filter can outrank a root error
+hook by scope.
+
+**Decided: declared filters and the default mapping are compiled together into
+each route's own `error` array, as `[...declaredFilters, defaultMapping]`. No root
+error hook is registered.** This uses only the mechanism verified above — a
+route-local `error` hook runs when nothing earlier answered, and the first
+responder ends the chain — and needs no route pattern at error time, because the
+list is bound where the route is mounted. The fallback this design recorded
+earlier, a root handler dispatching to the route it matched, is not taken: it
+needs the matched route pattern inside `onError`, which is unestablished and is
+the same class of assumption that produced this blocker. The cost is recorded
+rather than hidden: a controller declaring no enhancer gains exactly one
+synchronous `error` hook and nothing else, which is the form the Testing property
+now takes.
 
 ## Testing
 
@@ -387,10 +428,15 @@ Behavior that must have direct evidence:
   reversing;
 - both authoring paths — decorated controllers and `defineElysiaControllerRoutes`
   — produce the same mounted behavior for the same declarations;
-- a controller with no enhancers mounts exactly the hook object it mounts today.
+- a controller with no enhancers gains no `beforeHandle` and no `afterHandle`, and
+  exactly one synchronous `error` hook.
 
 That last case is the regression guard for the property this phase is most
-likely to break: routes that declare no enhancers must not gain hooks.
+likely to break: routes that declare no enhancers must not gain interception
+hooks. The single `error` hook is the default mapping, and the measurement in
+"What the probes established" is why it costs nothing — a synchronous hook
+leaves a route compiling to the same plain `Function` it compiled to without
+one.
 
 ## Delivery order
 

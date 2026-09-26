@@ -4,7 +4,7 @@
 
 **Goal:** Add guards, interceptors, and exception filters to AponiaJS, compiled into Elysia's own per-route lifecycle hooks.
 
-**Architecture:** Each enhancer kind maps onto a per-route Elysia hook (`beforeHandle`, `afterHandle`, `onError`) passed through the existing `registerNativeRoute` seam. Nothing wraps the handler, so Elysia's source-static handler compilation and the build-time invoker path are untouched. Enhancer classes are declared providers, resolved once per controller while it mounts.
+**Architecture:** Each enhancer kind maps onto a per-route Elysia hook (`beforeHandle`, `afterHandle`, `error`) passed through the existing `registerNativeRoute` seam. Nothing wraps the handler, so Elysia's source-static handler compilation and the build-time invoker path are untouched. Enhancer classes are declared providers, resolved once per controller while it mounts.
 
 **Tech Stack:** Bun, TypeScript (strict, ESM, explicit `.ts` extensions), Elysia 1.4.x, `reflect-metadata`, Oxfmt/Oxlint via `bun run check`, Bun test plus a Vite+ conformance lane.
 
@@ -16,6 +16,7 @@
   `rg -nP '[\x{0E00}-\x{0E7F}]' --glob '!node_modules/**' --glob '!dist/**' .`
 - `@aponiajs/common` stays platform-neutral: never import or reference Elysia, HTTP, or Bun types there.
 - `routing/native-route.ts` remains the only module that calls Elysia's route registration API.
+- The route-local error hook key is `error`. `onError` is not a member of Elysia 1.4.30's `LocalHook` and is silently ignored when a route is registered with it, so a hook written under that key never runs and no test can see it.
 - No new runtime dependency is added to any package. No RxJS.
 - Return frozen data from public APIs. Use `#private` class fields, not `private`. Keep type-only imports under `import type`.
 - Enhancer classes must be declared providers. An undeclared one fails the mount with `MISSING_PROVIDER`.
@@ -113,6 +114,13 @@ const app = new Elysia()
 const response = await app.handle(new Request("http://localhost/boom"));
 console.log({ order, status: response.status, body: await response.text() });
 ```
+
+Recorded while executing this task: the key this probe passes, `onError`, is not
+one Elysia reads — `LocalHook` declares `error` — so the route-local arm was
+silently dropped and the probe measured the root handler alone. The corrected key
+and the full precedence results are in the spec's "What the probes established".
+The probe is kept here as the record of what was actually run; every other
+route-local error hook in this plan is written under `error`.
 
 - [ ] **Step 4: Run it and record the result**
 
@@ -635,7 +643,7 @@ class OpenController {
 class AppModule {}
 
 describe("compiled route enhancers", () => {
-  test("a controller that declares no enhancer mounts no lifecycle hook", async () => {
+  test("a controller that declares no enhancer gains no beforeHandle and no afterHandle", async () => {
     const application = await AponiaFactory.create(AppModule, { logger: false });
     const open = application
       .getNativeApplication()
@@ -644,6 +652,10 @@ describe("compiled route enhancers", () => {
 
     expect(open?.hooks?.beforeHandle).toBeUndefined();
     expect(open?.hooks?.afterHandle).toBeUndefined();
+    // Task 7 appends the default mapping to every route's own `error` array, so
+    // this route gains `error` there. This case is extended with that half rather
+    // than replaced: the assertion that survives both tasks is the absence of the
+    // two interception hooks plus exactly one synchronous `error` hook.
     await application.close();
   });
 
@@ -658,7 +670,7 @@ describe("compiled route enhancers", () => {
 });
 ```
 
-This task adds no mounted behavior, so its test proves the property that must not change: a controller declaring no enhancer still mounts a route carrying no lifecycle hooks. The proof that a declared enhancer reaches the route arrives with the enhancer itself — Task 6 for guards, Task 7 for filters, Task 8 for interceptors. Until then the second case only pins that compilation accepts the declaration.
+This task adds no mounted behavior, so its test proves the property that must not change: a controller declaring no enhancer still mounts a route carrying no `beforeHandle` and no `afterHandle`. That assertion survives Task 7, which adds exactly one synchronous `error` hook — the default mapping — to every route; the case is extended there with the `error` half rather than replaced, because the spec's property is stated in both halves. The proof that a declared enhancer reaches the route arrives with the enhancer itself — Task 6 for guards, Task 7 for filters, Task 8 for interceptors. Until then the second case only pins that compilation accepts the declaration.
 
 - [ ] **Step 2: Run it to verify it fails or passes for the wrong reason**
 
@@ -1167,7 +1179,7 @@ Expected: PASS, three cases.
 
 - [ ] **Step 5: Add the no-enhancer regression case**
 
-Add to the same file a case asserting a controller with no enhancers mounts a route whose hook object is `undefined` when it declares no schema — the property the spec's Testing section pins. Read it through `application.getNativeApplication().routes` and assert no `beforeHandle` is present.
+Add to the same file a case asserting a controller with no enhancers mounts a route carrying no `beforeHandle` and no `afterHandle` — the property the spec's Testing section pins, in the half this task owns. Read it through `application.getNativeApplication().routes`. Do not assert that the hook object is `undefined`: Task 7 appends the default mapping to every route's own `error` array, and the case is extended there with that second half rather than rewritten.
 
 - [ ] **Step 6: Cover the declared-descriptor path**
 
@@ -1189,13 +1201,14 @@ git commit -m "feat(platform-elysia): run guards as a route-local beforeHandle"
 
 - Create: `packages/platform-elysia/src/errors/default-exception-filter.ts`
 - Create: `packages/platform-elysia/tests/exception-filters.test.ts`
-- Modify: `packages/platform-elysia/src/application/application-bootstrap.ts`
+- Modify: `packages/platform-elysia/src/routing/route-compiler.ts` (the route hook builder, which assembles each route's own `error` array)
+- Modify: `packages/platform-elysia/src/application/application-bootstrap.ts` (thread the system logger to the mount, beside the global enhancers Task 4 added)
 - Modify: `docs/architecture-and-style.md` or the errors section of the platform guide, wherever the Problem Details mapping is described
 
 **Interfaces:**
 
-- Consumes: `ResolvedEnhancers.filters` from Task 5, `HttpError`/`httpErrors` from `errors/`.
-- Produces: `isFilterMatch(filterClass, exception): boolean`, reading the class's own `@Catch()` metadata, and `registerDefaultExceptionFilter(application, logger): void`.
+- Consumes: `ResolvedEnhancers.filters` from Task 5, `HttpError`/`httpErrors` from `errors/`, and the system logger `bootstrapAponiaApplication` already receives.
+- Produces: `isFilterMatch(filterClass, exception): boolean`, reading the class's own `@Catch()` metadata, and `createDefaultExceptionFilter(logger)`, returning the hook every route carries last in its own `error` array. Nothing registers a root error hook.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1338,26 +1351,27 @@ Expected: FAIL — every case answers 500 with Elysia's own error body.
 
 ```ts
 // packages/platform-elysia/src/errors/default-exception-filter.ts
-import { AponiaError } from "@aponiajs/common";
 import type { LoggerService } from "@aponiajs/common";
-import type { Elysia } from "elysia";
 import { HttpError } from "./http-error.ts";
 
 /**
- * Maps an error nobody handled to a Problem Details response.
+ * The Problem Details mapping every route carries last in its own `error` array.
  *
- * Registered once on the root application rather than compiled into each
- * route's hooks, so a controller that declares no enhancer mounts exactly the
- * hook object it mounted before enhancers existed.
+ * Compiled into the route's local hook rather than registered on the root
+ * application. Elysia merges a route's hooks while the route is registered and
+ * puts the application's handlers first, so a root hook registered before
+ * controllers mount answers ahead of every declared filter and the declared
+ * filter never runs, while one registered after reaches no mounted route at all.
+ * Appending it where the route is mounted binds it behind the declared filters
+ * and needs no route pattern at error time.
  *
  * The response never carries the stack or the cause: an application that could
  * turn this off could ship a stack trace.
  */
-export function registerDefaultExceptionFilter(
-  application: Elysia,
+export function createDefaultExceptionFilter(
   logger: LoggerService | undefined,
-): void {
-  application.onError(({ error, set }) => {
+): (context: { error: unknown; set: { status?: number } }) => unknown {
+  return ({ error, set }) => {
     if (error instanceof HttpError) {
       return error.toResponse();
     }
@@ -1370,23 +1384,37 @@ export function registerDefaultExceptionFilter(
       status: 500,
       detail: "The server could not complete this request.",
     };
-  });
+  };
 }
 ```
 
-Adapt the `HttpError` branch to whatever the existing class actually exposes — read `errors/http-error.ts` and use its own response builder rather than adding one.
+Adapt the `HttpError` branch to whatever the existing class actually exposes — read `errors/http-error.ts` and use its own response builder rather than adding one. Type the hook's parameter against Elysia's real error-hook context rather than the shape sketched here.
 
-- [ ] **Step 4: Register it in bootstrap**
+- [ ] **Step 4: Append it to every route while the controller mounts**
 
-In `bootstrapAponiaApplication`, after the root `Elysia` is created and before any controller mounts:
+In `application-bootstrap.ts`, build the hook once from the system logger and pass
+it down the same path the global enhancers from Task 4 travel:
 
 ```ts
-registerDefaultExceptionFilter(nativeApplication, logger);
+const defaultExceptionFilter = createDefaultExceptionFilter(logger);
 ```
 
-- [ ] **Step 5: Emit declared filters as a route-local `onError`**
+The route hook builder appends it after the route's declared filters, so every
+route carries `error: [...declaredFilters, defaultExceptionFilter]`, and a route
+declaring no filter carries an array holding only the default. Do not reach for
+`application.onError()`: a root hook is exactly the ordering the probes ruled
+out, and no declared filter could outrank it.
 
-In the route hook builder, when `resolved.filters.length > 0`, emit an `onError` that walks the filters in order, calls `isFilterMatch`, and answers the first match. A filter returning `undefined` does not consume the error. Guard against a filter that throws: catch it, log, and return `undefined` so the default filter answers rather than the throw escaping into a second failure.
+- [ ] **Step 5: Emit declared filters into the route-local `error` array**
+
+In the route hook builder, build one `error` array: the resolved filters in
+precedence order, each consulted only when `isFilterMatch` accepts the thrown
+value, with `createDefaultExceptionFilter(logger)` appended last. The first entry
+that returns something other than `undefined` answers and the rest of the array
+never runs, which is what Elysia's composed error path already gives. Guard
+against a filter that throws: catch it, log, and return `undefined` so the next
+entry — ultimately the default mapping — answers rather than the throw escaping
+into a second failure.
 
 - [ ] **Step 6: Run it to verify it passes**
 
@@ -1395,7 +1423,7 @@ Expected: PASS, four cases.
 
 - [ ] **Step 7: Cover a filter that throws, and the native-error mapping for WebSocket gateways**
 
-Add a case where a filter's own `catch` throws, asserting one clean 500 and one log line rather than a second failure. Add a case asserting a gateway's `WEBSOCKET_HANDLER_ERROR` frame is unchanged, so the new root `onError` did not alter WebSocket error behavior.
+Add a case where a filter's own `catch` throws, asserting one clean 500 and one log line rather than a second failure. Add a case asserting a gateway's `WEBSOCKET_HANDLER_ERROR` frame is unchanged, so the per-route default mapping did not alter WebSocket error behavior. Extend Task 3's no-enhancer regression case with the second half of the spec's property: the route declaring no enhancer now carries exactly one synchronous `error` hook, and it is the only hook it gained.
 
 - [ ] **Step 8: Update the documentation and commit**
 
