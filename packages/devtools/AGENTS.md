@@ -70,13 +70,15 @@ runtime boundary it describes.
   the configuration would be indistinguishable from one that never bound.
 - A payload that describes a boot is built once, when the socket starts. It
   describes a boot, and a boot does not change once it has started, so two polls
-  of one server answer the same report. `/routes` is the exception, and it is one
-  by design: the mounted route table belongs to the running application, which
-  may mount another route on its native instance before it listens, so that
-  handler reads the table when the request arrives. Everything it reports from
-  the record is still the boot's, and a route the record does not describe is
-  reported with the facts a record would have supplied left empty rather than
-  filled in.
+  of one server answer the same report. `/routes` and `/flow` are the exceptions,
+  and they are exceptions by design: the mounted route table belongs to the
+  running application, which may mount another route on its native instance
+  before it listens, so those handlers read the table when the request arrives.
+  The table is also where a route's own entry lives — its contributed hooks and
+  the schema slots Elysia holds — which is the half of `/flow`'s stages no boot
+  record carries. Everything they report from the record is still the boot's, and
+  a route the record does not describe is reported with the facts a record would
+  have supplied left empty rather than filled in.
 - `/meta` falls back to this release for an application no boot produced, and
   says `null` for every artifact such a boot did not adopt. It never crashes on
   a missing record and never reports a guess as a release.
@@ -122,6 +124,58 @@ runtime boundary it describes.
   and no callback describes names none of the three. Entries are sorted by path,
   method, controller, handler, and module in code-unit order, which is the order
   the platform's own inspection states.
+- `/flow` is registered whatever the record holds, for `/routes`' reason and one
+  of its own: its stages have two owners. The mounted route entry owns the
+  contributed hooks and the schema slots Elysia itself holds, so an application
+  no boot produced still states the hook stages its routes run; the boot record
+  owns the compiled plan, which is the only place a route's guards and
+  interceptors are still separate, and the application's own enhancer
+  declaration, which no plan carries.
+- `/flow` publishes a compiled hook as its parts and never as a `hook` stage. The
+  platform lowers a route's guards and the before halves of its interceptors into
+  one `beforeHandle`, and the after halves into one `afterHandle`, so a compiled
+  hook says nothing about its parts: a `guard`, an `interceptBefore`, and an
+  `interceptAfter` stage each name the class the platform resolved, and the parts
+  of one hook keep the order the route declared them in. An entry of a lifecycle
+  array this release cannot identify — no scope it knows and no checksum — is not
+  published as a stage, which is how the compiled hook stays out of the hook
+  stages rather than being reported as one.
+- The application's own enhancer declaration merges into the routes the platform
+  mounted from a plan and into no others. A route a controller's callback mounted,
+  and one mounted on the native instance, carry no compiled hook for it to merge
+  into, so publishing it for one of those routes would claim an enhancer that never
+  runs.
+- `/flow` publishes a stage only when the route runs it: a route that declares a
+  schema for no slot carries no `validate` stage, a handler that binds no
+  parameter carries no `bind` stage, and a route no record describes carries no
+  `invoke` and no `handler`. The order is the spec's, and it is read from the two
+  sources rather than re-derived: the contributed hooks and the validation slots
+  first, then the guards and before halves, then the binding, the invoker, and the
+  method, then what a plugin contributed to the after phase, and last the after
+  halves over the whole interceptor list reversed, so the outermost interceptor's
+  half runs last.
+- `/flow`'s `id` and `next` are stated per stage rather than assumed from the
+  order, so a renderer draws a graph: the ids are the route's own id and the
+  stage's position, and every `next` names a stage of the same route. The ids are
+  stable within one response and never a cross-response identity, because the
+  stages are assembled per request from a table that may have changed.
+- A contributed hook is identified by an identity, never by a name. Elysia
+  identifies a hook by its `subType`, its scope, and a `checksum`, and the plugin
+  that contributed it is not carried on the route, so the identity is derived from
+  the checksum — which groups the same hook across every route it reaches — and no
+  plugin name is reported. A hook that carries no checksum is published with its
+  scope and no identity, because nothing would group it; a hook whose scope this
+  release does not know is published without a scope rather than with a guess.
+  `"scoped"` is normalized to `"local"`: a hook scoped to the plugin that
+  contributed it reaches that plugin's own routes and the ones mounted beside it,
+  which is the reach of a local declaration.
+- A route's filters are a list on the route and never a stage in the chain. They
+  run when a guard or the handler threw rather than on every request, and the list
+  is ordered exactly as the route's own `error` array is — the method's filters,
+  then the controller's, then the application's, then the mapping every compiled
+  route ends with — because the first entry that answers is the one that decides.
+  A route no plan describes carries no list at all: the platform compiles that
+  array only for the routes it mounts from a plan.
 - The report describes the boot the _plugin's own_ application carries: Elysia
   hands `onStart` the root application, which is the one bootstrap attached the
   record to.
@@ -191,6 +245,29 @@ a per-boot one — and each route answers with a different string, so the report
 checked against the binding that served rather than read back as a claim. A route
 mounted on the native application after the server started has to appear, which is
 the case a payload built once at `onStart` would fail.
+
+`/flow` is asserted the same way, and the assertions are the wire shape because
+the shape is the contract. A decorated application pins the full chain a route
+runs, its guard's class and scope, and its filter list; a plugin-contributed
+`derive`, `resolve`, and lifecycle hook pin what the mounted entry owns, including
+the identity that groups one hook across the two routes it reaches and the absence
+of `enhancer` on a stage nothing names; a hand-written descriptor pins the
+`generated`/`compiled`/`null` tri-state `source` on `invoke`; and the application's
+own enhancers pin both their order ahead of the route's and the reversal of the
+after halves. A compiled hook is asserted not to appear as a `hook` stage by the
+exact stage lists rather than by a rule re-applied in the test. The graph every
+case needs is checked from the payload alone: the ids are unique, every `next`
+names a stage of the same route, and every stage is reachable from the first.
+
+The table and the record are both data this release did not write, so both are
+asserted where they are not the shape it expects. One case serves a table whose
+`routes` is not an array, whose entries carry no method or path, whose hooks
+object is missing, and whose lifecycle arrays hold entries with no identity and a
+scope this release does not know; another serves a record whose plans carry a
+property key, a parameter list, a schema, and enhancer lists that are not the
+shapes this release writes. Both must leave the endpoint answering — that handler
+runs inside `Bun.serve`, where a throw is a failed request — so a fact neither
+source states is reported as the absence it is rather than filled in.
 
 The Elysia read is asserted for what it refuses: the workspace's own install
 answers its version, and a throwaway project that installed nothing answers

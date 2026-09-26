@@ -58,6 +58,19 @@ export class AppModule {}
   boot. A route no plan and no callback describes reports empty names rather than
   guessed ones, which is also what a callback's route reports for its handler:
   the property key that built it exists only while the callback runs.
+- **`GET /__devtools/flow` reports the stages each route passes through.** The
+  stages a route's own hooks and schema state — a plugin's `derive` and
+  `resolve`, any other lifecycle hook, and each validation slot — are read from
+  the mounted table when the request arrives, which is why this payload has no
+  boot-time variant. The stages its enhancers state — a `guard`, an
+  `interceptBefore`, an `interceptAfter` — come from the compiled plan, because
+  the platform lowers them into one `beforeHandle` and one `afterHandle` where
+  their order is no longer legible; each names the class it runs and the scope
+  that declared it. A compiled hook is published as its parts and never as a
+  hook stage, and a contributed hook can only be identified — by the checksum
+  Elysia stamps, never by a plugin name the route does not carry. The route's
+  filters are a list beside the stages rather than a stage in the chain, ordered
+  as its own `error` array is, with the Problem Details mapping last.
 - Every endpoint is a `GET`: any other method answers `405` before the path is
   read, and a path the server does not serve answers `404`.
 

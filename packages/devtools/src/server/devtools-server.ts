@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { readApplicationDiagnostics } from "@aponiajs/platform-elysia";
 import type { Elysia } from "elysia";
+import { buildFlowPayload, devtoolsFlowPath } from "../endpoints/flow.ts";
 import { buildGraphPayload, devtoolsGraphPath } from "../endpoints/graph.ts";
 import { buildMetaPayload, devtoolsMetaPath } from "../endpoints/meta.ts";
 import { buildRoutesPayload, devtoolsRoutesPath } from "../endpoints/routes.ts";
@@ -117,13 +118,15 @@ function findInstalledElysiaManifest(baseDirectory: string): string | undefined 
  *
  * `/meta` and `/graph` describe a boot, and a boot does not change once it has
  * started, so their payloads are built here and answered unchanged. `/routes`
- * reports the table the application answers, which belongs to the application
- * rather than to the boot: an application may mount another route on its native
- * instance before it listens, so that handler reads the table when it is asked
- * instead of freezing a moment no client ever observed. It is registered
- * whatever the record holds, because the table is this package's answer on its
- * own; a route no record describes is reported with the facts a record would
- * have supplied left empty.
+ * and `/flow` report the table the application answers, which belongs to the
+ * application rather than to the boot: an application may mount another route on
+ * its native instance before it listens, so those handlers read the table when
+ * they are asked instead of freezing a moment no client ever observed. The
+ * table is also where a route's own entry lives — its contributed hooks and the
+ * schema slots Elysia holds — which is the half of a route's stages no boot
+ * record carries. Both are registered whatever the record holds, because the
+ * table is this package's answer on its own; a route no record describes is
+ * reported with the facts a record would have supplied left empty.
  *
  * Every builder it calls is total — a record this release cannot project is one
  * of the cases they answer rather than throw for — because this runs before the
@@ -146,6 +149,7 @@ function createHandlers(application: Elysia): DevtoolsHandlers {
     // not own is the dispatcher's `404`.
     ...(graph === undefined ? {} : { [devtoolsGraphPath]: () => jsonResponse(graph) }),
     [devtoolsRoutesPath]: () => jsonResponse(buildRoutesPayload(application, diagnostics)),
+    [devtoolsFlowPath]: () => jsonResponse(buildFlowPayload(application, diagnostics)),
   });
 }
 

@@ -26,3 +26,11 @@ export type {
   AponiaRouteSource,
   AponiaRoutesPayload,
 } from "./endpoints/payloads.types.ts";
+export type {
+  AponiaFlowFilter,
+  AponiaFlowPayload,
+  AponiaFlowRoute,
+  AponiaFlowScope,
+  AponiaFlowStage,
+  AponiaFlowStageKind,
+} from "./endpoints/flow.types.ts";
