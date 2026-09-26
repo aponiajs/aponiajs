@@ -14,10 +14,12 @@ import {
 import {
   collectEnhancerDeclarations,
   resolveEnhancers,
+  type MountedExceptionHandling,
   type MountedRouteEnhancers,
   type ResolvedEnhancers,
 } from "../controllers/enhancer-resolver.ts";
 import type { RuntimeElysiaController } from "../controllers/controller.types.ts";
+import { createDefaultExceptionFilter } from "../errors/default-exception-filter.ts";
 import { compileRootModule } from "../modules/module-compiler.ts";
 import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
 import { selectRootModuleDescriptor } from "../modules/module-descriptor-artifact.ts";
@@ -99,6 +101,17 @@ export async function bootstrapAponiaApplication(
     }),
   );
 
+  // The Problem Details mapping every route carries last is built once, from
+  // the logger this boot reports on, and travels with each mount beside the
+  // global enhancers: a route's `error` array is assembled while it mounts, so
+  // this is the only place a boot's own mapping exists. The logger travels with
+  // it because the wrapper around each declared filter reports a filter that
+  // threw where an application reads its logs, and it has nowhere else to.
+  const exceptionHandling: MountedExceptionHandling = Object.freeze({
+    defaultFilter: createDefaultExceptionFilter(logger),
+    logger,
+  });
+
   for (const module of container.graph.modules) {
     for (const controller of module.controllers) {
       if (!isElysiaController(controller)) {
@@ -126,6 +139,7 @@ export async function bootstrapAponiaApplication(
       const mountedEnhancers: MountedRouteEnhancers = Object.freeze({
         global: globalEnhancers,
         controller: resolvedEnhancers,
+        exceptionHandling,
       });
       if (typeof controller.registerRoutes === "function") {
         const routeStart = nativeApplication.routes.length;

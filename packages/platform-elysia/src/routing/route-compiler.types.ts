@@ -38,6 +38,30 @@ export type AponiaControllerInvokerFactory = (
 ) => ReadonlyMap<string | symbol, AponiaRouteInvoker>;
 
 /**
+ * What a route-local `error` hook is given: the request's own context with the
+ * thrown value on it.
+ *
+ * Elysia hands an error hook the fields a handler reads, so the platform states
+ * the context it already publishes plus the one member an error hook is for.
+ */
+export interface ElysiaRouteErrorContext extends RouteContext {
+  /** The thrown value, exactly as it was thrown, because anything can be thrown. */
+  readonly error: unknown;
+}
+
+/**
+ * One entry of a route's own `error` array.
+ *
+ * Elysia runs the array in order and the first entry that returns anything
+ * other than `undefined` answers the request; the rest never run. Declining is
+ * therefore returning `undefined`, which is what leaves the decision to the
+ * entry behind it.
+ *
+ * @internal
+ */
+export type ElysiaErrorHook = (context: ElysiaRouteErrorContext) => unknown;
+
+/**
  * The hook object one route is registered with.
  *
  * Elysia splits it across two types — `InputSchema` holds the validators, while
@@ -50,6 +74,12 @@ export type AponiaControllerInvokerFactory = (
 export interface ElysiaRouteHook extends InputSchema<never> {
   /** Runs before the handler, and answers the request instead of it when it throws. */
   beforeHandle?(context: RouteContext): Promise<void>;
+  /**
+   * Runs when the handler or one of the route's own hooks threw. The declared
+   * filters come first and the Problem Details mapping last, so a filter ahead
+   * of the mapping answers in its place.
+   */
+  error?: ElysiaErrorHook[];
 }
 
 /**

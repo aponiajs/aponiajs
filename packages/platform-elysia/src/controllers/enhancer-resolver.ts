@@ -7,9 +7,11 @@ import {
   type ClassToken,
   type EnhancerMetadata,
   type ExceptionFilter,
+  type LoggerService,
   type ModuleDefinition,
 } from "@aponiajs/common";
 import type { AponiaContainer } from "@aponiajs/core";
+import type { ElysiaErrorHook } from "../routing/route-compiler.types.ts";
 
 /**
  * One filter, resolved: the instance that answers and the exception types it
@@ -48,15 +50,36 @@ export interface ResolvedControllerEnhancers extends ResolvedEnhancers {
 }
 
 /**
+ * What a route's own `error` array carries besides the filters the route
+ * declares: the Problem Details mapping every route ends with, and the channel
+ * a filter's own failure is reported on.
+ *
+ * Both belong to the boot rather than to any controller, so both are built once
+ * and travel with the mount beside the global enhancers: a route's hooks are
+ * built while it mounts, which makes bootstrap the only place a boot's logger
+ * and its mapping exist. `undefined` is a statement, not an omission — it is
+ * what a mount that resolves nothing mounts with, and it is why such a mount
+ * gains no `error` hook at all.
+ *
+ * @internal
+ */
+export interface MountedExceptionHandling {
+  /** The mapping behind every declared filter, built once per boot. */
+  readonly defaultFilter: ElysiaErrorHook | undefined;
+  /** The system logger the mapping and every failed filter report on. */
+  readonly logger: LoggerService | undefined;
+}
+
+/**
  * Everything one controller's mount runs its routes through: the application's
  * own declaration, resolved once for the whole boot, and the resolution the
  * controller's own declarations were lowered into.
  *
- * The two are kept apart rather than joined into flat lists because a kind's run
- * order is decided where that kind is consumed: a guard runs the application's
- * declaration first, while the scopes of the kinds that run the other way round
- * are still needed separately. Joining them here would settle an order no one
- * asked for yet.
+ * The two resolutions are kept apart rather than joined into flat lists because
+ * a kind's run order is decided where that kind is consumed: a guard runs the
+ * application's declaration first, while the filters run the other way round
+ * and need the two scopes separately to say so. Joining them here would settle
+ * an order no one asked for yet.
  *
  * @internal
  */
@@ -65,6 +88,8 @@ export interface MountedRouteEnhancers {
   readonly global: ResolvedEnhancers;
   /** The declarations of the controller this mount belongs to. */
   readonly controller: ResolvedControllerEnhancers;
+  /** What this mount's routes carry in their own `error` arrays. */
+  readonly exceptionHandling: MountedExceptionHandling;
 }
 
 /** The enhancers that run nothing, shared because a resolution is never mutated. */
@@ -79,10 +104,10 @@ const noResolvedEnhancers: ResolvedEnhancers = Object.freeze({
  * definition's own `buildPlugin` makes.
  *
  * That path builds an Elysia plugin outside a boot, so it has no container to
- * resolve against and no application whose declaration it could merge. Its
- * routes mount with the validators their schemas declare and no enhancer hooks
- * at all. Bootstrap never passes this value: every mount it makes carries a real
- * resolution.
+ * resolve against, no application whose declaration it could merge, and no
+ * system logger to report an unhandled failure on. Its routes mount with the
+ * validators their schemas declare and no enhancer hooks at all. Bootstrap
+ * never passes this value: every mount it makes carries a real resolution.
  *
  * @internal
  */
@@ -91,6 +116,10 @@ export const unmountedRouteEnhancers: MountedRouteEnhancers = Object.freeze({
   controller: Object.freeze({
     ...noResolvedEnhancers,
     forRoute: () => noResolvedEnhancers,
+  }),
+  exceptionHandling: Object.freeze({
+    defaultFilter: undefined,
+    logger: undefined,
   }),
 });
 

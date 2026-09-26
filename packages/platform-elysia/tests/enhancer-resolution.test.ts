@@ -308,8 +308,10 @@ describe("resolving one controller's enhancers", () => {
     expect(first.interceptors[0]).toBe(resolved.interceptors[0]);
     expect(second.interceptors[0]).toBe(resolved.interceptors[0]);
     expect(first.filters[0]).toBe(resolved.filters[0]);
-    expect(second.filters[0]).toBe(resolved.filters[0]);
-    expect(second.filters[1]).toBe(resolved.filters[1]);
+    // Filters run most-specific-first, so the filter the handler declares itself
+    // is consulted before the one its controller declares.
+    expect(second.filters[0]).toBe(resolved.filters[1]);
+    expect(second.filters[1]).toBe(resolved.filters[0]);
     // Assembling a route's lists resolves nothing: the instances are shared.
     expect(container.resolvedTokens).toHaveLength(5);
   });
@@ -324,7 +326,7 @@ describe("resolving one controller's enhancers", () => {
     expect(first.filters[0]?.catch).toEqual([NotFoundError]);
     // A filter declared with no exceptions catches anything.
     expect(resolved.filters[1]?.catch).toEqual([]);
-    expect(second.filters[1]?.catch).toEqual([]);
+    expect(second.filters[0]?.catch).toEqual([]);
   });
 
   test("returns frozen data", () => {
@@ -376,10 +378,12 @@ describe("collecting a controller's enhancer declarations", () => {
     const declarations = collectEnhancerDeclarations(routes);
 
     // A class both routes name appears once per route: resolution is cached by
-    // class, and each route keeps the run order it declared.
+    // class, and each route keeps the run order it declared. Filters declare
+    // themselves most-specific-first, so the handler's own precede the
+    // controller's within one route.
     expect(declarations.guards).toEqual([FirstGuard, FirstGuard, SecondGuard]);
     expect(declarations.interceptors).toEqual([AuditInterceptor, AuditInterceptor]);
-    expect(declarations.filters).toEqual([NotFoundFilter, NotFoundFilter, CatchEverythingFilter]);
+    expect(declarations.filters).toEqual([NotFoundFilter, CatchEverythingFilter, NotFoundFilter]);
     expect(Object.isFrozen(declarations)).toBe(true);
     expect(Object.isFrozen(declarations.guards)).toBe(true);
   });

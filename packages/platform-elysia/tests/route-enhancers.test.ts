@@ -125,20 +125,27 @@ class GuardedGateway {
 class GuardedGatewayModule {}
 
 describe("compiled route enhancers", () => {
-  test("a controller that declares no enhancer gains no beforeHandle and no afterHandle", async () => {
+  test("a controller that declares no enhancer gains one error hook and nothing else", async () => {
     const application = await AponiaFactory.create(AppModule, { logger: false });
     const open = application
       .getNativeApplication()
       .routes.find((route) => route.path === "/open") as
       | { hooks?: Record<string, unknown> }
       | undefined;
+    const errorHooks = open?.hooks?.error as
+      | readonly { readonly fn?: (...arguments_: never[]) => unknown }[]
+      | undefined;
 
     expect(open?.hooks?.beforeHandle).toBeUndefined();
     expect(open?.hooks?.afterHandle).toBeUndefined();
-    // Task 7 appends the default mapping to every route's own `error` array, so
-    // this route gains `error` there. This case is extended with that half rather
-    // than replaced: the assertion that survives both tasks is the absence of the
-    // two interception hooks plus exactly one synchronous `error` hook.
+    // The default mapping is compiled into every route's own `error` array, so
+    // that array is the one hook a route declaring no enhancer gains. It is
+    // synchronous, which is what leaves the route compiling the way it compiled
+    // before the mapping existed.
+    expect(Object.keys(open?.hooks ?? {})).toEqual(["error"]);
+    expect(errorHooks).toHaveLength(1);
+    expect(typeof errorHooks?.[0]?.fn).toBe("function");
+    expect(errorHooks?.[0]?.fn?.constructor.name).not.toBe("AsyncFunction");
     await application.close();
   });
 
@@ -156,8 +163,9 @@ describe("compiled route enhancers", () => {
       compileElysiaRoutes(ScopedController, "scoped").map((route) => [route.path, route]),
     );
 
-    // A handler that declares one kind keeps the controller's other two, and the
-    // controller's own declaration comes first in every collection.
+    // A handler that declares one kind keeps the controller's other two.
+    // Guards go outward-in, so the controller's declaration comes first; filters
+    // run most-specific-first, so the handler's own come first there.
     expect(routes.get("/scoped/guarded")?.enhancers).toEqual({
       guards: [AuthGuard, MethodGuard],
       interceptors: [AuditInterceptor],
@@ -166,7 +174,7 @@ describe("compiled route enhancers", () => {
     expect(routes.get("/scoped/declared")?.enhancers).toEqual({
       guards: [AuthGuard],
       interceptors: [AuditInterceptor, MethodInterceptor],
-      filters: [ReportingFilter, MethodFilter],
+      filters: [MethodFilter, ReportingFilter],
     });
     expect(routes.get("/scoped/bare")?.enhancers).toEqual({
       guards: [AuthGuard],

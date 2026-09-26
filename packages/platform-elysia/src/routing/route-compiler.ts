@@ -6,11 +6,13 @@ import {
   isRouteResponseSchemaMap,
   isStandardSchema,
   resolveRouteValidator,
+  type ArgumentsHost,
   type CanActivate,
   type ClassToken,
   type EnhancerMetadata,
   type ExecutionContext,
   type HttpArgumentsHost,
+  type LoggerService,
   type RequestMethod,
   type RouteContext,
   type RouteParameterMetadata,
@@ -19,12 +21,14 @@ import {
   type RouteValidatorInput,
 } from "@aponiajs/common";
 import { type AnySchema, type Elysia, type TSchema } from "elysia";
-import type { MountedRouteEnhancers } from "../controllers/enhancer-resolver.ts";
+import type { MountedRouteEnhancers, ResolvedFilter } from "../controllers/enhancer-resolver.ts";
+import { isFilterMatch } from "../errors/default-exception-filter.ts";
 import { httpErrors } from "../errors/http-error.ts";
 import { registerNativeRoute } from "./native-route.ts";
 import type {
   AponiaRouteInvoker,
   CompiledElysiaRoute,
+  ElysiaErrorHook,
   ElysiaRouteHook,
 } from "./route-compiler.types.ts";
 
@@ -92,9 +96,14 @@ export function compileElysiaRoutes(
  *
  * `getEnhancerMetadata` reads exactly one scope, so the join belongs here, at
  * the call site: joining inside the reader would double-apply a controller's
- * declarations once this call site also joins them. The controller's own
- * declarations come first, then the handler's, which is the scope order the
- * enhancers run in.
+ * declarations once this call site also joins them.
+ *
+ * Each kind is stored in the order that kind runs. Guards and interceptors run
+ * outward-in, so the controller's own declarations come first and the handler's
+ * follow. Filters run the other way round — most specific first, because the
+ * first one that matches answers — so the handler's declarations come first
+ * there, and the scope that is left to merge, the application's own, is
+ * appended after the whole list by the mount.
  */
 function mergeEnhancerMetadata(
   controllerScope: EnhancerMetadata,
@@ -103,7 +112,7 @@ function mergeEnhancerMetadata(
   return Object.freeze({
     guards: Object.freeze([...controllerScope.guards, ...handlerScope.guards]),
     interceptors: Object.freeze([...controllerScope.interceptors, ...handlerScope.interceptors]),
-    filters: Object.freeze([...controllerScope.filters, ...handlerScope.filters]),
+    filters: Object.freeze([...handlerScope.filters, ...controllerScope.filters]),
   });
 }
 
@@ -175,7 +184,13 @@ export function registerCompiledElysiaRoutes(
       suppliedInvoker === undefined
         ? createRouteHandler(callableHandler, instance, route)
         : (suppliedInvoker as (context: RouteContext) => unknown),
-      toRouteHook(route, controller, callableHandler, routeGuards(mountedEnhancers, route)),
+      toRouteHook(
+        route,
+        controller,
+        callableHandler,
+        routeGuards(mountedEnhancers, route),
+        routeExceptionHooks(mountedEnhancers, route),
+      ),
     );
   }
 }
@@ -198,6 +213,87 @@ function routeGuards(
   }
 
   return Object.freeze([...mountedEnhancers.global.guards, ...declared]);
+}
+
+/**
+ * The `error` array one route mounts: the filters the route declares, then the
+ * application's own, then the Problem Details mapping every route carries last.
+ *
+ * The order is the reverse of the guard order, because the first filter that
+ * matches answers: a route's own filters are consulted before the
+ * application's, so the most specific one decides, and the mapping at the end
+ * answers only what every declared filter declined.
+ *
+ * `undefined` is what a mount with no boot states, and it is returned as such:
+ * a mount that resolved nothing and has nothing to map with mounts no `error`
+ * hook at all rather than an inert one.
+ */
+function routeExceptionHooks(
+  mountedEnhancers: MountedRouteEnhancers,
+  route: CompiledElysiaRoute,
+): ElysiaErrorHook[] | undefined {
+  const { defaultFilter, logger } = mountedEnhancers.exceptionHandling;
+  const declared = mountedEnhancers.controller.forRoute(route.enhancers).filters;
+  const filters = [...declared, ...mountedEnhancers.global.filters];
+  if (filters.length === 0 && defaultFilter === undefined) {
+    return undefined;
+  }
+
+  const hooks = filters.map((filter) => createFilterHook(filter, logger));
+  if (defaultFilter !== undefined) {
+    hooks.push(defaultFilter);
+  }
+
+  return hooks;
+}
+
+/**
+ * One declared filter as a route's `error` array runs it.
+ *
+ * The wrapper is what makes a filter's own failure reach the entry behind it
+ * rather than escape into a second failure: the exception is matched against
+ * the types the filter declared, `catch` is called with the matched exception
+ * and the host, its result is awaited, and a filter that throws or rejects is
+ * reported on the system logger and declined. Reporting it keeps a broken
+ * filter visible, and declining it is what lets the mapping the route carries
+ * last still answer the request.
+ *
+ * Declining happens before the filter is called, so a filter that answers for a
+ * narrower type than the one thrown is never constructed-for and never runs.
+ */
+function createFilterHook(
+  filter: ResolvedFilter,
+  logger: LoggerService | undefined,
+): ElysiaErrorHook {
+  return async (context) => {
+    if (!isFilterMatch(filter, context.error)) {
+      return undefined;
+    }
+
+    try {
+      return await filter.instance.catch(context.error, createArgumentsHost(context));
+    } catch (failure) {
+      logger?.error(failure, "ExceptionsHandler");
+      return undefined;
+    }
+  };
+}
+
+/**
+ * What a filter running for one request is given about the route it runs for.
+ *
+ * The object is built per request because it carries the request's own context,
+ * and it is an `ArgumentsHost` rather than an `ExecutionContext`: a filter is
+ * not asked which class or handler threw, and `common` deliberately does not
+ * carry the per-transport dispatch Nest's host performs.
+ */
+function createArgumentsHost(context: RouteContext): ArgumentsHost {
+  const httpHost: HttpArgumentsHost = Object.freeze({ getRequest: () => context });
+
+  return Object.freeze({
+    getContext: () => context,
+    switchToHttp: () => httpHost,
+  });
 }
 
 /**
@@ -377,7 +473,8 @@ function contextSource(parameter: RouteParameterMetadata): string {
 
 /**
  * Builds the hook object one route is registered with: the validators its schema
- * declares, and the guards it runs before its handler.
+ * declares, the guards it runs before its handler, and the `error` array it
+ * answers a failure through.
  *
  * A route that declares no guard mounts the schema hook itself rather than a
  * copy of it, so a controller with no enhancers gains no `beforeHandle` and no
@@ -388,10 +485,16 @@ function toRouteHook(
   controller: ClassToken<unknown>,
   handler: (...arguments_: unknown[]) => unknown,
   guards: readonly CanActivate[],
+  exceptionHooks: ElysiaErrorHook[] | undefined,
 ): ElysiaRouteHook | undefined {
   const schemaHook = toSchemaHook(route.schema);
-  if (guards.length === 0) {
+  if (guards.length === 0 && exceptionHooks === undefined) {
     return schemaHook;
+  }
+
+  const errorHook = exceptionHooks === undefined ? {} : { error: exceptionHooks };
+  if (guards.length === 0) {
+    return { ...schemaHook, ...errorHook };
   }
 
   // The route a request was handled by never changes, so the value `getRoute`
@@ -400,6 +503,7 @@ function toRouteHook(
 
   return {
     ...schemaHook,
+    ...errorHook,
     // Refusal is the throw and nothing else: Elysia answers an error carrying
     // `toResponse()` through its own native path, so the response is already
     // Problem Details with a 403 before any hook this task adds could shape it.

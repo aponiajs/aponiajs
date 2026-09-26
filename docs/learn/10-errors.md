@@ -5,8 +5,7 @@ test needs to assert on either contract.
 
 ## Application HTTP errors
 
-Use the intent-named defaults in controllers. Elysia handles them through its
-native error response path:
+Use the intent-named defaults in controllers:
 
 ```ts
 import { httpErrors } from "@aponiajs/platform-elysia";
@@ -70,6 +69,28 @@ are filtered there as well.
 
 Route validation failures remain Elysia's native `422` responses. `HttpError`
 is for failures an application deliberately throws.
+
+## Unhandled errors
+
+Every route carries a default Problem Details mapping last in its own error
+path, behind any exception filters the route declares. An error a handler
+throws that no filter answers answers `500` `application/problem+json`:
+
+```json
+{
+  "type": "about:blank",
+  "title": "Internal Server Error",
+  "status": 500,
+  "detail": "The server could not complete this request.",
+  "code": "INTERNAL_SERVER_ERROR"
+}
+```
+
+The thrown value is never repeated to the client — a message is written for
+whoever reads the log — and the boot's system logger records the failure under
+`ExceptionsHandler`. An exception that already states its own answer keeps it:
+Elysia's validation, parse, and other status-bearing responses, anything
+throwing `status(...)`, and any exception carrying its own `toResponse()`.
 
 ## Framework errors
 

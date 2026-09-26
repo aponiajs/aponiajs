@@ -333,8 +333,13 @@ Application-owned HTTP failures use `HttpError` from
 `@aponiajs/platform-elysia`. `httpErrors` covers every 4xx and 5xx status in
 Elysia's supported `StatusMap`; responses use RFC 9457
 `application/problem+json` and never serialize the stack or cause. These are
-deliberate application failures. Native Elysia validation and framework errors
-are not automatically translated to Problem Details yet.
+deliberate application failures. Anything else a handler throws becomes a `500`
+Problem Details response, reported through the system logger, unless a declared
+exception filter answers it first or it already carries its own answer: every
+route compiles a default Problem Details mapping last in its own `error` array,
+behind the filters it declares, and that mapping declines Elysia's own
+validation, parse, and status-bearing errors so their native responses are
+preserved.
 
 ### CLI
 

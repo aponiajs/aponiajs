@@ -14,7 +14,7 @@ It depends on `common` and `core`, with `elysia` as a peer.
 | `application/` | Factory orchestration, application lifecycle wrapper, public option contracts                    |
 | `modules/`     | `compileRootModule` and decorator-to-descriptor lowering                                         |
 | `controllers/` | Controller descriptors, direct registration, `ELYSIA_CONTROLLER`                                 |
-| `errors/`      | Typed HTTP errors and RFC 9457 Problem Details responses                                         |
+| `errors/`      | Typed HTTP errors, RFC 9457 Problem Details responses, and the default mapping                   |
 | `inspection/`  | Read-only projection of a compiled application for build-time consumers                          |
 | `plugins/`     | Native plugin module registration and plugin contracts                                           |
 | `routing/`     | Route plans, compiled invokers, schemas, and native context types                                |
@@ -54,13 +54,33 @@ runtime boundary it describes.
   site rather than omit it.
 - Guards run as a route-local `beforeHandle`, in declaration order, with the
   application's own declarations before the route's. A guard that refuses throws
-  `httpErrors.forbidden(...)`, and that throw is the whole refusal: Elysia
-  answers an error carrying `toResponse()` through its native path, so no error
-  hook is registered for it. A route that declares no enhancer carries no
-  `beforeHandle` and no `afterHandle`, and no `ExecutionContext` is built for
-  one. `routing/route-compiler.types.ts` declares the route hook the platform
+  `httpErrors.forbidden(...)`, and that throw is the whole refusal: the throw
+  reaches the route's own error path, where the default mapping below answers it
+  as the Problem Details response an `HttpError` already carries. A route that
+  declares no enhancer carries no `beforeHandle` and no `afterHandle`, and no
+  `ExecutionContext` is built for one; the one hook it does carry is the default
+  mapping. `routing/route-compiler.types.ts` declares the route hook the platform
   mounts, so a lifecycle member is added there rather than by widening the
   native signature.
+- Every route carries the default Problem Details mapping last in its own
+  `error` array, behind the filters it declares, so the array reads
+  `[...method, ...controller, ...global, default]`. Declared filters run
+  most-specific-first — the reverse of the guard and `interceptBefore` order —
+  and the first entry that returns anything other than `undefined` answers. The mapping is built once from the
+  boot's system logger and compiled into each route while it mounts, never
+  registered on the root application: Elysia puts the application's handlers
+  ahead of a mounted route's own, so a root hook would outrank every declared
+  filter, and one registered after controllers mount reaches no route at all.
+  It reports an unhandled failure through the logger under `ExceptionsHandler`
+  and never lets the stack or the cause reach the response, and it declines an
+  exception that already carries its own answer — Elysia's validation, parse,
+  and status-bearing errors, and anything exposing `toResponse()` — so Elysia's
+  native responses, the `status()` escape hatch, and `HttpError` keep answering
+  as they did. A declared filter that throws is caught, logged the same way, and
+  treated as declining, so the array continues to what answers next. The
+  default hook is synchronous, so a route with no declared filter compiles the
+  way it compiled before the mapping existed; a route with one carries an
+  asynchronous hook per filter, because answering may await.
 - `routing/native-route.ts` is the only module that calls Elysia's route
   registration API. A version that moves it fails there as
   `UNSUPPORTED_ELYSIA_VERSION` instead of as a bare `TypeError` from inside a
