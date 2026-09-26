@@ -11,6 +11,7 @@ coverage
 # Local agent tooling and generated research inputs
 .agents/
 .claude/
+.superpowers/
 skills-lock.json
 research.md
 
