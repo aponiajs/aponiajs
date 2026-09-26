@@ -9,6 +9,7 @@ export type {
 export type { AponiaNativeApplication } from "./application/native-application.types.ts";
 export { compileRootModule } from "./modules/module-compiler.ts";
 export type { AponiaRootModule } from "./modules/module-compiler.types.ts";
+export type { AponiaModuleDescriptorArtifact } from "./modules/module-descriptor-artifact.types.ts";
 export { inspectAponiaApplication } from "./inspection/application-inspection.ts";
 export type {
   AponiaApplicationInspection,

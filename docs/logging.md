@@ -6,6 +6,7 @@ sequence:
 
 ```text
 [Aponia] 4210 - 07/25/2026, 10:30:00 AM     LOG [AponiaFactory] Starting Aponia application...
+[Aponia] 4210 - 07/25/2026, 10:30:00 AM     LOG [RoutesResolver] Booting GreetingModule from the generated module descriptors, so the declared graph serves this application. +1ms
 [Aponia] 4210 - 07/25/2026, 10:30:00 AM     LOG [InstanceLoader] GreetingModule dependencies initialized +2ms
 [Aponia] 4210 - 07/25/2026, 10:30:00 AM     LOG [WebSocketsController] ChatGateway {/chat}: +0ms
 [Aponia] 4210 - 07/25/2026, 10:30:00 AM     LOG [WebSocketsController] Subscribed to "chat.send" message +0ms
@@ -18,13 +19,23 @@ sequence:
 The lifecycle contexts intentionally mirror the responsibilities in Nest:
 
 - `AponiaFactory` reports bootstrap start;
+- `RoutesResolver` reports which graph serves the application before anything is
+  lowered, then each controller and its base path;
 - `InstanceLoader` reports each initialized module after its providers have
   been instantiated;
 - `WebSocketsController` reports each gateway path and subscribed message
   event;
-- `RoutesResolver` reports each controller and its base path;
 - `RouterExplorer` reports every mapped HTTP method and complete path;
 - `AponiaApplication` reports readiness after the server starts listening.
+
+`RoutesResolver` is also where a supplied artifact is reported as refused. Both
+the generated route invokers and the generated module descriptors record the
+framework release they were built against, and neither is used when that release
+is not the one running; the module descriptors are also not used when they hold no
+declaration for the root module the application names. Each case logs one line
+naming what it read, and the application boots from the decorated declarations it
+was given, so a stale generated file shows up in the log as a cold start rather
+than as a route that behaves unexpectedly.
 
 The displayed address comes from the Elysia/Bun server instance after the
 listener has started. It is not assembled from the requested port.

@@ -14,6 +14,7 @@ import {
 import type { RuntimeElysiaController } from "../controllers/controller.types.ts";
 import { compileRootModule } from "../modules/module-compiler.ts";
 import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
+import { selectRootModuleDescriptor } from "../modules/module-descriptor-artifact.ts";
 import { getElysiaPlugin, isElysiaPluginModule } from "../plugins/plugin-module.ts";
 import { selectInvokerArtifact } from "../routing/invoker-artifact.ts";
 import type { AponiaControllerInvokerFactory } from "../routing/route-compiler.types.ts";
@@ -45,7 +46,12 @@ export async function bootstrapAponiaApplication(
   // single log line rather than one lookup per controller.
   const generatedInvokers = selectInvokerArtifact(options.invokers, aponiaVersion, logger);
 
-  const compiledRootModule = compileRootModule(rootModule);
+  // The generated descriptors are the whole module graph, so the root is chosen
+  // once, before anything is compiled: a refused artifact leaves the application
+  // it named in place.
+  const compiledRootModule = compileRootModule(
+    selectRootModuleDescriptor(options.descriptors, rootModule, aponiaVersion, logger),
+  );
   const container = createContainer(compiledRootModule);
   const webSocketGateways = compileElysiaWebSocketGateways(container.graph.modules);
   const baseApplication = new Elysia({

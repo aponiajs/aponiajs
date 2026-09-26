@@ -2,6 +2,11 @@ import { afterEach, expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { AponiaFactory, inspectAponiaApplication } from "@aponiajs/platform-elysia";
+import type { LoggerService } from "@aponiajs/common";
+import type {
+  AponiaApplicationOptions,
+  AponiaModuleDescriptorArtifact,
+} from "@aponiajs/platform-elysia";
 import {
   analyzeControllerRoutes,
   analyzeModuleDescriptors,
@@ -25,6 +30,41 @@ import type { DescriptorSourceFile } from "../src/index.ts";
  * booting the generated module proves the emitted `imports`, `exports`, and
  * `inject` lists all wire the same container the decorators do.
  */
+
+/**
+ * The version the running platform reports, read from the manifest it ships
+ * rather than imported from the module under test, so the artifact this file
+ * generates cannot accidentally agree with a broken platform.
+ */
+const frameworkVersion = (
+  (await Bun.file(new URL("../../platform-elysia/package.json", import.meta.url)).json()) as {
+    version: string;
+  }
+).version;
+
+/**
+ * The provenance the artifact is generated with. The Elysia field is recorded
+ * rather than compared — the platform only names it when it refuses an artifact
+ * from another release — so a stated value keeps this file from depending on
+ * what the machine happened to install.
+ */
+const provenance = Object.freeze({ framework: frameworkVersion, elysia: "1.4.30" });
+
+class RecordingLogger implements LoggerService {
+  readonly records: { readonly context: string; readonly message: string }[] = [];
+
+  log(message: unknown, context?: unknown): void {
+    this.records.push({
+      context: typeof context === "string" ? context : "",
+      message: String(message),
+    });
+  }
+
+  fatal(): void {}
+  error(): void {}
+  warn(): void {}
+}
+
 const temporaryDirectories: string[] = [];
 
 afterEach(async () => {
@@ -156,7 +196,7 @@ interface Fixture {
   readonly UsersModule: unknown;
   readonly EventsModule: unknown;
   readonly source: string;
-  readonly moduleDescriptors: Readonly<Record<string, unknown>>;
+  readonly moduleDescriptorArtifact: AponiaModuleDescriptorArtifact;
 }
 
 /**
@@ -185,7 +225,7 @@ async function generateFixture(): Promise<Fixture> {
   }
 
   const generatedPath = join(directory, "descriptors.generated.ts");
-  const emitted = emitModuleDescriptors(files, generatedPath);
+  const emitted = emitModuleDescriptors(files, generatedPath, provenance);
   if (emitted.source === undefined) {
     throw new Error(`The emitter declined every module: ${JSON.stringify(emitted.declined)}`);
   }
@@ -204,7 +244,7 @@ async function generateFixture(): Promise<Fixture> {
     UsersModule: module.UsersModule,
     EventsModule: events.EventsModule,
     source: emitted.source,
-    moduleDescriptors: generated.moduleDescriptors,
+    moduleDescriptorArtifact: generated.moduleDescriptorArtifact,
   };
 }
 
@@ -213,8 +253,14 @@ interface Answer {
   readonly body: string;
 }
 
-async function answers(rootModule: unknown): Promise<readonly Answer[]> {
-  const application = await AponiaFactory.create(rootModule as never, { logger: false });
+async function answers(
+  rootModule: unknown,
+  options: AponiaApplicationOptions = {},
+): Promise<readonly Answer[]> {
+  const application = await AponiaFactory.create(rootModule as never, {
+    logger: false,
+    ...options,
+  });
 
   try {
     return await Promise.all(
@@ -257,18 +303,91 @@ test("a generated descriptor module answers exactly as the decorated application
   const fixture = await generateFixture();
 
   const compiled = await answers(fixture.UsersModule);
-  const generated = await answers(fixture.moduleDescriptors.UsersModule);
+  // Both readings of the artifact are exercised, because they are two different
+  // facts. Booting the descriptor directly is what the generated module supports
+  // on its own, and booting the module the application names with the artifact is
+  // what a generated application does — there, the platform decides which graph
+  // serves the request.
+  const declared = await answers(fixture.moduleDescriptorArtifact.modules.UsersModule);
+  const adopted = await answers(fixture.UsersModule, {
+    descriptors: fixture.moduleDescriptorArtifact,
+  });
 
-  expect(generated).toEqual(compiled);
+  expect(declared).toEqual(compiled);
+  expect(adopted).toEqual(compiled);
   expect(compiled.map((answer) => answer.status)).toEqual([200, 200, 422, 422, 200]);
   // The first body carries the audit provider, which only resolves when the
   // generated module's `imports` and `exports` reach the other module.
   expect(compiled[0]?.body).toBe("read:7:audited");
   // The second body comes from the controller's own injected service, and the
   // third and fourth are the platform refusing a body the `@Validation()` model
-  // rejects.
+  // rejects — the same 422 and the same body either way, which is what proves the
+  // declared route carries the validator its model declared.
   expect(compiled[1]?.body).toBe("created:aponia");
   expect(compiled[4]?.body).toBe("updated:7");
+});
+
+test("reports the graph that served the application through the routing log", async () => {
+  const fixture = await generateFixture();
+  const logger = new RecordingLogger();
+
+  await answers(fixture.UsersModule, { descriptors: fixture.moduleDescriptorArtifact, logger });
+
+  expect(logger.records).toContainEqual({
+    context: "RoutesResolver",
+    message:
+      "Booting UsersModule from the generated module descriptors, so the declared graph serves this application.",
+  });
+
+  // Without the artifact the line is absent, so what the log reports is a fact
+  // about this boot rather than about the option being named at all.
+  const silent = new RecordingLogger();
+  await answers(fixture.UsersModule, { logger: silent });
+  expect(silent.records.filter((record) => record.message.startsWith("Booting "))).toEqual([]);
+});
+
+test("lowers the decorated root when the artifact holds no declaration for it", async () => {
+  const fixture = await generateFixture();
+  const logger = new RecordingLogger();
+
+  // What a module renamed since the last build leaves on disk: the artifact is
+  // valid and stamped by this release, and the entry it holds is for a module the
+  // application no longer names.
+  const renamed: AponiaModuleDescriptorArtifact = Object.freeze({
+    ...fixture.moduleDescriptorArtifact,
+    modules: Object.freeze({ RenamedModule: fixture.moduleDescriptorArtifact.modules.UsersModule }),
+  });
+
+  const compiled = await answers(fixture.UsersModule);
+  const adopted = await answers(fixture.UsersModule, { descriptors: renamed, logger });
+
+  expect(adopted).toEqual(compiled);
+  expect(logger.records).toContainEqual({
+    context: "RoutesResolver",
+    message:
+      'The generated module descriptors hold no declaration for "UsersModule", so it is lowered from its ' +
+      "decorators instead. Run `aponia build` again.",
+  });
+});
+
+test("lowers the decorated root when the artifact was built by another release", async () => {
+  const fixture = await generateFixture();
+  const logger = new RecordingLogger();
+
+  const stale: AponiaModuleDescriptorArtifact = Object.freeze({
+    ...fixture.moduleDescriptorArtifact,
+    framework: "0.0.0",
+    elysia: "1.0.0",
+  });
+
+  const compiled = await answers(fixture.UsersModule);
+  const adopted = await answers(fixture.UsersModule, { descriptors: stale, logger });
+
+  expect(adopted).toEqual(compiled);
+  const refusal = logger.records.find((record) => record.context === "RoutesResolver");
+  expect(refusal?.message).toContain("0.0.0");
+  expect(refusal?.message).toContain("1.0.0");
+  expect(refusal?.message).toContain(frameworkVersion);
 });
 
 test("a generated schema slot states the model's validator instead of naming the model", async () => {
@@ -290,11 +409,14 @@ test("a generated schema slot states the model's validator instead of naming the
 test("a generated descriptor module declares every module of the graph", async () => {
   const fixture = await generateFixture();
 
-  expect(Object.keys(fixture.moduleDescriptors).toSorted()).toEqual([
+  expect(Object.keys(fixture.moduleDescriptorArtifact.modules).toSorted()).toEqual([
     "AuditModule",
     "EventsModule",
     "UsersModule",
   ]);
+  // The artifact carries the release that generated it, which is what the
+  // platform compares before it accepts any of those declarations.
+  expect(fixture.moduleDescriptorArtifact.framework).toBe(frameworkVersion);
 });
 
 test("a generated gateway is discovered with the same path and events as the decorated one", async () => {
@@ -313,7 +435,9 @@ test("a generated gateway is discovered with the same path and events as the dec
   // Inspection runs bootstrap's own lowering, so equal projections mean the
   // declared gateway reaches the same compilation a decorated one does.
   const compiled = inspectAponiaApplication(fixture.EventsModule as never);
-  const generated = inspectAponiaApplication(fixture.moduleDescriptors.EventsModule as never);
+  const generated = inspectAponiaApplication(
+    fixture.moduleDescriptorArtifact.modules.EventsModule as never,
+  );
 
   expect(generated.gateways).toEqual(compiled.gateways);
   expect(compiled.gateways).toEqual([

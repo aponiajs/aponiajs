@@ -115,9 +115,11 @@ separate focused modules. `src/index.ts` is the only public barrel.
   `<sourceRoot>/descriptors.generated.ts` in place on every run and reports each
   as `UPDATE` rather than refusing an existing target, which is the one place
   this package's change lines do not mean "did not exist before". A descriptor
-  module left behind after a module was renamed is stale until the next build:
-  nothing prunes it, and the entry it still exports boots the module the
-  application no longer declares.
+  module left behind after a module was renamed is stale until the next build,
+  and nothing here prunes it — but it cannot boot the module the application no
+  longer declares: the platform looks up the declaration for the root module the
+  application named, and a renamed root has none, so the artifact is refused and
+  the decorated graph answers instead.
 - `generation/descriptor-emitter.ts` emits the module graph as data:
   `defineModule` from `@aponiajs/common`, `defineElysiaControllerRoutes` and
   `defineElysiaWebSocketGateway` from `@aponiajs/platform-elysia`, which is what
@@ -125,7 +127,14 @@ separate focused modules. `src/index.ts` is the only public barrel.
   calls Elysia's route API or `application.ws()` — those stay in the platform, and
   a generated route or gateway reaches them through its declared plan. It emits
   exactly the helpers a module's body calls, one import per package, and exports
-  `moduleDescriptors`, a frozen record keyed by module class name.
+  `moduleDescriptorArtifact`, a frozen record of descriptors keyed by module
+  class name beside the release the file was built by — the descriptor half of
+  what the invoker module records, kept in step with the platform's
+  `AponiaModuleDescriptorArtifact` by hand. The platform refuses that artifact
+  whole when the release disagrees, when it holds no module record, or when it
+  holds no descriptor for the root module the application named, and lowers the
+  decorated root instead: substituting a graph is a whole-artifact decision, so
+  nothing here has to make a per-module one.
 - A module is emitted whole or not at all. A module whose collections could not
   be read, whose controller or provider dependencies could not be reduced to
   importable tokens, whose route or schema slot could not be copied, or whose
@@ -162,8 +171,8 @@ separate focused modules. `src/index.ts` is the only public barrel.
   `defineElysiaWebSocketGateway(...)` provider carrying the plan bootstrap would
   otherwise have reflected off `useClass`. What remains is exactly what the
   build did not touch: a module it declined still boots from its own decorators,
-  and so does an application that boots from `AppModule` instead of
-  `moduleDescriptors`.
+  and so does an application that does not pass `moduleDescriptorArtifact` — or
+  passes one the platform refuses.
 - The two exceptions are stated rather than papered over, because both are
   reachable in ordinary projects. A slot whose model class name two
   `@Validation()` classes share cannot be resolved — `add()` drops an ambiguous
@@ -185,7 +194,11 @@ separate focused modules. `src/index.ts` is the only public barrel.
   `@aponiajs/platform-elysia` on purpose: they are the only places the emitters
   and the runtime that consumes their output meet, and they assert the acceptance
   criterion for each — an application booted from a generated module answers
-  exactly as one booted from its decorated classes. No Vite+ conformance case is
+  exactly as one booted from its decorated classes. The descriptor pair is
+  asserted twice, because a generated application takes neither reading alone:
+  once by booting the emitted descriptor directly, and once by naming the
+  decorated root and passing the artifact through the option the platform
+  resolves it with. No Vite+ conformance case is
   warranted for them: the generated modules call platform contracts the
   conformance lane already covers, and what these tests add is CLI-internal
   analysis with no public type or runtime behavior of its own.
@@ -219,14 +232,18 @@ separate focused modules. `src/index.ts` is the only public barrel.
   bundler resolves the entrypoint that would read them. `@aponiajs/cli` is a
   starter devDependency for that, and the packed lane installs it into the
   generated project.
-- The starter commits both generated modules and `src/main.ts` adopts the
-  invoker artifact, so a freshly generated application serves through generated
-  route invokers before any build has run. `bun run dev`, `bun start`, and
-  `bun test` therefore work on a checkout that has never been built, and now run
-  with the optimization rather than without it. The template holds them as
-  `src/invokers.generated.ts.tmpl` and
-  `src/descriptors.generated.ts.tmpl`, which is what gives the invoker module its
-  `{{APONIA_VERSION}}` stamp and the descriptor module its name back on render.
+- The starter commits both generated modules and `src/main.ts` adopts both
+  artifacts, so a freshly generated application serves through generated route
+  invokers and boots from the declared module graph before any build has run.
+  `bun run dev`, `bun start`, and `bun test` therefore work on a checkout that
+  has never been built, and now run with the optimization rather than without it.
+  The entrypoint goes on naming the decorated `AppModule` and lets the platform
+  decide which graph serves it, which is what keeps the fallback intact: a build
+  that declined the starter's module, or a checkout whose artifact was written by
+  another release, boots the decorated graph rather than failing. The template
+  holds them as `src/invokers.generated.ts.tmpl` and
+  `src/descriptors.generated.ts.tmpl`, which is what gives each module its
+  `{{APONIA_VERSION}}` stamp back on render.
   The framework stamp is the one field that must be substituted rather than
   literal: the runtime compares it with the release that is running, so a literal
   version would make every artifact a fresh application ships refuse itself. A
@@ -235,10 +252,11 @@ separate focused modules. `src/index.ts` is the only public barrel.
 - `tests/starter-artifact-freshness.test.ts` regenerates the starter's own
   sources and fails when what it produces differs from the committed modules.
   That guard protects the optimization rather than safety: a stale artifact is
-  refused by `routing/invoker-artifact.ts` and costs a cold start, so losing it
-  is silent. The comparison normalizes `elysia` and nothing else, because that
-  field is resolved from what the project has installed — a fact about the
-  machine — while the framework stamp and the invokers are decided here.
+  refused by `routing/invoker-artifact.ts` and
+  `modules/module-descriptor-artifact.ts` and costs a cold start, so losing it is
+  silent. The comparison normalizes `elysia` and nothing else, because that field
+  is resolved from what the project has installed — a fact about the machine —
+  while the framework stamp, the invokers, and the module graph are decided here.
 - `generation/generated-source-formatter.ts` is the only place generated source
   is laid out, and it calls a formatter rather than imitating one. The emitters
   used to hand-wrap their own output and drifted from `oxfmt`; the committed
@@ -285,8 +303,10 @@ separate focused modules. `src/index.ts` is the only public barrel.
   CLI's plugin runs inside a generated application's real build, reports `UPDATE`
   for both modules, and that application's own `check`, `test`, `test:e2e`, and
   bundle all pass. It also boots `src/main.ts` before the build and `dist/main.js`
-  after it, because a starter that shipped the modules but never adopted them
-  would pass every other assertion in that lane.
+  after it, and reads each server's startup log for the line that reports the
+  declared graph served it, because a starter that shipped the modules but never
+  handed them over would pass every other assertion in that lane — the answer to
+  `GET /` is the same either way.
 - A REST CRUD resource emits `<name>.model.ts` with separate `@Validation`
   classes for create bodies, update bodies, and shared path parameters.
   Controllers and services consume those classes directly, and REST CRUD does

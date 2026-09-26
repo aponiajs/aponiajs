@@ -51,6 +51,23 @@ export interface DeclinedRouteDescriptor {
 export type DeclinedDescriptor = DeclinedModuleDescriptor | DeclinedRouteDescriptor;
 
 /**
+ * What produced a generated descriptor module.
+ *
+ * The platform refuses an artifact from another framework release and lowers the
+ * decorated root module instead, so the generated file has to say which release
+ * and which Elysia it was built against. `elysia` is `null` when no installed
+ * Elysia could be resolved at generation time, which the platform reports rather
+ * than treats as a match. This is the descriptor half of the fact
+ * `ControllerInvokerProvenance` records for invokers; keep it in step with the
+ * platform's `AponiaModuleDescriptorArtifact` by hand, the same way the route
+ * parameter kinds are kept in step.
+ */
+export interface ModuleDescriptorProvenance {
+  readonly framework: string;
+  readonly elysia: string | null;
+}
+
+/**
  * A generated descriptor module, or the reasons nothing could be generated.
  *
  * `source` is `undefined` when no module could be emitted, in which case the

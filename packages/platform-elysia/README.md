@@ -266,6 +266,52 @@ a symbol-keyed handler are all compiled from decorator metadata exactly as they
 are when the option is omitted. The supplied maps are read only, and an entry
 for a token no controller uses is ignored.
 
+### Build-time generated module descriptors
+
+The `descriptors` option consumes the second artifact `aponia build` writes: the
+application's module graph as data, so bootstrap can mount it without lowering
+decorated classes at all. The entrypoint goes on naming the root module class:
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { moduleDescriptorArtifact } from "./descriptors.generated.ts";
+import { AppModule } from "./app.module.ts";
+
+const application = await AponiaFactory.create(AppModule, {
+  descriptors: moduleDescriptorArtifact,
+});
+```
+
+Bootstrap looks the module up by its class name and boots the declared graph when
+it finds one, reporting the choice under `RoutesResolver`:
+
+```text
+[RoutesResolver] Booting AppModule from the generated module descriptors, so the declared graph serves this application.
+```
+
+The artifact holds the descriptors keyed by module class name, beside the versions
+it was generated against:
+
+```ts
+// src/descriptors.generated.ts
+export const moduleDescriptorArtifact = Object.freeze({
+  framework: "0.6.0-alpha.19",
+  elysia: "1.4.30",
+  modules: Object.freeze({ AppModule: AppModuleDescriptor }),
+});
+```
+
+Unlike invokers, this artifact is the whole graph rather than one handler at a
+time, so the decision is made once and applies to the entire application. It is
+used only when it is stamped with this release, carries a module record, and
+holds a declaration for the root module the application named; in every other
+case bootstrap lowers that module from its decorators, exactly as it does when
+the option is omitted. A foreign, stale, truncated, or hand-edited file
+therefore costs the lowering it was meant to remove rather than a boot that
+cannot start. A module renamed since the last build leaves an entry the
+application no longer names, which is the same refusal — the leftover entry is
+never used to serve a request.
+
 ### Declared routes
 
 A controller can declare its routes as data instead of through decorators. This is

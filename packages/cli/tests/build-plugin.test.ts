@@ -7,6 +7,7 @@ import {
   AponiaFactory,
   type AponiaApplicationOptions,
   type AponiaInvokerArtifact,
+  type AponiaModuleDescriptorArtifact,
 } from "@aponiajs/platform-elysia";
 import {
   aponiaBuildPlugin,
@@ -72,10 +73,10 @@ export class UsersModule {}
 
 /** An entrypoint whose imports only resolve once the plugin has written them. */
 const entryImportingArtifacts = `import { controllerInvokerArtifact } from "./invokers.generated.ts";
-import { moduleDescriptors } from "./descriptors.generated.ts";
+import { moduleDescriptorArtifact } from "./descriptors.generated.ts";
 
 export const artifact = controllerInvokerArtifact;
-export const descriptors = moduleDescriptors;
+export const descriptors = moduleDescriptorArtifact;
 `;
 
 /** An entrypoint that touches nothing the plugin writes. */
@@ -174,20 +175,31 @@ test("the artifacts a build writes are the ones the runtime boots from", async (
   const [decorated, generated, invokerModule] = await Promise.all([
     import(join(directory, "src", "users.module.ts")) as Promise<{ readonly UsersModule: unknown }>,
     import(join(directory, "src", descriptorModuleFileName)) as Promise<{
-      readonly moduleDescriptors: Readonly<Record<string, unknown>>;
+      readonly moduleDescriptorArtifact: AponiaModuleDescriptorArtifact;
     }>,
     import(join(directory, "src", invokerModuleFileName)) as Promise<{
       readonly controllerInvokerArtifact: AponiaInvokerArtifact;
     }>,
   ]);
 
+  // Both artifacts the plugin wrote are handed over the way a generated
+  // application hands them over, so what this case proves is the wiring a
+  // freshly built project uses rather than the emitters in isolation.
+  const logger = new RecordingLogger();
   const compiled = await answers(decorated.UsersModule);
-  const built = await answers(generated.moduleDescriptors.UsersModule, {
+  const built = await answers(decorated.UsersModule, {
+    descriptors: generated.moduleDescriptorArtifact,
     invokers: invokerModule.controllerInvokerArtifact,
+    logger,
   });
 
   expect(built).toEqual(compiled);
   expect(compiled).toEqual([{ status: 200, body: "read:7" }]);
+  expect(logger.records).toContainEqual({
+    context: "RoutesResolver",
+    message:
+      "Booting UsersModule from the generated module descriptors, so the declared graph serves this application.",
+  });
 });
 
 test("fails the build when generation fails instead of bundling the artifact already on disk", async () => {
@@ -248,14 +260,14 @@ test("a stale artifact is still refused by the runtime the plugin built for", as
   const [decorated, generatedModule, invokerModule] = await Promise.all([
     import(join(directory, "src", "users.module.ts")) as Promise<{ readonly UsersModule: unknown }>,
     import(join(directory, "src", descriptorModuleFileName)) as Promise<{
-      readonly moduleDescriptors: Readonly<Record<string, unknown>>;
+      readonly moduleDescriptorArtifact: AponiaModuleDescriptorArtifact;
     }>,
     import(invokerPath) as Promise<{ readonly controllerInvokerArtifact: AponiaInvokerArtifact }>,
   ]);
   expect(invokerModule.controllerInvokerArtifact.framework).toBe("0.0.0-foreign.1");
 
   const logger = new RecordingLogger();
-  const refused = await answers(generatedModule.moduleDescriptors.UsersModule, {
+  const refused = await answers(generatedModule.moduleDescriptorArtifact.modules.UsersModule, {
     invokers: invokerModule.controllerInvokerArtifact,
     logger,
   });
@@ -264,6 +276,43 @@ test("a stale artifact is still refused by the runtime the plugin built for", as
   expect(refusal?.message).toContain("0.0.0-foreign.1");
   expect(refusal?.message).toContain(aponiaVersion);
   // The refusal costs a cold start, never an answer.
+  expect(refused).toEqual(await answers(decorated.UsersModule));
+});
+
+test("a descriptor artifact the build wrote is refused once another release touched it", async () => {
+  const directory = await createProject({
+    "src/users.service.ts": serviceSource,
+    "src/users.controller.ts": controllerSource,
+    "src/users.module.ts": moduleSource,
+    "src/main.ts": entryImportingArtifacts,
+  });
+  await build(directory, "src/main.ts", [aponiaBuildPlugin({ cwd: directory })]);
+
+  const descriptorPath = join(directory, "src", descriptorModuleFileName);
+  const generated = await Bun.file(descriptorPath).text();
+  expect(generated).toContain(`framework: ${JSON.stringify(aponiaVersion)}`);
+  const stale = generated.replace(/framework: "[^"]*"/, 'framework: "0.0.0-foreign.1"');
+  expect(stale).not.toBe(generated);
+  await Bun.write(descriptorPath, stale);
+
+  const [decorated, generatedModule] = await Promise.all([
+    import(join(directory, "src", "users.module.ts")) as Promise<{ readonly UsersModule: unknown }>,
+    import(descriptorPath) as Promise<{
+      readonly moduleDescriptorArtifact: AponiaModuleDescriptorArtifact;
+    }>,
+  ]);
+  expect(generatedModule.moduleDescriptorArtifact.framework).toBe("0.0.0-foreign.1");
+
+  const logger = new RecordingLogger();
+  const refused = await answers(decorated.UsersModule, {
+    descriptors: generatedModule.moduleDescriptorArtifact,
+    logger,
+  });
+
+  const refusal = logger.records.find((record) => record.context === "RoutesResolver");
+  expect(refusal?.message).toContain("0.0.0-foreign.1");
+  expect(refusal?.message).toContain(aponiaVersion);
+  // The whole graph is refused at once, so the answer is the decorated one.
   expect(refused).toEqual(await answers(decorated.UsersModule));
 });
 
@@ -291,14 +340,11 @@ interface Answer {
 
 async function answers(
   rootModule: unknown,
-  options: Omit<AponiaApplicationOptions, "logger" | "invokers"> & {
-    readonly logger?: AponiaApplicationOptions["logger"];
-    readonly invokers?: AponiaApplicationOptions["invokers"];
-  } = {},
+  options: AponiaApplicationOptions = {},
 ): Promise<readonly Answer[]> {
   const application = await AponiaFactory.create(rootModule as never, {
+    ...options,
     logger: options.logger ?? false,
-    invokers: options.invokers,
   });
 
   try {

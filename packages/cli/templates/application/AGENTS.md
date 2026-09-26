@@ -61,17 +61,28 @@ Every later feature is a directory under `src/<resource>/`, holding its module,
 controller, service, models, and tests together.
 
 `src/invokers.generated.ts` and `src/descriptors.generated.ts` sit beside those
-sources and are committed. `src/main.ts` passes `controllerInvokerArtifact` to
-`AponiaFactory.create`, so the application serves through generated route
-invokers from `bun run dev`, `bun start`, and `bun test` without a build having
-run. `bun run build` regenerates both in place, which is why a controller or a
-module change is not live in the generated binding until the next build.
+sources and are committed. `src/main.ts` passes `controllerInvokerArtifact` and
+`moduleDescriptorArtifact` to `AponiaFactory.create` while still naming the
+decorated `AppModule`, so the application serves through generated route
+invokers and boots from the declared module graph from `bun run dev`,
+`bun start`, and `bun test` without a build having run. `bun run build`
+regenerates both in place, which is why a controller or a module change is not
+live in the generated artifacts until the next build.
 
-The invoker module is stamped with the framework release that wrote it, and a
-mismatch is refused rather than used: the runtime compiles every route from
-decorator metadata instead, which is slower but never wrong. That is what a
-stale file costs, and it is the only cost — nothing needs repairing by hand.
-`aponia build` writes the same two modules without bundling.
+Both modules are stamped with the framework release that wrote them, and each is
+refused rather than used when that release is not the one running. The startup
+log says which graph answered, under `RoutesResolver`:
+
+```text
+[RoutesResolver] Booting AppModule from the generated module descriptors, so the declared graph serves this application.
+```
+
+A mismatch is slower but never wrong — the runtime compiles every route from
+decorator metadata and lowers the module graph from its decorators instead — and
+it is the only cost: nothing needs repairing by hand. The same applies to a
+descriptor module left behind by a module rename, because the renamed root has no
+entry and the decorated graph answers. `aponia build` writes the same two modules
+without bundling.
 
 ## Authoring rules
 

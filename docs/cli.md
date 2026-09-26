@@ -248,20 +248,24 @@ The generated runtime flow is:
 
 ```text
 main.ts
-  -> AponiaFactory.create(AppModule, { invokers: controllerInvokerArtifact })
+  -> AponiaFactory.create(AppModule, {
+       descriptors: moduleDescriptorArtifact,
+       invokers: controllerInvokerArtifact,
+     })
   -> AppModule
   -> AppController
   -> AppService
 ```
 
-`main.ts` owns only bootstrap configuration, the generated invoker artifact, and
+`main.ts` owns only bootstrap configuration, the two generated artifacts, and
 `listen`. Decorated controllers own routes. Services own application behavior.
 Generated application code does not import Elysia or low-level runtime
 descriptors.
 
 The starter ships both generated modules, so a freshly generated application
-serves through generated route invokers without a build having run.
-`bun run build` refreshes them instead of creating them.
+serves through generated route invokers and boots from the declared module graph
+without a build having run. `bun run build` refreshes them instead of creating
+them.
 
 This is standard mode and intentionally matches the flat starter structure
 created by `nest new`. Generated resources belong directly under
@@ -316,19 +320,47 @@ application can boot without lowering decorated classes at all. It is written
 only when at least one `@Module()` could be read, so a project whose modules are
 all built at run time still gets its invoker module.
 
-Boot from it by naming the root module's descriptor instead of the class:
+Pass it to the factory from your entrypoint, which goes on naming the root module
+class:
 
 ```ts
 import { AponiaFactory } from "@aponiajs/platform-elysia";
-import { moduleDescriptors } from "./descriptors.generated.ts";
+import { moduleDescriptorArtifact } from "./descriptors.generated.ts";
+import { AppModule } from "./app.module.ts";
 
-const application = await AponiaFactory.create(moduleDescriptors.AppModule);
+const application = await AponiaFactory.create(AppModule, {
+  descriptors: moduleDescriptorArtifact,
+});
 ```
 
-The generated module exports `moduleDescriptors`, one entry per module it could
-declare, keyed by the module class name. A module that is missing from it is one
-the build declined and reported, and it keeps booting from its own decorators, so
-the fallback is per module rather than per application.
+The generated module exports `moduleDescriptorArtifact`: the descriptors keyed by
+module class name, beside the AponiaJS and Elysia versions the file was built
+against. Bootstrap looks up the name of the module you passed. When the artifact
+holds a declaration for it, that declared graph serves the application, and the
+startup log says so under `RoutesResolver`, so a route that behaves unexpectedly
+can be traced to the graph that answered for it without reading the generated
+file:
+
+```text
+[Aponia] 4210 - 07/25/2026, 10:30:00 AM     LOG [RoutesResolver] Booting AppModule from the generated module descriptors, so the declared graph serves this application. +0ms
+```
+
+Otherwise the artifact is refused whole and the root module you named is lowered
+from its decorators, with the same context reporting why. A refusal is not an
+error: the fallback is the bootstrap the application would have run without the
+option at all, so a stale or hand-edited file costs a cold start rather than a
+boot that cannot start. That is what makes the file an optimization an
+application can ship — and what makes a descriptor left behind by a module
+rename harmless, since the renamed root has no entry and the decorated graph
+answers instead.
+
+Because the artifact is substituted as a whole, its fallback is per application
+rather than per module. A module the build declined is missing from it, and a
+module that imports one the build declined is left out with it, so an application
+whose root is reachable from a declined module boots from its decorators
+throughout. Everything it would have booted from is still there: the decorators
+remain the authoring surface, and the generated file changes which graph is
+lowered, never which declarations exist.
 
 Neither of the two decorator reads a generated module used to leave behind
 happens on a path the build generated:
@@ -348,9 +380,8 @@ happens on a path the build generated:
   meant, so it copies the class name and that route keeps the run-time read.
 
 The decorators remain the authoring surface, and the paths that still read their
-metadata are the ones the build did not touch: a module the build declined keeps
-booting from its own decorators, as does any application that boots from
-`AppModule` rather than from `moduleDescriptors`.
+metadata are the ones the build did not touch: a module the build declined, and
+every application that does not hand the artifact over.
 
 Anything the build cannot read is reported rather than guessed at. Each decline
 prints its own line, which is not a change line:
@@ -360,15 +391,15 @@ CREATE src/invokers.generated.ts
 DECLINED module UsersModule: @Module in /app/src/users/users.module.ts must declare "providers" as an array literal to be read statically.
 ```
 
-A declined module is left out of `moduleDescriptors` whole; a declined route also
-sinks the module that declares it, because a controller is declared whole and
-emitting it without a route would leave the application answering a 404 where it
-used to answer with the handler. Fix what the line names and build again.
+A declined module is left out of the artifact whole; a declined route also sinks
+the module that declares it, because a controller is declared whole and emitting
+it without a route would leave the application answering a 404 where it used to
+answer with the handler. Fix what the line names and build again.
 
 The command only reads source, so it never starts the application, never
 connects to anything, and never runs provider factories. Run it again whenever a
-controller or a module changes; a descriptor module that names a module the
-application no longer declares is stale until you do. It is separate from
+controller or a module changes: a file that is not current still boots the
+application, from the decorators it was lowered from. It is separate from
 `bun run build`, which bundles the application for deployment.
 
 ### Generating during a bundle
@@ -421,10 +452,11 @@ by `aponia new` starts with it registered: its `bun run build` runs
 `scripts/build.ts`, which is the script above.
 
 The starter commits both generated modules and its `src/main.ts` imports
-`controllerInvokerArtifact` and passes it to `AponiaFactory.create`, so a
-freshly generated application serves through generated route invokers from its
-first `bun run dev`, `bun start`, or `bun test` — no build required. Each build
-refreshes them in place and reports `UPDATE` rather than `CREATE`.
+`controllerInvokerArtifact` and `moduleDescriptorArtifact` and passes both to
+`AponiaFactory.create`, so a freshly generated application serves through
+generated route invokers from its first `bun run dev`, `bun start`, or
+`bun test` — no build required. Each build refreshes them in place and reports
+`UPDATE` rather than `CREATE`.
 
 Both modules are laid out by a formatter that `@aponiajs/cli` calls rather than
 imitates, so they are ordinary application source: your `vp check` reads them,
@@ -439,10 +471,11 @@ A build that does not register the plugin behaves exactly as before, and
 `aponia build` remains the way to generate without bundling.
 
 The committed modules go stale when a controller or a module changes, and a
-stale one is refused by the runtime rather than used: `invokers.generated.ts`
-records the framework release it was built against, and an artifact from another
-release costs a slower cold start — never a wrong binding — until the next build
-rewrites it.
+stale one is refused by the runtime rather than used: each records the framework
+release it was built against, and an artifact from another release — or one that
+holds no declaration for the module the application names — costs a slower cold
+start, never a wrong route or a graph the application no longer declares, until
+the next build rewrites it.
 
 ## Safety behavior
 

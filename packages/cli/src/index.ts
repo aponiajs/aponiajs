@@ -21,6 +21,7 @@ export type {
   DeclinedRouteDescriptor,
   DescriptorSourceFile,
   EmittedModuleDescriptors,
+  ModuleDescriptorProvenance,
 } from "./generation/descriptor-emitter.types.ts";
 export { analyzeModuleDescriptors } from "./generation/module-descriptors.ts";
 export type {

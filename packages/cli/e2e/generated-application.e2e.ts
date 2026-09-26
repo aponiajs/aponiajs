@@ -194,7 +194,9 @@ test("packed workspaces generate an application that installs, validates, builds
     // serving through generated route invokers since before this build: the
     // checks above, and the e2e suite inside them, ran on a project no build had
     // touched. Booting the sources here is what asserts that rather than
-    // assuming it.
+    // assuming it, and the startup line is what separates "the starter ships the
+    // artifacts" from "the starter boots from them" — a starter that imported
+    // them and never handed them over answers every request either way.
     for (const artifact of generatedArtifacts) {
       expect(await Bun.file(join(projectDirectory, artifact)).exists()).toBe(true);
     }
@@ -281,6 +283,16 @@ async function assertPackageDependency(
   expect(manifest.dependencies[dependency]).toBe(version);
 }
 
+/**
+ * The graph a generated application reports it booted from.
+ *
+ * `src/main.ts` names the decorated `AppModule` and hands over the descriptor
+ * module the build committed beside it, so this line is the application saying
+ * which of the two served it. It is logged while the application starts, before
+ * the first request is answered.
+ */
+const descriptorStartupLine = "Booting AppModule from the generated module descriptors";
+
 async function expectServer(projectDirectory: string, entrypoint: string): Promise<void> {
   const reservation = Bun.serve({
     port: 0,
@@ -298,16 +310,20 @@ async function expectServer(projectDirectory: string, entrypoint: string): Promi
     stderr: "pipe",
     stdout: "pipe",
   });
-  const stdout = new Response(server.stdout).text();
-  const stderr = new Response(server.stderr).text();
+  // A server this lane starts is killed rather than exiting on its own, so both
+  // streams are read as they arrive: awaiting one after the process ends would
+  // mean waiting for the kill below.
+  const stdout = captureStream(server.stdout);
+  const stderr = captureStream(server.stderr);
 
   try {
-    for (let attempt = 0; attempt < 100; attempt += 1) {
+    let answered = false;
+    for (let attempt = 0; attempt < 100 && !answered; attempt += 1) {
       try {
         const response = await fetch(`http://127.0.0.1:${port}/`);
         expect(response.status).toBe(200);
         expect(await response.text()).toBe("Hello from generated-app!");
-        return;
+        answered = true;
       } catch {
         if (server.exitCode !== null) {
           break;
@@ -316,13 +332,43 @@ async function expectServer(projectDirectory: string, entrypoint: string): Promi
       }
     }
 
-    throw new Error(
-      `Generated application did not start successfully from "${entrypoint}".\nstdout:\n${await stdout}\nstderr:\n${await stderr}`,
-    );
+    if (!answered) {
+      throw new Error(
+        `Generated application did not start successfully from "${entrypoint}".\n` +
+          `stdout:\n${stdout.text()}\nstderr:\n${stderr.text()}`,
+      );
+    }
+
+    for (let attempt = 0; attempt < 100; attempt += 1) {
+      if (stdout.text().includes(descriptorStartupLine)) {
+        break;
+      }
+      await Bun.sleep(20);
+    }
+    expect(stdout.text()).toContain(descriptorStartupLine);
   } finally {
     server.kill();
     await server.exited;
   }
+}
+
+/**
+ * A subprocess stream, captured as it arrives.
+ *
+ * The text a server wrote is only readable once its stream has ended, so a
+ * long-running process needs the chunks collected while it runs rather than the
+ * stream awaited.
+ */
+function captureStream(stream: ReadableStream<Uint8Array>): { readonly text: () => string } {
+  const decoder = new TextDecoder();
+  let captured = "";
+  void (async () => {
+    for await (const chunk of stream) {
+      captured += decoder.decode(chunk, { stream: true });
+    }
+  })();
+
+  return { text: () => captured };
 }
 
 async function run(

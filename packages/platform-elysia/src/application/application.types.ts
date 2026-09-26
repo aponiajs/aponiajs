@@ -1,5 +1,6 @@
 import type { LoggerService, LogLevel } from "@aponiajs/common";
 import type { AnyElysia, Elysia, ElysiaConfig } from "elysia";
+import type { AponiaModuleDescriptorArtifact } from "../modules/module-descriptor-artifact.types.ts";
 import type { AponiaInvokerArtifact } from "../routing/invoker-artifact.types.ts";
 
 export type NativeElysiaConfigurator<TNativeApplication extends AnyElysia> = (
@@ -32,6 +33,23 @@ export interface AponiaApplicationOptions {
    * application boots on compiled binding; see {@link AponiaInvokerArtifact}.
    */
   readonly invokers?: AponiaInvokerArtifact;
+  /**
+   * A build-time generated module descriptor artifact, as `aponia build` writes
+   * it. Its record holds one declared module per module class name, and the root
+   * module passed to the factory is substituted by the declaration matching its
+   * name.
+   *
+   * An artifact this release cannot use — one built by another framework
+   * release, one whose root name it does not hold, or one whose entries are not
+   * module descriptors — is refused whole and the root module is lowered from
+   * its decorators exactly as it is when this option is omitted. Refusing costs
+   * the lowering the artifact exists to remove and nothing more, so supplying it
+   * can never make a bootable application fail.
+   *
+   * The startup log reports which of the two graphs served the application,
+   * because the answer decides what a route actually runs.
+   */
+  readonly descriptors?: AponiaModuleDescriptorArtifact;
 }
 
 export interface ConfiguredAponiaApplicationOptions<

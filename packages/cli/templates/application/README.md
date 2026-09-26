@@ -10,9 +10,16 @@ bun run build
 
 `bun run build` bundles the application into `dist` and regenerates
 `src/invokers.generated.ts` and `src/descriptors.generated.ts` first. Both are
-committed: `src/main.ts` passes the generated route invokers to
-`AponiaFactory.create`, so `bun run dev`, `bun start`, and `bun test` use them
-without a build having run, and each build refreshes them in place.
+committed: `src/main.ts` passes both artifacts to `AponiaFactory.create` while
+still naming the decorated `AppModule`, so `bun run dev`, `bun start`, and
+`bun test` serve through generated route invokers and boot from the declared
+module graph without a build having run, and each build refreshes them in place.
+
+Each artifact records the framework release it was built against, and the runtime
+refuses one from another release instead of using it — the same for a descriptor
+module that holds no declaration for `AppModule`. The application then compiles
+its routes and lowers its modules from decorators, exactly as it would without
+the artifacts, and says so under `RoutesResolver` in the startup log.
 
 The generated request flow is:
 

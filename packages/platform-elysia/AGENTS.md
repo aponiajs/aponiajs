@@ -105,6 +105,27 @@ runtime boundary it describes.
   `routing/native-route.ts`'s structural guard, and reading an installed
   manifest at bootstrap would add a resolution this package does not otherwise
   need.
+- `AponiaApplicationOptions.descriptors` accepts the descriptor artifact
+  `aponia build` writes, and `modules/module-descriptor-artifact.ts` selects the
+  root module from it before anything is compiled. The two artifacts are refused
+  the same way for the same reason, but not with the same consequence: an invoker
+  artifact substitutes one handler at a time, while a descriptor artifact _is_
+  the module graph, so the choice is made once and applies to the whole
+  application. A descriptor is used only when the artifact is stamped with this
+  release, carries a module record, and holds a declaration for the name of the
+  module the application passed; every other case lowers that module from its
+  decorators, so a stale, foreign, truncated, or hand-edited file costs the
+  lowering the descriptor was meant to remove and never a boot that cannot start.
+  The lookup is by class name because that is what the artifact is keyed by, and
+  it is also what closes the rename hole: a root renamed since the last build has
+  no entry, so the entry left behind cannot boot a graph the application no
+  longer declares. The choice is reported under `RoutesResolver`, once, whichever
+  way it went, because an application booting from data has to be able to say
+  which graph served it. A root passed as a descriptor rather than as a class
+  names the graph itself, so the artifact is not consulted, and `isModuleDefinition`
+  guards the selected entry structurally rather than trusting the option's type:
+  a JavaScript caller has no type checker, and a truncated descriptor reaching
+  the graph compiler is the one outcome this option must never cause.
 - `defineElysiaControllerRoutes` is the descriptor path's counterpart to
   `@Controller()` and its route decorators: it compiles `ElysiaRoutePlan` values
   through the same lowering a decorated controller uses, so a declared

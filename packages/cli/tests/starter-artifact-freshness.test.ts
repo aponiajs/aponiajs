@@ -21,13 +21,14 @@ afterEach(async () => {
 /**
  * The one field of a committed artifact that cannot be compared.
  *
- * Everything else in `invokers.generated.ts` is decided by this package: the
- * framework stamp comes from `version.ts` and the invokers come from the
- * project's own source. `elysia` is resolved from what the project has
- * installed, so it is a fact about the machine rather than about this
- * repository, and it is provenance the platform never re-reads
- * (`packages/platform-elysia/src/routing/invoker-artifact.ts` records it only to
- * name both sides in a refusal). A difference there cannot change what an
+ * Everything else in either generated module is decided by this package: the
+ * framework stamp comes from `version.ts`, the invokers and the module graph come
+ * from the project's own source. `elysia` is resolved from what the project has
+ * installed, so it is a fact about the machine rather than about this repository,
+ * and it is provenance the platform never re-reads
+ * (`packages/platform-elysia/src/routing/invoker-artifact.ts` and
+ * `packages/platform-elysia/src/modules/module-descriptor-artifact.ts` record it
+ * only to name both sides in a refusal). A difference there cannot change what an
  * application does, which is why the comparison below normalizes it and nothing
  * else.
  */
@@ -37,15 +38,17 @@ const elysiaStamp = /^ {2}elysia: .*,$/m;
  * Guards the optimization, not safety.
  *
  * The starter commits the two modules a build writes, so a freshly generated
- * application answers through generated route invokers without a build having
- * run. The runtime is already safe against a stale artifact: `invoker-artifact.ts`
- * compares the artifact's framework stamp with the release that is running,
- * refuses the artifact whole when they differ, and compiles every route from
- * decorator metadata instead. Losing that comparison is therefore not a wrong
- * answer — it is a slower cold start that nothing reports. This test is what
- * notices: it fails when the committed modules stop being what the generator
- * produces today, which is the state that would make every newly generated
- * application silently stop using them.
+ * application answers through generated route invokers and boots through the
+ * declared module graph without a build having run. The runtime is already safe
+ * against a stale artifact: `invoker-artifact.ts` and
+ * `module-descriptor-artifact.ts` each compare the artifact's framework stamp
+ * with the release that is running, refuse the artifact whole when they differ,
+ * and fall back to compiling every route and lowering every module from decorator
+ * metadata. Losing that comparison is therefore not a wrong answer — it is a
+ * slower cold start that nothing reports. This test is what notices: it fails
+ * when the committed modules stop being what the generator produces today, which
+ * is the state that would make every newly generated application silently stop
+ * using them.
  */
 test("the starter's committed generated modules are what the generator produces today", async () => {
   const temporaryDirectory = await mkdtemp(join(tmpdir(), "aponia-starter-artifacts-"));
@@ -74,11 +77,14 @@ test("the starter's committed generated modules are what the generator produces 
     descriptors: await Bun.file(descriptorPath).text(),
   };
 
-  // The stamp is what the platform compares before it accepts the artifact at
-  // all, so the committed module has to carry the release that is running.
+  // The stamp is what the platform compares before it accepts either artifact
+  // at all, so both committed modules have to carry the release that is running.
   expect(committed.invokers).toContain(`framework: ${JSON.stringify(aponiaVersion)},`);
+  expect(committed.descriptors).toContain(`framework: ${JSON.stringify(aponiaVersion)},`);
   expect(regenerated.invokers.replace(elysiaStamp, `  elysia: "<provenance>",`)).toBe(
     committed.invokers.replace(elysiaStamp, `  elysia: "<provenance>",`),
   );
-  expect(regenerated.descriptors).toBe(committed.descriptors);
+  expect(regenerated.descriptors.replace(elysiaStamp, `  elysia: "<provenance>",`)).toBe(
+    committed.descriptors.replace(elysiaStamp, `  elysia: "<provenance>",`),
+  );
 });

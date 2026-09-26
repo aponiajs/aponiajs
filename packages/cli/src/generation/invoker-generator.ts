@@ -109,10 +109,14 @@ export async function generateInvokers(
     imports[controller.className] = toImportPath(outputPath, file);
   }
 
+  const provenance = Object.freeze({
+    framework: aponiaVersion,
+    elysia: await resolveElysiaVersion(projectRoot),
+  });
   const emitted = emitControllerInvokers(
     found.map((entry) => entry.controller),
     imports,
-    Object.freeze({ framework: aponiaVersion, elysia: await resolveElysiaVersion(projectRoot) }),
+    provenance,
   );
   if (emitted.source === undefined) {
     const [first] = emitted.declined;
@@ -121,7 +125,7 @@ export async function generateInvokers(
     );
   }
 
-  const descriptors = emitModuleDescriptors(analyzed, descriptorPath);
+  const descriptors = emitModuleDescriptors(analyzed, descriptorPath, provenance);
   // Regenerating is the normal case, so a file is replaced rather than refused
   // when it is already there. The descriptor module is written only when
   // something could be declared for it: every application that reaches this
