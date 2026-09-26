@@ -567,7 +567,13 @@ conformance lane mirrors the public contract in
   validation slot, every guard and interceptor stage in the order the code
   states, a declared route's filter list in its precedence order, the binding,
   the invoke source, and the handler, with every `next` naming a stage the same
-  route actually declares and no stage unreachable from the first.
+  route actually declares and no stage unreachable from the first; `/requests`
+  recording an entry with every field it publishes by default, carrying the
+  pattern in `path` and the query string in `url`, recording an unmatched
+  request without a route identity, recording nothing when `capture` is false,
+  omitting `headers` and `body` when each is turned off, marking a body it cut at
+  `bodyLimit`, replacing a `redact`ed header with the literal, and carrying
+  `error` on a `5xx` and on nothing else.
 - Assert `contract` is `1` and that a consumer reading only `meta` can decide
   whether to proceed.
 - The platform changes carry their own tests in the platform's lanes, including
