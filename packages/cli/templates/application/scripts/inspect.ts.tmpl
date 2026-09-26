@@ -1,4 +1,5 @@
 import { inspectAponiaApplication } from "@aponiajs/platform-elysia";
+import { moduleDescriptorArtifact } from "../src/descriptors.generated.ts";
 import { AppModule } from "../src/app.module.ts";
 
 /**
@@ -10,10 +11,18 @@ import { AppModule } from "../src/app.module.ts";
  * bun run inspect --json   # the whole inspection, for tooling
  * ```
  *
+ * The descriptor artifact is resolved the way `src/main.ts` resolves it, so this
+ * reports the graph the application boots from rather than the decorated classes
+ * it names. `logger: false` keeps the line reporting that choice out of the
+ * summary, and out of the `--json` document a tool reads.
+ *
  * Routes registered through `elysiaController` callbacks do not appear here;
  * their routes only exist once the callback runs against a real application.
  */
-const inspection = inspectAponiaApplication(AppModule);
+const inspection = inspectAponiaApplication(AppModule, {
+  descriptors: moduleDescriptorArtifact,
+  logger: false,
+});
 
 if (Bun.argv.includes("--json")) {
   console.log(JSON.stringify(inspection, undefined, 2));

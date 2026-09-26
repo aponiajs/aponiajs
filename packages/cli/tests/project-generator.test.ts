@@ -99,7 +99,13 @@ test("ships a runnable inspection script wired into the manifest", async () => {
   };
 
   expect(script).toContain('import { inspectAponiaApplication } from "@aponiajs/platform-elysia"');
+  expect(script).toContain(
+    'import { moduleDescriptorArtifact } from "../src/descriptors.generated.ts"',
+  );
   expect(script).toContain('import { AppModule } from "../src/app.module.ts"');
+  // The artifact is what makes the script describe the graph the application
+  // boots from; without it the summary would be the decorated classes.
+  expect(script).toContain("descriptors: moduleDescriptorArtifact");
   expect(script).toContain("--json");
   expect(manifest.scripts.inspect).toBe("bun run scripts/inspect.ts");
 });
