@@ -125,6 +125,24 @@ export class AppModule {}
   route has no pattern to report — `path` carries the path that arrived, and
   `/routes` is the table that tells the two apart. The record belongs to one
   application and one boot, so a second `listen()` begins a new one.
+- **`GET /__devtools/aot` reports what a build decided beside what the boot did
+  with it.** `graph` and `invokers` are the boot record's: which root the
+  container compiled, and the boot's verdict on the generated invoker artifact,
+  with the refusal's own sentence — and no `reason` key at all when there was no
+  refusal, because a reason belongs to a refusal. `controllers` is the verdict
+  `aponia build` reaches for the project the server was started in: every
+  `@Controller()` class its analysis reads, and per handler — one entry per
+  property key, however many routes it declares — `"generated"` when the emitter
+  renders an invoker for it, `"compiled"` when it declines and the running
+  platform keeps compiling it, with the emitter's own reason. `@aponiajs/cli` is
+  imported on the first request to this endpoint and never at boot, because it
+  carries `ts-morph` and a formatter that an application which never polls this
+  endpoint should not load; the analysis is read once per process, and an
+  unreachable one leaves `controllers` empty and reports why once under
+  `Devtools` rather than failing the endpoint or answering it per poll. The
+  project root is the process's working directory — the same root `aponia build`
+  defaults to — and the endpoint is served only for a record that states the two
+  boot facts it publishes.
 - Every endpoint is a `GET`: any other method answers `405` before the path is
   read, and a path the server does not serve answers `404`.
 

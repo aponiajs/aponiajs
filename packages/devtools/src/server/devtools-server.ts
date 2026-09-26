@@ -1,7 +1,14 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import type { LoggerService } from "@aponiajs/common";
 import { readApplicationDiagnostics } from "@aponiajs/platform-elysia";
 import type { Elysia } from "elysia";
+import {
+  buildAotPayload,
+  devtoolsAotPath,
+  loadAotAnalysis,
+  readAotFacts,
+} from "../endpoints/aot.ts";
 import { buildFlowPayload, devtoolsFlowPath } from "../endpoints/flow.ts";
 import { buildGraphPayload, devtoolsGraphPath } from "../endpoints/graph.ts";
 import { readSinceCursor } from "../endpoints/cursor.ts";
@@ -10,6 +17,7 @@ import { buildMetaPayload, devtoolsMetaPath } from "../endpoints/meta.ts";
 import { buildRequestsPayload, devtoolsRequestsPath } from "../endpoints/requests.ts";
 import { buildRoutesPayload, devtoolsRoutesPath } from "../endpoints/routes.ts";
 import type { LogBuffer } from "../logging/log-buffer.types.ts";
+import { oneLine } from "../logging/one-line.ts";
 import type { RequestBuffer } from "../requests/request-buffer.types.ts";
 import type {
   DevtoolsHandlers,
@@ -38,7 +46,12 @@ const defaultDevtoolsPort = 8000;
  */
 export function startDevtoolsServer(options: DevtoolsServerOptions): DevtoolsServer | undefined {
   const port = options.port ?? defaultDevtoolsPort;
-  const handlers = createHandlers(options.application, options.logs, options.requests);
+  const handlers = createHandlers(
+    options.application,
+    options.logs,
+    options.requests,
+    options.logger,
+  );
 
   try {
     const server = Bun.serve({
@@ -50,7 +63,7 @@ export function startDevtoolsServer(options: DevtoolsServerOptions): DevtoolsSer
     return Object.freeze({ url: server.url.origin, stop: () => void server.stop(true) });
   } catch (error) {
     options.logger.warn(
-      `Aponia devtools could not listen on http://${devtoolsHostname}:${port} (${describe(error)}); the application continues without it.`,
+      `Aponia devtools could not listen on http://${devtoolsHostname}:${port} (${oneLine(error)}); the application continues without it.`,
     );
 
     return undefined;
@@ -139,6 +152,13 @@ function findInstalledElysiaManifest(baseDirectory: string): string | undefined 
  * the buffer it states, and each reads its cursor from the request, because two
  * pollers read one buffer from two different positions.
  *
+ * `/aot` publishes the facts its record states even when that is all it can
+ * publish, so the path is registered only for a record that carries them: a
+ * record a copy of the platform this release does not own wrote is one this
+ * server has nothing to say about, and the dispatcher answers `404` for it. The
+ * analyzer that supplies its other half is reached from the request instead, so
+ * nothing here loads it.
+ *
  * Every builder it calls is total — a record this release cannot project is one
  * of the cases they answer rather than throw for — because this runs before the
  * bind's `try`, where a failure would be reported as a refused listen, a cause
@@ -148,6 +168,7 @@ function createHandlers(
   application: Elysia,
   logs: LogBuffer | undefined,
   requests: RequestBuffer | undefined,
+  logger: LoggerService,
 ): DevtoolsHandlers {
   const diagnostics = readApplicationDiagnostics(application);
   const meta = buildMetaPayload({
@@ -156,6 +177,7 @@ function createHandlers(
     startedAt: new Date().toISOString(),
   });
   const graph = buildGraphPayload(diagnostics);
+  const aot = readAotFacts(diagnostics);
 
   return Object.freeze({
     [devtoolsMetaPath]: () => jsonResponse(meta),
@@ -163,6 +185,16 @@ function createHandlers(
     // the handler record states the paths this server serves, and a path it does
     // not own is the dispatcher's `404`.
     ...(graph === undefined ? {} : { [devtoolsGraphPath]: () => jsonResponse(graph) }),
+    // `/aot` is the one endpoint here whose payload is built per request even
+    // though half of it describes the boot: the other half is a project's
+    // analysis, which is settled asynchronously and read from a cache this
+    // handler shares with every later poll.
+    ...(aot === undefined
+      ? {}
+      : {
+          [devtoolsAotPath]: async () =>
+            jsonResponse(buildAotPayload(aot, await loadAotAnalysis(process.cwd(), logger))),
+        }),
     [devtoolsRoutesPath]: () => jsonResponse(buildRoutesPayload(application, diagnostics)),
     [devtoolsFlowPath]: () => jsonResponse(buildFlowPayload(application, diagnostics)),
     // A server with no stream serves no `/logs`, the way a boot the record holds
@@ -193,14 +225,4 @@ function createHandlers(
  */
 function jsonResponse(payload: unknown): Response {
   return Response.json(payload, { status: 200, headers: { "cache-control": "no-store" } });
-}
-
-/**
- * One line-safe account of a thrown reason. The refusal is a single row, so a
- * message that arrived wrapped is folded back into one.
- */
-function describe(error: unknown): string {
-  const message = error instanceof Error ? error.message : String(error);
-
-  return message.replaceAll(/\s+/g, " ").trim();
 }

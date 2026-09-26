@@ -34,6 +34,7 @@
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
+    "@aponiajs/cli": "workspace:*",
     "@aponiajs/common": "workspace:*",
     "@aponiajs/platform-elysia": "workspace:*"
   },

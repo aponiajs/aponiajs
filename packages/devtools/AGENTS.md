@@ -9,7 +9,9 @@ The opt-in devtools surface for a running application: the module an application
 imports, the plugin that runs at `onStart`, and (from the tasks that build it)
 the loopback HTTP API that reports what the running application actually is. The
 package is a leaf — nothing in the framework depends on it, and an application
-installs it deliberately.
+installs it deliberately. It is not dependency-free itself: `@aponiajs/cli` is
+what `/aot`'s build verdicts are read through, and that import is deferred to the
+first request so an application that never polls the endpoint never loads it.
 
 | Domain       | Owns                                                                                                                    |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------- |
@@ -17,7 +19,7 @@ installs it deliberately.
 | `server/`    | `startDevtoolsServer`, the loopback socket, `routeRequest`, the dispatcher                                              |
 | `endpoints/` | One payload builder and its wire contract per endpoint, `/meta` first, and the cursor reader the cursor endpoints share |
 | `buffer/`    | The bounded cursor buffer `/logs` and `/requests` share, and nothing else                                               |
-| `logging/`   | The log stream: its record, its bound, and the tap that fills it from a logger                                          |
+| `logging/`   | The log stream: its record, its bound, the tap that fills it from a logger, and the one-line form of a thrown reason    |
 | `requests/`  | The request record: its entry, its bound, and the capture that fills it                                                 |
 
 `src/index.ts` is the only public barrel. Keep `*.types.ts` colocated with the
@@ -190,6 +192,62 @@ runtime boundary it describes.
   route ends with — because the first entry that answers is the one that decides.
   A route no plan describes carries no list at all: the platform compiles that
   array only for the routes it mounts from a plan.
+- `/aot` has two owners, which is why its payload is built per request rather
+  than frozen when the socket starts: `graph` and `invokers` are the boot
+  record's, and `controllers` is `@aponiajs/cli`'s analysis of the project the
+  process was started in — the one fact a boot cannot state, because it belongs
+  to a build. The record's half is validated for the two facts this endpoint
+  publishes — a graph this release names, and an invoker verdict that is a
+  boolean with a reason that is a string or absent — and a record that does not
+  carry them serves no `/aot` at all: an application no boot produced, and one a
+  copy of the platform this release does not own booted, are the same absence
+  `/graph` answers with the dispatcher's `404`.
+- `invokers.reason` is published exactly as the record states it, and a record
+  that states none publishes no reason key. A reason belongs to a refusal, so an
+  artifact the boot adopted is reported with no reason at all rather than with a
+  placeholder or with the selector's sentence restated for a refusal that never
+  happened. `accepted` is the running boot's verdict on the artifact it was
+  offered, never a prediction about the verdicts beside it, and `/routes` remains
+  the endpoint that reports which binding actually serves a mounted route.
+- The analyzer is reached through a dynamic import on the first request, never at
+  boot. `@aponiajs/cli` carries `ts-morph` and a formatter, so a static import
+  would load both into every application that enables the devtools whether or not
+  anyone opens `/aot`, while this endpoint is polled by a person and a
+  `bun --watch` loop that is never polled pays nothing. The result is cached for
+  the life of the process, keyed by project root, and what is cached is the
+  promise rather than its result, so two polls arriving together read the project
+  once. A failure is cached the same way — one row under `Devtools`, one reading
+  of the project rather than a walk per poll — and its cost is stated rather than
+  hidden: a project fixed on disk keeps reading as unreadable until the process
+  restarts.
+- The analysis mirrors `aponia build`'s rules instead of calling it, because the
+  command writes files and refuses a project it cannot build while this endpoint
+  only reports what a build would decide. The configuration file, the source root
+  and its escape guard, the ignore list, the sorted walk, the duplicate class
+  name, and the import specifier are repeated from
+  `packages/cli/src/generation/invoker-generator.ts` and
+  `generation/project-configuration.ts`, with `Bun.Glob` in place of the command's
+  `fast-glob` because a runtime package reaches its glob through the runtime. The
+  refusal sentences are the command's own, so the row a developer reads here names
+  what a build would say about the same project. Keep the copies in step by hand.
+- A handler's verdict is the emitter's, never re-applied here.
+  `emitControllerInvokers` decides which handler is emitted and which is declined,
+  and the reason beside a `"compiled"` handler is the sentence that emitter
+  returned, so the endpoint cannot drift from what the build prints. A handler is
+  one property key rather than one route — the emitter keys its invokers by the
+  handler, so a method carrying two route decorators is one entry with one verdict
+  — and that key rule is the one part of the emitter's output this endpoint cannot
+  read back, which is why it lives in one function. A project whose every handler
+  was declined is still reported: a build writes no module there and names the
+  first decline it found, and those per-handler reasons are exactly what this
+  endpoint exists to explain.
+- `controllers` is empty exactly when no verdicts are available. A project with no
+  configuration file, no controller under its source root, a source root outside
+  the project, two controllers sharing a class name, or an analyzer that would not
+  load reports once under `Devtools` and leaves the list empty, so a consumer never
+  reads "this project declares no controllers" out of a failure. The framework half
+  is served either way, which is the degradation this endpoint promises: one field
+  group, never the endpoint.
 - The log stream is built when the module is registered, not when the socket
   starts, and the logger is patched in place rather than replaced. Registration is
   the only moment this package holds the application's logger before the boot
@@ -363,7 +421,7 @@ runtime boundary it describes.
   package serves mutates application state.
 - `startDevtoolsServer` is synchronous, and so is the read that resolves the
   installed Elysia, because Elysia does not await `onStart`. A handler may still
-  answer a promise: Task 10's analyzer loads itself on first request.
+  answer a promise: `/aot`'s analyzer loads itself on its first request.
 - Only an Elysia installed in the tree is reported. `Bun.resolveSync` falls back
   to Bun's global install cache, so it answers for a tree that installed nothing
   and would name a release the application never ran against; the resolver walks
@@ -397,6 +455,15 @@ whose devtools points at the port the blocker took — and the pair is what make
 the two reports distinguishable: the ephemeral case names an address that
 answers, the refused case states it could not listen and leaves the application
 answering its own routes.
+
+`/aot`'s analysis is a project on disk, so its cases write one into a temporary
+directory and `process.chdir` into it, restoring the working directory after each
+case: the root a build defaults to is the process's own, and the endpoint is
+proved over HTTP rather than by calling its builder. Its laziness is proved in a
+`Bun.spawnSync` child that reads Bun's module registry before the import, after
+it, and after the first request, because the parent process may already hold the
+analyzer through another test file's imports — a snapshot taken there could only
+ever show that nothing was loaded _again_.
 
 The socket's lifetime is asserted over HTTP too: a case polls the address while
 the application listens, closes the application, and polls again, because a

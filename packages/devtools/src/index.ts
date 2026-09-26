@@ -22,6 +22,14 @@ export type {
   DevtoolsServerOptions,
 } from "./server/devtools-server.types.ts";
 export type {
+  AponiaAotController,
+  AponiaAotGraph,
+  AponiaAotHandler,
+  AponiaAotInvoker,
+  AponiaAotInvokers,
+  AponiaAotPayload,
+} from "./endpoints/aot.types.ts";
+export type {
   AponiaArtifactStamps,
   AponiaGraphPayload,
   AponiaLogsPayload,

@@ -149,6 +149,7 @@
       "name": "@aponiajs/devtools",
       "version": "0.6.0-alpha.22",
       "dependencies": {
+        "@aponiajs/cli": "workspace:*",
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
       },
