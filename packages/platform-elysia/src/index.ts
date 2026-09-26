@@ -4,6 +4,7 @@ export { readApplicationDiagnostics } from "./application/application-diagnostic
 export type {
   AponiaApplicationDiagnostics,
   AponiaArtifactProvenance,
+  AponiaCallbackRouteDiagnostics,
   AponiaCompiledRouteDiagnostics,
   AponiaInvokerDiagnostics,
 } from "./application/application-diagnostics.types.ts";

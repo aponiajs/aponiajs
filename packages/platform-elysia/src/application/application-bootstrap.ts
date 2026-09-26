@@ -5,6 +5,7 @@ import {
   type ClassToken,
   type EnhancerMetadata,
   type LoggerService,
+  type Token,
 } from "@aponiajs/common";
 import { createContainer } from "@aponiajs/core";
 import { Elysia, type AnyElysia } from "elysia";
@@ -37,6 +38,7 @@ import {
   attachApplicationDiagnostics,
   createApplicationDiagnostics,
 } from "./application-diagnostics.ts";
+import type { AponiaCallbackRouteDiagnostics } from "./application-diagnostics.types.ts";
 import type { ApplicationBootstrapResult } from "./application-bootstrap.types.ts";
 import type {
   AponiaApplicationOptions,
@@ -155,6 +157,14 @@ export async function bootstrapAponiaApplication(
     logger,
   });
 
+  // Two facts the record publishes are not readable afterwards, so the mounts
+  // that decide them collect them here. Which property keys a supplied invoker
+  // bound is settled one route at a time while the route registers, and a
+  // callback's routes are named by the callback that mounted them, which no
+  // entry of the mounted table remembers: it knows a method and a path.
+  const generatedInvokers = new Map<Token<unknown>, ReadonlySet<string | symbol>>();
+  const callbackRoutes: AponiaCallbackRouteDiagnostics[] = [];
+
   for (const module of container.graph.modules) {
     for (const controller of module.controllers) {
       if (!isElysiaController(controller)) {
@@ -186,14 +196,23 @@ export async function bootstrapAponiaApplication(
       });
       if (typeof controller.registerRoutes === "function") {
         const routeStart = nativeApplication.routes.length;
-        registerControllerRoutes(
+        const generatedKeys = registerControllerRoutes(
           controller,
           nativeApplication,
           instance,
           invokerSelection.invokers,
           mountedEnhancers,
         );
-        logControllerRoutes(logger, controller, nativeApplication.routes.slice(routeStart));
+        // The table grew by exactly the routes this controller mounted, which is
+        // the slice the boot reports on `RoutesResolver` and the only observation
+        // of a callback's own routes that names their controller.
+        const mountedRoutes = nativeApplication.routes.slice(routeStart);
+        logControllerRoutes(logger, controller, mountedRoutes);
+        if (controller.compiledRoutes === undefined) {
+          collectCallbackRoutes(callbackRoutes, module.id, controller, mountedRoutes);
+        } else if (generatedKeys !== undefined) {
+          generatedInvokers.set(controller.token, generatedKeys);
+        }
         continue;
       }
 
@@ -206,20 +225,28 @@ export async function bootstrapAponiaApplication(
         );
       }
 
+      const pluginRouteStart = nativeApplication.routes.length;
       logControllerRoutes(logger, controller, plugin.routes);
       nativeApplication.use(plugin);
+      collectCallbackRoutes(
+        callbackRoutes,
+        module.id,
+        controller,
+        nativeApplication.routes.slice(pluginRouteStart),
+      );
     }
   }
 
   // The boot's own record, attached to the application it returns: which root
   // the container compiled, what it decided about the invoker artifact, which
   // release supplied each artifact it adopted, the compiled root, every plan the
-  // controllers mounted from, and the application's own enhancer declaration.
-  // Those are the facts a consumer cannot recover from the mounted application —
-  // a route keeps its method and path, never the module or controller that
-  // declared it — and the record is attached here, once the container holds
-  // every plan, rather than after the gateway work, which mounts through its own
-  // path.
+  // controllers mounted from with the binding that serves it, the routes a
+  // callback added, and the application's own enhancer declaration. Those are
+  // the facts a consumer cannot recover from the mounted application — a route
+  // keeps its method and path, never the module, the controller, or the property
+  // key that declared it — and the record is attached here, once the container
+  // holds every plan, rather than after the gateway work, which mounts through
+  // its own path.
   attachApplicationDiagnostics(
     nativeApplication,
     createApplicationDiagnostics({
@@ -235,6 +262,8 @@ export async function bootstrapAponiaApplication(
       },
       rootModule: compiledRootModule,
       modules: container.graph.modules,
+      generatedInvokers,
+      callbackRoutes,
       globalEnhancers: globalEnhancerDeclarations,
     }),
   );
@@ -258,7 +287,10 @@ export async function bootstrapAponiaApplication(
  *
  * A controller whose descriptor carries a compiled plan is mounted from that
  * plan, which is the one place the enhancers resolved for this controller exist:
- * a plan's hooks are built while it mounts, and nothing else can state them. A
+ * a plan's hooks are built while it mounts, and nothing else can state them. It
+ * returns the property keys a supplied invoker bound, which is the mount's own
+ * decision, and `undefined` for a controller mounted through its registration
+ * callback — the path that compiles no plan and consults no invoker. A
  * controller without one mounts through the callback it was defined with, and
  * that callback owns its routes' hooks.
  */
@@ -268,18 +300,18 @@ function registerControllerRoutes(
   instance: unknown,
   invokers: ReadonlyMap<ClassToken<unknown>, AponiaControllerInvokerFactory> | undefined,
   mountedEnhancers: MountedRouteEnhancers,
-): void {
+): ReadonlySet<string | symbol> | undefined {
   const compiledRoutes = controller.compiledRoutes;
   if (!compiledRoutes) {
     registerElysiaControllerRoutes(controller, application, instance);
-    return;
+    return undefined;
   }
 
   // Elysia controllers are always class-backed, which is what makes the token
   // safe as a minification-proof key.
   const controllerToken = controller.token as ClassToken<unknown>;
   const createInvokers = invokers?.get(controllerToken);
-  registerCompiledElysiaRoutes(
+  return registerCompiledElysiaRoutes(
     application,
     controllerToken,
     instance,
@@ -287,6 +319,38 @@ function registerControllerRoutes(
     mountedEnhancers,
     createInvokers?.(instance as never),
   );
+}
+
+/**
+ * Records the routes one controller's own callback added to the mounted table.
+ *
+ * The callback built them from its instance and registered them itself, so the
+ * platform compiled no plan and the table keeps no trace of the class property
+ * that served them. What it does keep is the controller, through this call
+ * site: the slice between the two table lengths was added by one controller of
+ * one module. The binding is stated rather than reasoned about — an invoker
+ * artifact substitutes handlers in the platform's own compilation, and a
+ * callback registers through the native API, so no artifact reaches these
+ * routes.
+ */
+function collectCallbackRoutes(
+  routes: AponiaCallbackRouteDiagnostics[],
+  moduleId: string,
+  controller: RuntimeElysiaController,
+  mountedRoutes: readonly { readonly method: string; readonly path: string }[],
+): void {
+  const controllerName = tokenName(controller.token);
+  for (const route of mountedRoutes) {
+    routes.push(
+      Object.freeze({
+        module: moduleId,
+        controller: controllerName,
+        source: "compiled",
+        method: String(route.method),
+        path: route.path,
+      }),
+    );
+  }
 }
 
 function createSystemLogger(

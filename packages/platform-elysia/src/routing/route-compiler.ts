@@ -139,6 +139,12 @@ function classifyDeclaredReturnKind(
  * their absence, so hand-written descriptors, symbol-keyed handlers, and a
  * controller without an entry keep working.
  *
+ * The keys those invokers bound are returned rather than left for a caller to
+ * re-derive: which binding serves a route is this function's own decision, taken
+ * one route at a time above, and the mount is the only place that knows it. A
+ * caller that re-applied the lookup would restate the rule and could disagree
+ * with the mount it is describing.
+ *
  * `mountedEnhancers` is what a route's hooks are built from while the route
  * registers, never what the compiled route it registers from carries: a compiled
  * plan states what a controller declares and nothing else. The parameter is
@@ -154,7 +160,9 @@ export function registerCompiledElysiaRoutes(
   routes: readonly CompiledElysiaRoute[],
   mountedEnhancers: MountedRouteEnhancers,
   invokers?: ReadonlyMap<string | symbol, AponiaRouteInvoker>,
-): void {
+): ReadonlySet<string | symbol> {
+  const generatedKeys = new Set<string | symbol>();
+
   for (const route of routes) {
     const handler = (instance as Record<PropertyKey, unknown>)[route.propertyKey];
     if (typeof handler !== "function") {
@@ -179,6 +187,9 @@ export function registerCompiledElysiaRoutes(
     // The two are the same function at run time; only the variance differs, and
     // the compiler's own handler needs no widening.
     const suppliedInvoker = invokers?.get(route.propertyKey);
+    if (suppliedInvoker !== undefined) {
+      generatedKeys.add(route.propertyKey);
+    }
     registerNativeRoute(
       application,
       route.method,
@@ -196,6 +207,8 @@ export function registerCompiledElysiaRoutes(
       ),
     );
   }
+
+  return generatedKeys;
 }
 
 /**

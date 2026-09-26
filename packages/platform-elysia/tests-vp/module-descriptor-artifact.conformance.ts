@@ -14,6 +14,8 @@ import {
   type AponiaApplicationDiagnostics,
   type AponiaApplicationOptions,
   type AponiaArtifactProvenance,
+  type AponiaCallbackRouteDiagnostics,
+  type AponiaCompiledRouteDiagnostics,
   type AponiaModuleDescriptorArtifact,
 } from "../src/index.ts";
 import { aponiaVersion } from "../src/version.ts";
@@ -127,6 +129,31 @@ type ArtifactProvenanceAssertion = Expect<
     { readonly invokers: string | null; readonly descriptors: string | null }
   >
 >;
+/**
+ * Which of the two bindings serves a plan, and what the record holds for a route
+ * no plan describes. The source of a plan is a closed pair rather than an
+ * optional field, because the mount always decided one of the two; a callback
+ * route's source is the single state it can be in, stated so a consumer joins
+ * both halves of the mounted table with one rule.
+ */
+type CompiledRouteSourceAssertion = Expect<
+  Equals<AponiaCompiledRouteDiagnostics["source"], "generated" | "compiled">
+>;
+type CallbackRouteAssertion = Expect<
+  Equals<
+    AponiaCallbackRouteDiagnostics,
+    {
+      readonly module: string;
+      readonly controller: string;
+      readonly source: "compiled";
+      readonly method: string;
+      readonly path: string;
+    }
+  >
+>;
+type CallbackRoutesAssertion = Expect<
+  Equals<AponiaApplicationDiagnostics["callbackRoutes"], readonly AponiaCallbackRouteDiagnostics[]>
+>;
 
 /**
  * The artifact shape `aponia build` writes and the platform README documents: a
@@ -158,6 +185,31 @@ test("the Vite+ lane types the artifact provenance a boot record carries", () =>
 
   expect(artifactsAssertion).toBe(true);
   expect(provenanceAssertion).toBe(true);
+});
+
+test("the Vite+ lane types the binding each route of a boot record reports", () => {
+  const sourceAssertion: CompiledRouteSourceAssertion = true;
+  const callbackRouteAssertion: CallbackRouteAssertion = true;
+  const callbackRoutesAssertion: CallbackRoutesAssertion = true;
+
+  expect(sourceAssertion).toBe(true);
+  expect(callbackRouteAssertion).toBe(true);
+  expect(callbackRoutesAssertion).toBe(true);
+});
+
+test("the Vite+ lane reads the binding each mounted plan reports", async () => {
+  const application = await AponiaFactory.create(ConformanceDescriptorModule, documentedOptions);
+  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+  const routes = diagnostics?.routes ?? [];
+
+  // This boot adopted no invoker artifact, so every plan it mounted is the
+  // platform's own compilation — the second of the two states the field carries
+  // — and no controller mounted a route of its own, so the other half of the
+  // mounted table is empty rather than absent.
+  expect(routes.length).toBeGreaterThan(0);
+  expect(routes.every((entry) => entry.source === "compiled")).toBe(true);
+  expect(diagnostics?.callbackRoutes).toEqual([]);
+  await application.close();
 });
 
 test("the Vite+ lane stamps an adopted artifact and leaves declared data unstamped", async () => {

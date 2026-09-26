@@ -232,10 +232,16 @@ runtime boundary it describes.
   artifact's verdict with the selector's own reason, which release supplied each
   artifact the boot adopted and `null` for one it did not, so a hand-written
   descriptor is never reported as generated data, the root `compileRootModule`
-  returned, every compiled plan its controllers mounted (a controller mounted
-  through the low-level descriptor path built its routes in a callback and
-  contributes none), and the application's own enhancer declaration, which no
-  plan carries because a plan states only what its route declares. Consumers
+  returned, every compiled plan its controllers mounted with the binding that
+  serves it, every route a controller mounted itself (a controller that carries
+  no compiled plan — a direct registration callback, or the plugin a low-level
+  descriptor builds — contributes to `callbackRoutes` instead, because its routes
+  have a method and a path and neither the module nor the controller that mounted
+  them anywhere else), and the application's own enhancer declaration, which no
+  plan carries because a plan states only what its route declares. Which binding
+  serves a plan is the mount's own decision, never a consumer's re-derivation:
+  `registerCompiledElysiaRoutes` returns the property keys a supplied invoker
+  bound, and the boot hands that set to the record. Consumers
   project this record; they never re-apply a selector's rule to reach the same
   answer.
 - `defineElysiaControllerRoutes` is the descriptor path's counterpart to

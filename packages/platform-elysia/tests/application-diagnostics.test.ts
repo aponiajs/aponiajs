@@ -17,10 +17,12 @@ import {
   AponiaFactory,
   defineElysiaController,
   defineElysiaControllerRoutes,
+  elysiaController,
   readApplicationDiagnostics,
   type AponiaControllerInvokerFactory,
   type AponiaInvokerArtifact,
   type AponiaModuleDescriptorArtifact,
+  type AponiaRouteInvoker,
 } from "../src/index.ts";
 import { aponiaVersion } from "../src/version.ts";
 
@@ -87,6 +89,66 @@ const pluginOnlyDiagnosticsModule: ModuleDefinition = defineModule({
   id: "PluginOnlyDiagnosticsModule",
   controllers: [pluginOnlyController],
 });
+
+/**
+ * A controller whose routes a registration callback builds from its instance.
+ * It carries no plan, so the boot has to record the routes it mounted beside the
+ * controller that mounted them rather than leaving the two unreachable.
+ */
+class CallbackDiagnosticsController {
+  greet(): string {
+    return "callback";
+  }
+}
+
+const callbackDiagnosticsModule: ModuleDefinition = defineModule({
+  id: "CallbackDiagnosticsModule",
+  controllers: [
+    elysiaController(CallbackDiagnosticsController, (application, controller) => {
+      application.get("/callback-only", () => controller.greet());
+      return application;
+    }),
+  ],
+});
+
+/**
+ * Two controllers, one supplied invoker: the artifact covers the first
+ * controller's handler and says nothing about the second's, so one boot mounts
+ * both bindings and the record has to tell them apart. Both handlers answer, so
+ * a case can prove which one actually served each route.
+ */
+class GeneratedBindingController {
+  read(): string {
+    return "compiled binding";
+  }
+}
+
+class CompiledBindingController {
+  read(): string {
+    return "compiled binding";
+  }
+}
+
+const twoSourceModule: ModuleDefinition = defineModule({
+  id: "TwoSourceModule",
+  controllers: [
+    defineElysiaControllerRoutes(GeneratedBindingController, {
+      path: "generated",
+      routes: [{ method: "GET", path: "/", propertyKey: "read", promiseCapable: false }],
+    }),
+    defineElysiaControllerRoutes(CompiledBindingController, {
+      path: "compiled",
+      routes: [{ method: "GET", path: "/", propertyKey: "read", promiseCapable: false }],
+    }),
+  ],
+});
+
+const generatedBindingArtifact = new Map<ClassToken<unknown>, AponiaControllerInvokerFactory>([
+  [
+    GeneratedBindingController,
+    () => new Map<string | symbol, AponiaRouteInvoker>([["read", () => "generated binding"]]),
+  ],
+]);
 
 /**
  * The graph a descriptor artifact names: the same application as data, keyed by
@@ -282,16 +344,87 @@ test("a controller mounted through the low-level descriptor path contributes no 
   const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
   const response = await application.handle(new Request("http://localhost/plugin-only"));
 
-  // The route mounted, and the record still reports nothing for it: its
-  // callback built the route, so there is no compiled plan to describe. The
-  // root is data the caller declared, which is what that graph is reported as —
-  // and its descriptor stamp stays `null`, because `"declared"` says the
-  // container compiled data, not that a build emitted it. A hand-written
-  // descriptor was emitted by nobody.
+  // The route mounted, and the record still reports no compiled plan for it: its
+  // plugin built the route, so there is no plan to describe. Its mount is
+  // recorded as what it is — a route the controller mounted itself, with the two
+  // names the mounted table does not keep. The root is data the caller declared,
+  // which is what that graph is reported as — and its descriptor stamp stays
+  // `null`, because `"declared"` says the container compiled data, not that a
+  // build emitted it. A hand-written descriptor was emitted by nobody.
   expect(await response.text()).toBe("plugin");
   expect(diagnostics?.graph).toBe("declared");
   expect(diagnostics?.artifacts.descriptors).toBeNull();
   expect(diagnostics?.routes).toEqual([]);
+  expect(diagnostics?.callbackRoutes).toEqual([
+    {
+      module: "PluginOnlyDiagnosticsModule",
+      controller: "PluginOnlyDiagnosticsController",
+      source: "compiled",
+      method: "GET",
+      path: "/plugin-only",
+    },
+  ]);
+  await application.close();
+});
+
+test("a route a registration callback mounts is reported with the controller that mounted it", async () => {
+  const application = await AponiaFactory.create(callbackDiagnosticsModule, { logger: false });
+  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+  const response = await application.handle(new Request("http://localhost/callback-only"));
+
+  // The callback compiled nothing for the platform to read, so the two names
+  // that say who mounted this route come from the mount itself: the table grew
+  // between two observations, and the controller that was mounting is the one
+  // that made it grow.
+  expect(await response.text()).toBe("callback");
+  expect(diagnostics?.routes).toEqual([]);
+  expect(diagnostics?.callbackRoutes).toEqual([
+    {
+      module: "CallbackDiagnosticsModule",
+      controller: "CallbackDiagnosticsController",
+      source: "compiled",
+      method: "GET",
+      path: "/callback-only",
+    },
+  ]);
+  expect(diagnostics?.callbackRoutes.every((entry) => Object.isFrozen(entry))).toBe(true);
+  await application.close();
+});
+
+test("each plan reports the binding that serves it, from one boot that mounts both", async () => {
+  const application = await AponiaFactory.create(twoSourceModule, {
+    logger: false,
+    invokers: invokerArtifact(generatedBindingArtifact),
+  });
+  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+  const generated = await application.handle(new Request("http://localhost/generated"));
+  const compiled = await application.handle(new Request("http://localhost/compiled"));
+
+  // One boot, two sources: a supplied invoker covers the first controller's
+  // property key and not the second's, and each route answers with the binding
+  // the record names it. A case that only ever mounted one of the two could not
+  // tell a per-route decision from a per-boot one.
+  expect(await generated.text()).toBe("generated binding");
+  expect(await compiled.text()).toBe("compiled binding");
+  expect(diagnostics?.routes.map((entry) => [entry.route.path, entry.source])).toEqual([
+    ["/generated", "generated"],
+    ["/compiled", "compiled"],
+  ]);
+  // Nothing mounted a route of its own here, so the other half of the table is
+  // empty rather than absent.
+  expect(diagnostics?.callbackRoutes).toEqual([]);
+  await application.close();
+});
+
+test("a boot with no invoker artifact reports every plan as compiled binding", async () => {
+  const application = await AponiaFactory.create(twoSourceModule, { logger: false });
+  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+
+  // No artifact was supplied, so nothing could have bound a route: every plan is
+  // the platform's own compilation, including the controller a supplied map
+  // would otherwise have covered.
+  expect(diagnostics?.invokers.accepted).toBe(false);
+  expect(diagnostics?.routes.map((entry) => entry.source)).toEqual(["compiled", "compiled"]);
   await application.close();
 });
 

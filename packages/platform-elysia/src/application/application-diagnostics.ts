@@ -1,9 +1,15 @@
-import { tokenName, type EnhancerMetadata, type ModuleDefinition } from "@aponiajs/common";
+import {
+  tokenName,
+  type EnhancerMetadata,
+  type ModuleDefinition,
+  type Token,
+} from "@aponiajs/common";
 import type { Elysia } from "elysia";
 import { isElysiaController } from "../controllers/controller-definition.ts";
 import type {
   AponiaApplicationDiagnostics,
   AponiaArtifactProvenance,
+  AponiaCallbackRouteDiagnostics,
   AponiaCompiledRouteDiagnostics,
   AponiaInvokerDiagnostics,
 } from "./application-diagnostics.types.ts";
@@ -28,11 +34,19 @@ const diagnosticsKey: unique symbol = Symbol.for("aponia.application.diagnostics
  * nor the module that mounted it. Modules keep graph order and controllers keep
  * declaration order, so the record is deterministic.
  *
+ * Two facts arrive as the boot's own working data rather than as something to
+ * read back: which property keys a supplied invoker bound, collected by the
+ * mounts that took that decision, and the routes a controller's registration
+ * callback added, observed while the mounted table grew. Neither is recoverable
+ * afterwards — a mounted route keeps no controller, and a supplied invoker is
+ * indistinguishable from a compiled one once it is registered.
+ *
  * Every fact it is handed is copied before it is frozen — the invoker verdict,
- * the artifact provenance, the root descriptor, and the enhancer declaration are
- * all the caller's objects — because a record may never be the place its own
- * facts are still mutable. Nothing here relies on the boot having frozen them
- * first: a reader of the record cannot see how the boot kept them.
+ * the artifact provenance, the root descriptor, the callback routes, and the
+ * enhancer declaration are all the caller's objects — because a record may never
+ * be the place its own facts are still mutable. Nothing here relies on the boot
+ * having frozen them first: a reader of the record cannot see how the boot kept
+ * them.
  *
  * @internal
  */
@@ -43,6 +57,8 @@ export function createApplicationDiagnostics(facts: {
   readonly artifacts: AponiaArtifactProvenance;
   readonly rootModule: ModuleDefinition;
   readonly modules: readonly ModuleDefinition[];
+  readonly generatedInvokers: ReadonlyMap<Token<unknown>, ReadonlySet<string | symbol>>;
+  readonly callbackRoutes: readonly AponiaCallbackRouteDiagnostics[];
   readonly globalEnhancers: EnhancerMetadata;
 }): AponiaApplicationDiagnostics {
   return Object.freeze({
@@ -54,7 +70,8 @@ export function createApplicationDiagnostics(facts: {
       descriptors: facts.artifacts.descriptors,
     }),
     rootModule: freezeModuleDefinition(facts.rootModule),
-    routes: collectCompiledRoutes(facts.modules),
+    routes: collectCompiledRoutes(facts.modules, facts.generatedInvokers),
+    callbackRoutes: freezeCallbackRoutes(facts.callbackRoutes),
     globalEnhancers: freezeEnhancerMetadata(facts.globalEnhancers),
   });
 }
@@ -131,15 +148,33 @@ function freezeEnhancerMetadata(metadata: EnhancerMetadata): EnhancerMetadata {
 }
 
 /**
+ * The callback routes as the record publishes them, copied for the same reason
+ * the descriptor is: the entries were built while the boot was mounting.
+ */
+function freezeCallbackRoutes(
+  routes: readonly AponiaCallbackRouteDiagnostics[],
+): readonly AponiaCallbackRouteDiagnostics[] {
+  return Object.freeze(routes.map((route) => Object.freeze({ ...route })));
+}
+
+/**
  * Every compiled plan a module graph's controllers carry.
  *
  * A controller the graph holds but the platform does not own has no plan to
  * read, and one mounted through the low-level descriptor path builds its routes
  * in a callback that needs an instance, so neither contributes an entry: the
  * record states what was compiled, never a guess at what mounted.
+ *
+ * `generatedInvokers` is keyed by controller token rather than by handler
+ * property key alone, because two controllers may declare the same property key
+ * and only one of them be served by a supplied invoker. A token no mount took a
+ * decision for — a controller that mounted through its callback, or a graph the
+ * boot never expanded — contributes no entry, so every plan it holds is
+ * `"compiled"`.
  */
 function collectCompiledRoutes(
   modules: readonly ModuleDefinition[],
+  generatedInvokers: ReadonlyMap<Token<unknown>, ReadonlySet<string | symbol>>,
 ): readonly AponiaCompiledRouteDiagnostics[] {
   const routes: AponiaCompiledRouteDiagnostics[] = [];
 
@@ -150,8 +185,13 @@ function collectCompiledRoutes(
       }
 
       const controllerName = tokenName(controller.token);
+      const generatedKeys = generatedInvokers.get(controller.token);
       for (const route of controller.compiledRoutes ?? []) {
-        routes.push(Object.freeze({ module: module.id, controller: controllerName, route }));
+        const source: "generated" | "compiled" =
+          generatedKeys?.has(route.propertyKey) === true ? "generated" : "compiled";
+        routes.push(
+          Object.freeze({ module: module.id, controller: controllerName, route, source }),
+        );
       }
     }
   }
