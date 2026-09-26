@@ -1,11 +1,13 @@
 import {
   AponiaError,
+  getEnhancerMetadata,
   getRouteMetadata,
   getRouteParameterMetadata,
   isRouteResponseSchemaMap,
   isStandardSchema,
   resolveRouteValidator,
   type ClassToken,
+  type EnhancerMetadata,
   type RouteContext,
   type RouteParameterMetadata,
   type RouteResponseSchema,
@@ -26,6 +28,7 @@ export function compileElysiaRoutes(
   controller: ClassToken<unknown>,
   controllerPath: string,
 ): readonly CompiledElysiaRoute[] {
+  const controllerEnhancers = getEnhancerMetadata(controller);
   const routes = getRouteMetadata(controller).map((route): CompiledElysiaRoute => {
     const parameters = getRouteParameterMetadata(controller, route.propertyKey);
     const prototypeHandler = Object.getOwnPropertyDescriptor(
@@ -64,10 +67,34 @@ export function compileElysiaRoutes(
       schema: route.schema,
       declaredParameterCount,
       declaredReturnKind: classifyDeclaredReturnKind(returnType),
+      enhancers: mergeEnhancerMetadata(
+        controllerEnhancers,
+        getEnhancerMetadata(controller, route.propertyKey),
+      ),
     });
   });
 
   return Object.freeze(routes);
+}
+
+/**
+ * Joins the two scopes a route's enhancers are declared at.
+ *
+ * `getEnhancerMetadata` reads exactly one scope, so the join belongs here, at
+ * the call site: joining inside the reader would double-apply a controller's
+ * declarations once this call site also joins them. The controller's own
+ * declarations come first, then the handler's, which is the scope order the
+ * enhancers run in.
+ */
+function mergeEnhancerMetadata(
+  controllerScope: EnhancerMetadata,
+  handlerScope: EnhancerMetadata,
+): EnhancerMetadata {
+  return Object.freeze({
+    guards: Object.freeze([...controllerScope.guards, ...handlerScope.guards]),
+    interceptors: Object.freeze([...controllerScope.interceptors, ...handlerScope.interceptors]),
+    filters: Object.freeze([...controllerScope.filters, ...handlerScope.filters]),
+  });
 }
 
 function classifyDeclaredReturnKind(

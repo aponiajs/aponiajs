@@ -1,4 +1,9 @@
-import type { RequestMethod, RouteParameterMetadata, RouteSchema } from "@aponiajs/common";
+import type {
+  ClassToken,
+  RequestMethod,
+  RouteParameterMetadata,
+  RouteSchema,
+} from "@aponiajs/common";
 
 /**
  * One route a controller declares, as data rather than as decorator metadata.
@@ -12,7 +17,7 @@ import type { RequestMethod, RouteParameterMetadata, RouteSchema } from "@aponia
  * `routing/native-route.ts` stays the only module that calls the native route
  * API.
  *
- * Two facts the decorator path reads out of emitted metadata are stated here
+ * Three facts the decorator path reads out of emitted metadata are stated here
  * instead, because a plan has no class to reflect on:
  *
  * - `takesContext` decides what a handler with no decorated parameter receives.
@@ -22,6 +27,9 @@ import type { RequestMethod, RouteParameterMetadata, RouteSchema } from "@aponia
  *   Decorators answer it from `design:returntype`; omitting it here means
  *   Promise-capable, which costs at most one already-settled `await` and is the
  *   direction that cannot change what a lifecycle hook observes.
+ * - `guards`, `interceptors`, and `filters` are the enhancers the controller or
+ *   the handler declares. They remain the controller's own declarations:
+ *   application-wide enhancers merge at the mount, never into a compiled route.
  */
 export interface ElysiaRoutePlan {
   readonly method: RequestMethod;
@@ -41,4 +49,10 @@ export interface ElysiaRoutePlan {
   readonly promiseCapable?: boolean;
   /** The route's validation schema, exactly as a route decorator accepts one. */
   readonly schema?: RouteSchema;
+  /** Guards this route declares, as classes the container resolves. */
+  readonly guards?: readonly ClassToken<unknown>[];
+  /** Interceptors this route declares, as classes the container resolves. */
+  readonly interceptors?: readonly ClassToken<unknown>[];
+  /** Filters this route declares. Each filter's matched types come from its own `@Catch()`. */
+  readonly filters?: readonly ClassToken<unknown>[];
 }

@@ -1,4 +1,9 @@
-import { defineModule, provideClass, type RouteParameterMetadata } from "@aponiajs/common";
+import {
+  defineModule,
+  provideClass,
+  type ClassToken,
+  type RouteParameterMetadata,
+} from "@aponiajs/common";
 import { z } from "zod";
 import { AponiaFactory, defineElysiaControllerRoutes, type ElysiaRoutePlan } from "../src/index.ts";
 
@@ -62,6 +67,15 @@ type RouteParameterAssertion = Expect<
   Equals<ElysiaRoutePlan["parameters"], readonly RouteParameterMetadata[] | undefined>
 >;
 type TakesContextAssertion = Expect<Equals<ElysiaRoutePlan["takesContext"], boolean | undefined>>;
+type GuardsAssertion = Expect<
+  Equals<ElysiaRoutePlan["guards"], readonly ClassToken<unknown>[] | undefined>
+>;
+type InterceptorsAssertion = Expect<
+  Equals<ElysiaRoutePlan["interceptors"], readonly ClassToken<unknown>[] | undefined>
+>;
+type FiltersAssertion = Expect<
+  Equals<ElysiaRoutePlan["filters"], readonly ClassToken<unknown>[] | undefined>
+>;
 
 const conformanceModule = defineModule({
   id: "ConformanceDeclaredModule",
@@ -78,9 +92,15 @@ const conformanceModule = defineModule({
 test("the Vite+ lane types a declared route plan", () => {
   const parametersAssertion: RouteParameterAssertion = true;
   const takesContextAssertion: TakesContextAssertion = true;
+  const guardsAssertion: GuardsAssertion = true;
+  const interceptorsAssertion: InterceptorsAssertion = true;
+  const filtersAssertion: FiltersAssertion = true;
 
   expect(parametersAssertion).toBe(true);
   expect(takesContextAssertion).toBe(true);
+  expect(guardsAssertion).toBe(true);
+  expect(interceptorsAssertion).toBe(true);
+  expect(filtersAssertion).toBe(true);
 });
 
 test("the Vite+ lane serves a controller whose routes were declared as data", async () => {

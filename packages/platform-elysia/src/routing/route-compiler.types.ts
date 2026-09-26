@@ -1,4 +1,5 @@
 import type {
+  EnhancerMetadata,
   RequestMethod,
   RouteParameterKind,
   RouteParameterMetadata,
@@ -49,4 +50,6 @@ export interface CompiledElysiaRoute {
   readonly schema: RouteSchema | undefined;
   readonly declaredParameterCount: number | undefined;
   readonly declaredReturnKind: "promise" | "synchronous" | "unknown";
+  /** The enhancers this route declares, before any global ones are merged. */
+  readonly enhancers: EnhancerMetadata;
 }

@@ -219,6 +219,11 @@ function compileElysiaRoutePlan(
     schema: plan.schema,
     declaredParameterCount: takesContext ? 1 : parameters.length,
     declaredReturnKind: plan.promiseCapable === false ? "synchronous" : "promise",
+    enhancers: Object.freeze({
+      guards: Object.freeze([...(plan.guards ?? [])]),
+      interceptors: Object.freeze([...(plan.interceptors ?? [])]),
+      filters: Object.freeze([...(plan.filters ?? [])]),
+    }),
   });
 }
 
