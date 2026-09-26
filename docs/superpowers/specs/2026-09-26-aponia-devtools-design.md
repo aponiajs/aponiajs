@@ -176,8 +176,13 @@ directed graph.
     id: string;                       // "GET /users/:id"
     stages: readonly {
       id: string;                     // stable within one response
-      kind: "derive" | "resolve" | "hook" | "validate" | "bind" | "invoke" | "handler";
-      scope?: "global" | "local";     // for the three lifecycle kinds
+      kind:
+        | "derive" | "validate" | "resolve" | "hook"
+        | "guard" | "interceptBefore"
+        | "bind" | "invoke" | "handler"
+        | "interceptAfter";
+      scope?: "global" | "local";     // on the lifecycle kinds: which scope runs the stage
+      enhancer?: string;              // on `guard` and `intercept*`: the class the stage runs
       slot?: "body" | "query" | "params" | "headers" | "cookie" | "response";
       model?: string;                 // the @Validation() class the slot resolved to
       parameters?: readonly { index: number; kind: string; property: string | undefined }[];
@@ -187,6 +192,12 @@ directed graph.
       handler?: string;
       next: readonly string[];        // the stages that run after this one
     }[];
+    filters: readonly {               // run only when a guard or the handler threw
+      kind: "filter" | "default";     // a declared filter, or the mapping every route ends with
+      name: string;                   // the filter class, or the Problem Details mapping
+      scope?: "local" | "global";     // on `filter`: the declaration that contributed it
+      catch?: readonly string[];      // on `filter`: what @Catch() named; empty answers anything
+    }[];
   }[];
 }
 ```
@@ -195,26 +206,69 @@ Read from the running native application, not inferred from source. Verified by
 probe: a mounted route exposes its `transform` hooks (a plugin's `derive`), its
 `beforeHandle` hooks (a plugin's `resolve`, and any local hook), and the lowered
 JSON Schema already bound to `params`, `query`, and `body`. That is enough to
-publish the pipeline as data without re-deriving anything.
+publish the contributed hooks and the validation slots as data without
+re-deriving anything.
+
+The route's own enhancers are the exception, and the compiled route plan is
+where they come from. The platform lowers a route's guards and interceptors
+into one `beforeHandle` function and one `afterHandle` function, and a compiled
+hook says nothing about its parts; the plan carries the enhancers the route
+declares, and the application's own declaration is resolved beside it, so the
+two lists the hook was built from are what publishes as stages. A compiled hook
+is never published as a `hook` stage: its parts are the `guard` and `intercept*`
+stages, which is where the order between them is still legible.
+
+**The order is the one the code states.** Per request:
+
+1. `derive`, `validate`, `resolve`, `hook` — the route's Elysia hooks and its
+   schema, ahead of anything the platform compiled;
+2. `guard` — every guard the route runs, the application's own declaration
+   (`global`) first, then the controller's and the handler's (`local`), each
+   scope in declaration order;
+3. `interceptBefore` — the same order, immediately behind the guards, in the
+   same `beforeHandle`;
+4. `bind`, `invoke`, `handler` — the compiled parameter binding, the invoker
+   that serves the route, and the controller's method;
+5. `interceptAfter` — the whole interceptor list reversed, so the outermost
+   interceptor's half runs last and each receives what the previous one
+   answered.
+
+A stage is published only when the route runs it. A guard that refuses ends the
+chain there, and so does a handler that throws: no later guard, no before half,
+no after half, and no handler runs. What answers that path is the route's
+filters.
+
+**Filters are a list on the route, not a stage.** They run when a guard or the
+handler threw, never on the happy path, so a stage in the chain would claim
+something every request runs. Each route's entry carries them in their own list,
+ordered exactly as the route's `error` array is — the method's filters, then the
+controller's, then the application's, then the Problem Details mapping every
+route carries last — because the first entry that answers is the one that
+decides.
 
 **This is not Nest's flow graph, and the difference is the point.** Nest builds
-that view from guards, interceptors, and pipes. Aponia implements none of the
-three, so a faithful translation would publish an empty graph. What Aponia does
-run per request is what the stages above name, and it carries one dimension Nest
-has no equivalent for: `invoke.source` reports whether the route reaches a
-build-time invoker or a runtime-compiled one.
+that view from guards, interceptors, and pipes. Aponia compiles guards and
+interceptors onto a route's own hooks, so the stages above name them; it has no
+pipes, because a route's declared schema already validates every slot it
+carries; and it has no middleware, because Elysia's `derive` and `resolve`,
+reachable through `ElysiaPluginModule`, are that mechanism. The graph therefore
+publishes what the route actually runs rather than a translation of Nest's view,
+and it carries one dimension Nest has no equivalent for: `invoke.source` reports
+whether the route reaches a build-time invoker or a runtime-compiled one.
 
 `stages` is a graph rather than a list because a consumer renders it as one.
-Only the validation stages and the invoke stage can branch today, but `id` and
-`next` are stated explicitly so a linear chain is not something a renderer has
-to assume.
+Only the validation stages, the guard stages, and the invoke stage can branch
+today, but `id` and `next` are stated explicitly so a linear chain is not
+something a renderer has to assume.
 
 **A contributed hook cannot be named.** Elysia identifies a hook by `subType`,
 `scope`, and a `checksum`; the plugin that contributed it is not carried on the
 route. A stage therefore reports `hook` as an identity derived from the
 checksum — which groups the same hook across every route it reaches — and does
 not report a plugin name. Naming it would require Elysia to carry that
-information, which it does not, so the field is absent rather than guessed.
+information, which it does not, so the field is absent rather than guessed. An
+enhancer stage is the other case: the platform resolved that class itself, so
+`enhancer` names it, and only a hook Elysia owns stays anonymous.
 
 `GET /__devtools/aot` — the build-time verdicts.
 
@@ -293,17 +347,23 @@ Two, both in `@aponiajs/platform-elysia`.
 ### 1. Expose the boot decision and the compiled graph
 
 Bootstrap already resolves which module graph to compile and which invokers to
-accept. Today it keeps neither as data. `bootstrapAponiaApplication` will attach
-both to the native application so a plugin can read them at `onStart`:
+accept. Today it keeps none of it as data. `bootstrapAponiaApplication` will
+attach the following to the native application so a plugin can read them at
+`onStart`:
 
 - the resolution record, as already computed by
   `routing/invoker-artifact.ts` and `modules/module-descriptor-artifact.ts`;
 - the compiled `ModuleDefinition` root that `compileRootModule` returned;
 - the compiled route plans, whose schemas must retain the name of the
-  `@Validation()` model each slot resolved to. The platform already resolves
-  that model while a route mounts; `/flow` needs the name beside the lowered
-  validator, because the lowered JSON Schema no longer says which class
-  produced it.
+  `@Validation()` model each slot resolved to, and which carry the enhancers
+  their routes declare. The platform already resolves that model while a route
+  mounts; `/flow` needs the name beside the lowered validator, because the
+  lowered JSON Schema no longer says which class produced it, and it needs the
+  enhancers for the same reason: they lower into one compiled hook, so the plan
+  is the only place their order is still separate;
+- the application's own enhancer declaration, resolved once for the boot,
+  because a route's plan states only what the route declares while the hook a
+  route mounts runs both lists merged.
 
 This is a **seam, not a new public contract**: the two selectors stay internal
 and their rules stay in one place. The alternative — exporting them and letting
@@ -390,10 +450,11 @@ conformance lane mirrors the public contract in
   after the lazy import; `/routes` reporting `generated` and `compiled` for the
   two cases; `/graph` describing the compiled root when a descriptor artifact
   is supplied and the decorated root when it is refused; `/flow` reporting a
-  plugin `derive` and `resolve`, a local hook, each populated validation slot,
-  the binding, the invoke source, and the handler, with every `next` naming a
-  stage the same route actually declares and no stage unreachable from the
-  first.
+  plugin `derive` and `resolve`, a contributed local hook, each populated
+  validation slot, every guard and interceptor stage in the order the code
+  states, a declared route's filter list in its precedence order, the binding,
+  the invoke source, and the handler, with every `next` naming a stage the same
+  route actually declares and no stage unreachable from the first.
 - Assert `contract` is `1` and that a consumer reading only `meta` can decide
   whether to proceed.
 - The platform changes carry their own tests in the platform's lanes, including
