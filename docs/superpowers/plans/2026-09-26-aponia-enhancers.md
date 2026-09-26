@@ -126,7 +126,12 @@ route-local error hook in this plan is written under `error`.
 
 Run: `bun .probe-onerror-precedence.ts`
 
-Expected: `order` is `["route"]` and the body is `"from route"`. **If the root handler also runs, or runs first, stop**: the default filter cannot sit behind declared filters, and the fallback described in the spec must be designed before Task 7.
+Expected as the brief states it, kept as the historical record: `order` is
+`["route"]` and the body is `"from route"`. The probe as run returned
+`{ order: ["root"], status: 500, body: "from root" }` instead — the root handler
+alone, exactly as the note above explains. **If the root handler also runs, or
+runs first, stop**: the default filter cannot sit behind declared filters, and the
+fallback described in the spec must be designed before Task 7.
 
 - [ ] **Step 5: Delete both probes and record the verdicts in the spec**
 
@@ -1179,7 +1184,7 @@ Expected: PASS, three cases.
 
 - [ ] **Step 5: Add the no-enhancer regression case**
 
-Add to the same file a case asserting a controller with no enhancers mounts a route carrying no `beforeHandle` and no `afterHandle` — the property the spec's Testing section pins, in the half this task owns. Read it through `application.getNativeApplication().routes`. Do not assert that the hook object is `undefined`: Task 7 appends the default mapping to every route's own `error` array, and the case is extended there with that second half rather than rewritten.
+Add to the same file a case asserting a controller with no enhancers mounts a route carrying no `beforeHandle` and no `afterHandle` — the property the spec's Testing section pins, in the half this task owns. Read it through `application.getNativeApplication().routes`. Do not assert that the hook object is `undefined`, and do not assert the absence of `error`: Task 7 appends the default mapping to every route's own `error` array, and the second half of the property is added to Task 3's no-enhancer case in `tests/route-enhancers.test.ts` rather than to this one.
 
 - [ ] **Step 6: Cover the declared-descriptor path**
 
@@ -1400,16 +1405,21 @@ const defaultExceptionFilter = createDefaultExceptionFilter(logger);
 ```
 
 The route hook builder appends it after the route's declared filters, so every
-route carries `error: [...declaredFilters, defaultExceptionFilter]`, and a route
-declaring no filter carries an array holding only the default. Do not reach for
-`application.onError()`: a root hook is exactly the ordering the probes ruled
-out, and no declared filter could outrank it.
+route carries `error: [...declaredFilters, defaultExceptionFilter]` with the
+declared filters at the front of the array and the default mapping last, and a
+route declaring no filter carries an array holding only the default. Declared
+filters sit at that end because filters run most-specific-first — method, then
+controller, then global — the reverse of the guard and `interceptBefore` order the
+spec's ordering section states. Do not reach for `application.onError()`: a root
+hook is exactly the ordering the probes ruled out, and no declared filter could
+outrank it.
 
 - [ ] **Step 5: Emit declared filters into the route-local `error` array**
 
 In the route hook builder, build one `error` array: the resolved filters in
-precedence order, each consulted only when `isFilterMatch` accepts the thrown
-value, with `createDefaultExceptionFilter(logger)` appended last. The first entry
+most-specific-first precedence order (`[...method, ...controller, ...global]`),
+each consulted only when `isFilterMatch` accepts the thrown value, with
+`createDefaultExceptionFilter(logger)` appended last. The first entry
 that returns something other than `undefined` answers and the rest of the array
 never runs, which is what Elysia's composed error path already gives. Guard
 against a filter that throws: catch it, log, and return `undefined` so the next
@@ -1423,7 +1433,7 @@ Expected: PASS, five cases.
 
 - [ ] **Step 7: Cover a filter that throws, and the native-error mapping for WebSocket gateways**
 
-Add a case where a filter's own `catch` throws, asserting one clean 500 and one log line rather than a second failure. Add a case asserting a gateway's `WEBSOCKET_HANDLER_ERROR` frame is unchanged, so the per-route default mapping did not alter WebSocket error behavior. Extend Task 3's no-enhancer regression case with the second half of the spec's property: the route declaring no enhancer now carries exactly one synchronous `error` hook, and it is the only hook it gained.
+Add a case where a filter's own `catch` throws, asserting one clean 500 and one log line rather than a second failure. Add a case asserting a gateway's `WEBSOCKET_HANDLER_ERROR` frame is unchanged, so the per-route default mapping did not alter WebSocket error behavior. Extend Task 3's no-enhancer regression case in `tests/route-enhancers.test.ts` with the second half of the spec's property: the route declaring no enhancer now carries exactly one synchronous `error` hook, and it is the only hook it gained.
 
 - [ ] **Step 8: Update the documentation and commit**
 
