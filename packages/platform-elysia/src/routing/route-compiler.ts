@@ -570,10 +570,12 @@ function createLifecycleHook(
   return {
     ...(runsBefore
       ? {
-          // Refusal is the throw and nothing else: Elysia answers an error
-          // carrying `toResponse()` through its own native path, so the response
-          // is already Problem Details with a 403 before any hook this route
-          // carries could shape it.
+          // Refusal is the throw and nothing else: the thrown `HttpError` carries
+          // its own `toResponse()`, so on a route that declares no filter the
+          // default mapping declines it and Elysia's native error path answers a
+          // 403 Problem Details. A filter this route declares runs first and is
+          // consulted for the refusal like any other exception — nothing here
+          // shields an `HttpError` from the filters a route declares.
           async beforeHandle(context: RouteContext): Promise<void> {
             const executionContext = createExecutionContext(
               routeDescription,

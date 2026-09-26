@@ -199,8 +199,9 @@ on a method apply to that route alone and run after their controller's. A guard
 returning `false` refuses the request with a Problem Details `403`. An
 interceptor declares `interceptBefore` and `interceptAfter` instead of Nest's
 `next.handle()`, and `interceptBefore` cannot short-circuit. A filter that
-returns `undefined` declines, so the next entry in the route's error path is
-consulted. Guards, interceptors, and filters are handed an `ExecutionContext` or
+returns `undefined` or `null` declines, so the next entry in the route's error
+path is consulted; every other value answers. Guards, interceptors, and filters
+are handed an `ExecutionContext` or
 an `ArgumentsHost` whose `getContext()` and `switchToHttp().getRequest()` answer
 the request's `RouteContext`.
 

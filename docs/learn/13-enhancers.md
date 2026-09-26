@@ -71,11 +71,14 @@ class UserMissingFilter implements ExceptionFilter {
 ```
 
 `@Catch()` names the types a filter answers, matched by `instanceof`; without
-arguments it answers anything. Filters run most-specific-first and the first one
-that returns anything other than `undefined` answers. What no filter answers is
-handled by the default Problem Details mapping every route carries, which is why
-an unhandled failure is a `500` Problem Details response rather than a stack
-trace.
+arguments it answers anything. Filters run most-specific-first, and the first one
+that answers wins — returning `undefined` or `null` declines, every other value
+answers. What no filter answers is handled by the default Problem Details mapping
+every route carries, which is why an unhandled failure is a `500` Problem Details
+response rather than a stack trace. That mapping is a route-local `error` hook
+too, so under `elysia: { aot: false }` Elysia never reads it: neither the mapping
+nor any declared filter runs, and an unhandled failure answers Elysia's native
+`500` carrying the exception's message.
 
 ## Declare every enhancer as a provider
 

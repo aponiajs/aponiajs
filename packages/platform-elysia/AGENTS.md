@@ -84,7 +84,12 @@ runtime boundary it describes.
   `error` array, behind the filters it declares, so the array reads
   `[...method, ...controller, ...global, default]`. Declared filters run
   most-specific-first — the reverse of the guard and `interceptBefore` order —
-  and the first entry that returns anything other than `undefined` answers. The
+  and the first entry that returns anything other than `undefined` or `null`
+  answers: those two are what Elysia's error path reads as no answer, so a filter
+  returning `false`, `0`, or `""` answers with it rather than declining. A
+  declared filter is consulted for every exception its `@Catch()` matches, an
+  `HttpError`, a validation `422`, and a guard's refusal included; declining
+  those is the mapping's own rule, not the array's. The
   mapping is built once from the
   boot's system logger and compiled into each route while it mounts, never
   registered on the root application: Elysia puts the application's handlers

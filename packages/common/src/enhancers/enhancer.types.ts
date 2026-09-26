@@ -57,8 +57,9 @@ export interface AponiaInterceptor {
 
 export interface ExceptionFilter {
   /**
-   * Answers the exception, or returns `undefined` to decline it. A returned
-   * Promise is awaited, so an asynchronous filter is supported.
+   * Answers the exception, or returns `undefined` or `null` to decline it,
+   * leaving the decision to whatever answers next. A returned Promise is
+   * awaited, so an asynchronous filter is supported.
    */
   catch(exception: unknown, host: ArgumentsHost): unknown;
 }

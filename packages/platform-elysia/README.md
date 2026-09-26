@@ -523,7 +523,11 @@ A guard returning `false` refuses the request with a Problem Details `403` and
 never calls the handler. An interceptor declares `interceptBefore` and
 `interceptAfter` instead of Nest's `next.handle()`, and `interceptBefore` cannot
 short-circuit. A filter answers the types its `@Catch()` named — or anything,
-when it names none — and declines by returning `undefined`. Filters run
+when it names none — and declines by returning `undefined` or `null`, the two
+values Elysia's error path reads as no answer, so `false`, `0`, and `""` answer
+with what they are. A declared filter is consulted for every exception its
+`@Catch()` matches, an `HttpError`, a validation `422`, and a guard's refusal
+included. Filters run
 most-specific-first, and the default Problem Details mapping is always last: an
 application overrides it by declaring a filter ahead of it, never by removing it.
 

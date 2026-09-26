@@ -63,11 +63,15 @@ class AuthGuard implements CanActivate {
 ```
 
 Refusal is the throw and nothing else: the platform throws
-`httpErrors.forbidden("A guard refused this request.")`, and because that
-`HttpError` carries its own `toResponse()`, Elysia's native error path answers it
-before any declared filter or the default mapping could shape it. A guard that
-throws instead of returning `false` is a failure rather than a refusal, and
-reaches the exception filters.
+`httpErrors.forbidden("A guard refused this request.")`, and the **default
+mapping** declines that `HttpError` — it carries its own `toResponse()`, which is
+what the mapping declines by — so Elysia's native error path answers a `403`
+Problem Details. A filter the route declares runs before the mapping and is
+consulted for the refusal exactly as it is for any other exception, `instanceof`
+matching included: a catch-all `@Catch()` filter on that route answers the `403`
+with its own response, because that is what declaring a catch-all means. A
+guard that throws instead of returning `false` is a failure rather than a
+refusal, and reaches the exception filters the same way.
 
 An asynchronous guard is supported; `canActivate` may return
 `Promise<boolean>`.
@@ -126,13 +130,16 @@ class UserMissingFilter implements ExceptionFilter {
 }
 ```
 
-Filters are consulted in precedence order and **the first one that returns
-anything other than `undefined` answers**. A filter returning `undefined`
-declines, and the array continues to the entry behind it. A filter that throws is
-caught, reported through the system logger under `ExceptionsHandler`, and treated
-as declining too — so a filter that throws an `HttpError` does not answer with
-that error's response; the request answers whatever the entry behind the broken
-filter decides. An asynchronous `catch` is supported.
+Filters are consulted in precedence order and **the first one that answers
+wins**. Returning `undefined` or `null` declines — those are the two values
+Elysia's error path reads as no answer — and the array continues to the entry
+behind it. Every other value is an answer, `false`, `0`, and `""` included, so a
+filter that means to decline has to say so with one of those two absences. A
+filter that throws is caught, reported through the system logger under
+`ExceptionsHandler`, and treated as declining too — so a filter that throws an
+`HttpError` does not answer with that error's response; the request answers
+whatever the entry behind the broken filter decides. An asynchronous `catch` is
+supported.
 
 ### The default filter
 
@@ -149,6 +156,13 @@ decided — a validation `422`, a parse `400`, a failed `t.Transform` decode,
 anything thrown with `status(...)`, an exception carrying its own numeric
 `status` or `toResponse()`, and an `HttpError` — so a deliberate response is
 never replaced by a `500`.
+
+Those declines are the mapping's own, not a rule the whole array obeys. A filter
+declared ahead of the mapping runs first and is consulted for every exception its
+`@Catch()` matches — an `HttpError`, a validation `422`, and a guard's refusal
+included — so a declared filter that answers one of them replaces that response
+with its own. Declining them is how the mapping stays out of the way of
+responses an application already decided.
 
 Under `elysia: { aot: false }` the route-local `error` array is never read, so
 no declared filter and not even the default mapping runs; an unhandled failure

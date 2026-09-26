@@ -51,9 +51,10 @@ include the planned transport-neutral adapter, handshake policies, or
 per-message schema layer. Treat the lists above as the scope of record before
 assuming a feature exists.
 
-Every chapter that follows has a runnable counterpart in
+Most chapters that follow have a runnable counterpart in
 [`examples/`](../../examples/README.md): one application per topic, each with
-end-to-end tests asserting what the chapter describes.
+end-to-end tests asserting what the chapter describes. The chapters on errors,
+testing, releasing, and enhancers have no example of their own.
 
 Next: [02 · Install and generate](./02-install-and-generate.md) ·
 Deep dive: [architecture and style](../architecture-and-style.md)

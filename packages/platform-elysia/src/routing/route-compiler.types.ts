@@ -52,10 +52,11 @@ export interface ElysiaRouteErrorContext extends RouteContext {
 /**
  * One entry of a route's own `error` array.
  *
- * Elysia runs the array in order and the first entry that returns anything
- * other than `undefined` answers the request; the rest never run. Declining is
- * therefore returning `undefined`, which is what leaves the decision to the
- * entry behind it.
+ * Elysia runs the array in order and the first entry whose return value it can
+ * answer with answers the request; the rest never run. `undefined` and `null`
+ * are the two values Elysia's error path reads as no answer, so returning either
+ * declines and leaves the decision to the entry behind it — every other value,
+ * `false`, `0`, and `""` included, becomes the response.
  *
  * @internal
  */
