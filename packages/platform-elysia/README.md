@@ -443,15 +443,17 @@ stack or cause, and reserved Problem Details members cannot be replaced through
 extensions.
 
 Errors a handler throws that no exception filter answers do not escape as a
-stack trace either: on Elysia's AOT path every route carries a default Problem
-Details mapping last in its own error path, so they answer `500`
-`application/problem+json` with a fixed `detail` and are reported through the
-system logger under `ExceptionsHandler`. An answer Elysia's own error path
+stack trace either: on Elysia's AOT path every route the platform mounts carries
+a default Problem Details mapping last in its own error path, so they answer
+`500` `application/problem+json` with a fixed `detail` and are reported through
+the system logger under `ExceptionsHandler`. An answer Elysia's own error path
 already decided is declined rather than translated, so a rejected request still
 answers the native `422`, a failed `t.Transform` decode keeps its `422` and the
 decode error's message, a thrown `status(...)` keeps its response, and an
 `HttpError` keeps its own. The mapping is a route-local hook, so it is part of
-what `aot: false` disables.
+what `aot: false` disables — and it only exists on routes the platform mounted
+itself: a route a `registerRoutes` callback or a definition's own `buildPlugin`
+mounted runs no declared filter and no mapping either.
 
 ## Execution enhancers
 
@@ -527,17 +529,22 @@ when it names none — and declines by returning `undefined` or `null`, the two
 values Elysia's error path reads as no answer, so `false`, `0`, and `""` answer
 with what they are. A declared filter is consulted for every exception its
 `@Catch()` matches, an `HttpError`, a validation `422`, and a guard's refusal
-included. Filters run
-most-specific-first, and the default Problem Details mapping is always last: an
-application overrides it by declaring a filter ahead of it, never by removing it.
+included. Filters run most-specific-first, and the default Problem Details
+mapping is always last: an application overrides it by declaring a filter ahead
+of it, never by removing it.
 
 Every enhancer must be a declared provider in a module the controller's module
 can reach, and an undeclared one fails the boot with `MISSING_PROVIDER`. Global
 enhancers are factory options — `guards`, `interceptors`, and `filters` — rather
 than `useGlobal*` methods, because every route mounts during
 `AponiaFactory.create`; a global enhancer runs before the ones a route declares
-and resolves through the root module. See the
-[enhancers guide](../../docs/enhancers.md).
+and resolves through the root module.
+
+All of this reaches the routes the platform mounts from a compiled plan. A
+controller registered through its own `registerRoutes` callback owns its routes'
+hooks, and a definition mounted through its own `buildPlugin` resolves nothing,
+so neither runs a declared enhancer, a global enhancer, or the default mapping.
+See the [enhancers guide](../../docs/enhancers.md).
 
 ## Routes with the native Elysia context
 

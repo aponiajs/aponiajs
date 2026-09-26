@@ -72,9 +72,10 @@ is for failures an application deliberately throws.
 
 ## Unhandled errors
 
-Every route carries a default Problem Details mapping last in its own error
-path, behind any exception filters the route declares. An error a handler
-throws that no filter answers answers `500` `application/problem+json`:
+Every route the platform mounts carries a default Problem Details mapping last
+in its own error path, behind any exception filters the route declares. An error
+a handler throws that no filter answers answers `500`
+`application/problem+json`:
 
 ```json
 {
@@ -110,6 +111,13 @@ route-local `error` hook, which Elysia reads only while it composes routes ahead
 of time: under `elysia: { aot: false }` no declared filter and no mapping runs,
 an unhandled failure answers Elysia's native `500` carrying the exception's
 message, and bootstrap warns under `RoutesResolver` about the policy.
+
+The mapping also only exists on the routes the platform mounts itself. A
+controller registered through a `registerRoutes` callback, and a plugin a
+definition's own `buildPlugin` builds, carry no compiled hooks: no declared
+filter and no mapping runs on their routes, so an unhandled failure there
+answers Elysia's native `500` carrying the exception's message. The
+[execution enhancers guide](../enhancers.md) states which paths those are.
 
 ## Framework errors
 

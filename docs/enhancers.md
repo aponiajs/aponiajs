@@ -143,11 +143,11 @@ supported.
 
 ### The default filter
 
-Every route on Elysia's AOT path carries the default Problem Details mapping last
-in its own `error` array, behind the filters it declares. It maps an unhandled
-failure to `500` `application/problem+json` with a fixed `detail`, reports the
-exception through the system logger under `ExceptionsHandler`, and never
-serializes the stack or the cause.
+Every route the platform mounts on Elysia's AOT path carries the default
+Problem Details mapping last in its own `error` array, behind the filters it
+declares. It maps an unhandled failure to `500` `application/problem+json` with
+a fixed `detail`, reports the exception through the system logger under
+`ExceptionsHandler`, and never serializes the stack or the cause.
 
 It cannot be removed. An application overrides it by declaring a filter ahead of
 it, never by deleting it: an application that could turn error mapping off could
@@ -170,6 +170,30 @@ answers Elysia's native `500` carrying the exception's message, and the boot
 warns under `RoutesResolver` when that policy is set. See the
 [route compilation policy](../packages/platform-elysia/README.md#route-compilation-policy)
 and the [errors chapter](./learn/10-errors.md).
+
+## Routes mounted without a plan
+
+Every enhancer above compiles onto a route while the platform mounts it from a
+compiled plan: a decorated controller or a `defineElysiaControllerRoutes`
+declaration. Two mount paths are outside that, and **neither carries anything
+this page describes** — not the guards, interceptors, or filters the definition
+declares, not a global enhancer, and not the default mapping:
+
+- a controller registered through a `registerRoutes` callback, which is what
+  `elysiaController(...)` and `defineElysiaController(..., { registerRoutes })`
+  build: the callback is handed the real Elysia application and registers its
+  own routes, so the platform never sees them and has nothing to attach hooks
+  to;
+- a definition mounted through its own `buildPlugin`, which builds an Elysia
+  plugin outside a boot: with no boot there is no resolution, so the plugin
+  mounts the validators its schemas declare and no enhancer hooks at all.
+
+The consequence is the one `elysia: { aot: false }` has: a route mounted that
+way answers exactly the way Elysia answers, and an unhandled failure on it is
+Elysia's native `500` carrying the exception's message rather than a Problem
+Details response. The platform cannot retro-fit hooks onto routes it did not
+compile, so a declaration that has to run belongs on a decorated controller or a
+declared plan.
 
 ## Declaring enhancers
 
@@ -279,7 +303,8 @@ export const UsersModule = defineModule({
 ### Global enhancers
 
 `AponiaFactory.create` accepts one array per kind. A global enhancer reaches
-every route of every module, whatever module mounted it:
+every route the platform mounts, whatever module mounted it — the exceptions are
+the [routes mounted without a plan](#routes-mounted-without-a-plan):
 
 ```ts
 import { AponiaFactory } from "@aponiajs/platform-elysia";
@@ -368,7 +393,8 @@ Each of these is a decision, not an omission.
 Guards, `interceptBefore`, and the hook order belong to
 `packages/platform-elysia/tests/guards.test.ts`,
 `interceptors.test.ts`, and `route-enhancers.test.ts`; filters and the default
-mapping to `exception-filters.test.ts`; resolution and precedence to
+mapping to `exception-filters.test.ts`; the mounts that run none of it to
+`unmounted-route-enhancers.test.ts`; resolution and precedence to
 `enhancer-resolution.test.ts` and `global-enhancers.test.ts`; the decorators to
 `packages/common/tests/enhancer-decorators.test.ts`. The
 [enhancers chapter](./learn/13-enhancers.md) is the short walkthrough.

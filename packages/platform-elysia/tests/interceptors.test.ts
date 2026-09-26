@@ -78,6 +78,39 @@ class PassThroughInterceptor {
   }
 }
 
+/**
+ * Both halves return a Promise, so a route running it is ordered by the awaited
+ * halves rather than by whichever half happened to be scheduled first.
+ */
+@Injectable()
+class AsyncWrappingInterceptor {
+  async interceptBefore(): Promise<void> {
+    order.push("async:before:start");
+    await Promise.resolve();
+    order.push("async:before:end");
+  }
+
+  async interceptAfter(_context: unknown, response: unknown): Promise<unknown> {
+    order.push("async:after:start");
+    await Promise.resolve();
+    order.push("async:after:end");
+    return `${String(response)}+async`;
+  }
+}
+
+/**
+ * Declared after the asynchronous interceptor, so its own before half runs
+ * while that half's promise is still pending unless the compiled hook awaits.
+ * It records what it saw rather than throwing, so a mutation that stops the
+ * await changes the recorded order instead of answering a 500.
+ */
+@Injectable()
+class BeforeOrderProbeInterceptor {
+  interceptBefore(): void {
+    order.push(order.includes("async:before:end") ? "probe:after-async" : "probe:before-async");
+  }
+}
+
 @Injectable()
 class InvokerWrappingInterceptor {
   interceptAfter(_context: unknown, response: unknown): unknown {
@@ -180,6 +213,18 @@ class TimingController {
   }
 }
 
+// The asynchronous interceptor is declared after the outer one, so its after
+// half runs first and the value it answers with is what the outer half reads.
+@Controller("async-wrapped")
+@UseInterceptors(OuterInterceptor, AsyncWrappingInterceptor, BeforeOrderProbeInterceptor)
+class AsyncWrappedController {
+  @Get()
+  read(): string {
+    order.push("handler");
+    return "value";
+  }
+}
+
 @Controller("scoped")
 @UseInterceptors(OuterInterceptor, InnerInterceptor)
 class ScopedController {
@@ -264,6 +309,7 @@ class ProbeController {
     GuardedController,
     FailingController,
     TimingController,
+    AsyncWrappedController,
     ScopedController,
     InvokedController,
     ProbeController,
@@ -274,6 +320,8 @@ class ProbeController {
     GlobalInterceptor,
     TimingInterceptor,
     PassThroughInterceptor,
+    AsyncWrappingInterceptor,
+    BeforeOrderProbeInterceptor,
     InvokerWrappingInterceptor,
     ThrowingGuard,
     AfterMustNotRun,
@@ -367,6 +415,33 @@ describe("interceptors", () => {
     expect([await response.text(), order]).toEqual([
       "value+inner+outer",
       ["outer:before", "inner:before", "handler", "inner:after", "outer:after"],
+    ]);
+    await application.close();
+  });
+
+  test("awaits an asynchronous half before its value is used", async () => {
+    order.length = 0;
+    const application = await AponiaFactory.create(AppModule, { logger: false });
+
+    const response = await application.handle(new Request("http://localhost/async-wrapped"));
+
+    // The before half's awaited work finishes before the next before half runs,
+    // and the after half's awaited value is what the interceptor behind it
+    // receives: an unawaited half would leave the probe reading
+    // `probe:before-async`, hand the outer interceptor a Promise, and put
+    // `[object Promise]` in the body instead of the resolved string.
+    expect([await response.text(), order]).toEqual([
+      "value+async+outer",
+      [
+        "outer:before",
+        "async:before:start",
+        "async:before:end",
+        "probe:after-async",
+        "handler",
+        "async:after:start",
+        "async:after:end",
+        "outer:after",
+      ],
     ]);
     await application.close();
   });

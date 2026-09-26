@@ -157,6 +157,27 @@ class NullDeclinedController {
   }
 }
 
+/** The exception the validation-answering filter was consulted with. */
+const validationCatch: { exception?: unknown } = {};
+
+@Catch(Error)
+@Injectable()
+class ValidationAnsweringFilter {
+  catch(exception: unknown): unknown {
+    validationCatch.exception = exception;
+    return new Response("answered before the handler ran", { status: 400 });
+  }
+}
+
+@Controller("validated-filtered")
+@UseFilters(ValidationAnsweringFilter)
+class ValidatedFilteredController {
+  @Post("items", { body: t.Object({ name: t.String() }) })
+  create(@Body() body: { name: string }): { name: string } {
+    return { name: body.name };
+  }
+}
+
 /**
  * What a filter is actually handed for a real request, recorded by the filter
  * itself — the same probe shape `tests/guards.test.ts` uses for the context a
@@ -279,6 +300,7 @@ class NativeController {
     HttpController,
     RefusedController,
     NullDeclinedController,
+    ValidatedFilteredController,
     ProbeController,
     ValidatedController,
     NativeController,
@@ -292,6 +314,7 @@ class NativeController {
     AsyncAnsweringFilter,
     RefusingGuard,
     NullFilter,
+    ValidationAnsweringFilter,
     ProbeFilter,
   ],
 })
@@ -478,6 +501,30 @@ describe("exception filters", () => {
     // body rather than a Problem Details 500.
     expect(response.status).toBe(422);
     expect(response.headers.get("content-type")).not.toContain("problem+json");
+    await application.close();
+  });
+
+  test("a declared filter is consulted for a validation 422 and can answer it", async () => {
+    validationCatch.exception = undefined;
+    const application = await AponiaFactory.create(AppModule, { logger: false });
+
+    const response = await application.handle(
+      new Request("http://localhost/validated-filtered/items", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: 1 }),
+      }),
+    );
+
+    // Declining Elysia's own errors is the default mapping's rule, not the
+    // array's: a filter declared ahead of the mapping is consulted for every
+    // exception its `@Catch()` matches, Elysia's validation refusal included,
+    // and what it answers replaces the native 422.
+    expect(validationCatch.exception).toBeInstanceOf(Error);
+    expect([response.status, await response.text()]).toEqual([
+      400,
+      "answered before the handler ran",
+    ]);
     await application.close();
   });
 });

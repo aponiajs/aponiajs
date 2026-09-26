@@ -57,22 +57,34 @@ export interface AponiaApplicationOptions {
    */
   readonly descriptors?: AponiaModuleDescriptorArtifact;
   /**
-   * Guards every route runs, before the ones a controller or a handler declares.
+   * Guards every route the platform mounts runs, before the ones a controller
+   * or a handler declares.
    *
-   * A global guard reaches every route of every module, so it is resolved once,
-   * through the root module: the class must be a provider the root module can
-   * reach, and one it cannot reach fails `AponiaFactory.create` with the
-   * `MISSING_PROVIDER` a missing dependency raises rather than leaving a route
-   * unguarded.
+   * A global guard reaches every route the platform mounts, whatever module
+   * mounted it, so it is resolved once, through the root module: the class must
+   * be a provider the root module can reach, and one it cannot reach fails
+   * `AponiaFactory.create` with the `MISSING_PROVIDER` a missing dependency
+   * raises rather than leaving a route unguarded.
+   *
+   * The exception is a mount the platform does not compile: a controller
+   * registered through its own `registerRoutes` callback, and a definition
+   * mounted through its own `buildPlugin`, own their routes' hooks, so neither
+   * runs a global guard or one the route declares.
    *
    * There is deliberately no `useGlobalGuards()` method: routes mount during
    * `AponiaFactory.create`, so a method called on the returned application could
    * not affect them.
    */
   readonly guards?: readonly ClassToken<unknown>[];
-  /** Interceptors every route runs, declared and resolved the way `guards` are. */
+  /**
+   * Interceptors every route the platform mounts runs, declared and resolved
+   * the way `guards` are, the same mounts excluded.
+   */
   readonly interceptors?: readonly ClassToken<unknown>[];
-  /** Filters every route consults, declared and resolved the way `guards` are. */
+  /**
+   * Filters every route the platform mounts consults, declared and resolved the
+   * way `guards` are, the same mounts excluded.
+   */
   readonly filters?: readonly ClassToken<unknown>[];
 }
 

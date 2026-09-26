@@ -336,11 +336,12 @@ Elysia's supported `StatusMap`; responses use RFC 9457
 deliberate application failures. Anything else a handler throws becomes a `500`
 Problem Details response, reported through the system logger, unless a declared
 exception filter answers it first or Elysia's own error path already answers it:
-every route compiles a default Problem Details mapping last in its own `error`
-array, behind the filters it declares, and that mapping declines an exception
-carrying its own `status` or `toResponse()` and every status Elysia already
-decided, so validation `422`s, parse `400`s, a failed transform decode,
-`status()`, and `HttpError` keep the responses Elysia gives them. A route-local
+every route the platform mounts compiles a default Problem Details mapping last
+in its own `error` array, behind the filters it declares, and that mapping
+declines an exception carrying its own `status` or `toResponse()` and every
+status Elysia already decided, so validation `422`s, parse `400`s, a failed
+transform decode, `status()`, and `HttpError` keep the responses Elysia gives
+them. A route-local
 `error` array is read only while Elysia composes routes ahead of time, so
 `elysia: { aot: false }` disables every declared filter and that mapping; an
 unhandled failure then answers Elysia's native `500` carrying the exception's

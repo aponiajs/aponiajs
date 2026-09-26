@@ -244,9 +244,9 @@ function routeInterceptors(
  * application's own, then the Problem Details mapping every route carries last.
  *
  * The order is the reverse of the guard order, because the first filter that
- * matches answers: a route's own filters are consulted before the
- * application's, so the most specific one decides, and the mapping at the end
- * answers only what every declared filter declined.
+ * answers wins: a route's own filters are consulted before the application's,
+ * so the most specific one decides, and the mapping at the end answers only
+ * what every declared filter declined.
  *
  * `undefined` is what a mount with no boot states, and it is returned as such:
  * a mount that resolved nothing and has nothing to map with mounts no `error`

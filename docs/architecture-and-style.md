@@ -412,3 +412,10 @@ Hand-authored code normally uses the concise `elysiaController(...)` facade so
 Elysia contextually infers route input without a manual context type or
 `typeof`. The older `buildPlugin` form remains the compatibility escape hatch
 for a controller that deliberately owns an isolated Elysia plugin.
+
+Both of those forms own their routes' hooks, so neither is a place to declare an
+enhancer: the platform compiles guards, interceptors, filters, and the default
+mapping while it mounts a route itself, and a route registered through a
+callback or built by a `buildPlugin` gets none of them — an unhandled failure
+there answers Elysia's native `500` carrying the exception's message. The
+[execution enhancers guide](./enhancers.md) states the exclusion in full.

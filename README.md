@@ -366,9 +366,10 @@ throw httpErrors.notFound("User 42 does not exist.", {
 uses `application/problem+json`; optional causes stay server-side and stacks are
 never serialized. Use `httpError(422, detail, options)` when a numeric status is
 clearer. Anything else a handler throws answers a Problem Details `500` through
-the default mapping every route carries last, unless an exception filter answers
-it first. That mapping and every declared filter live in a route-local `error`
-array, which Elysia reads only while it composes routes ahead of time: under
+the default mapping every route the platform mounts carries last, unless an
+exception filter answers it first. That mapping and every declared filter live
+in a route-local `error` array, which Elysia reads only while it composes routes
+ahead of time: under
 `elysia: { aot: false }` neither runs, and an unhandled failure answers Elysia's
 native `500` carrying the exception's message. See the
 [errors chapter](./docs/learn/10-errors.md) and the
@@ -576,7 +577,10 @@ directly to Eden Treaty. Provider-registered WebSocket gateways expose
 Nest-style message and lifecycle decorators over Elysia's native socket
 runtime. Nest-style guards, interceptors, and exception filters compile into
 per-route Elysia lifecycle hooks, and an unhandled failure answers an RFC 9457
-`500` unless a declared filter answers it first.
+`500` unless a declared filter answers it first — on the routes the platform
+mounts from a compiled plan. A controller registered through its own
+`registerRoutes` callback, and a definition mounted through its own
+`buildPlugin`, run no enhancer and answer Elysia's native `500` instead.
 
 Not implemented yet: async provider lifecycle, request and transient scopes,
 platform-neutral HTTP packages, full Elysia phase conformance, serialization

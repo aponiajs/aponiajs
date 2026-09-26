@@ -47,8 +47,8 @@ runtime boundary it describes.
   into. A plugin a definition's `buildPlugin` builds outside a boot resolves
   nothing, so `unmountedRouteEnhancers` is what it mounts with. A global
   enhancer is the application's declaration and resolves once, through the root
-  module, so it reaches every route whatever module mounted it, and a class the
-  root cannot reach fails the boot with `MISSING_PROVIDER`.
+  module, so it reaches every route the platform mounts whatever module mounted
+  it, and a class the root cannot reach fails the boot with `MISSING_PROVIDER`.
   `registerCompiledElysiaRoutes` takes that resolution as a required parameter
   for the same reason: a mount that merged nothing has to say so at the call
   site rather than omit it.
@@ -80,9 +80,11 @@ runtime boundary it describes.
   route or per request — and enhancers are singletons like every other provider.
   A class the graph cannot reach fails the mount with `MISSING_PROVIDER` rather
   than leaving a route quietly unguarded, unwrapped, or unfiltered.
-- Every route carries the default Problem Details mapping last in its own
-  `error` array, behind the filters it declares, so the array reads
-  `[...method, ...controller, ...global, default]`. Declared filters run
+- Every route the platform mounts from a compiled plan carries the default
+  Problem Details mapping last in its own `error` array, behind the filters it
+  declares, so the array reads `[...method, ...controller, ...global, default]`;
+  the two mounts the bullet above leaves without a compiled plan carry no `error`
+  array at all, and no enhancer hook either. Declared filters run
   most-specific-first — the reverse of the guard and `interceptBefore` order —
   and the first entry that returns anything other than `undefined` or `null`
   answers: those two are what Elysia's error path reads as no answer, so a filter

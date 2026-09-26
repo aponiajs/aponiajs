@@ -74,11 +74,20 @@ class UserMissingFilter implements ExceptionFilter {
 arguments it answers anything. Filters run most-specific-first, and the first one
 that answers wins — returning `undefined` or `null` declines, every other value
 answers. What no filter answers is handled by the default Problem Details mapping
-every route carries, which is why an unhandled failure is a `500` Problem Details
-response rather than a stack trace. That mapping is a route-local `error` hook
-too, so under `elysia: { aot: false }` Elysia never reads it: neither the mapping
-nor any declared filter runs, and an unhandled failure answers Elysia's native
-`500` carrying the exception's message.
+every route the platform mounts carries, which is why an unhandled failure is a
+`500` Problem Details response rather than a stack trace. That mapping is a
+route-local `error` hook too, so under `elysia: { aot: false }` Elysia never
+reads it: neither the mapping nor any declared filter runs, and an unhandled
+failure answers Elysia's native `500` carrying the exception's message.
+
+Two mount paths never get there at all, and no enhancer above runs on them: a
+controller registered through a `registerRoutes` callback, and a definition
+mounted through its own `buildPlugin`. The platform compiles a route's hooks
+while it mounts the route, and those two mount their routes themselves — so
+their routes run no guard, interceptor, or filter and carry no default mapping,
+and an unhandled failure on one answers Elysia's native `500` carrying the
+exception's message. Declare the enhancer on a decorated controller or a
+declared plan when it has to run.
 
 ## Declare every enhancer as a provider
 
