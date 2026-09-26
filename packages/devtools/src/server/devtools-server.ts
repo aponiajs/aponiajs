@@ -1,4 +1,5 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { readApplicationDiagnostics } from "@aponiajs/platform-elysia";
 import type { Elysia } from "elysia";
 import { buildMetaPayload, devtoolsMetaPath } from "../endpoints/meta.ts";
@@ -49,27 +50,63 @@ export function startDevtoolsServer(options: DevtoolsServerOptions): DevtoolsSer
 }
 
 /**
- * The resolved Elysia release, or `null` when none resolves.
+ * The Elysia release installed in the tree that asks, or `null` when the tree
+ * has not installed one.
  *
- * Resolved from the directory of the caller that asks, which is the dependency
- * tree the running package sees — the same tree the framework's own resolution
- * uses — rather than the process's working directory, where an application
- * started from anywhere else would point the answer at the wrong install.
+ * Only an install answers. `Bun.resolveSync` falls back to Bun's global install
+ * cache when a package is absent from the tree it resolves from, so asking it
+ * here would report whatever the machine happens to have — a release the
+ * application never ran against. The walk up from the directory that asks is
+ * what keeps the answer local, and the manifest is read from the path the walk
+ * found rather than resolved a second time, so nothing can consult the cache in
+ * between.
  *
- * A manifest that cannot be read and one that carries no version are both "no
- * Elysia resolves" rather than a guess: the payload reports what was read.
+ * The starting directory is the one the caller that asks sees, which is the
+ * dependency tree the running package resolved through rather than the process's
+ * working directory, where an application started from anywhere else would
+ * point the answer at the wrong install.
+ *
+ * A package that is present but carries no version reads the same way as one
+ * that is not installed: the payload reports what it read, and a guess would be
+ * worse than an absence.
  *
  * @internal
  */
 export function resolveElysiaVersion(baseDirectory: string): string | null {
+  const manifestPath = findInstalledElysiaManifest(baseDirectory);
+
+  if (manifestPath === undefined) {
+    return null;
+  }
+
   try {
-    const manifestPath = Bun.resolveSync("elysia/package.json", baseDirectory);
     const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { version?: unknown };
 
     return typeof manifest.version === "string" ? manifest.version : null;
   } catch {
     return null;
   }
+}
+
+/**
+ * The manifest of the nearest `node_modules/elysia` at or above a directory, or
+ * `undefined` when the walk reaches the filesystem root without finding one.
+ *
+ * A package's own directory usually has no `node_modules` of its own: the
+ * install that serves it is hoisted to a workspace or project root above it, and
+ * that is the copy the running application resolved through.
+ */
+function findInstalledElysiaManifest(baseDirectory: string): string | undefined {
+  const candidate = join(baseDirectory, "node_modules", "elysia", "package.json");
+
+  if (existsSync(candidate)) {
+    return candidate;
+  }
+
+  // `dirname` of a filesystem root is that root, which is where the walk ends.
+  const parent = dirname(baseDirectory);
+
+  return parent === baseDirectory ? undefined : findInstalledElysiaManifest(parent);
 }
 
 /**

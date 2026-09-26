@@ -19,13 +19,11 @@ export const devtoolsContractVersion = 1;
  *   answers, because a client that asked a devtools server what it is looking at
  *   deserves an answer rather than a `500`, and the fallback is true: this
  *   release is what is serving the report.
- * - `artifacts` stamps the release that supplied an artifact the boot adopted,
- *   and `null` for one it did not. The record proves adoption — the invoker
- *   verdict, and a declared graph for descriptors — but not which release
- *   emitted the artifact, so this projects from what it does prove instead of
- *   re-applying a platform selector's rules here. A declared graph a caller
- *   handed over by hand reads as a declared graph, so its descriptor stamp is
- *   this release as well: the boot served declared data, and the caller wrote it.
+ * - `artifacts` reports the release each adopted artifact came from, exactly as
+ *   the record states it, and `null` for one the boot did not adopt. The record,
+ *   not this endpoint, is where that distinction lives: a hand-written
+ *   `ModuleDefinition` a caller passed compiles as declared data, but no build
+ *   emitted it, so its stamp stays `null` and this endpoint never invents one.
  *
  * The payload is frozen and built once: every request of one boot is answered
  * from the same report, so a poll cannot observe a half-changed one.
@@ -42,8 +40,8 @@ export function buildMetaPayload(facts: {
     framework,
     elysia: facts.elysia,
     artifacts: Object.freeze({
-      invokers: facts.diagnostics?.invokers.accepted === true ? framework : null,
-      descriptors: facts.diagnostics?.graph === "declared" ? framework : null,
+      invokers: facts.diagnostics?.artifacts.invokers ?? null,
+      descriptors: facts.diagnostics?.artifacts.descriptors ?? null,
     }),
     startedAt: facts.startedAt,
   });

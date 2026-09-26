@@ -198,6 +198,23 @@ test("meta names the release that supplied each artifact a boot adopted", async 
   }
 });
 
+test("meta reports no stamp for a descriptor the caller wrote by hand", async () => {
+  // The graph is declared data, and no build emitted it: the record's stamps are
+  // the artifact's own release, so a hand-written descriptor reports `null`
+  // rather than the release that happens to be serving the report.
+  const application = await AponiaFactory.createNative(declaredFixtureModule, { logger: false });
+  const server = serveLoopback(application);
+
+  try {
+    const meta = await readMeta(server);
+
+    expect(meta.framework).toBe(aponiaVersion);
+    expect(meta.artifacts).toEqual({ invokers: null, descriptors: null });
+  } finally {
+    server.stop();
+  }
+});
+
 test("meta falls back to the release serving it when no boot produced the application", async () => {
   const server = serveLoopback(new Elysia());
 
@@ -250,23 +267,41 @@ test("the Elysia release resolves from the directory a running package sees", ()
 });
 
 /**
- * A throwaway project whose only dependency is a stub `elysia` manifest, so a
- * case can state what the resolver reads. A directory with its own
- * `package.json` resolves that directory's `node_modules` rather than a copy
- * Bun has cached elsewhere.
+ * A throwaway project, optionally with a stub `elysia` manifest installed in its
+ * own `node_modules`, so a case can state what the resolver reads. A directory
+ * with its own `package.json` resolves that directory's `node_modules` rather
+ * than a copy Bun has cached elsewhere.
  */
-function createStubProject(elysiaManifest: string): {
+function createStubProject(elysiaManifest?: string): {
   readonly directory: string;
   readonly remove: () => void;
 } {
   const directory = mkdtempSync(join(tmpdir(), "aponia-devtools-"));
 
   writeFileSync(join(directory, "package.json"), JSON.stringify({ name: "stub-project" }));
-  mkdirSync(join(directory, "node_modules", "elysia"), { recursive: true });
-  writeFileSync(join(directory, "node_modules", "elysia", "package.json"), elysiaManifest);
+
+  if (elysiaManifest !== undefined) {
+    mkdirSync(join(directory, "node_modules", "elysia"), { recursive: true });
+    writeFileSync(join(directory, "node_modules", "elysia", "package.json"), elysiaManifest);
+  }
 
   return { directory, remove: () => rmSync(directory, { recursive: true, force: true }) };
 }
+
+test("a project that never installed Elysia reports no version, whatever the machine has cached", () => {
+  const project = createStubProject();
+
+  try {
+    // The trap this pins: `Bun.resolveSync` falls back to Bun's global install
+    // cache, so it can answer for a directory tree that installed nothing —
+    // reporting a release the application never ran against. The resolver reads
+    // only a `node_modules` at or above the directory, so the answer here does
+    // not depend on what this machine happens to have cached.
+    expect(resolveElysiaVersion(project.directory)).toBeNull();
+  } finally {
+    project.remove();
+  }
+});
 
 test("a manifest that carries no version resolves to nothing rather than to an empty string", () => {
   const project = createStubProject(JSON.stringify({ name: "elysia" }));

@@ -135,7 +135,6 @@ test.serial("an enabled module mounts its plugin, which serves the address it bo
   try {
     const application = await AponiaFactory.create(EnabledModule);
     await application.listen(0);
-    await application.close();
 
     expect(output.rows().join("")).toContain(
       "ElysiaPluginModule[devtools] dependencies initialized",
@@ -145,12 +144,50 @@ test.serial("an enabled module mounts its plugin, which serves the address it bo
     expect(reports).toHaveLength(1);
 
     // The one report names the port the socket took rather than the sentinel
-    // the registration asked for, and that address is what answers.
+    // the registration asked for, and that address is what answers for as long
+    // as the application that started it is listening.
     const address = reportedAddress(reports[0] ?? "");
     const response = await fetch(`${address}/__devtools/meta`);
 
     expect(response.status).toBe(200);
     expect(((await response.json()) as AponiaMetaPayload).contract).toBe(1);
+
+    await application.close();
+  } finally {
+    output.restore();
+  }
+});
+
+/**
+ * Whether a loopback address still answers. A socket that has stopped refuses
+ * the connection, which is what `fetch` reports as a rejection.
+ */
+async function answers(address: string): Promise<boolean> {
+  try {
+    await fetch(`${address}/__devtools/meta`);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+test.serial("closing the application stops the devtools socket it started", async () => {
+  const output = captureOutput();
+  try {
+    const application = await AponiaFactory.create(EnabledModule);
+    await application.listen(0);
+
+    const address = reportedAddress(devtoolsReports(output)[0] ?? "");
+
+    // The socket answers for as long as the application that started it runs...
+    expect(await answers(address)).toBe(true);
+
+    // ...and stops with it. The address is the one the plugin's own socket took,
+    // so a server left bound here is the leak this pins: it would hold the port
+    // across the next boot and answer for an application that is gone.
+    await application.close();
+
+    expect(await answers(address)).toBe(false);
   } finally {
     output.restore();
   }
@@ -190,7 +227,6 @@ test.serial("the report describes the boot the plugin's own application carries"
       invokers: acceptedInvokers,
     });
     await application.listen(0);
-    await application.close();
 
     const address = reportedAddress(devtoolsReports(output)[0] ?? "");
     const meta = (await (await fetch(`${address}/__devtools/meta`)).json()) as AponiaMetaPayload;
@@ -200,6 +236,8 @@ test.serial("the report describes the boot the plugin's own application carries"
     // `null`, which is exactly what the record's absence proves.
     expect(meta.framework).toBe(aponiaVersion);
     expect(meta.artifacts.invokers).toBe(aponiaVersion);
+
+    await application.close();
   } finally {
     output.restore();
   }

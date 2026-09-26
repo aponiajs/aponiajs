@@ -19,6 +19,8 @@ The package is a leaf: nothing in the framework depends on it. An application im
 - `onStart` fires on `listen()`. An application that only calls `handle()` publishes nothing and is unaffected.
 - The bind address is `127.0.0.1` and is not configurable.
 - A port that is already bound is reported under `Devtools` and never fails the boot: the application answers its own routes without the devtools server.
+- The devtools socket stops when the application is closed, so a restart binds a fresh one.
+- `GET /__devtools/meta` reports the contract version, the release that booted the application, the Elysia installed in the application's own tree (`null` when there is none), and which release supplied each artifact the boot adopted (`null` for one it did not).
 - Every endpoint is a `GET`. Any other method answers `405` before the path is read, and a path the server does not serve answers `404`.
 
 ## Documentation

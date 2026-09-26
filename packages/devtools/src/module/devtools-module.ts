@@ -2,6 +2,7 @@ import { Logger, Module, type DynamicModule } from "@aponiajs/common";
 import { ElysiaPluginModule } from "@aponiajs/platform-elysia";
 import { Elysia } from "elysia";
 import { startDevtoolsServer } from "../server/devtools-server.ts";
+import type { DevtoolsServer } from "../server/devtools-server.types.ts";
 import type { DevtoolsOptions } from "./devtools-module.types.ts";
 
 const devtoolsPluginName = "aponia.devtools";
@@ -62,19 +63,34 @@ function createInertModule(): DynamicModule {
  * the one the socket actually took rather than the port configuration asked
  * for. A server that could not bind has already reported why, so the plugin
  * reports nothing further.
+ *
+ * `onStop` — which Elysia fires on `close()`, for a plugin as much as for the
+ * application that mounted it — stops the socket the plugin started. A devtools
+ * server that outlived its application would keep the port bound for a restart
+ * that cannot take it, and the handle is the plugin's because the plugin is what
+ * opened the socket.
  */
 function createDevtoolsPlugin(options: DevtoolsOptions): Elysia {
-  return new Elysia({ name: devtoolsPluginName }).onStart((application) => {
-    const server = startDevtoolsServer({
-      application,
-      port: options.port,
-      logger: devtoolsLogger,
+  let server: DevtoolsServer | undefined;
+
+  return new Elysia({ name: devtoolsPluginName })
+    .onStart((application) => {
+      server = startDevtoolsServer({
+        application,
+        port: options.port,
+        logger: devtoolsLogger,
+      });
+
+      if (server === undefined) {
+        return;
+      }
+
+      devtoolsLogger.log(`Aponia devtools is enabled for ${server.url}.`);
+    })
+    .onStop(() => {
+      // The handle is dropped as well as stopped, so a later `listen()` starts a
+      // fresh socket rather than leaving a stopped one behind.
+      server?.stop();
+      server = undefined;
     });
-
-    if (server === undefined) {
-      return;
-    }
-
-    devtoolsLogger.log(`Aponia devtools is enabled for ${server.url}.`);
-  });
 }

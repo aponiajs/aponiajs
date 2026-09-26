@@ -34,11 +34,15 @@ export class AppModule {}
   `8000`), with no way to widen the address.
 - **A taken port never fails a boot.** The refused bind is reported under
   `Devtools`, and the application continues without the devtools server.
+- **The socket stops with the application.** `close()` stops the devtools server
+  the plugin started, so a restart binds a fresh socket instead of finding the
+  port still held.
 - **`GET /__devtools/meta` is the contract.** It answers the devtools contract
-  version, the release that booted the application, the Elysia release it
-  resolved, which release supplied each artifact the boot adopted, and when the
-  server started. Every endpoint is a `GET`: any other method answers `405`, and
-  an unknown path answers `404`.
+  version, the release that booted the application, the Elysia release installed
+  in the application's own tree (`null` when there is none), which release
+  supplied each artifact the boot adopted (`null` for one it did not), and when
+  the server started. Every endpoint is a `GET`: any other method answers `405`,
+  and an unknown path answers `404`.
 
 ```bash
 curl http://127.0.0.1:8000/__devtools/meta

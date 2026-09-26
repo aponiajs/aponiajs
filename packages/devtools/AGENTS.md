@@ -45,6 +45,11 @@ runtime boundary it describes.
   reported under `Devtools` with the reason, `startDevtoolsServer` returns
   `undefined`, and the application continues. The plugin's `onStart` reports
   nothing further when it sees that, so one refused bind is one row.
+- The plugin holds the server handle and stops it at `onStop`, which Elysia
+  fires on `close()` for a plugin as much as for the application that mounted it.
+  A devtools socket that outlived its application would hold the port across the
+  next boot and answer for an application that is gone; the handle belongs to the
+  plugin because the plugin is what opened the socket.
 - The socket binds port `0` happily, and the report then names the address the
   socket took — never the port the registration asked for. A report that echoed
   the configuration would be indistinguishable from one that never bound.
@@ -54,6 +59,10 @@ runtime boundary it describes.
 - `/meta` falls back to this release for an application no boot produced, and
   says `null` for every artifact such a boot did not adopt. It never crashes on
   a missing record and never reports a guess as a release.
+- `/meta` reports each artifact stamp exactly as the boot record states it. The
+  record is where "an artifact supplied this" and "a release wrote it" are told
+  apart — a hand-written `ModuleDefinition` compiles as declared data that no
+  build emitted — so this package never re-derives a stamp from the graph it sees.
 - The report describes the boot the _plugin's own_ application carries: Elysia
   hands `onStart` the root application, which is the one bootstrap attached the
   record to.
@@ -67,6 +76,12 @@ runtime boundary it describes.
 - `startDevtoolsServer` is synchronous, and so is the read that resolves the
   installed Elysia, because Elysia does not await `onStart`. A handler may still
   answer a promise: Task 10's analyzer loads itself on first request.
+- Only an Elysia installed in the tree is reported. `Bun.resolveSync` falls back
+  to Bun's global install cache, so it answers for a tree that installed nothing
+  and would name a release the application never ran against; the resolver walks
+  up from the directory that asks, looking for `node_modules/elysia/package.json`
+  itself, and answers `null` when the walk finds none. The CLI's
+  `hasOwnToolchain` guard is the same rule for the same reason.
 - The package reports what a boot decided; it never re-derives it. Read the boot
   record through `readApplicationDiagnostics` instead of re-applying a
   platform selector's rule here.
@@ -94,6 +109,16 @@ whose devtools points at the port the blocker took — and the pair is what make
 the two reports distinguishable: the ephemeral case names an address that
 answers, the refused case states it could not listen and leaves the application
 answering its own routes.
+
+The socket's lifetime is asserted over HTTP too: a case polls the address while
+the application listens, closes the application, and polls again, because a
+devtools server that survived `close()` is indistinguishable from a working one
+until a second boot cannot take the port.
+
+The Elysia read is asserted for what it refuses: the workspace's own install
+answers its version, and a throwaway project that installed nothing answers
+`null` — the case that would report a cached release instead if the resolver
+asked `Bun.resolveSync`.
 
 The pure dispatcher is tested directly, because `405` and `404` are the two
 answers a socket cannot demonstrate as cheaply, and the same cases run over a
