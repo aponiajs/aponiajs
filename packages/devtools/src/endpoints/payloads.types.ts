@@ -3,6 +3,7 @@ import type {
   AponiaModuleInspection,
   AponiaRouteParameterInspection,
 } from "@aponiajs/platform-elysia";
+import type { LogEntry } from "../logging/log-buffer.types.ts";
 
 /**
  * Which release supplied each artifact a boot adopted.
@@ -134,4 +135,23 @@ export interface AponiaMountedRoute {
 export interface AponiaRoutesPayload {
   /** Every mounted route, sorted by path, method, controller, handler, and module. */
   readonly routes: readonly AponiaMountedRoute[];
+}
+
+/**
+ * The payload `/__devtools/logs` answers with: the application's log stream read
+ * from one cursor, and the cursor the next poll asks from.
+ *
+ * `cursor` counts every line the stream has recorded, including the ones dropped
+ * since, which is what makes it usable as a poll marker: a client that keeps it
+ * and passes it back sees every line written between two polls, however many
+ * there were. It never goes backwards, whatever the request named — a `since`
+ * older than the retained window is answered with the whole window, and one
+ * ahead of every write with none — so a poll is never an error and never a
+ * rewind.
+ */
+export interface AponiaLogsPayload {
+  /** The cursor to pass back as `since` on the next poll. */
+  readonly cursor: number;
+  /** The retained entries written after the requested cursor, oldest first. */
+  readonly entries: readonly LogEntry[];
 }

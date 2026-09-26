@@ -11,11 +11,13 @@ the loopback HTTP API that reports what the running application actually is. The
 package is a leaf — nothing in the framework depends on it, and an application
 installs it deliberately.
 
-| Domain       | Owns                                                                       |
-| ------------ | -------------------------------------------------------------------------- |
-| `module/`    | `DevtoolsModule.register`, `DevtoolsOptions`, the plugin                   |
-| `server/`    | `startDevtoolsServer`, the loopback socket, `routeRequest`, the dispatcher |
-| `endpoints/` | One payload builder and its wire contract per endpoint, `/meta` first      |
+| Domain       | Owns                                                                           |
+| ------------ | ------------------------------------------------------------------------------ |
+| `module/`    | `DevtoolsModule.register`, `DevtoolsOptions`, the plugin                       |
+| `server/`    | `startDevtoolsServer`, the loopback socket, `routeRequest`, the dispatcher     |
+| `endpoints/` | One payload builder and its wire contract per endpoint, `/meta` first          |
+| `buffer/`    | The bounded cursor buffer `/logs` and `/requests` share, and nothing else      |
+| `logging/`   | The log stream: its record, its bound, and the tap that fills it from a logger |
 
 `src/index.ts` is the only public barrel. Keep `*.types.ts` colocated with the
 runtime boundary it describes.
@@ -187,6 +189,46 @@ runtime boundary it describes.
   route ends with — because the first entry that answers is the one that decides.
   A route no plan describes carries no list at all: the platform compiles that
   array only for the routes it mounts from a plan.
+- The log stream is built when the module is registered, not when the socket
+  starts, and the logger is patched in place rather than replaced. Registration is
+  the only moment this package holds the application's logger before the boot
+  writes, so a stream that began at `onStart` would have none of the lines the
+  boot reports about itself — the modules it initialized, the routes it resolved —
+  which are most of what a log stream is worth. The logger is the object the
+  application and the platform both hold, so a wrapper would be a logger the
+  framework never uses and a replacement one the application never sees: patching
+  its methods keeps one object, still prints every line it printed before, and
+  records every call whatever the logger's own level filter would print, because
+  `LoggerService` has no notion of an enabled level and re-applying a rule this
+  package cannot read would be enforcing a filter it does not own. A logger it
+  cannot patch is left as it is; a tap is this package's convenience and never
+  the application's contract.
+- `DevtoolsOptions.logger` is the application's handover, and its three states
+  are three decisions: a `LoggerService` is tapped and records; `false` — the
+  value that turns the application's logging off — publishes the stream empty
+  rather than absent, because the application decided and an empty stream is what
+  that decision looks like from a client; and omitting the option publishes no
+  `/logs` at all, the way a record with no compiled root serves no `/graph`,
+  because the endpoint states a stream and this registration has none to state.
+  An array of levels is not accepted: it tells the platform to build a logger of
+  its own, which the application never holds.
+- The log buffer is bounded at a capacity this package chooses, because the spec
+  bounds the buffer and names no number. One value lives in the logging domain and
+  is stated once; the capacity is not a per-call decision, so it is not repeated
+  per call site. A forgotten consumer cannot grow the process past it.
+- The cursor is the buffer's write count, not an index into what is retained,
+  which is what keeps it monotonic across the drops. A `since` older than the
+  window slides to the front of it, one ahead of every write answers nothing, and
+  neither is an error: the answer always carries the cursor to poll from next, and
+  that cursor never goes backwards. `/logs` reads its cursor from the query string
+  through `URL`, and a `since` that is not a positive integer reads as no cursor at
+  all rather than as a `400` a poller cannot act on.
+- An entry is projected to text when the line is written, never when a request
+  reads it: a logger's arguments are `unknown`, and an `Error` or a value that
+  refers to itself would otherwise fail the payload on the request that asked for
+  it. The projection never publishes a stack — a stream a page reads is no place
+  for one — and never guesses a logger's own configured context, which is private
+  to it; the context is the last string argument the caller named, or empty.
 - The report describes the boot the _plugin's own_ application carries: Elysia
   hands `onStart` the root application, which is the one bootstrap attached the
   record to.
@@ -279,6 +321,27 @@ property key, a parameter list, a schema, and enhancer lists that are not the
 shapes this release writes. Both must leave the endpoint answering — that handler
 runs inside `Bun.serve`, where a throw is a failed request — so a fact neither
 source states is reported as the absence it is rather than filled in.
+
+The log stream is asserted where a test can quietly stop asserting anything: the
+ring and the cursor. A read is checked against the exact lines it answers with
+rather than their count, the lines are written in an order that fails if the
+buffer kept the newest instead of the oldest, and the cases read from three
+different cursors — one older than the window, one inside it, one ahead of every
+write — so an implementation that treated the cursor as an offset into what is
+retained cannot pass. A poll is asserted for what it must _not_ repeat: the
+second read names the line written since the first and nothing the first already
+saw. The capacity case writes more lines than the buffer holds and states which
+ones are gone.
+
+The tap is asserted against a logger the case owns, because what it must not
+change is the object: the case keeps its own record of the calls it received, so
+a tap that swallowed a line, wrapped the logger instead of patching it, or failed
+to write through is visible. The stream is then asserted over a real boot, where
+the lines the boot wrote before `onStart` must appear — the case a tap installed
+when the socket starts would fail — and where the application's own next line
+must arrive after the cursor the previous answer carried. `logger: false` and an
+omitted logger are asserted as the two different answers they are: an empty
+stream, and no endpoint at all.
 
 The Elysia read is asserted for what it refuses: the workspace's own install
 answers its version, and a throwaway project that installed nothing answers

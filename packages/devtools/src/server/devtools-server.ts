@@ -4,8 +4,10 @@ import { readApplicationDiagnostics } from "@aponiajs/platform-elysia";
 import type { Elysia } from "elysia";
 import { buildFlowPayload, devtoolsFlowPath } from "../endpoints/flow.ts";
 import { buildGraphPayload, devtoolsGraphPath } from "../endpoints/graph.ts";
+import { buildLogsPayload, devtoolsLogsPath, readLogsCursor } from "../endpoints/logs.ts";
 import { buildMetaPayload, devtoolsMetaPath } from "../endpoints/meta.ts";
 import { buildRoutesPayload, devtoolsRoutesPath } from "../endpoints/routes.ts";
+import type { LogBuffer } from "../logging/log-buffer.types.ts";
 import type {
   DevtoolsHandlers,
   DevtoolsServer,
@@ -33,7 +35,7 @@ const defaultDevtoolsPort = 8000;
  */
 export function startDevtoolsServer(options: DevtoolsServerOptions): DevtoolsServer | undefined {
   const port = options.port ?? defaultDevtoolsPort;
-  const handlers = createHandlers(options.application);
+  const handlers = createHandlers(options.application, options.logs);
 
   try {
     const server = Bun.serve({
@@ -117,23 +119,29 @@ function findInstalledElysiaManifest(baseDirectory: string): string | undefined 
  * application answers rather than the boot.
  *
  * `/meta` and `/graph` describe a boot, and a boot does not change once it has
- * started, so their payloads are built here and answered unchanged. `/routes`
- * and `/flow` report the table the application answers, which belongs to the
- * application rather than to the boot: an application may mount another route on
- * its native instance before it listens, so those handlers read the table when
- * they are asked instead of freezing a moment no client ever observed. The
- * table is also where a route's own entry lives — its contributed hooks and the
- * schema slots Elysia holds — which is the half of a route's stages no boot
- * record carries. Both are registered whatever the record holds, because the
- * table is this package's answer on its own; a route no record describes is
- * reported with the facts a record would have supplied left empty.
+ * started, so their payloads are built here and answered unchanged. `/routes`,
+ * `/flow`, and `/logs` report what the running application holds, which belongs
+ * to the application rather than to the boot: an application may mount another
+ * route on its native instance before it listens, and the lines it logs arrive
+ * while it serves, so those handlers read their source when they are asked
+ * instead of freezing a moment no client ever observed. The table is also where
+ * a route's own entry lives — its contributed hooks and the schema slots Elysia
+ * holds — which is the half of a route's stages no boot record carries. All of
+ * them are registered whatever the record holds, because the table is this
+ * package's answer on its own; a route no record describes is reported with the
+ * facts a record would have supplied left empty.
+ *
+ * `/logs` is the one endpoint whose source is passed in rather than read off the
+ * application: it is registered only for a server that was handed a stream, and
+ * its cursor is the request's, because two pollers read the same stream from two
+ * different positions.
  *
  * Every builder it calls is total — a record this release cannot project is one
  * of the cases they answer rather than throw for — because this runs before the
  * bind's `try`, where a failure would be reported as a refused listen, a cause
  * this package never observed.
  */
-function createHandlers(application: Elysia): DevtoolsHandlers {
+function createHandlers(application: Elysia, logs: LogBuffer | undefined): DevtoolsHandlers {
   const diagnostics = readApplicationDiagnostics(application);
   const meta = buildMetaPayload({
     diagnostics,
@@ -150,6 +158,16 @@ function createHandlers(application: Elysia): DevtoolsHandlers {
     ...(graph === undefined ? {} : { [devtoolsGraphPath]: () => jsonResponse(graph) }),
     [devtoolsRoutesPath]: () => jsonResponse(buildRoutesPayload(application, diagnostics)),
     [devtoolsFlowPath]: () => jsonResponse(buildFlowPayload(application, diagnostics)),
+    // A server with no stream serves no `/logs`, the way a boot the record holds
+    // no compiled root for serves no `/graph`: the handler record states the
+    // paths this server serves, and a path it does not own is the dispatcher's
+    // `404`.
+    ...(logs === undefined
+      ? {}
+      : {
+          [devtoolsLogsPath]: (request: Request) =>
+            jsonResponse(buildLogsPayload(logs, readLogsCursor(request))),
+        }),
   });
 }
 

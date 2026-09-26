@@ -1,5 +1,6 @@
 import type { LoggerService } from "@aponiajs/common";
 import type { Elysia } from "elysia";
+import type { LogBuffer } from "../logging/log-buffer.types.ts";
 
 /** The loopback HTTP surface one devtools boot publishes. */
 export interface DevtoolsServer {
@@ -21,6 +22,18 @@ export interface DevtoolsServerOptions {
   readonly port?: number;
   /** Where a refused bind is reported, so a boot cannot swallow the reason. */
   readonly logger: LoggerService;
+  /**
+   * The application's log stream, when the caller has one to publish.
+   *
+   * It is the caller's rather than the server's because a stream has to start
+   * before the server does: `LoggerService` is the object the application and the
+   * platform both write to, so whoever holds it is who can record what a boot
+   * wrote before `onStart` ran. A server that is handed none serves no `/logs`
+   * at all, because that endpoint states a stream and this one has none to
+   * state; the dispatcher's `404` is the answer for a path the handler record
+   * does not own.
+   */
+  readonly logs?: LogBuffer;
 }
 
 /**
