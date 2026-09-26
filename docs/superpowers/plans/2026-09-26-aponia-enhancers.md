@@ -562,7 +562,7 @@ function createEnhancerDecorator<TEntry>(
 - [ ] **Step 5: Run the test to verify it passes**
 
 Run: `bun test packages/common/tests/enhancer-decorators.test.ts`
-Expected: PASS, six cases.
+Expected: PASS, eight cases.
 
 - [ ] **Step 6: Export from the barrel**
 
