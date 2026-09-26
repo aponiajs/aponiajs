@@ -3,7 +3,6 @@ import {
   Logger,
   tokenName,
   type ClassToken,
-  type EnhancerMetadata,
   type LoggerService,
 } from "@aponiajs/common";
 import { createContainer } from "@aponiajs/core";
@@ -15,7 +14,8 @@ import {
 import {
   collectEnhancerDeclarations,
   resolveEnhancers,
-  type ResolvedControllerEnhancers,
+  type MountedRouteEnhancers,
+  type ResolvedEnhancers,
 } from "../controllers/enhancer-resolver.ts";
 import type { RuntimeElysiaController } from "../controllers/controller.types.ts";
 import { compileRootModule } from "../modules/module-compiler.ts";
@@ -73,16 +73,6 @@ export async function bootstrapAponiaApplication(
     );
   }
 
-  // The global enhancers are the application's own declaration and are copied
-  // into frozen metadata once, before any controller mounts. They travel to the
-  // mount rather than into a compiled route: a compiled plan states what a
-  // controller declares and nothing else.
-  const globalEnhancers: EnhancerMetadata = Object.freeze({
-    guards: Object.freeze([...(options.guards ?? [])]),
-    interceptors: Object.freeze([...(options.interceptors ?? [])]),
-    filters: Object.freeze([...(options.filters ?? [])]),
-  });
-
   for (const module of container.graph.modules) {
     container.initializeModule(module);
     if (isElysiaPluginModule(module)) {
@@ -90,6 +80,24 @@ export async function bootstrapAponiaApplication(
     }
     logger?.log(`${module.id} dependencies initialized`, "InstanceLoader");
   }
+
+  // The global enhancers are the application's own declaration, so they resolve
+  // once, through the root module, rather than per controller: one instance
+  // serves every route whatever module it was mounted from, and a class the root
+  // cannot reach fails the boot here with the same MISSING_PROVIDER a missing
+  // dependency raises. Resolution waits for the pass above so that a global
+  // enhancer is constructed after the providers it may depend on, and it happens
+  // whether or not any controller mounts: an application that declares a global
+  // enhancer it cannot resolve is refused at boot, not at its first request.
+  const globalEnhancers: ResolvedEnhancers = resolveEnhancers(
+    container,
+    container.graph.root,
+    Object.freeze({
+      guards: Object.freeze([...(options.guards ?? [])]),
+      interceptors: Object.freeze([...(options.interceptors ?? [])]),
+      filters: Object.freeze([...(options.filters ?? [])]),
+    }),
+  );
 
   for (const module of container.graph.modules) {
     for (const controller of module.controllers) {
@@ -112,6 +120,13 @@ export async function bootstrapAponiaApplication(
         module,
         collectEnhancerDeclarations(controller.compiledRoutes ?? []),
       );
+      // The two resolutions travel together from here: every path this
+      // controller's routes mount through carries both, which is what makes a
+      // global enhancer reach a route mounted through any of them.
+      const mountedEnhancers: MountedRouteEnhancers = Object.freeze({
+        global: globalEnhancers,
+        controller: resolvedEnhancers,
+      });
       if (typeof controller.registerRoutes === "function") {
         const routeStart = nativeApplication.routes.length;
         registerControllerRoutes(
@@ -119,8 +134,7 @@ export async function bootstrapAponiaApplication(
           nativeApplication,
           instance,
           generatedInvokers,
-          globalEnhancers,
-          resolvedEnhancers,
+          mountedEnhancers,
         );
         logControllerRoutes(logger, controller, nativeApplication.routes.slice(routeStart));
         continue;
@@ -157,39 +171,36 @@ export async function bootstrapAponiaApplication(
  * Registers one controller on the root application, preferring build-time
  * generated invokers when the artifact supplied factories for its token.
  *
- * Only decorated controllers carry a compiled route plan, so an entry for any
- * other controller token is ignored rather than treated as an error.
+ * A controller whose descriptor carries a compiled plan is mounted from that
+ * plan, which is the one place the enhancers resolved for this controller exist:
+ * a plan's hooks are built while it mounts, and nothing else can state them. A
+ * controller without one mounts through the callback it was defined with, and
+ * that callback owns its routes' hooks.
  */
 function registerControllerRoutes(
   controller: RuntimeElysiaController,
   application: Elysia,
   instance: unknown,
   invokers: ReadonlyMap<ClassToken<unknown>, AponiaControllerInvokerFactory> | undefined,
-  globalEnhancers: EnhancerMetadata,
-  // A route's hooks are what consume the resolution, and they are compiled from
-  // it while the route mounts. Until they exist the resolution travels to the
-  // boundary and no further, so the parameter is deliberately inert rather than
-  // read and discarded.
-  // oxlint-disable-next-line no-unused-vars
-  resolvedEnhancers: ResolvedControllerEnhancers,
+  mountedEnhancers: MountedRouteEnhancers,
 ): void {
   const compiledRoutes = controller.compiledRoutes;
+  if (!compiledRoutes) {
+    registerElysiaControllerRoutes(controller, application, instance);
+    return;
+  }
+
   // Elysia controllers are always class-backed, which is what makes the token
   // safe as a minification-proof key.
   const controllerToken = controller.token as ClassToken<unknown>;
   const createInvokers = invokers?.get(controllerToken);
-  if (!compiledRoutes || !createInvokers) {
-    registerElysiaControllerRoutes(controller, application, instance, globalEnhancers);
-    return;
-  }
-
   registerCompiledElysiaRoutes(
     application,
     controllerToken,
     instance,
     compiledRoutes,
-    createInvokers(instance as never),
-    globalEnhancers,
+    mountedEnhancers,
+    createInvokers?.(instance as never),
   );
 }
 

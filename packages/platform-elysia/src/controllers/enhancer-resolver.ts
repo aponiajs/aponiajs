@@ -48,6 +48,53 @@ export interface ResolvedControllerEnhancers extends ResolvedEnhancers {
 }
 
 /**
+ * Everything one controller's mount runs its routes through: the application's
+ * own declaration, resolved once for the whole boot, and the resolution the
+ * controller's own declarations were lowered into.
+ *
+ * The two are kept apart rather than joined into flat lists because a kind's run
+ * order is decided where that kind is consumed: a guard runs the application's
+ * declaration first, while the scopes of the kinds that run the other way round
+ * are still needed separately. Joining them here would settle an order no one
+ * asked for yet.
+ *
+ * @internal
+ */
+export interface MountedRouteEnhancers {
+  /** The application's own declarations, resolved through the root module. */
+  readonly global: ResolvedEnhancers;
+  /** The declarations of the controller this mount belongs to. */
+  readonly controller: ResolvedControllerEnhancers;
+}
+
+/** The enhancers that run nothing, shared because a resolution is never mutated. */
+const noResolvedEnhancers: ResolvedEnhancers = Object.freeze({
+  guards: Object.freeze([]),
+  interceptors: Object.freeze([]),
+  filters: Object.freeze([]),
+});
+
+/**
+ * The enhancers a mount that resolves nothing runs: the one a controller
+ * definition's own `buildPlugin` makes.
+ *
+ * That path builds an Elysia plugin outside a boot, so it has no container to
+ * resolve against and no application whose declaration it could merge. Its
+ * routes mount with the validators their schemas declare and no enhancer hooks
+ * at all. Bootstrap never passes this value: every mount it makes carries a real
+ * resolution.
+ *
+ * @internal
+ */
+export const unmountedRouteEnhancers: MountedRouteEnhancers = Object.freeze({
+  global: noResolvedEnhancers,
+  controller: Object.freeze({
+    ...noResolvedEnhancers,
+    forRoute: () => noResolvedEnhancers,
+  }),
+});
+
+/**
  * Resolves every enhancer a controller declares, once per distinct class.
  *
  * Resolution goes through `resolveModuleProvider`, the same function the

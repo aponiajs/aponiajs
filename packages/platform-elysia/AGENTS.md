@@ -32,10 +32,35 @@ runtime boundary it describes.
   instantiating providers, controller mounting, await native plugin composition,
   WebSocket gateway registration and initialization, then await
   `nativeApplication.modules` again.
-  `configureNative` must return the instance it receives.
+  `configureNative` must return the instance it receives. The application's own
+  enhancer declarations resolve between the first pass and the controller loop.
 - Decorated controllers register their compiled route plans directly on the
   root Elysia instance. Low-level controller descriptors retain `buildPlugin`
   as their compatibility and escape-hatch path.
+- Every dispatch that mounts a route states what it runs. A controller whose
+  descriptor carries a compiled plan is mounted from that plan by bootstrap
+  itself, with the enhancer resolution that plan's hooks are built from — both
+  the application's own declaration and the resolution of the controller's own
+  — so a plan is never mounted without them. A controller without a compiled
+  plan mounts through the callback it was defined with, and that callback owns
+  its routes' hooks: the platform never compiled them and has nothing to merge
+  into. A plugin a definition's `buildPlugin` builds outside a boot resolves
+  nothing, so `unmountedRouteEnhancers` is what it mounts with. A global
+  enhancer is the application's declaration and resolves once, through the root
+  module, so it reaches every route whatever module mounted it, and a class the
+  root cannot reach fails the boot with `MISSING_PROVIDER`.
+  `registerCompiledElysiaRoutes` takes that resolution as a required parameter
+  for the same reason: a mount that merged nothing has to say so at the call
+  site rather than omit it.
+- Guards run as a route-local `beforeHandle`, in declaration order, with the
+  application's own declarations before the route's. A guard that refuses throws
+  `httpErrors.forbidden(...)`, and that throw is the whole refusal: Elysia
+  answers an error carrying `toResponse()` through its native path, so no error
+  hook is registered for it. A route that declares no enhancer carries no
+  `beforeHandle` and no `afterHandle`, and no `ExecutionContext` is built for
+  one. `routing/route-compiler.types.ts` declares the route hook the platform
+  mounts, so a lifecycle member is added there rather than by widening the
+  native signature.
 - `routing/native-route.ts` is the only module that calls Elysia's route
   registration API. A version that moves it fails there as
   `UNSUPPORTED_ELYSIA_VERSION` instead of as a bare `TypeError` from inside a

@@ -17,6 +17,7 @@ import {
 import { Elysia } from "elysia";
 import { ELYSIA_CONTROLLER } from "../controllers/controller.constants.ts";
 import type { RuntimeElysiaController } from "../controllers/controller.types.ts";
+import { unmountedRouteEnhancers } from "../controllers/enhancer-resolver.ts";
 import {
   compileElysiaRoutes,
   joinPaths,
@@ -187,7 +188,11 @@ function compileDecoratedController(controller: ClassToken<unknown>): Controller
 
   const routes = compileElysiaRoutes(controller, metadata.path);
   const registerRoutes = (plugin: Elysia, instance: unknown): void => {
-    registerCompiledElysiaRoutes(plugin, controller, instance, routes);
+    // Bootstrap mounts this controller's plan itself, where the enhancer
+    // resolution exists; this callback is what the definition's own
+    // `buildPlugin` mounts through, and a plugin built outside a boot resolves
+    // nothing.
+    registerCompiledElysiaRoutes(plugin, controller, instance, routes, unmountedRouteEnhancers);
   };
   const definition: RuntimeElysiaController = Object.freeze({
     kind: ELYSIA_CONTROLLER,

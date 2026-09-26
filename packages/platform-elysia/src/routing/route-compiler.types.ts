@@ -1,10 +1,12 @@
 import type {
   EnhancerMetadata,
   RequestMethod,
+  RouteContext,
   RouteParameterKind,
   RouteParameterMetadata,
   RouteSchema,
 } from "@aponiajs/common";
+import type { InputSchema } from "elysia";
 
 /**
  * A route handler compiled outside the platform, already bound to its
@@ -34,6 +36,21 @@ export type AponiaRouteInvoker = (context: never) => unknown;
 export type AponiaControllerInvokerFactory = (
   instance: never,
 ) => ReadonlyMap<string | symbol, AponiaRouteInvoker>;
+
+/**
+ * The hook object one route is registered with.
+ *
+ * Elysia splits it across two types — `InputSchema` holds the validators, while
+ * the lifecycle members live on the route hook — and a route is registered with
+ * one object carrying both. Members are added here as the platform compiles
+ * them, so `routing/native-route.ts` never has to widen the native signature.
+ *
+ * @internal
+ */
+export interface ElysiaRouteHook extends InputSchema<never> {
+  /** Runs before the handler, and answers the request instead of it when it throws. */
+  beforeHandle?(context: RouteContext): Promise<void>;
+}
 
 /**
  * Immutable route information produced from decorator metadata before a

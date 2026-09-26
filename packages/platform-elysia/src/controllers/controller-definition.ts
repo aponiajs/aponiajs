@@ -4,7 +4,6 @@ import {
   type ClassToken,
   type Constructor,
   type ControllerDefinition,
-  type EnhancerMetadata,
   type RouteParameterKind,
   type Token,
   type TokenValues,
@@ -14,6 +13,7 @@ import { joinPaths, registerCompiledElysiaRoutes } from "../routing/route-compil
 import type { CompiledElysiaRoute } from "../routing/route-compiler.types.ts";
 import type { ElysiaRoutePlan } from "../routing/route-plan.types.ts";
 import { ELYSIA_CONTROLLER } from "./controller.constants.ts";
+import { unmountedRouteEnhancers } from "./enhancer-resolver.ts";
 import type {
   DeclaredElysiaControllerDefinition,
   ElysiaControllerRegistrationResult,
@@ -171,7 +171,17 @@ export function defineElysiaControllerRoutes<
     options.routes.map((plan) => compileElysiaRoutePlan(plan, controllerPath)),
   );
   const registerRoutes = (application: Elysia, instance: unknown): void => {
-    registerCompiledElysiaRoutes(application, useClass as ClassToken<unknown>, instance, routes);
+    // A registration callback states the routes a caller mounts on its own, and
+    // bootstrap mounts a controller that carries `compiledRoutes` itself. The
+    // only caller left is this definition's own `buildPlugin`, which resolves
+    // nothing, so the plan's enhancer declarations stay unmounted there.
+    registerCompiledElysiaRoutes(
+      application,
+      useClass as ClassToken<unknown>,
+      instance,
+      routes,
+      unmountedRouteEnhancers,
+    );
   };
 
   return Object.freeze({
@@ -238,10 +248,10 @@ export function isElysiaController(
  * Registers a low-level controller on the shared root application while
  * preserving the same-instance invariant required for native Elysia typing.
  *
- * `globalEnhancers` is the application's own declaration, which a route runs
- * before the ones its controller and its handler declare. It travels with the
- * mount rather than into a compiled route: a compiled plan states what a
- * controller declares and nothing else.
+ * The callback this calls mounts routes the platform never compiled, so it owns
+ * their hooks and there is no enhancer resolution for bootstrap to merge: a
+ * controller the platform does compile carries a plan, and bootstrap mounts the
+ * plan itself.
  *
  * @internal
  */
@@ -249,12 +259,6 @@ export function registerElysiaControllerRoutes(
   controller: RuntimeElysiaController,
   application: Elysia,
   instance: unknown,
-  // A global enhancer is merged into a route's hooks while the route mounts, and
-  // those hooks are what consume this declaration. Until they exist the
-  // declaration travels to the boundary and no further, so the parameter is
-  // deliberately inert rather than read and discarded.
-  // oxlint-disable-next-line no-unused-vars
-  globalEnhancers?: EnhancerMetadata,
 ): void {
   const registerRoutes = controller.registerRoutes;
   if (!registerRoutes) {

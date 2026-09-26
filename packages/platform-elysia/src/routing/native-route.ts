@@ -1,5 +1,6 @@
 import { AponiaError, type RequestMethod, type RouteContext } from "@aponiajs/common";
-import type { Elysia, InputSchema } from "elysia";
+import type { Elysia } from "elysia";
+import type { ElysiaRouteHook } from "./route-compiler.types.ts";
 
 /**
  * The only place this platform calls Elysia's route registration API.
@@ -20,7 +21,7 @@ export function registerNativeRoute(
   method: RequestMethod,
   path: string,
   handler: (context: RouteContext) => unknown,
-  hook: InputSchema<never> | undefined,
+  hook: ElysiaRouteHook | undefined,
 ): void {
   const nativeRoute = (application as unknown as { readonly route?: unknown }).route;
   if (typeof nativeRoute !== "function") {

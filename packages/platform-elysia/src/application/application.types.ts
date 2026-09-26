@@ -53,14 +53,20 @@ export interface AponiaApplicationOptions {
   /**
    * Guards every route runs, before the ones a controller or a handler declares.
    *
+   * A global guard reaches every route of every module, so it is resolved once,
+   * through the root module: the class must be a provider the root module can
+   * reach, and one it cannot reach fails `AponiaFactory.create` with the
+   * `MISSING_PROVIDER` a missing dependency raises rather than leaving a route
+   * unguarded.
+   *
    * There is deliberately no `useGlobalGuards()` method: routes mount during
    * `AponiaFactory.create`, so a method called on the returned application could
    * not affect them.
    */
   readonly guards?: readonly ClassToken<unknown>[];
-  /** Interceptors every route runs, outside the ones a controller or a handler declares. */
+  /** Interceptors every route runs, declared and resolved the way `guards` are. */
   readonly interceptors?: readonly ClassToken<unknown>[];
-  /** Filters every route consults, after the ones a controller or a handler declares. */
+  /** Filters every route consults, declared and resolved the way `guards` are. */
   readonly filters?: readonly ClassToken<unknown>[];
 }
 

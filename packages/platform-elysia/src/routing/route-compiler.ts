@@ -6,17 +6,27 @@ import {
   isRouteResponseSchemaMap,
   isStandardSchema,
   resolveRouteValidator,
+  type CanActivate,
   type ClassToken,
   type EnhancerMetadata,
+  type ExecutionContext,
+  type HttpArgumentsHost,
+  type RequestMethod,
   type RouteContext,
   type RouteParameterMetadata,
   type RouteResponseSchema,
   type RouteSchema,
   type RouteValidatorInput,
 } from "@aponiajs/common";
-import { type AnySchema, type Elysia, type InputSchema, type TSchema } from "elysia";
+import { type AnySchema, type Elysia, type TSchema } from "elysia";
+import type { MountedRouteEnhancers } from "../controllers/enhancer-resolver.ts";
+import { httpErrors } from "../errors/http-error.ts";
 import { registerNativeRoute } from "./native-route.ts";
-import type { AponiaRouteInvoker, CompiledElysiaRoute } from "./route-compiler.types.ts";
+import type {
+  AponiaRouteInvoker,
+  CompiledElysiaRoute,
+  ElysiaRouteHook,
+} from "./route-compiler.types.ts";
 
 /**
  * Lowers every decorated route into a stable plan shared by child-plugin and
@@ -118,11 +128,11 @@ function classifyDeclaredReturnKind(
  * their absence, so hand-written descriptors, symbol-keyed handlers, and a
  * controller without an entry keep working.
  *
- * `globalEnhancers` is the application's own declaration, which a route runs
- * before the ones its controller and its handler declare. It reaches the mount
- * so that it is merged while the route is registered, never into the compiled
- * route it is registered from: a compiled plan states what a controller
- * declares and nothing else.
+ * `mountedEnhancers` is what a route's hooks are built from while the route
+ * registers, never what the compiled route it registers from carries: a compiled
+ * plan states what a controller declares and nothing else. The parameter is
+ * required, so a mount that merged nothing would have to say so at the call site
+ * rather than omit it.
  *
  * @internal
  */
@@ -131,13 +141,8 @@ export function registerCompiledElysiaRoutes(
   controller: ClassToken<unknown>,
   instance: unknown,
   routes: readonly CompiledElysiaRoute[],
+  mountedEnhancers: MountedRouteEnhancers,
   invokers?: ReadonlyMap<string | symbol, AponiaRouteInvoker>,
-  // A global enhancer is merged into a route's hooks while the route mounts, and
-  // those hooks are what consume this declaration. Until they exist the
-  // declaration travels to the boundary and no further, so the parameter is
-  // deliberately inert rather than read and discarded.
-  // oxlint-disable-next-line no-unused-vars
-  globalEnhancers?: EnhancerMetadata,
 ): void {
   for (const route of routes) {
     const handler = (instance as Record<PropertyKey, unknown>)[route.propertyKey];
@@ -170,9 +175,29 @@ export function registerCompiledElysiaRoutes(
       suppliedInvoker === undefined
         ? createRouteHandler(callableHandler, instance, route)
         : (suppliedInvoker as (context: RouteContext) => unknown),
-      toRouteHook(route.schema),
+      toRouteHook(route, controller, callableHandler, routeGuards(mountedEnhancers, route)),
     );
   }
+}
+
+/**
+ * The guards one route runs: the application's own declaration first, then the
+ * ones the route declares, each scope in the order it declared them.
+ *
+ * A route that declares no guard of its own runs the application's declaration
+ * itself, so a route with no enhancers at all merges nothing and allocates
+ * nothing.
+ */
+function routeGuards(
+  mountedEnhancers: MountedRouteEnhancers,
+  route: CompiledElysiaRoute,
+): readonly CanActivate[] {
+  const declared = mountedEnhancers.controller.forRoute(route.enhancers).guards;
+  if (declared.length === 0) {
+    return mountedEnhancers.global.guards;
+  }
+
+  return Object.freeze([...mountedEnhancers.global.guards, ...declared]);
 }
 
 /**
@@ -350,12 +375,85 @@ function contextSource(parameter: RouteParameterMetadata): string {
   }
 }
 
-function toRouteHook(schema: RouteSchema | undefined): InputSchema<never> | undefined {
+/**
+ * Builds the hook object one route is registered with: the validators its schema
+ * declares, and the guards it runs before its handler.
+ *
+ * A route that declares no guard mounts the schema hook itself rather than a
+ * copy of it, so a controller with no enhancers gains no `beforeHandle` and no
+ * `ExecutionContext` is ever built for one.
+ */
+function toRouteHook(
+  route: CompiledElysiaRoute,
+  controller: ClassToken<unknown>,
+  handler: (...arguments_: unknown[]) => unknown,
+  guards: readonly CanActivate[],
+): ElysiaRouteHook | undefined {
+  const schemaHook = toSchemaHook(route.schema);
+  if (guards.length === 0) {
+    return schemaHook;
+  }
+
+  // The route a request was handled by never changes, so the value `getRoute`
+  // answers with is frozen once here rather than on every call.
+  const routeDescription = Object.freeze({ method: route.method, path: route.path });
+
+  return {
+    ...schemaHook,
+    // Refusal is the throw and nothing else: Elysia answers an error carrying
+    // `toResponse()` through its own native path, so the response is already
+    // Problem Details with a 403 before any hook this task adds could shape it.
+    async beforeHandle(context: RouteContext): Promise<void> {
+      const executionContext = createExecutionContext(
+        routeDescription,
+        controller,
+        handler,
+        context,
+      );
+      for (const guard of guards) {
+        if ((await guard.canActivate(executionContext)) === false) {
+          throw httpErrors.forbidden("A guard refused this request.");
+        }
+      }
+
+      return undefined;
+    },
+  };
+}
+
+/**
+ * What a guard running for one request is given about the route it protects.
+ *
+ * The object is built per request because it carries the request's own context,
+ * and built here rather than per guard so every guard on a route sees the same
+ * one.
+ */
+function createExecutionContext(
+  route: Readonly<{ readonly method: RequestMethod; readonly path: string }>,
+  controller: ClassToken<unknown>,
+  handler: (...arguments_: unknown[]) => unknown,
+  context: RouteContext,
+): ExecutionContext {
+  const httpHost: HttpArgumentsHost = Object.freeze({ getRequest: () => context });
+
+  return Object.freeze({
+    // The token is one class, while the type argument is the guard's own claim
+    // about it: nothing at run time could check that claim, so it is the one
+    // place this contract is answered with a cast.
+    getClass: <TController>() => controller as ClassToken<TController>,
+    getHandler: () => handler as (...arguments_: never[]) => unknown,
+    getRoute: () => route,
+    getContext: () => context,
+    switchToHttp: () => httpHost,
+  });
+}
+
+function toSchemaHook(schema: RouteSchema | undefined): ElysiaRouteHook | undefined {
   if (!schema) {
     return undefined;
   }
 
-  const hook: InputSchema<never> = {
+  const hook: ElysiaRouteHook = {
     ...(schema.body ? { body: toElysiaSchema(schema.body) } : {}),
     ...(schema.query ? { query: toElysiaSchema(schema.query) } : {}),
     ...(schema.params ? { params: toElysiaSchema(schema.params) } : {}),
@@ -382,7 +480,7 @@ function toElysiaSchema(validator: RouteValidatorInput): AnySchema {
 
 function toElysiaResponseSchema(
   schema: RouteResponseSchema,
-): NonNullable<InputSchema<never>["response"]> {
+): NonNullable<ElysiaRouteHook["response"]> {
   if (!isRouteResponseSchemaMap(schema)) {
     return toElysiaSchema(schema);
   }

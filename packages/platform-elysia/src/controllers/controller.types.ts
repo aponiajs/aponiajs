@@ -94,6 +94,13 @@ export interface RuntimeElysiaController extends ControllerDefinition {
   /**
    * Registers a compiled controller directly on the root application.
    *
+   * The signature is the registration callback a caller writes, because this is
+   * what a definition's own `buildPlugin` mounts through: a plugin built outside
+   * a boot has no container to resolve enhancers against, so the routes it
+   * carries mount with the validators their schemas declare and no enhancer
+   * hooks. Bootstrap mounts a controller that carries `compiledRoutes` itself,
+   * where the resolution exists.
+   *
    * @internal
    */
   readonly registerRoutes?: (
