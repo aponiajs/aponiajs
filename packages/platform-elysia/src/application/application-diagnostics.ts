@@ -27,8 +27,11 @@ const diagnosticsKey: unique symbol = Symbol.for("aponia.application.diagnostics
  * nor the module that mounted it. Modules keep graph order and controllers keep
  * declaration order, so the record is deterministic.
  *
- * The invoker verdict is copied before it is frozen: it is the caller's object,
- * and a record may never be the place its own facts are still mutable.
+ * Every fact it is handed is copied before it is frozen — the invoker verdict,
+ * the root descriptor, and the enhancer declaration are all the caller's
+ * objects — because a record may never be the place its own facts are still
+ * mutable. Nothing here relies on the boot having frozen them first: a reader
+ * of the record cannot see how the boot kept them.
  *
  * @internal
  */
@@ -44,9 +47,9 @@ export function createApplicationDiagnostics(facts: {
     framework: facts.framework,
     graph: facts.graph,
     invokers: Object.freeze({ accepted: facts.invokers.accepted, reason: facts.invokers.reason }),
-    rootModule: facts.rootModule,
+    rootModule: freezeModuleDefinition(facts.rootModule),
     routes: collectCompiledRoutes(facts.modules),
-    globalEnhancers: facts.globalEnhancers,
+    globalEnhancers: freezeEnhancerMetadata(facts.globalEnhancers),
   });
 }
 
@@ -88,6 +91,37 @@ export function readApplicationDiagnostics(
   return (application as { readonly [diagnosticsKey]?: AponiaApplicationDiagnostics })[
     diagnosticsKey
   ];
+}
+
+/**
+ * The root descriptor as the record publishes it: one frozen object carrying
+ * frozen copies of the four collections a reader walks.
+ *
+ * The compiler freezes what it lowers and `defineModule` freezes what it
+ * normalizes, but a caller can hand a boot a hand-written descriptor, so the
+ * record copies rather than trusting the object it was given.
+ */
+function freezeModuleDefinition(module: ModuleDefinition): ModuleDefinition {
+  return Object.freeze({
+    ...module,
+    imports: Object.freeze([...module.imports]),
+    controllers: Object.freeze([...module.controllers]),
+    providers: Object.freeze([...module.providers]),
+    exports: Object.freeze([...module.exports]),
+  });
+}
+
+/**
+ * The application's own enhancer declaration as the record publishes it, copied
+ * for the same reason the descriptor is: the arrays were built from the options
+ * the caller passed.
+ */
+function freezeEnhancerMetadata(metadata: EnhancerMetadata): EnhancerMetadata {
+  return Object.freeze({
+    guards: Object.freeze([...metadata.guards]),
+    interceptors: Object.freeze([...metadata.interceptors]),
+    filters: Object.freeze([...metadata.filters]),
+  });
 }
 
 /**

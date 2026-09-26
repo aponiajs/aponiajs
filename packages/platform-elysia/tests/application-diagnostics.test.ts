@@ -8,6 +8,7 @@ import {
   Validation,
   defineModule,
   type ClassToken,
+  type DynamicModule,
   type ModuleDefinition,
   type RouteSchema,
 } from "@aponiajs/common";
@@ -111,8 +112,9 @@ const declaredDiagnosticsModule: ModuleDefinition = defineModule({
 
 function descriptorArtifact(
   modules: Readonly<Record<string, ModuleDefinition>>,
+  overrides: Partial<Pick<AponiaModuleDescriptorArtifact, "framework" | "elysia">> = {},
 ): AponiaModuleDescriptorArtifact {
-  return Object.freeze({ framework: aponiaVersion, elysia: "1.4.30", modules });
+  return Object.freeze({ framework: aponiaVersion, elysia: "1.4.30", modules, ...overrides });
 }
 
 /**
@@ -160,7 +162,13 @@ test("the record handed out is frozen, one entry at a time", async () => {
   expect(Object.isFrozen(diagnostics)).toBe(true);
   expect(Object.isFrozen(diagnostics?.routes)).toBe(true);
   expect(Object.isFrozen(diagnostics?.invokers)).toBe(true);
+  // The record owns the freeze of what it was handed: the boot's own objects
+  // are not the reason these are immutable.
+  expect(Object.isFrozen(diagnostics?.rootModule)).toBe(true);
+  expect(Object.isFrozen(diagnostics?.rootModule.controllers)).toBe(true);
+  expect(Object.isFrozen(diagnostics?.rootModule.providers)).toBe(true);
   expect(Object.isFrozen(diagnostics?.globalEnhancers)).toBe(true);
+  expect(Object.isFrozen(diagnostics?.globalEnhancers.guards)).toBe(true);
   expect(diagnostics?.routes.every((entry) => Object.isFrozen(entry))).toBe(true);
   expect(diagnostics?.routes.every((entry) => Object.isFrozen(entry.route))).toBe(true);
   await application.close();
@@ -198,7 +206,6 @@ test("the seam is attached as a non-enumerable own property", async () => {
     configurable: false,
   });
   expect(Reflect.ownKeys(nativeApplication)).toContain(diagnosticsKey);
-  expect(Object.keys(nativeApplication)).not.toContain("aponia.application.diagnostics");
   const enumerableKeys = Reflect.ownKeys(nativeApplication).filter(
     (ownKey) => Object.getOwnPropertyDescriptor(nativeApplication, ownKey)?.enumerable === true,
   );
@@ -220,6 +227,44 @@ test("a boot served by the descriptor artifact reports the declared graph", asyn
   expect(diagnostics?.routes.map((entry) => entry.route.path)).toEqual(["/declared"]);
   expect(diagnostics?.routes[0]?.module).toBe("DeclaredDiagnosticsModule");
   expect(diagnostics?.routes[0]?.controller).toBe("DeclaredDiagnosticsController");
+  await application.close();
+});
+
+test("a class whose descriptor artifact was refused reports the decorated graph", async () => {
+  const application = await AponiaFactory.create(DiagnosticsAppModule, {
+    logger: false,
+    descriptors: descriptorArtifact(
+      { DiagnosticsAppModule: declaredDiagnosticsModule },
+      { framework: "0.0.0", elysia: "1.0.0" },
+    ),
+  });
+  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+
+  // The artifact named a declared graph, and the boot refused it: a stale
+  // artifact must never make the record describe a graph the application is not
+  // running, so the class the caller passed is what both the record and the
+  // container report.
+  expect(diagnostics?.graph).toBe("decorated");
+  expect(diagnostics?.rootModule.id).toBe("DiagnosticsAppModule");
+  expect(diagnostics?.routes.map((entry) => entry.route.path)).toContain("/");
+  await application.close();
+});
+
+test("a boot served by a dynamic module root reports the decorated graph", async () => {
+  const dynamicRoot: DynamicModule = {
+    module: DiagnosticsAppModule,
+    id: "DynamicDiagnosticsModule",
+    instanceId: Symbol("dynamic-diagnostics"),
+  };
+  const application = await AponiaFactory.create(dynamicRoot, { logger: false });
+  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+
+  // A dynamic module is not data the container compiles as it stands: its
+  // decorators are read and lowered exactly as a class root's are, so it is the
+  // decorated graph — and the id comes from the configuration, not the class.
+  expect(diagnostics?.graph).toBe("decorated");
+  expect(diagnostics?.rootModule.id).toBe("DynamicDiagnosticsModule");
+  expect(diagnostics?.routes.map((entry) => entry.route.path)).toContain("/");
   await application.close();
 });
 

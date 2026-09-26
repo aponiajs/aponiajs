@@ -205,8 +205,8 @@ runtime boundary it describes.
   longer declares. The choice is reported under `RoutesResolver`, once, whichever
   way it went, because an application booting from data has to be able to say
   which graph served it. A root passed as a descriptor rather than as a class
-  names the graph itself, so the artifact is not consulted, and `isModuleDefinition`
-  guards the selected entry structurally rather than trusting the option's type:
+  names the graph itself, so the artifact is not consulted, and a structural
+  `isModuleDefinition` guards the selected entry rather than trusting the option's type:
   a JavaScript caller has no type checker, and a truncated descriptor reaching
   the graph compiler is the one outcome this option must never cause.
 - `bootstrapAponiaApplication` attaches one boot record to the native application
@@ -218,9 +218,10 @@ runtime boundary it describes.
   as `undefined` rather than as an empty record. The record is attached once the
   container holds every plan and before the gateway work, and it states what the
   boot decided and mounted: the release, whether the graph it served was
-  `"declared"` or `"decorated"` — read off what `selectRootModuleDescriptor`
-  returned, never by re-reading the artifact, and `"declared"` for a root the
-  caller itself passed as a descriptor or a dynamic module — the invoker
+  `"declared"` or `"decorated"` — decided by the shape of the root
+  `selectRootModuleDescriptor` resolved, never by re-reading the artifact:
+  `"declared"` when that root is a `ModuleDefinition`, and `"decorated"` when it
+  is a class or a dynamic module, both of which the boot lowers — the invoker
   artifact's verdict with the selector's own reason, the root `compileRootModule`
   returned, every compiled plan its controllers mounted (a controller mounted
   through the low-level descriptor path built its routes in a callback and

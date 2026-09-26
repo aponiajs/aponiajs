@@ -21,7 +21,7 @@ import {
 } from "../controllers/enhancer-resolver.ts";
 import type { RuntimeElysiaController } from "../controllers/controller.types.ts";
 import { createDefaultExceptionFilter } from "../errors/default-exception-filter.ts";
-import { compileRootModule } from "../modules/module-compiler.ts";
+import { compileRootModule, isModuleDefinition } from "../modules/module-compiler.ts";
 import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
 import { selectRootModuleDescriptor } from "../modules/module-descriptor-artifact.ts";
 import { getElysiaPlugin, isElysiaPluginModule } from "../plugins/plugin-module.ts";
@@ -71,14 +71,13 @@ export async function bootstrapAponiaApplication(
     logger,
   );
   const compiledRootModule = compileRootModule(selectedRootModule);
-  // Which graph served the application is read from what the selector returned,
-  // never by re-reading the artifact: a class it left in place was lowered from
-  // its decorators, while a descriptor it substituted — and a root the caller
-  // declared as a descriptor or a dynamic module — is data the boot served.
-  const graph: "declared" | "decorated" =
-    selectedRootModule === rootModule && typeof rootModule === "function"
-      ? "decorated"
-      : "declared";
+  // Which graph served the application is decided by the shape of the root the
+  // selector resolved, never by re-reading the artifact: a descriptor is data
+  // the container compiles as it stands, while a class and a dynamic module both
+  // have their decorators read and lowered, so both are the decorated path.
+  const graph: "declared" | "decorated" = isModuleDefinition(selectedRootModule)
+    ? "declared"
+    : "decorated";
   const container = createContainer(compiledRootModule);
   const webSocketGateways = compileElysiaWebSocketGateways(container.graph.modules);
   const baseApplication = new Elysia({

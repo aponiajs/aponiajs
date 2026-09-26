@@ -112,7 +112,17 @@ function compileModuleImports(rootModule: ModuleImport): ModuleDefinition {
   return compile(rootModule);
 }
 
-function isModuleDefinition(moduleImport: ModuleImport): moduleImport is ModuleDefinition {
+/**
+ * Whether a module import is already the descriptor the container compiles,
+ * rather than a class or a dynamic module the boot lowers.
+ *
+ * Exported because a boot's own record has to name the graph it served, and the
+ * answer is this one question: a descriptor is data, while a class and a dynamic
+ * module both have their decorators read and lowered here.
+ *
+ * @internal
+ */
+export function isModuleDefinition(moduleImport: ModuleImport): moduleImport is ModuleDefinition {
   return (
     typeof moduleImport !== "function" &&
     "controllers" in moduleImport &&
