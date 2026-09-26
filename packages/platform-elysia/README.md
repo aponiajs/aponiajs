@@ -212,6 +212,12 @@ the application starts accepting traffic. Leaving `precompile` disabled keeps
 Elysia composition lazy. Set `aot: false` only when the generic dynamic Elysia
 dispatcher is required for compatibility.
 
+That dispatcher reads no route's own `error` array, so under `aot: false` the
+exception filters a route declares and the default Problem Details mapping do
+not run, and an unhandled failure answers Elysia's native `500` carrying the
+exception's message. A boot states this under `RoutesResolver` when the option
+is set.
+
 These settings are not native machine-code AOT. Elysia generates JavaScript,
 and JavaScriptCore remains responsible for interpreter and machine-code JIT
 tiers.
@@ -431,14 +437,15 @@ stack or cause, and reserved Problem Details members cannot be replaced through
 extensions.
 
 Errors a handler throws that no exception filter answers do not escape as a
-stack trace either: every route carries a default Problem Details mapping last
-in its own error path, so they answer `500` `application/problem+json` with a
-fixed `detail` and are reported through the system logger under
-`ExceptionsHandler`. An answer Elysia's own error path already decided is
-declined rather than translated, so a rejected request still answers the native
-`422`, a failed `t.Transform` decode keeps its `422` and the decode error's
-message, a thrown `status(...)` keeps its response, and an `HttpError` keeps its
-own.
+stack trace either: on Elysia's AOT path every route carries a default Problem
+Details mapping last in its own error path, so they answer `500`
+`application/problem+json` with a fixed `detail` and are reported through the
+system logger under `ExceptionsHandler`. An answer Elysia's own error path
+already decided is declined rather than translated, so a rejected request still
+answers the native `422`, a failed `t.Transform` decode keeps its `422` and the
+decode error's message, a thrown `status(...)` keeps its response, and an
+`HttpError` keeps its own. The mapping is a route-local hook, so it is part of
+what `aot: false` disables.
 
 ## Routes with the native Elysia context
 

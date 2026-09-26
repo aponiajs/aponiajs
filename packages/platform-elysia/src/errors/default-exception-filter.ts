@@ -39,8 +39,13 @@ export function isFilterMatch(filter: ResolvedFilter, exception: unknown): boole
  *
  * It answers an unhandled failure with a `500` Problem Details response that
  * carries neither the stack nor the cause: an application that could turn this
- * off could ship a stack trace, so it is always present and never removable,
- * and an application overrides it by declaring a filter ahead of it.
+ * off could ship a stack trace, so on Elysia's AOT path it is always present and
+ * never removable, and an application overrides it by declaring a filter ahead
+ * of it. It is a route-local hook, and Elysia's dynamic dispatcher
+ * (`elysia: { aot: false }`) never reads a route's own `error` array: that path
+ * runs no declared filter and no mapping, and answers an unhandled failure with
+ * Elysia's native `500` carrying the exception's message, which is why
+ * `bootstrapAponiaApplication` warns about the policy at boot.
  *
  * It answers only what Elysia would otherwise answer from its unknown-error
  * fallback. Everything Elysia's own error path decides for itself is declined

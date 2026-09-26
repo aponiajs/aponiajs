@@ -101,6 +101,24 @@ export async function bootstrapAponiaApplication(
     }),
   );
 
+  // Elysia runs a route's own `error` array only while composing routes ahead of
+  // time: its dynamic dispatcher, which `aot: false` selects, consults the root
+  // application's single `error` hook and each exception's own `toResponse()`
+  // and never the array a route carries. The filters a route declares and the
+  // mapping built below therefore do not run under that policy, and an
+  // unhandled failure answers Elysia's native `500` carrying the exception's
+  // message — the leak the mapping exists to prevent. The policy is a
+  // compatibility escape hatch, so the boot states what it disabled instead of
+  // leaving an application to discover it from a leaked message.
+  if (options.elysia?.aot === false) {
+    logger?.warn(
+      "Elysia's AOT compilation is disabled (elysia: { aot: false }), so declared exception filters " +
+        "and the default Problem Details mapping never run: an unhandled failure answers Elysia's " +
+        "native 500 carrying the exception's message.",
+      "RoutesResolver",
+    );
+  }
+
   // The Problem Details mapping every route carries last is built once, from
   // the logger this boot reports on, and travels with each mount beside the
   // global enhancers: a route's `error` array is assembled while it mounts, so

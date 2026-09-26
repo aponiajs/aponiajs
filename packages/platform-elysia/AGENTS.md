@@ -86,7 +86,12 @@ runtime boundary it describes.
   so the array continues to what answers next. The
   default hook is synchronous, so a route with no declared filter compiles the
   way it compiled before the mapping existed; a route with one carries an
-  asynchronous hook per filter, because answering may await.
+  asynchronous hook per filter, because answering may await. A route-local
+  `error` array is read only while Elysia composes routes ahead of time, so
+  `elysia: { aot: false }` disables the mapping and every declared filter —
+  only the `error` hook kind — and `bootstrapAponiaApplication` warns under
+  `RoutesResolver` when the option is set rather than letting that boot look
+  like the default one.
 - `routing/native-route.ts` is the only module that calls Elysia's route
   registration API. A version that moves it fails there as
   `UNSUPPORTED_ELYSIA_VERSION` instead of as a bare `TypeError` from inside a

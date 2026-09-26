@@ -12,7 +12,9 @@ import {
   SubscribeMessage,
   UseFilters,
   WebSocketGateway,
+  type ArgumentsHost,
   type LoggerService,
+  type RouteContext,
   type RouteResponseSettings,
 } from "@aponiajs/common";
 import { t, status } from "elysia";
@@ -117,6 +119,43 @@ class HttpController {
   }
 }
 
+/**
+ * What a filter is actually handed for a real request, recorded by the filter
+ * itself — the same probe shape `tests/guards.test.ts` uses for the context a
+ * guard receives, so a case asserts the arguments rather than executing them.
+ */
+interface FilterProbe {
+  exception?: unknown;
+  context?: RouteContext;
+  request?: RouteContext;
+}
+
+const filterProbe: FilterProbe = {};
+
+/** The exact value the probed handler throws, so its identity can be asserted. */
+const probedFailure = new Error("the prober's own failure");
+
+@Catch(Error)
+@Injectable()
+class ProbeFilter {
+  catch(exception: unknown, host: ArgumentsHost): unknown {
+    filterProbe.exception = exception;
+    filterProbe.context = host.getContext();
+    filterProbe.request = host.switchToHttp().getRequest();
+
+    return undefined;
+  }
+}
+
+@Controller("probe")
+@UseFilters(ProbeFilter)
+class ProbeController {
+  @Get()
+  read(): string {
+    throw probedFailure;
+  }
+}
+
 @Controller("validated")
 class ValidatedController {
   @Post("items", { body: t.Object({ name: t.String() }) })
@@ -200,11 +239,19 @@ class NativeController {
     BrokenController,
     AsyncController,
     HttpController,
+    ProbeController,
     ValidatedController,
     NativeController,
     TransformController,
   ],
-  providers: [NotFoundFilter, CatchAllFilter, UndecidedFilter, BrokenFilter, AsyncAnsweringFilter],
+  providers: [
+    NotFoundFilter,
+    CatchAllFilter,
+    UndecidedFilter,
+    BrokenFilter,
+    AsyncAnsweringFilter,
+    ProbeFilter,
+  ],
 })
 class AppModule {}
 
@@ -225,22 +272,49 @@ class FailingGatewayModule {}
  */
 class RecordingLogger implements LoggerService {
   readonly errors: { readonly context: string; readonly message: string }[] = [];
+  readonly warnings: { readonly context: string; readonly message: string }[] = [];
 
   log(): void {}
 
   fatal(): void {}
 
-  warn(): void {}
+  warn(message: unknown, context?: unknown): void {
+    this.warnings.push(record(message, context));
+  }
 
   error(message: unknown, context?: unknown): void {
-    this.errors.push({
-      context: typeof context === "string" ? context : "",
-      message: String(message),
-    });
+    this.errors.push(record(message, context));
   }
 }
 
+function record(
+  message: unknown,
+  context: unknown,
+): { readonly context: string; readonly message: string } {
+  return { context: typeof context === "string" ? context : "", message: String(message) };
+}
+
 describe("exception filters", () => {
+  test("a filter receives the thrown value and the request's own host", async () => {
+    const application = await AponiaFactory.create(AppModule, { logger: false });
+
+    const response = await application.handle(new Request("http://localhost/probe"));
+    const body = await response.text();
+
+    // The exception is the value the handler threw, not a wrapper, and the host
+    // carries the request's own context. A call site that passed the host where
+    // the exception belongs, or a context in the exception's place, fails this
+    // case and only this case.
+    expect(filterProbe.exception).toBe(probedFailure);
+    expect(filterProbe.context?.path).toBe("/probe");
+    expect(filterProbe.context?.request.url).toBe("http://localhost/probe");
+    expect(filterProbe.request).toBe(filterProbe.context);
+    // The probe filter declined, so the mapping behind it still answered.
+    expect(response.status).toBe(500);
+    expect(body).not.toContain("the prober's own failure");
+    await application.close();
+  });
+
   test("a filter answers the type @Catch named", async () => {
     const application = await AponiaFactory.create(AppModule, { logger: false });
 
@@ -450,6 +524,30 @@ describe("what Elysia's own error path already answers", () => {
     );
 
     expect([response.status, await response.json()]).toEqual([200, { when: "readable" }]);
+    await application.close();
+  });
+});
+
+describe("the mapping with Elysia's AOT compilation disabled", () => {
+  test("a boot with aot: false warns that the filters and the mapping never run", async () => {
+    const logger = new RecordingLogger();
+    const application = await AponiaFactory.create(AppModule, {
+      logger,
+      elysia: { aot: false },
+    });
+
+    expect(logger.warnings).toHaveLength(1);
+    expect(logger.warnings[0]?.context).toBe("RoutesResolver");
+    expect(logger.warnings[0]?.message).toContain("aot: false");
+    expect(logger.warnings[0]?.message).toContain("Problem Details mapping");
+    await application.close();
+  });
+
+  test("a boot on the AOT path warns about nothing", async () => {
+    const logger = new RecordingLogger();
+    const application = await AponiaFactory.create(AppModule, { logger });
+
+    expect(logger.warnings).toEqual([]);
     await application.close();
   });
 });
