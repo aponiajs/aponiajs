@@ -74,8 +74,10 @@ outside loopback is never silent: the start reports one row under `Devtools`
 naming the `host` option, the address the socket took, and `/requests`, which
 records request headers and bodies by default. `127.0.0.1`, anything in
 `127.x.x.x`, `::1`, and `localhost` are the loopback spellings the row is
-skipped for; the check is syntactic and resolves nothing, so a host name that
-points at loopback still reports.
+skipped for; the check is syntactic and resolves nothing, so any other name
+reports. `localhost` is the one name accepted without being resolved, so a hosts
+file that mapped it to one of this machine's public addresses would bind it in
+silence — the price of a check with no lookup in it.
 
 ## Read it
 

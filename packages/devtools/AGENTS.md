@@ -52,9 +52,12 @@ runtime boundary it describes.
   socket took, and `/requests`, because that endpoint records request headers
   and bodies by default. `127.0.0.1`, any `127.x.x.x`, `::1`, and
   `localhost` are the spellings the warning is skipped for. The check is this
-  package's own and resolves nothing, so a host name that points at loopback
-  still warns; that direction is the safe one, because a spelling the pattern
-  cannot be sure of is reported rather than assumed. A debugging aid that
+  package's own and resolves nothing, so any other name warns; that direction is
+  the safe one, because a spelling the pattern cannot be sure of is reported
+  rather than assumed. The one name it accepts without resolving is `localhost`,
+  and that is stated rather than hidden: a hosts file that mapped `localhost` to
+  one of this machine's public addresses would bind it in silence, which is the
+  price of a check with no lookup in it. A debugging aid that
   reaches a public interface silently is the failure mode this package exists
   not to have.
 - A debugging aid must never fail a boot: a port that is already bound is
@@ -527,7 +530,21 @@ spelling a registration can name — the address, `localhost`, its other case, a
 named, answers on it, and reports exactly one row naming the `host` option, that
 address, and `/requests`. A widened bind that is refused reports the refusal and
 no exposure row, because a socket that never started exposed nothing; that case
-is also what pins the bracketed form of an IPv6 address.
+is also what pins the bracketed form of an IPv6 address, and it names a host
+outside loopback — `::` rather than the loopback `::1` — because with a loopback
+host no exposure row could appear however the code was ordered, so the guarantee
+would be untestable there.
+
+The boundary the socket cases cannot reach is pinned directly, against
+`isLoopbackHost`. It is exported from `server/devtools-server.ts` for this
+package's own cases, marked `@internal` and deliberately kept off the barrel,
+because three of the near misses — `127.1`, `::ffff:127.0.0.1`, and the expanded
+`0:0:0:0:0:0:0:1` — bind successfully on this machine: a socket case over them
+would report what the resolver did rather than what the check decided, and with
+a warning assertion it could not tell an exposure row from a refusal. The case
+lists the silent spellings and the reported ones, including `localhost\n` (a
+trailing newline is what a copied value carries, and `$` without `m` refuses it),
+and reports the spelling that moved rather than a boolean.
 
 `/aot`'s analysis is a project on disk, so its cases write one into a temporary
 directory and `process.chdir` into it, restoring the working directory after each

@@ -56,9 +56,14 @@ export interface DevtoolsOptions {
    * binding it where the network can reach it puts credentials on the network,
    * and a row that said only "reachable from the network" would leave the
    * reader to guess that. `127.0.0.1`, any `127.x.x.x`, `::1`, and
-   * `localhost` are the loopback spellings the warning is skipped for — the
-   * check names them rather than resolving anything, so a hostname that points
-   * at loopback still warns.
+   * `localhost` are the loopback spellings the warning is skipped for. The
+   * check is syntactic and resolves nothing, so any other name warns, and
+   * `localhost` is the one name accepted without being resolved. That is stated
+   * rather than hidden: a hosts file that mapped `localhost` to one of this
+   * machine's public addresses would bind it in silence, which is the price of a
+   * check with no lookup in it — accepted with the alternative in view, because
+   * a resolver in a debugging aid's start path would decide what to warn about
+   * from the machine it happens to run on.
    */
   readonly host?: string;
   /**

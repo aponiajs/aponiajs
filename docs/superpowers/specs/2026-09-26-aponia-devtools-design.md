@@ -445,8 +445,13 @@ the failure mode is it being reachable when it should not be.
   and `/requests` — which records request headers and bodies by default — so the
   reader learns the concrete exposure rather than the abstraction. `127.0.0.1`,
   any `127.x.x.x`, `::1`, and `localhost` are the loopback spellings
-  the row is skipped for. The check is syntactic and resolves nothing, which is
-  the safe direction: a host name that points at loopback still reports.
+  the row is skipped for. The check is syntactic and resolves nothing, so any
+  other name is reported. `localhost` is the one name accepted without being
+  resolved, and the price is stated rather than hidden: a hosts file that mapped
+  it to one of this machine's public addresses would bind it in silence. That is
+  the price of a check with no lookup in it,
+  accepted with the alternative — a resolver in a debugging aid's start path,
+  deciding what to warn about from the machine it runs on — in view.
 - **No environment inference.** `enabled` is required and is the application's
   decision. The framework does not read `NODE_ENV`, because an environment
   variable is not a security boundary and a framework that guesses on the

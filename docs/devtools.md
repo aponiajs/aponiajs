@@ -77,8 +77,13 @@ Three facts about the socket:
   A row that said only "reachable from the network" would leave the reader to
   guess that. `127.0.0.1`, any `127.x.x.x`, `::1`, and `localhost` are
   the loopback spellings the warning is skipped for; the check names them rather
-  than resolving anything, so a host name that points at loopback still warns
-  and every other value — `0.0.0.0` included — is reported.
+  than resolving anything, so **any other name is reported**, and every other
+  value — `0.0.0.0` included — with it. `localhost` is the one name accepted
+  without being resolved, and that is stated rather than hidden: a hosts file
+  that mapped it to one of this machine's public addresses would bind it in
+  silence. That is the price of a check with no lookup in it, accepted with the
+  alternative in view — a resolver in a debugging aid's start path would decide
+  what to warn about from the machine it happens to run on.
 - **A taken port never fails a boot.** The refused bind is reported under the
   `Devtools` context with the reason, and the application continues without the
   devtools server. Only a start that succeeded becomes the socket the plugin

@@ -35,16 +35,30 @@ const defaultDevtoolsHostname = "127.0.0.1";
  * `127.0.0.0/8` written as four dotted octets.
  *
  * The check is syntactic and resolves nothing, and that direction is the safe
- * one: a name that happens to point at loopback still warns, and a spelling the
- * pattern cannot be sure of is reported rather than assumed. The octets after
- * `127` are not range-checked because an address outside an interface's range
- * cannot bind at all — there is nothing to expose — while a spelling that is
- * rejected for the wrong reason would go silent.
+ * one: any name the pattern cannot be sure of is reported rather than assumed.
+ * `127.1`, `::ffff:127.0.0.1`, and `0:0:0:0:0:0:0:1` are loopback to a resolver
+ * and to the kernel, and all three warn here. `localhost` is the one name
+ * accepted without being resolved, and the price is stated where the option is
+ * documented: a hosts file that mapped it to one of this machine's public
+ * addresses would bind it in silence.
+ *
+ * The octets after `127` are not range-checked because an address outside an
+ * interface's range cannot bind at all — there is nothing to expose — while a
+ * spelling that is rejected for the wrong reason would go silent.
  */
 const loopbackHostPattern = /^(?:localhost\.?|::1|127(?:\.\d{1,3}){3})$/i;
 
-/** Whether a host names the loopback interface, so a bind to it exposes nothing. */
-function isLoopbackHost(host: string): boolean {
+/**
+ * Whether a host names the loopback interface, so a bind to it exposes nothing.
+ *
+ * Exported for this package's own tests, which pin the boundary the socket cases
+ * cannot reach: three of the near-miss spellings warn while binding
+ * successfully, so a socket case would report what they resolved to rather than
+ * what the check decided. Not on the barrel — an application never calls this.
+ *
+ * @internal
+ */
+export function isLoopbackHost(host: string): boolean {
   return loopbackHostPattern.test(host);
 }
 

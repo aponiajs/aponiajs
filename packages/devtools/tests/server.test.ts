@@ -14,6 +14,11 @@ import {
   type DevtoolsHandlers,
   type DevtoolsServer,
 } from "../src/index.ts";
+// The boundary itself, from the module that owns it rather than the barrel: it
+// is `@internal` and no application calls it, and three of the near-miss
+// spellings below bind successfully on this machine, so a socket case would
+// prove what the resolver did rather than what the check decided.
+import { isLoopbackHost } from "../src/server/devtools-server.ts";
 
 /**
  * The loopback server and the dispatcher under it. The contract is HTTP, so
@@ -321,6 +326,33 @@ test("the loopback spellings a registration can name report nothing", () => {
   expect(results.every((result) => result.url !== undefined)).toBe(true);
 });
 
+test("the loopback check is silent only for the spellings it names and reports every near miss", () => {
+  // Silent: the four spellings the option documents, including the root-dot
+  // form of the name and an address in `127.0.0.0/8` that is not `.1`.
+  const silent = ["127.0.0.1", "127.255.255.254", "localhost", "LOCALHOST", "localhost.", "::1"];
+
+  // Reported. The first three are loopback to a resolver and to the kernel, and
+  // the check still reports them: it resolves nothing, so the boundary is the
+  // spelling rather than what the spelling means. `localhost\n` is here because
+  // a trailing newline is what a copied value carries, and `$` without the `m`
+  // flag refuses it — a pattern that grew that flag would go silent for it.
+  const reported = [
+    "127.1",
+    "::ffff:127.0.0.1",
+    "0:0:0:0:0:0:0:1",
+    "::",
+    "0.0.0.0",
+    "192.168.1.5",
+    "dev.localhost",
+    "",
+    "localhost\n",
+  ];
+
+  // Filtered rather than mapped so a failure names the spelling that moved.
+  expect(silent.filter((host) => !isLoopbackHost(host))).toEqual([]);
+  expect(reported.filter((host) => isLoopbackHost(host))).toEqual([]);
+});
+
 test("a host outside loopback binds it, answers, and reports once what it exposed", async () => {
   const { logger, warnings } = recordingLogger();
   const server = startDevtoolsServer({
@@ -390,25 +422,31 @@ test("a port that is already bound is refused, and the caller continues", async 
   }
 });
 
-test("a widened host that cannot bind reports the address it could not take", async () => {
-  const blocker = Bun.serve({ hostname: "::1", port: 0, fetch: () => new Response("taken") });
+test("a host outside loopback that cannot bind reports the refusal and no exposure row", async () => {
+  // `::` rather than `::1`: the guarantee this case exists for — a widening
+  // that never happened exposes nothing — is only testable with a host the
+  // check treats as widen-eligible, and `::1` is one of the silent spellings
+  // the sibling case lists. With a loopback host no exposure row could appear
+  // however the code was ordered, so the case could not bite.
+  const blocker = Bun.serve({ hostname: "::", port: 0, fetch: () => new Response("taken") });
   const { logger, warnings } = recordingLogger();
 
   try {
     const server = startDevtoolsServer({
       application: new Elysia(),
-      host: "::1",
+      host: "::",
       port: blocker.port,
       logger,
     });
 
     expect(server).toBeUndefined();
 
-    // One row, and it is the refusal: a bind that never happened exposed
-    // nothing, so no exposure row joins it. The address is bracketed the way a
-    // URL needs an IPv6 host.
+    // One row, and it is the refusal. Two things hold that: the exposure row is
+    // written only after a bind that succeeded, and the address is the one the
+    // registration asked for because no socket exists to report its own. The
+    // bracketed form is what a URL needs for an IPv6 host.
     expect(warnings).toHaveLength(1);
-    expect(warnings[0]).toContain(`http://[::1]:${blocker.port}`);
+    expect(warnings[0]).toContain(`http://[::]:${blocker.port}`);
     expect(warnings[0]).not.toContain("/requests");
   } finally {
     await blocker.stop(true);

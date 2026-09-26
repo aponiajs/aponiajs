@@ -39,16 +39,20 @@ export class AppModule {}
   `DECLINED module` line a build prints.
 - **`onStart` requires `listen()`.** An application that only calls `handle()`
   publishes nothing and is otherwise unaffected.
-- **Loopback by default.** The devtools server binds `127.0.0.1` on `port`
-  (default `8000`) unless `host` names another address, which a container that
-  publishes its port, a remote development box, and a phone on the same network
-  may all need. A bind outside loopback is never silent: the start reports one
-  row under `Devtools` naming the `host` option, the address the socket took,
-  and `/requests` — which records request headers and bodies by default, so the
-  row states what is now reachable rather than leaving the reader to infer it.
-  `127.0.0.1`, any `127.x.x.x`, `::1`, and `localhost` are the loopback
-  spellings the warning is skipped for; the check is this package's own and
-  resolves nothing, so a host name that points at loopback still warns.
+- **Loopback by default.** The default is loopback because a debugging aid
+  should not be reachable by default. The devtools server binds `127.0.0.1` on
+  `port` (default `8000`) unless `host` names another address, which a container
+  that publishes its port, a remote development box, and a phone on the same
+  network may all need. A bind outside loopback is never silent: the start
+  reports one row under `Devtools` naming the `host` option, the address the
+  socket took, and `/requests` — which records request headers and bodies by
+  default, so the row states what is now reachable rather than leaving the
+  reader to infer it. `127.0.0.1`, any `127.x.x.x`, `::1`, and `localhost` are
+  the loopback spellings the warning is skipped for; the check is this package's
+  own and resolves nothing, so any other name warns. `localhost` is the one name
+  accepted without being resolved, and that is stated rather than hidden: a
+  hosts file that mapped it to one of this machine's public addresses would bind
+  it in silence.
 - **The log stream is the application's own, and it is handed over twice.** Pass
   the same logger to `DevtoolsModule.register` and to `AponiaFactory.create`:
   registration patches that object **in place**, so every line it writes — the
