@@ -291,27 +291,77 @@ In `@aponiajs/common`:
 
 No new runtime dependency is added to any package.
 
-## What this does not yet establish
+## What the probes established
 
-Two behaviors. Both are verified by probe before the first line of this design is
-implemented, because each one changes the design rather than merely the tests.
+Both behaviors were probed against `elysia@1.4.30`, the version this workspace
+resolves, before any of this design was implemented. Each probe was a throwaway
+file at the repository root, run with `bun`, and deleted afterwards.
 
-**1. Hooks do not change a route's synchronous classification.** The design
-assumes that adding hooks to a route leaves the route's own
-synchronous-or-async classification alone, so the build-time invoker and the
-runtime's `isPossiblyAsync` decision continue to apply unchanged. The reasoning
-is that hooks are separate functions from the handler and Elysia classifies the
-handler itself. If registering an `afterHandle` hook moves the route onto an
-asynchronous composition path, the cost lands on every route carrying an
-enhancer, and the spec's claim that the AOT invoker is unaffected is wrong.
+**1. Hooks do not change a route's synchronous classification — holds as probed.**
+One instance carried two routes with the same synchronous handler,
+`() => "sync result"`; one was registered with a synchronous `afterHandle` hook
+and one without, while a global `onAfterHandle` recorded what it received. Both
+routes reported `resolved value` from the hook and `sync result` from the
+response body, so neither exposed a raw Promise to the lifecycle.
 
-**2. A route-local `onError` answers before the root application's.** The
-default filter is registered on the root application, so a declared filter can
-only take precedence if a route-local `onError` that returns a value prevents
-the root one from running. If it does not, the default mapping cannot sit
-"behind" declared filters, and the fallback is that the root handler consults
-the matched route's compiled filters itself — a different design, recorded here
-rather than discovered later.
+That observable is a proxy for the classification, so it was measured directly as
+well, by compiling the application and reading each route's composed handler.
+`/plain` and `/sync-hook` both compile to a plain `Function`, as does a route
+carrying a synchronous `beforeHandle` alongside a synchronous `afterHandle`.
+Elysia treats a hook as asynchronous only when the hook function itself is
+(`hooks.afterHandle?.some(isAsync)`), so the claim holds for the synchronous hooks
+this design rests on, and the build-time invoker with the runtime's
+`isPossiblyAsync` decision continues to apply unchanged.
+
+One consequence is recorded rather than left implicit. It sits outside the probed
+scope and does not weaken the verdict above, but the contracts here permit
+`Promise`-returning enhancers: an **async** hook does move the route onto the
+asynchronous path. The same route with `async () => undefined` as its
+`afterHandle` compiles to an `AsyncFunction`. A route carrying an async guard,
+interceptor, or filter is therefore Promise-capable whichever way its handler is
+classified.
+
+**2. A route-local `onError` answers before the root application's —
+contradicted.** Two findings, and the second is the one that changes the design.
+
+The first is a naming defect. `onError` is not a route-local hook key in Elysia
+1.4.30: `LocalHook` declares `error`, and a route registered with `{ onError }`
+ignores it entirely, leaving Elysia's own `500` to carry the handler's message
+with no hook run at all. The probe as first written passed `{ onError: ... }`, so
+it had no local arm to measure. The findings below use the key Elysia reads,
+`error`, and the "Platform changes" bullet above should be read as naming that
+key.
+
+The second is precedence, which is registration order rather than scope. A route
+whose handler throws `new Error("exploded")`:
+
+| Registered on the route     | Root `onError`   | Handlers that ran | Body         |
+| --------------------------- | ---------------- | ----------------- | ------------ |
+| local `error` only          | not registered   | `route`           | `from route` |
+| local `error`               | before the route | `root`            | `from root`  |
+| local `error`               | after the route  | `route`           | `from route` |
+| local `error` that declines | before the route | `root`, `route`   | `from route` |
+| no local hook               | after the route  | none              | `exploded`   |
+| local `error` on one of two | before both      | `root`, `root`    | `from root`  |
+
+Both orderings break something this design needs, so neither is a defect to
+report and move past. Elysia merges the instance's lifecycle store with the
+route-local hook while the route is added, instance handlers first, and the
+composed error path runs a handler only while no response has been set. A root
+`onError` registered before controllers mount is therefore ahead of every
+declared filter and answers it away; the route's own hook never runs. A root
+`onError` registered after they mount is in no mounted route's hook list at all,
+so it never maps a native error either. Reading the merged arrays directly shows
+both halves: with the root handler registered late, the instance held one error
+hook while the already-mounted route held none, and with it registered early, the
+route held two in the order `root`, `local`.
+
+The route-local `onError` this design's precedence section assumes does not exist
+as a hook in the supported Elysia. The fallback this design already records — the
+root handler consulting the matched route's compiled filters itself — is
+therefore the design that is required, and it has to be settled before filters
+are built. Everything above this section is left as written rather than adjusted
+to match this result.
 
 ## Testing
 
