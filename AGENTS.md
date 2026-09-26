@@ -29,6 +29,7 @@ Bun workspace. Framework packages live in `packages/`:
 | `@aponiajs/platform-elysia` | Elysia adapter, HTTP routes, WebSocket gateways, plugins     | `common`, `core`, peer `elysia`                                                       |
 | `@aponiajs/cli`             | `aponia new` and `aponia generate` schematics                | `change-case`, `ts-morph`, `yargs-parser`, `fast-glob`, `inflection`, `oxfmt` (exact) |
 | `create-aponia`             | `bun create aponia` entrypoint into the same generator       | `@aponiajs/cli`                                                                       |
+| `@aponiajs/devtools`        | Opt-in loopback devtools for a running application           | `common`, `platform-elysia`, peer `elysia`                                            |
 | `aponiajs`                  | Reserved public facade, private and unpublished              | —                                                                                     |
 
 Supporting directories: `examples/` for executable examples, `docs/` for
@@ -64,6 +65,7 @@ being changed:
 | [`packages/platform-elysia`](packages/platform-elysia/AGENTS.md) | Bootstrap, route mapping, native plugins, context types |
 | [`packages/cli`](packages/cli/AGENTS.md)                         | Schematics, templates, generated layout                 |
 | [`packages/create-aponia`](packages/create-aponia/AGENTS.md)     | The `bun create aponia` entrypoint                      |
+| [`packages/devtools`](packages/devtools/AGENTS.md)               | The opt-in loopback devtools package                    |
 | [`packages/aponiajs`](packages/aponiajs/AGENTS.md)               | The reserved, still-private facade                      |
 | [`scripts`](scripts/AGENTS.md)                                   | Release channel derivation and documentation guards     |
 | [`docs`](docs/AGENTS.md)                                         | The published documentation set and what guards it      |

@@ -1,0 +1,22 @@
+# @aponiajs/devtools
+
+> The opt-in devtools surface for a running AponiaJS application. A disabled registration mounts nothing; an enabled one mounts an Elysia plugin that runs at `onStart`, after every route has mounted.
+
+The package is a leaf: nothing in the framework depends on it. An application imports `DevtoolsModule.register({ enabled })` and decides for itself whether the devtools mount at all — the framework never reads an environment variable on the application's behalf.
+
+## What this package exports
+
+- [DevtoolsModule](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/devtools/src/module/devtools-module.ts): `register(options)` builds the module an application imports; a disabled registration is inert.
+- [DevtoolsOptions](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/devtools/src/module/devtools-module.types.ts): the required `enabled` switch and the optional loopback `port`.
+
+## Behavior a consumer can rely on
+
+- A disabled module registers no provider, mounts no plugin, and opens no socket.
+- An enabled module registers an `ElysiaPluginModule`, so its plugin runs at `onStart` — after every route has mounted.
+- `onStart` fires on `listen()`. An application that only calls `handle()` publishes nothing and is unaffected.
+- The bind address is `127.0.0.1` and is not configurable.
+
+## Documentation
+
+- [Package README](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/devtools/README.md): installation and registration.
+- [Published packages](../../docs/packages.md): the npm catalog and install commands.

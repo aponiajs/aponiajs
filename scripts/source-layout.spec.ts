@@ -45,6 +45,11 @@ const packageLayouts: readonly PackageLayout[] = [
     ],
   },
   {
+    sourceRoot: "packages/devtools/src",
+    files: ["index.ts"],
+    directories: ["module"],
+  },
+  {
     sourceRoot: "packages/cli/src",
     files: ["index.ts", "version.ts"],
     directories: ["bundler", "commands", "generation"],

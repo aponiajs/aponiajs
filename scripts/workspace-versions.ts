@@ -7,6 +7,7 @@ export const versionedPackageFiles = [
   "packages/common/package.json",
   "packages/core/package.json",
   "packages/create-aponia/package.json",
+  "packages/devtools/package.json",
   "packages/platform-elysia/package.json",
 ] as const;
 
@@ -16,6 +17,7 @@ export const versionedWorkspacePaths = [
   "packages/common",
   "packages/core",
   "packages/create-aponia",
+  "packages/devtools",
   "packages/platform-elysia",
 ] as const;
 
