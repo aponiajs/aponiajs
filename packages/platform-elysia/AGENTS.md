@@ -156,9 +156,19 @@ runtime boundary it describes.
   phantom type, so the value is inspectable at runtime.
 - Verify a fallback controller's `buildPlugin` result is a real `Elysia`
   instance and raise `INVALID_CONTROLLER` when it is not.
-- A gateway is a decorated class provider. Discover metadata on `useClass`,
-  resolve the existing provider token through `resolveModuleProvider`, and
-  never construct a second instance.
+- A gateway is a class provider, declared or decorated. Bootstrap compiles the
+  plan a provider carries when it has one and otherwise reads
+  `@WebSocketGateway()`/`@SubscribeMessage()` off `useClass`; either way it
+  resolves the existing provider token through `resolveModuleProvider` and never
+  constructs a second instance. Both readings produce the same compiled plan, so
+  a duplicate path, a duplicate event, and every other rejection come from one
+  check at one moment with one code. `defineElysiaWebSocketGateway` is the
+  descriptor path's counterpart to those decorators: a plan never registers
+  itself, and `websockets/websocket-gateway.ts` stays the only module that calls
+  `application.ws()`. A plan states only what a decorator records as metadata —
+  path, handlers with their parameter bindings, server properties —
+  because `afterInit`, `handleConnection`, and `handleDisconnect` are resolved
+  from the instance while the gateway is bound and a plan has nothing to add.
 - Canonical gateway paths and message events are unique before routes mount.
   One gateway maps to one native `application.ws()` route. A collision with a
   configured or plugin-provided native WS route must fail deterministically.

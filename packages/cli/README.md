@@ -29,7 +29,11 @@ every file under the configured source root and writes two modules beside it:
 `invokers.generated.ts`, which holds the route invokers the runtime would
 otherwise compile at startup, and `descriptors.generated.ts`, which declares the
 module graph as data so the application can boot without its decorators being
-lowered. Both cover what they can prove and report what they cannot, so an
+lowered. A declared route states the validator its `@Validation()` model was
+declared with rather than the model class, and a declared gateway states its
+path, handlers, and server properties as a `defineElysiaWebSocketGateway` plan,
+so booting from the descriptor module reads no decorator metadata for either.
+Both cover what they can prove and report what they cannot, so an
 application chooses how far to go: pass the invoker artifact to
 `AponiaFactory.create`, boot from `moduleDescriptors.<Module>`, or ignore both
 files and keep booting exactly as before. What it writes is laid out by the

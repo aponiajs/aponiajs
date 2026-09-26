@@ -330,15 +330,27 @@ declare, keyed by the module class name. A module that is missing from it is one
 the build declined and reported, and it keeps booting from its own decorators, so
 the fallback is per module rather than per application.
 
-Two things still read decorator metadata at run time, and a generated module does
-not change that:
+Neither of the two decorator reads a generated module used to leave behind
+happens on a path the build generated:
 
-- WebSocket gateway discovery reads `@WebSocketGateway()` and `@SubscribeMessage()`
-  off the provider class, so a gateway in a generated module is discovered
-  exactly as a decorated one is.
-- A `@Validation()` model is resolved to the validator it was declared with while
-  its routes mount. The generated module names the model class, not the
-  validator, so the metadata read stays.
+- A gateway is declared, not discovered. `@WebSocketGateway()` and
+  `@SubscribeMessage()` are read at build time and emitted as a
+  `defineElysiaWebSocketGateway(...)` provider carrying the path, the handlers,
+  and the server properties as data, so bootstrap mounts the same gateway from
+  that plan instead of reflecting on the class.
+- A route's schema slot states the validator, not the model class. A
+  `@Validation()` model is read at build time and its validator expression is
+  written into the generated route, so bootstrap hands Elysia that validator
+  directly and never resolves a model class while a route mounts. A model whose
+  validator reads a module-private binding of its own file is written out with
+  that binding folded in, because no other file can name it. Two model classes
+  that share a name are the exception: the build cannot tell which one a slot
+  meant, so it copies the class name and that route keeps the run-time read.
+
+The decorators remain the authoring surface, and the paths that still read their
+metadata are the ones the build did not touch: a module the build declined keeps
+booting from its own decorators, as does any application that boots from
+`AppModule` rather than from `moduleDescriptors`.
 
 Anything the build cannot read is reported rather than guessed at. Each decline
 prints its own line, which is not a change line:

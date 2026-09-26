@@ -123,7 +123,8 @@ that metadata and lowers decorated classes into frozen `ModuleDefinition`,
 `ControllerDefinition`, and `Provider` descriptors. `@aponiajs/core` only ever
 sees descriptors — it never imports `reflect-metadata` or decorator logic.
 Applications can hand-write descriptors instead (`defineModule`,
-`defineElysiaController`, `provideValue`/`provideFactory`/`provideClass`/
+`defineElysiaController`, `defineElysiaControllerRoutes`,
+`defineElysiaWebSocketGateway`, `provideValue`/`provideFactory`/`provideClass`/
 `provideAlias`) and skip decorators entirely. Both paths must stay supported.
 
 ### Dependency direction
@@ -174,7 +175,8 @@ that resolves inside an arbitrary module and is not application API.
 6. await `nativeApplication.modules` so promised, asynchronous, and
    controller-owned native plugins finish contributing routes before WebSocket
    collision checks;
-7. discover each decorated class provider carrying `@WebSocketGateway()`, reject
+7. compile one gateway plan per class provider — the one it declares, or the one
+   read off `@WebSocketGateway()`/`@SubscribeMessage()` on `useClass` — reject
    duplicate paths and message events, resolve the existing singleton provider
    instance, register one native `application.ws()` route, inject
    `@WebSocketServer()` properties, and run `afterInit`;
@@ -206,8 +208,10 @@ ArkType, and Valibot) or platform-native JSON Schema validators matched
 structurally through `NativeSchema` (`static`/`params`, which is how TypeBox and
 Elysia `t` arrive without `common` depending on TypeBox). The platform resolves
 a validation-model token once while routes mount and passes its original
-validator to Elysia unchanged; raw validators remain the low-level escape
-hatch. Slots are `body`, `query`, `params`, `headers`, `cookie`, and `response`;
+validator to Elysia unchanged; a declared route states that validator directly,
+which is what takes the resolution off its startup path. Raw validators remain
+the low-level escape hatch. Slots are `body`, `query`, `params`, `headers`,
+`cookie`, and `response`;
 `response` accepts either one validator or a status-specific validator map.
 Keep `routeSchemaSlots`, `RouteContext`, model inference, and the platform hook
 builder in sync when adding one.
@@ -229,10 +233,16 @@ inference — do not reintroduce an inference-based route API to work around it.
 
 Gateway decorators live in
 `packages/common/src/websockets/websocket-gateway.ts` and remain
-platform-neutral. A gateway is a class provider in `@Module({ providers })`;
-bootstrap discovers the metadata on `provider.useClass` and resolves the
-existing container instance through its provider token. Never construct a
-second gateway instance or add a separate gateway container.
+platform-neutral. A gateway is a class provider in `@Module({ providers })`:
+bootstrap compiles the plan the provider declares, or the metadata on
+`provider.useClass` when it declares none, and resolves the existing container
+instance through its provider token either way. Never construct a second
+gateway instance or add a separate gateway container.
+`defineElysiaWebSocketGateway` in
+`packages/platform-elysia/src/websockets/gateway-definition.ts` is the declared
+half of that pair, and a plan states only what the decorators record — path,
+handlers, and server properties — because lifecycle is resolved from the
+instance.
 
 `@WebSocketGateway()` defaults to `/ws` and accepts a path string or
 `{ path }`. `@SubscribeMessage(event)` records named handlers;

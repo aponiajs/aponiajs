@@ -1,10 +1,22 @@
-import { isAbsolute } from "node:path";
+import { isAbsolute, resolve } from "node:path";
 import { Node } from "ts-morph";
 import { toImportPath } from "./project-configuration.ts";
-import { parseSourceExpression, readExpressionImports } from "./source-imports.ts";
-import type { AnalyzedController, AnalyzedRoute } from "./controller-routes.types.ts";
+import {
+  parseSourceExpression,
+  readExpressionImports,
+  readExpressionValueNames,
+  substituteExpression,
+} from "./source-imports.ts";
+import type { SourceSubstitution } from "./source-imports.ts";
+import type {
+  AnalyzedController,
+  AnalyzedRoute,
+  AnalyzedRouteSchemaSlot,
+} from "./controller-routes.types.ts";
 import type {
   AnalyzedConstructorDependency,
+  AnalyzedGateway,
+  AnalyzedGatewayHandler,
   AnalyzedInjectedDependency,
   AnalyzedModule,
   AnalyzedModuleEntry,
@@ -33,17 +45,19 @@ const aponiaModuleSpecifier = "@aponiajs/common";
 const platformModuleSpecifier = "@aponiajs/platform-elysia";
 const defineModuleName = "defineModule";
 const defineControllerRoutesName = "defineElysiaControllerRoutes";
+const defineGatewayName = "defineElysiaWebSocketGateway";
 const provideClassName = "provideClass";
 
 /**
  * Every helper a generated module calls, by name.
  *
- * The three are the constants above, and the type exists so the helper-to-module
+ * The four are the constants above, and the type exists so the helper-to-module
  * lookup below is total: a generated file imports exactly the helpers its body
  * calls, and a name outside this union would have no module to import from.
  */
 type DescriptorHelper =
   | typeof defineControllerRoutesName
+  | typeof defineGatewayName
   | typeof defineModuleName
   | typeof provideClassName;
 
@@ -51,14 +65,17 @@ type DescriptorHelper =
  * The module each helper is imported from.
  *
  * `defineModule` and the provider helpers are `@aponiajs/common` contracts, but
- * `defineElysiaControllerRoutes` is the platform's own descriptor authoring
- * surface, because compiling a declared controller into native routes is the
- * platform's job. A generated file therefore imports from both packages, which an
- * application booting through `AponiaFactory.create` already depends on.
+ * `defineElysiaControllerRoutes` and `defineElysiaWebSocketGateway` are the
+ * platform's own descriptor authoring surface, because compiling a declared
+ * controller into native routes and a declared gateway into a native WebSocket
+ * route is the platform's job. A generated file therefore imports from both
+ * packages, which an application booting through `AponiaFactory.create` already
+ * depends on.
  */
 const helperSpecifiers: Readonly<Record<DescriptorHelper, string>> = {
   [defineModuleName]: aponiaModuleSpecifier,
   [defineControllerRoutesName]: platformModuleSpecifier,
+  [defineGatewayName]: platformModuleSpecifier,
   [provideClassName]: aponiaModuleSpecifier,
 };
 
@@ -105,13 +122,37 @@ interface ControllerDeclaration {
   readonly routes: readonly AnalyzedRoute[];
 }
 
-/** An `@Injectable()` or `@WebSocketGateway()` class, whose provider token is the class itself. */
+/**
+ * An `@Injectable()` or `@WebSocketGateway()` class, whose provider token is the
+ * class itself.
+ *
+ * `gateway` is set when the class is a gateway, whatever else also decorates it:
+ * bootstrap discovers every class provider as a potential gateway, so a class
+ * that is both `@Injectable()` and `@WebSocketGateway()` is one provider that is
+ * also one gateway, and it is emitted as the declared gateway it is rather than
+ * as the bare class whose decorators would have to be read again.
+ */
 interface ProviderDeclaration {
   readonly name: string;
   readonly file: string;
   readonly imports: SourceImports;
   readonly dependencies: readonly AnalyzedConstructorDependency[];
   /** Why the analysis could not read the class whole, or empty when it did. */
+  readonly unreadable: readonly string[];
+  readonly gateway: AnalyzedGateway | undefined;
+}
+
+/**
+ * A `@Validation()` model class, with the validator the emitter substitutes for
+ * it in a schema slot and the names its own file can read.
+ */
+interface ValidationModelDeclaration {
+  readonly name: string;
+  readonly file: string;
+  readonly imports: SourceImports;
+  /** The validator to emit, or `undefined` when the analysis could not read one. */
+  readonly validator: string | undefined;
+  /** Why the model's validator could not be read, or empty when it could. */
   readonly unreadable: readonly string[];
 }
 
@@ -127,6 +168,7 @@ interface ProjectCatalog {
   readonly modules: readonly ModuleDeclaration[];
   readonly controllerByName: ReadonlyMap<string, ControllerDeclaration>;
   readonly providerByName: ReadonlyMap<string, ProviderDeclaration>;
+  readonly validationByName: ReadonlyMap<string, ValidationModelDeclaration>;
   readonly duplicates: ReadonlySet<string>;
 }
 
@@ -269,6 +311,7 @@ function readCatalog(files: readonly DescriptorSourceFile[]): ProjectCatalog {
   const moduleNames = new Set<string>();
   const controllerByName = new Map<string, ControllerDeclaration>();
   const providerByName = new Map<string, ProviderDeclaration>();
+  const validationByName = new Map<string, ValidationModelDeclaration>();
   const duplicates = new Set<string>();
 
   const add = <T>(map: Map<string, T>, name: string, declaration: T): void => {
@@ -315,13 +358,46 @@ function readCatalog(files: readonly DescriptorSourceFile[]): ProjectCatalog {
       });
     }
 
-    for (const dependency of [...file.descriptors.injectables, ...file.descriptors.gateways]) {
-      add(providerByName, dependency.className, {
-        name: dependency.className,
+    // A class can be both `@Injectable()` and `@WebSocketGateway()`, and it is
+    // one provider either way, so the gateway reading is the one recorded and the
+    // remaining injectables are added after it. Recording it twice would make it
+    // look like two classes sharing a name, which is the one thing this map
+    // refuses to guess about.
+    const injectables = new Map(
+      file.descriptors.injectables.map((declaration) => [declaration.className, declaration]),
+    );
+    for (const gateway of file.descriptors.gateways) {
+      const injectable = injectables.get(gateway.className);
+      injectables.delete(gateway.className);
+      add(providerByName, gateway.className, {
+        name: gateway.className,
         file: file.file,
         imports: file.imports,
-        dependencies: dependency.dependencies,
-        unreadable: dependency.unreadable,
+        dependencies: gateway.dependencies,
+        unreadable: Object.freeze([
+          ...new Set([...(injectable?.unreadable ?? []), ...gateway.unreadable]),
+        ]),
+        gateway,
+      });
+    }
+    for (const declaration of injectables.values()) {
+      add(providerByName, declaration.className, {
+        name: declaration.className,
+        file: file.file,
+        imports: file.imports,
+        dependencies: declaration.dependencies,
+        unreadable: declaration.unreadable,
+        gateway: undefined,
+      });
+    }
+
+    for (const model of file.descriptors.validationModels) {
+      add(validationByName, model.className, {
+        name: model.className,
+        file: file.file,
+        imports: file.imports,
+        validator: model.validator,
+        unreadable: model.unreadable,
       });
     }
   }
@@ -330,6 +406,7 @@ function readCatalog(files: readonly DescriptorSourceFile[]): ProjectCatalog {
     modules: Object.freeze(modules),
     controllerByName,
     providerByName,
+    validationByName,
     duplicates,
   };
 }
@@ -395,6 +472,7 @@ function planModule(
     const rendered = renderController(
       controller,
       reading.reference.name,
+      catalog,
       generatedFile,
       references,
       declined,
@@ -520,6 +598,7 @@ function readEntryReference(
 function renderController(
   controller: ControllerDeclaration,
   name: string,
+  catalog: ProjectCatalog,
   generatedFile: string,
   references: ModuleImport[],
   declined: DeclinedDescriptor[],
@@ -540,6 +619,7 @@ function renderController(
     const rendered = renderRoute(
       route,
       controller,
+      catalog,
       generatedFile,
       references,
       declined,
@@ -573,6 +653,7 @@ function renderController(
 function renderRoute(
   route: AnalyzedRoute,
   controller: ControllerDeclaration,
+  catalog: ProjectCatalog,
   generatedFile: string,
   references: ModuleImport[],
   declined: DeclinedDescriptor[],
@@ -633,9 +714,10 @@ function renderRoute(
   if (route.schema !== undefined) {
     const slots: string[] = [];
     for (const slot of route.schema.slots) {
-      const rendered = emitExpression(
-        slot.expression,
+      const rendered = renderSchemaSlot(
+        slot,
         controller,
+        catalog,
         generatedFile,
         `${description(controller, route)}'s "${slot.slot}" schema`,
       );
@@ -652,12 +734,126 @@ function renderRoute(
 }
 
 /**
+ * Renders one schema slot, resolving a `@Validation()` model to its validator.
+ *
+ * A decorated route names the model class and the platform resolves it while the
+ * route mounts, by reading `Symbol.for("aponia.validation.metadata")` off the
+ * class. A generated route states the validator itself instead, which is what
+ * takes that read off the startup path.
+ *
+ * The validator is read from the model's own file, so the names it has to import
+ * are that file's. It has to be, because a model's validator normally reads a
+ * module-private constant of that file — the starter's
+ * `t.Partial(createUserSchema)` is exactly that — and the analysis has already
+ * folded those constants into the expression it reported. A model whose validator
+ * the analysis could not read is declined with its own reason rather than emitted
+ * as the class: emitting the class would leave the runtime doing the metadata read
+ * this emitter exists to remove, and the route would silently keep the very cost
+ * it was supposed to lose.
+ *
+ * A name the catalog does not hold — a raw validator, a class from another package
+ * — is copied verbatim, which is what the runtime does with it: a validator that is
+ * not a callable model class is passed to Elysia unchanged.
+ */
+function renderSchemaSlot(
+  slot: AnalyzedRouteSchemaSlot,
+  controller: ControllerDeclaration,
+  catalog: ProjectCatalog,
+  generatedFile: string,
+  description: string,
+): ExpressionEmission {
+  const node = parseSourceExpression(slot.expression);
+  const resolved = new Set<string>();
+  const substitutions: SourceSubstitution[] = [];
+  const references: ModuleImport[] = [];
+
+  for (const identifier of readExpressionValueNames(node)) {
+    const name = identifier.getText();
+    const model = catalog.validationByName.get(name);
+    if (model === undefined || !readsModel(controller, name, model)) {
+      continue;
+    }
+
+    const validator = model.validator;
+    if (validator === undefined) {
+      return declinedResult(
+        model.unreadable[0] ??
+          `The validator of the model ${model.name} in ${model.file} could not be read.`,
+      );
+    }
+
+    const rendered = emitExpression(
+      validator,
+      model,
+      generatedFile,
+      `The validator of the model ${model.name} in ${model.file}`,
+    );
+    if (rendered.kind === "declined") {
+      return rendered;
+    }
+
+    resolved.add(name);
+    references.push(...rendered.references);
+    substitutions.push({ identifier, text: validator });
+  }
+
+  if (substitutions.length === 0) {
+    return emitExpression(slot.expression, controller, generatedFile, description);
+  }
+
+  const reading = readExpressionImports(node, controller.imports, description);
+  if (reading.unreadable !== undefined) {
+    return declinedResult(reading.unreadable);
+  }
+
+  references.push(
+    ...reading.references
+      .filter((reference) => !resolved.has(reference.name))
+      .map((reference) => resolveReference(reference, generatedFile)),
+  );
+
+  return {
+    kind: "source",
+    source: substituteExpression(node, substitutions),
+    references: Object.freeze(references),
+  };
+}
+
+/**
+ * Whether the model the catalog holds under `name` is the one the controller
+ * wrote.
+ *
+ * A name that appears in two declarations is already recorded as ambiguous and
+ * never reaches the catalog, so this is about a name that means one thing
+ * project-wide but is imported from somewhere else by this file: the slot would
+ * then be naming a class the build never read, and substituting another model's
+ * validator into it would be a guess about a route. A specifier written without
+ * its extension names the same file as the one it would resolve to.
+ */
+function readsModel(
+  controller: ControllerDeclaration,
+  name: string,
+  model: ValidationModelDeclaration,
+): boolean {
+  const reference = controller.imports.get(name);
+  if (reference === undefined) {
+    return false;
+  }
+
+  const target = resolve(model.file);
+  return resolve(reference.specifier) === target || resolve(`${reference.specifier}.ts`) === target;
+}
+
+/**
  * Renders one provider entry.
  *
  * A bare class the build read is the case worth rewriting, and the runtime
  * lowers it by reflecting on the class — so the emitter writes the same
  * `provideClass` call with the dependencies the analysis read instead, which is
- * the reflection this artifact exists to remove.
+ * the reflection this artifact exists to remove. A class the build read as a
+ * gateway is the other case: bootstrap discovers gateways by reflecting on
+ * `useClass`, so the emitter writes `defineElysiaWebSocketGateway` with the same
+ * plan that reflection would have produced.
  *
  * Everything else is copied verbatim, which is exactly what the runtime does with
  * it: `compileProvider` passes a provider value through unchanged, so a
@@ -709,11 +905,94 @@ function renderProvider(
     return inject;
   }
 
+  if (provider.gateway !== undefined) {
+    return renderGatewayProvider(provider.gateway, reference.name, inject.source, description);
+  }
+
   return {
     kind: "source",
     source: `${provideClassName}(${reference.name}, ${inject.source})`,
     helpers: [provideClassName],
   };
+}
+
+/**
+ * Renders one declared gateway's plan.
+ *
+ * The path, the handlers, and the server properties are what bootstrap reads off
+ * `useClass` for a decorated gateway, stated as data instead: the plan carries
+ * the same events, the same property keys, the same parameter bindings, and the
+ * same server properties, so a gateway declared this way is mounted by the same
+ * bootstrap step and rejected by the same checks.
+ *
+ * A plan the analysis could not read whole is declined rather than partially
+ * emitted, for the same reason a route is: a gateway that dropped a handler would
+ * answer for the application with a silent gap where a message used to be
+ * handled, and the module declaring it keeps booting from its decorators instead.
+ */
+function renderGatewayProvider(
+  gateway: AnalyzedGateway,
+  name: string,
+  inject: string,
+  description: string,
+): ProviderEmission {
+  const reason = gateway.unreadable[0];
+  if (reason !== undefined) {
+    return declinedResult(reason);
+  }
+
+  // The analysis reports an unreadable path as a reason, so a gateway that
+  // reached this point declares one; the guard keeps the emitter from writing a
+  // plan that would silently mount at the platform's default instead.
+  const path = gateway.path;
+  if (path === undefined) {
+    return declinedResult(`${description} declares a path this analysis could not read.`);
+  }
+
+  const fields: string[] = [`path: ${JSON.stringify(path)},`, `inject: ${inject},`];
+  if (gateway.handlers.length > 0) {
+    fields.push(...renderCollection("handlers", gateway.handlers.map(renderGatewayHandler)));
+  }
+  if (gateway.serverProperties.length > 0) {
+    fields.push(
+      `serverProperties: [${gateway.serverProperties.map((property) => JSON.stringify(property)).join(", ")}],`,
+    );
+  }
+
+  return {
+    kind: "source",
+    source: [`${defineGatewayName}(${name}, {`, ...indentLines(fields, 1), "})"].join("\n"),
+    helpers: [defineGatewayName],
+  };
+}
+
+/**
+ * One handler of a declared gateway.
+ *
+ * `property` is required by the platform's parameter metadata even when the
+ * decorator named no property, so it is written as `undefined` rather than left
+ * out — the same rule the route parameters follow, and the runtime reads the same
+ * `undefined` either way.
+ */
+function renderGatewayHandler(handler: AnalyzedGatewayHandler): string {
+  const fields: string[] = [
+    `event: ${JSON.stringify(handler.event)},`,
+    `propertyKey: ${JSON.stringify(handler.propertyKey)},`,
+  ];
+  if (handler.parameters.length > 0) {
+    fields.push(
+      ...renderCollection(
+        "parameters",
+        handler.parameters.map(
+          (parameter) =>
+            `{ index: ${parameter.index}, kind: ${JSON.stringify(parameter.kind)}, property: ` +
+            `${parameter.property === undefined ? "undefined" : JSON.stringify(parameter.property)} }`,
+        ),
+      ),
+    );
+  }
+
+  return ["{", ...indentLines(fields, 1), "}"].join("\n");
 }
 
 /**

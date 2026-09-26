@@ -2,7 +2,7 @@
 
 `inspectAponiaApplication` turns a root module into plain data describing what
 bootstrap would mount: the module graph, every provider and its dependencies,
-every decorated route with its parameter bindings, and every WebSocket gateway.
+every route with its parameter bindings, and every WebSocket gateway.
 It is the read model behind build tooling, editor helpers, and anything that
 needs to reason about an application without running it.
 

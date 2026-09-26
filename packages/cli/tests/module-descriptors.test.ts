@@ -33,6 +33,7 @@ export class UsersModule {}
       controllers: [],
       injectables: [],
       gateways: [],
+      validationModels: [],
     });
   });
 
@@ -122,6 +123,173 @@ export class EmptyOptionsGateway {}
       ["ChatGateway", "chat", []],
       ["EventsGateway", "events", []],
       ["EmptyOptionsGateway", "/ws", []],
+    ]);
+  });
+
+  test("reads a gateway's message handlers, their parameter bindings, and its server properties", () => {
+    const source = `import { ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@aponiajs/common";
+import type { Elysia } from "elysia";
+
+@WebSocketGateway("events")
+export class EventsGateway {
+  @WebSocketServer()
+  server!: Elysia;
+
+  @SubscribeMessage("events.echo")
+  echo(@MessageBody("value") value: string, @ConnectedSocket() socket: unknown, plain: string): void {}
+
+  @SubscribeMessage("events.silent")
+  silent(): undefined {
+    return undefined;
+  }
+
+  afterInit(): void {}
+}
+`;
+
+    // A method with no `@SubscribeMessage()`, a parameter no WebSocket decorator
+    // binds, and a lifecycle method are all simply absent: the runtime registers
+    // message handlers and nothing else.
+    expect(analyzeModuleDescriptors(source, "events.gateway.ts").gateways).toStrictEqual([
+      {
+        className: "EventsGateway",
+        path: "events",
+        dependencies: [],
+        handlers: [
+          {
+            event: "events.echo",
+            propertyKey: "echo",
+            parameters: [
+              { index: 0, kind: "message-body", property: "value" },
+              { index: 1, kind: "connected-socket", property: undefined },
+            ],
+          },
+          { event: "events.silent", propertyKey: "silent", parameters: [] },
+        ],
+        serverProperties: ["server"],
+        unreadable: [],
+      },
+    ]);
+  });
+
+  test("reports every gateway handler and binding it cannot reproduce", () => {
+    const source = `import { ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway } from "@aponiajs/common";
+
+const event = "events.echo";
+
+@WebSocketGateway("events")
+export class EventsGateway {
+  @SubscribeMessage(event)
+  @SubscribeMessage("events.echo")
+  twice(): void {}
+
+  @SubscribeMessage("events.bound")
+  bound(
+    @MessageBody("value") value: string,
+    @MessageBody() @ConnectedSocket() doubled: unknown,
+    @ConnectedSocket("socket") socket: unknown,
+    @MessageBody(dynamic) dynamic: unknown,
+  ): void {}
+
+  @SubscribeMessage()
+  missing(): void {}
+}
+`;
+
+    const gateway = analyzeModuleDescriptors(source, "events.gateway.ts").gateways[0]!;
+
+    // A handler declined for one binding keeps whatever else could be read, so the
+    // report names the exact parameter rather than the whole method.
+    expect(gateway.handlers).toStrictEqual([
+      {
+        event: "events.bound",
+        propertyKey: "bound",
+        parameters: [{ index: 0, kind: "message-body", property: "value" }],
+      },
+    ]);
+    expect(gateway.unreadable).toStrictEqual([
+      "@SubscribeMessage on the method twice in events.gateway.ts declares more than one event, and a generated gateway states one handler per method.",
+      "@SubscribeMessage on the method bound in events.gateway.ts binds the parameter at index 1 more than once, which the platform rejects at startup.",
+      "@SubscribeMessage on the method bound in events.gateway.ts declares @ConnectedSocket(...) with arguments.",
+      "@SubscribeMessage on the method bound in events.gateway.ts binds the parameter at index 3 to a message property this analysis cannot read statically.",
+      "@SubscribeMessage on the method missing in events.gateway.ts declares an event this analysis cannot read statically.",
+    ]);
+  });
+
+  test("reads a @Validation() model's validator and folds the file's own constants into it", () => {
+    const source = `import { Validation } from "@aponiajs/common";
+import { t } from "elysia";
+import { shared } from "./shared.ts";
+
+const createUserSchema = t.Object({ name: t.String({ minLength: 2 }) });
+const updateUserSchema = t.Partial(createUserSchema);
+export const listQuerySchema = t.Object({ limit: t.Number() });
+
+@Validation(createUserSchema)
+export class CreateUser {}
+
+@Validation(updateUserSchema)
+export class UpdateUser {}
+
+@Validation(t.Object({ id: t.String() }))
+export class PathParams {}
+
+@Validation(shared)
+export class SharedUser {}
+
+@Validation(listQuerySchema)
+export class ListQuery {}
+`;
+
+    // A module-private constant has no second copy outside its file, so it is
+    // folded into the validator the model declared; an exported binding and an
+    // import are names another file can write as they are.
+    expect(analyzeModuleDescriptors(source, "users.model.ts").validationModels).toStrictEqual([
+      {
+        className: "CreateUser",
+        validator: "t.Object({ name: t.String({ minLength: 2 }) })",
+        unreadable: [],
+      },
+      {
+        className: "UpdateUser",
+        validator: "t.Partial(t.Object({ name: t.String({ minLength: 2 }) }))",
+        unreadable: [],
+      },
+      { className: "PathParams", validator: "t.Object({ id: t.String() })", unreadable: [] },
+      { className: "SharedUser", validator: "shared", unreadable: [] },
+      { className: "ListQuery", validator: "listQuerySchema", unreadable: [] },
+    ]);
+  });
+
+  test("reports a @Validation() model whose validator reads a constant in a cycle", () => {
+    const source = `import { Validation } from "@aponiajs/common";
+import { t } from "elysia";
+
+let reassigned = t.Object({ name: t.String() });
+const first = t.Object({ name: second });
+const second = t.Object({ name: first });
+
+@Validation(reassigned)
+export class ReassignedUser {}
+
+@Validation(first)
+export class CyclicUser {}
+`;
+
+    // A `let` can be reassigned after the decorator ran, so it is never folded:
+    // the model reports the expression its file wrote, and whether another file
+    // can name it is the emitter's question, which it asks against this file's
+    // own imports. A cycle of constants has no value to fold at all, so it is
+    // reported here with the reason the reader needs.
+    expect(analyzeModuleDescriptors(source, "users.model.ts").validationModels).toStrictEqual([
+      { className: "ReassignedUser", validator: "reassigned", unreadable: [] },
+      {
+        className: "CyclicUser",
+        validator: undefined,
+        unreadable: [
+          'The validator of the model CyclicUser in users.model.ts reads "first" through a cycle of constants, which cannot be resolved.',
+        ],
+      },
     ]);
   });
 
@@ -259,6 +427,7 @@ class UncalledGateway {}
       controllers: [],
       injectables: [],
       gateways: [],
+      validationModels: [],
     });
   });
 
@@ -274,6 +443,7 @@ export class Unrelated {}
       controllers: [],
       injectables: [],
       gateways: [],
+      validationModels: [],
     });
   });
 
@@ -757,6 +927,24 @@ export class ChatGateway {}
 export class ChatGateway {}
 `,
       message: "@WebSocketGateway in broken.ts must declare a non-empty path.",
+    },
+    {
+      label: "@Validation() with no validator",
+      source: `import { Validation } from "@aponiajs/common";
+@Validation()
+export class CreateUser {}
+`,
+      message:
+        "@Validation on The class CreateUser in broken.ts must declare exactly one validator.",
+    },
+    {
+      label: "@Validation() with two validators",
+      source: `import { Validation } from "@aponiajs/common";
+@Validation(first, second)
+export class CreateUser {}
+`,
+      message:
+        "@Validation on The class CreateUser in broken.ts must declare exactly one validator.",
     },
   ])("throws a plain Error for $label", ({ source, message }) => {
     expect(() => analyzeModuleDescriptors(source, "broken.ts")).toThrow(Error);

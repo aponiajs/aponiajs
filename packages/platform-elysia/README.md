@@ -93,6 +93,46 @@ constructor injection and module visibility stay identical to services.
 [WebSocket gateway guide](../../docs/websockets.md) for responses, lifecycle,
 errors, and native publish/subscribe.
 
+### Declared gateways
+
+A gateway can declare its path and handlers as data instead of through
+decorators. This is the descriptor path's counterpart to `@WebSocketGateway()`
+and `@SubscribeMessage()`, and it is what build-time descriptor generation
+emits: the plan is compiled by the same bootstrap step, so the gateway reaches
+the same path and event uniqueness checks, the same envelope, and the same
+exception frames.
+
+```ts
+import { defineModule } from "@aponiajs/common";
+import { defineElysiaWebSocketGateway } from "@aponiajs/platform-elysia";
+
+const module = defineModule({
+  id: "EventsModule",
+  providers: [
+    defineElysiaWebSocketGateway(EventsGateway, {
+      path: "/events",
+      handlers: [
+        {
+          event: "events.echo",
+          propertyKey: "echo",
+          parameters: [
+            { index: 0, kind: "message-body", property: undefined },
+            { index: 1, kind: "connected-socket", property: undefined },
+          ],
+        },
+      ],
+    }),
+  ],
+});
+```
+
+The class keeps its handler methods and its `afterInit`, `handleConnection`, and
+`handleDisconnect`, which are resolved from the instance while the gateway is
+bound and are therefore not part of a plan. `serverProperties` declares the
+instance properties that receive the root Elysia application, as
+`@WebSocketServer()` marks them. A plan never calls `application.ws()` itself —
+`websockets/websocket-gateway.ts` remains the only module that does.
+
 ## Native application and Eden Treaty
 
 `createNative` returns the real composed Elysia instance. A statically declared

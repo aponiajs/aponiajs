@@ -4,19 +4,26 @@ import {
   type ClassDeclaration,
   type Decorator,
   type Expression,
+  type MethodDeclaration,
   type ObjectLiteralElementLike,
   type ParameterDeclaration,
+  type PropertyDeclaration,
   type SourceFile,
 } from "ts-morph";
+import { readExpressionValueNames, substituteExpression } from "./source-imports.ts";
+import type { SourceSubstitution } from "./source-imports.ts";
 import type {
   AnalyzedConstructorDependency,
   AnalyzedControllerDeclaration,
   AnalyzedGateway,
+  AnalyzedGatewayHandler,
+  AnalyzedGatewayParameter,
   AnalyzedInjectable,
   AnalyzedModule,
   AnalyzedModuleDescriptors,
   AnalyzedModuleEntry,
   AnalyzedToken,
+  AnalyzedValidationModel,
 } from "./module-descriptors.types.ts";
 
 const aponiaModuleSpecifier = "@aponiajs/common";
@@ -25,6 +32,11 @@ const moduleDecoratorName = "Module";
 const injectableDecoratorName = "Injectable";
 const injectDecoratorName = "Inject";
 const gatewayDecoratorName = "WebSocketGateway";
+const subscribeMessageDecoratorName = "SubscribeMessage";
+const messageBodyDecoratorName = "MessageBody";
+const connectedSocketDecoratorName = "ConnectedSocket";
+const webSocketServerDecoratorName = "WebSocketServer";
+const validationDecoratorName = "Validation";
 const injectionTokenFactoryName = "createToken";
 
 /**
@@ -50,6 +62,7 @@ const noDescriptors: AnalyzedModuleDescriptors = Object.freeze({
   controllers: Object.freeze([]),
   injectables: Object.freeze([]),
   gateways: Object.freeze([]),
+  validationModels: Object.freeze([]),
 });
 
 const noDependencies: DependencyReading = Object.freeze({
@@ -127,6 +140,12 @@ interface DependencyReading {
  * a declaration that genuinely has nothing in it. Its consumer declines those
  * declarations and leaves them on the runtime's own compile path.
  *
+ * A `@Validation()` model is read the same way. The analysis reports the
+ * validator the decorator declares rather than the class the runtime would
+ * resolve through it, and it folds the model file's own module-scope constants
+ * into that expression, because a generated module can neither name a binding
+ * the file does not export nor import one it does not declare.
+ *
  * A decorator whose arguments contradict its documented signature throws a plain
  * `Error`, as does a gateway path the runtime itself rejects as empty. A bare
  * `@Module` or `@Injectable` that is never called is ignored, because the
@@ -150,6 +169,8 @@ export function analyzeModuleDescriptors(
   const controllers: AnalyzedControllerDeclaration[] = [];
   const injectables: AnalyzedInjectable[] = [];
   const gateways: AnalyzedGateway[] = [];
+  const validationModels: AnalyzedValidationModel[] = [];
+  const modelConstants = readModelConstants(sourceFile);
 
   for (const declaration of sourceFile.getClasses()) {
     const uses = readDecoratorUses(declaration, bindings);
@@ -173,6 +194,13 @@ export function analyzeModuleDescriptors(
     if (gatewayUse) {
       gateways.push(analyzeGateway(declaration, gatewayUse, bindings, filePath));
     }
+
+    const validationUse = uses.find((use) => use.name === validationDecoratorName);
+    if (validationUse) {
+      validationModels.push(
+        analyzeValidationModel(declaration, validationUse, modelConstants, filePath),
+      );
+    }
   }
 
   return Object.freeze({
@@ -180,6 +208,7 @@ export function analyzeModuleDescriptors(
     controllers: Object.freeze(controllers),
     injectables: Object.freeze(injectables),
     gateways: Object.freeze(gateways),
+    validationModels: Object.freeze(validationModels),
   });
 }
 
@@ -312,8 +341,13 @@ function analyzeInjectable(
 
 /**
  * Reads one class into a gateway declaration when Aponia's `@WebSocketGateway`
- * decorates it. The path is the whole of the decorator's metadata; the message
- * handlers are not part of this analysis.
+ * decorates it.
+ *
+ * The path comes from the class decorator and the handlers and server properties
+ * from the member decorators, which is the whole of what the runtime discovers
+ * by reflecting on a gateway. A gateway a generated module declares states the
+ * same facts as data, and a consumer therefore has to read them here: a plan
+ * that dropped a handler would answer for the application with a silent gap.
  */
 function analyzeGateway(
   declaration: ClassDeclaration,
@@ -328,14 +362,374 @@ function analyzeGateway(
 
   const path = readGatewayPath(use.arguments.at(0), description);
   const dependencies = readDependencies(declaration, bindings, filePath);
-  const reasons = [...(path.reason === undefined ? [] : [path.reason]), ...dependencies.reasons];
+  const handlers = readGatewayHandlers(declaration, bindings, filePath);
+  const serverProperties = readGatewayServerProperties(declaration, bindings, filePath);
+  const reasons = [
+    ...(path.reason === undefined ? [] : [path.reason]),
+    ...dependencies.reasons,
+    ...handlers.reasons,
+    ...serverProperties.reasons,
+  ];
 
   return Object.freeze({
     className: readClassName(declaration),
     path: path.value,
     dependencies: dependencies.dependencies,
+    handlers: handlers.handlers,
+    serverProperties: serverProperties.properties,
     unreadable: Object.freeze(reasons),
   });
+}
+
+/** The handlers one gateway class declares, and why any could not be read. */
+interface GatewayHandlersReading {
+  readonly handlers: readonly AnalyzedGatewayHandler[];
+  readonly reasons: readonly string[];
+}
+
+/**
+ * Reads the message handlers a gateway class declares.
+ *
+ * Only the class's own methods are read, which is what the runtime discovers
+ * too: `@SubscribeMessage()` writes its metadata on the prototype it decorates
+ * and the platform reads own metadata, so a handler a base class declares is not
+ * a handler of the gateway that extends it.
+ */
+function readGatewayHandlers(
+  declaration: ClassDeclaration,
+  bindings: AponiaDecoratorBindings,
+  filePath: string,
+): GatewayHandlersReading {
+  const handlers: AnalyzedGatewayHandler[] = [];
+  const reasons: string[] = [];
+
+  for (const method of declaration.getMethods()) {
+    // A static method never reaches the runtime: `@SubscribeMessage()` throws
+    // while the class is being defined, because it decorates the constructor
+    // rather than the prototype.
+    if (method.isStatic()) {
+      continue;
+    }
+
+    const readings = readGatewayHandler(method, bindings, filePath);
+    if (readings === undefined) {
+      continue;
+    }
+    if (readings.handler !== undefined) {
+      handlers.push(readings.handler);
+    }
+    reasons.push(...readings.reasons);
+  }
+
+  return Object.freeze({
+    handlers: Object.freeze(handlers),
+    reasons: Object.freeze(reasons),
+  });
+}
+
+/**
+ * Reads one gateway method.
+ *
+ * A method with no `@SubscribeMessage()` is not a handler, and is skipped rather
+ * than reported: the runtime registers message handlers and nothing else, and a
+ * lifecycle method such as `afterInit` is discovered from the instance when the
+ * gateway is bound.
+ */
+function readGatewayHandler(
+  method: MethodDeclaration,
+  bindings: AponiaDecoratorBindings,
+  filePath: string,
+):
+  | { readonly handler: AnalyzedGatewayHandler | undefined; readonly reasons: readonly string[] }
+  | undefined {
+  const uses = method
+    .getDecorators()
+    .map((decorator) => readDecoratorUse(decorator, bindings))
+    .filter((use) => use !== undefined);
+  const events = uses.filter((use) => use.name === subscribeMessageDecoratorName);
+  if (events.length === 0) {
+    return undefined;
+  }
+
+  const name = readMemberName(method);
+  const description = `@${subscribeMessageDecoratorName} on ${describeMember(method, filePath)}`;
+  if (events.length > 1) {
+    return {
+      handler: undefined,
+      reasons: Object.freeze([
+        `${description} declares more than one event, and a generated gateway states one handler per method.`,
+      ]),
+    };
+  }
+
+  const event = readSubscribeEvent(events[0]!, description);
+  const parameters = readGatewayParameters(method, bindings, description);
+  const reasons = [...(event.reason === undefined ? [] : [event.reason]), ...parameters.reasons];
+  if (name === undefined) {
+    reasons.push(
+      `${description} is declared under a name that is not a plain property key, so a generated gateway cannot look it up.`,
+    );
+  }
+  if (event.value === undefined || name === undefined) {
+    return { handler: undefined, reasons: Object.freeze(reasons) };
+  }
+
+  return {
+    handler: Object.freeze({
+      event: event.value,
+      propertyKey: name,
+      parameters: parameters.parameters,
+    }),
+    reasons: Object.freeze(reasons),
+  };
+}
+
+/** The event one `@SubscribeMessage()` declares, or why it could not be read. */
+function readSubscribeEvent(use: AponiaDecoratorUse, description: string): NodeReading {
+  const argument = use.arguments.at(0);
+  return use.arguments.length === 1 && Node.isStringLiteral(argument)
+    ? { value: argument.getLiteralValue(), reason: undefined }
+    : {
+        value: undefined,
+        reason: `${description} declares an event this analysis cannot read statically.`,
+      };
+}
+
+/**
+ * Reads the parameters one handler's WebSocket decorators bind.
+ *
+ * A parameter with no such decorator is left out, which is what the platform
+ * passes it: the invoker emits one argument per decorated parameter, so an
+ * undecorated parameter receives `undefined` from both paths.
+ */
+function readGatewayParameters(
+  method: MethodDeclaration,
+  bindings: AponiaDecoratorBindings,
+  description: string,
+): {
+  readonly parameters: readonly AnalyzedGatewayParameter[];
+  readonly reasons: readonly string[];
+} {
+  const parameters: AnalyzedGatewayParameter[] = [];
+  const reasons: string[] = [];
+
+  for (const [index, parameter] of method.getParameters().entries()) {
+    const uses = parameter
+      .getDecorators()
+      .map((decorator) => readDecoratorUse(decorator, bindings))
+      .filter((use) => use !== undefined)
+      .filter(
+        (use) => use.name === messageBodyDecoratorName || use.name === connectedSocketDecoratorName,
+      );
+    if (uses.length === 0) {
+      continue;
+    }
+    if (uses.length > 1) {
+      reasons.push(
+        `${description} binds the parameter at index ${index} more than once, which the platform rejects at startup.`,
+      );
+      continue;
+    }
+
+    const use = uses[0]!;
+    if (use.name === connectedSocketDecoratorName) {
+      if (use.arguments.length > 0) {
+        reasons.push(
+          `${description} declares @${connectedSocketDecoratorName}(...) with arguments.`,
+        );
+        continue;
+      }
+      parameters.push(Object.freeze({ index, kind: "connected-socket", property: undefined }));
+      continue;
+    }
+
+    const property = readMessageBodyProperty(use, index, description);
+    if (property.reason !== undefined) {
+      reasons.push(property.reason);
+      continue;
+    }
+    parameters.push(Object.freeze({ index, kind: "message-body", property: property.value }));
+  }
+
+  return Object.freeze({
+    parameters: Object.freeze(parameters),
+    reasons: Object.freeze(reasons),
+  });
+}
+
+/** The property one `@MessageBody()` names, or why it could not be read. */
+function readMessageBodyProperty(
+  use: AponiaDecoratorUse,
+  index: number,
+  description: string,
+): NodeReading {
+  const argument = use.arguments.at(0);
+  if (argument === undefined) {
+    return { value: undefined, reason: undefined };
+  }
+  if (use.arguments.length === 1 && Node.isStringLiteral(argument)) {
+    return { value: argument.getLiteralValue(), reason: undefined };
+  }
+
+  return {
+    value: undefined,
+    reason: `${description} binds the parameter at index ${index} to a message property this analysis cannot read statically.`,
+  };
+}
+
+/**
+ * Reads the instance properties `@WebSocketServer()` marks.
+ *
+ * The property is where the platform writes the root application, so a name it
+ * cannot reproduce is reported: a plan that dropped one would leave the property
+ * `undefined` where the decorator path assigns the server.
+ */
+function readGatewayServerProperties(
+  declaration: ClassDeclaration,
+  bindings: AponiaDecoratorBindings,
+  filePath: string,
+): { readonly properties: readonly string[]; readonly reasons: readonly string[] } {
+  const properties: string[] = [];
+  const reasons: string[] = [];
+
+  for (const property of declaration.getProperties()) {
+    const uses = property
+      .getDecorators()
+      .map((decorator) => readDecoratorUse(decorator, bindings))
+      .filter((use) => use !== undefined && use.name === webSocketServerDecoratorName);
+    if (uses.length === 0) {
+      continue;
+    }
+
+    const name = readMemberName(property);
+    if (name === undefined) {
+      reasons.push(
+        `@${webSocketServerDecoratorName} on ${describeMember(property, filePath)} is declared under a name that is not a plain property key, so a generated gateway cannot assign it.`,
+      );
+      continue;
+    }
+
+    properties.push(name);
+  }
+
+  return Object.freeze({
+    properties: Object.freeze(properties),
+    reasons: Object.freeze(reasons),
+  });
+}
+
+/**
+ * Reads one class into a validation model when Aponia's `@Validation` decorates
+ * it, folding the model file's own constants into the validator it declares.
+ */
+function analyzeValidationModel(
+  declaration: ClassDeclaration,
+  use: AponiaDecoratorUse,
+  constants: ReadonlyMap<string, Node>,
+  filePath: string,
+): AnalyzedValidationModel {
+  const className = readClassName(declaration);
+  const description = `The validator of the model ${className} in ${filePath}`;
+  const validator = readOnlyArgument(
+    use,
+    `@${validationDecoratorName} on ${describeClass(declaration, filePath)}`,
+    "exactly one validator",
+  );
+  const inlined = inlineModelConstants(validator, constants, [], description);
+
+  return Object.freeze({
+    className,
+    validator: inlined.expression,
+    unreadable: Object.freeze(inlined.reason === undefined ? [] : [inlined.reason]),
+  });
+}
+
+/**
+ * The module-scope constants a validator may read by name.
+ *
+ * A generated module can import what a file exports and copy an expression
+ * verbatim, but a module-private binding has no second copy: nothing outside the
+ * file that declares it can name it. A `@Validation()` model is written into
+ * another file, so its validator has to carry those constants with it.
+ *
+ * Only `const` declarations qualify. A `let` or a `var` can be reassigned after
+ * the decorator ran, so its initializer is not necessarily the value the
+ * validator read, and a binding a generated module inlined there would be a
+ * guess rather than the value the application has.
+ */
+function readModelConstants(sourceFile: SourceFile): ReadonlyMap<string, Node> {
+  const constants = new Map<string, Node>();
+
+  for (const statement of sourceFile.getVariableStatements()) {
+    if (statement.isExported() || statement.getDeclarationKind() !== "const") {
+      continue;
+    }
+
+    for (const declaration of statement.getDeclarations()) {
+      const nameNode = declaration.getNameNode();
+      const initializer = declaration.getInitializer();
+      if (Node.isIdentifier(nameNode) && initializer !== undefined) {
+        constants.set(nameNode.getText(), initializer);
+      }
+    }
+  }
+
+  return constants;
+}
+
+/**
+ * Rewrites one validator expression so that every module-private constant it
+ * reads is replaced by what that constant was initialized with.
+ *
+ * The substitution is recursive because a constant may read another one —
+ * `t.Partial(createUserSchema)` is the shape this exists for — and a cycle among
+ * them is reported rather than followed: a binding that reads itself cannot
+ * produce a value at all, so there is nothing to copy.
+ */
+function inlineModelConstants(
+  node: Node,
+  constants: ReadonlyMap<string, Node>,
+  inlining: readonly string[],
+  description: string,
+): ValidationReading {
+  const substitutions: SourceSubstitution[] = [];
+
+  for (const identifier of readExpressionValueNames(node)) {
+    const name = identifier.getText();
+    const initializer = constants.get(name);
+    if (initializer === undefined) {
+      continue;
+    }
+    if (inlining.includes(name)) {
+      return {
+        expression: undefined,
+        reason: `${description} reads "${name}" through a cycle of constants, which cannot be resolved.`,
+      };
+    }
+
+    const nested = inlineModelConstants(initializer, constants, [...inlining, name], description);
+    if (nested.expression === undefined) {
+      return nested;
+    }
+    substitutions.push({ identifier, text: nested.expression });
+  }
+
+  return {
+    expression: substituteExpression(node, substitutions),
+    reason: undefined,
+  };
+}
+
+/** A value the analysis read, or why it could not read one. */
+interface NodeReading {
+  readonly value: string | undefined;
+  readonly reason: string | undefined;
+}
+
+/** A validator expression, or why the analysis could not reproduce it. */
+interface ValidationReading {
+  readonly expression: string | undefined;
+  readonly reason: string | undefined;
 }
 
 /**
@@ -721,6 +1115,31 @@ function unreadableTokenReason(description: string): string {
 
 function readClassName(declaration: ClassDeclaration): string {
   return declaration.getName() ?? "";
+}
+
+/**
+ * The property key a class member declares, or `undefined` when a generated
+ * gateway cannot name it.
+ *
+ * A plan addresses a member by the key the runtime looks it up by —
+ * `instance[propertyKey]` — so only a plain identifier can be written back. A
+ * computed name reaches the analysis as its own source text, a string literal
+ * keeps its quotes, and a private name is unreachable, so each of them is
+ * reported instead of being copied into a key no member has.
+ */
+function readMemberName(member: MethodDeclaration | PropertyDeclaration): string | undefined {
+  const name = member.getNameNode();
+  return Node.isIdentifier(name) ? name.getText() : undefined;
+}
+
+/**
+ * How one class member is named in a reported reason. The reasons this appears
+ * in are sentences — `@SubscribeMessage on the method findAll in <file> declares
+ * ...` — so the member is described rather than quoted.
+ */
+function describeMember(member: MethodDeclaration | PropertyDeclaration, filePath: string): string {
+  const kind = Node.isMethodDeclaration(member) ? "method" : "property";
+  return `the ${kind} ${member.getName()} in ${filePath}`;
 }
 
 function describeClass(declaration: ClassDeclaration, filePath: string): string {

@@ -143,7 +143,7 @@ export class UsersModule {}
     expect(source).toContain(
       'import { defineElysiaControllerRoutes } from "@aponiajs/platform-elysia";',
     );
-    expect(source).toContain('import { CreateUser } from "./users.model.ts";');
+    expect(source).toContain('import { t } from "elysia";');
     expect(source).toContain(
       [
         "    defineElysiaControllerRoutes(UsersController, {",
@@ -164,9 +164,11 @@ export class UsersModule {}
         "        },",
       ].join("\n"),
     );
-    // A model class is copied by name, and a status-keyed response map by the
-    // literal that declares it.
-    expect(source).toContain("schema: { body: CreateUser, response: { 201: CreateUser } },");
+    // A model class is resolved to the validator it declares, and a status-keyed
+    // response map keeps the literal that declares it.
+    expect(source).toContain(
+      "schema: { body: t.Object({ name: t.String() }), response: { 201: t.Object({ name: t.String() }) } },",
+    );
     // A decorated parameter is declared; an async handler keeps the
     // Promise-capable default rather than claiming to be synchronous.
     expect(source).toContain('{ index: 0, kind: "query", property: "page" },');
@@ -1089,5 +1091,347 @@ export class UsersModule {}
       reason:
         'it imports "BillingModule", which this build did not lower into the generated module',
     });
+  });
+
+  test("resolves a @Validation() model to the validator it declares", () => {
+    const emitted = emit({
+      "users.model.ts": `import { Validation } from "@aponiajs/common";
+import { t } from "elysia";
+
+const createUserSchema = t.Object({ name: t.String({ minLength: 2 }) });
+
+@Validation(createUserSchema)
+export class CreateUser {}
+`,
+      "users.controller.ts": `import { Body, Controller, Post } from "@aponiajs/common";
+import { CreateUser } from "./users.model.ts";
+
+@Controller("users")
+export class UsersController {
+  @Post("/", { body: CreateUser })
+  create(@Body() body: CreateUser): string {
+    return body.name;
+  }
+}
+`,
+      "users.module.ts": `import { Module } from "@aponiajs/common";
+import { UsersController } from "./users.controller.ts";
+
+@Module({ controllers: [UsersController] })
+export class UsersModule {}
+`,
+    });
+
+    expect(emitted.declined).toEqual([]);
+    // The validator is stated, and the model's own private constant is folded
+    // into it because a generated module cannot name what the file does not
+    // export. Nothing names the class the runtime would have resolved instead.
+    expect(emitted.source).toContain(
+      "schema: { body: t.Object({ name: t.String({ minLength: 2 }) }) },",
+    );
+    expect(emitted.source).not.toContain("CreateUser");
+  });
+
+  test("folds a model constant built from another constant, and keeps a model the catalog cannot place", () => {
+    const emitted = emit({
+      "users.model.ts": `import { Validation } from "@aponiajs/common";
+import { t } from "elysia";
+
+const createUserSchema = t.Object({ name: t.String() });
+const updateUserSchema = t.Partial(createUserSchema);
+
+@Validation(updateUserSchema)
+export class UpdateUser {}
+`,
+      "shared.model.ts": `import { Validation } from "@aponiajs/common";
+import { t } from "elysia";
+
+@Validation(t.Object({ id: t.String() }))
+export class UpdateUser {}
+`,
+      "users.controller.ts": `import { Body, Controller, Patch } from "@aponiajs/common";
+import { UpdateUser } from "./users.model.ts";
+
+@Controller("users")
+export class UsersController {
+  @Patch("/", { body: UpdateUser })
+  update(@Body() body: UpdateUser): string {
+    return JSON.stringify(body);
+  }
+}
+`,
+      "users.module.ts": `import { Module } from "@aponiajs/common";
+import { UsersController } from "./users.controller.ts";
+
+@Module({ controllers: [UsersController] })
+export class UsersModule {}
+`,
+    });
+
+    // Two classes are named `UpdateUser`, so the emitter cannot tell which one
+    // the slot meant and copies the class the controller imported — the one
+    // thing it must not do is substitute the other file's validator.
+    expect(emitted.declined).toEqual([]);
+    expect(emitted.source).toContain('import { UpdateUser } from "./users.model.ts";');
+    expect(emitted.source).not.toContain("t.Partial");
+
+    const single = emit({
+      "users.model.ts": `import { Validation } from "@aponiajs/common";
+import { t } from "elysia";
+
+const createUserSchema = t.Object({ name: t.String() });
+const updateUserSchema = t.Partial(createUserSchema);
+
+@Validation(updateUserSchema)
+export class UpdateUser {}
+`,
+      "users.controller.ts": `import { Body, Controller, Patch } from "@aponiajs/common";
+import { UpdateUser } from "./users.model.ts";
+
+@Controller("users")
+export class UsersController {
+  @Patch("/", { body: UpdateUser })
+  update(@Body() body: UpdateUser): string {
+    return JSON.stringify(body);
+  }
+}
+`,
+      "users.module.ts": `import { Module } from "@aponiajs/common";
+import { UsersController } from "./users.controller.ts";
+
+@Module({ controllers: [UsersController] })
+export class UsersModule {}
+`,
+    });
+
+    expect(single.declined).toEqual([]);
+    expect(single.source).toContain("schema: { body: t.Partial(t.Object({ name: t.String() })) },");
+  });
+
+  test("declines a route whose model validator cannot be reproduced", () => {
+    const emitted = emit({
+      "users.model.ts": `import { Validation } from "@aponiajs/common";
+import { t } from "elysia";
+
+let reassigned = t.Object({ name: t.String() });
+
+@Validation(reassigned)
+export class ReassignedUser {}
+`,
+      "users.controller.ts": `import { Body, Controller, Patch } from "@aponiajs/common";
+import { ReassignedUser } from "./users.model.ts";
+
+@Controller("users")
+export class UsersController {
+  @Patch("/", { body: ReassignedUser })
+  patch(@Body() body: ReassignedUser): string {
+    return JSON.stringify(body);
+  }
+}
+`,
+      "users.module.ts": `import { Module } from "@aponiajs/common";
+import { UsersController } from "./users.controller.ts";
+
+@Module({ controllers: [UsersController] })
+export class UsersModule {}
+`,
+    });
+
+    // A `let` is never folded — it can be reassigned after the decorator ran — so
+    // the validator the model declares is a name only that file can read, and the
+    // route is declined rather than emitted naming the class.
+    const reason =
+      'The validator of the model ReassignedUser in /project/src/users.model.ts reads "reassigned", ' +
+      "which is not an import or an export of the file it was written in, so a generated module cannot name it.";
+    expect(emitted.source).toBeUndefined();
+    expect(emitted.declined).toEqual([
+      {
+        kind: "route",
+        module: "UsersModule",
+        controller: "UsersController",
+        method: "patch",
+        reason,
+      },
+      { kind: "module", module: "UsersModule", reason },
+    ]);
+  });
+
+  test("declines a route whose model reads its constants in a cycle", () => {
+    const emitted = emit({
+      "users.model.ts": `import { Validation } from "@aponiajs/common";
+import { t } from "elysia";
+
+const first = t.Object({ name: second });
+const second = t.Object({ name: first });
+
+@Validation(first)
+export class CyclicUser {}
+`,
+      "users.controller.ts": `import { Body, Controller, Post } from "@aponiajs/common";
+import { CyclicUser } from "./users.model.ts";
+
+@Controller("users")
+export class UsersController {
+  @Post("/", { body: CyclicUser })
+  create(@Body() body: CyclicUser): string {
+    return JSON.stringify(body);
+  }
+}
+`,
+      "users.module.ts": `import { Module } from "@aponiajs/common";
+import { UsersController } from "./users.controller.ts";
+
+@Module({ controllers: [UsersController] })
+export class UsersModule {}
+`,
+    });
+
+    expect(emitted.source).toBeUndefined();
+    // A constant that reads itself has no value to fold, so the analysis reports
+    // the cycle rather than following it.
+    const reason =
+      'The validator of the model CyclicUser in /project/src/users.model.ts reads "first" through ' +
+      "a cycle of constants, which cannot be resolved.";
+    expect(emitted.declined).toEqual([
+      {
+        kind: "route",
+        module: "UsersModule",
+        controller: "UsersController",
+        method: "create",
+        reason,
+      },
+      { kind: "module", module: "UsersModule", reason },
+    ]);
+  });
+
+  test("declares a gateway provider through defineElysiaWebSocketGateway", () => {
+    const emitted = emit({
+      "events.gateway.ts": `import { ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@aponiajs/common";
+import type { Elysia } from "elysia";
+
+@WebSocketGateway("/events")
+export class EventsGateway {
+  @WebSocketServer()
+  server!: Elysia;
+
+  @SubscribeMessage("events.echo")
+  echo(@MessageBody("value") value: string, @ConnectedSocket() socket: unknown): unknown {
+    return { value, socket };
+  }
+
+  @SubscribeMessage("events.silent")
+  silent(): undefined {
+    return undefined;
+  }
+}
+`,
+      "events.module.ts": `import { Module } from "@aponiajs/common";
+import { EventsGateway } from "./events.gateway.ts";
+
+@Module({ providers: [EventsGateway] })
+export class EventsModule {}
+`,
+    });
+
+    expect(emitted.declined).toEqual([]);
+    expect(emitted.source).toContain(
+      'import { defineElysiaWebSocketGateway } from "@aponiajs/platform-elysia";',
+    );
+    expect(emitted.source).toContain(`defineElysiaWebSocketGateway(EventsGateway, {
+      path: "/events",
+      inject: [],
+      handlers: [
+        {
+          event: "events.echo",
+          propertyKey: "echo",
+          parameters: [
+            { index: 0, kind: "message-body", property: "value" },
+            { index: 1, kind: "connected-socket", property: undefined },
+          ],
+        },
+        {
+          event: "events.silent",
+          propertyKey: "silent",
+        },
+      ],
+      serverProperties: ["server"],
+    }),`);
+  });
+
+  test("declares a gateway that is also @Injectable() once, with its dependencies", () => {
+    const emitted = emit({
+      "events.gateway.ts": `import { Injectable, SubscribeMessage, WebSocketGateway } from "@aponiajs/common";
+import { AuditService } from "./audit.service.ts";
+
+@Injectable()
+@WebSocketGateway("events")
+export class EventsGateway {
+  constructor(private readonly auditService: AuditService) {}
+
+  @SubscribeMessage("events.echo")
+  echo(): string {
+    return this.auditService.read();
+  }
+}
+`,
+      "audit.service.ts": `import { Injectable } from "@aponiajs/common";
+
+@Injectable()
+export class AuditService {
+  read(): string {
+    return "audited";
+  }
+}
+`,
+      "events.module.ts": `import { Module } from "@aponiajs/common";
+import { AuditService } from "./audit.service.ts";
+import { EventsGateway } from "./events.gateway.ts";
+
+@Module({ providers: [EventsGateway, AuditService] })
+export class EventsModule {}
+`,
+    });
+
+    expect(emitted.declined).toEqual([]);
+    expect(emitted.source).toContain(
+      'defineElysiaWebSocketGateway(EventsGateway, {\n      path: "events",\n      inject: [AuditService],',
+    );
+  });
+
+  test("declines a module whose gateway declares a handler the analysis cannot read", () => {
+    const emitted = emit({
+      "events.gateway.ts": `import { MessageBody, SubscribeMessage, WebSocketGateway } from "@aponiajs/common";
+
+const event = "events.echo";
+
+@WebSocketGateway()
+export class EventsGateway {
+  @SubscribeMessage(event)
+  echo(@MessageBody() data: unknown): unknown {
+    return data;
+  }
+}
+`,
+      "events.module.ts": `import { Module } from "@aponiajs/common";
+import { EventsGateway } from "./events.gateway.ts";
+
+@Module({ providers: [EventsGateway] })
+export class EventsModule {}
+`,
+    });
+
+    // The event is a module-private binding, so no generated plan can state it —
+    // and a plan that dropped the handler would answer for a message the
+    // application used to handle.
+    expect(emitted.source).toBeUndefined();
+    expect(emitted.declined).toEqual([
+      {
+        kind: "module",
+        module: "EventsModule",
+        reason:
+          "@SubscribeMessage on the method echo in /project/src/events.gateway.ts declares an event " +
+          "this analysis cannot read statically.",
+      },
+    ]);
   });
 });

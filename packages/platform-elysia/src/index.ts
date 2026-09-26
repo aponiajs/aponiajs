@@ -68,6 +68,13 @@ export type {
   ElysiaPluginModuleOptions,
   NativeElysiaPlugin,
 } from "./plugins/plugin.types.ts";
+export { defineElysiaWebSocketGateway } from "./websockets/gateway-definition.ts";
+export type {
+  DeclaredElysiaWebSocketGateway,
+  ElysiaWebSocketGatewayOptions,
+  ElysiaWebSocketGatewayPlan,
+  ElysiaWebSocketHandlerPlan,
+} from "./websockets/gateway-plan.types.ts";
 export type {
   ElysiaWebSocket,
   ElysiaWebSocketServer,

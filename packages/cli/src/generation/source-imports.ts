@@ -121,10 +121,74 @@ export function readExpressionImports(
   return Object.freeze({ references: Object.freeze(references), unreadable });
 }
 
+/**
+ * The identifiers one expression reads as values, in source order.
+ *
+ * A name read in a type position is left out, because `typeof schema` names a
+ * type rather than the binding a copy of the expression would have to carry, and
+ * so is a name a declaration inside the expression binds itself.
+ *
+ * The identifiers rather than their text are returned because a caller that
+ * rewrites the expression needs each occurrence's own position, and it is this
+ * module — the one rule for what an expression reads — that decides which
+ * occurrences those are.
+ */
+export function readExpressionValueNames(node: Node): readonly Identifier[] {
+  const names: Identifier[] = [];
+  walkNames(node, new Set(), (identifier) => {
+    if (!isTypePosition(identifier)) {
+      names.push(identifier);
+    }
+  });
+
+  return Object.freeze(names);
+}
+
 /** Parses one file's text and reads the names it can read. */
 export function collectSourceImports(source: string, filePath: string): SourceImports {
   const project = new Project({ useInMemoryFileSystem: true });
   return readSourceImports(project.createSourceFile(filePath, source));
+}
+
+/** One name replaced inside an expression, as the identifier it replaces. */
+export interface SourceSubstitution {
+  /** An identifier {@link readExpressionValueNames} returned for the same expression. */
+  readonly identifier: Identifier;
+  /** The text written in its place. */
+  readonly text: string;
+}
+
+/**
+ * The expression's own text with the given names replaced.
+ *
+ * The identifiers come from {@link readExpressionValueNames} for this same
+ * expression, so the positions are already the ones this rewrites; a caller that
+ * built its substitution text from another node does not have to know where that
+ * node was. The spans are disjoint — a name is replaced by the text of a
+ * declaration somewhere else, never by text containing the name itself — so one
+ * pass leaves everything else exactly as the application wrote it.
+ */
+export function substituteExpression(
+  node: Node,
+  substitutions: readonly SourceSubstitution[],
+): string {
+  const source = node.getText();
+  const offsets = substitutions
+    .map((substitution) => ({
+      start: substitution.identifier.getStart() - node.getStart(),
+      end: substitution.identifier.getEnd() - node.getStart(),
+      text: substitution.text,
+    }))
+    .toSorted((left, right) => left.start - right.start);
+
+  let result = "";
+  let cursor = 0;
+  for (const offset of offsets) {
+    result += `${source.slice(cursor, offset.start)}${offset.text}`;
+    cursor = offset.end;
+  }
+
+  return `${result}${source.slice(cursor)}`;
 }
 
 // One project, reused for every expression a build copies: a build copies a

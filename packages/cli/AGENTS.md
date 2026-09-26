@@ -16,7 +16,7 @@ packages and driven by libraries rather than hand-rolled parsing.
 | `generation/`                              | Naming, project discovery, file planning, renderers, module updates, writes |
 | `generation/controller-routes.ts`          | Build-time route analysis of controller source                              |
 | `generation/controller-invokers.ts`        | Emits route invokers as literal source for the Elysia platform              |
-| `generation/module-descriptors.ts`         | Build-time analysis of module, injectable, and gateway source               |
+| `generation/module-descriptors.ts`         | Build-time analysis of module, injectable, gateway, and model source        |
 | `generation/descriptor-emitter.ts`         | Emits the module graph as `defineModule` calls for the Elysia platform      |
 | `generation/source-imports.ts`             | Which names a file can read, and which one expression reads                 |
 | `generation/invoker-generator.ts`          | The `aponia build` command: scans a project and writes both modules         |
@@ -119,13 +119,13 @@ separate focused modules. `src/index.ts` is the only public barrel.
   nothing prunes it, and the entry it still exports boots the module the
   application no longer declares.
 - `generation/descriptor-emitter.ts` emits the module graph as data:
-  `defineModule` from `@aponiajs/common` plus `defineElysiaControllerRoutes` from
-  `@aponiajs/platform-elysia`, which is what makes an application able to boot
-  without lowering decorated classes. It never calls Elysia's route API — that
-  stays in the platform, and a generated route reaches it through the declared
-  plan. It emits exactly the helpers a module's body calls, one import per
-  package, and exports `moduleDescriptors`, a frozen record keyed by module class
-  name.
+  `defineModule` from `@aponiajs/common`, `defineElysiaControllerRoutes` and
+  `defineElysiaWebSocketGateway` from `@aponiajs/platform-elysia`, which is what
+  makes an application able to boot without lowering decorated classes. It never
+  calls Elysia's route API or `application.ws()` — those stay in the platform, and
+  a generated route or gateway reaches them through its declared plan. It emits
+  exactly the helpers a module's body calls, one import per package, and exports
+  `moduleDescriptors`, a frozen record keyed by module class name.
 - A module is emitted whole or not at all. A module whose collections could not
   be read, whose controller or provider dependencies could not be reduced to
   importable tokens, whose route or schema slot could not be copied, or whose
@@ -155,11 +155,30 @@ separate focused modules. `src/index.ts` is the only public barrel.
   `parseSourceExpression` parses expression text with the shared in-memory
   project and unwraps the parentheses it wraps the text in, because callers ask
   what the text itself is.
-- `aponia build` still leaves decorator metadata load-bearing in two places, and
-  the guide states it rather than implying otherwise: WebSocket gateway discovery
-  reads `@WebSocketGateway()`/`@SubscribeMessage()` off `provider.useClass`, and a
-  `@Validation()` model is resolved to its validator while its routes mount,
-  because a generated schema slot names the model class the decorator named.
+- `aponia build` no longer leaves either of the two decorator reads it used to
+  leave behind. A schema slot that names a `@Validation()` model is emitted as
+  the validator that model declared, so bootstrap never resolves a model class
+  while a route mounts; a gateway is emitted as a
+  `defineElysiaWebSocketGateway(...)` provider carrying the plan bootstrap would
+  otherwise have reflected off `useClass`. What remains is exactly what the
+  build did not touch: a module it declined still boots from its own decorators,
+  and so does an application that boots from `AppModule` instead of
+  `moduleDescriptors`.
+- The two exceptions are stated rather than papered over, because both are
+  reachable in ordinary projects. A slot whose model class name two
+  `@Validation()` classes share cannot be resolved — `add()` drops an ambiguous
+  name from `validationByName` — so the slot is copied verbatim, naming the class
+  and leaving the run-time model read in place for that route. A validator that
+  reads a binding the model file neither exports nor declares as a `const` is
+  declined with a reason instead, and its module boots from decorators.
+- `generation/module-descriptors.ts` folds a model file's own module-private
+  `const` declarations into the validator it reports, recursively, and reports a
+  cycle among them rather than following it. Only `const` qualifies: a `let` or a
+  `var` can be reassigned after the decorator ran, so its initializer is not
+  necessarily the value the validator read. Folding is the analysis's job
+  because it is a fact about one file; whether the resulting expression is one
+  another file can name is the emitter's, which asks it with
+  `readExpressionImports` against the model file's own imports.
 - Both emitters are covered in the Bun lane only.
   `tests/generated-invokers.integration.test.ts` and
   `tests/generated-descriptors.integration.test.ts` reach
@@ -291,27 +310,30 @@ separate focused modules. `src/index.ts` is the only public barrel.
   routes. Arguments it cannot read statically and a parameter decorator on
   anything but a method parameter throw a plain `Error`.
 - `generation/module-descriptors.ts` is the same kind of analysis for the module
-  authoring surface: it reads one file's `@Module()`, `@Injectable()`, and
-  `@WebSocketGateway()` classes and reports what each declares, including the
-  constructor dependencies `@Inject()` names by parameter index and the declared
-  parameter types for the rest. It emits nothing. It repeats
-  `controller-routes.ts`'s recognition rule — and its binding lookup — rather
-  than sharing it, because that file's copy is private to it; keep the two in
-  step by hand.
+  authoring surface: it reads one file's `@Module()`, `@Injectable()`,
+  `@WebSocketGateway()`, and `@Validation()` classes and reports what each
+  declares, including the constructor dependencies `@Inject()` names by parameter
+  index and the declared parameter types for the rest, a gateway's handlers with
+  their parameter bindings and server properties, and each model's validator. It
+  emits nothing. It repeats `controller-routes.ts`'s recognition rule — and its
+  binding lookup — rather than sharing it, because that file's copy is private to
+  it; keep the two in step by hand.
 - A declaration the analysis cannot read statically is reported, never dropped: a
   module whose options are not an object literal, a collection that is not an
   array literal, a spread or computed key, a token that is neither a reference
-  nor a `createToken(...)` call, a gateway path built at run time, a class whose
-  constructor dependencies come from a base class in another file. A class
-  declaration's `unreadable` list repeats the reason each unreadable entry and
-  dependency carries; a module splits that list in two, because a generated
-  module declares the collections and nothing about the module class —
-  `collectionUnreadable` for the collections, `unreadable` for those plus the
-  module class's own constructor reasons. An omission is therefore never mistaken
-  for a declaration with nothing in it, and a module that boots perfectly well is
-  not declined for a constructor the container never runs. A plain `Error` is
-  reserved for a decorator whose arguments contradict its documented signature
-  and for an empty gateway path, which the runtime rejects too.
+  nor a `createToken(...)` call, a gateway path built at run time, a gateway
+  event or message property that is not a string literal, a member whose name is
+  not a plain property key, a class whose constructor dependencies come from a
+  base class in another file. A class declaration's `unreadable` list repeats the
+  reason each unreadable entry and dependency carries; a module splits that list
+  in two, because a generated module declares the collections and nothing about
+  the module class — `collectionUnreadable` for the collections, `unreadable` for
+  those plus the module class's own constructor reasons. An omission is therefore
+  never mistaken for a declaration with nothing in it, and a module that boots
+  perfectly well is not declined for a constructor the container never runs. A
+  plain `Error` is reserved for a decorator whose arguments contradict its
+  documented signature and for an empty gateway path, which the runtime rejects
+  too.
 
 ## Tests
 

@@ -13,6 +13,7 @@ import {
 } from "@aponiajs/common";
 import type { AponiaContainer } from "@aponiajs/core";
 import type { AnyElysia } from "elysia";
+import type { ElysiaWebSocketGatewayPlan } from "./gateway-plan.types.ts";
 import type {
   BoundElysiaWebSocketGateway,
   CompiledElysiaWebSocketGateway,
@@ -39,7 +40,41 @@ interface IncomingWebSocketMessage {
 }
 
 /**
- * Discovers and lowers decorated class providers into immutable gateway plans.
+ * The path a gateway that declares none is mounted at. Mirrors the default in
+ * `@aponiajs/common`'s `normalizeGatewayPath`.
+ */
+const defaultGatewayPath = "/ws";
+
+/**
+ * The property a declared gateway provider carries its plan on, which is the
+ * field `defineElysiaWebSocketGateway` writes.
+ */
+const declaredGatewayPlanKey = "gateway";
+
+/** One message handler, before it is compiled into an invoker factory. */
+interface GatewayHandlerPlan {
+  readonly event: string;
+  readonly propertyKey: string | symbol;
+  readonly parameters: readonly WebSocketParameterMetadata[];
+}
+
+/** Everything a gateway declares, however it was authored. */
+interface GatewayPlan {
+  readonly path: string;
+  readonly handlers: readonly GatewayHandlerPlan[];
+  readonly serverProperties: readonly (string | symbol)[];
+}
+
+/**
+ * Discovers class providers into immutable gateway plans.
+ *
+ * Both authoring paths are discovered here. A provider carrying a `gateway`
+ * plan is a declared one, and nothing is read from its class; a provider
+ * without one is the decorator path, which reads `@WebSocketGateway()`,
+ * `@SubscribeMessage()`, and the member decorators off `useClass`. The two
+ * produce the same plan and are compiled by the same call, so a gateway that
+ * declares a duplicate path or a duplicate event is rejected with the same code
+ * at the same point whichever way it was authored.
  *
  * @internal
  */
@@ -56,12 +91,12 @@ export function compileElysiaWebSocketGateways(
       }
 
       const gatewayClass = provider.useClass as ClassToken<unknown>;
-      const metadata = getWebSocketGatewayMetadata(gatewayClass);
-      if (!metadata) {
+      const plan = readGatewayPlan(module, provider, gatewayClass);
+      if (plan === undefined) {
         continue;
       }
 
-      const gateway = compileGateway(module, provider, gatewayClass, metadata.path);
+      const gateway = compileGateway(module, provider, gatewayClass, plan);
       const existing = paths.get(gateway.path);
       if (existing) {
         throw new AponiaError(
@@ -146,13 +181,154 @@ export function bindElysiaWebSocketGateway(
   });
 }
 
+/**
+ * The plan a class provider declares, or `undefined` when the provider is not a
+ * gateway at all.
+ *
+ * A provider carrying a `gateway` plan is a declared one, and nothing is read
+ * from its class. Every other class provider takes the decorator path, which is
+ * the one that existed before declared gateways did.
+ */
+function readGatewayPlan(
+  module: ModuleDefinition,
+  provider: Extract<ModuleDefinition["providers"][number], { readonly kind: "class" }>,
+  gatewayClass: ClassToken<unknown>,
+): GatewayPlan | undefined {
+  const declared = Reflect.get(provider, declaredGatewayPlanKey) as
+    | ElysiaWebSocketGatewayPlan
+    | undefined;
+  if (declared !== undefined) {
+    return readDeclaredGatewayPlan(module, gatewayClass, declared);
+  }
+
+  const metadata = getWebSocketGatewayMetadata(gatewayClass);
+  if (!metadata) {
+    return undefined;
+  }
+
+  return {
+    path: metadata.path,
+    handlers: getWebSocketMessageMetadata(gatewayClass).map((message) =>
+      Object.freeze({
+        event: message.event,
+        propertyKey: message.propertyKey,
+        parameters: getWebSocketParameterMetadata(gatewayClass, message.propertyKey),
+      }),
+    ),
+    serverProperties: getWebSocketServerProperties(gatewayClass),
+  };
+}
+
+/**
+ * Reads the plan a declared gateway provider carries.
+ *
+ * The shape is validated rather than trusted, because a hand-written provider
+ * literal is the escape hatch this path exists to support: a plan that is not an
+ * object, or whose handlers or server properties are not arrays, would otherwise
+ * mount a gateway that silently ignores what it declares.
+ */
+function readDeclaredGatewayPlan(
+  module: ModuleDefinition,
+  gatewayClass: ClassToken<unknown>,
+  plan: unknown,
+): GatewayPlan {
+  const gatewayName = gatewayClass.name;
+  if (!isObject(plan)) {
+    throw invalidGatewayDeclaration(
+      module,
+      gatewayName,
+      "declares a gateway plan that is not an object.",
+    );
+  }
+
+  const handlers = Reflect.get(plan, "handlers") ?? [];
+  if (!Array.isArray(handlers)) {
+    throw invalidGatewayDeclaration(module, gatewayName, 'must declare "handlers" as an array.');
+  }
+
+  const serverProperties = Reflect.get(plan, "serverProperties") ?? [];
+  if (!Array.isArray(serverProperties)) {
+    throw invalidGatewayDeclaration(
+      module,
+      gatewayName,
+      'must declare "serverProperties" as an array.',
+    );
+  }
+
+  const path = Reflect.get(plan, "path");
+  if (path !== undefined && typeof path !== "string") {
+    throw invalidGatewayDeclaration(module, gatewayName, "must declare its path as a string.");
+  }
+
+  return {
+    path: path ?? defaultGatewayPath,
+    handlers: Object.freeze(
+      handlers.map((handler) => readDeclaredGatewayHandler(module, gatewayName, handler)),
+    ),
+    serverProperties: Object.freeze([...(serverProperties as readonly (string | symbol)[])]),
+  };
+}
+
+/**
+ * Reads one declared handler.
+ *
+ * The event is the handler's whole identity — it is the key a message is routed
+ * by — so a plan that declares an empty one, or none at all, is refused rather
+ * than mounted as a handler no client can reach.
+ */
+function readDeclaredGatewayHandler(
+  module: ModuleDefinition,
+  gatewayName: string,
+  handler: unknown,
+): GatewayHandlerPlan {
+  if (!isObject(handler)) {
+    throw invalidGatewayDeclaration(
+      module,
+      gatewayName,
+      "declares a handler that is not an object.",
+    );
+  }
+
+  const event = Reflect.get(handler, "event");
+  const propertyKey = Reflect.get(handler, "propertyKey");
+  const parameters = Reflect.get(handler, "parameters") ?? [];
+  if (typeof event !== "string" || event.trim().length === 0) {
+    throw invalidGatewayDeclaration(
+      module,
+      gatewayName,
+      "declares a handler whose event is not a non-empty string.",
+    );
+  }
+  if (typeof propertyKey !== "string" && typeof propertyKey !== "symbol") {
+    throw invalidGatewayDeclaration(
+      module,
+      gatewayName,
+      "declares a handler without a property key.",
+    );
+  }
+  if (!Array.isArray(parameters)) {
+    throw invalidGatewayDeclaration(
+      module,
+      gatewayName,
+      "declares a handler whose parameters are not an array.",
+    );
+  }
+
+  return Object.freeze({
+    event,
+    propertyKey,
+    parameters: parameters as readonly WebSocketParameterMetadata[],
+  });
+}
+
 function compileGateway(
   module: ModuleDefinition,
   provider: Extract<ModuleDefinition["providers"][number], { readonly kind: "class" }>,
   gatewayClass: ClassToken<unknown>,
-  path: string,
+  plan: GatewayPlan,
 ): CompiledElysiaWebSocketGateway {
   const gatewayName = gatewayClass.name;
+  const path = plan.path;
   if (typeof path !== "string" || path.trim().length === 0) {
     throw new AponiaError(
       "INVALID_WEBSOCKET_GATEWAY",
@@ -164,47 +340,47 @@ function compileGateway(
 
   const handlers: CompiledElysiaWebSocketHandler[] = [];
   const events = new Map<string, string | symbol>();
-  for (const message of getWebSocketMessageMetadata(gatewayClass)) {
-    const existing = events.get(message.event);
+  for (const declared of plan.handlers) {
+    const existing = events.get(declared.event);
     if (existing !== undefined) {
       throw new AponiaError(
         "DUPLICATE_WEBSOCKET_HANDLER",
-        `WebSocket gateway "${gatewayName}" has more than one handler for event "${message.event}".`,
+        `WebSocket gateway "${gatewayName}" has more than one handler for event "${declared.event}".`,
         {
           module: module.id,
           gateway: gatewayName,
-          event: message.event,
-          handlers: Object.freeze([String(existing), String(message.propertyKey)]),
+          event: declared.event,
+          handlers: Object.freeze([String(existing), String(declared.propertyKey)]),
         },
       );
     }
 
-    const prototypeHandler = Reflect.get(gatewayClass.prototype, message.propertyKey) as unknown;
+    const prototypeHandler = Reflect.get(gatewayClass.prototype, declared.propertyKey) as unknown;
     if (typeof prototypeHandler !== "function") {
       throw invalidGatewayDefinition(
         module,
         gatewayName,
-        message.propertyKey,
-        "The decorated message handler is not callable.",
+        declared.propertyKey,
+        "The message handler is not callable.",
       );
     }
 
-    const parameters = getWebSocketParameterMetadata(gatewayClass, message.propertyKey);
-    assertDistinctParameterIndexes(module, gatewayName, message.propertyKey, parameters);
+    const parameters = declared.parameters;
+    assertDistinctParameterIndexes(module, gatewayName, declared.propertyKey, parameters);
     const invokerFactory = compileMessageInvoker(parameters);
     handlers.push(
       Object.freeze({
-        event: message.event,
-        propertyKey: message.propertyKey,
+        event: declared.event,
+        propertyKey: declared.propertyKey,
         createInvoker: (instance: unknown) => {
           const handler = isObject(instance)
-            ? Reflect.get(instance, message.propertyKey)
+            ? Reflect.get(instance, declared.propertyKey)
             : undefined;
           if (typeof handler !== "function") {
             throw invalidGatewayDefinition(
               module,
               gatewayName,
-              message.propertyKey,
+              declared.propertyKey,
               "The resolved message handler is not callable.",
             );
           }
@@ -212,7 +388,7 @@ function compileGateway(
         },
       }),
     );
-    events.set(message.event, message.propertyKey);
+    events.set(declared.event, declared.propertyKey);
   }
 
   return Object.freeze({
@@ -222,7 +398,7 @@ function compileGateway(
     gatewayName,
     path: normalizedPath,
     handlers: Object.freeze(handlers),
-    serverProperties: Object.freeze([...getWebSocketServerProperties(gatewayClass)]),
+    serverProperties: Object.freeze([...plan.serverProperties]),
   });
 }
 
@@ -549,6 +725,21 @@ function invalidGateway(gateway: CompiledElysiaWebSocketGateway, message: string
     gateway: gateway.gatewayName,
     token: tokenName(gateway.token),
   });
+}
+
+function invalidGatewayDeclaration(
+  module: ModuleDefinition,
+  gatewayName: string,
+  message: string,
+): AponiaError {
+  return new AponiaError(
+    "INVALID_WEBSOCKET_GATEWAY",
+    `WebSocket gateway "${gatewayName}" ${message}`,
+    {
+      module: module.id,
+      gateway: gatewayName,
+    },
+  );
 }
 
 function invalidGatewayDefinition(

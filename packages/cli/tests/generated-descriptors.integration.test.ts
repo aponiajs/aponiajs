@@ -1,7 +1,7 @@
 import { afterEach, expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
-import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AponiaFactory, inspectAponiaApplication } from "@aponiajs/platform-elysia";
 import {
   analyzeControllerRoutes,
   analyzeModuleDescriptors,
@@ -62,20 +62,35 @@ export class UsersService {
   create(name: string): string {
     return \`created:\${name}\`;
   }
+
+  update(id: string): string {
+    return \`updated:\${id}\`;
+  }
 }
 `,
+  // The shape the CLI's own REST resource schematic emits: the validators are
+  // module-private constants, and one of them is built from another.
   "users.model.ts": `import { Validation } from "@aponiajs/common";
 import { t } from "elysia";
 
-@Validation(t.Object({ name: t.String({ minLength: 2 }) }))
+const createUserSchema = t.Object({ name: t.String({ minLength: 2 }) });
+const updateUserSchema = t.Partial(createUserSchema);
+
+@Validation(createUserSchema)
 export class CreateUser {}
 export interface CreateUser {
   readonly name: string;
 }
+
+@Validation(updateUserSchema)
+export class UpdateUser {}
+export interface UpdateUser {
+  readonly name?: string;
+}
 `,
-  "users.controller.ts": `import { Body, Controller, Get, Param, Post } from "@aponiajs/common";
+  "users.controller.ts": `import { Body, Controller, Get, Param, Patch, Post } from "@aponiajs/common";
 import { AuditService } from "./audit.service.ts";
-import { CreateUser } from "./users.model.ts";
+import { CreateUser, UpdateUser } from "./users.model.ts";
 import { UsersService } from "./users.service.ts";
 
 @Controller("users")
@@ -94,6 +109,11 @@ export class UsersController {
   create(@Body() body: CreateUser): string {
     return this.usersService.create(body.name);
   }
+
+  @Patch(":id", { body: UpdateUser })
+  update(@Param("id") id: string): string {
+    return this.usersService.update(id);
+  }
 }
 `,
   "users.module.ts": `import { Module } from "@aponiajs/common";
@@ -109,10 +129,33 @@ import { UsersService } from "./users.service.ts";
 })
 export class UsersModule {}
 `,
+  "events.gateway.ts": `import { MessageBody, SubscribeMessage, WebSocketGateway } from "@aponiajs/common";
+
+@WebSocketGateway("/events")
+export class EventsGateway {
+  @SubscribeMessage("events.echo")
+  echo(@MessageBody("value") value: string): { readonly value: string } {
+    return { value };
+  }
+
+  @SubscribeMessage("events.silent")
+  silent(): undefined {
+    return undefined;
+  }
+}
+`,
+  "events.module.ts": `import { Module } from "@aponiajs/common";
+import { EventsGateway } from "./events.gateway.ts";
+
+@Module({ providers: [EventsGateway], exports: [EventsGateway] })
+export class EventsModule {}
+`,
 };
 
 interface Fixture {
   readonly UsersModule: unknown;
+  readonly EventsModule: unknown;
+  readonly source: string;
   readonly moduleDescriptors: Readonly<Record<string, unknown>>;
 }
 
@@ -151,12 +194,18 @@ async function generateFixture(): Promise<Fixture> {
   }
   await Bun.write(generatedPath, emitted.source);
 
-  const [module, generated] = await Promise.all([
+  const [module, events, generated] = await Promise.all([
     import(join(directory, "users.module.ts")) as Promise<Fixture>,
+    import(join(directory, "events.module.ts")) as Promise<Fixture>,
     import(generatedPath) as Promise<Fixture>,
   ]);
 
-  return { UsersModule: module.UsersModule, moduleDescriptors: generated.moduleDescriptors };
+  return {
+    UsersModule: module.UsersModule,
+    EventsModule: events.EventsModule,
+    source: emitted.source,
+    moduleDescriptors: generated.moduleDescriptors,
+  };
 }
 
 interface Answer {
@@ -181,6 +230,19 @@ async function answers(rootModule: unknown): Promise<readonly Answer[]> {
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ name: "x" }),
         }),
+        // `UpdateUser` is `t.Partial(createUserSchema)`, so the same minimum
+        // length applies and an empty body is still accepted — which is what
+        // proves the folded constant is the validator the model declared.
+        new Request("http://localhost/users/7", {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ name: "z" }),
+        }),
+        new Request("http://localhost/users/7", {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({}),
+        }),
       ].map(async (request) => {
         const response = await application.handle(request);
         return { status: response.status, body: await response.text() };
@@ -198,17 +260,68 @@ test("a generated descriptor module answers exactly as the decorated application
   const generated = await answers(fixture.moduleDescriptors.UsersModule);
 
   expect(generated).toEqual(compiled);
-  expect(compiled.map((answer) => answer.status)).toEqual([200, 200, 422]);
+  expect(compiled.map((answer) => answer.status)).toEqual([200, 200, 422, 422, 200]);
   // The first body carries the audit provider, which only resolves when the
   // generated module's `imports` and `exports` reach the other module.
   expect(compiled[0]?.body).toBe("read:7:audited");
   // The second body comes from the controller's own injected service, and the
-  // third is the platform refusing a body the `@Validation()` model rejects.
+  // third and fourth are the platform refusing a body the `@Validation()` model
+  // rejects.
   expect(compiled[1]?.body).toBe("created:aponia");
+  expect(compiled[4]?.body).toBe("updated:7");
+});
+
+test("a generated schema slot states the model's validator instead of naming the model", async () => {
+  const fixture = await generateFixture();
+
+  // The model's own constants are folded into the expression, because a
+  // generated module cannot name a binding the model file does not export.
+  expect(fixture.source).toContain("body: t.Object({ name: t.String({ minLength: 2 }) })");
+  expect(fixture.source).toContain(
+    "body: t.Partial(t.Object({ name: t.String({ minLength: 2 }) }))",
+  );
+  expect(fixture.source).toContain('import { t } from "elysia";');
+  // Nothing names a model class, which is what takes the runtime's
+  // `@Validation()` metadata read off the startup path.
+  expect(fixture.source).not.toContain("CreateUser");
+  expect(fixture.source).not.toContain("UpdateUser");
 });
 
 test("a generated descriptor module declares every module of the graph", async () => {
   const fixture = await generateFixture();
 
-  expect(Object.keys(fixture.moduleDescriptors).toSorted()).toEqual(["AuditModule", "UsersModule"]);
+  expect(Object.keys(fixture.moduleDescriptors).toSorted()).toEqual([
+    "AuditModule",
+    "EventsModule",
+    "UsersModule",
+  ]);
+});
+
+test("a generated gateway is discovered with the same path and events as the decorated one", async () => {
+  const fixture = await generateFixture();
+
+  expect(fixture.source).toContain("defineElysiaWebSocketGateway(EventsGateway, {");
+  expect(fixture.source).toContain(
+    ['          event: "events.echo",', '          propertyKey: "echo",'].join("\n"),
+  );
+  expect(fixture.source).toContain('{ index: 0, kind: "message-body", property: "value" }');
+  // A handler that binds no parameter declares none, which is what it receives.
+  expect(fixture.source).toContain(
+    ['          event: "events.silent",', '          propertyKey: "silent",'].join("\n"),
+  );
+
+  // Inspection runs bootstrap's own lowering, so equal projections mean the
+  // declared gateway reaches the same compilation a decorated one does.
+  const compiled = inspectAponiaApplication(fixture.EventsModule as never);
+  const generated = inspectAponiaApplication(fixture.moduleDescriptors.EventsModule as never);
+
+  expect(generated.gateways).toEqual(compiled.gateways);
+  expect(compiled.gateways).toEqual([
+    {
+      module: "EventsModule",
+      token: "EventsGateway",
+      path: "/events",
+      events: ["events.echo", "events.silent"],
+    },
+  ]);
 });
