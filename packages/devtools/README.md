@@ -40,13 +40,13 @@ export class AppModule {}
   about itself are in it. That is the condition this option states rather than
   hides: the framework never exposes the logger it builds for itself, so an
   application that names `false`, names a level array, or names nothing at all has
-  no object to record from, and a registration that names one of those serves no
+  no object to record from, and a logger this package cannot patch — a frozen one
+  — records nothing either; a registration with no stream to publish serves no
   `/logs` rather than an empty stream that would read as "nothing is being logged".
-  The patch is a
-  mutation of a logger the application holds too, and the stream holds the lines
-  written through that one object — the platform's own, and an application's where
-  it logs through the same reference, because the container hands no logger to a
-  provider.
+  The patch is a mutation of a logger the application holds too, and the stream
+  holds the lines written through that one object — the platform's own, and an
+  application's where it logs through the same reference, because the container
+  hands no logger to a provider.
 - **A taken port never fails a boot.** The refused bind is reported under
   `Devtools`, and the application continues without the devtools server.
 - **The socket stops with the application.** `close()` stops the devtools server
@@ -90,8 +90,9 @@ export class AppModule {}
   The registration takes the logger the application also gives
   `AponiaFactory.create`, patches it in place, and records every line into a
   bounded buffer from the moment the module registers — and a registration with no
-  logger object to record from, because it named none, named `false`, or named
-  something that is not one, serves no `/logs` rather than an empty stream.
+  stream to serve, because it named none, named `false`, named something that is
+  not a logger, or named one whose levels refuse the patch, serves no `/logs`
+  rather than an empty stream.
   Each poll names the cursor the previous answer carried and is answered with
   `{ cursor, entries }`, where an entry is `{ level, context, message, timestamp }`.
   A cursor older than the retained window is answered with what is retained and

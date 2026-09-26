@@ -282,19 +282,25 @@ test("one logger records into one stream, so a line is never recorded or printed
   expect(second.since(0).entries).toEqual([]);
 });
 
-test("a logger this package cannot patch is left as it is and records nothing", () => {
+test("a logger this package cannot patch is answered with no stream, not an empty one", () => {
   const { logger, calls } = fakeLogger();
   const buffer = createLogBuffer(4);
   Object.freeze(logger);
 
   const tapped = tapLogBuffer(logger, buffer);
 
-  expect(tapped).toBe(buffer);
+  // Nothing was installed, so the buffer will never hold a line: handing it back
+  // would be an empty stream published over a logger that goes on printing, which
+  // is the false silence this package refuses everywhere else.
+  expect(tapped).toBeUndefined();
 
   logger.log("still writes");
 
   expect(calls).toEqual(["log still writes"]);
   expect(buffer.since(0).entries).toEqual([]);
+  // A logger nothing could be installed on is not remembered as one that has a
+  // stream, so a later tap retries and answers the same absence.
+  expect(tapLogBuffer(logger, buffer)).toBeUndefined();
 });
 
 /** Binds the loopback socket on port `0` and reads the address it took. */
@@ -464,6 +470,24 @@ class PublishedNoLoggerModule {}
 })
 class LevelArrayModule {}
 
+/**
+ * A logger object that exists and cannot be patched. Freezing it is how a real
+ * application ends up here: the object is handed over, the tap's assignments all
+ * throw, and nothing is installed — the one case where a stream would be empty
+ * while the logger behind it prints.
+ */
+const frozenLogger: LoggerService = Object.freeze({
+  log: () => {},
+  fatal: () => {},
+  error: () => {},
+  warn: () => {},
+});
+
+@Module({
+  imports: [DevtoolsModule.register({ enabled: true, port: ephemeralPort, logger: frozenLogger })],
+})
+class FrozenLoggerModule {}
+
 interface CapturedOutput {
   readonly rows: () => readonly string[];
   readonly restore: () => void;
@@ -610,3 +634,24 @@ test.serial(
     }
   },
 );
+
+test.serial("a registration whose logger cannot be patched serves no endpoint", async () => {
+  const output = captureOutput();
+  let application: AponiaElysiaApplication | undefined;
+  try {
+    application = await AponiaFactory.create(FrozenLoggerModule, { logger: frozenLogger });
+    await application.listen(0);
+
+    const address = reportedAddress(output);
+
+    // This registration named a logger object, and it is the one case where a
+    // stream would be a lie rather than an absence: the tap installed nothing, so
+    // `{ cursor: 0, entries: [] }` would announce that nothing is being logged
+    // while the logger keeps printing everything the platform writes to it.
+    expect((await fetch(`${address}/__devtools/logs`)).status).toBe(404);
+    expect((await fetch(`${address}/__devtools/meta`)).status).toBe(200);
+  } finally {
+    await application?.close();
+    output.restore();
+  }
+});

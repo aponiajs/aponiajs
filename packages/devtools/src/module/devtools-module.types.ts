@@ -32,9 +32,10 @@ export interface DevtoolsOptions {
    * anything, so the lines a boot reports about itself — the graph it served, the
    * modules it initialized, the routes it resolved — are in it.
    *
-   * A logger object earns the stream, and every other value serves no `/logs` at
-   * all rather than an empty one, because absence is true in all of those cases
-   * and an empty window is true in only one of them:
+   * A logger object the tap can install on earns the stream, and every other
+   * value — or a logger it cannot patch — serves no `/logs` at all rather than an
+   * empty one, because absence is true in all of those cases and an empty window
+   * is true in only one of them:
    *
    * - `false` — the value that turns the application's logging off — states that
    *   the application has no logger object to hand over. That is not the same
@@ -47,6 +48,11 @@ export interface DevtoolsOptions {
    *   so an application that names one has nothing to hand over either. The type
    *   does not accept it; a JavaScript caller can pass it anyway, which is why
    *   the value is checked rather than trusted.
+   * - A logger object whose levels cannot be patched — a frozen one — is the same
+   *   absence. It is patched in place, so a logger that refuses every assignment
+   *   records nothing, and a published stream would answer
+   *   `{ cursor: 0, entries: [] }` while that logger goes on printing every line:
+   *   the same false silence, so it earns no endpoint either.
    *
    * The endpoint states a stream, and a registration with none to state serves no
    * endpoint — the dispatcher's `404`, the way a boot the record holds no compiled

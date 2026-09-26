@@ -128,13 +128,15 @@ function createDevtoolsPlugin(options: DevtoolsOptions): Elysia {
  * runs, so a tap installed when the socket starts records none of them, and they
  * are most of what this stream is worth.
  *
- * Two outcomes, however many values arrive at the first one. A logger object is
- * tapped in place and its stream is published. Everything else publishes no
- * `/logs` at all: the option omitted, `false`, and any value that is not a logger
- * — which a JavaScript caller can pass whatever the type says. The endpoint
- * states a stream, and a registration with none to state serves no endpoint, so
- * the dispatcher's `404` is the answer, the way a boot the record holds no
- * compiled root for serves no `/graph`.
+ * Two outcomes, however many values arrive at the first one. A logger object the
+ * tap could install on is tapped in place and its stream is published. Everything
+ * else publishes no `/logs` at all: the option omitted, `false`, any value that is
+ * not a logger — which a JavaScript caller can pass whatever the type says — and a
+ * logger whose levels refuse the patch, where the tap installs nothing and a
+ * published stream would record nothing while that logger goes on printing. The
+ * endpoint states a stream, and a registration with none to state serves no
+ * endpoint, so the dispatcher's `404` is the answer, the way a boot the record
+ * holds no compiled root for serves no `/graph`.
  *
  * `false` is not the empty stream it once answered, and the difference is the
  * whole reason: it states that the application has no logger object to hand over,

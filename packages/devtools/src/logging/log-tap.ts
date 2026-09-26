@@ -4,8 +4,9 @@ import type { LogBuffer, LogEntry } from "./log-buffer.types.ts";
 /**
  * The `LoggerService` methods a tap records: every level the interface declares,
  * and `debug` and `verbose` are optional on it, so a logger that omits them is
- * tapped for the levels it has. This order is the package's own and decides
- * nothing — each level's method is patched on its own.
+ * tapped for the levels it has. This order is the package's own and no contract
+ * depends on it — each level's method is patched on its own, so it decides only
+ * which levels were patched when one of the assignments refuses.
  */
 const recordableLevels = [
   "log",
@@ -52,7 +53,9 @@ export function isRecordableLogger(value: unknown): value is LoggerService {
 
 /**
  * Records everything `logger` writes into `buffer`, and answers the stream that
- * records it.
+ * records it — or `undefined` when nothing could be installed on the logger, in
+ * which case `buffer` will never receive a line and the caller must not publish
+ * it as a stream.
  *
  * The logger is patched in place rather than replaced. The application has
  * already handed this object to the platform, which holds its own reference to
@@ -67,15 +70,20 @@ export function isRecordableLogger(value: unknown): value is LoggerService {
  * may make for itself, and re-applying a rule this package cannot read would be
  * enforcing a filter it does not own.
  *
- * A patch that fails — a frozen logger, or one property that refuses the
- * assignment — leaves the methods it could not patch exactly as they were, and
- * the stream handed over records the lines written through the methods it did
- * patch, because a debugging aid that failed a boot over its own tap would be the
- * failure mode this package exists not to have. A logger it has tapped before is
- * answered with the stream already recording it, so the two cannot disagree about
- * where a line went.
+ * A patch that fails part way — one property that refuses the assignment — leaves
+ * the methods it could not patch exactly as they were, and the stream handed over
+ * records the lines written through the methods it did patch, because a debugging
+ * aid that failed a boot over its own tap would be the failure mode this package
+ * exists not to have. A logger that refused every assignment — a frozen one — has
+ * nothing installed, so the answer is `undefined`: an empty stream would announce
+ * that nothing is being logged while that logger goes on printing every line, the
+ * same false answer a value that is not a logger is refused. A logger it has
+ * tapped before is answered with the stream already recording it, so the two
+ * cannot disagree about where a line went.
  */
-export function tapLogBuffer(logger: LoggerService, buffer: LogBuffer): LogBuffer {
+export function tapLogBuffer(logger: LoggerService, buffer: LogBuffer): LogBuffer | undefined {
+  let installed = false;
+
   try {
     const tapped = tappedLoggers.get(logger);
 
@@ -102,14 +110,19 @@ export function tapLogBuffer(logger: LoggerService, buffer: LogBuffer): LogBuffe
         buffer.write(createLogEntry(level, message, optionalParameters));
         write.call(logger, message, ...optionalParameters);
       };
+      installed = true;
     }
   } catch {
     // What holds afterwards is per level: the levels patched before the failure
     // record, the one that refused keeps the method it had — a frozen logger
-    // refuses the first assignment, so it is left exactly as it was — and the
-    // stream is still the answer below, because the tap is this package's
-    // convenience and never the application's contract. A boot does not fail
-    // over it, which is the failure mode this package exists not to have.
+    // refuses the first assignment, so nothing is installed and the answer below
+    // is `undefined` — because the tap is this package's convenience and never
+    // the application's contract. A boot does not fail over it, which is the
+    // failure mode this package exists not to have.
+  }
+
+  if (!installed) {
+    return undefined;
   }
 
   rememberTap(logger, buffer);
@@ -118,9 +131,11 @@ export function tapLogBuffer(logger: LoggerService, buffer: LogBuffer): LogBuffe
 }
 
 /**
- * Remembers which stream records a logger, however the patch went: a logger this
- * package could not patch is still a logger it has answered for, and a second
- * caller gets the same answer rather than a second stream that records nothing.
+ * Remembers which stream records a logger, once a tap has installed something on
+ * it: a second caller gets that stream rather than a second one nothing writes
+ * into. A logger nothing could be installed on is not remembered, because there is
+ * no stream to answer with — the honest answer is the one it just got, and a
+ * later tap retries rather than remembering an absence as a stream.
  *
  * A value that cannot be keyed — a JavaScript caller can pass anything — is
  * simply not remembered, because the stream handed over is the answer either way.
