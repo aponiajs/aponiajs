@@ -48,6 +48,16 @@ export class AppModule {}
   the boot compiled — the descriptor artifact's when it adopted one — never the
   decorated classes it replaced, and it carries no routes: a route a controller
   declares and a route the server answers are two different questions.
+- **`GET /__devtools/routes` reports the routes the application answers.** The
+  table is read when the request arrives, so a route mounted on the native
+  application after the boot appears too. Each route carries the method and path
+  the table states, the module, controller and handler the boot recorded, the
+  context fields its handler binds, and `source`: `"generated"` when a build-time
+  invoker serves it, `"compiled"` when the running platform does, or `null` when
+  no boot recorded it — a native WebSocket route, or a route mounted outside the
+  boot. A route no plan and no callback describes reports empty names rather than
+  guessed ones, which is also what a callback's route reports for its handler:
+  the property key that built it exists only while the callback runs.
 - Every endpoint is a `GET`: any other method answers `405` before the path is
   read, and a path the server does not serve answers `404`.
 

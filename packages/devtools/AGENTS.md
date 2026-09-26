@@ -68,9 +68,15 @@ runtime boundary it describes.
 - The socket binds port `0` happily, and the report then names the address the
   socket took — never the port the registration asked for. A report that echoed
   the configuration would be indistinguishable from one that never bound.
-- The payload is built once, when the socket starts. It describes a boot, and a
-  boot does not change once it has started, so two polls of one server answer
-  the same report.
+- A payload that describes a boot is built once, when the socket starts. It
+  describes a boot, and a boot does not change once it has started, so two polls
+  of one server answer the same report. `/routes` is the exception, and it is one
+  by design: the mounted route table belongs to the running application, which
+  may mount another route on its native instance before it listens, so that
+  handler reads the table when the request arrives. Everything it reports from
+  the record is still the boot's, and a route the record does not describe is
+  reported with the facts a record would have supplied left empty rather than
+  filled in.
 - `/meta` falls back to this release for an application no boot produced, and
   says `null` for every artifact such a boot did not adopt. It never crashes on
   a missing record and never reports a guess as a release.
@@ -90,6 +96,32 @@ runtime boundary it describes.
   older, which has no `rootModule` field, or one newer, whose compiled root this
   release cannot lower — serves no `/graph`, and the dispatcher's `404` is the
   answer for a path the handler record does not own.
+- `/routes` is registered whatever the record holds, because its fact is not the
+  record's: the mounted route table is the application's own, and an application
+  no boot produced still answers one. The record joins to it rather than replacing
+  it, and the join runs one way only — every route the table holds is reported,
+  and an entry describes a route only when the table holds it. The table is read
+  from the application, never from a payload, and it is Elysia's rather than this
+  release's, so both halves of the join are checked rather than assumed: an entry
+  whose method or path is not a string cannot be joined or reported, and is
+  dropped.
+- `/routes` states three facts per route and each has one owner. The method, the
+  path, and the parameter list are what the mounted table and the boot's plans
+  hold. `source` is the binding the boot decided on: `"generated"` for a
+  build-time invoker, `"compiled"` for the running platform's own compilation or
+  for a route a callback mounted, which no artifact can reach, and `null` when no
+  boot recorded the route — a native WebSocket route, or one mounted outside the
+  boot. `null` never means "an unknown binding"; a guess published where a decided
+  state belongs would make one boot's routes look interchangeable with another's.
+  A field the record is too old to carry reads `null` the same way, for the same
+  reason `/meta`'s optional stamp read does.
+- `/routes` reports an empty name rather than a guess wherever the boot has none
+  to give: a route a controller's callback or plugin mounted names its module and
+  controller and no handler, because the property key that built it exists only
+  while the mount runs and the mounted table keeps no trace of it; a route no plan
+  and no callback describes names none of the three. Entries are sorted by path,
+  method, controller, handler, and module in code-unit order, which is the order
+  the platform's own inspection states.
 - The report describes the boot the _plugin's own_ application carries: Elysia
   hands `onStart` the root application, which is the one bootstrap attached the
   record to.
@@ -149,7 +181,16 @@ The handler build is asserted against a record this release did not write: a cas
 attaches a boot record with no `artifacts` — what a copy of the platform older
 than the artifact stamps leaves behind — and requires `/meta` to answer `null`
 stamps rather than throw, because that build runs where a throw takes `listen()`
-with it.
+with it. `/routes` is asserted the same way against a record whose plans carry no
+binding state and which has no callback routes at all.
+
+`/routes` is asserted for the two decisions it makes about a running application
+rather than about a boot. Both bindings are mounted by one application, because a
+case that only ever observed one of them could not tell a per-route decision from
+a per-boot one — and each route answers with a different string, so the report is
+checked against the binding that served rather than read back as a claim. A route
+mounted on the native application after the server started has to appear, which is
+the case a payload built once at `onStart` would fail.
 
 The Elysia read is asserted for what it refuses: the workspace's own install
 answers its version, and a throwaway project that installed nothing answers

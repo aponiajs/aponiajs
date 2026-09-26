@@ -22,4 +22,7 @@ export type {
   AponiaArtifactStamps,
   AponiaGraphPayload,
   AponiaMetaPayload,
+  AponiaMountedRoute,
+  AponiaRouteSource,
+  AponiaRoutesPayload,
 } from "./endpoints/payloads.types.ts";

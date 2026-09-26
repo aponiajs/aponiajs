@@ -12,6 +12,7 @@ The package is a leaf: nothing in the framework depends on it. An application im
 - [routeRequest](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/devtools/src/server/request-router.ts): the pure dispatcher every request goes through.
 - [AponiaMetaPayload](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/devtools/src/endpoints/payloads.types.ts): the `GET /__devtools/meta` payload, including the `contract` version a client checks first.
 - [AponiaGraphPayload](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/devtools/src/endpoints/payloads.types.ts): the `GET /__devtools/graph` payload, the compiled module graph with no `routes` key.
+- [AponiaRoutesPayload](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/devtools/src/endpoints/payloads.types.ts): the `GET /__devtools/routes` payload, every route the application answers with the binding that serves it.
 
 ## Behavior a consumer can rely on
 
@@ -23,6 +24,7 @@ The package is a leaf: nothing in the framework depends on it. An application im
 - The devtools socket stops when the application is closed, so a restart binds a fresh one.
 - `GET /__devtools/meta` reports the contract version, the release that booted the application, the Elysia installed in the application's own tree (`null` when there is none), and which release supplied each artifact the boot adopted (`null` for one it did not).
 - `GET /__devtools/graph` reports the graph the application compiled: its modules with their imports, controllers, providers, dependencies and exports, and its WebSocket gateways with their events. It describes the descriptor artifact's graph when the boot adopted one and the lowered decorated classes otherwise, and it carries no routes.
+- `GET /__devtools/routes` reports the routes the application answers, read from the mounted table when the request arrives, so a route mounted after the boot appears too. Each route carries the method and path the table states, the module, controller and handler the boot recorded, the context fields its handler binds, and `source`: `"generated"` for a build-time invoker, `"compiled"` for the running platform's own binding, or `null` when no boot recorded the route. A route no record describes reports empty names rather than guessed ones.
 - Every endpoint is a `GET`. Any other method answers `405` before the path is read, and a path the server does not serve answers `404`.
 
 ## Documentation

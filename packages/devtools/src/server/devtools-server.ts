@@ -4,6 +4,7 @@ import { readApplicationDiagnostics } from "@aponiajs/platform-elysia";
 import type { Elysia } from "elysia";
 import { buildGraphPayload, devtoolsGraphPath } from "../endpoints/graph.ts";
 import { buildMetaPayload, devtoolsMetaPath } from "../endpoints/meta.ts";
+import { buildRoutesPayload, devtoolsRoutesPath } from "../endpoints/routes.ts";
 import type {
   DevtoolsHandlers,
   DevtoolsServer,
@@ -111,9 +112,18 @@ function findInstalledElysiaManifest(baseDirectory: string): string | undefined 
 }
 
 /**
- * The endpoints one server serves, built once. The report is fixed for the life
- * of the socket: it describes a boot, and a boot does not change after it has
- * started.
+ * The endpoints one server serves, built once — with one payload the running
+ * application answers rather than the boot.
+ *
+ * `/meta` and `/graph` describe a boot, and a boot does not change once it has
+ * started, so their payloads are built here and answered unchanged. `/routes`
+ * reports the table the application answers, which belongs to the application
+ * rather than to the boot: an application may mount another route on its native
+ * instance before it listens, so that handler reads the table when it is asked
+ * instead of freezing a moment no client ever observed. It is registered
+ * whatever the record holds, because the table is this package's answer on its
+ * own; a route no record describes is reported with the facts a record would
+ * have supplied left empty.
  *
  * Every builder it calls is total — a record this release cannot project is one
  * of the cases they answer rather than throw for — because this runs before the
@@ -135,12 +145,13 @@ function createHandlers(application: Elysia): DevtoolsHandlers {
     // the handler record states the paths this server serves, and a path it does
     // not own is the dispatcher's `404`.
     ...(graph === undefined ? {} : { [devtoolsGraphPath]: () => jsonResponse(graph) }),
+    [devtoolsRoutesPath]: () => jsonResponse(buildRoutesPayload(application, diagnostics)),
   });
 }
 
 /**
- * One endpoint's answer. The payload is fixed for the life of this socket and is
- * never stored: a cached report would outlive the boot it describes.
+ * One endpoint's answer. Every payload is built when it is asked for and is
+ * never stored: a cached report would outlive the moment it describes.
  */
 function jsonResponse(payload: unknown): Response {
   return Response.json(payload, { status: 200, headers: { "cache-control": "no-store" } });
