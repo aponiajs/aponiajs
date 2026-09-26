@@ -23,9 +23,11 @@ runtime boundary it describes.
 - Registration is the opt-in and `enabled` is the switch. The framework never
   reads an environment variable on the application's behalf, because an
   environment variable is not a security boundary.
-- A disabled registration mounts nothing: no provider, no native plugin, and no
-  socket. It is an inert module rather than a plugin that does nothing, so a
-  boot cannot mistake it for the enabled one.
+- A disabled registration mounts nothing: no provider, no native plugin, and so
+  no socket — the plugin is the only thing in this package that starts a server,
+  so the socket absence follows by construction from the plugin absence. It is
+  an inert module rather than a plugin that does nothing, so a boot cannot
+  mistake it for the enabled one.
 - The module is an `ElysiaPluginModule` because the plugin has to see the
   mounted route table. A plain provider is constructed before any controller
   mounts and cannot; an Elysia plugin runs at `onStart`, after every route is
@@ -53,6 +55,10 @@ runtime boundary it describes.
 `tests/*.test.ts` under Bun, `tests-vp/*.conformance.ts` under Vite+.
 
 Boot through `AponiaFactory.create` and assert what an application observes:
-whether the plugin module mounted, what the plugin reported, and that a disabled
-registration opened no socket. The socket cases bind an ephemeral port; a
-disabled module is proven by a refused connection, never by a timeout.
+whether the boot mounted the plugin module (the enabled twin reports
+`ElysiaPluginModule[devtools] dependencies initialized`, the disabled twin
+asserts that line and every `Devtools` report absent) and what the plugin
+reported at `onStart`. The disabled case is proven by the inert module's
+descriptor and the missing mount line, never by a connection: nothing in this
+package serves yet, so no test can connect to it. The port assertion — against
+a server on an ephemeral port — lands with the server in Task 4.

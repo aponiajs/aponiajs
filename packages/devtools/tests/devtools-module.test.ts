@@ -3,9 +3,10 @@ import { Controller, Get, Module } from "@aponiajs/common";
 import { AponiaFactory } from "@aponiajs/platform-elysia";
 import { DevtoolsModule } from "../src/index.ts";
 
-// A port nothing else in this suite binds, so the disabled case proves the
-// absence of a socket by a refused connection rather than by a timeout.
-const devtoolsPort = 8123;
+// `0` is the standard "no fixed port" sentinel, and nothing in this task binds
+// one: the value is configuration the report echoes back. The socket assertion
+// arrives with the server in Task 4, on an ephemeral port.
+const configuredPort = 0;
 
 @Controller("health")
 class HealthController {
@@ -15,11 +16,11 @@ class HealthController {
   }
 }
 
-@Module({ imports: [DevtoolsModule.register({ enabled: false, port: devtoolsPort })] })
+@Module({ imports: [DevtoolsModule.register({ enabled: false })] })
 class DisabledModule {}
 
 @Module({
-  imports: [DevtoolsModule.register({ enabled: true, port: devtoolsPort })],
+  imports: [DevtoolsModule.register({ enabled: true, port: configuredPort })],
   controllers: [HealthController],
 })
 class EnabledModule {}
@@ -54,15 +55,6 @@ function devtoolsReports(output: CapturedOutput): readonly string[] {
   return output.rows().filter((row) => row.includes("[Devtools]"));
 }
 
-test("a disabled module mounts no plugin and opens no socket", async () => {
-  const application = await AponiaFactory.create(DisabledModule, { logger: false });
-  const refused = fetch(`http://127.0.0.1:${devtoolsPort}/__devtools/meta`);
-
-  expect(refused).rejects.toThrow();
-
-  await application.close();
-});
-
 test("register returns an inert module when disabled and a plugin module when enabled", () => {
   const disabled = DevtoolsModule.register({ enabled: false });
 
@@ -78,6 +70,9 @@ test("register returns an inert module when disabled and a plugin module when en
   expect(Object.isFrozen(enabled)).toBe(true);
 });
 
+// The enabled twin below makes the same two observations, and finds both
+// present. Absence here is therefore evidence that the plugin did not mount,
+// not that the boot logs nothing.
 test.serial("a listening disabled application mounts no plugin", async () => {
   const output = captureOutput();
   try {
@@ -105,7 +100,7 @@ test.serial("an enabled module mounts its plugin, which reports at onStart", asy
 
     const reports = devtoolsReports(output);
     expect(reports).toHaveLength(1);
-    expect(reports[0]).toContain(`127.0.0.1:${devtoolsPort}`);
+    expect(reports[0]).toContain(`127.0.0.1:${configuredPort}`);
   } finally {
     output.restore();
   }
@@ -127,7 +122,7 @@ test.serial("an enabled module reports the loopback port it defaults to", async 
 });
 
 test.serial(
-  "an application that only handles requests opens no socket and publishes nothing",
+  "an application that only handles requests stays unlistened, so the plugin reports nothing",
   async () => {
     const output = captureOutput();
     try {
