@@ -1,9 +1,6 @@
 import { Logger, Module, type DynamicModule } from "@aponiajs/common";
 import { ElysiaPluginModule } from "@aponiajs/platform-elysia";
 import { Elysia } from "elysia";
-import { createLogBuffer, defaultLogBufferCapacity } from "../logging/log-buffer.ts";
-import type { LogBuffer } from "../logging/log-buffer.types.ts";
-import { tapLogBuffer } from "../logging/log-tap.ts";
 import { startDevtoolsServer } from "../server/devtools-server.ts";
 import type { DevtoolsServer } from "../server/devtools-server.types.ts";
 import type { DevtoolsOptions } from "./devtools-module.types.ts";
@@ -62,16 +59,16 @@ function createInertModule(): DynamicModule {
  * before any controller mounts and cannot see the route table.
  *
  * The application `onStart` receives is the root one, so the boot record it
- * carries is what the report describes, and the address the plugin reports is
- * the one the socket actually took rather than the port configuration asked
- * for. A server that could not bind has already reported why, so the plugin
- * reports nothing further.
+ * carries is what the report describes — including the system logger the boot
+ * built, which is where the log stream comes from — and the address the plugin
+ * reports is the one the socket actually took rather than the port configuration
+ * asked for. A server that could not bind has already reported why, so the
+ * plugin reports nothing further.
  *
- * The log stream is built before the plugin is, at registration, so it records
- * what the boot wrote about itself and not only what the application wrote once
- * it was serving. It outlives every socket the plugin starts: a second `listen()`
- * re-runs `onStart` with the same stream, so the lines written in between are
- * retained rather than lost with the socket that was replaced.
+ * The stream outlives the socket: a second `listen()` starts a second server
+ * over the same application, and the tap answers it with the stream that is
+ * already recording, so the lines written between the two listens are retained
+ * rather than lost with the socket that was replaced.
  *
  * `onStop` — which Elysia fires on `close()`, for a plugin as much as for the
  * application that mounted it — stops the socket the plugin started. A devtools
@@ -81,7 +78,6 @@ function createInertModule(): DynamicModule {
  */
 function createDevtoolsPlugin(options: DevtoolsOptions): Elysia {
   let server: DevtoolsServer | undefined;
-  const logs = createLogStream(options.logger);
 
   return new Elysia({ name: devtoolsPluginName })
     .onStart((application) => {
@@ -89,7 +85,6 @@ function createDevtoolsPlugin(options: DevtoolsOptions): Elysia {
         application,
         port: options.port,
         logger: devtoolsLogger,
-        logs,
       });
 
       // A second `listen()` re-runs `onStart` while the socket the first one
@@ -112,34 +107,4 @@ function createDevtoolsPlugin(options: DevtoolsOptions): Elysia {
       server?.stop();
       server = undefined;
     });
-}
-
-/**
- * The application's log stream for one registration, or `undefined` when the
- * registration published no logger at all.
- *
- * The stream is built here, when the module is registered, rather than when the
- * socket starts, because that is the earliest moment this package holds the
- * application's logger and the only one that comes before the boot writes: the
- * lines a boot reports about itself — the modules it initialized, the routes it
- * resolved — are written before `onStart` runs, and a stream that began at the
- * socket would have none of them.
- *
- * `false` builds the stream without tapping anything. The application said it
- * has no logger, which is a decision, and a decided stream is published empty
- * rather than not at all: a client reads "nothing is being logged" instead of
- * asking a server that answers nothing for it.
- */
-function createLogStream(source: DevtoolsOptions["logger"]): LogBuffer | undefined {
-  if (source === undefined) {
-    return undefined;
-  }
-
-  const logs = createLogBuffer(defaultLogBufferCapacity);
-
-  if (source !== false) {
-    tapLogBuffer(source, logs);
-  }
-
-  return logs;
 }

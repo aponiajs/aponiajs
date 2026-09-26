@@ -3,12 +3,14 @@ import {
   Body,
   Controller,
   Get,
+  Logger,
   Module,
   Post,
   Validation,
   defineModule,
   type ClassToken,
   type DynamicModule,
+  type LoggerService,
   type ModuleDefinition,
   type RouteSchema,
 } from "@aponiajs/common";
@@ -217,6 +219,63 @@ test("a booted application exposes its boot decision and compiled routes", async
   expect(diagnostics?.globalEnhancers.guards).toEqual([DiagnosticsGuard]);
   expect(diagnostics?.globalEnhancers.interceptors).toEqual([]);
   expect(diagnostics?.globalEnhancers.filters).toEqual([]);
+  await application.close();
+});
+
+test("a boot records the very logger the application handed it and writes through it", async () => {
+  const calls: string[] = [];
+  const logger: LoggerService = {
+    log: (message) => void calls.push(String(message)),
+    fatal: () => {},
+    error: () => {},
+    warn: () => {},
+  };
+  const application = await AponiaFactory.create(DiagnosticsAppModule, { logger });
+  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+
+  // The object itself, not a copy of it: a consumer that patches this logger
+  // patches the one the platform wrote its own boot lines through, which is what
+  // makes observing an application's lines possible at all.
+  expect(diagnostics?.logger).toBe(logger);
+  expect(calls).toContain("Starting Aponia application...");
+  // The record states which object the boot chose and never makes it immutable:
+  // the logger is the application's object too, and the record is not its owner.
+  expect(Object.isFrozen(diagnostics?.logger)).toBe(false);
+  await application.close();
+});
+
+test("a boot that named no logger records the one it built", async () => {
+  const application = await AponiaFactory.create(DiagnosticsAppModule);
+  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+
+  // No `logger` option is the default path, and the boot still built one: the
+  // record is where a consumer reads what an application that named nothing logs
+  // through, so "the application publishes no logger" is never a state a boot
+  // can be in while it logs normally.
+  expect(diagnostics?.logger).toBeInstanceOf(Logger);
+  expect(typeof diagnostics?.logger?.log).toBe("function");
+  await application.close();
+});
+
+test("a boot that named a level array records the logger it built for it", async () => {
+  const application = await AponiaFactory.create(DiagnosticsAppModule, { logger: ["log"] });
+  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+
+  // A list of levels is a request to build a logger rather than a logger, so the
+  // application holds no object to hand over — and the record still names the
+  // logger the boot built, which is the only one its lines reach.
+  expect(diagnostics?.logger).toBeInstanceOf(Logger);
+  await application.close();
+});
+
+test("a boot that disabled its logging records no logger", async () => {
+  const application = await AponiaFactory.create(DiagnosticsAppModule, { logger: false });
+  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+
+  // `null` is the decision stated as a fact: an application that turned its
+  // logging off has no logger, and a record that stayed silent about it would be
+  // indistinguishable from one written before this field existed.
+  expect(diagnostics?.logger).toBeNull();
   await application.close();
 });
 

@@ -1,6 +1,7 @@
 import {
   tokenName,
   type EnhancerMetadata,
+  type LoggerService,
   type ModuleDefinition,
   type Token,
 } from "@aponiajs/common";
@@ -48,10 +49,17 @@ const diagnosticsKey: unique symbol = Symbol.for("aponia.application.diagnostics
  * having frozen them first: a reader of the record cannot see how the boot kept
  * them.
  *
+ * The logger is the one fact that is neither copied nor frozen. It is a live
+ * object the application holds beside the record, so a copy would be a logger
+ * nothing writes to and a freeze would reach an owner the record does not have;
+ * the record states which object the boot chose, and what a reader does with it
+ * is the reader's decision to state.
+ *
  * @internal
  */
 export function createApplicationDiagnostics(facts: {
   readonly framework: string;
+  readonly logger: LoggerService | undefined;
   readonly graph: "declared" | "decorated";
   readonly invokers: AponiaInvokerDiagnostics;
   readonly artifacts: AponiaArtifactProvenance;
@@ -63,6 +71,11 @@ export function createApplicationDiagnostics(facts: {
 }): AponiaApplicationDiagnostics {
   return Object.freeze({
     framework: facts.framework,
+    // `logger: false` is a decision — the application disabled its logging — and
+    // `null` is how this record states a decision to adopt nothing, the way an
+    // artifact stamp does. `undefined` never reaches the record: it is what a
+    // record written before this field existed reads as.
+    logger: facts.logger ?? null,
     graph: facts.graph,
     invokers: Object.freeze({ accepted: facts.invokers.accepted, reason: facts.invokers.reason }),
     artifacts: Object.freeze({

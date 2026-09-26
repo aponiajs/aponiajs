@@ -224,7 +224,11 @@ runtime boundary it describes.
   application no boot produced — a plain `Elysia`, a plugin instance — must read
   as `undefined` rather than as an empty record. The record is attached once the
   container holds every plan and before the gateway work, and it states what the
-  boot decided and mounted: the release, whether the graph it served was
+  boot decided and mounted: the release, the system logger it built — the object
+  itself, which is the one the platform, the application facade, and the default
+  exception mapping all write through, so a boot handed a `LoggerService` records
+  that same object and one handed nothing or a list of levels records the logger
+  it built — whether the graph it served was
   `"declared"` or `"decorated"` — decided by the shape of the root
   `selectRootModuleDescriptor` resolved, never by re-reading the artifact:
   `"declared"` when that root is a `ModuleDefinition`, and `"decorated"` when it
@@ -241,7 +245,12 @@ runtime boundary it describes.
   plan carries because a plan states only what its route declares. Which binding
   serves a plan is the mount's own decision, never a consumer's re-derivation:
   `registerCompiledElysiaRoutes` returns the property keys a supplied invoker
-  bound, and the boot hands that set to the record. Consumers
+  bound, and the boot hands that set to the record. A logger the application
+  disabled is `null` rather than an absent field, because a decision not to log
+  is a fact and `undefined` is left to mean a record written before the field
+  existed; and the record neither copies nor freezes the logger it names, because
+  a copy would be a logger nothing writes to and the object belongs to the
+  application as much as to the boot. Consumers
   project this record; they never re-apply a selector's rule to reach the same
   answer.
 - `defineElysiaControllerRoutes` is the descriptor path's counterpart to

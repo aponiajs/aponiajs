@@ -32,11 +32,15 @@ export class AppModule {}
   publishes nothing and is otherwise unaffected.
 - **Loopback only.** The devtools server binds `127.0.0.1` on `port` (default
   `8000`), with no way to widen the address.
-- **The log stream is the application's own.** Registration taps the logger the
-  application passes as `logger` — the same object it gives the factory, which
-  keeps printing everything it printed before — and records from the moment the
-  module registers, so the lines a boot reports about itself are in the stream
-  too.
+- **The log stream is the application's own.** The boot record names the logger
+  the application logs through — the object the factory built or the one it was
+  handed, whichever the application asked for — and starting the devtools server
+  patches that object **in place** so every line it writes is recorded without
+  the application handing anything over twice. The patch is a mutation of a
+  logger the platform and the application both hold, and it is the only way to
+  see the lines: a wrapper would see only what goes through the wrapper. The
+  stream holds what was written through that one object, and the container hands
+  no logger to a provider, so a provider's own logger is not part of it.
 - **A taken port never fails a boot.** The refused bind is reported under
   `Devtools`, and the application continues without the devtools server.
 - **The socket stops with the application.** `close()` stops the devtools server
@@ -77,11 +81,13 @@ export class AppModule {}
   filters are a list beside the stages rather than a stage in the chain, ordered
   as its own `error` array is, with the Problem Details mapping last.
 - **`GET /__devtools/logs?since=<cursor>` streams what the application logged.**
-  The registration takes the logger the application also gives
-  `AponiaFactory.create`, patches it in place, and records every line into a
-  bounded buffer — `logger: false` publishes that stream empty, and no `logger`
-  at all serves no `/logs`. Each poll names the cursor the previous answer
-  carried and is answered with `{ cursor, entries }`, where an entry is
+  The stream is the logger the boot decided on, read from the boot record and
+  recorded from the moment the socket starts — so the lines the application
+  writes while it serves are the lines this answers, whatever it named at the
+  factory: a `LoggerService`, a list of levels, or nothing at all. `logger: false`
+  publishes the stream empty, and an application no boot produced serves no
+  `/logs`. Each poll names the cursor the previous answer carried and is answered
+  with `{ cursor, entries }`, where an entry is
   `{ level, context, message, timestamp }`. A cursor older than the retained
   window is answered with what is retained and one ahead of every write with
   nothing: neither is an error, and the cursor never goes backwards.

@@ -7,7 +7,9 @@ import { buildGraphPayload, devtoolsGraphPath } from "../endpoints/graph.ts";
 import { buildLogsPayload, devtoolsLogsPath, readLogsCursor } from "../endpoints/logs.ts";
 import { buildMetaPayload, devtoolsMetaPath } from "../endpoints/meta.ts";
 import { buildRoutesPayload, devtoolsRoutesPath } from "../endpoints/routes.ts";
+import { createLogBuffer, defaultLogBufferCapacity } from "../logging/log-buffer.ts";
 import type { LogBuffer } from "../logging/log-buffer.types.ts";
+import { isRecordableLogger, tapLogBuffer } from "../logging/log-tap.ts";
 import type {
   DevtoolsHandlers,
   DevtoolsServer,
@@ -28,6 +30,14 @@ const defaultDevtoolsPort = 8000;
  * it, so nothing here may be a promise that has to settle before the first
  * request is served — including the read that resolves the installed Elysia.
  *
+ * The application's log stream is taken from the boot record it carries, and
+ * recording its lines means patching the logger the record names **in place**:
+ * the application and the platform already hold their references to it, so a
+ * wrapper would see only the lines that went through the wrapper and a
+ * replacement would be a logger neither of them writes to. That is a mutation of
+ * a logger the platform built, done here because a stream of the application's
+ * own lines cannot be had any other way.
+ *
  * A refused bind is this package's problem and never the application's: the
  * reason is reported under `Devtools`, with the address it could not take, and
  * `undefined` is returned. That is the caller's signal that there is nothing to
@@ -35,7 +45,7 @@ const defaultDevtoolsPort = 8000;
  */
 export function startDevtoolsServer(options: DevtoolsServerOptions): DevtoolsServer | undefined {
   const port = options.port ?? defaultDevtoolsPort;
-  const handlers = createHandlers(options.application, options.logs);
+  const handlers = createHandlers(options.application, createLogStream(options.application));
 
   try {
     const server = Bun.serve({
@@ -115,6 +125,43 @@ function findInstalledElysiaManifest(baseDirectory: string): string | undefined 
 }
 
 /**
+ * The application's log stream, taken from the boot record it carries.
+ *
+ * The logger is a boot decision, so it is read from the record rather than
+ * passed beside it: whatever `AponiaFactory.create` was given — a
+ * `LoggerService`, a list of levels, or nothing at all — the record names the
+ * very object the platform writes through, so no registration can disagree with
+ * the boot it belongs to and an application that named no logger is not a
+ * silence nobody can explain.
+ *
+ * Three states are three answers. A record naming a logger is tapped, which is
+ * the in-place patch `startDevtoolsServer` states above, and its stream is
+ * published. `null` — the application disabled its logging — is a decision, and
+ * the stream is published empty rather than absent, because that is what the
+ * decision looks like to a client. A record with no logger field at all is one
+ * written before this field existed, or an application no boot produced, and it
+ * serves no `/logs` at all: the endpoint states a stream, and this one has none
+ * to state. A field a foreign record fills with something that is not a logger
+ * reads the same way, because an empty stream would claim the application logs
+ * nothing.
+ */
+function createLogStream(application: Elysia): LogBuffer | undefined {
+  const logger = readApplicationDiagnostics(application)?.logger;
+
+  if (logger === undefined) {
+    return undefined;
+  }
+
+  const logs = createLogBuffer(defaultLogBufferCapacity);
+
+  if (logger === null) {
+    return logs;
+  }
+
+  return isRecordableLogger(logger) ? tapLogBuffer(logger, logs) : undefined;
+}
+
+/**
  * The endpoints one server serves, built once — with one payload the running
  * application answers rather than the boot.
  *
@@ -131,10 +178,10 @@ function findInstalledElysiaManifest(baseDirectory: string): string | undefined 
  * package's answer on its own; a route no record describes is reported with the
  * facts a record would have supplied left empty.
  *
- * `/logs` is the one endpoint whose source is passed in rather than read off the
- * application: it is registered only for a server that was handed a stream, and
- * its cursor is the request's, because two pollers read the same stream from two
- * different positions.
+ * `/logs` is the one endpoint whose source is not the record's own data but the
+ * live object the record names: it is registered for a server that resolved a
+ * stream, and its cursor is the request's, because two pollers read the same
+ * stream from two different positions.
  *
  * Every builder it calls is total — a record this release cannot project is one
  * of the cases they answer rather than throw for — because this runs before the

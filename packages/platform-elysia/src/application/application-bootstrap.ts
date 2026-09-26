@@ -237,20 +237,22 @@ export async function bootstrapAponiaApplication(
     }
   }
 
-  // The boot's own record, attached to the application it returns: which root
-  // the container compiled, what it decided about the invoker artifact, which
-  // release supplied each artifact it adopted, the compiled root, every plan the
-  // controllers mounted from with the binding that serves it, the routes a
-  // callback added, and the application's own enhancer declaration. Those are
-  // the facts a consumer cannot recover from the mounted application — a route
-  // keeps its method and path, never the module, the controller, or the property
-  // key that declared it — and the record is attached here, once the container
-  // holds every plan, rather than after the gateway work, which mounts through
-  // its own path.
+  // The boot's own record, attached to the application it returns: the system
+  // logger it built, which root the container compiled, what it decided about the
+  // invoker artifact, which release supplied each artifact it adopted, the
+  // compiled root, every plan the controllers mounted from with the binding that
+  // serves it, the routes a callback added, and the application's own enhancer
+  // declaration. Those are the facts a consumer cannot recover from the mounted
+  // application — a route keeps its method and path, never the module, the
+  // controller, or the property key that declared it, and the logger is held
+  // privately by the application facade — and the record is attached here, once
+  // the container holds every plan, rather than after the gateway work, which
+  // mounts through its own path.
   attachApplicationDiagnostics(
     nativeApplication,
     createApplicationDiagnostics({
       framework: aponiaVersion,
+      logger,
       graph,
       invokers: {
         accepted: invokerSelection.invokers !== undefined,

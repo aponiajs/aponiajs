@@ -5,21 +5,23 @@ import { Elysia } from "elysia";
 import {
   DevtoolsModule,
   createLogBuffer,
+  defaultLogBufferCapacity,
   startDevtoolsServer,
   tapLogBuffer,
   type AponiaLogsPayload,
   type DevtoolsServer,
-  type LogBuffer,
   type LogEntry,
 } from "../src/index.ts";
 
 /**
  * The bounded log stream and the endpoint that publishes it.
  *
- * The contract is HTTP and a cursor, so the socket lane binds port `0` and reads
- * the address it took back out of the server handle, and the cases that need an
- * application boot read it back out of the `Devtools` report. No case depends on
- * a port it guessed.
+ * The stream comes from the boot record: the logger `AponiaFactory.create`
+ * decided on is the object `/logs` records, so a case boots a real application
+ * and writes through a logger it owns to pin what a client observes. The
+ * contract is HTTP and a cursor, so every socket binds port `0` and the address
+ * is read back — off the server handle, or out of the `Devtools` report. No case
+ * depends on a port it guessed.
  *
  * The cursor and the ring are where a test can quietly become useless — a
  * fixture whose input order already equals its expected order, or an assertion
@@ -44,6 +46,10 @@ function entry(message: string): LogEntry {
 function messagesOf(read: { readonly entries: readonly LogEntry[] }): readonly string[] {
   return read.entries.map((item) => item.message);
 }
+
+/** A module with nothing in it: a boot for the sake of its record. */
+@Module({})
+class EmptyModule {}
 
 test("a read answers the entries after its cursor and the cursor to pass back", () => {
   const buffer = createLogBuffer(10);
@@ -157,18 +163,19 @@ function fakeLogger(): { readonly logger: LoggerService; readonly calls: readonl
   };
 }
 
-test("the tap records each line and still writes it through the same logger", () => {
+test("the tap records each line and still writes it through the logger it was given", () => {
   const { logger, calls } = fakeLogger();
   const buffer = createLogBuffer(4);
 
   const tapped = tapLogBuffer(logger, buffer);
 
-  // The object, not a wrapper: the application and the platform hold their own
-  // references to it, so the lines they write are the lines this records.
-  expect(tapped).toBe(logger);
+  // The stream that records it is the answer, and the logger is the object the
+  // caller already held: the lines written through that reference are the lines
+  // this records, which is what patching in place buys and a wrapper could not.
+  expect(tapped).toBe(buffer);
 
-  tapped.log("serving", "RouterExplorer");
-  tapped.warn("slow", "HealthController");
+  logger.log("serving", "RouterExplorer");
+  logger.warn("slow", "HealthController");
 
   expect(calls).toEqual(["log serving", "warn slow"]);
   expect(
@@ -234,13 +241,16 @@ test("a message is projected to text whatever the logger was handed", () => {
   ]);
 });
 
-test("a logger is tapped once, so a line cannot be recorded or printed twice", () => {
+test("one logger records into one stream, so a line is never recorded or printed twice", () => {
   const { logger, calls } = fakeLogger();
   const first = createLogBuffer(4);
   const second = createLogBuffer(4);
 
-  tapLogBuffer(logger, first);
-  tapLogBuffer(logger, second);
+  expect(tapLogBuffer(logger, first)).toBe(first);
+  // A second server started over the same logger — a second `listen()` — is
+  // answered with the stream that is already recording, so the lines a client
+  // polls and the lines the logger writes cannot drift apart.
+  expect(tapLogBuffer(logger, second)).toBe(first);
 
   logger.log("once");
 
@@ -256,22 +266,17 @@ test("a logger this package cannot patch is left as it is and records nothing", 
 
   const tapped = tapLogBuffer(logger, buffer);
 
-  expect(tapped).toBe(logger);
+  expect(tapped).toBe(buffer);
 
-  tapped.log("still writes");
+  logger.log("still writes");
 
   expect(calls).toEqual(["log still writes"]);
   expect(buffer.since(0).entries).toEqual([]);
 });
 
 /** Binds the loopback socket on port `0` and reads the address it took. */
-function serveLoopback(application: Elysia, logs?: LogBuffer): DevtoolsServer {
-  const server = startDevtoolsServer({
-    application,
-    port: 0,
-    logger: silentLogger,
-    ...(logs === undefined ? {} : { logs }),
-  });
+function serveLoopback(application: Elysia): DevtoolsServer {
+  const server = startDevtoolsServer({ application, port: 0, logger: silentLogger });
 
   if (server === undefined) {
     throw new Error("the devtools server refused to bind the loopback socket");
@@ -289,18 +294,23 @@ async function readLogs(server: DevtoolsServer, query = ""): Promise<AponiaLogsP
 }
 
 test("logs answers the retained window and answers a poll from the cursor it published", async () => {
-  const logs = createLogBuffer(4);
-  logs.write(entry("one"));
-  logs.write(entry("two"));
+  const { logger } = fakeLogger();
+  const application = await AponiaFactory.createNative(EmptyModule, { logger });
+  const server = serveLoopback(application);
 
-  const server = serveLoopback(new Elysia(), logs);
   try {
+    // Written after the socket started, so the stream holds exactly these: the
+    // tap is installed while the server starts, and the boot's own lines are
+    // behind it rather than mixed into a window this case asserts by name.
+    logger.log("one", "LogsTest");
+    logger.log("two", "LogsTest");
+
     const first = await readLogs(server);
 
     expect(first.cursor).toBe(2);
     expect(messagesOf(first)).toEqual(["one", "two"]);
 
-    logs.write(entry("three"));
+    logger.log("three", "LogsTest");
 
     const second = await readLogs(server, `?since=${first.cursor}`);
 
@@ -312,11 +322,13 @@ test("logs answers the retained window and answers a poll from the cursor it pub
 });
 
 test("a since beyond the retained window answers what is retained, not an error", async () => {
-  const logs = createLogBuffer(4);
-  logs.write(entry("one"));
+  const { logger } = fakeLogger();
+  const application = await AponiaFactory.createNative(EmptyModule, { logger });
+  const server = serveLoopback(application);
 
-  const server = serveLoopback(new Elysia(), logs);
   try {
+    logger.log("one", "LogsTest");
+
     const response = await fetch(`${server.url}/__devtools/logs?since=999999`);
 
     expect(response.status).toBe(200);
@@ -335,29 +347,37 @@ test("a since beyond the retained window answers what is retained, not an error"
 });
 
 test("the stream is bounded over the wire at the capacity it was built with", async () => {
-  const logs = createLogBuffer(2);
-  for (const message of ["one", "two", "three"]) {
-    logs.write(entry(message));
-  }
+  const { logger } = fakeLogger();
+  const application = await AponiaFactory.createNative(EmptyModule, { logger });
+  const server = serveLoopback(application);
 
-  const server = serveLoopback(new Elysia(), logs);
   try {
+    // Two lines more than the bound holds, so what is retained is a suffix of
+    // what was written and the two oldest are the ones gone.
+    const written = defaultLogBufferCapacity + 2;
+    for (let index = 1; index <= written; index += 1) {
+      logger.log(`line-${index}`, "LogsTest");
+    }
+
     const payload = await readLogs(server);
 
-    expect(payload.entries).toHaveLength(2);
-    expect(messagesOf(payload)).toEqual(["two", "three"]);
-    expect(payload.cursor).toBe(3);
+    expect(payload.entries).toHaveLength(defaultLogBufferCapacity);
+    expect(payload.cursor).toBe(written);
+    expect(payload.entries[0]?.message).toBe(`line-${written - defaultLogBufferCapacity + 1}`);
+    expect(payload.entries.at(-1)?.message).toBe(`line-${written}`);
   } finally {
     server.stop();
   }
 });
 
 test("a since that is not a cursor reads as the whole retained window", async () => {
-  const logs = createLogBuffer(4);
-  logs.write(entry("one"));
+  const { logger } = fakeLogger();
+  const application = await AponiaFactory.createNative(EmptyModule, { logger });
+  const server = serveLoopback(application);
 
-  const server = serveLoopback(new Elysia(), logs);
   try {
+    logger.log("one", "LogsTest");
+
     // A repeated key reads as its first value, which is what a poller sends when
     // it appends its cursor to a query it built.
     for (const query of [
@@ -379,14 +399,16 @@ test("a since that is not a cursor reads as the whole retained window", async ()
   }
 });
 
-test("a server that was handed no stream serves no logs endpoint", async () => {
+test("a server whose application carries no boot record serves no logs endpoint", async () => {
   const server = serveLoopback(new Elysia());
+
   try {
     const logs = await fetch(`${server.url}/__devtools/logs`);
 
-    // The endpoint states a stream, and this server has none to state: the
-    // dispatcher's `404` is the answer for a path its handler record does not
-    // own, rather than an empty stream that would claim nothing was logged.
+    // The endpoint states a stream, and an application no boot produced has no
+    // logger to state: the dispatcher's `404` is the answer for a path its
+    // handler record does not own, rather than an empty stream that would claim
+    // nothing was logged.
     expect(logs.status).toBe(404);
     expect((await fetch(`${server.url}/__devtools/meta`)).status).toBe(200);
   } finally {
@@ -394,25 +416,62 @@ test("a server that was handed no stream serves no logs endpoint", async () => {
   }
 });
 
+test("a record written before the boot published a logger serves no logs endpoint", async () => {
+  // The record is read through a registry-global symbol key, so a boot run by an
+  // older copy of `@aponiajs/platform-elysia` in this process is reachable from
+  // here — and that copy's record has no `logger` at all. This attaches the
+  // record the way an older bootstrap did: a missing field is "no statement",
+  // which is a different thing from `null`, the decision not to log.
+  const application = new Elysia();
+  Object.defineProperty(application, Symbol.for("aponia.application.diagnostics"), {
+    value: { framework: "0.0.0-older", graph: "decorated" },
+    enumerable: false,
+  });
+  const server = serveLoopback(application);
+
+  try {
+    expect((await fetch(`${server.url}/__devtools/logs`)).status).toBe(404);
+    expect((await fetch(`${server.url}/__devtools/meta`)).status).toBe(200);
+  } finally {
+    server.stop();
+  }
+});
+
+test("a record whose logger is not a logger serves no logs endpoint", async () => {
+  for (const logger of ["nope", {}, { log: "not a function" }]) {
+    const application = new Elysia();
+    Object.defineProperty(application, Symbol.for("aponia.application.diagnostics"), {
+      value: { framework: "9.9.9-newer", logger },
+      enumerable: false,
+    });
+    const server = serveLoopback(application);
+
+    try {
+      // A foreign record may hold anything, and a logger with no callable level
+      // records nothing: an endpoint answering an empty stream would claim the
+      // application logs nothing while it logs normally, so the path is not
+      // served at all.
+      expect((await fetch(`${server.url}/__devtools/logs`)).status).toBe(404);
+    } finally {
+      server.stop();
+    }
+  }
+});
+
 const ephemeralPort = 0;
 
-/** The logger the application and the platform both write to, tapped once. */
+/**
+ * One registration for the cases that need a real boot. Which logger the
+ * application logs through is the factory's decision in every one of them, and
+ * the case that owns a logger passes it there.
+ */
+@Module({
+  imports: [DevtoolsModule.register({ enabled: true, port: ephemeralPort })],
+})
+class LoggedModule {}
+
+/** The logger one case hands the factory, so its own lines are the ones it asserts. */
 const streamedLogger = new Logger("Streamed", { timestamp: false });
-
-@Module({
-  imports: [
-    DevtoolsModule.register({ enabled: true, port: ephemeralPort, logger: streamedLogger }),
-  ],
-})
-class StreamedModule {}
-
-@Module({
-  imports: [DevtoolsModule.register({ enabled: true, port: ephemeralPort, logger: false })],
-})
-class DisabledLoggingModule {}
-
-@Module({ imports: [DevtoolsModule.register({ enabled: true, port: ephemeralPort })] })
-class PublishedNoLoggerModule {}
 
 interface CapturedOutput {
   readonly rows: () => readonly string[];
@@ -457,28 +516,70 @@ async function readLogsAt(address: string, query = ""): Promise<AponiaLogsPayloa
   return (await response.json()) as AponiaLogsPayload;
 }
 
+test.serial("an application that named no logger streams what it logs", async () => {
+  const output = captureOutput();
+  let application: AponiaElysiaApplication | undefined;
+  try {
+    // No `logger` option at all: the default path, and the one a registration
+    // could not have covered with a logger of its own. The record names the
+    // logger the boot built, so the lines the application writes through it are
+    // the lines the stream states.
+    application = await AponiaFactory.create(LoggedModule);
+    await application.listen(0);
+
+    const first = await readLogsAt(reportedAddress(output));
+    const contexts = first.entries.map((item) => item.context);
+
+    expect(contexts).toContain("AponiaApplication");
+    expect(first.cursor).toBe(first.entries.length);
+    expect(first.cursor).toBeGreaterThan(0);
+
+    // The stream begins when the socket starts, because that is when the server
+    // reads the record and installs the tap: the lines the boot wrote about
+    // itself are behind it. Those are the only lines a stream of the
+    // application's own logger cannot hold, and it holds every one written after.
+    expect(contexts).not.toContain("InstanceLoader");
+    expect(contexts).not.toContain("AponiaFactory");
+  } finally {
+    await application?.close();
+    output.restore();
+  }
+});
+
+test.serial("an application that named a list of levels streams what it logs", async () => {
+  const output = captureOutput();
+  let application: AponiaElysiaApplication | undefined;
+  try {
+    // The other value the factory accepts that is not a logger: the platform
+    // builds one, and the record is still where it can be read, so the
+    // application logs normally and the stream is not silently empty.
+    application = await AponiaFactory.create(LoggedModule, { logger: ["log"] });
+    await application.listen(0);
+
+    const payload = await readLogsAt(reportedAddress(output));
+
+    expect(payload.cursor).toBeGreaterThan(0);
+    expect(payload.entries.map((item) => item.context)).toContain("AponiaApplication");
+  } finally {
+    await application?.close();
+    output.restore();
+  }
+});
+
 test.serial(
-  "a registration records the lines the boot wrote before its socket started",
+  "the application's own line arrives after the cursor the last answer named",
   async () => {
     const output = captureOutput();
     let application: AponiaElysiaApplication | undefined;
     try {
-      application = await AponiaFactory.create(StreamedModule, { logger: streamedLogger });
+      // A logger the application supplied and still holds: the tap patches this
+      // object, so the line written through the case's own reference is a line the
+      // stream states — which a wrapper could not promise.
+      application = await AponiaFactory.create(LoggedModule, { logger: streamedLogger });
       await application.listen(0);
 
       const first = await readLogsAt(reportedAddress(output));
-      const contexts = first.entries.map((item) => item.context);
 
-      // The stream started at registration, which is before the boot wrote
-      // anything: a tap installed when the socket starts would answer with none of
-      // these, and these are most of what a log stream is worth.
-      expect(contexts).toContain("AponiaFactory");
-      expect(contexts).toContain("InstanceLoader");
-      expect(contexts).toContain("AponiaApplication");
-      expect(first.cursor).toBe(first.entries.length);
-
-      // Cause one more log line, then read from the cursor the previous answer
-      // carried: the poll is answered with that line and nothing else.
       streamedLogger.log("after the first poll", "LogsTest");
 
       const second = await readLogsAt(reportedAddress(output), `?since=${first.cursor}`);
@@ -497,29 +598,12 @@ test.serial("an application that disabled its logging serves an empty stream", a
   const output = captureOutput();
   let application: AponiaElysiaApplication | undefined;
   try {
-    application = await AponiaFactory.create(DisabledLoggingModule, { logger: false });
+    application = await AponiaFactory.create(LoggedModule, { logger: false });
     await application.listen(0);
 
     // `false` is a decision, not an absence: the endpoint answers, and what it
     // answers is that nothing is being logged.
     expect(await readLogsAt(reportedAddress(output))).toEqual({ cursor: 0, entries: [] });
-  } finally {
-    await application?.close();
-    output.restore();
-  }
-});
-
-test.serial("a registration that published no logger serves no logs endpoint", async () => {
-  const output = captureOutput();
-  let application: AponiaElysiaApplication | undefined;
-  try {
-    application = await AponiaFactory.create(PublishedNoLoggerModule, { logger: false });
-    await application.listen(0);
-
-    const address = reportedAddress(output);
-
-    expect((await fetch(`${address}/__devtools/logs`)).status).toBe(404);
-    expect((await fetch(`${address}/__devtools/meta`)).status).toBe(200);
   } finally {
     await application?.close();
     output.restore();

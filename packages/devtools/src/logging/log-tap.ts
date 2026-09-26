@@ -16,17 +16,42 @@ const recordableLevels = [
 ] as const satisfies readonly LogLevel[];
 
 /**
- * The loggers this module has already wrapped.
+ * The stream each tapped logger records into.
  *
- * A logger is a live object the application owns, so wrapping one twice would
+ * A logger is a live object the application owns, so tapping one twice would
  * wrap the wrapper: every line would be recorded twice and printed twice. The
- * guard makes a second tap a no-op that leaves the first recording, which is the
- * state the application asked for the first time.
+ * map makes a second tap answer with the stream that is already recording — one
+ * logger, one stream — which is also what keeps a second `listen()`, and the
+ * second devtools server it starts, publishing the stream the logger writes to
+ * rather than a fresh one nothing writes into.
  */
-const tappedLoggers = new WeakSet<object>();
+const tappedLoggers = new WeakMap<object, LogBuffer>();
 
 /**
- * Records everything `logger` writes into `buffer`, and answers the same logger.
+ * Whether this package can record the lines a value writes: an object with at
+ * least one callable `LoggerService` method.
+ *
+ * The value comes from a boot record this package did not write, so it is
+ * checked rather than trusted. A value that fails the check records nothing, and
+ * the endpoint that would publish it is not registered at all, because an empty
+ * stream claims the application logs nothing — the one answer that must not be
+ * given when it is not true.
+ *
+ * @internal
+ */
+export function isRecordableLogger(value: unknown): value is LoggerService {
+  if (value === null || typeof value !== "object") {
+    return false;
+  }
+
+  return recordableLevels.some(
+    (level) => typeof (value as Record<string, unknown>)[level] === "function",
+  );
+}
+
+/**
+ * Records everything `logger` writes into `buffer`, and answers the stream that
+ * records it.
  *
  * The logger is patched in place rather than replaced. The application has
  * already handed this object to the platform, which holds its own reference to
@@ -42,16 +67,20 @@ const tappedLoggers = new WeakSet<object>();
  * enforcing a filter it does not own.
  *
  * A logger this package cannot patch — a frozen object, or a property that
- * refuses the assignment — is left exactly as it was and is still answered with,
- * because a debugging aid that failed a boot over its own tap would be the
- * failure mode this package exists not to have.
+ * refuses the assignment — is left exactly as it was and the stream handed over
+ * records nothing for it, because a debugging aid that failed a boot over its own
+ * tap would be the failure mode this package exists not to have. A logger it has
+ * tapped before is answered with the stream already recording it, so the two
+ * cannot disagree about where a line went.
  */
-export function tapLogBuffer(logger: LoggerService, buffer: LogBuffer): LoggerService {
-  if (tappedLoggers.has(logger)) {
-    return logger;
-  }
-
+export function tapLogBuffer(logger: LoggerService, buffer: LogBuffer): LogBuffer {
   try {
+    const tapped = tappedLoggers.get(logger);
+
+    if (tapped !== undefined) {
+      return tapped;
+    }
+
     // One assertion, stated here rather than repeated per level: the methods the
     // interface declares are mutable properties of whatever object implements
     // it, and patching them is what keeps the logger the object it was.
@@ -72,14 +101,30 @@ export function tapLogBuffer(logger: LoggerService, buffer: LogBuffer): LoggerSe
         write.call(logger, message, ...optionalParameters);
       };
     }
-
-    tappedLoggers.add(logger);
   } catch {
     // Nothing was recorded and the logger keeps the methods it had, because the
     // tap is this package's convenience and never the application's contract.
   }
 
-  return logger;
+  rememberTap(logger, buffer);
+
+  return buffer;
+}
+
+/**
+ * Remembers which stream records a logger, however the patch went: a logger this
+ * package could not patch is still a logger it has answered for, and a second
+ * caller gets the same answer rather than a second stream that records nothing.
+ *
+ * A value that cannot be keyed — a foreign record can hold anything — is simply
+ * not remembered, because the stream handed over is the answer either way.
+ */
+function rememberTap(logger: LoggerService, buffer: LogBuffer): void {
+  try {
+    tappedLoggers.set(logger, buffer);
+  } catch {
+    // Not an object, so there is nothing to remember it by.
+  }
 }
 
 /**
