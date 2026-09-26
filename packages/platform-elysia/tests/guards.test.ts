@@ -7,6 +7,10 @@ import {
   UseGuards,
   defineModule,
   provideClass,
+  type ClassToken,
+  type ExecutionContext,
+  type RequestMethod,
+  type RouteContext,
 } from "@aponiajs/common";
 import {
   AponiaFactory,
@@ -90,6 +94,52 @@ class OrderedController {
   providers: [AllowGuard, DenyGuard, AsyncDenyGuard, GlobalAllowGuard, GlobalDenyGuard],
 })
 class AppModule {}
+
+/**
+ * What each accessor answered for the one request the probe guard let through.
+ *
+ * The guard records the values itself, from the context the platform handed a
+ * real request, so a case asserts what a guard is actually given rather than
+ * what a context built in isolation would answer.
+ */
+interface ContextProbe {
+  handler?: (...arguments_: never[]) => unknown;
+  controller?: ClassToken<unknown>;
+  route?: Readonly<{ readonly method: RequestMethod; readonly path: string }>;
+  context?: RouteContext;
+  request?: RouteContext;
+}
+
+const probe: ContextProbe = {};
+
+@Injectable()
+class ContextProbeGuard {
+  canActivate(context: ExecutionContext): boolean {
+    calls.push("probe");
+    probe.handler = context.getHandler();
+    probe.controller = context.getClass<ProbeController>();
+    probe.route = context.getRoute();
+    probe.context = context.getContext();
+    probe.request = context.switchToHttp().getRequest();
+
+    return true;
+  }
+}
+
+@Controller("probe")
+@UseGuards(ContextProbeGuard)
+class ProbeController {
+  @Get()
+  // The handler never reads `this`, which the annotation states so that a case
+  // can hold the method itself as the handler a guard is given.
+  read(this: void): string {
+    calls.push("handler");
+    return "probe";
+  }
+}
+
+@Module({ controllers: [ProbeController], providers: [ContextProbeGuard] })
+class ProbeModule {}
 
 @Controller("feature")
 class FeatureController {
@@ -234,6 +284,33 @@ describe("guards", () => {
     expect(hooks.afterHandle).toBeUndefined();
     const response = await application.handle(new Request("http://localhost/open"));
     expect([response.status, await response.text()]).toEqual([200, "read"]);
+
+    await application.close();
+  });
+});
+
+describe("the context a guard receives", () => {
+  test("each accessor answers the controller, the handler, and the mounted route", async () => {
+    calls.length = 0;
+    const application = await AponiaFactory.create(ProbeModule, { logger: false });
+
+    const response = await application.handle(new Request("http://localhost/probe"));
+
+    // The guard allowed the request, so everything below states the contract on
+    // the successful path: the guard ran first, the handler answered.
+    expect([response.status, await response.text()]).toEqual([200, "probe"]);
+    expect(calls).toEqual(["probe", "handler"]);
+
+    expect(probe.controller).toBe(ProbeController);
+    // The handler is the controller's own method, not the platform's invoker, so
+    // a guard recognises the route it protects the way Nest code does.
+    expect(probe.handler).toBe(ProbeController.prototype.read);
+    expect(probe.route).toEqual({ method: "GET", path: "/probe" });
+    // `switchToHttp().getRequest()` and `getContext()` are the same object, which
+    // is the request the context describes.
+    expect(probe.request).toBe(probe.context);
+    expect(probe.context?.request.url).toBe("http://localhost/probe");
+    expect(probe.context?.path).toBe("/probe");
 
     await application.close();
   });
