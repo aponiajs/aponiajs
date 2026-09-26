@@ -15,6 +15,7 @@ and documentation guards that CI enforces.
 | `agent-guides.spec.ts`       | Guide inventory, aliases, and mandatory per-turn `RULES.md` loading      |
 | `ci-workflows.spec.ts`       | Complete CI, publish, packaging, and dependency-security command matrix  |
 | `source-layout.spec.ts`      | Package owner directories, barrels, type-only modules, local imports     |
+| `toolchain-config.spec.ts`   | The decorator transpiler options and the single Bun version pin          |
 | `package-llms.spec.ts`       | The `llms.txt` every published package ships and lists in `files`        |
 | `*.spec.ts`                  | Guard tests over the above and over documentation wording                |
 
@@ -56,6 +57,16 @@ and documentation guards that CI enforces.
   `packages/aponiajs` is the pinned private exception.
 - Every push must raise the synchronized workspace version. Run the smallest
   valid `bun run version:*` and commit its output.
+- `toolchain-config.spec.ts` holds two configuration invariants. Every package
+  `tsconfig.json` declares `experimentalDecorators` and `emitDecoratorMetadata`,
+  because Bun reads the transpiler configuration from the process working
+  directory and a package without them silently serves `404` from its own
+  directory. And the Bun version is identical in `package.json`
+  (`packageManager` and `devEngines`), `mise.toml`, every workflow's
+  `bun-version`, the starter manifest, and the README badge — `packageManager` is
+  the source of truth and the rest are asserted against it. Move all of them in
+  one change; a version that drifts between them passes locally and fails in CI,
+  or measures a release nobody else ran.
 
 ## Tests
 

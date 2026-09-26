@@ -23,7 +23,7 @@ Structured applications for Bun
 
 [![CI](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml/badge.svg)](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcommon/alpha?label=npm&color=baa9d1)](https://www.npmjs.com/package/@aponiajs/common)
-[![Bun](https://img.shields.io/badge/Bun-1.3.14-f8eddd?logo=bun&logoColor=24232d)](https://bun.sh)
+[![Bun](https://img.shields.io/badge/Bun-1.4.2-f8eddd?logo=bun&logoColor=24232d)](https://bun.sh)
 [![Elysia](https://img.shields.io/badge/Elysia-1.4-d9ccea)](https://elysiajs.com)
 [![License](https://img.shields.io/badge/License-MIT-e8b9b5)](./LICENSE)
 
