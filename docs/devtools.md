@@ -259,8 +259,9 @@ accepts one level and then refuses the next publishes a stream: a tap genuinely
 installed, so it records the levels the tap reached, the refusing level keeps the
 method it had, and the levels after it are never reached. **The payload does not
 say which levels are missing** — an entry states the level it was written at, so
-a stream that never carries `debug` cannot be told from one whose `debug` lines
-were never written. Read the two together when a level you expect is absent.
+a level absent from a stream has two readings that read the same in the payload:
+nothing was written at it, or the tap never reached it. A stream that never
+carries `debug` cannot be told from one whose `debug` lines were never written.
 
 ### `/requests`
 
@@ -349,6 +350,18 @@ different owners and fail differently.
   when the emitter renders an invoker for it or `"compiled"` when it declines,
   with the emitter's own reason. A handler is one property key, however many
   routes its decorators declare.
+
+`graph` states the shape of the root that was compiled, never what the project
+declares, so **`"declared"` is not an endorsement of your source**. A root module
+that registers a dynamic module is declined by `aponia build`, and where nothing
+else could be declared the artifact the project already had keeps serving: such
+an application reports `graph: "declared"` for a source tree that declares a
+registration the compiled graph does not carry, and `/__devtools` never mounts.
+`"decorated"` is the other side of that same decline, taken when other modules
+were still lowered — the registration is in the graph it names, and the
+declared-graph boot was given up for it. The `DECLINED module` line a build
+prints is what separates the two, and [the limitation
+below](#accepted-limitations) states the same case from the build's side.
 
 `@aponiajs/cli` is imported on the first request to this endpoint and never at
 boot, because it carries `ts-morph` and a formatter an application that never

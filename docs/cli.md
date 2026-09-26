@@ -273,14 +273,14 @@ low-level runtime descriptors.
 object to `AponiaFactory.create`, so every bootstrap line is written through the
 logger the application also holds.
 
-A [devtools](./devtools.md) registration is added the same way — the import is
-`DevtoolsModule.register({ enabled, logger: appLogger })`, declared in
-`src/app.module.ts` and handed the same logger — but the starter does not make
-it. A registration is a dynamic module, and `aponia build` reports a root module
-that imports one as `DECLINED`, because the committed
-`descriptors.generated.ts` is what lets a fresh checkout boot from the declared
-graph and a run-time registration cannot be lowered into it. The trade-off is
-the application's to make; the [devtools guide](./devtools.md) states it.
+A [devtools](./devtools.md) registration is added the same way — it is an entry
+in the root module's `imports`, `DevtoolsModule.register({ enabled, logger: appLogger })`,
+handed the same logger — but the starter does not make it. A registration is a
+dynamic module, and `aponia build` reports a root module that imports one as
+`DECLINED`, because the committed `descriptors.generated.ts` is what lets a fresh
+checkout boot from the declared graph and a run-time registration cannot be
+lowered into it. The trade-off is the application's to make; the
+[devtools guide](./devtools.md) states it.
 
 The starter ships both generated modules, so a freshly generated application
 serves through generated route invokers and boots from the declared module graph

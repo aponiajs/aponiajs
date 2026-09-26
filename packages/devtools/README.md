@@ -154,7 +154,10 @@ export class AppModule {}
   with it.** `graph` and `invokers` are the boot record's: which root the
   container compiled, and the boot's verdict on the generated invoker artifact,
   with the refusal's own sentence — and no `reason` key at all when there was no
-  refusal, because a reason belongs to a refusal. `controllers` is the verdict
+  refusal, because a reason belongs to a refusal. `graph` states the shape of the
+  root that was compiled, never what the project declares: `"declared"` is not an
+  endorsement of your source, and the silent case above reports it for a
+  registration the compiled graph does not carry. `controllers` is the verdict
   `aponia build` reaches for the project the server was started in: every
   `@Controller()` class its analysis reads, and per handler — one entry per
   property key, however many routes it declares — `"generated"` when the emitter
