@@ -12,6 +12,11 @@ import {
   isElysiaController,
   registerElysiaControllerRoutes,
 } from "../controllers/controller-definition.ts";
+import {
+  collectEnhancerDeclarations,
+  resolveEnhancers,
+  type ResolvedControllerEnhancers,
+} from "../controllers/enhancer-resolver.ts";
 import type { RuntimeElysiaController } from "../controllers/controller.types.ts";
 import { compileRootModule } from "../modules/module-compiler.ts";
 import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
@@ -98,6 +103,15 @@ export async function bootstrapAponiaApplication(
       }
 
       const instance = container.instantiateController(module, controller);
+      // Every enhancer this controller's routes declare is resolved here, while
+      // the controller mounts: an undeclared or unreachable class fails the
+      // mount with the same MISSING_PROVIDER a missing dependency raises, and
+      // each distinct class is resolved once however many routes name it.
+      const resolvedEnhancers = resolveEnhancers(
+        container,
+        module,
+        collectEnhancerDeclarations(controller.compiledRoutes ?? []),
+      );
       if (typeof controller.registerRoutes === "function") {
         const routeStart = nativeApplication.routes.length;
         registerControllerRoutes(
@@ -106,6 +120,7 @@ export async function bootstrapAponiaApplication(
           instance,
           generatedInvokers,
           globalEnhancers,
+          resolvedEnhancers,
         );
         logControllerRoutes(logger, controller, nativeApplication.routes.slice(routeStart));
         continue;
@@ -151,6 +166,12 @@ function registerControllerRoutes(
   instance: unknown,
   invokers: ReadonlyMap<ClassToken<unknown>, AponiaControllerInvokerFactory> | undefined,
   globalEnhancers: EnhancerMetadata,
+  // A route's hooks are what consume the resolution, and they are compiled from
+  // it while the route mounts. Until they exist the resolution travels to the
+  // boundary and no further, so the parameter is deliberately inert rather than
+  // read and discarded.
+  // oxlint-disable-next-line no-unused-vars
+  resolvedEnhancers: ResolvedControllerEnhancers,
 ): void {
   const compiledRoutes = controller.compiledRoutes;
   // Elysia controllers are always class-backed, which is what makes the token
