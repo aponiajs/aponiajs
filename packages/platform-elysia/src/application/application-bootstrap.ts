@@ -3,6 +3,7 @@ import {
   Logger,
   tokenName,
   type ClassToken,
+  type EnhancerMetadata,
   type LoggerService,
 } from "@aponiajs/common";
 import { createContainer } from "@aponiajs/core";
@@ -67,6 +68,16 @@ export async function bootstrapAponiaApplication(
     );
   }
 
+  // The global enhancers are the application's own declaration and are copied
+  // into frozen metadata once, before any controller mounts. They travel to the
+  // mount rather than into a compiled route: a compiled plan states what a
+  // controller declares and nothing else.
+  const globalEnhancers: EnhancerMetadata = Object.freeze({
+    guards: Object.freeze([...(options.guards ?? [])]),
+    interceptors: Object.freeze([...(options.interceptors ?? [])]),
+    filters: Object.freeze([...(options.filters ?? [])]),
+  });
+
   for (const module of container.graph.modules) {
     container.initializeModule(module);
     if (isElysiaPluginModule(module)) {
@@ -89,7 +100,13 @@ export async function bootstrapAponiaApplication(
       const instance = container.instantiateController(module, controller);
       if (typeof controller.registerRoutes === "function") {
         const routeStart = nativeApplication.routes.length;
-        registerControllerRoutes(controller, nativeApplication, instance, generatedInvokers);
+        registerControllerRoutes(
+          controller,
+          nativeApplication,
+          instance,
+          generatedInvokers,
+          globalEnhancers,
+        );
         logControllerRoutes(logger, controller, nativeApplication.routes.slice(routeStart));
         continue;
       }
@@ -133,6 +150,7 @@ function registerControllerRoutes(
   application: Elysia,
   instance: unknown,
   invokers: ReadonlyMap<ClassToken<unknown>, AponiaControllerInvokerFactory> | undefined,
+  globalEnhancers: EnhancerMetadata,
 ): void {
   const compiledRoutes = controller.compiledRoutes;
   // Elysia controllers are always class-backed, which is what makes the token
@@ -140,7 +158,7 @@ function registerControllerRoutes(
   const controllerToken = controller.token as ClassToken<unknown>;
   const createInvokers = invokers?.get(controllerToken);
   if (!compiledRoutes || !createInvokers) {
-    registerElysiaControllerRoutes(controller, application, instance);
+    registerElysiaControllerRoutes(controller, application, instance, globalEnhancers);
     return;
   }
 
@@ -150,6 +168,7 @@ function registerControllerRoutes(
     instance,
     compiledRoutes,
     createInvokers(instance as never),
+    globalEnhancers,
   );
 }
 

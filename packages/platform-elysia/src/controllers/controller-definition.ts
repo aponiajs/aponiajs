@@ -4,6 +4,7 @@ import {
   type ClassToken,
   type Constructor,
   type ControllerDefinition,
+  type EnhancerMetadata,
   type RouteParameterKind,
   type Token,
   type TokenValues,
@@ -237,12 +238,23 @@ export function isElysiaController(
  * Registers a low-level controller on the shared root application while
  * preserving the same-instance invariant required for native Elysia typing.
  *
+ * `globalEnhancers` is the application's own declaration, which a route runs
+ * before the ones its controller and its handler declare. It travels with the
+ * mount rather than into a compiled route: a compiled plan states what a
+ * controller declares and nothing else.
+ *
  * @internal
  */
 export function registerElysiaControllerRoutes(
   controller: RuntimeElysiaController,
   application: Elysia,
   instance: unknown,
+  // A global enhancer is merged into a route's hooks while the route mounts, and
+  // those hooks are what consume this declaration. Until they exist the
+  // declaration travels to the boundary and no further, so the parameter is
+  // deliberately inert rather than read and discarded.
+  // oxlint-disable-next-line no-unused-vars
+  globalEnhancers?: EnhancerMetadata,
 ): void {
   const registerRoutes = controller.registerRoutes;
   if (!registerRoutes) {

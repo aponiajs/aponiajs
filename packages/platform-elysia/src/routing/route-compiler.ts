@@ -118,6 +118,12 @@ function classifyDeclaredReturnKind(
  * their absence, so hand-written descriptors, symbol-keyed handlers, and a
  * controller without an entry keep working.
  *
+ * `globalEnhancers` is the application's own declaration, which a route runs
+ * before the ones its controller and its handler declare. It reaches the mount
+ * so that it is merged while the route is registered, never into the compiled
+ * route it is registered from: a compiled plan states what a controller
+ * declares and nothing else.
+ *
  * @internal
  */
 export function registerCompiledElysiaRoutes(
@@ -126,6 +132,12 @@ export function registerCompiledElysiaRoutes(
   instance: unknown,
   routes: readonly CompiledElysiaRoute[],
   invokers?: ReadonlyMap<string | symbol, AponiaRouteInvoker>,
+  // A global enhancer is merged into a route's hooks while the route mounts, and
+  // those hooks are what consume this declaration. Until they exist the
+  // declaration travels to the boundary and no further, so the parameter is
+  // deliberately inert rather than read and discarded.
+  // oxlint-disable-next-line no-unused-vars
+  globalEnhancers?: EnhancerMetadata,
 ): void {
   for (const route of routes) {
     const handler = (instance as Record<PropertyKey, unknown>)[route.propertyKey];

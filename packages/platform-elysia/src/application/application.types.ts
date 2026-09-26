@@ -1,4 +1,4 @@
-import type { LoggerService, LogLevel } from "@aponiajs/common";
+import type { ClassToken, LoggerService, LogLevel } from "@aponiajs/common";
 import type { AnyElysia, Elysia, ElysiaConfig } from "elysia";
 import type { AponiaModuleDescriptorArtifact } from "../modules/module-descriptor-artifact.types.ts";
 import type { AponiaInvokerArtifact } from "../routing/invoker-artifact.types.ts";
@@ -50,6 +50,18 @@ export interface AponiaApplicationOptions {
    * because the answer decides what a route actually runs.
    */
   readonly descriptors?: AponiaModuleDescriptorArtifact;
+  /**
+   * Guards every route runs, before the ones a controller or a handler declares.
+   *
+   * There is deliberately no `useGlobalGuards()` method: routes mount during
+   * `AponiaFactory.create`, so a method called on the returned application could
+   * not affect them.
+   */
+  readonly guards?: readonly ClassToken<unknown>[];
+  /** Interceptors every route runs, outside the ones a controller or a handler declares. */
+  readonly interceptors?: readonly ClassToken<unknown>[];
+  /** Filters every route consults, after the ones a controller or a handler declares. */
+  readonly filters?: readonly ClassToken<unknown>[];
 }
 
 export interface ConfiguredAponiaApplicationOptions<

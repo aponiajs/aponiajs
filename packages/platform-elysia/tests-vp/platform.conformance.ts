@@ -14,6 +14,7 @@ import {
   Store,
   Validation,
   defineModule,
+  type ClassToken,
   type ControllerDefinition,
   type RouteContext,
   type RouteResponseSettings,
@@ -28,6 +29,7 @@ import {
   defineElysiaPlugin,
   elysiaController,
   httpErrors,
+  type AponiaApplicationOptions,
   type ConfiguredAponiaApplicationOptions,
   type ElysiaRouteContext,
   type ElysiaSet,
@@ -45,6 +47,15 @@ declare const expect: VitePlusTest["expect"];
 
 const conformanceNotFound = httpErrors.notFound();
 type HttpErrorConformanceAssertion = Expect<Equals<typeof conformanceNotFound.status, 404>>;
+type GlobalGuardsOptionAssertion = Expect<
+  Equals<AponiaApplicationOptions["guards"], readonly ClassToken<unknown>[] | undefined>
+>;
+type GlobalInterceptorsOptionAssertion = Expect<
+  Equals<AponiaApplicationOptions["interceptors"], readonly ClassToken<unknown>[] | undefined>
+>;
+type GlobalFiltersOptionAssertion = Expect<
+  Equals<AponiaApplicationOptions["filters"], readonly ClassToken<unknown>[] | undefined>
+>;
 
 @Injectable()
 class HealthService {
@@ -168,6 +179,16 @@ test("the Vite+ lane mounts a controller from module metadata", async () => {
   expect(healthHandlerSource.startsWith("()=>")).toBe(true);
   expect(compiledHealthRoute).not.toContain("await handler(c)");
   await application.close();
+});
+
+test("the Vite+ lane types the global enhancer options", () => {
+  const guardsAssertion: GlobalGuardsOptionAssertion = true;
+  const interceptorsAssertion: GlobalInterceptorsOptionAssertion = true;
+  const filtersAssertion: GlobalFiltersOptionAssertion = true;
+
+  expect(guardsAssertion).toBe(true);
+  expect(interceptorsAssertion).toBe(true);
+  expect(filtersAssertion).toBe(true);
 });
 
 test("the Vite+ lane supports explicit dynamic Elysia composition", async () => {
