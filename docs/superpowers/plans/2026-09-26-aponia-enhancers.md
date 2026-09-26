@@ -23,6 +23,7 @@
 - Enhancers are singletons, resolved once per controller during mount, never per request.
 - Scope order is global, then controller, then method. `interceptAfter` runs in reverse of that order.
 - Every new runtime source under `packages/*/src/**/*.ts` must appear in LCOV and keep aggregate line and function coverage at or above 95%.
+- A package's own tests import its API from `../src/index.ts`; other packages are imported by name.
 - Run `bun run check`, `bun run test:coverage`, and `bun run test:vite-plus` before submitting.
 
 ## Review Focus
@@ -256,7 +257,7 @@ import type {
   CanActivate,
   ExceptionFilter,
   ExecutionContext,
-} from "@aponiajs/common";
+} from "../src/index.ts";
 
 class ExampleGuard implements CanActivate {
   canActivate(_context: ExecutionContext): boolean {
@@ -346,7 +347,7 @@ import {
   UseGuards,
   UseInterceptors,
   getEnhancerMetadata,
-} from "@aponiajs/common";
+} from "../src/index.ts";
 
 class AuthGuard {}
 class OwnerGuard {}
@@ -622,7 +623,7 @@ Both authoring paths must produce the same compiled shape.
 // packages/platform-elysia/tests/route-enhancers.test.ts
 import { describe, expect, test } from "bun:test";
 import { Controller, Get, Injectable, Module, UseGuards } from "@aponiajs/common";
-import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AponiaFactory } from "../src/index.ts";
 
 class AuthGuard {
   canActivate(): boolean {
@@ -780,7 +781,7 @@ git commit -m "feat(platform-elysia): carry enhancer declarations on a compiled 
 // packages/platform-elysia/tests/global-enhancers.test.ts
 import { describe, expect, test } from "bun:test";
 import { Controller, Get, Injectable, Module } from "@aponiajs/common";
-import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AponiaFactory } from "../src/index.ts";
 
 const seen: string[] = [];
 
@@ -889,7 +890,7 @@ git commit -m "feat(platform-elysia): accept global enhancers as application opt
 // packages/platform-elysia/tests/enhancer-resolution.test.ts
 import { describe, expect, test } from "bun:test";
 import { Controller, Get, Injectable, Module, UseGuards } from "@aponiajs/common";
-import { AponiaFactory, type AponiaError } from "@aponiajs/platform-elysia";
+import { AponiaFactory, type AponiaError } from "../src/index.ts";
 
 @Injectable()
 class UndeclaredGuard {
@@ -1057,7 +1058,7 @@ git commit -m "feat(platform-elysia): resolve enhancer instances while a control
 // packages/platform-elysia/tests/guards.test.ts
 import { describe, expect, test } from "bun:test";
 import { Controller, Get, Injectable, Module, UseGuards } from "@aponiajs/common";
-import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AponiaFactory } from "../src/index.ts";
 
 const calls: string[] = [];
 
@@ -1225,7 +1226,7 @@ git commit -m "feat(platform-elysia): run guards as a route-local beforeHandle"
 // packages/platform-elysia/tests/exception-filters.test.ts
 import { describe, expect, test } from "bun:test";
 import { Catch, Controller, Get, Injectable, Module, UseFilters } from "@aponiajs/common";
-import { AponiaFactory, httpErrors } from "@aponiajs/platform-elysia";
+import { AponiaFactory, httpErrors } from "../src/index.ts";
 
 class NotFoundError extends Error {}
 
@@ -1469,7 +1470,7 @@ git commit -m "feat(platform-elysia): map unhandled errors to Problem Details"
 // packages/platform-elysia/tests/interceptors.test.ts
 import { describe, expect, test } from "bun:test";
 import { Controller, Get, Injectable, Module, UseInterceptors, UseGuards } from "@aponiajs/common";
-import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AponiaFactory } from "../src/index.ts";
 
 const order: string[] = [];
 
