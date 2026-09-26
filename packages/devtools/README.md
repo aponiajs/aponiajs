@@ -41,8 +41,15 @@ export class AppModule {}
   version, the release that booted the application, the Elysia release installed
   in the application's own tree (`null` when there is none), which release
   supplied each artifact the boot adopted (`null` for one it did not), and when
-  the server started. Every endpoint is a `GET`: any other method answers `405`,
-  and an unknown path answers `404`.
+  the server started.
+- **`GET /__devtools/graph` describes the graph the application compiled.** It
+  answers the modules with their imports, controllers, providers, dependencies
+  and exports, and the WebSocket gateways with their events. The graph is the one
+  the boot compiled — the descriptor artifact's when it adopted one — never the
+  decorated classes it replaced, and it carries no routes: a route a controller
+  declares and a route the server answers are two different questions.
+- Every endpoint is a `GET`: any other method answers `405` before the path is
+  read, and a path the server does not serve answers `404`.
 
 ```bash
 curl http://127.0.0.1:8000/__devtools/meta

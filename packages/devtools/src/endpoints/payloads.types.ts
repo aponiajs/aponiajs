@@ -1,3 +1,5 @@
+import type { AponiaGatewayInspection, AponiaModuleInspection } from "@aponiajs/platform-elysia";
+
 /**
  * Which release supplied each artifact a boot adopted.
  *
@@ -34,4 +36,24 @@ export interface AponiaMetaPayload {
   readonly artifacts: AponiaArtifactStamps;
   /** The moment the devtools server started, as an ISO-8601 timestamp. */
   readonly startedAt: string;
+}
+
+/**
+ * The payload `/__devtools/graph` answers with: the compiled module graph, in
+ * the shape the inspection projection describes it.
+ *
+ * The one field the inspection carries and this payload does not is `routes`,
+ * and it is absent rather than empty. A compiled plan states the routes a
+ * controller *declares*, while `/routes` reports the routes the server
+ * *answers*; publishing both under one name would leave a consumer choosing
+ * between two answers to the same question, so routes belong to that endpoint
+ * alone.
+ */
+export interface AponiaGraphPayload {
+  /** The id of the root module the boot compiled. */
+  readonly rootModule: string;
+  /** Every module of the compiled graph, in graph order. */
+  readonly modules: readonly AponiaModuleInspection[];
+  /** Every gateway the compiled graph registers, sorted by canonical path. */
+  readonly gateways: readonly AponiaGatewayInspection[];
 }

@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { readApplicationDiagnostics } from "@aponiajs/platform-elysia";
 import type { Elysia } from "elysia";
+import { buildGraphPayload, devtoolsGraphPath } from "../endpoints/graph.ts";
 import { buildMetaPayload, devtoolsMetaPath } from "../endpoints/meta.ts";
 import type {
   DevtoolsHandlers,
@@ -113,18 +114,36 @@ function findInstalledElysiaManifest(baseDirectory: string): string | undefined 
  * The endpoints one server serves, built once. The report is fixed for the life
  * of the socket: it describes a boot, and a boot does not change after it has
  * started.
+ *
+ * Every builder it calls is total — a record this release cannot project is one
+ * of the cases they answer rather than throw for — because this runs before the
+ * bind's `try`, where a failure would be reported as a refused listen, a cause
+ * this package never observed.
  */
 function createHandlers(application: Elysia): DevtoolsHandlers {
+  const diagnostics = readApplicationDiagnostics(application);
   const meta = buildMetaPayload({
-    diagnostics: readApplicationDiagnostics(application),
+    diagnostics,
     elysia: resolveElysiaVersion(import.meta.dir),
     startedAt: new Date().toISOString(),
   });
+  const graph = buildGraphPayload(diagnostics);
 
   return Object.freeze({
-    [devtoolsMetaPath]: () =>
-      Response.json(meta, { status: 200, headers: { "cache-control": "no-store" } }),
+    [devtoolsMetaPath]: () => jsonResponse(meta),
+    // A boot the record holds no compiled root for serves no `/graph` at all:
+    // the handler record states the paths this server serves, and a path it does
+    // not own is the dispatcher's `404`.
+    ...(graph === undefined ? {} : { [devtoolsGraphPath]: () => jsonResponse(graph) }),
   });
+}
+
+/**
+ * One endpoint's answer. The payload is fixed for the life of this socket and is
+ * never stored: a cached report would outlive the boot it describes.
+ */
+function jsonResponse(payload: unknown): Response {
+  return Response.json(payload, { status: 200, headers: { "cache-control": "no-store" } });
 }
 
 /**

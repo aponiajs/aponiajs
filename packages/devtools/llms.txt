@@ -11,6 +11,7 @@ The package is a leaf: nothing in the framework depends on it. An application im
 - [startDevtoolsServer](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/devtools/src/server/devtools-server.ts): starts the loopback server for one boot, or answers `undefined` when the port is taken.
 - [routeRequest](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/devtools/src/server/request-router.ts): the pure dispatcher every request goes through.
 - [AponiaMetaPayload](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/devtools/src/endpoints/payloads.types.ts): the `GET /__devtools/meta` payload, including the `contract` version a client checks first.
+- [AponiaGraphPayload](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/devtools/src/endpoints/payloads.types.ts): the `GET /__devtools/graph` payload, the compiled module graph with no `routes` key.
 
 ## Behavior a consumer can rely on
 
@@ -21,6 +22,7 @@ The package is a leaf: nothing in the framework depends on it. An application im
 - A port that is already bound is reported under `Devtools` and never fails the boot: the application answers its own routes without the devtools server.
 - The devtools socket stops when the application is closed, so a restart binds a fresh one.
 - `GET /__devtools/meta` reports the contract version, the release that booted the application, the Elysia installed in the application's own tree (`null` when there is none), and which release supplied each artifact the boot adopted (`null` for one it did not).
+- `GET /__devtools/graph` reports the graph the application compiled: its modules with their imports, controllers, providers, dependencies and exports, and its WebSocket gateways with their events. It describes the descriptor artifact's graph when the boot adopted one and the lowered decorated classes otherwise, and it carries no routes.
 - Every endpoint is a `GET`. Any other method answers `405` before the path is read, and a path the server does not serve answers `404`.
 
 ## Documentation

@@ -78,6 +78,18 @@ runtime boundary it describes.
   record is where "an artifact supplied this" and "a release wrote it" are told
   apart — a hand-written `ModuleDefinition` compiles as declared data that no
   build emitted — so this package never re-derives a stamp from the graph it sees.
+- `/graph` reports the graph the boot compiled, which is the record's own
+  `rootModule` lowered through `compileRootModule` and projected by
+  `inspectAponiaApplication` — the root selector substitutes only a class or a
+  dynamic module, so a descriptor handed to the projection cannot be re-resolved
+  and this endpoint cannot disagree with `bun run inspect`. It carries no `routes`
+  key, because the plans state the routes a controller declares while `/routes` is
+  what reports the routes the server answers.
+- An endpoint whose fact the boot record does not hold is not registered rather
+  than answered with a guess: a record a foreign copy of the platform wrote — one
+  older, which has no `rootModule` field, or one newer, whose compiled root this
+  release cannot lower — serves no `/graph`, and the dispatcher's `404` is the
+  answer for a path the handler record does not own.
 - The report describes the boot the _plugin's own_ application carries: Elysia
   hands `onStart` the root application, which is the one bootstrap attached the
   record to.

@@ -18,4 +18,8 @@ export type {
   DevtoolsServer,
   DevtoolsServerOptions,
 } from "./server/devtools-server.types.ts";
-export type { AponiaArtifactStamps, AponiaMetaPayload } from "./endpoints/payloads.types.ts";
+export type {
+  AponiaArtifactStamps,
+  AponiaGraphPayload,
+  AponiaMetaPayload,
+} from "./endpoints/payloads.types.ts";
