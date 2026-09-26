@@ -28,6 +28,14 @@ export type {
   RouteMetadata,
   RouteMethodDecorator,
 } from "./decorators/decorators.types.ts";
+export type {
+  AponiaInterceptor,
+  ArgumentsHost,
+  CanActivate,
+  ExceptionFilter,
+  ExecutionContext,
+  HttpArgumentsHost,
+} from "./enhancers/enhancer.types.ts";
 export { AponiaError } from "./errors/aponia-error.ts";
 export type { AponiaErrorCode } from "./errors/aponia-error.types.ts";
 export { ConsoleLogger, Logger } from "./logging/console-logger.ts";

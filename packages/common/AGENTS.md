@@ -20,6 +20,7 @@ tokens, providers, errors, and logging. Its only runtime dependency is
 | `errors/`      | `AponiaError` and the closed `AponiaErrorCode` union                       |
 | `logging/`     | `LoggerService` and the default structured logger                          |
 | `websockets/`  | Gateway, message, parameter, server, response, and lifecycle contracts     |
+| `enhancers/`   | Guard, interceptor, filter, and execution-context contracts                |
 
 Runtime implementation and `*.types.ts` contracts stay beside each other in
 their owning domain. `src/index.ts` is the package's only public barrel.

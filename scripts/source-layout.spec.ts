@@ -15,6 +15,7 @@ const packageLayouts: readonly PackageLayout[] = [
     directories: [
       "controllers",
       "decorators",
+      "enhancers",
       "errors",
       "logging",
       "modules",
