@@ -473,6 +473,28 @@ test.serial("a body that arrived as text is stored as text, and cut like any oth
   }
 });
 
+test.serial("a body that arrived as a literal JSON null is stated, not read as none", async () => {
+  const { application, address } = await bootApplication(CapturedModule);
+  try {
+    await fetch(`${application.getUrl()}/users`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "null",
+    });
+
+    const entry = onlyEntry(await readRequests(address));
+
+    // The client sent a body and the route parsed it as `null`, which the
+    // installed Elysia tells apart from the request that carried none — an
+    // absent or empty body reads `undefined` there. A missing `body` here would
+    // read as that absence, so the parsed `null` is stated as the text it
+    // arrived as.
+    expect(entry.body).toBe("null");
+  } finally {
+    await application.close();
+  }
+});
+
 test.serial("a body this package cannot serialize is stated as unreadable", async () => {
   const { application, address } = await bootApplication(UnserializableModule);
   try {

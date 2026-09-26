@@ -19,6 +19,7 @@ import { Elysia } from "elysia";
 import {
   aponiaVersion,
   startDevtoolsServer,
+  type AponiaAotController,
   type AponiaAotPayload,
   type DevtoolsServer,
 } from "../src/index.ts";
@@ -187,6 +188,85 @@ export class UnanalyzedController {
 `;
 
 /**
+ * The controller double an ignored file declares: a second class named
+ * `AlphaController`.
+ *
+ * The name is the whole point. A build's glob ignores test files, and this
+ * endpoint repeats that list, so neither reads this file — but if either side
+ * stops ignoring it, that side reads two classes of one name and refuses the
+ * project, because a generated module addresses a controller by its class name.
+ * That is what turns "the two sides apply the same rule" into something a case
+ * can assert rather than something a comment claims.
+ */
+const controllerDoubleSource = `import { Controller, Get } from "@aponiajs/common";
+
+@Controller("double")
+export class AlphaController {
+  @Get()
+  list(): string {
+    return "double";
+  }
+}
+`;
+
+/**
+ * The two ways a build resolves the source root, each holding the same project:
+ * the directory a configuration names, and the default a headless
+ * `aponia.json` falls back to.
+ */
+const ignoredControllerProjects = [
+  ["the source root a configuration names", "app", `{ "sourceRoot": "app" }\n`],
+  ["the default source root", "src", "{}\n"],
+] as const;
+
+/** The verdicts both sides reach for the controller the ignored files double. */
+const alphaControllerVerdicts = {
+  controller: "AlphaController",
+  handlers: [
+    { handler: "list", invoker: "generated" },
+    { handler: "read", invoker: "generated" },
+    {
+      handler: "describe",
+      invoker: "compiled",
+      reason: wholeContextReason,
+    },
+  ],
+} satisfies AponiaAotController;
+
+/**
+ * What `aponia build` decides about one project, read from the command.
+ *
+ * A build either writes the modules or refuses the project, and which one it is
+ * is the command's own answer rather than a rule restated here: a mutation of
+ * the build's ignore list or source-root resolution turns `accepted` into
+ * `refused` for the fixture below, and the case that compares this with the
+ * endpoint fails.
+ */
+async function commandDecision(projectRoot: string): Promise<"accepted" | "refused"> {
+  const { generateInvokers } = await import("@aponiajs/cli");
+
+  try {
+    await generateInvokers({ cwd: projectRoot, dryRun: true });
+  } catch {
+    return "refused";
+  }
+
+  return "accepted";
+}
+
+/**
+ * The same decision, read from what the endpoint published.
+ *
+ * An analysis that refuses the project leaves `controllers` empty and writes one
+ * row under `Devtools`, which is the endpoint's own degradation; the fixture's
+ * verdicts are asserted beside this, so a loadable but wrong controller list
+ * fails the case rather than reading as an agreement.
+ */
+function endpointDecision(payload: AponiaAotPayload): "accepted" | "refused" {
+  return payload.controllers.length === 0 ? "refused" : "accepted";
+}
+
+/**
  * A project a build refuses outright: every handler it declares is one the
  * emitter declines, so `aponia build` writes no module at all and names the
  * first decline it found.
@@ -290,18 +370,7 @@ test("aot reports the emitter's verdicts for the project it is started in", asyn
       graph: "decorated",
       invokers: { accepted: false, reason: expect.any(String) },
       controllers: [
-        {
-          controller: "AlphaController",
-          handlers: [
-            { handler: "list", invoker: "generated" },
-            { handler: "read", invoker: "generated" },
-            {
-              handler: "describe",
-              invoker: "compiled",
-              reason: wholeContextReason,
-            },
-          ],
-        },
+        alphaControllerVerdicts,
         { controller: "ZebraController", handlers: [{ handler: "create", invoker: "generated" }] },
       ],
     });
@@ -315,6 +384,52 @@ test("aot reports the emitter's verdicts for the project it is started in", asyn
     server.stop();
   }
 });
+
+test.each(ignoredControllerProjects)(
+  "aot reports the verdicts a build reads under %s, ignored files included",
+  async (_description, rootDirectory, configuration) => {
+    // One fixture, one rule, read at both ends: the source root and the ignore
+    // list are hand-copied from the build, so the case does not assert this
+    // package's copy of them — it asserts that the project the command accepts
+    // is the project this endpoint reports verdicts for. A build that stopped
+    // ignoring the doubles would refuse this project for two classes named
+    // `AlphaController`; an endpoint whose copy drifted would refuse it while
+    // the build still reads it. Either one fails here rather than shipping a
+    // verdict computed over a different file set than `aponia build` reads.
+    const projectRoot = createTemporaryDirectory("aponia-aot-ignored-");
+    writeProjectFile(projectRoot, "aponia.json", configuration);
+    writeProjectFile(
+      projectRoot,
+      `${rootDirectory}/alpha/alpha.controller.ts`,
+      alphaControllerSource,
+    );
+    // Both globs the build leaves out, each holding a controller double that
+    // only a side which stopped honoring the list could read.
+    writeProjectFile(projectRoot, `${rootDirectory}/alpha/alpha.test.ts`, controllerDoubleSource);
+    writeProjectFile(projectRoot, `${rootDirectory}/alpha/alpha.spec.ts`, controllerDoubleSource);
+    process.chdir(projectRoot);
+
+    const application = await AponiaFactory.createNative(AppModule, { logger: false });
+    const server = serveLoopback(application);
+
+    try {
+      const build = await commandDecision(process.cwd());
+      const payload = await readAot(server);
+
+      expect(endpointDecision(payload)).toBe(build);
+      // Both refused would be an agreement, not the case: the fixture is a
+      // project a build reads, so the command has to have accepted it.
+      expect(build).toBe("accepted");
+
+      // And the verdicts are the ones the build reads: the one controller under
+      // the source root, however many ignored files double it.
+      expect(payload.controllers).toEqual([alphaControllerVerdicts]);
+      expect(warnings).toEqual([]);
+    } finally {
+      server.stop();
+    }
+  },
+);
 
 test("aot reports the verdicts of a project whose every handler a build declined", async () => {
   // The other side of the case above: a build states a verdict for a project it

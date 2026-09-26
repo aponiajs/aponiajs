@@ -119,6 +119,7 @@ The current package boundaries are:
 | `@aponiajs/core`            | container, graph                                                              |
 | `@aponiajs/platform-elysia` | application, controllers, modules, plugins, routing                           |
 | `@aponiajs/cli`             | commands, generation                                                          |
+| `@aponiajs/devtools`        | buffer, endpoints, logging, module, requests, server                          |
 
 Keep package tests at `tests/*.test.ts` and Vite+ conformance tests at
 `tests-vp/*.conformance.ts`; those flat locations are part of the configured

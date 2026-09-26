@@ -299,7 +299,7 @@ An entry carries:
 ```
 
 An opt-out is observable on the wire: a field left out is absent, which is a
-different fact from a request that carried none. Three further rules:
+different fact from a request that carried none. Four further rules:
 
 - **A token passed as a query parameter is captured in `url`.** That is a fact
   about the record rather than a defect in it — `url` is what joined to the
@@ -308,6 +308,11 @@ different fact from a request that carried none. Three further rules:
   environment's. Redaction replaces a named header with `[redacted]` and keeps
   its place, so a consumer can see that one was sent and that the tool was told
   not to show it.
+- **A body the client sent is stated, never dropped.** One this package cannot
+  serialize is stored as `[unserializable]`, and one that arrived as a literal
+  JSON `null` is stored as the text `null`: `undefined` is reserved for the
+  request that carried none, so a missing `body` never stands for a body the
+  client sent.
 - **A request that matched no route is recorded, and the record says so**:
   `path` carries the path that arrived rather than a pattern, and `/routes` is
   the table that tells the two apart, because a pattern the application mounted

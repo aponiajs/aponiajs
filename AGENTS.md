@@ -29,7 +29,7 @@ Bun workspace. Framework packages live in `packages/`:
 | `@aponiajs/platform-elysia` | Elysia adapter, HTTP routes, WebSocket gateways, plugins     | `common`, `core`, peer `elysia`                                                       |
 | `@aponiajs/cli`             | `aponia new` and `aponia generate` schematics                | `change-case`, `ts-morph`, `yargs-parser`, `fast-glob`, `inflection`, `oxfmt` (exact) |
 | `create-aponia`             | `bun create aponia` entrypoint into the same generator       | `@aponiajs/cli`                                                                       |
-| `@aponiajs/devtools`        | Opt-in loopback devtools for a running application           | `common`, `platform-elysia`, peer `elysia`                                            |
+| `@aponiajs/devtools`        | Opt-in loopback devtools for a running application           | `cli`, `common`, `platform-elysia`, peer `elysia`                                     |
 | `aponiajs`                  | Reserved public facade, private and unpublished              | —                                                                                     |
 
 Supporting directories: `examples/` for executable examples, `docs/` for

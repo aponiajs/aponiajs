@@ -131,7 +131,9 @@ export class AppModule {}
   at `capture.bodyLimit`, while a body this package cannot serialize — a cyclic
   one, or one carrying a `BigInt`, which an application's own validation can make
   — is stored as `[unserializable]` rather than left out, because a missing `body`
-  would read as a request that carried none; `error` is what the answer published
+  would read as a request that carried none; a body that arrived as a literal JSON
+  `null` is stored as the text `null` for the same reason, since the client carried
+  one; `error` is what the answer published
   and never the exception, so it is present on a `5xx` whose Problem Details body
   the tool can read, absent on a `4xx`, which is an answer rather than a failure,
   and absent where there is nothing to read — an unhandled failure the platform

@@ -250,7 +250,13 @@ runtime boundary it describes.
   refusal sentences are the command's own, so the row a developer reads here names
   what a build would say about the same project, and `tests/aot.test.ts` reads them
   back out of `generateInvokers` rather than copying them into the case, so a
-  wording change on either side fails there instead of shipping. The default
+  wording change on either side fails there instead of shipping. The two rules no
+  sentence states are read from the command too: a case holds a controller double
+  in a file the build's ignore list leaves out — under both the configured source
+  root and the default one — and compares this endpoint's verdict for that project
+  with `generateInvokers`' own decision for it, so a change to either copy of the
+  ignore list or of the source-root resolution fails there rather than reporting
+  verdicts over a file set a build no longer reads. The default
   project is the one mirrored, because `/aot` has no way to name another one. Keep
   the copies in step by hand.
 - A handler's verdict is the emitter's, never re-applied here.
@@ -414,7 +420,10 @@ runtime boundary it describes.
   missing `body` would read as a request with no body, which is a claim about the
   request rather than an absence to leave out. Dropping the guard fails the answer
   the record describes, and dropping the literal turns a body the tool could not
-  read into a request that never had one.
+  read into a request that never had one. A literal JSON `null` is that rule read
+  the other way: the client carried a body, and the installed Elysia reads it as
+  `null` while a request that carried none reads `undefined`, so it is stored as
+  the text it arrived as rather than folded into that absence.
 - The pair of hooks is two answers a maintainer may not merge, narrow, or make
   return: the arrival hook rides the request phase, which Elysia merges from a used
   plugin unfiltered, while the completion hook is declared `{ as: "global" }`,

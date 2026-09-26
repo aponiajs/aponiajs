@@ -404,7 +404,6 @@ test("a since beyond the retained window answers what is retained, not an error"
     // cursor that comes back is the stream's own count rather than a rewind to
     // the number the request named.
     expect(payload.entries).toEqual([]);
-    expect(payload.cursor).toBeLessThanOrEqual(999999);
     expect(payload.cursor).toBe(1);
   } finally {
     server.stop();

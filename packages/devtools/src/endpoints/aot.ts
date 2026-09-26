@@ -197,7 +197,12 @@ async function analyzeProject(
  * another: `aponia.json` is read the way a build with no `--project` reads it.
  * The refusal sentences are the command's own words, and `tests/aot.test.ts`
  * reads them back out of `generateInvokers` rather than copying them into the
- * case, so a wording change on either side fails there instead of shipping.
+ * case, so a wording change on either side fails there instead of shipping. The
+ * two rules no sentence states — the source root and the ignore list — are read
+ * at both ends the same way: a case compares this endpoint's verdict for a
+ * project whose ignored files hold a controller double against the command's own
+ * decision for that project, so one side changing a rule alone fails there
+ * rather than reporting verdicts over a different file set than a build reads.
  *
  * The emitter decides and this reports. Which handler is emitted and which is
  * declined comes from `emitControllerInvokers`, and the verdicts are read off

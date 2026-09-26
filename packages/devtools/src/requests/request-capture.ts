@@ -349,13 +349,19 @@ function captureHeaders(
  * which is a claim about the request rather than an absence to leave out. This
  * hook may not throw, and a throw here is a failed request, so the record states
  * what it could not read instead of failing the answer it describes.
+ *
+ * A literal JSON `null` is the same rule read the other way: it is a body the
+ * request carried, and the installed Elysia tells it apart from the request that
+ * carried none — a `null` body parses to `null` while an absent or empty one
+ * reads `undefined` — so the client's `null` is stored as the text it was sent
+ * as rather than folded into that absence.
  */
 function captureBody(body: unknown, limit: number): string | undefined {
   if (typeof body === "string") {
     return body.length > limit ? `${body.slice(0, limit)}${truncatedMarker}` : body;
   }
 
-  if (body === undefined || body === null) {
+  if (body === undefined) {
     return undefined;
   }
 
