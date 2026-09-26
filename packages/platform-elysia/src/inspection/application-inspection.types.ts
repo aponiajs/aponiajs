@@ -1,25 +1,22 @@
-import type { LoggerService, Provider, RequestMethod, RouteParameterKind } from "@aponiajs/common";
+import type { Provider, RequestMethod, RouteParameterKind } from "@aponiajs/common";
 import type { AponiaApplicationOptions } from "../application/application.types.ts";
 
 /**
  * Options for {@link inspectAponiaApplication}.
  *
- * The artifact options are the ones an application passes to the factory, so an
- * inspection can be handed the pair `aponia build` wrote. Only `descriptors` is
- * resolved, through the same selector bootstrap uses, because that artifact
- * declares the module graph: an inspection has to describe the graph the
- * application boots from however that graph was chosen. `invokers` is accepted
- * so the two option shapes stay interchangeable — an invoker artifact binds
- * handlers rather than declaring the graph, so it changes nothing the projection
- * reports.
+ * `descriptors` is the artifact option an application passes to the factory, and
+ * inspection resolves it through the same selector bootstrap uses, because that
+ * artifact declares the module graph: an inspection has to describe the graph the
+ * application boots from however that graph was chosen.
  *
- * A `logger` receives the line the selector reports whichever way it decided,
- * which is the line bootstrap would log for the same artifact.
+ * `logger` takes the shapes the factory's own option takes, so an application can
+ * forward its value unchanged. Omitting it and passing `false` both keep the
+ * inspection silent, because inspection is a library call whose caller decides
+ * what gets printed — a level list is the caller asking for the platform's
+ * logger. Whichever way the artifact is decided, one line reports it.
  */
-export type AponiaInspectionOptions = Readonly<
-  Pick<AponiaApplicationOptions, "invokers" | "descriptors">
-> & {
-  readonly logger?: LoggerService;
+export type AponiaInspectionOptions = Readonly<Pick<AponiaApplicationOptions, "descriptors">> & {
+  readonly logger?: AponiaApplicationOptions["logger"];
 };
 
 /**

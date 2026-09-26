@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, spyOn, test } from "bun:test";
 import {
   Body,
   Controller,
@@ -331,6 +331,41 @@ test("inspects the declared graph when the descriptor artifact declares the root
       "Booting InspectionAppModule from the generated module descriptors, so the declared graph serves " +
       "this application.",
   });
+});
+
+test("stays silent when the logger option turns logging off", () => {
+  // What a generated application passes to the factory, forwarded unchanged: a
+  // `false` reaching the selector would call `log` on it and throw where the
+  // refusal is meant to cost nothing.
+  const inspection = inspectAponiaApplication(InspectionAppModule, {
+    descriptors: inspectionArtifact({}),
+    logger: false,
+  });
+
+  expect(inspection).toEqual(inspectAponiaApplication(InspectionAppModule));
+});
+
+test("reports the refusal through the platform logger a level list asks for", () => {
+  const written: string[] = [];
+  const write = spyOn(process.stdout, "write").mockImplementation((chunk: string) => {
+    written.push(chunk);
+    return true;
+  });
+
+  try {
+    const inspection = inspectAponiaApplication(InspectionAppModule, {
+      descriptors: inspectionArtifact({}),
+      logger: ["log"],
+    });
+
+    expect(inspection).toEqual(inspectAponiaApplication(InspectionAppModule));
+  } finally {
+    write.mockRestore();
+  }
+
+  expect(written.join("")).toContain(
+    'hold no declaration for "InspectionAppModule", so it is lowered from its decorators instead',
+  );
 });
 
 test("projects module graph order, imports, exports, and controller ids", () => {

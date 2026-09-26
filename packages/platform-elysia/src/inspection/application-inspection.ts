@@ -1,4 +1,12 @@
-import { AponiaError, tokenName, type ModuleDefinition, type Provider } from "@aponiajs/common";
+import {
+  AponiaError,
+  Logger,
+  tokenName,
+  type LoggerService,
+  type LogLevel,
+  type ModuleDefinition,
+  type Provider,
+} from "@aponiajs/common";
 import { createContainer, providerDependencies } from "@aponiajs/core";
 import { isElysiaController } from "../controllers/controller-definition.ts";
 import type { RuntimeElysiaController } from "../controllers/controller.types.ts";
@@ -32,8 +40,9 @@ import type {
  * Resolving the root from the descriptor artifact is what keeps the projection
  * describing the graph the application actually serves: an application booting
  * from the artifact would otherwise be inspected as the decorated classes it
- * named. An artifact this release refuses is reported through the options' logger
- * and the decorated module is inspected instead, exactly as bootstrap lowers it.
+ * named. An artifact this release refuses is reported through the options'
+ * logger, when one is configured, and the decorated module is inspected instead,
+ * exactly as bootstrap lowers it.
  *
  * Routes come from the compiled route plans of decorated controllers. A
  * controller mounted through the low-level descriptor path produces its routes
@@ -52,7 +61,7 @@ export function inspectAponiaApplication(
     options.descriptors,
     rootModule,
     aponiaVersion,
-    options.logger,
+    resolveInspectionLogger(options.logger),
   );
   const container = createContainer(compileRootModule(resolvedRootModule));
   const modules = container.graph.modules;
@@ -128,6 +137,36 @@ function inspectGateways(
       }),
     )
     .toSorted((left, right) => compareText(left.path, right.path));
+}
+
+/**
+ * Narrows the option to the logger the root selector reports through.
+ *
+ * The shapes are the factory's, so an application can forward its own option
+ * unchanged. An omitted option and `false` — what a generated application
+ * passes — both stay silent, because an inspection prints only what its caller
+ * asked for; unlike a boot, one that receives no logger writes nothing. A level
+ * list is a caller asking for the platform's logger, so it builds one the way
+ * the factory builds one.
+ */
+function resolveInspectionLogger(
+  loggerOption: AponiaInspectionOptions["logger"],
+): LoggerService | undefined {
+  if (loggerOption === false || loggerOption === undefined) {
+    return undefined;
+  }
+
+  if (isLogLevelList(loggerOption)) {
+    return new Logger("AponiaInspection", { logLevels: loggerOption, timestamp: true });
+  }
+
+  return loggerOption;
+}
+
+// `Array.isArray` narrows to a mutable array, which a level list declared
+// `readonly` is not, so the guard names the branch the option actually has.
+function isLogLevelList(value: unknown): value is readonly LogLevel[] {
+  return Array.isArray(value);
 }
 
 /**

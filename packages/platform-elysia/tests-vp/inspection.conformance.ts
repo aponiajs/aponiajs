@@ -22,6 +22,7 @@ import {
   defineElysiaControllerRoutes,
   inspectAponiaApplication,
   type AponiaApplicationInspection,
+  type AponiaApplicationOptions,
   type AponiaInspectedProviderKind,
   type AponiaInspectionOptions,
   type AponiaModuleDescriptorArtifact,
@@ -56,6 +57,9 @@ type InspectionOptionsAssertion = Expect<
 >;
 type InspectionDescriptorsAssertion = Expect<
   Equals<AponiaInspectionOptions["descriptors"], AponiaModuleDescriptorArtifact | undefined>
+>;
+type InspectionLoggerAssertion = Expect<
+  Equals<AponiaInspectionOptions["logger"], AponiaApplicationOptions["logger"]>
 >;
 
 const conformanceCreateSchema = { body: z.object({ name: z.string().min(2) }) };
@@ -353,18 +357,21 @@ test("the Vite+ lane resolves a descriptor artifact when inspecting an applicati
   const inspectionAssertions: readonly boolean[] = [
     true satisfies InspectionOptionsAssertion,
     true satisfies InspectionDescriptorsAssertion,
+    true satisfies InspectionLoggerAssertion,
   ];
   const declared = inspectAponiaApplication(
     ConformanceInspectionModule,
     documentedInspectionOptions,
   );
   // A refusal is not an error here either: the decorated module the application
-  // named is inspected instead, which is the graph bootstrap would lower.
+  // named is inspected instead, which is the graph bootstrap would lower. The
+  // logger is the `false` a generated application forwards to the factory.
   const refused = inspectAponiaApplication(ConformanceInspectionModule, {
     descriptors: Object.freeze({ framework: "0.0.0", elysia: null, modules: Object.freeze({}) }),
+    logger: false,
   });
 
-  expect(inspectionAssertions).toEqual([true, true]);
+  expect(inspectionAssertions).toEqual([true, true, true]);
   expect(declared.rootModule).toBe("ConformanceInspectionDeclaredModule");
   expect(declared.routes.map((route) => `${route.method} ${route.path}`)).toEqual([
     "GET /conformance-declared-inspection/ping",
