@@ -422,6 +422,18 @@ New framework behavior normally needs a case in both.
 `packages/cli/e2e/generated-application.e2e.ts` packs the CLI and boots the
 generated application, so it is slow and excluded from the default lanes.
 
+Every package `tsconfig.json` declares `experimentalDecorators` and
+`emitDecoratorMetadata`, and `scripts/toolchain-config.spec.ts` holds that. Bun
+selects its transpiler configuration from the **process working directory**, so a
+package that omits them does not fail loudly when a command runs from its own
+directory: decorators transpile with stage-3 semantics, `design:paramtypes` is
+never emitted, a decorated controller gets an empty route plan, and the
+application answers `404` without throwing. That is why `bun run --filter
+@aponiajs/cli test` once failed while the same tests passed from the repository
+root, and it is a live hazard for an application started from a directory whose
+own `tsconfig.json` lacks the options — check the consumer's configuration before
+suspecting the framework.
+
 Prefer exercising public entrypoints: build an application with
 `AponiaFactory.create` and assert through `application.handle(new Request(...))`,
 and assert `AponiaError.code` rather than message text. `scripts/*.spec.ts` are

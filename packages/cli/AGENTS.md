@@ -175,6 +175,18 @@ separate focused modules. `src/index.ts` is the only public barrel.
   be stale or absent — the CI test lane installs and runs without building — so a
   fixture would silently exercise an older build. This is a test affordance only:
   the package's own source still imports nothing from the runtime packages.
+- `tsconfig.json` also declares `experimentalDecorators` and
+  `emitDecoratorMetadata`, which is what makes the package-scoped lane the root
+  guide documents (`bun run --filter @aponiajs/cli test`) agree with the root
+  lane. Bun selects the transpiler configuration from the **process cwd**, so
+  without them this package's integration tests, which boot decorated
+  applications, transpiled decorators with stage-3 semantics: the route plan came
+  out empty and every request answered `404` with nothing thrown. The options are
+  declared in every package's `tsconfig.json`, not only this one, because nothing
+  marks which package's fixtures will boot a decorated application next;
+  `scripts/toolchain-config.spec.ts` holds that. `tsconfig.build.json` is a
+  separate file rather than an extension of this one, so neither option reaches
+  the published bundle.
 - The build must not read those mappings. `vite.config.ts` points `pack` and its
   declaration step at `tsconfig.build.json`, which is `tsconfig.json` without
   `paths`; with them the declaration emitter follows the mappings into the other

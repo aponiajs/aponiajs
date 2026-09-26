@@ -12,6 +12,8 @@
       "@aponiajs/platform-elysia": ["../platform-elysia/src/index.ts"]
     },
     "strict": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "noUnusedLocals": true,
     "declaration": true,
     "noEmit": true,
