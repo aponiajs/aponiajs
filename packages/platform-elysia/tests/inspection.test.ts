@@ -19,9 +19,18 @@ import {
   provideValue,
   type ControllerDefinition,
   type DynamicModule,
+  type LoggerService,
+  type ModuleDefinition,
 } from "@aponiajs/common";
 import { z } from "zod";
-import { elysiaController, inspectAponiaApplication } from "../src/index.ts";
+import {
+  defineElysiaControllerRoutes,
+  elysiaController,
+  inspectAponiaApplication,
+  type AponiaInspectionOptions,
+  type AponiaModuleDescriptorArtifact,
+} from "../src/index.ts";
+import { aponiaVersion } from "../src/version.ts";
 
 const inspectionCreateSchema = { body: z.object({ name: z.string().min(2) }) };
 
@@ -196,6 +205,52 @@ const inspectionRegisteredModule = defineModule({
   controllers: [inspectionRegisteredController],
 });
 
+/**
+ * The graph `aponia build` would declare for the root the cases below inspect.
+ * Its id is not the class name the artifact is keyed by, so a case that reads it
+ * can only have read the declaration rather than compared it to a lowered one.
+ */
+const inspectionDeclaredAppModule = defineModule({
+  id: "InspectionDeclaredModule",
+  providers: [provideClass(InspectionUserService, [])],
+  controllers: [
+    defineElysiaControllerRoutes(InspectionUserController, {
+      path: "inspections-declared",
+      inject: [InspectionUserService],
+      routes: [
+        {
+          method: "GET",
+          path: "ping",
+          propertyKey: "readAlpha",
+          promiseCapable: false,
+        },
+      ],
+    }),
+  ],
+});
+
+/** An artifact shaped the way `aponia build` writes one, stamped by this release. */
+function inspectionArtifact(
+  modules: Readonly<Record<string, ModuleDefinition>>,
+): AponiaModuleDescriptorArtifact {
+  return Object.freeze({ framework: aponiaVersion, elysia: null, modules: Object.freeze(modules) });
+}
+
+class InspectionRecordingLogger implements LoggerService {
+  readonly records: { readonly context: string; readonly message: string }[] = [];
+
+  log(message: unknown, context?: unknown): void {
+    this.records.push({
+      context: typeof context === "string" ? context : "",
+      message: String(message),
+    });
+  }
+
+  fatal(): void {}
+  error(): void {}
+  warn(): void {}
+}
+
 const inspectionEmptyModule = defineModule({ id: "InspectionEmptyModule" });
 
 class InspectionCyclicFirst {}
@@ -230,6 +285,52 @@ test("projects a decorated controller with its parameter bindings in a determini
     { index: 0, kind: "params", property: "id" },
     { index: 1, kind: "query", property: "expand" },
   ]);
+});
+
+test("inspects the decorated graph when the descriptor artifact holds no declaration for the root", () => {
+  const logger = new InspectionRecordingLogger();
+  const inspection = inspectAponiaApplication(InspectionAppModule, {
+    descriptors: inspectionArtifact({}),
+    logger,
+  });
+
+  expect(inspection).toEqual(inspectAponiaApplication(InspectionAppModule));
+  expect(inspection.rootModule).toBe("InspectionAppModule");
+  expect(logger.records).toContainEqual({
+    context: "RoutesResolver",
+    message:
+      'The generated module descriptors hold no declaration for "InspectionAppModule", so it is lowered ' +
+      "from its decorators instead. Run `aponia build` again.",
+  });
+});
+
+test("inspects the declared graph when the descriptor artifact declares the root name", () => {
+  const logger = new InspectionRecordingLogger();
+  const options: AponiaInspectionOptions = {
+    descriptors: inspectionArtifact({ InspectionAppModule: inspectionDeclaredAppModule }),
+    logger,
+  };
+
+  const inspection = inspectAponiaApplication(InspectionAppModule, options);
+
+  expect(inspection.rootModule).toBe("InspectionDeclaredModule");
+  expect(inspection.modules.map((module) => module.id)).toEqual(["InspectionDeclaredModule"]);
+  expect(inspection.routes).toEqual([
+    {
+      method: "GET",
+      path: "/inspections-declared/ping",
+      module: "InspectionDeclaredModule",
+      controller: "InspectionUserController",
+      handler: "readAlpha",
+      parameters: [],
+    },
+  ]);
+  expect(logger.records).toContainEqual({
+    context: "RoutesResolver",
+    message:
+      "Booting InspectionAppModule from the generated module descriptors, so the declared graph serves " +
+      "this application.",
+  });
 });
 
 test("projects module graph order, imports, exports, and controller ids", () => {

@@ -4,11 +4,14 @@ import { isElysiaController } from "../controllers/controller-definition.ts";
 import type { RuntimeElysiaController } from "../controllers/controller.types.ts";
 import { compileRootModule } from "../modules/module-compiler.ts";
 import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
+import { selectRootModuleDescriptor } from "../modules/module-descriptor-artifact.ts";
+import { aponiaVersion } from "../version.ts";
 import { compileElysiaWebSocketGateways } from "../websockets/websocket-gateway.ts";
 import type { CompiledElysiaWebSocketGateway } from "../websockets/websocket-gateway.types.ts";
 import type {
   AponiaApplicationInspection,
   AponiaGatewayInspection,
+  AponiaInspectionOptions,
   AponiaModuleInspection,
   AponiaProviderInspection,
   AponiaRouteInspection,
@@ -18,26 +21,40 @@ import type {
  * Projects a root module into plain, frozen, JSON-serializable data describing
  * the application bootstrap would mount.
  *
- * Inspection runs the same lowering bootstrap runs — `compileRootModule`, then
- * the container that compiles the module graph, then gateway compilation — and
- * reads the resulting descriptors. It never resolves a provider and never
- * constructs a controller instance, so calling it has no side effects beyond
- * compilation, and it fails with the same `AponiaError` codes bootstrap would
- * raise for the same application.
+ * Inspection runs the same lowering bootstrap runs — the same root resolution
+ * from the descriptor artifact, then `compileRootModule`, then the container
+ * that compiles the module graph, then gateway compilation — and reads the
+ * resulting descriptors. It never resolves a provider and never constructs a
+ * controller instance, so calling it has no side effects beyond compilation, and
+ * it fails with the same `AponiaError` codes bootstrap would raise for the same
+ * application.
+ *
+ * Resolving the root from the descriptor artifact is what keeps the projection
+ * describing the graph the application actually serves: an application booting
+ * from the artifact would otherwise be inspected as the decorated classes it
+ * named. An artifact this release refuses is reported through the options' logger
+ * and the decorated module is inspected instead, exactly as bootstrap lowers it.
  *
  * Routes come from the compiled route plans of decorated controllers. A
  * controller mounted through the low-level descriptor path produces its routes
  * in a callback that requires an instance, so it is listed in its module's
  * `controllers` but contributes no entries to `routes`.
  *
- * Repeated calls with the same root module return deeply equal data: modules
- * keep graph order, providers and gateway events keep declaration order, and
- * routes and gateways are sorted by their documented keys.
+ * Repeated calls with the same root module and options return deeply equal data:
+ * modules keep graph order, providers and gateway events keep declaration order,
+ * and routes and gateways are sorted by their documented keys.
  */
 export function inspectAponiaApplication(
   rootModule: AponiaRootModule,
+  options: AponiaInspectionOptions = {},
 ): AponiaApplicationInspection {
-  const container = createContainer(compileRootModule(rootModule));
+  const resolvedRootModule = selectRootModuleDescriptor(
+    options.descriptors,
+    rootModule,
+    aponiaVersion,
+    options.logger,
+  );
+  const container = createContainer(compileRootModule(resolvedRootModule));
   const modules = container.graph.modules;
   const gateways = compileElysiaWebSocketGateways(modules);
 

@@ -892,11 +892,15 @@ console.log(inspection.routes.map((route) => `${route.method} ${route.path}`));
 ```
 
 It compiles the graph without constructing a single instance, so it is safe to
-run against providers that open connections. Routes registered by
-`elysiaController` and `defineElysiaController` callbacks are not included,
-because their routes only exist once the callback runs; build the application and
-read `getNativeApplication().routes` for the complete native route table. See
-the [introspection guide](../../docs/introspection.md) for the full contract.
+run against providers that open connections. Pass the `descriptors` artifact
+`aponia build` wrote and the root is resolved through the same selector bootstrap
+uses, so the inspection describes the graph the application actually serves; an
+artifact this release refuses is reported through the `logger` option and the
+decorated module is inspected instead. Routes registered by `elysiaController`
+and `defineElysiaController` callbacks are not included, because their routes
+only exist once the callback runs; build the application and read
+`getNativeApplication().routes` for the complete native route table. See the
+[introspection guide](../../docs/introspection.md) for the full contract.
 
 [npm package](https://www.npmjs.com/package/@aponiajs/platform-elysia) ·
 [native plugin guide](../../docs/native-plugins.md) ·

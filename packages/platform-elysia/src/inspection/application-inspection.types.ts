@@ -1,4 +1,26 @@
-import type { Provider, RequestMethod, RouteParameterKind } from "@aponiajs/common";
+import type { LoggerService, Provider, RequestMethod, RouteParameterKind } from "@aponiajs/common";
+import type { AponiaApplicationOptions } from "../application/application.types.ts";
+
+/**
+ * Options for {@link inspectAponiaApplication}.
+ *
+ * The artifact options are the ones an application passes to the factory, so an
+ * inspection can be handed the pair `aponia build` wrote. Only `descriptors` is
+ * resolved, through the same selector bootstrap uses, because that artifact
+ * declares the module graph: an inspection has to describe the graph the
+ * application boots from however that graph was chosen. `invokers` is accepted
+ * so the two option shapes stay interchangeable — an invoker artifact binds
+ * handlers rather than declaring the graph, so it changes nothing the projection
+ * reports.
+ *
+ * A `logger` receives the line the selector reports whichever way it decided,
+ * which is the line bootstrap would log for the same artifact.
+ */
+export type AponiaInspectionOptions = Readonly<
+  Pick<AponiaApplicationOptions, "invokers" | "descriptors">
+> & {
+  readonly logger?: LoggerService;
+};
 
 /**
  * The declared kind of a provider in a compiled module graph.

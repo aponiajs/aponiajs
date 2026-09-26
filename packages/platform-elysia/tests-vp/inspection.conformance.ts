@@ -19,13 +19,17 @@ import {
 } from "@aponiajs/common";
 import { z } from "zod";
 import {
+  defineElysiaControllerRoutes,
   inspectAponiaApplication,
   type AponiaApplicationInspection,
   type AponiaInspectedProviderKind,
+  type AponiaInspectionOptions,
+  type AponiaModuleDescriptorArtifact,
   type AponiaModuleInspection,
   type AponiaRouteInspection,
   type AponiaRouteParameterInspection,
 } from "../src/index.ts";
+import { aponiaVersion } from "../src/version.ts";
 
 type VitePlusTest = typeof import("vite-plus/test");
 type Equals<TLeft, TRight> =
@@ -46,6 +50,12 @@ type ProviderKindInspectionAssertion = Expect<
 >;
 type InspectionCollectionsAssertion = Expect<
   Equals<AponiaApplicationInspection["modules"], readonly AponiaModuleInspection[]>
+>;
+type InspectionOptionsAssertion = Expect<
+  Equals<NonNullable<Parameters<typeof inspectAponiaApplication>[1]>, AponiaInspectionOptions>
+>;
+type InspectionDescriptorsAssertion = Expect<
+  Equals<AponiaInspectionOptions["descriptors"], AponiaModuleDescriptorArtifact | undefined>
 >;
 
 const conformanceCreateSchema = { body: z.object({ name: z.string().min(2) }) };
@@ -112,6 +122,50 @@ const conformanceInspectionDynamicModule: DynamicModule = Object.freeze({
 class ConformanceInspectionTenantModule {}
 
 const conformanceInspectionEmptyModule = defineModule({ id: "ConformanceInspectionEmptyModule" });
+
+@Controller("conformance-declared-inspection")
+class ConformanceDeclaredInspectionController {
+  @Get("ping")
+  ping(): string {
+    return "ping";
+  }
+}
+
+/**
+ * The graph `aponia build` would declare for the root above: a declared id the
+ * decorated lowering cannot produce, so an inspection that reads it can only
+ * have read the declaration rather than the classes the application named.
+ */
+const conformanceInspectionDeclaredModule = defineModule({
+  id: "ConformanceInspectionDeclaredModule",
+  controllers: [
+    defineElysiaControllerRoutes(ConformanceDeclaredInspectionController, {
+      path: "conformance-declared-inspection",
+      inject: [],
+      routes: [
+        {
+          method: "GET",
+          path: "ping",
+          propertyKey: "ping",
+          promiseCapable: false,
+        },
+      ],
+    }),
+  ],
+});
+
+/**
+ * The options an application hands its inspection: the artifact `aponia build`
+ * writes, accepted exactly as it is committed, and the logger the choice is
+ * reported through.
+ */
+const documentedInspectionOptions: AponiaInspectionOptions = {
+  descriptors: Object.freeze({
+    framework: aponiaVersion,
+    elysia: "1.4.30",
+    modules: Object.freeze({ ConformanceInspectionModule: conformanceInspectionDeclaredModule }),
+  }),
+};
 
 @WebSocketGateway("/conformance-inspection")
 class ConformanceInspectionGateway {
@@ -293,6 +347,29 @@ test("the Vite+ lane returns empty collections for an application without contro
     routes: [],
     gateways: [],
   });
+});
+
+test("the Vite+ lane resolves a descriptor artifact when inspecting an application", () => {
+  const inspectionAssertions: readonly boolean[] = [
+    true satisfies InspectionOptionsAssertion,
+    true satisfies InspectionDescriptorsAssertion,
+  ];
+  const declared = inspectAponiaApplication(
+    ConformanceInspectionModule,
+    documentedInspectionOptions,
+  );
+  // A refusal is not an error here either: the decorated module the application
+  // named is inspected instead, which is the graph bootstrap would lower.
+  const refused = inspectAponiaApplication(ConformanceInspectionModule, {
+    descriptors: Object.freeze({ framework: "0.0.0", elysia: null, modules: Object.freeze({}) }),
+  });
+
+  expect(inspectionAssertions).toEqual([true, true]);
+  expect(declared.rootModule).toBe("ConformanceInspectionDeclaredModule");
+  expect(declared.routes.map((route) => `${route.method} ${route.path}`)).toEqual([
+    "GET /conformance-declared-inspection/ping",
+  ]);
+  expect(refused).toEqual(inspectAponiaApplication(ConformanceInspectionModule));
 });
 
 test("the Vite+ lane raises the typed errors bootstrap would raise", () => {

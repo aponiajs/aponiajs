@@ -15,6 +15,7 @@ export type {
   AponiaApplicationInspection,
   AponiaGatewayInspection,
   AponiaInspectedProviderKind,
+  AponiaInspectionOptions,
   AponiaModuleInspection,
   AponiaProviderInspection,
   AponiaRouteInspection,

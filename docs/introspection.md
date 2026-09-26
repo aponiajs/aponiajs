@@ -25,6 +25,35 @@ bun run inspect          # a readable summary of modules, routes, and gateways
 bun run inspect --json   # the whole inspection, for tooling
 ```
 
+## Resolving the graph the application boots from
+
+An application that boots from the descriptor artifact `aponia build` writes
+passes it to the factory. Inspection accepts the same artifact, so it reports the
+graph that application serves instead of the decorated classes it named:
+
+```ts
+import { inspectAponiaApplication } from "@aponiajs/platform-elysia";
+import { AppModule } from "../src/app.module.ts";
+import { moduleDescriptorArtifact } from "../src/descriptors.generated.ts";
+
+const inspection = inspectAponiaApplication(AppModule, {
+  descriptors: moduleDescriptorArtifact,
+});
+
+console.log(inspection.rootModule); // the id of the declared graph
+```
+
+The root is resolved through the same selector bootstrap uses, so which graph
+serves the application and which graph an inspection describes cannot disagree.
+An artifact this release refuses — one built by another release, one holding no
+declaration for the root module's name, one whose entries are not module
+descriptors — is never an error here either: the decorated module is inspected
+instead, exactly as bootstrap lowers it, and the `logger` option receives the one
+line reporting which of the two was chosen. The options also accept the
+`invokers` artifact for symmetry with the factory options; an invoker artifact
+binds handlers rather than declaring the graph, so it changes nothing an
+inspection reports.
+
 ## What it returns
 
 ```ts
