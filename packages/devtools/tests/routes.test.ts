@@ -516,15 +516,62 @@ test("a record whose plans are not the shape this release writes still answers",
   }
 });
 
+test("a route table this release cannot walk is reported as no routes, not a failure", async () => {
+  // The table is Elysia's, not this release's: an installed release that exposed
+  // it as something other than the array this release reads — or as an array
+  // holding entries this release cannot join — must leave the endpoint
+  // answering. This handler runs inside `Bun.serve`, where a throw is a failed
+  // request, and a devtools server that failed one endpoint would have failed
+  // the debugging aid it exists to be.
+  const unwalkable = { routes: {} } as unknown as Elysia;
+  const unwalkableServer = serveLoopback(unwalkable);
+
+  try {
+    expect(await readRoutes(unwalkableServer)).toEqual({ routes: [] });
+  } finally {
+    unwalkableServer.stop();
+  }
+
+  // The same refusal one level down: an entry whose method or path is not a
+  // string cannot be joined to a record entry or reported as a route, and is
+  // dropped rather than rendered as one.
+  const malformed = {
+    routes: [
+      { method: 7, path: null },
+      { method: "GET", path: "/foreign" },
+    ],
+  } as unknown as Elysia;
+  const malformedServer = serveLoopback(malformed);
+
+  try {
+    expect((await readRoutes(malformedServer)).routes).toEqual([
+      {
+        method: "GET",
+        path: "/foreign",
+        module: "",
+        controller: "",
+        handler: "",
+        source: null,
+        parameters: [],
+      },
+    ]);
+  } finally {
+    malformedServer.stop();
+  }
+});
+
 test("routes answers in a deterministic order that does not depend on mount order", async () => {
   // Mounted in the reverse of the order the payload states, so an endpoint that
   // published the table as the application holds it would answer the other way
   // round. The controller's routes sort by path, and the third route sorts first
-  // for the same reason: `path` is the outermost key of the five.
+  // for the same reason: `path` is the outermost key of the five. The two
+  // `/alpha` routes are mounted `POST` before `GET` while the payload states
+  // `GET` before `POST`, so the second key is exercised rather than assumed —
+  // a payload that compared only paths would keep the order they were mounted in.
   const application = new Elysia();
   application.get("/zeta", () => "zeta");
-  application.get("/alpha", () => "alpha");
   application.post("/alpha", () => "alpha");
+  application.get("/alpha", () => "alpha");
   const server = serveLoopback(application);
 
   try {
