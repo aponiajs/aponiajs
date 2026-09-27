@@ -177,11 +177,12 @@ export interface AponiaLogsPayload {
  * The payload `/__devtools/requests` answers with: the requests the application
  * answered, read from one cursor, and the cursor the next poll asks from.
  *
- * It is `/logs`' shape over a different record, down to the cursor's meaning —
- * which counts every entry the record has written, including the ones dropped
- * since — so a client that polls one endpoint already knows how to poll the
- * other, and a `since` outside the retained window is answered with what is
- * retained rather than an error.
+ * It is `/logs`' cursor rules over a different record, down to the cursor's
+ * meaning — which counts every entry the record has written, including the ones
+ * dropped since — so a client that polls one endpoint already knows how to poll
+ * the other, and a `since` outside the retained window is answered with what is
+ * retained rather than an error. It carries no `levels`: a request has no level,
+ * and only the log stream has levels to name.
  *
  * Every other endpoint publishes what the application **is**; this one publishes
  * what it **did**. The record is in memory, per boot, and bounded like every

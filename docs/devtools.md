@@ -282,8 +282,9 @@ It counts every line recorded, including the ones dropped since, which is what
 keeps it monotonic and makes it usable as a poll marker. A `since` older than
 the retained window is answered with the whole window, and one ahead of every
 write with nothing: neither is an error, the answer always carries the cursor to
-poll from next, and that cursor never goes backwards. The same rule and the same
-shape serve `/requests`.
+poll from next, and that cursor never goes backwards. The same cursor rule serves
+`/requests`, which answers `{ cursor, entries }`: a request has no level, so there
+is no `levels` beside its entries.
 
 Recording requires the logger, and the handover is a condition this endpoint
 states rather than hides: pass the **same** object to `DevtoolsOptions.logger`
@@ -320,9 +321,8 @@ never reached it.
 
 ### `/requests`
 
-`GET /__devtools/requests?since=<cursor>` answers the same `{ cursor, entries }`
-shape over a different record: what the application **did** rather than what it
-**is**. The record is written by a pair of hooks the module contributes, not by
+`GET /__devtools/requests?since=<cursor>` answers `{ cursor, entries }` over a
+different record: what the application **did** rather than what it **is**. The record is written by a pair of hooks the module contributes, not by
 the application, so it observes rather than participates — it cannot change what
 a route receives or what it answers.
 

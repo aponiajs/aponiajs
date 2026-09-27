@@ -116,9 +116,11 @@ curl http://127.0.0.1:8000/__devtools/routes
 ```
 
 `meta` comes first for a consumer, because it carries `contract` — the version
-of the wire shape every other payload obeys. The cursor endpoints answer
-`{ cursor, entries }` and are polled: send the cursor the previous answer
-carried, and the answer holds the entries written since. The cursor never goes
+of the wire shape every other payload obeys. The cursor endpoints are polled:
+send the cursor the previous answer carried, and the answer holds the entries
+written since. `/logs` answers `{ cursor, entries, levels }` — `levels` being the
+`LoggerService` levels the tap reached — and `/requests` answers
+`{ cursor, entries }`, because a request has no level. The cursor never goes
 backwards, and a cursor older than the retained window or ahead of every write
 is answered with what there is rather than an error.
 

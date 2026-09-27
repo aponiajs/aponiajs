@@ -167,11 +167,12 @@ const application = await AponiaFactory.create(AppModule, {
   one ahead of every write with nothing: neither is an error, and the cursor never
   goes backwards.
 - **`GET /__devtools/requests?since=<cursor>` reports the requests the
-  application answered.** The record is the `/logs` shape over a different fact —
-  every other endpoint says what the application _is_, this one says what it
-  _did_ — so each poll names the cursor the previous answer carried and is
-  answered with `{ cursor, entries }` under the same rules, including an empty
-  record when a registration was told to capture nothing. An entry carries the
+  application answered.** The record is `/logs`' cursor rules over a different
+  fact — every other endpoint says what the application _is_, this one says what
+  it _did_ — so each poll names the cursor the previous answer carried and is
+  answered with `{ cursor, entries }` under them, including an empty record when
+  a registration was told to capture nothing. It carries no `levels`, because a
+  request has no level to report. An entry carries the
   `method`, the `path` (the route pattern that matched, or the path that arrived
   when none did), the `url` as it arrived, the `status`, the `durationMs`, the
   `timestamp`, the request's `headers`, and the `body` the route parsed, truncated
