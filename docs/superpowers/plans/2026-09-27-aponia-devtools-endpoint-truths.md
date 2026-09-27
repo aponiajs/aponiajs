@@ -4,7 +4,7 @@
 
 **Goal:** Make `@aponiajs/devtools` stop answering questions with shapes that read as a different answer — seven of the sixteen stated limitations become facts instead of silences.
 
-**Architecture:** Six changes across `packages/platform-elysia` and `packages/devtools`. Two are pure devtools edits (`#8`, `#3`), two are platform facts a mount can see and a record must carry (`#4`, `#10`), and two change the `/requests` contract (`#6`/`#7`, `#9`). The wire contract moves from `1` to `2` in the task that breaks it, so no intermediate state ships a changed shape under an unchanged number.
+**Architecture:** Six changes across `packages/platform-elysia` and `packages/devtools`. Two are pure devtools edits (`#8`, `#3`), two are platform facts a mount can see and a record must carry (`#4`, `#10`), and two change the `/requests` record (`#6`/`#7`, `#9`). The wire contract moves from `1` to `2` in Task 3, which is the task that **breaks** the shape rather than the one that extends it: `status` changes type and one request becomes two entries, so a reader of `1` would misread it. Task 2's `levels` is additive and rides at `1`, because a reader of `1` reads a `1` payload correctly and ignores a field it does not know.
 
 **Tech Stack:** Bun, TypeScript (strict, ESM, explicit `.ts` extensions), Elysia as a peer, `bun test` for the Bun lane, `vitest` under Vite+ for the conformance lane.
 
@@ -50,15 +50,19 @@ Listed most likely to bite first. Each gets its test in the owning task.
 
 Add to `packages/devtools/tests/requests.test.ts`. The case proves the closing reading is taken before the reads it currently encloses, by making those reads expensive and requiring the duration not to grow with them.
 
+Read `packages/devtools/tests/requests.test.ts` first and use **its** fixture helpers —
+the names and option shapes below are the assertion, not the API. Every task in this plan
+that names a fixture means "the one the file already has"; do not add a helper for it.
+
 ```ts
 test("a duration is not charged for the answer this package reads", async () => {
-  // A body large enough that serializing it costs measurably more than the
-  // route does. The route answers immediately; every millisecond the record
-  // reports beyond a small floor is this package's own read.
+  // A body large enough that serializing it costs measurably more than the route
+  // does. The route answers immediately, so every millisecond the record reports
+  // beyond a small floor is this package's own read of the answer.
   const filler = "x".repeat(400_000);
   const application = await bootRequestsApplication({
-    bodyLimit: 500_000,
-    routes: [["get", "/bulk", () => ({ filler })]],
+    capture: { bodyLimit: 500_000 },
+    answer: { filler },
   });
 
   await fetch(`${application.getUrl()}/bulk`);
@@ -68,6 +72,11 @@ test("a duration is not charged for the answer this package reads", async () => 
   expect(entry.durationMs).toBeLessThan(50);
 });
 ```
+
+The route that answers with the filler body is added to the file's existing fixture
+route set, not through a new option. Calibrate the `< 50` bound against the observed
+failure before the fix and the observed pass after it, and state both numbers in a
+comment: a bound that the unfixed code also passes proves nothing.
 
 - [ ] **Step 2: Run test to verify it fails**
 
@@ -156,45 +165,62 @@ git commit -m "fix(devtools): stop charging the application for the answer this 
 
 - [ ] **Step 1: Write the failing test**
 
+````ts
+Read `packages/common/src/logging/logger.ts` first: whether the concrete `Logger` carries
+every `LoggerService` level as an own, writable property decides how these cases are set
+up. Assert membership rather than an exact array, so a case does not break when a level
+is added to the interface.
+
 ```ts
 test("a stream names the levels the tap reached", async () => {
   const logger = new Logger("Test", { timestamp: false });
-  // `debug` is declared by `LoggerService` but absent on this object, so the
-  // tap cannot reach it and the payload has to say so.
+  // A level the object does not carry is a level the tap cannot reach, and the
+  // payload has to say so rather than leave it to be inferred from an absence.
   delete (logger as { debug?: unknown }).debug;
 
   const application = await bootLogsApplication({ logger });
   const payload = await readLogs(application);
 
-  expect(payload.levels).toEqual(["log", "fatal", "error", "warn", "verbose"]);
+  expect(payload.levels).toContain("log");
   expect(payload.levels).not.toContain("debug");
 });
 
 test("a level that refuses its assignment does not cost the levels after it", async () => {
   const logger = new Logger("Test", { timestamp: false });
-  const warn = logger.warn.bind(logger);
-  Object.defineProperty(logger, "error", { value: logger.error, writable: false });
-  logger.warn = warn;
+  // `error` is made unwritable, which is the one shape that refuses a patch while
+  // later levels would still accept one. The levels after it must still be
+  // reached, and the payload must not name the level that refused.
+  Object.defineProperty(logger, "error", {
+    value: logger.error,
+    writable: false,
+    configurable: true,
+  });
 
   const application = await bootLogsApplication({ logger });
   const payload = await readLogs(application);
 
-  expect(payload.levels).toContain("warn");
-  expect(payload.levels).toContain("verbose");
-  logger.log("after");
+  expect(payload.levels).toContain("log");
   expect(payload.levels).not.toContain("error");
+  expect(payload.levels).toContain("verbose");
 });
+````
+
+`recordableLevels` order is `log, fatal, error, warn, debug, verbose`, so `error`
+refusing leaves `warn`, `debug`, and `verbose` after it — the levels that prove the loop
+continued. Confirm `verbose` is actually present on the concrete `Logger` before
+asserting it; if it is not, assert on `warn` instead and say why in the case.
 
 test("a logger whose first assignment refuses serves no endpoint", async () => {
-  const logger = Object.freeze(new Logger("Test", { timestamp: false }));
-  const application = await bootLogsApplication({ logger });
+const logger = Object.freeze(new Logger("Test", { timestamp: false }));
+const application = await bootLogsApplication({ logger });
 
-  expect(await fetch(`${application.getUrl()}${devtoolsPrefix}/logs`)).toHaveProperty(
-    "status",
-    404,
-  );
+expect(await fetch(`${application.getUrl()}${devtoolsPrefix}/logs`)).toHaveProperty(
+"status",
+404,
+);
 });
-```
+
+````
 
 - [ ] **Step 2: Run test to verify it fails**
 
@@ -267,7 +293,7 @@ function rememberTap(logger: LoggerService, stream: TappedLogStream): void {
     // Not an object, so there is nothing to remember it by.
   }
 }
-```
+````
 
 - [ ] **Step 4: Publish the levels**
 
@@ -501,7 +527,7 @@ Also update the interface's doc paragraph: it says "One request the application 
       // answer never reaches this package would otherwise leave no trace at all —
       // indistinguishable from one that never arrived. The entry states the
       // absence of an answer rather than inventing one.
-      open.write(toPendingRecord(arrival, policy));
+      open.write(toPendingRecord(arrival));
     },
 ```
 
@@ -511,7 +537,7 @@ The counter is per capture, not per record, so ids are unique across the capture
 
 ```ts
 /** The entry written when a request arrives, before anything can state an answer. */
-function toPendingRecord(arrival: RequestArrival, policy: ResolvedCapture): RequestRecord {
+function toPendingRecord(arrival: RequestArrival): RequestRecord {
   return Object.freeze({
     id: arrival.id,
     method: arrival.method,
@@ -619,7 +645,7 @@ test("a captured response body is cut at its own limit and marked", async () => 
 test("a response body this package cannot serialize is stated, not dropped", async () => {
   const application = await bootRequestsApplication({
     capture: { responseBody: true },
-    routes: [["get", "/cyclic", () => cyclicAnswer]],
+    answer: { cyclic: true },
   });
 
   await fetch(`${application.getUrl()}/cyclic`);
@@ -680,6 +706,15 @@ const responseBody =
 ```
 
 Spread it in the returned object the way `body` already is.
+
+**Confirm what the after-response context actually exposes for the answer before relying
+on `responseValue`.** The request-side facts are read at arrival because that context
+stops stating them; the answer side is read here, so whatever field carries the answer —
+a value, a `Response`, or nothing at all for an answer Elysia composed — decides whether
+this change is possible as written. If the context carries no readable answer for every
+route, say so in the task report rather than publishing a `responseBody` that is present
+for some answers and not others: a field that appears for one route and not another, with
+no way to tell why, is the false-completeness shape this plan exists to remove.
 
 - [ ] **Step 5: Run the tests**
 
@@ -835,12 +870,22 @@ Add `mappedExceptions` to the `createApplicationDiagnostics` facts and to the re
 
 - [ ] **Step 5: Hand it to the capture**
 
-`RequestCapture.beginBoot` takes the map optionally and stores it per application identity alongside the buffer (a second `WeakMap<ApplicationIdentity, WeakMap<Request, string>>`). `toRequestRecord` reads it after `failureMessage` and uses it only where that produced nothing:
+`RequestCapture.beginBoot` takes the map optionally and stores it **per application
+identity**, beside the buffer — a second `WeakMap<ApplicationIdentity, WeakMap<Request,
+string>>`. It is not carried on the arrival stamp: the map belongs to the boot, and a
+request's stamp is a fact about the request. `complete` looks the map up by the arrival's
+record, exactly as `arrive` looks up the buffer.
 
 ```ts
+// The platform's own mapping recorded this exception when it answered, and the
+// answer's published body cannot be read from here for the two shapes that carry
+// none. The map is consulted only where the answer published nothing readable, so
+// it never overwrites what the client received.
 const error =
-  (await failureMessage(status, context.answer)) ?? arrival.mappedExceptions?.get(context.request);
+  (await failureMessage(status, context.answer)) ?? mappedExceptions?.get(context.request);
 ```
+
+`toRequestRecord`'s signature gains a fourth parameter for the map, which stays `@internal`.
 
 `module/devtools-module.ts:181` — read the record at `onStart` and pass the field:
 
