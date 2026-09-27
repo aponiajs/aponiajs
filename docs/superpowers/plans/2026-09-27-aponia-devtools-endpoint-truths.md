@@ -1119,16 +1119,21 @@ Add the field to `AponiaApplicationDiagnostics` with a doc comment stating it is
  * below is the fallback for a record that carries no halves — an older or
  * foreign platform copy.
  *
- * The fallback reads the class the token names, which makes it exact for a
- * class-backed interceptor and **approximate for a token whose provider is not
- * one**: a `provideValue` object whose shape differs from its token's
- * `prototype` is answered from the prototype while the platform calls the
- * object, so the probe can state a step the route does not run. Do not describe
- * this as a narrower answer that is never wrong — it is wrong in that one case,
- * and `resolveEnhancers` casts the resolved provider without checking it is a
- * constructed instance, so nothing prevents it. Narrowing the sentence is the
- * fix; validating the provider and throwing would fail a boot, which this
- * package may never do.
+ * The fallback answers for the class the token names rather than for the object
+ * the platform calls, and it is **wrong in both directions**: it leaves a
+ * field-declared half out, because a field is an instance property the
+ * `prototype` never carries; and it can state a half the resolved object does
+ * not implement, when a token's provider is a `provideValue` object whose shape
+ * differs from its token's `prototype`. `resolveEnhancers` casts the resolved
+ * provider without checking it is a constructed instance, so nothing prevents
+ * that second case.
+ *
+ * Do not describe this as "exact for a class-backed interceptor": the class
+ * whose half is a field IS class-backed, and it is the case this feature exists
+ * for. Do not call it a narrower answer that is never wrong either. Say what it
+ * is — approximate in one direction and wrong in the other — and give the
+ * configuration for each. Narrowing the sentence is the fix; validating the
+ * provider and throwing would fail a boot, which this package may never do.
  */
 function declaresHalf(
   token: ClassToken<unknown>,
