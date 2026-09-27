@@ -13,6 +13,11 @@
 ## Global Constraints
 
 - All repository content is English — code, comments, docs, test names. Scan with `rg -nP '[\x{0E00}-\x{0E7F}]' --glob '!node_modules/**' --glob '!dist/**' .` before finishing any task.
+- **Every prose edit sweeps for the claim; it never edits a named list of lines.** Task 1 missed four files by trusting a list, and each round of correcting the wording produced a fresh instance of the same defect — three rounds running. A carry list is a list of the places somebody happened to see.
+  - Search across `docs/` and every package's `README.md`, `AGENTS.md`, and `llms.txt`, with a **multiline-aware** pattern: a wrapped `"outside\n  it"` does not match `"outside it"`, so a line-anchored sweep reports silence it has not earned.
+  - `rg` **skips symlinks**. `CLAUDE.md` and `GEMINI.md` are symlinks to `AGENTS.md` in every package; add `-L`, or confirm the real file and check that all three spellings agree.
+  - Exclude `docs/superpowers/**`: the specs and this plan are the design record that mandates the changes, and they describe the pre-change state deliberately.
+- **When a claim needs a scope clause to be true, the boundary is in the wrong place.** Task 1 spent three rounds narrowing a sentence before moving the reading it described. A clause that exists only to make a statement accurate is a signal to move the thing being described.
 - `src/index.ts` is the only public barrel per package. Type-only contracts are `*.types.ts` beside the owner. No `any`; narrow `unknown`.
 - Type-only imports use `import type`. Public descriptors and metadata are returned frozen; caller-owned collections are copied before freezing.
 - Public API edits are contract changes. `#4` and `#10` add fields to the `@internal` diagnostics record, which is a seam, not a public contract — devtools must keep reading it defensively so an older platform copy still answers.
@@ -44,7 +49,7 @@ Listed most likely to bite first. Each gets its test in the owning task.
 **Interfaces:**
 
 - Consumes: nothing from earlier tasks.
-- Produces: no signature change. `toRequestRecord` keeps `(context, capture, arrival) => Promise<RequestRecord>`.
+- Produces: `RequestCapture.complete(context: AnsweredRequest, completedAt: number): Promise<void>` and `toRequestRecord(context, capture, arrival, completedAt) => Promise<RequestRecord>`. Both are `@internal` and have one call site each. **Tasks 3, 4, and 5 build on this signature and must not re-take a reading.**
 
 - [ ] **Step 1: Write the failing test**
 
@@ -85,24 +90,66 @@ Expected: FAIL — the marker the case keys on flips strictly between the openin
 
 **The premise this case was first written from is wrong, and the case must be rebuilt on the read that actually exists.** Response bodies are never captured, so a large _response_ body enlarges no enclosed read and the case as first sketched would pass unfixed. The enclosed reads are the parsed **request** body through `captureBody`, plus `routePattern` and `answerStatus`. Build the regression on `captureBody` over a large request body, with an observable marker that flips only when the serializer enumerates it.
 
-- [ ] **Step 3: Move the closing reading**
+- [ ] **Step 3: Move the closing reading to the boundary, not inside the function**
 
-In `packages/devtools/src/requests/request-capture.ts`, inside `toRequestRecord`, move the duration line above the reads it currently follows. The existing comment already states the rule the code does not keep; keep it and correct it.
+**The reading does not belong in `toRequestRecord` at all.** It is taken as the after-response hook's first statement and passed in, because `toRequestRecord` is not where the completion side begins: the hook reads `context.request`, `context.route`, `context.body`, `context.set.status`, and `context.responseValue` while assembling `complete()`'s argument, and a reading taken inside `toRequestRecord` follows all five. Every sentence saying the route, the status, and the parsed body are outside the measurement would then be false.
+
+This was found the hard way: three rounds of narrowing the sentence produced a fresh instance of the same defect each time, so the boundary moved instead of the wording. Do not reintroduce a reading inside `toRequestRecord`, and do not re-scope the claim in the documents — with the boundary at hook entry the unconditional form is simply true.
+
+`packages/devtools/src/module/devtools-module.ts` — the hook:
+
+```ts
+.onAfterResponse({ as: "global" }, async (context) => {
+  // Taken before this hook reads anything off the context, so that every read the
+  // completion side makes — the five below and everything toRequestRecord does with
+  // them — is outside the measurement rather than merely most of it. Moving this
+  // line below the argument object silently charges the application for this
+  // package's own work.
+  const completedAt = performance.now();
+  await capture.complete(
+    {
+      request: context.request,
+      route: context.route,
+      body: context.body,
+      status: context.set.status,
+      answer: context.responseValue,
+    },
+    completedAt,
+  );
+})
+```
+
+`packages/devtools/src/requests/request-capture.ts` — `complete` takes the reading, and `toRequestRecord` takes it too:
+
+```ts
+async complete(context: AnsweredRequest, completedAt: number): Promise<void> {
+  const arrival = arrivals.get(context.request);
+
+  // A request this registration never saw, and an answer whose arrival was
+  // spent by an earlier completion, leave nothing rather than a partial entry.
+  if (arrival === undefined) {
+    return;
+  }
+
+  arrivals.delete(context.request);
+  arrival.record.write(await toRequestRecord(context, policy, arrival, completedAt));
+},
+```
 
 ```ts
 export async function toRequestRecord(
   context: AnsweredRequest,
   capture: ResolvedCapture,
   arrival: RequestArrival,
+  completedAt: number,
 ): Promise<RequestRecord> {
-  // The closing reading is taken before this package reads anything from the
-  // context: the route, the status, the parsed body, and the answer's published
-  // message are all this package's own work, and a duration that included them
-  // would report time the application never spent. The one thing still excluded
-  // below is the single await that reads a readable `5xx` answer's body, and it
-  // is excluded for the same reason — which is why the read happens after this
-  // line rather than before it.
-  const durationMs = performance.now() - arrival.startedAt;
+  // The reading arrives as an argument rather than being taken here: the
+  // completion side begins at the hook, and a reading taken in this function
+  // would follow the hook's own reads of the context. Everything below is this
+  // package's own work and none of it is charged to the application — including
+  // the single await, which reads a readable `5xx` answer's published body and
+  // is the one exclusion that predates this change.
+  const durationMs = completedAt - arrival.startedAt;
   const route = routePattern(context.route);
   const status = answerStatus(context);
   const body = capture.body ? captureBody(context.body, capture.bodyLimit) : undefined;
@@ -122,6 +169,8 @@ export async function toRequestRecord(
 }
 ```
 
+**Every later task in this plan that edits `toRequestRecord` inherits this signature.** Tasks 3, 4, and 5 each add to this function; each takes `completedAt` for granted and must not add a reading of its own.
+
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `bun test packages/devtools/tests/requests.test.ts -t "not charged for the answer"`
@@ -131,7 +180,9 @@ Expected: PASS.
 
 `docs/devtools.md` currently says the duration "includes this package's own synchronous reads of the request and the answer". Replace that paragraph with what is now true.
 
-**Do not claim the reading excludes every read this package performs — it does not, and that claim is false.** Two reads stay inside the measurement: the completion path reads `context.request` and touches the arrival `WeakMap` (`arrivals.get`, the guard, `arrivals.delete`) before the closing reading, and the arrival hook's own `performance.now()`, `requestUrl`, `request.method`, and `captureHeaders` all follow the opening stamp. The true claim is narrower and is the one to write: the reading is taken **before every read the completion path makes of the answer**, so the route, the status, and the parsed body are outside it, and so is the one `await` that reads a readable `5xx` body.
+**Write the unconditional claim, and make sure the code earns it.** With the reading taken at the hook's first statement, it precedes _every_ read the completion side makes: the hook's five context reads, `complete`'s `arrivals.get` and `arrivals.delete`, and everything `toRequestRecord` does — including the one `await` that reads a readable `5xx` body. Say that, without a scope clause: a leftover "the reads of the answer" qualifier was needed only while the reading sat inside `toRequestRecord`, and leaving it behind misleads the next reader about why it is there.
+
+What stays inside is the arrival hook's own work — `performance.now()`, `requestUrl`, `request.method`, and `captureHeaders` all follow the opening stamp — because that stamp must precede the reads that need the request while it is whole. That half of the sentence is right and stays.
 
 **Sweep for the claim rather than editing the lines named here.** This repository has a recorded history of this exact failure — a carry list is a list of the places somebody happened to see. Search the whole published set for the old claim rather than trusting the two paths above:
 
@@ -708,7 +759,7 @@ Expected: FAIL — `responseBody` is not a known option and is never published.
   readonly responseBody?: string;
 ```
 
-In `toRequestRecord`, read it after the closing duration stamp, through the same `captureBody` helper and the same literals the request body uses:
+In `toRequestRecord`, read it through the same `captureBody` helper and the same literals the request body uses. There is no stamp in this function to read it "after" — Task 1 moved the closing reading to the hook, and `durationMs` arrives as the `completedAt` argument. Everything this function does is outside the measurement, which is the point.
 
 ```ts
 const responseBody =
@@ -897,7 +948,7 @@ const error =
   (await failureMessage(status, context.answer)) ?? mappedExceptions?.get(context.request);
 ```
 
-`toRequestRecord`'s signature gains a fourth parameter for the map, which stays `@internal`.
+`toRequestRecord`'s signature gains a fifth parameter for the map, after Task 1's `completedAt`, which stays `@internal`. Keep the parameter order the one Task 1 established and append; do not reorder the existing four.
 
 `module/devtools-module.ts:181` — read the record at `onStart` and pass the field:
 
