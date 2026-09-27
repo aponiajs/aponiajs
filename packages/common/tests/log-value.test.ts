@@ -47,8 +47,10 @@ describe("renderLogValue", () => {
   });
 
   test("states a value that refuses the JSON form by its plain string form", () => {
-    // A refusal at `JSON.stringify` alone is not a value this release cannot
-    // state: the plain form is tried once more before the literal.
+    // The refusal happens inside `JSON.stringify`, and the plain form is the
+    // `catch`'s answer: a value that refuses the JSON form is still one this
+    // release can state. The `??` fall-through is the other path to the plain
+    // form, and the `undefined` case above pins it.
     expect(renderLogValue(cyclicRefusal())).toBe("[object Object]");
   });
 

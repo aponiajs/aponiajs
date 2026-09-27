@@ -15,25 +15,25 @@
 export const unrenderableValue = "[unrenderable]";
 
 /**
- * The account of a value, as the text a surface states it in.
+ * The account of a value, as the text a surface states it in: a string is its own
+ * text, a function is its name, an `Error` is its name and message with no stack,
+ * and anything else is its JSON form with the plain string form behind it. A value
+ * that refuses both of those forms is stated as the literal rather than allowed to
+ * throw.
  *
- * It is the rendering a thrown value is reported as on every surface this
- * framework publishes one: the devtools log stream's entry for a line, and the
- * exception the platform's default mapping records for `/requests`. One
- * definition rather than a copy, so two surfaces reporting one failure cannot
- * disagree about it.
+ * The text is not folded to one line. A string keeps its newlines, because a
+ * surface states what happened rather than editing it.
  *
- * The text is not folded to one line. A string is its own text, newlines
- * included, because a surface states what happened rather than editing it.
- *
- * It may not throw, whatever it is handed. One caller is the platform's error
- * hook: it reports an unhandled failure by logging it from inside the hook whose
- * return value is the response the client receives, so a throw here would replace
- * the application's answer with the engine's own page. The whole body is guarded
+ * It may not throw, whatever it is handed, and the totality is the function's own
+ * rather than its callers': this rendering exists to be used where a failure is
+ * reported, and a failure is reported from inside a hook whose return value is the
+ * response the client receives, so a throw here would replace the application's
+ * answer with the engine's own page. Every read of the value below is inside the
+ * guard except the `typeof` test that answers a string, because `typeof` is the
+ * one read that cannot be made to throw; the guard covers the whole of the rest
  * rather than the reads somebody thought of — a `Proxy` refuses `instanceof`,
- * `JSON.stringify` refuses a value that refers to itself or whose `toJSON`
- * throws, and a function's `name` refuses when it is a getter that throws — and
- * a value that refuses even the plain string form is stated as the literal.
+ * `JSON.stringify` refuses a value that refers to itself or whose `toJSON` throws,
+ * and a function's `name` refuses when it is a getter that throws.
  */
 export function renderLogValue(value: unknown): string {
   if (typeof value === "string") {

@@ -170,8 +170,8 @@ renders every value it is handed, or states `[unrenderable]`.
 
 `renderLogValue` turns a logged value into the text a surface states it in: a string is its own text,
 a function is its name, an `Error` is its name and message with no stack, and everything else is its
-JSON form with the plain string form behind it. A value that refuses every one of those reads is
-stated as `[unrenderable]` rather than allowed to throw, which is what the devtools log stream and
-the platform's exception record both rely on — they call this one function, so they cannot disagree
-about a failure they both report. The console logger prints its own form for a terminal reader and
-answers the same literal when a value refuses it.
+JSON form with the plain string form behind it. A value that refuses both of those forms is stated as
+`[unrenderable]` rather than allowed to throw, so a surface can report any value it is handed — a
+thrown one included — without the report becoming a failure of its own. Reach for it when you publish
+a surface of your own and need to state a value the way the framework's does. The console logger prints
+its own form for a terminal reader and answers the same literal when a value refuses it.
