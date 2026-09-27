@@ -50,6 +50,18 @@ Or add AponiaJS to an existing project:
 bun add @aponiajs/common@alpha @aponiajs/platform-elysia@alpha elysia
 ```
 
+For decorated classes, enable TypeScript's legacy decorators and metadata in
+`tsconfig.json`. `aponia new` configures these options for you:
+
+```json
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  }
+}
+```
+
 ## Services
 
 A service holds business behavior. `@Injectable()` marks it for constructor
@@ -164,19 +176,20 @@ import {
 export const APP_NAME = createToken<string>("APP_NAME");
 export const GREETING = createToken<string>("GREETING");
 
-@Module({
-  providers: [
-    provideValue(APP_NAME, "my-api"),
-    provideFactory(GREETING, [APP_NAME], (name) => `Hello from ${name}`),
-  ],
-  exports: [GREETING],
-})
-export class ConfigModule {}
-
 @Injectable()
 export class GreetingService {
   constructor(@Inject(GREETING) private readonly greeting: string) {}
 }
+
+@Module({
+  providers: [
+    provideValue(APP_NAME, "my-api"),
+    provideFactory(GREETING, [APP_NAME], (name) => `Hello from ${name}`),
+    GreetingService,
+  ],
+  exports: [GREETING, GreetingService],
+})
+export class ConfigModule {}
 ```
 
 `provideClass` and `provideAlias` complete the set. Providers are singletons.
@@ -253,20 +266,19 @@ Elysia route inference and minimal syntax:
 ```ts
 import { defineModule, provideClass } from "@aponiajs/common";
 import { elysiaController } from "@aponiajs/platform-elysia";
-import { t } from "elysia";
 
-class NativeUsersController {
-  constructor(readonly users: UserService) {}
-
-  create(name: string) {
-    return this.users.create(name);
+class UserService {
+  list() {
+    return [{ id: "1", name: "Ada" }];
   }
 }
 
+class NativeUsersController {
+  constructor(readonly users: UserService) {}
+}
+
 const usersController = elysiaController(NativeUsersController, [UserService], (app, controller) =>
-  app.post("/users", ({ body, status }) => status(201, controller.create(body.name)), {
-    body: t.Object({ name: t.String() }),
-  }),
+  app.get("/users", () => controller.users.list()),
 );
 
 export const UsersModule = defineModule({
@@ -290,7 +302,7 @@ name that selects a single property:
 | --------------------- | ------------------------------ |
 | `@Body()`             | The validated request body     |
 | `@Query("term")`      | The parsed query string        |
-| `@Param("id")`        | Path parameters                |
+| `@Param("id")`        | The `id` route parameter       |
 | `@Headers("x-agent")` | Request headers                |
 | `@Cookie("session")`  | Cookies, or one cookie's value |
 | `@Store()`            | The native application store   |
@@ -300,12 +312,12 @@ name that selects a single property:
 | `@Ctx()`              | The whole Elysia context       |
 
 ```ts
-import { Body, Controller, Get, Headers, Param, Post, Query } from "@aponiajs/common";
+import { Body, Controller, Get, Param, Post, Query } from "@aponiajs/common";
 
 @Controller("users")
 export class UserController {
-  @Post()
-  create(@Body() body: { name: string }, @Headers("x-tenant") tenant: string) {
+  @Post(":tenant")
+  create(@Param("tenant") tenant: string, @Body() body: { name: string }) {
     return { tenant, name: body.name };
   }
 
@@ -406,7 +418,7 @@ Existing Elysia plugins install as module imports and reach Elysia's `.use()`
 unchanged:
 
 ```bash
-bun add @elysiajs/cors @elysiajs/jwt
+bun add @elysiajs/cors
 ```
 
 ```ts
@@ -420,28 +432,9 @@ import { cors } from "@elysiajs/cors";
 export class AppModule {}
 ```
 
-A plugin that needs configuration resolves it from the container first:
-
-```ts
-import { Module } from "@aponiajs/common";
-import { ElysiaPluginModule } from "@aponiajs/platform-elysia";
-import { jwt } from "@elysiajs/jwt";
-import { ConfigModule, ConfigService } from "./config/config.module.ts";
-
-@Module({
-  imports: [
-    ElysiaPluginModule.registerAsync({
-      key: "jwt",
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => jwt({ name: "jwt", secret: config.get("JWT_SECRET") }),
-    }),
-  ],
-})
-export class AuthModule {}
-```
-
-A stable `key` keeps a plugin imported by several modules installed once. An
+A stable `key` keeps a plugin imported by several modules installed once. Use
+`ElysiaPluginModule.registerAsync()` when plugin setup needs an injected service;
+the [native plugin guide](./docs/native-plugins.md) has a complete example. An
 application can also mount a plugin itself, through
 `AponiaFactory.create(AppModule, { plugins: [cors()] })`, which takes the same
 `.use()` path before the module graph mounts and reaches no module's `imports`:
@@ -452,63 +445,35 @@ composed Elysia instance directly. `AponiaFactory.create(AppModule, { configureN
 plugin needs it.
 
 What a plugin decorates, stores, or derives is available in every handler at
-runtime. Name the plugin to type it too:
+runtime. For a decorated controller, include the plugin type in
+`ElysiaRouteContext` and register the same plugin with its module:
 
 ```ts
-import { Controller, Ctx, Get } from "@aponiajs/common";
-import { type ElysiaRouteContext } from "@aponiajs/platform-elysia";
+import { Controller, Ctx, Get, Module } from "@aponiajs/common";
+import { ElysiaPluginModule, type ElysiaRouteContext } from "@aponiajs/platform-elysia";
 import { Elysia } from "elysia";
 
-export const clock = new Elysia({ name: "clock" }).decorate("now", () => new Date().toISOString());
+const clock = new Elysia({ name: "clock" }).decorate("now", () => new Date().toISOString());
 
 @Controller("health")
-export class HealthController {
+class HealthController {
   @Get()
   read(@Ctx() context: ElysiaRouteContext<typeof clock>) {
     return { now: context.now() };
   }
 }
+
+@Module({
+  imports: [ElysiaPluginModule.register(clock, { key: "clock" })],
+  controllers: [HealthController],
+})
+class HealthModule {}
 ```
 
-A tuple types several plugins at once, and the second argument is only needed
-when a route schema comes first:
-`ElysiaRouteContext<typeof createUser, [typeof clock, typeof jwt]>`.
-
-`defineElysiaPlugin` converts a native plugin into a module import that carries
-its own type. For decorated methods, declare one same-named type alias at the
-export boundary so every handler annotation can omit `typeof`:
-
-```ts
-// src/clock.plugin.ts
-export const clock = defineElysiaPlugin(
-  new Elysia({ name: "clock" }).decorate("now", () => new Date().toISOString()),
-  { key: "clock" },
-);
-export type clock = typeof clock;
-```
-
-```ts
-import { type ElysiaRouteContext as e } from "@aponiajs/platform-elysia";
-import { clock } from "./clock.plugin.ts";
-
-@Controller("health")
-export class HealthController {
-  @Get()
-  read(@Ctx() context: e<clock>) {
-    return { now: context.now() };
-  }
-}
-
-@Module({ imports: [clock], controllers: [HealthController] })
-export class HealthModule {}
-```
-
-TypeScript cannot contextually type a decorated method from decorator metadata,
-which is why that one alias exists. A native `elysiaController` callback can
-instead call `.use(plugin)` and infer the resulting context directly with no
-alias. The [native plugin guide](./docs/native-plugins.md) covers both forms,
-the `AppContext<TSchema>` alias, and exactly which plugin declarations reach a
-controller.
+For a schema plus several plugins, use
+`ElysiaRouteContext<typeof schema, [typeof clock, typeof cache]>`. The
+[native plugin guide](./docs/native-plugins.md) covers async plugin setup,
+`defineElysiaPlugin`, and the full type mapping.
 
 ## Test
 

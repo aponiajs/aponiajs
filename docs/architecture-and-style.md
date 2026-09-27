@@ -9,7 +9,7 @@ The structural vocabulary is familiar:
 
 - modules define dependency and visibility boundaries;
 - services contain business logic;
-- controllers will adapt transport input and output;
+- controllers adapt transport input and output;
 - `main.ts` owns application bootstrap.
 
 The runtime model is intentionally different where explicit behavior improves
