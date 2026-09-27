@@ -137,26 +137,40 @@ function exceptionMessage(error: unknown): string {
   if (typeof error === "string") {
     return error;
   }
-  if (typeof error === "function") {
-    return error.name || "(anonymous)";
-  }
-  if (error instanceof Error) {
-    // The name and the message, never the stack: a stack describes the internals
-    // of the running application, and a record a page reads is no place for one.
-    return `${error.name}: ${error.message}`;
-  }
 
   try {
+    if (typeof error === "function") {
+      return error.name || "(anonymous)";
+    }
+    if (error instanceof Error) {
+      // The name and the message, never the stack: a stack describes the internals
+      // of the running application, and a record a page reads is no place for one.
+      return `${error.name}: ${error.message}`;
+    }
+
     return JSON.stringify(error) ?? String(error);
   } catch {
-    // `JSON.stringify` refused this value — it refers to itself, or its `toJSON`
-    // threw — so the plain string form is tried on its own, in a guard of its
-    // own, because a value can refuse that too.
+    // Every read above can refuse, and the ones that were noticed first are not
+    // the only ones that can: `JSON.stringify` refuses a value that refers to
+    // itself or whose `toJSON` throws, `instanceof` refuses a `Proxy` whose
+    // `getPrototypeOf` throws, and the `name` of a function refuses when it is a
+    // getter that throws. The whole body is guarded rather than the reads that
+    // were thought of, so this holds for the next shape too. `String` is tried
+    // once more on its own, because a value that refused only `JSON.stringify`
+    // still has a plain form worth stating.
     return plainString(error);
   }
 }
 
-/** The plain string form of a value, or the literal when even that refuses. */
+/**
+ * The plain string form of a value, or the literal when even that refuses.
+ *
+ * This is the last read the projection makes, and it is guarded on its own
+ * because a value can refuse the plain string form as readily as it refused
+ * everything before it. A value whose `toPrimitive` or `toString` throws is a
+ * value this release cannot state, and saying so in a literal is the honest
+ * account where a throw is a different answer rather than a report of one.
+ */
 function plainString(value: unknown): string {
   try {
     return String(value);

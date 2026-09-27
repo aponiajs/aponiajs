@@ -195,9 +195,9 @@ const application = await AponiaFactory.create(AppModule, {
   one; `error` carries the failure's message
   — what the answer published, or, for an unhandled failure the platform mapped,
   the exception that mapping answered — so it is present on a `5xx` whose Problem
-  Details body the tool can read, absent on a `4xx`, which is an answer rather
-  than a failure, and absent where there is nothing to read: a `5xx` a handler
-  built itself. An unhandled failure the platform mapped is the one failure whose
+  Details body the tool can read and on that mapped failure, absent on a `4xx`,
+  which is an answer rather than a failure, and absent where there is nothing to
+  read: a `5xx` a handler built itself. An unhandled failure the platform mapped is the one failure whose
   message comes from the exception rather than the answer: the mapping answers one
   fixed sentence for every such failure and its `Response` is not on the
   after-response context either, so the boot records the exception the mapping

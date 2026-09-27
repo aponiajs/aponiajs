@@ -215,6 +215,8 @@ function rememberTap(logger: LoggerService, stream: TappedLogStream): void {
  * than a nicety: it runs inside a patched logger method, and one caller of a
  * logger method is the platform's error hook reporting an unhandled failure. A
  * throw there would replace the application's answer with the engine's own page.
+ * Only the `typeof` test is outside the guard, because `typeof` is the one read
+ * that cannot be made to throw; every read of the value itself is inside it.
  */
 function createLogEntry(
   level: LogLevel,
@@ -258,21 +260,27 @@ function projectMessage(message: unknown): string {
   if (typeof message === "string") {
     return message;
   }
-  if (typeof message === "function") {
-    return message.name || "(anonymous)";
-  }
-  if (message instanceof Error) {
-    // The name and the message, never the stack: a stack describes the internals
-    // of the running application, and a stream a page reads is no place for one.
-    return `${message.name}: ${message.message}`;
-  }
 
   try {
+    if (typeof message === "function") {
+      return message.name || "(anonymous)";
+    }
+    if (message instanceof Error) {
+      // The name and the message, never the stack: a stack describes the internals
+      // of the running application, and a stream a page reads is no place for one.
+      return `${message.name}: ${message.message}`;
+    }
+
     return JSON.stringify(message) ?? String(message);
   } catch {
-    // `JSON.stringify` refused this value — it refers to itself, or its `toJSON`
-    // threw — so the plain string form is tried on its own, and it is tried
-    // inside a guard of its own because a value can refuse that too.
+    // Every read above can refuse, and the ones that were noticed first are not
+    // the only ones that can: `JSON.stringify` refuses a value that refers to
+    // itself or whose `toJSON` throws, `instanceof` refuses a `Proxy` whose
+    // `getPrototypeOf` throws, and the `name` of a function refuses when it is a
+    // getter that throws. The whole body is guarded rather than the reads that
+    // were thought of, so the rule holds for the next shape too. `String` is
+    // tried once more on its own, because a value that refused only
+    // `JSON.stringify` still has a plain form worth stating.
     return plainString(message);
   }
 }
@@ -280,8 +288,10 @@ function projectMessage(message: unknown): string {
 /**
  * The plain string form of a value, or the literal when even that refuses.
  *
- * This is the floor of the projection and it may not throw, because what calls it
- * is a logger method: the platform reports an unhandled failure by logging it
+ * This is the last read the projection makes, and it is guarded on its own
+ * because a value can refuse the plain string form as readily as it refused
+ * everything before it. It may not throw, because what calls it is a logger
+ * method: the platform reports an unhandled failure by logging it
  * from inside a route-local `error` hook, so a throw here would leave that hook
  * through `logger.error(...)` and take the answer with it — the client would get
  * the engine's own page instead of the Problem Details response. A value whose

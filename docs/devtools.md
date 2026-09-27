@@ -412,8 +412,9 @@ different fact from a request that carried none. Four further rules:
 - **`error` carries the failure's message: what the answer published, or — for an
   unhandled failure the platform mapped — the exception that mapping answered.**
   It is present on a `5xx` whose Problem Details body this hook can still read —
-  the message is that body's `detail` — and absent on every failure with no
-  readable body of its own. A `4xx` is an answer rather than a failure, so a
+  the message is that body's `detail` — and on the unhandled failure the platform
+  mapped, which the paragraph below names. Every other failure carries none. A
+  `4xx` is an answer rather than a failure, so a
   `404`, a validation `422`, and an `HttpError` a route threw on purpose all carry
   none; a `5xx` a handler built itself carries none either, because its body is
   the one the client already holds. An unhandled failure the platform mapped is

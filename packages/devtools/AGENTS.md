@@ -517,7 +517,8 @@ runtime boundary it describes.
 - `error` carries the failure's message: what the answer published, or — for an
   unhandled failure the platform mapped — the exception that mapping answered. It
   is present on a `5xx` whose Problem Details body this after-response hook can
-  still read, and absent otherwise, because a `4xx` is an answer rather than a
+  still read, and on the mapped failure the sentence below names; every other
+  failure carries none, because a `4xx` is an answer rather than a
   failure. A `404`, a validation `422`, and an `HttpError` a route threw on purpose
   carry none, and a `5xx` a handler built itself carries none either, because its
   body is the one the client already holds. The mapped failure is the one whose

@@ -1,5 +1,14 @@
 import { expect, spyOn, test } from "bun:test";
-import { Body, Controller, Get, Logger, Module, Post, Status } from "@aponiajs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Logger,
+  Module,
+  Post,
+  Status,
+  type LoggerService,
+} from "@aponiajs/common";
 import {
   AponiaFactory,
   ElysiaPluginModule,
@@ -83,6 +92,32 @@ function unprojectableRefusal(): Record<string, unknown> {
   return refusal;
 }
 
+/**
+ * A thrown function that cannot be named.
+ *
+ * The other fixtures refuse at `toJSON` and at the plain string form, which are
+ * the two reads a projection states out loud. This one refuses at the read the
+ * projection makes of the value itself — the property a function is named by,
+ * declared here as a getter that throws — which is the read a projection guarded
+ * around only the pair it thought of would leave bare. It is a function rather
+ * than a `Proxy` on purpose: the platform's mapping decides whether Elysia
+ * answers an exception before any projection runs, and that decision walks the
+ * value's prototype chain, so a `Proxy` whose `getPrototypeOf` throws never
+ * reaches a projection at all.
+ */
+function trapRefusingRefusal(): () => never {
+  const refusal = function refusingRefusal(): never {
+    throw new Error("never reached: the throw above is the failure under test");
+  };
+  Object.defineProperty(refusal, "name", {
+    get() {
+      throw new TypeError("this value refuses to be named");
+    },
+  });
+
+  return refusal;
+}
+
 @Controller()
 class AnswersController {
   @Get("/explodes")
@@ -108,6 +143,13 @@ class AnswersController {
     // The value below both projections' fallbacks: the shape that reaches the
     // literal, and so the shape that says whether either of them can throw.
     throw unprojectableRefusal();
+  }
+
+  @Get("/trap-refusal")
+  trapRefusal(): never {
+    // The shape that refuses a read the projection makes before either fallback:
+    // naming it.
+    throw trapRefusingRefusal();
   }
 
   @Get("/own")
@@ -341,6 +383,32 @@ const agreeingLogger = new Logger("Agreeing", { timestamp: false });
 })
 class LoggedFailureModule {}
 
+/**
+ * A logger that writes nothing, for the case that has to isolate the projection.
+ *
+ * The framework's own console logger restates a projection of its own — the same
+ * three branches, in `packages/common/src/logging/console-logger.ts` — and its
+ * function branch reads `name` exactly as this package's does, so a value that
+ * refuses to be named throws out of that read as readily as out of this one. A
+ * logger double keeps the case about the projection: the boot reports the failure
+ * through the logger it was handed, the tap records the line, and nothing below
+ * the tap reads the value a second time.
+ */
+const silentFailureLogger: LoggerService = {
+  log: () => {},
+  fatal: () => {},
+  error: () => {},
+  warn: () => {},
+};
+
+@Module({
+  imports: [
+    DevtoolsModule.register({ enabled: true, port: ephemeralPort, logger: silentFailureLogger }),
+  ],
+  controllers: [AnswersController],
+})
+class SilentFailureModule {}
+
 interface CapturedOutput {
   readonly rows: () => readonly string[];
   readonly restore: () => void;
@@ -389,9 +457,21 @@ interface BootedApplication {
 }
 
 async function bootApplication(rootModule: DevtoolsRootModule): Promise<BootedApplication> {
+  return bootWithLogger(rootModule, false);
+}
+
+/**
+ * A boot whose factory and devtools registration share one logger, which is what
+ * makes a case able to compare the line `/logs` states for a failure with what the
+ * record states about it. `bootApplication` is this with the logger turned off.
+ */
+async function bootWithLogger(
+  rootModule: DevtoolsRootModule,
+  logger: LoggerService | false,
+): Promise<BootedApplication> {
   const output = captureOutput();
   try {
-    const application = await AponiaFactory.create(rootModule, { logger: false });
+    const application = await AponiaFactory.create(rootModule, { logger });
     await application.listen(0);
 
     return { application, address: reportedAddress(output) };
@@ -946,41 +1026,84 @@ test.serial("the exception the record reports is the one the log stream states",
 });
 
 test.serial(
-  "a value the projection cannot state leaves the answer and the log line intact",
+  "a thrown value the projection cannot read leaves the answer and the log line intact",
   async () => {
-    const output = captureOutput();
-    let application: AponiaElysiaApplication | undefined;
-    try {
-      application = await AponiaFactory.create(LoggedFailureModule, { logger: agreeingLogger });
-      await application.listen(0);
+    // Two shapes, because the projection reads more than the two values it states
+    // out loud: one refuses `JSON.stringify` and the plain string form, and the
+    // other refuses the property a function is named by — the read a projection
+    // guarded around only the pair it thought of would leave bare.
+    //
+    // They are read on two loggers, and the second is the reason why. The line a
+    // failure writes is produced twice on its way out: this package's tap projects
+    // the value to state it, and then hands the call to the logger the application
+    // installed, which projects it again for the console. The framework's own
+    // console logger restates the same three branches with an unguarded read of
+    // `name` (`packages/common/src/logging/console-logger.ts`), so a value that
+    // refuses to be named is answered by the platform's logging path however total
+    // this package's projection is — and a boot that handed that logger over would
+    // be asserting a fact about a second projection rather than about this one.
+    // `silentFailureLogger` records the line and writes nothing, which is the state
+    // this case is about: the value reaches the projection, the tap states it, and
+    // nothing below the tap reads it a second time.
+    const cases = [
+      {
+        path: "/unprojectable",
+        states: "[unprojectable]" as string | undefined,
+        rootModule: LoggedFailureModule,
+        logger: agreeingLogger,
+      },
+      {
+        path: "/trap-refusal",
+        states: undefined,
+        rootModule: SilentFailureModule,
+        logger: silentFailureLogger,
+      },
+    ];
 
-      const address = reportedAddress(output);
-      const response = await fetch(`${application.getUrl()}/unprojectable`);
+    for (const expected of cases) {
+      const output = captureOutput();
+      let application: AponiaElysiaApplication | undefined;
+      try {
+        application = await AponiaFactory.create(expected.rootModule, { logger: expected.logger });
+        await application.listen(0);
 
-      // The premise first, and it is the whole point of the case: the projection
-      // runs inside the patched logger method the platform's error hook calls, so
-      // a throw there leaves the hook and the client receives the engine's own
-      // page instead of this answer. A Problem Details `500` is the answer that
-      // says the projection failed nothing.
-      expect(response.status).toBe(500);
-      expect(response.headers.get("content-type")).toContain("application/problem+json");
+        const address = reportedAddress(output);
+        const response = await fetch(`${application.getUrl()}${expected.path}`);
 
-      const entry = findAnsweredEntry(
-        await readRequests(address),
-        (record) => record.url === "/unprojectable",
-      );
-      const logs = (await (await fetch(`${address}/__devtools/logs`)).json()) as AponiaLogsPayload;
-      const reported = logs.entries.filter((item) => item.context === "ExceptionsHandler").at(-1);
+        // The premise first, and it is the whole point of the case: the projection
+        // runs inside the patched logger method the platform's error hook calls, so
+        // a throw there leaves the hook and the client receives the engine's own
+        // page instead of this answer. A Problem Details `500` is the answer that
+        // says the projection failed nothing.
+        expect(response.status).toBe(500);
+        expect(response.headers.get("content-type")).toContain("application/problem+json");
 
-      // The line is asserted as well as the record: a projection that answered
-      // without recording would leave the failure unreported in the one place it
-      // was always reported, and the two surfaces state the literal together.
-      expect(reported).toBeDefined();
-      expect(entry.error).toBe("[unprojectable]");
-      expect(entry.error).toBe(reported?.message);
-    } finally {
-      output.restore();
-      await application?.close();
+        const entry = findAnsweredEntry(
+          await readRequests(address),
+          (record) => record.url === expected.path,
+        );
+        const logs = (await (
+          await fetch(`${address}/__devtools/logs`)
+        ).json()) as AponiaLogsPayload;
+        const reported = logs.entries.filter((item) => item.context === "ExceptionsHandler").at(-1);
+
+        // The line is asserted as well as the record: a projection that answered
+        // without recording would leave the failure unreported in the one place it
+        // was always reported, and the two surfaces state the same thing about it.
+        expect(reported).toBeDefined();
+        expect(typeof reported?.message).toBe("string");
+        expect(entry.error).toBe(reported?.message);
+        // What the first shape states is the literal both surfaces fall back to.
+        // The second is held by the comparison above alone: what it states is the
+        // function's own source text, and pinning that would pin this file's
+        // formatting rather than the projection.
+        if (expected.states !== undefined) {
+          expect(entry.error).toBe(expected.states);
+        }
+      } finally {
+        output.restore();
+        await application?.close();
+      }
     }
   },
 );
