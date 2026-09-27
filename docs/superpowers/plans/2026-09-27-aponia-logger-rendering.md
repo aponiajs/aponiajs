@@ -1213,3 +1213,39 @@ the same name in all four sites. The platform task keeps its own private `except
 **Review Focus.** Each of the five lines names the task that owns its test: 1 and 2 → Task 2's two
 cases; 3 and 4 → Task 1's JSON and `Proxy` cases; 5 → Task 3's plain-string and literal cases plus
 Task 4's renamed parity expectation.
+
+## What execution changed, recorded after the fact
+
+This section is appended by the executor. The plan above is kept as written where it was wrong, so the
+record shows what was decided and what was later found — the same rule the retired-literal guard
+applies to the documents.
+
+**Task 2's guard set is five sites, not one, and the reason is a plan error.** The plan says the error
+path is the only call site whose failure would cost an answer, "so it is the only one guarded". The
+survey behind that sentence used the pattern `logger\.(error|warn|…)\(`, which cannot match
+`logger?.`. Re-run as `logger\??\.(error|warn|log|fatal|debug|verbose)\(`, it finds **five**
+failure-reporting call sites: the platform's default mapping, its declared-filter hook, its
+`listen` catch, and two in `packages/devtools` — the row for a refused bind and the row for an
+unreadable `/aot` analysis. All five guard, through one `@internal` seam in `platform-elysia` and one
+shared `reportFailure` in `devtools`. The rule the plan did not state, and which now appears in
+`logger.types.ts`, `docs/logging.md`, and both package guides, is: **a call site that reports a
+failure guards, and a call site that reports progress does not.** The boot's own progress lines and
+the devtools non-loopback notice stay unguarded on purpose, which is what makes the pinned
+boot-boundary case true.
+
+**Three errors in the plan's own text were found while executing it.** Task 4's quoted replacement for
+`recordMappedException` carried a false clause (a throw "anywhere on this path") and dropped two true
+sentences. The retired-literal guard's code sample resolved against the process working directory,
+where every sibling guard anchors at `resolve(import.meta.dir, "..")`. And this plan's "literal's
+family" testing bullet presupposed a published list of literals that does not exist. All three were
+corrected in the code; the text above is left as it was.
+
+**One carry-forward given to Task 4 was withdrawn by measurement.** The plan's ledger asked for
+`packages/devtools/src/logging/one-line.ts`'s refusal fallback to be pointed at `renderLogValue`. The
+two disagree on exactly the shapes that fallback exists for — `oneLine` answers `[unrenderable]` for a
+`Proxy` whose `getPrototypeOf` throws and for a refusing `Symbol.toPrimitive`, while `renderLogValue`
+answers `[object Object]` and `{}`, because its `JSON.stringify` step runs before any refusal. They
+agree only for a value that refuses every read, which is the one shape a case can hold them to.
+
+The full record — eleven rulings, the pre-flight scan, and every fix round with what it measured — is
+in `.superpowers/sdd/2026-09-27-aponia-logger-rendering/progress.md`.
