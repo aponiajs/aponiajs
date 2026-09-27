@@ -563,8 +563,8 @@ git commit -m "feat(examples): measure every upload shape the body slot accepts"
 
 **Interfaces:**
 
-- Consumes: the measured shapes and the example from Task 1, which the documents link
-  to as `../examples/files/`.
+- Consumes: the measured shapes and the example from Task 1, which the reference page
+  names as `examples/files` (a code span, not a link — the directory is not a page).
 - Produces: `docs/files.md`, whose `## Downloads` and `## Static assets` sections
   Tasks 3 and 4 append to, and `docs/learn/15-files.md`, which Task 3 extends with the
   download snippet.
