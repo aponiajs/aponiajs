@@ -534,9 +534,13 @@ export interface RequestRecord {
   /**
    * The request this entry describes. One request produces one entry when it
    * arrived and a second when it was answered, and both carry this id, so a
-   * consumer groups by it and takes the last entry for each. It is the arrival
-   * ordinal within one record, stable for the life of that record and never a
-   * cross-boot identity.
+   * consumer groups by it and takes the last entry for each.
+   *
+   * The counter belongs to the **capture**, not to a record: it keeps counting
+   * across a second `listen()` in the same process, so an id never repeats there
+   * and a consumer that polled through a restart cannot group two different
+   * requests under one id. It is not a cross-process or cross-boot identity —
+   * within one record the first arrival's id is whatever the capture had reached.
    */
   readonly id: number;
   /** The request's method, as it arrived. */
