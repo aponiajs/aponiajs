@@ -968,6 +968,15 @@ test.serial("an id keeps counting across the two boots of one registration", asy
     await fetch(`${application.getUrl()}/users/42`);
 
     const firstBoot = await readRequests(reportedAddress(output));
+
+    // The comparison this case turns on is read off a window, so the window is
+    // stated before it: `Math.max` of an empty window answers `-Infinity`, and
+    // every id is greater than that, so a regression that emptied this window
+    // would leave the case green while proving nothing. One request leaves two
+    // entries and both carry its id, which is the premise grouping rests on.
+    expect(firstBoot.entries).toHaveLength(2);
+    expect(firstBoot.entries[0]?.id).toBe(firstBoot.entries[1]?.id);
+
     const lastOfFirstBoot = Math.max(...firstBoot.entries.map((record) => record.id));
 
     // A second `listen()` is a second boot of one registration: the record is

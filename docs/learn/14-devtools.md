@@ -1,8 +1,8 @@
 # 14 · Devtools
 
 **Use when:** you want to see what the running application compiled and what
-answered every request that reached it, without adding a route to it or a log
-line to a handler.
+answered every request that reached the record, without adding a route to the
+application or a log line to a handler.
 
 `@aponiajs/devtools` starts a second HTTP server beside the application — on
 loopback unless the registration names another host — and serves what the boot

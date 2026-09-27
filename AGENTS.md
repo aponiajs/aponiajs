@@ -381,8 +381,8 @@ errors, provider-registered Elysia WebSocket gateways, and guards, interceptors,
 and exception filters compiled into per-route lifecycle hooks, with the default
 Problem Details mapping last in each route's error path, and an opt-in devtools
 package, loopback by default and reported when widened, that reports what a boot
-compiled and every request that reached it — with the answer it observed, or the
-absence of one. Not implemented:
+compiled and every request that reached its record, with the answer it observed
+or the absence of one. Not implemented:
 middleware, non-singleton scopes, testing modules, OpenAPI, authentication,
 production WebSocket policies and transport extraction, and microservice
 transports. Treat the two lists above as the scope of record for the current

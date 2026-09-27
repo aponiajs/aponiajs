@@ -4,8 +4,8 @@
 only by naming a host — that answers what a running application **is** and what
 it **did**: the module graph it compiled, the routes
 it actually answers, the stages each route passes through, the lines its logger
-wrote, the requests that reached it and what answered them, and what a build
-decides about its invokers.
+wrote, the requests that reached its record and what answered them, and what a
+build decides about its invokers.
 
 It is a leaf package: nothing in the framework depends on it, and an application
 installs it deliberately. It ships no UI, no assets, and no browser bundle —
@@ -137,15 +137,15 @@ Three facts about the socket:
 
 Seven endpoints, all `GET`, all under `/__devtools`:
 
-| Endpoint               | Answers                                                               |
-| ---------------------- | --------------------------------------------------------------------- |
-| `/__devtools/meta`     | The contract version, the releases in play, and the start time        |
-| `/__devtools/graph`    | The module graph the boot compiled                                    |
-| `/__devtools/routes`   | The routes the application answers, with the binding that serves each |
-| `/__devtools/flow`     | The stages each route passes through, and its filters                 |
-| `/__devtools/logs`     | The application's log stream, from a cursor                           |
-| `/__devtools/requests` | The requests that reached it and what answered them, from a cursor    |
-| `/__devtools/aot`      | What a build decides, beside what the boot did                        |
+| Endpoint               | Answers                                                                    |
+| ---------------------- | -------------------------------------------------------------------------- |
+| `/__devtools/meta`     | The contract version, the releases in play, and the start time             |
+| `/__devtools/graph`    | The module graph the boot compiled                                         |
+| `/__devtools/routes`   | The routes the application answers, with the binding that serves each      |
+| `/__devtools/flow`     | The stages each route passes through, and its filters                      |
+| `/__devtools/logs`     | The application's log stream, from a cursor                                |
+| `/__devtools/requests` | The requests that reached the record and what answered them, from a cursor |
+| `/__devtools/aot`      | What a build decides, beside what the boot did                             |
 
 ```bash
 curl http://127.0.0.1:8000/__devtools/meta
