@@ -644,12 +644,13 @@ test("a half an interceptor does not declare is not published as a stage", async
     const route = routeById(await readFlow(server), "GET /edge/two");
 
     // The platform calls both halves with an optional call, so an interceptor
-    // that declares one half runs one half. A stage is published only when the
-    // route runs it, which is the rule that governs the binding, the invoker,
-    // and the validation slots too — so each class is a stage in the half it
-    // declares and nothing in the other. The application's own declarations are
-    // in the list beside them, and the after half is published over the whole
-    // list reversed, which puts the half-only class ahead of the global one.
+    // that declares one half runs one half. A stage is published only for a half
+    // the class declares, which is the rule that governs the binding, the
+    // invoker, and the validation slots too — so each class is a stage in the
+    // half it declares and nothing in the other. The application's own
+    // declarations are in the list beside them, and the after half is published
+    // over the whole list reversed, which puts the half-only class ahead of the
+    // global one.
     expect(route.stages.map((stage) => [stage.kind, stage.enhancer])).toEqual([
       ["guard", "GlobalGuard"],
       ["interceptBefore", "GlobalInterceptor"],

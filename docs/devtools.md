@@ -269,16 +269,17 @@ when a guard or the handler threw rather than on every request.
 **Which interceptor halves a route runs is decided by the record the boot
 wrote, and the class token's `prototype` is only the fallback for a record that
 carries none.** The platform calls each half with an optional call, so a class
-implementing one half runs one half, and a stage is published only for the halves
-that run. Which those are was recorded while the route mounted, read from the
-instance the platform calls — so a half written as a class field
-(`interceptBefore = () => {}`), an own property no class token carries, is
-reported like any other. A record that carries no such field — a copy of the
-platform older than this release, or one this package does not own — falls back
-to each class token's `prototype`, which answers for the class the token names
-rather than for the object the platform calls, and that makes it wrong in both
-directions. It leaves a field-declared half out, because a field is an own
-property of the instance that no `prototype` carries — so an interceptor the
+implementing one half runs one half, and a stage is published for the halves the
+class declares rather than for both. Which those are was recorded while the route
+mounted, read from the instance the platform calls — so a half
+written as a class field (`interceptBefore = () => {}`), an own property no class
+token carries, is reported like any other. A record that carries no such field —
+a copy of the platform older than this release, or one this package does not
+own — falls back to each class token's `prototype`, which answers for the class
+the token names rather than for the object the platform calls: there the stage
+list and what runs can disagree in both directions. It leaves a field-declared
+half out, because a field is an own property of the instance that no `prototype`
+carries — so an interceptor the
 container constructed can lose a stage here. It can also state a half the
 resolved object does not implement, because a token whose provider supplies
 something else is answered from the prototype while the platform calls the

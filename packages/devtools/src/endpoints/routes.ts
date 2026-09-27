@@ -201,10 +201,6 @@ function handlerName(propertyKey: unknown): string {
 }
 
 /**
- * The parameters as the payload publishes them: one frozen copy per bound field,
- * so a reader of the wire shape can never be handed part of a record to mutate.
- */
-/**
  * A record's entries as a walkable list, for the same reason the table is
  * checked: the record arrives through a registry-global symbol key, and a copy
  * of the platform older than a collection answers the same key without it.
