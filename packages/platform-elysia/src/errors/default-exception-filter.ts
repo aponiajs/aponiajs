@@ -101,36 +101,60 @@ export function createDefaultExceptionFilter(
     // The record is the only place `/requests` can read this failure's message
     // from, because the `Response` below is not on the after-response context, and
     // the guard is what keeps a throw out of a hook whose return value is the
-    // client's answer — see `reportUnhandledFailure`.
+    // client's answer — see `reportThroughLogger`.
     recordMappedException(mappedExceptions, request, error);
-    reportUnhandledFailure(logger, error);
+    reportThroughLogger(logger, error, "ExceptionsHandler");
     return httpErrors.internalServerError(unhandledFailureDetail).toResponse();
   };
 }
 
 /**
- * Reports an unhandled failure through the application's logger, and never lets
- * the logger's own failure become the client's answer.
+ * Reports a failure through the application's logger, and never lets the logger's
+ * own failure replace the failure being reported.
  *
  * `LoggerService` is a public interface and an application's implementation of it
  * may throw, so the framework may not read a call as a promise the interface
- * makes. This is the one call site where that costs an answer: the hook this runs
- * in returns the response the client receives, so a throw here would replace the
- * application's Problem Details answer with the engine's own page. The built-in
- * logger no longer refuses any value, which is why this guard is not the whole
- * story — it is the half that holds for a logger this framework did not build.
+ * makes. The rule this holds to is narrow on purpose: a call site that reports a
+ * failure guards, and a call site that reports progress does not. A throw on a
+ * progress line aborts work that has not yet reported a failure, and that is
+ * louder than continuing — which is why the boot's `logger.log(...)` lines are
+ * left unguarded.
+ *
+ * Three call sites report a failure, and every one of them needs this:
+ *
+ * - the default Problem Details mapping below, whose hook's return value is the
+ *   client's answer, so a throw there would replace the application's Problem
+ *   Details response with the engine's own page;
+ * - `createFilterHook`'s catch in `routing/route-compiler.ts`, where a throw would
+ *   reject the route's `error` hook and cost the same answer that filter's decline
+ *   exists to preserve;
+ * - `listen`'s catch in `application/aponia-elysia-application.ts`, where a throw
+ *   would replace the engine's failure the caller is about to be handed.
+ *
+ * The built-in logger no longer refuses any value, which is why this guard is not
+ * the whole story — it is the half that holds for a logger this framework did not
+ * build.
  *
  * A logger that refuses is reported rather than swallowed, on `stderr` by a direct
  * write, because the channel that would normally carry the diagnostic is the one
  * that just failed. This is the only place this package writes a process stream,
  * and the layering cost is real — logging is `common`'s domain — and it is
  * accepted because the alternative is a logger that is broken and invisible.
+ *
+ * `context` is required rather than defaulted because it is the subsystem each
+ * call site already reported under, and the announcement below repeats it.
+ *
+ * @internal
  */
-function reportUnhandledFailure(logger: LoggerService | undefined, error: unknown): void {
+export function reportThroughLogger(
+  logger: LoggerService | undefined,
+  failure: unknown,
+  context: string,
+): void {
   try {
-    logger?.error(error, "ExceptionsHandler");
+    logger?.error(failure, context);
   } catch (loggerFailure) {
-    announceLoggerFailure(loggerFailure);
+    announceLoggerFailure(loggerFailure, context);
   }
 }
 
@@ -138,16 +162,16 @@ function reportUnhandledFailure(logger: LoggerService | undefined, error: unknow
  * States a logger's own failure where a reader will see it.
  *
  * Guarded for the same reason the call above is: an application can be writing to
- * a closed stream, and a throw out of this one would leave the error hook with no
- * response at all — the outcome this whole path exists to prevent. A stderr write
- * that refuses leaves nothing further to report to, so the absence is accepted at
- * the last line rather than taken out on the client's answer.
+ * a closed stream, and a throw out of this one would leave the failing call site
+ * with nothing at all — the outcome this whole path exists to prevent. A stderr
+ * write that refuses leaves nothing further to report to, so the absence is
+ * accepted at the last line rather than taken out on the caller's answer.
  */
-function announceLoggerFailure(loggerFailure: unknown): void {
+function announceLoggerFailure(loggerFailure: unknown, context: string): void {
   try {
     process.stderr.write(
-      `[Aponia] ${process.pid} - ERROR [ExceptionsHandler] the configured logger threw while ` +
-        `reporting an unhandled failure: ${exceptionMessage(loggerFailure)}\n`,
+      `[Aponia] ${process.pid} - ERROR [${context}] the configured logger threw while ` +
+        `reporting a failure: ${exceptionMessage(loggerFailure)}\n`,
     );
   } catch {
     // Nothing left to report to.

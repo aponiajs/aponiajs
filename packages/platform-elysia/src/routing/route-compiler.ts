@@ -23,7 +23,7 @@ import {
 } from "@aponiajs/common";
 import { type AnySchema, type Elysia, type TSchema } from "elysia";
 import type { MountedRouteEnhancers, ResolvedFilter } from "../controllers/enhancer-resolver.ts";
-import { isFilterMatch } from "../errors/default-exception-filter.ts";
+import { isFilterMatch, reportThroughLogger } from "../errors/default-exception-filter.ts";
 import { httpErrors } from "../errors/http-error.ts";
 import { registerNativeRoute } from "./native-route.ts";
 import type {
@@ -310,7 +310,7 @@ function createFilterHook(
     try {
       return await filter.instance.catch(context.error, createArgumentsHost(context));
     } catch (failure) {
-      logger?.error(failure, "ExceptionsHandler");
+      reportThroughLogger(logger, failure, "ExceptionsHandler");
       return undefined;
     }
   };

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, spyOn, test } from "bun:test";
 import {
   Body,
   Catch,
@@ -359,6 +359,25 @@ function record(
   return { context: typeof context === "string" ? context : "", message: String(message) };
 }
 
+/**
+ * A logger whose `error` refuses where an application would read the failure.
+ *
+ * Every other fixture in this file records the line it was handed, which is the
+ * wrong shape for the guard: the failure under test is one the logger itself
+ * produces, so it has to refuse rather than record.
+ */
+class RefusingLogger implements LoggerService {
+  error(): void {
+    throw new Error("the logger refused to report the failure");
+  }
+
+  log(): void {}
+
+  fatal(): void {}
+
+  warn(): void {}
+}
+
 describe("exception filters", () => {
   test("a filter receives the thrown value and the request's own host", async () => {
     const application = await AponiaFactory.create(AppModule, { logger: false });
@@ -483,6 +502,39 @@ describe("exception filters", () => {
     expect(body).not.toContain("filter exploded");
     expect(body).not.toContain("unmapped as well");
     await application.close();
+  });
+
+  test("a logger that throws while reporting leaves the mapping's 500 intact", async () => {
+    const logger = new RefusingLogger();
+    const application = await AponiaFactory.create(AppModule, { logger });
+    const stderr: string[] = [];
+    const stderrWrite = spyOn(process.stderr, "write").mockImplementation((chunk) => {
+      stderr.push(String(chunk));
+      return true;
+    });
+
+    try {
+      const response = await application.handle(new Request("http://localhost/broken"));
+      const body = await response.text();
+
+      // One request, two guarded sites: the filter hook reports the filter's own
+      // failure and declines, then the mapping reports the handler's failure and
+      // answers. The count is the point — it fails if either site is left
+      // unguarded, because an unguarded one would reject the route's `error`
+      // hook and hand the client the engine's page instead of this answer.
+      expect(response.status).toBe(500);
+      expect(response.headers.get("content-type")).toContain("application/problem+json");
+      expect(body).not.toContain("the logger refused");
+      expect(stderr).toHaveLength(2);
+      for (const line of stderr) {
+        expect(line).toContain("[ExceptionsHandler]");
+        expect(line).toContain("the configured logger threw");
+        expect(line).toContain("the logger refused to report the failure");
+      }
+    } finally {
+      stderrWrite.mockRestore();
+      await application.close();
+    }
   });
 
   test("Elysia's own validation failure keeps its native response", async () => {

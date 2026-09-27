@@ -480,14 +480,24 @@ test("a logger that throws as it reports the failure leaves the answer and the r
 });
 
 test("a logger that throws while the boot logs its routes fails the boot", async () => {
-  // The boundary, pinned rather than left to be discovered. The error path guards
-  // its logger call because the response depends on it; no other framework call
-  // site does, and the boot's own lines are where a throw is loud at the one
-  // moment there is no answer to lose. A boot that started anyway would be an
-  // application whose logger is broken and whose silence nothing reports.
-  await expect(
-    AponiaFactory.create(FailingDiagnosticsModule, { logger: new ThrowingBootLogger() }),
-  ).rejects.toThrow("the logger refused to report the boot's routes");
+  // The boundary, pinned rather than left to be discovered. The framework guards
+  // the call sites that report a failure; the boot's own lines report progress and
+  // are left unguarded. A boot that started anyway would be an application whose
+  // logger is broken and whose silence nothing reports, so this is the one moment
+  // a throw is loud where there is no answer to lose.
+  let bootFailure: unknown;
+
+  try {
+    await AponiaFactory.create(FailingDiagnosticsModule, { logger: new ThrowingBootLogger() });
+  } catch (error) {
+    bootFailure = error;
+  }
+
+  // The logger's own failure is what the boot reports, which is the whole point:
+  // no mapping and no filter stands between this call site and its caller, so the
+  // throw travels rather than being answered.
+  expect(bootFailure).toBeInstanceOf(Error);
+  expect((bootFailure as Error).message).toBe("the logger refused to report the boot's routes");
 });
 
 test("a stderr write that refuses still leaves the mapping's answer in place", async () => {

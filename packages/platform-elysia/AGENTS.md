@@ -134,13 +134,23 @@ runtime boundary it describes.
   it returns the `Response` it always returned, because a hook in Elysia's error
   path that could change which handler answers would be a different answer rather
   than a report of one. The record is written before the logger is called, and
-  the call is guarded: a logger that throws as it reports the failure leaves both
-  the record and the Problem Details answer intact, because the response depends
-  on the hook returning and a logger an application supplies may throw. Such a
-  logger is reported on `stderr` by a direct write — the only place this package
-  writes a process stream — because the channel that would normally carry the
-  diagnostic is the one that failed. No other framework call site is guarded: a
-  logger that throws while the boot logs its routes fails the boot. The projection
+  the call goes through `errors/default-exception-filter.ts`'s
+  `reportThroughLogger`, which guards it: a logger that throws as it reports a
+  failure leaves both the record and the Problem Details answer intact, because
+  the response depends on the hook returning and a logger an application
+  supplies may throw. Such a logger is reported on `stderr` by a direct write —
+  the only place this package writes a process stream — because the channel that
+  would normally carry the diagnostic is the one that failed. Three call sites
+  report a failure and every one of them goes through that seam: this mapping,
+  `createFilterHook`'s catch, which reports a filter that threw before declining
+  to what answers next, and `AponiaElysiaApplication.listen`'s catch, which
+  reports the failure it is about to rethrow. The rule is deliberately narrow —
+  a call site that reports a failure guards, and a call site that reports
+  progress does not, because a throw on a progress line aborts work that has not
+  yet reported a failure and aborting it is louder than continuing. So no
+  `logger.log(...)` line is guarded, and a logger that throws while the boot logs
+  its routes fails the boot; `packages/devtools` leaves its own warnings
+  unguarded as that package's decision. The projection
   is the one the devtools log stream applies
   to a line, restated here branch for branch because the two packages do not
   depend on each other, and it is guarded so a thrown value that refuses to be

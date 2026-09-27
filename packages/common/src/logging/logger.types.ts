@@ -12,12 +12,17 @@ export type LogLevel = "fatal" | "error" | "warn" | "log" | "debug" | "verbose";
  * itself, and an application that hands over a logger gets one that cannot cost
  * it a response.
  *
- * One call site needs that guard: the platform's default mapping reports an
- * unhandled failure through `error` from inside the hook whose return value is
- * the response, so it guards the call and answers whatever the logger does, and
- * reports a logger that refused on `stderr`. Everywhere else a throw is a throw —
- * a logger that fails while the boot logs its routes fails the boot, which is
- * loud at the one moment there is no answer to lose.
+ * One rule follows, and it is narrow on purpose: a call site that reports a
+ * failure guards, and a call site that reports progress does not. Three call
+ * sites report a failure — the platform's default mapping answers an unhandled
+ * failure from inside the hook whose return value is the response, its declared
+ * filter hook reports a filter that threw before declining to what answers next,
+ * and `listen` reports the failure it is about to rethrow — so each guards the
+ * call and answers whatever the logger does, and reports a logger that refused on
+ * `stderr`. Everywhere else a throw is a throw — a logger that fails while the
+ * boot logs its routes fails the boot, which is loud at the one moment there is
+ * no answer to lose. A throw on a progress line aborts work that has not yet
+ * reported a failure, and aborting it is louder than continuing.
  */
 export interface LoggerService {
   log(message: unknown, ...optionalParameters: unknown[]): void;

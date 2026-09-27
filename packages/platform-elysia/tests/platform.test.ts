@@ -39,6 +39,41 @@ class MemoryLogger implements LoggerService {
   warn(): void {}
 }
 
+/**
+ * A logger whose `error` refuses, and that states it was reached.
+ *
+ * The listen path has to leave two facts, so this fixture carries both: the
+ * failure thrown below replaces the engine's when the guard is missing, and
+ * `entered` is what keeps a case from passing because nothing was logged at all.
+ */
+class RefusingErrorLogger implements LoggerService {
+  entered = false;
+
+  log(): void {}
+
+  fatal(): void {}
+
+  warn(): void {}
+
+  error(): void {
+    this.entered = true;
+    throw new Error("the logger refused to report the failure");
+  }
+}
+
+/**
+ * The port a freshly bound socket took. Bun types a server's port as optional —
+ * a unix socket has none — so the case that needs the number states that it read
+ * one rather than defaulting it.
+ */
+function boundPort(server: { readonly port?: number }): number {
+  if (server.port === undefined) {
+    throw new Error("the held server bound no port to take");
+  }
+
+  return server.port;
+}
+
 @Injectable()
 class MessageService {
   getMessage(): string {
@@ -435,6 +470,49 @@ test.serial("logs and rethrows native listen failures", async () => {
     listen.mockRestore();
   }
 });
+
+test.serial(
+  "a logger that throws while reporting a listen failure is not the failure",
+  async () => {
+    // A real refusal rather than a stubbed one, so the case covers the path an
+    // application actually takes: the port belongs to another server, the engine
+    // refuses to start, and the logger refuses to report it.
+    const held = Bun.serve({ port: 0, fetch: () => new Response("held") });
+    const heldPort = boundPort(held);
+    const logger = new RefusingErrorLogger();
+    const application = await AponiaFactory.create(MessageModule, { logger });
+    const stderr: string[] = [];
+    const stderrWrite = spyOn(process.stderr, "write").mockImplementation((chunk) => {
+      stderr.push(String(chunk));
+      return true;
+    });
+
+    try {
+      const failure = await application.listen(heldPort).then(
+        () => undefined,
+        (reason: unknown) => reason,
+      );
+
+      // The caller is handed the engine's failure, never the logger's: the report
+      // is guarded, so `throw error` below it still runs.
+      expect(failure).toBeInstanceOf(Error);
+      expect((failure as Error).message).toContain(`Is port ${heldPort} in use?`);
+      expect((failure as Error).message).not.toContain("the logger refused");
+      // And the logger was asked to report at all, so this case cannot pass by
+      // nothing having been logged.
+      expect(logger.entered).toBe(true);
+      // The announcement names the context this site reports under rather than the
+      // exception handler's, because `listen` reports under `AponiaApplication`.
+      expect(stderr).toHaveLength(1);
+      expect(stderr[0]).toContain("[AponiaApplication]");
+      expect(stderr[0]).toContain("the configured logger threw");
+    } finally {
+      stderrWrite.mockRestore();
+      await application.close();
+      await held.stop(true);
+    }
+  },
+);
 
 test("closes active native connections by default and permits caller-managed draining", async () => {
   const closePolicies: boolean[] = [];
