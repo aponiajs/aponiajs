@@ -494,8 +494,10 @@ Bun is the primary lane and the contract is HTTP, so every endpoint change is
 asserted over the socket rather than against a builder.
 
 - **3** — a logger whose second level refuses records the first and publishes
-  `levels` naming it; a logger whose first refuses serves no endpoint; a logger
-  with a gap in the middle records every level it can and names them.
+  `levels` naming it; a logger **no level could be patched on** serves no
+  endpoint, which is not the same as a logger whose _first_ level refused — one
+  whose `log` refuses while `fatal` accepts does get a stream, and `levels` says
+  so; a logger with a gap in the middle records every level it can and names them.
 - **4** — a decorated application whose interceptor declares its halves as
   **class fields** publishes both stages; the same class with prototype methods
   publishes the same stages; a record with no `interceptorHalves` falls back to
