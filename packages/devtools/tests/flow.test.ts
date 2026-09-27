@@ -699,8 +699,9 @@ test("a record whose interceptor halves this release cannot read falls back to t
   // that never resolved the class has no entry for it, and a value can borrow
   // `Map.prototype` without being a `Map` at all. Each of those falls back to
   // the class token's `prototype`, and none of them fails the request this
-  // handler answers — the borrowed map is the case that would throw a `TypeError`
-  // out of `Bun.serve` if the read were not guarded.
+  // handler answers. Two of them would throw a `TypeError` out of `Bun.serve` if
+  // the read were not guarded: the borrowed map fails the lookup, and the value
+  // that refuses its own prototype fails the brand check before any lookup runs.
   const fromPrototype: (string | undefined)[][] = [
     ["interceptBefore", "AuditInterceptor"],
     ["invoke", undefined],
@@ -719,6 +720,17 @@ test("a record whose interceptor halves this release cannot read falls back to t
       // `instanceof Map` accepts it; its `get` does not.
       shape: "a map only by prototype",
       halves: Object.create(Map.prototype) as Map<unknown, unknown>,
+      expected: fromPrototype,
+    },
+    {
+      // `instanceof Map` is itself a walk of the value's prototype chain, so a
+      // value that refuses that walk is answered before any lookup happens.
+      shape: "a map-shaped value that refuses its prototype",
+      halves: new Proxy(new Map<unknown, unknown>(), {
+        getPrototypeOf: () => {
+          throw new TypeError("this value has no prototype to walk");
+        },
+      }) as Map<unknown, unknown>,
       expected: fromPrototype,
     },
     {

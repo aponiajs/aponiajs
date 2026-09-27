@@ -118,12 +118,20 @@ const emptyEnhancers: EnhancerMetadata = Object.freeze({
  * own lists are. A compiled hook is therefore published as its parts, and never
  * as a contributed hook stage.
  *
- * Nothing here may throw. This handler answers inside `Bun.serve`, where a
- * throw is a failed request, and both sources are data this release did not
- * write — the table belongs to the installed Elysia and the record arrives
- * through a registry-global symbol key. Every field is read as the unknown it
- * is and stated as an absence rather than dereferenced, so a foreign route or a
- * foreign record costs a field rather than the whole report.
+ * Nothing this file reads is trusted. This handler answers inside `Bun.serve`,
+ * where a throw is a failed request, and both sources are data this release did
+ * not write: the table belongs to the installed Elysia and the record arrives
+ * through a registry-global symbol key. Every shape either one states is checked
+ * before it is used and answered as an absence when it is not the shape this
+ * release writes — a value that lies about its own prototype is answered as no
+ * halves — so a foreign route or a foreign record costs a field rather than the
+ * whole report.
+ *
+ * The claim stops there rather than at "nothing here may throw". The table is
+ * Elysia's own and this file reads it as Elysia wrote it, so an entry whose
+ * properties refuse to be read fails the request the way any other throw in a
+ * handler does; the record is the source a value can lie about, and it is the one
+ * this file reads defensively.
  */
 export function buildFlowPayload(
   application: Elysia,
@@ -615,13 +623,20 @@ function declaringHalf(
  * The `prototype` probe is the fallback for a record that carries no halves: a
  * copy of the platform older than this release, or one this package does not
  * own. It answers for the class the token names rather than for the object the
- * platform calls, so it publishes a half only when that token declares one on
- * its `prototype` and leaves a field-declared half out instead of inventing one
- * — exact for an interceptor the container constructed from that class, and
- * approximate for a token a provider resolved to something else, since the
- * resolution hands back whatever the provider supplies. A token that is not a
- * class declares neither half, and a stage left out costs a stage rather than
- * the request.
+ * platform calls, so it is wrong in both directions.
+ *
+ * It leaves a field-declared half out, because a field is an own property of the
+ * instance that the `prototype` never carries — the shape the record above
+ * exists to state, and one a class the container did construct can have.
+ *
+ * It can also state a half the resolved object does not implement. The resolution
+ * hands back whatever the provider supplies, and `resolveEnhancers` casts that
+ * value without checking it is an instance of the token's class, so a
+ * `provideValue` object whose shape differs from its token's `prototype` is
+ * answered from the prototype while the platform calls the object.
+ *
+ * Neither direction costs the request: a token that is not a class declares
+ * neither half, and neither direction throws.
  */
 function declaresHalf(
   token: ClassToken<unknown>,
@@ -686,16 +701,24 @@ function recordedHalf(
  * The field is `unknown` at this boundary for the reason the rest of the record
  * is read as unknown: it belongs to a copy of the platform this package does not
  * own, so a copy older than the field leaves it out and a foreign one may hold
- * something else under the name. Only the `Map` this release writes is used
- * here, and every read made through it is guarded in `recordedHalf`, because
- * `instanceof Map` is satisfied by a value that only borrows `Map.prototype`.
+ * something else under the name. Only the `Map` this release writes is used here,
+ * and every read of the value sits inside a guard — this one and the lookup
+ * `recordedHalf` makes — because a value can refuse a read as readily as it can
+ * answer one: `instanceof Map` walks the value's prototype chain, which a value
+ * that only borrows `Map.prototype` passes and a `Proxy` with a
+ * `getPrototypeOf` trap can refuse, and either refusal is answered as no halves
+ * rather than thrown out of the handler.
  */
 function readInterceptorHalves(
   value: unknown,
 ): ReadonlyMap<ClassToken<unknown>, InterceptorHalves> | undefined {
-  return value instanceof Map
-    ? (value as ReadonlyMap<ClassToken<unknown>, InterceptorHalves>)
-    : undefined;
+  try {
+    return value instanceof Map
+      ? (value as ReadonlyMap<ClassToken<unknown>, InterceptorHalves>)
+      : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 /**

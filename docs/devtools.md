@@ -273,10 +273,14 @@ instance the platform calls — so a half written as a class field
 reported like any other. A record that carries no such field — a copy of the
 platform older than this release, or one this package does not own — falls back
 to each class token's `prototype`, which answers for the class the token names
-rather than for the object the platform calls: it publishes a half only when the
-token declares one there, so it is exact for an interceptor the container
-constructed from that class and approximate for a token a provider resolved to
-something else.
+rather than for the object the platform calls, and that makes it wrong in both
+directions. It leaves a field-declared half out, because a field is an own
+property of the instance that no `prototype` carries — so an interceptor the
+container constructed can lose a stage here. It can also state a half the
+resolved object does not implement, because a token whose provider supplies
+something else is answered from the prototype while the platform calls the
+supplied object: a `provideValue` object whose shape differs from its token's
+`prototype` can gain a stage that never runs.
 
 ### `/logs`
 

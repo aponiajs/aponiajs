@@ -201,18 +201,22 @@ runtime boundary it describes.
   the object the platform calls: it derives a stage from a token only when that
   token declares the half as a function on its `prototype`, so a field-declared
   half is omitted rather than invented, and a token that declares neither half
-  yields neither stage. That makes it exact for an interceptor the container
-  constructed from the class and approximate for a token a provider resolved to
-  something else — the resolution hands back whatever the provider supplies —
-  which is why the recorded halves are the ones that answer first. There is
+  yields neither stage. That makes it wrong in both directions: it leaves a
+  field-declared half out, because a field is an own property of the instance
+  that no `prototype` carries — an interceptor the container constructed can
+  lose a stage here — and it can state a half the resolved object does not
+  implement, because the resolution hands back whatever the provider supplies: a
+  `provideValue` object whose shape differs from its token's `prototype` is
+  answered from the prototype while the platform calls the object. That is why
+  the recorded halves are the ones that answer first. There is
   nothing to infer from the other side: by the time a plan is mounted, the
   platform has lowered the guards and both interceptor halves into one
   `beforeHandle` and one `afterHandle`, so the parts are legible only through
   the tokens the plan carries. The field is data this package did not write, so
   it is validated as the `Map` this release writes before it is read, and every
-  read made through it is guarded — `instanceof Map` is satisfied by a value that
-  only borrows `Map.prototype` — because a throw there is a failed request, not
-  a failed report.
+  read of it is guarded — `instanceof Map` is satisfied by a value that only
+  borrows `Map.prototype`, and it is itself a prototype walk that a `Proxy` can
+  refuse — because a throw there is a failed request, not a failed report.
 - The application's own enhancer declaration merges into the routes the platform
   mounted from a plan and into no others. A route a controller's callback mounted,
   and one mounted on the native instance, carry no compiled hook for it to merge

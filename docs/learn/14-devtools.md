@@ -137,8 +137,11 @@ saw answered.
   written as a class field (`interceptBefore = () => {}`) is published like any
   other. A record that carries no such field — a copy of the platform older than
   this release — falls back to each class token's `prototype`, which answers for
-  the class the token names rather than for the object the platform calls: it
-  publishes a half only when that token declares one there.
+  the class the token names rather than for the object the platform calls, so it
+  is wrong in both directions: it publishes a half only when that token declares
+  one there, which omits a field-declared half, and it states one for a token
+  whose provider supplied an object of another shape — the object the platform
+  calls in its place.
 - **A stream states the levels it reached.** If the logger accepts one level and
   refuses the next, the stream covers every level it could patch and names them in
   `levels`; the level that refused is absent from that list, so a stream that never
