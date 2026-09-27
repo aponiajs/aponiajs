@@ -83,7 +83,18 @@ runtime boundary it describes.
 - A debugging aid must never fail a boot: a port that is already bound is
   reported under `Devtools` with the reason, `startDevtoolsServer` returns
   `undefined`, and the application continues. The plugin's `onStart` reports
-  nothing further when it sees that, so one refused bind is one row.
+  nothing further when it sees that, so one refused bind is one row. That row is
+  guarded, in `server/devtools-server.ts`'s `reportRefusedBind`, because the
+  sentence and the `undefined` are two halves of one promise and a logger that
+  refuses the row would otherwise cost the caller both — and this runs inside
+  `onStart`, which Elysia neither awaits nor catches, so the throw would reach
+  `listen()`. A logger that refuses is answered by a direct `stderr` write of the
+  same sentence — the only place this package writes a process stream — and that
+  write is guarded in turn, so a stream that refuses still leaves the caller with
+  the `undefined`. The rule is the framework's: a call site that reports a
+  failure guards, and a call site that reports progress does not. The
+  non-loopback exposure notice above is the other side of that rule and stays
+  unguarded: it reports a state the socket really took rather than a failure.
 - The handler build runs inside that `onStart`, which Elysia neither awaits nor
   catches, so its own reads are written to answer rather than to throw — a throw
   would take `listen()` with it. What that buys is the shapes: every recorded

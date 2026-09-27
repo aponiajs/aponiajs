@@ -141,7 +141,8 @@ runtime boundary it describes.
   supplies may throw. Such a logger is reported on `stderr` by a direct write —
   the only place this package writes a process stream — because the channel that
   would normally carry the diagnostic is the one that failed. Three call sites
-  report a failure and every one of them goes through that seam: this mapping,
+  in this package report a failure and every one of them goes through that seam:
+  this mapping,
   `createFilterHook`'s catch, which reports a filter that threw before declining
   to what answers next, and `AponiaElysiaApplication.listen`'s catch, which
   reports the failure it is about to rethrow. The rule is deliberately narrow —
@@ -149,8 +150,12 @@ runtime boundary it describes.
   progress does not, because a throw on a progress line aborts work that has not
   yet reported a failure and aborting it is louder than continuing. So no
   `logger.log(...)` line is guarded, and a logger that throws while the boot logs
-  its routes fails the boot; `packages/devtools` leaves its own warnings
-  unguarded as that package's decision. The projection
+  its routes fails the boot. `packages/devtools` guards the one of its own
+  reports that is a failure — the row it writes for a port it could not take,
+  which a throw would otherwise turn into a boot that never listened — and
+  leaves the notice it writes for a bind outside loopback unguarded, because
+  that one reports a state the socket really took rather than a failure. The
+  projection
   is the one the devtools log stream applies
   to a line, restated here branch for branch because the two packages do not
   depend on each other, and it is guarded so a thrown value that refuses to be

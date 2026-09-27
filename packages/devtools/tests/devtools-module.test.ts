@@ -1,5 +1,5 @@
 import { expect, spyOn, test } from "bun:test";
-import { Controller, Get, Module } from "@aponiajs/common";
+import { Controller, Get, Logger, Module } from "@aponiajs/common";
 import {
   AponiaFactory,
   type AponiaElysiaApplication,
@@ -46,6 +46,7 @@ class WidenedHostModule {}
 
 interface CapturedOutput {
   readonly rows: () => readonly string[];
+  readonly stderrRows: () => readonly string[];
   readonly restore: () => void;
 }
 
@@ -53,17 +54,31 @@ interface CapturedOutput {
  * The devtools plugin reports through the framework logger, which writes to
  * `process.stdout`. Capturing it here keeps Elysia's own startup banner out of
  * the assertion: only the rows carrying the `Devtools` context are read.
+ *
+ * `stderr` is captured beside it because one report travels there instead when
+ * the logger refuses it: `error` and `fatal` rows are written to `stderr` by
+ * the framework logger, and a refused bind the logger would not carry is
+ * repeated there by a direct write.
  */
 function captureOutput(): CapturedOutput {
   const chunks: string[] = [];
+  const errors: string[] = [];
   const write = spyOn(process.stdout, "write").mockImplementation((chunk) => {
     chunks.push(String(chunk));
+    return true;
+  });
+  const writeError = spyOn(process.stderr, "write").mockImplementation((chunk) => {
+    errors.push(String(chunk));
     return true;
   });
 
   return {
     rows: () => chunks.join("").split("\n"),
-    restore: () => write.mockRestore(),
+    stderrRows: () => errors.join("").split("\n"),
+    restore: () => {
+      write.mockRestore();
+      writeError.mockRestore();
+    },
   };
 }
 
@@ -351,6 +366,66 @@ test.serial("a devtools port that is already bound does not fail the boot", asyn
     await blocker.stop(true);
   }
 });
+
+test.serial(
+  "a refused bind whose logger refuses the row still reports it and leaves the boot running",
+  async () => {
+    const blocker = Bun.serve({
+      hostname: "127.0.0.1",
+      port: 0,
+      fetch: () => new Response("taken"),
+    });
+    const output = captureOutput();
+    const takenPort = boundPort(blocker);
+    // The refusal row travels through this package's own logger, which is a
+    // `Logger` from `@aponiajs/common`: making `warn` refuse is what puts the
+    // guard under test. Only `warn` is stubbed, so the boot's own lines are
+    // unaffected and a failure here is about this row rather than about them.
+    const refusingWarn = spyOn(Logger.prototype, "warn").mockImplementation(() => {
+      throw new Error("the logger refused the refusal");
+    });
+
+    try {
+      const application = await AponiaFactory.create(devtoolsModuleOn(takenPort));
+      await application.listen(0);
+
+      // The guard's whole point, and the reason it is here rather than in a
+      // unit case alone: this report runs inside the plugin's `onStart`, which
+      // Elysia neither awaits nor catches, so an unguarded `warn` would reject
+      // this `listen()` and take the boot with it. The application reached
+      // listening state all the same.
+      expect(() => application.getUrl()).not.toThrow();
+
+      // And it is unaffected: it answers its own routes.
+      const response = await application.handle(new Request("http://localhost/health/ping"));
+
+      expect(response.status).toBe(200);
+      expect(await response.text()).toBe("pong");
+
+      // The logger was entered — a case that never reached it would pass with
+      // nothing reported at all — and what it was handed is the refusal.
+      const warned = refusingWarn.mock.calls.map((call) => String(call[0]));
+
+      expect(warned.filter((message) => message.includes("could not listen"))).toHaveLength(1);
+
+      // Nothing reached the logger's own channel, so the row read below is the
+      // only account of the refusal rather than a second copy of one.
+      expect(devtoolsReports(output)).toEqual([]);
+
+      const refusals = output.stderrRows().filter((row) => row.includes("could not listen"));
+
+      expect(refusals).toHaveLength(1);
+      expect(refusals[0]).toContain(`http://127.0.0.1:${takenPort}`);
+      expect(refusals[0]).toContain("the application continues without it");
+
+      await application.close();
+    } finally {
+      refusingWarn.mockRestore();
+      output.restore();
+      await blocker.stop(true);
+    }
+  },
+);
 
 test.serial(
   "an application that only handles requests stays unlistened, so the plugin reports nothing",

@@ -519,9 +519,11 @@ describe("exception filters", () => {
 
       // One request, two guarded sites: the filter hook reports the filter's own
       // failure and declines, then the mapping reports the handler's failure and
-      // answers. The count is the point — it fails if either site is left
-      // unguarded, because an unguarded one would reject the route's `error`
-      // hook and hand the client the engine's page instead of this answer.
+      // answers. The status, the content type, and the body are what either
+      // unguarded site costs — a throw out of the route's `error` hook leaves the
+      // client the engine's page rather than this answer. The count is the
+      // mapping's own: the filter hook's line is written before it, so a second
+      // line exists only while the mapping reports as well as answers.
       expect(response.status).toBe(500);
       expect(response.headers.get("content-type")).toContain("application/problem+json");
       expect(body).not.toContain("the logger refused");

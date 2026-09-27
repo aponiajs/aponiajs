@@ -124,8 +124,10 @@ Three facts about the socket:
   what to warn about from the machine it happens to run on.
 - **A taken port never fails a boot.** The refused bind is reported under the
   `Devtools` context with the reason, and the application continues without the
-  devtools server. Only a start that succeeded becomes the socket the plugin
-  holds.
+  devtools server. That report is guarded: a logger that throws on it is not
+  allowed to cost the application the boot, and the same sentence is written to
+  `stderr` instead, so the refusal is never silent and never fatal. Only a start
+  that succeeded becomes the socket the plugin holds.
 - **`onStart` requires `listen()`.** The devtools API starts when the
   application starts listening, after every route has mounted — which is what
   lets it see the route table. An application that only calls

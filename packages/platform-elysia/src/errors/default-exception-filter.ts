@@ -120,7 +120,8 @@ export function createDefaultExceptionFilter(
  * louder than continuing — which is why the boot's `logger.log(...)` lines are
  * left unguarded.
  *
- * Three call sites report a failure, and every one of them needs this:
+ * Three call sites in this package report a failure, and every one of them needs
+ * this:
  *
  * - the default Problem Details mapping below, whose hook's return value is the
  *   client's answer, so a throw there would replace the application's Problem
@@ -130,6 +131,10 @@ export function createDefaultExceptionFilter(
  *   exists to preserve;
  * - `listen`'s catch in `application/aponia-elysia-application.ts`, where a throw
  *   would replace the engine's failure the caller is about to be handed.
+ *
+ * `packages/devtools`'s refused-bind row is the framework's fourth site of that
+ * kind, and it guards in place rather than through this function: this seam is
+ * `@internal` and off this package's barrel, so another package cannot call it.
  *
  * The built-in logger no longer refuses any value, which is why this guard is not
  * the whole story — it is the half that holds for a logger this framework did not

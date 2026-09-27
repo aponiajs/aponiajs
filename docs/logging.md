@@ -151,14 +151,15 @@ System events pass their subsystem name as the final parameter, allowing custom
 loggers to preserve contextual filtering.
 
 A method of your logger may throw. The framework never reads a successful call as a promise this
-contract makes, so it guards the call sites that report a failure: an unhandled failure is reported
+contract makes, so it guards the four call sites that report a failure: an unhandled failure is reported
 through `error` from inside the route's error hook — whose return value is the response the client
 receives — and a declared filter that throws is reported the same way before the route's error path
 declines to what answers next, so the Problem Details response is returned whether or not the logger
 reported the failure. `listen` guards its report too, so the failure the caller is handed is still the
-engine's. A logger that refuses at any of those sites is reported on `stderr` by a direct write rather
-than swallowed, because the channel that would normally carry the diagnostic is the one that failed.
-Everywhere else a throw is a throw — the framework guards the sites that report a failure and not the
-ones that report progress, so a logger that fails while the boot logs its routes fails the boot. The
-framework's own logger needs no such care: `ConsoleLogger` renders every value it is handed, or states
-`[unrenderable]`.
+engine's. The devtools server guards the row it writes for a port it could not take, so a logger that
+refuses it cannot cost the boot that continues without it. A logger that refuses at any of those sites is
+reported on `stderr` by a direct write rather than swallowed, because the channel that would normally
+carry the diagnostic is the one that failed. Everywhere else a throw is a throw — the framework guards
+the sites that report a failure and not the ones that report progress, so a logger that fails while the
+boot logs its routes fails the boot. The framework's own logger needs no such care: `ConsoleLogger`
+renders every value it is handed, or states `[unrenderable]`.

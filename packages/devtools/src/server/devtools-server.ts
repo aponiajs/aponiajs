@@ -82,7 +82,9 @@ const defaultDevtoolsPort = 8000;
  * A refused bind is this package's problem and never the application's: the
  * reason is reported under `Devtools`, with the address it could not take, and
  * `undefined` is returned. That is the caller's signal that there is nothing to
- * report as listening; the boot itself continues untouched.
+ * report as listening; the boot itself continues untouched. The report is
+ * guarded, because a logger that refuses it would otherwise cost the caller
+ * both the row and that `undefined` — see `reportRefusedBind`.
  */
 export function startDevtoolsServer(options: DevtoolsServerOptions): DevtoolsServer | undefined {
   const port = options.port ?? defaultDevtoolsPort;
@@ -120,11 +122,60 @@ export function startDevtoolsServer(options: DevtoolsServerOptions): DevtoolsSer
     const refusedAddress = host.includes(":")
       ? `http://[${host}]:${port}`
       : `http://${host}:${port}`;
-    options.logger.warn(
-      `Aponia devtools could not listen on ${refusedAddress} (${oneLine(error)}); the application continues without it.`,
-    );
+    // Built once, because it is stated on one of two channels: the logger this
+    // start was handed, or, when that logger refuses, `stderr`.
+    const refusal = `Aponia devtools could not listen on ${refusedAddress} (${oneLine(error)}); the application continues without it.`;
+
+    reportRefusedBind(options.logger, refusal);
 
     return undefined;
+  }
+}
+
+/**
+ * Reports a refused bind, and never lets the logger's own failure become the
+ * caller's.
+ *
+ * The sentence is this package's only account of a refusal the boot already
+ * survived, and `LoggerService` is an interface an application's own
+ * implementation may refuse: a throw out of the `warn` above would leave the
+ * caller with neither the report nor the `undefined` that says there is nothing
+ * to report as listening. That is worse here than anywhere else in the
+ * framework, because this runs inside the plugin's `onStart`, which Elysia
+ * neither awaits nor catches — the refusal would take `listen()` with it, and
+ * the sentence the row carries, that the application continues without the
+ * devtools server, would be the one thing a throw made false.
+ *
+ * The rule is the framework's: a call site that reports a failure guards, and a
+ * call site that reports progress does not. This one reports a failure, so a
+ * logger that refuses is answered on `stderr` by a direct write — the only
+ * place this package writes a process stream — because the channel that would
+ * normally carry the row is the one that just failed. The wording is the
+ * logger's either way; only the channel changes.
+ */
+function reportRefusedBind(logger: LoggerService, refusal: string): void {
+  try {
+    logger.warn(refusal);
+  } catch {
+    announceRefusedBind(refusal);
+  }
+}
+
+/**
+ * States a refused bind where a reader will see it, when the logger would not.
+ *
+ * Guarded for the reason the call above is: a process can be writing to a
+ * stream that refuses, and a throw out of this one would leave the caller with
+ * no report and no `undefined` — the two things this path exists to deliver
+ * together. A `stderr` write that refuses leaves nothing further to report to,
+ * so the absence is accepted at the last line rather than taken out on the
+ * boot.
+ */
+function announceRefusedBind(refusal: string): void {
+  try {
+    process.stderr.write(`${refusal}\n`);
+  } catch {
+    // Nothing left to report to.
   }
 }
 

@@ -110,7 +110,10 @@ const application = await AponiaFactory.create(AppModule, {
   application's where it logs through the same reference, because the container
   hands no logger to a provider.
 - **A taken port never fails a boot.** The refused bind is reported under
-  `Devtools`, and the application continues without the devtools server.
+  `Devtools`, and the application continues without the devtools server. That
+  report is guarded, so a logger that throws on it cannot cost the boot either:
+  the same sentence is written to `stderr` instead, which is the only place this
+  package writes a process stream.
 - **The socket stops with the application.** `close()` stops the devtools server
   the plugin started, so a restart binds a fresh socket instead of finding the
   port still held.

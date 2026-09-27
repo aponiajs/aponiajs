@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, spyOn, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -419,6 +419,84 @@ test("a port that is already bound is refused, and the caller continues", async 
     expect(warnings[0]).toContain(`http://127.0.0.1:${blocker.port}`);
     expect(warnings[0]).not.toContain("\n");
   } finally {
+    await blocker.stop(true);
+  }
+});
+
+test("a refusal the logger will not carry is stated on stderr, and the caller still continues", async () => {
+  const blocker = Bun.serve({
+    hostname: "127.0.0.1",
+    port: 0,
+    fetch: () => new Response("taken"),
+  });
+  const logger: LoggerService = {
+    log: () => {},
+    fatal: () => {},
+    error: () => {},
+    warn: () => {
+      throw new Error("the logger refused the refusal");
+    },
+  };
+  const stderr: string[] = [];
+  const stderrWrite = spyOn(process.stderr, "write").mockImplementation((chunk) => {
+    stderr.push(String(chunk));
+    return true;
+  });
+
+  try {
+    const server = startDevtoolsServer({
+      application: new Elysia(),
+      port: blocker.port,
+      logger,
+    });
+
+    // The sentence is the one the logger was handed, on the channel that
+    // survived, and it is the whole row: the address the registration could not
+    // take is still in it.
+    expect(server).toBeUndefined();
+    expect(stderr).toHaveLength(1);
+    expect(stderr[0]).toContain(`http://127.0.0.1:${blocker.port}`);
+    expect(stderr[0]).toContain("could not listen");
+    expect(stderr[0]).toContain("the application continues without it");
+  } finally {
+    stderrWrite.mockRestore();
+    await blocker.stop(true);
+  }
+});
+
+test("a refusal stderr refuses too still answers undefined rather than throwing", async () => {
+  const blocker = Bun.serve({
+    hostname: "127.0.0.1",
+    port: 0,
+    fetch: () => new Response("taken"),
+  });
+  const logger: LoggerService = {
+    log: () => {},
+    fatal: () => {},
+    error: () => {},
+    warn: () => {
+      throw new Error("the logger refused the refusal");
+    },
+  };
+  const stderrWrite = spyOn(process.stderr, "write").mockImplementation(() => {
+    throw new Error("the stream refused the refusal");
+  });
+
+  try {
+    // Both channels refused, and the caller still hears the `undefined` that
+    // says the application continues: the direct write is guarded for the
+    // reason the logger call is, because a throw out of it would leave neither
+    // the row nor that answer — and inside `onStart`, which Elysia does not
+    // catch, it would take `listen()` with it.
+    const server = startDevtoolsServer({
+      application: new Elysia(),
+      port: blocker.port,
+      logger,
+    });
+
+    expect(server).toBeUndefined();
+  } finally {
+    stderrWrite.mockRestore();
     await blocker.stop(true);
   }
 });
