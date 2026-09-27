@@ -148,4 +148,18 @@ export interface AponiaApplicationDiagnostics {
    * both, so the declaration is the half a consumer cannot read from a plan.
    */
   readonly globalEnhancers: EnhancerMetadata;
+  /**
+   * What the boot's default mapping answered each unhandled failure with, keyed
+   * by the request object the mapping saw.
+   *
+   * Live rather than copied, and the one field of this record that is: what it
+   * holds is not a decision the boot made but a fact the boot keeps producing,
+   * exactly like the mounted route table. It is therefore per boot — two
+   * applications built from one module class never share one — and it holds an
+   * entry only for the requests the mapping itself answered. A reader that finds
+   * no such field, which is what a copy of this platform older than this release
+   * leaves behind, reads no exception: the answer it gave before the field
+   * existed.
+   */
+  readonly mappedExceptions: WeakMap<Request, string>;
 }

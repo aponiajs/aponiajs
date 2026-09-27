@@ -131,8 +131,21 @@ export interface RequestCapture {
    * draws the same boundary from the other side — the record is in memory, per
    * boot, and a restart is a new record — and a second `listen()`, which serves
    * the same application over a second socket, is that restart.
+   *
+   * `mappedExceptions` is the map the platform's own default mapping writes an
+   * unhandled failure's message into, read off the boot record. It is filed
+   * against the buffer this call opens rather than against the application
+   * identity, because it is the buffer the completion hook can reach: a request
+   * is answered from the arrival stamp that holds the boot's record, and one
+   * boot is one buffer, so the two name the same boot either way. A boot whose
+   * record carries none — an application built without the factory, or one a
+   * copy of the platform older than this release booted — files none, and every
+   * request it answers reads what it read before this map existed.
    */
-  beginBoot(application: ApplicationIdentity): RequestBuffer;
+  beginBoot(
+    application: ApplicationIdentity,
+    mappedExceptions?: WeakMap<Request, string>,
+  ): RequestBuffer;
   /**
    * Records one request as seen by this registration, filed under the
    * application that received it, by writing the entry that states it arrived
@@ -211,11 +224,17 @@ export function resolveCapture(capture: DevtoolsOptions["capture"]): ResolvedCap
  * registration that records nothing retains nothing and writes nothing, not even
  * the entry taken at arrival.
  *
+ * The exceptions the platform mapped are filed the same way and for the same
+ * reason: one boot's map belongs to the boot, so it is held against the buffer
+ * that boot's `beginBoot` opened — the record the arrival stamp carries — rather
+ * than on the stamp, which is a fact about one request.
+ *
  * @internal
  */
 export function createRequestCapture(capture: DevtoolsOptions["capture"]): RequestCapture {
   const policy = resolveCapture(capture);
   const records = new WeakMap<ApplicationIdentity, RequestBuffer>();
+  const bootExceptions = new WeakMap<RequestBuffer, WeakMap<Request, string>>();
   const arrivals = new WeakMap<Request, RequestArrival>();
   // The id one request's two entries share, allocated at arrival.
   //
@@ -232,10 +251,16 @@ export function createRequestCapture(capture: DevtoolsOptions["capture"]): Reque
   let arrivalOrdinal = 0;
 
   return Object.freeze({
-    beginBoot(application: ApplicationIdentity): RequestBuffer {
+    beginBoot(
+      application: ApplicationIdentity,
+      mappedExceptions?: WeakMap<Request, string>,
+    ): RequestBuffer {
       const opened = createRequestBuffer(defaultRequestBufferCapacity);
 
       records.set(application, opened);
+      if (mappedExceptions !== undefined) {
+        bootExceptions.set(opened, mappedExceptions);
+      }
 
       return opened;
     },
@@ -281,7 +306,18 @@ export function createRequestCapture(capture: DevtoolsOptions["capture"]): Reque
       }
 
       arrivals.delete(context.request);
-      arrival.record.write(await toRequestRecord(context, policy, arrival, completedAt));
+      // The map is looked up by the boot's own record — the one the arrival
+      // stamp carries — so a request is reported against the exceptions the boot
+      // that saw it recorded, never against another's.
+      arrival.record.write(
+        await toRequestRecord(
+          context,
+          policy,
+          arrival,
+          completedAt,
+          bootExceptions.get(arrival.record),
+        ),
+      );
     },
   });
 }
@@ -348,6 +384,12 @@ function toPendingRecord(arrival: RequestArrival): RequestRecord {
  * answer's published body — because the reading is in hand before that read
  * happens.
  *
+ * `mappedExceptions` is the boot's own record of what the platform's mapping
+ * answered an unhandled failure with, and it is optional because a boot whose
+ * record carries none has none to hand over. It is consulted only where the
+ * answer published nothing readable, so it never overwrites what the client
+ * received.
+ *
  * @internal
  */
 export async function toRequestRecord(
@@ -355,12 +397,13 @@ export async function toRequestRecord(
   capture: ResolvedCapture,
   arrival: RequestArrival,
   completedAt: number,
+  mappedExceptions: WeakMap<Request, string> | undefined,
 ): Promise<RequestRecord> {
   const durationMs = completedAt - arrival.startedAt;
   const route = routePattern(context.route);
   const status = answerStatus(context);
   const body = capture.body ? captureBody(context.body, capture.bodyLimit) : undefined;
-  const error = await failureMessage(status, context.answer);
+  const error = await failureMessage(status, context, mappedExceptions);
 
   return Object.freeze({
     id: arrival.id,
@@ -484,27 +527,45 @@ function answerStatus(context: AnsweredRequest): number {
  *
  * A `5xx` is the whole test: a `4xx` is an answer rather than a failure, so a
  * validation `422`, a `404`, and an `HttpError` a route threw on purpose all
- * carry no `error`. The message is read from the answer and never from the
+ * carry no `error`. The message is read from the answer rather than from the
  * context's `error`, because this package registers no error hooks and an
  * exception's message is written for whoever reads the log, not for whoever reads
  * the record — it is reported where it always was, under `ExceptionsHandler` in
  * the log stream `/logs` serves.
  *
- * Two failures publish a message this hook cannot reach, and both state the
- * absence rather than repeat the exception: the platform's own mapping for an
- * unhandled failure, which answers with a `Response` Elysia does not store on the
- * context, and an answer a handler built itself, whose body is the one the client
- * already holds.
+ * Two failures publish a body this hook cannot read, and they part company here.
+ * A `5xx` a handler built itself carries none and keeps carrying none: its body
+ * is the one the client already holds, and `mappedExceptions` holds no entry for
+ * it, because the platform's mapping never ran. The platform's own mapping for an
+ * unhandled failure answers with a `Response` Elysia does not store on the
+ * context either, and that is the case the map answers: the boot recorded the
+ * message it decided on, keyed by the request this hook is reading, so the entry
+ * states the exception the client's `500` was an answer to instead of stating
+ * that an unhandled failure said nothing at all.
+ *
+ * The map is consulted only here, after the published body has failed to yield a
+ * string, so it never replaces what the client actually received. A boot with no
+ * map to hand over — one whose record carries none, which is what a copy of the
+ * platform older than this release leaves behind — reads as an absent message
+ * rather than as a failed read, which is the answer this hook gave before the map
+ * existed.
  */
-async function failureMessage(status: number, answer: unknown): Promise<string | undefined> {
+async function failureMessage(
+  status: number,
+  context: AnsweredRequest,
+  mappedExceptions: WeakMap<Request, string> | undefined,
+): Promise<string | undefined> {
   if (status < 500) {
     return undefined;
   }
 
-  const published = await publishedBody(answer);
+  const published = await publishedBody(context.answer);
   const detail = (published as { readonly detail?: unknown } | null | undefined)?.detail;
+  if (typeof detail === "string") {
+    return detail;
+  }
 
-  return typeof detail === "string" ? detail : undefined;
+  return mappedExceptions?.get(context.request);
 }
 
 /** The answer's body as JSON, or `undefined` when it cannot be read from here. */

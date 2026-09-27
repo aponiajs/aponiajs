@@ -167,8 +167,17 @@ export async function bootstrapAponiaApplication(
   // this is the only place a boot's own mapping exists. The logger travels with
   // it because the wrapper around each declared filter reports a filter that
   // threw where an application reads its logs, and it has nowhere else to.
+  //
+  // The map is created here, beside the exception handling it belongs to,
+  // because it is that mapping's own record: the `Response` the mapping answers
+  // with is not on the after-response context, so the message it decided on is
+  // readable afterwards only where it wrote it down. It is one boot's — a
+  // second boot creates a second map — and it is published on the boot record
+  // below rather than frozen into it, because it keeps receiving what the
+  // mapping answers.
+  const mappedExceptions = new WeakMap<Request, string>();
   const exceptionHandling: MountedExceptionHandling = Object.freeze({
-    defaultFilter: createDefaultExceptionFilter(logger),
+    defaultFilter: createDefaultExceptionFilter(logger, mappedExceptions),
     logger,
   });
 
@@ -280,6 +289,7 @@ export async function bootstrapAponiaApplication(
       generatedInvokers,
       callbackRoutes,
       globalEnhancers: globalEnhancerDeclarations,
+      mappedExceptions,
     }),
   );
 

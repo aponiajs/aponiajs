@@ -411,12 +411,19 @@ different fact from a request that carried none. Four further rules:
   is in it and a path that arrived without matching one is not.
 - **`error` is what the answer published, never the exception.** It is present on
   a `5xx` whose Problem Details body this hook can still read — the message is
-  that body's `detail` — and absent everywhere else. A `4xx` is an answer rather
-  than a failure, so a `404`, a validation `422`, and an `HttpError` a route
-  threw on purpose all carry none; an unhandled failure the platform mapped and a
-  `5xx` a handler built itself carry none either, because their `Response` cannot
-  be read from where the record is written. An exception is reported where it
-  always was, under `ExceptionsHandler` in `/logs`.
+  that body's `detail` — and absent on every failure with no readable body of its
+  own. A `4xx` is an answer rather than a failure, so a `404`, a validation `422`,
+  and an `HttpError` a route threw on purpose all carry none; a `5xx` a handler
+  built itself carries none either, because its body is the one the client already
+  holds. An unhandled failure the platform mapped is the one failure whose message
+  is read from somewhere else: the mapping's `Response` is not on the
+  after-response context either, so the boot records what it answered with as it
+  answers, and the entry states the same one-line account of the exception that
+  `/logs` states for it — the name and the message, and no stack. Nothing is
+  guessed where neither source states a message: a failure whose answer published
+  none and whose exception the boot recorded nothing about carries no `error` at
+  all. An exception is reported where it always was, under `ExceptionsHandler` in
+  `/logs`.
 
 The record belongs to one application and one boot: a second `listen()` serves a
 new empty window rather than extending one a socket that is gone was serving.

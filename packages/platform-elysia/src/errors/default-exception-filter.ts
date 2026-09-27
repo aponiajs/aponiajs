@@ -59,17 +59,85 @@ export function isFilterMatch(filter: ResolvedFilter, exception: unknown): boole
  * so a boot that compiled the mapping states the logger it reports to, and
  * `undefined` is that statement for an application that disabled logging.
  *
+ * `mappedExceptions` is where the message this mapping answered with is recorded
+ * for a reader that cannot see the answer: the `Response` it returns is not on
+ * the after-response context, so a consumer reporting what a request received —
+ * the devtools `/requests` record — would otherwise state that an unhandled
+ * failure said nothing at all. It is keyed by the request object, which the
+ * after-response hook carries. Recording is the mapping's whole second job here:
+ * it writes to a `WeakMap` and returns what it always returned, because a hook
+ * in Elysia's error path that could change which handler answers would be a
+ * different answer rather than a report of one.
+ *
  * @internal
  */
-export function createDefaultExceptionFilter(logger: LoggerService | undefined): ElysiaErrorHook {
-  return ({ error, set }) => {
+export function createDefaultExceptionFilter(
+  logger: LoggerService | undefined,
+  mappedExceptions: WeakMap<Request, string>,
+): ElysiaErrorHook {
+  return ({ error, request, set }) => {
     if (elysiaAnswersThis(error, set.status)) {
       return undefined;
     }
 
     logger?.error(error, "ExceptionsHandler");
+    recordMappedException(mappedExceptions, request, error);
     return httpErrors.internalServerError(unhandledFailureDetail).toResponse();
   };
+}
+
+/**
+ * Records the account this mapping answered with, or leaves it unrecorded when
+ * the thrown value cannot be projected at all.
+ *
+ * The projection is the devtools log stream's own, restated here rather than
+ * shared because the two live in packages that do not depend on each other. It
+ * is restated in full, branch for branch, and not only for its `Error` case: the
+ * devtools `/requests` entry is compared against the line `/logs` states for the
+ * same exception, so a value the two surfaces projected differently would make
+ * that comparison hold for `Error`s alone while the sentence beside it promised
+ * it for every exception.
+ *
+ * Nothing is recorded when the projection fails, because an absent message is
+ * the truthful account of an exception this release cannot state, where a
+ * stand-in literal would claim it said something. The projection is guarded for
+ * the one outcome an observer in Elysia's error path may never cause: a throw
+ * there takes the answer with it, and the client receives the engine's own page
+ * instead of this mapping's Problem Details response. `JSON.stringify` refuses a
+ * value that refers to itself and `String` refuses one whose `toPrimitive` or
+ * `toString` does, so the guard covers a value that refuses both.
+ */
+function recordMappedException(
+  mappedExceptions: WeakMap<Request, string>,
+  request: Request,
+  error: unknown,
+): void {
+  const message = exceptionMessage(error);
+
+  if (message !== undefined) {
+    mappedExceptions.set(request, message);
+  }
+}
+
+/** The one-line account of a thrown value, or `undefined` when it refuses to be projected. */
+function exceptionMessage(error: unknown): string | undefined {
+  if (typeof error === "string") {
+    return error;
+  }
+  if (typeof error === "function") {
+    return error.name || "(anonymous)";
+  }
+  if (error instanceof Error) {
+    // The name and the message, never the stack: a stack describes the internals
+    // of the running application, and a record a page reads is no place for one.
+    return `${error.name}: ${error.message}`;
+  }
+
+  try {
+    return JSON.stringify(error) ?? String(error);
+  } catch {
+    return undefined;
+  }
 }
 
 /**

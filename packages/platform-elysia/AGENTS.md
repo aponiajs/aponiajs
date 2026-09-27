@@ -125,7 +125,19 @@ runtime boundary it describes.
   validation `422`s, parse `400`s, the `status()` escape hatch, `HttpError`
   (through its own `toResponse()`), and a failed `t.Transform` decode — which
   Elysia answers `422` and then rethrows the decode function's own plain `Error`
-  for — exactly as Elysia answered them before the mapping existed. A declared
+  for — exactly as Elysia answered them before the mapping existed. It also
+  records the message it mapped, keyed by the request the hook saw, in a
+  `WeakMap` the boot owns and publishes on its diagnostics record: the `Response`
+  the mapping returns is not on the after-response context, so that record is the
+  only place a consumer reporting what a request received — the devtools
+  `/requests` entry — can read it. Recording is the hook's whole second job and
+  it returns the `Response` it always returned, because a hook in Elysia's error
+  path that could change which handler answers would be a different answer rather
+  than a report of one; the projection is the log stream's own one-line form,
+  restated here branch for branch because the two packages do not depend on each
+  other, and it is guarded so a thrown value that refuses to be projected is
+  recorded as nothing rather than allowed to throw inside the error path. A
+  declared
   filter that throws is caught, logged the same way, and treated as declining,
   so the array continues to what answers next. The
   default hook is synchronous, so a route with no declared filter compiles the
@@ -256,8 +268,13 @@ runtime boundary it describes.
   no compiled plan — a direct registration callback, or the plugin a low-level
   descriptor builds — contributes to `callbackRoutes` instead, because its routes
   have a method and a path and neither the module nor the controller that mounted
-  them anywhere else), and the application's own enhancer declaration, which no
-  plan carries because a plan states only what its route declares. Which binding
+  them anywhere else), the application's own enhancer declaration, which no
+  plan carries because a plan states only what its route declares, and the
+  `WeakMap` the default mapping records its answers in. That last field is the
+  record's one live fact rather than a decision the boot made: it is published as
+  the boot handed it over — not copied, because copying would publish a snapshot
+  of a table still being written — and it is per boot, so two applications built
+  from one module class never share one. Which binding
   serves a plan is the mount's own decision, never a consumer's re-derivation:
   `registerCompiledElysiaRoutes` returns the property keys a supplied invoker
   bound, and the boot hands that set to the record. Consumers

@@ -1,5 +1,5 @@
 import { Logger, Module, type DynamicModule } from "@aponiajs/common";
-import { ElysiaPluginModule } from "@aponiajs/platform-elysia";
+import { ElysiaPluginModule, readApplicationDiagnostics } from "@aponiajs/platform-elysia";
 import { Elysia } from "elysia";
 import { createLogBuffer, defaultLogBufferCapacity } from "../logging/log-buffer.ts";
 import { isRecordableLogger, tapLogBuffer } from "../logging/log-tap.ts";
@@ -194,13 +194,21 @@ function createDevtoolsPlugin(options: DevtoolsOptions): Elysia {
       );
     })
     .onStart((application) => {
+      // The boot's own record, read defensively: this runs inside `onStart`,
+      // which Elysia neither awaits nor catches, so nothing here may throw. A
+      // record a copy of the platform older than this release wrote carries no
+      // `mappedExceptions` field at all, and an application no boot produced
+      // carries no record — both read as `undefined` and leave the capture
+      // reporting the published body alone, which is what it reported before the
+      // field existed.
+      const diagnostics = readApplicationDiagnostics(application);
       const started = startDevtoolsServer({
         application,
         port: options.port,
         host: options.host,
         logger: devtoolsLogger,
         logs,
-        requests: capture.beginBoot(application.store),
+        requests: capture.beginBoot(application.store, diagnostics?.mappedExceptions),
       });
 
       // A second `listen()` re-runs `onStart` while the socket the first one

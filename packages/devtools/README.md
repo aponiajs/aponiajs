@@ -195,8 +195,12 @@ const application = await AponiaFactory.create(AppModule, {
   one; `error` is what the answer published
   and never the exception, so it is present on a `5xx` whose Problem Details body
   the tool can read, absent on a `4xx`, which is an answer rather than a failure,
-  and absent where there is nothing to read — an unhandled failure the platform
-  mapped, and a `5xx` a handler built itself. Everything is recorded by default —
+  and absent where there is nothing to read — a `5xx` a handler built itself. An
+  unhandled failure the platform mapped is the second source rather than a second
+  exception to the rule: the mapping's answer is not on the after-response context
+  either, so the boot records the message it mapped as it answers, and the entry
+  publishes the same one-line account `/logs` states for the exception, with no
+  stack. Everything is recorded by default —
   `capture` is an opt-out on each field, never a permission, because a tool that
   needed two opt-ins before it showed a header is one nobody opens. Two facts are
   stated rather than softened: a token passed as a query parameter is captured in

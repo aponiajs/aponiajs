@@ -48,6 +48,12 @@ const diagnosticsKey: unique symbol = Symbol.for("aponia.application.diagnostics
  * having frozen them first: a reader of the record cannot see how the boot kept
  * them.
  *
+ * `mappedExceptions` is the one fact that is published as it was handed over
+ * rather than copied, and it is the one fact that is not a decision the boot
+ * made: it is the live map the boot's mapping keeps writing into, so copying it
+ * would publish a snapshot of a record that is still being filled and a consumer
+ * would read an answer for no request it ever asked about.
+ *
  * @internal
  */
 export function createApplicationDiagnostics(facts: {
@@ -60,6 +66,7 @@ export function createApplicationDiagnostics(facts: {
   readonly generatedInvokers: ReadonlyMap<Token<unknown>, ReadonlySet<string | symbol>>;
   readonly callbackRoutes: readonly AponiaCallbackRouteDiagnostics[];
   readonly globalEnhancers: EnhancerMetadata;
+  readonly mappedExceptions: WeakMap<Request, string>;
 }): AponiaApplicationDiagnostics {
   return Object.freeze({
     framework: facts.framework,
@@ -73,6 +80,7 @@ export function createApplicationDiagnostics(facts: {
     routes: collectCompiledRoutes(facts.modules, facts.generatedInvokers),
     callbackRoutes: freezeCallbackRoutes(facts.callbackRoutes),
     globalEnhancers: freezeEnhancerMetadata(facts.globalEnhancers),
+    mappedExceptions: facts.mappedExceptions,
   });
 }
 

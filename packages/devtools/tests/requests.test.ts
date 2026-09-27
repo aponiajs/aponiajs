@@ -1,5 +1,5 @@
 import { expect, spyOn, test } from "bun:test";
-import { Body, Controller, Get, Module, Post, Status } from "@aponiajs/common";
+import { Body, Controller, Get, Logger, Module, Post, Status } from "@aponiajs/common";
 import {
   AponiaFactory,
   ElysiaPluginModule,
@@ -11,6 +11,7 @@ import { Elysia } from "elysia";
 import {
   DevtoolsModule,
   createRequestBuffer,
+  type AponiaLogsPayload,
   type AponiaRequestsPayload,
   type AponiaRoutesPayload,
   type RequestRecord,
@@ -72,6 +73,13 @@ class AnswersController {
   @Get("/unhandled")
   unhandled(): never {
     throw new Error("the raw exception");
+  }
+
+  @Get("/unhandled-object")
+  unhandledObject(): never {
+    // A thrown value that is not an `Error`, so the projection both surfaces
+    // restate has to agree on a branch other than the `Error` one.
+    throw { code: "E_CONN", retries: 3 };
   }
 
   @Get("/own")
@@ -286,6 +294,24 @@ const gatePlugin = new Elysia({ name: "gate" }).onRequest((context) => {
   controllers: [UsersController],
 })
 class GatedModule {}
+
+/**
+ * The one registration a case reads a log stream out of, because the two
+ * endpoints that report an exception have to be compared rather than assumed to
+ * agree: `error` on the request record is the same string `/logs` states for the
+ * exception the platform mapped. The logger is the one object both halves see —
+ * this registration's and the factory's — which is what makes the comparison
+ * possible at all.
+ */
+const agreeingLogger = new Logger("Agreeing", { timestamp: false });
+
+@Module({
+  imports: [
+    DevtoolsModule.register({ enabled: true, port: ephemeralPort, logger: agreeingLogger }),
+  ],
+  controllers: [AnswersController],
+})
+class LoggedFailureModule {}
 
 interface CapturedOutput {
   readonly rows: () => readonly string[];
@@ -804,7 +830,7 @@ test.serial("an answer a handler built itself is recorded with the status it car
   }
 });
 
-test.serial("an unhandled failure is recorded without a message it cannot read", async () => {
+test.serial("an unhandled failure carries the exception the platform mapped", async () => {
   const { application, address } = await bootApplication(CapturedModule);
   try {
     await fetch(`${application.getUrl()}/unhandled`);
@@ -813,13 +839,79 @@ test.serial("an unhandled failure is recorded without a message it cannot read",
     const entry = findAnsweredEntry(payload, (record) => record.url === "/unhandled");
 
     // The platform answers an unhandled failure with its own Problem Details
-    // sentence, and that answer is not on the after-response context: the record
-    // states the failure and leaves the message out rather than repeating the
-    // exception, which is what the log stream is for.
+    // sentence, and that `Response` is not on the after-response context, so the
+    // only account of the exception this side can publish is the one the
+    // mapping recorded as it answered. It is the projection `/logs` states for
+    // the same exception: the name and the message, never the stack.
     expect(entry.status).toBe(500);
-    expect(Object.hasOwn(entry, "error")).toBe(false);
+    expect(entry.error).toBe("Error: the raw exception");
   } finally {
     await application.close();
+  }
+});
+
+test.serial("an exception's stack is never published", async () => {
+  const { application, address } = await bootApplication(CapturedModule);
+  try {
+    await fetch(`${application.getUrl()}/unhandled`);
+
+    const payload = await readRequests(address);
+    const entry = findAnsweredEntry(payload, (record) => record.url === "/unhandled");
+
+    // The premise is asserted before the comparison, because an absent `error`
+    // would satisfy a `not.toContain` on its own and prove nothing about what
+    // the record publishes.
+    expect(typeof entry.error).toBe("string");
+    // A stack frame is `    at ...`, and the message the fixture threw carries
+    // none of its own: anything below would be where the exception was thrown.
+    expect(entry.error).not.toContain("at ");
+    expect(entry.error).not.toContain("/");
+  } finally {
+    await application.close();
+  }
+});
+
+test.serial("the exception the record reports is the one the log stream states", async () => {
+  const output = captureOutput();
+  let application: AponiaElysiaApplication | undefined;
+  try {
+    application = await AponiaFactory.create(LoggedFailureModule, { logger: agreeingLogger });
+    await application.listen(0);
+
+    const address = reportedAddress(output);
+    // One route per turn, so the line `/logs` reports last is the line for the
+    // request the record was just read for — two failures in one turn would be
+    // told apart only by their order in two independently read windows. The two
+    // thrown values are different shapes on purpose: an `Error` and a value
+    // that is not one take different branches of the projection both surfaces
+    // restate, and a case that only threw `Error`s could not tell a faithful
+    // restatement from one that happened to agree on that branch alone.
+    const cases = [
+      { path: "/unhandled", expected: "Error: the raw exception" },
+      { path: "/unhandled-object", expected: '{"code":"E_CONN","retries":3}' },
+    ];
+
+    for (const expected of cases) {
+      await fetch(`${application.getUrl()}${expected.path}`);
+
+      const entry = findAnsweredEntry(
+        await readRequests(address),
+        (record) => record.url === expected.path,
+      );
+      const response = await fetch(`${address}/__devtools/logs`);
+      const logs = (await response.json()) as AponiaLogsPayload;
+      const reported = logs.entries.filter((item) => item.context === "ExceptionsHandler").at(-1);
+
+      // Both halves are stated rather than read out of each other: the premise
+      // that the failure reached both surfaces, and what the record is expected
+      // to say about it.
+      expect(reported).toBeDefined();
+      expect(entry.error).toBe(expected.expected);
+      expect(entry.error).toBe(reported?.message);
+    }
+  } finally {
+    output.restore();
+    await application?.close();
   }
 });
 

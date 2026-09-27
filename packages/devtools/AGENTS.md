@@ -517,14 +517,22 @@ runtime boundary it describes.
 - `error` is what the answer published and never the exception: it is present on a
   `5xx` whose Problem Details body this after-response hook can still read, and
   absent otherwise, because a `4xx` is an answer rather than a failure. A `404`, a
-  validation `422`, and an `HttpError` a route threw on purpose carry none. Two
-  `5xx` answers carry none either, and both state the absence rather than repeat
-  the exception: the platform's mapping for an unhandled failure, whose `Response`
-  is not on the after-response context, and a `5xx` a handler built itself, whose
-  body is the one the client already holds. The message is read from the answer and
-  never from the context's `error`, because this package registers no error hooks
-  and reports an exception where it always was, under `ExceptionsHandler` in the
-  log stream. `status` is the status the client received: `set.status` is a number
+  validation `422`, and an `HttpError` a route threw on purpose carry none, and a
+  `5xx` a handler built itself carries none either, because its body is the one
+  the client already holds. An unhandled failure the platform mapped is the one
+  failure whose message comes from somewhere else, and it is read from the boot's
+  own record of what the mapping answered: the mapping's `Response` is not on the
+  after-response context either, so without that record this hook could state only
+  that an unhandled failure said nothing at all. That record is the platform's,
+  handed over at `onStart` and read defensively — a copy of the platform older than
+  this release carries no such field, and the entry then states the absence it
+  stated before the field existed. The map is consulted only where the published
+  body yielded nothing readable, so it never replaces what the client received.
+  `error` is still never the context's `error`, and still never the exception's
+  stack: this package registers no error hooks and reports an exception where it
+  always was, under `ExceptionsHandler` in the log stream, in the one-line
+  projection that stream uses and this endpoint restates. `status` is the status
+  the client received: `set.status` is a number
   for every answer Elysia composed, while an answer a handler built leaves it at
   the default and carries the real status on its own `Response`.
 - The report describes the boot the _plugin's own_ application carries: Elysia
@@ -739,7 +747,16 @@ cut and marked. What the record
 states about an answer is asserted against the answer rather than the exception: a
 thrown `HttpError` carries the message the platform published, a `404` and a
 handler's own `5xx` carry none, and a handler's own `Response` states the status
-the client received rather than the one `set.status` still reads. A request that
+the client received rather than the one `set.status` still reads. The unhandled
+failure is asserted from the other side, because its message is nowhere on the
+answer: the entry the record holds is compared with the line `/logs` states for
+the same exception, so the two surfaces cannot drift apart, and a case pins that
+the projection publishes no stack — with the presence of `error` asserted before
+the comparison, because an absent field would satisfy a `not.toContain` on its
+own and prove nothing. The comparison runs over two thrown values, an `Error` and
+one that is not, because the projection has a branch per shape and a case that
+only ever threw `Error`s could not tell a faithful restatement from one that
+agreed on that branch alone. A request that
 matched no route is recorded with the path that arrived and shown not to be in
 `/routes`, and a request a plugin refused before matching is recorded the same way
 with the status its answer carried. Polling is asserted not to add to the record:

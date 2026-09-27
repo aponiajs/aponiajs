@@ -65,6 +65,56 @@ class DiagnosticsGuard {
 class DiagnosticsAppModule {}
 
 /**
+ * A controller whose routes throw values the platform's own mapping answers, so
+ * the boot records what the exception said where the after-response hook that
+ * reports the request can read it. One value is an ordinary `Error`; the other
+ * refuses to be projected into a string at all, which is the case that decides
+ * whether this record can cost the application its answer.
+ */
+@Controller()
+class FailingDiagnosticsController {
+  @Get("explodes")
+  explode(): never {
+    throw new Error("the connection string was rejected");
+  }
+
+  @Get("unprojectable")
+  unprojectable(): never {
+    const refusal: Record<string, unknown> = {
+      [Symbol.toPrimitive](): string {
+        throw new Error("this value refuses to be projected");
+      },
+    };
+    // Cyclic as well as refusing to be coerced, so both halves of the projection
+    // this release restates fail on it: `JSON.stringify` refuses the cycle, and
+    // the string form refuses the coercion.
+    refusal.self = refusal;
+
+    throw refusal;
+  }
+
+  @Get("throws-string")
+  throwsString(): never {
+    throw "the connection string was rejected as a string";
+  }
+
+  @Get("throws-function")
+  throwsFunction(): never {
+    throw function namedRefusal(): never {
+      throw new Error("never reached: the throw above is the failure under test");
+    };
+  }
+
+  @Get("throws-object")
+  throwsObject(): never {
+    throw { code: "E_CONN", retries: 3 };
+  }
+}
+
+@Module({ controllers: [FailingDiagnosticsController] })
+class FailingDiagnosticsModule {}
+
+/**
  * A controller whose routes are built by a callback that needs an instance, so
  * the platform never compiled a plan for it. `/routes` has to report nothing
  * for it rather than guess, and this module is what states that.
@@ -237,6 +287,76 @@ test("the record handed out is frozen, one entry at a time", async () => {
   expect(Object.isFrozen(diagnostics?.globalEnhancers.guards)).toBe(true);
   expect(diagnostics?.routes.every((entry) => Object.isFrozen(entry))).toBe(true);
   expect(diagnostics?.routes.every((entry) => Object.isFrozen(entry.route))).toBe(true);
+  // The one field that is deliberately not frozen, because it is not a decision
+  // the boot made: the map keeps receiving what the mapping answers.
+  expect(Object.isFrozen(diagnostics?.mappedExceptions)).toBe(false);
+  await application.close();
+});
+
+test("the record carries the message the mapping answered an unhandled failure with", async () => {
+  const application = await AponiaFactory.create(FailingDiagnosticsModule, { logger: false });
+  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+  const request = new Request("http://localhost/explodes");
+
+  const response = await application.handle(request);
+  await response.text();
+
+  // The premise first: the boot's own mapping answered this request, and the
+  // record exposes the map it writes into.
+  expect(response.status).toBe(500);
+  expect(diagnostics?.mappedExceptions).toBeInstanceOf(WeakMap);
+  // Keyed by the request object the mapping saw — the one the caller handed
+  // `handle` — because that is the object the after-response hook looks the
+  // message up by, and the projection is the one `/logs` states for the same
+  // exception: the name and the message, never the stack.
+  expect(diagnostics?.mappedExceptions.get(request)).toBe(
+    "Error: the connection string was rejected",
+  );
+  await application.close();
+});
+
+test("an exception this platform cannot project leaves the mapping's answer unchanged", async () => {
+  const application = await AponiaFactory.create(FailingDiagnosticsModule, { logger: false });
+  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+  const request = new Request("http://localhost/unprojectable");
+
+  const response = await application.handle(request);
+  const body = await response.text();
+
+  // The premise is the answer itself: a projection that threw inside Elysia's
+  // error path would replace this Problem Details response with the engine's own
+  // page, which is the one outcome an observer may never cause.
+  expect(response.status).toBe(500);
+  expect(body).toContain("The server could not complete this request.");
+  // Nothing is recorded for it: an absent message states that no readable
+  // account exists, where a literal would claim the exception said something.
+  expect(diagnostics?.mappedExceptions.get(request)).toBeUndefined();
+  await application.close();
+});
+
+test("a thrown value that is not an Error is recorded in the projection's own form", async () => {
+  const application = await AponiaFactory.create(FailingDiagnosticsModule, { logger: false });
+  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+  // One case per branch the projection restates, so a restatement that agreed
+  // with the log stream on its `Error` case alone could not pass here.
+  const cases = [
+    { path: "/throws-string", expected: "the connection string was rejected as a string" },
+    { path: "/throws-function", expected: "namedRefusal" },
+    { path: "/throws-object", expected: '{"code":"E_CONN","retries":3}' },
+  ];
+
+  for (const expected of cases) {
+    const request = new Request(`http://localhost${expected.path}`);
+    const response = await application.handle(request);
+    await response.text();
+
+    // The premise first: a projection that threw would have replaced this answer
+    // with the engine's own page, so the assertion below would then be reading a
+    // failure rather than a projection.
+    expect(response.status).toBe(500);
+    expect(diagnostics?.mappedExceptions.get(request)).toBe(expected.expected);
+  }
+
   await application.close();
 });
 
@@ -253,6 +373,9 @@ test("each boot attaches its own record to its own application", async () => {
   expect(firstDiagnostics).toBeDefined();
   expect(secondDiagnostics).toBeDefined();
   expect(firstDiagnostics).not.toBe(secondDiagnostics);
+  // The exception map is one boot's too: two applications never share one, so
+  // what one recorded cannot be read out of the other's record.
+  expect(firstDiagnostics?.mappedExceptions).not.toBe(secondDiagnostics?.mappedExceptions);
   await first.close();
   await second.close();
 });
