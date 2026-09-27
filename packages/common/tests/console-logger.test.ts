@@ -139,6 +139,106 @@ describe("ConsoleLogger", () => {
       stdoutWrite.mockRestore();
     }
   });
+
+  test.serial("states a value it cannot render instead of throwing", () => {
+    const stdout: string[] = [];
+    const stdoutWrite = spyOn(process.stdout, "write").mockImplementation((chunk) => {
+      stdout.push(String(chunk));
+      return true;
+    });
+
+    try {
+      // The read the projection makes of the value itself: a function is named by
+      // a property that can be declared as a getter that throws.
+      const refusal = function refusingName(): void {};
+      Object.defineProperty(refusal, "name", {
+        get() {
+          throw new TypeError("this value refuses to be named");
+        },
+      });
+
+      new ConsoleLogger({ colors: false }).log(refusal);
+
+      // The line is the assertion, not the absence of a throw: a logger that threw
+      // wrote nothing, and a logger that wrote nothing would satisfy a bare
+      // "did not throw" on its own.
+      expect(stdout).toHaveLength(1);
+      expect(stdout[0]).toContain("[unrenderable]");
+    } finally {
+      stdoutWrite.mockRestore();
+    }
+  });
+
+  test.serial("states a JSON line for a value it cannot serialize", () => {
+    const stderr: string[] = [];
+    const stderrWrite = spyOn(process.stderr, "write").mockImplementation((chunk) => {
+      stderr.push(String(chunk));
+      return true;
+    });
+
+    try {
+      const logger = new ConsoleLogger({ json: true });
+      const cyclic: Record<string, unknown> = {};
+      cyclic.self = cyclic;
+
+      // Two shapes, because they refuse the same call for different reasons: a
+      // value that refers to itself, and a `BigInt`, which is what a database
+      // identifier is.
+      logger.error(cyclic);
+      logger.error({ id: 1n });
+
+      const records = stderr.map(parseJsonRecord) as readonly Record<string, unknown>[];
+
+      // A real line with the literal in the field, rather than no line at all: a
+      // consumer parsing the stream cannot tell a dropped message from one the
+      // caller never passed.
+      expect(records).toHaveLength(2);
+      expect(records[0]).toMatchObject({
+        level: "error",
+        pid: process.pid,
+        message: "[unrenderable]",
+      });
+      expect(records[1]).toMatchObject({ level: "error", message: "[unrenderable]" });
+    } finally {
+      stderrWrite.mockRestore();
+    }
+  });
+
+  test.serial("renders a value that refuses inspection as an empty object", () => {
+    const stdout: string[] = [];
+    const stdoutWrite = spyOn(process.stdout, "write").mockImplementation((chunk) => {
+      stdout.push(String(chunk));
+      return true;
+    });
+
+    try {
+      // The negative case, and the reason this plan's guard is one `try` rather
+      // than a list: `util.inspect` absorbs a refusing trap and renders `{}`, so
+      // this shape cannot reach the literal and no guard belongs here for it.
+      const refusal = new Proxy(
+        {},
+        {
+          get() {
+            throw new TypeError("this value refuses to be read");
+          },
+          ownKeys() {
+            throw new TypeError("this value refuses to be enumerated");
+          },
+          getOwnPropertyDescriptor() {
+            throw new TypeError("this value refuses to describe itself");
+          },
+        },
+      );
+
+      new ConsoleLogger({ colors: false }).log(refusal);
+
+      expect(stdout).toHaveLength(1);
+      expect(stdout[0]).toContain("{}");
+      expect(stdout[0]).not.toContain("[unrenderable]");
+    } finally {
+      stdoutWrite.mockRestore();
+    }
+  });
 });
 
 function parseJsonRecord(value: string): unknown {

@@ -386,13 +386,10 @@ class LoggedFailureModule {}
 /**
  * A logger that writes nothing, for the case that has to isolate the projection.
  *
- * The framework's own console logger restates a projection of its own — the same
- * three branches, in `packages/common/src/logging/console-logger.ts` — and its
- * function branch reads `name` exactly as this package's does, so a value that
- * refuses to be named throws out of that read as readily as out of this one. A
- * logger double keeps the case about the projection: the boot reports the failure
- * through the logger it was handed, the tap records the line, and nothing below
- * the tap reads the value a second time.
+ * A boot reports a failure through the logger it was handed, and this package's
+ * tap records the line before handing the call on, so a logger double keeps the
+ * case about the projection: the failure is reported through it, the tap states
+ * the value, and nothing below the tap reads the value a second time.
  */
 const silentFailureLogger: LoggerService = {
   log: () => {},

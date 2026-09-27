@@ -1,4 +1,5 @@
 import { inspect } from "node:util";
+import { unrenderableValue } from "./log-value.ts";
 import type { ConsoleLoggerOptions, LoggerService, LogLevel } from "./logger.types.ts";
 
 const logLevelOrder: readonly LogLevel[] = ["fatal", "error", "warn", "log", "debug", "verbose"];
@@ -108,14 +109,26 @@ export class ConsoleLogger implements LoggerService {
     process[level === "error" || level === "fatal" ? "stderr" : "stdout"].write(`${output}\n`);
   }
 
+  /**
+   * One JSON line, or a line that states the value could not be serialized.
+   *
+   * `JSON.stringify` refuses two shapes an application logs in the ordinary
+   * course of things: an object that refers to itself — any parent and child
+   * that point at each other — and one carrying a `BigInt`, which is what a
+   * database identifier is. The fallback is a real line with the literal in the
+   * `message` field rather than no line at all, because a consumer parsing the
+   * stream cannot tell a message that was dropped from one the caller never
+   * passed. It cannot refuse in turn: every field it carries is a primitive this
+   * logger read from its own configuration.
+   */
   #formatJson(level: LogLevel, message: unknown, context: string, timestamp: number): string {
-    return JSON.stringify({
-      level,
-      pid: process.pid,
-      timestamp,
-      message,
-      ...(context ? { context } : {}),
-    });
+    const record = { level, pid: process.pid, timestamp, message, ...(context ? { context } : {}) };
+
+    try {
+      return JSON.stringify(record);
+    } catch {
+      return JSON.stringify({ ...record, message: unrenderableValue });
+    }
   }
 
   #formatText(
@@ -151,20 +164,34 @@ export class ConsoleLogger implements LoggerService {
       : "";
   }
 
+  /**
+   * The text this logger states a value as, or the literal when the value
+   * refuses every read.
+   *
+   * The whole body is inside one `try` rather than a guard per read: a function's
+   * `name` can be a getter that throws, and `inspect` runs whatever the value
+   * declared for itself, so the branch that was noticed first is not the only one
+   * that can refuse. One guard makes "this cannot throw" true by construction
+   * instead of true for the shapes somebody thought of.
+   */
   #stringify(message: unknown): string {
-    if (typeof message === "string") {
-      return message;
-    }
-    if (typeof message === "function") {
-      return message.name || message.toString();
-    }
+    try {
+      if (typeof message === "string") {
+        return message;
+      }
+      if (typeof message === "function") {
+        return message.name || message.toString();
+      }
 
-    return inspect(message, {
-      colors: this.#options.colors,
-      compact: this.#options.compact ?? true,
-      depth: this.#options.depth ?? 5,
-      breakLength: Number.POSITIVE_INFINITY,
-    });
+      return inspect(message, {
+        colors: this.#options.colors,
+        compact: this.#options.compact ?? true,
+        depth: this.#options.depth ?? 5,
+        breakLength: Number.POSITIVE_INFINITY,
+      });
+    } catch {
+      return unrenderableValue;
+    }
   }
 
   #colorize(message: string, level: LogLevel): string {
