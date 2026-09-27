@@ -1,10 +1,12 @@
 import { expect, test } from "bun:test";
 import {
+  AponiaError,
   Controller,
   Get,
   Injectable,
   Module,
   createToken,
+  provideClass,
   provideValue,
   type DynamicModule,
 } from "@aponiajs/common";
@@ -111,4 +113,86 @@ test("keeps a class module free of the dynamic module that configures it", () =>
   ]);
   expect(classOnly.providers).toHaveLength(1);
   expect(classOnly.exports).toEqual([BaseMergeService]);
+});
+
+/**
+ * A class nothing decorates.
+ *
+ * `design:paramtypes` is emitted only for a declaration that carries a decorator,
+ * so this one resolves to no dependencies however many parameters its constructor
+ * takes — the shape that reaches the compiler when a service is registered without
+ * `@Injectable()`.
+ */
+class BareSettingsService {
+  constructor(private readonly name: string) {}
+
+  describe(): string {
+    return this.name;
+  }
+}
+
+@Module({ providers: [BareSettingsService] })
+class BareProviderModule {}
+
+/** The same registration for a class that never needed anything from the module. */
+class ParameterlessService {
+  index(): string {
+    return "Hi";
+  }
+}
+
+@Module({ providers: [ParameterlessService] })
+class ParameterlessModule {}
+
+/** The escape: the empty list is stated rather than missing. */
+class OptionalService {
+  constructor(private readonly name?: string) {}
+
+  describe(): string {
+    return this.name ?? "nothing was injected";
+  }
+}
+
+@Module({ providers: [provideClass(OptionalService, [])] })
+class ExplicitlyEmptyModule {}
+
+function captureAponiaError(run: () => unknown): AponiaError {
+  try {
+    run();
+  } catch (error) {
+    if (error instanceof AponiaError) {
+      return error;
+    }
+    throw error;
+  }
+
+  throw new Error("Expected the operation to throw an AponiaError.");
+}
+
+test("refuses a class registered on its own whose constructor takes parameters", () => {
+  const error = captureAponiaError(() => compileRootModule(BareProviderModule));
+
+  // Nothing about this declaration said anything was wrong: it compiles to a
+  // class provider with an empty dependency list, which is exactly what a
+  // parameterless class compiles to.
+  expect(error.code).toBe("UNRESOLVED_CONSTRUCTOR_DEPENDENCIES");
+  expect(error.details).toEqual({
+    provider: "BareSettingsService",
+    required: 1,
+    supplied: 0,
+  });
+  expect(Object.isFrozen(error.details)).toBe(true);
+});
+
+test("accepts the same registration for a class that takes no parameters", () => {
+  const compiled = compileRootModule(ParameterlessModule);
+
+  expect(compiled.providers).toHaveLength(1);
+  expect(compiled.controllers).toEqual([]);
+});
+
+test("accepts an empty dependency list the application stated itself", () => {
+  const compiled = compileRootModule(ExplicitlyEmptyModule);
+
+  expect(compiled.providers).toHaveLength(1);
 });

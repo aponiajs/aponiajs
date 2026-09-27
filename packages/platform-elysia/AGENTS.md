@@ -71,6 +71,18 @@ runtime boundary it describes.
   `registerCompiledElysiaRoutes` takes that resolution as a required parameter
   for the same reason: a mount that merged nothing has to say so at the call
   site rather than omit it.
+- A class registered on its own in `providers` is lowered from the metadata a
+  decorator made TypeScript emit, so a class nothing decorates resolves to no
+  dependencies however many parameters its constructor takes. That fails the boot
+  with `UNRESOLVED_CONSTRUCTOR_DEPENDENCIES` instead of constructing the class
+  with the missing arguments `undefined`, which nothing else would notice: the
+  instance exists, its methods run, and the failure surfaces at the first use of a
+  value nobody filled. `@Injectable()` on the class or `@Inject()` on each
+  parameter is what makes the metadata exist, and `provideClass(provider, [])` is
+  how an application states that the empty list is its decision — that form is
+  trusted and not checked. The count compared is the constructor's own `length`,
+  which keeps an optional parameter, because TypeScript erases `?` before run
+  time, so a class with one of those and no decorator is refused too.
 - A route's enhancers compile onto the route-local hooks their kind maps to:
   guards and an interceptor's `interceptBefore` join one `beforeHandle`, an
   interceptor's `interceptAfter` is an `afterHandle`, and a filter joins the
