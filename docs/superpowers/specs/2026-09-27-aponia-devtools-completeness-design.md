@@ -14,11 +14,12 @@ debugging tool that omits a fact is usable. One that answers a question with a
 shape that reads as a different answer is not — and three of the sixteen do
 exactly that.
 
-This document closes eleven of the sixteen. Two are left deliberately (a
-class-field-adjacent guess, and making the build execute application code), and
-three are not limitations at all: the record being per boot, `onStart` needing
-`listen()`, and boot facts not changing are each the correct behaviour, and
-changing them would make the tool wrong rather than fuller.
+This document closes ten of the sixteen. Three are left deliberately — a
+class-field-adjacent guess, making the build execute application code, and a
+response body this package cannot observe — and three are not limitations at all:
+the record being per boot, `onStart` needing `listen()`, and boot facts not
+changing are each the correct behaviour, and changing them would make the tool
+wrong rather than fuller.
 
 The remaining gap — an application's providers logging through their own logger,
 which `/logs` cannot see — is **not** addressed here. It needs an injectable
@@ -43,19 +44,19 @@ request that never arrived.
 
 ## What changes
 
-| #   | Limitation today                                                    | Change                                                                                          |
-| --- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| 3   | A partly patched logger's stream does not name the levels it missed | Publish the levels the tap reached; patch every level rather than stopping at the first refusal |
-| 4   | A class-field interceptor half is invisible to `/flow`              | Record each interceptor class's halves at mount, where the instance exists                      |
-| 6   | A request answered by a plugin's early `Response` leaves no entry   | Write the entry at arrival; supersede it at completion                                          |
-| 7   | A request the runtime never reached is not recorded                 | Follows from 6 for the plugin-refusal case; the server-rejected case stays unrecorded           |
-| 8   | `durationMs` includes this package's own reads                      | Take the closing stamp before the reads it currently encloses                                   |
-| 9   | Response bodies are never captured                                  | An opt-in `capture.responseBody`, off by default                                                |
-| 10  | `error` is never the exception                                      | The platform's own mapping records the exception it already sees                                |
-| 14  | A stale invoker artifact is served silently                         | A structural signature over the facts both sides compute identically                            |
-| 15a | `/aot` caches a failure until restart                               | Do not cache a failure                                                                          |
-| 15b | `/aot` mirrors the build's rules by hand                            | Share one pure analyzer with the CLI                                                            |
-| 16a | A build that emits nothing leaves a stale artifact silently         | Warn at build, naming the cause and the escape                                                  |
+| #   | Limitation today                                                    | Change                                                                                                       |
+| --- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| 3   | A partly patched logger's stream does not name the levels it missed | Publish the levels the tap reached; patch every level rather than stopping at the first refusal              |
+| 4   | A class-field interceptor half is invisible to `/flow`              | Record each interceptor class's halves at mount, where the instance exists                                   |
+| 6   | A request answered by a plugin's early `Response` leaves no entry   | Write the entry at arrival; supersede it at completion                                                       |
+| 7   | A request the runtime never reached is not recorded                 | Follows from 6 for the plugin-refusal case; the server-rejected case stays unrecorded                        |
+| 8   | `durationMs` includes this package's own reads                      | Take the closing stamp before the reads it currently encloses                                                |
+| 9   | Response bodies are never captured                                  | **Withdrawn — see below.** The bytes the client received are not observable from where the record is written |
+| 10  | `error` is never the exception                                      | The platform's own mapping records the exception it already sees                                             |
+| 14  | A stale invoker artifact is served silently                         | A structural signature over the facts both sides compute identically                                         |
+| 15a | `/aot` caches a failure until restart                               | Do not cache a failure                                                                                       |
+| 15b | `/aot` mirrors the build's rules by hand                            | Share one pure analyzer with the CLI                                                                         |
+| 16a | A build that emits nothing leaves a stale artifact silently         | Warn at build, naming the cause and the escape                                                               |
 
 Limitations **not** changed, with reasons in the last section: the callback
 route's missing handler name (5), lowering a call-expression import out of user
@@ -260,17 +261,49 @@ route, and would also add a lifecycle stage to every route in every application
 that enables devtools. The `packages/devtools/AGENTS.md` rule that a debugging
 aid must not change what it observes forbids it.
 
-### 9 · Response bodies, off by default
+### 9 · Response bodies — withdrawn
 
-**Change.** `capture.responseBody: boolean` (default `false`) and
-`capture.responseBodyLimit: number` (default the existing body limit). When on,
-`RequestRecord` gains an optional `responseBody`, projected through the same
-serializer and the same `[truncated]` / `[unserializable]` literals the request
-body already uses.
+**This change was specified and then refused by probe, before any code was written. It is recorded here as a limitation that stands, with the mechanism, because the mechanism is what makes it a limitation rather than a gap someone should close later.**
 
-**Why off by default.** The existing decision stands: buffering every answer
-costs in proportion to traffic rather than to the question. Making it opt-in
-removes the cost for everyone who does not want it and gives it to whoever does.
+**What was specified.** `capture.responseBody: boolean` (default `false`) and
+`capture.responseBodyLimit`, publishing an optional `responseBody` on
+`RequestRecord` through the same serializer and the same `[truncated]` /
+`[unserializable]` literals the request body uses. Off by default, because
+buffering every answer costs in proportion to traffic rather than to the question.
+
+**Why it cannot be built.** The record is written from the after-response hook,
+and that context exposes `responseValue`, which Elysia types as the route's
+declared response — the **handler's return value**, not the bytes the client
+received (`node_modules/elysia/dist/types.d.ts:547`). Projecting it is therefore
+wrong for most answers rather than missing for some:
+
+| The answer                                                       | `captureBody(context.responseValue, limit)` produces                                               |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| a plain object, a string, or `void`                              | correct — 3 of the 9 shapes this package's own fixtures exercise                                   |
+| a handler's own `Response`, Elysia's `404`, a thrown `HttpError` | **`"{}"`** — `JSON.stringify` of a `Response`, which is a false statement about the answer         |
+| `@Status()(201, …)`                                              | the `{ code, response }` wrapper, a documented feature and the route the fixtures already exercise |
+| the platform's unhandled-failure mapping                         | absent, though the client did receive a body                                                       |
+
+A `Response`-aware reader does not close the gap: whether a `Response` is still
+readable varies per answer with no property to distinguish the cases — one
+fixture's answer is readable (`bodyUsed === false`) while its neighbours are not,
+and the existing suite already documents the disturbed half
+(`packages/devtools/tests/requests.test.ts`). A field present for some routes and
+absent for others, with no way to tell why, is the false-completeness shape this
+document exists to remove. **Present and wrong is worse than absent**, which is
+the whole argument.
+
+**The second reason, which is independent.** Every other option under `capture`
+is an opt-**out**, and seven documents say so as a property of the option group
+(`packages/devtools/AGENTS.md`, `devtools-module.types.ts`, `docs/devtools.md`,
+the package README, and `llms.txt`). A field defaulting to `false` would be the
+first opt-in and would falsify all seven at once.
+
+**What would make it possible.** Reading the answer the client actually received
+at the moment it is sent, rather than the value the handler returned — a
+different hook and a different boundary from the one this record is written at.
+That is a platform change evaluated on its own merit, not a devtools feature, and
+this document does not take it.
 
 ### 10 · `error` carries the exception the platform already caught
 
@@ -417,7 +450,7 @@ last.
    already computed and not published.
 2. **The record learns what only the mount knows** — 4. One additive field, one
    consumer, one fallback.
-3. **The request record** — 6, 7, 9. The only wire-breaking change, and it is
+3. **The request record** — 6, 7. The only wire-breaking change, and it is
    one change: the entry written at arrival.
 4. **The exception** — 10. A platform recording seam with no precedence risk.
 5. **AOT integrity** — 14, 15b. The artifact contract and the analyzer split.
@@ -443,6 +476,13 @@ change that a previously committed artifact can be on the wrong side of.
   thing that happened.
 - **A request the server rejected is not recorded.** Nothing in the application
   ran, so there is no observation to publish.
+- **A response body is not recorded, and cannot be from here.** The record is
+  written from the after-response hook, whose `responseValue` is the handler's
+  return value rather than the bytes the client received, so a `responseBody`
+  field would be present and wrong for every `Response`-backed answer instead of
+  merely absent. Section 9 gives the mechanism in full. It is listed here as well
+  as there because a reader looking for what the record does not hold should not
+  have to find the change that was withdrawn.
 - **Providers still cannot inject a logger.** `/logs` holds the platform's lines
   and whatever was written through the object handed over. Closing this needs an
   injectable `LOGGER` token, which changes `ModuleGraph`'s documented visibility
@@ -468,8 +508,9 @@ asserted over the socket rather than against a builder.
   an empty record.
 - **8** — a route whose handler does work reports a duration that does not grow
   with the size of the answer this package reads.
-- **9** — `responseBody` off omits the key; on publishes it; a body past the
-  limit is cut and marked; an unserializable body is the literal.
+- **9** — withdrawn, so it has no case. The limitation stands, and the number is
+  kept so a reader can follow it from the table above to the section that gives
+  the mechanism.
 - **10** — an unhandled failure carries `error` with the exception's message and
   never a stack; a `404`, a validation `422`, and an `HttpError` still carry
   none; a handler's own `5xx` still carries none.

@@ -4,7 +4,7 @@
 
 **Goal:** Make `@aponiajs/devtools` stop answering questions with shapes that read as a different answer — seven of the sixteen stated limitations become facts instead of silences.
 
-**Architecture:** Six changes across `packages/platform-elysia` and `packages/devtools`. Two are pure devtools edits (`#8`, `#3`), two are platform facts a mount can see and a record must carry (`#4`, `#10`), and two change the `/requests` record (`#6`/`#7`, `#9`). The wire contract moves from `1` to `2` in Task 3, which is the task that **breaks** the shape rather than the one that extends it: `status` changes type and one request becomes two entries, so a reader of `1` would misread it. Task 2's `levels` is additive and rides at `1`, because a reader of `1` reads a `1` payload correctly and ignores a field it does not know.
+**Architecture:** Five changes across `packages/platform-elysia` and `packages/devtools`. Two are pure devtools edits (`#8`, `#3`), two are platform facts a mount can see and a record must carry (`#4`, `#10`), and one changes the `/requests` record (`#6`/`#7`). **Task 4 was withdrawn before any code was written** — `#9` cannot be built at this boundary, and the reason is recorded in the spec and in the task itself. The wire contract moves from `1` to `2` in Task 3, which is the task that **breaks** the shape rather than the one that extends it: `status` changes type and one request becomes two entries, so a reader of `1` would misread it. Task 2's `levels` is additive and rides at `1`, because a reader of `1` reads a `1` payload correctly and ignores a field it does not know.
 
 **Tech Stack:** Bun, TypeScript (strict, ESM, explicit `.ts` extensions), Elysia as a peer, `bun test` for the Bun lane, `vitest` under Vite+ for the conformance lane.
 
