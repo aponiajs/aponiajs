@@ -98,15 +98,20 @@ runtime boundary it describes.
   `stderr` write of the sentence, the line also stating that the logger refused
   it — the only place this package writes a process stream — and that write is
   guarded in turn, so a stream that refuses still leaves the caller with the
-  answer it was promised. The sentence itself is total, and that is the other
-  half of the guarantee: it is built as an argument to the guarded report and so
-  is built first, and `logging/one-line.ts` reads the value it states under a
+  answer it was promised. The sentence is total for the value it states, and that
+  is the other half of the guarantee: it is built as an argument to the guarded
+  report and so is built first, and `logging/one-line.ts` reads that value under a
   guard of its own: a value that refuses to be read — a `Proxy` whose
   `getPrototypeOf` trap throws, a value whose primitive conversion throws — is
   stated as `[unrenderable]` rather than left out, because an empty pair of
-  parentheses would read as a value that was read and was empty. The rule is the
-  framework's: a call site that reports a
-  failure guards, and a call site that reports progress does not. The
+  parentheses would read as a value that was read and was empty. The refused
+  bind's sentence also echoes the caller's own `host`, and that read is not
+  guarded: the option is declared `readonly host?: string`, so no TypeScript
+  caller can reach a value the read refuses, and a JavaScript caller that passes
+  something else fails there rather than anywhere this rule speaks to. The
+  sentence is total for what it reports, and the option it echoes is the caller's
+  own. The rule is the framework's: a call site that reports a failure guards,
+  and a call site that reports progress does not. The
   non-loopback exposure notice above is the other side of that rule and stays
   unguarded: it reports a state the socket really took rather than a failure, so
   a logger that throws on it fails the boot. That throw has a defined outcome
