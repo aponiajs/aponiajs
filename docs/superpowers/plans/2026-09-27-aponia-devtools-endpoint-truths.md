@@ -674,7 +674,15 @@ git commit -m "feat(devtools)!: record a request that was never answered"
 
 ---
 
-### Task 4: Response bodies, off by default
+### Task 4: Response bodies, off by default — WITHDRAWN, do not execute
+
+> **This task was refused by probe before any code was written, and its text below is kept only as the record of what was specified and why it was refused. It is not part of the plan. Nothing in it should be implemented.**
+>
+> The after-response hook exposes `responseValue`, which Elysia types as the route's declared response — the **handler's return value, not the bytes the client received** (`node_modules/elysia/dist/types.d.ts:547`). Projecting it is wrong rather than missing: a handler's own `Response`, Elysia's `404`, and a thrown `HttpError` all stringify to `"{}"`; `@Status()` yields the `{ code, response }` wrapper; and the platform's unhandled-failure mapping yields nothing although the client received a body. **3 of the 9 shapes this package's own fixtures exercise come out correct.** A `Response`-aware reader does not close the gap, because whether a `Response` is still readable varies per answer with no property to distinguish the cases — one fixture's answer reads `bodyUsed === false` while its neighbours do not, and the existing suite already documents the disturbed half.
+>
+> Present and wrong is worse than absent, which is the rule this plan is built on. The second, independent reason: every other option under `capture` is an opt-**out** and seven documents state that as a property of the group, so a field defaulting to `false` would falsify all seven at once.
+>
+> The spec carries the same finding as a limitation that stands, at `#9` in its table and in its own section. Reading the answer the client actually received needs a different hook and a different boundary — a platform change evaluated on its own merit, not a devtools feature.
 
 **Files:**
 
