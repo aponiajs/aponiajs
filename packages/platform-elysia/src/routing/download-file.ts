@@ -4,8 +4,10 @@ import type { DownloadFileOptions } from "./download-file.types.ts";
 
 /**
  * RFC 8187 §3.2.1's `attr-char`, less `ALPHA` and `DIGIT`, which the predicate
- * below reads by code range. `*`, `'`, and `%` are deliberately absent: they
- * carry meaning inside an extended value.
+ * below reads by code range. `'` and `%` are absent because they carry meaning
+ * inside an extended value — the first separates the charset from the value and
+ * the second starts a percent-escape — and `*` is absent because it is not an
+ * `attr-char` at all.
  */
 const extendedValueAttributeCharacters = "!#$&+.^_`|~-";
 
