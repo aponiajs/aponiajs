@@ -6,7 +6,7 @@ Read the [repository guide](../AGENTS.md) first.
 
 One runnable application per topic, each named after what it demonstrates:
 `basic`, `multiple-routers`, `dependency-injection`, `validation`,
-`request-parameters`, `native-plugins`, `descriptors`, `websockets`.
+`request-parameters`, `native-plugins`, `descriptors`, `websockets`, `files`.
 `examples/README.md` is the index, with the port and command for each.
 
 Every example keeps the same shape — `src/app.module.ts`, `src/main.ts`,

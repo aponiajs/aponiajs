@@ -46,6 +46,15 @@
         "elysia": "^1.4.30",
       },
     },
+    "examples/files": {
+      "name": "@aponiajs/example-files",
+      "version": "0.0.0",
+      "dependencies": {
+        "@aponiajs/common": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
+        "elysia": "^1.4.30",
+      },
+    },
     "examples/multiple-routers": {
       "name": "@aponiajs/example-multiple-routers",
       "version": "0.0.0",
@@ -196,6 +205,8 @@
     "@aponiajs/example-dependency-injection": ["@aponiajs/example-dependency-injection@workspace:examples/dependency-injection"],
 
     "@aponiajs/example-descriptors": ["@aponiajs/example-descriptors@workspace:examples/descriptors"],
+
+    "@aponiajs/example-files": ["@aponiajs/example-files@workspace:examples/files"],
 
     "@aponiajs/example-multiple-routers": ["@aponiajs/example-multiple-routers@workspace:examples/multiple-routers"],
 
