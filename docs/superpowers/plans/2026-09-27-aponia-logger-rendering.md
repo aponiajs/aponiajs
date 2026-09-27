@@ -1248,4 +1248,6 @@ answers `[object Object]` and `{}`, because its `JSON.stringify` step runs befor
 agree only for a value that refuses every read, which is the one shape a case can hold them to.
 
 The full record — eleven rulings, the pre-flight scan, and every fix round with what it measured — is
-in `.superpowers/sdd/2026-09-27-aponia-logger-rendering/progress.md`.
+in this plan's ledger at `.superpowers/sdd/2026-09-27-aponia-logger-rendering/progress.md`. That
+directory is git-ignored scratch rather than part of the commit, so the record travels with the
+working tree and not with the branch.
