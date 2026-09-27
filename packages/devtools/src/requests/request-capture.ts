@@ -258,14 +258,15 @@ export function createRequestCapture(capture: DevtoolsOptions["capture"]): Reque
  * reads the same as an absence.
  *
  * The request-side fields come from the arrival stamp rather than from
- * `context.request`, which no longer states them by this phase. Every fact the
- * context does state — and the duration, which is measured rather than read — is
- * taken before the one `await` below, because the context is Elysia's for the
- * duration of the hook and the answer's body is the only fact that has to be read
- * across a microtask. The duration is stamped with those facts rather than after
- * them, because a readable `5xx` spends that microtask on this package's own read
+ * `context.request`, which no longer states them by this phase. The duration is
+ * the first thing taken off the context, ahead of the route, the status, and the
+ * parsed body: those are this package's own reads, so a stamp taken after them
+ * would charge the application for work it never did. The context stays Elysia's
+ * for the duration of the hook, and the one fact read across a microtask is the
+ * answer's published body, which is why the single `await` below happens after
+ * the stamp: a readable `5xx` spends that microtask on this package's own read
  * of the answer, and a duration that included it would report work the
- * application never did.
+ * application never did for the same reason.
  *
  * @internal
  */
@@ -274,10 +275,16 @@ export async function toRequestRecord(
   capture: ResolvedCapture,
   arrival: RequestArrival,
 ): Promise<RequestRecord> {
+  // The closing reading is taken before this package reads anything from the
+  // context: the route, the status, and the parsed body are all this package's
+  // own work, and a duration that included them would report time the
+  // application never spent. The one thing still excluded below is the single
+  // `await` that reads a readable `5xx` answer's body — excluded for the same
+  // reason, which is why that read happens after this line rather than before.
+  const durationMs = performance.now() - arrival.startedAt;
   const route = routePattern(context.route);
   const status = answerStatus(context);
   const body = capture.body ? captureBody(context.body, capture.bodyLimit) : undefined;
-  const durationMs = performance.now() - arrival.startedAt;
   const error = await failureMessage(status, context.answer);
 
   return Object.freeze({

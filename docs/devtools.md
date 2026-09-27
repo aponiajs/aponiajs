@@ -383,14 +383,15 @@ The record belongs to one application and one boot: a second `listen()` serves a
 new empty window rather than extending one a socket that is gone was serving.
 
 `durationMs` is measured from the moment the request reached this package's
-arrival hook to a reading taken in the completion hook, after this package has
-read the route, the status, and the parsed body. It therefore **includes this
-package's own synchronous reads of the request and the answer** — the arrival
-side's URL and header reads, and the completion side's route, status, and body
-reads — because both stamps are taken at the outer edges of the hook. It is not
-"the time the application spent on the route" and it does not claim to be; it
-excludes only the one microtask this package spends reading a readable `5xx`
-answer's published body, which is why that read happens after the stamp.
+arrival hook to a reading taken at the entry of the completion hook. The closing
+reading now precedes the reads this package makes of the answer, so the route,
+the status, and the parsed body it stores are outside the measurement — as is the
+one `await` that reads a readable `5xx` answer's published body, which is why that
+read happens after the stamp. The arrival hook's own URL and header capture is
+still inside it, because the opening stamp is that hook's first statement and the
+reads which need the request while it is whole necessarily follow it. The field is
+therefore the time from arrival to the completion hook's entry with this package's
+answer-side work taken out, and it is not a CPU profile of the handler.
 
 ### `/aot`
 
@@ -474,8 +475,10 @@ These are the boundaries this package states rather than hides.
   it; the payload omits its stage. See [`/flow`](#flow).
 - **A partly patched logger's stream does not name the levels it missed.** See
   [`/logs`](#logs).
-- **`durationMs` includes this package's own reads of the request and the
-  answer.** See [`/requests`](#requests).
+- **`durationMs` still includes this package's own reading of the request at
+  arrival.** The completion side's reads are outside it, but the arrival hook's
+  URL and header capture sits between the two stamps. See
+  [`/requests`](#requests).
 - **The request record is not complete.** A request refused before a route
   matched has no route identity: the entry carries the path it asked for and
   names no controller, module, or handler. A request the runtime never reached —

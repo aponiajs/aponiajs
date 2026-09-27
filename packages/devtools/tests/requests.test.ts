@@ -178,6 +178,50 @@ class UnserializableController {
 class UnserializableModule {}
 
 /**
+ * A validation model whose transform yields a body large enough that this
+ * package's own serialization of it costs more than the route does, and which
+ * states when that serializer reaches it. The `filler` accessor is read when
+ * something enumerates the parsed body, and the only thing in this window that
+ * does is the record's own `JSON.stringify` — the route reads no body and
+ * answers with none. The wire carries ordinary JSON: the large body is made by
+ * the application's own validation, which is what makes it a body a real
+ * application can reach rather than one a test invented.
+ */
+let bulkBodyRead = false;
+const bulkBody = {
+  "~standard": {
+    version: 1 as const,
+    vendor: "aponia-devtools-test",
+    validate: () => ({
+      value: {
+        get filler(): string {
+          bulkBodyRead = true;
+
+          return "x".repeat(400_000);
+        },
+      },
+    }),
+  },
+};
+
+@Controller("/bulk")
+class BulkController {
+  @Post("/", { body: bulkBody })
+  create(): { created: true } {
+    // The route answers at once and reads no body, so everything the record
+    // reports beyond a small floor is this package's own read of the body it
+    // stored rather than time the application spent on the route.
+    return { created: true };
+  }
+}
+
+@Module({
+  imports: [DevtoolsModule.register({ enabled: true, port: ephemeralPort })],
+  controllers: [BulkController],
+})
+class BulkModule {}
+
+/**
  * A plugin that refuses two different ways, because the record's boundary
  * between them is a fact about the installed Elysia rather than a preference.
  */
@@ -639,6 +683,40 @@ test.serial("the duration does not include this package's own read of the answer
     expect(entry.durationMs).toBe(0);
   } finally {
     json.mockRestore();
+    clock.mockRestore();
+    await application.close();
+  }
+});
+
+test.serial("the duration is not charged for the body this package serializes", async () => {
+  const { application, address } = await bootApplication(BulkModule);
+  bulkBodyRead = false;
+  // The clock reads `5` until this package's own serializer reaches the parsed
+  // body and `1000` after it, so the reading the record takes measures the same
+  // window whichever stamp it is: taken after the read it reports `995`, and
+  // taken before it, `0`. The unfixed code reports `995` here and fails the
+  // bound below; the fixed code reports `0` and passes.
+  const clock = spyOn(performance, "now").mockImplementation(() => (bulkBodyRead ? 1000 : 5));
+
+  try {
+    await fetch(`${application.getUrl()}/bulk`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: '{"id":1}',
+    });
+
+    const entry = onlyEntry(await readRequests(address));
+
+    expect(entry.status).toBe(200);
+    // The read this case makes expensive did happen: the record states the body
+    // it serialized, so the duration assertion cannot pass by never reading it.
+    expect(bulkBodyRead).toBe(true);
+    expect(entry.body?.endsWith("[truncated]")).toBe(true);
+    // At most a small floor rather than a share of the 400 KB this package
+    // read: a duration that grew with the body would be charging the
+    // application for the tool's own work.
+    expect(entry.durationMs).toBeLessThan(50);
+  } finally {
     clock.mockRestore();
     await application.close();
   }

@@ -425,26 +425,29 @@ runtime boundary it describes.
   query string, and the headers the policy kept, and the completion reads the
   route, the status, the parsed body, and the message the answer published — every
   one of them before the single `await` that reads the answer's body, because the
-  context is Elysia's for the duration of the hook. The duration is stamped with
-  them rather than after them, because a readable `5xx` spends that microtask on
-  this package's own read of the answer, and a duration that included it would
-  report work the application never did. The stamp is keyed by the
+  context is Elysia's for the duration of the hook. The duration is stamped before
+  them rather than after them, because those are this package's own reads of the
+  answer and the same reason holds for the one `await`: a duration that included
+  them would report work the application never did. The stamp is keyed by the
   `Request` object in a `WeakMap` and spent by the completion that reads it, so a
   request this registration never saw, and one whose answer never reached the
   hook, leave nothing rather than a partial entry. `arrive` also refuses to stamp
   while the policy records nothing, and while no boot has opened a record for the
   application that received the request.
-- `durationMs` measures this package's own hooks, and it is documented as what it
-  is rather than as what it would ideally be: the opening stamp is the first
-  statement of `arrive` and the closing one is taken after the completion hook has
-  read the route, the status, and the parsed body, so this package's own
-  synchronous reads of the request and the answer are inside the measurement and
-  the field is not "the time the application spent on the route". It excludes
-  exactly one thing — the microtask spent reading a readable `5xx` answer's
-  published body — and that exclusion is the reason the read happens after the
-  stamp. Narrowing the measurement means moving a stamp past the reads it
-  currently encloses, which changes what the endpoint reports rather than tidying
-  it.
+- `durationMs` measures the request from this package's arrival hook to the entry
+  of its completion hook, and it is documented as what it is rather than as what
+  it would ideally be: the opening stamp is the first statement of `arrive` and
+  the closing one precedes every read the completion makes, so the route, the
+  status, and the parsed body are outside the measurement and the tool does not
+  charge the application for reading its own record. It does not exclude
+  everything this package does, and that remainder is stated: the arrival hook's
+  own URL and header capture is inside, because the opening stamp precedes the
+  reads that need the request while it is whole, so the field is not "the time the
+  application spent on the route". The microtask spent reading a readable `5xx`
+  answer's published body is outside as well, which is the reason that read
+  happens after the stamp. Narrowing the measurement further means moving the
+  opening stamp past the arrival reads it currently precedes, which changes what
+  the endpoint reports rather than tidying it.
 - A body is read through one serializer with one guard, and a body the serializer
   refuses is stated rather than dropped: `JSON.stringify` throws on a body that
   refers to itself or carries a `BigInt`, both of which an application's own
