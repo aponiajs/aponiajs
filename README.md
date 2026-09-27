@@ -20,6 +20,7 @@ Structured applications for Bun
 [Eden Treaty](./docs/eden-treaty.md) ·
 [Testing](./docs/testing.md) ·
 [CLI](./docs/cli.md) ·
+[Files](./docs/files.md) ·
 [Devtools](./docs/devtools.md)
 
 [![CI](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml/badge.svg)](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml)
