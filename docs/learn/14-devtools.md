@@ -136,8 +136,9 @@ is answered with what there is rather than an error.
   look the same.
 - **`durationMs` measures the hook, not the route.** It starts at the arrival
   hook and ends before this package reads the route, the status, and the parsed
-  body, so this package's answer-side reads are outside it; of this package's own
-  reads, only the arrival hook's URL and header capture is inside.
+  body, so this package's answer-side reads are outside it. The arrival hook's
+  own URL and header capture is inside, because the opening stamp comes before
+  the reads that need the request while it is whole.
 
 The full list, including what the record leaves out on purpose, is in
 [the devtools guide](../devtools.md).

@@ -439,14 +439,14 @@ runtime boundary it describes.
   documented as what it is rather than as what it would ideally be: the route, the
   status, and the parsed body are outside the measurement and the tool does not
   charge the application for reading its own record. It does not exclude
-  everything this package does, and that remainder is stated: the arrival hook's
-  own URL and header capture is inside, because the opening stamp precedes the
-  reads that need the request while it is whole, so the field is not "the time the
-  application spent on the route". The microtask spent reading a readable `5xx`
-  answer's published body is outside as well, which is the reason that read
-  happens after the stamp. Narrowing the measurement further means moving the
-  opening stamp past the arrival reads it currently precedes, which changes what
-  the endpoint reports rather than tidying it.
+  everything this package does: the arrival hook's own URL and header capture is
+  inside, because the opening stamp precedes the reads that need the request
+  while it is whole, so the field is not "the time the application spent on the
+  route". The microtask spent reading a readable `5xx` answer's published body
+  is outside as well, which is the reason that read happens after the stamp.
+  Narrowing the measurement further means moving the opening stamp past the
+  arrival reads it currently precedes, which changes what the endpoint reports
+  rather than tidying it.
 - A body is read through one serializer with one guard, and a body the serializer
   refuses is stated rather than dropped: `JSON.stringify` throws on a body that
   refers to itself or carries a `BigInt`, both of which an application's own

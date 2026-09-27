@@ -260,14 +260,14 @@ export function createRequestCapture(capture: DevtoolsOptions["capture"]): Reque
  * The request-side fields come from the arrival stamp rather than from
  * `context.request`, which no longer states them by this phase. The duration is
  * measured from the arrival stamp rather than read off the context, and it is
- * taken before anything is read off the context: the route, the status, and the
- * parsed body are this package's own reads, so a stamp taken after them would
- * charge the application for work it never did. The context stays Elysia's
- * for the duration of the hook, and the one fact read across a microtask is the
- * answer's published body, which is why the single `await` below happens after
- * the stamp: a readable `5xx` spends that microtask on this package's own read
- * of the answer, and a duration that included it would report work the
- * application never did for the same reason.
+ * taken before anything is read off the context in this function: the route, the
+ * status, and the parsed body are this package's own reads, and a stamp taken
+ * after them would charge the application for work it never did. The context
+ * stays Elysia's for the duration of the hook, and the one fact read across a
+ * microtask is the answer's published body, which is why the single `await`
+ * below happens after the stamp: a readable `5xx` spends that microtask on this
+ * package's own read of the answer, and a duration that included it would report
+ * work the application never did for the same reason.
  *
  * @internal
  */

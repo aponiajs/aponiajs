@@ -476,8 +476,8 @@ These are the boundaries this package states rather than hides.
 - **A partly patched logger's stream does not name the levels it missed.** See
   [`/logs`](#logs).
 - **`durationMs` still includes this package's own reading of the request at
-  arrival.** The completion side's reads are outside it, but the arrival hook's
-  URL and header capture sits between the two stamps. See
+  arrival.** The completion path's reads of the answer are outside it, but the
+  arrival hook's URL and header capture sits between the two stamps. See
   [`/requests`](#requests).
 - **The request record is not complete.** A request refused before a route
   matched has no route identity: the entry carries the path it asked for and
