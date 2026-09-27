@@ -377,10 +377,14 @@ test.serial(
     });
     const output = captureOutput();
     const takenPort = boundPort(blocker);
-    // The refusal row travels through this package's own logger, which is a
-    // `Logger` from `@aponiajs/common`: making `warn` refuse is what puts the
-    // guard under test. Only `warn` is stubbed, so the boot's own lines are
-    // unaffected and a failure here is about this row rather than about them.
+    // The refusal row is written through this package's own logger — the
+    // module-level `new Logger("Devtools", …)` that `createDevtoolsPlugin` hands
+    // `startDevtoolsServer` — and never through the registration's `logger`
+    // option, which is the `/logs` handover and is tapped in place rather than
+    // passed on. So the only logger whose refusal can reach this row is the
+    // built-in `Logger`, and refusing its `warn` is what puts the guard under
+    // test. Only `warn` is stubbed, so the boot's own lines are unaffected and a
+    // failure here is about this row rather than about them.
     const refusingWarn = spyOn(Logger.prototype, "warn").mockImplementation(() => {
       throw new Error("the logger refused the refusal");
     });

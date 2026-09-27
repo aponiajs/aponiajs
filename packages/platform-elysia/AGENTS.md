@@ -154,8 +154,11 @@ runtime boundary it describes.
   reports that is a failure — the row it writes for a port it could not take,
   which a throw would otherwise turn into a boot that never listened — and
   leaves the notice it writes for a bind outside loopback unguarded, because
-  that one reports a state the socket really took rather than a failure. The
-  projection
+  that one reports a state the socket really took rather than a failure. That
+  notice's throw is therefore a throw with a defined outcome rather than a
+  refusal report: the boot fails, and the socket the notice described is
+  released before the failure reaches the caller, because the handle was never
+  the caller's and nothing else could ever stop it. The projection
   is the one the devtools log stream applies
   to a line, restated here branch for branch because the two packages do not
   depend on each other, and it is guarded so a thrown value that refuses to be

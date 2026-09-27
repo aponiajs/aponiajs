@@ -85,6 +85,12 @@ const defaultDevtoolsPort = 8000;
  * report as listening; the boot itself continues untouched. The report is
  * guarded, because a logger that refuses it would otherwise cost the caller
  * both the row and that `undefined` — see `reportRefusedBind`.
+ *
+ * The widening notice below the bind is the other side of that: it reports a
+ * state the socket really took, it is not guarded, and a logger that throws on
+ * it fails the boot — with the socket that exists released on the way out, so a
+ * failure the caller reads costs a port rather than holding one. See
+ * `reportWidenedBind`.
  */
 export function startDevtoolsServer(options: DevtoolsServerOptions): DevtoolsServer | undefined {
   const port = options.port ?? defaultDevtoolsPort;
@@ -95,27 +101,48 @@ export function startDevtoolsServer(options: DevtoolsServerOptions): DevtoolsSer
     options.requests,
     options.logger,
   );
+  const server = bindDevtoolsServer(host, port, handlers, options.logger);
 
+  if (server === undefined) {
+    // The refusal is already reported: there is no socket to widen and nothing
+    // to answer as listening.
+    return undefined;
+  }
+
+  reportWidenedBind(options.logger, host, server); // may throw the logger's own failure
+
+  return server;
+}
+
+/**
+ * Binds the devtools socket for one boot, or reports the refusal and answers
+ * `undefined`.
+ *
+ * The `try` here covers the bind alone, and that boundary is load-bearing: the
+ * one failure this `catch` was written for is a bind that never happened, and
+ * the address it names is the address the socket never took. A `catch` around
+ * the widening notice as well would report a port this server is holding as one
+ * it could not have — a misreport in the very row a reader trusts — and would
+ * answer `undefined` for a live socket, which no caller can ever stop.
+ *
+ * Sealed off in its own function rather than kept on the widening path because
+ * that is how the boundary is guaranteed: nothing below the bind can reach this
+ * handler, whatever the notice throws. See `startDevtoolsServer`.
+ */
+function bindDevtoolsServer(
+  host: string,
+  port: number,
+  handlers: DevtoolsHandlers,
+  logger: LoggerService,
+): DevtoolsServer | undefined {
   try {
     const server = Bun.serve({
       hostname: host,
       port,
       fetch: (request) => routeRequest(request, handlers),
     });
-    const url = server.url.origin;
 
-    // Reported after the socket exists, so the row names the address that was
-    // taken rather than one that was asked for — the port is the socket's, not
-    // the registration's. A bind that never happened states its own refusal
-    // below instead, so a failed widening is one row and not two.
-    if (!isLoopbackHost(host)) {
-      options.logger.warn(
-        `Aponia devtools is bound to ${url} because the registration set host, so /requests — ` +
-          "which records request headers and bodies by default — is reachable from outside this machine.",
-      );
-    }
-
-    return Object.freeze({ url, stop: () => void server.stop(true) });
+    return Object.freeze({ url: server.url.origin, stop: () => void server.stop(true) });
   } catch (error) {
     // An IPv6 host is bracketed the way a URL needs it here: the socket never
     // started, so the address is the one the registration asked for.
@@ -126,9 +153,52 @@ export function startDevtoolsServer(options: DevtoolsServerOptions): DevtoolsSer
     // start was handed, or, when that logger refuses, `stderr`.
     const refusal = `Aponia devtools could not listen on ${refusedAddress} (${oneLine(error)}); the application continues without it.`;
 
-    reportRefusedBind(options.logger, refusal);
+    reportRefusedBind(logger, refusal);
 
     return undefined;
+  }
+}
+
+/**
+ * Reports a bind that left loopback, and releases the socket when the report
+ * itself fails.
+ *
+ * Reported after the socket exists, so the row names the address that was taken
+ * rather than one that was asked for — the port is the socket's, not the
+ * registration's. A loopback host exposes nothing and reports nothing, and a bind
+ * that never happened exposes nothing and states its own refusal instead, so a
+ * failed widening is one row and never two.
+ *
+ * The call is unguarded, by the rule this package follows: a call site that
+ * reports a failure guards, and a call site that reports progress does not. This
+ * one reports a state the socket really took, so a logger that throws is a
+ * throw, and the boot fails rather than continuing with a widened surface nobody
+ * was told about. What the throw may not do is hold the address: the socket
+ * exists and its handle is not the caller's yet, so nothing else can ever stop
+ * it, and it would hold the port for the life of a process that refused to
+ * start. It is released here, before the failure is rethrown unchanged — the
+ * guard around the `stop` is what keeps it unchanged, because a `stop` that
+ * refuses may not become the failure the caller reads.
+ */
+function reportWidenedBind(logger: LoggerService, host: string, server: DevtoolsServer): void {
+  if (isLoopbackHost(host)) {
+    return;
+  }
+
+  try {
+    logger.warn(
+      `Aponia devtools is bound to ${server.url} because the registration set host, so /requests — ` +
+        "which records request headers and bodies by default — is reachable from outside this machine.",
+    );
+  } catch (failure) {
+    try {
+      server.stop();
+    } catch {
+      // The logger's failure is the one the caller has to read, so a `stop` that
+      // refuses may not replace it: an unknown failure is rethrown unchanged.
+    }
+
+    throw failure;
   }
 }
 
@@ -138,7 +208,7 @@ export function startDevtoolsServer(options: DevtoolsServerOptions): DevtoolsSer
  *
  * The sentence is this package's only account of a refusal the boot already
  * survived, and `LoggerService` is an interface an application's own
- * implementation may refuse: a throw out of the `warn` above would leave the
+ * implementation may refuse: a throw out of the `warn` below would leave the
  * caller with neither the report nor the `undefined` that says there is nothing
  * to report as listening. That is worse here than anywhere else in the
  * framework, because this runs inside the plugin's `onStart`, which Elysia
@@ -151,7 +221,9 @@ export function startDevtoolsServer(options: DevtoolsServerOptions): DevtoolsSer
  * logger that refuses is answered on `stderr` by a direct write — the only
  * place this package writes a process stream — because the channel that would
  * normally carry the row is the one that just failed. The wording is the
- * logger's either way; only the channel changes.
+ * logger's either way; only the channel changes. The widening notice is a
+ * different call site with a different outcome, and it is deliberately not
+ * routed through here: see `reportWidenedBind`.
  */
 function reportRefusedBind(logger: LoggerService, refusal: string): void {
   try {
@@ -270,8 +342,8 @@ function findInstalledElysiaManifest(baseDirectory: string): string | undefined 
  *
  * Every builder it calls is total — a record this release cannot project is one
  * of the cases they answer rather than throw for — because this runs before the
- * bind's `try`, where a failure would be reported as a refused listen, a cause
- * this package never observed.
+ * socket is bound, where a failure would be reported as a refused listen, a
+ * cause this package never observed.
  */
 function createHandlers(
   application: Elysia,

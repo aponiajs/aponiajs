@@ -83,7 +83,10 @@ const application = await AponiaFactory.create(AppModule, {
   own and resolves nothing, so any other name warns. `localhost` is the one name
   accepted without being resolved, and that is stated rather than hidden: a
   hosts file that mapped it to one of this machine's public addresses would bind
-  it in silence.
+  it in silence. That row reports a state the socket really took rather than a
+  failure, so it is not guarded the way the refused bind below is: a logger that
+  throws on it fails the boot, and the socket the row describes is released
+  before the failure reaches the caller.
 - **The log stream is the application's own, and it is handed over twice.** Pass
   the same logger to the registration — `DevtoolsModule.register` or
   `devtoolsPlugin` — and to `AponiaFactory.create`:

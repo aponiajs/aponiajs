@@ -94,7 +94,14 @@ runtime boundary it describes.
   the `undefined`. The rule is the framework's: a call site that reports a
   failure guards, and a call site that reports progress does not. The
   non-loopback exposure notice above is the other side of that rule and stays
-  unguarded: it reports a state the socket really took rather than a failure.
+  unguarded: it reports a state the socket really took rather than a failure, so
+  a logger that throws on it fails the boot. That throw has a defined outcome
+  rather than being left to the bind's handler: the bind is the only thing
+  inside the `catch` that reports a refusal, and the notice's own `catch`
+  releases the socket before rethrowing the logger's failure unchanged — the
+  handle is not the caller's yet, so nothing else could ever stop a socket it
+  would otherwise hold for the life of a boot that failed, and a `stop` that
+  refuses may not become the failure the caller reads.
 - The handler build runs inside that `onStart`, which Elysia neither awaits nor
   catches, so its own reads are written to answer rather than to throw — a throw
   would take `listen()` with it. What that buys is the shapes: every recorded
@@ -661,7 +668,14 @@ no exposure row, because a socket that never started exposed nothing; that case
 is also what pins the bracketed form of an IPv6 address, and it names a host
 outside loopback — `::` rather than the loopback `::1` — because with a loopback
 host no exposure row could appear however the code was ordered, so the guarantee
-would be untestable there.
+would be untestable there. A widened bind whose notice the logger refuses is
+asserted as the third outcome it is: the start throws the logger's own failure
+rather than answering `undefined`, no refusal sentence reaches `stderr`, and the
+address binds again — the port is the only evidence of the release, because a
+start that throws hands out no handle to stop. The two outcomes are pinned apart
+on purpose: `undefined` plus a refusal row is exactly the misreport a notice
+falling into the bind's handler produces, so the case fails if that throw can
+still reach it.
 
 The boundary the socket cases cannot reach is pinned directly, against
 `isLoopbackHost`. It is exported from `server/devtools-server.ts` for this

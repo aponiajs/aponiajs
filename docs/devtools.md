@@ -121,7 +121,11 @@ Three facts about the socket:
   that mapped it to one of this machine's public addresses would bind it in
   silence. That is the price of a check with no lookup in it, accepted with the
   alternative in view — a resolver in a debugging aid's start path would decide
-  what to warn about from the machine it happens to run on.
+  what to warn about from the machine it happens to run on. That row reports a
+  state the socket really took rather than a failure, so it is **not** guarded
+  the way the refusal below is: a logger that throws on it fails the boot, and
+  the socket the row describes is released before the failure reaches the
+  caller, so a bind nobody could report does not also hold the port.
 - **A taken port never fails a boot.** The refused bind is reported under the
   `Devtools` context with the reason, and the application continues without the
   devtools server. That report is guarded: a logger that throws on it is not

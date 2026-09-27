@@ -89,6 +89,36 @@ async function readMeta(server: DevtoolsServer): Promise<AponiaMetaPayload> {
   return (await response.json()) as AponiaMetaPayload;
 }
 
+/**
+ * The port a freshly bound socket took. Bun types a server's port as optional —
+ * a unix socket has none — so a case that needs the number states that it read
+ * one rather than defaulting it.
+ */
+function boundPort(server: { readonly port?: number }): number {
+  if (server.port === undefined) {
+    throw new Error("the socket bound no port to take");
+  }
+
+  return server.port;
+}
+
+/**
+ * Whether the address binds again, which is how a released socket is observed
+ * from outside: a start that throws hands out no handle, so the port is the only
+ * evidence that the socket it took was stopped on the way out.
+ */
+async function bindsAgain(host: string, port: number): Promise<boolean> {
+  try {
+    const server = Bun.serve({ hostname: host, port, fetch: () => new Response("released") });
+
+    await server.stop(true);
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 @Module({})
 class DevtoolsServerFixtureModule {}
 
@@ -388,6 +418,58 @@ test("a host outside loopback binds it, answers, and reports once what it expose
     expect(warnings[0]).not.toContain("\n");
   } finally {
     server.stop();
+  }
+});
+
+test("a widening notice the logger refuses fails the boot and releases the socket it took", async () => {
+  // The port comes from a socket this case stops, so it is an address this file
+  // can bind again: no case here depends on a port it guessed, and binding the
+  // address again is the only way the release is observable — the start throws
+  // instead of answering a handle, so nothing is left to ask.
+  const holder = Bun.serve({ hostname: "0.0.0.0", port: 0, fetch: () => new Response("free") });
+  const port = boundPort(holder);
+  await holder.stop(true);
+
+  const noticeRefused = new Error("the logger refused the widening notice");
+  const logger: LoggerService = {
+    log: () => {},
+    fatal: () => {},
+    error: () => {},
+    warn: () => {
+      throw noticeRefused;
+    },
+  };
+  const stderr: string[] = [];
+  const stderrWrite = spyOn(process.stderr, "write").mockImplementation((chunk) => {
+    stderr.push(String(chunk));
+    return true;
+  });
+
+  try {
+    let failure: unknown;
+    try {
+      startDevtoolsServer({ application: new Elysia(), host: "0.0.0.0", port, logger });
+    } catch (error) {
+      failure = error;
+    }
+
+    // The notice reports a state the socket really took, so a throw on it is a
+    // throw: the boot fails with the logger's own failure, unchanged, and never
+    // with the `undefined` a refused bind answers with.
+    expect(failure).toBe(noticeRefused);
+
+    // The refusal sentence belongs to a bind that never happened, and this
+    // socket took its address: one here would name an address the server is
+    // holding, which is the misreport the bind's own `catch` — and nothing else
+    // — exists to prevent.
+    expect(stderr.filter((row) => row.includes("could not listen"))).toEqual([]);
+
+    // The handle was never the caller's, so nothing else could ever stop this
+    // socket: the address binding again is what states the throw released it
+    // rather than holding a port for the life of a boot that failed.
+    expect(await bindsAgain("0.0.0.0", port)).toBe(true);
+  } finally {
+    stderrWrite.mockRestore();
   }
 });
 
