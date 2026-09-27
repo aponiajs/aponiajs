@@ -425,17 +425,21 @@ runtime boundary it describes.
   query string, and the headers the policy kept, and the completion reads the
   route, the status, the parsed body, and the message the answer published — every
   one of them before the single `await` that reads the answer's body, because the
-  context is Elysia's for the duration of the hook. The duration is stamped before
-  them rather than after them, because those are this package's own reads of the
-  answer and the same reason holds for the one `await`: a duration that included
-  them would report work the application never did. The stamp is keyed by the
+  context is Elysia's for the duration of the hook. The closing reading is taken
+  by the after-response hook itself, as its first statement, before it reads a
+  single field off the context: every read the completion side makes is this
+  package's own work, and the same reason holds for the one `await`, so a
+  duration that included any of them would report work the application never did.
+  The reading is handed to `complete`, which never takes one of its own — that is
+  what keeps the arrival lookups and the whole of `toRequestRecord` outside the
+  measurement rather than merely most of it. The stamp is keyed by the
   `Request` object in a `WeakMap` and spent by the completion that reads it, so a
   request this registration never saw, and one whose answer never reached the
   hook, leave nothing rather than a partial entry. `arrive` also refuses to stamp
   while the policy records nothing, and while no boot has opened a record for the
   application that received the request.
 - `durationMs` measures the request from this package's arrival hook to a reading
-  the completion path takes before every read it makes of the answer, and it is
+  the completion hook takes before its first read of the context, and it is
   documented as what it is rather than as what it would ideally be: the route, the
   status, and the parsed body are outside the measurement and the tool does not
   charge the application for reading its own record. It does not exclude
@@ -443,10 +447,10 @@ runtime boundary it describes.
   inside, because the opening stamp precedes the reads that need the request
   while it is whole, so the field is not "the time the application spent on the
   route". The microtask spent reading a readable `5xx` answer's published body
-  is outside as well, which is the reason that read happens after the stamp.
-  Narrowing the measurement further means moving the opening stamp past the
-  arrival reads it currently precedes, which changes what the endpoint reports
-  rather than tidying it.
+  is outside as well, which is why the reading is handed in before that read
+  happens rather than taken after it. Narrowing the measurement further means
+  moving the opening stamp past the arrival reads it currently precedes, which
+  changes what the endpoint reports rather than tidying it.
 - A body is read through one serializer with one guard, and a body the serializer
   refuses is stated rather than dropped: `JSON.stringify` throws on a body that
   refers to itself or carries a `BigInt`, both of which an application's own

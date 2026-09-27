@@ -383,15 +383,15 @@ The record belongs to one application and one boot: a second `listen()` serves a
 new empty window rather than extending one a socket that is gone was serving.
 
 `durationMs` is measured from the moment the request reached this package's
-arrival hook to a reading the completion path takes before every read it makes of
-the answer. The route, the status, and the parsed body the record stores are
+arrival hook to a reading the completion path takes before its first read of the
+context. The route, the status, and the parsed body the record stores are
 therefore outside the measurement, as is the one `await` that reads a readable
-`5xx` answer's published body — that read happens after the stamp, which is why it
-is excluded. The arrival hook's own URL and header capture is still inside it,
-because the opening stamp precedes the reads that need the request while it is
-whole. The field is therefore the time from arrival to the completion path with
-this package's answer-side work taken out, and it is not a CPU profile of the
-handler.
+`5xx` answer's published body — that read happens after the reading is in hand,
+which is why it is excluded. The arrival hook's own URL and header capture is
+still inside it, because the opening stamp precedes the reads that need the
+request while it is whole. The field is therefore the time from arrival to the
+completion path with this package's completion-side work taken out, and it is
+not a CPU profile of the handler.
 
 ### `/aot`
 
@@ -476,8 +476,8 @@ These are the boundaries this package states rather than hides.
 - **A partly patched logger's stream does not name the levels it missed.** See
   [`/logs`](#logs).
 - **`durationMs` still includes this package's own reading of the request at
-  arrival.** The completion path's reads of the answer are outside it, but the
-  arrival hook's URL and header capture sits between the two stamps. See
+  arrival.** Every read the completion path makes is outside it, but the arrival
+  hook's URL and header capture sits between the two stamps. See
   [`/requests`](#requests).
 - **The request record is not complete.** A request refused before a route
   matched has no route identity: the entry carries the path it asked for and

@@ -152,6 +152,15 @@ function createInertModule(): DynamicModule {
  * Neither hook returns a value, and that is a rule rather than a style: a hook
  * that returns a truthy one is the answer, so the pair would change what every
  * route receives — the one thing `/requests` claims it cannot do.
+ *
+ * The completion hook takes the closing reading as its first statement, before it
+ * reads a field off the context, and hands it to `complete`, which takes none of
+ * its own. That is what makes the duration the interval between the two hooks
+ * rather than the interval between the arrival and however much of this package's
+ * own work ran before the stamp: the route, the status, the parsed body, the
+ * arrival lookup, and the one `await` that reads a `5xx` answer's published body
+ * are all outside it. Moving that reading down the hook, or back inside
+ * `toRequestRecord`, silently charges the application for this package's work.
  */
 function createDevtoolsPlugin(options: DevtoolsOptions): Elysia {
   let server: DevtoolsServer | undefined;
@@ -163,13 +172,26 @@ function createDevtoolsPlugin(options: DevtoolsOptions): Elysia {
       capture.arrive(context.request, context.store);
     })
     .onAfterResponse({ as: "global" }, async (context) => {
-      await capture.complete({
-        request: context.request,
-        route: context.route,
-        body: context.body,
-        status: context.set.status,
-        answer: context.responseValue,
-      });
+      // The closing reading is the first statement of this hook, before the five
+      // reads below, because every one of them and everything `toRequestRecord`
+      // does with them is this package's own work: a duration that included them
+      // would report time the application never spent. The single `await` inside
+      // `complete` that reads a readable `5xx` answer's published body is outside
+      // the measurement for the same reason, and it stays outside only while this
+      // reading stays here — moving it after that `await` would charge the
+      // application for it.
+      const completedAt = performance.now();
+
+      await capture.complete(
+        {
+          request: context.request,
+          route: context.route,
+          body: context.body,
+          status: context.set.status,
+          answer: context.responseValue,
+        },
+        completedAt,
+      );
     })
     .onStart((application) => {
       const started = startDevtoolsServer({

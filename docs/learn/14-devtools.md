@@ -135,10 +135,11 @@ is answered with what there is rather than an error.
   that never carries `debug` and one whose `debug` lines were never written
   look the same.
 - **`durationMs` measures the hook, not the route.** It starts at the arrival
-  hook and ends before this package reads the route, the status, and the parsed
-  body, so this package's answer-side reads are outside it. The arrival hook's
-  own URL and header capture is inside, because the opening stamp comes before
-  the reads that need the request while it is whole.
+  hook and ends before the completion hook reads anything at all, so everything
+  the completion side does — the route, the status, and the parsed body among it
+  — is outside the measurement. The arrival hook's own URL and header capture is
+  inside, because the opening stamp comes before the reads that need the request
+  while it is whole.
 
 The full list, including what the record leaves out on purpose, is in
 [the devtools guide](../devtools.md).

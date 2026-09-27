@@ -693,9 +693,11 @@ test.serial("the duration is not charged for the body this package serializes", 
   bulkBodyRead = false;
   // The clock reads `5` until this package's own serializer reaches the parsed
   // body and `1000` after it, so the reading the record takes measures the same
-  // window whichever stamp it is: taken after the read it reports `995`, and
-  // taken before it, `0`. The unfixed code reports `995` here and fails the
-  // bound below; the fixed code reports `0` and passes.
+  // window whichever position it is taken from: taken after the read — where the
+  // defect had it — the entry reports `995` and fails the bound below, and taken
+  // before it, `0`. Re-measured after the reading moved to the completion hook's
+  // first statement, which is even earlier and still `0`, while the same
+  // simulated regression still reports `995`.
   const clock = spyOn(performance, "now").mockImplementation(() => (bulkBodyRead ? 1000 : 5));
 
   try {

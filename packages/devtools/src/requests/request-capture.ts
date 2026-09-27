@@ -130,8 +130,17 @@ export interface RequestCapture {
    * needs, filed under the application that received it.
    */
   arrive(request: Request, application: ApplicationIdentity): void;
-  /** Writes the entry for an answer, when this registration saw the request arrive. */
-  complete(context: AnsweredRequest): Promise<void>;
+  /**
+   * Writes the entry for an answer, when this registration saw the request
+   * arrive, ending the duration at `completedAt`.
+   *
+   * The closing reading is handed in rather than taken here, because the hook
+   * that calls this takes it before it reads anything off the context: every
+   * read this method makes of the answer, and the lookups it makes to find the
+   * arrival at all, are then outside the measurement rather than only most of
+   * it.
+   */
+  complete(context: AnsweredRequest, completedAt: number): Promise<void>;
 }
 
 /**
@@ -224,7 +233,7 @@ export function createRequestCapture(capture: DevtoolsOptions["capture"]): Reque
         }),
       );
     },
-    async complete(context: AnsweredRequest): Promise<void> {
+    async complete(context: AnsweredRequest, completedAt: number): Promise<void> {
       const arrival = arrivals.get(context.request);
 
       // A request this registration never saw, and an answer whose arrival was
@@ -235,7 +244,7 @@ export function createRequestCapture(capture: DevtoolsOptions["capture"]): Reque
       }
 
       arrivals.delete(context.request);
-      arrival.record.write(await toRequestRecord(context, policy, arrival));
+      arrival.record.write(await toRequestRecord(context, policy, arrival, completedAt));
     },
   });
 }
@@ -258,16 +267,17 @@ export function createRequestCapture(capture: DevtoolsOptions["capture"]): Reque
  * reads the same as an absence.
  *
  * The request-side fields come from the arrival stamp rather than from
- * `context.request`, which no longer states them by this phase. The duration is
- * measured from the arrival stamp rather than read off the context, and it is
- * taken before anything is read off the context in this function: the route, the
- * status, and the parsed body are this package's own reads, and a stamp taken
- * after them would charge the application for work it never did. The context
- * stays Elysia's for the duration of the hook, and the one fact read across a
- * microtask is the answer's published body, which is why the single `await`
- * below happens after the stamp: a readable `5xx` spends that microtask on this
- * package's own read of the answer, and a duration that included it would report
- * work the application never did for the same reason.
+ * `context.request`, which no longer states them by this phase.
+ *
+ * `completedAt` is the closing reading, taken by the calling hook before it read
+ * anything off the context, and the duration is measured from the arrival stamp
+ * to it rather than taken here: every read of the answer below, and the lookups
+ * that found the arrival at all, are this package's own work, so a stamp taken
+ * among them would charge the application for work it never did. The reading is
+ * the boundary: everything after it is outside. That includes the single `await`
+ * below — a readable `5xx` spends a microtask on this package's own read of the
+ * answer's published body — because the reading is in hand before that read
+ * happens.
  *
  * @internal
  */
@@ -275,14 +285,9 @@ export async function toRequestRecord(
   context: AnsweredRequest,
   capture: ResolvedCapture,
   arrival: RequestArrival,
+  completedAt: number,
 ): Promise<RequestRecord> {
-  // The closing reading is taken before this package reads the route, the
-  // status, and the parsed body: those are this package's own work, and a
-  // duration that included them would report time the application never spent.
-  // The one thing still excluded below is the single `await` that reads a
-  // readable `5xx` answer's body — excluded for the same reason, which is why
-  // that read happens after this line rather than before.
-  const durationMs = performance.now() - arrival.startedAt;
+  const durationMs = completedAt - arrival.startedAt;
   const route = routePattern(context.route);
   const status = answerStatus(context);
   const body = capture.body ? captureBody(context.body, capture.bodyLimit) : undefined;

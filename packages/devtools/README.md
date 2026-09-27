@@ -190,12 +190,12 @@ const application = await AponiaFactory.create(AppModule, {
   `/routes` is the table that tells the two apart. The record belongs to one
   application and one boot, so a second `listen()` begins a new one.
   `durationMs` is measured from the moment the request reached this package's
-  arrival hook to a reading the completion path takes before every read it makes
-  of the answer — so the route, the status, the parsed body, and the one
-  microtask spent reading a readable `5xx` answer's published body are outside
-  it. The arrival hook's own URL and header capture is still inside, because the
-  opening stamp precedes the reads that need the request while it is whole, so
-  the field is not "the time the application spent on the route".
+  arrival hook to a reading the completion path takes before its first read of
+  the context — so the route, the status, the parsed body, and the one microtask
+  spent reading a readable `5xx` answer's published body are outside it. The
+  arrival hook's own URL and header capture is still inside, because the opening
+  stamp precedes the reads that need the request while it is whole, so the field
+  is not "the time the application spent on the route".
 - **`GET /__devtools/aot` reports what a build decided beside what the boot did
   with it.** `graph` and `invokers` are the boot record's: which root the
   container compiled, and the boot's verdict on the generated invoker artifact,
