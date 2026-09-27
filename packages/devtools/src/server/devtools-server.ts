@@ -16,8 +16,8 @@ import { buildLogsPayload, devtoolsLogsPath } from "../endpoints/logs.ts";
 import { buildMetaPayload, devtoolsMetaPath } from "../endpoints/meta.ts";
 import { buildRequestsPayload, devtoolsRequestsPath } from "../endpoints/requests.ts";
 import { buildRoutesPayload, devtoolsRoutesPath } from "../endpoints/routes.ts";
-import type { LogBuffer } from "../logging/log-buffer.types.ts";
 import { oneLine } from "../logging/one-line.ts";
+import type { TappedLogStream } from "../logging/log-tap.ts";
 import type { RequestBuffer } from "../requests/request-buffer.types.ts";
 import type {
   DevtoolsHandlers,
@@ -224,7 +224,7 @@ function findInstalledElysiaManifest(baseDirectory: string): string | undefined 
  */
 function createHandlers(
   application: Elysia,
-  logs: LogBuffer | undefined,
+  logs: TappedLogStream | undefined,
   requests: RequestBuffer | undefined,
   logger: LoggerService,
 ): DevtoolsHandlers {
@@ -263,7 +263,7 @@ function createHandlers(
       ? {}
       : {
           [devtoolsLogsPath]: (request: Request) =>
-            jsonResponse(buildLogsPayload(logs, readSinceCursor(request))),
+            jsonResponse(buildLogsPayload(logs.buffer, readSinceCursor(request), logs.levels)),
         }),
     // The request record is passed in for `/logs`' reason, and a registration
     // that captures nothing still hands one over: an empty record with a live

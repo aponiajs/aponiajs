@@ -324,13 +324,16 @@ runtime boundary it describes.
   object, still prints every line it printed before, and records every call
   whatever the logger's own level filter would print, because `LoggerService` has
   no notion of an enabled level and re-applying a rule this package cannot read
-  would be enforcing a filter it does not own. A tap that is refused an
-  assignment stops there and the boundary is two-sided: a level patched before
-  the refusal is a tap that installed, so it records and the stream is published,
-  while a logger whose **first** assignment refuses — a frozen one refuses them
-  all — is left as it is and earns no endpoint, because that is the shape where a
-  stream would have nothing to state and would announce a silence the logger is
-  not keeping. A tap is this package's convenience and never the application's
+  would be enforcing a filter it does not own. A tap is attempted at every level
+  on its own, and the boundary is two-sided: a level patched before a refusal is a
+  tap that installed, so it records and the stream is published, while a logger
+  whose **first** assignment refuses — a frozen one refuses them all — is left as
+  it is and earns no endpoint, because that is the shape where a stream would have
+  nothing to state and would announce a silence the logger is not keeping. A
+  refusal costs one level rather than that level and every one after it: the level
+  that refused keeps the method it had and the remaining levels are still
+  attempted, which is what makes the stream's level list the whole truth about
+  what it can hold. A tap is this package's convenience and never the application's
   contract. One logger records into one stream: a logger this package has already
   answered for is answered with the stream that is recording rather than a second
   one nothing writes into. A logger nothing could be installed on has no stream to
@@ -391,16 +394,16 @@ runtime boundary it describes.
   still serves `/requests` answering an empty record rather than no endpoint, and
   "this registration was told to record nothing" is itself a fact the record
   states.
-- A partly patched logger publishes a stream and does not say what it missed.
-  The refusal boundary is two-sided — the **first** assignment refusing is the
+- A partly patched logger publishes a stream and names the levels it reached. The
+  refusal boundary is two-sided — the **first** assignment refusing is the
   absence, a later one is a tap that installed — and the side that publishes is
-  all-or-nothing at the endpoint and never at the level: the stream holds the
-  levels the tap reached, an entry states only the level it was written at, and
-  so an absent `debug` line cannot be told from a `debug` level the tap never
-  reached. Nothing in the payload answers "which levels are missing", so the
-  limitation is stated wherever the endpoint is documented rather than filled in
-  with a guess; a stream and the endpoint that serves it are the whole fact this
-  package has to publish.
+  all-or-nothing at the endpoint and never at the level, while the level list
+  inside the payload is exact. An entry states only the level it was written at,
+  so the level list is what tells an absent `debug` line apart from a `debug` level
+  the tap never reached; without it those two facts would read the same, and the
+  field exists so the payload answers "which levels does this stream hold" rather
+  than leaving it to be inferred from a silence. A stream and the endpoint that
+  serves it are the whole fact this package has to publish.
 - A record is opened by the boot that serves it, one per application, and never at
   registration. The platform hands one registration to every boot of the module
   class that declared it, so a record built when the module registered would be
@@ -657,8 +660,14 @@ second-tap case pins that one logger answers with one stream. The refusal is
 pinned on both sides it can land on: a logger that refuses its **first** assignment
 — a frozen one, asserted by freezing the case's own logger — answers no stream at
 all, and one that accepts a level and then refuses the next is a tap that
-installed, so it records and publishes, with the refusing level keeping its method
-and the levels after it left unreached. The stream is then asserted over a real
+installed, so it records and publishes with the refusing level keeping its method
+and every level after it still patched. What the tap reports about itself is
+pinned the same way, against the concrete logger: a level the object does not carry
+is not named, a level that refuses its assignment costs only itself — the last
+level in the order proves the loop kept going — and the payload a boot serves names
+the levels reached, so a stream that never holds `debug` and one whose tap never
+reached `debug` are told apart over HTTP rather than only in the tap. The stream is
+then asserted over a real
 boot, where the lines the boot wrote before `onStart` must appear — the case a tap
 installed when the socket starts would fail, and the assertion that says why the
 tap belongs to the registration — and where the application's own next line must

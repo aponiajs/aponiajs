@@ -2,8 +2,8 @@ import { Logger, Module, type DynamicModule } from "@aponiajs/common";
 import { ElysiaPluginModule } from "@aponiajs/platform-elysia";
 import { Elysia } from "elysia";
 import { createLogBuffer, defaultLogBufferCapacity } from "../logging/log-buffer.ts";
-import type { LogBuffer } from "../logging/log-buffer.types.ts";
 import { isRecordableLogger, tapLogBuffer } from "../logging/log-tap.ts";
+import type { TappedLogStream } from "../logging/log-tap.ts";
 import { createRequestCapture } from "../requests/request-capture.ts";
 import { startDevtoolsServer } from "../server/devtools-server.ts";
 import type { DevtoolsServer } from "../server/devtools-server.types.ts";
@@ -238,14 +238,15 @@ function createDevtoolsPlugin(options: DevtoolsOptions): Elysia {
  * are most of what this stream is worth.
  *
  * Two outcomes, however many values arrive at the first one. A logger object the
- * tap could install on is tapped in place and its stream is published. Everything
- * else publishes no `/logs` at all: the option omitted, `false`, any value that is
- * not a logger — which a JavaScript caller can pass whatever the type says — and a
- * logger whose first assignment refuses, where the tap installs nothing and a
- * published stream would record nothing while that logger goes on printing. The
- * endpoint states a stream, and a registration with none to state serves no
- * endpoint, so the dispatcher's `404` is the answer, the way a boot the record
- * holds no compiled root for serves no `/graph`.
+ * tap could install on is tapped in place and its stream is published, and the
+ * stream states the levels the tap reached, so a partly patched logger still
+ * names what it covers. Everything else publishes no `/logs` at all: the option
+ * omitted, `false`, any value that is not a logger — which a JavaScript caller can
+ * pass whatever the type says — and a logger whose first assignment refuses, where
+ * the tap installs nothing and a published stream would record nothing while that
+ * logger goes on printing. The endpoint states a stream, and a registration with
+ * none to state serves no endpoint, so the dispatcher's `404` is the answer, the
+ * way a boot the record holds no compiled root for serves no `/graph`.
  *
  * `false` is not the empty stream it once answered, and the difference is the
  * whole reason: it states that the application has no logger object to hand over,
@@ -256,7 +257,7 @@ function createDevtoolsPlugin(options: DevtoolsOptions): Elysia {
  * would announce the silence in exactly that case; absence is true in every one
  * of them.
  */
-function createLogStream(source: DevtoolsOptions["logger"]): LogBuffer | undefined {
+function createLogStream(source: DevtoolsOptions["logger"]): TappedLogStream | undefined {
   if (!isRecordableLogger(source)) {
     return undefined;
   }

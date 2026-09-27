@@ -140,7 +140,8 @@ export interface AponiaRoutesPayload {
 
 /**
  * The payload `/__devtools/logs` answers with: the application's log stream read
- * from one cursor, and the cursor the next poll asks from.
+ * from one cursor, the cursor the next poll asks from, and the levels the stream
+ * records.
  *
  * `cursor` counts every line the stream has recorded, including the ones dropped
  * since, which is what makes it usable as a poll marker: a client that keeps it
@@ -149,12 +150,27 @@ export interface AponiaRoutesPayload {
  * older than the retained window is answered with the whole window, and one
  * ahead of every write with none — so a poll is never an error and never a
  * rewind.
+ *
+ * `entries` states only the level each line was written at, so the level list is
+ * the half that says which levels this stream can hold at all. The tap is
+ * installed per level, and a level it could not reach is a silence this payload
+ * states rather than one a client has to guess at.
  */
 export interface AponiaLogsPayload {
   /** The cursor to pass back as `since` on the next poll. */
   readonly cursor: number;
   /** The retained entries written after the requested cursor, oldest first. */
   readonly entries: readonly LogEntry[];
+  /**
+   * The `LoggerService` levels this stream records, as the tap reached them.
+   *
+   * A logger that declared no `debug`, or whose `debug` property refused the
+   * patch, is stated here rather than left to be inferred from an absence in
+   * `entries`: a stream that never holds a `debug` line and a stream whose tap
+   * never reached `debug` are different facts, and only this field tells them
+   * apart.
+   */
+  readonly levels: readonly string[];
 }
 
 /**

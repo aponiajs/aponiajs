@@ -1,6 +1,6 @@
 import type { LoggerService } from "@aponiajs/common";
 import type { Elysia } from "elysia";
-import type { LogBuffer } from "../logging/log-buffer.types.ts";
+import type { TappedLogStream } from "../logging/log-tap.ts";
 import type { RequestBuffer } from "../requests/request-buffer.types.ts";
 
 /** The HTTP surface one devtools boot publishes. */
@@ -35,12 +35,15 @@ export interface DevtoolsServerOptions {
    * It is the caller's rather than the server's because a stream has to start
    * before the server does: `LoggerService` is the object the application and the
    * platform both write to, so whoever holds it is who can record what a boot
-   * wrote before `onStart` ran — which is the registration, not this function. A
+   * wrote before `onStart` ran — which is the registration, not this function. It
+   * carries the levels the tap reached beside the buffer that records them,
+   * because a stream has to state both: the entries name the level each line was
+   * written at, and only the level list says which levels this stream can hold. A
    * server that is handed none serves no `/logs` at all, because that endpoint
    * states a stream and this one has none to state; the dispatcher's `404` is the
    * answer for a path the handler record does not own.
    */
-  readonly logs?: LogBuffer;
+  readonly logs?: TappedLogStream;
   /**
    * The application's request record, when the caller has one to publish.
    *

@@ -105,7 +105,10 @@ export interface DevtoolsOptions {
    *   published stream would answer `{ cursor: 0, entries: [] }` while that logger
    *   goes on printing every line: the same false silence, so it earns no endpoint
    *   either. A refusal later than that is not this case — a level was patched, so
-   *   the stream is published and records the levels the tap reached.
+   *   the stream is published, the refusing level keeps the method it had, and the
+   *   remaining levels are still patched. The stream names the levels the tap
+   *   reached, so a level it could not patch is stated rather than left to be read
+   *   out of an absence.
    *
    * The endpoint states a stream, and a registration with none to state serves no
    * endpoint — the dispatcher's `404`, the way a boot the record holds no compiled

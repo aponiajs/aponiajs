@@ -56,6 +56,7 @@ type DevtoolsContractAssertions = [
   Expect<Equals<AponiaFlowPayload["routes"], readonly AponiaFlowRoute[]>>,
   Expect<Equals<AponiaLogsPayload["cursor"], AponiaRequestsPayload["cursor"]>>,
   Expect<Equals<AponiaLogsPayload["entries"], readonly LogEntry[]>>,
+  Expect<Equals<AponiaLogsPayload["levels"], readonly string[]>>,
   Expect<Equals<AponiaRequestsPayload["entries"], readonly RequestRecord[]>>,
   Expect<Equals<AponiaRequestRecordFields, RequestRecord>>,
   Expect<Equals<AponiaAotPayload["graph"], "declared" | "decorated">>,
@@ -114,11 +115,11 @@ class ConformanceApplicationModule {}
 
 test("keeps the contract assertions referenced", () => {
   const assertions: DevtoolsContractAssertions = Array.from(
-    { length: 13 },
+    { length: 14 },
     () => true,
   ) as DevtoolsContractAssertions;
 
-  expect(assertions).toHaveLength(13);
+  expect(assertions).toHaveLength(14);
 });
 
 test("the registration is a module an application import accepts", () => {
@@ -162,6 +163,7 @@ test("every endpoint payload is constructible from the published types", () => {
         timestamp: "2026-01-01T00:00:00.000Z",
       },
     ],
+    levels: ["log"],
   };
   const requests: AponiaRequestsPayload = {
     cursor: 1,
@@ -187,6 +189,7 @@ test("every endpoint payload is constructible from the published types", () => {
   expect(routes.routes).toHaveLength(0);
   expect(flow.routes).toHaveLength(0);
   expect(logs.entries[0]?.context).toBe("Conformance");
+  expect(logs.levels).toContain("log");
   expect(requests.entries[0]?.url).toBe("/?page=1");
   expect(aot.invokers.accepted).toBe(false);
 });

@@ -9,8 +9,8 @@ import {
   tapLogBuffer,
   type AponiaLogsPayload,
   type DevtoolsServer,
-  type LogBuffer,
   type LogEntry,
+  type TappedLogStream,
 } from "../src/index.ts";
 
 /**
@@ -168,7 +168,11 @@ test("the tap records each line and still writes it through the same logger", ()
   // The stream that records it is the answer, and the logger is the object the
   // caller already held: the lines written through that reference are the lines
   // this records, which is what patching in place buys and a wrapper could not.
-  expect(tapped).toBe(buffer);
+  expect(tapped?.buffer).toBe(buffer);
+  // The stream states the levels it reached, and this logger carries the four a
+  // plain object declares, so every one of them was patched.
+  expect(tapped?.levels).toContain("log");
+  expect(tapped?.levels).toContain("warn");
 
   logger.log("serving", "RouterExplorer");
   logger.warn("slow", "HealthController");
@@ -269,11 +273,11 @@ test("one logger records into one stream, so a line is never recorded or printed
   const first = createLogBuffer(4);
   const second = createLogBuffer(4);
 
-  expect(tapLogBuffer(logger, first)).toBe(first);
+  expect(tapLogBuffer(logger, first)?.buffer).toBe(first);
   // A second registration naming the same logger is answered with the stream that
   // is already recording, so the lines a client polls and the lines the logger
   // writes cannot drift apart.
-  expect(tapLogBuffer(logger, second)).toBe(first);
+  expect(tapLogBuffer(logger, second)?.buffer).toBe(first);
 
   logger.log("once");
 
@@ -322,27 +326,91 @@ test("a logger that refuses one assignment is still recorded and published", () 
   // refusal. A logger that accepts one assignment and refuses the next has a tap
   // the lines through it reach, so handing `undefined` back here would drop lines
   // this package is recording.
-  expect(tapped).toBe(buffer);
+  expect(tapped?.buffer).toBe(buffer);
 
   logger.log("recorded through the patch");
   // The level the refusal landed on keeps the method it had, and the levels after
-  // it are never reached: the tap stops where the refusal did rather than
-  // covering whichever levels happened to accept it.
+  // it are still reached: a refusal costs the level it landed on rather than that
+  // level and every one after it, so `warn` is patched like any other.
   logger.fatal("written through the method it kept");
-  logger.warn("not reached by the tap");
+  logger.warn("reached past the refusal");
 
   expect(calls).toEqual([
     "log recorded through the patch",
     "fatal written through the method it kept",
-    "warn not reached by the tap",
+    "warn reached past the refusal",
   ]);
   expect(
     buffer.since(0).entries.map((item) => [item.level, item.message] satisfies unknown[]),
-  ).toEqual([["log", "recorded through the patch"]]);
+  ).toEqual([
+    ["log", "recorded through the patch"],
+    ["warn", "reached past the refusal"],
+  ]);
+  // The stream states which levels it reached, so the level that refused is named
+  // as unreached and the level after it is named as recorded — the two facts this
+  // case exists to tell apart from the payload alone.
+  expect(tapped?.levels).toContain("warn");
+  expect(tapped?.levels).not.toContain("fatal");
+});
+
+test("a stream names the levels the tap reached", () => {
+  const logger = new Logger("Test", { timestamp: false });
+  // A level the object does not carry is a level the tap cannot reach, and the
+  // payload has to say so rather than leave it to be inferred from an absence.
+  // `debug` is optional on `LoggerService`, and the concrete logger declares it
+  // on its prototype — which a `delete` of an own property would not remove — so
+  // the own property set to `undefined` is how this logger lacks the level.
+  Object.defineProperty(logger, "debug", {
+    value: undefined,
+    writable: true,
+    configurable: true,
+  });
+
+  const tapped = tapLogBuffer(logger, createLogBuffer(4));
+
+  expect(tapped?.levels).toContain("log");
+  expect(tapped?.levels).not.toContain("debug");
+});
+
+test("a level that refuses its assignment does not cost the levels after it", () => {
+  // A logger that declares every level as its own property, so the level that is
+  // redefined below is the level the tap reads — the concrete `Logger` declares
+  // its levels on the prototype, where an own descriptor cannot reach them.
+  const calls: string[] = [];
+  const record =
+    (level: string) =>
+    (message: unknown): void => {
+      calls.push(`${level} ${String(message)}`);
+    };
+  const logger: LoggerService = {
+    log: record("log"),
+    fatal: record("fatal"),
+    error: record("error"),
+    warn: record("warn"),
+    debug: record("debug"),
+    verbose: record("verbose"),
+  };
+  // `error` is the third level the tap reaches, so `log` and `fatal` are patched
+  // before the refusal lands and `warn`, `debug`, and `verbose` come after it. A
+  // non-writable own property is how a logger refuses one assignment and accepts
+  // the others; the descriptor form is used because the method is redefined, not
+  // called.
+  Object.defineProperty(logger, "error", {
+    ...Object.getOwnPropertyDescriptor(logger, "error"),
+    writable: false,
+  });
+
+  const tapped = tapLogBuffer(logger, createLogBuffer(4));
+
+  expect(tapped?.levels).toContain("log");
+  expect(tapped?.levels).not.toContain("error");
+  // `verbose` is the last level the tap attempts, so naming it is what shows the
+  // loop kept going past the refusal instead of stopping on it.
+  expect(tapped?.levels).toContain("verbose");
 });
 
 /** Binds the loopback socket on port `0` and reads the address it took. */
-function serveLoopback(application: Elysia, logs?: LogBuffer): DevtoolsServer {
+function serveLoopback(application: Elysia, logs?: TappedLogStream): DevtoolsServer {
   const server = startDevtoolsServer({
     application,
     port: 0,
@@ -370,7 +438,7 @@ test("logs answers the retained window and answers a poll from the cursor it pub
   logs.write(entry("one"));
   logs.write(entry("two"));
 
-  const server = serveLoopback(new Elysia(), logs);
+  const server = serveLoopback(new Elysia(), { buffer: logs, levels: ["log"] });
   try {
     const first = await readLogs(server);
 
@@ -392,7 +460,7 @@ test("a since beyond the retained window answers what is retained, not an error"
   const logs = createLogBuffer(4);
   logs.write(entry("one"));
 
-  const server = serveLoopback(new Elysia(), logs);
+  const server = serveLoopback(new Elysia(), { buffer: logs, levels: ["log"] });
   try {
     const response = await fetch(`${server.url}/__devtools/logs?since=999999`);
 
@@ -416,7 +484,7 @@ test("the stream is bounded over the wire at the capacity it was built with", as
     logs.write(entry(message));
   }
 
-  const server = serveLoopback(new Elysia(), logs);
+  const server = serveLoopback(new Elysia(), { buffer: logs, levels: ["log"] });
   try {
     const payload = await readLogs(server);
 
@@ -432,7 +500,7 @@ test("a since that is not a cursor reads as the whole retained window", async ()
   const logs = createLogBuffer(4);
   logs.write(entry("one"));
 
-  const server = serveLoopback(new Elysia(), logs);
+  const server = serveLoopback(new Elysia(), { buffer: logs, levels: ["log"] });
   try {
     // A repeated key reads as its first value, which is what a poller sends when
     // it appends its cursor to a query it built.
@@ -481,6 +549,33 @@ const streamedLogger = new Logger("Streamed", { timestamp: false });
   ],
 })
 class StreamedModule {}
+
+/**
+ * The same logger with one level taken away. `debug` is optional on
+ * `LoggerService`, so a logger that does not carry it is an ordinary shape rather
+ * than a case invented here, and it is the one way a level is absent from a
+ * stream without a refusal having landed: the tap reads no method at that level
+ * and moves on. The level is shadowed by an own property set to `undefined`
+ * because the concrete logger declares it on its prototype, where a `delete` of
+ * an own property could not reach it.
+ */
+const partlyReachableLogger = new Logger("PartlyReachable", { timestamp: false });
+Object.defineProperty(partlyReachableLogger, "debug", {
+  value: undefined,
+  writable: true,
+  configurable: true,
+});
+
+@Module({
+  imports: [
+    DevtoolsModule.register({
+      enabled: true,
+      port: ephemeralPort,
+      logger: partlyReachableLogger,
+    }),
+  ],
+})
+class PartlyReachableModule {}
 
 @Module({
   imports: [DevtoolsModule.register({ enabled: true, port: ephemeralPort, logger: false })],
@@ -619,6 +714,10 @@ test.serial(
       expect(contexts).toContain("InstanceLoader");
       expect(contexts).toContain("AponiaApplication");
       expect(first.cursor).toBe(first.entries.length);
+      // A logger that carries every level is tapped at every one of them, so the
+      // payload names the optional `debug` level too: a stream that could only
+      // ever reach the four levels a plain object declares would drop it here.
+      expect(first.levels).toContain("debug");
 
       // Cause one more log line, then read from the cursor the previous answer
       // carried: the poll is answered with that line and nothing else.
@@ -745,12 +844,48 @@ test.serial(
       // what shows this stream began at registration too.
       expect(first.entries.map((item) => item.context)).toContain("AponiaFactory");
 
+      // The refusal costs one level rather than every level after it: `fatal` was
+      // the level it landed on and `warn` is a level the tap reached afterwards, so
+      // the stream publishes `warn` and not `fatal`.
+      expect(first.levels).toContain("warn");
+      expect(first.levels).not.toContain("fatal");
+
       partlyTappableLogger.log("after the refusal", "LogsTest");
 
       const second = await readLogsAt(address, `?since=${first.cursor}`);
 
       expect(second.entries.map((item) => item.message)).toEqual(["after the refusal"]);
       expect(second.entries.map((item) => item.context)).toEqual(["LogsTest"]);
+    } finally {
+      await application?.close();
+      output.restore();
+    }
+  },
+);
+
+test.serial(
+  "a stream names the levels the tap reached and leaves out the one it could not",
+  async () => {
+    const output = captureOutput();
+    let application: AponiaElysiaApplication | undefined;
+    try {
+      application = await AponiaFactory.create(PartlyReachableModule, {
+        logger: partlyReachableLogger,
+      });
+      await application.listen(0);
+
+      const first = await readLogsAt(reportedAddress(output));
+
+      // The boot's own lines are in the stream, so the stream is live and an absent
+      // `debug` entry is the tap's business rather than the application's.
+      expect(first.entries.map((item) => item.context)).toContain("AponiaFactory");
+
+      // The level the logger does not carry is stated as unreached rather than left
+      // to be inferred from an absence in `entries`: without this field a stream that
+      // never carries `debug` and one whose `debug` lines were never written would
+      // read the same.
+      expect(first.levels).toContain("log");
+      expect(first.levels).not.toContain("debug");
     } finally {
       await application?.close();
       output.restore();

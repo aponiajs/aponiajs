@@ -16,6 +16,7 @@ export { devtoolsPathPrefix, routeRequest } from "./server/request-router.ts";
 export { devtoolsContractVersion } from "./endpoints/meta.ts";
 export { createLogBuffer, defaultLogBufferCapacity } from "./logging/log-buffer.ts";
 export { tapLogBuffer } from "./logging/log-tap.ts";
+export type { TappedLogStream } from "./logging/log-tap.ts";
 export { createRequestBuffer, defaultRequestBufferCapacity } from "./requests/request-buffer.ts";
 export { aponiaVersion } from "./version.ts";
 export type {

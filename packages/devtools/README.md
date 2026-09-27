@@ -97,11 +97,12 @@ const application = await AponiaFactory.create(AppModule, {
   frozen one refuses every level — records nothing either; a registration with no
   stream to publish serves no `/logs` rather than an empty stream that would read
   as "nothing is being logged". A logger that accepts one level and refuses the
-  next is not that case: a level was patched, so the stream is served, and it
-  holds the levels the tap reached. The payload does not say which levels are
-  missing — an entry states the level it was written at — so a stream that never
-  carries `debug` cannot be told from one whose `debug` lines were never written,
-  and the two are read together when a level you expect is absent.
+  next is not that case: a level was patched, so the stream is served, and the
+  payload names the levels the tap reached, so a level it could not patch — one
+  the logger does not declare, or one that refused the assignment — is stated as
+  unreached rather than left to be inferred from an absent entry. The one filter
+  the stream cannot read is the logger's own: `LoggerService` has no notion of an
+  enabled level, so a line the console would have suppressed is still recorded.
   The patch is a mutation of a logger the application holds too, and the stream
   holds the lines written through that one object — the platform's own, and an
   application's where it logs through the same reference, because the container
@@ -159,7 +160,9 @@ const application = await AponiaFactory.create(AppModule, {
   not a logger, or named one whose first level refuses the patch, serves no `/logs`
   rather than an empty stream.
   Each poll names the cursor the previous answer carried and is answered with
-  `{ cursor, entries }`, where an entry is `{ level, context, message, timestamp }`.
+  `{ cursor, entries, levels }`, where an entry is
+  `{ level, context, message, timestamp }` and `levels` names the `LoggerService`
+  levels the tap reached on the logger it was handed.
   A cursor older than the retained window is answered with what is retained and
   one ahead of every write with nothing: neither is an error, and the cursor never
   goes backwards.

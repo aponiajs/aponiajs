@@ -5,8 +5,9 @@ import type { LogBuffer, LogEntry } from "./log-buffer.types.ts";
  * The `LoggerService` methods a tap records: every level the interface declares,
  * and `debug` and `verbose` are optional on it, so a logger that omits them is
  * tapped for the levels it has. This order is the package's own and no contract
- * depends on it — each level's method is patched on its own, so it decides only
- * which levels were patched when one of the assignments refuses.
+ * depends on it — each level's method is patched on its own, and every level is
+ * attempted whatever happened to the ones before it, so the order decides only
+ * the order `levels` is stated in.
  */
 const recordableLevels = [
   "log",
@@ -18,6 +19,21 @@ const recordableLevels = [
 ] as const satisfies readonly LogLevel[];
 
 /**
+ * A tapped logger's stream and the levels the tap reached on it.
+ *
+ * `levels` is what makes a stream readable: an entry states only the level it was
+ * written at, so without this list an absent `debug` line and a `debug` level the
+ * tap never reached would read the same. It is the levels the tap installed on,
+ * in `recordableLevels` order, and it is a copy the caller owns.
+ */
+export interface TappedLogStream {
+  /** The buffer that records every line written through the tapped logger. */
+  readonly buffer: LogBuffer;
+  /** The levels the tap patched, in `recordableLevels` order. */
+  readonly levels: readonly LogLevel[];
+}
+
+/**
  * The stream each tapped logger records into.
  *
  * A logger is a live object the application owns, so tapping one twice would
@@ -27,7 +43,7 @@ const recordableLevels = [
  * named publishes the stream a client is already polling rather than a fresh one
  * nothing writes into.
  */
-const tappedLoggers = new WeakMap<object, LogBuffer>();
+const tappedLoggers = new WeakMap<object, TappedLogStream>();
 
 /**
  * Whether this package can record the lines a value writes: an object with at
@@ -70,41 +86,43 @@ export function isRecordableLogger(value: unknown): value is LoggerService {
  * may make for itself, and re-applying a rule this package cannot read would be
  * enforcing a filter it does not own.
  *
- * A patch that fails part way — one property that refuses the assignment — stops
- * there: the levels patched before it record and the stream is the answer,
- * because a tap genuinely installed on the logger; the level that refused keeps
- * its method and the levels after it are never reached. The answer is `undefined`
- * when the refusing assignment is the first one the tap makes, so no level was
- * patched: an empty stream would announce that nothing is being logged while that
- * logger goes on printing every line, the same false answer a value that is not a
- * logger is refused. That is the whole of the trigger — the first refusal, not a
- * logger that refuses every assignment — so a logger that refuses only its first
- * level is answered with `undefined` even though a later level would have
- * accepted the patch. A logger it has tapped before is answered with the stream
+ * Each level is attempted on its own, and one that refuses the assignment costs
+ * only itself: the method it had is left in place, the levels before it record,
+ * and the levels after it are still attempted. That is why the answer carries
+ * `levels` — a stream states which levels it can hold rather than leaving a
+ * client to read a silence the tap never installed into. The whole answer is
+ * `undefined` only when no level at all was patched, because that is the shape
+ * where an empty stream would announce that nothing is being logged while that
+ * logger goes on printing every line — the same false answer a value that is not
+ * a logger is refused. A logger it has tapped before is answered with the stream
  * already recording it, so the two cannot disagree about where a line went.
  */
-export function tapLogBuffer(logger: LoggerService, buffer: LogBuffer): LogBuffer | undefined {
-  let installed = false;
+export function tapLogBuffer(
+  logger: LoggerService,
+  buffer: LogBuffer,
+): TappedLogStream | undefined {
+  const tapped = tappedLoggers.get(logger);
 
-  try {
-    const tapped = tappedLoggers.get(logger);
+  if (tapped !== undefined) {
+    return tapped;
+  }
 
-    if (tapped !== undefined) {
-      return tapped;
+  // One assertion, stated here rather than repeated per level: the methods the
+  // interface declares are mutable properties of whatever object implements it,
+  // and patching them is what keeps the logger the object it was.
+  const target = logger as unknown as Record<string, unknown>;
+  const levels: LogLevel[] = [];
+
+  for (const level of recordableLevels) {
+    const write: ((message: unknown, ...optionalParameters: unknown[]) => void) | undefined =
+      logger[level];
+
+    // A level the logger does not carry is a level there is nothing to patch.
+    if (write === undefined) {
+      continue;
     }
 
-    // One assertion, stated here rather than repeated per level: the methods the
-    // interface declares are mutable properties of whatever object implements
-    // it, and patching them is what keeps the logger the object it was.
-    const target = logger as unknown as Record<string, unknown>;
-
-    for (const level of recordableLevels) {
-      const write: ((message: unknown, ...optionalParameters: unknown[]) => void) | undefined =
-        logger[level];
-      if (write === undefined) {
-        continue;
-      }
-
+    try {
       target[level] = (message: unknown, ...optionalParameters: unknown[]): void => {
         // The entry is recorded before the line is written: the logger's own
         // write can fail — a closed stream, a logger that throws — and a line
@@ -112,24 +130,25 @@ export function tapLogBuffer(logger: LoggerService, buffer: LogBuffer): LogBuffe
         buffer.write(createLogEntry(level, message, optionalParameters));
         write.call(logger, message, ...optionalParameters);
       };
-      installed = true;
+      levels.push(level);
+    } catch {
+      // This level keeps the method it had, and the remaining levels are still
+      // attempted: a refusal costs the level it landed on rather than that level
+      // and every one after it. Nothing here may escape — the tap is this
+      // package's convenience and never the application's contract, so a boot
+      // does not fail over it, which is the failure mode this package exists not
+      // to have.
     }
-  } catch {
-    // What holds afterwards is per level: the levels patched before the failure
-    // record, the one that refused keeps the method it had — a frozen logger
-    // refuses the first assignment, so nothing is installed and the answer below
-    // is `undefined` — because the tap is this package's convenience and never
-    // the application's contract. A boot does not fail over it, which is the
-    // failure mode this package exists not to have.
   }
 
-  if (!installed) {
+  if (levels.length === 0) {
     return undefined;
   }
 
-  rememberTap(logger, buffer);
+  const stream = Object.freeze({ buffer, levels: Object.freeze(levels) });
+  rememberTap(logger, stream);
 
-  return buffer;
+  return stream;
 }
 
 /**
@@ -142,9 +161,9 @@ export function tapLogBuffer(logger: LoggerService, buffer: LogBuffer): LogBuffe
  * A value that cannot be keyed — a JavaScript caller can pass anything — is
  * simply not remembered, because the stream handed over is the answer either way.
  */
-function rememberTap(logger: LoggerService, buffer: LogBuffer): void {
+function rememberTap(logger: LoggerService, stream: TappedLogStream): void {
   try {
-    tappedLoggers.set(logger, buffer);
+    tappedLoggers.set(logger, stream);
   } catch {
     // Not an object, so there is nothing to remember it by.
   }

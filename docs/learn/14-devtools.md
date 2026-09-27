@@ -129,11 +129,14 @@ is answered with what there is rather than an error.
   their `prototype`, so a half written as a field
   (`interceptBefore = () => {}`) runs while the payload omits its stage. An
   interceptor declared as a prototype method is reported in full.
-- **A partly patchable logger's stream does not say what it missed.** If the
-  logger accepts one level and refuses the next, the stream covers the levels
-  the tap reached, and no entry states that the others are missing — a stream
-  that never carries `debug` and one whose `debug` lines were never written
-  look the same.
+- **A stream states the levels it reached.** If the logger accepts one level and
+  refuses the next, the stream covers every level it could patch and names them in
+  `levels`; the level that refused is absent from that list, so a stream that never
+  carries `debug` and one whose `debug` lines were never written are told apart
+  rather than read the same.
+- **A stream records the calls, not what the console printed.** `LoggerService`
+  has no notion of an enabled level, so a line the logger's own filter would have
+  suppressed is still in the stream.
 - **`durationMs` measures the hook, not the route.** It starts at the arrival
   hook and ends before the completion hook reads anything at all, so everything
   the completion side does — the route, the status, and the parsed body among it

@@ -270,11 +270,12 @@ stated.
 
 ### `/logs`
 
-`GET /__devtools/logs?since=<cursor>` answers `{ cursor, entries }`, where an
-entry is `{ level, context, message, timestamp }`. `context` is the last string
-argument the caller named — the subsystem name the framework's own logger prints
-— or the empty string; the logger's configured context is private to it and is
-never guessed at.
+`GET /__devtools/logs?since=<cursor>` answers `{ cursor, entries, levels }`, where
+an entry is `{ level, context, message, timestamp }` and `levels` names the
+`LoggerService` levels the tap reached on the logger it was handed. `context` is
+the last string argument the caller named — the subsystem name the framework's own
+logger prints — or the empty string; the logger's configured context is private
+to it and is never guessed at.
 
 **The cursor is the stream's write count, not an index into what is retained.**
 It counts every line recorded, including the ones dropped since, which is what
@@ -309,12 +310,13 @@ logger, and a logger whose **first** assignment refuses the patch.
 
 The all-or-nothing boundary is at the endpoint, not at the level. A logger that
 accepts one level and then refuses the next publishes a stream: a tap genuinely
-installed, so it records the levels the tap reached, the refusing level keeps the
-method it had, and the levels after it are never reached. **The payload does not
-say which levels are missing** — an entry states the level it was written at, so
-a level absent from a stream has two readings that read the same in the payload:
-nothing was written at it, or the tap never reached it. A stream that never
-carries `debug` cannot be told from one whose `debug` lines were never written.
+installed, so the stream is served, the refusing level keeps the method it had,
+and the levels after it are still patched. The refusal is never silent either:
+the payload names the levels the tap **reached**, so a level it could not patch
+is stated as unreached rather than left to be read out of an absence — an entry
+states only the level it was written at, and a stream that never carries `debug`
+would otherwise look the same whether nothing was written at `debug` or the tap
+never reached it.
 
 ### `/requests`
 
@@ -473,8 +475,9 @@ These are the boundaries this package states rather than hides.
   declarable and the surface still mounts.
 - **A class-field interceptor half is invisible to `/flow`.** The platform runs
   it; the payload omits its stage. See [`/flow`](#flow).
-- **A partly patched logger's stream does not name the levels it missed.** See
-  [`/logs`](#logs).
+- **A stream records the calls, whatever the logger's own level filter would
+  print.** `LoggerService` has no notion of an enabled level, so a line the
+  console would have suppressed is still in the stream. See [`/logs`](#logs).
 - **`durationMs` still includes this package's own reading of the request at
   arrival.** Every read the completion path makes is outside it, but the arrival
   hook's URL and header capture sits between the two stamps. See
