@@ -68,9 +68,13 @@ export function isFilterMatch(filter: ResolvedFilter, exception: unknown): boole
  * deliberate `422`, `400`, `404`, or Problem Details response with a `500`.
  *
  * The system logger receives the exception it maps, so an unhandled failure is
- * still reported where an application reads its logs. The parameter is required
- * so a boot that compiled the mapping states the logger it reports to, and
- * `undefined` is that statement for an application that disabled logging.
+ * still reported where an application reads its logs. The call is guarded, and a
+ * logger that refuses is reported on `stderr` instead: `LoggerService` is a
+ * public interface an application implements, so a throw is not this mapping's
+ * to depend on, and the response above is not the logger's to replace. The
+ * parameter is required so a boot that compiled the mapping states the logger it
+ * reports to, and `undefined` is that statement for an application that disabled
+ * logging.
  *
  * `mappedExceptions` is where this mapping records the exception it answered, for
  * a reader that cannot see the answer: the `Response` it returns is not on the
@@ -93,16 +97,61 @@ export function createDefaultExceptionFilter(
       return undefined;
     }
 
-    // The record is written before the logger is called. A logger that throws as
-    // it reports the failure would otherwise take this mapping's record with it,
-    // and that record is the only place `/requests` can read the failure's message
-    // from, because the `Response` below is not on the after-response context. The
-    // other order costs the logger nothing: it is handed the exception either way,
-    // and the map is this package's own.
+    // The record is written before the logger is called, and the call is guarded.
+    // The record is the only place `/requests` can read this failure's message
+    // from, because the `Response` below is not on the after-response context, and
+    // the guard is what keeps a throw out of a hook whose return value is the
+    // client's answer — see `reportUnhandledFailure`.
     recordMappedException(mappedExceptions, request, error);
-    logger?.error(error, "ExceptionsHandler");
+    reportUnhandledFailure(logger, error);
     return httpErrors.internalServerError(unhandledFailureDetail).toResponse();
   };
+}
+
+/**
+ * Reports an unhandled failure through the application's logger, and never lets
+ * the logger's own failure become the client's answer.
+ *
+ * `LoggerService` is a public interface and an application's implementation of it
+ * may throw, so the framework may not read a call as a promise the interface
+ * makes. This is the one call site where that costs an answer: the hook this runs
+ * in returns the response the client receives, so a throw here would replace the
+ * application's Problem Details answer with the engine's own page. The built-in
+ * logger no longer refuses any value, which is why this guard is not the whole
+ * story — it is the half that holds for a logger this framework did not build.
+ *
+ * A logger that refuses is reported rather than swallowed, on `stderr` by a direct
+ * write, because the channel that would normally carry the diagnostic is the one
+ * that just failed. This is the only place this package writes a process stream,
+ * and the layering cost is real — logging is `common`'s domain — and it is
+ * accepted because the alternative is a logger that is broken and invisible.
+ */
+function reportUnhandledFailure(logger: LoggerService | undefined, error: unknown): void {
+  try {
+    logger?.error(error, "ExceptionsHandler");
+  } catch (loggerFailure) {
+    announceLoggerFailure(loggerFailure);
+  }
+}
+
+/**
+ * States a logger's own failure where a reader will see it.
+ *
+ * Guarded for the same reason the call above is: an application can be writing to
+ * a closed stream, and a throw out of this one would leave the error hook with no
+ * response at all — the outcome this whole path exists to prevent. A stderr write
+ * that refuses leaves nothing further to report to, so the absence is accepted at
+ * the last line rather than taken out on the client's answer.
+ */
+function announceLoggerFailure(loggerFailure: unknown): void {
+  try {
+    process.stderr.write(
+      `[Aponia] ${process.pid} - ERROR [ExceptionsHandler] the configured logger threw while ` +
+        `reporting an unhandled failure: ${exceptionMessage(loggerFailure)}\n`,
+    );
+  } catch {
+    // Nothing left to report to.
+  }
 }
 
 /**

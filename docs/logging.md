@@ -149,3 +149,13 @@ const application = await AponiaFactory.create(AppModule, {
 
 System events pass their subsystem name as the final parameter, allowing custom
 loggers to preserve contextual filtering.
+
+A method of your logger may throw. The framework never reads a successful call as a promise this
+contract makes, so it guards the one call site where a throw would cost an answer: an unhandled
+failure is reported through `error` from inside the route's error hook, whose return value is the
+response the client receives, and that call is guarded so the Problem Details response is returned
+whether or not the logger reported the failure. A logger that refuses there is reported on `stderr`
+by a direct write rather than swallowed, because the channel that would normally carry the diagnostic
+is the one that failed. Everywhere else a throw is a throw — a logger that fails while the boot logs
+its routes fails the boot. The framework's own logger needs no such care: `ConsoleLogger` renders
+every value it is handed, or states `[unrenderable]`.

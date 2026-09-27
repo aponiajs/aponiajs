@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, spyOn, test } from "bun:test";
 import {
   Body,
   Controller,
@@ -185,6 +185,19 @@ class ThrowingErrorLogger implements LoggerService {
     this.reported = true;
     throw new Error("the logger refused to report the failure");
   }
+}
+
+/** A logger that refuses where the boot writes its own lines. */
+class ThrowingBootLogger implements LoggerService {
+  log(): void {
+    throw new Error("the logger refused to report the boot's routes");
+  }
+
+  fatal(): void {}
+  error(): void {}
+  warn(): void {}
+  debug(): void {}
+  verbose(): void {}
 }
 
 /**
@@ -423,28 +436,83 @@ test("the record carries the exception the mapping answered an unhandled failure
   await application.close();
 });
 
-test("a logger that throws as it reports the failure does not take the record with it", async () => {
+test("a logger that throws as it reports the failure leaves the answer and the record intact", async () => {
   const logger = new ThrowingErrorLogger();
   const application = await AponiaFactory.create(FailingDiagnosticsModule, { logger });
   const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
   const request = new Request("http://localhost/explodes");
+  const stderr: string[] = [];
+  const stderrWrite = spyOn(process.stderr, "write").mockImplementation((chunk) => {
+    stderr.push(String(chunk));
+    return true;
+  });
 
-  // The throw leaves this mapping's error hook, so the answer the engine then
-  // produces is not what this case is about; what it is about is that the failure
-  // is still recorded, which the map is the only place to read from — the
-  // `Response` the mapping would have returned is not on the after-response
-  // context.
   try {
-    await application.handle(request);
-  } catch {
-    // The logger's throw, which is this case's premise rather than its subject.
-  }
+    const response = await application.handle(request);
+    await response.text();
 
-  expect(logger.reported).toBe(true);
-  expect(diagnostics?.mappedExceptions.get(request)).toBe(
-    "Error: the connection string was rejected",
-  );
-  await application.close();
+    // The answer first, and it is the whole defect: this hook's return value is
+    // what the client receives, so a throw out of it replaces the application's
+    // Problem Details response with the engine's own page. `LoggerService` is a
+    // public interface an application implements, and the framework may not
+    // depend on the one property that keeps this safe.
+    expect(response.status).toBe(500);
+    expect(response.headers.get("content-type")).toContain("application/problem+json");
+    // The record survives too — it is the only place `/requests` can read the
+    // failure's message from, because the `Response` above is not on the
+    // after-response context.
+    expect(logger.reported).toBe(true);
+    expect(diagnostics?.mappedExceptions.get(request)).toBe(
+      "Error: the connection string was rejected",
+    );
+    // And the logger's own failure is stated rather than swallowed: the channel
+    // that would normally carry it is the one that just failed, so an application
+    // whose logger throws on every line would otherwise see neither its logs nor
+    // any sign that its logger is broken.
+    expect(stderr).toHaveLength(1);
+    expect(stderr[0]).toContain("[ExceptionsHandler]");
+    expect(stderr[0]).toContain("the configured logger threw");
+    expect(stderr[0]).toContain("the logger refused to report the failure");
+  } finally {
+    stderrWrite.mockRestore();
+    await application.close();
+  }
+});
+
+test("a logger that throws while the boot logs its routes fails the boot", async () => {
+  // The boundary, pinned rather than left to be discovered. The error path guards
+  // its logger call because the response depends on it; no other framework call
+  // site does, and the boot's own lines are where a throw is loud at the one
+  // moment there is no answer to lose. A boot that started anyway would be an
+  // application whose logger is broken and whose silence nothing reports.
+  await expect(
+    AponiaFactory.create(FailingDiagnosticsModule, { logger: new ThrowingBootLogger() }),
+  ).rejects.toThrow("the logger refused to report the boot's routes");
+});
+
+test("a stderr write that refuses still leaves the mapping's answer in place", async () => {
+  const logger = new ThrowingErrorLogger();
+  const application = await AponiaFactory.create(FailingDiagnosticsModule, { logger });
+  const request = new Request("http://localhost/explodes");
+  // The last line of the path, and the only one left when a logger refuses: the
+  // write that states the refusal. A closed stream refuses it, and a throw from
+  // there would leave the error hook with no response at all — the outcome the
+  // guard above exists to prevent — so the absence is accepted one line later.
+  const stderrWrite = spyOn(process.stderr, "write").mockImplementation(() => {
+    throw new Error("the stream is closed");
+  });
+
+  try {
+    const response = await application.handle(request);
+    await response.text();
+
+    expect(response.status).toBe(500);
+    expect(response.headers.get("content-type")).toContain("application/problem+json");
+    expect(logger.reported).toBe(true);
+  } finally {
+    stderrWrite.mockRestore();
+    await application.close();
+  }
 });
 
 test("an exception this platform cannot project leaves the mapping's answer unchanged", async () => {

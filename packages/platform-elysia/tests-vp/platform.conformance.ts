@@ -16,6 +16,7 @@ import {
   defineModule,
   type ClassToken,
   type ControllerDefinition,
+  type LoggerService,
   type RouteContext,
   type RouteResponseSettings,
   type RouteSchema,
@@ -778,5 +779,36 @@ test("the Vite+ lane mounts and types a defined native plugin", async () => {
   );
 
   expect(await response.json()).toEqual({ cached: "cached:users" });
+  await application.close();
+});
+
+@Controller("exploding")
+class ExplodingController {
+  @Get()
+  explode(): never {
+    throw new Error("the raw exception");
+  }
+}
+
+@Module({ controllers: [ExplodingController] })
+class ExplodingModule {}
+
+/** A logger whose `error` refuses, supplied by an application rather than built by the framework. */
+const refusingLogger: LoggerService = {
+  log(): void {},
+  fatal(): void {},
+  warn(): void {},
+  error(): void {
+    throw new Error("the logger refused to report the failure");
+  },
+};
+
+test("the Vite+ lane answers Problem Details when the configured logger throws", async () => {
+  const application = await AponiaFactory.create(ExplodingModule, { logger: refusingLogger });
+
+  const response = await application.handle(new Request("http://localhost/exploding"));
+
+  expect(response.status).toBe(500);
+  expect(response.headers.get("content-type")).toContain("application/problem+json");
   await application.close();
 });
