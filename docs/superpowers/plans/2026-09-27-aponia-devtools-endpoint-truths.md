@@ -81,7 +81,9 @@ comment: a bound that the unfixed code also passes proves nothing.
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `bun test packages/devtools/tests/requests.test.ts -t "not charged for the answer"`
-Expected: FAIL — `durationMs` is in the hundreds, because `captureBody` runs before the closing stamp.
+Expected: FAIL — the marker the case keys on flips strictly between the opening stamp and the closing reading, which is unreachable while the closing reading follows the read it keys on.
+
+**The premise this case was first written from is wrong, and the case must be rebuilt on the read that actually exists.** Response bodies are never captured, so a large _response_ body enlarges no enclosed read and the case as first sketched would pass unfixed. The enclosed reads are the parsed **request** body through `captureBody`, plus `routePattern` and `answerStatus`. Build the regression on `captureBody` over a large request body, with an observable marker that flips only when the serializer enumerates it.
 
 - [ ] **Step 3: Move the closing reading**
 
@@ -127,7 +129,17 @@ Expected: PASS.
 
 - [ ] **Step 5: Correct the prose that describes the old behaviour**
 
-`docs/devtools.md` currently says the duration "includes this package's own synchronous reads of the request and the answer". Replace that paragraph with what is now true: the reading is taken at the completion hook's entry and excludes every read this package performs, including the one `await` that reads a readable `5xx` body. Update the same sentence in `packages/devtools/README.md` if it repeats it (`rg -n "durationMs" docs/devtools.md packages/devtools/README.md`).
+`docs/devtools.md` currently says the duration "includes this package's own synchronous reads of the request and the answer". Replace that paragraph with what is now true.
+
+**Do not claim the reading excludes every read this package performs — it does not, and that claim is false.** Two reads stay inside the measurement: the completion path reads `context.request` and touches the arrival `WeakMap` (`arrivals.get`, the guard, `arrivals.delete`) before the closing reading, and the arrival hook's own `performance.now()`, `requestUrl`, `request.method`, and `captureHeaders` all follow the opening stamp. The true claim is narrower and is the one to write: the reading is taken **before every read the completion path makes of the answer**, so the route, the status, and the parsed body are outside it, and so is the one `await` that reads a readable `5xx` body.
+
+**Sweep for the claim rather than editing the lines named here.** This repository has a recorded history of this exact failure — a carry list is a list of the places somebody happened to see. Search the whole published set for the old claim rather than trusting the two paths above:
+
+```
+rg -n "own synchronous reads|application took|took to answer|after this package has read|after the completion hook has read" docs packages --glob '!docs/superpowers/**'
+```
+
+`docs/learn/`, the package `AGENTS.md`, `llms.txt`, and `request-buffer.types.ts`'s own `durationMs` doc have all been missed at least once on this task already. Excluding `docs/superpowers/**` is deliberate: the spec and plan are the design record that mandates the change and describe the pre-change state on purpose.
 
 - [ ] **Step 6: Run the gates**
 
@@ -486,7 +498,7 @@ export interface RequestRecord {
    * application answered. It is never `0` and never an omitted key.
    */
   readonly status: number | null;
-  /** How long the application took, in milliseconds, or `null` when no answer was observed. */
+  /** From this package's arrival hook to the answer's completion, in milliseconds, or `null` when no answer was observed. */
   readonly durationMs: number | null;
   readonly timestamp: string;
   readonly error?: string;
