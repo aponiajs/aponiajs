@@ -73,3 +73,18 @@ test("states the same literal as the framework's rendering for a value that refu
   expect(renderLogValue(refusingEveryRead)).toBe("[unrenderable]");
   expect(oneLine(refusingEveryRead)).toBe(renderLogValue(refusingEveryRead));
 });
+
+test("states the literal for a refusal the shared rendering still states", () => {
+  // The divergence the published documents name: a value that refuses the read
+  // the plain string form makes and nothing else is stated by the shared
+  // rendering and answered with the literal by this one. Until this case, that
+  // sentence was asserted in four documents and pinned by no test.
+  const refusingConversion = {
+    [Symbol.toPrimitive]: () => {
+      throw new TypeError("this value refuses to be converted");
+    },
+  };
+
+  expect(renderLogValue(refusingConversion)).toBe("{}");
+  expect(oneLine(refusingConversion)).toBe("[unrenderable]");
+});

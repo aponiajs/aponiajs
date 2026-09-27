@@ -130,7 +130,7 @@ Three facts about the socket:
   `Devtools` context with the reason, and the application continues without the
   devtools server. That report is guarded: a logger that throws on it is not
   allowed to cost the application the boot, and the same sentence is written to
-  `stderr` instead, so the refusal is never silent and never fatal. Only a start
+  `stderr` instead, so the refusal is never fatal. Only a start
   that succeeded becomes the socket the plugin holds.
 - **`onStart` requires `listen()`.** The devtools API starts when the
   application starts listening, after every route has mounted — which is what
