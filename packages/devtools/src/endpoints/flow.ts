@@ -614,18 +614,21 @@ function declaringHalf(
  *
  * The `prototype` probe is the fallback for a record that carries no halves: a
  * copy of the platform older than this release, or one this package does not
- * own. It answers from the class the token names rather than from the instance
- * the platform calls, so it is the narrower answer: it publishes a half only
- * when that token declares one on its `prototype`, which leaves a field-declared
- * half out instead of inventing one. A token that is not a class declares
- * neither half, and a stage left out costs a stage rather than the request.
+ * own. It answers for the class the token names rather than for the object the
+ * platform calls, so it publishes a half only when that token declares one on
+ * its `prototype` and leaves a field-declared half out instead of inventing one
+ * — exact for an interceptor the container constructed from that class, and
+ * approximate for a token a provider resolved to something else, since the
+ * resolution hands back whatever the provider supplies. A token that is not a
+ * class declares neither half, and a stage left out costs a stage rather than
+ * the request.
  */
 function declaresHalf(
   token: ClassToken<unknown>,
   half: InterceptorHalf,
   recorded: ReadonlyMap<ClassToken<unknown>, InterceptorHalves> | undefined,
 ): boolean {
-  const declared = recordedHalf(recorded?.get(token), half);
+  const declared = recordedHalf(recorded, token, half);
   if (declared !== undefined) {
     return declared;
   }
@@ -640,36 +643,52 @@ function declaresHalf(
 }
 
 /**
- * The halves a record states for one class, or `undefined` when it states none
+ * The half a record states for one class, or `undefined` when it states none
  * this release can read.
  *
- * The field is read defensively because the record arrives through a
- * registry-global symbol key and its entries are data this release did not
- * necessarily write: an entry that is not an object, and one whose half is not a
- * boolean, both read as no halves rather than being dereferenced or reported as
- * a stage. Every other shape reaches the `prototype` fallback above, which is
- * what a record with no halves at all reaches too.
+ * The read is guarded because the record is data this package did not write and
+ * this handler runs inside `Bun.serve`, where a throw is a failed request: a
+ * `Map` that only borrows `Map.prototype`, and one whose `get` is overridden,
+ * both refuse a lookup they are asked for, and an entry may be a value whose
+ * half refuses to be read at all. Every shape that does not state a boolean
+ * reads as no halves, and so reaches the `prototype` fallback above — which is
+ * also what a record carrying no field reaches.
  */
-function recordedHalf(value: unknown, half: InterceptorHalf): boolean | undefined {
-  if (typeof value !== "object" || value === null) {
+function recordedHalf(
+  recorded: ReadonlyMap<ClassToken<unknown>, InterceptorHalves> | undefined,
+  token: ClassToken<unknown>,
+  half: InterceptorHalf,
+): boolean | undefined {
+  if (recorded === undefined) {
     return undefined;
   }
 
-  const members = value as Record<string, unknown>;
-  const declared = half === "interceptBefore" ? members.before : members.after;
+  try {
+    const entry: unknown = recorded.get(token);
 
-  return typeof declared === "boolean" ? declared : undefined;
+    if (typeof entry !== "object" || entry === null) {
+      return undefined;
+    }
+
+    const members = entry as Record<string, unknown>;
+    const declared = half === "interceptBefore" ? members.before : members.after;
+
+    return typeof declared === "boolean" ? declared : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 /**
  * The boot's record of which interceptor halves each class implements, or
- * `undefined` when the record carries none.
+ * `undefined` when the record states nothing under that name.
  *
  * The field is `unknown` at this boundary for the reason the rest of the record
  * is read as unknown: it belongs to a copy of the platform this package does not
  * own, so a copy older than the field leaves it out and a foreign one may hold
- * something else under the name. A value that is not a `Map` reads as no halves,
- * and every decision then falls back to the class token's `prototype`.
+ * something else under the name. Only the `Map` this release writes is used
+ * here, and every read made through it is guarded in `recordedHalf`, because
+ * `instanceof Map` is satisfied by a value that only borrows `Map.prototype`.
  */
 function readInterceptorHalves(
   value: unknown,

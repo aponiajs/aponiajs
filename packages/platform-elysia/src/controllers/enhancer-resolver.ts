@@ -125,7 +125,15 @@ const noResolvedEnhancers: ResolvedEnhancers = Object.freeze({
   filters: Object.freeze([]),
 });
 
-/** The halves of no class, shared for the same reason the empty lists are. */
+/**
+ * The halves of no class, shared for the same reason the empty lists are.
+ *
+ * It is stated rather than frozen for the one reason a `Map` cannot be: the
+ * shared instance is empty and typed `ReadonlyMap`, so this package's own
+ * callers cannot write into it, and nothing in this workspace reads it — the
+ * halves a record publishes are the boot's own collection, which it copies, and
+ * a mount that resolved nothing has none to publish.
+ */
 const noInterceptorHalves: ReadonlyMap<ClassToken<unknown>, InterceptorHalves> = new Map();
 
 /**

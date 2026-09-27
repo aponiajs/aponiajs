@@ -153,9 +153,10 @@ const application = await AponiaFactory.create(AppModule, {
   instance the platform calls while the class resolved, so a half written as a
   class field (`interceptBefore = () => {}`) is reported like any other. A
   record that carries no such field — a copy of the platform older than this
-  release — falls back to each class token's `prototype`, the narrower answer:
-  it publishes a half only when that token declares one there, so a
-  field-declared half is omitted rather than stated.
+  release — falls back to each class token's `prototype`, which answers for the
+  class the token names rather than for the object the platform calls: it
+  publishes a half only when that token declares one there, so a field-declared
+  half is omitted rather than stated.
 - **`GET /__devtools/logs?since=<cursor>` streams what the application logged.**
   The registration takes the logger the application also gives
   `AponiaFactory.create`, patches it in place, and records every line into a

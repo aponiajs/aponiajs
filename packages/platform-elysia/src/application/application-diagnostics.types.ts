@@ -173,13 +173,15 @@ export interface AponiaApplicationDiagnostics {
    * Which halves of the interceptor lifecycle each resolved interceptor class
    * implements, keyed by the class token the plans name it by.
    *
-   * A class token is the whole key because a class resolved once serves every
-   * route that names it: an interceptor is one singleton instance whatever
-   * route, scope, or module declared it, so the two booleans it answers are one
-   * fact about the class rather than one per route. The halves are read from the
-   * instance the container resolved, which is the object the platform calls —
-   * a half declared as a class field is an own property no token can be read
-   * for, and this field is where that shape survives the mount.
+   * A class token is the whole key because that is what a plan names: the halves
+   * are read from the instance the container resolved for that token, which is
+   * the object the platform calls — a half declared as a class field is an own
+   * property no token can be read for, and this field is where that shape
+   * survives the mount. Two scopes that resolve one token contribute one entry,
+   * and for a class the container constructs they state the same halves, because
+   * the halves follow from the class body rather than from the instance's
+   * identity — the container caches one instance per provider per module, so the
+   * entry rests on the class rather than on there being one instance.
    *
    * It is copied rather than published as the boot held it, for the reason every
    * other fact here is copied: the boot fills one map while its controllers

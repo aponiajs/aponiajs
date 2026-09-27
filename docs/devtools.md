@@ -263,17 +263,20 @@ draws a graph rather than assuming a chain.
 Filters are a list on the route, never a stage in the chain, because they run
 when a guard or the handler threw rather than on every request.
 
-**Which interceptor halves a route runs is read from the boot, never inferred
-from the class.** The platform calls each half with an optional call, so a class
+**Which interceptor halves a route runs is decided by the record the boot
+wrote, and the class token's `prototype` is only the fallback for a record that
+carries none.** The platform calls each half with an optional call, so a class
 implementing one half runs one half, and a stage is published only for the halves
 that run. Which those are was recorded while the route mounted, read from the
 instance the platform calls — so a half written as a class field
 (`interceptBefore = () => {}`), an own property no class token carries, is
 reported like any other. A record that carries no such field — a copy of the
 platform older than this release, or one this package does not own — falls back
-to each class token's `prototype`: the narrower answer, which publishes a half
-only when the token declares one and so omits a field-declared half instead of
-inventing a step the route does not run.
+to each class token's `prototype`, which answers for the class the token names
+rather than for the object the platform calls: it publishes a half only when the
+token declares one there, so it is exact for an interceptor the container
+constructed from that class and approximate for a token a provider resolved to
+something else.
 
 ### `/logs`
 

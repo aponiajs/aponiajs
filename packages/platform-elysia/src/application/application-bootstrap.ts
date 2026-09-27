@@ -194,10 +194,10 @@ export async function bootstrapAponiaApplication(
   const callbackRoutes: AponiaCallbackRouteDiagnostics[] = [];
   const interceptorHalves = new Map<ClassToken<unknown>, InterceptorHalves>();
   // The application's own declaration resolves first, so it is collected first.
-  // Both scopes merge into one map because a class is one singleton whichever
-  // scope resolved it: a class declared at both scopes answers the same two
-  // booleans twice, so the later merge overwrites an identical value rather than
-  // correcting an earlier one, and no guard is needed to say so.
+  // Both scopes merge into one map because a class declares one set of halves
+  // wherever it is named: a class resolved at both scopes contributes the same
+  // two booleans twice, so the later merge overwrites an identical value rather
+  // than correcting an earlier one, and no guard is needed to say so.
   collectInterceptorHalves(interceptorHalves, globalEnhancers.halves);
 
   for (const module of container.graph.modules) {
@@ -322,12 +322,12 @@ export async function bootstrapAponiaApplication(
 /**
  * Adds one scope's interceptor halves to the boot's own collection.
  *
- * A class is one singleton whichever scope resolved it, so a class declared both
- * globally and on a route's own list answers the same two booleans twice: this
- * overwrites an identical value rather than resolving a conflict, which is why
- * nothing here compares the two. The collection is the boot's working map rather
- * than a record field — the record copies it, once every mount that writes into
- * it is done.
+ * A class declares one set of halves wherever it is named, so a class resolved
+ * both globally and on a route's own list contributes the same two booleans
+ * twice: this overwrites an identical value rather than resolving a conflict,
+ * which is why nothing here compares the two. The collection is the boot's
+ * working map rather than a record field — the record copies it, once every
+ * mount that writes into it is done.
  */
 function collectInterceptorHalves(
   collected: Map<ClassToken<unknown>, InterceptorHalves>,

@@ -695,11 +695,12 @@ test("an interceptor half declared as a class field is published as a stage", as
 test("a record whose interceptor halves this release cannot read falls back to the prototype", async () => {
   // The halves are this release's field, and the record arrives through a
   // registry-global symbol key: an older copy of the platform leaves the field
-  // out entirely, a foreign one may hold something else under the name, and a
-  // boot that never resolved the class has no entry for it. Each of those falls
-  // back to the class token's `prototype` — the narrower answer, which misses a
-  // half declared as a field rather than reporting a stage the route does not
-  // run, and which never fails the request this handler answers.
+  // out entirely, a foreign one may hold something else under the name, a boot
+  // that never resolved the class has no entry for it, and a value can borrow
+  // `Map.prototype` without being a `Map` at all. Each of those falls back to
+  // the class token's `prototype`, and none of them fails the request this
+  // handler answers — the borrowed map is the case that would throw a `TypeError`
+  // out of `Bun.serve` if the read were not guarded.
   const fromPrototype: (string | undefined)[][] = [
     ["interceptBefore", "AuditInterceptor"],
     ["invoke", undefined],
@@ -714,6 +715,12 @@ test("a record whose interceptor halves this release cannot read falls back to t
     { shape: "no field at all", halves: undefined, expected: fromPrototype },
     { shape: "a field that is not a map", halves: "not a map", expected: fromPrototype },
     { shape: "a map with no entry for the class", halves: new Map(), expected: fromPrototype },
+    {
+      // `instanceof Map` accepts it; its `get` does not.
+      shape: "a map only by prototype",
+      halves: Object.create(Map.prototype) as Map<unknown, unknown>,
+      expected: fromPrototype,
+    },
     {
       shape: "an entry that is not a halves pair",
       halves: new Map([[AuditInterceptor, null]]),
