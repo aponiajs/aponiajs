@@ -14,6 +14,7 @@ Decorated modules, controllers, gateways, and `@Validation()` models are the nor
 - [ElysiaPluginModule](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/plugins/plugin-module.ts): `register()` and `registerAsync()` mount a native Elysia plugin as a module import.
 - [defineElysiaPlugin](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/plugins/plugin-module.ts): the same registration that also carries the plugin type, reachable as `plugin` at runtime.
 - [defineElysiaWebSocketGateway](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/websockets/gateway-definition.ts): declares a gateway's path, message handlers, and server properties as data instead of through `@WebSocketGateway()` and `@SubscribeMessage()`.
+- [downloadFile](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/routing/download-file.ts): writes the `content-disposition` value that names a download and returns the file the platform streams.
 
 ## Public types
 
@@ -27,6 +28,7 @@ Decorated modules, controllers, gateways, and `@Validation()` models are the nor
 - [ElysiaPluginImport, ElysiaPluginModuleOptions, AsyncElysiaPluginModuleOptions, NativeElysiaPlugin](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/plugins/plugin.types.ts): plugin registration contracts.
 - [ElysiaWebSocket, ElysiaWebSocketServer](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/websockets/websocket-gateway.types.ts): transparent aliases over the native Elysia socket and server objects.
 - [ElysiaWebSocketGatewayPlan, ElysiaWebSocketGatewayOptions, ElysiaWebSocketHandlerPlan, DeclaredElysiaWebSocketGateway](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/websockets/gateway-plan.types.ts): the declared gateway's plan, its option contract, and the provider it compiles to.
+- [DownloadFileOptions](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/routing/download-file.types.ts): `attachment` or `inline`, the disposition a download is named with.
 
 ## Documentation
 

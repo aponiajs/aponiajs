@@ -79,3 +79,38 @@ through `t.File`.
 
 `examples/files` runs every shape above, the refusal included, as an application you can
 start with `bun run example:files`.
+
+## Downloads
+
+A handler that returns a `File`, a `Bun.file(...)`, or Elysia's `file(...)` streams it:
+the platform detects the content type and the substrate adds `accept-ranges` and range
+support. What it cannot do is name it — `content-disposition` is absent — and a name
+written by hand into that header fails on the case a non-English application hits
+first. A code point above `U+00FF` is outside what a header value may carry, so the
+value escapes `application.handle` as a `TypeError` with no response at all.
+
+`downloadFile` writes that one value and returns the file:
+
+```ts
+import { Controller, Get, Param, Set, type RouteResponseSettings } from "@aponiajs/common";
+import { downloadFile } from "@aponiajs/platform-elysia";
+
+@Controller("reports")
+export class ReportController {
+  @Get(":id")
+  read(@Param("id") id: string, @Set() set: RouteResponseSettings) {
+    return downloadFile(set, `/srv/reports/${id}.csv`, `${id}.csv`);
+  }
+}
+```
+
+It constructs no `Response`, opens no stream, and reads no file: the returned value is
+what the platform streams, so range requests, `ETag`, and content-type detection stay
+Elysia's. The name follows RFC 6266 with the RFC 8187 extended parameter — `filename*`
+carries the real name UTF-8 percent-encoded, and a quoted ASCII fallback carries a
+name an older client can save — so both parameters are always present and a pure-ASCII
+name is the ordinary case rather than a branch. `{ disposition: "inline" }` renders
+instead of saving. A name carrying a line break, a NUL, or a path separator is refused
+with a `TypeError`: a value an application hands a helper while it runs is a caller
+mistake, which is the runtime half of the convention the batch delivery document
+states.

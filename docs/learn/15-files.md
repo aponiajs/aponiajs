@@ -30,5 +30,19 @@ request may carry several.
 The handler receives the platform's own `File`. There is no Aponia file type to learn,
 and `@Body("file")` already selects one part without a dedicated decorator.
 
+A download is named rather than rebuilt. `downloadFile` writes the header the response
+cannot name itself with — encoded, so a name outside ASCII arrives intact — and returns
+the file the platform streams:
+
+```ts
+import { Get, Set, type RouteResponseSettings } from "@aponiajs/common";
+import { downloadFile } from "@aponiajs/platform-elysia";
+
+@Get("download")
+download(@Set() set: RouteResponseSettings) {
+  return downloadFile(set, "/srv/reports/2026.csv", "2026.csv");
+}
+```
+
 Next: nothing — this is the last chapter. ·
 Deep dive: [files](../files.md)

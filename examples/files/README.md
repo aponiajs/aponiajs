@@ -19,6 +19,14 @@ bun run --cwd examples/files test
 
 `test/uploads.e2e-spec.ts` asserts each declaration through
 `application.handle(new Request(...))`: the object form, `@Body("file")`, `t.Files()`,
-`t.Form()`, the `maxSize` refusal, and the `422` a whole-body `t.File()` answers.
+`t.Form()`, the `maxSize` refusal, the filename rather than the declaration deciding
+`file.type`, and the `422` a whole-body `t.File()` answers.
+
+## Downloads
+
+Two routes answer with the same file: one as an attachment under its own name, one
+inline under a name outside ASCII, which is percent-encoded per RFC 8187 rather than
+reaching the engine raw. `test/downloads.e2e-spec.ts` asserts both the header and the
+bytes.
 
 [Every example](../README.md)

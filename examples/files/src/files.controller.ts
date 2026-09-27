@@ -1,5 +1,13 @@
-import { Body, Controller, Post } from "@aponiajs/common";
+import { Body, Controller, Get, Post, Set, type RouteResponseSettings } from "@aponiajs/common";
+import { downloadFile } from "@aponiajs/platform-elysia";
 import { t } from "elysia";
+import { resolve } from "node:path";
+
+/**
+ * Resolved from this file, never from the working directory: a route that serves a
+ * file must answer the same way however the application was started.
+ */
+const reportPath = resolve(import.meta.dir, "../data/measurements.csv");
 
 /**
  * A file is an ordinary body value: the `body` slot carries it, `@Body()` hands
@@ -34,5 +42,15 @@ export class FilesController {
   @Post("top-level", { body: t.File() })
   uploadTopLevel(@Body() body: File) {
     return { name: body.name };
+  }
+
+  @Get("download")
+  download(@Set() set: RouteResponseSettings) {
+    return downloadFile(set, reportPath, "measurements.csv");
+  }
+
+  @Get("download/named")
+  render(@Set() set: RouteResponseSettings) {
+    return downloadFile(set, reportPath, "Ω 2026.csv", { disposition: "inline" });
   }
 }
