@@ -1,0 +1,277 @@
+import { Logger, Module, type DynamicModule } from "@aponiajs/common";
+import { ElysiaPluginModule, readApplicationDiagnostics } from "@aponiajs/platform-elysia";
+import { Elysia } from "elysia";
+import { createLogBuffer, defaultLogBufferCapacity } from "../logging/log-buffer.ts";
+import { isRecordableLogger, tapLogBuffer } from "../logging/log-tap.ts";
+import type { TappedLogStream } from "../logging/log-tap.ts";
+import { createRequestCapture } from "../requests/request-capture.ts";
+import { startDevtoolsServer } from "../server/devtools-server.ts";
+import type { DevtoolsServer } from "../server/devtools-server.types.ts";
+import type { DevtoolsOptions } from "./devtools-module.types.ts";
+
+const devtoolsPluginName = "aponia.devtools";
+const devtoolsPluginKey = "devtools";
+const devtoolsModuleId = "DevtoolsModule";
+
+const devtoolsLogger = new Logger("Devtools", { timestamp: true });
+
+/**
+ * The module an application imports to opt in to the devtools surface.
+ *
+ * ```ts
+ * @Module({ imports: [DevtoolsModule.register({ enabled: Bun.env.NODE_ENV !== "production" })] })
+ * export class AppModule {}
+ * ```
+ */
+@Module({})
+export class DevtoolsModule {
+  /**
+   * Builds the devtools module for one application. A disabled registration is
+   * inert — it mounts no provider and no native plugin — while an enabled one
+   * registers the devtools plugin as an `ElysiaPluginModule`, so the plugin
+   * runs at `onStart`, after every route has mounted.
+   */
+  static register(options: DevtoolsOptions): DynamicModule {
+    const plugin = devtoolsPlugin(options);
+    if (plugin === undefined) {
+      return createInertModule();
+    }
+
+    return ElysiaPluginModule.register(plugin, { key: devtoolsPluginKey });
+  }
+}
+
+/**
+ * The devtools plugin, for the application that mounts it through
+ * `AponiaFactory.create`'s `plugins` option rather than through a module:
+ *
+ * ```ts
+ * const application = await AponiaFactory.create(AppModule, {
+ *   plugins: [devtoolsPlugin({ enabled: Bun.env.NODE_ENV !== "production", logger: appLogger })],
+ * });
+ * ```
+ *
+ * Both paths build the same plugin through the same construction, so they mount
+ * the same hooks, open the same socket, and serve the same endpoints. They
+ * differ in what `aponia build` can see. `DevtoolsModule.register` belongs in a
+ * module's `imports`, and `aponia build` lowers a module only when every
+ * `imports` entry names its declaration with a single identifier: an entry that
+ * is a call expression declines the module that wrote it, and a declined root
+ * leaves the committed descriptor artifact serving a graph the registration is
+ * not in. A plugin mounted through this option is not an `imports` entry, so
+ * the module that would have been declined stays declarable.
+ *
+ * The price is stated rather than hidden: a plugin mounted this way is not in
+ * the module graph, so nothing about it reaches the generated descriptor
+ * artifact or the inspection of a compiled application. Mount the plugin
+ * through the module when the graph should carry it.
+ *
+ * `enabled` gates this path exactly as it gates the module path: a registration
+ * that is not enabled returns `undefined`, and the platform mounts no plugin
+ * for that value. It is not an inert plugin, for the same reason
+ * `DevtoolsModule.register({ enabled: false })` is not an inert module — a boot
+ * must not be able to mistake a disabled registration for an enabled one. The
+ * switch stays in the options rather than in whether the call happens, so one
+ * options object drives both paths: an application that forwards its devtools
+ * configuration to this function mounts a debug surface only when it said it
+ * wanted one.
+ */
+export function devtoolsPlugin(options: DevtoolsOptions): Elysia | undefined {
+  if (!options.enabled) {
+    return undefined;
+  }
+
+  return createDevtoolsPlugin(options);
+}
+
+/**
+ * The disabled registration stays a module, so an application's `imports` read
+ * the same either way, but it carries nothing a boot would mount. It states its
+ * own identity because the module graph identifies and names a `DynamicModule`
+ * by it.
+ */
+function createInertModule(): DynamicModule {
+  return Object.freeze({
+    module: DevtoolsModule,
+    id: devtoolsModuleId,
+    instanceId: Symbol(devtoolsModuleId),
+    imports: Object.freeze([]),
+    providers: Object.freeze([]),
+  });
+}
+
+/**
+ * The plugin starts the devtools server at `onStart`, which Elysia runs once the
+ * application is listening and every route has mounted. That is why the module
+ * is a plugin module rather than a plain provider: a provider is constructed
+ * before any controller mounts and cannot see the route table.
+ *
+ * The application `onStart` receives is the root one, so the boot record it
+ * carries is what the report describes, and the address the plugin reports is
+ * the one the socket actually took rather than the port configuration asked
+ * for. A server that could not bind has already reported why, so the plugin
+ * reports nothing further.
+ *
+ * The log stream is built before the plugin is, at registration, so it records
+ * what the boot wrote about itself and not only what the application wrote once
+ * it was serving. That timing is why it lives here rather than in the server
+ * `onStart` builds — `createLogStream` states it from the stream's side. It
+ * outlives every socket the plugin starts: a second `listen()` re-runs `onStart`
+ * with the same stream, so the lines written in between are retained rather than
+ * lost with the socket that was replaced.
+ *
+ * `onStop` — which Elysia fires on `close()`, for a plugin as much as for the
+ * application that mounted it — stops the socket the plugin started. A devtools
+ * server that outlived its application would keep the port bound for a restart
+ * that cannot take it, and the handle is the plugin's because the plugin is what
+ * opened the socket.
+ *
+ * The request record is contributed by the same plugin, and its pair of hooks is
+ * built at the same moment for the same reason: registration is what mounts the
+ * plugin, and the plugin is what observes a request. The pair is two hooks on
+ * this instance rather than anything the root application holds — this package
+ * registers nothing on the root — so the arrival hook rides the request phase,
+ * which Elysia merges from a used plugin unfiltered, and the completion hook is
+ * declared `{ as: "global" }`, which is the option the installed Elysia reads for
+ * an after-response hook to reach routes this plugin does not own. The two are
+ * separate answers and neither is a tidiness a maintainer may drop: with the
+ * local scope the after-response hook never runs for a controller's route, and
+ * the record then stays empty however many requests the application answers.
+ *
+ * The records the pair fills are opened here instead, at `onStart` and one per
+ * application, and that is the one place this parts company with the log stream:
+ * the stream has to start before the boot writes, while a record states the
+ * traffic of one application and belongs to the socket that serves it. A boot
+ * reuses the dynamic module a module class was decorated with, so one plugin
+ * serves every application built from that class, and a record held in one
+ * variable would be one window for all of them: each application's socket would
+ * serve the others' traffic. The application's own object — its `store`, which
+ * Elysia hands this callback and hands every hook — is what files one
+ * application's record apart from another's.
+ *
+ * Neither hook returns a value, and that is a rule rather than a style: a hook
+ * that returns a truthy one is the answer, so the pair would change what every
+ * route receives — the one thing `/requests` claims it cannot do.
+ *
+ * The completion hook takes the closing reading as its first statement, before it
+ * reads a field off the context, and hands it to `complete`, which takes none of
+ * its own. That is what makes the duration the interval between the two hooks
+ * rather than the interval between the arrival and however much of this package's
+ * own work ran before the stamp: the route, the status, the parsed body, the
+ * arrival lookup, and the one `await` that reads a `5xx` answer's published body
+ * are all outside it. Moving that reading down the hook, or back inside
+ * `toRequestRecord`, silently charges the application for this package's work.
+ */
+function createDevtoolsPlugin(options: DevtoolsOptions): Elysia {
+  let server: DevtoolsServer | undefined;
+  const logs = createLogStream(options.logger);
+  const capture = createRequestCapture(options.capture);
+
+  return new Elysia({ name: devtoolsPluginName })
+    .onRequest((context) => {
+      capture.arrive(context.request, context.store);
+    })
+    .onAfterResponse({ as: "global" }, async (context) => {
+      // The closing reading is the first statement of this hook, before the five
+      // reads below, because every one of them and everything `toRequestRecord`
+      // does with them is this package's own work: a duration that included them
+      // would report time the application never spent. The single `await` inside
+      // `complete` that reads a readable `5xx` answer's published body is outside
+      // the measurement for the same reason, and it stays outside only while this
+      // reading stays here — moving it after that `await` would charge the
+      // application for it.
+      const completedAt = performance.now();
+
+      await capture.complete(
+        {
+          request: context.request,
+          route: context.route,
+          body: context.body,
+          status: context.set.status,
+          answer: context.responseValue,
+        },
+        completedAt,
+      );
+    })
+    .onStart((application) => {
+      // The boot's own record, read defensively: this runs inside `onStart`,
+      // which Elysia neither awaits nor catches, so its own reads are written to
+      // answer rather than to throw. A record a copy of the platform older than
+      // this release wrote carries no `mappedExceptions` field at all, and an
+      // application no boot produced carries no record — both read as `undefined`
+      // and leave the capture reporting the published body alone, which is what
+      // it reported before the field existed.
+      const diagnostics = readApplicationDiagnostics(application);
+      const started = startDevtoolsServer({
+        application,
+        port: options.port,
+        host: options.host,
+        logger: devtoolsLogger,
+        logs,
+        requests: capture.beginBoot(application.store, diagnostics?.mappedExceptions),
+      });
+
+      // A second `listen()` re-runs `onStart` while the socket the first one
+      // started is still held, so only a start that succeeded becomes the
+      // handle: assigning the `undefined` a refused bind answers would leave the
+      // running socket with nothing left to stop it. The socket being replaced
+      // is stopped as it is replaced, so the plugin owns exactly one devtools
+      // server at a time and `onStop` always stops the live one.
+      if (started === undefined) {
+        return;
+      }
+
+      server?.stop();
+      server = started;
+      devtoolsLogger.log(`Aponia devtools is enabled for ${started.url}.`);
+    })
+    .onStop(() => {
+      // The handle is dropped as well as stopped, so a later `listen()` starts a
+      // fresh socket rather than leaving a stopped one behind.
+      server?.stop();
+      server = undefined;
+    });
+}
+
+/**
+ * The application's log stream for one registration, or `undefined` when this
+ * registration has none to publish.
+ *
+ * The stream is built here, when the module is registered, and that is not a
+ * detail a maintainer may tidy away into `onStart`: registration is the only
+ * moment this package holds the application's logger that comes before the boot
+ * writes. The lines a boot reports about itself — which graph served, which
+ * modules it initialized, which routes it resolved — are written before `onStart`
+ * runs, so a tap installed when the socket starts records none of them, and they
+ * are most of what this stream is worth.
+ *
+ * Two outcomes, however many values arrive at the first one. A logger object the
+ * tap could install on is tapped in place and its stream is published, and the
+ * stream states the levels the tap reached, so a partly patched logger still
+ * names what it covers. Everything else publishes no `/logs` at all: the option
+ * omitted, `false`, any value that is not a logger — which a JavaScript caller can
+ * pass whatever the type says — and a logger no level could be patched on, where
+ * the tap installs nothing and a published stream would record nothing while that
+ * logger goes on printing. The boundary is the count of levels patched rather than
+ * the first refusal: a logger whose `log` refuses but whose `fatal` accepts is the
+ * publishing outcome, and its stream names `fatal`. The endpoint states a stream,
+ * and a registration with
+ * none to state serves no endpoint, so the dispatcher's `404` is the answer, the
+ * way a boot the record holds no compiled root for serves no `/graph`.
+ *
+ * `false` is not the empty stream it once answered, and the difference is the
+ * whole reason: it states that the application has no logger object to hand over,
+ * which is not the fact "nothing is being logged". An application that passes
+ * `false` here and a logger to `AponiaFactory.create` — type-legal, and what
+ * forwarding an option value looks like — logs normally, and a registration
+ * cannot tell that logger from one the factory built for itself. An empty window
+ * would announce the silence in exactly that case; absence is true in every one
+ * of them.
+ */
+function createLogStream(source: DevtoolsOptions["logger"]): TappedLogStream | undefined {
+  if (!isRecordableLogger(source)) {
+    return undefined;
+  }
+
+  return tapLogBuffer(source, createLogBuffer(defaultLogBufferCapacity));
+}

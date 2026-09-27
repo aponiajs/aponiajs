@@ -13,6 +13,7 @@ import {
   type Constructor,
   type LoggerService,
   type Provider,
+  type Token,
   type WsResponse,
 } from "@aponiajs/common";
 import { createContainer } from "@aponiajs/core";
@@ -23,6 +24,7 @@ import {
   registerElysiaWebSocketGateways,
 } from "../src/websockets/websocket-gateway.ts";
 import { AponiaFactory, ElysiaPluginModule, defineElysiaController } from "../src/index.ts";
+import { defineElysiaWebSocketGateway, inspectAponiaApplication } from "../src/index.ts";
 import type { ElysiaWebSocket } from "../src/websockets/websocket-gateway.types.ts";
 
 class RecordingSocket {
@@ -576,6 +578,320 @@ test("rejects invalid paths, duplicate parameters, lifecycle members, and server
   expect(await emptyBound.open(socket)).toBeUndefined();
   expect(await emptyBound.close(socket)).toBeUndefined();
 });
+
+/**
+ * A gateway that declares nothing with decorators, and every behavior the
+ * decorated `EventsGateway` above has: the same handlers, the same bound
+ * parameters, the same lifecycle members, and the same server property.
+ *
+ * The pair exists so the declared path can be asserted against the decorated one
+ * rather than against a hand-written expectation: both are driven by the same
+ * message script and the two results are compared.
+ */
+class DeclaredEventsGateway {
+  server!: Elysia;
+
+  readonly lifecycle: string[] = [];
+
+  afterInit(server: Elysia): void {
+    this.lifecycle.push(server === this.server ? "init" : "wrong-server");
+  }
+
+  async handleConnection(): Promise<void> {
+    await Promise.resolve();
+    this.lifecycle.push("open");
+  }
+
+  handleDisconnect(): void {
+    this.lifecycle.push("close");
+  }
+
+  echo(value: unknown, socket: ElysiaWebSocket): WsResponse {
+    return { event: "echo.result", data: { value, connected: socket !== undefined } };
+  }
+
+  value(data: unknown): unknown {
+    return data;
+  }
+
+  async promise(): Promise<string> {
+    return "resolved";
+  }
+
+  *syncStream(): Generator<number> {
+    yield 1;
+    yield 2;
+  }
+
+  async *asyncStream(): AsyncGenerator<string> {
+    yield "first";
+    await Promise.resolve();
+    yield "second";
+  }
+
+  silent(): undefined {
+    return undefined;
+  }
+
+  failure(): never {
+    throw new Error("private implementation detail");
+  }
+}
+
+/**
+ * The plan the emitter writes for a gateway, spelled out by hand.
+ *
+ * Its shape is asserted where it meets the option type — the `parameters`
+ * entries carry every field the platform's metadata requires — and the tests
+ * below are what prove a gateway declared this way behaves as a decorated one.
+ */
+const declaredEventsProvider = defineElysiaWebSocketGateway(DeclaredEventsGateway, {
+  path: "/events",
+  serverProperties: ["server"],
+  handlers: [
+    {
+      event: "echo",
+      propertyKey: "echo",
+      parameters: [
+        { index: 0, kind: "message-body", property: "value" },
+        { index: 1, kind: "connected-socket", property: undefined },
+      ],
+    },
+    {
+      event: "value",
+      propertyKey: "value",
+      parameters: [{ index: 0, kind: "message-body", property: undefined }],
+    },
+    { event: "promise", propertyKey: "promise" },
+    { event: "sync-stream", propertyKey: "syncStream" },
+    { event: "async-stream", propertyKey: "asyncStream" },
+    { event: "silent", propertyKey: "silent" },
+    { event: "failure", propertyKey: "failure" },
+  ],
+});
+const declaredEventsModule = defineModule({
+  id: "DeclaredEventsModule",
+  providers: [declaredEventsProvider],
+});
+
+test("binds a declared gateway provider into the same plan a decorated one compiles to", () => {
+  const decorated = compileElysiaWebSocketGateways([eventsModule]);
+  const declared = compileElysiaWebSocketGateways([declaredEventsModule]);
+
+  expect(declared).toHaveLength(1);
+  expect(Object.isFrozen(declared[0])).toBe(true);
+  expect(Object.isFrozen(declared[0]?.handlers)).toBe(true);
+  expect(declared[0]?.path).toBe(decorated[0]?.path);
+  expect(declared[0]?.token).toBe(DeclaredEventsGateway);
+  expect(declared[0]?.handlers.map((handler) => handler.event)).toEqual(
+    decorated[0]?.handlers.map((handler) => handler.event),
+  );
+  expect(declared[0]?.handlers.map((handler) => handler.propertyKey)).toEqual(
+    decorated[0]?.handlers.map((handler) => handler.propertyKey),
+  );
+});
+
+test("dispatches, binds, and runs lifecycle identically for a declared and a decorated gateway", async () => {
+  const decorated = await runGatewayScript(eventsModule, eventsToken);
+  const declared = await runGatewayScript(declaredEventsModule, DeclaredEventsGateway);
+
+  expect(declared.events).toEqual(decorated.events);
+  expect(declared.sent).toEqual(decorated.sent);
+  expect(declared.lifecycle).toEqual(decorated.lifecycle);
+  expect(declared.serverAssigned).toBe(true);
+  // Spelled out so the comparison above cannot pass by both paths failing the
+  // same way: the envelope, a `WsResponse` event, the preserved falsy values,
+  // the silent `undefined`, and both exception frames.
+  expect(declared.sent).toEqual([
+    { event: "echo.result", data: { value: 42, connected: true } },
+    { event: "value", data: null },
+    { event: "value", data: false },
+    { event: "value", data: 0 },
+    { event: "promise", data: "resolved" },
+    { event: "sync-stream", data: 1 },
+    { event: "sync-stream", data: 2 },
+    { event: "async-stream", data: "first" },
+    { event: "async-stream", data: "second" },
+    {
+      event: "exception",
+      data: {
+        code: "UNKNOWN_WEBSOCKET_EVENT",
+        message: "No WebSocket handler is registered for this event.",
+      },
+    },
+    {
+      event: "exception",
+      data: {
+        code: "WEBSOCKET_HANDLER_ERROR",
+        message: "The WebSocket handler failed.",
+      },
+    },
+  ]);
+  expect(JSON.stringify(declared.sent)).not.toContain("private implementation detail");
+});
+
+test("rejects declared gateways with the same codes and at the same point as decorated ones", () => {
+  const declared = (id: string, gateway: unknown): ReturnType<typeof defineModule> =>
+    defineModule({
+      id,
+      providers: [declaredGatewayProvider(DeclaredEventsGateway, gateway)],
+    });
+
+  expectAponiaCode(
+    () =>
+      compileElysiaWebSocketGateways([
+        declared("FirstDeclaredModule", { path: "/declared-duplicate" }),
+        declared("SecondDeclaredModule", { path: "declared-duplicate/" }),
+      ]),
+    "DUPLICATE_WEBSOCKET_GATEWAY",
+  );
+
+  // The path is claimed by a decorated gateway and a declared one in the same
+  // application, which is the collision the check exists for.
+  expectAponiaCode(
+    () =>
+      compileElysiaWebSocketGateways([
+        eventsModule,
+        declared("DeclaredModule", { path: "events/" }),
+      ]),
+    "DUPLICATE_WEBSOCKET_GATEWAY",
+  );
+
+  expectAponiaCode(
+    () =>
+      compileElysiaWebSocketGateways([
+        declared("DuplicateEventModule", {
+          handlers: [
+            { event: "declared", propertyKey: "echo" },
+            { event: "declared", propertyKey: "value" },
+          ],
+        }),
+      ]),
+    "DUPLICATE_WEBSOCKET_HANDLER",
+  );
+
+  for (const gateway of [
+    null,
+    "not-a-plan",
+    { handlers: "not-an-array" },
+    { serverProperties: "not-an-array" },
+    { path: 1 },
+    { handlers: [1] },
+    { handlers: [{ event: "   ", propertyKey: "echo" }] },
+    { handlers: [{ event: "declared" }] },
+    { handlers: [{ event: "declared", propertyKey: "echo", parameters: "not-an-array" }] },
+  ]) {
+    expectAponiaCode(
+      () => compileElysiaWebSocketGateways([declared("InvalidDeclaredModule", gateway)]),
+      "INVALID_WEBSOCKET_GATEWAY",
+    );
+  }
+});
+
+test("boots a declared and a decorated gateway in one application", async () => {
+  @WebSocketGateway("/decorated-mixed")
+  class DecoratedMixedGateway {
+    @SubscribeMessage("decorated.event")
+    decorated(@MessageBody() data: unknown): unknown {
+      return data;
+    }
+  }
+
+  @Module({
+    providers: [classProvider(DecoratedMixedGateway)],
+  })
+  class DecoratedMixedModule {}
+
+  @Module({
+    providers: [
+      defineElysiaWebSocketGateway(DeclaredEventsGateway, {
+        path: "/declared-mixed",
+        handlers: [
+          {
+            event: "declared.event",
+            propertyKey: "value",
+            parameters: [{ index: 0, kind: "message-body", property: undefined }],
+          },
+        ],
+      }),
+    ],
+  })
+  class DeclaredMixedModule {}
+
+  @Module({ imports: [DecoratedMixedModule, DeclaredMixedModule] })
+  class MixedModule {}
+
+  const application = await AponiaFactory.create(MixedModule, { logger: false });
+  const nativeApplication = application.getNativeApplication();
+  const gatewayRoutes = nativeApplication.routes.filter((route) => route.method === "WS");
+
+  expect(gatewayRoutes.map((route) => route.path).toSorted()).toEqual([
+    "/declared-mixed",
+    "/decorated-mixed",
+  ]);
+  expect(
+    new Set(inspectAponiaApplication(MixedModule).gateways.map((gateway) => gateway.path)),
+  ).toEqual(new Set(["/declared-mixed", "/decorated-mixed"]));
+  await application.close();
+});
+
+interface GatewayScript {
+  readonly events: readonly string[];
+  readonly sent: readonly unknown[];
+  readonly lifecycle: readonly string[];
+  readonly serverAssigned: boolean;
+}
+
+/** Drives one gateway through the whole supported message surface. */
+async function runGatewayScript(
+  module: Parameters<typeof createContainer>[0],
+  token: Token<unknown>,
+): Promise<GatewayScript> {
+  const compiled = compileElysiaWebSocketGateways([module])[0]!;
+  const instance = createContainer(module).resolveModuleProvider(module, token) as {
+    server?: unknown;
+    lifecycle: string[];
+  };
+  const bound = bindElysiaWebSocketGateway(compiled, instance);
+  const recording = new RecordingSocket();
+  const socket = recording as unknown as ElysiaWebSocket;
+  const application = new Elysia();
+
+  await bound.initialize(application);
+  await bound.open(socket);
+  await bound.message(socket, JSON.stringify({ event: "echo", data: { value: 42 } }));
+  await bound.message(socket, { event: "value", data: null });
+  await bound.message(socket, { event: "value", data: false });
+  await bound.message(socket, { event: "value", data: 0 });
+  await bound.message(socket, { event: "promise" });
+  await bound.message(socket, { event: "sync-stream" });
+  await bound.message(socket, { event: "async-stream" });
+  await bound.message(socket, { event: "silent" });
+  await bound.message(socket, { event: "missing" });
+  await bound.message(socket, { event: "failure" });
+  await bound.close(socket);
+
+  return {
+    events: compiled.handlers.map((handler) => handler.event),
+    sent: recording.sent,
+    lifecycle: instance.lifecycle,
+    serverAssigned: instance.server === application,
+  };
+}
+
+/** A class provider carrying the given plan, for the malformed shapes a factory refuses. */
+function declaredGatewayProvider(
+  useClass: Constructor<unknown, readonly []>,
+  gateway: unknown,
+): Provider {
+  return {
+    kind: "class",
+    provide: useClass,
+    inject: Object.freeze([]),
+    useClass: useClass as Constructor<unknown, never[]>,
+    gateway,
+  } as unknown as Provider;
+}
 
 function classProvider<T>(useClass: Constructor<T, readonly []>): Provider {
   return Object.freeze({

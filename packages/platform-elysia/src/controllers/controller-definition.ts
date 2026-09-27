@@ -1,18 +1,26 @@
 import {
   AponiaError,
   tokenName,
+  type ClassToken,
   type Constructor,
   type ControllerDefinition,
+  type RouteParameterKind,
   type Token,
   type TokenValues,
 } from "@aponiajs/common";
 import { Elysia, type AnyElysia } from "elysia";
+import { joinPaths, registerCompiledElysiaRoutes } from "../routing/route-compiler.ts";
+import type { CompiledElysiaRoute } from "../routing/route-compiler.types.ts";
+import type { ElysiaRoutePlan } from "../routing/route-plan.types.ts";
 import { ELYSIA_CONTROLLER } from "./controller.constants.ts";
+import { unmountedRouteEnhancers } from "./enhancer-resolver.ts";
 import type {
+  DeclaredElysiaControllerDefinition,
   ElysiaControllerRegistrationResult,
   ElysiaControllerDefinition,
   ElysiaControllerPluginOptions,
   ElysiaControllerRegistrationOptions,
+  ElysiaControllerRoutesOptions,
   RegisteredElysiaControllerDefinition,
   RegisteredElysiaApplication,
   RuntimeElysiaController,
@@ -137,6 +145,99 @@ function createElysiaControllerDefinition<
   });
 }
 
+/**
+ * Defines a controller whose routes are declared as data.
+ *
+ * This is the descriptor path's counterpart to decorating a class with
+ * `@Controller()` and its route decorators, and it is what build-time descriptor
+ * generation emits: the application keeps its decorators as the authoring
+ * surface, while the generated module supplies the same routes without anyone
+ * reading `reflect-metadata` at startup.
+ *
+ * The plans are lowered through the platform's own route compiler, so a
+ * controller defined this way reaches the same native version guard, the same
+ * duplicate-route check, the same startup logging, and the same
+ * `AponiaApplicationOptions.invokers` lookup a decorated one does.
+ */
+export function defineElysiaControllerRoutes<
+  TController,
+  const TDependencies extends readonly Token<unknown>[] = readonly [],
+>(
+  useClass: Constructor<TController, TokenValues<TDependencies>>,
+  options: ElysiaControllerRoutesOptions<TDependencies>,
+): DeclaredElysiaControllerDefinition<TController, TDependencies> {
+  const controllerPath = options.path ?? "";
+  const routes = Object.freeze(
+    options.routes.map((plan) => compileElysiaRoutePlan(plan, controllerPath)),
+  );
+  const registerRoutes = (application: Elysia, instance: unknown): void => {
+    // A registration callback states the routes a caller mounts on its own, and
+    // bootstrap mounts a controller that carries `compiledRoutes` itself. The
+    // only caller left is this definition's own `buildPlugin`, which resolves
+    // nothing, so the plan's enhancer declarations stay unmounted there.
+    registerCompiledElysiaRoutes(
+      application,
+      useClass as ClassToken<unknown>,
+      instance,
+      routes,
+      unmountedRouteEnhancers,
+    );
+  };
+
+  return Object.freeze({
+    kind: ELYSIA_CONTROLLER,
+    token: useClass,
+    inject: Object.freeze([...(options.inject ?? [])]) as unknown as TDependencies,
+    useClass,
+    path: joinPaths(controllerPath, ""),
+    compiledRoutes: routes,
+    registerRoutes,
+    buildPlugin: (controller: TController) => {
+      const plugin = new Elysia();
+      registerRoutes(plugin, controller);
+      return plugin;
+    },
+  });
+}
+
+/**
+ * Lowers one declared plan into the plan a decorated controller compiles to.
+ *
+ * `declaredParameterCount` is synthesized rather than left undefined because the
+ * runtime's whole-context fallback reads it: a positive count or a zero count
+ * settles the decision outright, while `undefined` sends it to reading the
+ * handler's own source, which is the inference this path exists to remove.
+ */
+function compileElysiaRoutePlan(
+  plan: ElysiaRoutePlan,
+  controllerPath: string,
+): CompiledElysiaRoute {
+  const parameters = plan.parameters ?? [];
+  const takesContext = parameters.length === 0 && plan.takesContext === true;
+  const capabilities: readonly RouteParameterKind[] =
+    parameters.length === 0
+      ? takesContext
+        ? ["context"]
+        : []
+      : parameters.map((parameter) => parameter.kind);
+
+  return Object.freeze({
+    method: plan.method,
+    path: joinPaths(controllerPath, plan.path),
+    propertyKey: plan.propertyKey,
+    parameters: Object.freeze([...parameters]),
+    capabilities: Object.freeze([...new Set(capabilities)]),
+    schema: plan.schema,
+    declaredParameterCount: takesContext ? 1 : parameters.length,
+    declaredReturnKind: plan.promiseCapable === false ? "synchronous" : "promise",
+    enhancers: Object.freeze({
+      guards: Object.freeze([...(plan.guards ?? [])]),
+      interceptors: Object.freeze([...(plan.interceptors ?? [])]),
+      filters: Object.freeze([...(plan.filters ?? [])]),
+    }),
+  });
+}
+
 export function isElysiaController(
   controller: ControllerDefinition,
 ): controller is RuntimeElysiaController {
@@ -146,6 +247,11 @@ export function isElysiaController(
 /**
  * Registers a low-level controller on the shared root application while
  * preserving the same-instance invariant required for native Elysia typing.
+ *
+ * The callback this calls mounts routes the platform never compiled, so it owns
+ * their hooks and there is no enhancer resolution for bootstrap to merge: a
+ * controller the platform does compile carries a plan, and bootstrap mounts the
+ * plan itself.
  *
  * @internal
  */

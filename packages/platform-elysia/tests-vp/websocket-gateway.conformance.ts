@@ -13,7 +13,11 @@ import {
   bindElysiaWebSocketGateway,
   compileElysiaWebSocketGateways,
 } from "../src/websockets/websocket-gateway.ts";
-import type { ElysiaWebSocket, ElysiaWebSocketServer } from "../src/index.ts";
+import {
+  defineElysiaWebSocketGateway,
+  type ElysiaWebSocket,
+  type ElysiaWebSocketServer,
+} from "../src/index.ts";
 
 type VitePlusTest = typeof import("vite-plus/test");
 type Equals<TLeft, TRight> =
@@ -66,4 +70,51 @@ test("the Vite+ lane preserves native WebSocket gateway compilation and dispatch
   expect(serverAliasAssertion).toBe(true);
   expect(compiled[0]?.path).toBe("/conformance");
   expect(sent).toEqual([{ event: "echo", data: "typed" }]);
+});
+
+/** The same gateway as data: `@SubscribeMessage("echo")` on `echo(@MessageBody("text") text)`. */
+class DeclaredConformanceGateway {
+  echo(text: unknown): unknown {
+    return text;
+  }
+}
+
+const declaredModule = defineModule({
+  id: "DeclaredWebSocketConformanceModule",
+  providers: [
+    defineElysiaWebSocketGateway(DeclaredConformanceGateway, {
+      path: "/conformance/",
+      handlers: [
+        {
+          event: "echo",
+          propertyKey: "echo",
+          parameters: [{ index: 0, kind: "message-body", property: "text" }],
+        },
+      ],
+    }),
+  ],
+});
+
+test("the Vite+ lane compiles and dispatches a declared gateway through the same path", async () => {
+  const compiled = compileElysiaWebSocketGateways([declaredModule]);
+  const instance = createContainer(declaredModule).resolveModuleProvider(
+    declaredModule,
+    DeclaredConformanceGateway,
+  );
+  const gateway = bindElysiaWebSocketGateway(compiled[0]!, instance);
+  const sent: unknown[] = [];
+  const socket = {
+    send(value: unknown): number {
+      sent.push(value);
+      return 1;
+    },
+  } as unknown as ElysiaWebSocket;
+
+  await gateway.message(socket, { event: "echo", data: { text: "declared" } });
+
+  expect(compiled[0]?.path).toBe("/conformance");
+  expect(sent).toEqual([{ event: "echo", data: "declared" }]);
+  expect(() => compileElysiaWebSocketGateways([module, declaredModule])).toThrow(
+    "WebSocket gateway path",
+  );
 });

@@ -1,8 +1,10 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import {
+  Body,
   Controller,
   Inject,
   Module,
+  Param,
   Post,
   Set,
   Status,
@@ -17,12 +19,31 @@ import {
   isRouteResponseSchemaMap,
   isStandardSchema,
   provideValue,
+  renderLogValue,
+  type RouteParameterMetadata,
 } from "../src/index.ts";
+import type { RouteResponseSettings } from "../src/index.ts";
 
 type VitePlusTest = typeof import("vite-plus/test");
 
 declare const test: VitePlusTest["test"];
 declare const expect: VitePlusTest["expect"];
+
+type Equals<TLeft, TRight> =
+  (<T>() => T extends TLeft ? 1 : 2) extends <T>() => T extends TRight ? 1 : 2 ? true : false;
+type Expect<TAssertion extends true> = TAssertion;
+
+/**
+ * `redirect` is asserted absent on purpose: the supported platform ignores an
+ * assigned redirect, so the response settings type must not offer one.
+ */
+type ResponseSettingsAssertions = [
+  Expect<Equals<"redirect" extends keyof RouteResponseSettings ? true : false, false>>,
+  Expect<Equals<RouteResponseSettings["status"], number | string | undefined>>,
+  Expect<
+    Equals<RouteResponseSettings["headers"], Record<string, string | number | string[] | undefined>>
+  >,
+];
 
 test("common contracts work in the Vite+ lane", () => {
   const value = createToken<number>("value");
@@ -123,4 +144,87 @@ test("the Vite+ lane preserves explicit dependencies and own decorator metadata"
   expect(getModuleMetadata(ChildModule)).toBeUndefined();
   expect(getControllerMetadata(ParentController)?.path).toBe("parent");
   expect(getControllerMetadata(ChildController)).toBeUndefined();
+});
+
+test("the Vite+ lane orders recorded parameters and keeps them out of subclasses", () => {
+  class OrderedController {
+    read(_first: unknown, _second: unknown): string {
+      return "read";
+    }
+  }
+
+  Param("second")(OrderedController.prototype, "read", 1);
+  Body()(OrderedController.prototype, "read", 0);
+
+  const parameters: readonly RouteParameterMetadata[] = getRouteParameterMetadata(
+    OrderedController,
+    "read",
+  );
+
+  expect(parameters).toEqual([
+    { index: 0, kind: "body", property: undefined },
+    { index: 1, kind: "params", property: "second" },
+  ]);
+
+  class ChildOrderedController extends OrderedController {}
+
+  expect(getRouteParameterMetadata(ChildOrderedController, "read")).toEqual([]);
+});
+
+test("the Vite+ lane inherits explicit injection tokens through constructor-less subclasses", () => {
+  class ParentConsumer {
+    constructor(_dependency: string) {}
+  }
+  class ChildConsumer extends ParentConsumer {}
+  class GrandChildConsumer extends ChildConsumer {}
+  const explicitDependency = createToken<string>("inherited-dependency");
+  Reflect.defineMetadata("design:paramtypes", [String], ParentConsumer);
+  Inject(explicitDependency)(ParentConsumer, undefined, 0);
+
+  expect(getConstructorDependencies(ParentConsumer)).toEqual([explicitDependency]);
+  expect(getConstructorDependencies(ChildConsumer)).toEqual([explicitDependency]);
+  expect(getConstructorDependencies(GrandChildConsumer)).toEqual([explicitDependency]);
+});
+
+test("the Vite+ lane keeps an overriding subclass's own injection tokens", () => {
+  class ParentConsumer {
+    constructor(_dependency: string) {}
+  }
+  class ChildConsumer extends ParentConsumer {
+    constructor(_dependency: string) {
+      super(_dependency);
+    }
+  }
+  const parentDependency = createToken<string>("parent-dependency");
+  const childDependency = createToken<string>("child-dependency");
+  Reflect.defineMetadata("design:paramtypes", [String], ParentConsumer);
+  Inject(parentDependency)(ParentConsumer, undefined, 0);
+  Reflect.defineMetadata("design:paramtypes", [String], ChildConsumer);
+  Inject(childDependency)(ChildConsumer, undefined, 0);
+
+  expect(getConstructorDependencies(ChildConsumer)).toEqual([childDependency]);
+});
+
+test("the Vite+ lane keeps the response settings free of a redirect field", () => {
+  const settings: RouteResponseSettings = { headers: {} };
+  settings.status = "No Content";
+  settings.headers["x-source"] = "conformance";
+  const assertions = Array.from({ length: 3 }, () => true) as ResponseSettingsAssertions;
+
+  expect(settings.status).toBe("No Content");
+  expect(settings.headers).toEqual({ "x-source": "conformance" });
+  expect(assertions).toHaveLength(3);
+});
+
+test("the Vite+ lane renders a logged value and never throws", () => {
+  const cyclic: Record<string, unknown> = {};
+  cyclic.self = cyclic;
+  Object.defineProperty(cyclic, Symbol.toPrimitive, {
+    value: () => {
+      throw new TypeError("this value cannot be stated");
+    },
+  });
+
+  expect(renderLogValue({ ready: true })).toBe('{"ready":true}');
+  expect(renderLogValue(cyclic)).toBe("[unrenderable]");
 });

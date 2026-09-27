@@ -1,6 +1,6 @@
 # Published Packages
 
-AponiaJS publishes five public packages to the npm registry. Use the live npm
+AponiaJS publishes six public packages to the npm registry. Use the live npm
 badges and linked registry pages below as the source of truth for the latest
 published version.
 
@@ -11,6 +11,7 @@ published version.
 | [`@aponiajs/platform-elysia`](https://www.npmjs.com/package/@aponiajs/platform-elysia) | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fplatform-elysia)](https://www.npmjs.com/package/@aponiajs/platform-elysia) | `bun add @aponiajs/platform-elysia elysia` |
 | [`@aponiajs/cli`](https://www.npmjs.com/package/@aponiajs/cli)                         | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcli)](https://www.npmjs.com/package/@aponiajs/cli)                         | `bun add --global @aponiajs/cli`           |
 | [`create-aponia`](https://www.npmjs.com/package/create-aponia)                         | [![npm](https://img.shields.io/npm/v/create-aponia)](https://www.npmjs.com/package/create-aponia)                             | `bun create aponia <name>`                 |
+| [`@aponiajs/devtools`](https://www.npmjs.com/package/@aponiajs/devtools)               | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fdevtools)](https://www.npmjs.com/package/@aponiajs/devtools)               | `bun add @aponiajs/devtools`               |
 
 The reserved `aponiajs` facade is private in this workspace and is not
 published. Do not install it yet.
@@ -81,6 +82,20 @@ dependency and must be installed by the application.
 [WebSockets](./websockets.md) ·
 [npm](https://www.npmjs.com/package/@aponiajs/platform-elysia)
 
+### `@aponiajs/devtools`
+
+The opt-in devtools surface for a running application: an HTTP API — loopback by
+default, and widened only by naming a `host` — that reports the compiled graph,
+the routes the server answers, the stages each route passes through, the log
+stream, the requests that reached the record and what answered them, and
+what a build decided about the project's invokers. It is a leaf package — nothing
+in the framework depends on it — and it is enabled by an application's own
+registration, never by an environment variable the framework reads.
+
+[Package README](../packages/devtools/README.md) ·
+[Devtools guide](./devtools.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/devtools)
+
 ## Project creation and CLI
 
 Install the published CLI globally with Bun and invoke its `aponia` binary
@@ -100,7 +115,7 @@ same project generator. See the
 
 ## Synchronized versions
 
-All five public packages are released with the same
+All six public packages are released with the same
 [Semantic Version](https://semver.org). Avoid mixing AponiaJS package versions
 within one application. See [Releasing npm Packages](./releasing.md) for the
 version gate and publication flow.

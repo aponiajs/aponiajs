@@ -81,3 +81,28 @@ test("the Vite+ lane rejects unresolvable graph dependencies", () => {
     expect.objectContaining({ code: "MISSING_PROVIDER" }),
   );
 });
+
+test("the Vite+ lane keeps one instance per exported provider and root visibility", () => {
+  const shared = createToken<{ readonly value: string }>("conformance-shared");
+  const privateValue = createToken<number>("conformance-private");
+  const feature = defineModule({
+    id: "conformance-feature",
+    providers: [provideValue(privateValue, 1)],
+  });
+  const root = defineModule({
+    id: "conformance-root",
+    imports: [feature],
+    providers: [provideValue(shared, { value: "shared" })],
+  });
+  const container = createContainer(root);
+  const resolved: { readonly value: string } = container.get(shared);
+
+  expect(container.get(shared)).toBe(resolved);
+  expect(container.resolveModuleProvider(feature, privateValue)).toBe(1);
+  expect(() => container.get(privateValue)).toThrow(
+    expect.objectContaining({
+      code: "MISSING_PROVIDER",
+      details: { module: "conformance-root", token: "conformance-private" },
+    }),
+  );
+});

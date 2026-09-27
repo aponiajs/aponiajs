@@ -1,8 +1,42 @@
 import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { devtoolsPlugin } from "@aponiajs/devtools";
+import { moduleDescriptorArtifact } from "./descriptors.generated.ts";
+import { controllerInvokerArtifact } from "./invokers.generated.ts";
 import { AppModule } from "./app.module.ts";
+import { appLogger } from "./logger.ts";
 
 async function bootstrap(): Promise<void> {
-  const application = await AponiaFactory.create(AppModule);
+  const application = await AponiaFactory.create(AppModule, {
+    descriptors: moduleDescriptorArtifact,
+    invokers: controllerInvokerArtifact,
+    logger: appLogger,
+    // The devtools surface, mounted on the application rather than declared as a
+    // module import, and the difference is what a build can read: `aponia build`
+    // lowers a module only when every `imports` entry names its declaration with
+    // a single identifier, so a `DevtoolsModule.register(...)` in `AppModule`
+    // would be a call expression and would leave the root module out of
+    // `descriptors.generated.ts` — the application would boot from decorators
+    // instead of the declared graph it commits. A plugin mounted here is not an
+    // `imports` entry, so the two do not compete.
+    //
+    // The price is stated rather than hidden: nothing about a plugin mounted
+    // this way reaches the module graph or the generated descriptor artifact.
+    // What is mounted is the same either way, so move the registration into
+    // `AppModule`'s `imports` when the graph should carry it.
+    //
+    // `enabled` is this application's decision and the framework never guesses
+    // it from the environment: the starter serves the surface unless
+    // `NODE_ENV=production`. The socket binds loopback and `8000` by default;
+    // naming another `host` is permitted and reported, because `/requests`
+    // records headers and bodies.
+    plugins: [
+      devtoolsPlugin({
+        enabled: Bun.env.NODE_ENV !== "production",
+        port: Number(Bun.env.DEVTOOLS_PORT ?? 8000),
+        logger: appLogger,
+      }),
+    ],
+  });
   const port = Number(Bun.env.PORT ?? 3000);
   await application.listen(port);
 }

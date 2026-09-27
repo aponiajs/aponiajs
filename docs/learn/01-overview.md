@@ -38,21 +38,23 @@ models over Standard Schema and native validators, request parameter decorators,
 singleton dependency injection,
 class/value/factory/alias providers, explicit tokens, module imports and
 exports, lifecycle, structured logging, generators, and native Elysia escape
-hatches, RFC 9457 application errors for every supported HTTP error status, and
-provider-registered WebSocket gateways backed by native Elysia sockets.
+hatches, RFC 9457 application errors for every supported HTTP error status,
+provider-registered WebSocket gateways backed by native Elysia sockets, and
+guards, interceptors, and exception filters compiled into per-route Elysia
+lifecycle hooks, with the default Problem Details mapping an unhandled failure
+answers through last in each route's error path.
 
-Not implemented yet: guards, interceptors, middleware, exception filters,
-automatic mapping of native framework and validation errors to Problem Details,
-non-singleton scopes, testing modules, OpenAPI, authentication, production
-WebSocket policies and transport extraction, and microservice transports. The
-implemented WebSocket gateway preview does not yet include the planned
-transport-neutral adapter, handshake policies, or per-message schema layer.
-Check
-[`ROADMAP.md`](../../ROADMAP.md) before assuming a feature exists.
+Not implemented yet: middleware, non-singleton scopes, testing modules, OpenAPI,
+authentication, production WebSocket policies and transport extraction, and
+microservice transports. The implemented WebSocket gateway preview does not yet
+include the planned transport-neutral adapter, handshake policies, or
+per-message schema layer. Treat the lists above as the scope of record before
+assuming a feature exists.
 
-Every chapter that follows has a runnable counterpart in
+Most chapters that follow have a runnable counterpart in
 [`examples/`](../../examples/README.md): one application per topic, each with
-end-to-end tests asserting what the chapter describes.
+end-to-end tests asserting what the chapter describes. The chapters on errors,
+testing, releasing, and enhancers have no example of their own.
 
 Next: [02 · Install and generate](./02-install-and-generate.md) ·
 Deep dive: [architecture and style](../architecture-and-style.md)

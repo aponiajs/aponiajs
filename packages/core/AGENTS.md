@@ -28,6 +28,10 @@ container.
   unresolvable controller dependencies.
 - Modules are identified by `instanceId ?? id`. Two configured instances of one
   module class stay distinct through `instanceId`.
+- `ModuleGraph.modules` holds every module reachable from the root through
+  `imports`, once each, in post-order. It is the set a platform mounts, so a
+  validation that must agree with mounting reads it instead of a compiler's
+  working map.
 - `ModuleGraph.locate` resolves the module's own providers first, then imports
   that **export** the token. A provider left out of `exports` is invisible to
   importers, and two imports exporting the same token raise
@@ -38,6 +42,9 @@ container.
 - `get()` enforces root-module visibility on purpose. `resolveModuleProvider()`
   is the platform SPI for resolving inside an arbitrary module and is not
   application API; keep it marked `@internal`.
+- `providerDependencies()` is exported for the same reason: a platform adapter
+  that describes a graph without building one must read the container's own
+  dependency rule rather than restate it. It stays `@internal`.
 
 ## Tests
 

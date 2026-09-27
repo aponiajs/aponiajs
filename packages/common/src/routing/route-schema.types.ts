@@ -46,11 +46,18 @@ type InferSlot<
   TFallback,
 > = TSchema[TSlot] extends RouteValidatorInput ? InferValidatorOutput<TSchema[TSlot]> : TFallback;
 
+/**
+ * Mutable response settings handed to a handler through `@Set()` / `@Res()`.
+ *
+ * There is deliberately no redirect field. The supported platform ignores an
+ * assigned redirect and instead completes the request with its own status, so
+ * a handler that redirects returns the platform's inline `redirect(url)`
+ * helper rather than advertising a setting the substrate does not honour.
+ */
 export interface RouteResponseSettings {
   /** A status code, or a platform-recognized status name such as "Not Found". */
   status?: number | string;
   headers: Record<string, string | number | string[] | undefined>;
-  redirect?: string;
 }
 
 /**

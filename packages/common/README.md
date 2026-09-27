@@ -14,9 +14,9 @@ bun add @aponiajs/common
 ## Public surface
 
 The public application authoring API includes `@Module()`, `@Controller()`,
-HTTP method decorators, WebSocket gateway decorators, `@Injectable()`, and
-`@Inject()`. This package does not depend on Elysia, Bun runtime APIs, or
-another Aponia package.
+HTTP method decorators, WebSocket gateway decorators, `@Injectable()`,
+`@Inject()`, and the guard, interceptor, and filter decorators. This package does
+not depend on Elysia, Bun runtime APIs, or another Aponia package.
 
 ```ts
 import { Controller, Get, Injectable, Module } from "@aponiajs/common";
@@ -49,6 +49,13 @@ For descriptor-first applications, `defineModule()` supplies frozen empty
 collections for omitted options and preserves each declared collection as an
 exact tuple. Multiple native plugins and controller descriptors therefore keep
 their individual route contracts without requiring `as const`.
+
+Constructor dependencies follow the constructor that actually runs. A subclass
+that declares no constructor of its own resolves the parent's reflected
+parameter types and `@Inject()` tokens; one that declares its own constructor
+reads its own metadata. The
+[dependency injection guide](../../docs/dependency-injection.md) covers token
+and visibility rules in full.
 
 ## Route validation
 
@@ -127,6 +134,82 @@ receive the context, typed platform-neutrally by
 `ElysiaRouteContext<typeof schema>` from
 `@aponiajs/platform-elysia` to keep Elysia's own context types. `@Res()` remains
 the Nest-style alias of the native-named `@Set()`.
+
+`@Set()` and `@Res()` expose the mutable response settings — a status and
+headers. Redirects are not a response setting: return the platform's inline
+`redirect(url)` helper from the handler, because an assigned redirect on the
+response settings is ignored by the platform.
+
+## Execution enhancers
+
+`@UseGuards()`, `@UseInterceptors()`, and `@UseFilters()` declare the classes
+that decide whether a route runs, wrap its result, and answer what it throws.
+`@Catch()` names the error types a filter answers:
+
+```ts
+import {
+  Catch,
+  Controller,
+  Get,
+  Injectable,
+  Module,
+  UseFilters,
+  UseGuards,
+  type CanActivate,
+  type ExceptionFilter,
+  type ExecutionContext,
+} from "@aponiajs/common";
+
+@Injectable()
+class AuthGuard implements CanActivate {
+  canActivate(context: ExecutionContext): boolean {
+    return context.switchToHttp().getRequest().headers.authorization === "Bearer secret";
+  }
+}
+
+class UserMissingError extends Error {}
+
+@Catch(UserMissingError)
+@Injectable()
+class UserMissingFilter implements ExceptionFilter {
+  catch(): unknown {
+    return new Response("No such user.", { status: 404 });
+  }
+}
+
+@Controller("users")
+@UseGuards(AuthGuard)
+export class UsersController {
+  @Get(":id")
+  @UseFilters(UserMissingFilter)
+  read(): string {
+    throw new UserMissingError("no such user");
+  }
+}
+
+@Module({
+  controllers: [UsersController],
+  providers: [AuthGuard, UserMissingFilter],
+})
+export class UsersModule {}
+```
+
+The decorators on a controller class apply to every route it declares; the ones
+on a method apply to that route alone and run after their controller's. A guard
+returning `false` refuses the request with a Problem Details `403`. An
+interceptor declares `interceptBefore` and `interceptAfter` instead of Nest's
+`next.handle()`, and `interceptBefore` cannot short-circuit. A filter that
+returns `undefined` or `null` declines, so the next entry in the route's error
+path is consulted; every other value answers. Guards, interceptors, and filters
+are handed an `ExecutionContext` or
+an `ArgumentsHost` whose `getContext()` and `switchToHttp().getRequest()` answer
+the request's `RouteContext`.
+
+This package records the declarations and publishes the contracts; the platform
+resolves each enhancer as a provider while the controller mounts, so an enhancer
+that is not declared fails the boot with `MISSING_PROVIDER`. The
+[enhancers guide](../../docs/enhancers.md) covers precedence, resolution, and the
+default filter.
 
 ## WebSocket gateways
 

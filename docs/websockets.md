@@ -59,6 +59,57 @@ export class ChatModule {}
 upgrade path; `{ path: "/chat" }` is the equivalent object form. Gateways share
 the HTTP application's server and port.
 
+### Declare a gateway as data
+
+Decorators are the authoring surface; `defineElysiaWebSocketGateway` is the same
+gateway expressed as data, and it is what `aponia build` writes into
+`descriptors.generated.ts`. The result is an ordinary class provider, so it is
+registered in `@Module({ providers })` exactly as a decorated gateway is — and
+the two can sit in the same application:
+
+```ts
+import { defineModule } from "@aponiajs/common";
+import { defineElysiaWebSocketGateway } from "@aponiajs/platform-elysia";
+import { ChatGateway } from "./chat.gateway.ts";
+import { ChatService } from "./chat.service.ts";
+
+export const ChatModule = defineModule({
+  id: "ChatModule",
+  providers: [
+    defineElysiaWebSocketGateway(ChatGateway, {
+      path: "/chat",
+      inject: [ChatService],
+      handlers: [
+        {
+          event: "chat.send",
+          propertyKey: "sendMessage",
+          parameters: [
+            { index: 0, kind: "message-body", property: "text" },
+            { index: 1, kind: "connected-socket", property: undefined },
+          ],
+        },
+      ],
+    }),
+    ChatService,
+  ],
+});
+```
+
+The class is unchanged: it still declares its handler methods, and it still
+implements `OnGatewayInit`, `OnGatewayConnection`, and `OnGatewayDisconnect` by
+implementing `afterInit`, `handleConnection`, and `handleDisconnect`. Those are
+resolved from the instance while the gateway is bound, so a plan states none of
+them. A plan states the path, one entry per `@SubscribeMessage()` handler with
+its property key and its parameter bindings, and `serverProperties` — the
+instance properties that receive the root Elysia application, as
+`@WebSocketServer()` marks them.
+
+A declared gateway reaches the same compilation a decorated one does: the path
+and event uniqueness checks run at the same moment and raise the same error
+codes, the envelope, unknown-event handling, and exception frames are the same,
+and a plan never registers itself — `websockets/websocket-gateway.ts` stays the
+only module that calls `application.ws()`.
+
 ## Wire protocol
 
 Native WebSocket does not have Socket.IO event names. Aponia represents the

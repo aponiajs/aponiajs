@@ -10,6 +10,7 @@ const guideDirectories = [
   "packages/common",
   "packages/core",
   "packages/create-aponia",
+  "packages/devtools",
   "packages/platform-elysia",
 ] as const;
 

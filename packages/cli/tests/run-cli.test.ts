@@ -1,5 +1,5 @@
 import { afterEach, expect, spyOn, test } from "bun:test";
-import { mkdir, mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runCli } from "../src/index.ts";
@@ -126,7 +126,11 @@ test.serial("prints schematic CREATE and UPDATE changes", async () => {
 });
 
 async function createTemporaryDirectory(prefix: string): Promise<string> {
-  const directory = await mkdtemp(join(tmpdir(), prefix));
+  // `mkdtemp` reports the /var/folders spelling of the temporary directory,
+  // while `process.cwd()` reports the canonical /private/var/folders spelling
+  // after `chdir` on macOS. Resolving the path once keeps both spellings equal
+  // so assertions can compare the directory the CLI reports.
+  const directory = await realpath(await mkdtemp(join(tmpdir(), prefix)));
   temporaryDirectories.push(directory);
   return directory;
 }

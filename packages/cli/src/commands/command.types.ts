@@ -31,8 +31,15 @@ export interface GenerateCommandOptions {
   readonly type: ResourceTransport;
 }
 
+export interface BuildCommandOptions {
+  readonly command: "build";
+  readonly dryRun: boolean;
+  readonly project?: string;
+}
+
 export type CliCommand =
   | NewCommandOptions
   | GenerateCommandOptions
+  | BuildCommandOptions
   | { readonly command: "help" }
   | { readonly command: "version" };

@@ -75,6 +75,12 @@ export class AppController {
 `createToken<T>(description)` returns a frozen, unique token carrying its value
 type. The description is only used in diagnostics.
 
+Constructor dependencies follow the constructor that actually runs. A subclass
+that declares no constructor of its own runs the parent's, so it resolves the
+parent's reflected parameter types and its `@Inject()` tokens. A subclass that
+declares its own constructor reads its own metadata, and only the sources it
+does not declare fall back to the parent's.
+
 ## Visibility
 
 A provider is private to its module until the module exports it, and an importer
@@ -115,8 +121,10 @@ assertions never depend on message text:
 | `INVALID_MODULE`             | A class is used as a module without `@Module()`                             |
 | `INVALID_CONTROLLER`         | A controller is missing `@Controller()`, or a route handler is not callable |
 | `UNSUPPORTED_CONTROLLER`     | A controller cannot be mounted by the platform                              |
+| `DUPLICATE_ROUTE`            | Two controllers claim one method and path                                   |
 | `INVALID_VALIDATION_MODEL`   | A route uses a class without `@Validation()`                                |
 | `INVALID_NATIVE_APPLICATION` | `configureNative` returned a different Elysia instance                      |
+| `UNSUPPORTED_ELYSIA_VERSION` | The installed Elysia does not expose the route API this platform calls      |
 | `APPLICATION_NOT_LISTENING`  | `getUrl()` is called before `listen()`                                      |
 
 ```ts

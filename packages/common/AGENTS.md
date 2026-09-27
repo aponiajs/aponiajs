@@ -20,6 +20,7 @@ tokens, providers, errors, and logging. Its only runtime dependency is
 | `errors/`      | `AponiaError` and the closed `AponiaErrorCode` union                       |
 | `logging/`     | `LoggerService` and the default structured logger                          |
 | `websockets/`  | Gateway, message, parameter, server, response, and lifecycle contracts     |
+| `enhancers/`   | Enhancer decorators, guard, interceptor, filter, and host contracts        |
 
 Runtime implementation and `*.types.ts` contracts stay beside each other in
 their owning domain. `src/index.ts` is the package's only public barrel.
@@ -34,7 +35,12 @@ their owning domain. `src/index.ts` is the package's only public barrel.
   container. `@Injectable()` stays a no-op that exists for
   `emitDecoratorMetadata`.
 - Metadata is read with `Reflect.getOwnMetadata`, so a subclass never inherits a
-  parent's module or controller metadata. Keep it that way.
+  parent's module or controller metadata. Keep it that way. Constructor
+  dependencies are the deliberate exception: `design:paramtypes` and the
+  explicit `@Inject()` token map are both read with `Reflect.getMetadata`,
+  because a subclass without its own constructor runs the parent's constructor
+  and must resolve the parent's declared tokens. Own metadata still wins, so a
+  subclass that declares its own constructor keeps its own tokens.
 - `@Validation()` records one raw `RouteValidator` under
   `Symbol.for("aponia.validation.metadata")`. Validation-model metadata is
   own-only and immutable, and resolving it preserves the original validator
@@ -57,10 +63,19 @@ their owning domain. `src/index.ts` is the package's only public barrel.
 - `@WebSocketGateway()` defaults to `/ws`. `@SubscribeMessage()` events,
   message parameters, and server properties are own-only immutable metadata
   under `Symbol.for("aponia.websocket-*.metadata")` keys.
+- Enhancer decorators write own-only frozen metadata under
+  `Symbol.for("aponia.enhancer-*.metadata")`: one declaration object per class
+  and one map keyed by property per prototype. `@Catch()` records on the filter
+  class itself, so the matched types travel with the class that names it. A
+  decorator called with no class, or with a value that is not a class, throws a
+  `TypeError` at the decoration site.
+- `ExecutionContext` carries the route's class, handler, and mounted
+  `{ method, path }` beside the shared `ArgumentsHost` surface. One transport
+  exists, so `getType()` and Nest's per-transport dispatch are not carried.
 
 ## Tests
 
 `tests/*.test.ts` under Bun, `tests-vp/*.conformance.ts` under Vite+. This
-package's `tsconfig.json` has no `experimentalDecorators`, so Bun compiles TC39
-decorators and a decorator applied normally records nothing. Apply decorators
-manually in tests, as `tests/contracts.test.ts` does.
+package's `tsconfig.json` declares `experimentalDecorators` and
+`emitDecoratorMetadata` as every package must, so decorators are applied the
+ordinary way in tests, as `tests/enhancer-decorators.test.ts` does.

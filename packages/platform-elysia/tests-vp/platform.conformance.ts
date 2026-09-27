@@ -14,7 +14,9 @@ import {
   Store,
   Validation,
   defineModule,
+  type ClassToken,
   type ControllerDefinition,
+  type LoggerService,
   type RouteContext,
   type RouteResponseSettings,
   type RouteSchema,
@@ -28,11 +30,13 @@ import {
   defineElysiaPlugin,
   elysiaController,
   httpErrors,
+  type AponiaApplicationOptions,
   type ConfiguredAponiaApplicationOptions,
   type ElysiaRouteContext,
   type ElysiaSet,
   type ElysiaStatus,
   type ElysiaStore,
+  type NativeElysiaPlugin,
 } from "../src/index.ts";
 
 type VitePlusTest = typeof import("vite-plus/test");
@@ -45,6 +49,21 @@ declare const expect: VitePlusTest["expect"];
 
 const conformanceNotFound = httpErrors.notFound();
 type HttpErrorConformanceAssertion = Expect<Equals<typeof conformanceNotFound.status, 404>>;
+type GlobalGuardsOptionAssertion = Expect<
+  Equals<AponiaApplicationOptions["guards"], readonly ClassToken<unknown>[] | undefined>
+>;
+type GlobalInterceptorsOptionAssertion = Expect<
+  Equals<AponiaApplicationOptions["interceptors"], readonly ClassToken<unknown>[] | undefined>
+>;
+type GlobalFiltersOptionAssertion = Expect<
+  Equals<AponiaApplicationOptions["filters"], readonly ClassToken<unknown>[] | undefined>
+>;
+type PluginsOptionAssertion = Expect<
+  Equals<
+    AponiaApplicationOptions["plugins"],
+    readonly (NativeElysiaPlugin | undefined)[] | undefined
+  >
+>;
 
 @Injectable()
 class HealthService {
@@ -85,6 +104,19 @@ class AmbiguousPromiseController {
 
 @Module({ controllers: [AmbiguousPromiseController] })
 class AmbiguousPromiseModule {}
+
+@Controller("conformance-deferred")
+class ConformanceDeferredController {
+  readonly pendingLookup: Promise<string> = Promise.resolve("deferred");
+
+  @Get()
+  read(): string | Promise<string> | undefined {
+    return this.pendingLookup;
+  }
+}
+
+@Module({ controllers: [ConformanceDeferredController] })
+class ConformanceDeferredModule {}
 
 class RegisteredHealthController {
   read(): string {
@@ -157,6 +189,34 @@ test("the Vite+ lane mounts a controller from module metadata", async () => {
   await application.close();
 });
 
+test("the Vite+ lane types the global enhancer options", () => {
+  const guardsAssertion: GlobalGuardsOptionAssertion = true;
+  const interceptorsAssertion: GlobalInterceptorsOptionAssertion = true;
+  const filtersAssertion: GlobalFiltersOptionAssertion = true;
+  const pluginsAssertion: PluginsOptionAssertion = true;
+
+  expect(guardsAssertion).toBe(true);
+  expect(interceptorsAssertion).toBe(true);
+  expect(filtersAssertion).toBe(true);
+  expect(pluginsAssertion).toBe(true);
+});
+
+test("the Vite+ lane mounts the plugins option and skips an undefined entry", async () => {
+  const application = await AponiaFactory.create(HealthModule, {
+    logger: false,
+    plugins: [
+      new Elysia({ name: "conformance-option-plugin" }).get("/option-health", () => "ok"),
+      undefined,
+    ],
+  });
+  const mounted = await application.handle(new Request("http://localhost/option-health"));
+  const absent = await application.handle(new Request("http://localhost/skipped-health"));
+
+  expect(await mounted.text()).toBe("ok");
+  expect(absent.status).toBe(404);
+  await application.close();
+});
+
 test("the Vite+ lane supports explicit dynamic Elysia composition", async () => {
   const application = await AponiaFactory.create(HealthModule, {
     logger: false,
@@ -190,6 +250,33 @@ test("the Vite+ lane awaits ambiguous Promise results before after-handle hooks"
 
   expect(await response.text()).toBe("resolved");
   expect(observedResponse).toBe("resolved");
+  expect(observedResponse).not.toBeInstanceOf(Promise);
+  expect(compiledRoute).toContain("await handler(c)");
+  await application.close();
+});
+
+test("the Vite+ lane awaits a Promise returned without a call expression before after-handle hooks", async () => {
+  let observedResponse: unknown;
+  const application = await AponiaFactory.create(ConformanceDeferredModule, {
+    logger: false,
+    configureNative: (nativeApplication) =>
+      nativeApplication.onAfterHandle(({ response }) => {
+        observedResponse = response;
+      }),
+  });
+  const compiledRoute = application
+    .getNativeApplication()
+    .compile()
+    .router.history.find((route) => route.path === "/conformance-deferred")
+    ?.compile()
+    .toString();
+  const response = await application.handle(new Request("http://localhost/conformance-deferred"));
+
+  // The union return type leaves design:returntype as Object, and the handler
+  // returns the Promise through an identifier, so nothing can prove the
+  // handler synchronous.
+  expect(await response.text()).toBe("deferred");
+  expect(observedResponse).toBe("deferred");
   expect(observedResponse).not.toBeInstanceOf(Promise);
   expect(compiledRoute).toContain("await handler(c)");
   await application.close();
@@ -692,5 +779,36 @@ test("the Vite+ lane mounts and types a defined native plugin", async () => {
   );
 
   expect(await response.json()).toEqual({ cached: "cached:users" });
+  await application.close();
+});
+
+@Controller("exploding")
+class ExplodingController {
+  @Get()
+  explode(): never {
+    throw new Error("the raw exception");
+  }
+}
+
+@Module({ controllers: [ExplodingController] })
+class ExplodingModule {}
+
+/** A logger whose `error` refuses, supplied by an application rather than built by the framework. */
+const refusingLogger: LoggerService = {
+  log(): void {},
+  fatal(): void {},
+  warn(): void {},
+  error(): void {
+    throw new Error("the logger refused to report the failure");
+  },
+};
+
+test("the Vite+ lane answers Problem Details when the configured logger throws", async () => {
+  const application = await AponiaFactory.create(ExplodingModule, { logger: refusingLogger });
+
+  const response = await application.handle(new Request("http://localhost/exploding"));
+
+  expect(response.status).toBe(500);
+  expect(response.headers.get("content-type")).toContain("application/problem+json");
   await application.close();
 });

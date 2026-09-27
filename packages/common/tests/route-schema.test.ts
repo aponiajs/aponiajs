@@ -8,6 +8,7 @@ import {
   isStandardSchema,
   routeSchemaSlots,
   type RouteContext,
+  type RouteResponseSchemaMap,
 } from "../src/index.ts";
 
 const nameSchema: StandardSchemaV1<unknown, { name: string }> = {
@@ -120,6 +121,35 @@ test("copies and freezes a status-specific response schema map", () => {
 
   expect(responseRoute?.schema?.response).not.toHaveProperty("500");
   expect(Object.isFrozen(responseRoute?.schema?.response)).toBe(true);
+});
+
+test("treats only non-empty all-numeric response maps as status maps", () => {
+  const mixedKeys = { 200: nameSchema, Not: nameSchema } as unknown as RouteResponseSchemaMap;
+  const negativeStatus = { "-1": nameSchema } as unknown as RouteResponseSchemaMap;
+
+  expect(isRouteResponseSchemaMap({})).toBe(false);
+  expect(isRouteResponseSchemaMap(mixedKeys)).toBe(false);
+  expect(isRouteResponseSchemaMap(negativeStatus)).toBe(false);
+});
+
+test("preserves a raw response validator instance and freezes the route schema", () => {
+  class RawResponseController {
+    readUser(): string {
+      return "read";
+    }
+  }
+
+  Get({ response: nameSchema })(
+    RawResponseController.prototype,
+    "readUser",
+    Object.getOwnPropertyDescriptor(RawResponseController.prototype, "readUser")!,
+  );
+
+  const [route] = getRouteMetadata(RawResponseController);
+
+  expect(route?.schema?.response).toBe(nameSchema);
+  expect(isRouteResponseSchemaMap(nameSchema)).toBe(false);
+  expect(Object.isFrozen(route?.schema)).toBe(true);
 });
 
 type Equals<TLeft, TRight> =

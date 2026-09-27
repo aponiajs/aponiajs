@@ -22,18 +22,18 @@ it satisfies both this guide and `RULES.md`.
 
 Bun workspace. Framework packages live in `packages/`:
 
-| Package                     | Owns                                                         | Runtime dependencies                                                 |
-| --------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------- |
-| `@aponiajs/common`          | Decorators, contracts, tokens, providers, errors, WebSockets | `reflect-metadata` only                                              |
-| `@aponiajs/core`            | Module graph, visibility rules, dependency injection         | `@aponiajs/common`                                                   |
-| `@aponiajs/platform-elysia` | Elysia adapter, HTTP routes, WebSocket gateways, plugins     | `common`, `core`, peer `elysia`                                      |
-| `@aponiajs/cli`             | `aponia new` and `aponia generate` schematics                | `change-case`, `ts-morph`, `yargs-parser`, `fast-glob`, `inflection` |
-| `create-aponia`             | `bun create aponia` entrypoint into the same generator       | `@aponiajs/cli`                                                      |
-| `aponiajs`                  | Reserved public facade, private and unpublished              | —                                                                    |
+| Package                     | Owns                                                           | Runtime dependencies                                                                  |
+| --------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `@aponiajs/common`          | Decorators, contracts, tokens, providers, errors, WebSockets   | `reflect-metadata` only                                                               |
+| `@aponiajs/core`            | Module graph, visibility rules, dependency injection           | `@aponiajs/common`                                                                    |
+| `@aponiajs/platform-elysia` | Elysia adapter, HTTP routes, WebSocket gateways, plugins       | `common`, `core`, peer `elysia`                                                       |
+| `@aponiajs/cli`             | `aponia new` and `aponia generate` schematics                  | `change-case`, `ts-morph`, `yargs-parser`, `fast-glob`, `inflection`, `oxfmt` (exact) |
+| `create-aponia`             | `bun create aponia` entrypoint into the same generator         | `@aponiajs/cli`                                                                       |
+| `@aponiajs/devtools`        | Opt-in devtools for a running application, loopback by default | `cli`, `common`, `platform-elysia`, peer `elysia`                                     |
+| `aponiajs`                  | Reserved public facade, private and unpublished                | —                                                                                     |
 
 Supporting directories: `examples/` for executable examples, `docs/` for
-published documentation, `ROADMAP.md` for milestones and architecture plans,
-`scripts/`
+published documentation, `scripts/`
 for release and documentation guards, `packages/cli/templates/` for generated
 application sources.
 
@@ -54,11 +54,6 @@ these boundaries.
 `AGENTS.md` is the real file; `CLAUDE.md` and `GEMINI.md` are symlinks to it.
 Edit `AGENTS.md`.
 
-For performance, AOT, pseudo-JIT, and benchmark work, read
-[`CONTEXT.md`](CONTEXT.md) before changing runtime paths. It records the measured
-baseline, theoretical ceilings, terminology, architecture recommendation, and
-acceptance gates.
-
 Every package and supporting directory carries its own `AGENTS.md` with the
 invariants that apply there. Read this file first, then the one next to the code
 being changed:
@@ -70,6 +65,7 @@ being changed:
 | [`packages/platform-elysia`](packages/platform-elysia/AGENTS.md) | Bootstrap, route mapping, native plugins, context types |
 | [`packages/cli`](packages/cli/AGENTS.md)                         | Schematics, templates, generated layout                 |
 | [`packages/create-aponia`](packages/create-aponia/AGENTS.md)     | The `bun create aponia` entrypoint                      |
+| [`packages/devtools`](packages/devtools/AGENTS.md)               | The opt-in devtools package, loopback by default        |
 | [`packages/aponiajs`](packages/aponiajs/AGENTS.md)               | The reserved, still-private facade                      |
 | [`scripts`](scripts/AGENTS.md)                                   | Release channel derivation and documentation guards     |
 | [`docs`](docs/AGENTS.md)                                         | The published documentation set and what guards it      |
@@ -129,7 +125,8 @@ that metadata and lowers decorated classes into frozen `ModuleDefinition`,
 `ControllerDefinition`, and `Provider` descriptors. `@aponiajs/core` only ever
 sees descriptors — it never imports `reflect-metadata` or decorator logic.
 Applications can hand-write descriptors instead (`defineModule`,
-`defineElysiaController`, `provideValue`/`provideFactory`/`provideClass`/
+`defineElysiaController`, `defineElysiaControllerRoutes`,
+`defineElysiaWebSocketGateway`, `provideValue`/`provideFactory`/`provideClass`/
 `provideAlias`) and skip decorators entirely. Both paths must stay supported.
 
 ### Dependency direction
@@ -180,7 +177,8 @@ that resolves inside an arbitrary module and is not application API.
 6. await `nativeApplication.modules` so promised, asynchronous, and
    controller-owned native plugins finish contributing routes before WebSocket
    collision checks;
-7. discover each decorated class provider carrying `@WebSocketGateway()`, reject
+7. compile one gateway plan per class provider — the one it declares, or the one
+   read off `@WebSocketGateway()`/`@SubscribeMessage()` on `useClass` — reject
    duplicate paths and message events, resolve the existing singleton provider
    instance, register one native `application.ws()` route, inject
    `@WebSocketServer()` properties, and run `afterInit`;
@@ -212,8 +210,10 @@ ArkType, and Valibot) or platform-native JSON Schema validators matched
 structurally through `NativeSchema` (`static`/`params`, which is how TypeBox and
 Elysia `t` arrive without `common` depending on TypeBox). The platform resolves
 a validation-model token once while routes mount and passes its original
-validator to Elysia unchanged; raw validators remain the low-level escape
-hatch. Slots are `body`, `query`, `params`, `headers`, `cookie`, and `response`;
+validator to Elysia unchanged; a declared route states that validator directly,
+which is what takes the resolution off its startup path. Raw validators remain
+the low-level escape hatch. Slots are `body`, `query`, `params`, `headers`,
+`cookie`, and `response`;
 `response` accepts either one validator or a status-specific validator map.
 Keep `routeSchemaSlots`, `RouteContext`, model inference, and the platform hook
 builder in sync when adding one.
@@ -235,10 +235,16 @@ inference — do not reintroduce an inference-based route API to work around it.
 
 Gateway decorators live in
 `packages/common/src/websockets/websocket-gateway.ts` and remain
-platform-neutral. A gateway is a class provider in `@Module({ providers })`;
-bootstrap discovers the metadata on `provider.useClass` and resolves the
-existing container instance through its provider token. Never construct a
-second gateway instance or add a separate gateway container.
+platform-neutral. A gateway is a class provider in `@Module({ providers })`:
+bootstrap compiles the plan the provider declares, or the metadata on
+`provider.useClass` when it declares none, and resolves the existing container
+instance through its provider token either way. Never construct a second
+gateway instance or add a separate gateway container.
+`defineElysiaWebSocketGateway` in
+`packages/platform-elysia/src/websockets/gateway-definition.ts` is the declared
+half of that pair, and a plan states only what the decorators record — path,
+handlers, and server properties — because lifecycle is resolved from the
+instance.
 
 `@WebSocketGateway()` defaults to `/ws` and accepts a path string or
 `{ path }`. `@SubscribeMessage(event)` records named handlers;
@@ -301,9 +307,11 @@ mapping widens or drops a plugin type.
 Elysia compiles handlers by statically reading their source (sucrose), so
 generated route invokers must expose every context field they use directly and
 call the controller with `handler.call(instance, ...)`. Binding is compiled and
-cached during bootstrap, and synchronous handlers must stay off Elysia's async
-composition path while declared or inferred Promise handlers remain awaited;
-never forward every request through a generic context mapper. Hiding context
+cached during bootstrap. Synchronous handlers must stay off Elysia's async
+composition path, and any handler whose function kind and emitted
+`design:returntype` cannot prove a synchronous return stays Promise-capable;
+the handler's own source is never consulted. Never forward every request
+through a generic context mapper. Hiding context
 behind `Reflect.apply`, or passing the whole context to a generic helper,
 respectively drops required fields or makes Elysia materialize every optional
 field. Both break the route contract or its hot path.
@@ -315,7 +323,7 @@ in `packages/common/src/errors/aponia-error.types.ts` (`MODULE_CYCLE`, `DUPLICAT
 `DUPLICATE_PROVIDER`, `INVALID_EXPORT`, `AMBIGUOUS_PROVIDER`, `MISSING_PROVIDER`,
 `PROVIDER_CYCLE`, `INVALID_CONTROLLER`, `INVALID_MODULE`,
 `INVALID_NATIVE_APPLICATION`, `APPLICATION_NOT_LISTENING`,
-`UNSUPPORTED_CONTROLLER`, `INVALID_VALIDATION_MODEL`,
+`UNSUPPORTED_CONTROLLER`, `DUPLICATE_ROUTE`, `INVALID_VALIDATION_MODEL`,
 `INVALID_WEBSOCKET_GATEWAY`, `DUPLICATE_WEBSOCKET_GATEWAY`,
 `DUPLICATE_WEBSOCKET_HANDLER`, `INVALID_WEBSOCKET_MESSAGE`,
 `UNKNOWN_WEBSOCKET_EVENT`, `WEBSOCKET_HANDLER_ERROR`) plus frozen structured
@@ -327,8 +335,20 @@ Application-owned HTTP failures use `HttpError` from
 `@aponiajs/platform-elysia`. `httpErrors` covers every 4xx and 5xx status in
 Elysia's supported `StatusMap`; responses use RFC 9457
 `application/problem+json` and never serialize the stack or cause. These are
-deliberate application failures. Native Elysia validation and framework errors
-are not automatically translated to Problem Details yet.
+deliberate application failures. Anything else a handler throws becomes a `500`
+Problem Details response, reported through the system logger, unless a declared
+exception filter answers it first or Elysia's own error path already answers it:
+every route the platform mounts compiles a default Problem Details mapping last
+in its own `error` array, behind the filters it declares, and that mapping
+declines an exception carrying its own `status` or `toResponse()` and every
+status Elysia already decided, so validation `422`s, parse `400`s, a failed
+transform decode, `status()`, and `HttpError` keep the responses Elysia gives
+them. A route-local
+`error` array is read only while Elysia composes routes ahead of time, so
+`elysia: { aot: false }` disables every declared filter and that mapping; an
+unhandled failure then answers Elysia's native `500` carrying the exception's
+message, and `bootstrapAponiaApplication` warns under `RoutesResolver` when the
+option is set.
 
 ### CLI
 
@@ -354,13 +374,19 @@ Implemented: decorated modules and HTTP controllers, Standard Schema route
 validation, one-schema validation-model classes, request parameter decorators,
 singleton DI, class/value/factory/alias providers, explicit tokens,
 imports and exports, lifecycle, structured logging, generators, native Elysia
-escape hatches, concise inferred controller registration, RFC 9457 application
-errors, and provider-registered Elysia WebSocket gateways. Not implemented:
-guards, interceptors, middleware,
-exception filters, automatic Problem Details mapping for native errors,
-non-singleton scopes, testing modules, OpenAPI, authentication, production
-WebSocket policies and transport extraction, and microservice transports. Check
-`ROADMAP.md` before assuming a feature belongs somewhere.
+escape hatches, application-owned native plugins mounted through
+`AponiaApplicationOptions.plugins`, concise inferred controller registration,
+RFC 9457 application
+errors, provider-registered Elysia WebSocket gateways, and guards, interceptors,
+and exception filters compiled into per-route lifecycle hooks, with the default
+Problem Details mapping last in each route's error path, and an opt-in devtools
+package, loopback by default and reported when widened, that reports what a boot
+compiled and every request that reached its record, with the answer it observed
+or the absence of one. Not implemented:
+middleware, non-singleton scopes, testing modules, OpenAPI, authentication,
+production WebSocket policies and transport extraction, and microservice
+transports. Treat the two lists above as the scope of record for the current
+release.
 
 ## Coding Style & Naming Conventions
 
@@ -425,6 +451,18 @@ include glob and `@aponiajs/*` source aliases live in the root `vite.config.ts`.
 New framework behavior normally needs a case in both.
 `packages/cli/e2e/generated-application.e2e.ts` packs the CLI and boots the
 generated application, so it is slow and excluded from the default lanes.
+
+Every package `tsconfig.json` declares `experimentalDecorators` and
+`emitDecoratorMetadata`, and `scripts/toolchain-config.spec.ts` holds that. Bun
+selects its transpiler configuration from the **process working directory**, so a
+package that omits them does not fail loudly when a command runs from its own
+directory: decorators transpile with stage-3 semantics, `design:paramtypes` is
+never emitted, a decorated controller gets an empty route plan, and the
+application answers `404` without throwing. That is why `bun run --filter
+@aponiajs/cli test` once failed while the same tests passed from the repository
+root, and it is a live hazard for an application started from a directory whose
+own `tsconfig.json` lacks the options — check the consumer's configuration before
+suspecting the framework.
 
 Prefer exercising public entrypoints: build an application with
 `AponiaFactory.create` and assert through `application.handle(new Request(...))`,

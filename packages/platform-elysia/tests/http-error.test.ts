@@ -194,4 +194,13 @@ test("rejects statuses outside Elysia's known error set at runtime", () => {
   expect(() => new HttpError(419 as never)).toThrow(
     "HttpError requires a known 4xx or 5xx status; received 419.",
   );
+  // A string status is its own title, so the previous `title === undefined`
+  // guard never fired for one: an unrecognized name left the status code
+  // undefined and the failure was served as a 200 carrying a problem document.
+  expect(() => new HttpError("NotAStatus" as never)).toThrow(
+    "HttpError requires a known 4xx or 5xx status; received NotAStatus.",
+  );
+  expect(() => new HttpError("OK" as never)).toThrow(
+    "HttpError requires a known 4xx or 5xx status; received OK.",
+  );
 });

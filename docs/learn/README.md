@@ -19,9 +19,12 @@ afterwards.
 | [10 · Errors](./10-errors.md)                                   | Which failures are raised, when, and how to assert on them  |
 | [11 · Testing](./11-testing.md)                                 | How to exercise a real application without a port           |
 | [12 · Releasing](./12-releasing.md)                             | How a change reaches npm, for contributors                  |
+| [13 · Enhancers](./13-enhancers.md)                             | How a route is guarded, wrapped, and answered when it fails |
+| [14 · Devtools](./14-devtools.md)                               | How to see what the running application compiled and did    |
 
 Reference documents live one directory up: [architecture and style](../architecture-and-style.md),
 [dependency injection](../dependency-injection.md),
 [WebSocket gateways](../websockets.md), [native plugins](../native-plugins.md),
 [logging](../logging.md),
-[testing](../testing.md), [CLI](../cli.md), [releasing](../releasing.md).
+[testing](../testing.md), [CLI](../cli.md), [releasing](../releasing.md),
+[execution enhancers](../enhancers.md), [devtools](../devtools.md).

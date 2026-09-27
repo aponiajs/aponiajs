@@ -19,7 +19,10 @@ src/
     |-- greeting.module.ts
     `-- greeting.service.ts
 test/
-`-- app.e2e-spec.ts
+|-- app.e2e-spec.ts
+|-- application.ts
+|-- lifecycle.e2e-spec.ts
+`-- logging.e2e-spec.ts
 ```
 
 ## Run

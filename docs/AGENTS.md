@@ -6,19 +6,23 @@ Read the [repository guide](../AGENTS.md) first.
 
 The published documentation set:
 
-| File                        | Covers                                                          |
-| --------------------------- | --------------------------------------------------------------- |
-| `architecture-and-style.md` | Application and framework layout, naming, and expected patterns |
-| `dependency-injection.md`   | Tokens, visibility, providers, and the error codes on failure   |
-| `websockets.md`             | Nest-style gateways over native Elysia WebSockets               |
-| `native-plugins.md`         | Mounting native Elysia plugins and typing what they add         |
-| `eden-treaty.md`            | Native-style application types consumed through Eden Treaty     |
-| `logging.md`                | Logger configuration and the bootstrap log lines                |
-| `testing.md`                | Testing applications through `application.handle`               |
-| `cli.md`                    | The generator catalog, aliases, and options                     |
-| `packages.md`               | The published package catalog                                   |
-| `releasing.md`              | Channels, the version gate, and the publish flow                |
-| `learn/`                    | The ordered chapters that teach the same material in sequence   |
+| File                        | Covers                                                                                        |
+| --------------------------- | --------------------------------------------------------------------------------------------- |
+| `architecture-and-style.md` | Application and framework layout, naming, and expected patterns                               |
+| `dependency-injection.md`   | Tokens, visibility, providers, and the error codes on failure                                 |
+| `websockets.md`             | Nest-style gateways over native Elysia WebSockets                                             |
+| `native-plugins.md`         | Mounting native Elysia plugins and typing what they add                                       |
+| `eden-treaty.md`            | Native-style application types consumed through Eden Treaty                                   |
+| `elysia-compatibility.md`   | Supported Elysia versions and how a mismatch fails                                            |
+| `introspection.md`          | Projecting a compiled application into frozen, serializable data                              |
+| `enhancers.md`              | Guards, interceptors, and exception filters on a route's hooks                                |
+| `logging.md`                | Logger configuration and the bootstrap log lines                                              |
+| `testing.md`                | Testing applications through `application.handle`                                             |
+| `cli.md`                    | The generator catalog, aliases, and options                                                   |
+| `devtools.md`               | The opt-in devtools API, loopback by default, and what each endpoint does and does not report |
+| `packages.md`               | The published package catalog                                                                 |
+| `releasing.md`              | Channels, the version gate, and the publish flow                                              |
+| `learn/`                    | The ordered chapters that teach the same material in sequence                                 |
 
 ## The learning path
 
@@ -37,8 +41,8 @@ genuinely wrong.
 - A public behavior change ships with its documentation in the same pull
   request, in `docs/` and in the affected package README.
 - Documentation is guarded by tests. `scripts/documentation.spec.ts` requires
-  `bun add --global @aponiajs/cli` and forbids `bunx aponia`; `ROADMAP.md` must
-  carry the current version line. A wording edit can fail `bun test`.
+  `bun add --global @aponiajs/cli` and forbids `bunx aponia`. A wording edit can
+  fail `bun test`.
 - Every example in a document must compile against the current API. Prefer
   copying from a passing test over writing fresh snippets.
 - All content is English. Scan before finishing:

@@ -1,0 +1,305 @@
+import {
+  Controller,
+  Get,
+  Module,
+  defineModule,
+  provideClass,
+  type ModuleDefinition,
+} from "@aponiajs/common";
+import { z } from "zod";
+import {
+  AponiaFactory,
+  defineElysiaControllerRoutes,
+  readApplicationDiagnostics,
+  type AponiaApplicationDiagnostics,
+  type AponiaApplicationOptions,
+  type AponiaArtifactProvenance,
+  type AponiaCallbackRouteDiagnostics,
+  type AponiaCompiledRouteDiagnostics,
+  type AponiaModuleDescriptorArtifact,
+} from "../src/index.ts";
+import { aponiaVersion } from "../src/version.ts";
+
+type VitePlusTest = typeof import("vite-plus/test");
+type Equals<TLeft, TRight> =
+  (<T>() => T extends TLeft ? 1 : 2) extends <T>() => T extends TRight ? 1 : 2 ? true : false;
+type Expect<TAssertion extends true> = TAssertion;
+
+declare const test: VitePlusTest["test"];
+declare const expect: VitePlusTest["expect"];
+
+class ConformanceDescriptorService {
+  read(): string {
+    return "declared";
+  }
+}
+
+@Controller("conformance-descriptors")
+class ConformanceDescriptorController {
+  constructor(private readonly service: ConformanceDescriptorService) {}
+
+  @Get(":id")
+  read(): string {
+    return this.service.read();
+  }
+}
+
+@Module({
+  controllers: [ConformanceDescriptorController],
+  providers: [ConformanceDescriptorService],
+})
+class ConformanceDescriptorModule {}
+
+@Controller("conformance-validated")
+class ConformanceValidatedController {
+  @Get()
+  read(): string {
+    return "validated";
+  }
+}
+
+@Module({ controllers: [ConformanceValidatedController] })
+class ConformanceValidatedModule {}
+
+/**
+ * The same application, declared the way `aponia build` writes it: `defineModule`
+ * from `@aponiajs/common` and `defineElysiaControllerRoutes` from this package,
+ * which is what makes a committed generated module ordinary source.
+ */
+const conformanceDescriptor = defineModule({
+  id: "ConformanceDescriptorModule",
+  providers: [provideClass(ConformanceDescriptorService, [])],
+  controllers: [
+    defineElysiaControllerRoutes(ConformanceDescriptorController, {
+      path: "conformance-descriptors",
+      inject: [ConformanceDescriptorService],
+      routes: [
+        {
+          method: "GET",
+          path: ":id",
+          propertyKey: "read",
+          promiseCapable: false,
+        },
+      ],
+    }),
+  ],
+});
+
+/**
+ * A declared schema slot lowered from another library's validator dialect. A
+ * declared route reaches the same route compiler a decorated one does, so this is
+ * the conformance lane's half of the acceptance criterion the Bun lane asserts
+ * against generated source.
+ */
+const conformanceValidatedDescriptor = defineModule({
+  id: "ConformanceValidatedModule",
+  controllers: [
+    defineElysiaControllerRoutes(ConformanceValidatedController, {
+      path: "conformance-validated",
+      inject: [],
+      routes: [
+        {
+          method: "GET",
+          path: "",
+          propertyKey: "read",
+          schema: { query: z.object({ page: z.coerce.number().min(1) }) },
+          promiseCapable: false,
+        },
+      ],
+    }),
+  ],
+});
+
+type DescriptorsOption = NonNullable<AponiaApplicationOptions["descriptors"]>;
+type DescriptorsOptionAssertion = Expect<Equals<DescriptorsOption, AponiaModuleDescriptorArtifact>>;
+type ModulesAssertion = Expect<
+  Equals<DescriptorsOption["modules"], Readonly<Record<string, ModuleDefinition>>>
+>;
+type ArtifactsAssertion = Expect<
+  Equals<AponiaApplicationDiagnostics["artifacts"], AponiaArtifactProvenance>
+>;
+/**
+ * The two stamps a consumer reports as provenance. `null` is a first-class
+ * answer — "no artifact supplied this", including a descriptor a caller wrote by
+ * hand — so it belongs to the type rather than to a rule a consumer re-applies.
+ */
+type ArtifactProvenanceAssertion = Expect<
+  Equals<
+    AponiaArtifactProvenance,
+    { readonly invokers: string | null; readonly descriptors: string | null }
+  >
+>;
+/**
+ * Which of the two bindings serves a plan, and what the record holds for a route
+ * no plan describes. The source of a plan is a closed pair rather than an
+ * optional field, because the mount always decided one of the two; a callback
+ * route's source is the single state it can be in, stated so a consumer joins
+ * both halves of the mounted table with one rule.
+ */
+type CompiledRouteSourceAssertion = Expect<
+  Equals<AponiaCompiledRouteDiagnostics["source"], "generated" | "compiled">
+>;
+type CallbackRouteAssertion = Expect<
+  Equals<
+    AponiaCallbackRouteDiagnostics,
+    {
+      readonly module: string;
+      readonly controller: string;
+      readonly source: "compiled";
+      readonly method: string;
+      readonly path: string;
+    }
+  >
+>;
+type CallbackRoutesAssertion = Expect<
+  Equals<AponiaApplicationDiagnostics["callbackRoutes"], readonly AponiaCallbackRouteDiagnostics[]>
+>;
+
+/**
+ * The artifact shape `aponia build` writes and the platform README documents: a
+ * frozen literal holding the release it was generated by, the Elysia it was
+ * generated against, and one entry per module keyed by that module's class name.
+ * It has to be accepted exactly as written, which is what makes the generated
+ * file committable source rather than something an application has to cast.
+ */
+const documentedOptions: AponiaApplicationOptions = {
+  logger: false,
+  descriptors: Object.freeze({
+    framework: aponiaVersion,
+    elysia: "1.4.30",
+    modules: Object.freeze({ ConformanceDescriptorModule: conformanceDescriptor }),
+  }),
+};
+
+test("the Vite+ lane types the descriptors option and its artifact contract", () => {
+  const descriptorsOptionAssertion: DescriptorsOptionAssertion = true;
+  const modulesAssertion: ModulesAssertion = true;
+
+  expect(descriptorsOptionAssertion).toBe(true);
+  expect(modulesAssertion).toBe(true);
+});
+
+test("the Vite+ lane types the artifact provenance a boot record carries", () => {
+  const artifactsAssertion: ArtifactsAssertion = true;
+  const provenanceAssertion: ArtifactProvenanceAssertion = true;
+
+  expect(artifactsAssertion).toBe(true);
+  expect(provenanceAssertion).toBe(true);
+});
+
+test("the Vite+ lane types the binding each route of a boot record reports", () => {
+  const sourceAssertion: CompiledRouteSourceAssertion = true;
+  const callbackRouteAssertion: CallbackRouteAssertion = true;
+  const callbackRoutesAssertion: CallbackRoutesAssertion = true;
+
+  expect(sourceAssertion).toBe(true);
+  expect(callbackRouteAssertion).toBe(true);
+  expect(callbackRoutesAssertion).toBe(true);
+});
+
+test("the Vite+ lane reads the binding each mounted plan reports", async () => {
+  const application = await AponiaFactory.create(ConformanceDescriptorModule, documentedOptions);
+  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+  const routes = diagnostics?.routes ?? [];
+
+  // This boot adopted no invoker artifact, so every plan it mounted is the
+  // platform's own compilation — the second of the two states the field carries
+  // — and no controller mounted a route of its own, so the other half of the
+  // mounted table is empty rather than absent.
+  expect(routes.length).toBeGreaterThan(0);
+  expect(routes.every((entry) => entry.source === "compiled")).toBe(true);
+  expect(diagnostics?.callbackRoutes).toEqual([]);
+  await application.close();
+});
+
+test("the Vite+ lane stamps an adopted artifact and leaves declared data unstamped", async () => {
+  const adopted = await AponiaFactory.create(ConformanceDescriptorModule, documentedOptions);
+  const adoptedDiagnostics = readApplicationDiagnostics(adopted.getNativeApplication());
+
+  expect(adoptedDiagnostics?.artifacts.descriptors).toBe(aponiaVersion);
+  expect(adoptedDiagnostics?.artifacts.invokers).toBeNull();
+  await adopted.close();
+
+  // The same distinction from the other side: this root is declared data too,
+  // and no build emitted it, so both stamps stay `null`. "declared" says the
+  // container compiled data; only adoption can name the release that wrote it.
+  const handwritten = await AponiaFactory.create(conformanceDescriptor, { logger: false });
+  const handwrittenDiagnostics = readApplicationDiagnostics(handwritten.getNativeApplication());
+
+  expect(handwrittenDiagnostics?.graph).toBe("declared");
+  expect(handwrittenDiagnostics?.artifacts).toEqual({ invokers: null, descriptors: null });
+  await handwritten.close();
+});
+
+test("the Vite+ lane boots the documented artifact shape", async () => {
+  const application = await AponiaFactory.create(ConformanceDescriptorModule, documentedOptions);
+  const response = await application.handle(
+    new Request("http://localhost/conformance-descriptors/7"),
+  );
+
+  expect(response.status).toBe(200);
+  expect(await response.text()).toBe("declared");
+  await application.close();
+});
+
+test("the Vite+ lane refuses an artifact from another framework release", async () => {
+  const application = await AponiaFactory.create(ConformanceDescriptorModule, {
+    logger: false,
+    descriptors: {
+      framework: "0.0.0",
+      elysia: null,
+      modules: { ConformanceDescriptorModule: conformanceDescriptor },
+    },
+  });
+  const response = await application.handle(
+    new Request("http://localhost/conformance-descriptors/7"),
+  );
+
+  // The refusal is not an error: the decorated module the application named
+  // answers instead.
+  expect(await response.text()).toBe("declared");
+  await application.close();
+});
+
+test("the Vite+ lane refuses an artifact whose entry is not a module descriptor", async () => {
+  // A JavaScript caller has no type checker, so the entry is guarded
+  // structurally rather than trusted: a truncated declaration never reaches the
+  // graph compiler, where it would fail the boot this option must never fail.
+  const malformed = {
+    framework: aponiaVersion,
+    elysia: null,
+    modules: { ConformanceDescriptorModule: { id: "ConformanceDescriptorModule" } },
+  } as unknown as AponiaModuleDescriptorArtifact;
+  const application = await AponiaFactory.create(ConformanceDescriptorModule, {
+    logger: false,
+    descriptors: malformed,
+  });
+  const response = await application.handle(
+    new Request("http://localhost/conformance-descriptors/7"),
+  );
+
+  expect(await response.text()).toBe("declared");
+  await application.close();
+});
+
+test("the Vite+ lane validates a declared schema slot the way a decorated one does", async () => {
+  const application = await AponiaFactory.create(ConformanceValidatedModule, {
+    logger: false,
+    descriptors: {
+      framework: aponiaVersion,
+      elysia: null,
+      modules: { ConformanceValidatedModule: conformanceValidatedDescriptor },
+    },
+  });
+
+  const accepted = await application.handle(
+    new Request("http://localhost/conformance-validated?page=2"),
+  );
+  expect(await accepted.text()).toBe("validated");
+
+  const rejected = await application.handle(
+    new Request("http://localhost/conformance-validated?page=0"),
+  );
+  expect(rejected.status).toBe(422);
+  await application.close();
+});

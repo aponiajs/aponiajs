@@ -130,13 +130,30 @@ function formatPercentage(ratio: number): string {
   return `${(ratio * 100).toFixed(2)}%`;
 }
 
-if (import.meta.main) {
-  const workspaceRoot = resolve(import.meta.dir, "..");
+export interface CoverageGateEntryOptions {
+  readonly log?: (message: string) => void;
+  readonly workspaceRoot?: string;
+}
+
+/**
+ * Verifies the aggregate LCOV report written by the coverage lane against the
+ * runtime sources of the workspace. The `import.meta.main` shim calls this
+ * function with the repository root it derives from its own location.
+ */
+export async function runCoverageGateEntry(
+  options: CoverageGateEntryOptions = {},
+): Promise<CoverageSummary> {
+  const workspaceRoot = options.workspaceRoot ?? resolve(import.meta.dir, "..");
   const report = await Bun.file(resolve(workspaceRoot, "coverage/lcov.info")).text();
   const expectedSources = await collectExpectedRuntimeSources(workspaceRoot);
   const summary = assertCoverageReport(report, expectedSources);
 
-  console.log(
+  const log = options.log ?? console.log;
+  log(
     `Verified aggregate coverage: ${formatPercentage(summary.lines.ratio)} lines, ${formatPercentage(summary.functions.ratio)} functions.`,
   );
+
+  return summary;
 }
+
+if (import.meta.main) await runCoverageGateEntry();

@@ -119,6 +119,7 @@ The current package boundaries are:
 | `@aponiajs/core`            | container, graph                                                              |
 | `@aponiajs/platform-elysia` | application, controllers, modules, plugins, routing                           |
 | `@aponiajs/cli`             | commands, generation                                                          |
+| `@aponiajs/devtools`        | buffer, endpoints, logging, module, requests, server                          |
 
 Keep package tests at `tests/*.test.ts` and Vite+ conformance tests at
 `tests-vp/*.conformance.ts`; those flat locations are part of the configured
@@ -397,9 +398,25 @@ Without `precompile`, Elysia performs its JavaScript route composition lazily.
 produces native machine code: JavaScriptCore still owns machine-code JIT
 compilation, and build-time Aponia source generation is a separate concern.
 
+`aot: false` is a compatibility escape hatch, not a performance switch. The
+dynamic dispatcher never reads a route's own `error` array, so declared
+exception filters and the default Problem Details mapping do not run, and an
+unhandled failure answers Elysia's native `500` carrying the exception's
+message. Bootstrap warns under `RoutesResolver` when the policy is set; see the
+[errors chapter](./learn/10-errors.md) and
+[execution enhancers](./enhancers.md). Leave `aot` at its default unless a
+native plugin forces otherwise.
+
 A build tool can target the same direct-registration path without decorators by
 emitting `defineElysiaController(..., { registerRoutes })` descriptors.
 Hand-authored code normally uses the concise `elysiaController(...)` facade so
 Elysia contextually infers route input without a manual context type or
 `typeof`. The older `buildPlugin` form remains the compatibility escape hatch
 for a controller that deliberately owns an isolated Elysia plugin.
+
+Both of those forms own their routes' hooks, so neither is a place to declare an
+enhancer: the platform compiles guards, interceptors, filters, and the default
+mapping while it mounts a route itself, and a route registered through a
+callback or built by a `buildPlugin` gets none of them — an unhandled failure
+there answers Elysia's native `500` carrying the exception's message. The
+[execution enhancers guide](./enhancers.md) states the exclusion in full.

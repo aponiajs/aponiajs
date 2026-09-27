@@ -15,14 +15,16 @@ Structured applications for Bun
 [Dependency injection](./docs/dependency-injection.md) ·
 [WebSockets](./docs/websockets.md) ·
 [Native plugins](./docs/native-plugins.md) ·
+[Introspection](./docs/introspection.md) ·
+[Elysia compatibility](./docs/elysia-compatibility.md) ·
 [Eden Treaty](./docs/eden-treaty.md) ·
 [Testing](./docs/testing.md) ·
 [CLI](./docs/cli.md) ·
-[Roadmap](./ROADMAP.md)
+[Devtools](./docs/devtools.md)
 
 [![CI](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml/badge.svg)](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcommon/alpha?label=npm&color=baa9d1)](https://www.npmjs.com/package/@aponiajs/common)
-[![Bun](https://img.shields.io/badge/Bun-1.3.14-f8eddd?logo=bun&logoColor=24232d)](https://bun.sh)
+[![Bun](https://img.shields.io/badge/Bun-1.4.2-f8eddd?logo=bun&logoColor=24232d)](https://bun.sh)
 [![Elysia](https://img.shields.io/badge/Elysia-1.4-d9ccea)](https://elysiajs.com)
 [![License](https://img.shields.io/badge/License-MIT-e8b9b5)](./LICENSE)
 
@@ -364,7 +366,15 @@ throw httpErrors.notFound("User 42 does not exist.", {
 `httpErrors` includes every 4xx and 5xx status supported by Elysia. Each response
 uses `application/problem+json`; optional causes stay server-side and stacks are
 never serialized. Use `httpError(422, detail, options)` when a numeric status is
-clearer. See the [errors chapter](./docs/learn/10-errors.md).
+clearer. Anything else a handler throws answers a Problem Details `500` through
+the default mapping every route the platform mounts carries last, unless an
+exception filter answers it first. That mapping and every declared filter live
+in a route-local `error` array, which Elysia reads only while it composes routes
+ahead of time: under
+`elysia: { aot: false }` neither runs, and an unhandled failure answers Elysia's
+native `500` carrying the exception's message. See the
+[errors chapter](./docs/learn/10-errors.md) and the
+[enhancers guide](./docs/enhancers.md).
 
 Need Elysia's whole context in a decorated method? Take it with `@Ctx()`, typed
 by the declared schema. This explicit annotation is the advanced decorator
@@ -431,9 +441,13 @@ import { ConfigModule, ConfigService } from "./config/config.module.ts";
 export class AuthModule {}
 ```
 
-A stable `key` keeps a plugin imported by several modules installed once.
-`AponiaFactory.createNative(AppModule)` returns the composed Elysia instance
-directly. `AponiaFactory.create(AppModule, { configureNative })` and
+A stable `key` keeps a plugin imported by several modules installed once. An
+application can also mount a plugin itself, through
+`AponiaFactory.create(AppModule, { plugins: [cors()] })`, which takes the same
+`.use()` path before the module graph mounts and reaches no module's `imports`:
+that option is for the plugins a module cannot declare, and it keeps none of
+them in the module graph. `AponiaFactory.createNative(AppModule)` returns the
+composed Elysia instance directly. `AponiaFactory.create(AppModule, { configureNative })` and
 `application.getNativeApplication()` retain the managed lifecycle facade when a
 plugin needs it.
 
@@ -542,16 +556,19 @@ its controller and service. See the
 
 ## Packages
 
-| Package                                                                                | Purpose                                    |
-| -------------------------------------------------------------------------------------- | ------------------------------------------ |
-| [`@aponiajs/common`](https://www.npmjs.com/package/@aponiajs/common)                   | Decorators, contracts, tokens, and logging |
-| [`@aponiajs/core`](https://www.npmjs.com/package/@aponiajs/core)                       | Module graph and dependency injection      |
-| [`@aponiajs/platform-elysia`](https://www.npmjs.com/package/@aponiajs/platform-elysia) | Elysia adapter and application lifecycle   |
-| [`@aponiajs/cli`](https://www.npmjs.com/package/@aponiajs/cli)                         | Project and component generators           |
-| [`create-aponia`](https://www.npmjs.com/package/create-aponia)                         | `bun create` entrypoint                    |
+| Package                                                                                | Purpose                                                |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| [`@aponiajs/common`](https://www.npmjs.com/package/@aponiajs/common)                   | Decorators, contracts, tokens, and logging             |
+| [`@aponiajs/core`](https://www.npmjs.com/package/@aponiajs/core)                       | Module graph and dependency injection                  |
+| [`@aponiajs/platform-elysia`](https://www.npmjs.com/package/@aponiajs/platform-elysia) | Elysia adapter and application lifecycle               |
+| [`@aponiajs/cli`](https://www.npmjs.com/package/@aponiajs/cli)                         | Project and component generators                       |
+| [`create-aponia`](https://www.npmjs.com/package/create-aponia)                         | `bun create` entrypoint                                |
+| [`@aponiajs/devtools`](https://www.npmjs.com/package/@aponiajs/devtools)               | Opt-in devtools for a running app, loopback by default |
 
-All public packages share one version and are published to the `alpha` channel;
-`latest` is reserved for the first stable release.
+All public packages share one version, and the channel a release goes to is
+derived from that version: a prerelease publishes under the tag its identifier
+names — `alpha`, `beta`, `rc`, or `canary` — and never under `latest`. The
+current line is an alpha, so `@alpha` is what to install today.
 
 ## Current scope
 
@@ -566,17 +583,25 @@ cover every supported 4xx and 5xx status with RFC 9457 responses. Statically
 declared descriptor modules also expose their composed Elysia route type
 directly to Eden Treaty. Provider-registered WebSocket gateways expose
 Nest-style message and lifecycle decorators over Elysia's native socket
-runtime.
+runtime. Nest-style guards, interceptors, and exception filters compile into
+per-route Elysia lifecycle hooks, and an unhandled failure answers an RFC 9457
+`500` unless a declared filter answers it first — on the routes the platform
+mounts from a compiled plan. A controller registered through its own
+`registerRoutes` callback, and a definition mounted through its own
+`buildPlugin`, run no enhancer and answer Elysia's native `500` instead.
+`@aponiajs/devtools` is an opt-in leaf package that serves an HTTP API, on
+loopback unless its registration names a `host`, over what a boot compiled and
+what the application answered; it mounts no route
+on the application and reports rather than changes.
 
 Not implemented yet: async provider lifecycle, request and transient scopes,
-platform-neutral HTTP packages, full Elysia phase conformance, automatic Problem
-Details mapping for native validation and framework failures, serialization
-policy, configuration and secret redaction, HTTP admission hardening, guards,
-interceptors, middleware, exception filters, authentication and authorization,
-rate limiting, testing packages, observability and health, OpenAPI generation,
-production WebSocket policies and the transport-neutral adapter package,
-decorator-wide Eden inference, and microservice transports. The
-[roadmap](./ROADMAP.md) tracks those capabilities and their dependencies.
+platform-neutral HTTP packages, full Elysia phase conformance, serialization
+policy, configuration and secret redaction, HTTP admission hardening,
+middleware, authentication and authorization, rate limiting, testing packages,
+observability and health, OpenAPI generation, production WebSocket policies and
+the transport-neutral adapter package, decorator-wide Eden inference, and
+microservice transports. Treat that list as the scope of record for the current
+release.
 
 ## Develop
 

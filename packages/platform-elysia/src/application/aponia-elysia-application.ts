@@ -1,5 +1,6 @@
 import { AponiaError, type LoggerService } from "@aponiajs/common";
 import { Elysia, type AnyElysia } from "elysia";
+import { reportThroughLogger } from "../errors/default-exception-filter.ts";
 
 export class AponiaElysiaApplication<TNativeApplication extends AnyElysia = Elysia> {
   readonly #nativeApplication: TNativeApplication;
@@ -25,7 +26,9 @@ export class AponiaElysiaApplication<TNativeApplication extends AnyElysia = Elys
       this.#logger?.log("Aponia application successfully started", "AponiaApplication");
       this.#logger?.log(`Application is running on: ${this.getUrl()}`, "AponiaApplication");
     } catch (error) {
-      this.#logger?.error(error, "AponiaApplication");
+      // Reported rather than the reason the caller hears: `reportThroughLogger`
+      // guards the logger, so the failure thrown below is still the engine's.
+      reportThroughLogger(this.#logger, error, "AponiaApplication");
       throw error;
     }
   }

@@ -15,6 +15,7 @@ const packageLayouts: readonly PackageLayout[] = [
     directories: [
       "controllers",
       "decorators",
+      "enhancers",
       "errors",
       "logging",
       "modules",
@@ -31,11 +32,12 @@ const packageLayouts: readonly PackageLayout[] = [
   },
   {
     sourceRoot: "packages/platform-elysia/src",
-    files: ["index.ts"],
+    files: ["index.ts", "version.ts"],
     directories: [
       "application",
       "controllers",
       "errors",
+      "inspection",
       "modules",
       "plugins",
       "routing",
@@ -43,9 +45,14 @@ const packageLayouts: readonly PackageLayout[] = [
     ],
   },
   {
+    sourceRoot: "packages/devtools/src",
+    files: ["index.ts", "version.ts"],
+    directories: ["buffer", "endpoints", "logging", "module", "requests", "server"],
+  },
+  {
     sourceRoot: "packages/cli/src",
     files: ["index.ts", "version.ts"],
-    directories: ["commands", "generation"],
+    directories: ["bundler", "commands", "generation"],
   },
   {
     sourceRoot: "packages/aponiajs/src",

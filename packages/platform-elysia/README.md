@@ -25,14 +25,18 @@ The first Elysia platform slice for Aponia:
   `@Status()`, and `@Ctx()`;
 - Nest-style startup logging for module initialization and route mapping;
 - controller factories that return native Elysia plugins;
+- application-owned native plugins mounted through `AponiaFactory.create`'s
+  `plugins` option, beside the ones a module registers;
 - concise `elysiaController(...)` registration with native callback inference;
 - typed RFC 9457 application errors for every supported 4xx and 5xx status;
+- Nest-style guards, interceptors (`interceptBefore`/`interceptAfter`), and
+  exception filters, compiled into per-route Elysia lifecycle hooks;
 - explicit Elysia AOT, lazy-composition, and startup-precompile policy;
 - `handle`, `listen`, and `close` application methods.
 
-This package intentionally does not yet implement request scopes, lifecycle
-enhancers, schema aggregation, Socket.IO-only gateway semantics, or
-decorator-wide static route inference from the roadmap.
+This package intentionally does not yet implement request scopes, schema
+aggregation, Socket.IO-only gateway semantics, or decorator-wide static route
+inference.
 
 Decorated modules, controllers, and validation models are the normal
 application-authoring surface. Direct raw validators remain supported as a
@@ -93,6 +97,46 @@ constructor injection and module visibility stay identical to services.
 [WebSocket gateway guide](../../docs/websockets.md) for responses, lifecycle,
 errors, and native publish/subscribe.
 
+### Declared gateways
+
+A gateway can declare its path and handlers as data instead of through
+decorators. This is the descriptor path's counterpart to `@WebSocketGateway()`
+and `@SubscribeMessage()`, and it is what build-time descriptor generation
+emits: the plan is compiled by the same bootstrap step, so the gateway reaches
+the same path and event uniqueness checks, the same envelope, and the same
+exception frames.
+
+```ts
+import { defineModule } from "@aponiajs/common";
+import { defineElysiaWebSocketGateway } from "@aponiajs/platform-elysia";
+
+const module = defineModule({
+  id: "EventsModule",
+  providers: [
+    defineElysiaWebSocketGateway(EventsGateway, {
+      path: "/events",
+      handlers: [
+        {
+          event: "events.echo",
+          propertyKey: "echo",
+          parameters: [
+            { index: 0, kind: "message-body", property: undefined },
+            { index: 1, kind: "connected-socket", property: undefined },
+          ],
+        },
+      ],
+    }),
+  ],
+});
+```
+
+The class keeps its handler methods and its `afterInit`, `handleConnection`, and
+`handleDisconnect`, which are resolved from the instance while the gateway is
+bound and are therefore not part of a plan. `serverProperties` declares the
+instance properties that receive the root Elysia application, as
+`@WebSocketServer()` marks them. A plan never calls `application.ws()` itself —
+`websockets/websocket-gateway.ts` remains the only module that does.
+
 ## Native application and Eden Treaty
 
 `createNative` returns the real composed Elysia instance. A statically declared
@@ -142,8 +186,15 @@ and the exact inference boundary.
 
 Aponia compiles decorator metadata and parameter binding once during bootstrap.
 The generated controller invoker exposes only the context fields used by that
-route, keeps synchronous handlers synchronous, and registers decorated routes
-directly on the root Elysia application.
+route and registers decorated routes directly on the root Elysia application.
+
+A handler is compiled as Promise-capable unless its function kind or its emitted
+`design:returntype` proves it returns synchronously. That matters because a
+synchronous invoker returning a Promise gives `onAfterHandle` the raw `Promise`
+rather than the resolved value, so the conservative default is the correct one.
+The handler's own source is never inspected — minification and bundling can
+change it, and a handler that merely returns a stored Promise carries no call
+expression to recognize.
 
 Use the `elysia` option to control Elysia's own route composition:
 
@@ -165,9 +216,157 @@ the application starts accepting traffic. Leaving `precompile` disabled keeps
 Elysia composition lazy. Set `aot: false` only when the generic dynamic Elysia
 dispatcher is required for compatibility.
 
+That dispatcher reads no route's own `error` array, so under `aot: false` the
+exception filters a route declares and the default Problem Details mapping do
+not run, and an unhandled failure answers Elysia's native `500` carrying the
+exception's message. A boot states this under `RoutesResolver` when the option
+is set.
+
 These settings are not native machine-code AOT. Elysia generates JavaScript,
 and JavaScriptCore remains responsible for interpreter and machine-code JIT
-tiers. They are also distinct from a future Aponia build-time source emitter.
+tiers.
+
+### Build-time generated invokers
+
+The `invokers` option consumes the artifact `aponia build` writes:
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { controllerInvokerArtifact } from "./invokers.generated.ts";
+import { AppModule } from "./app.module.ts";
+
+const application = await AponiaFactory.create(AppModule, {
+  invokers: controllerInvokerArtifact,
+});
+```
+
+The artifact carries its invokers keyed by controller class token, beside the
+versions it was generated against:
+
+```ts
+// src/invokers.generated.ts
+export const controllerInvokerArtifact = Object.freeze({
+  framework: "0.6.0-alpha.26",
+  elysia: "1.4.30",
+  invokers: new Map([
+    [UsersController, (instance: UsersController) => new Map([["ping", () => instance.ping()]])],
+  ]),
+});
+```
+
+The factory parameter is `never`, so a factory declared with a concrete
+controller type is accepted without a cast, and an invoker's context parameter is
+`never` for the same reason: an invoker reads the fields its own route declared,
+so it is written against the application's annotations rather than against
+`RouteContext`. An invoker that reads the context annotates the parameter itself
+— `(context: RouteContext) => context.body` — because a parameter type that
+accepts everything offers nothing to infer from. Class tokens and property keys
+are used rather than names, so both survive minification and renamed files.
+
+An artifact generated by another AponiaJS release is refused whole: bootstrap
+reports the mismatch and compiles every route from decorator metadata, exactly as
+it does when the option is omitted. A stale file therefore costs a cold start
+rather than a wrong binding, and supplying an artifact can never turn a bootable
+application into a failing one. The refusal names the Elysia the file was
+generated against, or says that none could be resolved.
+
+Supplying invokers is a substitution, never a requirement: a controller without
+an entry, a handler whose property key is absent from its controller's map, and
+a symbol-keyed handler are all compiled from decorator metadata exactly as they
+are when the option is omitted. The supplied maps are read only, and an entry
+for a token no controller uses is ignored.
+
+### Build-time generated module descriptors
+
+The `descriptors` option consumes the second artifact `aponia build` writes: the
+application's module graph as data, so bootstrap can mount it without lowering
+decorated classes at all. The entrypoint goes on naming the root module class:
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { moduleDescriptorArtifact } from "./descriptors.generated.ts";
+import { AppModule } from "./app.module.ts";
+
+const application = await AponiaFactory.create(AppModule, {
+  descriptors: moduleDescriptorArtifact,
+});
+```
+
+Bootstrap looks the module up by its class name and boots the declared graph when
+it finds one, reporting the choice under `RoutesResolver`:
+
+```text
+[RoutesResolver] Booting AppModule from the generated module descriptors, so the declared graph serves this application.
+```
+
+The artifact holds the descriptors keyed by module class name, beside the versions
+it was generated against:
+
+```ts
+// src/descriptors.generated.ts
+export const moduleDescriptorArtifact = Object.freeze({
+  framework: "0.6.0-alpha.26",
+  elysia: "1.4.30",
+  modules: Object.freeze({ AppModule: AppModuleDescriptor }),
+});
+```
+
+Unlike invokers, this artifact is the whole graph rather than one handler at a
+time, so the decision is made once and applies to the entire application. It is
+used only when it is stamped with this release, carries a module record, and
+holds a declaration for the root module the application named; in every other
+case bootstrap lowers that module from its decorators, exactly as it does when
+the option is omitted. A foreign, stale, truncated, or hand-edited file
+therefore costs the lowering it was meant to remove rather than a boot that
+cannot start. A module renamed since the last build leaves an entry the
+application no longer names, which is the same refusal — the leftover entry is
+never used to serve a request.
+
+### Declared routes
+
+A controller can declare its routes as data instead of through decorators. This is
+the descriptor path's counterpart to `@Controller()`, and it is what build-time
+descriptor generation targets: the plans are compiled through the same lowering a
+decorated controller uses, so the controller reaches the same native version
+guard, the same duplicate-route check, the same startup logging, and the same
+generated-invoker lookup.
+
+```ts
+import { defineModule, provideClass } from "@aponiajs/common";
+import { defineElysiaControllerRoutes } from "@aponiajs/platform-elysia";
+
+const module = defineModule({
+  id: "UsersModule",
+  providers: [provideClass(UsersService, [])],
+  controllers: [
+    defineElysiaControllerRoutes(UsersController, {
+      path: "/users",
+      inject: [UsersService],
+      routes: [
+        {
+          method: "GET",
+          path: ":id",
+          propertyKey: "read",
+          parameters: [{ index: 0, kind: "params", property: "id" }],
+        },
+      ],
+    }),
+  ],
+});
+```
+
+Three facts a decorator reads out of emitted metadata are declared instead,
+because a plan has no class to reflect on: `takesContext` decides whether a
+handler with no decorated parameter receives the whole context, `promiseCapable`
+decides whether the route awaits a returned Promise, and `guards`,
+`interceptors`, and `filters` are the enhancers the controller or the handler
+declares. Omitting `takesContext` means the handler receives nothing; omitting
+`promiseCapable` means Promise-capable, which costs at most one already-settled
+`await` and cannot change what a lifecycle hook observes. A plan's enhancer
+arrays are the controller's own declarations — application-wide enhancers merge
+while the route mounts, never into a compiled route. A plan never registers
+itself on Elysia — the platform's own route compiler does, so the native version
+guard stays in one place.
 
 ### The shortest type-safe controller
 
@@ -244,6 +443,110 @@ Every `HttpError` is handled by Elysia's native `toResponse()` path and returns
 server-side `cause` are supported. The response never serializes the error
 stack or cause, and reserved Problem Details members cannot be replaced through
 extensions.
+
+Errors a handler throws that no exception filter answers do not escape as a
+stack trace either: on Elysia's AOT path every route the platform mounts carries
+a default Problem Details mapping last in its own error path, so they answer
+`500` `application/problem+json` with a fixed `detail` and are reported through
+the system logger under `ExceptionsHandler`. An answer Elysia's own error path
+already decided is declined rather than translated, so a rejected request still
+answers the native `422`, a failed `t.Transform` decode keeps its `422` and the
+decode error's message, a thrown `status(...)` keeps its response, and an
+`HttpError` keeps its own. The mapping is a route-local hook, so it is part of
+what `aot: false` disables — and it only exists on routes the platform mounted
+itself: a route a `registerRoutes` callback or a definition's own `buildPlugin`
+mounted runs no declared filter and no mapping either.
+
+## Execution enhancers
+
+Guards, interceptors, and exception filters are declared like any other provider
+and compile into the route's own Elysia hooks, so nothing wraps the handler:
+
+```ts
+import {
+  Catch,
+  Controller,
+  Get,
+  Injectable,
+  Module,
+  UseFilters,
+  UseGuards,
+  UseInterceptors,
+  type AponiaInterceptor,
+  type CanActivate,
+  type ExceptionFilter,
+  type ExecutionContext,
+} from "@aponiajs/common";
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+
+@Injectable()
+class AuthGuard implements CanActivate {
+  canActivate(context: ExecutionContext): boolean {
+    return context.switchToHttp().getRequest().headers.authorization === "Bearer secret";
+  }
+}
+
+@Injectable()
+class TimingInterceptor implements AponiaInterceptor {
+  interceptAfter(_context: ExecutionContext, response: unknown): unknown {
+    return response;
+  }
+}
+
+class UserMissingError extends Error {}
+
+@Catch(UserMissingError)
+@Injectable()
+class UserMissingFilter implements ExceptionFilter {
+  catch(): unknown {
+    return new Response("No such user.", { status: 404 });
+  }
+}
+
+@Controller("users")
+@UseGuards(AuthGuard)
+@UseInterceptors(TimingInterceptor)
+export class UsersController {
+  @Get(":id")
+  @UseFilters(UserMissingFilter)
+  read(): string {
+    throw new UserMissingError("no such user");
+  }
+}
+
+@Module({
+  controllers: [UsersController],
+  providers: [AuthGuard, TimingInterceptor, UserMissingFilter],
+})
+class AppModule {}
+
+const application = await AponiaFactory.create(AppModule);
+```
+
+A guard returning `false` refuses the request with a Problem Details `403` and
+never calls the handler. An interceptor declares `interceptBefore` and
+`interceptAfter` instead of Nest's `next.handle()`, and `interceptBefore` cannot
+short-circuit. A filter answers the types its `@Catch()` named — or anything,
+when it names none — and declines by returning `undefined` or `null`, the two
+values Elysia's error path reads as no answer, so `false`, `0`, and `""` answer
+with what they are. A declared filter is consulted for every exception its
+`@Catch()` matches, an `HttpError`, a validation `422`, and a guard's refusal
+included. Filters run most-specific-first, and the default Problem Details
+mapping is always last: an application overrides it by declaring a filter ahead
+of it, never by removing it.
+
+Every enhancer must be a declared provider in a module the controller's module
+can reach, and an undeclared one fails the boot with `MISSING_PROVIDER`. Global
+enhancers are factory options — `guards`, `interceptors`, and `filters` — rather
+than `useGlobal*` methods, because every route mounts during
+`AponiaFactory.create`; a global enhancer runs before the ones a route declares
+and resolves through the root module.
+
+All of this reaches the routes the platform mounts from a compiled plan. A
+controller registered through its own `registerRoutes` callback owns its routes'
+hooks, and a definition mounted through its own `buildPlugin` resolves nothing,
+so neither runs a declared enhancer, a global enhancer, or the default mapping.
+See the [enhancers guide](../../docs/enhancers.md).
 
 ## Routes with the native Elysia context
 
@@ -434,11 +737,38 @@ shared configured module is installed once across diamond imports. A stable
 `key` keeps module diagnostics deterministic and prevents duplicate
 registrations with the same key.
 
+### The `plugins` option
+
+An application can also mount a native plugin itself, without a module
+declaring it:
+
+```ts
+const application = await AponiaFactory.create(AppModule, {
+  plugins: [cors()],
+});
+```
+
+Each entry takes the same `.use()` path a module-registered plugin takes, on the
+same root application and at the same point in the boot — before any controller
+mounts. Entries mount before the plugins the module graph contributes, and both
+the request and the after-response phase run in mount order, so a hook an entry
+declares runs before one a module's plugin declares. An entry may be
+`undefined`, which mounts nothing: that is how a factory states a decision the
+application made, and it is not the same as an inert plugin.
+
+Nothing about a plugin mounted this way reaches the module graph — not
+`compileRootModule`, not `inspectAponiaApplication`, not the artifacts
+`aponia build` writes. `imports` is the place for a plugin a module can name,
+and this option is for the ones it cannot: a plugin a call builds, which the
+descriptor emitter declines as an `imports` entry, and a plugin chosen at boot
+from configuration the module does not hold. It never resolves from the
+container, so no entry can fail a boot.
+
 ### Typing what a plugin adds
 
 Compiling a decorated controller erases the plugin instances its module imports,
-so no plugin type reaches a handler on its own. Name the plugins in the second
-type argument of `ElysiaRouteContext` and the context types what they add:
+so no plugin type reaches a handler on its own. Name the plugins in
+`ElysiaRouteContext` and the context types what they add:
 
 ```ts
 import { Controller, Ctx, Get } from "@aponiajs/common";
@@ -564,6 +894,42 @@ A controller descriptor with a platform kind other than
 Elysia controller whose `buildPlugin` factory returns something other than an
 Elysia instance fails with `INVALID_CONTROLLER`. Both are reported during
 `AponiaFactory.create`, before the application can listen.
+
+A route that two different declarations claim — two controllers, or two handlers
+of one controller — fails with `DUPLICATE_ROUTE` while the module graph
+compiles, naming the method, the path, and both claimants. Elysia would
+otherwise resolve the repeat by whichever registration wins under `elysia.aot`,
+so the handler that answered would depend on a compilation flag. One declaration
+reached through two modules is not a collision: a dynamic module merged onto a
+decorated class reaches the controller twice and still registers one route. A
+route a native plugin provides is outside the check, because a plugin mounts
+through `use()` and a controller deliberately overriding one is Elysia's own
+behavior.
+
+## Inspecting an application
+
+`inspectAponiaApplication` projects a root module into frozen, JSON-serializable
+data — the module graph, every provider and its dependencies, every decorated
+route with its parameter bindings, and every gateway:
+
+```ts
+import { inspectAponiaApplication } from "@aponiajs/platform-elysia";
+import { AppModule } from "./src/app.module.ts";
+
+const inspection = inspectAponiaApplication(AppModule);
+console.log(inspection.routes.map((route) => `${route.method} ${route.path}`));
+```
+
+It compiles the graph without constructing a single instance, so it is safe to
+run against providers that open connections. Pass the `descriptors` artifact
+`aponia build` wrote and the root is resolved through the same selector bootstrap
+uses, so the inspection describes the graph the application actually serves; an
+artifact this release refuses is reported through the `logger` option and the
+decorated module is inspected instead. Routes registered by `elysiaController`
+and `defineElysiaController` callbacks are not included, because their routes
+only exist once the callback runs; build the application and read
+`getNativeApplication().routes` for the complete native route table. See the
+[introspection guide](../../docs/introspection.md) for the full contract.
 
 [npm package](https://www.npmjs.com/package/@aponiajs/platform-elysia) ·
 [native plugin guide](../../docs/native-plugins.md) ·

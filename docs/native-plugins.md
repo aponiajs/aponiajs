@@ -59,6 +59,49 @@ The `key` is the plugin's identity in the module graph. Two modules importing
 the same keyed plugin install it once; two different plugins sharing one key
 raise `DUPLICATE_MODULE` at compile time, before the server listens.
 
+## The `plugins` option
+
+A plugin whose source no module can name still has somewhere to go:
+`AponiaFactory.create` mounts it directly, beside the ones the module graph
+contributes.
+
+```ts
+const application = await AponiaFactory.create(AppModule, {
+  plugins: [cors()],
+});
+```
+
+What it mounts is the same `.use()` on the same root application, at the same
+point in the boot: before any controller mounts. Entries mount before the
+plugins the module graph contributes, and both the request and the
+after-response phase run in mount order, so a hook an entry declares runs before
+one a module's plugin declares.
+
+What it is not is part of the module graph. No module declares it, so nothing
+about it reaches `compileRootModule`, `inspectAponiaApplication`, or the
+artifacts `aponia build` writes. `imports` stays the place for a plugin a module
+can name (`defineElysiaPlugin`, `ElysiaPluginModule.register`); this option is
+for the plugins a module cannot:
+
+- the plugin a call builds. `aponia build` lowers a module only when every
+  `imports` entry names its declaration with a single identifier, so
+  `SomeModule.register(...)` in an `imports` array declines the module that
+  wrote it, and a declined _root_ leaves the committed descriptor artifact
+  serving a graph the registration is not in.
+- the plugin the application decides on at boot, from a configuration the
+  module does not hold.
+
+An entry may be `undefined`, and one that is mounts nothing. That is the shape a
+factory states a decision with: a registration the application chose not to
+enable answers `undefined` rather than an inert plugin, so a boot cannot mistake
+it for an enabled one. Every other entry reaches Elysia unchanged, and nothing
+resolves from the container on this path — an entry is the plugin value itself,
+not a token, so no entry can fail a boot.
+
+[Typing what a plugin adds](#typing-what-a-plugin-adds) works the same way here
+as it does for an import; the type travels on the handler's annotation rather
+than through a module registration the plugin has no part in.
+
 ## The no-annotation path
 
 When a plugin belongs to one controller, compose it in an

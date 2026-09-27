@@ -20,8 +20,59 @@ aponia generate controller users
 aponia g s users
 aponia g resource users --type rest
 aponia g router health --no-spec
+aponia build
 aponia --version
 ```
+
+The build command generates code from an application's own source. It parses
+every file under the configured source root and writes two modules beside it:
+`invokers.generated.ts`, which holds the route invokers the runtime would
+otherwise compile at startup, and `descriptors.generated.ts`, which declares the
+module graph as data so the application can boot without its decorators being
+lowered. A declared route states the validator its `@Validation()` model was
+declared with rather than the model class, and a declared gateway states its
+path, handlers, and server properties as a `defineElysiaWebSocketGateway` plan,
+so booting from the descriptor module reads no decorator metadata for either.
+Both cover what they can prove and report what they cannot, so an
+application chooses how far to go: pass `controllerInvokerArtifact` and
+`moduleDescriptorArtifact` to `AponiaFactory.create` while still naming its root
+module class, or ignore both files and keep booting exactly as before. Each file
+records the framework release it was built against, and the runtime refuses one
+from another release — and a descriptor module that holds no declaration for the
+module the application names — so a generated file that is not current costs a
+cold start rather than serving a graph the application no longer declares. What
+it writes is laid out by the formatter your project already uses when it has one,
+and by the `oxfmt` this package depends on at an exact version when it does not,
+so both modules are committed application source a `vp check` accepts rather
+than build output to hide from it.
+
+The same generation is available as a Bun plugin, so a bundle cannot serve a
+stale artifact:
+
+```ts
+// scripts/build.ts
+import { aponiaBuildPlugin } from "@aponiajs/cli";
+
+const result = await Bun.build({
+  entrypoints: ["./src/main.ts"],
+  outdir: "./dist",
+  target: "bun",
+  plugins: [aponiaBuildPlugin()],
+});
+if (!result.success) process.exit(1);
+```
+
+It runs both generators in Bun's `onStart` hook — before the bundler resolves
+anything — prints the same change lines `aponia build` prints, and fails the
+build when generation fails. A project created by `aponia new` ships that script
+as `scripts/build.ts`, and both generated modules are committed, so a freshly
+generated application passes `controllerInvokerArtifact` and
+`moduleDescriptorArtifact` to `AponiaFactory.create` from its own `src/main.ts`,
+serves through generated invokers, and boots from the declared module graph
+before any build has run. `bun run build` then refreshes them rather than
+creating them. Registering it is opt-in for an application you already have, and
+`aponia build`
+still generates without bundling.
 
 The generate command supports the complete built-in Nest schematic catalog:
 application, library, class, controller, decorator, filter, gateway, guard,

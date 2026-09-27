@@ -1,18 +1,45 @@
-import { AponiaError, Logger, tokenName, type LoggerService } from "@aponiajs/common";
+import {
+  AponiaError,
+  Logger,
+  tokenName,
+  type ClassToken,
+  type EnhancerMetadata,
+  type LoggerService,
+  type Token,
+} from "@aponiajs/common";
 import { createContainer } from "@aponiajs/core";
 import { Elysia, type AnyElysia } from "elysia";
 import {
   isElysiaController,
   registerElysiaControllerRoutes,
 } from "../controllers/controller-definition.ts";
+import {
+  collectEnhancerDeclarations,
+  resolveEnhancers,
+  type InterceptorHalves,
+  type MountedExceptionHandling,
+  type MountedRouteEnhancers,
+  type ResolvedControllerEnhancers,
+} from "../controllers/enhancer-resolver.ts";
 import type { RuntimeElysiaController } from "../controllers/controller.types.ts";
-import { compileRootModule } from "../modules/module-compiler.ts";
+import { createDefaultExceptionFilter } from "../errors/default-exception-filter.ts";
+import { compileRootModule, isModuleDefinition } from "../modules/module-compiler.ts";
 import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
+import { selectRootModuleDescriptor } from "../modules/module-descriptor-artifact.ts";
 import { getElysiaPlugin, isElysiaPluginModule } from "../plugins/plugin-module.ts";
+import { selectInvokerArtifact } from "../routing/invoker-artifact.ts";
+import type { AponiaControllerInvokerFactory } from "../routing/route-compiler.types.ts";
+import { registerCompiledElysiaRoutes } from "../routing/route-compiler.ts";
 import {
   compileElysiaWebSocketGateways,
   registerElysiaWebSocketGateways,
 } from "../websockets/websocket-gateway.ts";
+import { aponiaVersion } from "../version.ts";
+import {
+  attachApplicationDiagnostics,
+  createApplicationDiagnostics,
+} from "./application-diagnostics.ts";
+import type { AponiaCallbackRouteDiagnostics } from "./application-diagnostics.types.ts";
 import type { ApplicationBootstrapResult } from "./application-bootstrap.types.ts";
 import type {
   AponiaApplicationOptions,
@@ -31,7 +58,32 @@ export async function bootstrapAponiaApplication(
   const logger = createSystemLogger(options.logger);
   logger?.log("Starting Aponia application...", "AponiaFactory");
 
-  const compiledRootModule = compileRootModule(rootModule);
+  // Resolved once, before any controller mounts, so a refused artifact costs a
+  // single log line rather than one lookup per controller. The decision is kept
+  // whole, because a boot has to be able to say not only that it compiled its
+  // own binding but why the artifact could not supply one.
+  const invokerSelection = selectInvokerArtifact(options.invokers, aponiaVersion, logger);
+
+  // The generated descriptors are the whole module graph, so the root is chosen
+  // once, before anything is compiled: a refused artifact leaves the application
+  // it named in place. The selection carries the artifact's own release stamp,
+  // which is what the record publishes below: "an artifact supplied this graph"
+  // and "the release that wrote it" are two different facts, and only the
+  // selector can state the second.
+  const rootSelection = selectRootModuleDescriptor(
+    options.descriptors,
+    rootModule,
+    aponiaVersion,
+    logger,
+  );
+  const compiledRootModule = compileRootModule(rootSelection.rootModule);
+  // Which graph served the application is decided by the shape of the root the
+  // selector resolved, never by re-reading the artifact: a descriptor is data
+  // the container compiles as it stands, while a class and a dynamic module both
+  // have their decorators read and lowered, so both are the decorated path.
+  const graph: "declared" | "decorated" = isModuleDefinition(rootSelection.rootModule)
+    ? "declared"
+    : "decorated";
   const container = createContainer(compiledRootModule);
   const webSocketGateways = compileElysiaWebSocketGateways(container.graph.modules);
   const baseApplication = new Elysia({
@@ -47,6 +99,21 @@ export async function bootstrapAponiaApplication(
     );
   }
 
+  // The application's own plugins mount here, beside the module-graph pass and
+  // for the same reason: a plugin contributes routes and request context, so it
+  // is in place before any controller mounts beside it. They mount first
+  // because the application named them, and both hook phases run in mount
+  // order, so a hook they declare runs before one a module's plugin declares.
+  // Nothing resolves from the container on this path — an entry is the plugin
+  // value itself, not a token — so no entry can fail the boot, and one that is
+  // `undefined` mounts nothing at all.
+  for (const plugin of options.plugins ?? []) {
+    if (plugin === undefined) {
+      continue;
+    }
+    nativeApplication.use(plugin);
+  }
+
   for (const module of container.graph.modules) {
     container.initializeModule(module);
     if (isElysiaPluginModule(module)) {
@@ -54,6 +121,84 @@ export async function bootstrapAponiaApplication(
     }
     logger?.log(`${module.id} dependencies initialized`, "InstanceLoader");
   }
+
+  // The global enhancers are the application's own declaration, so they resolve
+  // once, through the root module, rather than per controller: one instance
+  // serves every route whatever module it was mounted from, and a class the root
+  // cannot reach fails the boot here with the same MISSING_PROVIDER a missing
+  // dependency raises. Resolution waits for the pass above so that a global
+  // enhancer is constructed after the providers it may depend on, and it happens
+  // whether or not any controller mounts: an application that declares a global
+  // enhancer it cannot resolve is refused at boot, not at its first request.
+  // The declaration is kept as data beside the resolution it lowers into,
+  // because the boot's record publishes it: a plan states what its route
+  // declares, and the declaration is the other half of the hook a route runs.
+  const globalEnhancerDeclarations: EnhancerMetadata = Object.freeze({
+    guards: Object.freeze([...(options.guards ?? [])]),
+    interceptors: Object.freeze([...(options.interceptors ?? [])]),
+    filters: Object.freeze([...(options.filters ?? [])]),
+  });
+  const globalEnhancers: ResolvedControllerEnhancers = resolveEnhancers(
+    container,
+    container.graph.root,
+    globalEnhancerDeclarations,
+  );
+
+  // Elysia runs a route's own `error` array only while composing routes ahead of
+  // time: its dynamic dispatcher, which `aot: false` selects, consults the root
+  // application's single `error` hook and each exception's own `toResponse()`
+  // and never the array a route carries. The filters a route declares and the
+  // mapping built below therefore do not run under that policy, and an
+  // unhandled failure answers Elysia's native `500` carrying the exception's
+  // message — the leak the mapping exists to prevent. The policy is a
+  // compatibility escape hatch, so the boot states what it disabled instead of
+  // leaving an application to discover it from a leaked message.
+  if (options.elysia?.aot === false) {
+    logger?.warn(
+      "Elysia's AOT compilation is disabled (elysia: { aot: false }), so declared exception filters " +
+        "and the default Problem Details mapping never run: an unhandled failure answers Elysia's " +
+        "native 500 carrying the exception's message.",
+      "RoutesResolver",
+    );
+  }
+
+  // The Problem Details mapping every route carries last is built once, from
+  // the logger this boot reports on, and travels with each mount beside the
+  // global enhancers: a route's `error` array is assembled while it mounts, so
+  // this is the only place a boot's own mapping exists. The logger travels with
+  // it because the wrapper around each declared filter reports a filter that
+  // threw where an application reads its logs, and it has nowhere else to.
+  //
+  // The map is created here, beside the exception handling it belongs to,
+  // because it is that mapping's own record: the `Response` the mapping answers
+  // with is not on the after-response context, so the exception it decided on is
+  // readable afterwards only where it wrote it down. It is one boot's — a
+  // second boot creates a second map — and it is published on the boot record
+  // below rather than frozen into it, because it keeps receiving the exceptions
+  // the mapping answers.
+  const mappedExceptions = new WeakMap<Request, string>();
+  const exceptionHandling: MountedExceptionHandling = Object.freeze({
+    defaultFilter: createDefaultExceptionFilter(logger, mappedExceptions),
+    logger,
+  });
+
+  // The facts the record publishes that are not readable afterwards, so the
+  // mounts that decide them collect them here. Which property keys a supplied
+  // invoker bound is settled one route at a time while the route registers, a
+  // callback's routes are named by the callback that mounted them, which no
+  // entry of the mounted table remembers, and the halves an interceptor class
+  // implements are legible only while the instance that implements them is in
+  // hand — a half declared as a class field is an own property of that instance
+  // and the token a plan carries never states it.
+  const generatedInvokers = new Map<Token<unknown>, ReadonlySet<string | symbol>>();
+  const callbackRoutes: AponiaCallbackRouteDiagnostics[] = [];
+  const interceptorHalves = new Map<ClassToken<unknown>, InterceptorHalves>();
+  // The application's own declaration resolves first, so it is collected first.
+  // Both scopes merge into one map because a class declares one set of halves
+  // wherever it is named: a class resolved at both scopes contributes the same
+  // two booleans twice, so the later merge overwrites an identical value rather
+  // than correcting an earlier one, and no guard is needed to say so.
+  collectInterceptorHalves(interceptorHalves, globalEnhancers.halves);
 
   for (const module of container.graph.modules) {
     for (const controller of module.controllers) {
@@ -67,10 +212,43 @@ export async function bootstrapAponiaApplication(
       }
 
       const instance = container.instantiateController(module, controller);
+      // Every enhancer this controller's routes declare is resolved here, while
+      // the controller mounts: an undeclared or unreachable class fails the
+      // mount with the same MISSING_PROVIDER a missing dependency raises, and
+      // each distinct class is resolved once however many routes name it.
+      const resolvedEnhancers = resolveEnhancers(
+        container,
+        module,
+        collectEnhancerDeclarations(controller.compiledRoutes ?? []),
+      );
+      collectInterceptorHalves(interceptorHalves, resolvedEnhancers.halves);
+      // The two resolutions travel together from here: every path this
+      // controller's routes mount through carries both, which is what makes a
+      // global enhancer reach a route mounted through any of them.
+      const mountedEnhancers: MountedRouteEnhancers = Object.freeze({
+        global: globalEnhancers,
+        controller: resolvedEnhancers,
+        exceptionHandling,
+      });
       if (typeof controller.registerRoutes === "function") {
         const routeStart = nativeApplication.routes.length;
-        registerElysiaControllerRoutes(controller, nativeApplication, instance);
-        logControllerRoutes(logger, controller, nativeApplication.routes.slice(routeStart));
+        const generatedKeys = registerControllerRoutes(
+          controller,
+          nativeApplication,
+          instance,
+          invokerSelection.invokers,
+          mountedEnhancers,
+        );
+        // The table grew by exactly the routes this controller mounted, which is
+        // the slice the boot reports on `RoutesResolver` and the only observation
+        // of a callback's own routes that names their controller.
+        const mountedRoutes = nativeApplication.routes.slice(routeStart);
+        logControllerRoutes(logger, controller, mountedRoutes);
+        if (controller.compiledRoutes === undefined) {
+          collectCallbackRoutes(callbackRoutes, module.id, controller, mountedRoutes);
+        } else if (generatedKeys !== undefined) {
+          generatedInvokers.set(controller.token, generatedKeys);
+        }
         continue;
       }
 
@@ -83,10 +261,50 @@ export async function bootstrapAponiaApplication(
         );
       }
 
+      const pluginRouteStart = nativeApplication.routes.length;
       logControllerRoutes(logger, controller, plugin.routes);
       nativeApplication.use(plugin);
+      collectCallbackRoutes(
+        callbackRoutes,
+        module.id,
+        controller,
+        nativeApplication.routes.slice(pluginRouteStart),
+      );
     }
   }
+
+  // The boot's own record, attached to the application it returns: which root
+  // the container compiled, what it decided about the invoker artifact, which
+  // release supplied each artifact it adopted, the compiled root, every plan the
+  // controllers mounted from with the binding that serves it, the routes a
+  // callback added, and the application's own enhancer declaration. Those are
+  // the facts a consumer cannot recover from the mounted application — a route
+  // keeps its method and path, never the module, the controller, or the property
+  // key that declared it — and the record is attached here, once the container
+  // holds every plan, rather than after the gateway work, which mounts through
+  // its own path.
+  attachApplicationDiagnostics(
+    nativeApplication,
+    createApplicationDiagnostics({
+      framework: aponiaVersion,
+      graph,
+      invokers: {
+        accepted: invokerSelection.invokers !== undefined,
+        reason: invokerSelection.reason,
+      },
+      artifacts: {
+        invokers: invokerSelection.builtBy,
+        descriptors: rootSelection.builtBy,
+      },
+      rootModule: compiledRootModule,
+      modules: container.graph.modules,
+      generatedInvokers,
+      callbackRoutes,
+      globalEnhancers: globalEnhancerDeclarations,
+      mappedExceptions,
+      interceptorHalves,
+    }),
+  );
 
   await nativeApplication.modules;
   await registerElysiaWebSocketGateways(nativeApplication, container, webSocketGateways);
@@ -99,6 +317,97 @@ export async function bootstrapAponiaApplication(
 
   await nativeApplication.modules;
   return Object.freeze({ nativeApplication, logger });
+}
+
+/**
+ * Adds one scope's interceptor halves to the boot's own collection.
+ *
+ * A class declares one set of halves wherever it is named, so a class resolved
+ * both globally and on a route's own list contributes the same two booleans
+ * twice: this overwrites an identical value rather than resolving a conflict,
+ * which is why nothing here compares the two. The collection is the boot's
+ * working map rather than a record field — the record copies it, once every
+ * mount that writes into it is done.
+ */
+function collectInterceptorHalves(
+  collected: Map<ClassToken<unknown>, InterceptorHalves>,
+  halves: ReadonlyMap<ClassToken<unknown>, InterceptorHalves>,
+): void {
+  for (const [token, declared] of halves) {
+    collected.set(token, declared);
+  }
+}
+
+/**
+ * Registers one controller on the root application, preferring build-time
+ * generated invokers when the artifact supplied factories for its token.
+ *
+ * A controller whose descriptor carries a compiled plan is mounted from that
+ * plan, which is the one place the enhancers resolved for this controller exist:
+ * a plan's hooks are built while it mounts, and nothing else can state them. It
+ * returns the property keys a supplied invoker bound, which is the mount's own
+ * decision, and `undefined` for a controller mounted through its registration
+ * callback — the path that compiles no plan and consults no invoker. A
+ * controller without one mounts through the callback it was defined with, and
+ * that callback owns its routes' hooks.
+ */
+function registerControllerRoutes(
+  controller: RuntimeElysiaController,
+  application: Elysia,
+  instance: unknown,
+  invokers: ReadonlyMap<ClassToken<unknown>, AponiaControllerInvokerFactory> | undefined,
+  mountedEnhancers: MountedRouteEnhancers,
+): ReadonlySet<string | symbol> | undefined {
+  const compiledRoutes = controller.compiledRoutes;
+  if (!compiledRoutes) {
+    registerElysiaControllerRoutes(controller, application, instance);
+    return undefined;
+  }
+
+  // Elysia controllers are always class-backed, which is what makes the token
+  // safe as a minification-proof key.
+  const controllerToken = controller.token as ClassToken<unknown>;
+  const createInvokers = invokers?.get(controllerToken);
+  return registerCompiledElysiaRoutes(
+    application,
+    controllerToken,
+    instance,
+    compiledRoutes,
+    mountedEnhancers,
+    createInvokers?.(instance as never),
+  );
+}
+
+/**
+ * Records the routes one controller's own callback added to the mounted table.
+ *
+ * The callback built them from its instance and registered them itself, so the
+ * platform compiled no plan and the table keeps no trace of the class property
+ * that served them. What it does keep is the controller, through this call
+ * site: the slice between the two table lengths was added by one controller of
+ * one module. The binding is stated rather than reasoned about — an invoker
+ * artifact substitutes handlers in the platform's own compilation, and a
+ * callback registers through the native API, so no artifact reaches these
+ * routes.
+ */
+function collectCallbackRoutes(
+  routes: AponiaCallbackRouteDiagnostics[],
+  moduleId: string,
+  controller: RuntimeElysiaController,
+  mountedRoutes: readonly { readonly method: string; readonly path: string }[],
+): void {
+  const controllerName = tokenName(controller.token);
+  for (const route of mountedRoutes) {
+    routes.push(
+      Object.freeze({
+        module: moduleId,
+        controller: controllerName,
+        source: "compiled",
+        method: String(route.method),
+        path: route.path,
+      }),
+    );
+  }
 }
 
 function createSystemLogger(

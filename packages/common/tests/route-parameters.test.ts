@@ -74,3 +74,33 @@ test("rejects a decorator applied outside a method parameter", () => {
     "can only decorate a route handler parameter",
   );
 });
+
+class OutOfOrderController {
+  read(_first: unknown, _second: unknown, _third: unknown): string {
+    return "read";
+  }
+
+  other(_first: unknown): string {
+    return "other";
+  }
+}
+
+Param("third")(OutOfOrderController.prototype, "read", 2);
+Body()(OutOfOrderController.prototype, "read", 0);
+
+test("sorts parameters that were decorated out of order and isolates each method", () => {
+  const parameters = getRouteParameterMetadata(OutOfOrderController, "read");
+  const repeated = getRouteParameterMetadata(OutOfOrderController, "read");
+
+  expect(parameters).toEqual([
+    { index: 0, kind: "body", property: undefined },
+    { index: 2, kind: "params", property: "third" },
+  ]);
+  expect(repeated).toEqual(parameters);
+  expect(repeated).not.toBe(parameters);
+  expect(getRouteParameterMetadata(OutOfOrderController, "other")).toEqual([]);
+
+  class ChildOutOfOrderController extends OutOfOrderController {}
+
+  expect(getRouteParameterMetadata(ChildOutOfOrderController, "read")).toEqual([]);
+});

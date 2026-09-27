@@ -28,9 +28,27 @@ export type {
   RouteMetadata,
   RouteMethodDecorator,
 } from "./decorators/decorators.types.ts";
+export {
+  Catch,
+  UseFilters,
+  UseGuards,
+  UseInterceptors,
+  getCatchMetadata,
+  getEnhancerMetadata,
+} from "./enhancers/enhancer-decorators.ts";
+export type { EnhancerMetadata } from "./enhancers/enhancer-decorators.types.ts";
+export type {
+  AponiaInterceptor,
+  ArgumentsHost,
+  CanActivate,
+  ExceptionFilter,
+  ExecutionContext,
+  HttpArgumentsHost,
+} from "./enhancers/enhancer.types.ts";
 export { AponiaError } from "./errors/aponia-error.ts";
 export type { AponiaErrorCode } from "./errors/aponia-error.types.ts";
 export { ConsoleLogger, Logger } from "./logging/console-logger.ts";
+export { renderLogValue } from "./logging/log-value.ts";
 export type { ConsoleLoggerOptions, LoggerService, LogLevel } from "./logging/logger.types.ts";
 export { defineModule } from "./modules/module.ts";
 export type { DefinedModule, ModuleDefinition, ModuleOptions } from "./modules/module.types.ts";
