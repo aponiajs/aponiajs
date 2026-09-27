@@ -40,7 +40,7 @@ Listed most likely to bite first. Each gets its test in the owning task.
 1. **A pending entry that is never superseded must not read as an answered request.** A consumer polling `/requests` sees `status: null`; nothing may render that as `0`, `undefined`, or an omitted key, and the doc must say the absence means "no answer observed".
 2. **A poller that already read a pending entry must be able to learn it was superseded.** Grouping by `id` is the whole mechanism; if `id` is unstable, missing, or differs between the two entries, the consumer holds a stale row forever.
 3. **`capture: false` must still answer an empty record**, not no endpoint, and must not write pending entries. The distinction between the request policy and the logger option is load-bearing.
-4. **A logger whose first assignment refuses must serve no `/logs`**, while one that refuses a later assignment must serve a stream naming the levels it reached. Both sides of that boundary need a case.
+4. **A logger no level could be patched on must serve no `/logs`**, while one where at least one level was patched must serve a stream naming the levels it reached. **The boundary is "no level patched", not "the first level refused"** — a logger whose `log` refuses but whose `fatal` accepts does get a stream, and saying otherwise is a claim the code does not support. This wording was wrong here once and reached eight shipped documents before a whole-branch review caught it. Both sides of the boundary need a case.
 5. **A foreign or older diagnostics record must not make `/flow` or `/requests` throw.** Those handlers run inside `Bun.serve`, where a throw is a failed request; a record without `interceptorHalves` or without `mappedExceptions` must fall back, not crash.
 
 ---
@@ -279,7 +279,7 @@ refusing leaves `warn`, `debug`, and `verbose` after it — the levels that prov
 continued. Confirm `verbose` is actually present on the concrete `Logger` before
 asserting it; if it is not, assert on `warn` instead and say why in the case.
 
-test("a logger whose first assignment refuses serves no endpoint", async () => {
+test("a logger no level could be patched on serves no endpoint", async () => {
 const logger = Object.freeze(new Logger("Test", { timestamp: false }));
 const application = await bootLogsApplication({ logger });
 
