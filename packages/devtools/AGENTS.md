@@ -434,10 +434,9 @@ runtime boundary it describes.
   hook, leave nothing rather than a partial entry. `arrive` also refuses to stamp
   while the policy records nothing, and while no boot has opened a record for the
   application that received the request.
-- `durationMs` measures the request from this package's arrival hook to the entry
-  of its completion hook, and it is documented as what it is rather than as what
-  it would ideally be: the opening stamp is the first statement of `arrive` and
-  the closing one precedes every read the completion makes, so the route, the
+- `durationMs` measures the request from this package's arrival hook to a reading
+  the completion path takes before every read it makes of the answer, and it is
+  documented as what it is rather than as what it would ideally be: the route, the
   status, and the parsed body are outside the measurement and the tool does not
   charge the application for reading its own record. It does not exclude
   everything this package does, and that remainder is stated: the arrival hook's

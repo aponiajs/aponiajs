@@ -28,7 +28,7 @@ export interface RequestRecord {
   readonly url: string;
   /** The status the answer went out with. */
   readonly status: number;
-  /** How long the application took to answer, in milliseconds. */
+  /** From this package's arrival hook to the completion path's reading, in milliseconds. */
   readonly durationMs: number;
   /** When the request arrived, as an ISO-8601 timestamp. */
   readonly timestamp: string;
