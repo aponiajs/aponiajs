@@ -28,7 +28,10 @@ const publishedSurfaces = [
  * stamp left behind by an earlier release describes an artifact this release
  * would refuse.
  *
- * The keys are an allow-list rather than a scan for every version-shaped string,
+ * The keys are the ones this repository stamps its own release under — `framework`
+ * on a generated invoker or descriptor artifact, and `descriptors` on the boot
+ * record that reports which descriptor artifact served a boot. They are an
+ * allow-list rather than a scan for every version-shaped string,
  * because the same documents cite other projects' versions that are correct as
  * they stand: `docs/elysia-compatibility.md` pins `^1.4.29` and `^1.4.30` for
  * Elysia, and the platform's own guide names Elysia 2's `2.0.0-beta.19`. A guard
@@ -37,7 +40,7 @@ const publishedSurfaces = [
  * and that is the boundary: a release named in prose, or under a key a generated
  * artifact does not write, is not checked here.
  */
-const releaseKeys = ["framework", "aponiaVersion"] as const;
+const releaseKeys = ["framework", "descriptors"] as const;
 
 /** The stamp a snippet writes for one of those keys, in single or double quotes. */
 function stampsOf(content: string): readonly string[] {
