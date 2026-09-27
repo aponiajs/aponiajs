@@ -1,4 +1,4 @@
-import type { LoggerService } from "@aponiajs/common";
+import { renderLogValue, type LoggerService } from "@aponiajs/common";
 import { ElysiaCustomStatusResponse } from "elysia";
 import type { ResolvedFilter } from "../controllers/enhancer-resolver.ts";
 import type { ElysiaErrorHook } from "../routing/route-compiler.types.ts";
@@ -12,19 +12,6 @@ import { httpErrors } from "./http-error.ts";
  * log, not for whoever sent the request.
  */
 const unhandledFailureDetail = "The server could not complete this request.";
-
-/**
- * The literal a thrown value this release cannot project at all is stated as.
- *
- * The devtools log stream restates it, with the projection below, in
- * `packages/devtools/src/logging/log-tap.ts`: the message `/requests` publishes
- * for an unhandled failure is compared against the line `/logs` states for it, so
- * a value neither surface can project has to read the same on both. The two
- * packages do not depend on each other, so the constant and the branches of the
- * projection are kept in step by hand and held by
- * `packages/devtools/tests/requests.test.ts`.
- */
-const unprojectableValue = "[unprojectable]";
 
 /**
  * Whether one resolved filter answers one thrown value.
@@ -178,7 +165,7 @@ function announceLoggerFailure(loggerFailure: unknown, context: string): void {
   try {
     process.stderr.write(
       `[Aponia] ${process.pid} - ERROR [${context}] the configured logger threw while ` +
-        `reporting a failure: ${exceptionMessage(loggerFailure)}\n`,
+        `reporting a failure: ${renderLogValue(loggerFailure)}\n`,
     );
   } catch {
     // Nothing left to report to.
@@ -196,76 +183,25 @@ function announceLoggerFailure(loggerFailure: unknown, context: string): void {
  * record's field is named for — `mappedExceptions`, keyed by the request the
  * mapping saw.
  *
- * The projection is the devtools log stream's own, restated here branch for
- * branch rather than shared because the two live in packages that do not depend
- * on each other. Restating it in full is the point: `/requests` compares its
- * entry against the line `/logs` states for the same exception, so a branch that
- * differed would make the two surfaces disagree about one failure, and the
- * devtools cases that throw a value per branch are what hold them together.
- *
- * It is also the reason this projection may not throw. The mapping writes this map
- * and then calls `logger.error(...)`, which runs the same projection through the
- * devtools tap, all inside a route-local `error` hook: a throw here would leave
- * the hook and replace this mapping's Problem Details response with the engine's
- * own page. The write comes first for that reason too: a logger that throws as it
- * reports the failure would otherwise cost `/requests` the fact together with the
- * answer, and the record is the only place that fact can come from. A value that
- * refuses both `JSON.stringify` and the plain string form is stated as a literal
- * rather than allowed to throw.
+ * The projection is `@aponiajs/common`'s `renderLogValue`, the same call the
+ * devtools log stream renders a line through, so `/requests` and `/logs` cannot
+ * disagree about one failure and the literal a value that refuses everything is
+ * stated as is the same word on both. It is total, which is why it may be called
+ * here at all: this runs inside a route-local `error` hook whose return value is
+ * the response, and this call is not guarded — a throw out of it would leave the
+ * hook and replace the application's Problem Details answer with the engine's own
+ * page. The logger call below runs the same rendering under this package's own
+ * guard, so a refusal there is announced on `stderr` instead; the order still
+ * matters, because a logger that throws as it reports the failure would otherwise
+ * cost `/requests` the fact, and this record is the only place that fact can come
+ * from.
  */
 function recordMappedException(
   mappedExceptions: WeakMap<Request, string>,
   request: Request,
   error: unknown,
 ): void {
-  mappedExceptions.set(request, exceptionMessage(error));
-}
-
-/** The one-line account of a thrown value, which never throws whatever it is handed. */
-function exceptionMessage(error: unknown): string {
-  if (typeof error === "string") {
-    return error;
-  }
-
-  try {
-    if (typeof error === "function") {
-      return error.name || "(anonymous)";
-    }
-    if (error instanceof Error) {
-      // The name and the message, never the stack: a stack describes the internals
-      // of the running application, and a record a page reads is no place for one.
-      return `${error.name}: ${error.message}`;
-    }
-
-    return JSON.stringify(error) ?? String(error);
-  } catch {
-    // Every read above can refuse, and the ones that were noticed first are not
-    // the only ones that can: `JSON.stringify` refuses a value that refers to
-    // itself or whose `toJSON` throws, `instanceof` refuses a `Proxy` whose
-    // `getPrototypeOf` throws, and the `name` of a function refuses when it is a
-    // getter that throws. The whole body is guarded rather than the reads that
-    // were thought of, so this holds for the next shape too. `String` is tried
-    // once more on its own, because a value that refused only `JSON.stringify`
-    // still has a plain form worth stating.
-    return plainString(error);
-  }
-}
-
-/**
- * The plain string form of a value, or the literal when even that refuses.
- *
- * This is the last read the projection makes, and it is guarded on its own
- * because a value can refuse the plain string form as readily as it refused
- * everything before it. A value whose `toPrimitive` or `toString` throws is a
- * value this release cannot state, and saying so in a literal is the honest
- * account where a throw is a different answer rather than a report of one.
- */
-function plainString(value: unknown): string {
-  try {
-    return String(value);
-  } catch {
-    return unprojectableValue;
-  }
+  mappedExceptions.set(request, renderLogValue(error));
 }
 
 /**

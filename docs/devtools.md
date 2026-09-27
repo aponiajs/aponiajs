@@ -453,11 +453,14 @@ different fact from a request that carried none. Four further rules:
   answer: the mapping answers one fixed sentence for every unhandled failure, and
   its `Response` is not on the after-response context either, so the boot records
   the exception the mapping answered, and the entry states the same one-line
-  account of it that `/logs` states — the name and the message, and no stack. A
-  thrown value neither surface can state — one that refuses both the JSON form and
-  the plain string form — is stated as the literal `[unprojectable]` on both
-  rather than allowed to throw, because that projection runs inside the logger
-  method the mapping calls before it answers. The
+  account of it that `/logs` states — the name and the message, and no stack.
+  Both surfaces state it through one definition — `@aponiajs/common`'s
+  `renderLogValue` — rather than through a copy each, so they cannot disagree about
+  one failure. A thrown value neither can state — one that refuses both the JSON
+  form and the plain string form — is stated as the literal `[unrenderable]` rather
+  than allowed to throw: the mapping renders it in the route's own `error` hook,
+  before the answer is built, and the logger call beneath that render runs the same
+  rendering through this package's tap. The
   mapping's record is consulted only where the published body yielded nothing
   readable, so it never replaces what the client received. Nothing is guessed
   where neither source states a message: a failure whose answer published none and
@@ -580,14 +583,6 @@ These are the boundaries this package states rather than hides.
   hook's URL and header capture, and the build and write of the pending entry
   that same hook records, all sit between the two stamps. See
   [`/requests`](#requests).
-- **`[unprojectable]` and its projection are duplicated across two packages.**
-  `@aponiajs/platform-elysia` restates the devtools log stream's projection branch
-  for branch, because the two packages do not depend on each other and
-  `/requests` compares its entry against the line `/logs` states for the same
-  exception. The parity test that holds the copies together runs over three thrown
-  values — an `Error`, a value that is not one, and one neither projection can
-  state — so a fourth branch added to only one copy would be silent. That is the
-  accepted risk of keeping two copies rather than sharing one.
 - **The request record states what reached it, not everything that was asked of
   it.** A request refused before a route matched has no route identity: the entry
   carries the path it asked for and names no controller, module, or handler. A

@@ -1,4 +1,4 @@
-import type { LoggerService, LogLevel } from "@aponiajs/common";
+import { renderLogValue, type LogLevel, type LoggerService } from "@aponiajs/common";
 import type { LogBuffer, LogEntry } from "./log-buffer.types.ts";
 
 /**
@@ -201,22 +201,25 @@ function rememberTap(logger: LoggerService, stream: TappedLogStream): void {
 /**
  * One entry, as `/logs` states it.
  *
- * `message` is projected to text here rather than left to `JSON.stringify`,
- * because a logger's arguments are `unknown` by contract: an `Error` would
- * serialize as `{}`, a function as nothing at all, and a value that refers to
- * itself would fail the payload on the request that asked for it. The projection
- * is the console logger's where it has one — a string is its own text, a function
- * is its name — and JSON for everything else, with the plain string form as the
- * floor and a literal below it for a value that refuses both. A line is reported
- * as the caller wrote it: the text is not folded to one line, because a devtools
- * stream states what happened rather than editing it.
+ * `message` is rendered by `@aponiajs/common`'s `renderLogValue` rather than left
+ * to `JSON.stringify`, because a logger's arguments are `unknown` by contract: an
+ * `Error` would serialize as `{}`, a function as nothing at all, and a value that
+ * refers to itself would fail the payload on the request that asked for it. It is
+ * one definition rather than a copy of one: `/requests` states the exception the
+ * platform's mapping recorded through the same call, so the two surfaces cannot
+ * disagree about a failure they both report, and the literal a value that refuses
+ * everything is stated as is the same word on both by construction.
  *
- * The projection may not throw, whatever it is handed, and that is a rule rather
- * than a nicety: it runs inside a patched logger method, and one caller of a
- * logger method is the platform's error hook reporting an unhandled failure. A
- * throw there would replace the application's answer with the engine's own page.
- * Only the `typeof` test is outside the guard, because `typeof` is the one read
- * that cannot be made to throw; every read of the value itself is inside it.
+ * A line is reported as the caller wrote it: the text is not folded to one line,
+ * because a devtools stream states what happened rather than editing it. The
+ * rendering may not throw — it runs inside a patched logger method, and one caller
+ * of a logger method is the platform's error hook reporting an unhandled failure —
+ * and `renderLogValue` is total, so there is nothing here to catch. What a throw
+ * would cost has moved rather than gone: the platform's error hook guards the
+ * logger call that reaches this tap, so a throw on that path is caught, announced
+ * on `stderr`, and the request is answered all the same, while the line itself goes
+ * unrecorded, because the entry is built before the logger is called; every other
+ * caller of a logger method carries the throw, as it did before the tap existed.
  */
 function createLogEntry(
   level: LogLevel,
@@ -226,7 +229,7 @@ function createLogEntry(
   return Object.freeze({
     level,
     context: namedContext(optionalParameters),
-    message: projectMessage(message),
+    message: renderLogValue(message),
     timestamp: new Date().toISOString(),
   });
 }
@@ -241,68 +244,4 @@ function namedContext(optionalParameters: readonly unknown[]): string {
   const last = optionalParameters.at(-1);
 
   return typeof last === "string" ? last : "";
-}
-
-/**
- * The literal a thrown value this release cannot project at all is stated as.
- *
- * The platform restates it, with this projection, in
- * `packages/platform-elysia/src/errors/default-exception-filter.ts`: the message
- * `/requests` publishes for an unhandled failure is compared against the line
- * this stream states for it, so a value neither surface can project has to read
- * the same on both. The two packages do not depend on each other, so the constant
- * and the branches below are kept in step by hand and held by
- * `tests/requests.test.ts`.
- */
-const unprojectableValue = "[unprojectable]";
-
-function projectMessage(message: unknown): string {
-  if (typeof message === "string") {
-    return message;
-  }
-
-  try {
-    if (typeof message === "function") {
-      return message.name || "(anonymous)";
-    }
-    if (message instanceof Error) {
-      // The name and the message, never the stack: a stack describes the internals
-      // of the running application, and a stream a page reads is no place for one.
-      return `${message.name}: ${message.message}`;
-    }
-
-    return JSON.stringify(message) ?? String(message);
-  } catch {
-    // Every read above can refuse, and the ones that were noticed first are not
-    // the only ones that can: `JSON.stringify` refuses a value that refers to
-    // itself or whose `toJSON` throws, `instanceof` refuses a `Proxy` whose
-    // `getPrototypeOf` throws, and the `name` of a function refuses when it is a
-    // getter that throws. The whole body is guarded rather than the reads that
-    // were thought of, so the rule holds for the next shape too. `String` is
-    // tried once more on its own, because a value that refused only
-    // `JSON.stringify` still has a plain form worth stating.
-    return plainString(message);
-  }
-}
-
-/**
- * The plain string form of a value, or the literal when even that refuses.
- *
- * This is the last read the projection makes, and it is guarded on its own
- * because a value can refuse the plain string form as readily as it refused
- * everything before it. It may not throw, because what calls it is a logger
- * method: the platform reports an unhandled failure by logging it
- * from inside a route-local `error` hook, so a throw here would leave that hook
- * through `logger.error(...)` and take the answer with it — the client would get
- * the engine's own page instead of the Problem Details response. A value whose
- * `toPrimitive` or `toString` throws is a value this release cannot state, and
- * saying so in a literal is the honest account where a throw is a different
- * answer rather than a report of one.
- */
-function plainString(value: unknown): string {
-  try {
-    return String(value);
-  } catch {
-    return unprojectableValue;
-  }
 }

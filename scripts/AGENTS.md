@@ -17,6 +17,7 @@ and documentation guards that CI enforces.
 | `source-layout.spec.ts`      | Package owner directories, barrels, type-only modules, local imports     |
 | `toolchain-config.spec.ts`   | The decorator transpiler options and the single Bun version pin          |
 | `package-llms.spec.ts`       | The `llms.txt` every published package ships and lists in `files`        |
+| `retired-literals.spec.ts`   | Literals a published surface may no longer state                         |
 | `*.spec.ts`                  | Guard tests over the above and over documentation wording                |
 
 ## Invariants

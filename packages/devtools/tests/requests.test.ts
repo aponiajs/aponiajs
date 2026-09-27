@@ -72,15 +72,16 @@ class UsersController {
 }
 
 /**
- * A thrown value neither projection can state.
+ * A thrown value the rendering cannot state.
  *
  * It refers to itself, so `JSON.stringify` refuses it, and it refuses the plain
  * string form as well — which is what puts it below both fallbacks, at the
- * literal the two surfaces state such a value as. That literal is the one thing
- * the projections share below their own branches, so this is the value that says
- * whether either of them can throw.
+ * literal `@aponiajs/common`'s `renderLogValue` states such a value as. That
+ * literal is the one thing the rendering shares with the console logger below its
+ * own branches, and it is the one both surfaces report, so this is the value that
+ * says whether either of them can throw.
  */
-function unprojectableRefusal(): Record<string, unknown> {
+function unrenderableRefusal(): Record<string, unknown> {
   const refusal: Record<string, unknown> = {};
   refusal.self = refusal;
   Object.defineProperty(refusal, Symbol.toPrimitive, {
@@ -133,16 +134,16 @@ class AnswersController {
 
   @Get("/unhandled-object")
   unhandledObject(): never {
-    // A thrown value that is not an `Error`, so the projection both surfaces
-    // restate has to agree on a branch other than the `Error` one.
+    // A thrown value that is not an `Error`, so the rendering both surfaces call
+    // has to answer it in the same form on both.
     throw { code: "E_CONN", retries: 3 };
   }
 
-  @Get("/unprojectable")
-  unprojectable(): never {
-    // The value below both projections' fallbacks: the shape that reaches the
-    // literal, and so the shape that says whether either of them can throw.
-    throw unprojectableRefusal();
+  @Get("/unrenderable")
+  unrenderable(): never {
+    // The value below the rendering's fallback: the shape that reaches the
+    // literal, and so the shape that says whether it can throw.
+    throw unrenderableRefusal();
   }
 
   @Get("/trap-refusal")
@@ -988,14 +989,14 @@ test.serial("the exception the record reports is the one the log stream states",
     // request the record was just read for — two failures in one turn would be
     // told apart only by their order in two independently read windows. The
     // three thrown values are different shapes on purpose: an `Error`, a value
-    // that is not one, and one neither surface can state at all take three
-    // different branches of the projection both surfaces restate, and a case
-    // that only threw `Error`s could not tell a faithful restatement from one
+    // that is not one, and one the rendering cannot state at all take three
+    // different branches of the one rendering both surfaces call, and a case
+    // that only threw `Error`s could not tell a faithful rendering from one
     // that happened to agree on that branch alone.
     const cases = [
       { path: "/unhandled", expected: "Error: the raw exception" },
       { path: "/unhandled-object", expected: '{"code":"E_CONN","retries":3}' },
-      { path: "/unprojectable", expected: "[unprojectable]" },
+      { path: "/unrenderable", expected: "[unrenderable]" },
     ];
 
     for (const expected of cases) {
@@ -1025,29 +1026,32 @@ test.serial("the exception the record reports is the one the log stream states",
 test.serial(
   "a thrown value the projection cannot read leaves the answer and the log line intact",
   async () => {
-    // Two shapes, because the projection reads more than the two values it states
+    // Two shapes, because the rendering reads more than the two values it states
     // out loud: one refuses `JSON.stringify` and the plain string form, and the
-    // other refuses the property a function is named by — the read a projection
+    // other refuses the property a function is named by — the read a rendering
     // guarded around only the pair it thought of would leave bare.
     //
     // They are read on two loggers, and the second is the reason why. The line a
-    // failure writes is produced twice on its way out: this package's tap projects
-    // the value to state it, and then hands the call, with the value, to the logger
-    // the application installed, which renders it again for the console. The two
-    // renderings are different answers rather than one restated — the console
-    // states a value that is neither a string nor a function with `inspect`, and
-    // states `[unrenderable]` when the value refuses the read its branch makes,
-    // while this package's projection states `[unprojectable]` for the cyclic shape
-    // and the function's own source text for the trapping one — so a boot that
-    // handed a console logger over would be asserting this projection through two
-    // renderings instead of through this one alone. `silentFailureLogger` records
+    // failure writes is produced twice on its way out: this package's tap states
+    // the value through `@aponiajs/common`'s `renderLogValue`, and then hands the
+    // call, with the value, to the logger the application installed, which renders
+    // it again for the console. The two renderings are different answers rather
+    // than one restated, and each shape shows that from one side: the console
+    // reaches a value that is neither a string nor a function with `inspect`, so
+    // it states the cyclic shape's own `inspect` form and answers the trapping one
+    // with `[unrenderable]`, because the property that function is named by throws
+    // on the way; the rendering both surfaces call answers the cyclic shape with
+    // `[unrenderable]` — it refuses the JSON form and the plain one — and the
+    // trapping one with the function's own source text. A boot that handed a
+    // console logger over would therefore be asserting this rendering through two
+    // renderings instead of through the one alone. `silentFailureLogger` records
     // the line and writes nothing, which is the state this case is about: the value
-    // reaches the projection, the tap states it, and nothing below the tap reads it
+    // reaches the rendering, the tap states it, and nothing below the tap reads it
     // a second time.
     const cases = [
       {
-        path: "/unprojectable",
-        states: "[unprojectable]" as string | undefined,
+        path: "/unrenderable",
+        states: "[unrenderable]" as string | undefined,
         rootModule: LoggedFailureModule,
         logger: agreeingLogger,
       },
@@ -1069,11 +1073,13 @@ test.serial(
         const address = reportedAddress(output);
         const response = await fetch(`${application.getUrl()}${expected.path}`);
 
-        // The premise first, and it is the whole point of the case: the projection
-        // runs inside the patched logger method the platform's error hook calls, so
-        // a throw there leaves the hook and the client receives the engine's own
-        // page instead of this answer. A Problem Details `500` is the answer that
-        // says the projection failed nothing.
+        // The premise first, and it is the whole point of the case: the answer
+        // the client receives is still the platform's Problem Details `500`, so
+        // neither half of the shared path cost it. The rendering is total, which
+        // is why nothing on its own path is left to throw, and the platform's
+        // error hook guards the logger call the tap answers, so a logger that
+        // refuses this line is announced on `stderr` rather than allowed to take
+        // the answer with it. A Problem Details `500` is the answer that says so.
         expect(response.status).toBe(500);
         expect(response.headers.get("content-type")).toContain("application/problem+json");
 

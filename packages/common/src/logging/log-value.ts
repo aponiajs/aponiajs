@@ -21,14 +21,23 @@ export const unrenderableValue = "[unrenderable]";
  * that refuses both of those forms is stated as the literal rather than allowed to
  * throw.
  *
+ * It is the rendering a thrown value is reported as on every surface this
+ * framework publishes one: the devtools log stream's entry for a line, and the
+ * exception the platform's default mapping records for `/requests`. One definition
+ * rather than a copy each, so two surfaces reporting one failure cannot disagree
+ * about it, and the literal a value that refuses everything is stated as is the
+ * same word on both by construction.
+ *
  * The text is not folded to one line. A string keeps its newlines, because a
  * surface states what happened rather than editing it.
  *
  * It may not throw, whatever it is handed, and the totality is the function's own
  * rather than its callers': this rendering exists to be used where a failure is
- * reported, and a failure is reported from inside a hook whose return value is the
- * response the client receives, so a throw here would replace the application's
- * answer with the engine's own page. Every read of the value below is inside the
+ * reported, and the platform reports one by recording the exception from inside a
+ * hook whose return value is the response the client receives, through this call
+ * and without a guard, so a throw here would replace the application's answer with
+ * the engine's own page. The devtools log stream's half of that report is guarded
+ * by the platform instead. Every read of the value below is inside the
  * guard except the `typeof` test that answers a string, because `typeof` is the
  * one read that cannot be made to throw; the guard covers the whole of the rest
  * rather than the reads somebody thought of — a `Proxy` refuses `instanceof`,

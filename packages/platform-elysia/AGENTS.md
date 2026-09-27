@@ -161,15 +161,13 @@ runtime boundary it describes.
   notice's throw is therefore a throw with a defined outcome rather than a
   refusal report: the boot fails, and the socket the notice described is
   released before the failure reaches the caller, because the handle was never
-  the caller's and nothing else could ever stop it. The projection
-  is the one the devtools log stream applies
-  to a line, restated here branch for branch because the two packages do not
-  depend on each other, and it is guarded so a thrown value that refuses to be
-  projected is recorded as a literal rather than allowed to throw inside the
-  error path. A
-  declared
-  filter that throws is caught, logged the same way, and treated as declining,
-  so the array continues to what answers next. The
+  the caller's and nothing else could ever stop it. The projection is
+  `@aponiajs/common`'s `renderLogValue`, the same call the devtools log stream
+  renders a line through, so the two surfaces cannot disagree about one failure;
+  it is total, and a thrown value that refuses to be rendered is recorded as the
+  literal `[unrenderable]` rather than allowed to throw inside the error path. A
+  declared filter that throws is caught, logged the same way, and treated as
+  declining, so the array continues to what answers next. The
   default hook is synchronous, so a route with no declared filter compiles the
   way it compiled before the mapping existed; a route with one carries an
   asynchronous hook per filter, because answering may await. A route-local

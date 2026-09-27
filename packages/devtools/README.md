@@ -220,8 +220,13 @@ const application = await AponiaFactory.create(AppModule, {
   fixed sentence for every such failure and its `Response` is not on the
   after-response context either, so the boot records the exception the mapping
   answered, and the entry publishes the same one-line account `/logs` states for
-  it, with no stack; a thrown value neither surface can state reads as the literal
-  `[unprojectable]` on both, because a throw there would take the answer with it. Everything is recorded by default —
+  it, with no stack, both through one definition — `@aponiajs/common`'s
+  `renderLogValue` — rather than through a copy each, so the two surfaces cannot
+  disagree about one failure; a thrown value neither can state reads as the
+  literal `[unrenderable]` on both, because that rendering is total: it runs in
+  the route's own `error` hook before the answer is built, and the logger call
+  beneath it is guarded, so a logger that refuses the line is announced on
+  `stderr` rather than costing the answer. Everything is recorded by default —
   `capture` is an opt-out on each field, never a permission, because a tool that
   needed two opt-ins before it showed a header is one nobody opens. Two facts are
   stated rather than softened: a token passed as a query parameter is captured in

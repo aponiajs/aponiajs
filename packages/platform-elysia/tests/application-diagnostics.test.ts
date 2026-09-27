@@ -129,15 +129,15 @@ class FailingDiagnosticsController {
     throw new Error("the connection string was rejected");
   }
 
-  @Get("unprojectable")
-  unprojectable(): never {
+  @Get("unrenderable")
+  unrenderable(): never {
     const refusal: Record<string, unknown> = {
       [Symbol.toPrimitive](): string {
         throw new Error("this value refuses to be projected");
       },
     };
-    // Cyclic as well as refusing to be coerced, so both halves of the projection
-    // this release restates fail on it: `JSON.stringify` refuses the cycle, and
+    // Cyclic as well as refusing to be coerced, so both halves of the rendering
+    // the two surfaces share fail on it: `JSON.stringify` refuses the cycle, and
     // the string form refuses the coercion.
     refusal.self = refusal;
 
@@ -168,9 +168,12 @@ class FailingDiagnosticsModule {}
 /**
  * A logger whose `error` reports and then throws.
  *
- * This is the one shape that makes the order of the mapping's record and its log
- * call observable: the throw leaves the hook, so a record written after the call
- * is never written at all, and the map is the only place that fact can come from.
+ * It is the shape the mapping's guard exists for: `LoggerService` is an interface
+ * an application implements, so the call that reports a failure can throw, and the
+ * Problem Details answer, the recorded exception, and the announcement of the
+ * refusal all have to survive it. What it no longer does is order the record
+ * against that call: the guard catches the throw, so a record written after the
+ * call would be written all the same.
  */
 class ThrowingErrorLogger implements LoggerService {
   reported = false;
@@ -528,7 +531,7 @@ test("a stderr write that refuses still leaves the mapping's answer in place", a
 test("an exception this platform cannot project leaves the mapping's answer unchanged", async () => {
   const application = await AponiaFactory.create(FailingDiagnosticsModule, { logger: false });
   const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
-  const request = new Request("http://localhost/unprojectable");
+  const request = new Request("http://localhost/unrenderable");
 
   const response = await application.handle(request);
   const body = await response.text();
@@ -538,20 +541,21 @@ test("an exception this platform cannot project leaves the mapping's answer unch
   // page, which is the one outcome an observer may never cause.
   expect(response.status).toBe(500);
   expect(body).toContain("The server could not complete this request.");
-  // The value is recorded as the literal both surfaces state it as, rather than
-  // as an absent entry: nothing here may throw, and a thrown value that refuses
-  // both the JSON form and the plain string form is a value this release cannot
-  // state — which is a fact worth recording, not one worth hiding behind an
-  // absence that would read as "the log stream never saw this failure either".
-  expect(diagnostics?.mappedExceptions.get(request)).toBe("[unprojectable]");
+  // The value is recorded as the literal both surfaces state it as, through the
+  // one rendering they share, rather than as an absent entry: nothing here may
+  // throw, and a thrown value that refuses both the JSON form and the plain
+  // string form is a value this release cannot state — which is a fact worth
+  // recording, not one worth hiding behind an absence that would read as "the
+  // log stream never saw this failure either".
+  expect(diagnostics?.mappedExceptions.get(request)).toBe("[unrenderable]");
   await application.close();
 });
 
 test("a thrown value that is not an Error is recorded in the projection's own form", async () => {
   const application = await AponiaFactory.create(FailingDiagnosticsModule, { logger: false });
   const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
-  // One case per branch the projection restates, so a restatement that agreed
-  // with the log stream on its `Error` case alone could not pass here.
+  // One case per branch of the rendering both surfaces call, so a platform that
+  // agreed with the log stream on its `Error` case alone could not pass here.
   const cases = [
     { path: "/throws-string", expected: "the connection string was rejected as a string" },
     { path: "/throws-function", expected: "namedRefusal" },

@@ -19,7 +19,7 @@ first request so an application that never polls the endpoint never loads it.
 | `server/`    | `startDevtoolsServer`, the socket and the loopback check, `routeRequest`, the dispatcher                                                                                                                                                         |
 | `endpoints/` | One payload builder and its wire contract per endpoint, `/meta` first, and the readers the endpoints share: the cursor the two cursor endpoints read, and the route facts `/routes` and `/flow` both state — the binding, and the parameter list |
 | `buffer/`    | The bounded cursor buffer `/logs` and `/requests` share, and nothing else                                                                                                                                                                        |
-| `logging/`   | The log stream: its record, its bound, the tap that fills it from a logger, the one-line form of a thrown reason, and the report a sentence travels on when the logger refuses it                                                                |
+| `logging/`   | The log stream: its record, its bound, the tap that fills it from a logger through `@aponiajs/common`'s rendering, the one-line form of a thrown reason, and the report a sentence travels on when the logger refuses it                         |
 | `requests/`  | The request record: its entry, its bound, and the capture that fills it                                                                                                                                                                          |
 
 `src/index.ts` is the only public barrel. Keep `*.types.ts` colocated with the
@@ -617,11 +617,13 @@ runtime boundary it describes.
   body yielded nothing readable, so it never replaces what the client received.
   `error` is still never the context's `error`, and still never the exception's
   stack: this package registers no error hooks and reports an exception where it
-  always was, under `ExceptionsHandler` in the log stream, in the one-line
-  projection that stream uses and this endpoint restates. `status` is the status
-  the client received: `set.status` is a number
-  for every answer Elysia composed, while an answer a handler built leaves it at
-  the default and carries the real status on its own `Response`.
+  always was, under `ExceptionsHandler` in the log stream, through
+  `@aponiajs/common`'s `renderLogValue` — the same call the platform's mapping
+  records the exception it answered through, so the mapped failure's `error` is
+  that rendering's answer rather than a second one kept in step. `status` is the
+  status the client received: `set.status` is a number for every answer Elysia
+  composed, while an answer a handler built leaves it at the default and carries
+  the real status on its own `Response`.
 - The report describes the boot the _plugin's own_ application carries: Elysia
   hands `onStart` the root application, which is the one bootstrap attached the
   record to.
@@ -853,22 +855,26 @@ handler's own `5xx` carry none, and a handler's own `Response` states the status
 the client received rather than the one `set.status` still reads. The unhandled
 failure is asserted from the other side, because its message is nowhere on the
 answer: the entry the record holds is compared with the line `/logs` states for
-the same exception, so the two surfaces cannot drift apart, and a case pins that
-the projection publishes no stack — with the presence of `error` asserted before
-the comparison, because an absent field would satisfy a `not.toContain` on its
-own and prove nothing. The comparison runs over three thrown values — an `Error`,
-one that is not, and a value neither projection can state at all — because the
-projection has a branch per shape and a case that only ever threw `Error`s could
-not tell a faithful restatement from one that agreed on that branch alone; the
-third pins the literal both surfaces fall back to, since a value that refuses
-`JSON.stringify` and the plain string form alike has to read the same on both.
-The projection is also asserted for what it may not do to the request it is
-reporting on: a case throws such a value through an application whose logger the
+the same exception. Both surfaces render through `@aponiajs/common`'s
+`renderLogValue`, so the comparison asserts the wiring rather than two copies
+kept in step — the record's half is the exception the platform's mapping wrote,
+and the stream's half is the line this package's tap produced — and a case pins
+that the rendering publishes no stack, with the presence of `error` asserted
+before the comparison, because an absent field would satisfy a `not.toContain`
+on its own and prove nothing. The comparison runs over three thrown values — an
+`Error`, one that is not, and a value the rendering cannot state at all —
+because the rendering has a branch per shape and a case that only ever threw
+`Error`s could not tell a faithful rendering from one that agreed on that branch
+alone; the third pins the literal both surfaces fall back to, since a value that
+refuses `JSON.stringify` and the plain string form alike has to read the same on
+both. A further case throws such a value through an application whose logger the
 registration has tapped, and requires the client to receive the platform's
-Problem Details answer all the same and `/logs` to state a line for it, because
-that projection runs inside the patched logger method the platform's error hook
-calls, where a throw would replace the application's answer with the engine's own
-page. A request that
+Problem Details answer all the same and `/logs` to state a line for it. That
+case no longer carries the risk it was written around — the rendering is total,
+and the logger call behind it is guarded by the platform, so a throw on that
+path reaches `stderr` and leaves the answer standing — and what it pins now is
+that a value the rendering cannot state is stated rather than dropped, on both
+surfaces, with the request answered. A request that
 matched no route is recorded with the path that arrived and shown not to be in
 `/routes`, and a request a plugin refused before matching is recorded the same way
 with the status its answer carried. Polling is asserted not to add to the record:
