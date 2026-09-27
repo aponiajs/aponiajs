@@ -183,8 +183,9 @@ describe("ConsoleLogger", () => {
 
       // Two shapes, because they refuse the same call for different reasons: a
       // value that refers to itself, and a `BigInt`, which is what a database
-      // identifier is.
-      logger.error(cyclic);
+      // identifier is. The first names a context, so the fallback is shown to
+      // carry back every field the line already had rather than the literal alone.
+      logger.error(cyclic, "Database");
       logger.error({ id: 1n });
 
       const records = stderr.map(parseJsonRecord) as readonly Record<string, unknown>[];
@@ -196,7 +197,9 @@ describe("ConsoleLogger", () => {
       expect(records[0]).toMatchObject({
         level: "error",
         pid: process.pid,
+        timestamp: expect.any(Number),
         message: "[unrenderable]",
+        context: "Database",
       });
       expect(records[1]).toMatchObject({ level: "error", message: "[unrenderable]" });
     } finally {

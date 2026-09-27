@@ -1032,16 +1032,18 @@ test.serial(
     //
     // They are read on two loggers, and the second is the reason why. The line a
     // failure writes is produced twice on its way out: this package's tap projects
-    // the value to state it, and then hands the call to the logger the application
-    // installed, which projects it again for the console. The framework's own
-    // console logger restates the same three branches with an unguarded read of
-    // `name` (`packages/common/src/logging/console-logger.ts`), so a value that
-    // refuses to be named is answered by the platform's logging path however total
-    // this package's projection is — and a boot that handed that logger over would
-    // be asserting a fact about a second projection rather than about this one.
-    // `silentFailureLogger` records the line and writes nothing, which is the state
-    // this case is about: the value reaches the projection, the tap states it, and
-    // nothing below the tap reads it a second time.
+    // the value to state it, and then hands the call, with the value, to the logger
+    // the application installed, which renders it again for the console. The two
+    // renderings are different answers rather than one restated — the console
+    // states a value that is neither a string nor a function with `inspect`, and
+    // states `[unrenderable]` when the value refuses the read its branch makes,
+    // while this package's projection states `[unprojectable]` for the cyclic shape
+    // and the function's own source text for the trapping one — so a boot that
+    // handed a console logger over would be asserting this projection through two
+    // renderings instead of through this one alone. `silentFailureLogger` records
+    // the line and writes nothing, which is the state this case is about: the value
+    // reaches the projection, the tap states it, and nothing below the tap reads it
+    // a second time.
     const cases = [
       {
         path: "/unprojectable",

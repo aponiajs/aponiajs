@@ -112,12 +112,14 @@ export class ConsoleLogger implements LoggerService {
   /**
    * One JSON line, or a line that states the value could not be serialized.
    *
-   * `JSON.stringify` refuses two shapes an application logs in the ordinary
-   * course of things: an object that refers to itself — any parent and child
-   * that point at each other — and one carrying a `BigInt`, which is what a
-   * database identifier is. The fallback is a real line with the literal in the
-   * `message` field rather than no line at all, because a consumer parsing the
-   * stream cannot tell a message that was dropped from one the caller never
+   * `JSON.stringify` refuses shapes an application logs in the ordinary course
+   * of things: an object that refers to itself — any parent and child that point
+   * at each other — one carrying a `BigInt`, which is what a database identifier
+   * is, and one whose `toJSON` throws. The `try` is around the call rather than
+   * around a list of those shapes, so its reach is the call's rather than the
+   * shapes somebody thought of. The fallback is a real line with the literal in
+   * the `message` field rather than no line at all, because a consumer parsing
+   * the stream cannot tell a message that was dropped from one the caller never
    * passed. It cannot refuse in turn: every field it carries is a primitive this
    * logger read from its own configuration.
    */
