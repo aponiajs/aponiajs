@@ -105,8 +105,8 @@ export class ReportController {
 ```
 
 It constructs no `Response`, opens no stream, and reads no file: the returned value is
-what the platform streams, so range requests, `ETag`, and content-type detection stay
-Elysia's. The name follows RFC 6266 with the RFC 8187 extended parameter — `filename*`
+what the platform streams, so range requests and content-type detection stay Elysia's.
+The name follows RFC 6266 with the RFC 8187 extended parameter — `filename*`
 carries the real name UTF-8 percent-encoded, and a quoted ASCII fallback carries a
 name an older client can save — so both parameters are always present and a pure-ASCII
 name is the ordinary case rather than a branch. `{ disposition: "inline" }` renders

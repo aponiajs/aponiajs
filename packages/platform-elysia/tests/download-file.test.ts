@@ -55,6 +55,31 @@ describe("downloadFile", () => {
     );
   });
 
+  test("encodes the three characters an extended value cannot carry", () => {
+    const set = settings();
+
+    downloadFile(set, "/tmp/report.txt", "a*b'c%d.txt");
+
+    // `'` separates the charset from the value and `%` starts an escape inside an
+    // extended value, which is why neither is an attr-char and why the constant
+    // that holds the set leaves them out.
+    expect(set.headers["content-disposition"]).toBe(
+      "attachment; filename=\"a*b'c%d.txt\"; filename*=UTF-8''a%2Ab%27c%25d.txt",
+    );
+  });
+
+  test("keeps a control character out of the quoted fallback", () => {
+    const set = settings();
+
+    downloadFile(set, "/tmp/report.txt", "re\u0001port\u007f.txt");
+
+    const value = String(set.headers["content-disposition"]);
+    // A control character is legal in the extended value's percent-encoding and
+    // nowhere in a quoted-string, so the fallback replaces it.
+    expect(value).toBe("attachment; filename=\"re_port_.txt\"; filename*=UTF-8''re%01port%7F.txt");
+    expect(value).toMatch(/^[\x20-\x7e]+$/);
+  });
+
   test("refuses a filename that is a path or carries a control character", () => {
     for (const [filename, reason] of [
       ["reports/2026.csv", "path separator"],

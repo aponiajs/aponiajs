@@ -32,18 +32,22 @@ function assertNameable(filename: string): void {
 }
 
 /**
- * The quoted ASCII fallback every client can read. A non-ASCII code unit is
- * replaced rather than transliterated — choosing a Latin spelling for a name is
- * the application's business, and the extended parameter below carries the real
- * name for everything that reads it.
+ * The quoted ASCII fallback every client can read. Every code unit outside
+ * printable ASCII is replaced, controls included, so the fallback is always a
+ * valid quoted-string: RFC 7230's `qdtext` has no room for a control character,
+ * and a value outside that grammar is not one a client has to parse the way it
+ * was written. Replacing rather than transliterating is the same call — choosing
+ * a Latin spelling for a name is the application's business, and the extended
+ * parameter below carries the real name for everything that reads it.
  */
 function asciiFallback(filename: string): string {
   let fallback = "";
   for (let index = 0; index < filename.length; index += 1) {
     const character = filename.charAt(index);
+    const code = character.charCodeAt(0);
     if (character === '"') {
       fallback += '\\"';
-    } else if (character.charCodeAt(0) > 0x7f) {
+    } else if (code < 0x20 || code > 0x7e) {
       fallback += "_";
     } else {
       fallback += character;
