@@ -166,8 +166,10 @@ export function loadAotAnalysis(
  * module caches, and the endpoint would answer a failure instead of the payload
  * `/aot` promises — for the life of the process, since a rejection is cached
  * like a result. The row is a report of a failure, so it is guarded by the rule
- * the framework states; nothing between the analysis and the `return` below can
- * escape this `catch` other than the sentence itself. See
+ * the framework states; nothing between the analysis and the `return` below
+ * escapes this `catch`, the sentence included, because the value it states is
+ * read by a `oneLine` that cannot throw — a value that refuses to be read is
+ * stated as `[unrenderable]` rather than left out. See
  * `logging/report-failure.ts`.
  */
 async function analyzeProject(

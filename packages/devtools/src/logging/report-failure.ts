@@ -22,10 +22,12 @@ import type { LoggerService } from "@aponiajs/common";
  * A refusal is answered rather than swallowed: the sentence is written straight
  * to `stderr` — the only place this package writes a process stream — because the
  * channel that would normally carry the row is the one that just failed. That
- * line names the refusal as well as the sentence, so a reader knows why a report
- * the logger was configured to carry arrived here instead. The write is guarded
- * in turn, because a process may be writing to a stream that refuses: the absence
- * is accepted at the last line rather than taken out on the caller.
+ * line states the refusal alongside the sentence, so a reader knows why a report
+ * the logger was configured to carry arrived here instead, and it states the
+ * refusal as a sentence of its own: the report it follows ends in a period
+ * already, so a clause appended inside it would land mid-line. The write is
+ * guarded in turn, because a process may be writing to a stream that refuses:
+ * the absence is accepted at the last line rather than taken out on the caller.
  *
  * What the logger threw is not rendered: this states that the logger refused,
  * not what it refused with. `ConsoleLogger` — the one this framework builds —
@@ -49,7 +51,7 @@ export function reportFailure(logger: LoggerService, sentence: string): void {
  */
 function announceRefusedReport(sentence: string): void {
   try {
-    process.stderr.write(`${sentence} (the configured logger threw while reporting it)\n`);
+    process.stderr.write(`${sentence} The configured logger threw while reporting it.\n`);
   } catch {
     // Nothing left to report to.
   }

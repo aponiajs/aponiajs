@@ -98,7 +98,14 @@ runtime boundary it describes.
   `stderr` write of the sentence, the line also stating that the logger refused
   it — the only place this package writes a process stream — and that write is
   guarded in turn, so a stream that refuses still leaves the caller with the
-  answer it was promised. The rule is the framework's: a call site that reports a
+  answer it was promised. The sentence itself is total, and that is the other
+  half of the guarantee: it is built as an argument to the guarded report and so
+  is built first, and `logging/one-line.ts` reads the value it states under a
+  guard of its own: a value that refuses to be read — a `Proxy` whose
+  `getPrototypeOf` trap throws, a value whose primitive conversion throws — is
+  stated as `[unrenderable]` rather than left out, because an empty pair of
+  parentheses would read as a value that was read and was empty. The rule is the
+  framework's: a call site that reports a
   failure guards, and a call site that reports progress does not. The
   non-loopback exposure notice above is the other side of that rule and stays
   unguarded: it reports a state the socket really took rather than a failure, so

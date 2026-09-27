@@ -505,6 +505,50 @@ test("a port that is already bound is refused, and the caller continues", async 
   }
 });
 
+test("a refusal whose reason refuses to be read is still reported, and the caller continues", () => {
+  // The sentence embeds the reason, and it is built as an argument to
+  // `reportFailure`: a reason that refuses to be read would make the sentence —
+  // and so the report — the failure the guard around the logger call exists to
+  // prevent, and this start runs inside `onStart`, which Elysia neither awaits
+  // nor catches. The reason arrives from the bind, so that is where the hostile
+  // value is thrown, and what the caller observes is the same `undefined` a
+  // refusal always answers with.
+  const refusing = new Proxy(
+    {},
+    {
+      getPrototypeOf: () => {
+        throw new TypeError("this value has no prototype to walk");
+      },
+    },
+  );
+  const warnings: string[] = [];
+  const logger: LoggerService = {
+    log: () => {},
+    fatal: () => {},
+    error: () => {},
+    warn: (message) => {
+      warnings.push(String(message));
+    },
+  };
+  const serve = spyOn(Bun, "serve").mockImplementation(() => {
+    throw refusing;
+  });
+
+  try {
+    const server = startDevtoolsServer({ application: new Elysia(), port: 0, logger });
+
+    expect(server).toBeUndefined();
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain("could not listen");
+    expect(warnings[0]).toContain("the application continues without it");
+    // The refusal is stated rather than the parentheses left empty: a missing
+    // clause would read as a reason that was read and was empty.
+    expect(warnings[0]).toContain("([unrenderable])");
+  } finally {
+    serve.mockRestore();
+  }
+});
+
 test("a refusal the logger will not carry is stated on stderr, and the caller still continues", async () => {
   const blocker = Bun.serve({
     hostname: "127.0.0.1",

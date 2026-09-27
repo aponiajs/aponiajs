@@ -403,14 +403,70 @@ test("a report the logger refuses still answers aot's boot half and the degraded
     expect(await readAot(server)).toEqual(payload);
 
     // The sentence a logger refused still reaches a reader, on the channel
-    // that survived, and the line says the logger refused it rather than
-    // reading as a report the logger chose to make there.
+    // that survived, and the line says the logger refused it — as a sentence of
+    // its own after the report, because the report already ends in a period.
     expect(stderr).toHaveLength(1);
     expect(stderr[0]).toContain("could not read the route analysis");
     expect(stderr[0]).toContain(workingDirectory);
-    expect(stderr[0]).toContain("(the configured logger threw while reporting it)");
+    expect(stderr[0]).toContain("The configured logger threw while reporting it.");
   } finally {
     stderrWrite.mockRestore();
+    server.stop();
+  }
+});
+
+test("a value the analysis threw that refuses to be read still answers the degraded half", async () => {
+  // The sentence and the empty list are built together, and the sentence comes
+  // first: `oneLine` runs as an argument to `reportFailure`, so it runs before
+  // that guard can see it. A reason that refuses to be read would therefore make
+  // the report itself the failure, and this is the site where that costs an
+  // answer rather than a row — the promise is cached, so a rejection would be
+  // served to every later poll instead of the payload `/aot` promises.
+  //
+  // The analysis is handed no seam by design, so the hostile value is thrown
+  // where the analysis makes its first read of the project: `Bun.file` is how it
+  // finds `aponia.json`, and a throw there is the analysis's own failure,
+  // reached the way any unreadable project is.
+  const projectRoot = createTemporaryDirectory("aponia-aot-refusing-");
+  process.chdir(projectRoot);
+  const application = await AponiaFactory.createNative(AppModule, { logger: false });
+  const server = serveLoopback(application);
+  const refusing = new Proxy(
+    {},
+    {
+      getPrototypeOf: () => {
+        throw new TypeError("this value has no prototype to walk");
+      },
+    },
+  );
+  const file = spyOn(Bun, "file").mockImplementation(() => {
+    throw refusing;
+  });
+
+  try {
+    const response = await fetch(`${server.url}/__devtools/aot`);
+
+    // The answer the guard was written for, asserted before the row: without a
+    // total sentence build the cached promise rejects and this request fails
+    // with a `500` where the degraded payload belongs.
+    expect(response.status).toBe(200);
+
+    const payload = (await response.json()) as AponiaAotPayload;
+
+    expect(payload).toEqual({
+      graph: "decorated",
+      invokers: { accepted: false, reason: expect.any(String) },
+      controllers: [],
+    });
+
+    // And the row the analysis writes still reaches a reader, naming the project
+    // and stating the refusal — the word rather than an empty pair of
+    // parentheses, which would read as a reason that was read and was empty.
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain(projectRoot);
+    expect(warnings[0]).toContain("([unrenderable])");
+  } finally {
+    file.mockRestore();
     server.stop();
   }
 });
