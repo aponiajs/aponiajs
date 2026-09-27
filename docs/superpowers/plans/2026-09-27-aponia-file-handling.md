@@ -23,7 +23,7 @@ socket, because a native route never reaches `application.handle`.
 
 ## Corrections the spec needs, settled before Task 1
 
-Five claims in the spec are wrong, incomplete, or unusable as written. Each is
+Six claims in the spec are wrong, incomplete, or unusable as written. Each is
 settled here with what was measured, because a task that argued from the text as
 written would ship the defect.
 
@@ -77,6 +77,22 @@ port and fetching, the way `examples/websockets` reserves one.
 **5. The helper's name and options shape are this plan's, as the spec says
 (`:450-461`).** The name is `downloadFile`, the options type is `DownloadFileOptions`,
 and the ASCII fallback replaces each non-ASCII code unit with `_`.
+
+**6. The fallback rule was narrower than the grammar the fallback has to satisfy.** The
+spec replaces "every non-ASCII code unit" (`:256-257`) and refuses CR, LF, NUL, and a path
+separator (`:259-265`). A control character outside those three satisfies both rules and
+reaches the quoted string — `\u0001`, a tab, `\u007f` — and RFC 7230's `qdtext` has no room
+for any of them, so the value goes to the wire outside the grammar it claims to follow.
+Measured: Bun accepts such a value rather than refusing it, so nothing catches it but the
+client. Task 3 replaces every code unit outside printable ASCII, which is one condition
+instead of two, leaves the value valid for every input, and keeps the spec's refusals
+exactly as they are.
+
+One claim is dropped rather than corrected: the spec's Downloads section names `ETag` among
+the things that "stay Elysia's" (`:399-402`), and Elysia's file path sets `accept-ranges`,
+`content-range`, `content-length`, and content-type but no validator — grepping its
+distribution finds `etag` only as a header name in type declarations. The sentence in
+`docs/files.md` drops it.
 
 ## Global Constraints
 
@@ -837,6 +853,31 @@ describe("downloadFile", () => {
     );
   });
 
+  test("encodes the three characters an extended value cannot carry", () => {
+    const set = settings();
+
+    downloadFile(set, "/tmp/report.txt", "a*b'c%d.txt");
+
+    // `'` separates the charset from the value and `%` starts an escape inside an
+    // extended value, which is why neither is an attr-char and why the constant
+    // that holds the set leaves them out.
+    expect(set.headers["content-disposition"]).toBe(
+      "attachment; filename=\"a*b'c%d.txt\"; filename*=UTF-8''a%2Ab%27c%25d.txt",
+    );
+  });
+
+  test("keeps a control character out of the quoted fallback", () => {
+    const set = settings();
+
+    downloadFile(set, "/tmp/report.txt", "re\u0001port\u007f.txt");
+
+    const value = String(set.headers["content-disposition"]);
+    // A control character is legal in the extended value's percent-encoding and
+    // nowhere in a quoted-string, so the fallback replaces it.
+    expect(value).toBe("attachment; filename=\"re_port_.txt\"; filename*=UTF-8''re%01port%7F.txt");
+    expect(value).toMatch(/^[\x20-\x7e]+$/);
+  });
+
   test("refuses a filename that is a path or carries a control character", () => {
     for (const [filename, reason] of [
       ["reports/2026.csv", "path separator"],
@@ -976,18 +1017,22 @@ function assertNameable(filename: string): void {
 }
 
 /**
- * The quoted ASCII fallback every client can read. A non-ASCII code unit is
- * replaced rather than transliterated — choosing a Latin spelling for a name is
- * the application's business, and the extended parameter below carries the real
- * name for everything that reads it.
+ * The quoted ASCII fallback every client can read. Every code unit outside
+ * printable ASCII is replaced, controls included, so the fallback is always a
+ * valid quoted-string: RFC 7230's `qdtext` has no room for a control character,
+ * and a value outside that grammar is not one a client has to parse the way it
+ * was written. Replacing rather than transliterating is the same call — choosing
+ * a Latin spelling for a name is the application's business, and the extended
+ * parameter below carries the real name for everything that reads it.
  */
 function asciiFallback(filename: string): string {
   let fallback = "";
   for (let index = 0; index < filename.length; index += 1) {
     const character = filename.charAt(index);
+    const code = character.charCodeAt(0);
     if (character === '"') {
       fallback += '\\"';
-    } else if (character.charCodeAt(0) > 0x7f) {
+    } else if (code < 0x20 || code > 0x7e) {
       fallback += "_";
     } else {
       fallback += character;
@@ -1068,7 +1113,7 @@ export type { DownloadFileOptions } from "./routing/download-file.types.ts";
 ```
 
 Run: `bun test packages/platform-elysia/tests/download-file.test.ts`
-Expected: 7 pass, 0 fail.
+Expected: 9 pass, 0 fail.
 
 - [ ] **Step 5: Mirror the public contract in the Vite+ lane**
 
@@ -1199,8 +1244,8 @@ export class ReportController {
 ```
 
 It constructs no `Response`, opens no stream, and reads no file: the returned value is
-what the platform streams, so range requests, `ETag`, and content-type detection stay
-Elysia's. The name follows RFC 6266 with the RFC 8187 extended parameter — `filename*`
+what the platform streams, so range requests and content-type detection stay Elysia's.
+The name follows RFC 6266 with the RFC 8187 extended parameter — `filename*`
 carries the real name UTF-8 percent-encoded, and a quoted ASCII fallback carries a
 name an older client can save — so both parameters are always present and a pure-ASCII
 name is the ordinary case rather than a branch. `{ disposition: "inline" }` renders
