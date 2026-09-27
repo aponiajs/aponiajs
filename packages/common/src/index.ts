@@ -48,6 +48,7 @@ export type {
 export { AponiaError } from "./errors/aponia-error.ts";
 export type { AponiaErrorCode } from "./errors/aponia-error.types.ts";
 export { ConsoleLogger, Logger } from "./logging/console-logger.ts";
+export { renderLogValue } from "./logging/log-value.ts";
 export type { ConsoleLoggerOptions, LoggerService, LogLevel } from "./logging/logger.types.ts";
 export { defineModule } from "./modules/module.ts";
 export type { DefinedModule, ModuleDefinition, ModuleOptions } from "./modules/module.types.ts";

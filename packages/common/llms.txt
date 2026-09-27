@@ -18,6 +18,7 @@ This package records metadata and declares contracts. It never builds a module g
 - [createToken, tokenName](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/tokens/token.ts): explicit injection tokens.
 - [AponiaError](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/errors/aponia-error.ts): every framework failure, carrying one code and frozen structured details.
 - [ConsoleLogger, Logger](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/logging/console-logger.ts): the default structured logger.
+- [renderLogValue](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/logging/log-value.ts): the text a logged value is stated as, and `[unrenderable]` for a value it cannot state.
 - [WebSocketGateway, SubscribeMessage, MessageBody, ConnectedSocket, WebSocketServer](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/websockets/websocket-gateway.ts): platform-neutral gateway decorators.
 - [getWebSocketGatewayMetadata, getWebSocketMessageMetadata, getWebSocketParameterMetadata, getWebSocketServerProperties](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/websockets/websocket-gateway.ts): the gateway metadata readers.
 

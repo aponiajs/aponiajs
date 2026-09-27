@@ -19,6 +19,7 @@ import {
   isRouteResponseSchemaMap,
   isStandardSchema,
   provideValue,
+  renderLogValue,
   type RouteParameterMetadata,
 } from "../src/index.ts";
 import type { RouteResponseSettings } from "../src/index.ts";
@@ -213,4 +214,17 @@ test("the Vite+ lane keeps the response settings free of a redirect field", () =
   expect(settings.status).toBe("No Content");
   expect(settings.headers).toEqual({ "x-source": "conformance" });
   expect(assertions).toHaveLength(3);
+});
+
+test("the Vite+ lane renders a logged value and never throws", () => {
+  const cyclic: Record<string, unknown> = {};
+  cyclic.self = cyclic;
+  Object.defineProperty(cyclic, Symbol.toPrimitive, {
+    value: () => {
+      throw new TypeError("this value cannot be stated");
+    },
+  });
+
+  expect(renderLogValue({ ready: true })).toBe('{"ready":true}');
+  expect(renderLogValue(cyclic)).toBe("[unrenderable]");
 });

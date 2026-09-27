@@ -165,3 +165,13 @@ one that failed. Everywhere else a throw is a throw — the framework guards
 the sites that report a failure and not the ones that report progress, so a logger that fails while the
 boot logs its routes fails the boot. The framework's own logger needs no such care: `ConsoleLogger`
 renders every value it is handed, or states `[unrenderable]`.
+
+## Stating a value
+
+`renderLogValue` turns a logged value into the text a surface states it in: a string is its own text,
+a function is its name, an `Error` is its name and message with no stack, and everything else is its
+JSON form with the plain string form behind it. A value that refuses every one of those reads is
+stated as `[unrenderable]` rather than allowed to throw, which is what the devtools log stream and
+the platform's exception record both rely on — they call this one function, so they cannot disagree
+about a failure they both report. The console logger prints its own form for a terminal reader and
+answers the same literal when a value refuses it.
