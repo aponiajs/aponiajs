@@ -177,6 +177,5 @@ record a thrown value, and both state one through it: the devtools log stream's 
 the exception the platform's default mapping records for `/requests`. One definition rather than a copy
 each, so two surfaces reporting one failure cannot disagree about it, and the literal a value that
 refuses everything is stated as is the same word on both by construction. Reach for it when you publish
-a surface of your own and need to state a value the way the framework's does. A surface that reports
-something other than a recorded value has a form of its own: the console logger prints one for a
-terminal reader and answers the same literal when a value refuses it.
+a surface of your own and need to state a value the way the framework's does. The console logger prints
+its own form for a terminal reader and answers the same literal when a value refuses it.

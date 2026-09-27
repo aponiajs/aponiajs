@@ -26,9 +26,7 @@ export const unrenderableValue = "[unrenderable]";
  * platform's default mapping records for `/requests`. One definition rather than a
  * copy each, so two surfaces reporting one failure cannot disagree about it, and
  * the literal a value that refuses everything is stated as is the same word on both
- * by construction. A surface that reports something other than a recorded value has
- * a form of its own; the console logger prints one for a terminal reader, and the
- * devtools package's guarded report rows fold a thrown reason to one line.
+ * by construction.
  *
  * The text is not folded to one line. A string keeps its newlines, because a
  * surface states what happened rather than editing it.

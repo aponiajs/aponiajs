@@ -556,9 +556,9 @@ test("a thrown value that is not an Error is recorded in the projection's own fo
   const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
   // One case per branch of the rendering both surfaces call — a string, a
   // function, and an object — so each of these branches is shown reached rather
-  // than only the `Error` branch the case above covers. This boot passes
-  // `logger: false`, so the shapes are asserted against the projection alone,
-  // with no stream here to compare with.
+  // than left to the branch an `Error` takes. This boot passes `logger: false`,
+  // so the shapes are asserted against the projection alone, with no stream here
+  // to compare with.
   const cases = [
     { path: "/throws-string", expected: "the connection string was rejected as a string" },
     { path: "/throws-function", expected: "namedRefusal" },
