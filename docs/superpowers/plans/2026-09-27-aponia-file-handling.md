@@ -652,6 +652,9 @@ identifies it. Declare `type` for formats that carry one — images, audio, vide
 archives — and check anything finer in the handler. Elysia's `extension` option is not
 part of this surface: it is absent from the declared options and is not enforced
 through `t.File`.
+
+`examples/files` runs every shape above, the refusal included, as an application you can
+start with `bun run example:files`.
 ````
 
 - [ ] **Step 2: Create the learn chapter**
@@ -1308,7 +1311,17 @@ test("a name outside ASCII is encoded, and the header stays ASCII", async () => 
 });
 ```
 
-4. Append to `examples/files/README.md`, before the `[Every example](../README.md)`
+4. Correct the closing paragraph of `examples/files/README.md`, which enumerates what the
+   suite asserts and was written before Task 1's case list grew. It must read:
+
+```markdown
+`test/uploads.e2e-spec.ts` asserts each declaration through
+`application.handle(new Request(...))`: the object form, `@Body("file")`, `t.Files()`,
+`t.Form()`, the `maxSize` refusal, the filename rather than the declaration deciding
+`file.type`, and the `422` a whole-body `t.File()` answers.
+```
+
+5. Append to `examples/files/README.md`, before the `[Every example](../README.md)`
    line:
 
 ```markdown
