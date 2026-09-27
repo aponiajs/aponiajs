@@ -84,11 +84,10 @@ export function createDefaultExceptionFilter(
       return undefined;
     }
 
-    // The record is written before the logger is called, and the call is guarded.
     // The record is the only place `/requests` can read this failure's message
-    // from, because the `Response` below is not on the after-response context, and
-    // the guard is what keeps a throw out of a hook whose return value is the
-    // client's answer — see `reportThroughLogger`.
+    // from, because the `Response` below is not on the after-response context. The
+    // logger call is guarded, which is what keeps a throw out of a hook whose
+    // return value is the client's answer — see `reportThroughLogger`.
     recordMappedException(mappedExceptions, request, error);
     reportThroughLogger(logger, error, "ExceptionsHandler");
     return httpErrors.internalServerError(unhandledFailureDetail).toResponse();
@@ -190,11 +189,11 @@ function announceLoggerFailure(loggerFailure: unknown, context: string): void {
  * here at all: this runs inside a route-local `error` hook whose return value is
  * the response, and this call is not guarded — a throw out of it would leave the
  * hook and replace the application's Problem Details answer with the engine's own
- * page. The logger call below runs the same rendering under this package's own
- * guard, so a refusal there is announced on `stderr` instead; the order still
- * matters, because a logger that throws as it reports the failure would otherwise
- * cost `/requests` the fact, and this record is the only place that fact can come
- * from.
+ * page. The logger call below runs the same rendering through this package's
+ * guard, so a refusal there is announced on `stderr` instead of escaping the
+ * hook. The record is written above that call because it costs nothing and
+ * depends on no guard; the placement protects nothing, and it is the guard alone
+ * that leaves the record and the Problem Details answer standing.
  */
 function recordMappedException(
   mappedExceptions: WeakMap<Request, string>,

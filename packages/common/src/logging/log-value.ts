@@ -21,12 +21,14 @@ export const unrenderableValue = "[unrenderable]";
  * that refuses both of those forms is stated as the literal rather than allowed to
  * throw.
  *
- * It is the rendering a thrown value is reported as on every surface this
- * framework publishes one: the devtools log stream's entry for a line, and the
- * exception the platform's default mapping records for `/requests`. One definition
- * rather than a copy each, so two surfaces reporting one failure cannot disagree
- * about it, and the literal a value that refuses everything is stated as is the
- * same word on both by construction.
+ * Two surfaces in this framework record a thrown value, and both state one through
+ * this rendering: the devtools log stream's entry for a line, and the exception the
+ * platform's default mapping records for `/requests`. One definition rather than a
+ * copy each, so two surfaces reporting one failure cannot disagree about it, and
+ * the literal a value that refuses everything is stated as is the same word on both
+ * by construction. A surface that reports something other than a recorded value has
+ * a form of its own; the console logger prints one for a terminal reader, and the
+ * devtools package's guarded report rows fold a thrown reason to one line.
  *
  * The text is not folded to one line. A string keeps its newlines, because a
  * surface states what happened rather than editing it.

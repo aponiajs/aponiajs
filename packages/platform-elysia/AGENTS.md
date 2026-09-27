@@ -133,12 +133,11 @@ runtime boundary it describes.
   `/requests` entry — can read it. Recording is the hook's whole second job and
   it returns the `Response` it always returned, because a hook in Elysia's error
   path that could change which handler answers would be a different answer rather
-  than a report of one. The record is written before the logger is called, and
-  the call goes through `errors/default-exception-filter.ts`'s
-  `reportThroughLogger`, which guards it: a logger that throws as it reports a
-  failure leaves both the record and the Problem Details answer intact, because
-  the response depends on the hook returning and a logger an application
-  supplies may throw. Such a logger is reported on `stderr` by a direct write —
+  than a report of one. The call goes through
+  `errors/default-exception-filter.ts`'s `reportThroughLogger`, which guards it: a
+  logger that throws as it reports a failure leaves both the record and the Problem
+  Details answer intact, because the response depends on the hook returning and a
+  logger an application supplies may throw. Such a logger is reported on `stderr` by a direct write —
   the only place this package writes a process stream — because the channel that
   would normally carry the diagnostic is the one that failed. Three call sites
   in this package report a failure and every one of them goes through that seam:

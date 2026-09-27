@@ -1,5 +1,8 @@
+import { join, resolve } from "node:path";
 import { describe, expect, test } from "bun:test";
 import { Glob } from "bun";
+
+const repositoryRoot = resolve(import.meta.dir, "..");
 
 /**
  * Literals this framework has retired, and what replaced them.
@@ -18,6 +21,10 @@ const retiredLiterals = [{ literal: "[unprojectable]", replacedBy: "[unrenderabl
  * `docs/superpowers/` is deliberately outside the set. A spec or a plan is the
  * record of a change, so it names the literal it retired on purpose — including
  * this file, which states one as its own data.
+ *
+ * Every pattern is resolved against the repository root rather than the process
+ * working directory, so the scan covers the same set wherever it is run from
+ * instead of passing over a near-empty one.
  */
 const publishedSurfaces = [
   "README.md",
@@ -39,8 +46,10 @@ describe("retired literals", () => {
       const offenders: string[] = [];
 
       for (const pattern of publishedSurfaces) {
-        for await (const path of new Glob(pattern).scan(".")) {
-          const content = await Bun.file(path).text();
+        const scan = new Glob(pattern).scan({ cwd: repositoryRoot, onlyFiles: true });
+
+        for await (const path of scan) {
+          const content = await Bun.file(join(repositoryRoot, path)).text();
           if (content.includes(retired.literal)) {
             offenders.push(path);
           }

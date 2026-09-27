@@ -863,13 +863,13 @@ that the rendering publishes no stack, with the presence of `error` asserted
 before the comparison, because an absent field would satisfy a `not.toContain`
 on its own and prove nothing. The comparison runs over three thrown values — an
 `Error`, one that is not, and a value the rendering cannot state at all —
-because the rendering has a branch per shape and a case that only ever threw
-`Error`s could not tell a faithful rendering from one that agreed on that branch
-alone; the third pins the literal both surfaces fall back to, since a value that
-refuses `JSON.stringify` and the plain string form alike has to read the same on
-both. A further case throws such a value through an application whose logger the
-registration has tapped, and requires the client to receive the platform's
-Problem Details answer all the same and `/logs` to state a line for it. That
+because the rendering has a branch per shape, and these three shapes are what
+put a branch through both surfaces rather than one; the third pins the literal
+both surfaces fall back to, since a value that refuses `JSON.stringify` and the
+plain string form alike has to read the same on both. A further case throws such
+a value through an application whose logger the registration has tapped, and
+requires the client to receive the platform's Problem Details answer all the
+same and `/logs` to state a line for it. That
 case no longer carries the risk it was written around — the rendering is total,
 and the logger call behind it is guarded by the platform, so a throw on that
 path reaches `stderr` and leaves the answer standing — and what it pins now is

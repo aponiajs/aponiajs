@@ -990,9 +990,8 @@ test.serial("the exception the record reports is the one the log stream states",
     // told apart only by their order in two independently read windows. The
     // three thrown values are different shapes on purpose: an `Error`, a value
     // that is not one, and one the rendering cannot state at all take three
-    // different branches of the one rendering both surfaces call, and a case
-    // that only threw `Error`s could not tell a faithful rendering from one
-    // that happened to agree on that branch alone.
+    // different branches of the one rendering both surfaces call, so the
+    // comparison shows a branch per shape rather than the `Error` branch alone.
     const cases = [
       { path: "/unhandled", expected: "Error: the raw exception" },
       { path: "/unhandled-object", expected: '{"code":"E_CONN","retries":3}' },
@@ -1042,12 +1041,13 @@ test.serial(
     // with `[unrenderable]`, because the property that function is named by throws
     // on the way; the rendering both surfaces call answers the cyclic shape with
     // `[unrenderable]` — it refuses the JSON form and the plain one — and the
-    // trapping one with the function's own source text. A boot that handed a
-    // console logger over would therefore be asserting this rendering through two
-    // renderings instead of through the one alone. `silentFailureLogger` records
-    // the line and writes nothing, which is the state this case is about: the value
-    // reaches the rendering, the tap states it, and nothing below the tap reads it
-    // a second time.
+    // trapping one with the function's own source text. What the assertions below
+    // read is the rendering's own answer — `reported?.message`, and the record's
+    // `error` — and never what the console printed.
+    //
+    // `silentFailureLogger` records the line and writes nothing, which is the state
+    // this case is about: the value reaches the rendering, the tap states it, and
+    // nothing below the tap reads it a second time.
     const cases = [
       {
         path: "/unrenderable",

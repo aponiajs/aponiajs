@@ -172,10 +172,11 @@ renders every value it is handed, or states `[unrenderable]`.
 a function is its name, an `Error` is its name and message with no stack, and everything else is its
 JSON form with the plain string form behind it. A value that refuses both of those forms is stated as
 `[unrenderable]` rather than allowed to throw, so a surface can report any value it is handed — a
-thrown one included — without the report becoming a failure of its own. It is the rendering this
-framework's own surfaces report a thrown value through: the devtools log stream's entry for a line, and
+thrown one included — without the report becoming a failure of its own. Two surfaces in this framework
+record a thrown value, and both state one through it: the devtools log stream's entry for a line, and
 the exception the platform's default mapping records for `/requests`. One definition rather than a copy
 each, so two surfaces reporting one failure cannot disagree about it, and the literal a value that
 refuses everything is stated as is the same word on both by construction. Reach for it when you publish
-a surface of your own and need to state a value the way the framework's does. The console logger prints
-its own form for a terminal reader and answers the same literal when a value refuses it.
+a surface of your own and need to state a value the way the framework's does. A surface that reports
+something other than a recorded value has a form of its own: the console logger prints one for a
+terminal reader and answers the same literal when a value refuses it.
