@@ -112,6 +112,44 @@ class CapturedModule {}
 })
 class CapturedTwinModule {}
 
+/**
+ * A gate the out-of-order case opens, so the order two answers land in is that
+ * case's decision rather than the clock's: the slow route parks here until it is
+ * released.
+ */
+let openSlowGate: (() => void) | undefined;
+
+/**
+ * Two routes whose answers land in the order opposite to their arrivals.
+ *
+ * The slow route parks until the case releases it, which is what makes an
+ * entry's position in the window say nothing about the request it answers — the
+ * property that makes "group by `id` and take the last entry" necessary rather
+ * than incidental to a window that happened to be written in id order.
+ */
+@Controller("/delays")
+class DelayedController {
+  @Get("/slow")
+  async slow(): Promise<string> {
+    await new Promise<void>((resolve) => {
+      openSlowGate = resolve;
+    });
+
+    return "slow";
+  }
+
+  @Get("/fast")
+  fast(): string {
+    return "fast";
+  }
+}
+
+@Module({
+  imports: [DevtoolsModule.register({ enabled: true, port: ephemeralPort })],
+  controllers: [DelayedController],
+})
+class OutOfOrderModule {}
+
 @Module({
   imports: [DevtoolsModule.register({ enabled: true, port: ephemeralPort, capture: false })],
   controllers: [UsersController],
@@ -511,6 +549,67 @@ test.serial(
   },
 );
 
+test.serial("the last entry per id is the answer when answers land out of id order", async () => {
+  const { application, address } = await bootApplication(OutOfOrderModule);
+  try {
+    // The slow request arrives first, so it takes the lower id, and it parks
+    // until this case releases it. The fast request arrives second and answers
+    // first, so the two answers land in the order opposite to the two arrivals.
+    const slow = fetch(`${application.getUrl()}/delays/slow`);
+    for (let attempt = 0; attempt < 200 && openSlowGate === undefined; attempt += 1) {
+      await Bun.sleep(5);
+    }
+
+    const release = openSlowGate;
+
+    if (release === undefined) {
+      throw new Error("the slow route never parked, so it could not be released");
+    }
+
+    await fetch(`${application.getUrl()}/delays/fast`);
+    release();
+    await slow;
+
+    const payload = await readRequests(address);
+
+    // Two arrivals and two answers, and the position of each in the window says
+    // nothing about the request it answers: the `id` they share is the only
+    // thing that pairs them.
+    expect(payload.entries.map((record) => record.url)).toEqual([
+      "/delays/slow",
+      "/delays/fast",
+      "/delays/fast",
+      "/delays/slow",
+    ]);
+
+    const grouped = new Map<number, readonly RequestRecord[]>();
+    for (const record of payload.entries) {
+      grouped.set(record.id, [...(grouped.get(record.id) ?? []), record]);
+    }
+
+    expect(grouped.size).toBe(2);
+
+    for (const entries of grouped.values()) {
+      // Each group is one request: the entry written at arrival states no answer,
+      // and the one written at completion supersedes it.
+      expect(entries).toHaveLength(2);
+      expect(entries[0]?.status).toBeNull();
+      expect(entries.at(-1)?.status).toBe(200);
+    }
+
+    // Taking the last entry per id answers each request with its own answer,
+    // however the answers interleaved. Compared as a set rather than a sorted
+    // list, because the order the group keys walk is the map's and not the
+    // record's, and the fact under test is which request each answer belongs to.
+    expect(new Set([...grouped.values()].map((entries) => entries.at(-1)?.url))).toEqual(
+      new Set(["/delays/fast", "/delays/slow"]),
+    );
+  } finally {
+    openSlowGate = undefined;
+    await application.close();
+  }
+});
+
 test.serial("a registration told to capture nothing still writes no pending entry", async () => {
   const { application, address } = await bootApplication(UncapturedModule);
   try {
@@ -853,6 +952,38 @@ test.serial("a second listen serves the record of the boot it started", async ()
 
     expect(restarted.cursor).toBe(0);
     expect(restarted.entries).toEqual([]);
+  } finally {
+    await application?.close();
+    output.restore();
+  }
+});
+
+test.serial("an id keeps counting across the two boots of one registration", async () => {
+  const output = captureOutput();
+  let application: AponiaElysiaApplication | undefined;
+  try {
+    application = await AponiaFactory.create(CapturedModule, { logger: false });
+    await application.listen(0);
+
+    await fetch(`${application.getUrl()}/users/42`);
+
+    const firstBoot = await readRequests(reportedAddress(output));
+    const lastOfFirstBoot = Math.max(...firstBoot.entries.map((record) => record.id));
+
+    // A second `listen()` is a second boot of one registration: the record is
+    // new, but the counter that mints an id belongs to the capture and outlives
+    // the boot. An id that restarted at `1` here would let a consumer that kept
+    // polling through the restart group this boot's first request with the
+    // previous boot's — two different requests under one id.
+    await application.listen(0);
+
+    await fetch(`${application.getUrl()}/users/7`);
+
+    const addresses = reportedAddresses(output);
+    const secondBoot = await readRequests(addresses[1] ?? "");
+
+    expect(secondBoot.entries).toHaveLength(2);
+    expect(secondBoot.entries[0]?.id).toBeGreaterThan(lastOfFirstBoot);
   } finally {
     await application?.close();
     output.restore();

@@ -6,10 +6,12 @@ import type { RequestBuffer, RequestRecord } from "./request-buffer.types.ts";
  *
  * The spec fixes the buffer's shape and says it is bounded, and names no
  * capacity. The bound is on **entries**, not on requests: one answered request
- * writes two of them, one at arrival and one at completion, so `1000` is the
- * window of five hundred answered requests this number was chosen for. A
- * consumer counting requests reads the same window it always did; one counting
- * entries — the cursor counts entries — reads twice as many as it did.
+ * writes two of them, one at arrival and one at completion, so `1000` holds five
+ * hundred answered requests. A request nothing answered costs one entry rather
+ * than two, so the same bound holds more requests the more of those a boot
+ * records — up to the full `1000` when nothing is answered at all. The cursor
+ * counts entries rather than requests, so a consumer polling it reads two of
+ * them per answered request.
  *
  * The log stream's capacity is its own constant and does not move with this one:
  * its bound counts lines, and one line is one call, so the two numbers are equal

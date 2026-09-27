@@ -4,7 +4,8 @@
 only by naming a host — that answers what a running application **is** and what
 it **did**: the module graph it compiled, the routes
 it actually answers, the stages each route passes through, the lines its logger
-wrote, the requests it answered, and what a build decides about its invokers.
+wrote, the requests that reached it and what answered them, and what a build
+decides about its invokers.
 
 It is a leaf package: nothing in the framework depends on it, and an application
 installs it deliberately. It ships no UI, no assets, and no browser bundle —
