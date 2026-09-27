@@ -263,15 +263,17 @@ draws a graph rather than assuming a chain.
 Filters are a list on the route, never a stage in the chain, because they run
 when a guard or the handler threw rather than on every request.
 
-**A limitation to read before trusting `/flow`: an interceptor half declared as
-a class field does not appear.** The stage a route runs is decided from the
-class tokens the plan carries, read through their `prototype` — the object an
-instance's methods resolve through. A half written as a field
-(`interceptBefore = () => {}`) is an instance property instead, so the platform
-runs it while the payload omits its stage. `/flow`'s answer is complete for
-interceptors declared as prototype methods and incomplete for those declared as
-fields; the omission is the one part of this endpoint that is silent rather than
-stated.
+**Which interceptor halves a route runs is read from the boot, never inferred
+from the class.** The platform calls each half with an optional call, so a class
+implementing one half runs one half, and a stage is published only for the halves
+that run. Which those are was recorded while the route mounted, read from the
+instance the platform calls — so a half written as a class field
+(`interceptBefore = () => {}`), an own property no class token carries, is
+reported like any other. A record that carries no such field — a copy of the
+platform older than this release, or one this package does not own — falls back
+to each class token's `prototype`: the narrower answer, which publishes a half
+only when the token declares one and so omits a field-declared half instead of
+inventing a step the route does not run.
 
 ### `/logs`
 
@@ -526,8 +528,6 @@ These are the boundaries this package states rather than hides.
   [`devtoolsPlugin`](#mounting-it-without-a-module-import) is the way around the
   whole limitation: an option is not an `imports` entry, so the root stays
   declarable and the surface still mounts.
-- **A class-field interceptor half is invisible to `/flow`.** The platform runs
-  it; the payload omits its stage. See [`/flow`](#flow).
 - **A stream records the calls, whatever the logger's own level filter would
   print.** `LoggerService` has no notion of an enabled level, so a line the
   console would have suppressed is still in the stream. See [`/logs`](#logs).

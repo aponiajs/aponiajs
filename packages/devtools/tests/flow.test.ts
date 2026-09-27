@@ -284,6 +284,21 @@ class AfterOnlyInterceptor {
   }
 }
 
+/**
+ * The two halves declared as class fields rather than as prototype methods.
+ *
+ * This is the shape a class token cannot state: the platform calls the
+ * interceptor's halves on the instance, and a field is an own property the
+ * prototype never carries. The route below is what fails when the payload
+ * decides a stage from the `prototype` alone — which is why the boot records the
+ * halves it resolved, while the instance that implements them is in hand.
+ */
+class FieldInterceptor {
+  interceptBefore = (): void => {};
+
+  interceptAfter = (_context: unknown, response: unknown): unknown => response;
+}
+
 class GlobalFilter {
   catch(): unknown {
     return undefined;
@@ -303,6 +318,10 @@ class EdgeController {
 
   two(): string {
     return "two";
+  }
+
+  fields(): string {
+    return "fields";
   }
 }
 
@@ -332,6 +351,12 @@ const edgeModule: ModuleDefinition = defineModule({
           propertyKey: "two",
           interceptors: [BeforeOnlyInterceptor, AfterOnlyInterceptor],
         },
+        {
+          method: "GET",
+          path: "/fields",
+          propertyKey: "fields",
+          interceptors: [FieldInterceptor],
+        },
       ],
     }),
     elysiaController(CallbackController, (application, controller) => {
@@ -346,6 +371,7 @@ const edgeModule: ModuleDefinition = defineModule({
     provideClass(LocalInterceptor, []),
     provideClass(BeforeOnlyInterceptor, []),
     provideClass(AfterOnlyInterceptor, []),
+    provideClass(FieldInterceptor, []),
     provideClass(GlobalFilter, []),
     provideClass(LocalFilter, []),
   ],
@@ -635,6 +661,122 @@ test("a half an interceptor does not declare is not published as a stage", async
     ]);
   } finally {
     server.stop();
+  }
+});
+
+test("an interceptor half declared as a class field is published as a stage", async () => {
+  const application = await bootEdgeApplication();
+  const server = serveLoopback(application);
+
+  try {
+    const route = routeById(await readFlow(server), "GET /edge/fields");
+
+    // The two stages are asserted by the class they name rather than by the
+    // whole stage list, because the list also carries the application's own
+    // declarations and whatever the route else declares. `FieldInterceptor`
+    // implements both halves as fields, so both stages are what the route runs:
+    // a payload that decided them from the class's `prototype` would report
+    // neither, and the two `expect`s below are what fails there.
+    const halves = route.stages.filter((stage) => stage.enhancer === "FieldInterceptor");
+
+    expect(halves.map((stage) => stage.kind)).toEqual(["interceptBefore", "interceptAfter"]);
+    expect(halves.map((stage) => stage.scope)).toEqual(["local", "local"]);
+    // The order is the contract: the before half runs ahead of the handler and
+    // the after half behind it, so the two are not adjacent — the invoke and the
+    // handler sit between them.
+    const before = halves[0]!;
+    const after = halves[1]!;
+    expect(route.stages.indexOf(after)).toBeGreaterThan(route.stages.indexOf(before));
+  } finally {
+    server.stop();
+  }
+});
+
+test("a record whose interceptor halves this release cannot read falls back to the prototype", async () => {
+  // The halves are this release's field, and the record arrives through a
+  // registry-global symbol key: an older copy of the platform leaves the field
+  // out entirely, a foreign one may hold something else under the name, and a
+  // boot that never resolved the class has no entry for it. Each of those falls
+  // back to the class token's `prototype` — the narrower answer, which misses a
+  // half declared as a field rather than reporting a stage the route does not
+  // run, and which never fails the request this handler answers.
+  const fromPrototype: (string | undefined)[][] = [
+    ["interceptBefore", "AuditInterceptor"],
+    ["invoke", undefined],
+    ["handler", undefined],
+    ["interceptAfter", "AuditInterceptor"],
+  ];
+  const shapes: readonly {
+    readonly shape: string;
+    readonly halves: unknown;
+    readonly expected: (string | undefined)[][];
+  }[] = [
+    { shape: "no field at all", halves: undefined, expected: fromPrototype },
+    { shape: "a field that is not a map", halves: "not a map", expected: fromPrototype },
+    { shape: "a map with no entry for the class", halves: new Map(), expected: fromPrototype },
+    {
+      shape: "an entry that is not a halves pair",
+      halves: new Map([[AuditInterceptor, null]]),
+      expected: fromPrototype,
+    },
+    {
+      shape: "a pair whose halves are not booleans",
+      halves: new Map([[AuditInterceptor, { before: "true", after: "true" }]]),
+      expected: fromPrototype,
+    },
+    {
+      // The record is what the boot resolved, so it answers ahead of the
+      // prototype rather than beside it: a class recorded as implementing
+      // neither half publishes neither stage, although its prototype declares
+      // both.
+      shape: "a pair that states neither half",
+      halves: new Map([[AuditInterceptor, { before: false, after: false }]]),
+      expected: [
+        ["invoke", undefined],
+        ["handler", undefined],
+      ],
+    },
+  ];
+
+  for (const { shape, halves, expected } of shapes) {
+    const application = new Elysia();
+    application.get("/", () => "older");
+    Object.defineProperty(application, Symbol.for("aponia.application.diagnostics"), {
+      value: {
+        framework: "0.0.0-older",
+        interceptorHalves: halves,
+        routes: [
+          {
+            module: "OlderModule",
+            controller: "OlderController",
+            route: {
+              method: "GET",
+              path: "/",
+              propertyKey: "read",
+              parameters: [],
+              schema: undefined,
+              enhancers: { guards: [], interceptors: [AuditInterceptor], filters: [] },
+            },
+          },
+        ],
+      },
+      enumerable: false,
+    });
+
+    const server = serveLoopback(application);
+
+    try {
+      const stages = routeById(await readFlow(server), "GET /").stages;
+
+      // The shape is read back with the assertion, so a failure names which
+      // record it was rather than only which stage list differed.
+      expect({ shape, stages: stages.map((stage) => [stage.kind, stage.enhancer]) }).toEqual({
+        shape,
+        stages: expected,
+      });
+    } finally {
+      server.stop();
+    }
   }
 });
 

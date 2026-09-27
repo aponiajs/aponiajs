@@ -5,6 +5,7 @@ import {
   Get,
   Module,
   Post,
+  UseInterceptors,
   Validation,
   defineModule,
   type ClassToken,
@@ -63,6 +64,55 @@ class DiagnosticsGuard {
 
 @Module({ controllers: [DiagnosticsController], providers: [DiagnosticsGuard] })
 class DiagnosticsAppModule {}
+
+/**
+ * The two shapes one interceptor half is written in: a prototype method, which
+ * every class token carries, and a class field, which only the instance does.
+ *
+ * The record has to state both, because the platform calls
+ * `interceptor.interceptBefore?.(…)` on the instance — a half declared as a
+ * field is an own property no token can be read for. The third class declares
+ * one half only, so a reader that assumed both halves from a resolved class is
+ * visible rather than agreeing with the cases that declare both.
+ */
+class MethodHalvesInterceptor {
+  interceptBefore(): void {}
+
+  interceptAfter(_context: unknown, response: unknown): unknown {
+    return response;
+  }
+}
+
+class FieldHalvesInterceptor {
+  interceptBefore = (): void => {};
+
+  interceptAfter = (_context: unknown, response: unknown): unknown => response;
+}
+
+class BeforeOnlyFieldInterceptor {
+  interceptBefore = (): void => {};
+}
+
+@Controller()
+class InterceptorDiagnosticsController {
+  @Get("first")
+  @UseInterceptors(MethodHalvesInterceptor)
+  first(): string {
+    return "first";
+  }
+
+  @Get("second")
+  @UseInterceptors(FieldHalvesInterceptor, BeforeOnlyFieldInterceptor)
+  second(): string {
+    return "second";
+  }
+}
+
+@Module({
+  controllers: [InterceptorDiagnosticsController],
+  providers: [MethodHalvesInterceptor, FieldHalvesInterceptor, BeforeOnlyFieldInterceptor],
+})
+class InterceptorDiagnosticsAppModule {}
 
 /**
  * A controller whose routes throw values the platform's own mapping answers, so
@@ -267,6 +317,41 @@ test("a booted application exposes its boot decision and compiled routes", async
   expect(diagnostics?.globalEnhancers.guards).toEqual([DiagnosticsGuard]);
   expect(diagnostics?.globalEnhancers.interceptors).toEqual([]);
   expect(diagnostics?.globalEnhancers.filters).toEqual([]);
+  await application.close();
+});
+
+test("the record states which interceptor halves each resolved class implements", async () => {
+  // The halves a class implements are legible only while the instance that
+  // implements them is in hand, so the boot records them where each declaration
+  // resolves: a field-declared half is an own property of the instance and the
+  // class token a plan carries never states it. One interceptor is declared both
+  // globally and on a route, so this case also holds the record to one entry per
+  // class rather than one per scope.
+  const application = await AponiaFactory.create(InterceptorDiagnosticsAppModule, {
+    logger: false,
+    interceptors: [MethodHalvesInterceptor],
+  });
+  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+  const halves = diagnostics?.interceptorHalves;
+
+  expect(halves).toBeInstanceOf(Map);
+  // The premise first: an empty map would satisfy every lookup below by
+  // answering `undefined`, so the size and the key order are asserted before the
+  // entries are.
+  expect(halves?.size).toBe(3);
+  expect([...(halves?.keys() ?? [])]).toEqual([
+    MethodHalvesInterceptor,
+    FieldHalvesInterceptor,
+    BeforeOnlyFieldInterceptor,
+  ]);
+  expect(halves?.get(MethodHalvesInterceptor)).toEqual({ before: true, after: true });
+  expect(halves?.get(FieldHalvesInterceptor)).toEqual({ before: true, after: true });
+  expect(halves?.get(BeforeOnlyFieldInterceptor)).toEqual({ before: true, after: false });
+  // The prototype the token's method-declared half lives on, and the own
+  // properties the field-declared ones live on instead: this is the difference
+  // that makes the record the only source for the second shape.
+  expect(typeof MethodHalvesInterceptor.prototype.interceptBefore).toBe("function");
+  expect(Object.hasOwn(FieldHalvesInterceptor.prototype, "interceptBefore")).toBe(false);
   await application.close();
 });
 

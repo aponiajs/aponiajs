@@ -16,9 +16,10 @@ import {
 import {
   collectEnhancerDeclarations,
   resolveEnhancers,
+  type InterceptorHalves,
   type MountedExceptionHandling,
   type MountedRouteEnhancers,
-  type ResolvedEnhancers,
+  type ResolvedControllerEnhancers,
 } from "../controllers/enhancer-resolver.ts";
 import type { RuntimeElysiaController } from "../controllers/controller.types.ts";
 import { createDefaultExceptionFilter } from "../errors/default-exception-filter.ts";
@@ -137,7 +138,7 @@ export async function bootstrapAponiaApplication(
     interceptors: Object.freeze([...(options.interceptors ?? [])]),
     filters: Object.freeze([...(options.filters ?? [])]),
   });
-  const globalEnhancers: ResolvedEnhancers = resolveEnhancers(
+  const globalEnhancers: ResolvedControllerEnhancers = resolveEnhancers(
     container,
     container.graph.root,
     globalEnhancerDeclarations,
@@ -181,13 +182,23 @@ export async function bootstrapAponiaApplication(
     logger,
   });
 
-  // Two facts the record publishes are not readable afterwards, so the mounts
-  // that decide them collect them here. Which property keys a supplied invoker
-  // bound is settled one route at a time while the route registers, and a
+  // The facts the record publishes that are not readable afterwards, so the
+  // mounts that decide them collect them here. Which property keys a supplied
+  // invoker bound is settled one route at a time while the route registers, a
   // callback's routes are named by the callback that mounted them, which no
-  // entry of the mounted table remembers: it knows a method and a path.
+  // entry of the mounted table remembers, and the halves an interceptor class
+  // implements are legible only while the instance that implements them is in
+  // hand — a half declared as a class field is an own property of that instance
+  // and the token a plan carries never states it.
   const generatedInvokers = new Map<Token<unknown>, ReadonlySet<string | symbol>>();
   const callbackRoutes: AponiaCallbackRouteDiagnostics[] = [];
+  const interceptorHalves = new Map<ClassToken<unknown>, InterceptorHalves>();
+  // The application's own declaration resolves first, so it is collected first.
+  // Both scopes merge into one map because a class is one singleton whichever
+  // scope resolved it: a class declared at both scopes answers the same two
+  // booleans twice, so the later merge overwrites an identical value rather than
+  // correcting an earlier one, and no guard is needed to say so.
+  collectInterceptorHalves(interceptorHalves, globalEnhancers.halves);
 
   for (const module of container.graph.modules) {
     for (const controller of module.controllers) {
@@ -210,6 +221,7 @@ export async function bootstrapAponiaApplication(
         module,
         collectEnhancerDeclarations(controller.compiledRoutes ?? []),
       );
+      collectInterceptorHalves(interceptorHalves, resolvedEnhancers.halves);
       // The two resolutions travel together from here: every path this
       // controller's routes mount through carries both, which is what makes a
       // global enhancer reach a route mounted through any of them.
@@ -290,6 +302,7 @@ export async function bootstrapAponiaApplication(
       callbackRoutes,
       globalEnhancers: globalEnhancerDeclarations,
       mappedExceptions,
+      interceptorHalves,
     }),
   );
 
@@ -304,6 +317,25 @@ export async function bootstrapAponiaApplication(
 
   await nativeApplication.modules;
   return Object.freeze({ nativeApplication, logger });
+}
+
+/**
+ * Adds one scope's interceptor halves to the boot's own collection.
+ *
+ * A class is one singleton whichever scope resolved it, so a class declared both
+ * globally and on a route's own list answers the same two booleans twice: this
+ * overwrites an identical value rather than resolving a conflict, which is why
+ * nothing here compares the two. The collection is the boot's working map rather
+ * than a record field — the record copies it, once every mount that writes into
+ * it is done.
+ */
+function collectInterceptorHalves(
+  collected: Map<ClassToken<unknown>, InterceptorHalves>,
+  halves: ReadonlyMap<ClassToken<unknown>, InterceptorHalves>,
+): void {
+  for (const [token, declared] of halves) {
+    collected.set(token, declared);
+  }
 }
 
 /**

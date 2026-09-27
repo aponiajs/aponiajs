@@ -132,11 +132,12 @@ saw answered.
 
 ## Three answers this chapter will not let you misread
 
-- **A class-field interceptor half does not appear in `/flow`.** The stage a
-  route runs is decided from the class tokens the plan carries, read through
-  their `prototype`, so a half written as a field
-  (`interceptBefore = () => {}`) runs while the payload omits its stage. An
-  interceptor declared as a prototype method is reported in full.
+- **An interceptor half is a stage because the route runs it.** Which halves run
+  is the boot's own record, read from the instance the platform calls, so a half
+  written as a class field (`interceptBefore = () => {}`) is published like any
+  other. A record that carries no such field — a copy of the platform older than
+  this release — falls back to each class token's `prototype`, which is the
+  narrower answer: it publishes a half only when that token declares one there.
 - **A stream states the levels it reached.** If the logger accepts one level and
   refuses the next, the stream covers every level it could patch and names them in
   `levels`; the level that refused is absent from that list, so a stream that never

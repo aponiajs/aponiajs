@@ -13,6 +13,7 @@ import type {
   AponiaCallbackRouteDiagnostics,
   AponiaCompiledRouteDiagnostics,
   AponiaRouteParameterInspection,
+  InterceptorHalves,
 } from "@aponiajs/platform-elysia";
 import type { Elysia } from "elysia";
 import type {
@@ -131,6 +132,7 @@ export function buildFlowPayload(
   const plans = readCompiledPlans(diagnostics);
   const callbacks = readCallbackRoutes(diagnostics);
   const global = readEnhancers(diagnostics?.globalEnhancers);
+  const halves = readInterceptorHalves(diagnostics?.interceptorHalves);
   const routes: OrderedRoute[] = [];
 
   for (const mounted of readMountedRoutes(application)) {
@@ -142,7 +144,7 @@ export function buildFlowPayload(
     const id = routeKey(method, path);
     const plan = plans.get(id);
     const callback = callbacks.get(id);
-    const drafts = buildStageDrafts(mounted, plan, callback, global);
+    const drafts = buildStageDrafts(mounted, plan, callback, global, halves);
 
     routes.push(
       Object.freeze({
@@ -178,13 +180,16 @@ export function buildFlowPayload(
  *
  * Each half is published for the interceptors that declare it and no others: the
  * platform calls them with an optional call, so a class that implements one half
- * runs one half.
+ * runs one half. Which half a class implements is the boot's own record, read
+ * from the instance the platform calls and falling back to the class token's
+ * `prototype` for a record that carries none.
  */
 function buildStageDrafts(
   mounted: MountedNativeRoute,
   plan: AponiaCompiledRouteDiagnostics | undefined,
   callback: AponiaCallbackRouteDiagnostics | undefined,
   global: EnhancerMetadata,
+  recorded: ReadonlyMap<ClassToken<unknown>, InterceptorHalves> | undefined,
 ): readonly StageDraft[] {
   const hooks = readHooks(mounted.hooks);
   const declared = readEnhancers(plan?.route.enhancers);
@@ -205,7 +210,11 @@ function buildStageDrafts(
   appendContributedStages(drafts, hooks.beforeHandle, "beforeHandle");
   appendEnhancerStages(drafts, scopedEnhancers(inherited.guards, "global"), "guard");
   appendEnhancerStages(drafts, scopedEnhancers(declared.guards, "local"), "guard");
-  appendEnhancerStages(drafts, declaringHalf(interceptors, "interceptBefore"), "interceptBefore");
+  appendEnhancerStages(
+    drafts,
+    declaringHalf(interceptors, "interceptBefore", recorded),
+    "interceptBefore",
+  );
   appendParameterBinding(drafts, plan);
 
   const described = plan ?? callback;
@@ -217,7 +226,7 @@ function buildStageDrafts(
   appendContributedStages(drafts, hooks.afterHandle, "afterHandle");
   appendEnhancerStages(
     drafts,
-    Object.freeze([...declaringHalf(interceptors, "interceptAfter")].reverse()),
+    Object.freeze([...declaringHalf(interceptors, "interceptAfter", recorded)].reverse()),
     "interceptAfter",
   );
 
@@ -584,25 +593,43 @@ function scopedEnhancers(
  * The platform calls both halves with an optional call — `interceptor
  * .interceptBefore?.(…)` — so an interceptor that declares one half runs one
  * half, and a stage for the other would state something the route never runs.
- * The class the plan names is what this reads, which is the class the container
- * resolved for that token and the object an instance's methods come from.
+ * The class the plan names is what this reads, answered by the halves the boot
+ * recorded for that class and, failing that, by the class's own `prototype`.
  */
 function declaringHalf(
   enhancers: readonly ScopedEnhancer[],
   half: InterceptorHalf,
+  recorded: ReadonlyMap<ClassToken<unknown>, InterceptorHalves> | undefined,
 ): readonly ScopedEnhancer[] {
-  return Object.freeze(enhancers.filter(({ token }) => declaresHalf(token, half)));
+  return Object.freeze(enhancers.filter(({ token }) => declaresHalf(token, half, recorded)));
 }
 
 /**
  * Whether a class declares one half of the interceptor lifecycle.
  *
- * A class token's `prototype` is what an instance resolves its methods through,
- * so this answers for the object the platform would call. A token that is not a
- * class — a foreign record may hold anything — declares neither half, and a
- * stage left out costs a stage rather than the request.
+ * The recorded halves answer first, and they are the ones the route actually
+ * runs: they were read from the instance the platform calls, while building the
+ * mount, so a half declared as a class field — an own property of that instance
+ * and of no class token — is stated by them.
+ *
+ * The `prototype` probe is the fallback for a record that carries no halves: a
+ * copy of the platform older than this release, or one this package does not
+ * own. It answers from the class the token names rather than from the instance
+ * the platform calls, so it is the narrower answer: it publishes a half only
+ * when that token declares one on its `prototype`, which leaves a field-declared
+ * half out instead of inventing one. A token that is not a class declares
+ * neither half, and a stage left out costs a stage rather than the request.
  */
-function declaresHalf(token: ClassToken<unknown>, half: InterceptorHalf): boolean {
+function declaresHalf(
+  token: ClassToken<unknown>,
+  half: InterceptorHalf,
+  recorded: ReadonlyMap<ClassToken<unknown>, InterceptorHalves> | undefined,
+): boolean {
+  const declared = recordedHalf(recorded?.get(token), half);
+  if (declared !== undefined) {
+    return declared;
+  }
+
   const members = (token as { readonly prototype?: unknown }).prototype;
 
   return (
@@ -610,6 +637,46 @@ function declaresHalf(token: ClassToken<unknown>, half: InterceptorHalf): boolea
     members !== null &&
     typeof (members as Record<string, unknown>)[half] === "function"
   );
+}
+
+/**
+ * The halves a record states for one class, or `undefined` when it states none
+ * this release can read.
+ *
+ * The field is read defensively because the record arrives through a
+ * registry-global symbol key and its entries are data this release did not
+ * necessarily write: an entry that is not an object, and one whose half is not a
+ * boolean, both read as no halves rather than being dereferenced or reported as
+ * a stage. Every other shape reaches the `prototype` fallback above, which is
+ * what a record with no halves at all reaches too.
+ */
+function recordedHalf(value: unknown, half: InterceptorHalf): boolean | undefined {
+  if (typeof value !== "object" || value === null) {
+    return undefined;
+  }
+
+  const members = value as Record<string, unknown>;
+  const declared = half === "interceptBefore" ? members.before : members.after;
+
+  return typeof declared === "boolean" ? declared : undefined;
+}
+
+/**
+ * The boot's record of which interceptor halves each class implements, or
+ * `undefined` when the record carries none.
+ *
+ * The field is `unknown` at this boundary for the reason the rest of the record
+ * is read as unknown: it belongs to a copy of the platform this package does not
+ * own, so a copy older than the field leaves it out and a foreign one may hold
+ * something else under the name. A value that is not a `Map` reads as no halves,
+ * and every decision then falls back to the class token's `prototype`.
+ */
+function readInterceptorHalves(
+  value: unknown,
+): ReadonlyMap<ClassToken<unknown>, InterceptorHalves> | undefined {
+  return value instanceof Map
+    ? (value as ReadonlyMap<ClassToken<unknown>, InterceptorHalves>)
+    : undefined;
 }
 
 /**

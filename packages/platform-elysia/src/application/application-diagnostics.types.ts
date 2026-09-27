@@ -1,4 +1,5 @@
-import type { EnhancerMetadata, ModuleDefinition } from "@aponiajs/common";
+import type { ClassToken, EnhancerMetadata, ModuleDefinition } from "@aponiajs/common";
+import type { InterceptorHalves } from "../controllers/enhancer-resolver.ts";
 import type { CompiledElysiaRoute } from "../routing/route-compiler.types.ts";
 
 /**
@@ -106,8 +107,9 @@ export interface AponiaCallbackRouteDiagnostics {
  * Each fact is one bootstrap already decided — the graph the root selector
  * served, the invoker artifact's verdict, the release each adopted artifact came
  * from, the compiled root, the plans the controllers mounted from and the routes
- * they mounted themselves, and the application's own enhancer declaration — so a
- * consumer reports what the runtime did instead of re-applying its rules.
+ * they mounted themselves, the application's own enhancer declaration, and which
+ * halves of the interceptor lifecycle each resolved interceptor class implements
+ * — so a consumer reports what the runtime did instead of re-applying its rules.
  *
  * @internal
  */
@@ -167,4 +169,25 @@ export interface AponiaApplicationDiagnostics {
    * existed.
    */
   readonly mappedExceptions: WeakMap<Request, string>;
+  /**
+   * Which halves of the interceptor lifecycle each resolved interceptor class
+   * implements, keyed by the class token the plans name it by.
+   *
+   * A class token is the whole key because a class resolved once serves every
+   * route that names it: an interceptor is one singleton instance whatever
+   * route, scope, or module declared it, so the two booleans it answers are one
+   * fact about the class rather than one per route. The halves are read from the
+   * instance the container resolved, which is the object the platform calls —
+   * a half declared as a class field is an own property no token can be read
+   * for, and this field is where that shape survives the mount.
+   *
+   * It is copied rather than published as the boot held it, for the reason every
+   * other fact here is copied: the boot fills one map while its controllers
+   * mount, and a record may never be a handle on a collection its writer still
+   * owns. A reader that finds no such field — a copy of this platform older than
+   * this release — must read it as "no halves were recorded" rather than as "no
+   * halves were declared": the class may well implement both, and only the
+   * record that states them is missing.
+   */
+  readonly interceptorHalves: ReadonlyMap<ClassToken<unknown>, InterceptorHalves>;
 }

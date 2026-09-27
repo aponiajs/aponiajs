@@ -190,17 +190,24 @@ runtime boundary it describes.
   one half runs one half, and a stage for the other would state a step the route
   never runs — the same rule that keeps a `bind`, an `invoke`, a `handler`, and a
   validation slot off the routes that do not have them.
-- A half declared as a class **field** is invisible to `/flow`, and that omission
-  is this endpoint's one silent gap. The decision is read off each class token's
-  `prototype` — the object an instance's methods resolve through — so
-  `interceptBefore = () => {}` is an instance property the platform runs and the
-  payload reports no stage for, while a half declared as a prototype method is
-  reported in full. There is nothing to infer from the other side either: by the
-  time a plan is mounted, the platform has lowered the guards and both
-  interceptor halves into one `beforeHandle` and one `afterHandle`, so the parts
-  are legible only through the tokens the plan carries. Do not derive a stage
-  from a token that does not declare one; state the limit where a consumer reads
-  the payload, which is what `docs/devtools.md` and the package README do.
+- `/flow` decides which interceptor halves a route runs from the record the boot
+  wrote, and reaches a class token's `prototype` only as the fallback for a
+  record that carries none. The recorded halves are the boot's own, read from
+  the very instance the platform calls while that class resolved — a half
+  written as a class field is an own property of that instance and of no class
+  token — which is what makes a field-declared half a stage. The `prototype`
+  probe is for a record this release did not write, a copy of the platform older
+  than the field, and it is the narrower answer by construction: it derives a
+  stage from a token only when that token declares the half as a function on its
+  `prototype`, so a field-declared half is omitted rather than invented, and a
+  token that declares neither half yields neither stage. There is nothing to
+  infer from the other side: by the time a plan is mounted, the platform has
+  lowered the guards and both interceptor halves into one `beforeHandle` and one
+  `afterHandle`, so the parts are legible only through the tokens the plan
+  carries. The field is data this package did not write, so it is validated as
+  the `Map` this release writes before it is read and every other shape falls
+  back the same way; never let a read of it throw, because that handler runs
+  inside `Bun.serve`.
 - The application's own enhancer declaration merges into the routes the platform
   mounted from a plan and into no others. A route a controller's callback mounted,
   and one mounted on the native instance, carry no compiled hook for it to merge

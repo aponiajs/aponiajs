@@ -148,13 +148,14 @@ const application = await AponiaFactory.create(AppModule, {
   hook stage, and a contributed hook can only be identified — by the checksum
   Elysia stamps, never by a plugin name the route does not carry. The route's
   filters are a list beside the stages rather than a stage in the chain, ordered
-  as its own `error` array is, with the Problem Details mapping last. One
-  limitation is stated rather than hidden: an interceptor half declared as a
-  class field (`interceptBefore = () => {}`) does not appear. The stage a route
-  runs is decided from the class tokens the plan carries, read through their
-  `prototype` — the object an instance's methods resolve through — so a field is
-  run while its stage is omitted. A half declared as a prototype method is
-  reported in full.
+  as its own `error` array is, with the Problem Details mapping last. Which
+  interceptor halves a route runs is the boot's own record, read from the
+  instance the platform calls while the class resolved, so a half written as a
+  class field (`interceptBefore = () => {}`) is reported like any other. A
+  record that carries no such field — a copy of the platform older than this
+  release — falls back to each class token's `prototype`, the narrower answer:
+  it publishes a half only when that token declares one there, so a
+  field-declared half is omitted rather than stated.
 - **`GET /__devtools/logs?since=<cursor>` streams what the application logged.**
   The registration takes the logger the application also gives
   `AponiaFactory.create`, patches it in place, and records every line into a

@@ -50,6 +50,7 @@ export {
   defineElysiaController,
   elysiaController,
 } from "./controllers/controller-definition.ts";
+export type { InterceptorHalves } from "./controllers/enhancer-resolver.ts";
 export type {
   ElysiaControllerRegistrationResult,
   ElysiaControllerDefinition,

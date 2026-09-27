@@ -33,6 +33,21 @@ export interface ResolvedEnhancers {
 }
 
 /**
+ * Which halves of the interceptor lifecycle a resolved class implements.
+ *
+ * Both are stated rather than one, because the platform calls each with an
+ * optional call — `interceptor.interceptBefore?.(…)` — so a class implementing
+ * one half runs one half, and a reader that inferred the other from the class
+ * existing would state a step the route never runs.
+ *
+ * @internal
+ */
+export interface InterceptorHalves {
+  readonly before: boolean;
+  readonly after: boolean;
+}
+
+/**
  * Every enhancer a controller declares, resolved once while that controller
  * mounts.
  *
@@ -40,6 +55,12 @@ export interface ResolvedEnhancers {
  * controller's routes name it, and `forRoute` assembles one route's ordered
  * lists from those shared instances: routes carry different method-level
  * declarations, so their lists differ even though the instances do not.
+ *
+ * `halves` is the one fact the instances themselves own: which halves an
+ * interceptor class implements is a property of the object the platform calls,
+ * and a half declared as a class field is an own property no class token
+ * carries. It is keyed by the class token because that is what a plan — and so
+ * any reader of the mounted routes — names.
  */
 export interface ResolvedControllerEnhancers extends ResolvedEnhancers {
   /**
@@ -47,6 +68,11 @@ export interface ResolvedControllerEnhancers extends ResolvedEnhancers {
    * declared them. Assembling a list resolves nothing and constructs nothing.
    */
   forRoute(metadata: EnhancerMetadata): ResolvedEnhancers;
+  /**
+   * The halves each resolved interceptor class implements, keyed by its token.
+   * A class resolved at two scopes, or on two routes, is one entry.
+   */
+  readonly halves: ReadonlyMap<ClassToken<unknown>, InterceptorHalves>;
 }
 
 /**
@@ -99,6 +125,9 @@ const noResolvedEnhancers: ResolvedEnhancers = Object.freeze({
   filters: Object.freeze([]),
 });
 
+/** The halves of no class, shared for the same reason the empty lists are. */
+const noInterceptorHalves: ReadonlyMap<ClassToken<unknown>, InterceptorHalves> = new Map();
+
 /**
  * The enhancers a mount that resolves nothing runs: the one a controller
  * definition's own `buildPlugin` makes.
@@ -116,12 +145,28 @@ export const unmountedRouteEnhancers: MountedRouteEnhancers = Object.freeze({
   controller: Object.freeze({
     ...noResolvedEnhancers,
     forRoute: () => noResolvedEnhancers,
+    halves: noInterceptorHalves,
   }),
   exceptionHandling: Object.freeze({
     defaultFilter: undefined,
     logger: undefined,
   }),
 });
+
+/**
+ * Whether one interceptor **instance** implements one half.
+ *
+ * The instance, not the class's `prototype`: the platform calls
+ * `interceptor.interceptBefore?.(…)` on the instance, so a half written as a
+ * class field is an own property the prototype never carries. A reader that
+ * asks the prototype misses exactly that shape.
+ */
+function halvesOf(instance: AponiaInterceptor): InterceptorHalves {
+  return Object.freeze({
+    before: typeof instance.interceptBefore === "function",
+    after: typeof instance.interceptAfter === "function",
+  });
+}
 
 /**
  * Resolves every enhancer a controller declares, once per distinct class.
@@ -133,7 +178,10 @@ export const unmountedRouteEnhancers: MountedRouteEnhancers = Object.freeze({
  *
  * Every class is resolved while its declaration is stated rather than while a
  * route asks for its lists, so a declaration that cannot resolve fails the
- * mount even before any hook consumes it.
+ * mount even before any hook consumes it. That is also the only moment the
+ * pairing between a class token and the instance it resolved to is in hand, so
+ * the halves are read here, from the instances, rather than left to a reader of
+ * the tokens.
  */
 export function resolveEnhancers(
   container: AponiaContainer,
@@ -155,10 +203,16 @@ export function resolveEnhancers(
     }),
   );
 
+  const halves = new Map<ClassToken<unknown>, InterceptorHalves>();
+  for (const [token, interceptor] of interceptors) {
+    halves.set(token, halvesOf(interceptor));
+  }
+
   return Object.freeze({
     guards: Object.freeze([...guards.values()]),
     interceptors: Object.freeze([...interceptors.values()]),
     filters: Object.freeze([...filters.values()]),
+    halves,
     forRoute: (route: EnhancerMetadata): ResolvedEnhancers =>
       Object.freeze({
         guards: Object.freeze(route.guards.map((guard) => resolvedInstance(guards, guard, module))),

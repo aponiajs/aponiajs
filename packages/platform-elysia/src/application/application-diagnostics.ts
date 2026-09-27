@@ -1,11 +1,13 @@
 import {
   tokenName,
+  type ClassToken,
   type EnhancerMetadata,
   type ModuleDefinition,
   type Token,
 } from "@aponiajs/common";
 import type { Elysia } from "elysia";
 import { isElysiaController } from "../controllers/controller-definition.ts";
+import type { InterceptorHalves } from "../controllers/enhancer-resolver.ts";
 import type {
   AponiaApplicationDiagnostics,
   AponiaArtifactProvenance,
@@ -42,11 +44,15 @@ const diagnosticsKey: unique symbol = Symbol.for("aponia.application.diagnostics
  * indistinguishable from a compiled one once it is registered.
  *
  * Every other fact it is handed is copied before it is frozen — the invoker verdict,
- * the artifact provenance, the root descriptor, the callback routes, and the
- * enhancer declaration are all the caller's objects — because a record may never
- * be the place its own facts are still mutable. Nothing here relies on the boot
- * having frozen them first: a reader of the record cannot see how the boot kept
- * them.
+ * the artifact provenance, the root descriptor, the callback routes, the
+ * enhancer declaration, and the interceptor halves are all objects this record
+ * may not lend out — because a record may never be the place its own facts are
+ * still mutable. Nothing here relies on the boot having frozen them first: a
+ * reader of the record cannot see how the boot kept them. The halves are the one
+ * of those the boot itself owns rather than a caller, and they are copied for
+ * the same reason read the other way: the boot fills one map while its
+ * controllers mount, so the record takes the copy those mounts are done with
+ * rather than the map the boot still holds.
  *
  * `mappedExceptions` is the one fact that is published as it was handed over
  * rather than copied, and it is the one fact that is not a decision the boot
@@ -67,6 +73,7 @@ export function createApplicationDiagnostics(facts: {
   readonly callbackRoutes: readonly AponiaCallbackRouteDiagnostics[];
   readonly globalEnhancers: EnhancerMetadata;
   readonly mappedExceptions: WeakMap<Request, string>;
+  readonly interceptorHalves: ReadonlyMap<ClassToken<unknown>, InterceptorHalves>;
 }): AponiaApplicationDiagnostics {
   return Object.freeze({
     framework: facts.framework,
@@ -81,6 +88,11 @@ export function createApplicationDiagnostics(facts: {
     callbackRoutes: freezeCallbackRoutes(facts.callbackRoutes),
     globalEnhancers: freezeEnhancerMetadata(facts.globalEnhancers),
     mappedExceptions: facts.mappedExceptions,
+    // A new map over the same entries rather than a freeze: the record's other
+    // fields are copies of what the caller holds, and a `Map` is the one
+    // collection `Object.freeze` cannot close — it freezes the object and leaves
+    // `set` writing through it.
+    interceptorHalves: new Map(facts.interceptorHalves),
   });
 }
 

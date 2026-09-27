@@ -270,7 +270,12 @@ runtime boundary it describes.
   descriptor builds — contributes to `callbackRoutes` instead, because its routes
   have a method and a path and neither the module nor the controller that mounted
   them anywhere else), the application's own enhancer declaration, which no
-  plan carries because a plan states only what its route declares, and the
+  plan carries because a plan states only what its route declares, which halves
+  of the interceptor lifecycle each resolved interceptor class implements — read
+  from the instance the container resolved while that class mounted rather than
+  from the class token's `prototype`, because a half written as a class field is
+  an own property of the instance and of no token, and copied so the record never
+  lends out the map the boot was still filling — and the
   `WeakMap` the default mapping records its answers in. That last field is the
   record's one live fact rather than a decision the boot made: it is published as
   the boot handed it over — not copied, because copying would publish a snapshot
