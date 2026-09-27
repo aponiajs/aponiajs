@@ -126,16 +126,21 @@ backwards, and a cursor older than the retained window or ahead of every write
 is answered with what there is rather than an error. `/requests` counts entries
 rather than requests, and that is the one thing to know about its shape: a
 request writes one entry when it arrives and a second when it is answered, both
-carrying the same `id`, so you group by `id` and keep the last entry for each.
-An entry whose `status` is `null` is a request the record saw arrive and never
-saw answered.
+carrying the same `id`, so you group by `id` and keep the last entry each request
+has in the window you read. An entry whose `status` is `null` is a request the
+record saw arrive and read no answer for — the record's own view, not a promise
+about the application: a poll that lagged more than one window behind never reads
+an answer FIFO eviction already dropped, and an answer written after a second
+`listen()` lands in the record the socket that is gone was serving.
 
 ## Three answers this chapter will not let you misread
 
 - **An interceptor half is a stage because the route runs it.** Which halves run
   is the boot's own record, read from the instance the platform calls, so a half
   written as a class field (`interceptBefore = () => {}`) is published like any
-  other. A record that carries no such field — a copy of the platform older than
+  other. The fallback below is where that rule stops holding: a stage list derived
+  from a `prototype` can disagree with what runs in both directions. A record that
+  carries no such field — a copy of the platform older than
   this release — falls back to each class token's `prototype`, which answers for
   the class the token names rather than for the object the platform calls, so it
   is wrong in both directions: it publishes a half only when that token declares
@@ -155,7 +160,8 @@ saw answered.
   the completion side does — the route, the status, and the parsed body among it
   — is outside the measurement. The arrival hook's own URL and header capture is
   inside, because the opening stamp comes before the reads that need the request
-  while it is whole.
+  while it is whole — and so is the pending entry's build and write, which the
+  stamp also precedes.
 
 The full list, including what the record leaves out on purpose, is in
 [the devtools guide](../devtools.md).

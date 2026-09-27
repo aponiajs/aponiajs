@@ -10,6 +10,7 @@ import {
   defineModule,
   type ClassToken,
   type DynamicModule,
+  type LoggerService,
   type ModuleDefinition,
   type RouteSchema,
 } from "@aponiajs/common";
@@ -163,6 +164,28 @@ class FailingDiagnosticsController {
 
 @Module({ controllers: [FailingDiagnosticsController] })
 class FailingDiagnosticsModule {}
+
+/**
+ * A logger whose `error` reports and then throws.
+ *
+ * This is the one shape that makes the order of the mapping's record and its log
+ * call observable: the throw leaves the hook, so a record written after the call
+ * is never written at all, and the map is the only place that fact can come from.
+ */
+class ThrowingErrorLogger implements LoggerService {
+  reported = false;
+
+  log(): void {}
+  fatal(): void {}
+  warn(): void {}
+  debug(): void {}
+  verbose(): void {}
+
+  error(): void {
+    this.reported = true;
+    throw new Error("the logger refused to report the failure");
+  }
+}
 
 /**
  * A controller whose routes are built by a callback that needs an instance, so
@@ -394,6 +417,30 @@ test("the record carries the exception the mapping answered an unhandled failure
   // `handle` — because that is the object the after-response hook looks the
   // message up by, and the projection is the one `/logs` states for the same
   // exception: the name and the message, never the stack.
+  expect(diagnostics?.mappedExceptions.get(request)).toBe(
+    "Error: the connection string was rejected",
+  );
+  await application.close();
+});
+
+test("a logger that throws as it reports the failure does not take the record with it", async () => {
+  const logger = new ThrowingErrorLogger();
+  const application = await AponiaFactory.create(FailingDiagnosticsModule, { logger });
+  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+  const request = new Request("http://localhost/explodes");
+
+  // The throw leaves this mapping's error hook, so the answer the engine then
+  // produces is not what this case is about; what it is about is that the failure
+  // is still recorded, which the map is the only place to read from — the
+  // `Response` the mapping would have returned is not on the after-response
+  // context.
+  try {
+    await application.handle(request);
+  } catch {
+    // The logger's throw, which is this case's premise rather than its subject.
+  }
+
+  expect(logger.reported).toBe(true);
   expect(diagnostics?.mappedExceptions.get(request)).toBe(
     "Error: the connection string was rejected",
   );

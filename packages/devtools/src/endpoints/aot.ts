@@ -6,30 +6,6 @@ import { oneLine } from "../logging/one-line.ts";
 import { aponiaVersion } from "../version.ts";
 import type { AponiaAotController, AponiaAotPayload } from "./aot.types.ts";
 
-/**
- * The build-time verdicts behind a boot: what a build's analysis would decide
- * about this project's controllers, beside what this boot decided about the
- * artifacts a build produces.
- *
- * The two halves have different owners and fail differently, which is why the
- * endpoint answers both in one payload. The boot's facts are already recorded
- * when the socket starts, so they are served whether or not a project is on disk
- * and whether or not the analysis loaded. The per-handler verdicts come from
- * `@aponiajs/cli`, which is imported on the first request to this endpoint and
- * never at boot: it carries `ts-morph` and a formatter, and an application that
- * never polls this endpoint should not pay for either. A project the analysis
- * cannot read degrades that half — the controller list stays empty and the
- * reason is reported once under `Devtools` — rather than failing the endpoint
- * that states the boot's own facts.
- *
- * The analysis is a copy of the build's rules, not a second implementation with
- * its own opinions: `analyzeControllers` mirrors `generateInvokers` in
- * `packages/cli/src/generation/invoker-generator.ts`, and the per-handler
- * verdicts are read off the emitter's own returned declines rather than
- * re-applied here, so a reason reported by this endpoint is the sentence the
- * build prints. Keep the copies in step by hand; the file states each one.
- */
-
 /** The path this endpoint is served under, relative to the devtools prefix. */
 export const devtoolsAotPath = "/aot";
 
@@ -106,11 +82,31 @@ export function readAotFacts(
  * The payload one request answers with: the facts this server read from the
  * record when it started, beside the verdicts that request settled.
  *
+ * The build-time verdicts behind a boot: what a build's analysis would decide
+ * about this project's controllers, beside what this boot decided about the
+ * artifacts a build produces. The two halves have different owners and fail
+ * differently, which is why the endpoint answers both in one payload. The boot's
+ * facts are already recorded when the socket starts, so they are served whether
+ * or not a project is on disk and whether or not the analysis loaded. The
+ * per-handler verdicts come from `@aponiajs/cli`, which is imported on the first
+ * request to this endpoint and never at boot: it carries `ts-morph` and a
+ * formatter, and an application that never polls this endpoint should not pay for
+ * either. A project the analysis cannot read degrades that half — the controller
+ * list stays empty and the reason is reported once under `Devtools` — rather than
+ * failing the endpoint that states the boot's own facts.
+ *
  * The half that is read once and the half that is awaited per request meet
  * here, and neither is copied from the other: `controllers` is the analysis's
  * own frozen array, and the facts are the frozen pair the registration gate
  * already validated, so a response cannot report one of them differently from
  * the response before it.
+ *
+ * The analysis is a copy of the build's rules, not a second implementation with
+ * its own opinions: `analyzeControllers` mirrors `generateInvokers` in
+ * `packages/cli/src/generation/invoker-generator.ts`, and the per-handler
+ * verdicts are read off the emitter's own returned declines rather than
+ * re-applied here, so a reason reported by this endpoint is the sentence the
+ * build prints. The two copies are kept in step by hand.
  */
 export function buildAotPayload(
   facts: AponiaAotFacts,

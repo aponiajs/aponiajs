@@ -195,9 +195,14 @@ export interface AponiaLogsPayload {
  *
  * A request appears once when it arrived and again when it was answered, and
  * both entries carry the same `id`, so a consumer groups by `id` and takes the
- * last entry for each request. An entry whose `status` is `null` is a request
- * this record saw arrive and never saw answered — a plugin that answered from
- * its own `onRequest` before any later phase ran. The absence is stated rather
+ * last entry each request has in the window it reads — the answer wherever the
+ * answer is still there to read. Two configurations are where it is not: a
+ * consumer lagging more than one window behind never reads an answer the bounded
+ * record has already evicted, and an answer written after a second `listen()` goes
+ * to the record the socket that is gone was serving. An entry whose `status` is
+ * `null` is a request this record saw arrive and read no answer for — a plugin
+ * that answered from its own `onRequest` before any later phase ran, or an answer
+ * outside the window the consumer read. The absence is stated rather
  * than filled: an entry written at completion alone would make that request
  * indistinguishable from one that never arrived. The entry carries the path that
  * arrived rather than a pattern, because no route has matched at that point; the

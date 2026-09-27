@@ -165,11 +165,11 @@ A consumer reads `meta` first and decides whether to proceed:
 ```ts
 {
   contract: 2,              // the version of this wire shape
-  framework: "0.6.0-alpha.22", // the release that booted the application
+  framework: "0.6.0-alpha.24", // the release that booted the application
   elysia: "1.4.30",         // the release installed in the application's own tree, or null
   artifacts: {              // which release supplied each adopted artifact
     invokers: null,         // null: the boot adopted none
-    descriptors: "0.6.0-alpha.22",
+    descriptors: "0.6.0-alpha.24",
   },
   startedAt: "2026-09-26T12:00:00.000Z",
 }
@@ -260,8 +260,9 @@ A stage's `kind` is one of `derive`, `validate`, `resolve`, `hook`, `guard`,
 `interceptBefore`, `bind`, `invoke`, `handler`, or `interceptAfter`. A compiled
 hook is published as its parts and never as a `hook` stage, each part names the
 class it runs and the scope that declared it, and a stage is present only when
-the route actually runs it. `id` and `next` are stated per stage, so a renderer
-draws a graph rather than assuming a chain.
+the route actually runs it — except under the fallback described below, where the
+stage list and what runs can disagree in both directions. `id` and `next` are
+stated per stage, so a renderer draws a graph rather than assuming a chain.
 
 Filters are a list on the route, never a stage in the chain, because they run
 when a guard or the handler threw rather than on every request.
@@ -326,12 +327,16 @@ dispatcher's `404` — rather than an empty stream, which would announce a silen
 the application is not keeping. That is the answer for an omitted option,
 `logger: false`, an array of levels (the value that tells the platform to build
 a logger of its own, which the application never holds), any value that is not a
-logger, and a logger whose **first** assignment refuses the patch.
+logger, and a logger **no level could be patched on**: one whose every
+assignment refuses — a frozen one refuses them all.
 
-The all-or-nothing boundary is at the endpoint, not at the level. A logger that
-accepts one level and then refuses the next publishes a stream: a tap genuinely
-installed, so the stream is served, the refusing level keeps the method it had,
-and the levels after it are still patched. The refusal is never silent either:
+The all-or-nothing boundary is at the endpoint, not at the level, and it is the
+number of levels patched rather than where the first refusal landed. A logger the
+tap patched at least one level of publishes a stream: the tap genuinely
+installed, so the stream is served, every refusing level keeps the method it had,
+and the levels after it are still patched. A logger whose `log` refuses and whose
+`fatal` accepts is that case and not the absence above — `levels` names `fatal`,
+which is the level that was reached. The refusal is never silent either:
 the payload names the levels the tap **reached**, so a level it could not patch
 is stated as unreached rather than left to be read out of an absence — an entry
 states only the level it was written at, and a stream that never carries `debug`
@@ -366,7 +371,7 @@ An entry carries:
   method: "POST",
   path: "/users",            // the pattern that matched, or the path that arrived
   url: "/users?page=1",      // the path and query string as they arrived
-  status: 201,               // or null: this request was never seen answered
+  status: 201,               // or null: this entry states no answer was read
   durationMs: 3.2,           // or null, for the same reason
   timestamp: "2026-09-26T12:00:00.000Z",
   headers: { authorization: "[redacted]", "content-type": "application/json" },
@@ -377,8 +382,15 @@ An entry carries:
 **One request writes two entries, and `id` is what says they are one request's.**
 The first is written when the request arrives, before anything can state an
 answer, and the second when the answer completes. A consumer groups by `id` and
-takes the **last** entry for each request, which is the answer whenever there is
-one. That is also why the cursor counts entries rather than requests: it moves by
+takes the **last** entry for each request, which is the answer wherever the answer
+is still in the window the consumer reads. Two configurations are where it is not,
+and neither is a defect of the record: a consumer that lags more than one window
+behind never reads an answer FIFO eviction has already dropped, so the last entry
+it holds for that request stays the pending one; and an answer written after a
+second `listen()` goes to the record the socket that is gone was serving, which a
+poll of the new one never reads. In both, `status: null` on the last entry a
+consumer holds means this poll read no answer, never that the application answered
+none. That is also why the cursor counts entries rather than requests: it moves by
 two for every request the application answered, and a poll whose `since` sits
 between a request's two entries is served the second one rather than a request
 counted twice.
@@ -457,7 +469,9 @@ therefore outside the measurement, as is the one `await` that reads a readable
 `5xx` answer's published body — that read happens after the reading is in hand,
 which is why it is excluded. The arrival hook's own URL and header capture is
 still inside it, because the opening stamp precedes the reads that need the
-request while it is whole. The field is therefore the time from arrival to the
+request while it is whole — and so is the pending entry's own build and write:
+the stamp is taken before the entry is built and before it is written to the
+record, so both fall inside the interval. The field is therefore the time from arrival to the
 completion path with this package's completion-side work taken out, and it is
 not a CPU profile of the handler.
 
@@ -526,6 +540,17 @@ These are the boundaries this package states rather than hides.
 - **`elysiaController` callback routes appear in `/routes` but contribute no
   symbol-keyed handler name.** They are read off the mounted application, which
   knows the path and method but not the class property that built them.
+- **`/flow` states a read posture rather than total safety.** Every field it
+  reads from the mounted table and from the boot record — neither of which this
+  release wrote — is validated against the shape this release writes before it is
+  used, and a field that is not one of those shapes is answered as an absence
+  rather than filled in, so a record this package cannot read costs a fact rather
+  than the report. It does not defend against a value that refuses to be read: a
+  `Proxy` whose `get` or `getPrototypeOf` traps throw, or an accessor that throws,
+  fails that request the way any other throw inside a handler does. Making the
+  handler total would mean one guard around a whole payload build with a defined
+  answer for a build that failed, which would change the endpoint's wire contract
+  rather than repair a shape.
 - **A root module that registers the devtools is not lowered into the descriptor
   artifact.** The build declines it, because a registration is a call and an
   `imports` entry has to be a single identifier. Where other modules are still
@@ -544,8 +569,17 @@ These are the boundaries this package states rather than hides.
   console would have suppressed is still in the stream. See [`/logs`](#logs).
 - **`durationMs` still includes this package's own reading of the request at
   arrival.** Every read the completion path makes is outside it, but the arrival
-  hook's URL and header capture sits between the two stamps. See
+  hook's URL and header capture, and the build and write of the pending entry
+  that same hook records, all sit between the two stamps. See
   [`/requests`](#requests).
+- **`[unprojectable]` and its projection are duplicated across two packages.**
+  `@aponiajs/platform-elysia` restates the devtools log stream's projection branch
+  for branch, because the two packages do not depend on each other and
+  `/requests` compares its entry against the line `/logs` states for the same
+  exception. The parity test that holds the copies together runs over three thrown
+  values — an `Error`, a value that is not one, and one neither projection can
+  state — so a fourth branch added to only one copy would be silent. That is the
+  accepted risk of keeping two copies rather than sharing one.
 - **The request record states what reached it, not everything that was asked of
   it.** A request refused before a route matched has no route identity: the entry
   carries the path it asked for and names no controller, module, or handler. A

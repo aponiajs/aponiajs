@@ -358,11 +358,15 @@ runtime boundary it describes.
   whatever the logger's own level filter would print, because `LoggerService` has
   no notion of an enabled level and re-applying a rule this package cannot read
   would be enforcing a filter it does not own. A tap is attempted at every level
-  on its own, and the boundary is two-sided: a level patched before a refusal is a
-  tap that installed, so it records and the stream is published, while a logger
-  whose **first** assignment refuses — a frozen one refuses them all — is left as
-  it is and earns no endpoint, because that is the shape where a stream would have
-  nothing to state and would announce a silence the logger is not keeping. A
+  on its own, and the boundary is the count of levels patched: any level at all
+  patched is a tap that installed, so it records and the stream is published, while
+  a logger **no level could be patched on** — every assignment refuses, as a frozen
+  one refuses them all — is left as it is and earns no endpoint, because that is
+  the shape where a stream would have nothing to state and would announce a silence
+  the logger is not keeping. A logger whose `log` refuses but whose `fatal` accepts
+  is the publishing side and not this one: a refusal landing first does not decide
+  the boundary, because the levels after it are still attempted and `fatal` was
+  patched. A
   refusal costs one level rather than that level and every one after it: the level
   that refused keeps the method it had and the remaining levels are still
   attempted, which is what makes the stream's level list the whole truth about
@@ -388,9 +392,12 @@ runtime boundary it describes.
   arrive at it there are two outcomes. A `LoggerService` is tapped and records.
   Everything else publishes no `/logs` at all: the option omitted, `false`, a
   value that is not a logger, which a JavaScript caller can pass whatever the type
-  says, and a logger whose first assignment refuses the patch — a frozen one
-  refuses them all — where the tap installs nothing and a published stream would
-  announce a silence that logger is not keeping. The endpoint states a stream and
+  says, and a logger no level could be patched on — every assignment refuses, as a
+  frozen one refuses them all — where the tap installs nothing and a published
+  stream would announce a silence that logger is not keeping. A logger it patched
+  at least one level of is never this case, whichever level refused first: a logger
+  whose `log` refuses but whose `fatal` accepts serves a stream whose `levels` names
+  `fatal`. The endpoint states a stream and
   a registration with none to state serves no endpoint, the way a record with no
   compiled root serves no `/graph`, so the dispatcher's `404` is the answer. `false` is not the empty window it once
   answered: it states that the application has no logger object to hand over,
@@ -435,8 +442,10 @@ runtime boundary it describes.
   "this registration was told to record nothing" is itself a fact the record
   states.
 - A partly patched logger publishes a stream and names the levels it reached. The
-  refusal boundary is two-sided — the **first** assignment refusing is the
-  absence, a later one is a tap that installed — and the side that publishes is
+  boundary is the count of levels patched — no level patched at all is the
+  absence, one level patched is a tap that installed — and where the first refusal
+  landed decides nothing, because a level that refused costs only itself and the
+  levels after it are still attempted. The side that publishes is
   all-or-nothing at the endpoint and never at the level, while the level list
   inside the payload is exact. An entry states only the level it was written at,
   so the level list is what tells an absent `debug` line apart from a `debug` level
@@ -489,7 +498,9 @@ runtime boundary it describes.
   charge the application for reading its own record. It does not exclude
   everything this package does: the arrival hook's own URL and header capture is
   inside, because the opening stamp precedes the reads that need the request
-  while it is whole, so the field is not "the time the application spent on the
+  while it is whole, and the pending entry's build and write are inside for the
+  same reason — the stamp precedes both — so the field is not "the time the
+  application spent on the
   route". The microtask spent reading a readable `5xx` answer's published body
   is outside as well, which is why the reading is handed in before that read
   happens rather than taken after it. Narrowing the measurement further means
@@ -530,8 +541,11 @@ runtime boundary it describes.
   count, because that count is the cursor and it counts entries — an id read from
   it would differ between one request's two entries and group nothing. The
   counter is per capture rather than per record, so an id never repeats across
-  two boots in one process, because a consumer polling through a `listen()` must
-  not group two different requests. And the record's bound counts entries rather
+  two boots of one capture, because a consumer polling through a `listen()` must
+  not group two different requests. It is per capture and not per process — two
+  captures in one process each start at `1` — which is enough: a poll reads one
+  record, and every id that meets in one answer is that record's capture's own.
+  And the record's bound counts entries rather
   than requests, at twice the request window it names.
 - `path` is the pattern when a route matched and the path that arrived when none
   did, and `/routes` is the table that tells the two apart: a pattern the
@@ -723,11 +737,14 @@ change is the object: the case keeps its own record of the calls it received and
 writes through its own reference, so a tap that swallowed a line, wrapped the
 logger instead of patching it, or failed to write through is visible, and the
 second-tap case pins that one logger answers with one stream. The refusal is
-pinned on both sides it can land on: a logger that refuses its **first** assignment
+pinned on both sides it can land on: a logger no level could be patched on
 — a frozen one, asserted by freezing the case's own logger — answers no stream at
 all, and one that accepts a level and then refuses the next is a tap that
 installed, so it records and publishes with the refusing level keeping its method
-and every level after it still patched. What the tap reports about itself is
+and every level after it still patched. The count and not the position is the
+boundary, so the refusal that lands first is pinned too: a logger whose `log`
+refuses while a later level accepts is published with that level named, which is
+the case a first-refusal rule would call an absence. What the tap reports about itself is
 pinned the same way, against the concrete logger: a level the object does not carry
 is not named, a level that refuses its assignment costs only itself — the last
 level in the order proves the loop kept going — and the payload a boot serves names
@@ -751,9 +768,9 @@ installed when the socket starts would fail, and the assertion that says why the
 tap belongs to the registration — and where the application's own next line must
 arrive after the cursor the previous answer carried. A registration with no stream
 to publish is asserted to serve no endpoint rather than an empty one, and the four
-ways of arriving there are pinned separately — an omitted option, `false`, a level
-array, the value the option does not accept and a JavaScript caller can still
-pass, and a logger whose first assignment refuses the patch — so the rule is
+ways of arriving there are pinned separately — an omitted option, `false`, a value
+that is not a logger (a level array, which a JavaScript caller can pass whatever
+the type says), and a logger no level could be patched on — so the rule is
 asserted at each end a caller reaches it from rather than by one path, and the
 other end — a partly patched logger whose stream must be served — is pinned the
 same way.

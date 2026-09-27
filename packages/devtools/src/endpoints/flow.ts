@@ -663,8 +663,9 @@ function declaringHalf(
  * reads a token's `prototype` and one member of it, a recorded pair is read
  * under `recordedHalf`'s guard, and a read that refuses to happen is the
  * residual the whole file states rather than a case this function answers.
- * Neither direction costs the route a stage it never declared, because a token
- * that is not a class declares neither half.
+ * Neither of the two disagreements named above is a token that is not a class:
+ * such a token declares neither half and yields neither stage, so the fallback
+ * errs only about class tokens, in the two directions the paragraphs above state.
  */
 function declaresHalf(
   token: ClassToken<unknown>,

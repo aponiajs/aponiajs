@@ -99,16 +99,18 @@ export interface DevtoolsOptions {
    *   so an application that names one has nothing to hand over either. The type
    *   does not accept it; a JavaScript caller can pass it anyway, which is why
    *   the value is checked rather than trusted.
-   * - A logger object whose first assignment refuses — a frozen one refuses them
-   *   all — is the same absence. It is patched in place, so a refusal that lands
-   *   before any level was patched means the logger records nothing, and a
-   *   published stream would answer `{ cursor: 0, entries: [] }` while that logger
-   *   goes on printing every line: the same false silence, so it earns no endpoint
-   *   either. A refusal later than that is not this case — a level was patched, so
-   *   the stream is published, the refusing level keeps the method it had, and the
-   *   remaining levels are still patched. The stream names the levels the tap
-   *   reached, so a level it could not patch is stated rather than left to be read
-   *   out of an absence.
+   * - A logger object no level could be patched on — every assignment refuses, as
+   *   a frozen one's all do — is the same absence. It is patched in place, so a
+   *   logger where nothing could be installed means the logger records nothing, and
+   *   a published stream would answer `{ cursor: 0, entries: [] }` while that
+   *   logger goes on printing every line: the same false silence, so it earns no
+   *   endpoint either. A logger the tap patched at least one level of is not this
+   *   case: the stream is published, every refusing level keeps the method it had,
+   *   and the remaining levels are still patched. The count of levels patched
+   *   decides it and never where the first refusal landed — a logger whose `log`
+   *   refuses but whose `fatal` accepts earns a stream whose `levels` names `fatal`.
+   *   The stream names the levels the tap reached, so a level it could not patch is
+   *   stated rather than left to be read out of an absence.
    *
    * The endpoint states a stream, and a registration with none to state serves no
    * endpoint — the dispatcher's `404`, the way a boot the record holds no compiled

@@ -93,12 +93,14 @@ const application = await AponiaFactory.create(AppModule, {
   about itself are in it. That is the condition this option states rather than
   hides: the framework never exposes the logger it builds for itself, so an
   application that names `false`, names a level array, or names nothing at all has
-  no object to record from, and a logger whose first level refuses the patch — a
-  frozen one refuses every level — records nothing either; a registration with no
-  stream to publish serves no `/logs` rather than an empty stream that would read
-  as "nothing is being logged". A logger that accepts one level and refuses the
-  next is not that case: a level was patched, so the stream is served, and the
-  payload names the levels the tap reached, so a level it could not patch — one
+  no object to record from, and a logger no level could be patched on — every
+  assignment refused, as a frozen one refuses them all — records nothing either; a
+  registration with no stream to publish serves no `/logs` rather than an empty
+  stream that would read as "nothing is being logged". The boundary is the number
+  of levels patched, never where the first refusal landed: a logger the tap
+  patched at least one level of — one that accepts a level and refuses the next,
+  or one whose `log` refuses while its `fatal` accepts — publishes its stream, and
+  the payload names the levels the tap reached, so a level it could not patch — one
   the logger does not declare, or one that refused the assignment — is stated as
   unreached rather than left to be inferred from an absent entry. The one filter
   the stream cannot read is the logger's own: `LoggerService` has no notion of an
@@ -165,7 +167,7 @@ const application = await AponiaFactory.create(AppModule, {
   `AponiaFactory.create`, patches it in place, and records every line into a
   bounded buffer from the moment the module registers — and a registration with no
   stream to serve, because it named none, named `false`, named something that is
-  not a logger, or named one whose first level refuses the patch, serves no `/logs`
+  not a logger, or named one no level could be patched on, serves no `/logs`
   rather than an empty stream.
   Each poll names the cursor the previous answer carried and is answered with
   `{ cursor, entries, levels }`, where an entry is
@@ -183,9 +185,14 @@ const application = await AponiaFactory.create(AppModule, {
   a request has no level to report, and its cursor counts entries rather than
   requests: one request writes two of them. An entry carries
   `id`, and **one request's two entries carry the same `id`**, so a consumer groups
-  by it and takes the last entry for each request. The first entry is written when
+  by it and takes the last entry each request has in the window it reads — the
+  answer wherever the answer is still there to read. Two configurations are where
+  it is not, and in both the absence is the poll's rather than the application's: a
+  consumer lagging more than one window behind never reads an answer FIFO eviction
+  has already dropped, and an answer written after a second `listen()` goes to the
+  record the socket that is gone was serving. The first entry is written when
   the request arrives and states `status: null` and `durationMs: null` — this
-  record saw the request and saw nothing answer it, which is neither an invented
+  record saw the request and read no answer for it, which is neither an invented
   status nor a missing entry, and is what makes a request a plugin answered from
   its own `onRequest` legible instead of absent. The second is written when the
   answer completes, and carries the
@@ -225,8 +232,9 @@ const application = await AponiaFactory.create(AppModule, {
   the context — so the route, the status, the parsed body, and the one microtask
   spent reading a readable `5xx` answer's published body are outside it. The
   arrival hook's own URL and header capture is still inside, because the opening
-  stamp precedes the reads that need the request while it is whole, so the field
-  is not "the time the application spent on the route".
+  stamp precedes the reads that need the request while it is whole, and so is the
+  pending entry's build and write, because the stamp precedes those too — so the
+  field is not "the time the application spent on the route".
 - **`GET /__devtools/aot` reports what a build decided beside what the boot did
   with it.** `graph` and `invokers` are the boot record's: which root the
   container compiled, and the boot's verdict on the generated invoker artifact,

@@ -93,8 +93,14 @@ export function createDefaultExceptionFilter(
       return undefined;
     }
 
-    logger?.error(error, "ExceptionsHandler");
+    // The record is written before the logger is called. A logger that throws as
+    // it reports the failure would otherwise take this mapping's record with it,
+    // and that record is the only place `/requests` can read the failure's message
+    // from, because the `Response` below is not on the after-response context. The
+    // other order costs the logger nothing: it is handed the exception either way,
+    // and the map is this package's own.
     recordMappedException(mappedExceptions, request, error);
+    logger?.error(error, "ExceptionsHandler");
     return httpErrors.internalServerError(unhandledFailureDetail).toResponse();
   };
 }
@@ -117,12 +123,15 @@ export function createDefaultExceptionFilter(
  * differed would make the two surfaces disagree about one failure, and the
  * devtools cases that throw a value per branch are what hold them together.
  *
- * It is also the reason this projection may not throw. `logger.error(...)` above
- * runs the same projection through the devtools tap, and the mapping writes this
- * map, all inside a route-local `error` hook: a throw here would leave the hook
- * and replace this mapping's Problem Details response with the engine's own page.
- * A value that refuses both `JSON.stringify` and the plain string form is stated
- * as a literal rather than allowed to throw.
+ * It is also the reason this projection may not throw. The mapping writes this map
+ * and then calls `logger.error(...)`, which runs the same projection through the
+ * devtools tap, all inside a route-local `error` hook: a throw here would leave
+ * the hook and replace this mapping's Problem Details response with the engine's
+ * own page. The write comes first for that reason too: a logger that throws as it
+ * reports the failure would otherwise cost `/requests` the fact together with the
+ * answer, and the record is the only place that fact can come from. A value that
+ * refuses both `JSON.stringify` and the plain string form is stated as a literal
+ * rather than allowed to throw.
  */
 function recordMappedException(
   mappedExceptions: WeakMap<Request, string>,

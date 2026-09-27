@@ -133,7 +133,10 @@ runtime boundary it describes.
   `/requests` entry — can read it. Recording is the hook's whole second job and
   it returns the `Response` it always returned, because a hook in Elysia's error
   path that could change which handler answers would be a different answer rather
-  than a report of one; the projection is the one the devtools log stream applies
+  than a report of one. The record is written before the logger is called, because
+  a logger that throws as it reports the failure would otherwise take that record
+  with it; the other order costs the logger nothing, because it is handed the
+  exception either way. The projection is the one the devtools log stream applies
   to a line, restated here branch for branch because the two packages do not
   depend on each other, and it is guarded so a thrown value that refuses to be
   projected is recorded as a literal rather than allowed to throw inside the

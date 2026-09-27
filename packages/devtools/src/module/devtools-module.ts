@@ -250,9 +250,12 @@ function createDevtoolsPlugin(options: DevtoolsOptions): Elysia {
  * stream states the levels the tap reached, so a partly patched logger still
  * names what it covers. Everything else publishes no `/logs` at all: the option
  * omitted, `false`, any value that is not a logger — which a JavaScript caller can
- * pass whatever the type says — and a logger whose first assignment refuses, where
+ * pass whatever the type says — and a logger no level could be patched on, where
  * the tap installs nothing and a published stream would record nothing while that
- * logger goes on printing. The endpoint states a stream, and a registration with
+ * logger goes on printing. The boundary is the count of levels patched rather than
+ * the first refusal: a logger whose `log` refuses but whose `fatal` accepts is the
+ * publishing outcome, and its stream names `fatal`. The endpoint states a stream,
+ * and a registration with
  * none to state serves no endpoint, so the dispatcher's `404` is the answer, the
  * way a boot the record holds no compiled root for serves no `/graph`.
  *

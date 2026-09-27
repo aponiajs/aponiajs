@@ -245,9 +245,11 @@ export function createRequestCapture(capture: DevtoolsOptions["capture"]): Reque
   // anything.
   //
   // It counts for the life of the capture rather than per record, so an id never
-  // repeats across two records in one process. That is deliberate: a consumer
+  // repeats across two records of one capture. That is deliberate: a consumer
   // that kept ids while polling through a `listen()` would otherwise group two
-  // different requests — one boot's, and the next boot's — as one.
+  // different requests — one boot's, and the next boot's — as one. It is per
+  // capture and not per process: two captures in one process each start at 1,
+  // which is no collision for that consumer, because a poll reads one record.
   let arrivalOrdinal = 0;
 
   return Object.freeze({
@@ -336,8 +338,11 @@ export function createRequestCapture(capture: DevtoolsOptions["capture"]): Reque
  * the answer and no route has been matched at this point. The answer's entry
  * supersedes it with the pattern when one matched.
  *
- * Nothing here reads the request: every field comes from the arrival stamp, so
- * the duration the stamp opens is not charged for this write.
+ * Nothing here reads the request: every field comes from the arrival stamp, which
+ * is what keeps the request reads out of this build. The build is not outside the
+ * measurement, though: the stamp is taken before this function runs and before the
+ * caller writes the entry, so both sit inside the interval `durationMs` measures —
+ * the same side of the line the arrival capture is on.
  */
 function toPendingRecord(arrival: RequestArrival): RequestRecord {
   return Object.freeze({

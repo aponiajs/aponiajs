@@ -290,7 +290,7 @@ test("one logger records into one stream, so a line is never recorded or printed
   expect(second.since(0).entries).toEqual([]);
 });
 
-test("a logger that refuses the first patch is answered with no stream, not an empty one", () => {
+test("a logger no level could be patched on is answered with no stream, not an empty one", () => {
   const { logger, calls } = fakeLogger();
   const buffer = createLogBuffer(4);
   Object.freeze(logger);
@@ -326,10 +326,10 @@ test("a logger that refuses one assignment is still recorded and published", () 
   const tapped = tapLogBuffer(logger, buffer);
 
   // The stream is the answer, and that is the boundary this pins: the absence
-  // belongs to a refusal that lands before any level was patched, not to every
-  // refusal. A logger that accepts one assignment and refuses the next has a tap
-  // the lines through it reach, so handing `undefined` back here would drop lines
-  // this package is recording.
+  // belongs to a logger no level could be patched on, not to every refusal. A
+  // logger that accepts one assignment and refuses the next has a tap the lines
+  // through it reach, so handing `undefined` back here would drop lines this
+  // package is recording.
   expect(tapped?.buffer).toBe(buffer);
 
   logger.log("recorded through the patch");
@@ -355,6 +355,31 @@ test("a logger that refuses one assignment is still recorded and published", () 
   // case exists to tell apart from the payload alone.
   expect(tapped?.levels).toContain("warn");
   expect(tapped?.levels).not.toContain("fatal");
+});
+
+test("a logger whose first level refuses while a later level accepts is still published", () => {
+  const { logger, calls } = fakeLogger();
+  const buffer = createLogBuffer(4);
+  // `log` is the level the tap reaches first, and it refuses the assignment while
+  // `fatal`, `error`, and `warn` accept theirs. The boundary is the number of
+  // levels patched rather than where the first refusal landed, so this logger has
+  // a tap the lines through `fatal` reach and the stream is the answer — the
+  // counterexample a "first assignment refuses" rule would get wrong.
+  Object.defineProperty(logger, "log", {
+    ...Object.getOwnPropertyDescriptor(logger, "log"),
+    writable: false,
+  });
+
+  const tapped = tapLogBuffer(logger, buffer);
+
+  expect(tapped?.buffer).toBe(buffer);
+  expect(tapped?.levels).not.toContain("log");
+  expect(tapped?.levels).toContain("fatal");
+
+  logger.fatal("recorded through the patch");
+
+  expect(calls).toEqual(["fatal recorded through the patch"]);
+  expect(buffer.since(0).entries.map((item) => item.level)).toEqual(["fatal"]);
 });
 
 test("a stream names the levels the tap reached", () => {
@@ -932,26 +957,29 @@ test.serial(
   },
 );
 
-test.serial("a registration whose logger refuses the first patch serves no endpoint", async () => {
-  const output = captureOutput();
-  let application: AponiaElysiaApplication | undefined;
-  try {
-    application = await AponiaFactory.create(FrozenLoggerModule, { logger: frozenLogger });
-    await application.listen(0);
+test.serial(
+  "a registration whose logger no level could be patched on serves no endpoint",
+  async () => {
+    const output = captureOutput();
+    let application: AponiaElysiaApplication | undefined;
+    try {
+      application = await AponiaFactory.create(FrozenLoggerModule, { logger: frozenLogger });
+      await application.listen(0);
 
-    const address = reportedAddress(output);
+      const address = reportedAddress(output);
 
-    // This registration named a logger object, and it is the one case where a
-    // stream would be a lie rather than an absence: the tap installed nothing, so
-    // `{ cursor: 0, entries: [] }` would announce that nothing is being logged
-    // while the logger keeps printing everything the platform writes to it.
-    expect((await fetch(`${address}/__devtools/logs`)).status).toBe(404);
-    expect((await fetch(`${address}/__devtools/meta`)).status).toBe(200);
-  } finally {
-    await application?.close();
-    output.restore();
-  }
-});
+      // This registration named a logger object, and it is the one case where a
+      // stream would be a lie rather than an absence: the tap installed nothing, so
+      // `{ cursor: 0, entries: [] }` would announce that nothing is being logged
+      // while the logger keeps printing everything the platform writes to it.
+      expect((await fetch(`${address}/__devtools/logs`)).status).toBe(404);
+      expect((await fetch(`${address}/__devtools/meta`)).status).toBe(200);
+    } finally {
+      await application?.close();
+      output.restore();
+    }
+  },
+);
 
 test.serial(
   "a registration whose logger refuses one assignment still serves the stream",
