@@ -207,9 +207,14 @@ function rememberTap(logger: LoggerService, stream: TappedLogStream): void {
  * itself would fail the payload on the request that asked for it. The projection
  * is the console logger's where it has one — a string is its own text, a function
  * is its name — and JSON for everything else, with the plain string form as the
- * floor nothing falls through. A line is reported as the caller wrote it: the
- * text is not folded to one line, because a devtools stream states what happened
- * rather than editing it.
+ * floor and a literal below it for a value that refuses both. A line is reported
+ * as the caller wrote it: the text is not folded to one line, because a devtools
+ * stream states what happened rather than editing it.
+ *
+ * The projection may not throw, whatever it is handed, and that is a rule rather
+ * than a nicety: it runs inside a patched logger method, and one caller of a
+ * logger method is the platform's error hook reporting an unhandled failure. A
+ * throw there would replace the application's answer with the engine's own page.
  */
 function createLogEntry(
   level: LogLevel,
@@ -236,6 +241,19 @@ function namedContext(optionalParameters: readonly unknown[]): string {
   return typeof last === "string" ? last : "";
 }
 
+/**
+ * The literal a thrown value this release cannot project at all is stated as.
+ *
+ * The platform restates it, with this projection, in
+ * `packages/platform-elysia/src/errors/default-exception-filter.ts`: the message
+ * `/requests` publishes for an unhandled failure is compared against the line
+ * this stream states for it, so a value neither surface can project has to read
+ * the same on both. The two packages do not depend on each other, so the constant
+ * and the branches below are kept in step by hand and held by
+ * `tests/requests.test.ts`.
+ */
+const unprojectableValue = "[unprojectable]";
+
 function projectMessage(message: unknown): string {
   if (typeof message === "string") {
     return message;
@@ -252,6 +270,29 @@ function projectMessage(message: unknown): string {
   try {
     return JSON.stringify(message) ?? String(message);
   } catch {
-    return String(message);
+    // `JSON.stringify` refused this value — it refers to itself, or its `toJSON`
+    // threw — so the plain string form is tried on its own, and it is tried
+    // inside a guard of its own because a value can refuse that too.
+    return plainString(message);
+  }
+}
+
+/**
+ * The plain string form of a value, or the literal when even that refuses.
+ *
+ * This is the floor of the projection and it may not throw, because what calls it
+ * is a logger method: the platform reports an unhandled failure by logging it
+ * from inside a route-local `error` hook, so a throw here would leave that hook
+ * through `logger.error(...)` and take the answer with it — the client would get
+ * the engine's own page instead of the Problem Details response. A value whose
+ * `toPrimitive` or `toString` throws is a value this release cannot state, and
+ * saying so in a literal is the honest account where a throw is a different
+ * answer rather than a report of one.
+ */
+function plainString(value: unknown): string {
+  try {
+    return String(value);
+  } catch {
+    return unprojectableValue;
   }
 }

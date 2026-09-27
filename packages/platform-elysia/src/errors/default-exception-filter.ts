@@ -14,6 +14,19 @@ import { httpErrors } from "./http-error.ts";
 const unhandledFailureDetail = "The server could not complete this request.";
 
 /**
+ * The literal a thrown value this release cannot project at all is stated as.
+ *
+ * The devtools log stream restates it, with the projection below, in
+ * `packages/devtools/src/logging/log-tap.ts`: the message `/requests` publishes
+ * for an unhandled failure is compared against the line `/logs` states for it, so
+ * a value neither surface can project has to read the same on both. The two
+ * packages do not depend on each other, so the constant and the branches of the
+ * projection are kept in step by hand and held by
+ * `packages/devtools/tests/requests.test.ts`.
+ */
+const unprojectableValue = "[unprojectable]";
+
+/**
  * Whether one resolved filter answers one thrown value.
  *
  * A filter declared with no `@Catch()` arguments answers anything, which is
@@ -59,15 +72,15 @@ export function isFilterMatch(filter: ResolvedFilter, exception: unknown): boole
  * so a boot that compiled the mapping states the logger it reports to, and
  * `undefined` is that statement for an application that disabled logging.
  *
- * `mappedExceptions` is where the message this mapping answered with is recorded
- * for a reader that cannot see the answer: the `Response` it returns is not on
- * the after-response context, so a consumer reporting what a request received —
- * the devtools `/requests` record — would otherwise state that an unhandled
- * failure said nothing at all. It is keyed by the request object, which the
- * after-response hook carries. Recording is the mapping's whole second job here:
- * it writes to a `WeakMap` and returns what it always returned, because a hook
- * in Elysia's error path that could change which handler answers would be a
- * different answer rather than a report of one.
+ * `mappedExceptions` is where this mapping records the exception it answered, for
+ * a reader that cannot see the answer: the `Response` it returns is not on the
+ * after-response context, so a consumer reporting what a request received — the
+ * devtools `/requests` record — would otherwise state that an unhandled failure
+ * said nothing at all. It is keyed by the request object, which the after-response
+ * hook carries. Recording is the mapping's whole second job here: it writes to a
+ * `WeakMap` and returns what it always returned, because a hook in Elysia's error
+ * path that could change which handler answers would be a different answer rather
+ * than a report of one.
  *
  * @internal
  */
@@ -87,40 +100,40 @@ export function createDefaultExceptionFilter(
 }
 
 /**
- * Records the account this mapping answered with, or leaves it unrecorded when
- * the thrown value cannot be projected at all.
+ * Records the exception this mapping answered, so a reader that cannot see the
+ * answer can state it.
  *
- * The projection is the devtools log stream's own, restated here rather than
- * shared because the two live in packages that do not depend on each other. It
- * is restated in full, branch for branch, and not only for its `Error` case: the
- * devtools `/requests` entry is compared against the line `/logs` states for the
- * same exception, so a value the two surfaces projected differently would make
- * that comparison hold for `Error`s alone while the sentence beside it promised
- * it for every exception.
+ * What goes in the map is the exception, not the sentence this mapping answered
+ * with: the response body is one fixed `detail` for every unhandled failure, and
+ * repeating that sentence would tell a consumer nothing the status does not. The
+ * value is therefore the exception's own one-line account, which is what the
+ * record's field is named for — `mappedExceptions`, keyed by the request the
+ * mapping saw.
  *
- * Nothing is recorded when the projection fails, because an absent message is
- * the truthful account of an exception this release cannot state, where a
- * stand-in literal would claim it said something. The projection is guarded for
- * the one outcome an observer in Elysia's error path may never cause: a throw
- * there takes the answer with it, and the client receives the engine's own page
- * instead of this mapping's Problem Details response. `JSON.stringify` refuses a
- * value that refers to itself and `String` refuses one whose `toPrimitive` or
- * `toString` does, so the guard covers a value that refuses both.
+ * The projection is the devtools log stream's own, restated here branch for
+ * branch rather than shared because the two live in packages that do not depend
+ * on each other. Restating it in full is the point: `/requests` compares its
+ * entry against the line `/logs` states for the same exception, so a branch that
+ * differed would make the two surfaces disagree about one failure, and the
+ * devtools cases that throw a value per branch are what hold them together.
+ *
+ * It is also the reason this projection may not throw. `logger.error(...)` above
+ * runs the same projection through the devtools tap, and the mapping writes this
+ * map, all inside a route-local `error` hook: a throw here would leave the hook
+ * and replace this mapping's Problem Details response with the engine's own page.
+ * A value that refuses both `JSON.stringify` and the plain string form is stated
+ * as a literal rather than allowed to throw.
  */
 function recordMappedException(
   mappedExceptions: WeakMap<Request, string>,
   request: Request,
   error: unknown,
 ): void {
-  const message = exceptionMessage(error);
-
-  if (message !== undefined) {
-    mappedExceptions.set(request, message);
-  }
+  mappedExceptions.set(request, exceptionMessage(error));
 }
 
-/** The one-line account of a thrown value, or `undefined` when it refuses to be projected. */
-function exceptionMessage(error: unknown): string | undefined {
+/** The one-line account of a thrown value, which never throws whatever it is handed. */
+function exceptionMessage(error: unknown): string {
   if (typeof error === "string") {
     return error;
   }
@@ -136,7 +149,19 @@ function exceptionMessage(error: unknown): string | undefined {
   try {
     return JSON.stringify(error) ?? String(error);
   } catch {
-    return undefined;
+    // `JSON.stringify` refused this value — it refers to itself, or its `toJSON`
+    // threw — so the plain string form is tried on its own, in a guard of its
+    // own, because a value can refuse that too.
+    return plainString(error);
+  }
+}
+
+/** The plain string form of a value, or the literal when even that refuses. */
+function plainString(value: unknown): string {
+  try {
+    return String(value);
+  } catch {
+    return unprojectableValue;
   }
 }
 

@@ -62,14 +62,16 @@ export interface RequestRecord {
   /** When the request arrived, as an ISO-8601 timestamp. */
   readonly timestamp: string;
   /**
-   * The message the answer published for a failure — a `5xx` — and never the
-   * exception's. Absent when there was no failure, and absent for the failure
-   * whose published answer cannot be read from where the record is written and
-   * whose exception the boot recorded nothing about — a `5xx` a handler built
-   * itself. An unhandled failure the platform mapped is present rather than
-   * absent: the boot records what its mapping answered with as it answers, and
-   * that record is read here, in the same one-line projection the log stream
-   * states the exception in — never a stack.
+   * The failure's message: what the answer published, or — for an unhandled
+   * failure the platform mapped — the exception that mapping answered.
+   *
+   * Absent when there was no failure, and absent for a `5xx` a handler built
+   * itself, whose body is the one the client already holds. An unhandled failure
+   * the platform mapped is present rather than absent: the mapping answers one
+   * fixed `detail` for every such failure and its `Response` is not on the
+   * after-response context either, so the boot records the exception the mapping
+   * answered as it answers, and that record is read here — in the same one-line
+   * projection the log stream states the exception in, and never a stack.
    */
   readonly error?: string;
   /** The request's headers, as they arrived, with the redacted ones replaced. */

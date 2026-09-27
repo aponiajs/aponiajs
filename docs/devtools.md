@@ -409,20 +409,28 @@ different fact from a request that carried none. Four further rules:
   `path` carries the path that arrived rather than a pattern, and `/routes` is
   the table that tells the two apart, because a pattern the application mounted
   is in it and a path that arrived without matching one is not.
-- **`error` is what the answer published, never the exception.** It is present on
-  a `5xx` whose Problem Details body this hook can still read — the message is
-  that body's `detail` — and absent on every failure with no readable body of its
-  own. A `4xx` is an answer rather than a failure, so a `404`, a validation `422`,
-  and an `HttpError` a route threw on purpose all carry none; a `5xx` a handler
-  built itself carries none either, because its body is the one the client already
-  holds. An unhandled failure the platform mapped is the one failure whose message
-  is read from somewhere else: the mapping's `Response` is not on the
-  after-response context either, so the boot records what it answered with as it
-  answers, and the entry states the same one-line account of the exception that
-  `/logs` states for it — the name and the message, and no stack. Nothing is
-  guessed where neither source states a message: a failure whose answer published
-  none and whose exception the boot recorded nothing about carries no `error` at
-  all. An exception is reported where it always was, under `ExceptionsHandler` in
+- **`error` carries the failure's message: what the answer published, or — for an
+  unhandled failure the platform mapped — the exception that mapping answered.**
+  It is present on a `5xx` whose Problem Details body this hook can still read —
+  the message is that body's `detail` — and absent on every failure with no
+  readable body of its own. A `4xx` is an answer rather than a failure, so a
+  `404`, a validation `422`, and an `HttpError` a route threw on purpose all carry
+  none; a `5xx` a handler built itself carries none either, because its body is
+  the one the client already holds. An unhandled failure the platform mapped is
+  the one failure whose message comes from the exception rather than from the
+  answer: the mapping answers one fixed sentence for every unhandled failure, and
+  its `Response` is not on the after-response context either, so the boot records
+  the exception the mapping answered, and the entry states the same one-line
+  account of it that `/logs` states — the name and the message, and no stack. A
+  thrown value neither surface can state — one that refuses both the JSON form and
+  the plain string form — is stated as the literal `[unprojectable]` on both
+  rather than allowed to throw, because that projection runs inside the logger
+  method the mapping calls before it answers. The
+  mapping's record is consulted only where the published body yielded nothing
+  readable, so it never replaces what the client received. Nothing is guessed
+  where neither source states a message: a failure whose answer published none and
+  whose exception the boot recorded nothing about carries no `error` at all. An
+  exception is reported where it always was, under `ExceptionsHandler` in
   `/logs`.
 
 The record belongs to one application and one boot: a second `listen()` serves a

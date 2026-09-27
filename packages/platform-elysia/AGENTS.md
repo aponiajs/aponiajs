@@ -126,17 +126,18 @@ runtime boundary it describes.
   (through its own `toResponse()`), and a failed `t.Transform` decode — which
   Elysia answers `422` and then rethrows the decode function's own plain `Error`
   for — exactly as Elysia answered them before the mapping existed. It also
-  records the message it mapped, keyed by the request the hook saw, in a
+  records the exception it mapped, keyed by the request the hook saw, in a
   `WeakMap` the boot owns and publishes on its diagnostics record: the `Response`
   the mapping returns is not on the after-response context, so that record is the
   only place a consumer reporting what a request received — the devtools
   `/requests` entry — can read it. Recording is the hook's whole second job and
   it returns the `Response` it always returned, because a hook in Elysia's error
   path that could change which handler answers would be a different answer rather
-  than a report of one; the projection is the log stream's own one-line form,
-  restated here branch for branch because the two packages do not depend on each
-  other, and it is guarded so a thrown value that refuses to be projected is
-  recorded as nothing rather than allowed to throw inside the error path. A
+  than a report of one; the projection is the one the devtools log stream applies
+  to a line, restated here branch for branch because the two packages do not
+  depend on each other, and it is guarded so a thrown value that refuses to be
+  projected is recorded as a literal rather than allowed to throw inside the
+  error path. A
   declared
   filter that throws is caught, logged the same way, and treated as declining,
   so the array continues to what answers next. The

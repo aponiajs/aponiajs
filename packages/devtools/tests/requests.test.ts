@@ -62,6 +62,27 @@ class UsersController {
   }
 }
 
+/**
+ * A thrown value neither projection can state.
+ *
+ * It refers to itself, so `JSON.stringify` refuses it, and it refuses the plain
+ * string form as well — which is what puts it below both fallbacks, at the
+ * literal the two surfaces state such a value as. That literal is the one thing
+ * the projections share below their own branches, so this is the value that says
+ * whether either of them can throw.
+ */
+function unprojectableRefusal(): Record<string, unknown> {
+  const refusal: Record<string, unknown> = {};
+  refusal.self = refusal;
+  Object.defineProperty(refusal, Symbol.toPrimitive, {
+    value: () => {
+      throw new TypeError("this value cannot be stated");
+    },
+  });
+
+  return refusal;
+}
+
 @Controller()
 class AnswersController {
   @Get("/explodes")
@@ -80,6 +101,13 @@ class AnswersController {
     // A thrown value that is not an `Error`, so the projection both surfaces
     // restate has to agree on a branch other than the `Error` one.
     throw { code: "E_CONN", retries: 3 };
+  }
+
+  @Get("/unprojectable")
+  unprojectable(): never {
+    // The value below both projections' fallbacks: the shape that reaches the
+    // literal, and so the shape that says whether either of them can throw.
+    throw unprojectableRefusal();
   }
 
   @Get("/own")
@@ -881,14 +909,16 @@ test.serial("the exception the record reports is the one the log stream states",
     const address = reportedAddress(output);
     // One route per turn, so the line `/logs` reports last is the line for the
     // request the record was just read for — two failures in one turn would be
-    // told apart only by their order in two independently read windows. The two
-    // thrown values are different shapes on purpose: an `Error` and a value
-    // that is not one take different branches of the projection both surfaces
-    // restate, and a case that only threw `Error`s could not tell a faithful
-    // restatement from one that happened to agree on that branch alone.
+    // told apart only by their order in two independently read windows. The
+    // three thrown values are different shapes on purpose: an `Error`, a value
+    // that is not one, and one neither surface can state at all take three
+    // different branches of the projection both surfaces restate, and a case
+    // that only threw `Error`s could not tell a faithful restatement from one
+    // that happened to agree on that branch alone.
     const cases = [
       { path: "/unhandled", expected: "Error: the raw exception" },
       { path: "/unhandled-object", expected: '{"code":"E_CONN","retries":3}' },
+      { path: "/unprojectable", expected: "[unprojectable]" },
     ];
 
     for (const expected of cases) {
@@ -914,6 +944,46 @@ test.serial("the exception the record reports is the one the log stream states",
     await application?.close();
   }
 });
+
+test.serial(
+  "a value the projection cannot state leaves the answer and the log line intact",
+  async () => {
+    const output = captureOutput();
+    let application: AponiaElysiaApplication | undefined;
+    try {
+      application = await AponiaFactory.create(LoggedFailureModule, { logger: agreeingLogger });
+      await application.listen(0);
+
+      const address = reportedAddress(output);
+      const response = await fetch(`${application.getUrl()}/unprojectable`);
+
+      // The premise first, and it is the whole point of the case: the projection
+      // runs inside the patched logger method the platform's error hook calls, so
+      // a throw there leaves the hook and the client receives the engine's own
+      // page instead of this answer. A Problem Details `500` is the answer that
+      // says the projection failed nothing.
+      expect(response.status).toBe(500);
+      expect(response.headers.get("content-type")).toContain("application/problem+json");
+
+      const entry = findAnsweredEntry(
+        await readRequests(address),
+        (record) => record.url === "/unprojectable",
+      );
+      const logs = (await (await fetch(`${address}/__devtools/logs`)).json()) as AponiaLogsPayload;
+      const reported = logs.entries.filter((item) => item.context === "ExceptionsHandler").at(-1);
+
+      // The line is asserted as well as the record: a projection that answered
+      // without recording would leave the failure unreported in the one place it
+      // was always reported, and the two surfaces state the literal together.
+      expect(reported).toBeDefined();
+      expect(entry.error).toBe("[unprojectable]");
+      expect(entry.error).toBe(reported?.message);
+    } finally {
+      output.restore();
+      await application?.close();
+    }
+  },
+);
 
 test.serial("a failure whose answer the client already holds carries no message", async () => {
   const { application, address } = await bootApplication(CapturedModule);

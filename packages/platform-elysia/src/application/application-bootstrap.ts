@@ -170,11 +170,11 @@ export async function bootstrapAponiaApplication(
   //
   // The map is created here, beside the exception handling it belongs to,
   // because it is that mapping's own record: the `Response` the mapping answers
-  // with is not on the after-response context, so the message it decided on is
+  // with is not on the after-response context, so the exception it decided on is
   // readable afterwards only where it wrote it down. It is one boot's — a
   // second boot creates a second map — and it is published on the boot record
-  // below rather than frozen into it, because it keeps receiving what the
-  // mapping answers.
+  // below rather than frozen into it, because it keeps receiving the exceptions
+  // the mapping answers.
   const mappedExceptions = new WeakMap<Request, string>();
   const exceptionHandling: MountedExceptionHandling = Object.freeze({
     defaultFilter: createDefaultExceptionFilter(logger, mappedExceptions),

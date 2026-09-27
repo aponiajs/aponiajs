@@ -41,7 +41,7 @@ const diagnosticsKey: unique symbol = Symbol.for("aponia.application.diagnostics
  * afterwards — a mounted route keeps no controller, and a supplied invoker is
  * indistinguishable from a compiled one once it is registered.
  *
- * Every fact it is handed is copied before it is frozen — the invoker verdict,
+ * Every other fact it is handed is copied before it is frozen — the invoker verdict,
  * the artifact provenance, the root descriptor, the callback routes, and the
  * enhancer declaration are all the caller's objects — because a record may never
  * be the place its own facts are still mutable. Nothing here relies on the boot

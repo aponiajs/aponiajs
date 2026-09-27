@@ -192,15 +192,18 @@ const application = await AponiaFactory.create(AppModule, {
   — is stored as `[unserializable]` rather than left out, because a missing `body`
   would read as a request that carried none; a body that arrived as a literal JSON
   `null` is stored as the text `null` for the same reason, since the client carried
-  one; `error` is what the answer published
-  and never the exception, so it is present on a `5xx` whose Problem Details body
-  the tool can read, absent on a `4xx`, which is an answer rather than a failure,
-  and absent where there is nothing to read — a `5xx` a handler built itself. An
-  unhandled failure the platform mapped is the second source rather than a second
-  exception to the rule: the mapping's answer is not on the after-response context
-  either, so the boot records the message it mapped as it answers, and the entry
-  publishes the same one-line account `/logs` states for the exception, with no
-  stack. Everything is recorded by default —
+  one; `error` carries the failure's message
+  — what the answer published, or, for an unhandled failure the platform mapped,
+  the exception that mapping answered — so it is present on a `5xx` whose Problem
+  Details body the tool can read, absent on a `4xx`, which is an answer rather
+  than a failure, and absent where there is nothing to read: a `5xx` a handler
+  built itself. An unhandled failure the platform mapped is the one failure whose
+  message comes from the exception rather than the answer: the mapping answers one
+  fixed sentence for every such failure and its `Response` is not on the
+  after-response context either, so the boot records the exception the mapping
+  answered, and the entry publishes the same one-line account `/logs` states for
+  it, with no stack; a thrown value neither surface can state reads as the literal
+  `[unprojectable]` on both, because a throw there would take the answer with it. Everything is recorded by default —
   `capture` is an opt-out on each field, never a permission, because a tool that
   needed two opt-ins before it showed a header is one nobody opens. Two facts are
   stated rather than softened: a token passed as a query parameter is captured in

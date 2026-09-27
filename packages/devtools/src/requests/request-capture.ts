@@ -132,8 +132,8 @@ export interface RequestCapture {
    * boot, and a restart is a new record — and a second `listen()`, which serves
    * the same application over a second socket, is that restart.
    *
-   * `mappedExceptions` is the map the platform's own default mapping writes an
-   * unhandled failure's message into, read off the boot record. It is filed
+   * `mappedExceptions` is the map the platform's own default mapping records
+   * the exception it answered into, read off the boot record. It is filed
    * against the buffer this call opens rather than against the application
    * identity, because it is the buffer the completion hook can reach: a request
    * is answered from the arrival stamp that holds the boot's record, and one
@@ -384,10 +384,10 @@ function toPendingRecord(arrival: RequestArrival): RequestRecord {
  * answer's published body — because the reading is in hand before that read
  * happens.
  *
- * `mappedExceptions` is the boot's own record of what the platform's mapping
- * answered an unhandled failure with, and it is optional because a boot whose
- * record carries none has none to hand over. It is consulted only where the
- * answer published nothing readable, so it never overwrites what the client
+ * `mappedExceptions` is the boot's own record of the exception the platform's
+ * mapping answered an unhandled failure with, and it is optional because a boot
+ * whose record carries none has none to hand over. It is consulted only where
+ * the answer published nothing readable, so it never overwrites what the client
  * received.
  *
  * @internal
@@ -539,9 +539,9 @@ function answerStatus(context: AnsweredRequest): number {
  * it, because the platform's mapping never ran. The platform's own mapping for an
  * unhandled failure answers with a `Response` Elysia does not store on the
  * context either, and that is the case the map answers: the boot recorded the
- * message it decided on, keyed by the request this hook is reading, so the entry
- * states the exception the client's `500` was an answer to instead of stating
- * that an unhandled failure said nothing at all.
+ * exception the mapping answered, keyed by the request this hook is reading, so
+ * the entry states the exception the client's `500` was an answer to instead of
+ * stating that an unhandled failure said nothing at all.
  *
  * The map is consulted only here, after the published body has failed to yield a
  * string, so it never replaces what the client actually received. A boot with no

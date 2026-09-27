@@ -149,8 +149,13 @@ export interface AponiaApplicationDiagnostics {
    */
   readonly globalEnhancers: EnhancerMetadata;
   /**
-   * What the boot's default mapping answered each unhandled failure with, keyed
-   * by the request object the mapping saw.
+   * The exception the boot's default mapping answered each unhandled failure
+   * with, keyed by the request object the mapping saw.
+   *
+   * It is the exception and not the sentence the mapping answered with: that
+   * sentence is one fixed `detail` for every unhandled failure, so repeating it
+   * would tell a reader nothing the status does not, while the exception's own
+   * one-line account is what this field is named for.
    *
    * Live rather than copied, and the one field of this record that is: what it
    * holds is not a decision the boot made but a fact the boot keeps producing,

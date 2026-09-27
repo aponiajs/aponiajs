@@ -288,12 +288,12 @@ test("the record handed out is frozen, one entry at a time", async () => {
   expect(diagnostics?.routes.every((entry) => Object.isFrozen(entry))).toBe(true);
   expect(diagnostics?.routes.every((entry) => Object.isFrozen(entry.route))).toBe(true);
   // The one field that is deliberately not frozen, because it is not a decision
-  // the boot made: the map keeps receiving what the mapping answers.
+  // the boot made: the map keeps receiving the exception the mapping answers.
   expect(Object.isFrozen(diagnostics?.mappedExceptions)).toBe(false);
   await application.close();
 });
 
-test("the record carries the message the mapping answered an unhandled failure with", async () => {
+test("the record carries the exception the mapping answered an unhandled failure with", async () => {
   const application = await AponiaFactory.create(FailingDiagnosticsModule, { logger: false });
   const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
   const request = new Request("http://localhost/explodes");
@@ -328,9 +328,12 @@ test("an exception this platform cannot project leaves the mapping's answer unch
   // page, which is the one outcome an observer may never cause.
   expect(response.status).toBe(500);
   expect(body).toContain("The server could not complete this request.");
-  // Nothing is recorded for it: an absent message states that no readable
-  // account exists, where a literal would claim the exception said something.
-  expect(diagnostics?.mappedExceptions.get(request)).toBeUndefined();
+  // The value is recorded as the literal both surfaces state it as, rather than
+  // as an absent entry: nothing here may throw, and a thrown value that refuses
+  // both the JSON form and the plain string form is a value this release cannot
+  // state — which is a fact worth recording, not one worth hiding behind an
+  // absence that would read as "the log stream never saw this failure either".
+  expect(diagnostics?.mappedExceptions.get(request)).toBe("[unprojectable]");
   await application.close();
 });
 

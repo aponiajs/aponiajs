@@ -514,14 +514,16 @@ runtime boundary it describes.
   at traffic that is not a development environment's. Redaction replaces a named
   header with the literal and keeps its place, so a consumer can see that one was
   sent and that the tool was told not to show it.
-- `error` is what the answer published and never the exception: it is present on a
-  `5xx` whose Problem Details body this after-response hook can still read, and
-  absent otherwise, because a `4xx` is an answer rather than a failure. A `404`, a
-  validation `422`, and an `HttpError` a route threw on purpose carry none, and a
-  `5xx` a handler built itself carries none either, because its body is the one
-  the client already holds. An unhandled failure the platform mapped is the one
-  failure whose message comes from somewhere else, and it is read from the boot's
-  own record of what the mapping answered: the mapping's `Response` is not on the
+- `error` carries the failure's message: what the answer published, or — for an
+  unhandled failure the platform mapped — the exception that mapping answered. It
+  is present on a `5xx` whose Problem Details body this after-response hook can
+  still read, and absent otherwise, because a `4xx` is an answer rather than a
+  failure. A `404`, a validation `422`, and an `HttpError` a route threw on purpose
+  carry none, and a `5xx` a handler built itself carries none either, because its
+  body is the one the client already holds. The mapped failure is the one whose
+  message comes from the exception rather than from the answer, and it is read from
+  the boot's own record of the exception the mapping answered: the mapping answers
+  one fixed sentence for every unhandled failure and its `Response` is not on the
   after-response context either, so without that record this hook could state only
   that an unhandled failure said nothing at all. That record is the platform's,
   handed over at `onStart` and read defensively — a copy of the platform older than
@@ -753,10 +755,19 @@ answer: the entry the record holds is compared with the line `/logs` states for
 the same exception, so the two surfaces cannot drift apart, and a case pins that
 the projection publishes no stack — with the presence of `error` asserted before
 the comparison, because an absent field would satisfy a `not.toContain` on its
-own and prove nothing. The comparison runs over two thrown values, an `Error` and
-one that is not, because the projection has a branch per shape and a case that
-only ever threw `Error`s could not tell a faithful restatement from one that
-agreed on that branch alone. A request that
+own and prove nothing. The comparison runs over three thrown values — an `Error`,
+one that is not, and a value neither projection can state at all — because the
+projection has a branch per shape and a case that only ever threw `Error`s could
+not tell a faithful restatement from one that agreed on that branch alone; the
+third pins the literal both surfaces fall back to, since a value that refuses
+`JSON.stringify` and the plain string form alike has to read the same on both.
+The projection is also asserted for what it may not do to the request it is
+reporting on: a case throws such a value through an application whose logger the
+registration has tapped, and requires the client to receive the platform's
+Problem Details answer all the same and `/logs` to state a line for it, because
+that projection runs inside the patched logger method the platform's error hook
+calls, where a throw would replace the application's answer with the engine's own
+page. A request that
 matched no route is recorded with the path that arrived and shown not to be in
 `/routes`, and a request a plugin refused before matching is recorded the same way
 with the status its answer carried. Polling is asserted not to add to the record:
