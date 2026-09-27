@@ -2,6 +2,10 @@ import { expect, spyOn, test } from "bun:test";
 import { Logger, Module, type LoggerService } from "@aponiajs/common";
 import { AponiaFactory, type AponiaElysiaApplication } from "@aponiajs/platform-elysia";
 import { Elysia } from "elysia";
+// The reachability check the tap is reached through, imported from its own module
+// because it is marked `@internal` and deliberately kept off the barrel for this
+// package's cases — the same arrangement `isLoopbackHost` has in `server.test.ts`.
+import { isRecordableLogger } from "../src/logging/log-tap.ts";
 import {
   DevtoolsModule,
   createLogBuffer,
@@ -409,6 +413,95 @@ test("a level that refuses its assignment does not cost the levels after it", ()
   expect(tapped?.levels).toContain("verbose");
 });
 
+test("a level whose read throws does not escape the tap", () => {
+  // A logger is a live object, and a getter — or a `Proxy` — can refuse the
+  // **read** rather than the assignment. The tap runs at registration, while a
+  // module is being declared, so a read that escaped would fail the boot rather
+  // than cost one level. `error` is the third level in the order, so a later level
+  // is what throws and the levels after it have to survive it.
+  const calls: string[] = [];
+  const record =
+    (level: string) =>
+    (message: unknown): void => {
+      calls.push(`${level} ${String(message)}`);
+    };
+  const logger: LoggerService = {
+    log: record("log"),
+    fatal: record("fatal"),
+    error: record("error"),
+    warn: record("warn"),
+    debug: record("debug"),
+    verbose: record("verbose"),
+  };
+  Object.defineProperty(logger, "error", {
+    get(): never {
+      throw new Error("this logger refuses the read");
+    },
+    configurable: true,
+  });
+
+  const buffer = createLogBuffer(4);
+  const tapped = tapLogBuffer(logger, buffer);
+
+  // The level whose read threw is not named as one the tap reached, and it costs
+  // only itself: `verbose` is last in the order, so naming it is what shows the
+  // loop kept going past the read that threw.
+  expect(tapped?.levels).toContain("log");
+  expect(tapped?.levels).not.toContain("error");
+  expect(tapped?.levels).toContain("verbose");
+
+  logger.log("recorded");
+  expect(calls).toContain("log recorded");
+  expect(
+    buffer.since(0).entries.map((item) => [item.level, item.message] satisfies unknown[]),
+  ).toEqual([["log", "recorded"]]);
+});
+
+test("a logger nothing can be read from is answered with no stream", () => {
+  // The other end of the same rule. Nothing could be read, so nothing was patched:
+  // the answer is the absence the endpoint's `404` stands on, and it is answered
+  // rather than thrown, because this call runs while a module is being declared.
+  const logger = new Proxy({} as LoggerService, {
+    get(): never {
+      throw new Error("this logger refuses the read");
+    },
+  });
+
+  expect(tapLogBuffer(logger, createLogBuffer(4))).toBeUndefined();
+});
+
+test("the reachability check survives a level it cannot read", () => {
+  // This check runs before the tap, at registration, and it reads levels until it
+  // finds a callable one — so a value whose readable levels come *after* a level
+  // that throws is a value it has to walk past that throw to answer about, and a
+  // `Proxy` is a value whose every read throws. Both are shapes a JavaScript caller
+  // can pass, and a throw here fails the declaration rather than refusing a value.
+  const partlyUnreadable = {
+    error: (): void => {},
+  };
+  Object.defineProperty(partlyUnreadable, "error", {
+    get(): never {
+      throw new Error("this level refuses the read");
+    },
+    configurable: true,
+  });
+
+  expect(isRecordableLogger(partlyUnreadable)).toBe(false);
+  expect(
+    isRecordableLogger(
+      new Proxy({} as LoggerService, {
+        get(): never {
+          throw new Error("this logger refuses the read");
+        },
+      }),
+    ),
+  ).toBe(false);
+
+  // The control, so the two answers above are read as a refusal rather than as a
+  // check that answers `false` for everything.
+  expect(isRecordableLogger({ log: () => {} })).toBe(true);
+});
+
 /** Binds the loopback socket on port `0` and reads the address it took. */
 function serveLoopback(application: Elysia, logs?: TappedLogStream): DevtoolsServer {
   const server = startDevtoolsServer({
@@ -576,6 +669,42 @@ Object.defineProperty(partlyReachableLogger, "debug", {
   ],
 })
 class PartlyReachableModule {}
+
+/**
+ * A logger that refuses to be **read** at one level: `error`, the third level the
+ * tap reaches, is a getter that throws. A live object — a getter, a `Proxy` — can
+ * refuse the read as readily as the assignment, and registration reads every level
+ * twice: once in `isRecordableLogger`, to decide whether the value is a logger at
+ * all, and once in the tap, to take the method. Both reads happen while the module
+ * is being **declared**, so a read that escaped would not fail one endpoint; it
+ * would fail the declaration itself, and with it every boot of the module that
+ * wrote it.
+ */
+function createUnreadableLevelLogger(): LoggerService {
+  const logger: LoggerService = {
+    log: () => {},
+    fatal: () => {},
+    error: () => {},
+    warn: () => {},
+  };
+  Object.defineProperty(logger, "error", {
+    get(): never {
+      throw new Error("this logger refuses the read");
+    },
+    configurable: true,
+  });
+
+  return logger;
+}
+
+const unreadableLevelLogger: LoggerService = createUnreadableLevelLogger();
+
+@Module({
+  imports: [
+    DevtoolsModule.register({ enabled: true, port: ephemeralPort, logger: unreadableLevelLogger }),
+  ],
+})
+class UnreadableLevelModule {}
 
 @Module({
   imports: [DevtoolsModule.register({ enabled: true, port: ephemeralPort, logger: false })],
@@ -892,3 +1021,35 @@ test.serial(
     }
   },
 );
+
+test.serial("a level that refuses the read does not fail the boot", async () => {
+  const output = captureOutput();
+  let application: AponiaElysiaApplication | undefined;
+  try {
+    // The declaration above already read every level of this logger, at the moment
+    // the module was decorated, and this is the boot that follows: a read that threw
+    // out of the registration would have taken the module's declaration with it, so
+    // reaching this line at all is half of what the case asserts.
+    application = await AponiaFactory.create(UnreadableLevelModule, {
+      logger: unreadableLevelLogger,
+    });
+    await application.listen(0);
+
+    const first = await readLogsAt(reportedAddress(output));
+
+    // The stream is live — the boot wrote through the level that could be read — so
+    // the level it refused is a fact about that logger rather than about a tap that
+    // never installed.
+    expect(first.entries.map((item) => item.context)).toContain("AponiaFactory");
+
+    // The level whose read threw is stated as unreached, and the level after it is
+    // named: a read that throws costs the level it landed on rather than that level
+    // and every one after it.
+    expect(first.levels).toContain("log");
+    expect(first.levels).not.toContain("error");
+    expect(first.levels).toContain("warn");
+  } finally {
+    await application?.close();
+    output.restore();
+  }
+});

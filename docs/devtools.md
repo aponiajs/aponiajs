@@ -322,9 +322,10 @@ never reached it.
 ### `/requests`
 
 `GET /__devtools/requests?since=<cursor>` answers `{ cursor, entries }` over a
-different record: what the application **did** rather than what it **is**. The record is written by a pair of hooks the module contributes, not by
-the application, so it observes rather than participates — it cannot change what
-a route receives or what it answers.
+different record: what the application **did** rather than what it **is**. The
+record is written by a pair of hooks the module contributes, not by the
+application, so it observes rather than participates — it cannot change what a
+route receives or what it answers.
 
 Everything is captured by default, and every option under `capture` is an
 opt-out, never a permission. A development tool that required two opt-ins before

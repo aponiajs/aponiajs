@@ -55,6 +55,13 @@ const tappedLoggers = new WeakMap<object, TappedLogStream>();
  * because an empty stream claims the application logs nothing — the one answer
  * that must not be given when it is not true.
  *
+ * A level is read defensively, because a live object refuses a read as readily as
+ * an assignment: a getter, or a `Proxy`, can throw on the read itself, and this
+ * check walks levels until it finds a callable one — so a value whose readable
+ * levels come after an unreadable one reaches that throw. It runs at registration,
+ * while a module is being declared, so a throw here would fail the boot rather than
+ * refuse a value. A level that cannot be read is a level that cannot be recorded.
+ *
  * @internal
  */
 export function isRecordableLogger(value: unknown): value is LoggerService {
@@ -62,9 +69,27 @@ export function isRecordableLogger(value: unknown): value is LoggerService {
     return false;
   }
 
-  return recordableLevels.some(
-    (level) => typeof (value as Record<string, unknown>)[level] === "function",
-  );
+  const target = value as Record<string, unknown>;
+
+  return recordableLevels.some((level) => isCallableMethod(target, level));
+}
+
+/**
+ * Whether one level of a value is a callable method, read without letting the read
+ * escape.
+ *
+ * This is the check's half of the rule the tap applies per level: a getter, or a
+ * `Proxy`, can throw on the read itself, and that is data a JavaScript caller
+ * supplies rather than a defect here. Answering `false` says the level cannot be
+ * recorded, which is the truth about a level nothing can be read from — and it is
+ * answered from inside the guard rather than thrown out of a registration.
+ */
+function isCallableMethod(target: Record<string, unknown>, level: LogLevel): boolean {
+  try {
+    return typeof target[level] === "function";
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -86,16 +111,18 @@ export function isRecordableLogger(value: unknown): value is LoggerService {
  * may make for itself, and re-applying a rule this package cannot read would be
  * enforcing a filter it does not own.
  *
- * Each level is attempted on its own, and one that refuses the assignment costs
- * only itself: the method it had is left in place, the levels before it record,
- * and the levels after it are still attempted. That is why the answer carries
- * `levels` — a stream states which levels it can hold rather than leaving a
- * client to read a silence the tap never installed into. The whole answer is
- * `undefined` only when no level at all was patched, because that is the shape
- * where an empty stream would announce that nothing is being logged while that
- * logger goes on printing every line — the same false answer a value that is not
- * a logger is refused. A logger it has tapped before is answered with the stream
- * already recording it, so the two cannot disagree about where a line went.
+ * Each level is attempted on its own, and one that refuses costs only itself: the
+ * method it had is left in place, the levels before it record, and the levels
+ * after it are still attempted. A refusal is either half of the pair the tap needs
+ * — a live object can refuse the read of a level as readily as the assignment to
+ * it — and neither costs anything beyond the level it landed on. That is why the
+ * answer carries `levels` — a stream states which levels it can hold rather than
+ * leaving a client to read a silence the tap never installed into. The whole
+ * answer is `undefined` only when no level at all was patched, because that is the
+ * shape where an empty stream would announce that nothing is being logged while
+ * that logger goes on printing every line — the same false answer a value that is
+ * not a logger is refused. A logger it has tapped before is answered with the
+ * stream already recording it, so the two cannot disagree about where a line went.
  */
 export function tapLogBuffer(
   logger: LoggerService,
@@ -114,15 +141,15 @@ export function tapLogBuffer(
   const levels: LogLevel[] = [];
 
   for (const level of recordableLevels) {
-    const write: ((message: unknown, ...optionalParameters: unknown[]) => void) | undefined =
-      logger[level];
-
-    // A level the logger does not carry is a level there is nothing to patch.
-    if (write === undefined) {
-      continue;
-    }
-
     try {
+      const write: ((message: unknown, ...optionalParameters: unknown[]) => void) | undefined =
+        logger[level];
+
+      // A level the logger does not carry is a level there is nothing to patch.
+      if (write === undefined) {
+        continue;
+      }
+
       target[level] = (message: unknown, ...optionalParameters: unknown[]): void => {
         // The entry is recorded before the line is written: the logger's own
         // write can fail — a closed stream, a logger that throws — and a line
@@ -132,10 +159,12 @@ export function tapLogBuffer(
       };
       levels.push(level);
     } catch {
-      // This level keeps the method it had, and the remaining levels are still
-      // attempted: a refusal costs the level it landed on rather than that level
-      // and every one after it. Nothing here may escape — the tap is this
-      // package's convenience and never the application's contract, so a boot
+      // A level that refused — the read or the assignment — costs only itself: it
+      // is not pushed, it keeps the method it had, and the remaining levels are
+      // still attempted. The read is inside this attempt because a live object can
+      // refuse the read as well as the assignment, and this runs at registration,
+      // while a module is being declared. Nothing here may escape — the tap is
+      // this package's convenience and never the application's contract, so a boot
       // does not fail over it, which is the failure mode this package exists not
       // to have.
     }

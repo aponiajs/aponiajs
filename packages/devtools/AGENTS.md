@@ -333,7 +333,14 @@ runtime boundary it describes.
   refusal costs one level rather than that level and every one after it: the level
   that refused keeps the method it had and the remaining levels are still
   attempted, which is what makes the stream's level list the whole truth about
-  what it can hold. A tap is this package's convenience and never the application's
+  what it can hold. A refusal is either half of the pair a tap needs, and both
+  halves are caught per level: a live object — a getter, a `Proxy` — refuses the
+  **read** of a level as readily as the assignment to it, and the reachability
+  check reads levels too, so a read that escaped would fail the module's
+  declaration rather than cost one level, which is the one outcome this package
+  may never have. A level nothing can be read from is a level that cannot be
+  recorded, answered as a refusal rather than thrown. A tap is this package's
+  convenience and never the application's
   contract. One logger records into one stream: a logger this package has already
   answered for is answered with the stream that is recording rather than a second
   one nothing writes into. A logger nothing could be installed on has no stream to
@@ -666,7 +673,19 @@ pinned the same way, against the concrete logger: a level the object does not ca
 is not named, a level that refuses its assignment costs only itself — the last
 level in the order proves the loop kept going — and the payload a boot serves names
 the levels reached, so a stream that never holds `debug` and one whose tap never
-reached `debug` are told apart over HTTP rather than only in the tap. The stream is
+reached `debug` are told apart over HTTP rather than only in the tap. The other
+half of a refusal is pinned where it is the sharper failure: a level whose getter
+throws is a level the tap cannot read, so the case asserts the tap answers rather
+than throwing, that the level is not named, and that the levels after it are — and
+a logger whose every read throws is answered with no stream at all. The
+reachability check is asserted the same way and from its own module, because it
+reads levels before the tap does and a throw there fails the declaration: a value
+whose readable levels come after an unreadable one, and a `Proxy` that throws on
+every read, are both refused rather than thrown out of, with a callable logger
+beside them as the control. The module that declares a registration over such a
+logger is then booted over HTTP, which is what makes the claim end to end: the
+declaration survived the read that threw, and the payload states that level as
+unreached. The stream is
 then asserted over a real
 boot, where the lines the boot wrote before `onStart` must appear — the case a tap
 installed when the socket starts would fail, and the assertion that says why the
