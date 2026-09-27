@@ -1,9 +1,8 @@
-import type {
-  AponiaApplicationDiagnostics,
-  AponiaRouteParameterInspection,
-} from "@aponiajs/platform-elysia";
+import type { AponiaApplicationDiagnostics } from "@aponiajs/platform-elysia";
 import type { Elysia } from "elysia";
 import type { AponiaMountedRoute, AponiaRoutesPayload } from "./payloads.types.ts";
+import { readRouteParameters } from "./route-parameters.ts";
+import { readRouteSource } from "./route-source.ts";
 
 /** The path this endpoint is served under, relative to the devtools prefix. */
 export const devtoolsRoutesPath = "/routes";
@@ -35,9 +34,12 @@ interface MountedNativeRoute {
  * record entry describes a route only when the table holds it. A plan the
  * application never mounted is therefore absent rather than invented, and a
  * mounted route no plan and no callback describes is reported with the names it
- * does not have — the empty string — instead of a guess. `source` distinguishes
- * the two kinds of absence a record can leave: a plan an older record states no
- * binding for, and a route no record describes at all, both read as `null`.
+ * does not have — the empty string — instead of a guess. `source` states one of
+ * this release's three values and reads as `null` otherwise: a plan an older
+ * record states no binding for, a route no record describes at all, and a value
+ * under that field that is not one of the three — a foreign copy of the platform
+ * writes what it likes under the same key — are one absence, because this
+ * endpoint publishes no binding state it cannot name.
  *
  * The table is Elysia's, so both halves of it are what the installed release
  * holds rather than what this one expects: an entry whose method or path is not
@@ -86,13 +88,14 @@ function describeRecordedRoutes(
       continue;
     }
 
-    // An entry's `source` is read through a nullish fallback although the
-    // record's type declares it, because the record is read through a
+    // An entry's `source` is read for the one rule both endpoints share although
+    // the record's type declares it, because the record is read through a
     // registry-global symbol key: a boot run by a copy of the platform older
-    // than this field answers the same key with plans that have none. `null` is
-    // the answer a route no record describes reports, and it is the honest one
-    // where the state is absent rather than one of the two this release writes.
-    const source = entry.source ?? null;
+    // than this field answers the same key with plans that have none, and a
+    // foreign one may state a value this release does not write. Both read as
+    // the absence — the answer a route no record describes reports — rather than
+    // as a binding state this route was never given.
+    const source = readRouteSource(entry.source);
     recorded.set(
       routeKey(plan.method, plan.path),
       Object.freeze({
@@ -102,7 +105,7 @@ function describeRecordedRoutes(
         controller: entry.controller,
         handler: handlerName(plan.propertyKey),
         source,
-        parameters: freezeParameters(plan.parameters),
+        parameters: readRouteParameters(plan.parameters),
       }),
     );
   }
@@ -117,7 +120,7 @@ function describeRecordedRoutes(
       continue;
     }
 
-    const source = entry.source ?? null;
+    const source = readRouteSource(entry.source);
     recorded.set(
       key,
       Object.freeze({
@@ -201,24 +204,6 @@ function handlerName(propertyKey: unknown): string {
  * The parameters as the payload publishes them: one frozen copy per bound field,
  * so a reader of the wire shape can never be handed part of a record to mutate.
  */
-function freezeParameters(
-  parameters: readonly AponiaRouteParameterInspection[] | undefined,
-): readonly AponiaRouteParameterInspection[] {
-  if (!Array.isArray(parameters)) {
-    return Object.freeze([]);
-  }
-
-  return Object.freeze(
-    parameters.map((parameter) =>
-      Object.freeze({
-        index: parameter.index,
-        kind: parameter.kind,
-        property: parameter.property,
-      }),
-    ),
-  );
-}
-
 /**
  * A record's entries as a walkable list, for the same reason the table is
  * checked: the record arrives through a registry-global symbol key, and a copy

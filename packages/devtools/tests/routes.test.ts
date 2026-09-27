@@ -476,10 +476,11 @@ test("a record from a copy of the platform older than the binding state still na
 test("a record whose plans are not the shape this release writes still answers", async () => {
   // The other side of the version skew: a foreign copy of the platform may hold
   // the same key with collections this release cannot walk and a plan whose
-  // fields are not the ones it writes. Nothing may throw — this build runs
+  // fields are not the ones it writes. This build runs
   // inside `onStart`, where a throw takes `listen()` with it — so a plan it
-  // cannot name a handler for and a parameter list it cannot read are stated as
-  // the empty facts they are rather than as a reason to fail the request.
+  // cannot name a handler for, a parameter list it cannot read, and a binding
+  // state it does not write are stated as the empty facts they are rather than
+  // as a reason to fail the request.
   const application = new Elysia();
   application.get("/", () => "foreign");
   Object.defineProperty(application, Symbol.for("aponia.application.diagnostics"), {
@@ -490,6 +491,10 @@ test("a record whose plans are not the shape this release writes still answers",
           module: "ForeignModule",
           controller: "ForeignController",
           route: { method: "GET", path: "/", propertyKey: 7, parameters: "not a list" },
+          // A binding state outside this release's three values is reported as
+          // the absence rather than republished: `null` never means "an unknown
+          // binding", and a foreign value would be exactly that.
+          source: "not a binding",
         },
       ],
       callbackRoutes: "not a list",
@@ -509,6 +514,62 @@ test("a record whose plans are not the shape this release writes still answers",
         handler: "",
         source: null,
         parameters: [],
+      },
+    ]);
+  } finally {
+    server.stop();
+  }
+});
+
+test("a parameter list this release cannot fully read reports what it can read", async () => {
+  // The list is the record's, and both endpoints publish it: an entry is
+  // republished only when it states the fields this release writes — an index
+  // that is a number and a kind the decorators declare — and an entry it cannot
+  // read is dropped rather than reported as an argument the route never bound.
+  const application = new Elysia();
+  application.get("/", () => "parameters");
+  Object.defineProperty(application, Symbol.for("aponia.application.diagnostics"), {
+    value: {
+      framework: "9.9.9",
+      routes: [
+        {
+          module: "ForeignModule",
+          controller: "ForeignController",
+          route: {
+            method: "GET",
+            path: "/",
+            propertyKey: "read",
+            parameters: [
+              { index: 0, kind: "params", property: "id" },
+              { index: "one", kind: "params" },
+              { index: 1, kind: "not a kind" },
+              { index: 2, kind: "body", property: 7 },
+              "not a parameter",
+            ],
+          },
+        },
+      ],
+    },
+    enumerable: false,
+  });
+
+  const server = serveLoopback(application);
+
+  try {
+    expect((await readRoutes(server)).routes).toEqual([
+      {
+        method: "GET",
+        path: "/",
+        module: "ForeignModule",
+        controller: "ForeignController",
+        handler: "read",
+        source: null,
+        // A property that is not a string reads as no property, which is the
+        // shape a binding that names none already has.
+        parameters: [
+          { index: 0, kind: "params", property: "id" },
+          { index: 2, kind: "body", property: undefined },
+        ],
       },
     ]);
   } finally {

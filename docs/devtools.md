@@ -226,7 +226,7 @@ therefore appears too.
       controller: "UsersController",
       handler: "read",
       source: "generated",
-      parameters: [{ index: 0, kind: "param", property: "id" }],
+      parameters: [{ index: 0, kind: "params", property: "id" }],
     },
   ],
 }
@@ -236,7 +236,10 @@ therefore appears too.
   invoker, `"compiled"` for the running platform's own compilation or for a
   route a callback mounted, and `null` when no boot recorded the route — a
   native WebSocket route (which reports `"WS"` as its method), or one mounted
-  outside the boot. `null` never means "an unknown binding".
+  outside the boot — or when the record states a binding this release does not
+  write, which a foreign copy of the platform can. `null` never means "an unknown
+  binding": a state this release cannot name is reported as the absence rather
+  than republished.
 - A route no plan and no callback describes reports an empty name rather than a
   guessed one: a callback's route names its module and controller and no
   handler, because the property key that built it exists only while the callback

@@ -75,11 +75,14 @@ export interface AponiaGraphPayload {
  * `"generated"` is a build-time invoker: an artifact the boot adopted supplied
  * the binding for that route's handler. `"compiled"` is the running platform's
  * own: it compiled the route's parameter binding, or mounted a route a callback
- * built, which no artifact can reach. `null` is neither, and it means the boot
- * recorded nothing about this route at all — a native WebSocket route, a route a
- * plugin provides, or an application no boot produced. It never means "an
- * unknown binding": a report that published a guess where a state belongs would
- * make one boot's routes look interchangeable with another's.
+ * built, which no artifact can reach. `null` is neither: it is what a boot that
+ * recorded no binding this release can name answers with — nothing about this
+ * route at all, which is a native WebSocket route, a route a plugin provides, or
+ * an application no boot produced, or a value under that field that is not one of
+ * the three this release writes, which a foreign copy of the platform can state.
+ * It never means "an unknown binding": a report that published a guess, or a
+ * foreign state, where a decided state belongs would make one boot's routes look
+ * interchangeable with another's.
  */
 export type AponiaRouteSource = "generated" | "compiled" | null;
 
@@ -117,12 +120,19 @@ export interface AponiaMountedRoute {
    * symbol key reads as `Symbol(description)` — or `""` when no plan records one.
    */
   readonly handler: string;
-  /** Which binding answers the route, or `null` when no boot recorded one. */
+  /**
+   * Which binding answers the route, or `null` when the record states none this
+   * release can name — no binding at all, or a value outside the three it writes,
+   * which a foreign copy of the platform can state.
+   */
   readonly source: AponiaRouteSource;
   /**
    * The context fields the route's handler binds, in declaration order. Empty
    * for a route the recorded plans do not describe: a parameter list belongs to
-   * a compiled plan, and a callback's routes carry none.
+   * a compiled plan, and a callback's routes carry none. An entry the record
+   * states in a shape this release does not write — no index that is a number,
+   * no kind the decorators declare — is dropped rather than published, so a
+   * foreign entry costs a parameter and not the list.
    */
   readonly parameters: readonly AponiaRouteParameterInspection[];
 }
@@ -133,7 +143,8 @@ export interface AponiaMountedRoute {
  *
  * The table is the application's own, so this payload has no gating state: an
  * application no boot produced still answers with its routes, each of them
- * stating `null` for a binding no boot recorded. What a record does add is
+ * stating `null` for a binding no boot recorded — the answer for a value outside
+ * the three this release writes as well. What a record does add is
  * everything a mounted route cannot say about itself — its module, its
  * controller, and the property key that serves it — which no entry of the
  * table keeps once the boot that mounted it has returned.

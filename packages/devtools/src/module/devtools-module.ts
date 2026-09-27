@@ -195,12 +195,12 @@ function createDevtoolsPlugin(options: DevtoolsOptions): Elysia {
     })
     .onStart((application) => {
       // The boot's own record, read defensively: this runs inside `onStart`,
-      // which Elysia neither awaits nor catches, so nothing here may throw. A
-      // record a copy of the platform older than this release wrote carries no
-      // `mappedExceptions` field at all, and an application no boot produced
-      // carries no record — both read as `undefined` and leave the capture
-      // reporting the published body alone, which is what it reported before the
-      // field existed.
+      // which Elysia neither awaits nor catches, so its own reads are written to
+      // answer rather than to throw. A record a copy of the platform older than
+      // this release wrote carries no `mappedExceptions` field at all, and an
+      // application no boot produced carries no record — both read as `undefined`
+      // and leave the capture reporting the published body alone, which is what
+      // it reported before the field existed.
       const diagnostics = readApplicationDiagnostics(application);
       const started = startDevtoolsServer({
         application,

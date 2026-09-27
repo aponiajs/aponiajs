@@ -93,9 +93,10 @@ export interface AponiaFlowStage {
    * kind that carries it — and stated in the same three values `/routes` states
    * for the same fact: `"generated"` for a build-time invoker, `"compiled"` for
    * the running platform's own compilation or for a route a callback mounted,
-   * and `null` when no boot recorded a binding for the route. `null` never
-   * means "an unknown binding"; a guess published where a decided state belongs
-   * would make one boot's routes look interchangeable with another's.
+   * and `null` when no boot recorded a binding for the route, or recorded one
+   * this release cannot name. `null` never means "an unknown binding"; a guess
+   * published where a decided state belongs would make one boot's routes look
+   * interchangeable with another's.
    */
   readonly source?: AponiaRouteSource;
   /** The controller whose method serves the route, when a record names one. */

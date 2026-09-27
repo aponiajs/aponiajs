@@ -908,6 +908,115 @@ test("the application's own enhancers run before the route's, and the after halv
   }
 });
 
+test("a parameter list this release cannot fully read binds what it can read", async () => {
+  // The list is the record's, so each entry is published only when it states the
+  // fields this release writes: an index that is a number and a kind the
+  // decorators declare. An entry it cannot read is dropped rather than
+  // republished as an argument the route never bound, a property that is not a
+  // string reads as no property, and the entries it can read are still reported —
+  // which keeps a foreign entry a lost parameter rather than a lost route.
+  const application = new Elysia();
+  application.get("/", () => "parameters");
+  Object.defineProperty(application, Symbol.for("aponia.application.diagnostics"), {
+    value: {
+      routes: [
+        {
+          module: "ForeignModule",
+          controller: "ForeignController",
+          route: {
+            method: "GET",
+            path: "/",
+            propertyKey: "read",
+            parameters: [
+              { index: 0, kind: "query", property: "limit" },
+              { index: "one", kind: "query" },
+              { index: 1, kind: "not a kind" },
+              { index: 2, kind: "body", property: 7 },
+              "not a parameter",
+            ],
+            schema: undefined,
+            enhancers: { guards: [], interceptors: [], filters: [] },
+          },
+        },
+      ],
+    },
+    enumerable: false,
+  });
+
+  const server = serveLoopback(application);
+
+  try {
+    expect(
+      routeById(await readFlow(server), "GET /").stages.map((stage) => [
+        stage.kind,
+        stage.parameters,
+      ]),
+    ).toEqual([
+      [
+        "bind",
+        [
+          { index: 0, kind: "query", property: "limit" },
+          // The entry states a property this release cannot read, so it is
+          // published with none rather than with `7`.
+          { index: 2, kind: "body", property: undefined },
+        ],
+      ],
+      ["invoke", undefined],
+      ["handler", undefined],
+    ]);
+  } finally {
+    server.stop();
+  }
+});
+
+test("a filter whose catch metadata is not a list is published with no types", async () => {
+  // `@Catch()` is what stores a filter's exception list, and the metadata read
+  // answers whatever is stored under its key: a class whose metadata was written
+  // by hand — no decorator involved — carries a list this release cannot walk,
+  // and mapping over it would fail the request this handler answers. The stage
+  // states the absence, which is the shape a filter that declared no `@Catch()`
+  // publishes rather than a type it never declared.
+  class HandwrittenFilter {}
+  Reflect.defineMetadata(
+    Symbol.for("aponia.enhancer-catch.metadata"),
+    "not a list",
+    HandwrittenFilter,
+  );
+
+  const application = new Elysia();
+  application.get("/", () => "hand-written");
+  Object.defineProperty(application, Symbol.for("aponia.application.diagnostics"), {
+    value: {
+      routes: [
+        {
+          module: "HandwrittenModule",
+          controller: "HandwrittenController",
+          route: {
+            method: "GET",
+            path: "/",
+            propertyKey: "read",
+            parameters: [],
+            schema: undefined,
+            enhancers: { guards: [], interceptors: [], filters: [HandwrittenFilter] },
+          },
+        },
+      ],
+    },
+    enumerable: false,
+  });
+
+  const server = serveLoopback(application);
+
+  try {
+    expect(routeById(await readFlow(server), "GET /").filters).toEqual([
+      { kind: "filter", name: "HandwrittenFilter", scope: "local", catch: [] },
+      { kind: "default", name: "ProblemDetailsMapping" },
+    ]);
+  } finally {
+    server.stop();
+  }
+});
+
 test("a route a controller's callback mounted is reported with the controller that mounted it", async () => {
   const application = await bootEdgeApplication();
   const server = serveLoopback(application);
@@ -1086,10 +1195,11 @@ test("a route no boot recorded reports no binding rather than a binding it never
 test("a record whose plans are not the shape this release writes still answers", async () => {
   // The other side of the version skew: a foreign copy of the platform may hold
   // the same key with plans whose fields are not the ones this release writes.
-  // Nothing may throw — this handler answers inside `Bun.serve`, where a throw
-  // is a failed request — so a plan whose enhancer lists, parameter lists, and
-  // handler name cannot be read is stated as the empty facts they are: no
-  // guards, no binding, no name, and the mapping every compiled route carries.
+  // This handler answers inside `Bun.serve`, where a throw is a failed request,
+  // so a plan whose enhancer lists, parameter lists,
+  // handler name, and binding state cannot be read is stated as the empty facts
+  // they are: no guards, no binding, no name, no binding state in place of the
+  // value it does state, and the mapping every compiled route carries.
   const application = new Elysia();
   application.get("/", () => "foreign");
   Object.defineProperty(application, Symbol.for("aponia.application.diagnostics"), {
@@ -1107,6 +1217,11 @@ test("a record whose plans are not the shape this release writes still answers",
             schema: "not a schema",
             enhancers: "not a list",
           },
+          // A binding state this release does not write is republished as the
+          // absence rather than as a state: `null` is the one value that says
+          // "no binding this release can name" without inventing one, and
+          // publishing it verbatim would place a foreign state on this route.
+          source: "bundled",
         },
       ],
       globalEnhancers: { guards: "not a list", interceptors: null, filters: undefined },

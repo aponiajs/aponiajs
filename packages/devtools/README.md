@@ -133,7 +133,8 @@ const application = await AponiaFactory.create(AppModule, {
   context fields its handler binds, and `source`: `"generated"` when a build-time
   invoker serves it, `"compiled"` when the running platform does, or `null` when
   no boot recorded it — a native WebSocket route, or a route mounted outside the
-  boot. A route no plan and no callback describes reports empty names rather than
+  boot — or when the record states a binding this release does not write, which a
+  foreign copy of the platform can. A route no plan and no callback describes reports empty names rather than
   guessed ones, which is also what a callback's route reports for its handler:
   the property key that built it exists only while the callback runs.
 - **`GET /__devtools/flow` reports the stages each route passes through.** The

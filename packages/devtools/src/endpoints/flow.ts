@@ -12,7 +12,6 @@ import type {
   AponiaApplicationDiagnostics,
   AponiaCallbackRouteDiagnostics,
   AponiaCompiledRouteDiagnostics,
-  AponiaRouteParameterInspection,
   InterceptorHalves,
 } from "@aponiajs/platform-elysia";
 import type { Elysia } from "elysia";
@@ -24,6 +23,8 @@ import type {
   AponiaFlowStage,
   AponiaFlowStageKind,
 } from "./flow.types.ts";
+import { readRouteParameters } from "./route-parameters.ts";
+import { readRouteSource } from "./route-source.ts";
 
 /** The path this endpoint is served under, relative to the devtools prefix. */
 export const devtoolsFlowPath = "/flow";
@@ -118,20 +119,27 @@ const emptyEnhancers: EnhancerMetadata = Object.freeze({
  * own lists are. A compiled hook is therefore published as its parts, and never
  * as a contributed hook stage.
  *
- * Nothing this file reads is trusted. This handler answers inside `Bun.serve`,
- * where a throw is a failed request, and both sources are data this release did
- * not write: the table belongs to the installed Elysia and the record arrives
- * through a registry-global symbol key. Every shape either one states is checked
- * before it is used and answered as an absence when it is not the shape this
- * release writes — a value that lies about its own prototype is answered as no
- * halves — so a foreign route or a foreign record costs a field rather than the
- * whole report.
+ * What this file defends against is a shape, and it is not throw-free. Both
+ * sources are data this release did not write — the table belongs to the
+ * installed Elysia and the record arrives through a registry-global symbol key —
+ * so every field this file publishes is read as the unknown it is, checked
+ * against the shape this release writes, and stated as an absence when it is not
+ * one: a plan whose enhancer list is not a list is no guards, a binding state
+ * this release does not name is `null`, a handler name that is not a name is left
+ * out, a filter's catch list that is not a list is no types, a parameter entry
+ * with no index that is a number or no kind the decorators declare is dropped,
+ * and a recorded value that lies about its own prototype is no halves. A route
+ * or a record this package cannot read therefore costs a field rather than the
+ * report.
  *
- * The claim stops there rather than at "nothing here may throw". The table is
- * Elysia's own and this file reads it as Elysia wrote it, so an entry whose
- * properties refuse to be read fails the request the way any other throw in a
- * handler does; the record is the source a value can lie about, and it is the one
- * this file reads defensively.
+ * What it does not defend against is a read that refuses to happen. An accessor
+ * that throws, or a `Proxy` whose `get` or `getPrototypeOf` traps do, fails the
+ * request the way any other throw inside a handler does — and at either source,
+ * because the reads are the same kind of read: this file guards the one value it
+ * reads through the runtime's own `Map` because that read is its own, not because
+ * a throw is impossible anywhere else. Making the handler total would mean one
+ * guard around the whole build with an answer for a build that failed, which is a
+ * change to this endpoint's wire contract rather than a repair to a shape.
  */
 export function buildFlowPayload(
   application: Elysia,
@@ -227,7 +235,7 @@ function buildStageDrafts(
 
   const described = plan ?? callback;
   if (described !== undefined) {
-    drafts.push({ kind: "invoke", source: described.source ?? null });
+    drafts.push({ kind: "invoke", source: readRouteSource(described.source) });
     drafts.push(describeHandler(described, plan));
   }
 
@@ -320,7 +328,7 @@ function appendParameterBinding(
   drafts: StageDraft[],
   plan: AponiaCompiledRouteDiagnostics | undefined,
 ): void {
-  const parameters = freezeParameters(plan?.route.parameters);
+  const parameters = readRouteParameters(plan?.route.parameters);
 
   if (parameters.length > 0) {
     drafts.push({ kind: "bind", parameters });
@@ -387,13 +395,29 @@ function describeFilters(
   return Object.freeze(filters);
 }
 
-/** One declared filter, with the types its own `@Catch()` named. */
+/**
+ * One declared filter, with the types its own `@Catch()` named.
+ *
+ * The metadata read answers whatever is stored under the decorator's key, which
+ * is a list only when a `@Catch()` put one there: the platform's decorator
+ * writes one, and anything else — a class whose metadata was written by hand —
+ * is stated as the empty list rather than mapped over. A filter with no types
+ * this release can name is a fact it can publish; a throw here is a failed
+ * request.
+ */
 function describeFilter(token: ClassToken<unknown>, scope: AponiaFlowScope): AponiaFlowFilter {
+  const declared: unknown = getCatchMetadata(token);
+  const caught = Array.isArray(declared)
+    ? declared.filter(
+        (exception): exception is ClassToken<unknown> => typeof exception === "function",
+      )
+    : [];
+
   return Object.freeze({
     kind: "filter",
     name: tokenName(token),
     scope,
-    catch: Object.freeze(getCatchMetadata(token).map((exception) => tokenName(exception))),
+    catch: Object.freeze(caught.map((exception) => tokenName(exception))),
   });
 }
 
@@ -635,8 +659,12 @@ function declaringHalf(
  * `provideValue` object whose shape differs from its token's `prototype` is
  * answered from the prototype while the platform calls the object.
  *
- * Neither direction costs the request: a token that is not a class declares
- * neither half, and neither direction throws.
+ * What is guaranteed here is the two answers and not the two reads: the probe
+ * reads a token's `prototype` and one member of it, a recorded pair is read
+ * under `recordedHalf`'s guard, and a read that refuses to happen is the
+ * residual the whole file states rather than a case this function answers.
+ * Neither direction costs the route a stage it never declared, because a token
+ * that is not a class declares neither half.
  */
 function declaresHalf(
   token: ClassToken<unknown>,
@@ -719,29 +747,6 @@ function readInterceptorHalves(
   } catch {
     return undefined;
   }
-}
-
-/**
- * The parameters as the payload publishes them: one frozen copy per bound
- * field, so a reader of the wire shape can never be handed part of a record to
- * mutate.
- */
-function freezeParameters(
-  parameters: readonly AponiaRouteParameterInspection[] | undefined,
-): readonly AponiaRouteParameterInspection[] {
-  if (!Array.isArray(parameters)) {
-    return Object.freeze([]);
-  }
-
-  return Object.freeze(
-    parameters.map((parameter) =>
-      Object.freeze({
-        index: parameter.index,
-        kind: parameter.kind,
-        property: parameter.property,
-      }),
-    ),
-  );
 }
 
 /**

@@ -13,14 +13,14 @@ the framework depends on it, and an application installs it deliberately. It is 
 what `/aot`'s build verdicts are read through, and that import is deferred to the
 first request so an application that never polls the endpoint never loads it.
 
-| Domain       | Owns                                                                                                                    |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| `module/`    | `DevtoolsModule.register`, `devtoolsPlugin`, `DevtoolsOptions`, the plugin                                              |
-| `server/`    | `startDevtoolsServer`, the socket and the loopback check, `routeRequest`, the dispatcher                                |
-| `endpoints/` | One payload builder and its wire contract per endpoint, `/meta` first, and the cursor reader the cursor endpoints share |
-| `buffer/`    | The bounded cursor buffer `/logs` and `/requests` share, and nothing else                                               |
-| `logging/`   | The log stream: its record, its bound, the tap that fills it from a logger, and the one-line form of a thrown reason    |
-| `requests/`  | The request record: its entry, its bound, and the capture that fills it                                                 |
+| Domain       | Owns                                                                                                                                                                                                                                             |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `module/`    | `DevtoolsModule.register`, `devtoolsPlugin`, `DevtoolsOptions`, the plugin                                                                                                                                                                       |
+| `server/`    | `startDevtoolsServer`, the socket and the loopback check, `routeRequest`, the dispatcher                                                                                                                                                         |
+| `endpoints/` | One payload builder and its wire contract per endpoint, `/meta` first, and the readers the endpoints share: the cursor the two cursor endpoints read, and the route facts `/routes` and `/flow` both state — the binding, and the parameter list |
+| `buffer/`    | The bounded cursor buffer `/logs` and `/requests` share, and nothing else                                                                                                                                                                        |
+| `logging/`   | The log stream: its record, its bound, the tap that fills it from a logger, and the one-line form of a thrown reason                                                                                                                             |
+| `requests/`  | The request record: its entry, its bound, and the capture that fills it                                                                                                                                                                          |
 
 `src/index.ts` is the only public barrel. Keep `*.types.ts` colocated with the
 runtime boundary it describes.
@@ -85,8 +85,18 @@ runtime boundary it describes.
   `undefined`, and the application continues. The plugin's `onStart` reports
   nothing further when it sees that, so one refused bind is one row.
 - The handler build runs inside that `onStart`, which Elysia neither awaits nor
-  catches, so nothing it does may throw — a throw would take `listen()` with it.
-  That makes every read of a boot record a read of data this package did not
+  catches, so its own reads are written to answer rather than to throw — a throw
+  would take `listen()` with it. What that buys is the shapes: every recorded
+  field is validated before use and answered as an absence when it is not a shape
+  this release writes, which is what makes a record this package cannot read cost
+  a field rather than the report. It is not throw-freedom. A value that refuses
+  to be read — an accessor that throws, a `Proxy` whose `get` or `getPrototypeOf`
+  traps do — fails that request the way any other throw inside a handler does,
+  and at either source, because these reads are this package's own rather than
+  Elysia's table's alone. Making the handler total would mean one guard around a
+  whole payload build with a defined answer for a build that failed, which is a
+  change to the endpoint's wire contract rather than a repair to a shape.
+  Every read of a boot record is a read of data this package did not
   write: the record arrives through a registry-global symbol key, and a copy of
   `@aponiajs/platform-elysia` older than this release answers the same key with a
   record that has no `artifacts` at all. The stamp read is an optional chain that
@@ -148,12 +158,19 @@ runtime boundary it describes.
   dropped.
 - `/routes` states three facts per route and each has one owner. The method, the
   path, and the parameter list are what the mounted table and the boot's plans
-  hold. `source` is the binding the boot decided on: `"generated"` for a
-  build-time invoker, `"compiled"` for the running platform's own compilation or
-  for a route a callback mounted, which no artifact can reach, and `null` when no
+  hold, and the list is published entry by entry: an entry is kept only when it
+  states the three fields this release writes — an index that is a number, a kind
+  the decorators declare, and a property that is a string or absent — so a
+  foreign entry costs one parameter rather than the route, and a list that is not
+  a list is no list at all. `source` is the binding the boot decided on:
+  `"generated"` for a build-time invoker, `"compiled"` for the running platform's
+  own compilation or for a route a callback mounted, which no artifact can reach,
+  and `null` when no
   boot recorded the route — a native WebSocket route, or one mounted outside the
-  boot. `null` never means "an unknown binding"; a guess published where a decided
-  state belongs would make one boot's routes look interchangeable with another's.
+  boot — or when the record states a binding this release does not write, which a
+  foreign copy of the platform can. `null` never means "an unknown binding"; a
+  guess published where a decided state belongs would make one boot's routes look
+  interchangeable with another's.
   A field the record is too old to carry reads `null` the same way, for the same
   reason `/meta`'s optional stamp read does.
 - `/routes` reports an empty name rather than a guess wherever the boot has none
