@@ -80,8 +80,9 @@ export interface RequestRecord {
    * the platform mapped is present rather than absent: the mapping answers one
    * fixed `detail` for every such failure and its `Response` is not on the
    * after-response context either, so the boot records the exception the mapping
-   * answered as it answers, and that record is read here — in the same one-line
-   * projection the log stream states the exception in, and never a stack.
+   * answered as it answers, and that record is read here — in the same account
+   * the log stream states the exception in, through the same call, and never a
+   * stack.
    */
   readonly error?: string;
   /** The request's headers, as they arrived, with the redacted ones replaced. */

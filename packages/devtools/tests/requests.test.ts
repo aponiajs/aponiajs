@@ -96,7 +96,7 @@ function unrenderableRefusal(): Record<string, unknown> {
 /**
  * A thrown function that cannot be named.
  *
- * The other fixtures refuse at the JSON form and at the plain string form, which
+ * The other fixture refuses at the JSON form and at the plain string form, which
  * are the two reads a rendering states out loud. This one refuses at the read the
  * rendering makes of the value itself — the property a function is named by,
  * declared here as a getter that throws — which is the read a rendering guarded

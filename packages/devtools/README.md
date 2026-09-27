@@ -227,9 +227,8 @@ const application = await AponiaFactory.create(AppModule, {
   package's own `oneLine`, which the two rows written for a failure of its own
   guard — the bind it could not take, and the route analysis it could not read —
   embed, and it answers the literal `[unrenderable]` for any value whose read
-  refuses, where `renderLogValue` answers it only once the JSON form and the plain
-  string form have both refused, so a value the shared rendering still states —
-  `{}`, or `[object Object]` — reads as the literal there. A thrown value neither
+  refuses, including a value the shared rendering still states — `{}`, or
+  `[object Object]`. A thrown value neither
   can state reads as the
   literal `[unrenderable]` on both, because that rendering is total: it runs in
   the route's own `error` hook before the answer is built, and the logger call

@@ -52,11 +52,10 @@ test("states a value that refuses to be read as unrenderable rather than throwin
 });
 
 test("states the same literal as the framework's rendering for a value that refuses every read", () => {
-  // The one shape the two renderings agree on. `renderLogValue` answers the
-  // literal only after the JSON form and the plain string form have both refused,
-  // and `oneLine` answers it for a refusal at either read it makes, so a value
-  // that refuses the prototype walk, the JSON form, and the plain string form is
-  // the shape both must state with one word. Every other shape is one they part
+  // The one shape the two renderings agree on. `oneLine` answers the literal for
+  // a refusal at either read it makes, `renderLogValue` for a value it cannot
+  // state, and a value that refuses the prototype walk, the JSON form, and the
+  // plain string form is one neither can state. Every other shape is one they part
   // on by design — a value that refuses only a read this rendering makes is
   // stated by the shared rendering and answered with the literal here — and this
   // case asserts nothing about those.

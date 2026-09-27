@@ -68,6 +68,7 @@ const minimumScannedFiles = 400;
  * a file a reader meets, so its loss is a change worth failing over.
  */
 const requiredFiles: readonly string[] = [
+  "AGENTS.md",
   "README.md",
   "RULES.md",
   "docs/logging.md",

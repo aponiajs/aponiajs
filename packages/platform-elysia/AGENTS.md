@@ -160,7 +160,7 @@ runtime boundary it describes.
   notice's throw is therefore a throw with a defined outcome rather than a
   refusal report: the boot fails, and the socket the notice described is
   released before the failure reaches the caller, because the handle was never
-  the caller's and nothing else could ever stop it. The projection is
+  the caller's and nothing else could ever stop it. The rendering is
   `@aponiajs/common`'s `renderLogValue`, the same call the devtools log stream
   renders a line through, so the two surfaces cannot disagree about one failure;
   it is total, and a thrown value that refuses to be rendered is recorded as the

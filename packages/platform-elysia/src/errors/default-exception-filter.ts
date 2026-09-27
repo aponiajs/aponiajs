@@ -178,11 +178,11 @@ function announceLoggerFailure(loggerFailure: unknown, context: string): void {
  * What goes in the map is the exception, not the sentence this mapping answered
  * with: the response body is one fixed `detail` for every unhandled failure, and
  * repeating that sentence would tell a consumer nothing the status does not. The
- * value is therefore the exception's own one-line account, which is what the
+ * value is therefore the exception's own account, which is what the
  * record's field is named for — `mappedExceptions`, keyed by the request the
  * mapping saw.
  *
- * The projection is `@aponiajs/common`'s `renderLogValue`, the same call the
+ * The rendering is `@aponiajs/common`'s `renderLogValue`, the same call the
  * devtools log stream renders a line through, so `/requests` and `/logs` cannot
  * disagree about one failure and the literal a value that refuses everything is
  * stated as is the same word on both. It is total, which is why it may be called

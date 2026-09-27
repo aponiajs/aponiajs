@@ -163,8 +163,8 @@ at any of those sites is reported on `stderr` by a direct write rather than swal
 the refusal as well as the report — because the channel that would normally carry the diagnostic is the
 one that failed. Everywhere else a throw is a throw — the framework guards
 the sites that report a failure and not the ones that report progress, so a logger that fails while the
-boot logs its routes fails the boot. The framework's own logger needs no such care: `ConsoleLogger`
-renders every value it is handed, or states `[unrenderable]`.
+boot logs its routes fails the boot. The framework's own logger needs no such care for the value it is
+handed: `ConsoleLogger` renders that value, or states the literal a value it cannot render reads as.
 
 ## Stating a value
 
