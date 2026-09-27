@@ -8,10 +8,10 @@ sequence:
 [Aponia] 4210 - 07/25/2026, 10:30:00 AM     LOG [AponiaFactory] Starting Aponia application...
 [Aponia] 4210 - 07/25/2026, 10:30:00 AM     LOG [RoutesResolver] Booting GreetingModule from the generated module descriptors, so the declared graph serves this application. +1ms
 [Aponia] 4210 - 07/25/2026, 10:30:00 AM     LOG [InstanceLoader] GreetingModule dependencies initialized +2ms
-[Aponia] 4210 - 07/25/2026, 10:30:00 AM     LOG [WebSocketsController] ChatGateway {/chat}: +0ms
-[Aponia] 4210 - 07/25/2026, 10:30:00 AM     LOG [WebSocketsController] Subscribed to "chat.send" message +0ms
 [Aponia] 4210 - 07/25/2026, 10:30:00 AM     LOG [RoutesResolver] GreetingController {/greetings}: +1ms
 [Aponia] 4210 - 07/25/2026, 10:30:00 AM     LOG [RouterExplorer] Mapped {/greetings, GET} route +0ms
+[Aponia] 4210 - 07/25/2026, 10:30:00 AM     LOG [WebSocketsController] ChatGateway {/chat}: +0ms
+[Aponia] 4210 - 07/25/2026, 10:30:00 AM     LOG [WebSocketsController] Subscribed to "chat.send" message +0ms
 [Aponia] 4210 - 07/25/2026, 10:30:00 AM     LOG [AponiaApplication] Aponia application successfully started +3ms
 [Aponia] 4210 - 07/25/2026, 10:30:00 AM     LOG [AponiaApplication] Application is running on: http://localhost:3000 +0ms
 ```
@@ -26,7 +26,8 @@ The lifecycle contexts intentionally mirror the responsibilities in Nest:
 - `WebSocketsController` reports each gateway path and subscribed message
   event;
 - `RouterExplorer` reports every mapped HTTP method and complete path;
-- `AponiaApplication` reports readiness after the server starts listening.
+- `AponiaApplication` reports readiness after the server starts listening, and
+  reports a failure that stopped `listen()`.
 
 `RoutesResolver` is also where a supplied artifact is reported as refused. Both
 the generated route invokers and the generated module descriptors record the
@@ -94,7 +95,8 @@ const application = await AponiaFactory.create(AppModule, {
 ```
 
 The text format contains the prefix, process ID, local timestamp, aligned level,
-context, message, and optional elapsed time.
+message, and optional elapsed time, with the context between the level and the
+message when one resolves.
 
 For production log aggregation, enable newline-delimited JSON:
 
@@ -106,7 +108,13 @@ const application = await AponiaFactory.create(AppModule, {
 });
 ```
 
-Each line contains `level`, `pid`, `timestamp`, `message`, and `context`.
+Each JSON line carries `level`, `pid`, and `timestamp`, plus `message` and, when
+one resolves, `context`. A `context` that resolves to nothing is left out rather
+than written empty. A `message` `JSON.stringify` refuses is not dropped: the line
+is written again with `[unrenderable]` in the `message` field. One it drops
+without refusing — because the value, or what its `toJSON()` returns, is
+`undefined`, a function, or a symbol — leaves no `message` field at all. The
+[custom logger](#custom-logger) section states how a context resolves.
 
 ## Application logging
 
@@ -147,8 +155,11 @@ const application = await AponiaFactory.create(AppModule, {
 });
 ```
 
-System events pass their subsystem name as the final parameter, allowing custom
-loggers to preserve contextual filtering.
+The lifecycle lines pass their subsystem name as the final parameter, which lets
+a custom logger tell the subsystems apart. The context a call states is that
+final argument after the message, when it is a string. `ConsoleLogger` falls
+back to its own — the one it was constructed with, or the last `setContext()`
+named — while a logger you write sees only the argument.
 
 A method of your logger may throw. The framework never reads a successful call as a promise this
 contract makes, so it guards the call sites that report a failure: an unhandled failure is reported

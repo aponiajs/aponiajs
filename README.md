@@ -565,8 +565,10 @@ its controller and service. See the
 | [`create-aponia`](https://www.npmjs.com/package/create-aponia)                         | `bun create` entrypoint                                |
 | [`@aponiajs/devtools`](https://www.npmjs.com/package/@aponiajs/devtools)               | Opt-in devtools for a running app, loopback by default |
 
-All public packages share one version and are published to the `alpha` channel;
-`latest` is reserved for the first stable release.
+All public packages share one version, and the channel a release goes to is
+derived from that version: a prerelease publishes under the tag its identifier
+names — `alpha`, `beta`, `rc`, or `canary` — and never under `latest`. The
+current line is an alpha, so `@alpha` is what to install today.
 
 ## Current scope
 

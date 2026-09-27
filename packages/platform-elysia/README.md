@@ -246,7 +246,7 @@ versions it was generated against:
 ```ts
 // src/invokers.generated.ts
 export const controllerInvokerArtifact = Object.freeze({
-  framework: "0.6.0-alpha.20",
+  framework: "0.6.0-alpha.24",
   elysia: "1.4.30",
   invokers: new Map([
     [UsersController, (instance: UsersController) => new Map([["ping", () => instance.ping()]])],
@@ -305,7 +305,7 @@ it was generated against:
 ```ts
 // src/descriptors.generated.ts
 export const moduleDescriptorArtifact = Object.freeze({
-  framework: "0.6.0-alpha.20",
+  framework: "0.6.0-alpha.24",
   elysia: "1.4.30",
   modules: Object.freeze({ AppModule: AppModuleDescriptor }),
 });
@@ -767,8 +767,8 @@ container, so no entry can fail a boot.
 ### Typing what a plugin adds
 
 Compiling a decorated controller erases the plugin instances its module imports,
-so no plugin type reaches a handler on its own. Name the plugins in the second
-type argument of `ElysiaRouteContext` and the context types what they add:
+so no plugin type reaches a handler on its own. Name the plugins in
+`ElysiaRouteContext` and the context types what they add:
 
 ```ts
 import { Controller, Ctx, Get } from "@aponiajs/common";

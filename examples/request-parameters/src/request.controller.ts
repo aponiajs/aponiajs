@@ -22,8 +22,10 @@ import {
 import { createItemSchema, type CreateItem } from "./item.model.ts";
 
 /**
- * Every parameter decorator, both whole and named. A decorator with a name
- * selects one property; without one it injects the whole part.
+ * The parameter decorators this example covers — input, headers, cookies, the
+ * request, the response settings, the typed status, and the context. `@Body`,
+ * `@Query`, and `@Param` are used both whole and named, and the rest one way
+ * each.
  */
 @Controller("parameters")
 export class RequestController {

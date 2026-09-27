@@ -142,11 +142,16 @@ validation model for that resource:
 src/users/
 |-- entities/
 |   `-- user.entity.ts
+|-- users.controller.spec.ts
 |-- users.controller.ts
 |-- users.module.ts
 |-- users.model.ts
+|-- users.service.spec.ts
 `-- users.service.ts
 ```
+
+The resource's two spec files are written with it, and `--no-spec` leaves them
+out.
 
 `users.model.ts` keeps each raw validator beside one exported validation-model
 class. The same-named interfaces derive their fields from those validators, so
