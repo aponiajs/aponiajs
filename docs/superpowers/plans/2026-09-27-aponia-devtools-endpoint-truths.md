@@ -627,7 +627,7 @@ function toPendingRecord(arrival: RequestArrival): RequestRecord {
 
 - [ ] **Step 5: Double the capacity and state what it bounds**
 
-`packages/devtools/src/requests/request-buffer.ts:15` — `defaultRequestBufferCapacity` becomes `1000`, with a comment stating that an answered request now consumes two entries, so the window of answered requests is unchanged, and that the constant bounds **entries**, not requests. The log stream's own capacity constant is separate and does not move.
+`packages/devtools/src/requests/request-buffer.ts:15` — `defaultRequestBufferCapacity` becomes `1000`, and the comment must state what the bound actually covers rather than a rounding of it. The constant bounds **entries, not requests**, and a request nothing answered costs one entry rather than two — so the same bound holds **more** requests the more of those a boot records, up to the full `1000` when nothing is answered at all. An earlier draft of this plan said "the window of answered requests is unchanged", which is true only in the all-answered configuration; Task 3's review caught it as a comment asserting a guarantee that holds in one configuration. The log stream's own capacity constant is separate and does not move.
 
 - [ ] **Step 6: Bump the contract**
 
