@@ -4,6 +4,11 @@ Status: design. Companion to
 [`2026-09-27-aponia-devtools-completeness-design.md`](./2026-09-27-aponia-devtools-completeness-design.md),
 which it does not depend on and which does not depend on it.
 
+A duplicate design for this item, `2026-09-27-aponia-logger-token-design.md`,
+was written before it was known that this document existed and has been deleted;
+the answers merged from it are the no-op binding for `logger: false` and the
+predefined tier's consult-last position.
+
 ## Why this document
 
 Two limitations survive the completeness work, and they share one cause.
@@ -82,18 +87,19 @@ never manufacture the ambiguity that rule exists to catch.
 `@core`'s guide states the resolution rule as "the module's own providers first,
 then imports that **export** the token". That sentence is part of this change.
 
-### 4. `createContainer` accepts the logger
+### 4. `createContainer` accepts the predefined providers
 
-`createContainer(root, logger?)`. The second parameter is optional so the change
-does not ripple through the ~30 call sites in `@aponiajs/core`'s and
-`@aponiajs/platform-elysia`'s Bun and Vite+ lanes; only the two production sites
-read it.
+`createContainer(root, predefined?)`, where `predefined` is token-keyed and
+`@aponiajs/core` never learns what a token names. The second parameter is
+optional so the change does not ripple through the ~30 call sites in
+`@aponiajs/core`'s and `@aponiajs/platform-elysia`'s Bun and Vite+ lanes; only
+the two production sites read it.
 
 ## The changes
 
 ### 1 · One logger object, observed at creation
 
-`createSystemLogger` (`application-bootstrap.ts:371-388`) resolves the option
+`createSystemLogger` (`application-bootstrap.ts:413-430`) resolves the option
 into exactly one of: a `LoggerService` the application supplied, a `Logger` the
 factory builds from a level array, a `Logger` the factory builds by default, or
 `undefined` for `false`. It then calls every registered observer with that
@@ -113,10 +119,10 @@ the lane.
 
 **What changes for an application.** The starter no longer threads one logger
 into two places: `AponiaFactory.create`'s `logger` option is the only place it
-names one, and `/logs` records the boot whether or not the application passed
-anything. `logger: false` remains the one configuration with no logger at all,
-and it stays the one configuration with no `/logs`, which is the rule the
-existing design arrived at and this change does not touch.
+names one, and an application that names none — or names a level array — still
+gets `/logs`, because the boot publishes the logger it built. `logger: false`
+remains the one configuration with no logger at all, and so the one with no
+`/logs`: no logger is published to the observer, so devtools taps nothing.
 
 **Rejected.** A wrapper logger the factory returns to the application. The
 platform holds its own reference to the logger option and the application holds
@@ -127,7 +133,7 @@ observer keeps one object, which is the property the whole design rests on.
 
 A provider that declares `@Inject(LOGGER)` and whose module neither owns nor
 imports the token fails `compileModuleGraph` at boot with `MISSING_PROVIDER`,
-because validation is eager and graph-wide (`graph-compiler.ts:89-114`). Every
+because validation is eager and graph-wide (`graph-compiler.ts:104-131`). Every
 module would otherwise have to import a logging module and have it export the
 token — the tax that makes a logger not worth injecting.
 
@@ -138,30 +144,35 @@ use and no module declares** is a shape the graph did not have, and inventing a
 global module concept to carry one token would be a larger answer to a smaller
 question.
 
-**Binding.** `application-bootstrap.ts` creates the logger at line 57 and the
-container at line 86, so the value exists before the container does: the logger
-is passed to `createContainer`, which makes it available to the predefined tier.
+**Binding.** `application-bootstrap.ts` creates the logger at line 58 and the
+container at line 87, so the value exists before the container does: the boot
+binds the resolved logger — or the no-op for `false` — to `LOGGER` and passes
+that predefined provider into `createContainer`.
 
 **`logger: false` binds a no-op.** A no-op that discards every call, because that
-is what the application asked for: it said no logging. The alternative — no
-binding at all — would make `@Inject(LOGGER)` fail at boot because of an option
-set for an unrelated reason, and a provider that injects a logger should not
-decide whether the application boots. The no-op does not appear in `/logs`,
-because devtools taps what it is given and it is given nothing on that path.
+is what the application asked for: it said no logging. It is one `LoggerService`
+value in `common`'s logging domain, so the platform's binding and both test
+lanes share one definition. The alternative — no binding at all — would make
+`@Inject(LOGGER)` fail at boot because of an option set for an unrelated reason,
+and a provider that injects a logger should not decide whether the application
+boots. The no-op does not appear in `/logs`, because devtools taps what it is
+given and it is given nothing on that path.
 
-**Introspection is unaffected.** `application-inspection.ts:66` builds a
-container without a logger and instantiates no provider, so the tier is present
-and unread. It receives a no-op by the same default, which keeps the call site
-unchanged.
+**Introspection needs the same binding.** `application-inspection.ts:66` builds
+its own container, so that call site must receive the predefined binding too:
+without it, `compileModuleGraph`'s dependency validation raises
+`MISSING_PROVIDER` before any provider is constructed
+(`graph-compiler.ts:104-112`), and a graph whose provider injects `LOGGER`
+cannot be inspected.
 
 **`/graph` names the token, not the logger.** Introspection renders tokens
 through `tokenName`, so the token appears as `aponia.logger`. Nothing serializes
 the value, which is the reason a token is a symbol and not a string.
 
-**One seam the change must respect.** `descriptor-emitter.ts:1035-1047` declines
+**One seam the change must respect.** `descriptor-emitter.ts:1039-1043` declines
 any class whose constructor injects an inline `createToken(...)`, because the
 generated module cannot reproduce the identity; it accepts a named value import
-(`:1049-1058`). `LOGGER` exported as a value from `common` satisfies that rule,
+(`:1045-1054`). `LOGGER` exported as a value from `common` satisfies that rule,
 and a type-only re-export would decline the module. The requirement is therefore
 load-bearing for the AOT path, not merely tidy.
 
@@ -226,4 +237,5 @@ The devtools consumption of both — an application whose services reach `/logs`
   `/logs` over the socket, in the same stream as the boot's own lines.
 
 Every case carries a mutation that makes it fail alone. The Vite+ lane mirrors
-the token's public type and its injection path.
+the token's public type and its injection path
+(`packages/*/tests-vp/*.conformance.ts`, aliased by `vite.config.ts:5-14`).
