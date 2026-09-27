@@ -101,15 +101,15 @@ silence — the price of a check with no lookup in it.
 While the application listens, `http://127.0.0.1:8000/__devtools` answers seven
 `GET` endpoints:
 
-| Endpoint   | Answers                                                    |
-| ---------- | ---------------------------------------------------------- |
-| `meta`     | The contract version, the releases in play, the start time |
-| `graph`    | The module graph the boot compiled                         |
-| `routes`   | The routes the application actually answers                |
-| `flow`     | The stages each route passes through, and its filters      |
-| `logs`     | The log stream, from a cursor                              |
-| `requests` | The requests the application answered, from a cursor       |
-| `aot`      | What a build decided about the project's invokers          |
+| Endpoint   | Answers                                                     |
+| ---------- | ----------------------------------------------------------- |
+| `meta`     | The contract version, the releases in play, the start time  |
+| `graph`    | The module graph the boot compiled                          |
+| `routes`   | The routes the application actually answers                 |
+| `flow`     | The stages each route passes through, and its filters       |
+| `logs`     | The log stream, from a cursor                               |
+| `requests` | Every request that reached the record, and what answered it |
+| `aot`      | What a build decided about the project's invokers           |
 
 ```bash
 curl http://127.0.0.1:8000/__devtools/routes
@@ -122,7 +122,12 @@ written since. `/logs` answers `{ cursor, entries, levels }` — `levels` being 
 `LoggerService` levels the tap reached — and `/requests` answers
 `{ cursor, entries }`, because a request has no level. The cursor never goes
 backwards, and a cursor older than the retained window or ahead of every write
-is answered with what there is rather than an error.
+is answered with what there is rather than an error. `/requests` counts entries
+rather than requests, and that is the one thing to know about its shape: a
+request writes one entry when it arrives and a second when it is answered, both
+carrying the same `id`, so you group by `id` and keep the last entry for each.
+An entry whose `status` is `null` is a request the record saw arrive and never
+saw answered.
 
 ## Three answers this chapter will not let you misread
 

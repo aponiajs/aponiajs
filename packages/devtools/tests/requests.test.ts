@@ -26,6 +26,7 @@ import {
 test("the buffer keeps its capacity and its cursor never goes backwards", () => {
   const buffer = createRequestBuffer(2);
   const entry = (url: string): RequestRecord => ({
+    id: 1,
     method: "GET",
     path: url,
     url,
@@ -317,25 +318,42 @@ async function readRequests(address: string, query = ""): Promise<AponiaRequests
   return (await response.json()) as AponiaRequestsPayload;
 }
 
-/** The single entry a case is about, with the whole window in the failure message. */
-function onlyEntry(payload: AponiaRequestsPayload): RequestRecord {
-  const entry = payload.entries.length === 1 ? payload.entries[0] : undefined;
+/**
+ * The one answered entry a case is about, with the whole window in the failure
+ * message.
+ *
+ * One request leaves two entries — one when it arrived and one when it was
+ * answered — so a case that reads a field only an answer wrote has to name which
+ * half it is about. This is the answered half, and it refuses to guess when the
+ * window holds none or several: the pending entries carry `null` for both
+ * `status` and `durationMs`, which is what tells the two apart on the wire.
+ */
+function answeredEntry(payload: AponiaRequestsPayload): RequestRecord {
+  const answered = payload.entries.filter((record) => record.status !== null);
+  const [entry] = answered;
 
-  if (entry === undefined) {
+  if (entry === undefined || answered.length > 1) {
     throw new Error(
-      `the record does not hold exactly one entry: ${JSON.stringify(payload.entries)}`,
+      `the record does not hold exactly one answered entry: ${JSON.stringify(payload.entries)}`,
     );
   }
 
   return entry;
 }
 
-/** The one entry a case is about, found by a field rather than by position. */
-function findEntry(
+/**
+ * The answered entry a case is about, found by a field rather than by position.
+ *
+ * The search skips every pending entry, because the pending entry of a request
+ * shares its `url` and `method` with the answer that supersedes it: a case
+ * matching on one of those would otherwise be handed the entry written at
+ * arrival and read `null` where it expects an answer.
+ */
+function findAnsweredEntry(
   payload: AponiaRequestsPayload,
   match: (record: RequestRecord) => boolean,
 ): RequestRecord {
-  const entry = payload.entries.find(match);
+  const entry = payload.entries.find((record) => record.status !== null && match(record));
 
   if (entry === undefined) {
     throw new Error(`the record holds no such entry: ${JSON.stringify(payload.entries)}`);
@@ -352,7 +370,7 @@ test.serial("an entry reports the route pattern and the URL that arrived", async
     });
 
     const payload = await readRequests(address);
-    const entry = findEntry(payload, (record) => record.path === "/users/:id");
+    const entry = findAnsweredEntry(payload, (record) => record.path === "/users/:id");
 
     expect(entry.method).toBe("GET");
     expect(entry.url).toBe("/users/42?expand=true");
@@ -373,7 +391,7 @@ test.serial("a request that matched no route is recorded without a route identit
     await fetch(`${application.getUrl()}/nope?x=1`);
 
     const payload = await readRequests(address);
-    const entry = findEntry(payload, (record) => record.url === "/nope?x=1");
+    const entry = findAnsweredEntry(payload, (record) => record.url === "/nope?x=1");
     const routes = (await (
       await fetch(`${address}/__devtools/routes`)
     ).json()) as AponiaRoutesPayload;
@@ -397,7 +415,7 @@ test.serial(
       await fetch(`${application.getUrl()}/gated`);
 
       const payload = await readRequests(address);
-      const refused = findEntry(payload, (record) => record.url === "/gated");
+      const refused = findAnsweredEntry(payload, (record) => record.url === "/gated");
 
       expect(refused.status).toBe(403);
       expect(refused.path).toBe("/gated");
@@ -410,38 +428,101 @@ test.serial(
 );
 
 test.serial(
-  "a refusal answered by a plugin's early return leaves no entry, because nothing here runs after it",
+  "a request a plugin answers with an early response is recorded as unanswered",
   async () => {
     const { application, address } = await bootApplication(GatedModule);
     try {
       await fetch(`${application.getUrl()}/early-refusal`);
-      await fetch(`${application.getUrl()}/users/42`);
 
       const payload = await readRequests(address);
 
-      // The request phase of another plugin answered the first request by
-      // returning a `Response`, and Elysia then runs no later phase at all —
-      // not the after-response hook of this registration, and not even the
-      // `onRequest` of a hook registered after the one that answered. The
-      // second request is recorded in the same window, so the absence is this
-      // one request's rather than a broken capture.
+      // This plugin's arrival hook rides the request phase, which Elysia merges
+      // in mount order, so it ran before the plugin that answered: the request
+      // is in the record. Nothing ran after that answer — not the after-response
+      // hook of this registration, and not the request phase of a plugin mounted
+      // after the one that answered — so the entry is the one written at
+      // arrival, and its `null` status is this package stating that no answer
+      // was observed rather than inventing one.
       expect(payload.cursor).toBe(1);
-      expect(payload.entries.map((record) => record.url)).toEqual(["/users/42"]);
+      expect(payload.entries.map((record) => record.url)).toEqual(["/early-refusal"]);
+      expect(payload.entries[0].status).toBeNull();
+      expect(payload.entries[0].durationMs).toBeNull();
     } finally {
       await application.close();
     }
   },
 );
 
-test.serial("capture false records nothing", async () => {
+test.serial(
+  "an answered request carries one id across a pending entry and its answer",
+  async () => {
+    const { application, address } = await bootApplication(CapturedModule);
+    try {
+      await fetch(`${application.getUrl()}/users/42`);
+
+      const payload = await readRequests(address);
+
+      // One request writes two entries, and they are one request's because they
+      // share an id: a consumer that groups by it reads the answer and never the
+      // pending entry it supersedes.
+      expect(payload.cursor).toBe(2);
+      expect(payload.entries).toHaveLength(2);
+
+      const [pending, answered] = payload.entries;
+
+      expect(pending.id).toBe(answered.id);
+      expect(pending.url).toBe(answered.url);
+      expect(pending.status).toBeNull();
+      expect(pending.durationMs).toBeNull();
+      // The answer states the route it matched, which no arrival can know yet.
+      expect(pending.path).toBe("/users/42");
+      expect(answered.path).toBe("/users/:id");
+      expect(answered.status).toBe(200);
+      expect(answered.durationMs).toBeGreaterThanOrEqual(0);
+    } finally {
+      await application.close();
+    }
+  },
+);
+
+test.serial(
+  "a poll whose cursor sits between a request's two entries is served the answer",
+  async () => {
+    const { application, address } = await bootApplication(CapturedModule);
+    try {
+      await fetch(`${application.getUrl()}/users/42`);
+
+      const whole = await readRequests(address);
+      expect(whole.entries).toHaveLength(2);
+
+      // The cursor a poller would hold after reading the pending entry and nothing
+      // after it. The answer was written next, so this read is the superseding
+      // entry — which is the property that makes grouping by `id` work: a poller
+      // is never stuck holding the pending shape.
+      const between = await readRequests(address, `?since=${whole.cursor - 1}`);
+
+      expect(between.cursor).toBe(whole.cursor);
+      expect(between.entries).toHaveLength(1);
+      expect(between.entries[0].id).toBe(whole.entries[0].id);
+      expect(between.entries[0].status).toBe(200);
+    } finally {
+      await application.close();
+    }
+  },
+);
+
+test.serial("a registration told to capture nothing still writes no pending entry", async () => {
   const { application, address } = await bootApplication(UncapturedModule);
   try {
     await fetch(`${application.getUrl()}/users/42`);
 
     const payload = await readRequests(address);
 
-    expect(payload.entries).toEqual([]);
-    expect(payload.cursor).toBe(0);
+    // The endpoint answers over a registration that records nothing, and the
+    // entry written at arrival is behind the same switch as the one written at
+    // completion: a policy that turned the record off must not leak one entry
+    // per request through the arrival path.
+    expect(payload).toMatchObject({ cursor: 0, entries: [] });
   } finally {
     await application.close();
   }
@@ -457,7 +538,7 @@ test.serial("headers false and body false leave their field out of the entry", a
     });
 
     const payload = await readRequests(address);
-    const entry = onlyEntry(payload);
+    const entry = answeredEntry(payload);
 
     expect(Object.hasOwn(entry, "headers")).toBe(false);
     expect(Object.hasOwn(entry, "body")).toBe(false);
@@ -481,7 +562,7 @@ test.serial("a body longer than bodyLimit is cut and marked", async () => {
     });
 
     const payload = await readRequests(address);
-    const entry = onlyEntry(payload);
+    const entry = answeredEntry(payload);
 
     expect(entry.body?.endsWith("[truncated]")).toBe(true);
     // The limit governs the body; the marker is appended to the stored value.
@@ -503,8 +584,11 @@ test.serial("a body that arrived as text is stored as text, and cut like any oth
     await fetch(`${application.getUrl()}/users`, { method: "POST", headers, body: long });
 
     const payload = await readRequests(address);
-    const kept = findEntry(payload, (record) => record.body === short);
-    const cut = findEntry(payload, (record) => record.body?.endsWith("[truncated]") === true);
+    const kept = findAnsweredEntry(payload, (record) => record.body === short);
+    const cut = findAnsweredEntry(
+      payload,
+      (record) => record.body?.endsWith("[truncated]") === true,
+    );
 
     // The route declares no body schema, so the platform hands the hook the text
     // the client sent rather than anything it parsed: it is stored as it arrived,
@@ -526,7 +610,7 @@ test.serial("a body that arrived as a literal JSON null is stated, not read as n
       body: "null",
     });
 
-    const entry = onlyEntry(await readRequests(address));
+    const entry = answeredEntry(await readRequests(address));
 
     // The client sent a body and the route parsed it as `null`, which the
     // installed Elysia tells apart from the request that carried none — an
@@ -552,7 +636,7 @@ test.serial("a body this package cannot serialize is stated as unreadable", asyn
     // package's own read of it, never for the client or the route.
     expect(answered.status).toBe(200);
 
-    const entry = onlyEntry(await readRequests(address));
+    const entry = answeredEntry(await readRequests(address));
 
     // A missing `body` would read as a request that carried none, which is a
     // claim about the request rather than an absence to leave out.
@@ -570,7 +654,7 @@ test.serial("redact replaces a named header with the literal, whatever its case"
     });
 
     const payload = await readRequests(address);
-    const entry = onlyEntry(payload);
+    const entry = answeredEntry(payload);
 
     // The options name the header in its canonical case; it arrives lowercased.
     // The header stays in place rather than disappearing: a consumer can see
@@ -591,8 +675,8 @@ test.serial(
       await fetch(`${application.getUrl()}/nope`);
 
       const payload = await readRequests(address);
-      const failed = findEntry(payload, (record) => record.url === "/explodes");
-      const missing = findEntry(payload, (record) => record.url === "/nope");
+      const failed = findAnsweredEntry(payload, (record) => record.url === "/explodes");
+      const missing = findAnsweredEntry(payload, (record) => record.url === "/nope");
 
       expect(failed.status).toBe(500);
       expect(failed.error).toBe("The database is unreachable.");
@@ -611,7 +695,7 @@ test.serial("an answer a handler built itself is recorded with the status it car
     await fetch(`${application.getUrl()}/own`);
 
     const payload = await readRequests(address);
-    const entry = findEntry(payload, (record) => record.url === "/own");
+    const entry = findAnsweredEntry(payload, (record) => record.url === "/own");
 
     // `set.status` still reads `200` for a handler that answered with its own
     // `Response`: the status the record states is the one the client received.
@@ -627,7 +711,7 @@ test.serial("an unhandled failure is recorded without a message it cannot read",
     await fetch(`${application.getUrl()}/unhandled`);
 
     const payload = await readRequests(address);
-    const entry = findEntry(payload, (record) => record.url === "/unhandled");
+    const entry = findAnsweredEntry(payload, (record) => record.url === "/unhandled");
 
     // The platform answers an unhandled failure with its own Problem Details
     // sentence, and that answer is not on the after-response context: the record
@@ -646,7 +730,7 @@ test.serial("a failure whose answer the client already holds carries no message"
     await fetch(`${application.getUrl()}/own-failure`);
 
     const payload = await readRequests(address);
-    const entry = findEntry(payload, (record) => record.url === "/own-failure");
+    const entry = findAnsweredEntry(payload, (record) => record.url === "/own-failure");
 
     expect(entry.status).toBe(503);
     // The answer's own `Response` is the one the client was handed, so its body
@@ -674,7 +758,7 @@ test.serial("the duration does not include this package's own read of the answer
     await fetch(`${application.getUrl()}/explodes`);
 
     const payload = await readRequests(address);
-    const entry = findEntry(payload, (record) => record.url === "/explodes");
+    const entry = findAnsweredEntry(payload, (record) => record.url === "/explodes");
 
     expect(entry.error).toBe("The database is unreachable.");
     // The clock reads `5` until something reads the answer's body and `1000`
@@ -707,7 +791,7 @@ test.serial("the duration is not charged for the body this package serializes", 
       body: '{"id":1}',
     });
 
-    const entry = onlyEntry(await readRequests(address));
+    const entry = answeredEntry(await readRequests(address));
 
     expect(entry.status).toBe(200);
     // The read this case makes expensive did happen: the record states the body
@@ -736,7 +820,7 @@ test.serial("polling the record never adds to it", async () => {
     // the application's own requests: the poll that follows the first answer is
     // answered with nothing, and the cursor it carries back is the one it asked
     // from.
-    expect(first.cursor).toBe(1);
+    expect(first.cursor).toBe(2);
     expect(second.cursor).toBe(first.cursor);
     expect(second.entries).toEqual([]);
   } finally {
@@ -752,7 +836,7 @@ test.serial("a second listen serves the record of the boot it started", async ()
     await application.listen(0);
 
     await fetch(`${application.getUrl()}/users/42`);
-    expect((await readRequests(reportedAddress(output))).cursor).toBe(1);
+    expect((await readRequests(reportedAddress(output))).cursor).toBe(2);
 
     // The record belongs to the boot rather than to the registration: a second
     // `listen()` starts a second socket, and that socket serves a record of its
@@ -791,10 +875,17 @@ test.serial("two registrations in one process record into their own windows", as
     // The record belongs to the registration rather than to the process: each
     // socket serves its own application's traffic, and neither window holds a
     // request the other application answered — neither in count nor in content.
-    expect(firstWindow.cursor).toBe(1);
-    expect(firstWindow.entries.map((record) => record.url)).toEqual(["/users/42"]);
-    expect(secondWindow.cursor).toBe(2);
-    expect(secondWindow.entries.map((record) => record.url)).toEqual(["/users/42", "/users/7"]);
+    // One request leaves two entries, so each window's cursor counts two of them
+    // and every url appears beside the pending entry that shares it.
+    expect(firstWindow.cursor).toBe(2);
+    expect(firstWindow.entries.map((record) => record.url)).toEqual(["/users/42", "/users/42"]);
+    expect(secondWindow.cursor).toBe(4);
+    expect(secondWindow.entries.map((record) => record.url)).toEqual([
+      "/users/42",
+      "/users/42",
+      "/users/7",
+      "/users/7",
+    ]);
   } finally {
     await first.application.close();
     await second?.application.close();
@@ -806,7 +897,7 @@ test.serial("two applications built from one module keep their records apart", a
   let second: BootedApplication | undefined;
   try {
     await fetch(`${first.application.getUrl()}/users/42`);
-    expect((await readRequests(first.address)).cursor).toBe(1);
+    expect((await readRequests(first.address)).cursor).toBe(2);
 
     // The platform hands one registration to every boot of the class that
     // declared it, so these two applications are one plugin with one pair of

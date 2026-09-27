@@ -371,7 +371,11 @@ async function expectServer(projectDirectory: string, entrypoint: string): Promi
     // application wrote, which is what makes it evidence about the plugin.
     const meta = await waitForAnswer(`http://127.0.0.1:${devtoolsPort}/__devtools/meta`);
 
-    expect(((await meta.json()) as { readonly contract: number }).contract).toBe(1);
+    // The number is the devtools wire contract this release speaks, spelled
+    // literally like every other name in this lane: the file exercises the packed
+    // CLI the way an application does, so it reads the endpoint rather than a
+    // constant imported from the package that serves it.
+    expect(((await meta.json()) as { readonly contract: number }).contract).toBe(2);
   } finally {
     server.kill();
     await server.exited;

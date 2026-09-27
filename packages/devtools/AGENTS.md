@@ -443,11 +443,12 @@ runtime boundary it describes.
   The reading is handed to `complete`, which never takes one of its own — that is
   what keeps the arrival lookups and the whole of `toRequestRecord` outside the
   measurement rather than merely most of it. The stamp is keyed by the
-  `Request` object in a `WeakMap` and spent by the completion that reads it, so a
-  request this registration never saw, and one whose answer never reached the
-  hook, leave nothing rather than a partial entry. `arrive` also refuses to stamp
-  while the policy records nothing, and while no boot has opened a record for the
-  application that received the request.
+  `Request` object in a `WeakMap` and spent by the completion that reads it: a
+  request this registration never saw ends in nothing at all, because nothing
+  stamped it, while one whose answer never reached the hook keeps the entry
+  written when it arrived and gains no second one. `arrive` refuses to stamp and
+  to write while the policy records nothing, and while no boot has opened a record
+  for the application that received the request.
 - `durationMs` measures the request from this package's arrival hook to a reading
   the completion hook takes before its first read of the context, and it is
   documented as what it is rather than as what it would ideally be: the route, the
@@ -481,10 +482,24 @@ runtime boundary it describes.
   reach routes the plugin does not own — with the local scope the record stays
   empty however many requests the application answers. A hook that returned a
   truthy value would be the answer itself, which is the one thing `/requests`
-  claims it cannot change. A request a plugin refuses by returning a `Response`
-  from its own `onRequest` leaves no entry, and that absence is not a gap to close:
-  no later phase runs at all, and the fallback that would fill it — writing an
-  entry when the request arrives — is what the case rules out.
+  claims it cannot change. A request a plugin answers by returning a `Response`
+  from its own `onRequest` runs no later phase at all, so the completion hook
+  never sees it — and the entry written at arrival is what records it, with
+  `status` and `durationMs` `null`. That entry is not a fallback that invents an
+  answer: it states that this record observed none, which is a fact about the
+  request rather than a guess at it, and without it the request would be
+  indistinguishable from one that never arrived. Both hook phases run in mount
+  order, so the arrival hook records a request only when it runs before whatever
+  answers it: a plugin mounted ahead of the devtools registration answers first,
+  and this record is not in the path that answered. One request therefore writes
+  two entries, and two consequences follow. The id they share is allocated by an
+  arrival counter of the capture's own rather than read from the record's write
+  count, because that count is the cursor and it counts entries — an id read from
+  it would differ between one request's two entries and group nothing. The
+  counter is per capture rather than per record, so an id never repeats across
+  two boots in one process, because a consumer polling through a `listen()` must
+  not group two different requests. And the record's bound counts entries rather
+  than requests, at twice the request window it names.
 - `path` is the pattern when a route matched and the path that arrived when none
   did, and `/routes` is the table that tells the two apart: a pattern the
   application mounted is in it and a path that arrived without matching one is not.
@@ -702,19 +717,25 @@ same way.
 `/requests` is asserted over the socket, and its cases are the decisions the record
 makes rather than the fields it carries. The pair of hooks is pinned where it is a
 boundary rather than a style: the scope decision is the case that would leave the
-record empty, and the refusal case pins the absence a fallback mechanism would
-fill — a request a plugin answers by returning a `Response` from its own
-`onRequest` leaves no entry while a request in the same window is recorded, so
-the absence is one request's rather than a broken capture. The record's ownership
+record empty, and the unanswered case pins the entry written at arrival — a request
+a plugin answers by returning a `Response` from its own `onRequest` runs no later
+phase, so it is recorded once, with `status` and `durationMs` `null`, and the case
+asserts that absence rather than the missing entry a completion-only writer would
+have left. The two entries of one answered request are pinned together, because
+grouping by `id` is the rule the whole shape serves: the pending entry and the
+answer share the id, the pending one states `null` where the answer states the
+answer, and a poll whose cursor sits between them is served the superseding entry —
+the case a consumer stuck on the pending shape would fail. The record's ownership
 is asserted from both ends a process can reach: two registrations keep one window
 each, and two applications built from one module class — one registration, one
 plugin, two applications — keep the first application's traffic out of the second
 one's window, which is the case a record held in one variable fails. A second
 `listen()` is asserted to serve a new empty window, because the record belongs to
 the boot. The policy is asserted at the ends a caller reaches it from: `capture:
-false` answers `{ cursor: 0, entries: [] }`, the two opt-outs leave their field
-out of the entry rather than present and empty, a redacted header keeps its place
-with the literal, and a body past `bodyLimit` is cut and marked. What the record
+false` answers `{ cursor: 0, entries: [] }` and writes no arrival entry either,
+the two opt-outs leave their field out of the entry rather than present and empty,
+a redacted header keeps its place with the literal, and a body past `bodyLimit` is
+cut and marked. What the record
 states about an answer is asserted against the answer rather than the exception: a
 thrown `HttpError` carries the message the platform published, a `404` and a
 handler's own `5xx` carry none, and a handler's own `Response` states the status
@@ -725,7 +746,11 @@ with the status its answer carried. Polling is asserted not to add to the record
 the second answer is read from the cursor the first one carried and holds nothing.
 The arrival facts are pinned where they are read rather than where they are
 written, because the two moments differ: an entry built from the after-response
-context alone is the case the header assertions fail.
+context alone is the case the header assertions fail. The helpers a case reads the
+record through name the half they want, because both entries of a request carry
+the same `url` and `method`: a search over the window is a search over the answered
+entries, and a case that matched the pending one would read `null` where it expects
+an answer.
 
 The Elysia read is asserted for what it refuses: the workspace's own install
 answers its version, and a throwaway project that installed nothing answers

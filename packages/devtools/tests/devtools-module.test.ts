@@ -5,7 +5,12 @@ import {
   type AponiaElysiaApplication,
   type AponiaInvokerArtifact,
 } from "@aponiajs/platform-elysia";
-import { DevtoolsModule, aponiaVersion, type AponiaMetaPayload } from "../src/index.ts";
+import {
+  DevtoolsModule,
+  aponiaVersion,
+  devtoolsContractVersion,
+  type AponiaMetaPayload,
+} from "../src/index.ts";
 
 // `0` is the standard "no fixed port" sentinel. The plugin now binds it, and
 // every case below reads the address the socket took back out of the report it
@@ -162,7 +167,7 @@ test.serial("an enabled module mounts its plugin, which serves the address it bo
     const response = await fetch(`${address}/__devtools/meta`);
 
     expect(response.status).toBe(200);
-    expect(((await response.json()) as AponiaMetaPayload).contract).toBe(1);
+    expect(((await response.json()) as AponiaMetaPayload).contract).toBe(devtoolsContractVersion);
   } finally {
     // Closing in the `finally` rather than after the last assertion: a failing
     // assertion would otherwise leave the application and the devtools socket

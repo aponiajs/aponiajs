@@ -27,10 +27,15 @@ export interface AponiaArtifactStamps {
  * moves when a field changes meaning, while `framework` names the release that
  * produced the data being read. The two are independent on purpose — a devtools
  * release can read an older boot, and has to say which one it read.
+ *
+ * It is `2` as of this release. A request entry gained `id`, `status` and
+ * `durationMs` became nullable, and one request began writing two entries, so a
+ * reader written against `1` would read a status of `null` as a number and would
+ * count a request twice.
  */
 export interface AponiaMetaPayload {
   /** The devtools wire contract this payload is written in. */
-  readonly contract: 1;
+  readonly contract: 2;
   /**
    * The AponiaJS release that booted the application, or — when no boot
    * produced it — the release serving this payload.
@@ -174,15 +179,26 @@ export interface AponiaLogsPayload {
 }
 
 /**
- * The payload `/__devtools/requests` answers with: the requests the application
- * answered, read from one cursor, and the cursor the next poll asks from.
+ * The payload `/__devtools/requests` answers with: the entries the record wrote
+ * after one cursor, and the cursor the next poll asks from.
+ *
+ * A request appears once when it arrived and again when it was answered, and
+ * both entries carry the same `id`, so a consumer groups by `id` and takes the
+ * last entry for each request. An entry whose `status` is `null` is a request
+ * this record saw arrive and never saw answered — a plugin that answered from
+ * its own `onRequest` before any later phase ran. The absence is stated rather
+ * than filled: an entry written at completion alone would make that request
+ * indistinguishable from one that never arrived. The entry carries the path that
+ * arrived rather than a pattern, because no route has matched at that point; the
+ * answer's entry supersedes it with the pattern when one matched.
  *
  * It is `/logs`' cursor rules over a different record, down to the cursor's
  * meaning — which counts every entry the record has written, including the ones
- * dropped since — so a client that polls one endpoint already knows how to poll
- * the other, and a `since` outside the retained window is answered with what is
- * retained rather than an error. It carries no `levels`: a request has no level,
- * and only the log stream has levels to name.
+ * dropped since, and so counts two per answered request — so a client that polls
+ * one endpoint already knows how to poll the other, and a `since` outside the
+ * retained window is answered with what is retained rather than an error. It
+ * carries no `levels`: a request has no level, and only the log stream has levels
+ * to name.
  *
  * Every other endpoint publishes what the application **is**; this one publishes
  * what it **did**. The record is in memory, per boot, and bounded like every

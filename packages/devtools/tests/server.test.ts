@@ -7,6 +7,7 @@ import { AponiaFactory } from "@aponiajs/platform-elysia";
 import { Elysia } from "elysia";
 import {
   aponiaVersion,
+  devtoolsContractVersion,
   resolveElysiaVersion,
   routeRequest,
   startDevtoolsServer,
@@ -186,7 +187,7 @@ test("meta carries the contract version and the release it speaks", async () => 
     const meta = (await response.json()) as AponiaMetaPayload;
 
     expect(meta).toEqual({
-      contract: 1,
+      contract: devtoolsContractVersion,
       framework: aponiaVersion,
       elysia: installedElysiaVersion,
       artifacts: { invokers: null, descriptors: null },

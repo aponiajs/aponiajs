@@ -66,13 +66,19 @@ type DevtoolsContractAssertions = [
 /**
  * The request record as a client sees it, restated so the assertion above
  * compares the exported type with a second declaration rather than with itself.
+ *
+ * `status` and `durationMs` are nullable and `id` is present because a request
+ * writes an entry at arrival, before an answer exists: the client that reads
+ * `null` there is reading a request this record never saw answered, and the
+ * client that groups by `id` is reading the two entries as one request's.
  */
 interface AponiaRequestRecordFields {
+  readonly id: number;
   readonly method: string;
   readonly path: string;
   readonly url: string;
-  readonly status: number;
-  readonly durationMs: number;
+  readonly status: number | null;
+  readonly durationMs: number | null;
   readonly timestamp: string;
   readonly error?: string;
   readonly headers?: Readonly<Record<string, string>>;
@@ -169,11 +175,12 @@ test("every endpoint payload is constructible from the published types", () => {
     cursor: 1,
     entries: [
       {
+        id: 1,
         method: "GET",
         path: "/",
         url: "/?page=1",
-        status: 200,
-        durationMs: 0,
+        status: null,
+        durationMs: null,
         timestamp: "2026-01-01T00:00:00.000Z",
       },
     ],

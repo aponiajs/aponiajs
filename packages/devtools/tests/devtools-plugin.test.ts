@@ -2,6 +2,7 @@ import { expect, spyOn, test } from "bun:test";
 import { Controller, Get, Logger, Module, type LoggerService } from "@aponiajs/common";
 import { AponiaFactory, type AponiaElysiaApplication } from "@aponiajs/platform-elysia";
 import {
+  devtoolsContractVersion,
   devtoolsPlugin,
   type AponiaLogsPayload,
   type AponiaMetaPayload,
@@ -96,11 +97,17 @@ async function readRequests(address: string): Promise<AponiaRequestsPayload> {
 }
 
 /**
- * The recorded entry a case is about, polled rather than read once: the
+ * The recorded answer a case is about, polled rather than read once: the
  * completion hook writes it in the after-response phase, so a single read would
  * make the case depend on how this machine happened to schedule that hook rather
  * than on what the record holds. The poll is bounded, and its failure names the
  * whole window, so a record that never fills is a failure rather than a wait.
+ *
+ * The poll waits for an answered entry — one whose `status` is not `null` —
+ * because a request writes an entry when it arrives as well: the pending entry
+ * matches the same `path` and `url` and is in the record before the answer is,
+ * so a poll that accepted it would resolve on the very first read and hand the
+ * case a `null` status.
  */
 async function waitForEntry(
   address: string,
@@ -112,7 +119,7 @@ async function waitForEntry(
     const payload = await readRequests(address);
     seen = payload.entries;
 
-    const entry = payload.entries.find(match);
+    const entry = payload.entries.find((record) => record.status !== null && match(record));
     if (entry !== undefined) {
       return entry;
     }
@@ -175,7 +182,7 @@ test.serial("the option path mounts the surface the module path mounts", async (
     const address = reportedAddress(output);
     const meta = (await (await fetch(`${address}/__devtools/meta`)).json()) as AponiaMetaPayload;
 
-    expect(meta.contract).toBe(1);
+    expect(meta.contract).toBe(devtoolsContractVersion);
 
     // The application answers its own routes beside the surface, and the
     // request-capture pair reaches them: the plugin's after-response hook is

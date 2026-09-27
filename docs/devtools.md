@@ -143,7 +143,7 @@ Seven endpoints, all `GET`, all under `/__devtools`:
 | `/__devtools/routes`   | The routes the application answers, with the binding that serves each |
 | `/__devtools/flow`     | The stages each route passes through, and its filters                 |
 | `/__devtools/logs`     | The application's log stream, from a cursor                           |
-| `/__devtools/requests` | The requests the application answered, from a cursor                  |
+| `/__devtools/requests` | The requests that reached it and what answered them, from a cursor    |
 | `/__devtools/aot`      | What a build decides, beside what the boot did                        |
 
 ```bash
@@ -163,7 +163,7 @@ A consumer reads `meta` first and decides whether to proceed:
 
 ```ts
 {
-  contract: 1,              // the version of this wire shape
+  contract: 2,              // the version of this wire shape
   framework: "0.6.0-alpha.22", // the release that booted the application
   elysia: "1.4.30",         // the release installed in the application's own tree, or null
   artifacts: {              // which release supplied each adopted artifact
@@ -175,7 +175,11 @@ A consumer reads `meta` first and decides whether to proceed:
 ```
 
 `contract` is the one field whose meaning never changes: it is the version of
-the payload shape, and it moves when a field changes meaning. `framework` is
+the payload shape, and it moves when a field changes meaning. It is `2` as of
+this release, because a `/requests` entry gained `id`, its `status` and
+`durationMs` became nullable, and one request began writing two entries — a
+reader of `1` would read a `null` status as a number and would count a request
+twice. `framework` is
 independent of it on purpose — a devtools release can read an older boot and has
 to say which one it read. For an application no `AponiaFactory` boot produced,
 `framework` falls back to the release serving the payload, and every artifact
@@ -284,7 +288,8 @@ the retained window is answered with the whole window, and one ahead of every
 write with nothing: neither is an error, the answer always carries the cursor to
 poll from next, and that cursor never goes backwards. The same cursor rule serves
 `/requests`, which answers `{ cursor, entries }`: a request has no level, so there
-is no `levels` beside its entries.
+is no `levels` beside its entries, and its cursor counts entries rather than
+requests — one request writes two of them.
 
 Recording requires the logger, and the handover is a condition this endpoint
 states rather than hides: pass the **same** object to `DevtoolsOptions.logger`
@@ -343,16 +348,46 @@ An entry carries:
 
 ```ts
 {
+  id: 12,                    // both entries of one request carry this id
   method: "POST",
   path: "/users",            // the pattern that matched, or the path that arrived
   url: "/users?page=1",      // the path and query string as they arrived
-  status: 201,
-  durationMs: 3.2,
+  status: 201,               // or null: this request was never seen answered
+  durationMs: 3.2,           // or null, for the same reason
   timestamp: "2026-09-26T12:00:00.000Z",
   headers: { authorization: "[redacted]", "content-type": "application/json" },
   body: "{\"name\":\"Ada\"}",
 }
 ```
+
+**One request writes two entries, and `id` is what says they are one request's.**
+The first is written when the request arrives, before anything can state an
+answer, and the second when the answer completes. A consumer groups by `id` and
+takes the **last** entry for each request, which is the answer whenever there is
+one. That is also why the cursor counts entries rather than requests: it moves by
+two for every request the application answered, and a poll whose `since` sits
+between a request's two entries is served the second one rather than a request
+counted twice.
+
+The first entry is not redundant. A request whose answer never reaches this
+package leaves only that entry, whose `status` and `durationMs` are `null` — a
+plugin that answered from its own `onRequest` before any later phase ran, for
+instance. The absence is **stated rather than filled**: writing an entry only at
+completion would make such a request indistinguishable from one that never
+arrived, and a fallback written at arrival that guessed a status would be
+inventing an answer. `null` is neither: it is this record saying it saw the
+request arrive and saw nothing answer it, which is a different fact from `0`, and
+from a key left out. The entry states the path that arrived rather than a route
+pattern, because no route has matched at that point; the answer's entry
+supersedes it with the matched pattern and adds what only an answer can state —
+the status, the duration, the parsed body, and the message a failure published.
+
+That reach has one boundary, and it is Elysia's rather than this package's: both
+hook phases run in mount order, so the arrival hook records a request only when it
+runs before whatever answers it. A plugin mounted ahead of the devtools
+registration that answers with its own `Response` from `onRequest` therefore ends
+the request before this record's hook runs at all, and that request appears
+nowhere. Mount the devtools registration where you want the window to start.
 
 An opt-out is observable on the wire: a field left out is absent, which is a
 different fact from a request that carried none. Four further rules:
@@ -483,12 +518,14 @@ These are the boundaries this package states rather than hides.
   arrival.** Every read the completion path makes is outside it, but the arrival
   hook's URL and header capture sits between the two stamps. See
   [`/requests`](#requests).
-- **The request record is not complete.** A request refused before a route
-  matched has no route identity: the entry carries the path it asked for and
-  names no controller, module, or handler. A request the runtime never reached —
-  one the server itself rejected, or one whose client disconnected before an
-  answer — is not recorded at all. The record says what the application
-  answered, not everything that was asked of it.
+- **The request record states what reached it, not everything that was asked of
+  it.** A request refused before a route matched has no route identity: the entry
+  carries the path it asked for and names no controller, module, or handler. A
+  request that arrived and was never answered is recorded as exactly that —
+  `status` and `durationMs` are `null` — but this package's hook has to run for a
+  request to be in the record at all, so a request the server rejected before
+  Elysia's request phase leaves nothing, and neither does one a plugin mounted
+  ahead of the devtools registration answered first.
 - **Response bodies are not captured.** Buffering every answer costs in
   proportion to the traffic rather than to the question being asked, and the
   request is usually what is being debugged. An application whose answers are

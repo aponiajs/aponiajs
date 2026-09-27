@@ -46,6 +46,14 @@ export interface ResolvedCapture {
  * has opened one since.
  */
 export interface RequestArrival {
+  /**
+   * The id the request's two entries share.
+   *
+   * Allocated here, at arrival, rather than at completion, because the entry
+   * written when the request arrives carries it too: it is what lets a consumer
+   * group a request's pending entry with the answer that supersedes it.
+   */
+  readonly id: number;
   /** The record the boot that saw this request opened. */
   readonly record: RequestBuffer;
   /** The arrival moment, as an ISO-8601 timestamp. */
@@ -126,13 +134,25 @@ export interface RequestCapture {
    */
   beginBoot(application: ApplicationIdentity): RequestBuffer;
   /**
-   * Stamps one request as seen by this registration, which is what an entry
-   * needs, filed under the application that received it.
+   * Records one request as seen by this registration, filed under the
+   * application that received it, by writing the entry that states it arrived
+   * and stamping what its answer will need.
+   *
+   * The entry is written here rather than at completion, because a request can
+   * end without this package ever seeing an answer: a plugin that answers from
+   * its own `onRequest` runs no later phase at all, so an entry written only at
+   * completion would leave that request indistinguishable from one that never
+   * arrived. The entry states the absence — `status` and `durationMs` are
+   * `null` — in place of the answer this moment cannot know.
    */
   arrive(request: Request, application: ApplicationIdentity): void;
   /**
    * Writes the entry for an answer, when this registration saw the request
    * arrive, ending the duration at `completedAt`.
+   *
+   * The entry carries the id the arrival's entry was written with, so the two
+   * entries of one request are legible as one request's and a consumer that
+   * groups by `id` reads this one last.
    *
    * The closing reading is handed in rather than taken here, because the hook
    * that calls this takes it before it reads anything off the context: every
@@ -185,11 +205,11 @@ export function resolveCapture(capture: DevtoolsOptions["capture"]): ResolvedCap
  * serve a record over.
  *
  * The arrival stamp is keyed by the `Request` object in a `WeakMap`, which
- * outlives nothing and mutates nothing: a request this registration never saw
- * leaves no entry, and the stamp is gone the moment the answer that spends it is
- * recorded. `arrive` stamps only while the policy records, because the stamp is
- * what says this registration saw the request — a registration that records
- * nothing retains nothing.
+ * outlives nothing and mutates nothing: the stamp is gone the moment the answer
+ * that spends it is recorded. `arrive` stamps only while the policy records,
+ * because the stamp is what says this registration saw the request — a
+ * registration that records nothing retains nothing and writes nothing, not even
+ * the entry taken at arrival.
  *
  * @internal
  */
@@ -197,6 +217,19 @@ export function createRequestCapture(capture: DevtoolsOptions["capture"]): Reque
   const policy = resolveCapture(capture);
   const records = new WeakMap<ApplicationIdentity, RequestBuffer>();
   const arrivals = new WeakMap<Request, RequestArrival>();
+  // The id one request's two entries share, allocated at arrival.
+  //
+  // It is a counter of its own rather than the record's write count, because
+  // that count is the cursor and it counts entries: one request writes two now,
+  // so an id read from it would differ between a request's own pending and
+  // answered entries, and the grouping the id exists for would never match
+  // anything.
+  //
+  // It counts for the life of the capture rather than per record, so an id never
+  // repeats across two records in one process. That is deliberate: a consumer
+  // that kept ids while polling through a `listen()` would otherwise group two
+  // different requests — one boot's, and the next boot's — as one.
+  let arrivalOrdinal = 0;
 
   return Object.freeze({
     beginBoot(application: ApplicationIdentity): RequestBuffer {
@@ -219,19 +252,23 @@ export function createRequestCapture(capture: DevtoolsOptions["capture"]): Reque
       // whole.
       const startedAt = performance.now();
       const arrived = requestUrl(request);
+      const arrival = Object.freeze({
+        id: (arrivalOrdinal += 1),
+        record: open,
+        timestamp: new Date().toISOString(),
+        startedAt,
+        method: request.method,
+        pathname: arrived.pathname,
+        search: arrived.search,
+        ...(policy.headers ? { headers: captureHeaders(request.headers, policy.redact) } : {}),
+      });
 
-      arrivals.set(
-        request,
-        Object.freeze({
-          record: open,
-          timestamp: new Date().toISOString(),
-          startedAt,
-          method: request.method,
-          pathname: arrived.pathname,
-          search: arrived.search,
-          ...(policy.headers ? { headers: captureHeaders(request.headers, policy.redact) } : {}),
-        }),
-      );
+      arrivals.set(request, arrival);
+      // The record is written here, not at completion, because a request whose
+      // answer never reaches this package would otherwise leave no trace at all —
+      // indistinguishable from one that never arrived. The entry states the
+      // absence of an answer rather than inventing one.
+      open.write(toPendingRecord(arrival));
     },
     async complete(context: AnsweredRequest, completedAt: number): Promise<void> {
       const arrival = arrivals.get(context.request);
@@ -246,6 +283,36 @@ export function createRequestCapture(capture: DevtoolsOptions["capture"]): Reque
       arrivals.delete(context.request);
       arrival.record.write(await toRequestRecord(context, policy, arrival, completedAt));
     },
+  });
+}
+
+/**
+ * The entry written when a request arrives, before anything can state an answer.
+ *
+ * `status` and `durationMs` are `null` here rather than absent, and neither is
+ * `0`: a key left out would read as a field this release does not write, and a
+ * zero would claim the application answered — a `0` status or an answer that
+ * took no measurable time — where the truth is that this record observed no
+ * answer at all. A consumer tells the two entries of one request apart by
+ * exactly that, and groups them by `id`.
+ *
+ * `path` states the path that arrived, because the route it matched is a fact of
+ * the answer and no route has been matched at this point. The answer's entry
+ * supersedes it with the pattern when one matched.
+ *
+ * Nothing here reads the request: every field comes from the arrival stamp, so
+ * the duration the stamp opens is not charged for this write.
+ */
+function toPendingRecord(arrival: RequestArrival): RequestRecord {
+  return Object.freeze({
+    id: arrival.id,
+    method: arrival.method,
+    path: arrival.pathname,
+    url: `${arrival.pathname}${arrival.search}`,
+    status: null,
+    durationMs: null,
+    timestamp: arrival.timestamp,
+    ...(arrival.headers === undefined ? {} : { headers: arrival.headers }),
   });
 }
 
@@ -267,7 +334,9 @@ export function createRequestCapture(capture: DevtoolsOptions["capture"]): Reque
  * reads the same as an absence.
  *
  * The request-side fields come from the arrival stamp rather than from
- * `context.request`, which no longer states them by this phase.
+ * `context.request`, which no longer states them by this phase, and the id comes
+ * from it too: this is the second of the two entries one request writes, and the
+ * id is what says so.
  *
  * `completedAt` is the closing reading, taken by the calling hook before it read
  * anything off the context, and the duration is measured from the arrival stamp
@@ -294,6 +363,7 @@ export async function toRequestRecord(
   const error = await failureMessage(status, context.answer);
 
   return Object.freeze({
+    id: arrival.id,
     method: arrival.method,
     path: route ?? arrival.pathname,
     url: `${arrival.pathname}${arrival.search}`,

@@ -5,8 +5,15 @@ import type { AponiaMetaPayload } from "./payloads.types.ts";
 /** The path this endpoint is served under, relative to the devtools prefix. */
 export const devtoolsMetaPath = "/meta";
 
-/** The devtools wire contract this release speaks. */
-export const devtoolsContractVersion = 1;
+/**
+ * The devtools wire contract this release speaks.
+ *
+ * It moved from `1` to `2` when a request entry gained `id`, `status` and
+ * `durationMs` became nullable, and one request began writing two entries — a
+ * change a reader of `1` cannot survive, because it would read a `null` status
+ * as a number and count one request twice.
+ */
+export const devtoolsContractVersion = 2;
 
 /**
  * Builds the payload `/meta` answers with, once per boot.
