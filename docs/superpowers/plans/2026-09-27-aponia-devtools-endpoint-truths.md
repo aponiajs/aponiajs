@@ -1117,8 +1117,18 @@ Add the field to `AponiaApplicationDiagnostics` with a doc comment stating it is
  * The recorded halves are the instance's own, which is what the platform calls,
  * so they answer for a half written as a class field. The `prototype` probe
  * below is the fallback for a record that carries no halves — an older or
- * foreign platform copy — and it is the narrower answer: it misses a field
- * declared half rather than reporting a stage the route does not run.
+ * foreign platform copy.
+ *
+ * The fallback reads the class the token names, which makes it exact for a
+ * class-backed interceptor and **approximate for a token whose provider is not
+ * one**: a `provideValue` object whose shape differs from its token's
+ * `prototype` is answered from the prototype while the platform calls the
+ * object, so the probe can state a step the route does not run. Do not describe
+ * this as a narrower answer that is never wrong — it is wrong in that one case,
+ * and `resolveEnhancers` casts the resolved provider without checking it is a
+ * constructed instance, so nothing prevents it. Narrowing the sentence is the
+ * fix; validating the provider and throwing would fail a boot, which this
+ * package may never do.
  */
 function declaresHalf(
   token: ClassToken<unknown>,
