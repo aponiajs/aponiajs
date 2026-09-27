@@ -6,11 +6,15 @@ export type LogLevel = "fatal" | "error" | "warn" | "log" | "debug" | "verbose";
  * A method may throw. This interface is public and an application's own
  * implementation answers for itself, so the framework never reads a successful
  * call as a promise the interface makes. `ConsoleLogger`, the one this framework
- * builds, does not throw: it renders every value it is handed, or states that it
- * could not. That is a property of that class rather than of this contract, and
- * both halves are needed — a caller that must not be harmed by a throw guards for
- * itself, and an application that hands over a logger gets one that cannot cost
- * it a response.
+ * builds, does not throw on the value it is handed: it renders that value, or
+ * states the literal a value it cannot render reads as. That is a property of
+ * that class rather than of this contract, and it is a property of the value
+ * rather than of the call: the class writes to a stream it does not own, and a
+ * write that refuses throws like any other method — which is the progress-line
+ * rule below, not an exception to it. Both halves are still needed — a caller
+ * that must not be harmed by a throw guards for itself, and an application that
+ * hands over a logger gets one whose rendering of a value cannot cost it a
+ * response.
  *
  * One rule follows, and it is narrow on purpose: a call site that reports a
  * failure guards, and a call site that reports progress does not. The sites in

@@ -856,10 +856,12 @@ the client received rather than the one `set.status` still reads. The unhandled
 failure is asserted from the other side, because its message is nowhere on the
 answer: the entry the record holds is compared with the line `/logs` states for
 the same exception. Both surfaces render through `@aponiajs/common`'s
-`renderLogValue`, so the comparison asserts the wiring rather than two copies
-kept in step — the record's half is the exception the platform's mapping wrote,
-and the stream's half is the line this package's tap produced — and a case pins
-that the rendering publishes no stack, with the presence of `error` asserted
+`renderLogValue`, so the comparison catches drift between them rather than
+restating two copies: because both read one definition, a divergence in what one
+surface states is a defect rather than a coincidence — the record's half is the
+exception the platform's mapping wrote, and the stream's half is the line this
+package's tap produced — and a case pins that the rendering publishes no stack,
+with the presence of `error` asserted
 before the comparison, because an absent field would satisfy a `not.toContain`
 on its own and prove nothing. The comparison runs over three thrown values — an
 `Error`, one that is not, and a value the rendering cannot state at all —

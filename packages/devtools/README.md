@@ -219,10 +219,18 @@ const application = await AponiaFactory.create(AppModule, {
   message comes from the exception rather than the answer: the mapping answers one
   fixed sentence for every such failure and its `Response` is not on the
   after-response context either, so the boot records the exception the mapping
-  answered, and the entry publishes the same one-line account `/logs` states for
-  it, with no stack, both through one definition — `@aponiajs/common`'s
-  `renderLogValue` — rather than through a copy each, so the two surfaces cannot
-  disagree about one failure; a thrown value neither can state reads as the
+  answered, and the entry publishes the same account `/logs` states for it, with no
+  stack, both through one definition — `@aponiajs/common`'s `renderLogValue` —
+  rather than through a copy each, so the two surfaces cannot disagree about one
+  failure. That rendering does not fold, so a message that itself spans lines is
+  published with them; the fold-to-one-line rendering is the other one, this
+  package's own `oneLine`, which the two rows written for a failure of its own
+  guard — the bind it could not take, and the route analysis it could not read —
+  embed, and it answers the literal `[unrenderable]` for any value whose read
+  refuses, where `renderLogValue` answers it only once the JSON form and the plain
+  string form have both refused, so a value the shared rendering still states —
+  `{}`, or `[object Object]` — reads as the literal there. A thrown value neither
+  can state reads as the
   literal `[unrenderable]` on both, because that rendering is total: it runs in
   the route's own `error` hook before the answer is built, and the logger call
   beneath it is guarded, so a logger that refuses the line is announced on

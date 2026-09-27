@@ -16,8 +16,9 @@
  * one is a bare throw to a caller whose logger only ever sees the sentence.
  *
  * A refusal is stated as the framework's own word for a value it could not
- * render, `[unrenderable]` — the literal `@aponiajs/common`'s `ConsoleLogger`
- * writes, restated rather than imported because `common` does not publish it.
+ * render, `[unrenderable]` — the literal `@aponiajs/common` states in its shared
+ * rendering and in its console logger alike, restated rather than imported
+ * because `common` does not publish it.
  * The word is stated rather than left out: this result is embedded in the
  * sentence's parentheses, and a missing clause inside them would read as a
  * value that was read successfully and was empty.

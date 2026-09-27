@@ -96,15 +96,15 @@ function unrenderableRefusal(): Record<string, unknown> {
 /**
  * A thrown function that cannot be named.
  *
- * The other fixtures refuse at `toJSON` and at the plain string form, which are
- * the two reads a projection states out loud. This one refuses at the read the
- * projection makes of the value itself — the property a function is named by,
- * declared here as a getter that throws — which is the read a projection guarded
+ * The other fixtures refuse at the JSON form and at the plain string form, which
+ * are the two reads a rendering states out loud. This one refuses at the read the
+ * rendering makes of the value itself — the property a function is named by,
+ * declared here as a getter that throws — which is the read a rendering guarded
  * around only the pair it thought of would leave bare. It is a function rather
  * than a `Proxy` on purpose: the platform's mapping decides whether Elysia
- * answers an exception before any projection runs, and that decision walks the
+ * answers an exception before any rendering runs, and that decision walks the
  * value's prototype chain, so a `Proxy` whose `getPrototypeOf` throws never
- * reaches a projection at all.
+ * reaches a rendering at all.
  */
 function trapRefusingRefusal(): () => never {
   const refusal = function refusingRefusal(): never {
@@ -148,7 +148,7 @@ class AnswersController {
 
   @Get("/trap-refusal")
   trapRefusal(): never {
-    // The shape that refuses a read the projection makes before either fallback:
+    // The shape that refuses a read the rendering makes before either fallback:
     // naming it.
     throw trapRefusingRefusal();
   }
@@ -385,11 +385,11 @@ const agreeingLogger = new Logger("Agreeing", { timestamp: false });
 class LoggedFailureModule {}
 
 /**
- * A logger that writes nothing, for the case that has to isolate the projection.
+ * A logger that writes nothing, for the case that has to isolate the rendering.
  *
  * A boot reports a failure through the logger it was handed, and this package's
  * tap records the line before handing the call on, so a logger double keeps the
- * case about the projection: the failure is reported through it, the tap states
+ * case about the rendering: the failure is reported through it, the tap states
  * the value, and nothing below the tap reads the value a second time.
  */
 const silentFailureLogger: LoggerService = {
@@ -947,7 +947,7 @@ test.serial("an unhandled failure carries the exception the platform mapped", as
     // The platform answers an unhandled failure with its own Problem Details
     // sentence, and that `Response` is not on the after-response context, so the
     // only account of the exception this side can publish is the one the
-    // mapping recorded as it answered. It is the projection `/logs` states for
+    // mapping recorded as it answered. It is the rendering `/logs` states for
     // the same exception: the name and the message, never the stack.
     expect(entry.status).toBe(500);
     expect(entry.error).toBe("Error: the raw exception");
@@ -1023,7 +1023,7 @@ test.serial("the exception the record reports is the one the log stream states",
 });
 
 test.serial(
-  "a thrown value the projection cannot read leaves the answer and the log line intact",
+  "a thrown value the rendering cannot read leaves the answer and the log line intact",
   async () => {
     // Two shapes, because the rendering reads more than the two values it states
     // out loud: one refuses `JSON.stringify` and the plain string form, and the
@@ -1092,7 +1092,7 @@ test.serial(
         ).json()) as AponiaLogsPayload;
         const reported = logs.entries.filter((item) => item.context === "ExceptionsHandler").at(-1);
 
-        // The line is asserted as well as the record: a projection that answered
+        // The line is asserted as well as the record: a rendering that answered
         // without recording would leave the failure unreported in the one place it
         // was always reported, and the two surfaces state the same thing about it.
         expect(reported).toBeDefined();
@@ -1101,7 +1101,7 @@ test.serial(
         // What the first shape states is the literal both surfaces fall back to.
         // The second is held by the comparison above alone: what it states is the
         // function's own source text, and pinning that would pin this file's
-        // formatting rather than the projection.
+        // formatting rather than the rendering.
         if (expected.states !== undefined) {
           expect(entry.error).toBe(expected.states);
         }
