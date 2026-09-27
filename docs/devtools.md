@@ -525,7 +525,9 @@ The two degradations are different and are not to be collapsed:
   answers, with `controllers` empty and one row under `Devtools` naming why. That
   is a degraded half, not an absence, and `controllers` is empty exactly when no
   verdicts are available — never as a way of saying "this project declares no
-  controllers".
+  controllers". That row is guarded the way the refused bind's is, so a logger
+  that throws on it cannot turn the degraded half into a failed request: the
+  sentence is written to `stderr` instead, the line naming the refusal.
 
 ## Accepted limitations
 

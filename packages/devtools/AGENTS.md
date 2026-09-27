@@ -19,7 +19,7 @@ first request so an application that never polls the endpoint never loads it.
 | `server/`    | `startDevtoolsServer`, the socket and the loopback check, `routeRequest`, the dispatcher                                                                                                                                                         |
 | `endpoints/` | One payload builder and its wire contract per endpoint, `/meta` first, and the readers the endpoints share: the cursor the two cursor endpoints read, and the route facts `/routes` and `/flow` both state — the binding, and the parameter list |
 | `buffer/`    | The bounded cursor buffer `/logs` and `/requests` share, and nothing else                                                                                                                                                                        |
-| `logging/`   | The log stream: its record, its bound, the tap that fills it from a logger, and the one-line form of a thrown reason                                                                                                                             |
+| `logging/`   | The log stream: its record, its bound, the tap that fills it from a logger, the one-line form of a thrown reason, and the report a sentence travels on when the logger refuses it                                                                |
 | `requests/`  | The request record: its entry, its bound, and the capture that fills it                                                                                                                                                                          |
 
 `src/index.ts` is the only public barrel. Keep `*.types.ts` colocated with the
@@ -80,18 +80,25 @@ runtime boundary it describes.
   price of a check with no lookup in it. A debugging aid that
   reaches a public interface silently is the failure mode this package exists
   not to have.
-- A debugging aid must never fail a boot: a port that is already bound is
-  reported under `Devtools` with the reason, `startDevtoolsServer` returns
+- A debugging aid's own reports never fail a boot: a port that is already bound
+  is reported under `Devtools` with the reason, `startDevtoolsServer` returns
   `undefined`, and the application continues. The plugin's `onStart` reports
   nothing further when it sees that, so one refused bind is one row. That row is
-  guarded, in `server/devtools-server.ts`'s `reportRefusedBind`, because the
-  sentence and the `undefined` are two halves of one promise and a logger that
-  refuses the row would otherwise cost the caller both — and this runs inside
-  `onStart`, which Elysia neither awaits nor catches, so the throw would reach
-  `listen()`. A logger that refuses is answered by a direct `stderr` write of the
-  same sentence — the only place this package writes a process stream — and that
-  write is guarded in turn, so a stream that refuses still leaves the caller with
-  the `undefined`. The rule is the framework's: a call site that reports a
+  guarded, through `logging/report-failure.ts` — the one definition this
+  package's two guarded reports share, because a rule copied once per call site
+  is one rule per copy — because the sentence and the `undefined` are two halves
+  of one promise and a logger that refuses the row would otherwise cost the
+  caller both — and this runs inside `onStart`, which Elysia neither awaits nor
+  catches, so the throw would reach `listen()`. The row `/aot` writes for a
+  project whose route analysis could not be read is guarded the same way and for
+  the same reason: its sentence travels beside the empty `controllers` list that
+  endpoint degrades to, and the promise it settles is cached, so a refusal would
+  answer every later poll in the process with a failure instead of the payload
+  `/aot` promises. A logger that refuses either row is answered by a direct
+  `stderr` write of the sentence, the line also stating that the logger refused
+  it — the only place this package writes a process stream — and that write is
+  guarded in turn, so a stream that refuses still leaves the caller with the
+  answer it was promised. The rule is the framework's: a call site that reports a
   failure guards, and a call site that reports progress does not. The
   non-loopback exposure notice above is the other side of that rule and stays
   unguarded: it reports a state the socket really took rather than a failure, so
@@ -699,6 +706,12 @@ ever show that nothing was loaded _again_. The refusals this package mirrors are
 asserted against the command's own sentences, which the case reads back by calling
 `generateInvokers` with `dryRun` from the same root: a copy of a sentence inside
 the case, or a prefix of one, could not tell a faithful mirror from a paraphrase.
+The degradation is asserted where the report itself can refuse: a logger whose
+`warn` throws still answers the boot's half with `controllers` empty, the second
+poll is answered from the promise that settled to that list rather than to a
+rejection, and the sentence reaches `stderr` with the line naming the refusal.
+The status assertion is the one a removed guard fails, so the case is about the
+answer rather than only about the row.
 
 The socket's lifetime is asserted over HTTP too: a case polls the address while
 the application listens, closes the application, and polls again, because a

@@ -13,14 +13,16 @@ export type LogLevel = "fatal" | "error" | "warn" | "log" | "debug" | "verbose";
  * it a response.
  *
  * One rule follows, and it is narrow on purpose: a call site that reports a
- * failure guards, and a call site that reports progress does not. Four call
- * sites in the framework report a failure — the platform's default mapping
+ * failure guards, and a call site that reports progress does not. The sites in
+ * the framework that report a failure are the platform's default mapping, which
  * answers an unhandled failure from inside the hook whose return value is the
- * response, its declared filter hook reports a filter that threw before
- * declining to what answers next, `listen` reports the failure it is about to
- * rethrow, and the devtools server reports a bind it could not take before
- * answering that there is nothing to report as listening — so each guards the
- * call and answers whatever the logger does, and reports a logger that refused
+ * response; its declared filter hook, which reports a filter that threw before
+ * declining to what answers next; `listen`, which reports the failure it is
+ * about to rethrow; and the devtools server's two rows, the bind it could not
+ * take — reported before it answers that there is nothing to report as
+ * listening — and the route analysis it could not read, which it answers by
+ * degrading that half of the endpoint rather than failing it. Each guards the
+ * call and answers whatever the logger does, and states a logger that refused
  * on `stderr`. Everywhere else a throw is a throw — a logger that fails while
  * the boot logs its routes fails the boot, which is loud at the one moment
  * there is no answer to lose. A throw on a progress line aborts work that has

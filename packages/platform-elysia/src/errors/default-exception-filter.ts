@@ -132,8 +132,10 @@ export function createDefaultExceptionFilter(
  * - `listen`'s catch in `application/aponia-elysia-application.ts`, where a throw
  *   would replace the engine's failure the caller is about to be handed.
  *
- * `packages/devtools`'s refused-bind row is the framework's fourth site of that
- * kind, and it guards in place rather than through this function: this seam is
+ * `packages/devtools`'s two failure rows — the bind it could not take, and the
+ * route analysis it could not read — are the framework's other sites of that
+ * kind, and they guard in place, through that package's own
+ * `logging/report-failure.ts`, rather than through this function: this seam is
  * `@internal` and off this package's barrel, so another package cannot call it.
  *
  * The built-in logger no longer refuses any value, which is why this guard is not

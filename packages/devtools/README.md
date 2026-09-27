@@ -258,7 +258,9 @@ const application = await AponiaFactory.create(AppModule, {
   carries `ts-morph` and a formatter that an application which never polls this
   endpoint should not load; the analysis is read once per process, and an
   unreachable one leaves `controllers` empty and reports why once under
-  `Devtools` rather than failing the endpoint or answering it per poll. The
+  `Devtools` rather than failing the endpoint or answering it per poll. That
+  report is guarded the way the refused bind's is, so a logger that throws on it
+  cannot turn the degraded half into a failed request. The
   project root is the process's working directory — the same root `aponia build`
   defaults to — and the endpoint is served only for a record that states the two
   boot facts it publishes. Two failures are not one: a record that states neither

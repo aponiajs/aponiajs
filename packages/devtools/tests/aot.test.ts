@@ -1,4 +1,4 @@
-import { afterEach, expect, test } from "bun:test";
+import { afterEach, expect, spyOn, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
@@ -68,9 +68,18 @@ afterEach(() => {
   }
 });
 
-/** Binds the loopback socket on port `0`, reporting through the case's logger. */
-function serveLoopback(application: Elysia): DevtoolsServer {
-  const server = startDevtoolsServer({ application, port: 0, logger: recordingLogger });
+/**
+ * Binds the loopback socket on port `0`, reporting through the case's logger.
+ *
+ * The logger is a parameter because one case needs a logger that refuses: the
+ * row an unreadable project writes is guarded, and a case that could only hand
+ * in the recording logger could not reach that guard.
+ */
+function serveLoopback(
+  application: Elysia,
+  logger: LoggerService = recordingLogger,
+): DevtoolsServer {
+  const server = startDevtoolsServer({ application, port: 0, logger });
 
   if (server === undefined) {
     throw new Error("the devtools server refused to bind the loopback socket");
@@ -341,6 +350,67 @@ test("aot reports the boot's own decision when no project is on disk to analyze"
     const refusal = await commandRefusal(workingDirectory);
     expect(warnings[0]).toContain(`(${refusal}); /aot answers the boot's record alone.`);
   } finally {
+    server.stop();
+  }
+});
+
+test("a report the logger refuses still answers aot's boot half and the degraded list", async () => {
+  // The row an unreadable project writes and the empty controller list it
+  // degrades to are two halves of one promise, and a promise this endpoint
+  // caches: a logger whose `warn` throws would reject that promise, and every
+  // poll of this process would be answered with a failure instead of the
+  // payload `/aot` promises. The project here is one no analysis can read —
+  // the working directory holds no configuration — which is the same
+  // degradation the first case asserts, reached with a logger that refuses.
+  const projectRoot = createTemporaryDirectory("aponia-aot-refused-");
+  process.chdir(projectRoot);
+  const workingDirectory = process.cwd();
+  const application = await AponiaFactory.createNative(AppModule, { logger: false });
+  const refusingLogger: LoggerService = {
+    log: () => {},
+    fatal: () => {},
+    error: () => {},
+    warn: () => {
+      throw new Error("the logger refused the analysis row");
+    },
+  };
+  const server = serveLoopback(application, refusingLogger);
+  const stderr: string[] = [];
+  const stderrWrite = spyOn(process.stderr, "write").mockImplementation((chunk) => {
+    stderr.push(String(chunk));
+    return true;
+  });
+
+  try {
+    // The answer is what the guard is for, and it is asserted before the row:
+    // an unguarded `warn` rejects the cached promise, so the request fails
+    // with a `500` where the degraded payload belongs — the assertion below
+    // fails on that, not only the `stderr` one.
+    const response = await fetch(`${server.url}/__devtools/aot`);
+    expect(response.status).toBe(200);
+
+    const payload = (await response.json()) as AponiaAotPayload;
+
+    expect(payload).toEqual({
+      graph: "decorated",
+      invokers: { accepted: false, reason: expect.any(String) },
+      controllers: [],
+    });
+
+    // The cached promise settled to the degraded list rather than to a
+    // rejection, so the second poll is answered the same way rather than
+    // failing where the first one did.
+    expect(await readAot(server)).toEqual(payload);
+
+    // The sentence a logger refused still reaches a reader, on the channel
+    // that survived, and the line says the logger refused it rather than
+    // reading as a report the logger chose to make there.
+    expect(stderr).toHaveLength(1);
+    expect(stderr[0]).toContain("could not read the route analysis");
+    expect(stderr[0]).toContain(workingDirectory);
+    expect(stderr[0]).toContain("(the configured logger threw while reporting it)");
+  } finally {
+    stderrWrite.mockRestore();
     server.stop();
   }
 });

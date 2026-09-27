@@ -3,6 +3,7 @@ import type { AnalyzedController, DeclinedControllerHandler } from "@aponiajs/cl
 import type { LoggerService } from "@aponiajs/common";
 import type { AponiaApplicationDiagnostics } from "@aponiajs/platform-elysia";
 import { oneLine } from "../logging/one-line.ts";
+import { reportFailure } from "../logging/report-failure.ts";
 import { aponiaVersion } from "../version.ts";
 import type { AponiaAotController, AponiaAotPayload } from "./aot.types.ts";
 
@@ -159,6 +160,15 @@ export function loadAotAnalysis(
  * fail the same way from here — a release whose built entry is not installed, a
  * module that throws while loading, a project with no configuration to read —
  * and all of them degrade this endpoint's second half rather than the endpoint.
+ *
+ * The report is guarded, because it and the degraded half are two halves of one
+ * promise: a logger that refuses the row would otherwise reject the promise this
+ * module caches, and the endpoint would answer a failure instead of the payload
+ * `/aot` promises — for the life of the process, since a rejection is cached
+ * like a result. The row is a report of a failure, so it is guarded by the rule
+ * the framework states; nothing between the analysis and the `return` below can
+ * escape this `catch` other than the sentence itself. See
+ * `logging/report-failure.ts`.
  */
 async function analyzeProject(
   projectRoot: string,
@@ -167,7 +177,8 @@ async function analyzeProject(
   try {
     return await analyzeControllers(projectRoot);
   } catch (error) {
-    logger.warn(
+    reportFailure(
+      logger,
       `Aponia devtools could not read the route analysis of "${projectRoot}" (${oneLine(error)}); /aot answers the boot's record alone.`,
     );
 
