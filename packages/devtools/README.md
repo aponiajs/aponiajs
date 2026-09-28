@@ -7,6 +7,16 @@ bun add @aponiajs/devtools
 Opt-in devtools for a running Aponia application. The package is a leaf: nothing
 in the framework depends on it, and an application installs it deliberately.
 
+**It requires Bun at runtime.** The surface is built on the runtime's own
+globals: `import.meta.dir` while the handler build resolves the Elysia the
+application installed, and `Bun.Glob` and `Bun.file` while `/aot` reads the
+project. A Node process cannot serve this mount — `import.meta.dir` reads
+`undefined` there, so a request through the mount fails in the handler build and
+answers `500` where the same boot answers `200` under Bun. The requirement
+belongs to the surface rather than to the framework around it: the platform, the
+container, and the generators run wherever an Aponia application runs, and an
+application that never registers this package never loads it.
+
 The surface is a mount, not a server: it registers one wildcard route,
 `ALL /__devtools/*`, on the application's own route table, and answers wherever
 the application answers — under `application.handle()` as well as `listen()`.
