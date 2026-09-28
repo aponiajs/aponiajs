@@ -144,6 +144,7 @@ describe("the order across modules", () => {
       }
     }
 
+    @Injectable()
     class Outer implements OnModuleInit {
       constructor(readonly inner: Inner) {}
 
@@ -343,6 +344,7 @@ describe("the stopping hooks", () => {
       }
     }
 
+    @Injectable()
     class Outer implements OnModuleDestroy {
       constructor(readonly inner: Inner) {}
 
