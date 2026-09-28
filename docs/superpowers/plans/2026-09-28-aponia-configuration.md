@@ -1234,6 +1234,7 @@ git commit -m "feat(cli): generate an application whose port is a validated conf
 - Modify: `AGENTS.md` (the implemented paragraph)
 - Modify: `docs/packages.md`, `docs/devtools.md`, `packages/devtools/AGENTS.md` (the narrowed sentences)
 - Modify: `packages/common/README.md`, `packages/platform-elysia/README.md`
+- Modify: `docs/cli.md`, `docs/architecture-and-style.md`, `docs/learn/02-install-and-generate.md` (the starter's layout listings gain `config.ts`)
 - Modify: `packages/platform-elysia/llms.txt` (the wrapper's method list gains `get`)
 - Modify: `packages/platform-elysia/AGENTS.md` (the seam bullet names the second symbol seam)
 
@@ -1288,6 +1289,10 @@ of the three is guarded, so a missed edit ships silently.
 `packages/common/README.md` names `defineConfiguration` and `ConfigurationToken` in its public
 surface prose. `packages/platform-elysia/README.md` gains a bullet for `provideConfiguration` and
 `AponiaElysiaApplication.get`, and a link to the new page in its link block.
+
+Three more places list the starter's layout and none of them gains `config.ts` on its own:
+`docs/cli.md`, `docs/architecture-and-style.md`, and the second learn chapter. Each is prose with no
+guard, so the file the generator writes would be missing from every description of it.
 
 Two enumerations are stale the moment this surface ships and no guard reads either:
 `packages/platform-elysia/llms.txt` lists the wrapper's methods as `handle`, `listen`, and `close`,
