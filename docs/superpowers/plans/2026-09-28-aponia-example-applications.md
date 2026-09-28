@@ -765,7 +765,7 @@ test("requests records a request the application answered", async () => {
   }>(`${booted.devtools}/requests`);
 
   // One request writes two entries under one id — one when it arrived and one
-  // when it was answered — so the answer is the last entry carrying that id.
+  // and the answer — so the answer is the last entry.
   const last = requests.entries.at(-1);
   expect(last).toMatchObject({ method: "GET", path: "/greetings", status: 200 });
 });
@@ -837,7 +837,7 @@ export const appLogger = new Logger("Example");
 ```ts
 import { Injectable } from "@aponiajs/common";
 
-/** A service with state, so `/flow` and `/requests` have something to report. */
+/** A service holding state, so the singleton's counter grows across requests. */
 @Injectable()
 export class AppService {
   #served = 0;
@@ -961,15 +961,15 @@ The application listens on `PORT`, defaulting to `3110`. The surface binds
 `127.0.0.1:3111` unless `DEVTOOLS_PORT` names another port, and `ENABLE_DEVTOOLS=false`
 mounts nothing at all — no provider, no plugin, no socket.
 
-| Endpoint               | Answers                                                                                                                                                                    |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/__devtools/meta`     | The contract version, this framework's release, the Elysia it ran, and which artifacts the boot adopted                                                                    |
-| `/__devtools/graph`    | The module graph the boot compiled                                                                                                                                         |
-| `/__devtools/routes`   | Every mounted route with the binding that serves it                                                                                                                        |
-| `/__devtools/flow`     | The stages each route passes through, in order                                                                                                                             |
-| `/__devtools/logs`     | The application's log stream, through the one logger both places were handed                                                                                               |
-| `/__devtools/requests` | What each request was and what answered it                                                                                                                                 |
-| `/__devtools/aot`      | What a build decided about this project's invokers — the boot's own record alone when no build wrote an analysis, which is this example's case and says so in its `reason` |
+| Endpoint               | Answers                                                                                                                                                                                                                 |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/__devtools/meta`     | The contract version, this framework's release, the Elysia it ran, and which artifacts the boot adopted                                                                                                                 |
+| `/__devtools/graph`    | The module graph the boot compiled                                                                                                                                                                                      |
+| `/__devtools/routes`   | Every mounted route with the binding that serves it                                                                                                                                                                     |
+| `/__devtools/flow`     | The stages each route passes through, in order                                                                                                                                                                          |
+| `/__devtools/logs`     | The application's log stream, through the one logger both places were handed                                                                                                                                            |
+| `/__devtools/requests` | What each request was and what answered it                                                                                                                                                                              |
+| `/__devtools/aot`      | What a build decided about this project's invokers — the boot adopted no invoker artifact, so `invokers.accepted` is false with the refusal in `reason`; the analysis finds no `aponia.json`, so `controllers` is empty |
 
 ## Test
 
