@@ -453,6 +453,18 @@ paragraph, `packages/devtools/README.md`, `packages/devtools/llms.txt`. Fix each
 the new truth, and grep for the removed words afterwards rather than trusting this list:
 `rg -n "DEVTOOLS_PORT|Bun.serve|loopback|startDevtoolsServer|127\.0\.0\.1:8000"`.
 
+**And then do the half a grep cannot do, because the grep has now failed twice.** It finds the
+vocabulary this change removed; it cannot find a sentence that describes the removed _behaviour_ in
+other words. Two did, and the branch would have shipped them: `docs/logging.md`, whose paragraph
+about a logger that throws had been written around "the row it writes for a port it could not take",
+and — found only after that one — the two source comments that state the same rule, in
+`packages/common/src/logging/logger.types.ts` and
+`packages/platform-elysia/src/errors/default-exception-filter.ts`. Both describe `packages/devtools`'s
+two failure rows, one of which was the refused bind; that report no longer exists, and the rule the
+comment states now rests on the `/aot` row alone. Rewrite each to the report that is left, and sweep
+once more for prose that _refers_ to what the surface used to be — a server, a bind, a port, a
+refusal report — with whatever words it chooses rather than the words above.
+
 - [ ] **Step 4: Run the lanes and commit**
 
 ```bash
