@@ -121,9 +121,9 @@ export function createDefaultExceptionFilter(
  *   stop every remaining shutdown hook from running at all, so one pool that
  *   refused to close would leave every other pool open.
  *
- * `packages/devtools`'s two failure rows — the bind it could not take, and the
- * route analysis it could not read — are the framework's other sites of that
- * kind, and they guard in place, through that package's own
+ * `packages/devtools`'s one failure row — the route analysis it could not read
+ * — is the framework's other site of that
+ * kind, and it guards in place, through that package's own
  * `logging/report-failure.ts`, rather than through this function: this seam is
  * `@internal` and off this package's barrel, so another package cannot call it.
  *

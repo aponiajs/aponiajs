@@ -24,10 +24,9 @@ export type LogLevel = "fatal" | "error" | "warn" | "log" | "debug" | "verbose";
  * declining to what answers next; `listen`, which reports the failure it is
  * about to rethrow; the platform's shutdown runner, which reports a hook that
  * threw while the application was stopping and carries on, because `close()`
- * may not become a call that cannot complete; and the devtools server's two
- * rows, the bind it could not take — reported before it answers that there is
- * nothing to report as listening — and the route analysis it could not read,
- * which it answers by degrading that half of the endpoint rather than failing
+ * may not become a call that cannot complete; and the devtools surface's one
+ * failure row, the route analysis it could not read, which it answers by
+ * degrading that half of the endpoint rather than failing
  * it. Each guards the call and answers whatever the logger does, and states a
  * logger that refused on `stderr`. Everywhere else a throw is a throw — a logger
  * that fails while the boot logs its routes fails the boot, which is loud at the

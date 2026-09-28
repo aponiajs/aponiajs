@@ -41,14 +41,14 @@ export function isDevtoolsSurfaceRequest(request: Request): boolean {
  * makes `405` and `404` testable without one.
  *
  * The order of the two decisions is part of that contract. The method is
- * settled before any path is read, so a `POST` to a path this server does not
+ * settled before any path is read, so a `POST` to a path this surface does not
  * own is a `405` rather than a `404` — the request never reached the point where
  * a path could matter — and the answer says which method is served.
  *
  * The lookup is `Object.hasOwn`, because the suffix comes from the request: a
  * plain read of the record would find `/constructor` on `Object.prototype` and
  * call it. An unclaimed suffix, the bare prefix, and a trailing slash the record
- * does not carry are all `404`: the record states the paths this server serves
+ * does not carry are all `404`: the record states the paths this surface serves
  * and the dispatcher does not guess at the rest.
  */
 export function routeRequest(

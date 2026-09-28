@@ -126,9 +126,11 @@ function createInertModule(): DynamicModule {
  * the property the old shape had: a surface that could be enabled, disabled, or
  * fall over without changing a single answer the application gives is a surface
  * that owns a socket. The mount is a route, and one route can collide with
- * another — an application route that claims a devtools path wins, because
- * Elysia resolves a repeated `(method, path)` by the later registration and the
- * application's controllers mount after this plugin does.
+ * another — an application route that claims a devtools path wins, because the
+ * two owners sit in one route table and the more specific route answers: a
+ * static `/__devtools/meta` wins this wildcard whether it mounts before or after
+ * it, and the insertion order decides only between two registrations of the same
+ * pattern.
  *
  * The route is a wildcard over the prefix and nothing more: it hands every
  * request that reaches it to `routeRequest`, which decides the method and the

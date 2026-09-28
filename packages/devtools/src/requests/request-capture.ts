@@ -111,7 +111,7 @@ export type ApplicationIdentity = object;
  * when the module is registered — that is the moment this package holds the
  * plugin the request will pass through. A record is not: each boot opens one for
  * the application it serves, through `beginBoot`, and the plugin hands that
- * buffer to the server that serves it.
+ * buffer to the surface that serves it.
  *
  * The pair belongs to one registration, and the records belong to the
  * applications it was booted for: a boot reuses the dynamic module a module
@@ -122,7 +122,7 @@ export interface RequestCapture {
   /**
    * Opens the record for the application this boot serves, filed under the
    * identity every hook of that boot will report, and answers the buffer that
-   * boot's server reads.
+   * boot's surface reads.
    *
    * The record is the application's rather than the registration's, because the
    * platform hands one registration to every boot of the module class that

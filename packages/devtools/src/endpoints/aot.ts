@@ -39,9 +39,9 @@ const analyses = new Map<string, Promise<readonly AponiaAotController[]>>();
  * not written at all: an application no boot produced reads as `undefined`, and
  * one a newer copy booted can answer a graph this union does not name. Both are
  * a boot this endpoint has nothing to say about — the registration gate reads
- * this function's answer, and a `404` is the dispatcher's reply for the path a
- * server does not serve — rather than a payload assembled from fields that were
- * only assumed to be there.
+ * this function's answer, and a `404` is the dispatcher's reply for the path
+ * this surface does not serve — rather than a payload assembled from fields that
+ * were only assumed to be there.
  *
  * The invoker verdict is published as the record states it, and nothing is
  * derived from it. A reason belongs to a refusal, so a record that carries none
@@ -52,7 +52,7 @@ const analyses = new Map<string, Promise<readonly AponiaAotController[]>>();
  * `/aot` degrades along two axes, and they are not the same failure. This
  * function is the first: a record that states none of these facts serves no
  * `/aot` at all, because there is nothing to publish rather than something lost
- * — the path is not one this server owns, and every other endpoint it serves,
+ * — the path is not one this surface owns, and every other endpoint it serves,
  * `/meta` included, answers exactly as it did. The second is the analysis: a
  * record this release can read, a project it cannot, and the endpoint still
  * answers with the boot's half and an empty controller list. An absent fact is
@@ -80,8 +80,8 @@ export function readAotFacts(
 }
 
 /**
- * The payload one request answers with: the facts this server read from the
- * record when it started, beside the verdicts that request settled.
+ * The payload one request answers with: the facts this surface reads from the
+ * record, beside the verdicts that request settled.
  *
  * The build-time verdicts behind a boot: what a build's analysis would decide
  * about this project's controllers, beside what this boot decided about the
