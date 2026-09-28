@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/platform-elysia",
-  "version": "0.6.0-alpha.30",
+  "version": "0.6.0-alpha.32",
   "description": "Elysia application platform for Aponia HTTP controllers and WebSocket gateways.",
   "homepage": "https://github.com/aponiajs/aponiajs#readme",
   "bugs": {

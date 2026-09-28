@@ -26,6 +26,17 @@
         "elysia": "^1.4.30",
       },
     },
+    "examples/configuration": {
+      "name": "@aponiajs/example-configuration",
+      "version": "0.0.0",
+      "dependencies": {
+        "@aponiajs/common": "workspace:*",
+        "@aponiajs/core": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
+        "elysia": "^1.4.30",
+        "zod": "^4.4.3",
+      },
+    },
     "examples/dependency-injection": {
       "name": "@aponiajs/example-dependency-injection",
       "version": "0.0.0",
@@ -42,6 +53,17 @@
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/core": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
+        "elysia": "^1.4.30",
+      },
+    },
+    "examples/devtools": {
+      "name": "@aponiajs/example-devtools",
+      "version": "0.0.0",
+      "dependencies": {
+        "@aponiajs/common": "workspace:*",
+        "@aponiajs/core": "workspace:*",
+        "@aponiajs/devtools": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
         "elysia": "^1.4.30",
       },
@@ -118,11 +140,11 @@
     },
     "packages/aponiajs": {
       "name": "aponiajs",
-      "version": "0.6.0-alpha.30",
+      "version": "0.6.0-alpha.32",
     },
     "packages/cli": {
       "name": "@aponiajs/cli",
-      "version": "0.6.0-alpha.30",
+      "version": "0.6.0-alpha.32",
       "bin": {
         "aponia": "./bin/aponia.ts",
       },
@@ -140,7 +162,7 @@
     },
     "packages/common": {
       "name": "@aponiajs/common",
-      "version": "0.6.0-alpha.30",
+      "version": "0.6.0-alpha.32",
       "dependencies": {
         "@standard-schema/spec": "^1.1.0",
         "reflect-metadata": "^0.2.2",
@@ -151,14 +173,14 @@
     },
     "packages/core": {
       "name": "@aponiajs/core",
-      "version": "0.6.0-alpha.30",
+      "version": "0.6.0-alpha.32",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
       },
     },
     "packages/create-aponia": {
       "name": "create-aponia",
-      "version": "0.6.0-alpha.30",
+      "version": "0.6.0-alpha.32",
       "bin": {
         "create-aponia": "./dist/create-aponia.mjs",
       },
@@ -168,7 +190,7 @@
     },
     "packages/devtools": {
       "name": "@aponiajs/devtools",
-      "version": "0.6.0-alpha.30",
+      "version": "0.6.0-alpha.32",
       "dependencies": {
         "@aponiajs/cli": "workspace:*",
         "@aponiajs/common": "workspace:*",
@@ -183,7 +205,7 @@
     },
     "packages/platform-elysia": {
       "name": "@aponiajs/platform-elysia",
-      "version": "0.6.0-alpha.30",
+      "version": "0.6.0-alpha.32",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/core": "workspace:*",
@@ -214,9 +236,13 @@
 
     "@aponiajs/example-basic": ["@aponiajs/example-basic@workspace:examples/basic"],
 
+    "@aponiajs/example-configuration": ["@aponiajs/example-configuration@workspace:examples/configuration"],
+
     "@aponiajs/example-dependency-injection": ["@aponiajs/example-dependency-injection@workspace:examples/dependency-injection"],
 
     "@aponiajs/example-descriptors": ["@aponiajs/example-descriptors@workspace:examples/descriptors"],
+
+    "@aponiajs/example-devtools": ["@aponiajs/example-devtools@workspace:examples/devtools"],
 
     "@aponiajs/example-files": ["@aponiajs/example-files@workspace:examples/files"],
 

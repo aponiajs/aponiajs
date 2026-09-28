@@ -173,11 +173,11 @@ A consumer reads `meta` first and decides whether to proceed:
 ```ts
 {
   contract: 2,              // the version of this wire shape
-  framework: "0.6.0-alpha.30", // the release that booted the application
+  framework: "0.6.0-alpha.32", // the release that booted the application
   elysia: "1.4.30",         // the release installed in the application's own tree, or null
   artifacts: {              // which release supplied each adopted artifact
     invokers: null,         // null: the boot adopted none
-    descriptors: "0.6.0-alpha.30",
+    descriptors: "0.6.0-alpha.32",
   },
   startedAt: "2026-09-26T12:00:00.000Z",
 }
@@ -611,4 +611,6 @@ These are the boundaries this package states rather than hides.
 - [Logging](./logging.md): the logger `/logs` records.
 - [Introspection](./introspection.md): the projection `/graph` publishes.
 - [Execution enhancers](./enhancers.md): the stages `/flow` reports.
+- [The devtools example](../examples/devtools/README.md): the surface mounted on a running
+  application, one endpoint at a time.
 - [Published packages](./packages.md): the npm catalog.
