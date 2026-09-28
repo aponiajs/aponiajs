@@ -105,6 +105,7 @@ in the task named beside it.
 
 - Create: `packages/common/src/lifecycle/lifecycle.types.ts`
 - Modify: `packages/common/src/index.ts` (the barrel)
+- Modify: `packages/common/AGENTS.md` (the domain table gains the new directory)
 - Modify: `scripts/source-layout.spec.ts` (the `packages/common/src` directory list)
 - Modify: `packages/common/llms.txt`
 - Create: `packages/platform-elysia/tests-vp/lifecycle.conformance.ts` (the compile-time half only;
@@ -175,9 +176,9 @@ test("a synchronous hook answers nothing and an asynchronous one answers a promi
   const sync = new SyncHooks();
   const asynchronous = new AsyncHooks();
 
-  // Compiling is the main assertion here — a class that stopped satisfying a
-  // contract fails `bun run check` — and these calls keep the file honest about
-  // what the contracts accept.
+  // Compiling is the whole assertion: a class that stopped satisfying a contract
+  // fails `bun run check`. These calls exercise the two local doubles, and they
+  // cannot fail on a contract change at runtime.
   expect(sync.onModuleInit()).toBeUndefined();
   expect(sync.onApplicationBootstrap()).toBeUndefined();
   expect(sync.onModuleDestroy()).toBeUndefined();
@@ -226,14 +227,14 @@ export interface OnApplicationBootstrap {
   onApplicationBootstrap(): void | Promise<void>;
 }
 
-/** Runs while the application is stopping, after the server has stopped. */
-export interface OnModuleDestroy {
-  onModuleDestroy(): void | Promise<void>;
-}
-
 /** Runs while the application is stopping, before the server stops. */
 export interface BeforeApplicationShutdown {
   beforeApplicationShutdown(): void | Promise<void>;
+}
+
+/** Runs while the application is stopping, after the server has stopped. */
+export interface OnModuleDestroy {
+  onModuleDestroy(): void | Promise<void>;
 }
 
 /** Runs last, once the application has stopped. */
@@ -254,11 +255,21 @@ export type {
 } from "./lifecycle/lifecycle.types.ts";
 ```
 
-- [ ] **Step 4: Register the directory, or the layout guard fails**
+- [ ] **Step 4: Register the directory in the guard and in the guide**
 
 In `scripts/source-layout.spec.ts`, add `"lifecycle"` to the `packages/common/src` directory list,
 between `"errors"` and `"logging"`. The list is asserted exactly, so a new directory that is not
 added here fails the suite.
+
+In `packages/common/AGENTS.md`, add a row to the "What this package owns" domain table:
+
+```markdown
+| `lifecycle/` | The five type-only provider lifecycle contracts |
+```
+
+`scripts/AGENTS.md` states the invariant this closes — "Update the guide and guard together when a
+real new source domain is introduced" — and no guard reads that table, so a guide left behind stays
+behind.
 
 - [ ] **Step 5: Run the test and the guards**
 
