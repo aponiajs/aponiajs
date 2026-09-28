@@ -19,6 +19,7 @@ tokens, providers, errors, and logging. Its only runtime dependency is
 | `controllers/` | The platform-neutral controller descriptor                                 |
 | `errors/`      | `AponiaError` and the closed `AponiaErrorCode` union                       |
 | `logging/`     | `LoggerService` and the default structured logger                          |
+| `lifecycle/`   | The five type-only provider lifecycle contracts                            |
 | `websockets/`  | Gateway, message, parameter, server, response, and lifecycle contracts     |
 | `enhancers/`   | Enhancer decorators, guard, interceptor, filter, and host contracts        |
 

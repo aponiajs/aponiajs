@@ -22,15 +22,17 @@ export type LogLevel = "fatal" | "error" | "warn" | "log" | "debug" | "verbose";
  * answers an unhandled failure from inside the hook whose return value is the
  * response; its declared filter hook, which reports a filter that threw before
  * declining to what answers next; `listen`, which reports the failure it is
- * about to rethrow; and the devtools server's two rows, the bind it could not
- * take — reported before it answers that there is nothing to report as
- * listening — and the route analysis it could not read, which it answers by
- * degrading that half of the endpoint rather than failing it. Each guards the
- * call and answers whatever the logger does, and states a logger that refused
- * on `stderr`. Everywhere else a throw is a throw — a logger that fails while
- * the boot logs its routes fails the boot, which is loud at the one moment
- * there is no answer to lose. A throw on a progress line aborts work that has
- * not yet reported a failure, and aborting it is louder than continuing.
+ * about to rethrow; the platform's shutdown runner, which reports a hook that
+ * threw while the application was stopping and carries on, because `close()`
+ * may not become a call that cannot complete; and the devtools server's two
+ * rows, the bind it could not take — reported before it answers that there is
+ * nothing to report as listening — and the route analysis it could not read,
+ * which it answers by degrading that half of the endpoint rather than failing
+ * it. Each guards the call and answers whatever the logger does, and states a
+ * logger that refused on `stderr`. Everywhere else a throw is a throw — a logger
+ * that fails while the boot logs its routes fails the boot, which is loud at the
+ * one moment there is no answer to lose. A throw on a progress line aborts work
+ * that has not yet reported a failure, and aborting it is louder than continuing.
  */
 export interface LoggerService {
   log(message: unknown, ...optionalParameters: unknown[]): void;

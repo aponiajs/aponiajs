@@ -44,5 +44,4 @@ download(@Set() set: RouteResponseSettings) {
 }
 ```
 
-Next: nothing — this is the last chapter. ·
-Deep dive: [files](../files.md)
+Next: [16 · Lifecycle](./16-lifecycle.md) · Deep dive: [files](../files.md)

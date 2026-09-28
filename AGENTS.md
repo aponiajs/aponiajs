@@ -173,7 +173,10 @@ that resolves inside an arbitrary module and is not application API.
 5. second pass: instantiate each controller; decorated controllers register
    their compiled routes directly on the root application, while low-level
    descriptors fall back to `buildPlugin`, real-`Elysia` validation, and
-   `use()`; log `RoutesResolver`/`RouterExplorer` lines for both paths;
+   `use()`; log `RoutesResolver`/`RouterExplorer` lines for both paths; then
+   run `onModuleInit` over every hooked provider and controller, modules in
+   graph order, which is the moment between the controller pass and the gateway
+   pass;
 6. await `nativeApplication.modules` so promised, asynchronous, and
    controller-owned native plugins finish contributing routes before WebSocket
    collision checks;
@@ -182,9 +185,10 @@ that resolves inside an arbitrary module and is not application API.
    duplicate paths and message events, resolve the existing singleton provider
    instance, register one native `application.ws()` route, inject
    `@WebSocketServer()` properties, and run `afterInit`;
-8. await `nativeApplication.modules` again for any gateway initialization work
-   and wrap everything in
-   `AponiaElysiaApplication`.
+8. await `nativeApplication.modules` again for any gateway initialization work,
+   run the one `onApplicationBootstrap` pass over the graph — after every route
+   and gateway is mounted and before anything can listen — and wrap everything
+   in `AponiaElysiaApplication`.
 
 `compileDecoratedController` delegates route lowering to
 `routing/route-compiler.ts`.
@@ -374,7 +378,8 @@ create/find-all/find-one/update/remove message handlers. `runCli` prints
 Implemented: decorated modules and HTTP controllers, Standard Schema route
 validation, one-schema validation-model classes, request parameter decorators,
 singleton DI, class/value/factory/alias providers, explicit tokens,
-imports and exports, lifecycle, structured logging, generators, native Elysia
+imports and exports, provider and application lifecycle hooks, read
+from the provider instance, structured logging, generators, native Elysia
 escape hatches, application-owned native plugins mounted through
 `AponiaApplicationOptions.plugins`, concise inferred controller registration,
 RFC 9457 application
