@@ -138,8 +138,8 @@ import { resolve } from "node:path";
 import type { Elysia } from "elysia";
 import type { NativeElysiaConfigurator } from "@aponiajs/platform-elysia";
 
-// `public/` sits beside the file that declares this, and the path is resolved from
-// the file rather than from the working directory.
+// `../public` from a file under `src/`: the directory is resolved from the file,
+// not from the working directory, so the route answers wherever the process starts.
 export const configureStaticAssets: NativeElysiaConfigurator<Elysia> = (native) => {
   native.config.serve = {
     ...native.config.serve,
