@@ -214,10 +214,11 @@ test("packed workspaces generate an application that installs, validates, builds
     // variable the starter's schema declares, so the port the application takes
     // is the one the configuration validated.
     await expectServer(projectDirectory, "src/main.ts", await reservePort());
-    // The same boot with `PORT` absent, which is the schema's own default rather
-    // than a port this lane chose. It asserts that the application answers, not
-    // which port it took: the default is `3000` and nothing here may assume that
-    // port is free.
+    // The same boot with `PORT` absent. This lane does not choose the port here —
+    // it reserves one only for the configured case above: the schema's own default
+    // is `3000`, and this case therefore needs `3000` free. A runner already
+    // holding it fails the case by name, because the failure reports the port it
+    // fetched and the application cannot take it.
     await expectServer(projectDirectory, "src/main.ts");
 
     const buildResult = await run(["bun", "run", "build"], projectDirectory, bunTemporaryDirectory);
@@ -312,12 +313,13 @@ async function assertPackageDependency(
 const descriptorStartupLine = "Booting AppModule from the generated module descriptors";
 
 /**
- * The starter's own default for `PORT`, spelled literally like every other name
- * this lane reads.
+ * The address the absent case fetches, which is the starter's own default for
+ * `PORT`, spelled literally like every other name this lane reads.
  *
- * It is the fallback the generated application's `src/config.ts` declares, and
- * the absent case below reads it off the schema rather than choosing it: the
- * lane reserves an ephemeral port for the configured case and never names one.
+ * It is the fallback the generated application's `src/config.ts` declares: the
+ * lane names no port for that case, so the application takes `3000` and this
+ * constant is how the fetch finds it. The configured case beside it reserves an
+ * ephemeral port instead and never names one.
  */
 const starterDefaultPort = 3000;
 
@@ -326,8 +328,8 @@ const starterDefaultPort = 3000;
  *
  * `configuredPort` is the value the lane passes as `PORT` — the variable the
  * starter's schema declares — and omitting it is the other half of the same
- * contract: the schema applies its own default, which `starterDefaultPort`
- * restates for the fetch rather than for the application.
+ * contract: the lane passes nothing, the schema applies its own default, and
+ * `starterDefaultPort` is the address the fetch for it uses.
  */
 async function expectServer(
   projectDirectory: string,

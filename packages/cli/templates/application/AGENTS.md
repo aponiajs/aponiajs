@@ -62,6 +62,10 @@ test/
 `-- app.e2e-spec.ts
 ```
 
+`src/config.ts` holds the application's configuration: one schema that validates
+`PORT` once at boot, provided by `AppModule` and read back through
+`application.get(AppConfig)` in `src/main.ts`.
+
 Every later feature is a directory under `src/<resource>/`, holding its module,
 controller, service, models, and tests together.
 
