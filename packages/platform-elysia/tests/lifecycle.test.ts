@@ -273,17 +273,26 @@ describe("a hook that throws while starting", () => {
 describe("the stopping hooks", () => {
   test("run in the documented order around the server stopping", async () => {
     calls.length = 0;
+    // A hook receives no context, so the phase it runs in is only observable
+    // through the application the case closed over: `server` is null once
+    // `stop` has run. Asking the server itself is what pins the stop's place,
+    // and both boundaries are checked so a stop that moved either way shows.
+    const stoppedWhenCalled: boolean[] = [];
 
     class Stopping implements OnModuleDestroy, BeforeApplicationShutdown, OnApplicationShutdown {
-      // Asynchronous on purpose: the order below is what fails if the runner
-      // stops awaiting between hooks, and a synchronous set could not tell.
+      // Both are asynchronous on purpose: the sequence below is what fails if the
+      // runner stops awaiting between hooks, and one async hook could only prove
+      // the first boundary.
       async beforeApplicationShutdown(): Promise<void> {
         await Bun.sleep(1);
         calls.push("before");
+        stoppedWhenCalled.push(application?.getNativeApplication().server === null);
       }
 
-      onModuleDestroy(): void {
+      async onModuleDestroy(): Promise<void> {
+        await Bun.sleep(1);
         calls.push("destroy");
+        stoppedWhenCalled.push(application?.getNativeApplication().server === null);
       }
 
       onApplicationShutdown(): void {
@@ -299,10 +308,12 @@ describe("the stopping hooks", () => {
     await application.close();
 
     expect(calls).toEqual(["before", "destroy", "shutdown"]);
-    // The hooks are only half of what the name claims: deleting the plan's
-    // `stop` call leaves every other case in the suite green, so this is the
-    // line that fails when `close()` stops running the server.
     expect(application.getNativeApplication().server).toBeNull();
+    // The server was up when the first hook ran and gone when the second did.
+    // A stop moved before `beforeApplicationShutdown` leaves `[true, true]`, one
+    // moved after `onModuleDestroy` leaves `[false, false]`, and a deleted stop
+    // leaves `[false, false]` too.
+    expect(stoppedWhenCalled).toEqual([false, true]);
   });
 
   test("run on an application that never listened", async () => {
@@ -352,25 +363,28 @@ describe("the stopping hooks", () => {
     expect(calls).toEqual(["outer", "inner"]);
   });
 
-  test("report a throwing hook and still run the rest, with the server stopped", async () => {
+  test("report a throwing hook, stop the server anyway, and run the rest", async () => {
     calls.length = 0;
     const reported: string[] = [];
     const failure = new Error("could not close the pool");
 
     class RecordingLogger implements LoggerService {
       log(): void {}
-      fatal(): void {}
       warn(): void {}
       debug(): void {}
       verbose(): void {}
+      fatal(): void {}
 
       error(message: unknown): void {
         reported.push(String(message));
       }
     }
 
-    class Refusing implements OnApplicationShutdown {
-      onApplicationShutdown(): void {
+    // The throw is in the *first* stopping phase and the proof is in the last:
+    // a throw placed in the final phase could not show that a failure there
+    // still lets the server stop and the remaining phases run.
+    class Refusing implements BeforeApplicationShutdown {
+      beforeApplicationShutdown(): void {
         calls.push("refusing");
         throw failure;
       }
@@ -386,10 +400,75 @@ describe("the stopping hooks", () => {
     class RefusingModule {}
 
     application = await AponiaFactory.create(RefusingModule, { logger: new RecordingLogger() });
-
+    await application.listen(0);
     await application.close();
 
     expect(calls).toEqual(["refusing", "after"]);
     expect(reported.join("\n")).toContain("could not close the pool");
+    expect(application.getNativeApplication().server).toBeNull();
+  });
+
+  test("run the stopping hooks once, however many times close is called", async () => {
+    calls.length = 0;
+
+    class Once implements OnApplicationShutdown {
+      onApplicationShutdown(): void {
+        calls.push("shutdown");
+      }
+    }
+
+    @Module({ providers: [provideClass(Once, [])] })
+    class OnceModule {}
+
+    application = await AponiaFactory.create(OnceModule, { logger: false });
+    await application.close();
+    await application.close();
+
+    // The pre-seam `close()` was a no-op once the server had stopped, and a
+    // teardown hook run twice is a pool closed twice: the plan runs at most once.
+    expect(calls).toEqual(["shutdown"]);
+  });
+
+  test("carry on when the logger itself throws while reporting", async () => {
+    calls.length = 0;
+
+    class ThrowingLogger implements LoggerService {
+      log(): void {}
+      warn(): void {}
+      debug(): void {}
+      verbose(): void {}
+      fatal(): void {}
+
+      error(): void {
+        throw new Error("the logger refused");
+      }
+    }
+
+    class Refusing implements OnApplicationShutdown {
+      onApplicationShutdown(): void {
+        calls.push("refusing");
+        throw new Error("could not close the pool");
+      }
+    }
+
+    class After implements OnApplicationShutdown {
+      onApplicationShutdown(): void {
+        calls.push("after");
+      }
+    }
+
+    @Module({ providers: [provideClass(Refusing, []), provideClass(After, [])] })
+    class ThrowingLoggerModule {}
+
+    application = await AponiaFactory.create(ThrowingLoggerModule, {
+      logger: new ThrowingLogger(),
+    });
+
+    await application.close();
+
+    // The guard is the whole point of the seam this reports through: a logger
+    // that refuses while reporting must not cost the remaining hooks their turn,
+    // and `close()` must still resolve.
+    expect(calls).toEqual(["refusing", "after"]);
   });
 });
