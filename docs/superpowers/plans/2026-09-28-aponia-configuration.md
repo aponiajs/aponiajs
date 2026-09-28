@@ -920,6 +920,10 @@ describe("AponiaElysiaApplication.get", () => {
     const application = await AponiaFactory.create(AppModule, { logger: false });
 
     expect(application.get(AppConfig)).toEqual({ port: 4321 });
+    // The title says "the same object", and `toEqual` cannot tell a cached
+    // singleton from a fresh copy: the container caches one instance per
+    // provider, so identity is free to assert.
+    expect(application.get(AppConfig)).toBe(application.get(AppConfig));
     await application.close();
   });
 
@@ -985,11 +989,12 @@ const containerKey: unique symbol = Symbol.for("aponia.application.container");
  *
  * Attaches the boot's container to the application it produced.
  *
- * The property is non-enumerable, non-writable, and non-configurable for the
- * same reason the boot record's is: Elysia composes by walking an instance's
- * keys, and an application no boot produced must read as `undefined` rather than
- * as an empty container. Rides a symbol rather than a constructor parameter so
- * the wrapper's exported two-argument signature does not change.
+ * Non-enumerable because Elysia composes by walking an instance's keys,
+ * non-writable so nothing overwrites the decision a boot made, and
+ * non-configurable so nothing undoes it. An application no boot produced must
+ * read as `undefined` rather than as an empty container. Rides a symbol rather
+ * than a constructor parameter so the wrapper's exported two-argument signature
+ * does not change.
  */
 export function attachApplicationContainer(application: object, container: AponiaContainer): void {
   Object.defineProperty(application, containerKey, {
@@ -1001,11 +1006,13 @@ export function attachApplicationContainer(application: object, container: Aponi
 }
 
 /**
- * @internal
- *
  * The container a boot attached, or `undefined` for an application no boot produced.
+ *
+ * Module-private: `readApplicationToken` is the seam's reader, and a future
+ * consumer that needs the container itself can export this in the change that
+ * reads it rather than in advance of one.
  */
-export function readApplicationContainer(application: unknown): AponiaContainer | undefined {
+function readApplicationContainer(application: unknown): AponiaContainer | undefined {
   return (application as { [containerKey]?: AponiaContainer } | null | undefined)?.[containerKey];
 }
 
@@ -1225,6 +1232,8 @@ git commit -m "feat(cli): generate an application whose port is a validated conf
 - Modify: `AGENTS.md` (the implemented paragraph)
 - Modify: `docs/packages.md`, `docs/devtools.md`, `packages/devtools/AGENTS.md` (the narrowed sentences)
 - Modify: `packages/common/README.md`, `packages/platform-elysia/README.md`
+- Modify: `packages/platform-elysia/llms.txt` (the wrapper's method list gains `get`)
+- Modify: `packages/platform-elysia/AGENTS.md` (the seam bullet names the second symbol seam)
 
 **Interfaces:**
 
@@ -1277,6 +1286,12 @@ of the three is guarded, so a missed edit ships silently.
 `packages/common/README.md` names `defineConfiguration` and `ConfigurationToken` in its public
 surface prose. `packages/platform-elysia/README.md` gains a bullet for `provideConfiguration` and
 `AponiaElysiaApplication.get`, and a link to the new page in its link block.
+
+Two enumerations are stale the moment this surface ships and no guard reads either:
+`packages/platform-elysia/llms.txt` lists the wrapper's methods as `handle`, `listen`, and `close`,
+and `packages/platform-elysia/AGENTS.md`'s bullet about the boot record's symbol seam does not
+mention that a second symbol-keyed seam now rides the same instance. `RULES.md`'s Definition of Done
+asks the guides to describe the same enforced reality, so both move in this step.
 
 - [ ] **Step 5: Run the documentation gates and commit**
 
