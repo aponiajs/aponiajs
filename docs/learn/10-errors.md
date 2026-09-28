@@ -172,9 +172,9 @@ registers. Provider cycles are detected while singletons initialize, and
 controller or platform diagnostics are raised while routes mount. All happen
 during `AponiaFactory.create`, before the application can listen — with one
 exception: `application.get` resolves through the same graph after a successful
-boot, so a token the root cannot reach, and a token two of its imports disagree
-about, raise `MISSING_PROVIDER` and `AMBIGUOUS_PROVIDER` there instead of during
-the boot.
+boot, so a token the root cannot reach, or one two of its imports disagree about,
+can raise `MISSING_PROVIDER` or `AMBIGUOUS_PROVIDER` at that read rather than
+during the boot.
 
 Gateway declaration errors also happen during bootstrap. Invalid envelopes,
 unknown events, and handler failures happen later while the gateway handles a

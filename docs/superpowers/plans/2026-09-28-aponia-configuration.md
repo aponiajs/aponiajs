@@ -1364,6 +1364,21 @@ of them export the token". Verifying a repair is a separate act from making it. 
 review on this branch read the new sentence against the code and passed it; the verification round
 that finally caught it did so by writing a probe for the diamond case nobody had thought to try.
 
+**A fifth repair, from the round that verified the fourth.** The same page then claimed that the
+compiler runs the root's own lookup — "a configuration that anything injects fails the boot there
+rather than at this read" — and it does not. `validateExports` locates from the exporting module
+(`graph-compiler.ts:87-90`), `validateDependencies` and `validateControllers` from the module that
+holds the injecting provider (`:104-108`, `:127-129`), and only `AponiaContainer.get` starts at the
+root (`container.ts:26`), which is what `application.get` calls. Measured,
+`.tmp/probe-root-read-vs-compile.probe.ts`: a configuration declared and injected inside a module
+that does not export it **boots** and then reads `MISSING_PROVIDER`; two exporting modules that
+declare it, one of which injects it, **boot** and then read `AMBIGUOUS_PROVIDER`; the root itself
+injecting the ambiguous token fails the boot; and a module that cannot resolve its own injection
+fails the boot. So the page states the two cases that stay silent, `docs/learn/10-errors.md`'s
+exception is softened to "can raise", and the rule the whole run keeps relearning is written down
+where the next round will meet it: **a sentence about a lookup is verified by probing the lookup's
+cases, not by reading the sentence.**
+
 - [ ] **Step 5: Run the documentation gates and commit**
 
 ```bash
