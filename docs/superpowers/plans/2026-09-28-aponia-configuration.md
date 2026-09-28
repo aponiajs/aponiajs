@@ -1235,7 +1235,7 @@ git commit -m "feat(cli): generate an application whose port is a validated conf
 - Modify: `docs/packages.md`, `docs/devtools.md`, `packages/devtools/AGENTS.md` (the narrowed sentences)
 - Modify: `packages/common/README.md`, `packages/platform-elysia/README.md`
 - Modify: `docs/cli.md`, `docs/architecture-and-style.md`, `docs/learn/02-install-and-generate.md` (the starter's layout listings gain `config.ts`)
-- Modify: `packages/cli/templates/application/AGENTS.md`, `packages/cli/templates/application/README.md`, `docs/learn/14-devtools.md` (the same "never reads the environment" sentence as the three below)
+- Modify: `packages/cli/templates/application/AGENTS.md`, `packages/cli/templates/application/README.md`, `docs/learn/14-devtools.md`, `packages/devtools/llms.txt` (the same "never reads the environment" sentence as the three below)
 - Modify: `packages/platform-elysia/llms.txt` (the wrapper's method list gains `get`)
 - Modify: `packages/platform-elysia/AGENTS.md` (the seam bullet names the second symbol seam)
 
@@ -1251,7 +1251,8 @@ token carries its schema; the loader's split (contract in `common`, the environm
 platform); validation once at boot, synchronously, with the two failure codes and what a reader does
 differently for each; the visibility rules a configuration inherits because it is an ordinary
 provider, including the two-instances-in-two-modules consequence; `application.get` and its
-root-visibility; that the resolved value is the application's and is not frozen or copied; and the
+root-visibility — stated as the graph enforces it: a token is reachable when the root module
+**declares** it or **imports a module that exports** it, never "on the root's chain"; that the resolved value is the application's and is not frozen or copied; and the
 deliberate limits — no `ConfigService`, no partial read, no asynchronous schema, no secret redaction,
 no framework use of the value, and boot-shaping variables staying with the entrypoint. Copy the
 snippets from the tests Task 2 wrote rather than writing new ones.
@@ -1276,11 +1277,13 @@ paragraphs already use.
 
 - [ ] **Step 3: Narrow the sentences this change makes false**
 
-Six published places say the framework never reads an environment variable, and this change makes one
+Seven published places say the framework never reads an environment variable, and this change makes one
 read possible — a read the application asks for, through a schema it wrote. Three of them were in this
 plan's list; the template's own `AGENTS.md` and `README.md`, which ship inside every generated
 application, and the devtools chapter were found by Task 4's review. The template's guide is the one
 that matters most: it is what a reader of a generated application is told about its own configuration.
+The seventh, `packages/devtools/llms.txt`, was found by Task 5's review after this list was written, and
+it ships in that package's npm tarball.
 `docs/devtools.md:48-53`, `docs/packages.md:91-93`, and `packages/devtools/AGENTS.md:30-32` each
 keep their decision (the framework consults no variable to choose its own behaviour) and gain the
 distinction: a declaration an application makes is the application's read, not the framework's. None
