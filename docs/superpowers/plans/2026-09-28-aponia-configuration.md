@@ -704,7 +704,9 @@ export function loadConfiguration<T>(
   if (typeof (result as { then?: unknown } | null)?.then === "function") {
     // Observed rather than abandoned: refusing the value does not make a rejected
     // promise handled, and an unhandled rejection outlives the refusal.
-    void (result as Promise<unknown>).catch(() => undefined);
+    // `Promise.resolve` rather than `.catch` on the result: the guard accepts any
+    // thenable, and a thenable that is not a promise has no `.catch` at all.
+    void Promise.resolve(result).catch(() => undefined);
 
     throw new AponiaError(
       "INVALID_CONFIGURATION",
