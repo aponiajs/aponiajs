@@ -7,6 +7,17 @@ bun add @aponiajs/devtools
 Opt-in devtools for a running Aponia application. The package is a leaf: nothing
 in the framework depends on it, and an application installs it deliberately.
 
+The surface is a mount, not a server: it registers one wildcard route,
+`ALL /__devtools/*`, on the application's own route table, and answers wherever
+the application answers — under `application.handle()` as well as `listen()`.
+Two consequences follow, and both are the owner's decision rather than a side
+effect. An application route that claims a devtools path wins it, because the two
+owners sit in one table and the more specific route answers. And the surface is
+reachable wherever the application is, so `enabled` is how an application keeps
+it out of production: this is a development surface, and `/requests` records
+request headers and bodies by default with no warning. A registration names no
+port and no host, because the application already owns both.
+
 Registration is the opt-in, and `enabled` is the switch:
 
 ```ts
@@ -42,17 +53,19 @@ const application = await AponiaFactory.create(AppModule, {
 ```
 
 - **Both spellings mount the same thing.** The same options object, the same
-  `enabled` gate, the same plugin: the same socket, the same endpoints, the same
+  `enabled` gate, the same plugin: the same mount at the same path, the same
+  endpoints, the same
   log stream, beside the plugins a module contributes. `devtoolsPlugin` answers
   `undefined` when the registration is disabled, and the factory mounts nothing
   for that value — not an inert plugin — so neither path can produce a boot that
   believes it mounted a surface it did not.
 - **Disabled mounts nothing.** A disabled registration is an inert module on the
   module path and an `undefined` entry on the option path: no provider, no
-  plugin, and no socket either way.
-- **Enabled is a plugin, not a provider.** The devtools plugin runs at
-  `onStart`, after every route has mounted, which is what lets it see the route
-  table a boot-time provider cannot.
+  plugin, and no route either way.
+- **Enabled is a plugin, not a provider.** The plugin is merged into the root
+  application where a module contributes it, so its wildcard route and its
+  request hooks sit in the application's own route table beside the routes a
+  controller mounted — which a boot-time provider could not do.
 - **The module path costs the root module its generated descriptor.** A
   registration is a call, and `aponia build` lowers a module only when every
   `imports` entry is a single identifier, so the module that declares it is
@@ -68,25 +81,12 @@ const application = await AponiaFactory.create(AppModule, {
   so nothing about it reaches `bun run inspect` or the artifact
   `aponia build` writes. That is the price of the bullet above, not a defect in
   it, and `imports` stays the place for a plugin a module can name.
-- **`onStart` requires `listen()`.** An application that only calls `handle()`
-  publishes nothing and is otherwise unaffected.
-- **Loopback by default.** The default is loopback because a debugging aid
-  should not be reachable by default. The devtools server binds `127.0.0.1` on
-  `port` (default `8000`) unless `host` names another address, which a container
-  that publishes its port, a remote development box, and a phone on the same
-  network may all need. A bind outside loopback is never silent: the start
-  reports one row under `Devtools` naming the `host` option, the address the
-  socket took, and `/requests` — which records request headers and bodies by
-  default, so the row states what is now reachable rather than leaving the
-  reader to infer it. `127.0.0.1`, any `127.x.x.x`, `::1`, and `localhost` are
-  the loopback spellings the warning is skipped for; the check is this package's
-  own and resolves nothing, so any other name warns. `localhost` is the one name
-  accepted without being resolved, and that is stated rather than hidden: a
-  hosts file that mapped it to one of this machine's public addresses would bind
-  it in silence. That row reports a state the socket really took rather than a
-  failure, so it is not guarded the way the refused bind below is: a logger that
-  throws on it fails the boot, and the socket the row describes is released
-  before the failure reaches the caller.
+- **The surface is a route, so `/routes` and `/flow` report it.** A
+  devtools-enabled application carries one more row than the same application
+  without it — `ALL /__devtools/*` for the mount, which `/routes` reports as the
+  table really is rather than re-deriving one without it.
+- **The surface stops with the application.** `close()` removes its route with
+  the application, so nothing outlives the listener that mounted it.
 - **The log stream is the application's own, and it is handed over twice.** Pass
   the same logger to the registration — `DevtoolsModule.register` or
   `devtoolsPlugin` — and to `AponiaFactory.create`:
@@ -112,19 +112,11 @@ const application = await AponiaFactory.create(AppModule, {
   holds the lines written through that one object — the platform's own, and an
   application's where it logs through the same reference, because the container
   hands no logger to a provider.
-- **A taken port never fails a boot.** The refused bind is reported under
-  `Devtools`, and the application continues without the devtools server. That
-  report is guarded, so a logger that throws on it cannot cost the boot either:
-  the same sentence is written to `stderr` instead, which is the only place this
-  package writes a process stream.
-- **The socket stops with the application.** `close()` stops the devtools server
-  the plugin started, so a restart binds a fresh socket instead of finding the
-  port still held.
 - **`GET /__devtools/meta` is the contract.** It answers the devtools contract
   version, the release that booted the application, the Elysia release installed
   in the application's own tree (`null` when there is none), which release
   supplied each artifact the boot adopted (`null` for one it did not), and when
-  the server started. A reader checks `contract` first and proceeds only on a
+  the surface started. A reader checks `contract` first and proceeds only on a
   shape it knows: this release answers `2`, because a `/requests` entry gained
   `id`, its `status` and `durationMs` became nullable, and one request began
   writing two entries.
@@ -133,7 +125,7 @@ const application = await AponiaFactory.create(AppModule, {
   and exports, and the WebSocket gateways with their events. The graph is the one
   the boot compiled — the descriptor artifact's when it adopted one — never the
   decorated classes it replaced, and it carries no routes: a route a controller
-  declares and a route the server answers are two different questions.
+  declares and a route the application answers are two different questions.
 - **`GET /__devtools/routes` reports the routes the application answers.** The
   table is read when the request arrives, so a route mounted on the native
   application after the boot appears too. Each route carries the method and path
@@ -192,11 +184,10 @@ const application = await AponiaFactory.create(AppModule, {
   requests: one request writes two of them. An entry carries
   `id`, and **one request's two entries carry the same `id`**, so a consumer groups
   by it and takes the last entry each request has in the window it reads — the
-  answer wherever the answer is still there to read. Two configurations are where
-  it is not, and in both the absence is the poll's rather than the application's: a
+  answer wherever the answer is still there to read. One configuration is where
+  it is not, and the absence is the poll's rather than the application's: a
   consumer lagging more than one window behind never reads an answer FIFO eviction
-  has already dropped, and an answer written after a second `listen()` goes to the
-  record the socket that is gone was serving. The first entry is written when
+  has already dropped. The first entry is written when
   the request arrives and states `status: null` and `durationMs: null` — this
   record saw the request and read no answer for it, which is neither an invented
   status nor a missing entry, and is what makes a request a plugin answered from
@@ -224,9 +215,9 @@ const application = await AponiaFactory.create(AppModule, {
   rather than through a copy each, so the two surfaces cannot disagree about one
   failure. That rendering does not fold, so a message that itself spans lines is
   published with them; the fold-to-one-line rendering is the other one, this
-  package's own `oneLine`, which the two rows written for a failure of its own
-  guard — the bind it could not take, and the route analysis it could not read —
-  embed, and it answers the literal `[unrenderable]` for any value whose read
+  package's own `oneLine`, which the row written for a failure of its own
+  guard — the route analysis it could not read —
+  embeds, and it answers the literal `[unrenderable]` for any value whose read
   refuses, including a value the shared rendering still states — `{}`, or
   `[object Object]`. A thrown value neither
   can state reads as the
@@ -240,7 +231,8 @@ const application = await AponiaFactory.create(AppModule, {
   `url`, which is what `capture.redact` is for, and a request that matched no
   route has no pattern to report — `path` carries the path that arrived, and
   `/routes` is the table that tells the two apart. The record belongs to one
-  application and one boot, so a second `listen()` begins a new one. One boundary
+  application rather than to a listener, so a second `listen()` continues it
+  rather than beginning a new one. One boundary
   is Elysia's rather than this package's: both hook phases run in mount order, so a
   plugin mounted ahead of the devtools registration that answers from its own
   `onRequest` ends the request before this record's hook runs, and that request
@@ -261,7 +253,7 @@ const application = await AponiaFactory.create(AppModule, {
   root that was compiled, never what the project declares: `"declared"` is not an
   endorsement of your source, and the silent case above reports it for a
   registration the compiled graph does not carry. `controllers` is the verdict
-  `aponia build` reaches for the project the server was started in: every
+  `aponia build` reaches for the project the application was started in: every
   `@Controller()` class its analysis reads, and per handler — one entry per
   property key, however many routes it declares — `"generated"` when the emitter
   renders an invoker for it, `"compiled"` when it declines and the running
@@ -271,20 +263,20 @@ const application = await AponiaFactory.create(AppModule, {
   endpoint should not load; the analysis is read once per process, and an
   unreachable one leaves `controllers` empty and reports why once under
   `Devtools` rather than failing the endpoint or answering it per poll. That
-  report is guarded the way the refused bind's is, so a logger that throws on it
+  report is guarded, so a logger that throws on it
   cannot turn the degraded half into a failed request. The
   project root is the process's working directory — the same root `aponia build`
   defaults to — and the endpoint is served only for a record that states the two
   boot facts it publishes. Two failures are not one: a record that states neither
-  is a path this server does not serve — the dispatcher's `404`, with `/meta` and
+  is a path this surface does not serve — the dispatcher's `404`, with `/meta` and
   the rest of the surface answering as they always did — while a project the
   analysis cannot read still answers, with the boot's half beside an empty
   controller list.
 - Every endpoint is a `GET`: any other method answers `405` before the path is
-  read, and a path the server does not serve answers `404`.
+  read, and a path the surface does not serve answers `404`.
 
 ```bash
-curl http://127.0.0.1:8000/__devtools/meta
+curl http://localhost:3000/__devtools/meta
 ```
 
 ## Documentation

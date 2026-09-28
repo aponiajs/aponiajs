@@ -169,9 +169,9 @@ declines to what answers next, so the Problem Details response is returned wheth
 reported the failure. `listen` guards its report too, so the failure the caller is handed is still the
 engine's. The stopping half of the lifecycle guards its report as well, so a teardown hook that throws
 while the application is closing is reported and the remaining hooks still run: one pool that refuses to
-close cannot stop `close()` from finishing. The devtools server guards the rows it writes for a port it
-could not take and for a project whose route analysis could not be read, so a logger that refuses one
-cannot cost the boot that continues without the devtools server, nor turn `/aot`'s degraded half into a
+close cannot stop `close()` from finishing. The devtools surface guards the row it writes for a project
+whose route analysis could not be read, so a logger that refuses it
+cannot turn `/aot`'s degraded half into a
 failed request. A logger that refuses at any of those sites is reported on `stderr` by a direct write
 rather than swallowed — the line naming the refusal as well as the report — because the channel that
 would normally carry the diagnostic is the one that failed. Everywhere else a throw is a throw — the

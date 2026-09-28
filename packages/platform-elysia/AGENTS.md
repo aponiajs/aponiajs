@@ -167,18 +167,10 @@ runtime boundary it describes.
   progress does not, because a throw on a progress line aborts work that has not
   yet reported a failure and aborting it is louder than continuing. So no
   `logger.log(...)` line is guarded, and a logger that throws while the boot logs
-  its routes fails the boot. `packages/devtools` guards the two of its own
-  reports that are failures — the row it writes for a port it could not take,
-  which a throw would otherwise turn into a boot that never listened, and the row
-  it writes for a route analysis it could not read, which a throw would otherwise
-  turn into a failed `/aot` request instead of the degraded half that endpoint
-  promises — and leaves the notice it writes for a bind outside loopback
-  unguarded, because that one reports a state the socket really took rather than
-  a failure. That
-  notice's throw is therefore a throw with a defined outcome rather than a
-  refusal report: the boot fails, and the socket the notice described is
-  released before the failure reaches the caller, because the handle was never
-  the caller's and nothing else could ever stop it. The rendering is
+  its routes fails the boot. `packages/devtools` has one report of its own that
+  is a failure — the row it writes for a route analysis it could not read, which
+  a throw would otherwise turn into a failed `/aot` request instead of the
+  degraded half that endpoint promises — and it is guarded. The rendering is
   `@aponiajs/common`'s `renderLogValue`, the same call the devtools log stream
   renders a line through, so the two surfaces cannot disagree about one failure;
   it is total, and a thrown value that refuses to be rendered is recorded as the

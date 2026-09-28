@@ -1,12 +1,11 @@
 # 14 · Devtools
 
 **Use when:** you want to see what the running application compiled and what
-answered every request that reached the record, without adding a route to the
-application or a log line to a handler.
+answered every request that reached the record, without adding a log line to a
+handler.
 
-`@aponiajs/devtools` starts a second HTTP server beside the application — on
-loopback unless the registration names another host — and serves what the boot
-compiled and what the application did. It is
+`@aponiajs/devtools` mounts an HTTP API on the application itself, under
+`/__devtools`, on the address the application already answers. It is
 a leaf package an application installs deliberately, and it is not part of the
 runtime: removing it changes nothing about how an application answers.
 
@@ -83,26 +82,23 @@ keeping is not what a `200` should say.
 | Option    | Meaning                                                     |
 | --------- | ----------------------------------------------------------- |
 | `enabled` | Whether the devtools mount at all. Required.                |
-| `port`    | The port to bind. Defaults to `8000`.                       |
-| `host`    | The address to bind. Defaults to `127.0.0.1`.               |
 | `logger`  | The logger `/logs` records, or `false`.                     |
 | `capture` | What `/requests` records: an opt-out per field, or `false`. |
 
-The default address is loopback because a debugging aid should not be reachable
-by default. `host` exists because a container that publishes its port, a remote
-development box, and a phone on the same network are all real cases — and a bind
-outside loopback is never silent: the start reports one row under `Devtools`
-naming the `host` option, the address the socket took, and `/requests`, which
-records request headers and bodies by default. `127.0.0.1`, anything in
-`127.x.x.x`, `::1`, and `localhost` are the loopback spellings the row is
-skipped for; the check is syntactic and resolves nothing, so any other name
-reports. `localhost` is the one name accepted without being resolved, so a hosts
-file that mapped it to one of this machine's public addresses would bind it in
-silence — the price of a check with no lookup in it.
+The surface is a mount rather than a server: it registers one wildcard route,
+`ALL /__devtools/*`, on the application's own route table. Two consequences
+follow, and both are the point rather than accidents. It answers wherever the
+application answers — under `application.handle()` as well as `listen()` — and an
+application route that claims a devtools path wins it, because the two owners sit
+in one table and the more specific route answers. And it is reachable wherever
+the application is, so `enabled` is how an application keeps it out of
+production: this is a development surface, and `/requests` records request
+headers and bodies by default with no warning. A registration names no port and
+no host, because the application already owns both.
 
 ## Read it
 
-While the application listens, `http://127.0.0.1:8000/__devtools` answers seven
+While the application listens, `http://localhost:3000/__devtools` answers seven
 `GET` endpoints:
 
 | Endpoint   | Answers                                                     |
@@ -116,7 +112,7 @@ While the application listens, `http://127.0.0.1:8000/__devtools` answers seven
 | `aot`      | What a build decided about the project's invokers           |
 
 ```bash
-curl http://127.0.0.1:8000/__devtools/routes
+curl http://localhost:3000/__devtools/routes
 ```
 
 `meta` comes first for a consumer, because it carries `contract` — the version
@@ -133,8 +129,9 @@ carrying the same `id`, so you group by `id` and keep the last entry each reques
 has in the window you read. An entry whose `status` is `null` is a request the
 record saw arrive and read no answer for — the record's own view, not a promise
 about the application: a poll that lagged more than one window behind never reads
-an answer FIFO eviction already dropped, and an answer written after a second
-`listen()` lands in the record the socket that is gone was serving.
+an answer FIFO eviction already dropped. The record belongs to the application
+rather than to a listener, so a second `listen()` continues the same window
+instead of starting an empty one.
 
 ## Three answers this chapter will not let you misread
 
@@ -172,9 +169,10 @@ The full list, including what the record leaves out on purpose, is in
 ## What it is not
 
 No UI, no assets, no browser bundle: the payloads are the product and a consumer
-renders them. No route on the application. Nothing it serves mutates application
-state — every endpoint is a read. The address is `127.0.0.1` unless you name a
-`host`, and a port it cannot take is reported under `Devtools` and leaves the
-application running.
+renders them. Nothing it serves mutates application state — every endpoint is a
+read. Its one wildcard route lives in the application's own table, so `/routes`
+and `/flow` report one more row, `ALL /__devtools/*`, than the same application
+without the surface, and an application route that claims a devtools path wins
+it.
 
 Next: [15 · Files](./15-files.md) · Deep dive: [devtools](../devtools.md)

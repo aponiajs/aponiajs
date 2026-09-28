@@ -1,7 +1,7 @@
 {
   "name": "@aponiajs/devtools",
   "version": "0.6.0-alpha.32",
-  "description": "Opt-in devtools for a running Aponia application, on loopback by default.",
+  "description": "Opt-in devtools for a running Aponia application, served by the application itself.",
   "homepage": "https://github.com/aponiajs/aponiajs#readme",
   "bugs": {
     "url": "https://github.com/aponiajs/aponiajs/issues"

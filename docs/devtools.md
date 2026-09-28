@@ -1,20 +1,29 @@
 # Devtools
 
-`@aponiajs/devtools` publishes an HTTP API — loopback by default, and widened
-only by naming a host — that answers what a running application **is** and what
-it **did**: the module graph it compiled, the routes
-it actually answers, the stages each route passes through, the lines its logger
-wrote, the requests that reached its record and what answered them, and what a
-build decides about its invokers.
+`@aponiajs/devtools` mounts an HTTP API on the application itself, under
+`/__devtools`, on the address the application already answers. It reports what a
+running application **is** and what it **did**: the module graph it compiled, the
+routes it actually answers, the stages each route passes through, the lines its
+logger wrote, the requests that reached its record and what answered them, and
+what a build decides about its invokers.
 
 It is a leaf package: nothing in the framework depends on it, and an application
 installs it deliberately. It ships no UI, no assets, and no browser bundle —
 the payloads are the product, and a consumer renders them. Nothing it serves
 mutates application state: every endpoint is a read.
 
-The devtools server is a separate `Bun.serve` socket. It registers no route on
-the application, so it can be enabled, disabled, or fall over without changing
-a single answer the application gives.
+The surface is a mount rather than a server. It registers one wildcard route,
+`ALL /__devtools/*`, on the application's own route table, and every request that
+reaches it is answered by the surface's dispatcher. Two consequences follow, and
+both are the owner's decision rather than a side effect:
+
+- **The surface is part of the application's route table.** It answers wherever
+  the application answers — under `application.handle` as well as `listen()` —
+  and an application route that claims a devtools path wins it, because the two
+  owners are in one table and the more specific route answers.
+- **It is reachable wherever the application is.** This is a development
+  surface, `enabled` is how an application keeps it out of production, and
+  `/requests` records request headers and bodies by default with no warning.
 
 ## Registration
 
@@ -28,7 +37,6 @@ import { DevtoolsModule } from "@aponiajs/devtools";
   imports: [
     DevtoolsModule.register({
       enabled: Bun.env.NODE_ENV !== "production",
-      port: 8000,
       logger: appLogger,
       capture: { redact: ["authorization"] },
     }),
@@ -37,16 +45,14 @@ import { DevtoolsModule } from "@aponiajs/devtools";
 export class AppModule {}
 ```
 
-| Option    | Meaning                                                                                                    |
-| --------- | ---------------------------------------------------------------------------------------------------------- |
-| `enabled` | Whether the devtools mount at all. Required, and the only required option.                                 |
-| `port`    | The port to bind. Defaults to `8000`.                                                                      |
-| `host`    | The address to bind. Defaults to `127.0.0.1`; anything outside loopback is reported once under `Devtools`. |
-| `logger`  | The logger `/logs` records, or `false`. See [the log stream](#logs).                                       |
-| `capture` | What `/requests` records: an opt-out per field, or `false` for none of it.                                 |
+| Option    | Meaning                                                                    |
+| --------- | -------------------------------------------------------------------------- |
+| `enabled` | Whether the devtools mount at all. Required, and the only required option. |
+| `logger`  | The logger `/logs` records, or `false`. See [the log stream](#logs).       |
+| `capture` | What `/requests` records: an opt-out per field, or `false` for none of it. |
 
 `enabled: false` is not a plugin that does nothing. It is an inert module — no
-provider, no native plugin, and therefore no socket — so a boot that mounts it
+provider, no native plugin, and therefore no route — so a boot that mounts it
 answers exactly as a boot that never imported the package. The condition above
 is the application's own decision; the framework never reads an environment
 variable to choose its own behaviour, because an environment variable is not a
@@ -82,7 +88,6 @@ const application = await AponiaFactory.create(AppModule, {
   plugins: [
     devtoolsPlugin({
       enabled: Bun.env.NODE_ENV !== "production",
-      port: 8000,
       logger: appLogger,
     }),
   ],
@@ -90,7 +95,7 @@ const application = await AponiaFactory.create(AppModule, {
 ```
 
 It takes the same options, gates on the same `enabled`, and mounts the same
-thing: the same socket, the same endpoints, the same log stream, beside the
+thing at the same path: the same endpoints, the same log stream, beside the
 plugins a module contributes. An entry is an `undefined` rather than an inert
 plugin when the registration is disabled, and the factory mounts nothing for
 that value, so neither path can produce a boot that believes it mounted a
@@ -104,42 +109,13 @@ whose source a module can name belongs
 itself); this is for the plugin a module cannot declare, and it is what the
 generated application starter does.
 
-Three facts about the socket:
-
-- **The address defaults to `127.0.0.1`, and `host` is what moves it.** A
-  debugging aid should not be reachable by default, so a registration that names
-  no host gets loopback; the option exists because a container that publishes
-  its port, a remote development box, and a phone on the same network are all
-  real cases. Widening the bind is permitted and never silent: the start reports
-  one row under `Devtools` naming the `host` option, the address the socket
-  took, and `/requests` — which records request headers and bodies by default,
-  so binding it where the network can reach it puts credentials on the network.
-  A row that said only "reachable from the network" would leave the reader to
-  guess that. `127.0.0.1`, any `127.x.x.x`, `::1`, and `localhost` are
-  the loopback spellings the warning is skipped for; the check names them rather
-  than resolving anything, so **any other name is reported**, and every other
-  value — `0.0.0.0` included — with it. `localhost` is the one name accepted
-  without being resolved, and that is stated rather than hidden: a hosts file
-  that mapped it to one of this machine's public addresses would bind it in
-  silence. That is the price of a check with no lookup in it, accepted with the
-  alternative in view — a resolver in a debugging aid's start path would decide
-  what to warn about from the machine it happens to run on. That row reports a
-  state the socket really took rather than a failure, so it is **not** guarded
-  the way the refusal below is: a logger that throws on it fails the boot, and
-  the socket the row describes is released before the failure reaches the
-  caller, so a bind nobody could report does not also hold the port.
-- **A taken port never fails a boot.** The refused bind is reported under the
-  `Devtools` context with the reason, and the application continues without the
-  devtools server. That report is guarded: a logger that throws on it is not
-  allowed to cost the application the boot, and the same sentence is written to
-  `stderr` instead, so the refusal is never fatal. Only a start
-  that succeeded becomes the socket the plugin holds.
-- **`onStart` requires `listen()`.** The devtools API starts when the
-  application starts listening, after every route has mounted — which is what
-  lets it see the route table. An application that only calls
-  `application.handle()` — a test, typically — publishes nothing and is
-  unaffected. `close()` stops the devtools socket with the application, so a
-  restart binds a fresh one instead of finding the port still held.
+The surface starts with the application and stops with it. Its own row is
+mounted while the application is built, before `listen()` is called, so it
+answers under `application.handle()` in a test and on the address a `listen()`
+takes in a running application, and `close()` removes it with the application
+rather than leaving anything behind. Nothing mounts it on a second address: a
+registration names no port and no host, because the application already owns
+both.
 
 ## The API
 
@@ -155,11 +131,16 @@ Seven endpoints, all `GET`, all under `/__devtools`:
 | `/__devtools/requests` | The requests that reached the record and what answered them, from a cursor |
 | `/__devtools/aot`      | What a build decides, beside what the boot did                             |
 
+The surface is a route, so `/routes` and `/flow` also report it: both carry one
+more row, `ALL /__devtools/*`, alongside the application's own. That extra row
+is the mount itself and not a defect — those endpoints report the table the
+application really answers, and the surface's wildcard is genuinely in it.
+
 ```bash
-curl http://127.0.0.1:8000/__devtools/meta
+curl http://localhost:3000/__devtools/meta
 ```
 
-Any other method answers `405` before the path is read, and a path this server
+Any other method answers `405` before the path is read, and a path the surface
 does not serve answers `404`. Some paths are served conditionally, and the same
 `404` is the answer when they are not: an endpoint whose fact the boot record
 does not hold is not registered rather than answered with a guess, exactly as a
@@ -209,7 +190,7 @@ otherwise — never the decorated classes, and it is the same projection
 `bun run inspect` prints.
 
 It carries no `routes` key. The graph states the routes a controller _declares_
-while `/routes` states the routes the server _answers_, and publishing both
+while `/routes` states the routes the application _answers_, and publishing both
 under one name would leave a consumer choosing between two answers to one
 question. `/routes` is authoritative for routes.
 
@@ -391,14 +372,13 @@ An entry carries:
 The first is written when the request arrives, before anything can state an
 answer, and the second when the answer completes. A consumer groups by `id` and
 takes the **last** entry for each request, which is the answer wherever the answer
-is still in the window the consumer reads. Two configurations are where it is not,
-and neither is a defect of the record: a consumer that lags more than one window
+is still in the window the consumer reads. One configuration is where it is not,
+and it is not a defect of the record: a consumer that lags more than one window
 behind never reads an answer FIFO eviction has already dropped, so the last entry
-it holds for that request stays the pending one; and an answer written after a
-second `listen()` goes to the record the socket that is gone was serving, which a
-poll of the new one never reads. In both, `status: null` on the last entry a
-consumer holds means this poll read no answer, never that the application answered
-none. That is also why the cursor counts entries rather than requests: it moves by
+it holds for that request stays the pending one. There, `status: null` on the
+last entry a consumer holds means this poll read no answer, never that the
+application answered none. That is also why the cursor counts entries rather than
+requests: it moves by
 two for every request the application answered, and a poll whose `since` sits
 between a request's two entries is served the second one rather than a request
 counted twice.
@@ -460,8 +440,8 @@ different fact from a request that carried none. Four further rules:
   through a copy each, so they cannot disagree about one failure. That rendering
   does not fold, so a message that itself spans lines is stated with them. The
   fold-to-one-line rendering is the other one: this package's own `oneLine`, which
-  the two rows written for a failure of its own guard — the bind it could not take,
-  and the route analysis it could not read — embed. It answers the literal
+  the row written for a failure of its own guard — the route analysis it could not
+  read — embeds. It answers the literal
   `[unrenderable]` for any value whose read refuses, including a value the shared
   rendering still states — `{}`, or `[object Object]`. A thrown value neither
   can state — one that refuses both the JSON
@@ -476,8 +456,10 @@ different fact from a request that carried none. Four further rules:
   exception is reported where it always was, under `ExceptionsHandler` in
   `/logs`.
 
-The record belongs to one application and one boot: a second `listen()` serves a
-new empty window rather than extending one a socket that is gone was serving.
+The record belongs to one application rather than to a listener: a second
+`listen()` continues the window the boot opened rather than starting an empty
+one, and the ids never restart, because both the window and the counter belong to
+the application.
 
 `durationMs` is measured from the moment the request reached this package's
 arrival hook to a reading the completion path takes before its first read of the
@@ -536,21 +518,19 @@ The two degradations are different and are not to be collapsed:
   answers, with `controllers` empty and one row under `Devtools` naming why. That
   is a degraded half, not an absence, and `controllers` is empty exactly when no
   verdicts are available — never as a way of saying "this project declares no
-  controllers". That row is guarded the way the refused bind's is, so a logger
-  that throws on it cannot turn the degraded half into a failed request: the
-  sentence is written to `stderr` instead, the line naming the refusal.
+  controllers". That row is guarded so a logger that throws on it cannot turn the
+  degraded half into a failed request: the sentence is written to `stderr`
+  instead, the line naming the refusal.
 
 ## Accepted limitations
 
 These are the boundaries this package states rather than hides.
 
-- **Data freshness is per boot.** The server publishes what it read at startup.
+- **Data freshness is per boot.** The surface publishes what it read at startup.
   In development `bun --watch` restarts on every save, so this is current; a
   long-running process does not re-read the filesystem. `/routes` and `/flow` are
   the exceptions by design: the mounted route table belongs to the running
   application, which may mount another route before it listens.
-- **`onStart` requires `listen()`.** An application that only uses `handle()`
-  publishes nothing.
 - **A stale invoker artifact is still served.** If a handler's parameter
   decorators change and the committed artifact is not regenerated, the platform
   uses the stale invoker and binds the handler's arguments as the old source

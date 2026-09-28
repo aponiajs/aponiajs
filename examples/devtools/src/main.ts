@@ -7,12 +7,12 @@ export async function bootstrap(): Promise<void> {
   const application = await AponiaFactory.create(AppModule, {
     logger: appLogger,
     // The one object reaches both, which is what makes `/__devtools/logs` carry
-    // the boot's own lines. The surface binds loopback and reports rather than
-    // silences a `host` that widens it.
+    // the boot's own lines. The surface mounts on this application's own route
+    // table under `/__devtools`, on the address `listen` is given, so it is
+    // reachable wherever the application is.
     plugins: [
       devtoolsPlugin({
         enabled: Bun.env.ENABLE_DEVTOOLS !== "false",
-        port: Number(Bun.env.DEVTOOLS_PORT ?? 3111),
         logger: appLogger,
       }),
     ],

@@ -195,8 +195,8 @@ it.
   through injection or `application.get`.
 - **Boot-shaping variables stay with the entrypoint.** A variable the `plugins`
   option or the logger needs before a container exists cannot come from a
-  declaration. The starter's `NODE_ENV` and `DEVTOOLS_PORT` stay inline reads in
-  `src/main.ts`; only the value the application reads after the boot moves into
+  declaration. The starter's `NODE_ENV` stays an inline read in `src/main.ts`;
+  only the value the application reads after the boot moves into
   `src/config.ts`.
 
 ## Documentation
