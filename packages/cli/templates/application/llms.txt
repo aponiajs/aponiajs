@@ -11,6 +11,7 @@ rules, are in [`AGENTS.md`](AGENTS.md).
 - [Architecture and style](https://github.com/aponiajs/aponiajs/blob/main/docs/architecture-and-style.md): application layout, naming, and expected patterns
 - [Modules and dependency injection](https://github.com/aponiajs/aponiajs/blob/main/docs/dependency-injection.md): tokens, visibility, providers, and the error codes raised on failure
 - [Configuration](https://github.com/aponiajs/aponiajs/blob/main/docs/configuration.md): declaring the application's configuration as a schema, validating it once at boot, and reading the validated value back
+- [The generated application](https://github.com/aponiajs/aponiajs/blob/main/docs/learn/02-install-and-generate.md): the starter `aponia new` writes, including the `src/config.ts` in which it declares its configuration
 - [Controllers and routes](https://github.com/aponiajs/aponiajs/blob/main/docs/learn/05-controllers-and-routes.md): declaring routes and reading request input
 - [Validation](https://github.com/aponiajs/aponiajs/blob/main/docs/learn/06-validation.md): route schemas and one-schema-per-class validation models
 - [WebSocket gateways](https://github.com/aponiajs/aponiajs/blob/main/docs/websockets.md): the message envelope and gateway lifecycle

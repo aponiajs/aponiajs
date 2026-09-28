@@ -272,15 +272,18 @@ main.ts
        logger: appLogger,
        plugins: [devtoolsPlugin({ enabled, logger: appLogger })],
      })
-  -> AppModule
-  -> AppController
-  -> AppService
+     -> AppModule
+        -> provideConfiguration(AppConfig)
+     -> AppController
+     -> AppService
+  -> application.get(AppConfig).port -> listen
 ```
 
 `main.ts` owns only bootstrap configuration, the two generated artifacts, the
-logger it holds, the devtools plugin, and `listen`. Decorated controllers own
-routes. Services own application behavior. Generated application code does not
-import Elysia or low-level runtime descriptors.
+logger it holds, the devtools plugin, the read it passes to `listen`, and
+`listen`. Decorated controllers own routes. Services own application behavior.
+Generated application code does not import Elysia or low-level runtime
+descriptors.
 
 `src/logger.ts` holds the application's logger, and `src/main.ts` hands that one
 object to both `AponiaFactory.create` and `devtoolsPlugin`, so every bootstrap

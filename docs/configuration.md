@@ -16,10 +16,17 @@ import { defineConfiguration } from "@aponiajs/common";
 import { z } from "zod";
 
 export const AppConfig = defineConfiguration(
-  z.object({ port: z.coerce.number().int().positive().default(3000) }),
+  z
+    .object({ PORT: z.coerce.number().int().positive().default(3000) })
+    .transform(({ PORT }) => ({ port: PORT })),
   "app.config",
 );
 ```
+
+The schema's keys are the environment's variable names: the schema above reads
+`PORT`, and one declaring `port` would read a lowercase variable nothing defines
+and silently apply the default whatever `PORT` said. The transform is what gives
+the application the name it reads.
 
 The schema is not a token by itself. `Token<T>` is a class or an injection
 token, and a validation schema is neither, so it has no identity the graph's
@@ -48,7 +55,10 @@ class ServerConfigReader {
   constructor(@Inject(AppConfig) readonly config: { port: number }) {}
 }
 
-@Module({ providers: [provideConfiguration(AppConfig), ServerConfigReader] })
+@Module({
+  providers: [provideConfiguration(AppConfig), ServerConfigReader],
+  exports: [AppConfig],
+})
 export class AppModule {}
 ```
 
@@ -68,7 +78,7 @@ The schema validates the process environment by default. `source` replaces it,
 which is what a test uses to validate a literal without touching `process.env`:
 
 ```ts
-@Module({ providers: [provideConfiguration(AppConfig, { source: { port: "5000" } })] })
+@Module({ providers: [provideConfiguration(AppConfig, { source: { PORT: "5000" } })] })
 class AppModule {}
 ```
 
@@ -79,16 +89,19 @@ once, synchronously, before the application listens — and whether or not a
 service injects it. Two codes can fail that instantiation, and each asks for a
 different repair.
 
-| Code                          | `details`                   | Raised when                                                                    |
-| ----------------------------- | --------------------------- | ------------------------------------------------------------------------------ |
-| `INVALID_CONFIGURATION`       | `{ configuration, reason }` | The declaration is not a Standard Schema, or the schema answers asynchronously |
-| `INVALID_CONFIGURATION_VALUE` | `{ configuration, issues }` | The schema refused the source record                                           |
+| Code                          | `details`                   | Raised when                                                                  |
+| ----------------------------- | --------------------------- | ---------------------------------------------------------------------------- |
+| `INVALID_CONFIGURATION`       | `{ configuration, reason }` | The declaration or the schema's answer cannot be used; `reason` states which |
+| `INVALID_CONFIGURATION_VALUE` | `{ configuration, issues }` | The schema refused the source record                                         |
 
 `INVALID_CONFIGURATION` is a defect in the declaration rather than in the value.
-`reason: "not-a-standard-schema"` means the schema is not a schema at all: the
-loader shape-guards `~standard`, so `undefined`, a primitive, a `null` member,
-and a missing `validate` are all refused here rather than through an engine
-`TypeError`. `reason: "asynchronous-validation"` means the schema's `validate`
+`reason: "not-a-standard-schema"` covers both halves of that read, because
+neither a declaration nor an answer is usable when it is not shaped the way the
+protocol says. The loader shape-guards `~standard`, so a declared value that is
+`undefined`, a primitive, `null`, or an object with no `validate` is refused here
+rather than through an engine `TypeError`; so is a validator's answer that is
+`null`, a primitive, or neither a value nor `issues`, which is not a result
+either. `reason: "asynchronous-validation"` means the schema's `validate`
 returned a promise — a factory is invoked inside a synchronous resolve, so an
 awaited validator cannot be injected. The refusal observes the promise rather
 than abandoning it, so it never becomes an unhandled rejection. Both reasons are
@@ -135,11 +148,15 @@ const application = await AponiaFactory.create(AppModule, { logger: false });
 await application.listen(application.get(AppConfig).port);
 ```
 
-Root visibility applies, exactly as it does for any other read from the root: a
-token no module on the root's chain exports raises `MISSING_PROVIDER`. So does a
-read on an application no boot produced — a hand-constructed wrapper holds no
-container — and the message says which of the two it was. Because the read goes
-through the container's cache, two reads of one token answer the same object.
+The token is reachable exactly when the graph makes it reachable from the root
+module, which is the rule the dependency injection guide states: `locate` checks
+the root's own providers first, so a token the root module declares is reachable
+whether or not it exports it, and then the imports that export the token.
+Anything else raises `MISSING_PROVIDER` — a token only a module the root never
+imports declares, for instance. So does a read on an application no boot
+produced, because a hand-constructed wrapper holds no container, and the message
+says which of the two it was. Because the read goes through the container's
+cache, two reads of one token answer the same object.
 
 ## The value
 
