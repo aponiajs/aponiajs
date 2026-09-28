@@ -30,8 +30,9 @@ type Expect<TAssertion extends true> = TAssertion;
 /**
  * The compile-time half of this lane: what a consumer reads off the wire.
  *
- * This lane opens no socket. The transport is asserted in `tests/*.test.ts`,
- * where a case binds port `0` and fetches the address the plugin reported; here
+ * This lane opens no socket, because there is none to open: the surface is a
+ * route the application mounts and the transport is asserted in `tests/*.test.ts`
+ * over `application.handle`. Here
  * only the public contract is compiled, so a payload field that changes shape,
  * or a `contract` literal that stops matching the value the endpoint writes,
  * fails `bun run check` and `vp test` without any request being made.
@@ -91,8 +92,6 @@ interface AponiaRequestRecordFields {
  */
 const conformanceOptions: DevtoolsOptions = {
   enabled: true,
-  port: 8000,
-  host: "127.0.0.1",
   logger: false,
   capture: {
     enabled: true,
@@ -145,7 +144,6 @@ test("the options surface accepts the documented capture policy", () => {
   });
   expect(conformanceCapture.enabled).toBe(false);
   expect(conformanceOptions.logger).toBe(false);
-  expect(conformanceOptions.host).toBe("127.0.0.1");
 });
 
 test("every endpoint payload is constructible from the published types", () => {

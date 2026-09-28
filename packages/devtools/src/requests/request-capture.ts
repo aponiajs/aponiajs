@@ -33,7 +33,7 @@ export interface ResolvedCapture {
  * belongs to, when it arrived, and the request as it arrived.
  *
  * The request-side facts are read here, at arrival, rather than from the
- * after-response context, because by then the request the socket read no longer
+ * after-response context, because by then the request no longer
  * states them: its URL survives, but its header list reads empty unless
  * something iterated it during the request — a probe of the installed Elysia
  * reads `[]` in an after-response hook and the six headers a client sent as soon
@@ -129,8 +129,9 @@ export interface RequestCapture {
    * declared it: a record held in one variable would be one window for both
    * applications, and each of them would read the other's traffic. The spec
    * draws the same boundary from the other side — the record is in memory, per
-   * boot, and a restart is a new record — and a second `listen()`, which serves
-   * the same application over a second socket, is that restart.
+   * boot, and a restart is a new record — and a second `listen()` is not that
+   * restart: it serves the same application, and the record already opened for it
+   * goes on being served.
    *
    * `mappedExceptions` is the map the platform's own default mapping records
    * the exception it answered into, read off the boot record. It is filed
@@ -213,9 +214,10 @@ export function resolveCapture(capture: DevtoolsOptions["capture"]): ResolvedCap
  * The hooks are contributed to the plugin the registration mounts, so they are
  * built here; the record they fill is opened by each boot, for the application
  * it serves. A request that arrives for an application no boot opened a record
- * for leaves no entry, and none is lost: an application that only calls
- * `handle()` publishes nothing, and a boot that never started has no socket to
- * serve a record over.
+ * for leaves no entry, and none is lost: the plugin opens that application's
+ * record on the first request it sees, but no boot published an application on
+ * the store, so there is no boot record to file and an entry would claim a boot
+ * that never happened.
  *
  * The arrival stamp is keyed by the `Request` object in a `WeakMap`, which
  * outlives nothing and mutates nothing: the stamp is gone the moment the answer
@@ -434,7 +436,7 @@ function routePattern(route: unknown): string | undefined {
  * arrived with.
  *
  * The URL is parsed rather than reported whole, because the origin is the
- * socket's and not the application's: an entry states the address a client
+ * client's and not the application's: an entry states the address a client
  * asked for, not the address this boot happened to bind. A URL this platform
  * cannot parse is recorded as it arrived rather than dropped — this hook may not
  * throw, because a throw here is a failed request, and a record that stated

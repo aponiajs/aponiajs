@@ -87,7 +87,7 @@ export function readAotFacts(
  * about this project's controllers, beside what this boot decided about the
  * artifacts a build produces. The two halves have different owners and fail
  * differently, which is why the endpoint answers both in one payload. The boot's
- * facts are already recorded when the socket starts, so they are served whether
+ * facts are already recorded when the surface first answers, so they are served whether
  * or not a project is on disk and whether or not the analysis loaded. The
  * per-handler verdicts come from `@aponiajs/cli`, which is imported on the first
  * request to this endpoint and never at boot: it carries `ts-morph` and a

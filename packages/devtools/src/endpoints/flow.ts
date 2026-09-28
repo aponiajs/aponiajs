@@ -691,7 +691,7 @@ function declaresHalf(
  * this release can read.
  *
  * The read is guarded because the record is data this package did not write and
- * this handler runs inside `Bun.serve`, where a throw is a failed request: a
+ * this handler answers a request, where a throw is that request's failure: a
  * `Map` that only borrows `Map.prototype`, and one whose `get` is overridden,
  * both refuse a lookup they are asked for, and an entry may be a value whose
  * half refuses to be read at all. Every shape that does not state a boolean

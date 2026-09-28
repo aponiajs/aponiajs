@@ -1,21 +1,25 @@
 import { expect, spyOn, test } from "bun:test";
-import { Controller, Get, Logger, Module } from "@aponiajs/common";
+import {
+  Controller,
+  Get,
+  Module,
+  type ClassToken,
+  type DynamicModule,
+  type LoggerService,
+} from "@aponiajs/common";
 import {
   AponiaFactory,
   type AponiaElysiaApplication,
   type AponiaInvokerArtifact,
 } from "@aponiajs/platform-elysia";
+import { Elysia } from "elysia";
 import {
   DevtoolsModule,
   aponiaVersion,
-  devtoolsContractVersion,
+  devtoolsPathPrefix,
+  devtoolsPlugin,
   type AponiaMetaPayload,
 } from "../src/index.ts";
-
-// `0` is the standard "no fixed port" sentinel. The plugin now binds it, and
-// every case below reads the address the socket took back out of the report it
-// published, so none of them depends on a port it guessed.
-const ephemeralPort = 0;
 
 @Controller("health")
 class HealthController {
@@ -25,28 +29,60 @@ class HealthController {
   }
 }
 
-@Module({ imports: [DevtoolsModule.register({ enabled: false })] })
-class DisabledModule {}
+/**
+ * A controller that claims one devtools path.
+ *
+ * Built per case rather than declared once, because the path is the case's own,
+ * and the collision it pins is between one registration and one decorator rather
+ * than between two file-level declarations.
+ */
+function controllerAnswering(path: string): ClassToken<unknown> {
+  @Controller()
+  class AnsweringController {
+    @Get(path)
+    answer(): { readonly from: string } {
+      return { from: "application" };
+    }
+  }
 
-@Module({
-  imports: [DevtoolsModule.register({ enabled: true, port: ephemeralPort })],
-  controllers: [HealthController],
-})
-class EnabledModule {}
+  return AnsweringController as ClassToken<unknown>;
+}
 
-@Module({ imports: [DevtoolsModule.register({ enabled: true })] })
-class DefaultPortModule {}
+/** The root one case boots: the registration under test and the routes beside it. */
+function rootWith(registration: DynamicModule, controllers: readonly ClassToken<unknown>[] = []) {
+  @Module({ imports: [registration], controllers })
+  class DevtoolsRootModule {}
 
-/** A registration that widens the bind, which is permitted and reported. */
-@Module({
-  imports: [DevtoolsModule.register({ enabled: true, port: ephemeralPort, host: "0.0.0.0" })],
-  controllers: [HealthController],
-})
-class WidenedHostModule {}
+  return DevtoolsRootModule;
+}
+
+interface BootOptions {
+  /** Whether the registration under test is enabled. Default true. */
+  readonly enabled?: boolean;
+  /** The controllers mounted beside the devtools registration. */
+  readonly controllers?: readonly ClassToken<unknown>[];
+  /** An invoker artifact to boot with, when a case asserts the boot's stamp. */
+  readonly invokers?: AponiaInvokerArtifact;
+}
+
+/**
+ * Boots one application with the module path's own registration.
+ *
+ * `handle` is the entrypoint every case below drives, which is the point of the
+ * mount: the surface is served by the application, so a case does not need a
+ * socket, a port, or a report to learn where to send a request.
+ */
+async function bootWithDevtools(options: BootOptions = {}): Promise<AponiaElysiaApplication> {
+  const registration = DevtoolsModule.register({ enabled: options.enabled ?? true });
+
+  return AponiaFactory.create(rootWith(registration, options.controllers), {
+    logger: false,
+    ...(options.invokers === undefined ? {} : { invokers: options.invokers }),
+  });
+}
 
 interface CapturedOutput {
   readonly rows: () => readonly string[];
-  readonly stderrRows: () => readonly string[];
   readonly restore: () => void;
 }
 
@@ -54,79 +90,22 @@ interface CapturedOutput {
  * The devtools plugin reports through the framework logger, which writes to
  * `process.stdout`. Capturing it here keeps Elysia's own startup banner out of
  * the assertion: only the rows carrying the `Devtools` context are read.
- *
- * `stderr` is captured beside it because one report travels there instead when
- * the logger refuses it: `error` and `fatal` rows are written to `stderr` by
- * the framework logger, and a refused bind the logger would not carry is
- * repeated there by a direct write.
  */
 function captureOutput(): CapturedOutput {
   const chunks: string[] = [];
-  const errors: string[] = [];
   const write = spyOn(process.stdout, "write").mockImplementation((chunk) => {
     chunks.push(String(chunk));
-    return true;
-  });
-  const writeError = spyOn(process.stderr, "write").mockImplementation((chunk) => {
-    errors.push(String(chunk));
     return true;
   });
 
   return {
     rows: () => chunks.join("").split("\n"),
-    stderrRows: () => errors.join("").split("\n"),
-    restore: () => {
-      write.mockRestore();
-      writeError.mockRestore();
-    },
+    restore: () => write.mockRestore(),
   };
 }
 
 function devtoolsReports(output: CapturedOutput): readonly string[] {
   return output.rows().filter((row) => row.includes("[Devtools]"));
-}
-
-/**
- * The loopback address one report names. Reading it back is what keeps a case
- * off a fixed port: the port belongs to the socket, and the report is where the
- * socket published it.
- */
-function reportedAddress(report: string): string {
-  const address = /http:\/\/127\.0\.0\.1:\d+/.exec(report)?.[0];
-
-  if (address === undefined) {
-    throw new Error(`the devtools report named no loopback address: ${report}`);
-  }
-
-  return address;
-}
-
-/**
- * The port a freshly bound socket took. Bun types a server's port as optional —
- * a unix socket has none — so a case that needs the number states that it read
- * one rather than defaulting it.
- */
-function boundPort(server: { readonly port?: number }): number {
-  if (server.port === undefined) {
-    throw new Error("the blocker bound no port to take");
-  }
-
-  return server.port;
-}
-
-/**
- * A root module whose devtools port is only known once something has taken it.
- * The registration carries the port, so the decorated module has to be built
- * after the blocker bound its socket.
- */
-function devtoolsModuleOn(port: number) {
-  @Module({
-    imports: [DevtoolsModule.register({ enabled: true, port })],
-    controllers: [HealthController],
-  })
-  class TakenPortModule {}
-
-  return TakenPortModule;
 }
 
 test("register returns an inert module when disabled and a plugin module when enabled", () => {
@@ -150,7 +129,9 @@ test("register returns an inert module when disabled and a plugin module when en
 test.serial("a listening disabled application mounts no plugin", async () => {
   const output = captureOutput();
   try {
-    const application = await AponiaFactory.create(DisabledModule);
+    const application = await AponiaFactory.create(
+      rootWith(DevtoolsModule.register({ enabled: false })),
+    );
     await application.listen(0);
     await application.close();
 
@@ -161,293 +142,183 @@ test.serial("a listening disabled application mounts no plugin", async () => {
   }
 });
 
-test.serial("an enabled module mounts its plugin, which serves the address it bound", async () => {
-  const output = captureOutput();
-  let application: AponiaElysiaApplication | undefined;
-  try {
-    application = await AponiaFactory.create(EnabledModule);
-    await application.listen(0);
-
-    expect(output.rows().join("")).toContain(
-      "ElysiaPluginModule[devtools] dependencies initialized",
-    );
-
-    const reports = devtoolsReports(output);
-    expect(reports).toHaveLength(1);
-
-    // The one report names the port the socket took rather than the sentinel
-    // the registration asked for, and that address is what answers for as long
-    // as the application that started it is listening.
-    const address = reportedAddress(reports[0] ?? "");
-    const response = await fetch(`${address}/__devtools/meta`);
-
-    expect(response.status).toBe(200);
-    expect(((await response.json()) as AponiaMetaPayload).contract).toBe(devtoolsContractVersion);
-  } finally {
-    // Closing in the `finally` rather than after the last assertion: a failing
-    // assertion would otherwise leave the application and the devtools socket
-    // it started listening for the rest of the process.
-    await application?.close();
-    output.restore();
-  }
-});
-
-/**
- * Whether a loopback address still answers. A socket that has stopped refuses
- * the connection, which is what `fetch` reports as a rejection.
- */
-async function answers(address: string): Promise<boolean> {
-  try {
-    await fetch(`${address}/__devtools/meta`);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-test.serial("a second listen replaces the devtools socket instead of losing it", async () => {
-  const output = captureOutput();
-  let application: AponiaElysiaApplication | undefined;
-  try {
-    application = await AponiaFactory.create(EnabledModule);
-    await application.listen(0);
-
-    const firstAddress = reportedAddress(devtoolsReports(output)[0] ?? "");
-
-    // A second `listen()` re-runs the plugin's `onStart` with the first socket
-    // still held, which is already broken at the application level. What the
-    // plugin must not add to that is a socket nothing can stop: the one it
-    // replaces is stopped as it is replaced, and the handle names the one it
-    // holds, which is what `close()` stops. A handle overwritten by a start
-    // that failed — or by a second socket — is the leak this pins.
-    await application.listen(0);
-
-    expect(await answers(firstAddress)).toBe(false);
-
-    const secondAddress = reportedAddress(devtoolsReports(output)[1] ?? "");
-    expect(secondAddress).not.toBe(firstAddress);
-    expect(await answers(secondAddress)).toBe(true);
-  } finally {
-    await application?.close();
-    output.restore();
-  }
-});
-
-test.serial("closing the application stops the devtools socket it started", async () => {
-  const output = captureOutput();
-  try {
-    const application = await AponiaFactory.create(EnabledModule);
-    await application.listen(0);
-
-    const address = reportedAddress(devtoolsReports(output)[0] ?? "");
-
-    // The socket answers for as long as the application that started it runs...
-    expect(await answers(address)).toBe(true);
-
-    // ...and stops with it. The address is the one the plugin's own socket took,
-    // so a server left bound here is the leak this pins: it would hold the port
-    // across the next boot and answer for an application that is gone.
-    await application.close();
-
-    expect(await answers(address)).toBe(false);
-  } finally {
-    output.restore();
-  }
-});
-
-test.serial("an enabled module reports the loopback port it defaults to", async () => {
-  const output = captureOutput();
-  try {
-    const application = await AponiaFactory.create(DefaultPortModule);
-    await application.listen(0);
-    await application.close();
-
-    const reports = devtoolsReports(output);
-    expect(reports).toHaveLength(1);
-
-    // `8000` is the documented default, and this case decides nothing about
-    // whether the port is free: a bind that succeeds reports the address it
-    // took, and one that is refused reports the address it could not take. The
-    // port a real socket serves on is pinned by the ephemeral case instead.
-    expect(reports[0]).toContain("127.0.0.1:8000");
-  } finally {
-    output.restore();
-  }
-});
-
 test.serial(
-  "a host outside loopback is reported once under Devtools, naming what it exposed",
+  "an enabled module mounts its plugin, which serves the application's own address",
   async () => {
     const output = captureOutput();
     let application: AponiaElysiaApplication | undefined;
     try {
-      application = await AponiaFactory.create(WidenedHostModule);
+      application = await AponiaFactory.create(
+        rootWith(DevtoolsModule.register({ enabled: true }), [HealthController]),
+      );
       await application.listen(0);
 
-      // `devtoolsReports` is what makes this the row a developer reads: it keeps
-      // only the lines written under the `Devtools` context. The enabled line
-      // names the address too, so the filter is `/requests` — the endpoint whose
-      // record the widening puts on the network — and it must match exactly one
-      // row.
-      const exposed = devtoolsReports(output).filter((row) => row.includes("/requests"));
+      expect(output.rows().join("")).toContain(
+        "ElysiaPluginModule[devtools] dependencies initialized",
+      );
 
-      expect(exposed).toHaveLength(1);
-      expect(exposed[0]).toContain("0.0.0.0");
-      expect(exposed[0]).toContain("host");
+      // One report, written at `onStart`, and it names where the surface is
+      // mounted: there is no second socket behind it, so there is no address of
+      // its own for the row to publish.
+      const reports = devtoolsReports(output);
+      expect(reports).toHaveLength(1);
+      expect(reports[0]).toContain(devtoolsPathPrefix);
+
+      // The surface answers on the address the application serves, and the
+      // application's own routes answer beside it.
+      const meta = await fetch(`${application.getUrl()}${devtoolsPathPrefix}/meta`);
+
+      expect(meta.status).toBe(200);
+      expect(((await meta.json()) as AponiaMetaPayload).contract).toBe(2);
+
+      const health = await fetch(`${application.getUrl()}/health/ping`);
+
+      expect(health.status).toBe(200);
+      expect(await health.text()).toBe("pong");
     } finally {
+      // Closing in the `finally` rather than after the last assertion: a failing
+      // assertion would otherwise leave the application listening for the rest of
+      // the process.
       await application?.close();
       output.restore();
     }
   },
 );
 
-test.serial("the report describes the boot the plugin's own application carries", async () => {
-  const output = captureOutput();
-  let application: AponiaElysiaApplication | undefined;
-  try {
-    const acceptedInvokers: AponiaInvokerArtifact = {
-      framework: aponiaVersion,
-      elysia: null,
-      invokers: new Map(),
-    };
+test("serves its endpoints on the application's own address", async () => {
+  const application = await bootWithDevtools();
 
-    application = await AponiaFactory.create(EnabledModule, {
-      logger: false,
-      invokers: acceptedInvokers,
-    });
-    await application.listen(0);
+  const meta = await application.handle(new Request(`http://localhost${devtoolsPathPrefix}/meta`));
 
-    const address = reportedAddress(devtoolsReports(output)[0] ?? "");
-    const meta = (await (await fetch(`${address}/__devtools/meta`)).json()) as AponiaMetaPayload;
-
-    // The stamp is read from the record bootstrap attached to the root
-    // application: a report that described some other instance would state
-    // `null`, which is exactly what the record's absence proves.
-    expect(meta.framework).toBe(aponiaVersion);
-    expect(meta.artifacts.invokers).toBe(aponiaVersion);
-  } finally {
-    await application?.close();
-    output.restore();
-  }
+  expect(meta.status).toBe(200);
+  expect(await meta.json()).toMatchObject({ contract: 2 });
 });
 
-test.serial("a devtools port that is already bound does not fail the boot", async () => {
-  const blocker = Bun.serve({
-    hostname: "127.0.0.1",
-    port: 0,
-    fetch: () => new Response("taken"),
+test("answers 404 for a path it does not own and 405 for a method it does not serve", async () => {
+  const application = await bootWithDevtools();
+
+  const unknown = await application.handle(
+    new Request(`http://localhost${devtoolsPathPrefix}/nope`),
+  );
+  const wrongMethod = await application.handle(
+    new Request(`http://localhost${devtoolsPathPrefix}/meta`, { method: "POST" }),
+  );
+
+  expect(unknown.status).toBe(404);
+  expect(wrongMethod.status).toBe(405);
+  expect(wrongMethod.headers.get("allow")).toBe("GET");
+});
+
+test("an application route that claims a devtools path answers it", async () => {
+  const application = await bootWithDevtools({
+    controllers: [controllerAnswering(`${devtoolsPathPrefix}/meta`)],
   });
-  const output = captureOutput();
-  const takenPort = boundPort(blocker);
 
-  try {
-    const application = await AponiaFactory.create(devtoolsModuleOn(takenPort));
-    await application.listen(0);
+  const response = await application.handle(
+    new Request(`http://localhost${devtoolsPathPrefix}/meta`),
+  );
 
-    // The application is unaffected: it answers its own routes, and the one
-    // Devtools row states the address the devtools socket could not take.
-    const response = await application.handle(new Request("http://localhost/health/ping"));
-
-    expect(response.status).toBe(200);
-    expect(await response.text()).toBe("pong");
-
-    const reports = devtoolsReports(output);
-    expect(reports).toHaveLength(1);
-    expect(reports[0]).toContain(`http://127.0.0.1:${takenPort}`);
-
-    // The row says the bind was refused rather than naming an address a
-    // placeholder could have echoed back: this is the pair for the ephemeral
-    // case above, where the address the row names is the one that answers.
-    expect(reports[0]).toContain("could not listen");
-
-    await application.close();
-  } finally {
-    output.restore();
-    await blocker.stop(true);
-  }
+  expect(await response.json()).toEqual({ from: "application" });
 });
 
-test.serial(
-  "a refused bind whose logger refuses the row still reports it and leaves the boot running",
-  async () => {
-    const blocker = Bun.serve({
-      hostname: "127.0.0.1",
-      port: 0,
-      fetch: () => new Response("taken"),
-    });
-    const output = captureOutput();
-    const takenPort = boundPort(blocker);
-    // The refusal row is written through this package's own logger — the
-    // module-level `new Logger("Devtools", …)` that `createDevtoolsPlugin` hands
-    // `startDevtoolsServer` — and never through the registration's `logger`
-    // option, which is the `/logs` handover and is tapped in place rather than
-    // passed on. So the only logger whose refusal can reach this row is the
-    // built-in `Logger`, and refusing its `warn` is what puts the guard under
-    // test. Only `warn` is stubbed, so the boot's own lines are unaffected and a
-    // failure here is about this row rather than about them.
-    const refusingWarn = spyOn(Logger.prototype, "warn").mockImplementation(() => {
-      throw new Error("the logger refused the refusal");
-    });
+test("a disabled registration mounts no route at all", async () => {
+  const application = await bootWithDevtools({ enabled: false });
 
-    try {
-      const application = await AponiaFactory.create(devtoolsModuleOn(takenPort));
-      await application.listen(0);
+  const response = await application.handle(
+    new Request(`http://localhost${devtoolsPathPrefix}/meta`),
+  );
 
-      // The guard's whole point, and the reason it is here rather than in a
-      // unit case alone: this report runs inside the plugin's `onStart`, which
-      // Elysia neither awaits nor catches, so an unguarded `warn` would reject
-      // this `listen()` and take the boot with it. The application reached
-      // listening state all the same.
-      expect(() => application.getUrl()).not.toThrow();
+  expect(response.status).toBe(404);
+});
 
-      // And it is unaffected: it answers its own routes.
-      const response = await application.handle(new Request("http://localhost/health/ping"));
+test("an application no boot produced answers the endpoints that need no report", async () => {
+  const logger: LoggerService = {
+    log: () => {},
+    fatal: () => {},
+    error: () => {},
+    warn: () => {},
+  };
+  // A bare `Elysia` with the plugin mounted by hand: there is no boot behind it,
+  // so nothing published an application on the store this request carries, and
+  // no boot opened a request record for it either.
+  const application = new Elysia({ name: "HandBuilt" }).use(
+    devtoolsPlugin({ enabled: true, logger }),
+  );
 
-      expect(response.status).toBe(200);
-      expect(await response.text()).toBe("pong");
+  const meta = await application.handle(new Request(`http://localhost${devtoolsPathPrefix}/meta`));
 
-      // The logger was entered — a case that never reached it would pass with
-      // nothing reported at all — and what it was handed is the refusal.
-      const warned = refusingWarn.mock.calls.map((call) => String(call[0]));
+  // The documented degraded form: `/meta` answers with this release's own stamp
+  // and `null` for every artifact no boot adopted, rather than refusing the
+  // request. That is what it answered for an application no boot produced before
+  // the surface moved onto the application.
+  expect(meta.status).toBe(200);
+  expect(await meta.json()).toMatchObject({
+    contract: 2,
+    framework: aponiaVersion,
+    artifacts: { invokers: null, descriptors: null },
+  });
 
-      expect(warned.filter((message) => message.includes("could not listen"))).toHaveLength(1);
+  // Every endpoint whose fact belongs to a boot, or to the application that boot
+  // produced, is not registered for a request that carries neither, so the
+  // dispatcher's absence is the answer: not a throw, and not an empty `200`
+  // claiming a report there is nothing to build.
+  for (const path of ["/graph", "/routes", "/flow", "/aot", "/requests"]) {
+    const response = await application.handle(
+      new Request(`http://localhost${devtoolsPathPrefix}${path}`),
+    );
 
-      // Nothing reached the logger's own channel, so the row read below is the
-      // only account of the refusal rather than a second copy of one.
-      expect(devtoolsReports(output)).toEqual([]);
+    expect(response.status).toBe(404);
+  }
 
-      const refusals = output.stderrRows().filter((row) => row.includes("could not listen"));
+  // `/logs` is the registration's own fact rather than a boot's — the stream
+  // records the logger object the registration was handed — so it is the one
+  // endpoint beside `/meta` that still answers.
+  const logs = await application.handle(new Request(`http://localhost${devtoolsPathPrefix}/logs`));
 
-      expect(refusals).toHaveLength(1);
-      expect(refusals[0]).toContain(`http://127.0.0.1:${takenPort}`);
-      expect(refusals[0]).toContain("the application continues without it");
+  expect(logs.status).toBe(200);
+  expect(await logs.json()).toMatchObject({ cursor: 0 });
+});
 
-      await application.close();
-    } finally {
-      refusingWarn.mockRestore();
-      output.restore();
-      await blocker.stop(true);
-    }
-  },
-);
+test.serial("the report describes the boot the plugin's own application carries", async () => {
+  const acceptedInvokers: AponiaInvokerArtifact = {
+    framework: aponiaVersion,
+    elysia: null,
+    invokers: new Map(),
+  };
+  const application = await bootWithDevtools({ invokers: acceptedInvokers });
 
-test.serial(
-  "an application that only handles requests stays unlistened, so the plugin reports nothing",
-  async () => {
-    const output = captureOutput();
-    try {
-      const application = await AponiaFactory.create(EnabledModule, { logger: false });
+  const meta = (await (
+    await application.handle(new Request(`http://localhost${devtoolsPathPrefix}/meta`))
+  ).json()) as AponiaMetaPayload;
 
-      const response = await application.handle(new Request("http://localhost/health/ping"));
+  // The stamp is read from the record bootstrap attached to the root
+  // application: a report that described some other instance would state `null`,
+  // which is exactly what the record's absence would prove.
+  expect(meta.framework).toBe(aponiaVersion);
+  expect(meta.artifacts.invokers).toBe(aponiaVersion);
+});
 
-      expect(response.status).toBe(200);
-      expect(await response.text()).toBe("pong");
-      expect(() => application.getUrl()).toThrow(
-        expect.objectContaining({ code: "APPLICATION_NOT_LISTENING" }),
-      );
-      expect(devtoolsReports(output)).toEqual([]);
-    } finally {
-      output.restore();
-    }
-  },
-);
+test.serial("an application that only handles requests still answers the surface", async () => {
+  const output = captureOutput();
+  try {
+    const application = await bootWithDevtools();
+
+    const response = await application.handle(
+      new Request(`http://localhost${devtoolsPathPrefix}/meta`),
+    );
+
+    // `onStart` never fires for an application that never listens, which is the
+    // whole reason the surface is mounted rather than started: it answers here
+    // all the same.
+    expect(response.status).toBe(200);
+    expect(() => application.getUrl()).toThrow(
+      expect.objectContaining({ code: "APPLICATION_NOT_LISTENING" }),
+    );
+
+    // And `onStart` is only where the plugin says where the mount is, so nothing
+    // was reported for a boot that did not reach it.
+    expect(devtoolsReports(output)).toEqual([]);
+  } finally {
+    output.restore();
+  }
+});

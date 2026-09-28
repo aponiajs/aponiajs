@@ -4,18 +4,22 @@ import { AponiaFactory, type AponiaElysiaApplication } from "@aponiajs/platform-
 import { Elysia } from "elysia";
 // The reachability check the tap is reached through, imported from its own module
 // because it is marked `@internal` and deliberately kept off the barrel for this
-// package's cases — the same arrangement `isLoopbackHost` has in `server.test.ts`.
+// package's cases — the same arrangement `createHandlers` has in `server.test.ts`.
 import { isRecordableLogger } from "../src/logging/log-tap.ts";
 import {
   DevtoolsModule,
   createLogBuffer,
-  startDevtoolsServer,
+  devtoolsPathPrefix,
+  routeRequest,
   tapLogBuffer,
   type AponiaLogsPayload,
-  type DevtoolsServer,
   type LogEntry,
   type TappedLogStream,
 } from "../src/index.ts";
+// The handler record the mounted route answers through, from the module that owns
+// it rather than the barrel: the surface is a route an application mounts, and
+// this is the pair that route calls.
+import { createHandlers } from "../src/server/devtools-server.ts";
 
 /**
  * The bounded log stream and the endpoint that publishes it.
@@ -24,8 +28,10 @@ import {
  * `DevtoolsModule.register` is the object `/logs` records — the same one it hands
  * the factory — so a case boots a real application and writes through the logger
  * it owns to pin what a client observes. The contract is HTTP and a cursor, so
- * every socket binds port `0` and the address is read back — off the server
- * handle, or out of the `Devtools` report. No case depends on a port it guessed.
+ * every case asks the pair the mounted route calls in process, and the payload
+ * assertions are the wire shape. The mount itself is pinned over
+ * `application.handle` in `devtools-module.test.ts`, and the dispatcher's `404`
+ * and `405` in `server.test.ts`.
  *
  * The cursor and the ring are where a test can quietly become useless — a
  * fixture whose input order already equals its expected order, or an assertion
@@ -527,24 +533,20 @@ test("the reachability check survives a level it cannot read", () => {
   expect(isRecordableLogger({ log: () => {} })).toBe(true);
 });
 
-/** Binds the loopback socket on port `0` and reads the address it took. */
-function serveLoopback(application: Elysia, logs?: TappedLogStream): DevtoolsServer {
-  const server = startDevtoolsServer({
-    application,
-    port: 0,
-    logger: silentLogger,
-    ...(logs === undefined ? {} : { logs }),
-  });
-
-  if (server === undefined) {
-    throw new Error("the devtools server refused to bind the loopback socket");
-  }
-
-  return server;
+/** One devtools path answered for one application, with the stream it publishes. */
+async function ask(application: Elysia, path: string, logs?: TappedLogStream): Promise<Response> {
+  return await routeRequest(
+    new Request(`http://localhost${devtoolsPathPrefix}${path}`),
+    createHandlers(application, logs, undefined, silentLogger),
+  );
 }
 
-async function readLogs(server: DevtoolsServer, query = ""): Promise<AponiaLogsPayload> {
-  const response = await fetch(`${server.url}/__devtools/logs${query}`);
+async function readLogs(
+  application: Elysia,
+  query = "",
+  logs?: TappedLogStream,
+): Promise<AponiaLogsPayload> {
+  const response = await ask(application, `/logs${query}`, logs);
 
   expect(response.status).toBe(200);
 
@@ -556,44 +558,35 @@ test("logs answers the retained window and answers a poll from the cursor it pub
   logs.write(entry("one"));
   logs.write(entry("two"));
 
-  const server = serveLoopback(new Elysia(), { buffer: logs, levels: ["log"] });
-  try {
-    const first = await readLogs(server);
+  const application = new Elysia();
+  const stream: TappedLogStream = { buffer: logs, levels: ["log"] };
+  const first = await readLogs(application, "", stream);
 
-    expect(first.cursor).toBe(2);
-    expect(messagesOf(first)).toEqual(["one", "two"]);
+  expect(first.cursor).toBe(2);
+  expect(messagesOf(first)).toEqual(["one", "two"]);
 
-    logs.write(entry("three"));
+  logs.write(entry("three"));
 
-    const second = await readLogs(server, `?since=${first.cursor}`);
+  const second = await readLogs(application, `?since=${first.cursor}`, stream);
 
-    expect(second.cursor).toBe(3);
-    expect(messagesOf(second)).toEqual(["three"]);
-  } finally {
-    server.stop();
-  }
+  expect(second.cursor).toBe(3);
+  expect(messagesOf(second)).toEqual(["three"]);
 });
 
 test("a since beyond the retained window answers what is retained, not an error", async () => {
   const logs = createLogBuffer(4);
   logs.write(entry("one"));
 
-  const server = serveLoopback(new Elysia(), { buffer: logs, levels: ["log"] });
-  try {
-    const response = await fetch(`${server.url}/__devtools/logs?since=999999`);
+  const payload = await readLogs(new Elysia(), "?since=999999", {
+    buffer: logs,
+    levels: ["log"],
+  });
 
-    expect(response.status).toBe(200);
-
-    const payload = (await response.json()) as AponiaLogsPayload;
-
-    // Nothing is retained after a cursor that has never been reached, and the
-    // cursor that comes back is the stream's own count rather than a rewind to
-    // the number the request named.
-    expect(payload.entries).toEqual([]);
-    expect(payload.cursor).toBe(1);
-  } finally {
-    server.stop();
-  }
+  // Nothing is retained after a cursor that has never been reached, and the
+  // cursor that comes back is the stream's own count rather than a rewind to
+  // the number the request named.
+  expect(payload.entries).toEqual([]);
+  expect(payload.cursor).toBe(1);
 });
 
 test("the stream is bounded over the wire at the capacity it was built with", async () => {
@@ -602,69 +595,53 @@ test("the stream is bounded over the wire at the capacity it was built with", as
     logs.write(entry(message));
   }
 
-  const server = serveLoopback(new Elysia(), { buffer: logs, levels: ["log"] });
-  try {
-    const payload = await readLogs(server);
+  const payload = await readLogs(new Elysia(), "", { buffer: logs, levels: ["log"] });
 
-    expect(payload.entries).toHaveLength(2);
-    expect(messagesOf(payload)).toEqual(["two", "three"]);
-    expect(payload.cursor).toBe(3);
-  } finally {
-    server.stop();
-  }
+  expect(payload.entries).toHaveLength(2);
+  expect(messagesOf(payload)).toEqual(["two", "three"]);
+  expect(payload.cursor).toBe(3);
 });
 
 test("a since that is not a cursor reads as the whole retained window", async () => {
   const logs = createLogBuffer(4);
   logs.write(entry("one"));
 
-  const server = serveLoopback(new Elysia(), { buffer: logs, levels: ["log"] });
-  try {
-    // A repeated key reads as its first value, which is what a poller sends when
-    // it appends its cursor to a query it built.
-    for (const query of [
-      "",
-      "?since=",
-      "?since=later",
-      "?since=-1",
-      "?since=1.5",
-      "?since=0",
-      "?since=0&since=99",
-    ]) {
-      const payload = await readLogs(server, query);
+  const application = new Elysia();
+  const stream: TappedLogStream = { buffer: logs, levels: ["log"] };
 
-      expect(messagesOf(payload)).toEqual(["one"]);
-      expect(payload.cursor).toBe(1);
-    }
-  } finally {
-    server.stop();
+  // A repeated key reads as its first value, which is what a poller sends when
+  // it appends its cursor to a query it built.
+  for (const query of [
+    "",
+    "?since=",
+    "?since=later",
+    "?since=-1",
+    "?since=1.5",
+    "?since=0",
+    "?since=0&since=99",
+  ]) {
+    const payload = await readLogs(application, query, stream);
+
+    expect(messagesOf(payload)).toEqual(["one"]);
+    expect(payload.cursor).toBe(1);
   }
 });
 
-test("a server that was handed no stream serves no logs endpoint", async () => {
-  const server = serveLoopback(new Elysia());
-  try {
-    const logs = await fetch(`${server.url}/__devtools/logs`);
+test("a surface that was handed no stream serves no logs endpoint", async () => {
+  const application = new Elysia();
 
-    // The endpoint states a stream, and this server has none to state: the
-    // dispatcher's `404` is the answer for a path its handler record does not
-    // own, rather than an empty stream that would claim nothing was logged.
-    expect(logs.status).toBe(404);
-    expect((await fetch(`${server.url}/__devtools/meta`)).status).toBe(200);
-  } finally {
-    server.stop();
-  }
+  // The endpoint states a stream, and this surface has none to state: the
+  // dispatcher's `404` is the answer for a path its handler record does not
+  // own, rather than an empty stream that would claim nothing was logged.
+  expect((await ask(application, "/logs")).status).toBe(404);
+  expect((await ask(application, "/meta")).status).toBe(200);
 });
-
-const ephemeralPort = 0;
 
 /** The logger the application and the platform both write to, tapped once. */
 const streamedLogger = new Logger("Streamed", { timestamp: false });
 
 @Module({
-  imports: [
-    DevtoolsModule.register({ enabled: true, port: ephemeralPort, logger: streamedLogger }),
-  ],
+  imports: [DevtoolsModule.register({ enabled: true, logger: streamedLogger })],
 })
 class StreamedModule {}
 
@@ -685,13 +662,7 @@ Object.defineProperty(partlyReachableLogger, "debug", {
 });
 
 @Module({
-  imports: [
-    DevtoolsModule.register({
-      enabled: true,
-      port: ephemeralPort,
-      logger: partlyReachableLogger,
-    }),
-  ],
+  imports: [DevtoolsModule.register({ enabled: true, logger: partlyReachableLogger })],
 })
 class PartlyReachableModule {}
 
@@ -725,18 +696,16 @@ function createUnreadableLevelLogger(): LoggerService {
 const unreadableLevelLogger: LoggerService = createUnreadableLevelLogger();
 
 @Module({
-  imports: [
-    DevtoolsModule.register({ enabled: true, port: ephemeralPort, logger: unreadableLevelLogger }),
-  ],
+  imports: [DevtoolsModule.register({ enabled: true, logger: unreadableLevelLogger })],
 })
 class UnreadableLevelModule {}
 
 @Module({
-  imports: [DevtoolsModule.register({ enabled: true, port: ephemeralPort, logger: false })],
+  imports: [DevtoolsModule.register({ enabled: true, logger: false })],
 })
 class DisabledLoggingModule {}
 
-@Module({ imports: [DevtoolsModule.register({ enabled: true, port: ephemeralPort })] })
+@Module({ imports: [DevtoolsModule.register({ enabled: true })] })
 class PublishedNoLoggerModule {}
 
 /**
@@ -749,7 +718,6 @@ class PublishedNoLoggerModule {}
   imports: [
     DevtoolsModule.register({
       enabled: true,
-      port: ephemeralPort,
       logger: ["log"] as unknown as LoggerService,
     }),
   ],
@@ -770,7 +738,7 @@ const frozenLogger: LoggerService = Object.freeze({
 });
 
 @Module({
-  imports: [DevtoolsModule.register({ enabled: true, port: ephemeralPort, logger: frozenLogger })],
+  imports: [DevtoolsModule.register({ enabled: true, logger: frozenLogger })],
 })
 class FrozenLoggerModule {}
 
@@ -800,73 +768,59 @@ function createPartlyTappableLogger(): LoggerService {
 const partlyTappableLogger: LoggerService = createPartlyTappableLogger();
 
 @Module({
-  imports: [
-    DevtoolsModule.register({ enabled: true, port: ephemeralPort, logger: partlyTappableLogger }),
-  ],
+  imports: [DevtoolsModule.register({ enabled: true, logger: partlyTappableLogger })],
 })
 class PartlyTappableModule {}
 
-interface CapturedOutput {
-  readonly rows: () => readonly string[];
-  readonly restore: () => void;
+/**
+ * The boot writes its own lines through the logger a case handed in, so a case
+ * that hands in a printing logger captures stdout to keep the run's output
+ * readable — it is hygiene, not an assertion about those lines.
+ */
+function captureOutput(): () => void {
+  const write = spyOn(process.stdout, "write").mockImplementation(() => true);
+
+  return () => write.mockRestore();
 }
 
-/** Only the `Devtools` report is read back, so Elysia's banner stays out of it. */
-function captureOutput(): CapturedOutput {
-  const chunks: string[] = [];
-  const write = spyOn(process.stdout, "write").mockImplementation((chunk) => {
-    chunks.push(String(chunk));
-    return true;
-  });
-
-  return {
-    rows: () => chunks.join("").split("\n"),
-    restore: () => write.mockRestore(),
-  };
-}
-
-function devtoolsReports(output: CapturedOutput): readonly string[] {
-  return output.rows().filter((row) => row.includes("[Devtools]"));
-}
-
-/** The loopback address the one report names, read back rather than guessed. */
-function reportedAddress(output: CapturedOutput): string {
-  const report = devtoolsReports(output)[0] ?? "";
-  const address = /http:\/\/127\.0\.0\.1:\d+/.exec(report)?.[0];
-
-  if (address === undefined) {
-    throw new Error(`the devtools report named no loopback address: ${report}`);
-  }
-
-  return address;
-}
-
-async function readLogsAt(address: string, query = ""): Promise<AponiaLogsPayload> {
-  const response = await fetch(`${address}/__devtools/logs${query}`);
+/** One devtools path answered by the surface a real boot mounted. */
+async function readLogsFrom(
+  application: AponiaElysiaApplication,
+  query = "",
+): Promise<AponiaLogsPayload> {
+  const response = await application.handle(
+    new Request(`http://localhost${devtoolsPathPrefix}/logs${query}`),
+  );
 
   expect(response.status).toBe(200);
 
   return (await response.json()) as AponiaLogsPayload;
 }
 
-test.serial(
-  "a registration records the lines the boot wrote before its socket started",
-  async () => {
-    const output = captureOutput();
-    let application: AponiaElysiaApplication | undefined;
-    try {
-      application = await AponiaFactory.create(StreamedModule, { logger: streamedLogger });
-      await application.listen(0);
+/** The status one devtools path answers on a real boot's own mount. */
+async function statusOn(application: AponiaElysiaApplication, path: string): Promise<number> {
+  const response = await application.handle(
+    new Request(`http://localhost${devtoolsPathPrefix}${path}`),
+  );
 
-      const first = await readLogsAt(reportedAddress(output));
+  return response.status;
+}
+
+test.serial(
+  "a registration records the lines the boot wrote before the surface was asked",
+  async () => {
+    const restoreOutput = captureOutput();
+    try {
+      const application = await AponiaFactory.create(StreamedModule, { logger: streamedLogger });
+
+      const first = await readLogsFrom(application);
       const contexts = first.entries.map((item) => item.context);
 
       // The stream started at registration, which is before the boot wrote
-      // anything: a tap installed when the socket starts would answer with none of
-      // these, and these are most of what a log stream is worth.
+      // anything: a tap installed when the surface is first asked would answer
+      // with none of these, and these are most of what a log stream is worth.
       expect(contexts).toContain("AponiaFactory");
       expect(contexts).toContain("InstanceLoader");
-      expect(contexts).toContain("AponiaApplication");
       expect(first.cursor).toBe(first.entries.length);
       // A logger that carries every level is tapped at every one of them, so the
       // payload names the optional `debug` level too: a stream that could only
@@ -877,161 +831,109 @@ test.serial(
       // carried: the poll is answered with that line and nothing else.
       streamedLogger.log("after the first poll", "LogsTest");
 
-      const second = await readLogsAt(reportedAddress(output), `?since=${first.cursor}`);
+      const second = await readLogsFrom(application, `?since=${first.cursor}`);
 
       expect(second.entries.map((item) => item.message)).toEqual(["after the first poll"]);
       expect(second.entries.map((item) => item.context)).toEqual(["LogsTest"]);
       expect(second.cursor).toBe(first.cursor + 1);
     } finally {
-      await application?.close();
-      output.restore();
+      restoreOutput();
     }
   },
 );
 
 test.serial("an application that disabled its logging serves no logs endpoint", async () => {
-  const output = captureOutput();
-  let application: AponiaElysiaApplication | undefined;
-  try {
-    application = await AponiaFactory.create(DisabledLoggingModule, { logger: false });
-    await application.listen(0);
+  const application = await AponiaFactory.create(DisabledLoggingModule, { logger: false });
 
-    const address = reportedAddress(output);
-
-    // `false` states that the application has no logger object to hand over, and
-    // this registration cannot tell that from the logger the factory built for
-    // the application it was not given: an empty window would announce that
-    // nothing is being logged, which is false whenever the factory was handed a
-    // logger of its own. Absence is the one answer that is true either way.
-    expect((await fetch(`${address}/__devtools/logs`)).status).toBe(404);
-    expect((await fetch(`${address}/__devtools/meta`)).status).toBe(200);
-  } finally {
-    await application?.close();
-    output.restore();
-  }
+  // `false` states that the application has no logger object to hand over, and
+  // this registration cannot tell that from the logger the factory built for
+  // the application it was not given: an empty window would announce that
+  // nothing is being logged, which is false whenever the factory was handed a
+  // logger of its own. Absence is the one answer that is true either way.
+  expect(await statusOn(application, "/logs")).toBe(404);
+  expect(await statusOn(application, "/meta")).toBe(200);
 });
 
 test.serial("a registration that published no logger serves no logs endpoint", async () => {
-  const output = captureOutput();
-  let application: AponiaElysiaApplication | undefined;
-  try {
-    application = await AponiaFactory.create(PublishedNoLoggerModule, { logger: false });
-    await application.listen(0);
+  const application = await AponiaFactory.create(PublishedNoLoggerModule, { logger: false });
 
-    const address = reportedAddress(output);
-
-    // The endpoint states a stream, and this registration has none to state: the
-    // dispatcher's `404` is the answer for a path its handler record does not
-    // own, rather than an empty stream that would claim the application logs
-    // nothing. The application itself named no logger, so there is no object to
-    // record from — the factory built one, and a registration never sees it.
-    expect((await fetch(`${address}/__devtools/logs`)).status).toBe(404);
-    expect((await fetch(`${address}/__devtools/meta`)).status).toBe(200);
-  } finally {
-    await application?.close();
-    output.restore();
-  }
+  // The endpoint states a stream, and this registration has none to state: the
+  // dispatcher's `404` is the answer for a path its handler record does not
+  // own, rather than an empty stream that would claim the application logs
+  // nothing. The application itself named no logger, so there is no object to
+  // record from — the factory built one, and a registration never sees it.
+  expect(await statusOn(application, "/logs")).toBe(404);
+  expect(await statusOn(application, "/meta")).toBe(200);
 });
 
 test.serial(
   "a registration that named something that is not a logger serves no endpoint",
   async () => {
-    const output = captureOutput();
-    let application: AponiaElysiaApplication | undefined;
-    try {
-      application = await AponiaFactory.create(LevelArrayModule, { logger: false });
-      await application.listen(0);
+    const application = await AponiaFactory.create(LevelArrayModule, { logger: false });
 
-      const address = reportedAddress(output);
-
-      // A registration that names a level array has nothing this package can
-      // record from, and the endpoint is absent for the same reason it is absent
-      // for one that names nothing: an empty stream would claim the application
-      // logs nothing while it logs normally.
-      expect((await fetch(`${address}/__devtools/logs`)).status).toBe(404);
-      expect((await fetch(`${address}/__devtools/meta`)).status).toBe(200);
-    } finally {
-      await application?.close();
-      output.restore();
-    }
+    // A registration that names a level array has nothing this package can
+    // record from, and the endpoint is absent for the same reason it is absent
+    // for one that names nothing: an empty stream would claim the application
+    // logs nothing while it logs normally.
+    expect(await statusOn(application, "/logs")).toBe(404);
+    expect(await statusOn(application, "/meta")).toBe(200);
   },
 );
 
 test.serial(
   "a registration whose logger no level could be patched on serves no endpoint",
   async () => {
-    const output = captureOutput();
-    let application: AponiaElysiaApplication | undefined;
-    try {
-      application = await AponiaFactory.create(FrozenLoggerModule, { logger: frozenLogger });
-      await application.listen(0);
+    const application = await AponiaFactory.create(FrozenLoggerModule, { logger: frozenLogger });
 
-      const address = reportedAddress(output);
-
-      // This registration named a logger object, and it is the one case where a
-      // stream would be a lie rather than an absence: the tap installed nothing, so
-      // `{ cursor: 0, entries: [] }` would announce that nothing is being logged
-      // while the logger keeps printing everything the platform writes to it.
-      expect((await fetch(`${address}/__devtools/logs`)).status).toBe(404);
-      expect((await fetch(`${address}/__devtools/meta`)).status).toBe(200);
-    } finally {
-      await application?.close();
-      output.restore();
-    }
+    // This registration named a logger object, and it is the one case where a
+    // stream would be a lie rather than an absence: the tap installed nothing, so
+    // `{ cursor: 0, entries: [] }` would announce that nothing is being logged
+    // while the logger keeps printing everything the platform writes to it.
+    expect(await statusOn(application, "/logs")).toBe(404);
+    expect(await statusOn(application, "/meta")).toBe(200);
   },
 );
 
 test.serial(
   "a registration whose logger refuses one assignment still serves the stream",
   async () => {
-    const output = captureOutput();
-    let application: AponiaElysiaApplication | undefined;
-    try {
-      application = await AponiaFactory.create(PartlyTappableModule, {
-        logger: partlyTappableLogger,
-      });
-      await application.listen(0);
+    const application = await AponiaFactory.create(PartlyTappableModule, {
+      logger: partlyTappableLogger,
+    });
 
-      const address = reportedAddress(output);
-      const first = await readLogsAt(address);
+    const first = await readLogsFrom(application);
 
-      // The endpoint is there because a tap genuinely installed: `log` was patched
-      // before the refusal landed, so the lines the boot wrote through that level
-      // are recorded — the same boot lines the fully tappable case asserts, which is
-      // what shows this stream began at registration too.
-      expect(first.entries.map((item) => item.context)).toContain("AponiaFactory");
+    // The endpoint is there because a tap genuinely installed: `log` was patched
+    // before the refusal landed, so the lines the boot wrote through that level
+    // are recorded — the same boot lines the fully tappable case asserts, which is
+    // what shows this stream began at registration too.
+    expect(first.entries.map((item) => item.context)).toContain("AponiaFactory");
 
-      // The refusal costs one level rather than every level after it: `fatal` was
-      // the level it landed on and `warn` is a level the tap reached afterwards, so
-      // the stream publishes `warn` and not `fatal`.
-      expect(first.levels).toContain("warn");
-      expect(first.levels).not.toContain("fatal");
+    // The refusal costs one level rather than every level after it: `fatal` was
+    // the level it landed on and `warn` is a level the tap reached afterwards, so
+    // the stream publishes `warn` and not `fatal`.
+    expect(first.levels).toContain("warn");
+    expect(first.levels).not.toContain("fatal");
 
-      partlyTappableLogger.log("after the refusal", "LogsTest");
+    partlyTappableLogger.log("after the refusal", "LogsTest");
 
-      const second = await readLogsAt(address, `?since=${first.cursor}`);
+    const second = await readLogsFrom(application, `?since=${first.cursor}`);
 
-      expect(second.entries.map((item) => item.message)).toEqual(["after the refusal"]);
-      expect(second.entries.map((item) => item.context)).toEqual(["LogsTest"]);
-    } finally {
-      await application?.close();
-      output.restore();
-    }
+    expect(second.entries.map((item) => item.message)).toEqual(["after the refusal"]);
+    expect(second.entries.map((item) => item.context)).toEqual(["LogsTest"]);
   },
 );
 
 test.serial(
   "a stream names the levels the tap reached and leaves out the one it could not",
   async () => {
-    const output = captureOutput();
-    let application: AponiaElysiaApplication | undefined;
+    const restoreOutput = captureOutput();
     try {
-      application = await AponiaFactory.create(PartlyReachableModule, {
+      const application = await AponiaFactory.create(PartlyReachableModule, {
         logger: partlyReachableLogger,
       });
-      await application.listen(0);
 
-      const first = await readLogsAt(reportedAddress(output));
+      const first = await readLogsFrom(application);
 
       // The boot's own lines are in the stream, so the stream is live and an absent
       // `debug` entry is the tap's business rather than the application's.
@@ -1044,40 +946,31 @@ test.serial(
       expect(first.levels).toContain("log");
       expect(first.levels).not.toContain("debug");
     } finally {
-      await application?.close();
-      output.restore();
+      restoreOutput();
     }
   },
 );
 
 test.serial("a level that refuses the read does not fail the boot", async () => {
-  const output = captureOutput();
-  let application: AponiaElysiaApplication | undefined;
-  try {
-    // The declaration above already read every level of this logger, at the moment
-    // the module was decorated, and this is the boot that follows: a read that threw
-    // out of the registration would have taken the module's declaration with it, so
-    // reaching this line at all is half of what the case asserts.
-    application = await AponiaFactory.create(UnreadableLevelModule, {
-      logger: unreadableLevelLogger,
-    });
-    await application.listen(0);
+  // The declaration above already read every level of this logger, at the moment
+  // the module was decorated, and this is the boot that follows: a read that threw
+  // out of the registration would have taken the module's declaration with it, so
+  // reaching this line at all is half of what the case asserts.
+  const application = await AponiaFactory.create(UnreadableLevelModule, {
+    logger: unreadableLevelLogger,
+  });
 
-    const first = await readLogsAt(reportedAddress(output));
+  const first = await readLogsFrom(application);
 
-    // The stream is live — the boot wrote through the level that could be read — so
-    // the level it refused is a fact about that logger rather than about a tap that
-    // never installed.
-    expect(first.entries.map((item) => item.context)).toContain("AponiaFactory");
+  // The stream is live — the boot wrote through the level that could be read — so
+  // the level it refused is a fact about that logger rather than about a tap that
+  // never installed.
+  expect(first.entries.map((item) => item.context)).toContain("AponiaFactory");
 
-    // The level whose read threw is stated as unreached, and the level after it is
-    // named: a read that throws costs the level it landed on rather than that level
-    // and every one after it.
-    expect(first.levels).toContain("log");
-    expect(first.levels).not.toContain("error");
-    expect(first.levels).toContain("warn");
-  } finally {
-    await application?.close();
-    output.restore();
-  }
+  // The level whose read threw is stated as unreached, and the level after it is
+  // named: a read that throws costs the level it landed on rather than that level
+  // and every one after it.
+  expect(first.levels).toContain("log");
+  expect(first.levels).not.toContain("error");
+  expect(first.levels).toContain("warn");
 });

@@ -18,11 +18,15 @@ import {
 import { Elysia } from "elysia";
 import {
   aponiaVersion,
-  startDevtoolsServer,
+  devtoolsPathPrefix,
+  routeRequest,
   type AponiaAotController,
   type AponiaAotPayload,
-  type DevtoolsServer,
 } from "../src/index.ts";
+// The handler record the mounted route answers through, from the module that owns
+// it rather than the barrel: the surface is a route an application mounts, and
+// this is the pair that route calls.
+import { createHandlers } from "../src/server/devtools-server.ts";
 
 /**
  * The build-verdict endpoint. It has two halves that fail differently: the
@@ -30,8 +34,11 @@ import {
  * per-handler verdicts come from `@aponiajs/cli`'s analysis, which is imported
  * on the first request and cached for the process.
  *
- * Every case is HTTP against a socket that bound port `0`, and the payload
- * assertions are the wire shape. Three of them are boundaries rather than
+ * Every case asks the pair the mounted route calls in process — `createHandlers`
+ * and `routeRequest` — and the payload assertions are the wire shape. The mount
+ * itself is pinned over `application.handle` in `devtools-module.test.ts`, and
+ * the dispatcher's `404` and `405` in `server.test.ts`. Three of the cases are
+ * boundaries rather than
  * field names: a handler the emitter declined beside one it emitted, a project
  * a build would refuse beside one it would build, and an adopted artifact
  * beside a refused one — so a payload that guessed on either side fails here.
@@ -69,27 +76,29 @@ afterEach(() => {
 });
 
 /**
- * Binds the loopback socket on port `0`, reporting through the case's logger.
+ * One devtools path answered for one application, reporting through the case's
+ * logger.
  *
  * The logger is a parameter because one case needs a logger that refuses: the
  * row an unreadable project writes is guarded, and a case that could only hand
  * in the recording logger could not reach that guard.
  */
-function serveLoopback(
+async function ask(
   application: Elysia,
+  path: string,
   logger: LoggerService = recordingLogger,
-): DevtoolsServer {
-  const server = startDevtoolsServer({ application, port: 0, logger });
-
-  if (server === undefined) {
-    throw new Error("the devtools server refused to bind the loopback socket");
-  }
-
-  return server;
+): Promise<Response> {
+  return await routeRequest(
+    new Request(`http://localhost${devtoolsPathPrefix}${path}`),
+    createHandlers(application, undefined, undefined, logger),
+  );
 }
 
-async function readAot(server: DevtoolsServer): Promise<AponiaAotPayload> {
-  const response = await fetch(`${server.url}/__devtools/aot`);
+async function readAot(
+  application: Elysia,
+  logger: LoggerService = recordingLogger,
+): Promise<AponiaAotPayload> {
+  const response = await ask(application, "/aot", logger);
 
   expect(response.status).toBe(200);
 
@@ -315,43 +324,37 @@ test("aot reports the boot's own decision when no project is on disk to analyze"
   // expecting the spelling this case created.
   const workingDirectory = process.cwd();
   const application = await AponiaFactory.createNative(AppModule, { logger: false });
-  const server = serveLoopback(application);
+  const response = await ask(application, "/aot");
+  expect(response.status).toBe(200);
+  expect(response.headers.get("content-type")).toContain("application/json");
+  expect(response.headers.get("cache-control")).toBe("no-store");
 
-  try {
-    const response = await fetch(`${server.url}/__devtools/aot`);
-    expect(response.status).toBe(200);
-    expect(response.headers.get("content-type")).toContain("application/json");
-    expect(response.headers.get("cache-control")).toBe("no-store");
+  const payload = (await response.json()) as AponiaAotPayload;
 
-    const payload = (await response.json()) as AponiaAotPayload;
+  // One assertion for the whole wire shape: a decorated boot was not offered
+  // an artifact, so the record carries a refusal reason, and the analysis
+  // that could not run leaves the controller list empty rather than failing
+  // the endpoint that served these facts.
+  expect(payload).toEqual({
+    graph: "decorated",
+    invokers: { accepted: false, reason: expect.any(String) },
+    controllers: [],
+  });
 
-    // One assertion for the whole wire shape: a decorated boot was not offered
-    // an artifact, so the record carries a refusal reason, and the analysis
-    // that could not run leaves the controller list empty rather than failing
-    // the endpoint that served these facts.
-    expect(payload).toEqual({
-      graph: "decorated",
-      invokers: { accepted: false, reason: expect.any(String) },
-      controllers: [],
-    });
+  // The second request is answered from the analysis the first one settled,
+  // so the failure is reported once for the process rather than once per
+  // poll — and the row names the project it could not read.
+  expect(await readAot(application)).toEqual(payload);
+  expect(warnings).toHaveLength(1);
+  expect(warnings[0]).toContain(workingDirectory);
 
-    // The second request is answered from the analysis the first one settled,
-    // so the failure is reported once for the process rather than once per
-    // poll — and the row names the project it could not read.
-    expect(await readAot(server)).toEqual(payload);
-    expect(warnings).toHaveLength(1);
-    expect(warnings[0]).toContain(workingDirectory);
-
-    // The fourth sentence this package mirrors, read back the way the other
-    // three are: the configuration this directory does not have. Comparing the
-    // whole parenthetical is the point — the fragment `aponia.json` every
-    // spelling of this refusal would carry could not tell the command's own
-    // wording from a paraphrase that keeps the file's name and changes the rest.
-    const refusal = await commandRefusal(workingDirectory);
-    expect(warnings[0]).toContain(`(${refusal}); /aot answers the boot's record alone.`);
-  } finally {
-    server.stop();
-  }
+  // The fourth sentence this package mirrors, read back the way the other
+  // three are: the configuration this directory does not have. Comparing the
+  // whole parenthetical is the point — the fragment `aponia.json` every
+  // spelling of this refusal would carry could not tell the command's own
+  // wording from a paraphrase that keeps the file's name and changes the rest.
+  const refusal = await commandRefusal(workingDirectory);
+  expect(warnings[0]).toContain(`(${refusal}); /aot answers the boot's record alone.`);
 });
 
 test("a report the logger refuses still answers aot's boot half and the degraded list", async () => {
@@ -374,7 +377,6 @@ test("a report the logger refuses still answers aot's boot half and the degraded
       throw new Error("the logger refused the analysis row");
     },
   };
-  const server = serveLoopback(application, refusingLogger);
   const stderr: string[] = [];
   const stderrWrite = spyOn(process.stderr, "write").mockImplementation((chunk) => {
     stderr.push(String(chunk));
@@ -386,7 +388,7 @@ test("a report the logger refuses still answers aot's boot half and the degraded
     // an unguarded `warn` rejects the cached promise, so the request fails
     // with a `500` where the degraded payload belongs — the assertion below
     // fails on that, not only the `stderr` one.
-    const response = await fetch(`${server.url}/__devtools/aot`);
+    const response = await ask(application, "/aot", refusingLogger);
     expect(response.status).toBe(200);
 
     const payload = (await response.json()) as AponiaAotPayload;
@@ -400,7 +402,7 @@ test("a report the logger refuses still answers aot's boot half and the degraded
     // The cached promise settled to the degraded list rather than to a
     // rejection, so the second poll is answered the same way rather than
     // failing where the first one did.
-    expect(await readAot(server)).toEqual(payload);
+    expect(await readAot(application, refusingLogger)).toEqual(payload);
 
     // The sentence a logger refused still reaches a reader, on the channel
     // that survived, and the line says the logger refused it — as a sentence of
@@ -411,7 +413,6 @@ test("a report the logger refuses still answers aot's boot half and the degraded
     expect(stderr[0]).toContain("The configured logger threw while reporting it.");
   } finally {
     stderrWrite.mockRestore();
-    server.stop();
   }
 });
 
@@ -430,7 +431,6 @@ test("a value the analysis threw that refuses to be read still answers the degra
   const projectRoot = createTemporaryDirectory("aponia-aot-refusing-");
   process.chdir(projectRoot);
   const application = await AponiaFactory.createNative(AppModule, { logger: false });
-  const server = serveLoopback(application);
   const refusing = new Proxy(
     {},
     {
@@ -444,7 +444,7 @@ test("a value the analysis threw that refuses to be read still answers the degra
   });
 
   try {
-    const response = await fetch(`${server.url}/__devtools/aot`);
+    const response = await ask(application, "/aot");
 
     // The answer the guard was written for, asserted before the row: without a
     // total sentence build the cached promise rejects and this request fails
@@ -467,7 +467,6 @@ test("a value the analysis threw that refuses to be read still answers the degra
     expect(warnings[0]).toContain("([unrenderable])");
   } finally {
     file.mockRestore();
-    server.stop();
   }
 });
 
@@ -487,28 +486,22 @@ test("aot reports the emitter's verdicts for the project it is started in", asyn
   process.chdir(projectRoot);
 
   const application = await AponiaFactory.createNative(AppModule, { logger: false });
-  const server = serveLoopback(application);
+  const payload = await readAot(application);
 
-  try {
-    const payload = await readAot(server);
+  expect(payload).toEqual({
+    graph: "decorated",
+    invokers: { accepted: false, reason: expect.any(String) },
+    controllers: [
+      alphaControllerVerdicts,
+      { controller: "ZebraController", handlers: [{ handler: "create", invoker: "generated" }] },
+    ],
+  });
 
-    expect(payload).toEqual({
-      graph: "decorated",
-      invokers: { accepted: false, reason: expect.any(String) },
-      controllers: [
-        alphaControllerVerdicts,
-        { controller: "ZebraController", handlers: [{ handler: "create", invoker: "generated" }] },
-      ],
-    });
-
-    // The verdicts are the analysis's, and the analysis is read once: a second
-    // request answers the same payload from the result the first one settled,
-    // and nothing was reported because nothing failed.
-    expect(await readAot(server)).toEqual(payload);
-    expect(warnings).toEqual([]);
-  } finally {
-    server.stop();
-  }
+  // The verdicts are the analysis's, and the analysis is read once: a second
+  // request answers the same payload from the result the first one settled,
+  // and nothing was reported because nothing failed.
+  expect(await readAot(application)).toEqual(payload);
+  expect(warnings).toEqual([]);
 });
 
 test.each(ignoredControllerProjects)(
@@ -536,24 +529,18 @@ test.each(ignoredControllerProjects)(
     process.chdir(projectRoot);
 
     const application = await AponiaFactory.createNative(AppModule, { logger: false });
-    const server = serveLoopback(application);
+    const build = await commandDecision(process.cwd());
+    const payload = await readAot(application);
 
-    try {
-      const build = await commandDecision(process.cwd());
-      const payload = await readAot(server);
+    expect(endpointDecision(payload)).toBe(build);
+    // Both refused would be an agreement, not the case: the fixture is a
+    // project a build reads, so the command has to have accepted it.
+    expect(build).toBe("accepted");
 
-      expect(endpointDecision(payload)).toBe(build);
-      // Both refused would be an agreement, not the case: the fixture is a
-      // project a build reads, so the command has to have accepted it.
-      expect(build).toBe("accepted");
-
-      // And the verdicts are the ones the build reads: the one controller under
-      // the source root, however many ignored files double it.
-      expect(payload.controllers).toEqual([alphaControllerVerdicts]);
-      expect(warnings).toEqual([]);
-    } finally {
-      server.stop();
-    }
+    // And the verdicts are the ones the build reads: the one controller under
+    // the source root, however many ignored files double it.
+    expect(payload.controllers).toEqual([alphaControllerVerdicts]);
+    expect(warnings).toEqual([]);
   },
 );
 
@@ -570,23 +557,17 @@ test("aot reports the verdicts of a project whose every handler a build declined
   process.chdir(projectRoot);
 
   const application = await AponiaFactory.createNative(AppModule, { logger: false });
-  const server = serveLoopback(application);
+  const payload = await readAot(application);
 
-  try {
-    const payload = await readAot(server);
-
-    expect(payload.graph).toBe("decorated");
-    expect(payload.invokers.accepted).toBe(false);
-    expect(payload.controllers).toEqual([
-      {
-        controller: "OnlyController",
-        handlers: [{ handler: "describe", invoker: "compiled", reason: wholeContextReason }],
-      },
-    ]);
-    expect(warnings).toEqual([]);
-  } finally {
-    server.stop();
-  }
+  expect(payload.graph).toBe("decorated");
+  expect(payload.invokers.accepted).toBe(false);
+  expect(payload.controllers).toEqual([
+    {
+      controller: "OnlyController",
+      handlers: [{ handler: "describe", invoker: "compiled", reason: wholeContextReason }],
+    },
+  ]);
+  expect(warnings).toEqual([]);
 });
 
 test("aot leaves the controller list empty for a project a build would refuse", async () => {
@@ -618,26 +599,20 @@ test("aot leaves the controller list empty for a project a build would refuse", 
   for (const projectRoot of [duplicateNames, escapingRoot, controllerless]) {
     process.chdir(projectRoot);
     const application = await AponiaFactory.createNative(AppModule, { logger: false });
-    const server = serveLoopback(application);
+    const payload = await readAot(application);
+    expect(payload.graph).toBe("decorated");
+    expect(payload.controllers).toEqual([]);
 
-    try {
-      const payload = await readAot(server);
-      expect(payload.graph).toBe("decorated");
-      expect(payload.controllers).toEqual([]);
+    // One row per project per process, however many times it is asked.
+    expect((await readAot(application)).controllers).toEqual([]);
+    expect(warnings).toHaveLength(1);
 
-      // One row per project per process, however many times it is asked.
-      expect((await readAot(server)).controllers).toEqual([]);
-      expect(warnings).toHaveLength(1);
-
-      // The row quotes the build's own sentence and nothing else of it, which is
-      // why the whole sentence is compared rather than the opening words every
-      // spelling of it would share. The command is asked what it says, from the
-      // root the endpoint itself read.
-      const refusal = await commandRefusal(process.cwd());
-      expect(warnings[0]).toContain(`(${refusal}); /aot answers the boot's record alone.`);
-    } finally {
-      server.stop();
-    }
+    // The row quotes the build's own sentence and nothing else of it, which is
+    // why the whole sentence is compared rather than the opening words every
+    // spelling of it would share. The command is asked what it says, from the
+    // root the endpoint itself read.
+    const refusal = await commandRefusal(process.cwd());
+    expect(warnings[0]).toContain(`(${refusal}); /aot answers the boot's record alone.`);
     warnings.splice(0);
   }
 });
@@ -665,18 +640,12 @@ test("aot reports the declared graph and an adopted artifact without a refusal r
     descriptors,
     invokers,
   });
-  const server = serveLoopback(application);
+  const payload = await readAot(application);
 
-  try {
-    const payload = await readAot(server);
-
-    expect(payload.graph).toBe("declared");
-    expect(payload.invokers.accepted).toBe(true);
-    expect(Object.hasOwn(payload.invokers, "reason")).toBe(false);
-    expect(payload.controllers).toEqual([]);
-  } finally {
-    server.stop();
-  }
+  expect(payload.graph).toBe("declared");
+  expect(payload.invokers.accepted).toBe(true);
+  expect(Object.hasOwn(payload.invokers, "reason")).toBe(false);
+  expect(payload.controllers).toEqual([]);
 });
 
 test.each([
@@ -690,7 +659,7 @@ test.each([
   // The record is read through a registry-global symbol key, so it can have
   // been written by a copy of the platform this release does not own — or not
   // written at all. The endpoint states the facts it reports and no others: a
-  // record that does not carry them is a path this server does not serve,
+  // record that does not carry them is a path this surface does not serve,
   // because a payload built from it could only guess at what it said.
   const application = new Elysia();
 
@@ -701,16 +670,10 @@ test.each([
     });
   }
 
-  const server = serveLoopback(application);
-
-  try {
-    expect((await fetch(`${server.url}/__devtools/aot`)).status).toBe(404);
-    // The server is up either way: an endpoint the record cannot fill is
-    // absent rather than the whole surface failing.
-    expect((await fetch(`${server.url}/__devtools/meta`)).status).toBe(200);
-  } finally {
-    server.stop();
-  }
+  expect((await ask(application, "/aot")).status).toBe(404);
+  // The surface answers either way: an endpoint the record cannot fill is
+  // absent rather than the whole surface failing.
+  expect((await ask(application, "/meta")).status).toBe(200);
 });
 
 test("a record that predates the compiled root still answers aot", async () => {
@@ -728,35 +691,31 @@ test("a record that predates the compiled root still answers aot", async () => {
     enumerable: false,
   });
 
-  const server = serveLoopback(application);
-
-  try {
-    // The record states no reason, so the payload publishes none: an absent
-    // reason is what that copy said, and a placeholder would be this package's.
-    expect(await readAot(server)).toEqual({
-      graph: "decorated",
-      invokers: { accepted: false },
-      controllers: [],
-    });
-    expect((await fetch(`${server.url}/__devtools/graph`)).status).toBe(404);
-  } finally {
-    server.stop();
-  }
+  // The record states no reason, so the payload publishes none: an absent
+  // reason is what that copy said, and a placeholder would be this package's.
+  expect(await readAot(application)).toEqual({
+    graph: "decorated",
+    invokers: { accepted: false },
+    controllers: [],
+  });
+  expect((await ask(application, "/graph")).status).toBe(404);
 });
 
-test("starting the devtools surface loads no analyzer, and the first request does", () => {
+test("mounting the devtools surface loads no analyzer, and the first request does", () => {
   // Read in a child, because the registry is the process's: this file's own
   // run may have loaded the analyzer through another lane, and a snapshot here
   // could not tell "not loaded" from "already loaded". The child imports the
-  // same surface an application's boot imports, starts a server, and reads
-  // Bun's module registry before the import, after it, and after the request.
+  // surface's own barrel and the module that builds its handler record, answers
+  // one `/aot` request from that pair, and reads Bun's module registry before
+  // the import, after it, and after the request.
   const script = `
 const analyzerModules = () =>
   Object.keys(require.cache).filter(
     (key) => key.includes("ts-morph") || key.includes("/cli/src/"),
   ).length;
 const before = analyzerModules();
-const { startDevtoolsServer } = await import(${JSON.stringify(join(import.meta.dir, "..", "src", "index.ts"))});
+const { devtoolsPathPrefix, routeRequest } = await import(${JSON.stringify(join(import.meta.dir, "..", "src", "index.ts"))});
+const { createHandlers } = await import(${JSON.stringify(join(import.meta.dir, "..", "src", "server", "devtools-server.ts"))});
 const afterImport = analyzerModules();
 const { Elysia } = await import(${JSON.stringify(Bun.resolveSync("elysia", import.meta.dir))});
 const application = new Elysia();
@@ -764,15 +723,14 @@ Object.defineProperty(application, Symbol.for("aponia.application.diagnostics"),
   value: { framework: "0.0.0-probe", graph: "decorated", invokers: { accepted: false, reason: "probe" } },
   enumerable: false,
 });
-const server = startDevtoolsServer({
-  application,
-  port: 0,
-  logger: { log: () => {}, fatal: () => {}, error: () => {}, warn: () => {} },
-});
-const response = await fetch(\`\${server.url}/__devtools/aot\`);
+const silentLogger = { log: () => {}, fatal: () => {}, error: () => {}, warn: () => {} };
+const handlers = createHandlers(application, undefined, undefined, silentLogger);
+const response = await routeRequest(
+  new Request(\`http://localhost\${devtoolsPathPrefix}/aot\`),
+  handlers,
+);
 await response.json();
 const afterRequest = analyzerModules();
-server.stop();
 console.log(JSON.stringify({ before, afterImport, afterRequest, status: response.status }));
 `;
 

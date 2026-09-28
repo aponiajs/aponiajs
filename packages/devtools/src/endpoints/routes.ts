@@ -163,8 +163,9 @@ function describeUnrecordedRoute(method: string, path: string): AponiaMountedRou
  *
  * `routes` is a stable Elysia API, but what this release reads is whatever the
  * installed one holds. A table that is not an array is a route report with no
- * routes rather than a reason to fail the request: this handler answers inside
- * `Bun.serve`, and an application whose routes cannot be read is still an
+ * routes rather than a reason to fail the request: this handler answers a route
+ * the application mounted, and an application whose routes cannot be read is
+ * still an
  * application whose other endpoints answer.
  */
 function readMountedRoutes(application: Elysia): readonly MountedNativeRoute[] {

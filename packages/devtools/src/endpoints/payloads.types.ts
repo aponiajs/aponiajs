@@ -196,10 +196,9 @@ export interface AponiaLogsPayload {
  * A request appears once when it arrived and again when it was answered, and
  * both entries carry the same `id`, so a consumer groups by `id` and takes the
  * last entry each request has in the window it reads — the answer wherever the
- * answer is still there to read. Two configurations are where it is not: a
+ * answer is still there to read. One configuration is where it is not: a
  * consumer lagging more than one window behind never reads an answer the bounded
- * record has already evicted, and an answer written after a second `listen()` goes
- * to the record the socket that is gone was serving. An entry whose `status` is
+ * record has already evicted. An entry whose `status` is
  * `null` is a request this record saw arrive and read no answer for — a plugin
  * that answered from its own `onRequest` before any later phase ran, or an answer
  * outside the window the consumer read. The absence is stated rather

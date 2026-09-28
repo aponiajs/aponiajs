@@ -4,6 +4,36 @@ import type { DevtoolsHandlers, DevtoolsRequestHandler } from "./devtools-server
 export const devtoolsPathPrefix = "/__devtools";
 
 /**
+ * Whether a request is one the devtools surface answers itself.
+ *
+ * The record `/requests` publishes belongs to the application's traffic, and a
+ * page that polls it would otherwise be recording itself. The cost of that is
+ * one entry per poll, carried into the answer that poll returns, and it lands on
+ * a buffer bounded at twice the request window it names: a page polling every
+ * second would push the traffic the reader is watching out of the window it is
+ * watching it in. The surface is the one client this package can name, so it is
+ * the one it leaves out.
+ *
+ * A URL the platform cannot parse is not the surface's, and the direction is the
+ * safe one: the answer decides whether a request is recorded at all, so a
+ * spelling this check is not sure of stays recorded rather than dropped.
+ *
+ * `@internal` — the plugin's arrival hook is the only caller, and this is not
+ * part of the endpoint contract the barrel publishes.
+ */
+export function isDevtoolsSurfaceRequest(request: Request): boolean {
+  let pathname: string;
+
+  try {
+    pathname = new URL(request.url).pathname;
+  } catch {
+    return false;
+  }
+
+  return pathname === devtoolsPathPrefix || pathname.startsWith(`${devtoolsPathPrefix}/`);
+}
+
+/**
  * Routes one request to the handler that owns its path.
  *
  * Pure, and deliberately so: a method and a path are the whole contract a
