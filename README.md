@@ -543,7 +543,7 @@ Implemented: decorated modules and HTTP controllers, Standard Schema input and
 status-specific response validation, one-schema validation-model classes,
 request parameter decorators, singleton dependency injection,
 class/value/factory/alias providers, explicit tokens,
-module imports and exports, lifecycle management, provider and application
+module imports and exports, provider and application
 lifecycle hooks, read from the provider instance, structured logging, project
 generators, and native Elysia escape hatches. Concise controllers preserve
 native callback inference without manual context types, and application errors
