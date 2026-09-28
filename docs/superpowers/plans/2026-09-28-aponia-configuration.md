@@ -269,11 +269,21 @@ Expected: pass.
 
 - [ ] **Step 6: Advertise the export and commit**
 
-In `packages/common/llms.txt`, add to the public-types list:
+In `packages/common/llms.txt`, the function is a runtime export and the two types are not, so each
+goes in the section that names it and each links the file that declares it:
 
 ```markdown
-- [defineConfiguration, ConfigurationToken, ConfigurationOptions](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/configuration/configuration.ts): declares a configuration as a token that carries the Standard Schema its value must satisfy.
+- [defineConfiguration](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/configuration/configuration.ts): declares a configuration as a token that carries the Standard Schema its value must satisfy.
 ```
+
+in the exports list, and:
+
+```markdown
+- [ConfigurationToken, ConfigurationOptions](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/configuration/configuration.types.ts): the declaration's token type and the options a loader is asked with.
+```
+
+in the public-types list. `scripts/package-llms.spec.ts` resolves both paths against the tree, so
+both files must exist before the entry is added.
 
 ```bash
 bun run check --fix
@@ -757,20 +767,17 @@ Expected: pass.
 
 - [ ] **Step 7: Mirror the public surface in the conformance lane and commit**
 
-Add to `packages/platform-elysia/tests-vp/configuration.conformance.ts` — the compile-time half pins
-the provider's assignability, and one runtime case boots a module that declares a configuration:
+**Add to the file Task 1 created; do not rewrite it.** That file already declares the token's type
+half, including `AppConfig`, the `VitePlusTest` type, and the `test`/`expect` declarations. Add only
+what is missing — the imports the new code needs, the provider's assignability pin, the module, and
+the runtime case — and reuse `AppConfig` as it stands rather than declaring a second one. Pasting a
+whole file here would produce `Cannot redeclare block-scoped variable 'AppConfig'` and duplicate
+`declare` identifiers, so the additions are:
 
 ```ts
-import { Inject, Injectable, Module, defineConfiguration, type Provider } from "@aponiajs/common";
-import { z } from "zod";
+import { type Provider } from "@aponiajs/common";
+import { Inject, Injectable, Module } from "@aponiajs/common";
 import { AponiaFactory, provideConfiguration } from "../src/index.ts";
-
-type VitePlusTest = typeof import("vite-plus/test");
-
-declare const test: VitePlusTest["test"];
-declare const expect: VitePlusTest["expect"];
-
-const AppConfig = defineConfiguration(z.object({ port: z.coerce.number().default(3000) }));
 
 // The settled contract: a declaration lowers to an ordinary provider.
 const asProvider = provideConfiguration(AppConfig) satisfies Provider;
@@ -794,6 +801,9 @@ test("resolves a declared configuration through a real boot", async () => {
 
 void asProvider;
 ```
+
+Merge each import into the line already there rather than adding a second import of the same module,
+and keep the file's existing compile-time assertions above the additions.
 
 In `packages/platform-elysia/llms.txt`, add to the exports list:
 
