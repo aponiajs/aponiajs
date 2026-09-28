@@ -29,8 +29,11 @@ current line is an alpha, which is why the `@alpha` tag is what to install today
 
 `aponia new` follows Nest's flat starter layout: `src/app.module.ts` composes the
 application, `src/main.ts` bootstraps it, and one controller and one service sit
-beside them with the controller's spec. The starter writes more than those — its
-own `src/logger.ts`, the generated `src/descriptors.generated.ts` and
+beside them with the controller's spec. Its `src/config.ts` declares the
+application's configuration — one `PORT` schema validated once at boot and read
+back through `application.get(AppConfig)`, which the
+[configuration guide](../configuration.md) covers. The starter writes more than
+those — its own `src/logger.ts`, the generated `src/descriptors.generated.ts` and
 `src/invokers.generated.ts`, and the files around them. [The CLI
 reference](../cli.md) prints the complete tree.
 

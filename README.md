@@ -13,6 +13,7 @@ Structured applications for Bun
 [Learning path](./docs/learn/README.md) ·
 [Documentation](./docs/architecture-and-style.md) ·
 [Dependency injection](./docs/dependency-injection.md) ·
+[Configuration](./docs/configuration.md) ·
 [WebSockets](./docs/websockets.md) ·
 [Native plugins](./docs/native-plugins.md) ·
 [Introspection](./docs/introspection.md) ·
@@ -542,6 +543,7 @@ Implemented: decorated modules and HTTP controllers, Standard Schema input and
 status-specific response validation, one-schema validation-model classes,
 request parameter decorators, singleton dependency injection,
 class/value/factory/alias providers, explicit tokens,
+validated configuration an application declares and injects,
 module imports and exports, lifecycle management, structured logging, project
 generators, and native Elysia escape hatches. Concise controllers preserve
 native callback inference without manual context types, and application errors
@@ -562,7 +564,7 @@ on the application and reports rather than changes.
 
 Not implemented yet: async provider lifecycle, request and transient scopes,
 platform-neutral HTTP packages, full Elysia phase conformance, serialization
-policy, configuration and secret redaction, HTTP admission hardening,
+policy, secret redaction, HTTP admission hardening,
 middleware, authentication and authorization, rate limiting, testing packages,
 observability and health, OpenAPI generation, production WebSocket policies and
 the transport-neutral adapter package, decorator-wide Eden inference, and

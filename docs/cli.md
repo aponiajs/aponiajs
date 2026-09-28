@@ -247,6 +247,7 @@ my-api/
 |   |-- app.controller.ts
 |   |-- app.module.ts
 |   |-- app.service.ts
+|   |-- config.ts
 |   |-- descriptors.generated.ts
 |   |-- invokers.generated.ts
 |   |-- logger.ts
@@ -254,6 +255,12 @@ my-api/
 `-- test/
     `-- app.e2e-spec.ts
 ```
+
+`src/config.ts` declares the application's configuration: one schema validates
+`PORT` once at boot, provided by `AppModule` and read back through
+`application.get(AppConfig)` in `src/main.ts`. The [configuration
+guide](./configuration.md) covers the declaration, the two failure codes, and the
+deliberate limits.
 
 The generated runtime flow is:
 

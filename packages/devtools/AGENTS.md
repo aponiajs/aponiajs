@@ -28,8 +28,10 @@ runtime boundary it describes.
 ## Invariants
 
 - Registration is the opt-in and `enabled` is the switch. The framework never
-  reads an environment variable on the application's behalf, because an
-  environment variable is not a security boundary.
+  reads an environment variable to choose its own behaviour, because an
+  environment variable is not a security boundary. A configuration an
+  application declares through `provideConfiguration` is the application's own
+  read, not the framework's.
 - Registration has two spellings that mount one plugin: `DevtoolsModule.register`
   in a module's `imports`, and `devtoolsPlugin` in `AponiaFactory.create`'s
   `plugins` option. Both read the same `DevtoolsOptions`, both build the plugin

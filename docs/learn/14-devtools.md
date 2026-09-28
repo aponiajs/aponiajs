@@ -49,8 +49,11 @@ export class AppModule {}
 ```
 
 `enabled` is the switch on both, and it is the application's decision — the
-framework never reads an environment variable on your behalf, because an
-environment variable is not a security boundary. A registration that is not
+framework never reads an environment variable to choose its own behaviour,
+because an environment variable is not a security boundary. An application that
+declares a configuration reads one itself, through
+[`provideConfiguration`](../configuration.md); that read is the application's,
+not the framework's. A registration that is not
 enabled mounts nothing at all on either path: an inert module on one, and an
 `undefined` the factory mounts nothing for on the other.
 

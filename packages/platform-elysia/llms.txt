@@ -7,7 +7,7 @@ Decorated modules, controllers, gateways, and `@Validation()` models are the nor
 ## What this package exports
 
 - [AponiaFactory](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/application/aponia-factory.ts): `create()` bootstraps an application, `createNative()` returns the exact composed Elysia instance for native tooling and Eden Treaty.
-- [AponiaElysiaApplication](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/application/aponia-elysia-application.ts): the application wrapper with `handle`, `listen`, and `close`.
+- [AponiaElysiaApplication](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/application/aponia-elysia-application.ts): the application wrapper with `handle`, `listen`, `get`, and `close`.
 - [compileRootModule](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/modules/module-compiler.ts): lowers decorator metadata into the frozen descriptors `@aponiajs/core` consumes.
 - [defineElysiaController, elysiaController, ELYSIA_CONTROLLER](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/controllers/controller-definition.ts): descriptor-first controller definitions and the concise native-registration facade.
 - [HttpError, httpError, httpErrors](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/errors/http-error.ts): deliberate application failures serialized as RFC 9457 `application/problem+json`.

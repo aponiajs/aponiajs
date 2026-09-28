@@ -375,6 +375,7 @@ create/find-all/find-one/update/remove message handlers. `runCli` prints
 Implemented: decorated modules and HTTP controllers, Standard Schema route
 validation, one-schema validation-model classes, request parameter decorators,
 singleton DI, class/value/factory/alias providers, explicit tokens,
+validated configuration an application declares and injects,
 imports and exports, lifecycle, structured logging, generators, native Elysia
 escape hatches, application-owned native plugins mounted through
 `AponiaApplicationOptions.plugins`, concise inferred controller registration,

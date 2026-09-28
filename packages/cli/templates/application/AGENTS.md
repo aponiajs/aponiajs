@@ -124,7 +124,9 @@ The surface is served unless `NODE_ENV` is `production`, on loopback and port
 `devtoolsPlugin` moves the bind — which the start reports, because `/requests`
 records headers and bodies. `enabled: false` serves nothing at all: no socket and no endpoint. The
 expression in `src/main.ts` is this starter's choice; the framework never reads
-the environment on the application's behalf. Both halves of the trade are in the
+the environment to choose its own behaviour. This application reads it where it
+declares it to: `src/config.ts` validates `PORT` through `provideConfiguration`
+once at boot, and that read is the application's. Both halves of the trade are in the
 [devtools guide](https://github.com/aponiajs/aponiajs/blob/main/docs/devtools.md).
 
 ## Authoring rules

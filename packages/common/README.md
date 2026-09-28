@@ -15,8 +15,10 @@ bun add @aponiajs/common
 
 The public application authoring API includes `@Module()`, `@Controller()`,
 HTTP method decorators, WebSocket gateway decorators, `@Injectable()`,
-`@Inject()`, and the guard, interceptor, and filter decorators. This package does
-not depend on Elysia, Bun runtime APIs, or another Aponia package.
+`@Inject()`, `defineConfiguration()` — which returns a `ConfigurationToken`
+carrying the schema its value must satisfy — and the guard, interceptor, and
+filter decorators. This package does not depend on Elysia, Bun runtime APIs, or
+another Aponia package.
 
 ```ts
 import { Controller, Get, Injectable, Module } from "@aponiajs/common";

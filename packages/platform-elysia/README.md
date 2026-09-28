@@ -32,7 +32,9 @@ The first Elysia platform slice for Aponia:
 - Nest-style guards, interceptors (`interceptBefore`/`interceptAfter`), and
   exception filters, compiled into per-route Elysia lifecycle hooks;
 - explicit Elysia AOT, lazy-composition, and startup-precompile policy;
-- `handle`, `listen`, and `close` application methods.
+- `provideConfiguration(AppConfig)` — an application-declared configuration,
+  validated once at boot and read back through `application.get(AppConfig)`;
+- `handle`, `listen`, `get`, and `close` application methods.
 
 This package intentionally does not yet implement request scopes, schema
 aggregation, Socket.IO-only gateway semantics, or decorator-wide static route
@@ -957,6 +959,7 @@ only exist once the callback runs; build the application and read
 [introspection guide](../../docs/introspection.md) for the full contract.
 
 [npm package](https://www.npmjs.com/package/@aponiajs/platform-elysia) ·
+[configuration guide](../../docs/configuration.md) ·
 [native plugin guide](../../docs/native-plugins.md) ·
 [Eden Treaty guide](../../docs/eden-treaty.md) ·
 [complete package catalog](../../docs/packages.md)

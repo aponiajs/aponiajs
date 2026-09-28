@@ -293,7 +293,14 @@ runtime boundary it describes.
   non-writable, and non-configurable, and the record is frozen: this is a seam,
   not shape, because Elysia composes by walking an instance's keys, and an
   application no boot produced — a plain `Elysia`, a plugin instance — must read
-  as `undefined` rather than as an empty record. The record is attached once the
+  as `undefined` rather than as an empty record. A second symbol-keyed seam rides
+  the same instance: the boot also attaches its container under
+  `Symbol.for("aponia.application.container")` as
+  `application-container.ts`'s `attachApplicationContainer`, with the same three
+  flags and the same reader discipline, and it is what
+  `AponiaElysiaApplication.get` reads a token through — a wrapper no boot
+  produced holds no container and raises `MISSING_PROVIDER`. The record is
+  attached once the
   container holds every plan and before the gateway work, and it states what the
   boot decided and mounted: the release, whether the graph it served was
   `"declared"` or `"decorated"` — decided by the shape of the root

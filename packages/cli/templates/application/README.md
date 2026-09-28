@@ -38,8 +38,9 @@ Open `http://localhost:3000/` after starting the application.
 `host`, and `DEVTOOLS_PORT` moves it — while the application listens: `meta`,
 `graph`, `routes`, `flow`, `logs`, `requests`, and `aot`. The surface is served
 unless `NODE_ENV` is `production`, and `devtoolsPlugin({ enabled })` is the
-application's own decision rather than anything the framework reads from the
-environment.
+application's own decision rather than anything the framework reads to choose its
+own behaviour. The application reads the environment where it declares it to:
+`src/config.ts` validates `PORT` through `provideConfiguration` once at boot.
 
 It is mounted through the factory's `plugins` option instead of `AppModule`'s
 `imports`, and that placement is the point: `aponia build` lowers a module only

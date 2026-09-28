@@ -90,7 +90,9 @@ the routes the server answers, the stages each route passes through, the log
 stream, the requests that reached the record and what answered them, and
 what a build decided about the project's invokers. It is a leaf package — nothing
 in the framework depends on it — and it is enabled by an application's own
-registration, never by an environment variable the framework reads.
+registration, never by an environment variable the framework reads to decide.
+An application that declares its configuration does read one, through
+`provideConfiguration`; that read is the application's, not the framework's.
 
 [Package README](../packages/devtools/README.md) ·
 [Devtools guide](./devtools.md) ·
