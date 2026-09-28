@@ -2,6 +2,7 @@ import { AponiaError, type LoggerService, type Token } from "@aponiajs/common";
 import { Elysia, type AnyElysia } from "elysia";
 import { reportThroughLogger } from "../errors/default-exception-filter.ts";
 import { readApplicationToken } from "./application-container.ts";
+import { readApplicationShutdown } from "./lifecycle-hooks.ts";
 
 export class AponiaElysiaApplication<TNativeApplication extends AnyElysia = Elysia> {
   readonly #nativeApplication: TNativeApplication;
@@ -57,6 +58,14 @@ export class AponiaElysiaApplication<TNativeApplication extends AnyElysia = Elys
   }
 
   async close(closeActiveConnections = true): Promise<void> {
+    // A boot attaches the plan; an application no boot produced has none, and
+    // keeps the behaviour this method had before the seam existed.
+    const shutdown = readApplicationShutdown(this.#nativeApplication);
+    if (shutdown) {
+      await shutdown(closeActiveConnections);
+      return;
+    }
+
     if (this.#nativeApplication.server) {
       await this.#nativeApplication.stop(closeActiveConnections);
     }

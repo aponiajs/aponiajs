@@ -39,6 +39,7 @@ This package records metadata and declares contracts. It never builds a module g
 - [WebSocketGatewayMetadata, WebSocketGatewayOptions, WebSocketMessageMetadata, WebSocketParameterKind, WebSocketParameterMetadata](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/websockets/websocket-gateway.types.ts): gateway metadata shapes.
 - [ControllerDefinition](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/controllers/controller.types.ts): the platform-neutral controller descriptor.
 - [ConfigurationToken, ConfigurationOptions](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/configuration/configuration.types.ts): the declaration's token type and the options a loader is asked with.
+- [OnModuleInit, OnApplicationBootstrap, BeforeApplicationShutdown, OnModuleDestroy, OnApplicationShutdown](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/lifecycle/lifecycle.types.ts): the five moments a provider can hook, in the order a boot reaches them, read from the instance by the platform.
 
 ## Documentation
 
@@ -46,6 +47,7 @@ This package records metadata and declares contracts. It never builds a module g
 - [Dependency injection](../../docs/dependency-injection.md): tokens, visibility, providers, and the error codes raised on failure.
 - [WebSocket gateways](../../docs/websockets.md): the `{ event, data }` envelope, responses, and lifecycle methods.
 - [Logging](../../docs/logging.md): logger configuration, JSON output, and level filtering.
+- [Lifecycle](../../docs/lifecycle.md): the five moments a provider can hook, and what the framework does when it fails.
 - [Modules](../../docs/learn/03-modules.md): how code is grouped and what a module exposes.
 - [Controllers and routes](../../docs/learn/05-controllers-and-routes.md): how a request reaches a controller method.
 - [Validation](../../docs/learn/06-validation.md): how invalid requests are rejected before the handler.

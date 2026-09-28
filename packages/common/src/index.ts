@@ -52,6 +52,13 @@ export type {
 } from "./enhancers/enhancer.types.ts";
 export { AponiaError } from "./errors/aponia-error.ts";
 export type { AponiaErrorCode } from "./errors/aponia-error.types.ts";
+export type {
+  BeforeApplicationShutdown,
+  OnApplicationBootstrap,
+  OnApplicationShutdown,
+  OnModuleDestroy,
+  OnModuleInit,
+} from "./lifecycle/lifecycle.types.ts";
 export { ConsoleLogger, Logger } from "./logging/console-logger.ts";
 export { renderLogValue } from "./logging/log-value.ts";
 export type { ConsoleLoggerOptions, LoggerService, LogLevel } from "./logging/logger.types.ts";

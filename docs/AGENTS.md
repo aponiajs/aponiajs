@@ -14,6 +14,7 @@ The published documentation set:
 | `native-plugins.md`         | Mounting native Elysia plugins and typing what they add                                       |
 | `files.md`                  | Uploaded files, named downloads, and serving static assets                                    |
 | `configuration.md`          | Declaring, validating once at boot, injecting, and reading back a configuration               |
+| `lifecycle.md`              | The five moments a provider can hook, and what the framework does when one fails              |
 | `eden-treaty.md`            | Native-style application types consumed through Eden Treaty                                   |
 | `elysia-compatibility.md`   | Supported Elysia versions and how a mismatch fails                                            |
 | `introspection.md`          | Projecting a compiled application into frozen, serializable data                              |

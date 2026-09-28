@@ -22,7 +22,10 @@ import {
   type ResolvedControllerEnhancers,
 } from "../controllers/enhancer-resolver.ts";
 import type { RuntimeElysiaController } from "../controllers/controller.types.ts";
-import { createDefaultExceptionFilter } from "../errors/default-exception-filter.ts";
+import {
+  createDefaultExceptionFilter,
+  reportThroughLogger,
+} from "../errors/default-exception-filter.ts";
 import { compileRootModule, isModuleDefinition } from "../modules/module-compiler.ts";
 import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
 import { selectRootModuleDescriptor } from "../modules/module-descriptor-artifact.ts";
@@ -46,6 +49,11 @@ import type {
   AponiaApplicationOptions,
   ConfiguredAponiaApplicationOptions,
 } from "./application.types.ts";
+import {
+  attachApplicationShutdown,
+  collectLifecycleCalls,
+  type LifecycleCall,
+} from "./lifecycle-hooks.ts";
 
 /**
  * Compile and mount one Aponia module graph onto a native Elysia instance.
@@ -274,6 +282,51 @@ export async function bootstrapAponiaApplication(
     }
   }
 
+  // The graph is instantiated — providers in the first pass, controllers in the
+  // second — and the modules now initialize in the order `graph.modules` already
+  // holds them, which is post-order, so a module that imports another runs after
+  // it. The hooks do not interleave with instantiation: every module's providers
+  // and controllers exist before the first hook runs, so what this orders is
+  // modules rather than isolating one.
+  for (const call of collectLifecycleCalls(container, "onModuleInit")) {
+    await call();
+  }
+
+  // The shutdown plan is collected once, while the container holds every
+  // instance, and handed to the wrapper through the symbol seam below. Reading
+  // it here rather than from the container later means `close()` needs no
+  // container: an application the boot did not produce reads as `undefined` and
+  // keeps the behaviour it has today.
+  const beforeShutdown = collectLifecycleCalls(container, "beforeApplicationShutdown");
+  const moduleDestroy = [...collectLifecycleCalls(container, "onModuleDestroy")].reverse();
+  const applicationShutdown = collectLifecycleCalls(container, "onApplicationShutdown");
+
+  // Each group of stopping hooks runs once per boot, and a second caller joins the
+  // group already running rather than starting another — teardown hooks are not
+  // idempotent, and a pool closed twice is the defect this seam exists to prevent.
+  //
+  // The stop is deliberately not in a group. A `close()` that ran before the
+  // application listened must not make a later one a no-op: the server would stay
+  // bound and outlive the call that was supposed to end it. Stopping an
+  // application with no server costs nothing, so the stop is asked for every time.
+  let beforeShutdownDone: Promise<void> | undefined;
+  let afterStopDone: Promise<void> | undefined;
+
+  attachApplicationShutdown(nativeApplication, async (closeActiveConnections = true) => {
+    beforeShutdownDone ??= runShutdownHooks(beforeShutdown, logger);
+    await beforeShutdownDone;
+
+    if (nativeApplication.server) {
+      await nativeApplication.stop(closeActiveConnections);
+    }
+
+    afterStopDone ??= (async () => {
+      await runShutdownHooks(moduleDestroy, logger);
+      await runShutdownHooks(applicationShutdown, logger);
+    })();
+    await afterStopDone;
+  });
+
   // The boot's own record, attached to the application it returns: which root
   // the container compiled, what it decided about the invoker artifact, which
   // release supplied each artifact it adopted, the compiled root, every plan the
@@ -318,7 +371,37 @@ export async function bootstrapAponiaApplication(
   }
 
   await nativeApplication.modules;
+
+  // Once, after every route and gateway is mounted and no further plugin work is
+  // pending: a hook that needs the whole graph — a scheduler, a migration check,
+  // a cache warm — has one place to stand, and it is before anything can listen.
+  for (const call of collectLifecycleCalls(container, "onApplicationBootstrap")) {
+    await call();
+  }
+
   return Object.freeze({ nativeApplication, logger });
+}
+
+/**
+ * Runs shutdown hooks in order, reporting a failure and carrying on.
+ *
+ * A pool that refuses to close must not be able to keep every other pool open,
+ * and `close()` may not become a call that cannot complete, so each failure is
+ * reported where an application reads its logs and the next hook still runs.
+ * This is a failure-reporting call site and goes through the same guarded seam
+ * the default mapping does.
+ */
+async function runShutdownHooks(
+  calls: readonly LifecycleCall[],
+  logger: LoggerService | undefined,
+): Promise<void> {
+  for (const call of calls) {
+    try {
+      await call();
+    } catch (error) {
+      reportThroughLogger(logger, error, "ApplicationShutdown");
+    }
+  }
 }
 
 /**

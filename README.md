@@ -22,7 +22,8 @@ Structured applications for Bun
 [Testing](./docs/testing.md) ·
 [CLI](./docs/cli.md) ·
 [Files](./docs/files.md) ·
-[Devtools](./docs/devtools.md)
+[Devtools](./docs/devtools.md) ·
+[Lifecycle](./docs/lifecycle.md)
 
 [![CI](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml/badge.svg)](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcommon/alpha?label=npm&color=baa9d1)](https://www.npmjs.com/package/@aponiajs/common)
@@ -544,7 +545,8 @@ status-specific response validation, one-schema validation-model classes,
 request parameter decorators, singleton dependency injection,
 class/value/factory/alias providers, explicit tokens,
 validated configuration an application declares and injects,
-module imports and exports, lifecycle management, structured logging, project
+module imports and exports, provider and application lifecycle hooks, read from
+the provider instance, structured logging, project
 generators, and native Elysia escape hatches. Concise controllers preserve
 native callback inference without manual context types, and application errors
 cover every supported 4xx and 5xx status with RFC 9457 responses. Statically
@@ -562,7 +564,7 @@ loopback unless its registration names a `host`, over what a boot compiled and
 what the application answered; it mounts no route
 on the application and reports rather than changes.
 
-Not implemented yet: async provider lifecycle, request and transient scopes,
+Not implemented yet: request and transient scopes,
 platform-neutral HTTP packages, full Elysia phase conformance, serialization
 policy, secret redaction, HTTP admission hardening,
 middleware, authentication and authorization, rate limiting, testing packages,

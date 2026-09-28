@@ -17,8 +17,13 @@ The public application authoring API includes `@Module()`, `@Controller()`,
 HTTP method decorators, WebSocket gateway decorators, `@Injectable()`,
 `@Inject()`, `defineConfiguration()` — which returns a `ConfigurationToken`
 carrying the schema its value must satisfy — and the guard, interceptor, and
-filter decorators. This package does not depend on Elysia, Bun runtime APIs, or
-another Aponia package.
+filter decorators. The public types
+include the five provider lifecycle contracts — `OnModuleInit`,
+`OnApplicationBootstrap`, `BeforeApplicationShutdown`, `OnModuleDestroy`, and
+`OnApplicationShutdown` — which a provider implements by declaring the method;
+the platform reads that method from the instance, never the type, so
+`implements` is optional ([lifecycle guide](../../docs/lifecycle.md)). This package does
+not depend on Elysia, Bun runtime APIs, or another Aponia package.
 
 ```ts
 import { Controller, Get, Injectable, Module } from "@aponiajs/common";

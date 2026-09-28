@@ -31,9 +31,11 @@ runtime boundary it describes.
   create the root Elysia named after the root module id with its explicit
   compilation policy, mount the application's own `plugins` entries, first pass
   mounting plugin modules and eagerly
-  instantiating providers, controller mounting, await native plugin composition,
+  instantiating providers, controller mounting, the `onModuleInit` pass over the
+  graph in module order, await native plugin composition,
   WebSocket gateway registration and initialization, then await
-  `nativeApplication.modules` again.
+  `nativeApplication.modules` again and run the one `onApplicationBootstrap`
+  pass before the wrapper is returned.
   `configureNative` must return the instance it receives. The application's own
   enhancer declarations resolve between the first pass and the controller loop.
 - `AponiaApplicationOptions.plugins` mounts native plugins on the root
@@ -152,12 +154,15 @@ runtime boundary it describes.
   Details answer intact, because the response depends on the hook returning and a
   logger an application supplies may throw. Such a logger is reported on `stderr` by a direct write —
   the only place this package writes a process stream — because the channel that
-  would normally carry the diagnostic is the one that failed. Three call sites
+  would normally carry the diagnostic is the one that failed. Four call sites
   in this package report a failure and every one of them goes through that seam:
   this mapping,
   `createFilterHook`'s catch, which reports a filter that threw before declining
-  to what answers next, and `AponiaElysiaApplication.listen`'s catch, which
-  reports the failure it is about to rethrow. The rule is deliberately narrow —
+  to what answers next, `AponiaElysiaApplication.listen`'s catch, which reports
+  the failure it is about to rethrow, and `runShutdownHooks`'s catch in
+  `application-bootstrap.ts`, which reports a hook that threw while the
+  application was stopping and carries on, because `close()` may not become a
+  call that cannot complete. The rule is deliberately narrow —
   a call site that reports a failure guards, and a call site that reports
   progress does not, because a throw on a progress line aborts work that has not
   yet reported a failure and aborting it is louder than continuing. So no

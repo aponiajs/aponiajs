@@ -31,9 +31,11 @@ levels, or a `LoggerService`, when a test asserts on log output — see the
 [logging guide](./logging.md).
 
 `handle` never binds a port, so nothing needs to be closed. Call
-`application.close()` only after `application.listen(port)`. Closing terminates
+`application.close()` after `application.listen(port)`. Closing terminates
 active native connections by default; `application.close(false)` opts into
-caller-managed draining.
+caller-managed draining. Closing a `handle`-driven application is never
+required, but it is how a suite observes the stopping hooks, which the
+[lifecycle guide](./lifecycle.md) explains.
 
 ## Asserting validation
 

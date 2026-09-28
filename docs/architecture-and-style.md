@@ -160,7 +160,8 @@ type-only.
 - Do not read the container from business logic.
 - Do not import another package's private source path.
 - Do not add Elysia, HTTP, or Bun runtime APIs to `@aponiajs/common`.
-- Keep provider creation synchronous until async lifecycle support is available.
+- Keep provider creation synchronous: a provider factory returns a value, not a
+  promise, and asynchronous work belongs in the lifecycle hooks.
 
 ## Module, controller, gateway, and service flow
 

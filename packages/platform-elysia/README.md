@@ -18,6 +18,9 @@ The first Elysia platform slice for Aponia:
 - Nest-style `@Module()`, `@Controller()`, route, and `@Injectable()` metadata;
 - automatic translation of decorated controllers into native Elysia routes;
 - provider-registered Nest-style WebSocket gateways over Elysia `.ws()`;
+- Nest-style lifecycle hooks — `onModuleInit`, `onApplicationBootstrap`,
+  `beforeApplicationShutdown`, `onModuleDestroy`, and `onApplicationShutdown` —
+  read from the provider instance;
 - Standard Schema route validation for `body`, `query`, `params`, `headers`,
   `cookie`, and default or status-specific `response` schemas;
 - Nest-style request parameter decorators — `@Body()`, `@Query()`, `@Param()`,
@@ -248,7 +251,7 @@ versions it was generated against:
 ```ts
 // src/invokers.generated.ts
 export const controllerInvokerArtifact = Object.freeze({
-  framework: "0.6.0-alpha.28",
+  framework: "0.6.0-alpha.29",
   elysia: "1.4.30",
   invokers: new Map([
     [UsersController, (instance: UsersController) => new Map([["ping", () => instance.ping()]])],
@@ -307,7 +310,7 @@ it was generated against:
 ```ts
 // src/descriptors.generated.ts
 export const moduleDescriptorArtifact = Object.freeze({
-  framework: "0.6.0-alpha.28",
+  framework: "0.6.0-alpha.29",
   elysia: "1.4.30",
   modules: Object.freeze({ AppModule: AppModuleDescriptor }),
 });
@@ -960,6 +963,7 @@ only exist once the callback runs; build the application and read
 
 [npm package](https://www.npmjs.com/package/@aponiajs/platform-elysia) ·
 [configuration guide](../../docs/configuration.md) ·
+[lifecycle guide](../../docs/lifecycle.md) ·
 [native plugin guide](../../docs/native-plugins.md) ·
 [Eden Treaty guide](../../docs/eden-treaty.md) ·
 [complete package catalog](../../docs/packages.md)
