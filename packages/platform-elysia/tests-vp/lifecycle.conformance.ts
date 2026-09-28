@@ -1,10 +1,13 @@
 import {
+  Module,
+  provideClass,
   type BeforeApplicationShutdown,
   type OnApplicationBootstrap,
   type OnApplicationShutdown,
   type OnModuleDestroy,
   type OnModuleInit,
 } from "@aponiajs/common";
+import { AponiaFactory } from "../src/index.ts";
 
 type VitePlusTest = typeof import("vite-plus/test");
 
@@ -60,4 +63,24 @@ test("a synchronous hook answers nothing and an asynchronous one answers a promi
   expect(sync.onApplicationShutdown()).toBeUndefined();
   expect(asynchronous.onModuleInit()).toBeInstanceOf(Promise);
   expect(asynchronous.onApplicationShutdown()).toBeInstanceOf(Promise);
+});
+
+test("runs a provider's onModuleInit through a real boot", async () => {
+  const calls: string[] = [];
+
+  class Hooked {
+    onModuleInit(): void {
+      calls.push("init");
+    }
+  }
+
+  @Module({ providers: [provideClass(Hooked, [])] })
+  class HookedModule {}
+
+  const application = await AponiaFactory.create(HookedModule, { logger: false });
+  try {
+    expect(calls).toEqual(["init"]);
+  } finally {
+    await application.close();
+  }
 });
