@@ -222,6 +222,27 @@ describe("the reading", () => {
     expect(calls).toEqual(["shared:init"]);
   });
 
+  test("calls a hook a function carries, because a function carries properties too", async () => {
+    calls.length = 0;
+    // The widened half of the reader's guard: a function is not skipped, because
+    // it can carry the hook the same way an object can, and a value provider may
+    // be one. The case below still pins the input the guard's early return exists
+    // for.
+    const hooked = Object.assign((): void => {}, {
+      onModuleInit(): void {
+        calls.push("function:init");
+      },
+    });
+    const token = createToken<typeof hooked>("LIFECYCLE_FUNCTION");
+
+    @Module({ providers: [provideValue(token, hooked)] })
+    class FunctionModule {}
+
+    application = await AponiaFactory.create(FunctionModule, { logger: false });
+
+    expect(calls).toEqual(["function:init"]);
+  });
+
   test("ignores a value that cannot carry a method", async () => {
     calls.length = 0;
     const nothing = createToken<null>("NOTHING");
@@ -269,6 +290,41 @@ describe("a hook that throws while starting", () => {
     expect(thrown).toBe(failure);
     expect(calls).toEqual(["refusing:init"]);
   });
+
+  test("fails the boot from onApplicationBootstrap with the thrown value unchanged", async () => {
+    calls.length = 0;
+    const failure = new Error("bootstrap refused");
+
+    // The same shape as the `onModuleInit` case above, over the loop that is its
+    // own call site: `onApplicationBootstrap` runs after every route and gateway
+    // is mounted, so nothing else in this file proves a throw there reaches the
+    // caller rather than being swallowed by the boot it interrupts.
+    class Refusing implements OnApplicationBootstrap {
+      onApplicationBootstrap(): void {
+        calls.push("refusing:bootstrap");
+        throw failure;
+      }
+    }
+
+    class After implements OnApplicationBootstrap {
+      onApplicationBootstrap(): void {
+        calls.push("after:bootstrap");
+      }
+    }
+
+    @Module({ providers: [provideClass(Refusing, []), provideClass(After, [])] })
+    class RefusingBootstrapModule {}
+
+    let thrown: unknown;
+    try {
+      await AponiaFactory.create(RefusingBootstrapModule, { logger: false });
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toBe(failure);
+    expect(calls).toEqual(["refusing:bootstrap"]);
+  });
 });
 
 describe("the stopping hooks", () => {
@@ -315,6 +371,46 @@ describe("the stopping hooks", () => {
     // moved after `onModuleDestroy` leaves `[false, false]`, and a deleted stop
     // leaves `[false, false]` too.
     expect(stoppedWhenCalled).toEqual([false, true]);
+  });
+
+  test("hand the caller's close policy to the server the plan stops", async () => {
+    calls.length = 0;
+
+    class Policy implements OnApplicationShutdown {
+      onApplicationShutdown(): void {
+        calls.push("shutdown");
+      }
+    }
+
+    @Module({ providers: [provideClass(Policy, [])] })
+    class PolicyModule {}
+
+    application = await AponiaFactory.create(PolicyModule, { logger: false });
+    await application.listen(0);
+
+    // The policy is the whole opt-in: `close()` terminates what is in flight and
+    // `close(false)` drains it, and handing that flag to `stop` is the plan's
+    // job. Recording what the plan hands over is what makes a plan that dropped
+    // the flag fail here; the hand-built fallback case in `platform.test.ts`
+    // never reads a boot's plan, so it cannot see that change at all.
+    const policies: (boolean | undefined)[] = [];
+    const native = application.getNativeApplication();
+    const stop = native.stop.bind(native);
+    native.stop = async (closeActiveConnections?: boolean) => {
+      policies.push(closeActiveConnections);
+      return await stop(closeActiveConnections);
+    };
+
+    await application.close();
+    // Listening again binds a fresh server, so the opt-in is observed against a
+    // live one rather than against a stop that had nothing left to stop.
+    await application.listen(0);
+    await application.close(false);
+
+    expect(policies).toEqual([true, false]);
+    expect(application.getNativeApplication().server).toBeNull();
+    // The stopping hooks still run once whatever policy stops the server.
+    expect(calls).toEqual(["shutdown"]);
   });
 
   test("run on an application that never listened", async () => {

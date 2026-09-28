@@ -38,6 +38,7 @@ Decorated modules, controllers, gateways, and `@Validation()` models are the nor
 - [WebSocket gateways](../../docs/websockets.md): the `{ event, data }` envelope, responses, lifecycle, and native publish/subscribe.
 - [Logging](../../docs/logging.md): the bootstrap log lines and logger configuration.
 - [Testing an application](../../docs/testing.md): asserting through `application.handle(new Request(...))` without a port.
+- [Lifecycle](../../docs/lifecycle.md): the five moments a provider can hook, and what the framework does when one fails.
 - [Controllers and routes](../../docs/learn/05-controllers-and-routes.md): how a request reaches a controller method.
 - [Native plugins](../../docs/learn/08-native-plugins.md): the short walkthrough of mounting an Elysia plugin.
 - [Logging](../../docs/learn/09-logging.md): what the framework prints, and how to replace it.

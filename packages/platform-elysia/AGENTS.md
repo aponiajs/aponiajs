@@ -30,9 +30,11 @@ runtime boundary it describes.
   create the root Elysia named after the root module id with its explicit
   compilation policy, mount the application's own `plugins` entries, first pass
   mounting plugin modules and eagerly
-  instantiating providers, controller mounting, await native plugin composition,
+  instantiating providers, controller mounting, the `onModuleInit` pass over the
+  graph in module order, await native plugin composition,
   WebSocket gateway registration and initialization, then await
-  `nativeApplication.modules` again.
+  `nativeApplication.modules` again and run the one `onApplicationBootstrap`
+  pass before the wrapper is returned.
   `configureNative` must return the instance it receives. The application's own
   enhancer declarations resolve between the first pass and the controller loop.
 - `AponiaApplicationOptions.plugins` mounts native plugins on the root

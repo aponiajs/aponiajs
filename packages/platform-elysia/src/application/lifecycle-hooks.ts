@@ -9,7 +9,11 @@ import type { AponiaContainer } from "@aponiajs/core";
 import { isElysiaController } from "../controllers/controller-definition.ts";
 import type { AponiaNativeApplication } from "./native-application.types.ts";
 
-/** The contract a hook name belongs to, for the type of the collected callables. */
+/**
+ * The contract a hook name belongs to, for the type of the collected callables.
+ *
+ * @internal
+ */
 export type LifecycleHookContract =
   | OnModuleInit
   | OnApplicationBootstrap
@@ -17,7 +21,11 @@ export type LifecycleHookContract =
   | BeforeApplicationShutdown
   | OnApplicationShutdown;
 
-/** One callable per hooked instance, already bound. */
+/**
+ * One callable per hooked instance, already bound.
+ *
+ * @internal
+ */
 export type LifecycleCall = () => void | Promise<void>;
 
 /**
@@ -40,12 +48,18 @@ type LifecycleHookName<T> = T extends unknown ? keyof T : never;
  * skip the declaration. Binding here rather than at the call site keeps a
  * prototype method's `this` correct and leaves a class field's own arrow
  * function unchanged.
+ *
+ * A function is read as well as an object, because a function carries
+ * properties and a value provider may be one; only a value that can carry
+ * neither is skipped, which is what `null` is.
+ *
+ * @internal
  */
 export function lifecycleCallable(
   instance: unknown,
   name: LifecycleHookName<LifecycleHookContract>,
 ): LifecycleCall | undefined {
-  if (typeof instance !== "object" || instance === null) {
+  if (instance === null || (typeof instance !== "object" && typeof instance !== "function")) {
     return undefined;
   }
 
@@ -65,6 +79,8 @@ export function lifecycleCallable(
  * would call one object's hook once per entry, which is a pool opened twice and
  * a timer started twice for one object — the hooks are a fact about the
  * instance, and this is what makes them one.
+ *
+ * @internal
  */
 export function collectLifecycleCalls(
   container: AponiaContainer,
@@ -99,7 +115,11 @@ export function collectLifecycleCalls(
   return calls;
 }
 
-/** The plan a boot attaches for `close()`: the shutdown half, in order. */
+/**
+ * The plan a boot attaches for `close()`: the shutdown half, in order.
+ *
+ * @internal
+ */
 export type ApplicationShutdown = (closeActiveConnections?: boolean) => Promise<void>;
 
 const lifecycleKey: unique symbol = Symbol.for("aponia.application.lifecycle");
@@ -112,6 +132,8 @@ const lifecycleKey: unique symbol = Symbol.for("aponia.application.lifecycle");
  * keys, and an application no boot produced must read as `undefined` rather
  * than as an empty plan. Rides a symbol rather than a constructor parameter so
  * `AponiaElysiaApplication`'s public signature does not change.
+ *
+ * @internal
  */
 export function attachApplicationShutdown(
   application: AponiaNativeApplication<unknown>,
@@ -125,7 +147,11 @@ export function attachApplicationShutdown(
   });
 }
 
-/** The shutdown plan a boot attached, or `undefined` for an application no boot produced. */
+/**
+ * The shutdown plan a boot attached, or `undefined` for an application no boot produced.
+ *
+ * @internal
+ */
 export function readApplicationShutdown(application: unknown): ApplicationShutdown | undefined {
   return (application as { [lifecycleKey]?: ApplicationShutdown } | null | undefined)?.[
     lifecycleKey

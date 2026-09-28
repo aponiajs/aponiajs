@@ -876,6 +876,46 @@ describe("the stopping hooks", () => {
     expect(stoppedWhenCalled).toEqual([false, true]);
   });
 
+  test("hand the caller's close policy to the server the plan stops", async () => {
+    calls.length = 0;
+
+    class Policy implements OnApplicationShutdown {
+      onApplicationShutdown(): void {
+        calls.push("shutdown");
+      }
+    }
+
+    @Module({ providers: [provideClass(Policy, [])] })
+    class PolicyModule {}
+
+    application = await AponiaFactory.create(PolicyModule, { logger: false });
+    await application.listen(0);
+
+    // The policy is the whole opt-in: `close()` terminates what is in flight and
+    // `close(false)` drains it, and handing that flag to `stop` is the plan's
+    // job. Recording what the plan hands over is what makes a plan that dropped
+    // the flag fail here; the hand-built fallback case in `platform.test.ts`
+    // never reads a boot's plan, so it cannot see that change at all.
+    const policies: (boolean | undefined)[] = [];
+    const native = application.getNativeApplication();
+    const stop = native.stop.bind(native);
+    native.stop = async (closeActiveConnections?: boolean) => {
+      policies.push(closeActiveConnections);
+      return await stop(closeActiveConnections);
+    };
+
+    await application.close();
+    // Listening again binds a fresh server, so the opt-in is observed against a
+    // live one rather than against a stop that had nothing left to stop.
+    await application.listen(0);
+    await application.close(false);
+
+    expect(policies).toEqual([true, false]);
+    expect(application.getNativeApplication().server).toBeNull();
+    // The stopping hooks still run once whatever policy stops the server.
+    expect(calls).toEqual(["shutdown"]);
+  });
+
   test("run on an application that never listened", async () => {
     calls.length = 0;
 
@@ -1428,6 +1468,22 @@ In `docs/AGENTS.md`, add a row to the published-document table after the `files.
 ````
 
 In `README.md`, add `[Lifecycle](./docs/lifecycle.md) ·` to the navigation list.
+
+Then, in the package surfaces this change publishes — `docs/AGENTS.md` requires an
+affected package README to ship with the documentation, and both `llms.txt` files
+are listed in their manifest's `files` array:
+
+- `packages/platform-elysia/README.md`: a feature-list bullet naming the five
+  hooks, and `[Lifecycle](../../docs/lifecycle.md) ·` in the link block at the
+  end of the file;
+- `packages/common/README.md`: the five interface names added to the public-types
+  list, since `@aponiajs/common` is where they are exported from;
+- `packages/platform-elysia/llms.txt` and `packages/common/llms.txt`: one
+  `[Lifecycle](../../docs/lifecycle.md)` line each in their `## Documentation`
+  section, with the relative path that resolves from the package root.
+
+The list above stopped at `docs/`, which is how this step was missed: a public
+behaviour change ships in `docs/` **and** in the affected package README.
 
 - [ ] **Step 4: Move the two scope-of-record lists**
 

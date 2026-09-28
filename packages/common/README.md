@@ -15,7 +15,12 @@ bun add @aponiajs/common
 
 The public application authoring API includes `@Module()`, `@Controller()`,
 HTTP method decorators, WebSocket gateway decorators, `@Injectable()`,
-`@Inject()`, and the guard, interceptor, and filter decorators. This package does
+`@Inject()`, and the guard, interceptor, and filter decorators. The public types
+include the five provider lifecycle contracts — `OnModuleInit`,
+`OnApplicationBootstrap`, `BeforeApplicationShutdown`, `OnModuleDestroy`, and
+`OnApplicationShutdown` — which a provider implements by declaring the method;
+the platform reads that method from the instance, never the type, so
+`implements` is optional. This package does
 not depend on Elysia, Bun runtime APIs, or another Aponia package.
 
 ```ts
