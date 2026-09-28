@@ -1,3 +1,8 @@
+export { defineConfiguration } from "./configuration/configuration.ts";
+export type {
+  ConfigurationOptions,
+  ConfigurationToken,
+} from "./configuration/configuration.types.ts";
 export type { ControllerDefinition } from "./controllers/controller.types.ts";
 export {
   Controller,

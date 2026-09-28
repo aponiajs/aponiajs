@@ -16,6 +16,9 @@
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "@aponiajs/common": ["./src/index.ts"]
+    }
   }
 }
