@@ -693,6 +693,10 @@ describe("AponiaElysiaApplication.get", () => {
     const application = await AponiaFactory.create(AppModule, { logger: false });
 
     expect(application.get(AppConfig)).toEqual({ port: 4321 });
+    // The title says "the same object", and `toEqual` cannot tell a cached
+    // singleton from a fresh copy: the container caches one instance per
+    // provider, so identity is free to assert.
+    expect(application.get(AppConfig)).toBe(application.get(AppConfig));
     await application.close();
   });
 

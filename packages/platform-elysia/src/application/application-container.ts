@@ -1,16 +1,22 @@
-import { AponiaError, type Token } from "@aponiajs/common";
+import { AponiaError, tokenName, type Token } from "@aponiajs/common";
 import type { AponiaContainer } from "@aponiajs/core";
 
 const containerKey: unique symbol = Symbol.for("aponia.application.container");
 
+// Every export below is internal: none appears in this package's barrel, and the
+// marker is what keeps a future `export *` from publishing them.
+
 /**
+ * @internal
+ *
  * Attaches the boot's container to the application it produced.
  *
- * The property is non-enumerable, non-writable, and non-configurable for the
- * same reason the boot record's is: Elysia composes by walking an instance's
- * keys, and an application no boot produced must read as `undefined` rather than
- * as an empty container. Rides a symbol rather than a constructor parameter so
- * the wrapper's exported two-argument signature does not change.
+ * Non-enumerable because Elysia composes by walking an instance's keys,
+ * non-writable so nothing overwrites the decision a boot made, and
+ * non-configurable so nothing undoes it. An application no boot produced must
+ * read as `undefined` rather than as an empty container. Rides a symbol rather
+ * than a constructor parameter so the wrapper's exported two-argument signature
+ * does not change.
  */
 export function attachApplicationContainer(application: object, container: AponiaContainer): void {
   Object.defineProperty(application, containerKey, {
@@ -21,12 +27,20 @@ export function attachApplicationContainer(application: object, container: Aponi
   });
 }
 
-/** The container a boot attached, or `undefined` for an application no boot produced. */
-export function readApplicationContainer(application: unknown): AponiaContainer | undefined {
+/**
+ * The container a boot attached, or `undefined` for an application no boot produced.
+ *
+ * Module-private: `readApplicationToken` is the seam's reader, and a future
+ * consumer that needs the container itself can export this in the change that
+ * reads it rather than in advance of one.
+ */
+function readApplicationContainer(application: unknown): AponiaContainer | undefined {
   return (application as { [containerKey]?: AponiaContainer } | null | undefined)?.[containerKey];
 }
 
 /**
+ * @internal
+ *
  * The value a token resolves to, through the container a boot attached.
  *
  * An application no boot produced holds no container and has no graph to find
@@ -39,8 +53,8 @@ export function readApplicationToken<T>(application: unknown, token: Token<T>): 
   if (!container) {
     throw new AponiaError(
       "MISSING_PROVIDER",
-      `Provider "${String(token)}" cannot be read: no boot produced this application, so it holds no container.`,
-      { token: String(token) },
+      `Provider "${tokenName(token)}" cannot be read: no boot produced this application, so it holds no container.`,
+      { token: tokenName(token) },
     );
   }
 
