@@ -153,14 +153,14 @@ A consumer reads `meta` first and decides whether to proceed:
 
 ```ts
 {
-  contract: 3,              // the version of this wire shape
+  contract: 3,                 // the version of this wire shape
   framework: "0.6.0-alpha.36", // the release that booted the application
-  elysia: "1.4.30",         // the release installed in the application's own tree, or null
-  artifacts: {              // which release supplied each adopted artifact
-    invokers: null,         // null: the boot adopted none
+  elysia: "1.4.30",            // the release installed in the application's own tree, or null
+  artifacts: {                 // which release supplied each adopted artifact
+    invokers: null,            // null: the boot adopted none
     descriptors: "0.6.0-alpha.36",
   },
-  startedAt: "2026-09-26T12:00:00.000Z",
+  startedAt: "2026-09-26T12:00:00.000Z", // the first request the surface answered here
 }
 ```
 
@@ -185,6 +185,16 @@ that boot did not adopt reads `null` rather than a guess.
 walking up from the application rather than through Bun's global install cache,
 so a project that installed nothing reads `null` instead of naming a release it
 never ran against.
+
+`startedAt` names the moment the surface first answered for this application, as
+an ISO-8601 timestamp — not the moment the application started, and the
+difference is what made `contract` move. Elysia runs `onStart` only for an
+application that listens, and the surface has to answer for one that only ever
+calls `handle()`, so it is built when the first request reaches it rather than
+when a socket is bound. That is the only moment it can observe, and it is a
+constant for the life of the application, because the payload is built once and
+answered unchanged. The boot record carries no start time, and this release does
+not invent one to fill the field: what it states is what it saw.
 
 ### `/graph`
 
