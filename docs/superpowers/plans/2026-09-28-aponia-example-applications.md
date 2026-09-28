@@ -474,7 +474,6 @@ with `INVALID_CONFIGURATION_VALUE` and an issue whose `path` names `PORT`, where
 ```bash
 bun run example:configuration
 ```
-````
 
 The port comes from `PORT`, defaulting to `3100`; `SERVICE_NAME` renames the service the
 route reports.
@@ -492,11 +491,8 @@ default when the key is absent, the refusal of `PORT=abc` with the key named in
 `details.issues`, and that `application.get(AppConfig)` answers the one object the
 container cached.
 
-````
-
 In `docs/configuration.md`'s Documentation block, add above the "Published packages" line:
 
-```markdown
 - [The configuration example](../examples/configuration/README.md): the declaration, the
   injected value, and the two failures as a running application.
 ````
@@ -960,7 +956,6 @@ own lines.
 ```bash
 bun run example:devtools
 ```
-````
 
 The application listens on `PORT`, defaulting to `3110`. The surface binds
 `127.0.0.1:3111` unless `DEVTOOLS_PORT` names another port, and `ENABLE_DEVTOOLS=false`
@@ -989,11 +984,8 @@ route table's binding, the stages of one route, a request the application answer
 its status, the boot's own line in `/logs`, the degraded half of `/aot`, and that a
 disabled registration serves nothing.
 
-````
-
 In `docs/devtools.md`'s Documentation block, add above the "Published packages" line:
 
-```markdown
 - [The devtools example](../examples/devtools/README.md): the surface mounted on a running
   application, one endpoint at a time.
 ````
