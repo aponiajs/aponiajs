@@ -77,7 +77,7 @@ Promise<void>`. A class written for Nest with a signal parameter stays assignabl
 
 ## Review Focus
 
-Five input classes the spec implies and no task's prose would otherwise cover. Each line's test is
+Six input classes the spec implies and no task's prose would otherwise cover. Each line's test is
 in the task named beside it.
 
 1. **A hook that throws while the application is stopping, when other hooks still have to run.**
@@ -96,6 +96,10 @@ in the task named beside it.
 5. **A hook that throws during `onModuleInit`.** The boot fails with the application's own value
    unchanged, and a later module's hook does not run — the failure is not swallowed into a boot
    that looks successful. (Task 2)
+6. **One object reached through more than one provider entry.** An alias resolves to its target, and
+   a provider a module exports is the same instance its importers resolve, so a hook called once per
+   entry would open one pool twice or start one timer twice for one object. The hooks are a fact
+   about the instance. (Task 2)
 
 ---
 
@@ -332,16 +336,14 @@ import {
   Injectable,
   Module,
   createToken,
+  provideAlias,
+  provideClass,
+  provideValue,
   type LoggerService,
   type OnApplicationBootstrap,
   type OnModuleInit,
 } from "@aponiajs/common";
-import {
-  AponiaFactory,
-  provideClass,
-  provideValue,
-  type AponiaElysiaApplication,
-} from "../src/index.ts";
+import { AponiaFactory, type AponiaElysiaApplication } from "../src/index.ts";
 
 const calls: string[] = [];
 
@@ -446,6 +448,26 @@ describe("the reading", () => {
 
     expect(calls).toEqual(["value:init"]);
   });
+
+  test("calls one instance's hook once, however many entries reach it", async () => {
+    calls.length = 0;
+
+    class Shared {
+      onModuleInit(): void {
+        calls.push("shared:init");
+      }
+    }
+    const alias = createToken<Shared>("SHARED_ALIAS");
+
+    // Two entries, one object: an alias resolves to its target, so a hook that
+    // ran per entry would open this instance's pool twice.
+    @Module({ providers: [provideClass(Shared, []), provideAlias(alias, Shared)] })
+    class SharedModule {}
+
+    application = await AponiaFactory.create(SharedModule, { logger: false });
+
+    expect(calls).toEqual(["shared:init"]);
+  });
 });
 
 describe("a hook that throws while starting", () => {
@@ -499,7 +521,8 @@ import type {
   OnModuleDestroy,
   OnModuleInit,
 } from "@aponiajs/common";
-import type { AponiaNativeApplication } from "./native-application.types.ts";
+import type { AponiaContainer } from "@aponiajs/core";
+import { isElysiaController } from "../controllers/controller-definition.ts";
 
 /** The contract a hook name belongs to, for the type of the collected callables. */
 export type LifecycleHookContract =
@@ -513,6 +536,17 @@ export type LifecycleHookContract =
 export type LifecycleCall = () => void | Promise<void>;
 
 /**
+ * The member names the five contracts contribute, gathered member by member.
+ *
+ * `keyof` a union is the intersection of its members' keys, and no two of the
+ * five contracts share a member name, so `keyof LifecycleHookContract` alone is
+ * `never`. Distributing over the union is what yields the five names, and it
+ * keeps them derived from the contracts rather than restated beside them, so a
+ * renamed or removed contract member fails `bun run check` at every call site.
+ */
+type LifecycleHookName<T> = T extends unknown ? keyof T : never;
+
+/**
  * The hook an instance declares, if it declares one.
  *
  * The check is the instance's own, which is the mechanism this package already
@@ -524,7 +558,7 @@ export type LifecycleCall = () => void | Promise<void>;
  */
 export function lifecycleCallable(
   instance: unknown,
-  name: keyof LifecycleHookContract,
+  name: LifecycleHookName<LifecycleHookContract>,
 ): LifecycleCall | undefined {
   if (typeof instance !== "object" || instance === null) {
     return undefined;
@@ -532,6 +566,52 @@ export function lifecycleCallable(
 
   const candidate = (instance as Record<string, unknown>)[name];
   return typeof candidate === "function" ? (candidate as LifecycleCall).bind(instance) : undefined;
+}
+
+/**
+ * Every hook the graph declares for one moment, in the order a boot reaches
+ * them: modules in graph order — post-order, so a module that imports another
+ * comes first — and within a module its providers in declaration order, then
+ * its controllers.
+ *
+ * **Once per instance, not once per entry.** One object can be reached through
+ * more than one entry: an alias resolves to its target, and a provider a module
+ * exports is the same instance its importers resolve. Walking entries alone
+ * would call one object's hook once per entry, which is a pool opened twice and
+ * a timer started twice for one object — the hooks are a fact about the
+ * instance, and this is what makes them one.
+ */
+export function collectLifecycleCalls(
+  container: AponiaContainer,
+  name: LifecycleHookName<LifecycleHookContract>,
+): LifecycleCall[] {
+  const calls: LifecycleCall[] = [];
+  const collected = new Set<unknown>();
+
+  const collect = (instance: unknown): void => {
+    if (collected.has(instance)) {
+      return;
+    }
+    collected.add(instance);
+
+    const call = lifecycleCallable(instance, name);
+    if (call) {
+      calls.push(call);
+    }
+  };
+
+  for (const module of container.graph.modules) {
+    for (const provider of module.providers) {
+      collect(container.resolveModuleProvider(module, provider.provide));
+    }
+    for (const controller of module.controllers) {
+      if (isElysiaController(controller)) {
+        collect(container.instantiateController(module, controller));
+      }
+    }
+  }
+
+  return calls;
 }
 ```
 
@@ -550,28 +630,8 @@ ends and before `attachApplicationDiagnostics(...)` is called, insert:
 // it. The hooks do not interleave with instantiation: every module's providers
 // and controllers exist before the first hook runs, so what this orders is
 // modules rather than isolating one.
-for (const module of container.graph.modules) {
-  for (const provider of module.providers) {
-    const call = lifecycleCallable(
-      container.resolveModuleProvider(module, provider),
-      "onModuleInit",
-    );
-    if (call) {
-      await call();
-    }
-  }
-  for (const controller of module.controllers) {
-    if (!isElysiaController(controller)) {
-      continue;
-    }
-    const call = lifecycleCallable(
-      container.instantiateController(module, controller),
-      "onModuleInit",
-    );
-    if (call) {
-      await call();
-    }
-  }
+for (const call of collectLifecycleCalls(container, "onModuleInit")) {
+  await call();
 }
 ```
 
@@ -582,32 +642,12 @@ before the wrapper is returned — insert:
 // Once, after every route and gateway is mounted and no further plugin work is
 // pending: a hook that needs the whole graph — a scheduler, a migration check,
 // a cache warm — has one place to stand, and it is before anything can listen.
-for (const module of container.graph.modules) {
-  for (const provider of module.providers) {
-    const call = lifecycleCallable(
-      container.resolveModuleProvider(module, provider),
-      "onApplicationBootstrap",
-    );
-    if (call) {
-      await call();
-    }
-  }
-  for (const controller of module.controllers) {
-    if (!isElysiaController(controller)) {
-      continue;
-    }
-    const call = lifecycleCallable(
-      container.instantiateController(module, controller),
-      "onApplicationBootstrap",
-    );
-    if (call) {
-      await call();
-    }
-  }
+for (const call of collectLifecycleCalls(container, "onApplicationBootstrap")) {
+  await call();
 }
 ```
 
-Add `lifecycleCallable` to the file's imports from `./lifecycle-hooks.ts`.
+Add `collectLifecycleCalls` to the file's imports from `./lifecycle-hooks.ts`.
 
 - [ ] **Step 5: Run the test to verify it passes**
 
@@ -852,67 +892,17 @@ Task 2 and before `attachApplicationDiagnostics(...)`, insert:
 // it here rather than from the container later means `close()` needs no
 // container: an application the boot did not produce reads as `undefined` and
 // keeps the behaviour it has today.
-const applicationHooks: LifecycleCall[] = [];
-const moduleHooks: LifecycleCall[] = [];
-for (const module of container.graph.modules) {
-  for (const provider of module.providers) {
-    const instance = container.resolveModuleProvider(module, provider);
-    const before = lifecycleCallable(instance, "beforeApplicationShutdown");
-    if (before) {
-      applicationHooks.push(before);
-    }
-    const destroy = lifecycleCallable(instance, "onModuleDestroy");
-    if (destroy) {
-      moduleHooks.push(destroy);
-    }
-  }
-  for (const controller of module.controllers) {
-    if (!isElysiaController(controller)) {
-      continue;
-    }
-    const instance = container.instantiateController(module, controller);
-    const before = lifecycleCallable(instance, "beforeApplicationShutdown");
-    if (before) {
-      applicationHooks.push(before);
-    }
-    const destroy = lifecycleCallable(instance, "onModuleDestroy");
-    if (destroy) {
-      moduleHooks.push(destroy);
-    }
-  }
-}
-const applicationShutdownHooks: LifecycleCall[] = [];
-for (const module of container.graph.modules) {
-  for (const provider of module.providers) {
-    const call = lifecycleCallable(
-      container.resolveModuleProvider(module, provider),
-      "onApplicationShutdown",
-    );
-    if (call) {
-      applicationShutdownHooks.push(call);
-    }
-  }
-  for (const controller of module.controllers) {
-    if (!isElysiaController(controller)) {
-      continue;
-    }
-    const call = lifecycleCallable(
-      container.instantiateController(module, controller),
-      "onApplicationShutdown",
-    );
-    if (call) {
-      applicationShutdownHooks.push(call);
-    }
-  }
-}
+const beforeShutdown = collectLifecycleCalls(container, "beforeApplicationShutdown");
+const moduleDestroy = [...collectLifecycleCalls(container, "onModuleDestroy")].reverse();
+const applicationShutdown = collectLifecycleCalls(container, "onApplicationShutdown");
 
 attachApplicationShutdown(nativeApplication, async (closeActiveConnections = true) => {
-  await runShutdownHooks(applicationHooks, logger);
+  await runShutdownHooks(beforeShutdown, logger);
   if (nativeApplication.server) {
     await nativeApplication.stop(closeActiveConnections);
   }
-  await runShutdownHooks([...moduleHooks].reverse(), logger);
-  await runShutdownHooks(applicationShutdownHooks, logger);
+  await runShutdownHooks(moduleDestroy, logger);
+  await runShutdownHooks(applicationShutdown, logger);
 });
 ```
 
@@ -942,8 +932,8 @@ async function runShutdownHooks(
 }
 ```
 
-Add `attachApplicationShutdown`, `type LifecycleCall`, and `lifecycleCallable` to the imports from
-`./lifecycle-hooks.ts`, and `reportThroughLogger` to the existing import from
+Add `attachApplicationShutdown`, `collectLifecycleCalls`, and `type LifecycleCall` to the imports
+from `./lifecycle-hooks.ts`, and `reportThroughLogger` to the existing import from
 `../errors/default-exception-filter.ts`. `LoggerService` is already imported in this file for the
 logger it threads through the boot; if it is not, add the type import.
 
