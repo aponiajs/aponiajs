@@ -960,6 +960,10 @@ describe("AponiaElysiaApplication.get", () => {
 
     expect(codeOf(thrown)).toBe("MISSING_PROVIDER");
     expect((thrown as AponiaError).message).toContain("no boot produced");
+    // The rendered token, through details rather than the message: `vp check`
+    // reports `String(token)` as a warning and warnings do not fail it, so the
+    // linter is not what pins this.
+    expect((thrown as AponiaError).details).toMatchObject({ token: "app.config" });
   });
 });
 ```
@@ -979,14 +983,14 @@ Expected: FAIL — `application.get is not a function`.
 import { AponiaError, tokenName, type Token } from "@aponiajs/common";
 import type { AponiaContainer } from "@aponiajs/core";
 
+// A registered key rather than a fresh symbol: two copies of this package in one
+// graph must agree on it, the same reason the boot record registers its own.
 const containerKey: unique symbol = Symbol.for("aponia.application.container");
 
 // Every export below is internal: none appears in this package's barrel, and the
 // marker is what keeps a future `export *` from publishing them.
 
 /**
- * @internal
- *
  * Attaches the boot's container to the application it produced.
  *
  * Non-enumerable because Elysia composes by walking an instance's keys,
@@ -1017,8 +1021,6 @@ function readApplicationContainer(application: unknown): AponiaContainer | undef
 }
 
 /**
- * @internal
- *
  * The value a token resolves to, through the container a boot attached.
  *
  * An application no boot produced holds no container and has no graph to find
