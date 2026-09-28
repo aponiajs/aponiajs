@@ -52,7 +52,6 @@ test("reads back the one value the application was built with", async () => {
 
   expect(application.get(AppConfig).port).toBe(3123);
   // The container caches one instance per provider, so identity is the read's
-  // contract rather than an implementation detail: two reads answer one object,
-  // and that object is the one the route reported above.
+  // contract rather than an implementation detail: two reads answer one object.
   expect(application.get(AppConfig)).toBe(application.get(AppConfig));
 });
