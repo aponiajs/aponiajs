@@ -134,8 +134,10 @@ line's test is in the task named beside it.
 
 ```ts
 import { describe, expect, test } from "bun:test";
-import { defineConfiguration } from "@aponiajs/common";
 import { z } from "zod";
+// Relative, like every other test in this directory: importing the package by
+// its own name from inside it resolves to `dist/`, which CI never builds.
+import { defineConfiguration } from "../src/index.ts";
 
 describe("defineConfiguration", () => {
   test("carries the schema it was given", () => {
