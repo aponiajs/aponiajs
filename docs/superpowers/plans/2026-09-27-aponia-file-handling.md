@@ -691,7 +691,7 @@ import { t } from "elysia";
 
 @Controller("files")
 export class FilesController {
-  @Post()
+  @Post({ body: t.Object({ file: t.File() }) })
   upload(@Body("file") file: File) {
     return { name: file.name, size: file.size };
   }
@@ -1255,6 +1255,12 @@ instead of saving. A name carrying a line break, a NUL, or a path separator is r
 with a `TypeError`: a value an application hands a helper while it runs is a caller
 mistake, which is the runtime half of the convention the batch delivery document
 states.
+
+The helper reads no file, so a path that does not exist is not its answer to give. The file
+is opened while the response body streams, which is past the route's error path: a caller
+over a socket gets the server's own `500` rather than a `404`, and a caller through
+`application.handle` meets the failure when it reads the body. A path built from request
+input is worth checking before it is handed over.
 ````
 
 2. In `docs/learn/15-files.md`, replace the closing pair with:
@@ -1599,6 +1605,12 @@ and it answers `404` with no content type and no Problem Details for the same re
 also the one that arrives with the hardening a file server needs — canonical-path
 rejection, `Last-Modified` and a weak `ETag`, single-range `Range` requests — and it costs
 no dependency.
+
+The native row is measured here: `examples/files/test/static-assets.e2e-spec.ts` drives it
+through a real socket and asserts the `200` and the bare `404` above. The plugin row is
+described rather than measured — neither plugin is installed in this workspace, so what it
+says comes from the registry, from Elysia's own lifecycle, and from the mount path a plugin
+takes.
 
 ```ts
 import { resolve } from "node:path";
