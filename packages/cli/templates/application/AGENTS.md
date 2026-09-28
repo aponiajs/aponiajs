@@ -119,13 +119,17 @@ in place rather than replacing it, so the lines the boot writes about itself are
 what `/__devtools/logs` serves. Hand it to one and not the other and the stream
 is missing exactly what the other wrote.
 
-The surface is served unless `NODE_ENV` is `production`, on loopback and port
-`8000` unless `DEVTOOLS_PORT` says otherwise, and a `host` given to
-`devtoolsPlugin` moves the bind — which the start reports, because `/requests`
-records headers and bodies. `enabled: false` serves nothing at all: no socket and no endpoint. The
-expression in `src/main.ts` is this starter's choice; the framework never reads
-the environment to choose its own behaviour. This application reads it where it
-declares it to: `src/config.ts` declares the `PORT` schema, and the
+The surface is served unless `NODE_ENV` is `production`, on the application's own
+port under `/__devtools` — it is part of the route table the application mounts,
+and an application route that claims a devtools path wins it, because the more
+specific route answers: a static or parameter route beats this wildcard whether
+it is mounted before or after the plugin. It is reachable
+wherever the application is, and `/requests` records headers and bodies with no
+warning: this is a development surface, and `enabled` is how an application keeps
+it out of production. `enabled: false` mounts nothing at all: no route and no
+endpoint. The expression in `src/main.ts` is this starter's choice; the framework
+never reads the environment to choose its own behaviour. This application reads
+it where it declares it to: `src/config.ts` declares the `PORT` schema, and the
 `provideConfiguration(AppConfig)` provider in `src/app.module.ts` validates it
 once at boot — that read is the application's. Both halves of the trade are in the
 [devtools guide](https://github.com/aponiajs/aponiajs/blob/main/docs/devtools.md).

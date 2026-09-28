@@ -28,7 +28,7 @@ function createRecordingLogger(): RecordingLogger {
   };
 }
 
-/** Binds the loopback socket on port `0` and reads the address it took. */
+/** Reserves an ephemeral port and reads the number the operating system assigned. */
 async function reservePort(): Promise<number> {
   const reservation = createServer();
   await new Promise<void>((resolve, reject) => {
@@ -51,25 +51,24 @@ async function reservePort(): Promise<number> {
 
 export interface DevtoolsApplication {
   readonly application: AponiaElysiaApplication;
-  /** The mounted surface's base URL, prefix included. */
+  /** The surface's base URL: the application's own origin, prefix included. */
   readonly devtools: string;
   readonly logger: RecordingLogger;
 }
 
 export async function createApplication(enabled = true): Promise<DevtoolsApplication> {
-  const applicationPort = await reservePort();
-  const devtoolsPort = await reservePort();
+  const port = await reservePort();
   const logger = createRecordingLogger();
 
   const application = await AponiaFactory.create(AppModule, {
     logger,
-    plugins: [devtoolsPlugin({ enabled, port: devtoolsPort, logger })],
+    plugins: [devtoolsPlugin({ enabled, logger })],
   });
-  await application.listen(applicationPort);
+  await application.listen(port);
 
   return {
     application,
-    devtools: `http://127.0.0.1:${devtoolsPort}${devtoolsPathPrefix}`,
+    devtools: `http://127.0.0.1:${port}${devtoolsPathPrefix}`,
     logger,
   };
 }

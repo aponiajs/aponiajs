@@ -11,9 +11,19 @@ own lines.
 bun run example:devtools
 ```
 
-The application listens on `PORT`, defaulting to `3110`. The surface binds
-`127.0.0.1:3111` unless `DEVTOOLS_PORT` names another port, and `ENABLE_DEVTOOLS=false`
-mounts nothing at all — no provider, no plugin, no socket.
+The application listens on `PORT`, defaulting to `3110`, and the surface is served from
+that same application under `/__devtools`, so it is reachable wherever the application
+is. `ENABLE_DEVTOOLS=false` mounts nothing at all — no provider, no plugin, no route.
+
+Serving the surface from the application has two consequences, and both are the point of
+the example rather than accidents:
+
+- **An application route that claims a devtools path wins it.** The two are in one route
+  table, so a route declaring `/__devtools/meta` answers that path in front of the
+  surface's wildcard.
+- **The surface is part of the route table, and `/requests` records headers and bodies
+  with no warning.** This is a development surface, and `enabled` is how an application
+  keeps it out of production.
 
 | Endpoint               | Answers                                                                                                                                                                                                                 |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -31,9 +41,9 @@ mounts nothing at all — no provider, no plugin, no socket.
 bun run --cwd examples/devtools test
 ```
 
-`test/devtools.e2e-spec.ts` boots the real module with the surface mounted, reserving
-both ports from the operating system so the lane never binds a fixed one, and reads each
-endpoint over HTTP. It asserts the contract and the versions, the compiled graph, the
-route table's binding, the stages of one route, a request the application answered with
-its status, the boot's own line in `/logs`, the degraded half of `/aot`, and that a
-disabled registration serves nothing.
+`test/devtools.e2e-spec.ts` boots the real module with the surface mounted, reserving one
+port from the operating system so the lane never binds a fixed one, and reads each
+endpoint from the application's own address. It asserts the contract and the versions, the
+compiled graph, the route table's binding, the stages of one route, a request the
+application answered with its status, the boot's own line in `/logs`, the degraded half of
+`/aot`, and that a disabled registration serves nothing.

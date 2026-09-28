@@ -10,14 +10,12 @@ import type { LoggerService } from "@aponiajs/common";
  * a call site that reports a failure guards, and a call site that reports
  * progress does not.
  *
- * Two call sites in this package report a failure, and both are sentences whose
- * outcome travels beside the report itself: the row a refused bind writes, which
- * is paired with the `undefined` that says there is nothing to report as
- * listening, and the row an analysis that could not read a project writes, which
- * is paired with the empty controller list `/aot` degrades to. Both also run
- * where a throw would cost more than the row — the plugin's `onStart`, which
- * Elysia neither awaits nor catches, and a promise every later poll of `/aot` is
- * answered from — so a logger that refuses a row may not take the answer with it.
+ * One call site in this package reports a failure, and it is a sentence whose
+ * outcome travels beside the report itself: the row an analysis that could not
+ * read a project writes, which is paired with the empty controller list `/aot`
+ * degrades to. It also runs where a throw would cost more than the row — a
+ * promise every later poll of `/aot` is answered from — so a logger that refuses
+ * a row may not take the answer with it.
  *
  * A refusal is answered rather than swallowed: the sentence is written straight
  * to `stderr` — the only place this package writes a process stream — because the

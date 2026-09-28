@@ -28,14 +28,18 @@ export interface AponiaArtifactStamps {
  * produced the data being read. The two are independent on purpose — a devtools
  * release can read an older boot, and has to say which one it read.
  *
- * It is `2` as of this release. A request entry gained `id`, `status` and
- * `durationMs` became nullable, and one request began writing two entries, so a
- * reader written against `1` would read a status of `null` as a number and would
- * count a request twice.
+ * It is `3` as of this release. It became `2` when a request entry gained `id`,
+ * `status` and `durationMs` became nullable, and one request began writing two
+ * entries, so a reader written against `1` would read a status of `null` as a
+ * number and would count a request twice. It became `3` when `startedAt` changed
+ * meaning — it is stamped when the surface first answers for an application
+ * rather than when a socket was bound — which is a change no reader of `2` can
+ * detect for itself, because no key left the payload and the value is still an
+ * ISO-8601 string.
  */
 export interface AponiaMetaPayload {
   /** The devtools wire contract this payload is written in. */
-  readonly contract: 2;
+  readonly contract: 3;
   /**
    * The AponiaJS release that booted the application, or — when no boot
    * produced it — the release serving this payload.
@@ -45,7 +49,16 @@ export interface AponiaMetaPayload {
   readonly elysia: string | null;
   /** Which release supplied each artifact the boot adopted. */
   readonly artifacts: AponiaArtifactStamps;
-  /** The moment the devtools server started, as an ISO-8601 timestamp. */
+  /**
+   * The moment this payload was built for the application that serves it, as an
+   * ISO-8601 timestamp — the first request the surface answered here rather
+   * than the moment the application started.
+   *
+   * The boot record carries no start time and this release does not invent one:
+   * the field states what the surface can observe, which is when it first
+   * answered for this application. It is a constant for the life of that
+   * application, because the payload is built once and answered unchanged.
+   */
   readonly startedAt: string;
 }
 
@@ -55,7 +68,7 @@ export interface AponiaMetaPayload {
  *
  * The one field the inspection carries and this payload does not is `routes`,
  * and it is absent rather than empty. A compiled plan states the routes a
- * controller *declares*, while `/routes` reports the routes the server
+ * controller *declares*, while `/routes` reports the routes the application
  * *answers*; publishing both under one name would leave a consumer choosing
  * between two answers to the same question, so routes belong to that endpoint
  * alone.
@@ -90,18 +103,18 @@ export type AponiaRouteSource = "generated" | "compiled" | null;
  * One route the running application answers.
  *
  * The method, the path, and the parameter list come from the compiled plan the
- * boot recorded, while the entry itself comes from the mounted table — a server
- * that reported only the plans would miss every route a callback mounted, and
- * one that reported only the table would know no route's module, controller, or
- * handler. The three names are the join's whole contribution, and an empty one
+ * boot recorded, while the entry itself comes from the mounted table — an
+ * endpoint that reported only the plans would miss every route a callback
+ * mounted, and one that reported only the table would know no route's module,
+ * controller, or handler. The three names are the join's whole contribution, and an empty one
  * states that no record describes this route rather than that the name is
  * unknown: a callback's route names its module and controller but never its
  * handler, because the property key that built it exists only while the callback
  * runs, and a route no plan and no callback describes names none of the three.
  *
  * Route entries are sorted by path, method, controller, handler, and module, in
- * code-unit order, so the payload is deterministic and two polls of one server
- * answer the same order.
+ * code-unit order, so the payload is deterministic and two polls of one
+ * application answer the same order.
  */
 export interface AponiaMountedRoute {
   /**
@@ -196,10 +209,9 @@ export interface AponiaLogsPayload {
  * A request appears once when it arrived and again when it was answered, and
  * both entries carry the same `id`, so a consumer groups by `id` and takes the
  * last entry each request has in the window it reads — the answer wherever the
- * answer is still there to read. Two configurations are where it is not: a
+ * answer is still there to read. One configuration is where it is not: a
  * consumer lagging more than one window behind never reads an answer the bounded
- * record has already evicted, and an answer written after a second `listen()` goes
- * to the record the socket that is gone was serving. An entry whose `status` is
+ * record has already evicted. An entry whose `status` is
  * `null` is a request this record saw arrive and read no answer for — a plugin
  * that answered from its own `onRequest` before any later phase ran, or an answer
  * outside the window the consumer read. The absence is stated rather

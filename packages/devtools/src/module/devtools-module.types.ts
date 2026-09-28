@@ -37,36 +37,6 @@ export interface DevtoolsOptions {
    */
   readonly enabled: boolean;
   /**
-   * The port the devtools server binds once it starts. Defaults to `8000`, on
-   * the address `host` names.
-   */
-  readonly port?: number;
-  /**
-   * The address the devtools server binds once it starts. Defaults to
-   * `127.0.0.1`, because a debugging aid should not be reachable by default.
-   *
-   * The option exists because loopback is not always where the reader is: a
-   * container that publishes its port, a remote development box, and a phone on
-   * the same network are all real cases, and none of them is served by a bind
-   * only the machine itself can reach.
-   *
-   * Widening the bind is permitted and never silent. The start reports one row
-   * under `Devtools` naming this option, the address it bound, and `/requests`,
-   * because that endpoint records request headers and bodies **by default**:
-   * binding it where the network can reach it puts credentials on the network,
-   * and a row that said only "reachable from the network" would leave the
-   * reader to guess that. `127.0.0.1`, any `127.x.x.x`, `::1`, and
-   * `localhost` are the loopback spellings the warning is skipped for. The
-   * check is syntactic and resolves nothing, so any other name warns, and
-   * `localhost` is the one name accepted without being resolved. That is stated
-   * rather than hidden: a hosts file that mapped `localhost` to one of this
-   * machine's public addresses would bind it in silence, which is the price of a
-   * check with no lookup in it — accepted with the alternative in view, because
-   * a resolver in a debugging aid's start path would decide what to warn about
-   * from the machine it happens to run on.
-   */
-  readonly host?: string;
-  /**
    * The logger whose lines `/__devtools/logs` records: pass the **same** value
    * the application gives `AponiaFactory.create`.
    *
@@ -139,9 +109,9 @@ export interface DevtoolsOptions {
    * than no endpoint. "This registration was told to record nothing" is itself a
    * fact the record states.
    *
-   * The record is one boot's: it opens when the boot starts and holds what that
-   * boot answers, so a second `listen()` begins a new one rather than extending a
-   * window whose socket is gone.
+   * The record is one application's: it opens on the first request the plugin
+   * sees and holds what that application answers, so a second `listen()`
+   * continues it rather than starting an empty window.
    */
   readonly capture?: false | DevtoolsCaptureOptions;
 }

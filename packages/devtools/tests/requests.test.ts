@@ -27,10 +27,11 @@ import {
 } from "../src/index.ts";
 
 /**
- * Every case here boots one application with the module registered and reads the
- * record back over the devtools socket the plugin started. Every socket binds
- * port `0` and the address is read back out of the boot's own report, so no case
- * depends on a port it guessed.
+ * Every case here boots one application with the module registered and drives the
+ * record through `application.handle` itself: the surface answers on the
+ * application's own address now, and a request to the prefix is one the
+ * application answers. No case binds a socket, and none needs one — the record
+ * is written by the plugin's own hooks whichever entrypoint answered.
  */
 
 test("the buffer keeps its capacity and its cursor never goes backwards", () => {
@@ -169,10 +170,8 @@ class AnswersController {
   }
 }
 
-const ephemeralPort = 0;
-
 @Module({
-  imports: [DevtoolsModule.register({ enabled: true, port: ephemeralPort })],
+  imports: [DevtoolsModule.register({ enabled: true })],
   controllers: [UsersController, AnswersController],
 })
 class CapturedModule {}
@@ -186,7 +185,7 @@ class CapturedModule {}
  * pair the case below pins.
  */
 @Module({
-  imports: [DevtoolsModule.register({ enabled: true, port: ephemeralPort })],
+  imports: [DevtoolsModule.register({ enabled: true })],
   controllers: [UsersController, AnswersController],
 })
 class CapturedTwinModule {}
@@ -224,13 +223,13 @@ class DelayedController {
 }
 
 @Module({
-  imports: [DevtoolsModule.register({ enabled: true, port: ephemeralPort })],
+  imports: [DevtoolsModule.register({ enabled: true })],
   controllers: [DelayedController],
 })
 class OutOfOrderModule {}
 
 @Module({
-  imports: [DevtoolsModule.register({ enabled: true, port: ephemeralPort, capture: false })],
+  imports: [DevtoolsModule.register({ enabled: true, capture: false })],
   controllers: [UsersController],
 })
 class UncapturedModule {}
@@ -239,7 +238,6 @@ class UncapturedModule {}
   imports: [
     DevtoolsModule.register({
       enabled: true,
-      port: ephemeralPort,
       capture: { headers: false, body: false },
     }),
   ],
@@ -248,9 +246,7 @@ class UncapturedModule {}
 class SparseModule {}
 
 @Module({
-  imports: [
-    DevtoolsModule.register({ enabled: true, port: ephemeralPort, capture: { bodyLimit: 16 } }),
-  ],
+  imports: [DevtoolsModule.register({ enabled: true, capture: { bodyLimit: 16 } })],
   controllers: [UsersController],
 })
 class LimitedBodyModule {}
@@ -259,7 +255,6 @@ class LimitedBodyModule {}
   imports: [
     DevtoolsModule.register({
       enabled: true,
-      port: ephemeralPort,
       capture: { redact: ["Authorization"] },
     }),
   ],
@@ -290,7 +285,7 @@ class UnserializableController {
 }
 
 @Module({
-  imports: [DevtoolsModule.register({ enabled: true, port: ephemeralPort })],
+  imports: [DevtoolsModule.register({ enabled: true })],
   controllers: [UnserializableController],
 })
 class UnserializableModule {}
@@ -334,7 +329,7 @@ class BulkController {
 }
 
 @Module({
-  imports: [DevtoolsModule.register({ enabled: true, port: ephemeralPort })],
+  imports: [DevtoolsModule.register({ enabled: true })],
   controllers: [BulkController],
 })
 class BulkModule {}
@@ -359,7 +354,7 @@ const gatePlugin = new Elysia({ name: "gate" }).onRequest((context) => {
 
 @Module({
   imports: [
-    DevtoolsModule.register({ enabled: true, port: ephemeralPort }),
+    DevtoolsModule.register({ enabled: true }),
     ElysiaPluginModule.register(gatePlugin, { key: "gate" }),
   ],
   controllers: [UsersController],
@@ -377,9 +372,7 @@ class GatedModule {}
 const agreeingLogger = new Logger("Agreeing", { timestamp: false });
 
 @Module({
-  imports: [
-    DevtoolsModule.register({ enabled: true, port: ephemeralPort, logger: agreeingLogger }),
-  ],
+  imports: [DevtoolsModule.register({ enabled: true, logger: agreeingLogger })],
   controllers: [AnswersController],
 })
 class LoggedFailureModule {}
@@ -400,61 +393,39 @@ const silentFailureLogger: LoggerService = {
 };
 
 @Module({
-  imports: [
-    DevtoolsModule.register({ enabled: true, port: ephemeralPort, logger: silentFailureLogger }),
-  ],
+  imports: [DevtoolsModule.register({ enabled: true, logger: silentFailureLogger })],
   controllers: [AnswersController],
 })
 class SilentFailureModule {}
 
-interface CapturedOutput {
-  readonly rows: () => readonly string[];
-  readonly restore: () => void;
-}
-
-/** Only the `Devtools` report is read back, so Elysia's banner stays out of it. */
-function captureOutput(): CapturedOutput {
-  const chunks: string[] = [];
-  const write = spyOn(process.stdout, "write").mockImplementation((chunk) => {
-    chunks.push(String(chunk));
-    return true;
-  });
-
-  return {
-    rows: () => chunks.join("").split("\n"),
-    restore: () => write.mockRestore(),
-  };
-}
-
-/** Every loopback address the boot reported, in the order the rows were written. */
-function reportedAddresses(output: CapturedOutput): readonly string[] {
-  return output
-    .rows()
-    .filter((row) => row.includes("[Devtools]"))
-    .map((row) => /http:\/\/127\.0\.0\.1:\d+/.exec(row)?.[0])
-    .filter((address): address is string => address !== undefined);
-}
-
-/** The loopback address the one report names, read back rather than guessed. */
-function reportedAddress(output: CapturedOutput): string {
-  const [address] = reportedAddresses(output);
-
-  if (address === undefined) {
-    throw new Error(`the devtools report named no loopback address: ${output.rows().join("\n")}`);
-  }
-
-  return address;
-}
-
 type DevtoolsRootModule = Parameters<typeof AponiaFactory.create>[0];
 
-interface BootedApplication {
-  readonly application: AponiaElysiaApplication;
-  /** The devtools address, which is the socket the record is read over. */
-  readonly address: string;
+/**
+ * One request the application answers, driven through the application's own
+ * handler rather than over a socket: the surface is a route the application
+ * mounts, so a case reaches it the way a `handle()`-only application is reached.
+ *
+ * The request is followed by one yield, and it is the installed Elysia's doing
+ * rather than this case's: the after-response phase is scheduled on a later
+ * macrotask, so `handle()` answers before the record's completion half is filed.
+ * A case that made a second request without it would file two arrivals before
+ * either completion, and a window's order would state the case's own timing
+ * rather than the application's. The yield is what a socket round trip gave these
+ * cases for free, and it is the same one `readRequests` takes before it reads.
+ */
+async function ask(
+  application: AponiaElysiaApplication,
+  path: string,
+  init?: RequestInit,
+): Promise<Response> {
+  const response = await application.handle(new Request(`http://localhost${path}`, init));
+
+  await Bun.sleep(0);
+
+  return response;
 }
 
-async function bootApplication(rootModule: DevtoolsRootModule): Promise<BootedApplication> {
+async function bootApplication(rootModule: DevtoolsRootModule): Promise<AponiaElysiaApplication> {
   return bootWithLogger(rootModule, false);
 }
 
@@ -466,20 +437,26 @@ async function bootApplication(rootModule: DevtoolsRootModule): Promise<BootedAp
 async function bootWithLogger(
   rootModule: DevtoolsRootModule,
   logger: LoggerService | false,
-): Promise<BootedApplication> {
-  const output = captureOutput();
-  try {
-    const application = await AponiaFactory.create(rootModule, { logger });
-    await application.listen(0);
-
-    return { application, address: reportedAddress(output) };
-  } finally {
-    output.restore();
-  }
+): Promise<AponiaElysiaApplication> {
+  return await AponiaFactory.create(rootModule, { logger });
 }
 
-async function readRequests(address: string, query = ""): Promise<AponiaRequestsPayload> {
-  const response = await fetch(`${address}/__devtools/requests${query}`);
+/**
+ * The record as this package's own endpoint states it.
+ *
+ * One yield precedes the read, and it is the installed Elysia's doing rather than
+ * this case's: the after-response phase is scheduled on a later macrotask, so a
+ * `handle()` returns before the answer has been filed and a read taken at that
+ * moment would state the pending half of a request that has already been
+ * answered.
+ */
+async function readRequests(
+  application: AponiaElysiaApplication,
+  query = "",
+): Promise<AponiaRequestsPayload> {
+  await Bun.sleep(0);
+
+  const response = await ask(application, `/__devtools/requests${query}`);
 
   // The endpoint answers whether or not anything was recorded: a registration
   // that captures nothing serves an empty record rather than no record.
@@ -533,13 +510,13 @@ function findAnsweredEntry(
 }
 
 test.serial("an entry reports the route pattern and the URL that arrived", async () => {
-  const { application, address } = await bootApplication(CapturedModule);
+  const application = await bootApplication(CapturedModule);
   try {
-    await fetch(`${application.getUrl()}/users/42?expand=true`, {
+    await ask(application, `/users/42?expand=true`, {
       headers: { "x-trace-id": "abc" },
     });
 
-    const payload = await readRequests(address);
+    const payload = await readRequests(application);
     const entry = findAnsweredEntry(payload, (record) => record.path === "/users/:id");
 
     expect(entry.method).toBe("GET");
@@ -556,14 +533,14 @@ test.serial("an entry reports the route pattern and the URL that arrived", async
 });
 
 test.serial("a request that matched no route is recorded without a route identity", async () => {
-  const { application, address } = await bootApplication(CapturedModule);
+  const application = await bootApplication(CapturedModule);
   try {
-    await fetch(`${application.getUrl()}/nope?x=1`);
+    await ask(application, `/nope?x=1`);
 
-    const payload = await readRequests(address);
+    const payload = await readRequests(application);
     const entry = findAnsweredEntry(payload, (record) => record.url === "/nope?x=1");
     const routes = (await (
-      await fetch(`${address}/__devtools/routes`)
+      await ask(application, `/__devtools/routes`)
     ).json()) as AponiaRoutesPayload;
 
     expect(entry.status).toBe(404);
@@ -580,11 +557,11 @@ test.serial("a request that matched no route is recorded without a route identit
 test.serial(
   "a request a plugin refuses before it matches is recorded with the path that arrived",
   async () => {
-    const { application, address } = await bootApplication(GatedModule);
+    const application = await bootApplication(GatedModule);
     try {
-      await fetch(`${application.getUrl()}/gated`);
+      await ask(application, `/gated`);
 
-      const payload = await readRequests(address);
+      const payload = await readRequests(application);
       const refused = findAnsweredEntry(payload, (record) => record.url === "/gated");
 
       expect(refused.status).toBe(403);
@@ -600,11 +577,11 @@ test.serial(
 test.serial(
   "a request a plugin answers with an early response is recorded as unanswered",
   async () => {
-    const { application, address } = await bootApplication(GatedModule);
+    const application = await bootApplication(GatedModule);
     try {
-      await fetch(`${application.getUrl()}/early-refusal`);
+      await ask(application, `/early-refusal`);
 
-      const payload = await readRequests(address);
+      const payload = await readRequests(application);
 
       // This plugin's arrival hook rides the request phase, which Elysia merges
       // in mount order, so it ran before the plugin that answered: the request
@@ -626,11 +603,11 @@ test.serial(
 test.serial(
   "an answered request carries one id across a pending entry and its answer",
   async () => {
-    const { application, address } = await bootApplication(CapturedModule);
+    const application = await bootApplication(CapturedModule);
     try {
-      await fetch(`${application.getUrl()}/users/42`);
+      await ask(application, `/users/42`);
 
-      const payload = await readRequests(address);
+      const payload = await readRequests(application);
 
       // One request writes two entries, and they are one request's because they
       // share an id: a consumer that groups by it reads the answer and never the
@@ -658,18 +635,18 @@ test.serial(
 test.serial(
   "a poll whose cursor sits between a request's two entries is served the answer",
   async () => {
-    const { application, address } = await bootApplication(CapturedModule);
+    const application = await bootApplication(CapturedModule);
     try {
-      await fetch(`${application.getUrl()}/users/42`);
+      await ask(application, `/users/42`);
 
-      const whole = await readRequests(address);
+      const whole = await readRequests(application);
       expect(whole.entries).toHaveLength(2);
 
       // The cursor a poller would hold after reading the pending entry and nothing
       // after it. The answer was written next, so this read is the superseding
       // entry — which is the property that makes grouping by `id` work: a poller
       // is never stuck holding the pending shape.
-      const between = await readRequests(address, `?since=${whole.cursor - 1}`);
+      const between = await readRequests(application, `?since=${whole.cursor - 1}`);
 
       expect(between.cursor).toBe(whole.cursor);
       expect(between.entries).toHaveLength(1);
@@ -682,12 +659,12 @@ test.serial(
 );
 
 test.serial("the last entry per id is the answer when answers land out of id order", async () => {
-  const { application, address } = await bootApplication(OutOfOrderModule);
+  const application = await bootApplication(OutOfOrderModule);
   try {
     // The slow request arrives first, so it takes the lower id, and it parks
     // until this case releases it. The fast request arrives second and answers
     // first, so the two answers land in the order opposite to the two arrivals.
-    const slow = fetch(`${application.getUrl()}/delays/slow`);
+    const slow = ask(application, `/delays/slow`);
     for (let attempt = 0; attempt < 200 && openSlowGate === undefined; attempt += 1) {
       await Bun.sleep(5);
     }
@@ -698,11 +675,11 @@ test.serial("the last entry per id is the answer when answers land out of id ord
       throw new Error("the slow route never parked, so it could not be released");
     }
 
-    await fetch(`${application.getUrl()}/delays/fast`);
+    await ask(application, `/delays/fast`);
     release();
     await slow;
 
-    const payload = await readRequests(address);
+    const payload = await readRequests(application);
 
     // Two arrivals and two answers, and the position of each in the window says
     // nothing about the request it answers: the `id` they share is the only
@@ -743,11 +720,11 @@ test.serial("the last entry per id is the answer when answers land out of id ord
 });
 
 test.serial("a registration told to capture nothing still writes no pending entry", async () => {
-  const { application, address } = await bootApplication(UncapturedModule);
+  const application = await bootApplication(UncapturedModule);
   try {
-    await fetch(`${application.getUrl()}/users/42`);
+    await ask(application, `/users/42`);
 
-    const payload = await readRequests(address);
+    const payload = await readRequests(application);
 
     // The endpoint answers over a registration that records nothing, and the
     // entry written at arrival is behind the same switch as the one written at
@@ -760,15 +737,15 @@ test.serial("a registration told to capture nothing still writes no pending entr
 });
 
 test.serial("headers false and body false leave their field out of the entry", async () => {
-  const { application, address } = await bootApplication(SparseModule);
+  const application = await bootApplication(SparseModule);
   try {
-    await fetch(`${application.getUrl()}/users`, {
+    await ask(application, `/users`, {
       method: "POST",
       headers: { "content-type": "application/json", "x-trace-id": "abc" },
       body: JSON.stringify({ name: "ada" }),
     });
 
-    const payload = await readRequests(address);
+    const payload = await readRequests(application);
     const entry = answeredEntry(payload);
 
     expect(Object.hasOwn(entry, "headers")).toBe(false);
@@ -783,16 +760,16 @@ test.serial("headers false and body false leave their field out of the entry", a
 });
 
 test.serial("a body longer than bodyLimit is cut and marked", async () => {
-  const { application, address } = await bootApplication(LimitedBodyModule);
+  const application = await bootApplication(LimitedBodyModule);
   try {
     const sent = JSON.stringify({ name: "ada", email: "ada@example.com" });
-    await fetch(`${application.getUrl()}/users`, {
+    await ask(application, `/users`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: sent,
     });
 
-    const payload = await readRequests(address);
+    const payload = await readRequests(application);
     const entry = answeredEntry(payload);
 
     expect(entry.body?.endsWith("[truncated]")).toBe(true);
@@ -805,16 +782,16 @@ test.serial("a body longer than bodyLimit is cut and marked", async () => {
 });
 
 test.serial("a body that arrived as text is stored as text, and cut like any other", async () => {
-  const { application, address } = await bootApplication(LimitedBodyModule);
+  const application = await bootApplication(LimitedBodyModule);
   try {
     const short = "hi ada";
     const long = "ada@example.com asks a question that does not fit";
     const headers = { "content-type": "text/plain" };
 
-    await fetch(`${application.getUrl()}/users`, { method: "POST", headers, body: short });
-    await fetch(`${application.getUrl()}/users`, { method: "POST", headers, body: long });
+    await ask(application, `/users`, { method: "POST", headers, body: short });
+    await ask(application, `/users`, { method: "POST", headers, body: long });
 
-    const payload = await readRequests(address);
+    const payload = await readRequests(application);
     const kept = findAnsweredEntry(payload, (record) => record.body === short);
     const cut = findAnsweredEntry(
       payload,
@@ -833,15 +810,15 @@ test.serial("a body that arrived as text is stored as text, and cut like any oth
 });
 
 test.serial("a body that arrived as a literal JSON null is stated, not read as none", async () => {
-  const { application, address } = await bootApplication(CapturedModule);
+  const application = await bootApplication(CapturedModule);
   try {
-    await fetch(`${application.getUrl()}/users`, {
+    await ask(application, `/users`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: "null",
     });
 
-    const entry = answeredEntry(await readRequests(address));
+    const entry = answeredEntry(await readRequests(application));
 
     // The client sent a body and the route parsed it as `null`, which the
     // installed Elysia tells apart from the request that carried none — an
@@ -855,9 +832,9 @@ test.serial("a body that arrived as a literal JSON null is stated, not read as n
 });
 
 test.serial("a body this package cannot serialize is stated as unreadable", async () => {
-  const { application, address } = await bootApplication(UnserializableModule);
+  const application = await bootApplication(UnserializableModule);
   try {
-    const answered = await fetch(`${application.getUrl()}/bigint`, {
+    const answered = await ask(application, `/bigint`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: '{"id":1}',
@@ -867,7 +844,7 @@ test.serial("a body this package cannot serialize is stated as unreadable", asyn
     // package's own read of it, never for the client or the route.
     expect(answered.status).toBe(200);
 
-    const entry = answeredEntry(await readRequests(address));
+    const entry = answeredEntry(await readRequests(application));
 
     // A missing `body` would read as a request that carried none, which is a
     // claim about the request rather than an absence to leave out.
@@ -878,13 +855,13 @@ test.serial("a body this package cannot serialize is stated as unreadable", asyn
 });
 
 test.serial("redact replaces a named header with the literal, whatever its case", async () => {
-  const { application, address } = await bootApplication(RedactingModule);
+  const application = await bootApplication(RedactingModule);
   try {
-    await fetch(`${application.getUrl()}/users/42`, {
+    await ask(application, `/users/42`, {
       headers: { authorization: "Bearer secret", "x-trace-id": "abc" },
     });
 
-    const payload = await readRequests(address);
+    const payload = await readRequests(application);
     const entry = answeredEntry(payload);
 
     // The options name the header in its canonical case; it arrives lowercased.
@@ -900,12 +877,12 @@ test.serial("redact replaces a named header with the literal, whatever its case"
 test.serial(
   "a failure carries the message the answer published, and an answer carries none",
   async () => {
-    const { application, address } = await bootApplication(CapturedModule);
+    const application = await bootApplication(CapturedModule);
     try {
-      await fetch(`${application.getUrl()}/explodes`);
-      await fetch(`${application.getUrl()}/nope`);
+      await ask(application, `/explodes`);
+      await ask(application, `/nope`);
 
-      const payload = await readRequests(address);
+      const payload = await readRequests(application);
       const failed = findAnsweredEntry(payload, (record) => record.url === "/explodes");
       const missing = findAnsweredEntry(payload, (record) => record.url === "/nope");
 
@@ -921,11 +898,11 @@ test.serial(
 );
 
 test.serial("an answer a handler built itself is recorded with the status it carries", async () => {
-  const { application, address } = await bootApplication(CapturedModule);
+  const application = await bootApplication(CapturedModule);
   try {
-    await fetch(`${application.getUrl()}/own`);
+    await ask(application, `/own`);
 
-    const payload = await readRequests(address);
+    const payload = await readRequests(application);
     const entry = findAnsweredEntry(payload, (record) => record.url === "/own");
 
     // `set.status` still reads `200` for a handler that answered with its own
@@ -937,11 +914,11 @@ test.serial("an answer a handler built itself is recorded with the status it car
 });
 
 test.serial("an unhandled failure carries the exception the platform mapped", async () => {
-  const { application, address } = await bootApplication(CapturedModule);
+  const application = await bootApplication(CapturedModule);
   try {
-    await fetch(`${application.getUrl()}/unhandled`);
+    await ask(application, `/unhandled`);
 
-    const payload = await readRequests(address);
+    const payload = await readRequests(application);
     const entry = findAnsweredEntry(payload, (record) => record.url === "/unhandled");
 
     // The platform answers an unhandled failure with its own Problem Details
@@ -957,11 +934,11 @@ test.serial("an unhandled failure carries the exception the platform mapped", as
 });
 
 test.serial("an exception's stack is never published", async () => {
-  const { application, address } = await bootApplication(CapturedModule);
+  const application = await bootApplication(CapturedModule);
   try {
-    await fetch(`${application.getUrl()}/unhandled`);
+    await ask(application, `/unhandled`);
 
-    const payload = await readRequests(address);
+    const payload = await readRequests(application);
     const entry = findAnsweredEntry(payload, (record) => record.url === "/unhandled");
 
     // The premise is asserted before the comparison, because an absent `error`
@@ -978,13 +955,8 @@ test.serial("an exception's stack is never published", async () => {
 });
 
 test.serial("the exception the record reports is the one the log stream states", async () => {
-  const output = captureOutput();
-  let application: AponiaElysiaApplication | undefined;
+  const application = await AponiaFactory.create(LoggedFailureModule, { logger: agreeingLogger });
   try {
-    application = await AponiaFactory.create(LoggedFailureModule, { logger: agreeingLogger });
-    await application.listen(0);
-
-    const address = reportedAddress(output);
     // One route per turn, so the line `/logs` reports last is the line for the
     // request the record was just read for — two failures in one turn would be
     // told apart only by their order in two independently read windows. The
@@ -999,13 +971,13 @@ test.serial("the exception the record reports is the one the log stream states",
     ];
 
     for (const expected of cases) {
-      await fetch(`${application.getUrl()}${expected.path}`);
+      await ask(application, `${expected.path}`);
 
       const entry = findAnsweredEntry(
-        await readRequests(address),
+        await readRequests(application),
         (record) => record.url === expected.path,
       );
-      const response = await fetch(`${address}/__devtools/logs`);
+      const response = await ask(application, `/__devtools/logs`);
       const logs = (await response.json()) as AponiaLogsPayload;
       const reported = logs.entries.filter((item) => item.context === "ExceptionsHandler").at(-1);
 
@@ -1017,8 +989,7 @@ test.serial("the exception the record reports is the one the log stream states",
       expect(entry.error).toBe(reported?.message);
     }
   } finally {
-    output.restore();
-    await application?.close();
+    await application.close();
   }
 });
 
@@ -1064,14 +1035,11 @@ test.serial(
     ];
 
     for (const expected of cases) {
-      const output = captureOutput();
-      let application: AponiaElysiaApplication | undefined;
+      const application = await AponiaFactory.create(expected.rootModule, {
+        logger: expected.logger,
+      });
       try {
-        application = await AponiaFactory.create(expected.rootModule, { logger: expected.logger });
-        await application.listen(0);
-
-        const address = reportedAddress(output);
-        const response = await fetch(`${application.getUrl()}${expected.path}`);
+        const response = await ask(application, `${expected.path}`);
 
         // The premise first, and it is the whole point of the case: the answer
         // the client receives is still the platform's Problem Details `500`, so
@@ -1084,11 +1052,11 @@ test.serial(
         expect(response.headers.get("content-type")).toContain("application/problem+json");
 
         const entry = findAnsweredEntry(
-          await readRequests(address),
+          await readRequests(application),
           (record) => record.url === expected.path,
         );
         const logs = (await (
-          await fetch(`${address}/__devtools/logs`)
+          await ask(application, `/__devtools/logs`)
         ).json()) as AponiaLogsPayload;
         const reported = logs.entries.filter((item) => item.context === "ExceptionsHandler").at(-1);
 
@@ -1106,19 +1074,18 @@ test.serial(
           expect(entry.error).toBe(expected.states);
         }
       } finally {
-        output.restore();
-        await application?.close();
+        await application.close();
       }
     }
   },
 );
 
 test.serial("a failure whose answer the client already holds carries no message", async () => {
-  const { application, address } = await bootApplication(CapturedModule);
+  const application = await bootApplication(CapturedModule);
   try {
-    await fetch(`${application.getUrl()}/own-failure`);
+    await ask(application, `/own-failure`);
 
-    const payload = await readRequests(address);
+    const payload = await readRequests(application);
     const entry = findAnsweredEntry(payload, (record) => record.url === "/own-failure");
 
     expect(entry.status).toBe(503);
@@ -1131,7 +1098,7 @@ test.serial("a failure whose answer the client already holds carries no message"
 });
 
 test.serial("the duration does not include this package's own read of the answer", async () => {
-  const { application, address } = await bootApplication(CapturedModule);
+  const application = await bootApplication(CapturedModule);
   let read = false;
   const clock = spyOn(performance, "now").mockImplementation(() => (read ? 1000 : 5));
   const originalJson = Response.prototype.json;
@@ -1144,9 +1111,9 @@ test.serial("the duration does not include this package's own read of the answer
   );
 
   try {
-    await fetch(`${application.getUrl()}/explodes`);
+    await ask(application, `/explodes`);
 
-    const payload = await readRequests(address);
+    const payload = await readRequests(application);
     const entry = findAnsweredEntry(payload, (record) => record.url === "/explodes");
 
     expect(entry.error).toBe("The database is unreachable.");
@@ -1162,7 +1129,7 @@ test.serial("the duration does not include this package's own read of the answer
 });
 
 test.serial("the duration is not charged for the body this package serializes", async () => {
-  const { application, address } = await bootApplication(BulkModule);
+  const application = await bootApplication(BulkModule);
   bulkBodyRead = false;
   // The clock reads `5` until this package's own serializer reaches the parsed
   // body and `1000` after it, so the reading the record takes measures the same
@@ -1174,13 +1141,13 @@ test.serial("the duration is not charged for the body this package serializes", 
   const clock = spyOn(performance, "now").mockImplementation(() => (bulkBodyRead ? 1000 : 5));
 
   try {
-    await fetch(`${application.getUrl()}/bulk`, {
+    await ask(application, `/bulk`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: '{"id":1}',
     });
 
-    const entry = answeredEntry(await readRequests(address));
+    const entry = answeredEntry(await readRequests(application));
 
     expect(entry.status).toBe(200);
     // The read this case makes expensive did happen: the record states the body
@@ -1198,17 +1165,17 @@ test.serial("the duration is not charged for the body this package serializes", 
 });
 
 test.serial("polling the record never adds to it", async () => {
-  const { application, address } = await bootApplication(CapturedModule);
+  const application = await bootApplication(CapturedModule);
   try {
-    await fetch(`${application.getUrl()}/users/42`);
+    await ask(application, `/users/42`);
 
-    const first = await readRequests(address);
-    const second = await readRequests(address, `?since=${first.cursor}`);
+    const first = await readRequests(application);
+    const second = await readRequests(application, `?since=${first.cursor}`);
 
-    // The devtools server is its own server, so reading the record is not one of
-    // the application's own requests: the poll that follows the first answer is
-    // answered with nothing, and the cursor it carries back is the one it asked
-    // from.
+    // The surface's own traffic is the one thing this record leaves out: the
+    // polling request is excluded at arrival, so the poll that follows the first
+    // answer is answered with nothing and the cursor it carries back is the one it
+    // asked from.
     expect(first.cursor).toBe(2);
     expect(second.cursor).toBe(first.cursor);
     expect(second.entries).toEqual([]);
@@ -1217,96 +1184,62 @@ test.serial("polling the record never adds to it", async () => {
   }
 });
 
-test.serial("a second listen serves the record of the boot it started", async () => {
-  const output = captureOutput();
-  let application: AponiaElysiaApplication | undefined;
+test.serial("a second listen continues the record the application already opened", async () => {
+  const application = await AponiaFactory.create(CapturedModule, { logger: false });
   try {
-    application = await AponiaFactory.create(CapturedModule, { logger: false });
     await application.listen(0);
+    await ask(application, `/users/42`);
 
-    await fetch(`${application.getUrl()}/users/42`);
-    expect((await readRequests(reportedAddress(output))).cursor).toBe(2);
+    const firstBoot = await readRequests(application);
 
-    // The record belongs to the boot rather than to the registration: a second
-    // `listen()` starts a second socket, and that socket serves a record of its
-    // own rather than a window some other socket was serving. The spec states the
-    // same boundary — the record is in memory, per boot, and a restart is a new
-    // record — so an entry from a boot that is gone is not carried into the one
-    // that replaced it.
-    await application.listen(0);
-
-    const addresses = reportedAddresses(output);
-    expect(addresses).toHaveLength(2);
-
-    const restarted = await readRequests(addresses[1] ?? "");
-
-    expect(restarted.cursor).toBe(0);
-    expect(restarted.entries).toEqual([]);
-  } finally {
-    await application?.close();
-    output.restore();
-  }
-});
-
-test.serial("an id keeps counting across the two boots of one registration", async () => {
-  const output = captureOutput();
-  let application: AponiaElysiaApplication | undefined;
-  try {
-    application = await AponiaFactory.create(CapturedModule, { logger: false });
-    await application.listen(0);
-
-    await fetch(`${application.getUrl()}/users/42`);
-
-    const firstBoot = await readRequests(reportedAddress(output));
-
-    // The comparison this case turns on is read off a window, so the window is
-    // stated before it: `Math.max` of an empty window answers `-Infinity`, and
-    // every id is greater than that, so a regression that emptied this window
-    // would leave the case green while proving nothing. One request leaves two
-    // entries and both carry its id, which is the premise grouping rests on.
+    // The premise grouping rests on, stated before the comparison reads it:
+    // `Math.max` of an empty window answers `-Infinity`, so a regression that
+    // emptied this window would leave the case green while proving nothing. One
+    // request leaves two entries and both carry its id.
     expect(firstBoot.entries).toHaveLength(2);
     expect(firstBoot.entries[0]?.id).toBe(firstBoot.entries[1]?.id);
 
     const lastOfFirstBoot = Math.max(...firstBoot.entries.map((record) => record.id));
 
-    // A second `listen()` is a second boot of one registration: the record is
-    // new, but the counter that mints an id belongs to the capture and outlives
-    // the boot. An id that restarted at `1` here would let a consumer that kept
-    // polling through the restart group this boot's first request with the
-    // previous boot's — two different requests under one id.
+    // The record belongs to the application rather than to a socket, and this is
+    // where the old per-boot window would have parted from it: the record is
+    // opened on the first request the plugin sees and memoized by the application,
+    // so the `onStart` a second `listen()` runs opens nothing and the window the
+    // first boot began is the one still served. The counter that mints an id
+    // outlives the listener the same way, because it belongs to the capture rather
+    // than to the record: an id that restarted here would let a consumer polling
+    // through the restart group two different requests under one id.
     await application.listen(0);
+    await ask(application, `/users/7`);
 
-    await fetch(`${application.getUrl()}/users/7`);
+    const afterRestart = await readRequests(application, `?since=${firstBoot.cursor}`);
 
-    const addresses = reportedAddresses(output);
-    const secondBoot = await readRequests(addresses[1] ?? "");
-
-    expect(secondBoot.entries).toHaveLength(2);
-    expect(secondBoot.entries[0]?.id).toBeGreaterThan(lastOfFirstBoot);
+    expect(afterRestart.entries.map((record) => record.url)).toEqual(["/users/7", "/users/7"]);
+    expect(afterRestart.cursor).toBe(firstBoot.cursor + 2);
+    expect(afterRestart.entries[0]?.id).toBeGreaterThan(lastOfFirstBoot);
   } finally {
-    await application?.close();
-    output.restore();
+    await application.close();
   }
 });
 
 test.serial("two registrations in one process record into their own windows", async () => {
   const first = await bootApplication(CapturedModule);
-  let second: BootedApplication | undefined;
+  let second: AponiaElysiaApplication | undefined;
   try {
     second = await bootApplication(CapturedTwinModule);
 
-    await fetch(`${first.application.getUrl()}/users/42`);
-    await fetch(`${second.application.getUrl()}/users/42`);
-    await fetch(`${second.application.getUrl()}/users/7`);
+    await ask(first, `/users/42`);
+    await ask(second, `/users/42`);
+    await ask(second, `/users/7`);
 
-    const firstWindow = await readRequests(first.address);
-    const secondWindow = await readRequests(second.address);
+    const firstWindow = await readRequests(first);
+    const secondWindow = await readRequests(second);
 
-    // The record belongs to the registration rather than to the process: each
-    // socket serves its own application's traffic, and neither window holds a
-    // request the other application answered — neither in count nor in content.
-    // One request leaves two entries, so each window's cursor counts two of them
-    // and every url appears beside the pending entry that shares it.
+    // The record belongs to the application rather than to the process: each
+    // window serves its own application's traffic, and neither holds a request the
+    // other application answered — neither in count nor in content. One request
+    // leaves two entries, so each window's cursor counts two of them and every url
+    // appears beside the pending entry that shares it.
     expect(firstWindow.cursor).toBe(2);
     expect(firstWindow.entries.map((record) => record.url)).toEqual(["/users/42", "/users/42"]);
     expect(secondWindow.cursor).toBe(4);
@@ -1317,37 +1250,35 @@ test.serial("two registrations in one process record into their own windows", as
       "/users/7",
     ]);
   } finally {
-    await first.application.close();
-    await second?.application.close();
+    await first.close();
+    await second?.close();
   }
 });
 
 test.serial("two applications built from one module keep their records apart", async () => {
   const first = await bootApplication(CapturedModule);
-  let second: BootedApplication | undefined;
+  let second: AponiaElysiaApplication | undefined;
   try {
-    await fetch(`${first.application.getUrl()}/users/42`);
-    expect((await readRequests(first.address)).cursor).toBe(2);
+    await ask(first, `/users/42`);
+    expect((await readRequests(first)).cursor).toBe(2);
 
     // The platform hands one registration to every boot of the class that
     // declared it, so these two applications are one plugin with one pair of
     // hooks — which is the whole reason a record is filed per application rather
-    // than held in one variable. The second boot also takes over the single
-    // socket a registration drives, which is why only its address is read from
-    // here on.
+    // than held in one variable.
     second = await bootApplication(CapturedModule);
 
-    await fetch(`${first.application.getUrl()}/users/7`);
+    await ask(first, `/users/7`);
 
     // The request above was answered by the first application, and it is in that
     // application's record: the second application's window states its own
     // traffic and nothing that another application answered.
-    const secondWindow = await readRequests(second.address);
+    const secondWindow = await readRequests(second);
 
     expect(secondWindow.cursor).toBe(0);
     expect(secondWindow.entries).toEqual([]);
   } finally {
-    await first.application.close();
-    await second?.application.close();
+    await first.close();
+    await second?.close();
   }
 });

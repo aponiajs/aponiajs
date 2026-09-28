@@ -1,4 +1,4 @@
-import { expect, spyOn, test } from "bun:test";
+import { expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -8,24 +8,31 @@ import { Elysia } from "elysia";
 import {
   aponiaVersion,
   devtoolsContractVersion,
+  devtoolsPathPrefix,
   resolveElysiaVersion,
   routeRequest,
-  startDevtoolsServer,
   type AponiaMetaPayload,
   type DevtoolsHandlers,
-  type DevtoolsServer,
 } from "../src/index.ts";
-// The boundary itself, from the module that owns it rather than the barrel: it
-// is `@internal` and no application calls it, and three of the near-miss
-// spellings below bind successfully on this machine, so a socket case would
-// prove what the resolver did rather than what the check decided.
-import { isLoopbackHost } from "../src/server/devtools-server.ts";
+// The handler record the mounted route answers through, from the module that owns
+// it rather than the barrel: the surface is a route an application mounts, and
+// this is the pair that route calls.
+import { createHandlers } from "../src/server/devtools-server.ts";
 
 /**
- * The loopback server and the dispatcher under it. The contract is HTTP, so
- * every case either calls the pure dispatcher or fetches a socket that bound
- * port `0` and had its address read back: no case here depends on a port it
- * guessed, and none of them answers the question "is 8000 free".
+ * The dispatcher, the `/meta` record, and the Elysia resolver.
+ *
+ * There is no server in this package and no socket behind it, so nothing here
+ * binds a port: the dispatcher is called directly and the record it dispatches
+ * into is built in process for the application a case booted. The mount itself —
+ * that the application answers these paths on its own address, and that the
+ * `404` and `405` reach a client through it — is pinned over `application.handle`
+ * in `devtools-module.test.ts`.
+ *
+ * What is left here is the two halves a mount could not show cheaply: the
+ * dispatcher's own decisions, which are `405` and `404` before a route exists to
+ * carry them, and the release the installed Elysia states, which is read from
+ * the tree rather than from a boot.
  */
 
 /** The Elysia this workspace installed, read without the resolver under test. */
@@ -43,80 +50,32 @@ const silentLogger: LoggerService = {
 };
 
 /**
- * A logger that keeps what was written through it, so a case can state what a
- * start reported rather than only what it returned.
+ * One devtools path answered for one application.
+ *
+ * A case that polls twice through one record passes the record it built, because
+ * a case that built a second one would be asking a different boot: the payload
+ * a request describes is settled when the record is.
  */
-function recordingLogger(): {
-  readonly logger: LoggerService;
-  readonly warnings: readonly string[];
-} {
-  const warnings: string[] = [];
-  const logger: LoggerService = {
-    log: () => {},
-    fatal: () => {},
-    error: () => {},
-    warn: (message) => {
-      warnings.push(String(message));
-    },
-  };
-
-  return { logger, warnings };
-}
-
-/** Binds the loopback socket on port `0` and reads the address it took. */
-function serveLoopback(
+async function ask(
   application: Elysia,
-  options: { readonly port?: number; readonly logger?: LoggerService } = {},
-): DevtoolsServer {
-  const server = startDevtoolsServer({
-    application,
-    port: options.port ?? 0,
-    logger: options.logger ?? silentLogger,
-  });
-
-  if (server === undefined) {
-    throw new Error("the devtools server refused to bind the loopback socket");
-  }
-
-  return server;
+  path: string,
+  handlers?: DevtoolsHandlers,
+): Promise<Response> {
+  return await routeRequest(
+    new Request(`http://localhost${devtoolsPathPrefix}${path}`),
+    handlers ?? createHandlers(application, undefined, undefined, silentLogger),
+  );
 }
 
-async function readMeta(server: DevtoolsServer): Promise<AponiaMetaPayload> {
-  const response = await fetch(`${server.url}/__devtools/meta`);
+async function readMeta(
+  application: Elysia,
+  handlers?: DevtoolsHandlers,
+): Promise<AponiaMetaPayload> {
+  const response = await ask(application, "/meta", handlers);
 
   expect(response.status).toBe(200);
 
   return (await response.json()) as AponiaMetaPayload;
-}
-
-/**
- * The port a freshly bound socket took. Bun types a server's port as optional —
- * a unix socket has none — so a case that needs the number states that it read
- * one rather than defaulting it.
- */
-function boundPort(server: { readonly port?: number }): number {
-  if (server.port === undefined) {
-    throw new Error("the socket bound no port to take");
-  }
-
-  return server.port;
-}
-
-/**
- * Whether the address binds again, which is how a released socket is observed
- * from outside: a start that throws hands out no handle, so the port is the only
- * evidence that the socket it took was stopped on the way out.
- */
-async function bindsAgain(host: string, port: number): Promise<boolean> {
-  try {
-    const server = Bun.serve({ hostname: host, port, fetch: () => new Response("released") });
-
-    await server.stop(true);
-
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 @Module({})
@@ -136,7 +95,7 @@ test("a non-GET method answers 405 before any path lookup", async () => {
   expect(inside.status).toBe(405);
   expect(inside.headers.get("allow")).toBe("GET");
 
-  // The method decides before the path is read, so a path this server does not
+  // The method decides before the path is read, so a path this surface does not
   // own answers 405 rather than 404.
   const outside = await routeRequest(
     new Request("http://127.0.0.1:1/not-devtools", { method: "PUT" }),
@@ -182,55 +141,32 @@ test("the dispatcher hands the request to the handler it found, answer untouched
   expect(teapot.status).toBe(418);
 });
 
-test("the listening socket answers the method and path contract over HTTP", async () => {
-  const server = serveLoopback(new Elysia());
-  try {
-    expect(server.url.startsWith("http://127.0.0.1:")).toBe(true);
-
-    const get = await fetch(`${server.url}/__devtools/meta`);
-    expect(get.status).toBe(200);
-
-    const post = await fetch(`${server.url}/__devtools/meta`, { method: "POST" });
-    expect(post.status).toBe(405);
-
-    const unknown = await fetch(`${server.url}/__devtools/nope`);
-    expect(unknown.status).toBe(404);
-
-    const outside = await fetch(`${server.url}/not-devtools`);
-    expect(outside.status).toBe(404);
-  } finally {
-    server.stop();
-  }
-});
-
 test("meta carries the contract version and the release it speaks", async () => {
   const application = await AponiaFactory.createNative(DevtoolsServerFixtureModule, {
     logger: false,
   });
-  const server = serveLoopback(application);
 
-  try {
-    const response = await fetch(`${server.url}/__devtools/meta`);
-    expect(response.headers.get("content-type")).toContain("application/json");
-    expect(response.headers.get("cache-control")).toBe("no-store");
+  const handlers = createHandlers(application, undefined, undefined, silentLogger);
+  const response = await ask(application, "/meta", handlers);
 
-    const meta = (await response.json()) as AponiaMetaPayload;
+  expect(response.headers.get("content-type")).toContain("application/json");
+  expect(response.headers.get("cache-control")).toBe("no-store");
 
-    expect(meta).toEqual({
-      contract: devtoolsContractVersion,
-      framework: aponiaVersion,
-      elysia: installedElysiaVersion,
-      artifacts: { invokers: null, descriptors: null },
-      startedAt: expect.any(String),
-    });
-    expect(meta.startedAt).toBe(new Date(meta.startedAt).toISOString());
+  const meta = (await response.json()) as AponiaMetaPayload;
 
-    // The payload is built once and shared by every request, so a second read
-    // reports the same boot rather than the moment it was asked.
-    expect(await readMeta(server)).toEqual(meta);
-  } finally {
-    server.stop();
-  }
+  expect(meta).toEqual({
+    contract: devtoolsContractVersion,
+    framework: aponiaVersion,
+    elysia: installedElysiaVersion,
+    artifacts: { invokers: null, descriptors: null },
+    startedAt: expect.any(String),
+  });
+  expect(meta.startedAt).toBe(new Date(meta.startedAt).toISOString());
+
+  // The payload is built once and shared by every request, so a second read
+  // through the same record reports the same boot rather than the moment it was
+  // asked.
+  expect(await readMeta(application, handlers)).toEqual(meta);
 });
 
 test("meta names the release that supplied each artifact a boot adopted", async () => {
@@ -243,16 +179,11 @@ test("meta names the release that supplied each artifact a boot adopted", async 
       modules: { DevtoolsServerFixtureModule: declaredFixtureModule },
     },
   });
-  const server = serveLoopback(application);
 
-  try {
-    const meta = await readMeta(server);
+  const meta = await readMeta(application);
 
-    expect(meta.framework).toBe(aponiaVersion);
-    expect(meta.artifacts).toEqual({ invokers: aponiaVersion, descriptors: aponiaVersion });
-  } finally {
-    server.stop();
-  }
+  expect(meta.framework).toBe(aponiaVersion);
+  expect(meta.artifacts).toEqual({ invokers: aponiaVersion, descriptors: aponiaVersion });
 });
 
 test("meta reports no stamp for a descriptor the caller wrote by hand", async () => {
@@ -260,39 +191,28 @@ test("meta reports no stamp for a descriptor the caller wrote by hand", async ()
   // the artifact's own release, so a hand-written descriptor reports `null`
   // rather than the release that happens to be serving the report.
   const application = await AponiaFactory.createNative(declaredFixtureModule, { logger: false });
-  const server = serveLoopback(application);
 
-  try {
-    const meta = await readMeta(server);
+  const meta = await readMeta(application);
 
-    expect(meta.framework).toBe(aponiaVersion);
-    expect(meta.artifacts).toEqual({ invokers: null, descriptors: null });
-  } finally {
-    server.stop();
-  }
+  expect(meta.framework).toBe(aponiaVersion);
+  expect(meta.artifacts).toEqual({ invokers: null, descriptors: null });
 });
 
 test("meta falls back to the release serving it when no boot produced the application", async () => {
-  const server = serveLoopback(new Elysia());
+  const meta = await readMeta(new Elysia());
 
-  try {
-    const meta = await readMeta(server);
-
-    expect(meta.framework).toBe(aponiaVersion);
-    expect(meta.artifacts).toEqual({ invokers: null, descriptors: null });
-  } finally {
-    server.stop();
-  }
+  expect(meta.framework).toBe(aponiaVersion);
+  expect(meta.artifacts).toEqual({ invokers: null, descriptors: null });
 });
 
 test("a record from a copy of the platform older than the artifact stamps answers null", async () => {
   // The record is read through a registry-global symbol key, so a boot run by an
   // older copy of `@aponiajs/platform-elysia` in this process is reachable from
   // here — and that copy's record has no `artifacts` at all. This attaches the
-  // record the way an older bootstrap did. The handler build runs inside the
-  // plugin's `onStart`, where a throw takes `listen()` with it, so the read has
-  // to answer `null`, the way it does for an artifact the boot did not adopt,
-  // rather than fail a boot that is otherwise fine.
+  // record the way an older bootstrap did. The handler record is built on the
+  // request path, where a throw is that request's failure, so the read has to
+  // answer `null`, the way it does for an artifact the boot did not adopt,
+  // rather than fail the surface that reads it.
   const application = new Elysia();
   Object.defineProperty(application, Symbol.for("aponia.application.diagnostics"), {
     value: {
@@ -303,359 +223,10 @@ test("a record from a copy of the platform older than the artifact stamps answer
     enumerable: false,
   });
 
-  const server = serveLoopback(application);
+  const meta = await readMeta(application);
 
-  try {
-    const meta = await readMeta(server);
-
-    expect(meta.framework).toBe("0.0.0-older");
-    expect(meta.artifacts).toEqual({ invokers: null, descriptors: null });
-  } finally {
-    server.stop();
-  }
-});
-
-test("a registration that names no host binds loopback and reports nothing", () => {
-  const { logger, warnings } = recordingLogger();
-  const server = startDevtoolsServer({ application: new Elysia(), port: 0, logger });
-
-  try {
-    expect(server?.url.startsWith("http://127.0.0.1:")).toBe(true);
-    expect(warnings).toEqual([]);
-  } finally {
-    server?.stop();
-  }
-});
-
-test("the loopback spellings a registration can name report nothing", () => {
-  const results: {
-    readonly host: string;
-    readonly url: string | undefined;
-    readonly warnings: readonly string[];
-  }[] = [];
-
-  for (const host of ["127.0.0.1", "localhost", "LOCALHOST", "::1"]) {
-    const { logger, warnings } = recordingLogger();
-    const server = startDevtoolsServer({ application: new Elysia(), host, port: 0, logger });
-
-    try {
-      results.push({ host, url: server?.url, warnings });
-    } finally {
-      server?.stop();
-    }
-  }
-
-  // The name, its case-insensitive form, and the IPv6 loopback are the
-  // spellings the check must accept beside the `127.x.x.x` form; the
-  // default case above pins that branch.
-  expect(results.map((result) => [result.host, result.warnings])).toEqual([
-    ["127.0.0.1", []],
-    ["localhost", []],
-    ["LOCALHOST", []],
-    ["::1", []],
-  ]);
-  expect(results.every((result) => result.url !== undefined)).toBe(true);
-});
-
-test("the loopback check is silent only for the spellings it names and reports every near miss", () => {
-  // Silent: the four spellings the option documents, including the root-dot
-  // form of the name and an address in `127.0.0.0/8` that is not `.1`.
-  const silent = ["127.0.0.1", "127.255.255.254", "localhost", "LOCALHOST", "localhost.", "::1"];
-
-  // Reported. The first three are loopback to a resolver and to the kernel, and
-  // the check still reports them: it resolves nothing, so the boundary is the
-  // spelling rather than what the spelling means. `localhost\n` is here because
-  // a trailing newline is what a copied value carries, and `$` without the `m`
-  // flag refuses it — a pattern that grew that flag would go silent for it.
-  const reported = [
-    "127.1",
-    "::ffff:127.0.0.1",
-    "0:0:0:0:0:0:0:1",
-    "::",
-    "0.0.0.0",
-    "192.168.1.5",
-    "dev.localhost",
-    "",
-    "localhost\n",
-  ];
-
-  // Filtered rather than mapped so a failure names the spelling that moved.
-  expect(silent.filter((host) => !isLoopbackHost(host))).toEqual([]);
-  expect(reported.filter((host) => isLoopbackHost(host))).toEqual([]);
-});
-
-test("a host outside loopback binds it, answers, and reports once what it exposed", async () => {
-  const { logger, warnings } = recordingLogger();
-  const server = startDevtoolsServer({
-    application: new Elysia(),
-    host: "0.0.0.0",
-    port: 0,
-    logger,
-  });
-
-  if (server === undefined) {
-    throw new Error("the devtools server refused to bind the widened socket");
-  }
-
-  try {
-    // The socket bound the address the registration named rather than the
-    // default...
-    expect(server.url.startsWith("http://0.0.0.0:")).toBe(true);
-
-    // ...and it answers: `0.0.0.0` is every interface, loopback included, and
-    // the port is read from the address Bun reported rather than guessed.
-    const boundPort = new URL(server.url).port;
-    const response = await fetch(`http://127.0.0.1:${boundPort}/__devtools/meta`);
-    expect(response.status).toBe(200);
-
-    // One row states the address that was bound and what is reachable through
-    // it: `/requests` records request headers and bodies by default, so the
-    // reader is told what the widening costs rather than that it happened.
-    expect(warnings).toHaveLength(1);
-    expect(warnings[0]).toContain("0.0.0.0");
-    expect(warnings[0]).toContain("host");
-    expect(warnings[0]).toContain("/requests");
-    expect(warnings[0]).not.toContain("\n");
-  } finally {
-    server.stop();
-  }
-});
-
-test("a widening notice the logger refuses fails the boot and releases the socket it took", async () => {
-  // The port comes from a socket this case stops, so it is an address this file
-  // can bind again: no case here depends on a port it guessed, and binding the
-  // address again is the only way the release is observable — the start throws
-  // instead of answering a handle, so nothing is left to ask.
-  const holder = Bun.serve({ hostname: "0.0.0.0", port: 0, fetch: () => new Response("free") });
-  const port = boundPort(holder);
-  await holder.stop(true);
-
-  const noticeRefused = new Error("the logger refused the widening notice");
-  const logger: LoggerService = {
-    log: () => {},
-    fatal: () => {},
-    error: () => {},
-    warn: () => {
-      throw noticeRefused;
-    },
-  };
-  const stderr: string[] = [];
-  const stderrWrite = spyOn(process.stderr, "write").mockImplementation((chunk) => {
-    stderr.push(String(chunk));
-    return true;
-  });
-
-  try {
-    let failure: unknown;
-    try {
-      startDevtoolsServer({ application: new Elysia(), host: "0.0.0.0", port, logger });
-    } catch (error) {
-      failure = error;
-    }
-
-    // The notice reports a state the socket really took, so a throw on it is a
-    // throw: the boot fails with the logger's own failure, unchanged, and never
-    // with the `undefined` a refused bind answers with.
-    expect(failure).toBe(noticeRefused);
-
-    // The refusal sentence belongs to a bind that never happened, and this
-    // socket took its address: one here would name an address the server is
-    // holding, which is the misreport the bind's own `catch` — and nothing else
-    // — exists to prevent.
-    expect(stderr.filter((row) => row.includes("could not listen"))).toEqual([]);
-
-    // The handle was never the caller's, so nothing else could ever stop this
-    // socket: the address binding again is what states the throw released it
-    // rather than holding a port for the life of a boot that failed.
-    expect(await bindsAgain("0.0.0.0", port)).toBe(true);
-  } finally {
-    stderrWrite.mockRestore();
-  }
-});
-
-test("a port that is already bound is refused, and the caller continues", async () => {
-  const blocker = Bun.serve({
-    hostname: "127.0.0.1",
-    port: 0,
-    fetch: () => new Response("taken"),
-  });
-  const warnings: string[] = [];
-  const logger: LoggerService = {
-    log: () => {},
-    fatal: () => {},
-    error: () => {},
-    warn: (message) => {
-      warnings.push(String(message));
-    },
-  };
-
-  try {
-    const server = startDevtoolsServer({
-      application: new Elysia(),
-      port: blocker.port,
-      logger,
-    });
-
-    expect(server).toBeUndefined();
-    expect(warnings).toHaveLength(1);
-    expect(warnings[0]).toContain(`http://127.0.0.1:${blocker.port}`);
-    expect(warnings[0]).not.toContain("\n");
-  } finally {
-    await blocker.stop(true);
-  }
-});
-
-test("a refusal whose reason refuses to be read is still reported, and the caller continues", () => {
-  // The sentence embeds the reason, and it is built as an argument to
-  // `reportFailure`: a reason that refuses to be read would make the sentence —
-  // and so the report — the failure the guard around the logger call exists to
-  // prevent, and this start runs inside `onStart`, which Elysia neither awaits
-  // nor catches. The reason arrives from the bind, so that is where the hostile
-  // value is thrown, and what the caller observes is the same `undefined` a
-  // refusal always answers with.
-  const refusing = new Proxy(
-    {},
-    {
-      getPrototypeOf: () => {
-        throw new TypeError("this value has no prototype to walk");
-      },
-    },
-  );
-  const warnings: string[] = [];
-  const logger: LoggerService = {
-    log: () => {},
-    fatal: () => {},
-    error: () => {},
-    warn: (message) => {
-      warnings.push(String(message));
-    },
-  };
-  const serve = spyOn(Bun, "serve").mockImplementation(() => {
-    throw refusing;
-  });
-
-  try {
-    const server = startDevtoolsServer({ application: new Elysia(), port: 0, logger });
-
-    expect(server).toBeUndefined();
-    expect(warnings).toHaveLength(1);
-    expect(warnings[0]).toContain("could not listen");
-    expect(warnings[0]).toContain("the application continues without it");
-    // The refusal is stated rather than the parentheses left empty: a missing
-    // clause would read as a reason that was read and was empty.
-    expect(warnings[0]).toContain("([unrenderable])");
-  } finally {
-    serve.mockRestore();
-  }
-});
-
-test("a refusal the logger will not carry is stated on stderr, and the caller still continues", async () => {
-  const blocker = Bun.serve({
-    hostname: "127.0.0.1",
-    port: 0,
-    fetch: () => new Response("taken"),
-  });
-  const logger: LoggerService = {
-    log: () => {},
-    fatal: () => {},
-    error: () => {},
-    warn: () => {
-      throw new Error("the logger refused the refusal");
-    },
-  };
-  const stderr: string[] = [];
-  const stderrWrite = spyOn(process.stderr, "write").mockImplementation((chunk) => {
-    stderr.push(String(chunk));
-    return true;
-  });
-
-  try {
-    const server = startDevtoolsServer({
-      application: new Elysia(),
-      port: blocker.port,
-      logger,
-    });
-
-    // The sentence is the one the logger was handed, on the channel that
-    // survived, and it is the whole row: the address the registration could not
-    // take is still in it.
-    expect(server).toBeUndefined();
-    expect(stderr).toHaveLength(1);
-    expect(stderr[0]).toContain(`http://127.0.0.1:${blocker.port}`);
-    expect(stderr[0]).toContain("could not listen");
-    expect(stderr[0]).toContain("the application continues without it");
-  } finally {
-    stderrWrite.mockRestore();
-    await blocker.stop(true);
-  }
-});
-
-test("a refusal stderr refuses too still answers undefined rather than throwing", async () => {
-  const blocker = Bun.serve({
-    hostname: "127.0.0.1",
-    port: 0,
-    fetch: () => new Response("taken"),
-  });
-  const logger: LoggerService = {
-    log: () => {},
-    fatal: () => {},
-    error: () => {},
-    warn: () => {
-      throw new Error("the logger refused the refusal");
-    },
-  };
-  const stderrWrite = spyOn(process.stderr, "write").mockImplementation(() => {
-    throw new Error("the stream refused the refusal");
-  });
-
-  try {
-    // Both channels refused, and the caller still hears the `undefined` that
-    // says the application continues: the direct write is guarded for the
-    // reason the logger call is, because a throw out of it would leave neither
-    // the row nor that answer — and inside `onStart`, which Elysia does not
-    // catch, it would take `listen()` with it.
-    const server = startDevtoolsServer({
-      application: new Elysia(),
-      port: blocker.port,
-      logger,
-    });
-
-    expect(server).toBeUndefined();
-  } finally {
-    stderrWrite.mockRestore();
-    await blocker.stop(true);
-  }
-});
-
-test("a host outside loopback that cannot bind reports the refusal and no exposure row", async () => {
-  // `::` rather than `::1`: the guarantee this case exists for — a widening
-  // that never happened exposes nothing — is only testable with a host the
-  // check treats as widen-eligible, and `::1` is one of the silent spellings
-  // the sibling case lists. With a loopback host no exposure row could appear
-  // however the code was ordered, so the case could not bite.
-  const blocker = Bun.serve({ hostname: "::", port: 0, fetch: () => new Response("taken") });
-  const { logger, warnings } = recordingLogger();
-
-  try {
-    const server = startDevtoolsServer({
-      application: new Elysia(),
-      host: "::",
-      port: blocker.port,
-      logger,
-    });
-
-    expect(server).toBeUndefined();
-
-    // One row, and it is the refusal. Two things hold that: the exposure row is
-    // written only after a bind that succeeded, and the address is the one the
-    // registration asked for because no socket exists to report its own. The
-    // bracketed form is what a URL needs for an IPv6 host.
-    expect(warnings).toHaveLength(1);
-    expect(warnings[0]).toContain(`http://[::]:${blocker.port}`);
-    expect(warnings[0]).not.toContain("/requests");
-  } finally {
-    await blocker.stop(true);
-  }
+  expect(meta.framework).toBe("0.0.0-older");
+  expect(meta.artifacts).toEqual({ invokers: null, descriptors: null });
 });
 
 test("the Elysia release resolves from the directory a running package sees", () => {

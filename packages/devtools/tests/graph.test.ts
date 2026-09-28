@@ -14,15 +14,19 @@ import { AponiaFactory, type AponiaModuleDescriptorArtifact } from "@aponiajs/pl
 import { Elysia } from "elysia";
 import {
   aponiaVersion,
-  startDevtoolsServer,
+  devtoolsPathPrefix,
+  routeRequest,
   type AponiaGraphPayload,
-  type DevtoolsServer,
 } from "../src/index.ts";
+// The handler record the mounted route answers through, from the module that owns
+// it rather than the barrel: the surface is a route an application mounts, and
+// this is the pair that route calls.
+import { createHandlers } from "../src/server/devtools-server.ts";
 
 /**
- * The compiled-graph endpoint. The contract is HTTP, so every case fetches a
- * socket that bound port `0` and reads the address it took back out of it, and
- * the payload assertions are the wire shape rather than the server's internals.
+ * The compiled-graph endpoint: the payload assertions are the wire shape, and
+ * the applications they are asserted against are sometimes bare objects rather
+ * than boots of their own.
  *
  * What these cases pin beyond the field names is where the graph comes from: an
  * application booting from a descriptor artifact has to be described as the
@@ -38,19 +42,27 @@ const silentLogger: LoggerService = {
   warn: () => {},
 };
 
-/** Binds the loopback socket on port `0` and reads the address it took. */
-function serveLoopback(application: Elysia): DevtoolsServer {
-  const server = startDevtoolsServer({ application, port: 0, logger: silentLogger });
-
-  if (server === undefined) {
-    throw new Error("the devtools server refused to bind the loopback socket");
-  }
-
-  return server;
+/**
+ * One devtools path answered for one application.
+ *
+ * This is the pair the mounted route calls: `createHandlers` builds the record
+ * for the application a request reached, and `routeRequest` decides the path
+ * beneath the prefix. A case calls them in process rather than mounting the
+ * plugin and driving `application.handle`, because the applications these cases
+ * assert on are often bare objects — a table, a record, a shape this release did
+ * not write — that could not carry a route at all. The mount itself is pinned
+ * over `application.handle` in `devtools-module.test.ts`, and the dispatcher's
+ * `404` and `405` in `server.test.ts`.
+ */
+async function ask(application: Elysia, path: string): Promise<Response> {
+  return await routeRequest(
+    new Request(`http://localhost${devtoolsPathPrefix}${path}`),
+    createHandlers(application, undefined, undefined, silentLogger),
+  );
 }
 
-async function readGraph(server: DevtoolsServer): Promise<AponiaGraphPayload> {
-  const response = await fetch(`${server.url}/__devtools/graph`);
+async function readGraph(application: Elysia): Promise<AponiaGraphPayload> {
+  const response = await ask(application, "/graph");
 
   expect(response.status).toBe(200);
 
@@ -107,57 +119,51 @@ function descriptorArtifact(framework: string): AponiaModuleDescriptorArtifact {
 
 test("graph reports the compiled root with its modules, and carries no routes key", async () => {
   const application = await AponiaFactory.createNative(AppModule, { logger: false });
-  const server = serveLoopback(application);
+  const response = await ask(application, "/graph");
+  expect(response.status).toBe(200);
+  expect(response.headers.get("content-type")).toContain("application/json");
+  expect(response.headers.get("cache-control")).toBe("no-store");
 
-  try {
-    const response = await fetch(`${server.url}/__devtools/graph`);
-    expect(response.status).toBe(200);
-    expect(response.headers.get("content-type")).toContain("application/json");
-    expect(response.headers.get("cache-control")).toBe("no-store");
+  const payload = await readGraph(application);
 
-    const payload = await readGraph(server);
+  // The absence is asserted as an absence: a consumer reading `routes` here
+  // would be reading the routes a controller declares, when `/routes` is the
+  // endpoint that reports the routes the application answers.
+  expect(Object.hasOwn(payload, "routes")).toBe(false);
 
-    // The absence is asserted as an absence: a consumer reading `routes` here
-    // would be reading the routes a controller declares, when `/routes` is the
-    // endpoint that reports the routes the server answers.
-    expect(Object.hasOwn(payload, "routes")).toBe(false);
-
-    // One assertion for the whole wire shape, so a field added or renamed here
-    // fails rather than passing under a per-field read. `instanceId` is
-    // `undefined` here because a statically declared module has none, and JSON
-    // carries no key for it.
-    expect(payload).toEqual({
-      rootModule: "AppModule",
-      modules: [
-        {
-          id: "GraphSupportModule",
-          instanceId: undefined,
-          imports: [],
-          controllers: [],
-          providers: [{ token: "GraphService", kind: "class", dependencies: [] }],
-          exports: ["GraphService"],
-        },
-        {
-          id: "AppModule",
-          instanceId: undefined,
-          imports: ["GraphSupportModule"],
-          controllers: ["GraphController"],
-          providers: [{ token: "GraphGateway", kind: "class", dependencies: [] }],
-          exports: [],
-        },
-      ],
-      gateways: [
-        {
-          module: "AppModule",
-          token: "GraphGateway",
-          path: "/graph-socket",
-          events: ["ping"],
-        },
-      ],
-    });
-  } finally {
-    server.stop();
-  }
+  // One assertion for the whole wire shape, so a field added or renamed here
+  // fails rather than passing under a per-field read. `instanceId` is
+  // `undefined` here because a statically declared module has none, and JSON
+  // carries no key for it.
+  expect(payload).toEqual({
+    rootModule: "AppModule",
+    modules: [
+      {
+        id: "GraphSupportModule",
+        instanceId: undefined,
+        imports: [],
+        controllers: [],
+        providers: [{ token: "GraphService", kind: "class", dependencies: [] }],
+        exports: ["GraphService"],
+      },
+      {
+        id: "AppModule",
+        instanceId: undefined,
+        imports: ["GraphSupportModule"],
+        controllers: ["GraphController"],
+        providers: [{ token: "GraphGateway", kind: "class", dependencies: [] }],
+        exports: [],
+      },
+    ],
+    gateways: [
+      {
+        module: "AppModule",
+        token: "GraphGateway",
+        path: "/graph-socket",
+        events: ["ping"],
+      },
+    ],
+  });
 });
 
 test("graph describes the decorated root when the descriptor artifact is refused", async () => {
@@ -169,17 +175,11 @@ test("graph describes the decorated root when the descriptor artifact is refused
     logger: false,
     descriptors: descriptorArtifact("0.0.0-older"),
   });
-  const server = serveLoopback(application);
+  const payload = await readGraph(application);
 
-  try {
-    const payload = await readGraph(server);
-
-    expect(payload.rootModule).toBe("AppModule");
-    expect(payload.modules.map((module) => module.id)).toEqual(["GraphSupportModule", "AppModule"]);
-    expect(payload.modules.map((module) => module.id)).not.toContain("DeclaredGraphModule");
-  } finally {
-    server.stop();
-  }
+  expect(payload.rootModule).toBe("AppModule");
+  expect(payload.modules.map((module) => module.id)).toEqual(["GraphSupportModule", "AppModule"]);
+  expect(payload.modules.map((module) => module.id)).not.toContain("DeclaredGraphModule");
 });
 
 test("graph reports the root the adopted descriptor artifact declares", async () => {
@@ -187,29 +187,23 @@ test("graph reports the root the adopted descriptor artifact declares", async ()
     logger: false,
     descriptors: descriptorArtifact(aponiaVersion),
   });
-  const server = serveLoopback(application);
+  const payload = await readGraph(application);
 
-  try {
-    const payload = await readGraph(server);
-
-    // The declaration carries an id of its own, and neither decorated module is
-    // named: an endpoint that lowered the classes would answer "AppModule" with
-    // this fixture's controller and gateway under it.
-    expect(payload.rootModule).toBe("DeclaredGraphModule");
-    expect(payload.modules.map((module) => module.id)).toEqual(["DeclaredGraphModule"]);
-    expect(payload.gateways).toEqual([]);
-  } finally {
-    server.stop();
-  }
+  // The declaration carries an id of its own, and neither decorated module is
+  // named: an endpoint that lowered the classes would answer "AppModule" with
+  // this fixture's controller and gateway under it.
+  expect(payload.rootModule).toBe("DeclaredGraphModule");
+  expect(payload.modules.map((module) => module.id)).toEqual(["DeclaredGraphModule"]);
+  expect(payload.gateways).toEqual([]);
 });
 
 test("a record from a copy of the platform older than the compiled root serves no graph", async () => {
   // The record is read through a registry-global symbol key, so a boot run by an
   // older copy of `@aponiajs/platform-elysia` in this process is reachable from
-  // here — and that copy's record has no `rootModule` at all. The handler build
-  // runs inside the plugin's `onStart`, which Elysia neither awaits nor catches,
-  // so a record with no compiled root has to read as a boot this server serves
-  // no graph for rather than fail a boot that is otherwise fine.
+  // here — and that copy's record has no `rootModule` at all. The handler record
+  // is built on the path a request arrives on, where a throw is that request's
+  // failure, so a record with no compiled root has to read as a boot this surface
+  // serves no graph for rather than fail the surface that reads it.
   const application = new Elysia();
   Object.defineProperty(application, Symbol.for("aponia.application.diagnostics"), {
     value: {
@@ -220,23 +214,17 @@ test("a record from a copy of the platform older than the compiled root serves n
     enumerable: false,
   });
 
-  const server = serveLoopback(application);
-
-  try {
-    // The server is up — the other endpoint still answers — and the graph
-    // endpoint is simply not one this boot has anything to say for.
-    expect((await fetch(`${server.url}/__devtools/meta`)).status).toBe(200);
-    expect((await fetch(`${server.url}/__devtools/graph`)).status).toBe(404);
-  } finally {
-    server.stop();
-  }
+  // The surface answers — the other endpoint states its payload — and the
+  // graph endpoint is simply not one this boot has anything to say for.
+  expect((await ask(application, "/meta")).status).toBe(200);
+  expect((await ask(application, "/graph")).status).toBe(404);
 });
 
 test("a record whose compiled root this release cannot project serves no graph", async () => {
   // A record a copy of the platform newer than this one wrote can carry a
   // compiled root this release cannot lower. Compiling it would throw out of the
-  // handler build and take the boot's `listen()` with it, so the build answers
-  // "no graph" for the record instead.
+  // handler build, which runs on the request path where a throw is that
+  // request's failure, so the build answers "no graph" for the record instead.
   const application = new Elysia();
   Object.defineProperty(application, Symbol.for("aponia.application.diagnostics"), {
     value: {
@@ -248,12 +236,6 @@ test("a record whose compiled root this release cannot project serves no graph",
     enumerable: false,
   });
 
-  const server = serveLoopback(application);
-
-  try {
-    expect((await fetch(`${server.url}/__devtools/meta`)).status).toBe(200);
-    expect((await fetch(`${server.url}/__devtools/graph`)).status).toBe(404);
-  } finally {
-    server.stop();
-  }
+  expect((await ask(application, "/meta")).status).toBe(200);
+  expect((await ask(application, "/graph")).status).toBe(404);
 });

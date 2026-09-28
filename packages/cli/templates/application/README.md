@@ -33,15 +33,18 @@ main.ts
 
 Open `http://localhost:3000/` after starting the application.
 
-`src/main.ts` mounts `@aponiajs/devtools`, which serves an API on
-`http://127.0.0.1:8000/__devtools` — loopback unless `devtoolsPlugin` is given a
-`host`, and `DEVTOOLS_PORT` moves it — while the application listens: `meta`,
-`graph`, `routes`, `flow`, `logs`, `requests`, and `aot`. The surface is served
-unless `NODE_ENV` is `production`, and `devtoolsPlugin({ enabled })` is the
-application's own decision rather than anything the framework reads to choose its
-own behaviour. The application reads the environment where it declares it to:
-`src/config.ts` declares the `PORT` schema, and the `provideConfiguration(AppConfig)`
-provider in `src/app.module.ts` validates it once at boot.
+`src/main.ts` mounts `@aponiajs/devtools`, which serves an API under
+`/__devtools` on the application's own port — `http://localhost:3000/__devtools`
+for the starter's default: `meta`, `graph`, `routes`, `flow`, `logs`, `requests`,
+and `aot`. The surface is part of the application's route table, so it is
+reachable wherever the application is, and `/requests` records headers and bodies
+with no warning: this is a development surface, and `enabled` is how an
+application keeps it out of production. It is served unless `NODE_ENV` is
+`production`, and `devtoolsPlugin({ enabled })` is the application's own decision
+rather than anything the framework reads to choose its own behaviour. The
+application reads the environment where it declares it to: `src/config.ts`
+declares the `PORT` schema, and the `provideConfiguration(AppConfig)` provider in
+`src/app.module.ts` validates it once at boot.
 
 It is mounted through the factory's `plugins` option instead of `AppModule`'s
 `imports`, and that placement is the point: `aponia build` lowers a module only

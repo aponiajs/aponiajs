@@ -6,26 +6,26 @@ Read the [repository guide](../AGENTS.md) first.
 
 The published documentation set:
 
-| File                        | Covers                                                                                        |
-| --------------------------- | --------------------------------------------------------------------------------------------- |
-| `architecture-and-style.md` | Application and framework layout, naming, and expected patterns                               |
-| `dependency-injection.md`   | Tokens, visibility, providers, and the error codes on failure                                 |
-| `websockets.md`             | Nest-style gateways over native Elysia WebSockets                                             |
-| `native-plugins.md`         | Mounting native Elysia plugins and typing what they add                                       |
-| `files.md`                  | Uploaded files, named downloads, and serving static assets                                    |
-| `configuration.md`          | Declaring, validating once at boot, injecting, and reading back a configuration               |
-| `lifecycle.md`              | The five moments a provider can hook, and what the framework does when one fails              |
-| `eden-treaty.md`            | Native-style application types consumed through Eden Treaty                                   |
-| `elysia-compatibility.md`   | Supported Elysia versions and how a mismatch fails                                            |
-| `introspection.md`          | Projecting a compiled application into frozen, serializable data                              |
-| `enhancers.md`              | Guards, interceptors, and exception filters on a route's hooks                                |
-| `logging.md`                | Logger configuration and the bootstrap log lines                                              |
-| `testing.md`                | Testing applications through `application.handle`                                             |
-| `cli.md`                    | The generator catalog, aliases, and options                                                   |
-| `devtools.md`               | The opt-in devtools API, loopback by default, and what each endpoint does and does not report |
-| `packages.md`               | The published package catalog                                                                 |
-| `releasing.md`              | Channels, the version gate, and the publish flow                                              |
-| `learn/`                    | The ordered chapters that teach the same material in sequence                                 |
+| File                        | Covers                                                                                                                 |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `architecture-and-style.md` | Application and framework layout, naming, and expected patterns                                                        |
+| `dependency-injection.md`   | Tokens, visibility, providers, and the error codes on failure                                                          |
+| `websockets.md`             | Nest-style gateways over native Elysia WebSockets                                                                      |
+| `native-plugins.md`         | Mounting native Elysia plugins and typing what they add                                                                |
+| `files.md`                  | Uploaded files, named downloads, and serving static assets                                                             |
+| `configuration.md`          | Declaring, validating once at boot, injecting, and reading back a configuration                                        |
+| `lifecycle.md`              | The five moments a provider can hook, and what the framework does when one fails                                       |
+| `eden-treaty.md`            | Native-style application types consumed through Eden Treaty                                                            |
+| `elysia-compatibility.md`   | Supported Elysia versions and how a mismatch fails                                                                     |
+| `introspection.md`          | Projecting a compiled application into frozen, serializable data                                                       |
+| `enhancers.md`              | Guards, interceptors, and exception filters on a route's hooks                                                         |
+| `logging.md`                | Logger configuration and the bootstrap log lines                                                                       |
+| `testing.md`                | Testing applications through `application.handle`                                                                      |
+| `cli.md`                    | The generator catalog, aliases, and options                                                                            |
+| `devtools.md`               | The opt-in devtools API, mounted on the application's own route table, and what each endpoint does and does not report |
+| `packages.md`               | The published package catalog                                                                                          |
+| `releasing.md`              | Channels, the version gate, and the publish flow                                                                       |
+| `learn/`                    | The ordered chapters that teach the same material in sequence                                                          |
 
 ## The learning path
 

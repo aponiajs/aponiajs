@@ -16,192 +16,19 @@ import { buildLogsPayload, devtoolsLogsPath } from "../endpoints/logs.ts";
 import { buildMetaPayload, devtoolsMetaPath } from "../endpoints/meta.ts";
 import { buildRequestsPayload, devtoolsRequestsPath } from "../endpoints/requests.ts";
 import { buildRoutesPayload, devtoolsRoutesPath } from "../endpoints/routes.ts";
-import { oneLine } from "../logging/one-line.ts";
-import { reportFailure } from "../logging/report-failure.ts";
 import type { TappedLogStream } from "../logging/log-tap.ts";
 import type { RequestBuffer } from "../requests/request-buffer.types.ts";
-import type {
-  DevtoolsHandlers,
-  DevtoolsServer,
-  DevtoolsServerOptions,
-} from "./devtools-server.types.ts";
-import { routeRequest } from "./request-router.ts";
-
-/** The address a registration that names none binds. */
-const defaultDevtoolsHostname = "127.0.0.1";
+import type { DevtoolsHandlers } from "./devtools-server.types.ts";
 
 /**
- * The loopback spellings this package stays silent for: the `localhost` name
- * with an optional root dot, the IPv6 loopback, and any address in
- * `127.0.0.0/8` written as four dotted octets.
+ * The endpoints one application's surface serves.
  *
- * The check is syntactic and resolves nothing, and that direction is the safe
- * one: any name the pattern cannot be sure of is reported rather than assumed.
- * `127.1`, `::ffff:127.0.0.1`, and `0:0:0:0:0:0:0:1` are loopback to a resolver
- * and to the kernel, and all three warn here. `localhost` is the one name
- * accepted without being resolved, and the price is stated where the option is
- * documented: a hosts file that mapped it to one of this machine's public
- * addresses would bind it in silence.
- *
- * The octets after `127` are not range-checked because an address outside an
- * interface's range cannot bind at all — there is nothing to expose — while a
- * spelling that is rejected for the wrong reason would go silent.
+ * There is no server in this module and no socket behind the package: the
+ * surface is a route the plugin mounts on the application, and `routeRequest`
+ * decides what that route answers. What is left here is what has to be decided
+ * before a socket could exist — the record the request is dispatched against —
+ * and the one fact that is read from the tree rather than from a boot.
  */
-const loopbackHostPattern = /^(?:localhost\.?|::1|127(?:\.\d{1,3}){3})$/i;
-
-/**
- * Whether a host names the loopback interface, so a bind to it exposes nothing.
- *
- * Exported for this package's own tests, which pin the boundary the socket cases
- * cannot reach: three of the near-miss spellings warn while binding
- * successfully, so a socket case would report what they resolved to rather than
- * what the check decided. Not on the barrel — an application never calls this.
- *
- * @internal
- */
-export function isLoopbackHost(host: string): boolean {
-  return loopbackHostPattern.test(host);
-}
-
-/** The port an application that names none binds. */
-const defaultDevtoolsPort = 8000;
-
-/**
- * Starts the devtools server for one boot.
- *
- * Synchronous on purpose. Elysia invokes a plugin's `onStart` without awaiting
- * it, so nothing here may be a promise that has to settle before the first
- * request is served — including the read that resolves the installed Elysia.
- *
- * The bind address is the caller's, and the default is loopback because a
- * debugging aid should not be reachable by default. A bind outside loopback is
- * permitted and never silent: one row names the address it bound and
- * `/requests`, because that endpoint records request headers and bodies by
- * default, so the reader is told what the bind exposed rather than left to
- * infer it.
- *
- * A refused bind is this package's problem and never the application's: the
- * reason is reported under `Devtools`, with the address it could not take, and
- * `undefined` is returned. That is the caller's signal that there is nothing to
- * report as listening; the boot itself continues untouched. The report is
- * guarded, because a logger that refuses it would otherwise cost the caller
- * both the row and that `undefined` — see `logging/report-failure.ts`.
- *
- * The widening notice below the bind is the other side of that: it reports a
- * state the socket really took, it is not guarded, and a logger that throws on
- * it fails the boot — with the socket that exists released on the way out, so a
- * failure the caller reads costs a port rather than holding one. See
- * `reportWidenedBind`.
- */
-export function startDevtoolsServer(options: DevtoolsServerOptions): DevtoolsServer | undefined {
-  const port = options.port ?? defaultDevtoolsPort;
-  const host = options.host ?? defaultDevtoolsHostname;
-  const handlers = createHandlers(
-    options.application,
-    options.logs,
-    options.requests,
-    options.logger,
-  );
-  const server = bindDevtoolsServer(host, port, handlers, options.logger);
-
-  if (server === undefined) {
-    // The refusal is already reported: there is no socket to widen and nothing
-    // to answer as listening.
-    return undefined;
-  }
-
-  reportWidenedBind(options.logger, host, server); // may throw the logger's own failure
-
-  return server;
-}
-
-/**
- * Binds the devtools socket for one boot, or reports the refusal and answers
- * `undefined`.
- *
- * The `try` here covers the bind alone, and that boundary is load-bearing: the
- * one failure this `catch` was written for is a bind that never happened, and
- * the address it names is the address the socket never took. A `catch` around
- * the widening notice as well would report a port this server is holding as one
- * it could not have — a misreport in the very row a reader trusts — and would
- * answer `undefined` for a live socket, which no caller can ever stop.
- *
- * Sealed off in its own function rather than kept on the widening path because
- * that is how the boundary is guaranteed: nothing below the bind can reach this
- * handler, whatever the notice throws. See `startDevtoolsServer`.
- */
-function bindDevtoolsServer(
-  host: string,
-  port: number,
-  handlers: DevtoolsHandlers,
-  logger: LoggerService,
-): DevtoolsServer | undefined {
-  try {
-    const server = Bun.serve({
-      hostname: host,
-      port,
-      fetch: (request) => routeRequest(request, handlers),
-    });
-
-    return Object.freeze({ url: server.url.origin, stop: () => void server.stop(true) });
-  } catch (error) {
-    // An IPv6 host is bracketed the way a URL needs it here: the socket never
-    // started, so the address is the one the registration asked for.
-    const refusedAddress = host.includes(":")
-      ? `http://[${host}]:${port}`
-      : `http://${host}:${port}`;
-    // Built once, because it is stated on one of two channels: the logger this
-    // start was handed, or, when that logger refuses, `stderr`.
-    const refusal = `Aponia devtools could not listen on ${refusedAddress} (${oneLine(error)}); the application continues without it.`;
-
-    reportFailure(logger, refusal);
-
-    return undefined;
-  }
-}
-
-/**
- * Reports a bind that left loopback, and releases the socket when the report
- * itself fails.
- *
- * Reported after the socket exists, so the row names the address that was taken
- * rather than one that was asked for — the port is the socket's, not the
- * registration's. A loopback host exposes nothing and reports nothing, and a bind
- * that never happened exposes nothing and states its own refusal instead, so a
- * failed widening is one row and never two.
- *
- * The call is unguarded, by the rule this package follows: a call site that
- * reports a failure guards, and a call site that reports progress does not. This
- * one reports a state the socket really took, so a logger that throws is a
- * throw, and the boot fails rather than continuing with a widened surface nobody
- * was told about. What the throw may not do is hold the address: the socket
- * exists and its handle is not the caller's yet, so nothing else can ever stop
- * it, and it would hold the port for the life of a process that refused to
- * start. It is released here, before the failure is rethrown unchanged — the
- * guard around the `stop` is what keeps it unchanged, because a `stop` that
- * refuses may not become the failure the caller reads.
- */
-function reportWidenedBind(logger: LoggerService, host: string, server: DevtoolsServer): void {
-  if (isLoopbackHost(host)) {
-    return;
-  }
-
-  try {
-    logger.warn(
-      `Aponia devtools is bound to ${server.url} because the registration set host, so /requests — ` +
-        "which records request headers and bodies by default — is reachable from outside this machine.",
-    );
-  } catch (failure) {
-    try {
-      server.stop();
-    } catch {
-      // The logger's failure is the one the caller has to read, so a `stop` that
-      // refuses may not replace it: an unknown failure is rethrown unchanged.
-    }
-
-    throw failure;
-  }
-}
 
 /**
  * The Elysia release installed in the tree that asks, or `null` when the tree
@@ -264,8 +91,8 @@ function findInstalledElysiaManifest(baseDirectory: string): string | undefined 
 }
 
 /**
- * The endpoints one server serves, built once — with one payload the running
- * application answers rather than the boot.
+ * The endpoints one application answers, built once, with the payloads that
+ * describe the running application read at request time rather than the boot.
  *
  * `/meta` and `/graph` describe a boot, and a boot does not change once it has
  * started, so their payloads are built here and answered unchanged. `/routes`,
@@ -275,35 +102,50 @@ function findInstalledElysiaManifest(baseDirectory: string): string | undefined 
  * while it serves, so those handlers read their source when they are asked
  * instead of freezing a moment no client ever observed. The table is also where
  * a route's own entry lives — its contributed hooks and the schema slots Elysia
- * holds — which is the half of a route's stages no boot record carries. All of
- * them are registered whatever the record holds, because the table is this
- * package's answer on its own; a route no record describes is reported with the
- * facts a record would have supplied left empty.
+ * holds — which is the half of a route's stages no boot record carries.
  *
- * `/logs` and `/requests` are the endpoints whose source is passed in rather than
- * read off the application: each is registered only for a server that was handed
- * the buffer it states, and each reads its cursor from the request, because two
- * pollers read one buffer from two different positions.
+ * `application` is `undefined` for a request that reached a registration with no
+ * boot behind it — a plugin mounted on a bare `Elysia` by hand. Three endpoints
+ * need it, and an endpoint whose fact is missing is not registered rather than
+ * answered with a guess, so a path this record does not own is the dispatcher's
+ * `404`, exactly as a record with no compiled root serves no `/graph`.
+ * `/meta` still answers, with this release's own stamp and `null` for every
+ * artifact no boot adopted, because that is what it says for a record it does
+ * not hold.
+ *
+ * `/logs` and `/requests` are the endpoints whose source is passed in rather
+ * than read off the application: each is registered only for a surface that was
+ * handed the buffer it states, and each reads its cursor from the request,
+ * because two pollers read one buffer from two different positions. `/logs`
+ * comes from the registration and answers without a boot; `/requests` comes from
+ * the record the boot opened, so an application no boot produced serves none —
+ * there is no record, and an empty window would claim there was one.
  *
  * `/aot` publishes the facts its record states even when that is all it can
  * publish, so the path is registered only for a record that carries them: a
  * record a copy of the platform this release does not own wrote is one this
- * server has nothing to say about, and the dispatcher answers `404` for it. The
+ * surface has nothing to say about, and the dispatcher answers `404` for it. The
  * analyzer that supplies its other half is reached from the request instead, so
  * nothing here loads it.
  *
  * Every builder it calls is total — a record this release cannot project is one
- * of the cases they answer rather than throw for — because this runs before the
- * socket is bound, where a failure would be reported as a refused listen, a
- * cause this package never observed.
+ * of the cases they answer rather than throw for — because this runs inside a
+ * request handler, where a throw is that request's failure.
+ *
+ * @internal
+ *
+ * The mounted route and this package's own tests are the only callers, and it
+ * stays off the barrel: `routeRequest` is the dispatcher an application is told
+ * about, and this is the record it is dispatched against.
  */
-function createHandlers(
-  application: Elysia,
+export function createHandlers(
+  application: Elysia | undefined,
   logs: TappedLogStream | undefined,
   requests: RequestBuffer | undefined,
   logger: LoggerService,
 ): DevtoolsHandlers {
-  const diagnostics = readApplicationDiagnostics(application);
+  const diagnostics =
+    application === undefined ? undefined : readApplicationDiagnostics(application);
   const meta = buildMetaPayload({
     diagnostics,
     elysia: resolveElysiaVersion(import.meta.dir),
@@ -315,8 +157,8 @@ function createHandlers(
   return Object.freeze({
     [devtoolsMetaPath]: () => jsonResponse(meta),
     // A boot the record holds no compiled root for serves no `/graph` at all:
-    // the handler record states the paths this server serves, and a path it does
-    // not own is the dispatcher's `404`.
+    // the handler record states the paths this surface serves, and a path it
+    // does not own is the dispatcher's `404`.
     ...(graph === undefined ? {} : { [devtoolsGraphPath]: () => jsonResponse(graph) }),
     // `/aot` is the one endpoint here whose payload is built per request even
     // though half of it describes the boot: the other half is a project's
@@ -328,11 +170,18 @@ function createHandlers(
           [devtoolsAotPath]: async () =>
             jsonResponse(buildAotPayload(aot, await loadAotAnalysis(process.cwd(), logger))),
         }),
-    [devtoolsRoutesPath]: () => jsonResponse(buildRoutesPayload(application, diagnostics)),
-    [devtoolsFlowPath]: () => jsonResponse(buildFlowPayload(application, diagnostics)),
-    // A server with no stream serves no `/logs`, the way a boot the record holds
+    // The two endpoints whose fact is the mounted application. A surface that
+    // reached no application serves neither: the table they report belongs to an
+    // application, and an answer invented without one would describe nothing.
+    ...(application === undefined
+      ? {}
+      : {
+          [devtoolsRoutesPath]: () => jsonResponse(buildRoutesPayload(application, diagnostics)),
+          [devtoolsFlowPath]: () => jsonResponse(buildFlowPayload(application, diagnostics)),
+        }),
+    // A surface with no stream serves no `/logs`, the way a boot the record holds
     // no compiled root for serves no `/graph`: the handler record states the
-    // paths this server serves, and a path it does not own is the dispatcher's
+    // paths this surface serves, and a path it does not own is the dispatcher's
     // `404`.
     ...(logs === undefined
       ? {}

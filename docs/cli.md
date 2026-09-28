@@ -291,8 +291,8 @@ line is written through the logger the application also holds.
 
 The starter mounts [devtools](./devtools.md) itself, through the factory's
 `plugins` option — `devtoolsPlugin({ enabled, logger: appLogger })`, the same
-logger — and it is served unless `NODE_ENV` is `production`, on
-`127.0.0.1:8000` unless `DEVTOOLS_PORT` names another port. The placement is the
+logger — and it is served unless `NODE_ENV` is `production`, from the
+application's own address under `/__devtools`. The placement is the
 point:
 `DevtoolsModule.register(...)` in the root module's `imports` is a call
 expression, and `aponia build` lowers a module only when every `imports` entry

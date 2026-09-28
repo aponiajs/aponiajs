@@ -38,7 +38,7 @@ import {
   registerElysiaWebSocketGateways,
 } from "../websockets/websocket-gateway.ts";
 import { aponiaVersion } from "../version.ts";
-import { attachApplicationContainer } from "./application-container.ts";
+import { attachApplicationContainer, publishApplicationOnStore } from "./application-container.ts";
 import {
   attachApplicationDiagnostics,
   createApplicationDiagnostics,
@@ -360,6 +360,11 @@ export async function bootstrapAponiaApplication(
     }),
   );
   attachApplicationContainer(nativeApplication, container);
+  // The application published on its own store, beside the two instance seams
+  // above and for the caller that holds neither: a plugin answering a request is
+  // handed Elysia's `store` and never the instance, and `onStart` does not run
+  // for an application that never listens.
+  publishApplicationOnStore(nativeApplication);
 
   await nativeApplication.modules;
   await registerElysiaWebSocketGateways(nativeApplication, container, webSocketGateways);

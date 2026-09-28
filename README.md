@@ -524,14 +524,14 @@ its controller and service. See the
 
 ## Packages
 
-| Package                                                                                | Purpose                                                |
-| -------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| [`@aponiajs/common`](https://www.npmjs.com/package/@aponiajs/common)                   | Decorators, contracts, tokens, and logging             |
-| [`@aponiajs/core`](https://www.npmjs.com/package/@aponiajs/core)                       | Module graph and dependency injection                  |
-| [`@aponiajs/platform-elysia`](https://www.npmjs.com/package/@aponiajs/platform-elysia) | Elysia adapter and application lifecycle               |
-| [`@aponiajs/cli`](https://www.npmjs.com/package/@aponiajs/cli)                         | Project and component generators                       |
-| [`create-aponia`](https://www.npmjs.com/package/create-aponia)                         | `bun create` entrypoint                                |
-| [`@aponiajs/devtools`](https://www.npmjs.com/package/@aponiajs/devtools)               | Opt-in devtools for a running app, loopback by default |
+| Package                                                                                | Purpose                                          |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| [`@aponiajs/common`](https://www.npmjs.com/package/@aponiajs/common)                   | Decorators, contracts, tokens, and logging       |
+| [`@aponiajs/core`](https://www.npmjs.com/package/@aponiajs/core)                       | Module graph and dependency injection            |
+| [`@aponiajs/platform-elysia`](https://www.npmjs.com/package/@aponiajs/platform-elysia) | Elysia adapter and application lifecycle         |
+| [`@aponiajs/cli`](https://www.npmjs.com/package/@aponiajs/cli)                         | Project and component generators                 |
+| [`create-aponia`](https://www.npmjs.com/package/create-aponia)                         | `bun create` entrypoint                          |
+| [`@aponiajs/devtools`](https://www.npmjs.com/package/@aponiajs/devtools)               | Opt-in devtools served by the running app itself |
 
 All public packages share one version, and the channel a release goes to is
 derived from that version: a prerelease publishes under the tag its identifier
@@ -559,10 +559,10 @@ per-route Elysia lifecycle hooks, and an unhandled failure answers an RFC 9457
 mounts from a compiled plan. A controller registered through its own
 `registerRoutes` callback, and a definition mounted through its own
 `buildPlugin`, run no enhancer and answer Elysia's native `500` instead.
-`@aponiajs/devtools` is an opt-in leaf package that serves an HTTP API, on
-loopback unless its registration names a `host`, over what a boot compiled and
-what the application answered; it mounts no route
-on the application and reports rather than changes.
+`@aponiajs/devtools` is an opt-in leaf package that mounts an HTTP API on the
+application's own route table under `/__devtools`, on the address the application
+already answers, over what a boot compiled and
+what the application answered; it reports rather than changes.
 
 Not implemented yet: request and transient scopes,
 platform-neutral HTTP packages, full Elysia phase conformance, serialization

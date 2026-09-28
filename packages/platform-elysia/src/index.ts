@@ -1,6 +1,7 @@
 export { AponiaElysiaApplication } from "./application/aponia-elysia-application.ts";
 export { AponiaFactory } from "./application/aponia-factory.ts";
 export { readApplicationDiagnostics } from "./application/application-diagnostics.ts";
+export { readApplicationFromStore } from "./application/application-container.ts";
 export type {
   AponiaApplicationDiagnostics,
   AponiaArtifactProvenance,

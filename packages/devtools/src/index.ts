@@ -6,12 +6,13 @@
  * has two spellings that mount the same plugin: `DevtoolsModule.register({
  * enabled })` in a module's `imports`, and `devtoolsPlugin({ enabled })` in
  * `AponiaFactory.create`'s `plugins` option. A disabled registration mounts
- * nothing at all, while an enabled one serves, on loopback unless the
- * registration names another host, the API the rest of this barrel describes.
+ * nothing at all, while an enabled one serves, on the address the application
+ * itself serves and under `/__devtools`, the API the rest of this barrel
+ * describes.
  */
 export { DevtoolsModule, devtoolsPlugin } from "./module/devtools-module.ts";
 export type { DevtoolsCaptureOptions, DevtoolsOptions } from "./module/devtools-module.types.ts";
-export { resolveElysiaVersion, startDevtoolsServer } from "./server/devtools-server.ts";
+export { resolveElysiaVersion } from "./server/devtools-server.ts";
 export { devtoolsPathPrefix, routeRequest } from "./server/request-router.ts";
 export { devtoolsContractVersion } from "./endpoints/meta.ts";
 export { createLogBuffer, defaultLogBufferCapacity } from "./logging/log-buffer.ts";
@@ -19,12 +20,7 @@ export { tapLogBuffer } from "./logging/log-tap.ts";
 export type { TappedLogStream } from "./logging/log-tap.ts";
 export { createRequestBuffer, defaultRequestBufferCapacity } from "./requests/request-buffer.ts";
 export { aponiaVersion } from "./version.ts";
-export type {
-  DevtoolsHandlers,
-  DevtoolsRequestHandler,
-  DevtoolsServer,
-  DevtoolsServerOptions,
-} from "./server/devtools-server.types.ts";
+export type { DevtoolsHandlers, DevtoolsRequestHandler } from "./server/devtools-server.types.ts";
 export type {
   AponiaAotController,
   AponiaAotGraph,

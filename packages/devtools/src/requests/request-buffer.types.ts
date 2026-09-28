@@ -9,11 +9,9 @@ import type { RingBuffer, RingBufferRead } from "../buffer/ring-buffer.types.ts"
  * are `null` — and the second when the answer's completion runs, with the same
  * `id`. A consumer groups by `id` and takes the last entry each request has in
  * the window it reads, which is the answer wherever the answer is still there to
- * read. Two configurations are where it is not, and in neither is the entry at
+ * read. One configuration is where it is not, and in it the entry is not at
  * fault: a consumer lagging more than one window behind never reads an answer the
- * bounded buffer has already evicted, and an answer written after a second
- * `listen()` is written to the record the socket that is gone was serving, which a
- * poll of the new one never reads. The pending entry is not redundant:
+ * bounded buffer has already evicted. The pending entry is not redundant:
  * a request whose answer never reaches this package — a plugin that answered
  * from its own `onRequest`, so that no later phase ran at all — would otherwise
  * leave no trace, and would be indistinguishable from a request that never

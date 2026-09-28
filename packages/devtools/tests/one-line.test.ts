@@ -1,8 +1,8 @@
 import { expect, test } from "bun:test";
-// The one-line rendering both of this package's guarded reports build their
-// sentences with, imported from its own module because it is internal and
-// deliberately kept off the barrel — the same arrangement `isLoopbackHost` has in
-// `server.test.ts` and `isRecordableLogger` in `logs.test.ts`.
+// The one-line rendering this package's guarded report builds its sentence
+// with, imported from its own module because it is internal and
+// deliberately kept off the barrel — the same arrangement `isRecordableLogger`
+// has in `logs.test.ts`.
 import { oneLine } from "../src/logging/one-line.ts";
 // The rendering the two recorded surfaces state a thrown value through, imported
 // from the package's barrel because the last case below is the one place in this

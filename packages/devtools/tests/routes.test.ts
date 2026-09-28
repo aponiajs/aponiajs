@@ -23,15 +23,25 @@ import {
 import { Elysia } from "elysia";
 import {
   aponiaVersion,
-  startDevtoolsServer,
+  devtoolsPathPrefix,
+  routeRequest,
   type AponiaRoutesPayload,
-  type DevtoolsServer,
 } from "../src/index.ts";
+// The handler record the mounted route answers through, from the module that owns
+// it rather than the barrel: the surface is a route an application mounts, and
+// this is the pair that route calls.
+import { createHandlers } from "../src/server/devtools-server.ts";
 
 /**
- * The mounted-route endpoint. The contract is HTTP, so every case fetches a
- * socket that bound port `0` and reads the address it took back out of it, and
- * the payload assertions are the wire shape rather than the server's internals.
+ * The mounted-route endpoint. Every case asks the pair the mounted route calls —
+ * `createHandlers` and `routeRequest` — in process, and the payload assertions
+ * are the wire shape rather than the builder's internals.
+ *
+ * They are called directly rather than through `application.handle` because
+ * several fixtures here are bare `Elysia` instances, foreign records, or objects
+ * the case assembles by hand, which could not carry a mount. The mount itself is
+ * pinned over `application.handle` in `devtools-module.test.ts`, and the
+ * dispatcher's `404` and `405` in `server.test.ts`.
  *
  * What these cases pin beyond the field names is where each answer comes from.
  * The routes are the application's own table, read when the request arrives —
@@ -50,19 +60,16 @@ const silentLogger: LoggerService = {
   warn: () => {},
 };
 
-/** Binds the loopback socket on port `0` and reads the address it took. */
-function serveLoopback(application: Elysia): DevtoolsServer {
-  const server = startDevtoolsServer({ application, port: 0, logger: silentLogger });
-
-  if (server === undefined) {
-    throw new Error("the devtools server refused to bind the loopback socket");
-  }
-
-  return server;
+/** One devtools path answered for one application. */
+async function ask(application: Elysia, path: string): Promise<Response> {
+  return await routeRequest(
+    new Request(`http://localhost${devtoolsPathPrefix}${path}`),
+    createHandlers(application, undefined, undefined, silentLogger),
+  );
 }
 
-async function readRoutes(server: DevtoolsServer): Promise<AponiaRoutesPayload> {
-  const response = await fetch(`${server.url}/__devtools/routes`);
+async function readRoutes(application: Elysia): Promise<AponiaRoutesPayload> {
+  const response = await ask(application, "/routes");
 
   expect(response.status).toBe(200);
 
@@ -188,51 +195,45 @@ const pluginRoutesModule: ModuleDefinition = defineModule({
 
 test("routes reports every mounted route with the binding that serves it", async () => {
   const application = await AponiaFactory.createNative(RoutesAppModule, { logger: false });
-  const server = serveLoopback(application);
+  const response = await ask(application, "/routes");
+  expect(response.status).toBe(200);
+  expect(response.headers.get("content-type")).toContain("application/json");
+  expect(response.headers.get("cache-control")).toBe("no-store");
 
-  try {
-    const response = await fetch(`${server.url}/__devtools/routes`);
-    expect(response.status).toBe(200);
-    expect(response.headers.get("content-type")).toContain("application/json");
-    expect(response.headers.get("cache-control")).toBe("no-store");
+  const payload = await readRoutes(application);
 
-    const payload = await readRoutes(server);
+  expect(payload.routes.map((route) => route.path)).toContain("/");
+  expect(
+    payload.routes.every(({ source }) => source === "generated" || source === "compiled"),
+  ).toBe(true);
 
-    expect(payload.routes.map((route) => route.path)).toContain("/");
-    expect(
-      payload.routes.every(({ source }) => source === "generated" || source === "compiled"),
-    ).toBe(true);
-
-    // One assertion for the whole wire shape, so a field added or renamed here
-    // fails rather than passing under a per-field read. No artifact was
-    // supplied, so every route is the platform's own compilation, and the second
-    // route's bound field is what a plan adds to a route the table can describe
-    // only as a method and a path.
-    expect(payload).toEqual({
-      routes: [
-        {
-          method: "GET",
-          path: "/",
-          module: "RoutesAppModule",
-          controller: "RoutesController",
-          handler: "read",
-          source: "compiled",
-          parameters: [],
-        },
-        {
-          method: "GET",
-          path: "/messages/:id",
-          module: "RoutesAppModule",
-          controller: "RoutesController",
-          handler: "readMessage",
-          source: "compiled",
-          parameters: [{ index: 0, kind: "params", property: "id" }],
-        },
-      ],
-    });
-  } finally {
-    server.stop();
-  }
+  // One assertion for the whole wire shape, so a field added or renamed here
+  // fails rather than passing under a per-field read. No artifact was
+  // supplied, so every route is the platform's own compilation, and the second
+  // route's bound field is what a plan adds to a route the table can describe
+  // only as a method and a path.
+  expect(payload).toEqual({
+    routes: [
+      {
+        method: "GET",
+        path: "/",
+        module: "RoutesAppModule",
+        controller: "RoutesController",
+        handler: "read",
+        source: "compiled",
+        parameters: [],
+      },
+      {
+        method: "GET",
+        path: "/messages/:id",
+        module: "RoutesAppModule",
+        controller: "RoutesController",
+        handler: "readMessage",
+        source: "compiled",
+        parameters: [{ index: 0, kind: "params", property: "id" }],
+      },
+    ],
+  });
 });
 
 test("routes reports both bindings from the one boot that mounted them", async () => {
@@ -240,183 +241,142 @@ test("routes reports both bindings from the one boot that mounted them", async (
     logger: false,
     invokers: generatedBindingArtifact,
   });
-  const server = serveLoopback(application);
+  const payload = await readRoutes(application);
 
-  try {
-    const payload = await readRoutes(server);
+  expect(payload.routes.map((route) => [route.path, route.source])).toEqual([
+    ["/compiled", "compiled"],
+    ["/generated", "generated"],
+  ]);
 
-    expect(payload.routes.map((route) => [route.path, route.source])).toEqual([
-      ["/compiled", "compiled"],
-      ["/generated", "generated"],
-    ]);
-
-    // The report has to agree with the binding that answered, which is why one
-    // case mounts both: the generated route answers with the invoker's string
-    // while its own method answers with another, and the compiled route answers
-    // with its method's.
-    expect(await (await application.handle(new Request("http://localhost/generated"))).text()).toBe(
-      "generated binding",
-    );
-    expect(await (await application.handle(new Request("http://localhost/compiled"))).text()).toBe(
-      "runtime binding",
-    );
-  } finally {
-    server.stop();
-  }
+  // The report has to agree with the binding that answered, which is why one
+  // case mounts both: the generated route answers with the invoker's string
+  // while its own method answers with another, and the compiled route answers
+  // with its method's.
+  expect(await (await application.handle(new Request("http://localhost/generated"))).text()).toBe(
+    "generated binding",
+  );
+  expect(await (await application.handle(new Request("http://localhost/compiled"))).text()).toBe(
+    "runtime binding",
+  );
 });
 
 test("a route a controller's callback mounted is reported without a handler name", async () => {
   const application = await AponiaFactory.createNative(callbackRoutesModule, { logger: false });
-  const server = serveLoopback(application);
+  const payload = await readRoutes(application);
 
-  try {
-    const payload = await readRoutes(server);
-
-    // The mounted table knows the route's method and path and nothing else, and
-    // the property key that built it exists only while the callback runs: the
-    // report states the controller that mounted it and leaves the handler empty
-    // rather than guessing a name.
-    expect(payload.routes).toEqual([
-      {
-        method: "GET",
-        path: "/callback",
-        module: "CallbackRoutesModule",
-        controller: "CallbackRoutesController",
-        handler: "",
-        source: "compiled",
-        parameters: [],
-      },
-    ]);
-    expect(await (await application.handle(new Request("http://localhost/callback"))).text()).toBe(
-      "callback",
-    );
-  } finally {
-    server.stop();
-  }
+  // The mounted table knows the route's method and path and nothing else, and
+  // the property key that built it exists only while the callback runs: the
+  // report states the controller that mounted it and leaves the handler empty
+  // rather than guessing a name.
+  expect(payload.routes).toEqual([
+    {
+      method: "GET",
+      path: "/callback",
+      module: "CallbackRoutesModule",
+      controller: "CallbackRoutesController",
+      handler: "",
+      source: "compiled",
+      parameters: [],
+    },
+  ]);
+  expect(await (await application.handle(new Request("http://localhost/callback"))).text()).toBe(
+    "callback",
+  );
 });
 
 test("a route a controller's plugin mounted is reported the same way", async () => {
   const application = await AponiaFactory.createNative(pluginRoutesModule, { logger: false });
-  const server = serveLoopback(application);
+  const payload = await readRoutes(application);
 
-  try {
-    const payload = await readRoutes(server);
-
-    // The other half of the same platform decision: a low-level descriptor
-    // builds its plugin from an instance, so no plan exists for its routes
-    // either, and both mount paths are recorded by the boot the same way.
-    expect(payload.routes).toEqual([
-      {
-        method: "GET",
-        path: "/plugin",
-        module: "PluginRoutesModule",
-        controller: "PluginRoutesController",
-        handler: "",
-        source: "compiled",
-        parameters: [],
-      },
-    ]);
-    expect(await (await application.handle(new Request("http://localhost/plugin"))).text()).toBe(
-      "plugin",
-    );
-  } finally {
-    server.stop();
-  }
+  // The other half of the same platform decision: a low-level descriptor
+  // builds its plugin from an instance, so no plan exists for its routes
+  // either, and both mount paths are recorded by the boot the same way.
+  expect(payload.routes).toEqual([
+    {
+      method: "GET",
+      path: "/plugin",
+      module: "PluginRoutesModule",
+      controller: "PluginRoutesController",
+      handler: "",
+      source: "compiled",
+      parameters: [],
+    },
+  ]);
+  expect(await (await application.handle(new Request("http://localhost/plugin"))).text()).toBe(
+    "plugin",
+  );
 });
 
-test("routes reads the mounted table when it is asked, not when the server started", async () => {
+test("routes reads the mounted table when it is asked, not when the surface mounted", async () => {
   const application = await AponiaFactory.createNative(RoutesAppModule, { logger: false });
-  const server = serveLoopback(application);
+  const before = await readRoutes(application);
+  expect(before.routes.map((route) => route.path)).not.toContain("/mounted-later");
 
-  try {
-    const before = await readRoutes(server);
-    expect(before.routes.map((route) => route.path)).not.toContain("/mounted-later");
+  // A route mounted on the native application after the boot — the escape
+  // hatch an application reaches for before it listens — is a route the
+  // application answers, and a record built once would report a table the
+  // application no longer holds.
+  application.get("/mounted-later", () => "later");
 
-    // A route mounted on the native application after the boot — the escape
-    // hatch an application reaches for before it listens — is a route the
-    // application answers, and a devtools server that had frozen its report
-    // would describe a server that no longer exists.
-    application.get("/mounted-later", () => "later");
-
-    const after = await readRoutes(server);
-    expect(after.routes.filter((route) => route.path === "/mounted-later")).toEqual([
-      {
-        method: "GET",
-        path: "/mounted-later",
-        module: "",
-        controller: "",
-        handler: "",
-        source: null,
-        parameters: [],
-      },
-    ]);
-    expect(
-      await (await application.handle(new Request("http://localhost/mounted-later"))).text(),
-    ).toBe("later");
-  } finally {
-    server.stop();
-  }
+  const after = await readRoutes(application);
+  expect(after.routes.filter((route) => route.path === "/mounted-later")).toEqual([
+    {
+      method: "GET",
+      path: "/mounted-later",
+      module: "",
+      controller: "",
+      handler: "",
+      source: null,
+      parameters: [],
+    },
+  ]);
+  expect(
+    await (await application.handle(new Request("http://localhost/mounted-later"))).text(),
+  ).toBe("later");
 });
 
 test("a route no boot recorded reports the table's own facts and nothing else", async () => {
   const application = await AponiaFactory.createNative(RoutesGatewayModule, { logger: false });
-  const server = serveLoopback(application);
+  const payload = await readRoutes(application);
+  const sockets = payload.routes.filter(({ method }) => method === "WS");
 
-  try {
-    const payload = await readRoutes(server);
-    const sockets = payload.routes.filter(({ method }) => method === "WS");
-
-    // A gateway's route is mounted by the platform and named by no plan and no
-    // callback, so it is reported with the method the table carries and every
-    // name left empty. Dropping it would make the report disagree with the
-    // server, and naming anything would be a guess.
-    expect(sockets).toEqual([
-      {
-        method: "WS",
-        path: "/routes-socket",
-        module: "",
-        controller: "",
-        handler: "",
-        source: null,
-        parameters: [],
-      },
-    ]);
-  } finally {
-    server.stop();
-  }
+  // A gateway's route is mounted by the platform and named by no plan and no
+  // callback, so it is reported with the method the table carries and every
+  // name left empty. Dropping it would make the report disagree with the
+  // application, and naming anything would be a guess.
+  expect(sockets).toEqual([
+    {
+      method: "WS",
+      path: "/routes-socket",
+      module: "",
+      controller: "",
+      handler: "",
+      source: null,
+      parameters: [],
+    },
+  ]);
 });
 
 test("an application no boot produced still reports the routes it answers", async () => {
-  const bare = serveLoopback(new Elysia());
-
-  try {
-    // The mounted table is the application's own fact, so the endpoint answers
-    // for an application this package knows nothing about — with an empty table
-    // for one that answers no routes.
-    expect(await readRoutes(bare)).toEqual({ routes: [] });
-  } finally {
-    bare.stop();
-  }
+  const bare = new Elysia();
+  // The mounted table is the application's own fact, so the endpoint answers
+  // for an application this package knows nothing about — with an empty table
+  // for one that answers no routes.
+  expect(await readRoutes(bare)).toEqual({ routes: [] });
 
   const native = new Elysia();
   native.get("/", () => "native");
-  const server = serveLoopback(native);
-
-  try {
-    expect((await readRoutes(server)).routes).toEqual([
-      {
-        method: "GET",
-        path: "/",
-        module: "",
-        controller: "",
-        handler: "",
-        source: null,
-        parameters: [],
-      },
-    ]);
-  } finally {
-    server.stop();
-  }
+  expect((await readRoutes(native)).routes).toEqual([
+    {
+      method: "GET",
+      path: "/",
+      module: "",
+      controller: "",
+      handler: "",
+      source: null,
+      parameters: [],
+    },
+  ]);
 });
 
 test("a record from a copy of the platform older than the binding state still names its plans", async () => {
@@ -454,33 +414,27 @@ test("a record from a copy of the platform older than the binding state still na
     enumerable: false,
   });
 
-  const server = serveLoopback(application);
-
-  try {
-    expect((await readRoutes(server)).routes).toEqual([
-      {
-        method: "GET",
-        path: "/",
-        module: "OlderModule",
-        controller: "OlderController",
-        handler: "read",
-        source: null,
-        parameters: [],
-      },
-    ]);
-  } finally {
-    server.stop();
-  }
+  expect((await readRoutes(application)).routes).toEqual([
+    {
+      method: "GET",
+      path: "/",
+      module: "OlderModule",
+      controller: "OlderController",
+      handler: "read",
+      source: null,
+      parameters: [],
+    },
+  ]);
 });
 
 test("a record whose plans are not the shape this release writes still answers", async () => {
   // The other side of the version skew: a foreign copy of the platform may hold
   // the same key with collections this release cannot walk and a plan whose
-  // fields are not the ones it writes. This build runs
-  // inside `onStart`, where a throw takes `listen()` with it — so a plan it
-  // cannot name a handler for, a parameter list it cannot read, and a binding
-  // state it does not write are stated as the empty facts they are rather than
-  // as a reason to fail the request.
+  // fields are not the ones it writes. This build runs on the request path,
+  // where a throw is that request's failure — so a plan it cannot name a handler
+  // for, a parameter list it cannot read, and a binding state it does not write
+  // are stated as the empty facts they are rather than as a reason to fail the
+  // request.
   const application = new Elysia();
   application.get("/", () => "foreign");
   Object.defineProperty(application, Symbol.for("aponia.application.diagnostics"), {
@@ -502,23 +456,17 @@ test("a record whose plans are not the shape this release writes still answers",
     enumerable: false,
   });
 
-  const server = serveLoopback(application);
-
-  try {
-    expect((await readRoutes(server)).routes).toEqual([
-      {
-        method: "GET",
-        path: "/",
-        module: "ForeignModule",
-        controller: "ForeignController",
-        handler: "",
-        source: null,
-        parameters: [],
-      },
-    ]);
-  } finally {
-    server.stop();
-  }
+  expect((await readRoutes(application)).routes).toEqual([
+    {
+      method: "GET",
+      path: "/",
+      module: "ForeignModule",
+      controller: "ForeignController",
+      handler: "",
+      source: null,
+      parameters: [],
+    },
+  ]);
 });
 
 test("a parameter list this release cannot fully read reports what it can read", async () => {
@@ -553,45 +501,33 @@ test("a parameter list this release cannot fully read reports what it can read",
     enumerable: false,
   });
 
-  const server = serveLoopback(application);
-
-  try {
-    expect((await readRoutes(server)).routes).toEqual([
-      {
-        method: "GET",
-        path: "/",
-        module: "ForeignModule",
-        controller: "ForeignController",
-        handler: "read",
-        source: null,
-        // A property that is not a string reads as no property, which is the
-        // shape a binding that names none already has.
-        parameters: [
-          { index: 0, kind: "params", property: "id" },
-          { index: 2, kind: "body", property: undefined },
-        ],
-      },
-    ]);
-  } finally {
-    server.stop();
-  }
+  expect((await readRoutes(application)).routes).toEqual([
+    {
+      method: "GET",
+      path: "/",
+      module: "ForeignModule",
+      controller: "ForeignController",
+      handler: "read",
+      source: null,
+      // A property that is not a string reads as no property, which is the
+      // shape a binding that names none already has.
+      parameters: [
+        { index: 0, kind: "params", property: "id" },
+        { index: 2, kind: "body", property: undefined },
+      ],
+    },
+  ]);
 });
 
 test("a route table this release cannot walk is reported as no routes, not a failure", async () => {
   // The table is Elysia's, not this release's: an installed release that exposed
   // it as something other than the array this release reads — or as an array
   // holding entries this release cannot join — must leave the endpoint
-  // answering. This handler runs inside `Bun.serve`, where a throw is a failed
-  // request, and a devtools server that failed one endpoint would have failed
-  // the debugging aid it exists to be.
+  // answering. This handler runs on the request path, where a throw is a failed
+  // request, and a surface that failed one endpoint would have failed the
+  // debugging aid it exists to be.
   const unwalkable = { routes: {} } as unknown as Elysia;
-  const unwalkableServer = serveLoopback(unwalkable);
-
-  try {
-    expect(await readRoutes(unwalkableServer)).toEqual({ routes: [] });
-  } finally {
-    unwalkableServer.stop();
-  }
+  expect(await readRoutes(unwalkable)).toEqual({ routes: [] });
 
   // The same refusal one level down: an entry whose method or path is not a
   // string cannot be joined to a record entry or reported as a route, and is
@@ -602,23 +538,17 @@ test("a route table this release cannot walk is reported as no routes, not a fai
       { method: "GET", path: "/foreign" },
     ],
   } as unknown as Elysia;
-  const malformedServer = serveLoopback(malformed);
-
-  try {
-    expect((await readRoutes(malformedServer)).routes).toEqual([
-      {
-        method: "GET",
-        path: "/foreign",
-        module: "",
-        controller: "",
-        handler: "",
-        source: null,
-        parameters: [],
-      },
-    ]);
-  } finally {
-    malformedServer.stop();
-  }
+  expect((await readRoutes(malformed)).routes).toEqual([
+    {
+      method: "GET",
+      path: "/foreign",
+      module: "",
+      controller: "",
+      handler: "",
+      source: null,
+      parameters: [],
+    },
+  ]);
 });
 
 test("routes answers in a deterministic order that does not depend on mount order", async () => {
@@ -633,21 +563,15 @@ test("routes answers in a deterministic order that does not depend on mount orde
   application.get("/zeta", () => "zeta");
   application.post("/alpha", () => "alpha");
   application.get("/alpha", () => "alpha");
-  const server = serveLoopback(application);
+  const payload = await readRoutes(application);
 
-  try {
-    const payload = await readRoutes(server);
-
-    expect(payload.routes.map((route) => [route.path, route.method])).toEqual([
-      ["/alpha", "GET"],
-      ["/alpha", "POST"],
-      ["/zeta", "GET"],
-    ]);
-    // Two polls of one server state the same order.
-    expect((await readRoutes(server)).routes.map((route) => route.path)).toEqual(
-      payload.routes.map((route) => route.path),
-    );
-  } finally {
-    server.stop();
-  }
+  expect(payload.routes.map((route) => [route.path, route.method])).toEqual([
+    ["/alpha", "GET"],
+    ["/alpha", "POST"],
+    ["/zeta", "GET"],
+  ]);
+  // Two polls of one application state the same order.
+  expect((await readRoutes(application)).routes.map((route) => route.path)).toEqual(
+    payload.routes.map((route) => route.path),
+  );
 });

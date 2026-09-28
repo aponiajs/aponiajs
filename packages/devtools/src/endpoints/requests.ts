@@ -15,8 +15,9 @@ export const devtoolsRequestsPath = "/requests";
  * for next.
  *
  * The record is the application's own traffic, and a poll of it adds nothing to
- * it: the devtools server is a server of its own, so no request for this payload
- * reaches the application whose requests it reports.
+ * it: the surface is mounted on the application the record describes, and the
+ * plugin's arrival hook leaves every request under the devtools prefix out, so
+ * the request that asks for this payload is not one this payload reports.
  *
  * @internal
  */

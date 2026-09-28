@@ -39,9 +39,9 @@ const analyses = new Map<string, Promise<readonly AponiaAotController[]>>();
  * not written at all: an application no boot produced reads as `undefined`, and
  * one a newer copy booted can answer a graph this union does not name. Both are
  * a boot this endpoint has nothing to say about — the registration gate reads
- * this function's answer, and a `404` is the dispatcher's reply for the path a
- * server does not serve — rather than a payload assembled from fields that were
- * only assumed to be there.
+ * this function's answer, and a `404` is the dispatcher's reply for the path
+ * this surface does not serve — rather than a payload assembled from fields that
+ * were only assumed to be there.
  *
  * The invoker verdict is published as the record states it, and nothing is
  * derived from it. A reason belongs to a refusal, so a record that carries none
@@ -52,7 +52,7 @@ const analyses = new Map<string, Promise<readonly AponiaAotController[]>>();
  * `/aot` degrades along two axes, and they are not the same failure. This
  * function is the first: a record that states none of these facts serves no
  * `/aot` at all, because there is nothing to publish rather than something lost
- * — the path is not one this server owns, and every other endpoint it serves,
+ * — the path is not one this surface owns, and every other endpoint it serves,
  * `/meta` included, answers exactly as it did. The second is the analysis: a
  * record this release can read, a project it cannot, and the endpoint still
  * answers with the boot's half and an empty controller list. An absent fact is
@@ -80,14 +80,14 @@ export function readAotFacts(
 }
 
 /**
- * The payload one request answers with: the facts this server read from the
- * record when it started, beside the verdicts that request settled.
+ * The payload one request answers with: the facts this surface reads from the
+ * record, beside the verdicts that request settled.
  *
  * The build-time verdicts behind a boot: what a build's analysis would decide
  * about this project's controllers, beside what this boot decided about the
  * artifacts a build produces. The two halves have different owners and fail
  * differently, which is why the endpoint answers both in one payload. The boot's
- * facts are already recorded when the socket starts, so they are served whether
+ * facts are already recorded when the surface first answers, so they are served whether
  * or not a project is on disk and whether or not the analysis loaded. The
  * per-handler verdicts come from `@aponiajs/cli`, which is imported on the first
  * request to this endpoint and never at boot: it carries `ts-morph` and a
@@ -125,7 +125,7 @@ export function buildAotPayload(
  *
  * The project root is the process's own working directory, which is the root
  * `aponia build` defaults to, and it is read by the caller when the request
- * arrives rather than when the server starts: an application started from
+ * arrives rather than when the application starts: an application started from
  * anywhere else reports the project it was actually started in.
  *
  * A failed analysis is cached like a successful one. The row it writes is one

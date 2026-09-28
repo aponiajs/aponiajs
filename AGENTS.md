@@ -22,15 +22,15 @@ it satisfies both this guide and `RULES.md`.
 
 Bun workspace. Framework packages live in `packages/`:
 
-| Package                     | Owns                                                           | Runtime dependencies                                                                  |
-| --------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `@aponiajs/common`          | Decorators, contracts, tokens, providers, errors, WebSockets   | `reflect-metadata` only                                                               |
-| `@aponiajs/core`            | Module graph, visibility rules, dependency injection           | `@aponiajs/common`                                                                    |
-| `@aponiajs/platform-elysia` | Elysia adapter, HTTP routes, WebSocket gateways, plugins       | `common`, `core`, peer `elysia`                                                       |
-| `@aponiajs/cli`             | `aponia new` and `aponia generate` schematics                  | `change-case`, `ts-morph`, `yargs-parser`, `fast-glob`, `inflection`, `oxfmt` (exact) |
-| `create-aponia`             | `bun create aponia` entrypoint into the same generator         | `@aponiajs/cli`                                                                       |
-| `@aponiajs/devtools`        | Opt-in devtools for a running application, loopback by default | `cli`, `common`, `platform-elysia`, peer `elysia`                                     |
-| `aponiajs`                  | Reserved public facade, private and unpublished                | —                                                                                     |
+| Package                     | Owns                                                         | Runtime dependencies                                                                  |
+| --------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| `@aponiajs/common`          | Decorators, contracts, tokens, providers, errors, WebSockets | `reflect-metadata` only                                                               |
+| `@aponiajs/core`            | Module graph, visibility rules, dependency injection         | `@aponiajs/common`                                                                    |
+| `@aponiajs/platform-elysia` | Elysia adapter, HTTP routes, WebSocket gateways, plugins     | `common`, `core`, peer `elysia`                                                       |
+| `@aponiajs/cli`             | `aponia new` and `aponia generate` schematics                | `change-case`, `ts-morph`, `yargs-parser`, `fast-glob`, `inflection`, `oxfmt` (exact) |
+| `create-aponia`             | `bun create aponia` entrypoint into the same generator       | `@aponiajs/cli`                                                                       |
+| `@aponiajs/devtools`        | Opt-in devtools served by the running application itself     | `cli`, `common`, `platform-elysia`, peer `elysia`                                     |
+| `aponiajs`                  | Reserved public facade, private and unpublished              | —                                                                                     |
 
 Supporting directories: `examples/` for executable examples, `docs/` for
 published documentation, `scripts/`
@@ -58,19 +58,19 @@ Every package and supporting directory carries its own `AGENTS.md` with the
 invariants that apply there. Read this file first, then the one next to the code
 being changed:
 
-| Guide                                                            | Covers                                                  |
-| ---------------------------------------------------------------- | ------------------------------------------------------- |
-| [`packages/common`](packages/common/AGENTS.md)                   | Decorators, descriptors, tokens, errors, logging        |
-| [`packages/core`](packages/core/AGENTS.md)                       | Module graph, visibility, container                     |
-| [`packages/platform-elysia`](packages/platform-elysia/AGENTS.md) | Bootstrap, route mapping, native plugins, context types |
-| [`packages/cli`](packages/cli/AGENTS.md)                         | Schematics, templates, generated layout                 |
-| [`packages/create-aponia`](packages/create-aponia/AGENTS.md)     | The `bun create aponia` entrypoint                      |
-| [`packages/devtools`](packages/devtools/AGENTS.md)               | The opt-in devtools package, loopback by default        |
-| [`packages/aponiajs`](packages/aponiajs/AGENTS.md)               | The reserved, still-private facade                      |
-| [`scripts`](scripts/AGENTS.md)                                   | Release channel derivation and documentation guards     |
-| [`docs`](docs/AGENTS.md)                                         | The published documentation set and what guards it      |
-| [`docs/learn`](docs/learn/README.md)                             | The ordered chapters that teach the framework           |
-| [`examples`](examples/AGENTS.md)                                 | Executable applications built with the framework        |
+| Guide                                                            | Covers                                                        |
+| ---------------------------------------------------------------- | ------------------------------------------------------------- |
+| [`packages/common`](packages/common/AGENTS.md)                   | Decorators, descriptors, tokens, errors, logging              |
+| [`packages/core`](packages/core/AGENTS.md)                       | Module graph, visibility, container                           |
+| [`packages/platform-elysia`](packages/platform-elysia/AGENTS.md) | Bootstrap, route mapping, native plugins, context types       |
+| [`packages/cli`](packages/cli/AGENTS.md)                         | Schematics, templates, generated layout                       |
+| [`packages/create-aponia`](packages/create-aponia/AGENTS.md)     | The `bun create aponia` entrypoint                            |
+| [`packages/devtools`](packages/devtools/AGENTS.md)               | The opt-in devtools package, served by the application itself |
+| [`packages/aponiajs`](packages/aponiajs/AGENTS.md)               | The reserved, still-private facade                            |
+| [`scripts`](scripts/AGENTS.md)                                   | Release channel derivation and documentation guards           |
+| [`docs`](docs/AGENTS.md)                                         | The published documentation set and what guards it            |
+| [`docs/learn`](docs/learn/README.md)                             | The ordered chapters that teach the framework                 |
+| [`examples`](examples/AGENTS.md)                                 | Executable applications built with the framework              |
 
 `scripts/agent-guides.spec.ts` keeps that list and the symlinks honest, and
 `scripts/learning-path.spec.ts` keeps the numbered chapters in `docs/learn/`
@@ -389,7 +389,8 @@ RFC 9457 application
 errors, provider-registered Elysia WebSocket gateways, and guards, interceptors,
 and exception filters compiled into per-route lifecycle hooks, with the default
 Problem Details mapping last in each route's error path, and an opt-in devtools
-package, loopback by default and reported when widened, that reports what a boot
+package, mounted on the application's own route table under `/__devtools`, that
+reports what a boot
 compiled and every request that reached its record, with the answer it observed
 or the absence of one. Not implemented:
 middleware, non-singleton scopes, testing modules, OpenAPI, authentication,

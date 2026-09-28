@@ -167,18 +167,10 @@ runtime boundary it describes.
   progress does not, because a throw on a progress line aborts work that has not
   yet reported a failure and aborting it is louder than continuing. So no
   `logger.log(...)` line is guarded, and a logger that throws while the boot logs
-  its routes fails the boot. `packages/devtools` guards the two of its own
-  reports that are failures — the row it writes for a port it could not take,
-  which a throw would otherwise turn into a boot that never listened, and the row
-  it writes for a route analysis it could not read, which a throw would otherwise
-  turn into a failed `/aot` request instead of the degraded half that endpoint
-  promises — and leaves the notice it writes for a bind outside loopback
-  unguarded, because that one reports a state the socket really took rather than
-  a failure. That
-  notice's throw is therefore a throw with a defined outcome rather than a
-  refusal report: the boot fails, and the socket the notice described is
-  released before the failure reaches the caller, because the handle was never
-  the caller's and nothing else could ever stop it. The rendering is
+  its routes fails the boot. `packages/devtools` has one report of its own that
+  is a failure — the row it writes for a route analysis it could not read, which
+  a throw would otherwise turn into a failed `/aot` request instead of the
+  degraded half that endpoint promises — and it is guarded. The rendering is
   `@aponiajs/common`'s `renderLogValue`, the same call the devtools log stream
   renders a line through, so the two surfaces cannot disagree about one failure;
   it is total, and a thrown value that refuses to be rendered is recorded as the
@@ -334,7 +326,17 @@ runtime boundary it describes.
   `application-container.ts`'s `attachApplicationContainer`, with the same three
   flags and the same reader discipline, and it is what
   `AponiaElysiaApplication.get` reads a token through — a wrapper no boot
-  produced holds no container and raises `MISSING_PROVIDER`.
+  produced holds no container and raises `MISSING_PROVIDER`. The third seam rides
+  the application's own `store` rather than its instance, because its consumer
+  reaches the application from inside a request: `publishApplicationOnStore`
+  writes the application onto `application.store` under
+  `Symbol.for("aponia.application.native")` with the same three flags, and
+  `readApplicationFromStore` is its reader on the barrel — the one internal
+  export that appears there, because the consumer is `@aponiajs/devtools` rather
+  than an application, and Elysia hands a request context the `store` and not the
+  instance. `tests/application-diagnostics.test.ts` pins the publication, the
+  absence a plain `Elysia` reads, and the early return that leaves a value with no
+  `store` unpublished rather than throwing.
 - `defineElysiaControllerRoutes` is the descriptor path's counterpart to
   `@Controller()` and its route decorators: it compiles `ElysiaRoutePlan` values
   through the same lowering a decorated controller uses, so a declared

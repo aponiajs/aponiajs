@@ -6,9 +6,9 @@ specific to this package.
 ## What this package owns
 
 The opt-in devtools surface for a running application: the module an application
-imports, the plugin that runs at `onStart`, and (from the tasks that build it)
-the HTTP API that reports what the running application actually is — loopback by
-default, and widened only by naming a host. The package is a leaf — nothing in
+imports, the plugin that mounts the surface on the application's own route table,
+and the HTTP API that reports what the running application actually is. The
+package is a leaf — nothing in
 the framework depends on it, and an application installs it deliberately. It is not dependency-free itself: `@aponiajs/cli` is
 what `/aot`'s build verdicts are read through, and that import is deferred to the
 first request so an application that never polls the endpoint never loads it.
@@ -16,7 +16,7 @@ first request so an application that never polls the endpoint never loads it.
 | Domain       | Owns                                                                                                                                                                                                                                             |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `module/`    | `DevtoolsModule.register`, `devtoolsPlugin`, `DevtoolsOptions`, the plugin                                                                                                                                                                       |
-| `server/`    | `startDevtoolsServer`, the socket and the loopback check, `routeRequest`, the dispatcher                                                                                                                                                         |
+| `server/`    | `createHandlers`, the handler record the mounted route answers through, `routeRequest`, the dispatcher                                                                                                                                           |
 | `endpoints/` | One payload builder and its wire contract per endpoint, `/meta` first, and the readers the endpoints share: the cursor the two cursor endpoints read, and the route facts `/routes` and `/flow` both state — the binding, and the parameter list |
 | `buffer/`    | The bounded cursor buffer `/logs` and `/requests` share, and nothing else                                                                                                                                                                        |
 | `logging/`   | The log stream: its record, its bound, the tap that fills it from a logger through `@aponiajs/common`'s rendering, the one-line form of a thrown reason, and the report a sentence travels on when the logger refuses it                         |
@@ -46,9 +46,10 @@ runtime boundary it describes.
   module graph, nor `inspectAponiaApplication`, nor a generated artifact — and
   both prices are documented where a user reads them. Keep the two spellings in
   step: a third path is a third surface, not a convenience.
-- A disabled registration mounts nothing: no provider, no native plugin, and so
-  no socket — the plugin is the only thing in this package that starts a server,
-  so the socket absence follows by construction from the plugin absence. It is
+- A disabled registration mounts nothing: no provider and no native plugin, so
+  no route and no hooks — the plugin is the only thing in this package that
+  mounts anything, so the surface's absence follows by construction from the
+  plugin absence. It is
   an inert module rather than a plugin that does nothing, so a boot cannot
   mistake it for the enabled one. The option path states the same decision with
   the other shape the platform accepts: `devtoolsPlugin` answers `undefined` and
@@ -57,75 +58,59 @@ runtime boundary it describes.
   the switch on both paths rather than whether the call happens, so one options
   object drives both and an application forwarding its configuration cannot mount
   a debug surface it did not ask for.
-- The module is an `ElysiaPluginModule` because the plugin has to see the
-  mounted route table. A plain provider is constructed before any controller
-  mounts and cannot; an Elysia plugin runs at `onStart`, after every route is
-  mounted. Never construct a second plugin instance or add a separate devtools
-  container.
-- `onStart` fires on `listen()`. An application that only calls `handle()`
-  publishes nothing and must be unaffected — that is accepted behavior, not a
-  defect to work around.
-- The bind address defaults to `127.0.0.1` and `host` is what moves it. Loopback
-  stays the default because a debugging aid should not be reachable by default;
-  the option exists because a container that publishes its port, a remote
-  development box, and a phone on the same network are all real cases. A bind
-  outside loopback is permitted and never silent, and the row names the concrete
-  exposure rather than the abstraction: the `host` option, the address the
-  socket took, and `/requests`, because that endpoint records request headers
-  and bodies by default. `127.0.0.1`, any `127.x.x.x`, `::1`, and
-  `localhost` are the spellings the warning is skipped for. The check is this
-  package's own and resolves nothing, so any other name warns; that direction is
-  the safe one, because a spelling the pattern cannot be sure of is reported
-  rather than assumed. The one name it accepts without resolving is `localhost`,
-  and that is stated rather than hidden: a hosts file that mapped `localhost` to
-  one of this machine's public addresses would bind it in silence, which is the
-  price of a check with no lookup in it. A debugging aid that
-  reaches a public interface silently is the failure mode this package exists
-  not to have.
-- A debugging aid's own reports never fail a boot: a port that is already bound
-  is reported under `Devtools` with the reason, `startDevtoolsServer` returns
-  `undefined`, and the application continues. The plugin's `onStart` reports
-  nothing further when it sees that, so one refused bind is one row. That row is
-  guarded, through `logging/report-failure.ts` — the one definition this
-  package's two guarded reports share, because a rule copied once per call site
-  is one rule per copy — because the sentence and the `undefined` are two halves
-  of one promise and a logger that refuses the row would otherwise cost the
-  caller both — and this runs inside `onStart`, which Elysia neither awaits nor
-  catches, so the throw would reach `listen()`. The row `/aot` writes for a
-  project whose route analysis could not be read is guarded the same way and for
-  the same reason: its sentence travels beside the empty `controllers` list that
-  endpoint degrades to, and the promise it settles is cached, so a refusal would
-  answer every later poll in the process with a failure instead of the payload
-  `/aot` promises. A logger that refuses either row is answered by a direct
-  `stderr` write of the sentence, the line also stating that the logger refused
-  it — the only place this package writes a process stream — and that write is
-  guarded in turn, so a stream that refuses still leaves the caller with the
-  answer it was promised. The sentence is total for the value it states, and that
-  is the other half of the guarantee: it is built as an argument to the guarded
-  report and so is built first, and `logging/one-line.ts` reads that value under a
-  guard of its own: a value that refuses to be read — a `Proxy` whose
-  `getPrototypeOf` trap throws, a value whose primitive conversion throws — is
-  stated as `[unrenderable]` rather than left out, because an empty pair of
-  parentheses would read as a value that was read and was empty. The refused
-  bind's sentence also echoes the caller's own `host`, and that read is not
-  guarded: the option is declared `readonly host?: string`, so no TypeScript
-  caller can reach a value the read refuses, and a JavaScript caller that passes
-  something else fails there rather than anywhere this rule speaks to. The
-  sentence is total for what it reports, and the option it echoes is the caller's
-  own. The rule is the framework's: a call site that reports a failure guards,
-  and a call site that reports progress does not. The
-  non-loopback exposure notice above is the other side of that rule and stays
-  unguarded: it reports a state the socket really took rather than a failure, so
-  a logger that throws on it fails the boot. That throw has a defined outcome
-  rather than being left to the bind's handler: the bind is the only thing
-  inside the `catch` that reports a refusal, and the notice's own `catch`
-  releases the socket before rethrowing the logger's failure unchanged — the
-  handle is not the caller's yet, so nothing else could ever stop a socket it
-  would otherwise hold for the life of a boot that failed, and a `stop` that
-  refuses may not become the failure the caller reads.
-- The handler build runs inside that `onStart`, which Elysia neither awaits nor
-  catches, so its own reads are written to answer rather than to throw — a throw
-  would take `listen()` with it. What that buys is the shapes: every recorded
+- The module is an `ElysiaPluginModule` because the plugin has to be part of the
+  application's own route table and its hooks have to reach routes mounted beside
+  it. A plain provider is constructed before any controller mounts and cannot
+  register a route; an Elysia plugin a module contributes is merged into the root
+  application during bootstrap. Never construct a second plugin instance or add a
+  separate devtools container.
+- The surface is a mount, not a server: `createDevtoolsPlugin` registers
+  `` `${devtoolsPathPrefix}/*` `` as a route on the application and hands every
+  request that reaches it to `routeRequest`, which owns the `404` for a path it
+  does not serve and the `405` for a method other than `GET`. Nothing here calls
+  `Bun.serve`, binds a port, or reads a host option, and there is no port or host
+  option left to read. The surface answers wherever the application does and under
+  `handle()` as well as `listen()`, because a route registered at bootstrap needs
+  no `onStart` — an application that only calls `handle()` is the entrypoint this
+  mount exists for, not a case to work around. `onStart` is reduced to one log
+  line naming where the surface is mounted, and nothing may move the mount into
+  it.
+- An application route that claims a devtools path wins it. The two owners of that
+  path are in one route table, and the reason is specificity rather than insertion
+  order — measured: a static `/__devtools/meta` answers whether it is registered
+  before or after this plugin's wildcard, so mounting the plugin last changes
+  nothing, and an insertion-order rule holds only between two registrations of the
+  same pattern. `tests/devtools-module.test.ts` pins the rule from both orders; do
+  not reintroduce a claim about every path under the prefix, because the wildcard
+  owns none of them and the dispatcher decides each one.
+- The surface's own mount is reported by the endpoints that read the table:
+  `/routes` and `/flow` carry one more row — `ALL /__devtools/*` — for a
+  devtools-enabled application than the same application without it, and that is a
+  consequence of serving the surface from the application rather than a defect to
+  filter. `/routes` reports the mounted table and never re-derives it, so a
+  builder that dropped this row would be reporting an application that does not
+  exist. `tests/devtools-module.test.ts` pins the row.
+- A debugging aid's own reports never fail a request. The one report this package
+  writes from a handler is `/aot`'s row for a project whose route analysis could
+  not be read, and it is guarded through `logging/report-failure.ts`: its sentence
+  travels beside the empty `controllers` list that endpoint degrades to, and the
+  promise it settles is cached, so a refusal would answer every later poll in the
+  process with a failure instead of the payload `/aot` promises. A logger that
+  refuses that row is answered by a direct `stderr` write of the sentence, the
+  line also stating that the logger refused it — the only place this package
+  writes a process stream — and that write is guarded in turn, so a stream that
+  refuses still leaves the caller with the answer it was promised. The sentence is
+  total for the value it states, and that is the other half of the guarantee: it
+  is built as an argument to the guarded report and so is built first, and
+  `logging/one-line.ts` reads that value under a guard of its own: a value that
+  refuses to be read — a `Proxy` whose `getPrototypeOf` trap throws, a value whose
+  primitive conversion throws — is stated as `[unrenderable]` rather than left
+  out, because an empty pair of parentheses would read as a value that was read
+  and was empty. The rule is the framework's: a call site that reports a failure
+  guards, and a call site that reports progress does not.
+- The handler build runs on the request path, inside the route the plugin mounts,
+  so its own reads are written to answer rather than to throw — a throw there is
+  that request's failure, and nothing else's. What that buys is the shapes: every recorded
   field is validated before use and answered as an absence when it is not a shape
   this release writes, which is what makes a record this package cannot read cost
   a field rather than the report. It is not throw-freedom. A value that refuses
@@ -141,24 +126,10 @@ runtime boundary it describes.
   record that has no `artifacts` at all. The stamp read is an optional chain that
   answers `null` — what an artifact the boot did not adopt reads as — rather than
   a dereference that would fail the boot it is describing.
-- The plugin holds the server handle and stops it at `onStop`, which Elysia
-  fires on `close()` for a plugin as much as for the application that mounted it.
-  A devtools socket that outlived its application would hold the port across the
-  next boot and answer for an application that is gone; the handle belongs to the
-  plugin because the plugin is what opened the socket.
-- The plugin owns one devtools socket at a time. A second `listen()` re-runs
-  `onStart` while the socket the first one started is still held, so only a start
-  that succeeded becomes the handle — assigning the `undefined` a refused bind
-  answers would leave the live socket with nothing left to stop it — and the
-  socket being replaced is stopped as the replacement starts. Losing the handle
-  to a start that failed, or replacing it without stopping the socket it named,
-  is the leak this prevents.
-- The socket binds port `0` happily, and the report then names the address the
-  socket took — never the port the registration asked for. A report that echoed
-  the configuration would be indistinguishable from one that never bound.
-- A payload that describes a boot is built once, when the socket starts. It
+- A payload that describes a boot is built once, when the surface first answers
+  for that application. It
   describes a boot, and a boot does not change once it has started, so two polls
-  of one server answer the same report. `/routes` and `/flow` are the exceptions,
+  of one application answer the same report. `/routes` and `/flow` are the exceptions,
   and they are exceptions by design: the mounted route table belongs to the
   running application, which may mount another route on its native instance
   before it listens, so those handlers read the table when the request arrives.
@@ -180,7 +151,7 @@ runtime boundary it describes.
   dynamic module, so a descriptor handed to the projection cannot be re-resolved
   and this endpoint cannot disagree with `bun run inspect`. It carries no `routes`
   key, because the plans state the routes a controller declares while `/routes` is
-  what reports the routes the server answers.
+  what reports the routes the application answers.
 - An endpoint whose fact the boot record does not hold is not registered rather
   than answered with a guess: a record a foreign copy of the platform wrote — one
   older, which has no `rootModule` field, or one newer, whose compiled root this
@@ -310,7 +281,7 @@ runtime boundary it describes.
   A route no plan describes carries no list at all: the platform compiles that
   array only for the routes it mounts from a plan.
 - `/aot` has two owners, which is why its payload is built per request rather
-  than frozen when the socket starts: `graph` and `invokers` are the boot
+  than frozen when the surface first answers: `graph` and `invokers` are the boot
   record's, and `controllers` is `@aponiajs/cli`'s analysis of the project the
   process was started in — the one fact a boot cannot state, because it belongs
   to a build. The record's half is validated for the two facts this endpoint
@@ -320,7 +291,7 @@ runtime boundary it describes.
   copy of the platform this release does not own booted, are the same absence
   `/graph` answers with the dispatcher's `404`. That is the endpoint's first
   degradation axis, and it is an absence rather than a loss: there are no facts to
-  publish, so there is nothing to report, and every other endpoint this server
+  publish, so there is nothing to report, and every other endpoint this surface
   serves — `/meta` included — answers exactly as it did. The second axis is the
   analysis, which the bullets below state: a record this release can read and a
   project it cannot still answers, with `controllers` empty and one row under
@@ -383,13 +354,13 @@ runtime boundary it describes.
   reads "this project declares no controllers" out of a failure. The framework half
   is served either way, which is the degradation this endpoint promises: one field
   group, never the endpoint.
-- The log stream is built when the module is registered, not when the socket
-  starts, and the logger is patched in place rather than replaced. Registration is
+- The log stream is built when the module is registered, not when the surface
+  first answers, and the logger is patched in place rather than replaced. Registration is
   the only moment this package holds the application's logger before the boot
-  writes, so a stream that began at `onStart` would have none of the lines the
+  writes, so a stream that began at a hook would have none of the lines the
   boot reports about itself — the graph it served, the modules it initialized, the
   routes it resolved — which are most of what a log stream is worth. That timing
-  is a rule and not an arrangement: a tap moved into the server for tidiness
+  is a rule and not an arrangement: a tap moved later for tidiness
   silently drops those lines. The logger is the object the application and the
   platform both hold, so a wrapper would be a logger the framework never uses and
   a replacement one the application never sees: patching its methods keeps one
@@ -480,6 +451,19 @@ runtime boundary it describes.
   still serves `/requests` answering an empty record rather than no endpoint, and
   "this registration was told to record nothing" is itself a fact the record
   states.
+- The surface's own traffic is left out of the record, and the exclusion is by
+  path prefix rather than by route identity: `isDevtoolsSurfaceRequest` answers
+  true for `/__devtools` and everything under it, and the arrival hook returns
+  before stamping or writing. The reason is that the surface is the one client
+  this package can name — a page polling `/requests` would otherwise record
+  itself into the window it is reading, and evict the traffic being watched. The
+  consequence is the rule's other half and has to be stated wherever the
+  exclusion is: an application route that claims a `/__devtools` path wins that
+  path (see the collision rule above) and its traffic is unrecorded, because the
+  two decisions are made by different mechanisms and neither can see the other.
+  This is doctrine rather than a test's description: `/requests` documents what
+  reached the record, and a reader who takes "everything is recorded by default"
+  literally is reading a record that was already filtered.
 - A partly patched logger publishes a stream and names the levels it reached. The
   boundary is the count of levels patched — no level patched at all is the
   absence, one level patched is a tap that installed — and where the first refusal
@@ -495,20 +479,26 @@ runtime boundary it describes.
 - A record is opened by the boot that serves it, one per application, and never at
   registration. The platform hands one registration to every boot of the module
   class that declared it, so a record built when the module registered would be
-  one window for every application in the process, and each application's socket
+  one window for every application in the process, and each application's surface
   would serve the traffic of the others. What files one application's record apart
-  from another's is the application's own object — `application.store` at
-  `onStart`, `context.store` in a hook — which is the one value both halves see
-  that belongs to the application rather than to the registration, and its shape
-  is Elysia's: this package files by its identity and never reads it. The spec
-  states the same boundary from the other side, that the record is in memory per
-  boot and a restart is a new record, so a second `listen()` serves a new empty
-  window rather than extending one a socket that is gone was serving. That is the
-  one place the record parts company with the log stream, whose lines span sockets
-  because the object it records does.
+  from another's is the application's own object — the `store` a request carries,
+  which the platform published the application on at boot — and its shape is
+  Elysia's: this package files by its identity and never reads it. The record is
+  keyed by that store rather than by the application, because a registration
+  mounted on a bare `Elysia` by hand has no application to key by and still serves
+  its own endpoints. A record is opened on the first request the plugin sees,
+  rather than when the surface is first polled: opening it at the poll would
+  answer for the polling client and drop every request the application answered
+  before it, and the window belongs to the application rather than to the client's
+  attention. `beginBoot` is memoized per application, so it is one window per
+  application and a later `listen()` continues it rather than starting an empty
+  one — that is where the record parts company with a restart, because the object
+  the log stream records spans boots while the record belongs to the application.
+  It cannot be an `onStart` call for the same reason the mount cannot: `onStart`
+  never fires for an application that only calls `handle()`.
 - The request-side facts are read at arrival and the answer-side facts at
   completion, and the split is a fact about the installed Elysia rather than a
-  preference: by the after-response phase the socket's request no longer states
+  preference: by the after-response phase the request no longer states
   its header list — a probe reads an empty `Headers` there, and the six headers a
   client sent as soon as the request phase iterated them — so an entry assembled
   entirely from that context would state that the application answered requests
@@ -613,7 +603,7 @@ runtime boundary it describes.
   one fixed sentence for every unhandled failure and its `Response` is not on the
   after-response context either, so without that record this hook could state only
   that an unhandled failure said nothing at all. That record is the platform's,
-  handed over at `onStart` and read defensively — a copy of the platform older than
+  reached through the store and read defensively — a copy of the platform older than
   this release carries no such field, and the entry then states the absence it
   stated before the field existed. The map is consulted only where the published
   body yielded nothing readable, so it never replaces what the client received.
@@ -626,19 +616,24 @@ runtime boundary it describes.
   status the client received: `set.status` is a number for every answer Elysia
   composed, while an answer a handler built leaves it at the default and carries
   the real status on its own `Response`.
-- The report describes the boot the _plugin's own_ application carries: Elysia
-  hands `onStart` the root application, which is the one bootstrap attached the
-  record to.
-- The server is `Bun.serve` on its own port. It registers no Elysia route, which
-  keeps `routing/native-route.ts` in `packages/platform-elysia` the only module
-  in this workspace that calls Elysia's route registration API.
+- The report describes the boot the _request's own_ application carries. The
+  application is read from the request's `store`, where the platform published it
+  at boot — Elysia's request context carries `store` and not the instance, and
+  `onStart`, the only hook that receives the instance, does not run for an
+  application that never listens. An application no boot produced has nothing
+  published there, so the endpoints that need a report answer the documented
+  absence rather than throwing or answering an empty `200`: `createHandlers` is
+  handed `undefined` and its readers tolerate it.
+- The store is the one channel between the boot and this plugin, and it is the
+  platform's: `publishApplicationOnStore` writes the application onto its own
+  `store` under `Symbol.for("aponia.application.native")`, and
+  `readApplicationFromStore` reads it back. Never reach for a module-level
+  application variable instead — a second source of truth for a fact the boot
+  already decided — and never construct a devtools container to carry it.
 - Every endpoint is a `GET`; any other method answers `405` before the path is
   read, and a path the handler record does not own answers `404`. The lookup is
   `Object.hasOwn`, because the suffix comes from the request. Nothing this
   package serves mutates application state.
-- `startDevtoolsServer` is synchronous, and so is the read that resolves the
-  installed Elysia, because Elysia does not await `onStart`. A handler may still
-  answer a promise: `/aot`'s analyzer loads itself on its first request.
 - Only an Elysia installed in the tree is reported. `Bun.resolveSync` falls back
   to Bun's global install cache, so it answers for a tree that installed nothing
   and would name a release the application never ran against; the resolver walks
@@ -656,8 +651,8 @@ runtime boundary it describes.
 Boot through `AponiaFactory.create` and assert what an application observes:
 whether the boot mounted the plugin module (the enabled twin reports
 `ElysiaPluginModule[devtools] dependencies initialized`, the disabled twin
-asserts that line and every `Devtools` report absent) and what the plugin
-reported at `onStart`.
+asserts that line and every `Devtools` report absent) and what the application
+answers for the devtools paths.
 
 `tests/devtools-module.test.ts` covers the module path and
 `tests/devtools-plugin.test.ts` the option path, and the second file is the
@@ -667,49 +662,24 @@ shared construction has to be shown to deliver. Neither file asserts the
 build-time decline rule — that rule is `@aponiajs/cli`'s, and its own lanes hold
 it.
 
-The contract is HTTP, so the socket is asserted over HTTP and never assumed: a
-case binds port `0`, reads the address the report named back out of it, and
-fetches that address. No case depends on a fixed port, and none connects to a
-port it guessed. The single exception is the default-port case, which asserts
-that the row names `8000` and decides nothing about whether `8000` is free: a
-bind that succeeds reports the address it took, one that is refused reports the
-address it could not take.
+The contract is HTTP, so the surface is asserted through `application.handle` and
+never assumed: a case makes a `Request` for a devtools path and reads the
+`Response` the application answers with. Nothing binds a socket, and no case
+depends on a port. The mount itself is what the entrypoint pins — that the
+application answers those paths at all, that the dispatcher's `404` and `405`
+reach a client through it, that an application route claiming a devtools path
+wins it, that a disabled registration mounts no route, and that an application no
+boot produced answers the endpoints that need no report — because a surface that
+only worked under `listen()` is exactly what this change removed.
 
-A refused bind is asserted the same way — a blocker on port `0`, an application
-whose devtools points at the port the blocker took — and the pair is what makes
-the two reports distinguishable: the ephemeral case names an address that
-answers, the refused case states it could not listen and leaves the application
-answering its own routes.
-
-The bind address is asserted through what a start reports, not through what it
-returns: the default names `127.0.0.1` and reports no row, each loopback
-spelling a registration can name — the address, `localhost`, its other case, and
-`::1` — binds without a row, and a host outside loopback binds the address it
-named, answers on it, and reports exactly one row naming the `host` option, that
-address, and `/requests`. A widened bind that is refused reports the refusal and
-no exposure row, because a socket that never started exposed nothing; that case
-is also what pins the bracketed form of an IPv6 address, and it names a host
-outside loopback — `::` rather than the loopback `::1` — because with a loopback
-host no exposure row could appear however the code was ordered, so the guarantee
-would be untestable there. A widened bind whose notice the logger refuses is
-asserted as the third outcome it is: the start throws the logger's own failure
-rather than answering `undefined`, no refusal sentence reaches `stderr`, and the
-address binds again — the port is the only evidence of the release, because a
-start that throws hands out no handle to stop. The two outcomes are pinned apart
-on purpose: `undefined` plus a refusal row is exactly the misreport a notice
-falling into the bind's handler produces, so the case fails if that throw can
-still reach it.
-
-The boundary the socket cases cannot reach is pinned directly, against
-`isLoopbackHost`. It is exported from `server/devtools-server.ts` for this
-package's own cases, marked `@internal` and deliberately kept off the barrel,
-because three of the near misses — `127.1`, `::ffff:127.0.0.1`, and the expanded
-`0:0:0:0:0:0:0:1` — bind successfully on this machine: a socket case over them
-would report what the resolver did rather than what the check decided, and with
-a warning assertion it could not tell an exposure row from a refusal. The case
-lists the silent spellings and the reported ones, including `localhost\n` (a
-trailing newline is what a copied value carries, and `$` without `m` refuses it),
-and reports the spelling that moved rather than a boolean.
+The endpoint payloads are asserted through the same pair the mounted route calls:
+`createHandlers` for the application under test, then `routeRequest` with a
+`Request` for the path. A case that mounted the plugin instead would add
+`ALL /__devtools/*` to the route table `/routes` and `/flow` report, and every
+exact payload expectation would have to carry a row for the surface itself. The
+dispatcher's own decisions stay in `tests/server.test.ts`, where `405` and `404`
+are cheaper to state than to reach, and the mount that carries them is pinned in
+`tests/devtools-module.test.ts`.
 
 `/aot`'s analysis is a project on disk, so its cases write one into a temporary
 directory and `process.chdir` into it, restoring the working directory after each
@@ -729,28 +699,28 @@ rejection, and the sentence reaches `stderr` with the line naming the refusal.
 The status assertion is the one a removed guard fails, so the case is about the
 answer rather than only about the row.
 
-The socket's lifetime is asserted over HTTP too: a case polls the address while
-the application listens, closes the application, and polls again, because a
-devtools server that survived `close()` is indistinguishable from a working one
-until a second boot cannot take the port. A second `listen()` is asserted the
-same way: the address the first socket took stops answering once the second boot
-replaces it, and the address the second one took answers, so the plugin is shown
-to hold one socket rather than to have lost track of the first.
+The record's lifetime is asserted through the application too: a case listens,
+services a request, listens a second time, services another, and reads the
+window back — the second `listen()` continues the record the first boot opened
+rather than starting an empty one, and the ids never restart, because the counter
+belongs to the registration rather than to the record and counts for the life of
+the capture.
 
 The handler build is asserted against a record this release did not write: a case
 attaches a boot record with no `artifacts` — what a copy of the platform older
 than the artifact stamps leaves behind — and requires `/meta` to answer `null`
-stamps rather than throw, because that build runs where a throw takes `listen()`
-with it. `/routes` is asserted the same way against a record whose plans carry no
-binding state and which has no callback routes at all.
+stamps rather than throw, because that build runs on the request path, where a
+throw is that request's failure. `/routes` is asserted the same way against a
+record whose plans carry no binding state and which has no callback routes at
+all.
 
 `/routes` is asserted for the two decisions it makes about a running application
 rather than about a boot. Both bindings are mounted by one application, because a
 case that only ever observed one of them could not tell a per-route decision from
 a per-boot one — and each route answers with a different string, so the report is
 checked against the binding that served rather than read back as a claim. A route
-mounted on the native application after the server started has to appear, which is
-the case a payload built once at `onStart` would fail.
+mounted on the native application after the surface first answered has to appear,
+which is the case a payload frozen at that first answer would fail.
 
 `/flow` is asserted the same way, and the assertions are the wire shape because
 the shape is the contract. A decorated application pins the full chain a route
@@ -771,8 +741,8 @@ asserted where they are not the shape it expects. One case serves a table whose
 object is missing, and whose lifecycle arrays hold entries with no identity and a
 scope this release does not know; another serves a record whose plans carry a
 property key, a parameter list, a schema, and enhancer lists that are not the
-shapes this release writes. Both must leave the endpoint answering — that handler
-runs inside `Bun.serve`, where a throw is a failed request — so a fact neither
+shapes this release writes. Both must leave the endpoint answering — a throw in
+that handler is a failed request — so a fact neither
 source states is reported as the absence it is rather than filled in.
 
 The log stream is asserted where a test can quietly stop asserting anything: the
@@ -817,8 +787,9 @@ logger is then booted over HTTP, which is what makes the claim end to end: the
 declaration survived the read that threw, and the payload states that level as
 unreached. The stream is
 then asserted over a real
-boot, where the lines the boot wrote before `onStart` must appear — the case a tap
-installed when the socket starts would fail, and the assertion that says why the
+boot, where the lines the boot wrote before any hook runs must appear — the case a
+tap installed when the surface first answers would fail, and the assertion that
+says why the
 tap belongs to the registration — and where the application's own next line must
 arrive after the cursor the previous answer carried. A registration with no stream
 to publish is asserted to serve no endpoint rather than an empty one, and the four
@@ -829,7 +800,7 @@ asserted at each end a caller reaches it from rather than by one path, and the
 other end — a partly patched logger whose stream must be served — is pinned the
 same way.
 
-`/requests` is asserted over the socket, and its cases are the decisions the record
+`/requests` is asserted through the application, and its cases are the decisions the record
 makes rather than the fields it carries. The pair of hooks is pinned where it is a
 boundary rather than a style: the scope decision is the case that would leave the
 record empty, and the unanswered case pins the entry written at arrival — a request
@@ -845,8 +816,8 @@ is asserted from both ends a process can reach: two registrations keep one windo
 each, and two applications built from one module class — one registration, one
 plugin, two applications — keep the first application's traffic out of the second
 one's window, which is the case a record held in one variable fails. A second
-`listen()` is asserted to serve a new empty window, because the record belongs to
-the boot. The policy is asserted at the ends a caller reaches it from: `capture:
+`listen()` is asserted to continue the record the first boot opened, because the
+record belongs to the application. The policy is asserted at the ends a caller reaches it from: `capture:
 false` answers `{ cursor: 0, entries: [] }` and writes no arrival entry either,
 the two opt-outs leave their field out of the entry rather than present and empty,
 a redacted header keeps its place with the literal, and a body past `bodyLimit` is
@@ -897,9 +868,13 @@ answers its version, and a throwaway project that installed nothing answers
 asked `Bun.resolveSync`.
 
 The pure dispatcher is tested directly, because `405` and `404` are the two
-answers a socket cannot demonstrate as cheaply, and the same cases run over a
-real socket as well so the contract is pinned where a client meets it.
+answers a route table cannot demonstrate as cheaply, and the mount that carries
+them to a client is pinned in `devtools-module.test.ts` rather than re-stated for
+every path.
 
 The Vite+ lane stays type-only — it mirrors `DevtoolsOptions` and the payload
-types, and opens no socket. A conformance run is not the place to assert a
-transport the Bun lane already drives end to end.
+types and makes no request. A conformance run is not the place to assert a
+transport the Bun lane already drives end to end, and it could not make one:
+the lane runs on Node, and `createHandlers` reads `import.meta.dir`, which is a
+Bun-only property that reads `undefined` there, so every request through the
+mount throws before it can answer.

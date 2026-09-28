@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from "bun:test";
-import { aponiaVersion } from "@aponiajs/devtools";
+import { aponiaVersion, devtoolsContractVersion } from "@aponiajs/devtools";
 import type { DevtoolsApplication } from "./application.ts";
 import { createApplication, get, read } from "./application.ts";
 
@@ -17,7 +17,7 @@ test("meta reports the contract and the versions the boot ran", async () => {
     `${booted.devtools}/meta`,
   );
 
-  expect(meta.contract).toBe(2);
+  expect(meta.contract).toBe(devtoolsContractVersion);
   expect(meta.framework).toBe(aponiaVersion);
   expect(meta.elysia).toStartWith("1.");
 });
@@ -114,5 +114,8 @@ test("aot answers the boot's own record when no build wrote an analysis", async 
 test("a disabled registration mounts nothing at all", async () => {
   booted = await createApplication(false);
 
-  expect(await fetch(`${booted.devtools}/meta`).catch(() => "refused")).toBe("refused");
+  // The surface is a route on the application, so with nothing registered the
+  // application answers its own 404 for the prefix rather than serving it.
+  const response = await get(booted.application, "/__devtools/meta");
+  expect(response.status).toBe(404);
 });

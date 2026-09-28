@@ -30,8 +30,9 @@ type Expect<TAssertion extends true> = TAssertion;
 /**
  * The compile-time half of this lane: what a consumer reads off the wire.
  *
- * This lane opens no socket. The transport is asserted in `tests/*.test.ts`,
- * where a case binds port `0` and fetches the address the plugin reported; here
+ * This lane opens no socket, because there is none to open: the surface is a
+ * route the application mounts and the transport is asserted in `tests/*.test.ts`
+ * over `application.handle`. Here
  * only the public contract is compiled, so a payload field that changes shape,
  * or a `contract` literal that stops matching the value the endpoint writes,
  * fails `bun run check` and `vp test` without any request being made.
@@ -61,7 +62,21 @@ type DevtoolsContractAssertions = [
   Expect<Equals<AponiaRequestRecordFields, RequestRecord>>,
   Expect<Equals<AponiaAotPayload["graph"], "declared" | "decorated">>,
   Expect<Equals<AponiaAotPayload["invokers"]["accepted"], boolean>>,
+  Expect<Equals<keyof DevtoolsOptions, "enabled" | "logger" | "capture">>,
+  Expect<Equals<Extract<"startDevtoolsServer" | "DevtoolsServer", keyof DevtoolsBarrel>, never>>,
 ];
+
+/**
+ * The barrel as a consumer's `import` sees it, so the exports this release
+ * deleted are asserted absent rather than only documented as absent.
+ *
+ * `DevtoolsServerOptions` is deliberately not in the assertion above: a
+ * type-only export leaves no key here, so the two value exports the socket
+ * carried are the only ones this form can hold. Its removal is stated by
+ * `packages/devtools/AGENTS.md` and the README rather than pinned here, and
+ * this comment is where that gap is admitted.
+ */
+type DevtoolsBarrel = typeof import("../src/index.ts");
 
 /**
  * The request record as a client sees it, restated so the assertion above
@@ -91,8 +106,6 @@ interface AponiaRequestRecordFields {
  */
 const conformanceOptions: DevtoolsOptions = {
   enabled: true,
-  port: 8000,
-  host: "127.0.0.1",
   logger: false,
   capture: {
     enabled: true,
@@ -121,11 +134,11 @@ class ConformanceApplicationModule {}
 
 test("keeps the contract assertions referenced", () => {
   const assertions: DevtoolsContractAssertions = Array.from(
-    { length: 14 },
+    { length: 16 },
     () => true,
   ) as DevtoolsContractAssertions;
 
-  expect(assertions).toHaveLength(14);
+  expect(assertions).toHaveLength(16);
 });
 
 test("the registration is a module an application import accepts", () => {
@@ -145,7 +158,6 @@ test("the options surface accepts the documented capture policy", () => {
   });
   expect(conformanceCapture.enabled).toBe(false);
   expect(conformanceOptions.logger).toBe(false);
-  expect(conformanceOptions.host).toBe("127.0.0.1");
 });
 
 test("every endpoint payload is constructible from the published types", () => {
