@@ -3,6 +3,8 @@ import { defineModule, provideClass } from "@aponiajs/common";
 import { defineElysiaControllerRoutes } from "@aponiajs/platform-elysia";
 import { AppController } from "./app.controller.ts";
 import { AppService } from "./app.service.ts";
+import { provideConfiguration } from "@aponiajs/platform-elysia";
+import { AppConfig } from "./config.ts";
 
 const AppModuleDescriptor = defineModule({
   id: "AppModule",
@@ -20,7 +22,8 @@ const AppModuleDescriptor = defineModule({
       ],
     }),
   ],
-  providers: [provideClass(AppService, [])],
+  providers: [provideConfiguration(AppConfig), provideClass(AppService, [])],
+  exports: [AppConfig],
 });
 
 /**

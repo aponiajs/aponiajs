@@ -64,6 +64,7 @@ src/
 |-- app.controller.ts
 |-- app.module.ts
 |-- app.service.ts
+|-- config.ts
 |-- descriptors.generated.ts
 |-- invokers.generated.ts
 |-- logger.ts

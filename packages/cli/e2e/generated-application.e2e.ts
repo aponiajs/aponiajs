@@ -210,6 +210,14 @@ test("packed workspaces generate an application that installs, validates, builds
     for (const artifact of generatedArtifacts) {
       expect(await Bun.file(join(projectDirectory, artifact)).exists()).toBe(true);
     }
+    // The configured case: the lane reserves a port and passes it as `PORT`, the
+    // variable the starter's schema declares, so the port the application takes
+    // is the one the configuration validated.
+    await expectServer(projectDirectory, "src/main.ts", await reservePort());
+    // The same boot with `PORT` absent, which is the schema's own default rather
+    // than a port this lane chose. It asserts that the application answers, not
+    // which port it took: the default is `3000` and nothing here may assume that
+    // port is free.
     await expectServer(projectDirectory, "src/main.ts");
 
     const buildResult = await run(["bun", "run", "build"], projectDirectory, bunTemporaryDirectory);
@@ -224,7 +232,7 @@ test("packed workspaces generate an application that installs, validates, builds
     // the application's own check has to stay green afterwards.
     await run(["bun", "run", "check"], projectDirectory, bunTemporaryDirectory);
 
-    await expectServer(projectDirectory, "dist/main.js");
+    await expectServer(projectDirectory, "dist/main.js", await reservePort());
   } finally {
     await rm(temporaryDirectory, { recursive: true, force: true });
   }
@@ -303,8 +311,30 @@ async function assertPackageDependency(
  */
 const descriptorStartupLine = "Booting AppModule from the generated module descriptors";
 
-async function expectServer(projectDirectory: string, entrypoint: string): Promise<void> {
-  const port = await reservePort();
+/**
+ * The starter's own default for `PORT`, spelled literally like every other name
+ * this lane reads.
+ *
+ * It is the fallback the generated application's `src/config.ts` declares, and
+ * the absent case below reads it off the schema rather than choosing it: the
+ * lane reserves an ephemeral port for the configured case and never names one.
+ */
+const starterDefaultPort = 3000;
+
+/**
+ * Boots an application and asserts that it answers.
+ *
+ * `configuredPort` is the value the lane passes as `PORT` — the variable the
+ * starter's schema declares — and omitting it is the other half of the same
+ * contract: the schema applies its own default, which `starterDefaultPort`
+ * restates for the fetch rather than for the application.
+ */
+async function expectServer(
+  projectDirectory: string,
+  entrypoint: string,
+  configuredPort?: number,
+): Promise<void> {
+  const port = configuredPort ?? starterDefaultPort;
   // The starter's devtools binds a second socket, so the lane reserves that port
   // rather than letting the application take the documented `8000`: the surface
   // is asserted over HTTP below, and a port another process already holds would
@@ -312,17 +342,25 @@ async function expectServer(projectDirectory: string, entrypoint: string): Promi
   // starter mounted.
   const devtoolsPort = await reservePort();
 
+  const environment: Record<string, string | undefined> = {
+    ...Bun.env,
+    DEVTOOLS_PORT: String(devtoolsPort),
+    // The starter serves the devtools unless `NODE_ENV` is `production`, and
+    // this case is asserting that it does. Stated rather than inherited,
+    // because the lane's own environment would otherwise decide it.
+    NODE_ENV: "development",
+  };
+  if (configuredPort === undefined) {
+    // Absent rather than inherited: this is the case where the schema's default
+    // is the port, and a `PORT` the lane happens to hold would answer for it.
+    delete environment.PORT;
+  } else {
+    environment.PORT = String(configuredPort);
+  }
+
   const server = Bun.spawn([process.execPath, entrypoint], {
     cwd: projectDirectory,
-    env: {
-      ...Bun.env,
-      PORT: String(port),
-      DEVTOOLS_PORT: String(devtoolsPort),
-      // The starter serves the devtools unless `NODE_ENV` is `production`, and
-      // this case is asserting that it does. Stated rather than inherited,
-      // because the lane's own environment would otherwise decide it.
-      NODE_ENV: "development",
-    },
+    env: environment,
     stderr: "pipe",
     stdout: "pipe",
   });
@@ -350,7 +388,7 @@ async function expectServer(projectDirectory: string, entrypoint: string): Promi
 
     if (!answered) {
       throw new Error(
-        `Generated application did not start successfully from "${entrypoint}".\n` +
+        `Generated application did not start successfully from "${entrypoint}" on port ${port}.\n` +
           `stdout:\n${stdout.text()}\nstderr:\n${stderr.text()}`,
       );
     }
