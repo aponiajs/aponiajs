@@ -246,7 +246,7 @@ versions it was generated against:
 ```ts
 // src/invokers.generated.ts
 export const controllerInvokerArtifact = Object.freeze({
-  framework: "0.6.0-alpha.26",
+  framework: "0.6.0-alpha.28",
   elysia: "1.4.30",
   invokers: new Map([
     [UsersController, (instance: UsersController) => new Map([["ping", () => instance.ping()]])],
@@ -305,7 +305,7 @@ it was generated against:
 ```ts
 // src/descriptors.generated.ts
 export const moduleDescriptorArtifact = Object.freeze({
-  framework: "0.6.0-alpha.26",
+  framework: "0.6.0-alpha.28",
   elysia: "1.4.30",
   modules: Object.freeze({ AppModule: AppModuleDescriptor }),
 });
@@ -456,6 +456,31 @@ decode error's message, a thrown `status(...)` keeps its response, and an
 what `aot: false` disables — and it only exists on routes the platform mounted
 itself: a route a `registerRoutes` callback or a definition's own `buildPlugin`
 mounted runs no declared filter and no mapping either.
+
+## Downloads
+
+A handler that returns a file streams it with a detected content type, `accept-ranges`,
+and range support, but the response carries no name. `downloadFile` writes the one
+header that names it and returns the value the platform already streams:
+
+```ts
+import { Controller, Get, Param, Set, type RouteResponseSettings } from "@aponiajs/common";
+import { downloadFile } from "@aponiajs/platform-elysia";
+
+@Controller("reports")
+export class ReportController {
+  @Get(":id")
+  read(@Param("id") id: string, @Set() set: RouteResponseSettings) {
+    return downloadFile(set, `/srv/reports/${id}.csv`, `${id}.csv`);
+  }
+}
+```
+
+The value follows RFC 6266 with the RFC 8187 extended parameter, so a name outside
+ASCII is encoded rather than refused: `filename*` carries the name as UTF-8 and a
+quoted ASCII fallback rides beside it. Pass `{ disposition: "inline" }` to render
+instead of saving. A name carrying a line break, a NUL, or a path separator is refused
+with a `TypeError` before any header is written.
 
 ## Execution enhancers
 

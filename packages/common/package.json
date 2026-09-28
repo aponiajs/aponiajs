@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/common",
-  "version": "0.6.0-alpha.26",
+  "version": "0.6.0-alpha.28",
   "description": "Platform-neutral contracts for Aponia modules, dependency injection, and WebSocket gateways.",
   "homepage": "https://github.com/aponiajs/aponiajs#readme",
   "bugs": {

@@ -1,5 +1,5 @@
 import { AponiaError, tokenName, type ModuleDefinition, type Token } from "@aponiajs/common";
-import { providerDependencies } from "./dependencies.ts";
+import { providerDependencies, providerShapeProblem } from "./dependencies.ts";
 import { ModuleGraph } from "./module-graph.ts";
 
 export function compileModuleGraph(root: ModuleDefinition): ModuleGraph {
@@ -55,7 +55,22 @@ export function compileModuleGraph(root: ModuleDefinition): ModuleGraph {
 
 function validateOwnProviders(module: ModuleDefinition): void {
   const tokens = new Set<Token<unknown>>();
-  for (const provider of module.providers) {
+
+  for (const [index, provider] of module.providers.entries()) {
+    // The shape of the entry is checked before any field of it is read. Everything
+    // below reads `provide`, and an entry that is not a provider has no field to
+    // read: this runs during the graph walk, so the failure would name this
+    // compiler rather than the entry that is wrong.
+    const problem = providerShapeProblem(provider);
+
+    if (problem !== undefined) {
+      throw new AponiaError(
+        "INVALID_PROVIDER",
+        `Module "${module.id}" declares providers[${index}], which is not a provider this release can use: ${problem}.`,
+        { module: module.id, index, problem },
+      );
+    }
+
     if (tokens.has(provider.provide)) {
       throw new AponiaError(
         "DUPLICATE_PROVIDER",

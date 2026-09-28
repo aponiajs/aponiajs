@@ -12,6 +12,7 @@ The published documentation set:
 | `dependency-injection.md`   | Tokens, visibility, providers, and the error codes on failure                                 |
 | `websockets.md`             | Nest-style gateways over native Elysia WebSockets                                             |
 | `native-plugins.md`         | Mounting native Elysia plugins and typing what they add                                       |
+| `files.md`                  | Uploaded files, named downloads, and serving static assets                                    |
 | `eden-treaty.md`            | Native-style application types consumed through Eden Treaty                                   |
 | `elysia-compatibility.md`   | Supported Elysia versions and how a mismatch fails                                            |
 | `introspection.md`          | Projecting a compiled application into frozen, serializable data                              |

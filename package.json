@@ -1,6 +1,6 @@
 {
   "name": "aponiajs-workspace",
-  "version": "0.6.0-alpha.26",
+  "version": "0.6.0-alpha.28",
   "private": true,
   "description": "Bun-first application architecture powered by Elysia.",
   "license": "MIT",
@@ -19,6 +19,7 @@
     "example:basic": "bun run --cwd examples/basic start",
     "example:dependency-injection": "bun run --cwd examples/dependency-injection start",
     "example:descriptors": "bun run --cwd examples/descriptors start",
+    "example:files": "bun run --cwd examples/files start",
     "example:multiple-routers": "bun run --cwd examples/multiple-routers start",
     "example:native-plugins": "bun run --cwd examples/native-plugins start",
     "example:request-parameters": "bun run --cwd examples/request-parameters start",

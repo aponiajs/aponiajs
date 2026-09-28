@@ -178,6 +178,27 @@ function compileProvider(provider: ModuleProvider): Provider {
   }
 
   const inject = getConstructorDependencies(provider);
+
+  // A class registered on its own is lowered from the metadata a decorator made
+  // TypeScript emit, so a class nothing decorates resolves to no dependencies
+  // however many parameters its constructor takes. The container would then
+  // construct it with the rest `undefined`, and nothing downstream notices: the
+  // instance exists, its methods run, and the failure surfaces at the first use of
+  // a value nobody filled. Registering the class through `provideClass(provider,
+  // [])` is how an application says the empty list is a decision rather than the
+  // accident, and that path is not checked here.
+  //
+  // The count is the constructor's own `length`, which TypeScript leaves as the
+  // parameter count with `?` erased — so a class with an optional parameter and no
+  // decorator lands here too, and the fix named in the message is the same one.
+  if (inject.length < provider.length) {
+    throw new AponiaError(
+      "UNRESOLVED_CONSTRUCTOR_DEPENDENCIES",
+      `Provider "${provider.name}" is registered without dependencies and its constructor takes ${provider.length}: a class carries no dependency metadata until something decorates it, so add @Injectable() to the class or @Inject() to each parameter — or register it with provideClass(${provider.name}, []) when nothing has to arrive.`,
+      { provider: provider.name, required: provider.length, supplied: inject.length },
+    );
+  }
+
   return Object.freeze({
     kind: "class",
     provide: provider,

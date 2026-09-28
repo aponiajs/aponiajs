@@ -23,9 +23,14 @@ container.
   frozen descriptors and nothing else, which is what keeps the hand-written
   descriptor API a first-class path.
 - `compileModuleGraph` validates eagerly, before any instance exists: duplicate
-  module identity, import cycles, duplicate tokens inside a module, exports of
-  tokens the module cannot resolve, unresolvable provider dependencies, and
-  unresolvable controller dependencies.
+  module identity, import cycles, duplicate tokens inside a module, provider
+  entries that are not one of the four kinds, exports of tokens the module cannot
+  resolve, unresolvable provider dependencies, and unresolvable controller
+  dependencies. The shape check runs before any field of an entry is read, because
+  a provider can arrive from JavaScript or from a build's descriptor artifact and
+  every read below it assumes a provider. `providerDependencies` answers a kind it
+  does not know with `INVALID_PROVIDER` rather than `undefined`, since it is
+  exported for adapters that read a graph without building one.
 - Modules are identified by `instanceId ?? id`. Two configured instances of one
   module class stay distinct through `instanceId`.
 - `ModuleGraph.modules` holds every module reachable from the root through
