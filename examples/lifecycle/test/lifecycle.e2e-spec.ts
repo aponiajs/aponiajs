@@ -9,10 +9,14 @@ beforeEach(() => {
 test("a provider announces its own start, before the first request", async () => {
   const application = await createApplication();
 
+  // Asserted before the request rather than after it, because the name says
+  // "before the first request": a hook that only ran once something asked
+  // would satisfy the response and fail this line.
+  expect(announcements).toEqual(["onModuleInit"]);
+
   const response = await get(application, "/lifecycle/record");
 
   expect(await response.json()).toEqual({ started: true });
-  expect(announcements).toEqual(["onModuleInit"]);
 
   await application.close();
 });
