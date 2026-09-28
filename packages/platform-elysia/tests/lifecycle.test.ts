@@ -429,6 +429,61 @@ describe("the stopping hooks", () => {
     expect(calls).toEqual(["shutdown"]);
   });
 
+  test("join a close already in flight instead of resolving before it finishes", async () => {
+    calls.length = 0;
+
+    class Slow implements OnApplicationShutdown {
+      async onApplicationShutdown(): Promise<void> {
+        await Bun.sleep(5);
+        calls.push("shutdown");
+      }
+    }
+
+    @Module({ providers: [provideClass(Slow, [])] })
+    class SlowModule {}
+
+    application = await AponiaFactory.create(SlowModule, { logger: false });
+    await application.listen(0);
+
+    const first = application.close();
+    const second = application.close();
+    // The second caller is awaited on its own, before the first, and that is what
+    // pins the join: a `close()` that resolved instead of joining the teardown
+    // already running would resolve here with `calls` still empty, while the
+    // first was still sleeping in its hook. Awaiting both together could not tell
+    // the two apart — the first caller has finished the teardown by the time
+    // either is observed — and both callers waited for the same teardown: one
+    // that returned early would tell a caller an application is down that is not.
+    await second;
+    expect(calls).toEqual(["shutdown"]);
+
+    await first;
+    expect(application.getNativeApplication().server).toBeNull();
+  });
+
+  test("stop a server that was bound after an earlier close", async () => {
+    calls.length = 0;
+
+    class Late implements OnApplicationShutdown {
+      onApplicationShutdown(): void {
+        calls.push("shutdown");
+      }
+    }
+
+    @Module({ providers: [provideClass(Late, [])] })
+    class LateModule {}
+
+    application = await AponiaFactory.create(LateModule, { logger: false });
+    await application.close();
+    await application.listen(0);
+    await application.close();
+
+    // A `close()` before the application listened must not make a later one a
+    // no-op: the listener would outlive the call that was meant to end it.
+    expect(application.getNativeApplication().server).toBeNull();
+    expect(calls).toEqual(["shutdown"]);
+  });
+
   test("carry on when the logger itself throws while reporting", async () => {
     calls.length = 0;
 

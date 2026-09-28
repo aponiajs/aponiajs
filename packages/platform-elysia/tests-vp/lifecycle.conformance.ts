@@ -99,6 +99,10 @@ test("runs a provider's onApplicationShutdown through a real close", async () =>
 
   const application = await AponiaFactory.create(HookedModule, { logger: false });
   await application.close();
+  // The second close also exercises the once-only rule in this lane: both lanes
+  // mirror framework behaviour, and a teardown that ran twice would show here as
+  // two entries rather than one.
+  await application.close();
 
   expect(calls).toEqual(["shutdown"]);
 });

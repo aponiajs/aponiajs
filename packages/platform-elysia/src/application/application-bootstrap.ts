@@ -300,23 +300,30 @@ export async function bootstrapAponiaApplication(
   const moduleDestroy = [...collectLifecycleCalls(container, "onModuleDestroy")].reverse();
   const applicationShutdown = collectLifecycleCalls(container, "onApplicationShutdown");
 
-  // A second `close()` runs nothing. Teardown hooks are not idempotent — a pool
-  // closed twice is the defect the seam exists to prevent — and the `close()` this
-  // replaces was already a no-op once the server had stopped.
-  let stopped = false;
+  // Each group of stopping hooks runs once per boot, and a second caller joins the
+  // group already running rather than starting another — teardown hooks are not
+  // idempotent, and a pool closed twice is the defect this seam exists to prevent.
+  //
+  // The stop is deliberately not in a group. A `close()` that ran before the
+  // application listened must not make a later one a no-op: the server would stay
+  // bound and outlive the call that was supposed to end it. Stopping an
+  // application with no server costs nothing, so the stop is asked for every time.
+  let beforeShutdownDone: Promise<void> | undefined;
+  let afterStopDone: Promise<void> | undefined;
 
   attachApplicationShutdown(nativeApplication, async (closeActiveConnections = true) => {
-    if (stopped) {
-      return;
-    }
-    stopped = true;
+    beforeShutdownDone ??= runShutdownHooks(beforeShutdown, logger);
+    await beforeShutdownDone;
 
-    await runShutdownHooks(beforeShutdown, logger);
     if (nativeApplication.server) {
       await nativeApplication.stop(closeActiveConnections);
     }
-    await runShutdownHooks(moduleDestroy, logger);
-    await runShutdownHooks(applicationShutdown, logger);
+
+    afterStopDone ??= (async () => {
+      await runShutdownHooks(moduleDestroy, logger);
+      await runShutdownHooks(applicationShutdown, logger);
+    })();
+    await afterStopDone;
   });
 
   // The boot's own record, attached to the application it returns: which root
