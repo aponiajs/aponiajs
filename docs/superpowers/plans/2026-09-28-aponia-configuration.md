@@ -1294,6 +1294,12 @@ of the three is guarded, so a missed edit ships silently.
 surface prose. `packages/platform-elysia/README.md` gains a bullet for `provideConfiguration` and
 `AponiaElysiaApplication.get`, and a link to the new page in its link block.
 
+The template's own `llms.txt` gained its configuration entry pointing at
+`docs/learn/02-install-and-generate.md`, because `packages/cli/tests/project-generator.test.ts` resolves
+every `docs/*.md` link in that index against the repository and fails while one is missing — so it cannot
+point at the page this task creates until the page exists. Re-point it here, in the same change that
+creates `docs/configuration.md`.
+
 Three more places list the starter's layout and none of them gains `config.ts` on its own:
 `docs/cli.md`, `docs/architecture-and-style.md`, and the second learn chapter. Each is prose with no
 guard, so the file the generator writes would be missing from every description of it.
