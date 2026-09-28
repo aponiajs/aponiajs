@@ -434,6 +434,29 @@ describe("provideConfiguration", () => {
     });
   });
 
+  test("refuses a schema whose ~standard member is not an object", async () => {
+    // The membership test alone is not enough: `{ "~standard": null }` passes it
+    // and then throws reading `.validate`, which is the failure class the guard
+    // exists to prevent.
+    const broken = defineConfiguration({ "~standard": null } as unknown as z.ZodType, "app.config");
+
+    @Module({ providers: [provideConfiguration(broken, { source: {} })] })
+    class AppModule {}
+
+    let thrown: unknown;
+    try {
+      await AponiaFactory.create(AppModule, { logger: false });
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(codeOf(thrown)).toBe("INVALID_CONFIGURATION");
+    expect((thrown as AponiaError).details).toMatchObject({
+      configuration: "app.config",
+      reason: "not-a-standard-schema",
+    });
+  });
+
   test("refuses a schema whose validate returns a promise", async () => {
     const asynchronous = {
       "~standard": {
@@ -655,8 +678,12 @@ export function loadConfiguration<T>(
     );
   }
 
-  const validator = (schema as { readonly "~standard": { validate?: unknown } })["~standard"];
-  if (typeof validator.validate !== "function") {
+  const validator = (schema as { readonly "~standard"?: unknown })["~standard"];
+  if (
+    typeof validator !== "object" ||
+    validator === null ||
+    typeof (validator as { validate?: unknown }).validate !== "function"
+  ) {
     throw new AponiaError(
       "INVALID_CONFIGURATION",
       `Configuration "${name}" was declared with a value that is not a Standard Schema.`,
@@ -666,7 +693,7 @@ export function loadConfiguration<T>(
 
   // A copy, so the schema sees a stable input and a later change to the
   // environment cannot reach a value that was already validated.
-  const source = { ...(options?.source ?? Bun.env) };
+  const source = { ...(options?.source ?? process.env) };
   const result = (validator.validate as (value: unknown) => unknown)(source);
 
   // A factory is invoked by `Reflect.apply` inside a synchronous resolve, so
@@ -757,7 +784,7 @@ it, and the failure each row describes is the failure the union's member is rais
 - [ ] **Step 6: Run the tests and the guards**
 
 Run: `bun test packages/platform-elysia/tests/configuration.test.ts`
-Expected: 11 pass.
+Expected: 12 pass.
 
 Run: `bun run --filter @aponiajs/platform-elysia test`
 Expected: pass.
