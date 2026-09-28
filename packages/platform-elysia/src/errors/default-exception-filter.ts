@@ -106,7 +106,7 @@ export function createDefaultExceptionFilter(
  * louder than continuing — which is why the boot's `logger.log(...)` lines are
  * left unguarded.
  *
- * Three call sites in this package report a failure, and every one of them needs
+ * Four call sites in this package report a failure, and every one of them needs
  * this:
  *
  * - the default Problem Details mapping below, whose hook's return value is the
@@ -116,7 +116,10 @@ export function createDefaultExceptionFilter(
  *   reject the route's `error` hook and cost the same answer that filter's decline
  *   exists to preserve;
  * - `listen`'s catch in `application/aponia-elysia-application.ts`, where a throw
- *   would replace the engine's failure the caller is about to be handed.
+ *   would replace the engine's failure the caller is about to be handed;
+ * - `runShutdownHooks`'s catch in `application-bootstrap.ts`, where a throw would
+ *   stop every remaining shutdown hook from running at all, so one pool that
+ *   refused to close would leave every other pool open.
  *
  * `packages/devtools`'s two failure rows — the bind it could not take, and the
  * route analysis it could not read — are the framework's other sites of that

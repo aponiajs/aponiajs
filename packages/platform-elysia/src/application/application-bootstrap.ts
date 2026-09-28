@@ -22,7 +22,10 @@ import {
   type ResolvedControllerEnhancers,
 } from "../controllers/enhancer-resolver.ts";
 import type { RuntimeElysiaController } from "../controllers/controller.types.ts";
-import { createDefaultExceptionFilter } from "../errors/default-exception-filter.ts";
+import {
+  createDefaultExceptionFilter,
+  reportThroughLogger,
+} from "../errors/default-exception-filter.ts";
 import { compileRootModule, isModuleDefinition } from "../modules/module-compiler.ts";
 import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
 import { selectRootModuleDescriptor } from "../modules/module-descriptor-artifact.ts";
@@ -45,7 +48,11 @@ import type {
   AponiaApplicationOptions,
   ConfiguredAponiaApplicationOptions,
 } from "./application.types.ts";
-import { collectLifecycleCalls } from "./lifecycle-hooks.ts";
+import {
+  attachApplicationShutdown,
+  collectLifecycleCalls,
+  type LifecycleCall,
+} from "./lifecycle-hooks.ts";
 
 /**
  * Compile and mount one Aponia module graph onto a native Elysia instance.
@@ -284,6 +291,24 @@ export async function bootstrapAponiaApplication(
     await call();
   }
 
+  // The shutdown plan is collected once, while the container holds every
+  // instance, and handed to the wrapper through the symbol seam below. Reading
+  // it here rather than from the container later means `close()` needs no
+  // container: an application the boot did not produce reads as `undefined` and
+  // keeps the behaviour it has today.
+  const beforeShutdown = collectLifecycleCalls(container, "beforeApplicationShutdown");
+  const moduleDestroy = [...collectLifecycleCalls(container, "onModuleDestroy")].reverse();
+  const applicationShutdown = collectLifecycleCalls(container, "onApplicationShutdown");
+
+  attachApplicationShutdown(nativeApplication, async (closeActiveConnections = true) => {
+    await runShutdownHooks(beforeShutdown, logger);
+    if (nativeApplication.server) {
+      await nativeApplication.stop(closeActiveConnections);
+    }
+    await runShutdownHooks(moduleDestroy, logger);
+    await runShutdownHooks(applicationShutdown, logger);
+  });
+
   // The boot's own record, attached to the application it returns: which root
   // the container compiled, what it decided about the invoker artifact, which
   // release supplied each artifact it adopted, the compiled root, every plan the
@@ -336,6 +361,28 @@ export async function bootstrapAponiaApplication(
   }
 
   return Object.freeze({ nativeApplication, logger });
+}
+
+/**
+ * Runs shutdown hooks in order, reporting a failure and carrying on.
+ *
+ * A pool that refuses to close must not be able to keep every other pool open,
+ * and `close()` may not become a call that cannot complete, so each failure is
+ * reported where an application reads its logs and the next hook still runs.
+ * This is a failure-reporting call site and goes through the same guarded seam
+ * the default mapping does.
+ */
+async function runShutdownHooks(
+  calls: readonly LifecycleCall[],
+  logger: LoggerService | undefined,
+): Promise<void> {
+  for (const call of calls) {
+    try {
+      await call();
+    } catch (error) {
+      reportThroughLogger(logger, error, "ExceptionsHandler");
+    }
+  }
 }
 
 /**

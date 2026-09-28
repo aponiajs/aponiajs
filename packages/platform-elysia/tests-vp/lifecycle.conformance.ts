@@ -84,3 +84,21 @@ test("runs a provider's onModuleInit through a real boot", async () => {
     await application.close();
   }
 });
+
+test("runs a provider's onApplicationShutdown through a real close", async () => {
+  const calls: string[] = [];
+
+  class Hooked implements OnApplicationShutdown {
+    onApplicationShutdown(): void {
+      calls.push("shutdown");
+    }
+  }
+
+  @Module({ providers: [provideClass(Hooked, [])] })
+  class HookedModule {}
+
+  const application = await AponiaFactory.create(HookedModule, { logger: false });
+  await application.close();
+
+  expect(calls).toEqual(["shutdown"]);
+});

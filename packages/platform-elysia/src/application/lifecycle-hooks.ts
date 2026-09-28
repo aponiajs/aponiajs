@@ -7,6 +7,7 @@ import type {
 } from "@aponiajs/common";
 import type { AponiaContainer } from "@aponiajs/core";
 import { isElysiaController } from "../controllers/controller-definition.ts";
+import type { AponiaNativeApplication } from "./native-application.types.ts";
 
 /** The contract a hook name belongs to, for the type of the collected callables. */
 export type LifecycleHookContract =
@@ -96,4 +97,37 @@ export function collectLifecycleCalls(
   }
 
   return calls;
+}
+
+/** The plan a boot attaches for `close()`: the shutdown half, in order. */
+export type ApplicationShutdown = (closeActiveConnections?: boolean) => Promise<void>;
+
+const lifecycleKey: unique symbol = Symbol.for("aponia.application.lifecycle");
+
+/**
+ * Attaches the shutdown plan to the native application it belongs to.
+ *
+ * The property is non-enumerable, non-writable, and non-configurable for the
+ * same reason the boot record's is: Elysia composes by walking an instance's
+ * keys, and an application no boot produced must read as `undefined` rather
+ * than as an empty plan. Rides a symbol rather than a constructor parameter so
+ * `AponiaElysiaApplication`'s public signature does not change.
+ */
+export function attachApplicationShutdown(
+  application: AponiaNativeApplication<unknown>,
+  shutdown: ApplicationShutdown,
+): void {
+  Object.defineProperty(application, lifecycleKey, {
+    value: shutdown,
+    enumerable: false,
+    writable: false,
+    configurable: false,
+  });
+}
+
+/** The shutdown plan a boot attached, or `undefined` for an application no boot produced. */
+export function readApplicationShutdown(application: unknown): ApplicationShutdown | undefined {
+  return (application as { [lifecycleKey]?: ApplicationShutdown } | null | undefined)?.[
+    lifecycleKey
+  ];
 }

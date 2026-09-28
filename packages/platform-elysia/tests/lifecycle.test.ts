@@ -8,7 +8,11 @@ import {
   provideAlias,
   provideClass,
   provideValue,
+  type BeforeApplicationShutdown,
+  type LoggerService,
   type OnApplicationBootstrap,
+  type OnApplicationShutdown,
+  type OnModuleDestroy,
   type OnModuleInit,
 } from "@aponiajs/common";
 import { AponiaFactory, type AponiaElysiaApplication } from "../src/index.ts";
@@ -263,5 +267,129 @@ describe("a hook that throws while starting", () => {
 
     expect(thrown).toBe(failure);
     expect(calls).toEqual(["refusing:init"]);
+  });
+});
+
+describe("the stopping hooks", () => {
+  test("run in the documented order around the server stopping", async () => {
+    calls.length = 0;
+
+    class Stopping implements OnModuleDestroy, BeforeApplicationShutdown, OnApplicationShutdown {
+      // Asynchronous on purpose: the order below is what fails if the runner
+      // stops awaiting between hooks, and a synchronous set could not tell.
+      async beforeApplicationShutdown(): Promise<void> {
+        await Bun.sleep(1);
+        calls.push("before");
+      }
+
+      onModuleDestroy(): void {
+        calls.push("destroy");
+      }
+
+      onApplicationShutdown(): void {
+        calls.push("shutdown");
+      }
+    }
+
+    @Module({ providers: [provideClass(Stopping, [])] })
+    class StoppingModule {}
+
+    application = await AponiaFactory.create(StoppingModule, { logger: false });
+    await application.listen(0);
+    await application.close();
+
+    expect(calls).toEqual(["before", "destroy", "shutdown"]);
+    // The hooks are only half of what the name claims: deleting the plan's
+    // `stop` call leaves every other case in the suite green, so this is the
+    // line that fails when `close()` stops running the server.
+    expect(application.getNativeApplication().server).toBeNull();
+  });
+
+  test("run on an application that never listened", async () => {
+    calls.length = 0;
+
+    class NeverListening implements OnApplicationShutdown {
+      onApplicationShutdown(): void {
+        calls.push("shutdown");
+      }
+    }
+
+    @Module({ providers: [provideClass(NeverListening, [])] })
+    class NeverListeningModule {}
+
+    application = await AponiaFactory.create(NeverListeningModule, { logger: false });
+    await application.close();
+
+    expect(calls).toEqual(["shutdown"]);
+  });
+
+  test("run a module's destroy after the module that depends on it", async () => {
+    calls.length = 0;
+
+    class Inner implements OnModuleDestroy {
+      onModuleDestroy(): void {
+        calls.push("inner");
+      }
+    }
+
+    class Outer implements OnModuleDestroy {
+      constructor(readonly inner: Inner) {}
+
+      onModuleDestroy(): void {
+        calls.push("outer");
+      }
+    }
+
+    @Module({ providers: [Inner], exports: [Inner] })
+    class InnerModule {}
+
+    @Module({ imports: [InnerModule], providers: [Outer] })
+    class OuterModule {}
+
+    application = await AponiaFactory.create(OuterModule, { logger: false });
+    await application.close();
+
+    expect(calls).toEqual(["outer", "inner"]);
+  });
+
+  test("report a throwing hook and still run the rest, with the server stopped", async () => {
+    calls.length = 0;
+    const reported: string[] = [];
+    const failure = new Error("could not close the pool");
+
+    class RecordingLogger implements LoggerService {
+      log(): void {}
+      fatal(): void {}
+      warn(): void {}
+      debug(): void {}
+      verbose(): void {}
+
+      error(message: unknown): void {
+        reported.push(String(message));
+      }
+    }
+
+    class Refusing implements OnApplicationShutdown {
+      onApplicationShutdown(): void {
+        calls.push("refusing");
+        throw failure;
+      }
+    }
+
+    class After implements OnApplicationShutdown {
+      onApplicationShutdown(): void {
+        calls.push("after");
+      }
+    }
+
+    @Module({ providers: [provideClass(Refusing, []), provideClass(After, [])] })
+    class RefusingModule {}
+
+    application = await AponiaFactory.create(RefusingModule, { logger: new RecordingLogger() });
+
+    await application.close();
+
+    expect(calls).toEqual(["refusing", "after"]);
+    expect(reported.join("\n")).toContain("could not close the pool");
   });
 });
