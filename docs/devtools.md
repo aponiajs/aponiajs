@@ -234,7 +234,7 @@ therefore appears too.
   handler, because the property key that built it exists only while the callback
   runs, and the mounted table keeps no trace of it.
 - Entries are sorted by path, method, controller, handler, and module, in
-  code-unit order, so two polls of one server answer the same order.
+  code-unit order, so two polls of one application answer the same order.
 
 ### `/flow`
 
@@ -458,8 +458,8 @@ different fact from a request that carried none. Four further rules:
 
 The record belongs to one application rather than to a listener: a second
 `listen()` continues the window the boot opened rather than starting an empty
-one, and the ids never restart, because both the window and the counter belong to
-the application.
+one, and the ids never restart, because the counter belongs to the registration
+rather than to the record and counts for the life of the capture.
 
 `durationMs` is measured from the moment the request reached this package's
 arrival hook to a reading the completion path takes before its first read of the

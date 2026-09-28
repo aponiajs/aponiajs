@@ -125,7 +125,7 @@ export function buildAotPayload(
  *
  * The project root is the process's own working directory, which is the root
  * `aponia build` defaults to, and it is read by the caller when the request
- * arrives rather than when the server starts: an application started from
+ * arrives rather than when the application starts: an application started from
  * anywhere else reports the project it was actually started in.
  *
  * A failed analysis is cached like a successful one. The row it writes is one

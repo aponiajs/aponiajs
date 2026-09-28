@@ -95,7 +95,7 @@ test("a non-GET method answers 405 before any path lookup", async () => {
   expect(inside.status).toBe(405);
   expect(inside.headers.get("allow")).toBe("GET");
 
-  // The method decides before the path is read, so a path this server does not
+  // The method decides before the path is read, so a path this surface does not
   // own answers 405 rather than 404.
   const outside = await routeRequest(
     new Request("http://127.0.0.1:1/not-devtools", { method: "PUT" }),

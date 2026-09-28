@@ -151,7 +151,7 @@ runtime boundary it describes.
   dynamic module, so a descriptor handed to the projection cannot be re-resolved
   and this endpoint cannot disagree with `bun run inspect`. It carries no `routes`
   key, because the plans state the routes a controller declares while `/routes` is
-  what reports the routes the server answers.
+  what reports the routes the application answers.
 - An endpoint whose fact the boot record does not hold is not registered rather
   than answered with a guess: a record a foreign copy of the platform wrote — one
   older, which has no `rootModule` field, or one newer, whose compiled root this
@@ -291,7 +291,7 @@ runtime boundary it describes.
   copy of the platform this release does not own booted, are the same absence
   `/graph` answers with the dispatcher's `404`. That is the endpoint's first
   degradation axis, and it is an absence rather than a loss: there are no facts to
-  publish, so there is nothing to report, and every other endpoint this server
+  publish, so there is nothing to report, and every other endpoint this surface
   serves — `/meta` included — answers exactly as it did. The second axis is the
   analysis, which the bullets below state: a record this release can read and a
   project it cannot still answers, with `controllers` empty and one row under

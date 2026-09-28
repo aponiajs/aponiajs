@@ -5,9 +5,11 @@ answered every request that reached the record, without adding a log line to a
 handler.
 
 `@aponiajs/devtools` mounts an HTTP API on the application itself, under
-`/__devtools`, on the address the application already answers. It is
-a leaf package an application installs deliberately, and it is not part of the
-runtime: removing it changes nothing about how an application answers.
+`/__devtools`, on the address the application already answers. It is a leaf
+package an application installs deliberately: nothing in the framework depends
+on it, and mounting it registers its wildcard route on the application's own
+table — remove the registration and the application answers its own `404` for
+`/__devtools/meta`, and `/routes` and `/flow` lose the row the mount contributes.
 
 ```bash
 bun add @aponiajs/devtools

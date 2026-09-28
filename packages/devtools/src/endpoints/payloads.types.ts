@@ -64,7 +64,7 @@ export interface AponiaMetaPayload {
  *
  * The one field the inspection carries and this payload does not is `routes`,
  * and it is absent rather than empty. A compiled plan states the routes a
- * controller *declares*, while `/routes` reports the routes the server
+ * controller *declares*, while `/routes` reports the routes the application
  * *answers*; publishing both under one name would leave a consumer choosing
  * between two answers to the same question, so routes belong to that endpoint
  * alone.
@@ -99,18 +99,18 @@ export type AponiaRouteSource = "generated" | "compiled" | null;
  * One route the running application answers.
  *
  * The method, the path, and the parameter list come from the compiled plan the
- * boot recorded, while the entry itself comes from the mounted table — a server
- * that reported only the plans would miss every route a callback mounted, and
- * one that reported only the table would know no route's module, controller, or
- * handler. The three names are the join's whole contribution, and an empty one
+ * boot recorded, while the entry itself comes from the mounted table — an
+ * endpoint that reported only the plans would miss every route a callback
+ * mounted, and one that reported only the table would know no route's module,
+ * controller, or handler. The three names are the join's whole contribution, and an empty one
  * states that no record describes this route rather than that the name is
  * unknown: a callback's route names its module and controller but never its
  * handler, because the property key that built it exists only while the callback
  * runs, and a route no plan and no callback describes names none of the three.
  *
  * Route entries are sorted by path, method, controller, handler, and module, in
- * code-unit order, so the payload is deterministic and two polls of one server
- * answer the same order.
+ * code-unit order, so the payload is deterministic and two polls of one
+ * application answer the same order.
  */
 export interface AponiaMountedRoute {
   /**

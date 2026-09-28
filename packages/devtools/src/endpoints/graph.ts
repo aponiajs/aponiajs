@@ -21,7 +21,7 @@ export const devtoolsGraphPath = "/graph";
  * descriptor handed to it is the graph itself.
  *
  * `routes` is dropped rather than emptied, key and all: the plans state what a
- * controller declares while `/routes` reports what the server answers, and
+ * controller declares while `/routes` reports what the application answers, and
  * routes belong to that endpoint alone. `modules` and `gateways` are the
  * projection's own frozen arrays for the same reason `rootModule` is its id —
  * this endpoint publishes what inspection reads, and restating any of it here

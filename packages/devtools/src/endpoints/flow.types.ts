@@ -182,7 +182,7 @@ export interface AponiaFlowRoute {
  * stage the vocabulary would have to invent.
  *
  * Route entries are sorted by path and then method, in code-unit order, so the
- * payload is deterministic and two polls of one server answer the same order.
+ * payload is deterministic and two polls of one application answer the same order.
  */
 export interface AponiaFlowPayload {
   /** Every mounted route, sorted by path and then method. */

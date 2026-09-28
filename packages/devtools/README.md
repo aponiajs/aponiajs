@@ -116,7 +116,7 @@ const application = await AponiaFactory.create(AppModule, {
   version, the release that booted the application, the Elysia release installed
   in the application's own tree (`null` when there is none), which release
   supplied each artifact the boot adopted (`null` for one it did not), and when
-  the surface started. A reader checks `contract` first and proceeds only on a
+  it first answered for this application. A reader checks `contract` first and proceeds only on a
   shape it knows: this release answers `2`, because a `/requests` entry gained
   `id`, its `status` and `durationMs` became nullable, and one request began
   writing two entries.
