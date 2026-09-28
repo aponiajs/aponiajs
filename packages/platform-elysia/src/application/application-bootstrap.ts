@@ -35,6 +35,7 @@ import {
   registerElysiaWebSocketGateways,
 } from "../websockets/websocket-gateway.ts";
 import { aponiaVersion } from "../version.ts";
+import { attachApplicationContainer } from "./application-container.ts";
 import {
   attachApplicationDiagnostics,
   createApplicationDiagnostics,
@@ -305,6 +306,7 @@ export async function bootstrapAponiaApplication(
       interceptorHalves,
     }),
   );
+  attachApplicationContainer(nativeApplication, container);
 
   await nativeApplication.modules;
   await registerElysiaWebSocketGateways(nativeApplication, container, webSocketGateways);

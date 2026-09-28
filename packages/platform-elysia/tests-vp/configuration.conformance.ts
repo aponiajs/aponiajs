@@ -46,10 +46,30 @@ class Reader {
 @Module({ providers: [provideConfiguration(AppConfig), Reader] })
 class ConfigModule {}
 
+const SourceConfig = defineConfiguration(
+  z.object({ port: z.coerce.number().int().positive().default(3000) }),
+  "app.config",
+);
+
+@Module({
+  providers: [provideConfiguration(SourceConfig, { source: { port: 4500 } })],
+  exports: [SourceConfig],
+})
+class SourceModule {}
+
 test("resolves a declared configuration through a real boot", async () => {
   const application = await AponiaFactory.create(ConfigModule, { logger: false });
   try {
     expect(application).toBeDefined();
+  } finally {
+    await application.close();
+  }
+});
+
+test("reads a resolved value back through the entrypoint", async () => {
+  const application = await AponiaFactory.create(SourceModule, { logger: false });
+  try {
+    expect(application.get(SourceConfig)).toEqual({ port: 4500 });
   } finally {
     await application.close();
   }

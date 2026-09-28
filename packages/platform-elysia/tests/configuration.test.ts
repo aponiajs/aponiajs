@@ -9,8 +9,9 @@ import {
   provideClass,
   type AponiaErrorCode,
 } from "@aponiajs/common";
+import { Elysia } from "elysia";
 import { z } from "zod";
-import { AponiaFactory, provideConfiguration } from "../src/index.ts";
+import { AponiaElysiaApplication, AponiaFactory, provideConfiguration } from "../src/index.ts";
 // The loader is package-private and `defineConfiguration` always supplies a
 // description, so the name fallback is reachable only by calling it directly.
 import { loadConfiguration } from "../src/configuration/configuration-loader.ts";
@@ -671,5 +672,62 @@ describe("provideConfiguration", () => {
     expect(separate).toBeDefined();
     await application.close();
     await separate.close();
+  });
+});
+
+describe("AponiaElysiaApplication.get", () => {
+  test("reads back the same object the container resolved", async () => {
+    const AppConfig = defineConfiguration(portSchema, "app.config");
+
+    @Injectable()
+    class Reader {
+      constructor(@Inject(AppConfig) readonly config: { port: number }) {}
+    }
+
+    @Module({
+      providers: [provideConfiguration(AppConfig, { source: { port: 4321 } }), Reader],
+      exports: [AppConfig],
+    })
+    class AppModule {}
+
+    const application = await AponiaFactory.create(AppModule, { logger: false });
+
+    expect(application.get(AppConfig)).toEqual({ port: 4321 });
+    await application.close();
+  });
+
+  test("raises MISSING_PROVIDER for a token the application cannot reach", async () => {
+    const AppConfig = defineConfiguration(portSchema, "app.config");
+    const unreachable = defineConfiguration(portSchema, "unreachable");
+
+    @Module({ providers: [provideConfiguration(AppConfig, { source: {} })] })
+    class AppModule {}
+
+    const application = await AponiaFactory.create(AppModule, { logger: false });
+
+    let thrown: unknown;
+    try {
+      application.get(unreachable);
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(codeOf(thrown)).toBe("MISSING_PROVIDER");
+    await application.close();
+  });
+
+  test("raises MISSING_PROVIDER on an application no boot produced", () => {
+    const AppConfig = defineConfiguration(portSchema, "app.config");
+    const detached = new AponiaElysiaApplication(new Elysia(), undefined);
+
+    let thrown: unknown;
+    try {
+      detached.get(AppConfig);
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(codeOf(thrown)).toBe("MISSING_PROVIDER");
+    expect((thrown as AponiaError).message).toContain("no boot produced");
   });
 });

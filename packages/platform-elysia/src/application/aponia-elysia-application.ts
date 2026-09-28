@@ -1,6 +1,7 @@
-import { AponiaError, type LoggerService } from "@aponiajs/common";
+import { AponiaError, type LoggerService, type Token } from "@aponiajs/common";
 import { Elysia, type AnyElysia } from "elysia";
 import { reportThroughLogger } from "../errors/default-exception-filter.ts";
+import { readApplicationToken } from "./application-container.ts";
 
 export class AponiaElysiaApplication<TNativeApplication extends AnyElysia = Elysia> {
   readonly #nativeApplication: TNativeApplication;
@@ -13,6 +14,16 @@ export class AponiaElysiaApplication<TNativeApplication extends AnyElysia = Elys
 
   getNativeApplication(): TNativeApplication {
     return this.#nativeApplication;
+  }
+
+  /**
+   * The value a token resolves to, read from the container the boot built.
+   *
+   * Root visibility applies, exactly as it does for any other read from the root:
+   * a token this application cannot reach raises `MISSING_PROVIDER`.
+   */
+  get<T>(token: Token<T>): T {
+    return readApplicationToken(this.#nativeApplication, token);
   }
 
   handle(request: Request): Response | Promise<Response> {
