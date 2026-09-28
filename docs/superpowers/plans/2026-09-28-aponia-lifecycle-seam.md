@@ -284,7 +284,7 @@ Expected: pass.
 In `packages/common/llms.txt`, add to the public types list:
 
 ```markdown
-- [OnModuleInit, OnApplicationBootstrap, OnModuleDestroy, BeforeApplicationShutdown, OnApplicationShutdown](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/lifecycle/lifecycle.types.ts): the five moments a provider can hook, read from the instance by the platform.
+- [OnModuleInit, OnApplicationBootstrap, BeforeApplicationShutdown, OnModuleDestroy, OnApplicationShutdown](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/lifecycle/lifecycle.types.ts): the five moments a provider can hook, in the order a boot reaches them, read from the instance by the platform.
 ```
 
 ```bash
