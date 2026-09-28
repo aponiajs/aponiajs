@@ -249,7 +249,7 @@ versions it was generated against:
 ```ts
 // src/invokers.generated.ts
 export const controllerInvokerArtifact = Object.freeze({
-  framework: "0.6.0-alpha.28",
+  framework: "0.6.0-alpha.29",
   elysia: "1.4.30",
   invokers: new Map([
     [UsersController, (instance: UsersController) => new Map([["ping", () => instance.ping()]])],
@@ -308,7 +308,7 @@ it was generated against:
 ```ts
 // src/descriptors.generated.ts
 export const moduleDescriptorArtifact = Object.freeze({
-  framework: "0.6.0-alpha.28",
+  framework: "0.6.0-alpha.29",
   elysia: "1.4.30",
   modules: Object.freeze({ AppModule: AppModuleDescriptor }),
 });
