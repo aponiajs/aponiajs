@@ -721,12 +721,14 @@ export function loadConfiguration<T>(
   if (typeof outcome !== "object" || outcome === null) {
     throw new AponiaError(
       "INVALID_CONFIGURATION",
-      `Configuration "${name}" was validated by a schema that answered with ${typeof outcome} instead of a result.`,
+      `Configuration "${name}" was validated by a schema that answered with ${outcome === null ? "null" : typeof outcome} instead of a result.`,
       { configuration: name, reason: "not-a-standard-schema" },
     );
   }
 
-  if (!("value" in outcome) && !("issues" in outcome)) {
+  // Present-but-undefined `issues` is the same violation: the protocol answers
+  // with one of the two, and a key carrying nothing injects `undefined`.
+  if (!("value" in outcome) && (outcome as { issues?: unknown }).issues === undefined) {
     throw new AponiaError(
       "INVALID_CONFIGURATION",
       `Configuration "${name}" was validated by a schema that answered with neither a value nor issues.`,
@@ -745,6 +747,10 @@ export function loadConfiguration<T>(
   return (outcome as { readonly value: T }).value;
 }
 ```
+
+Two type-only casts are needed in the guards above where the narrowing reads a
+field off a value the cast widened; the implementer's fix round recorded them and
+they change no logic. Keep them type-only.
 
 `packages/platform-elysia/src/configuration/provider.ts`:
 
