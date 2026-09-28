@@ -410,7 +410,7 @@ async function expectServer(
     // literally like every other name in this lane: the file exercises the packed
     // CLI the way an application does, so it reads the endpoint rather than a
     // constant imported from the package that serves it.
-    expect(((await meta.json()) as { readonly contract: number }).contract).toBe(2);
+    expect(((await meta.json()) as { readonly contract: number }).contract).toBe(3);
   } finally {
     server.kill();
     await server.exited;
