@@ -415,6 +415,14 @@ gains the collision rule and the exposure sentence from Task 1's docs.
 
 - [ ] **Step 2: Rewrite the reference page's opening and its accepted limitations**
 
+**Added by Task 1's review, and it is the documentation half of its ruling.** The mount registers a
+real `ALL /__devtools/*` route, so a devtools-enabled application's `/routes` and `/flow` carry one
+more row than the same application without it. The package guide states this and a case pins it;
+this page must state it too, beside the endpoint table, because it is the first thing a reader
+compares between two applications and would otherwise read as a defect in the endpoint. State it as
+what it is: `/routes` reports the mounted table and never re-derives it, so the surface reporting
+itself is the same rule the page already applies to every other route.
+
 `docs/devtools.md` opens by stating the socket; it now states the mount, the path, and the two
 consequences the owner accepted: the surface is part of the application's route table, and it is
 reachable wherever the application is. The loopback section, the `host` option row, the bind-warning
