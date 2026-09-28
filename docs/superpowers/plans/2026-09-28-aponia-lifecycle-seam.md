@@ -808,6 +808,8 @@ git commit -m "feat(platform-elysia): initialize a module through the hook its i
 **Files:**
 
 - Modify: `packages/platform-elysia/src/application/lifecycle-hooks.ts` (the plan seam)
+- Modify: `packages/common/src/logging/logger.types.ts` (the guarded-site rule gains this call site)
+- Modify: `docs/logging.md` (the same rule, in the published prose)
 - Modify: `packages/platform-elysia/src/application/application-bootstrap.ts` (attach the plan)
 - Modify: `packages/platform-elysia/src/application/aponia-elysia-application.ts` (`close()`)
 - Modify: `packages/platform-elysia/AGENTS.md` (the enumerated failure-reporting call sites)
@@ -824,12 +826,32 @@ git commit -m "feat(platform-elysia): initialize a module through the hook its i
 
 - [ ] **Step 1: Write the failing test**
 
-Append to `packages/platform-elysia/tests/lifecycle.test.ts`:
+Append to `packages/platform-elysia/tests/lifecycle.test.ts`, beside the file's own `calls` array:
+
+```ts
+/**
+ * Whether the application answers at all, which is the only thing a hook can
+ * observe about the server's state: the hooks receive no context, so a case that
+ * has to pin *when* the server stopped asks it from inside the hook.
+ */
+async function answers(url: string): Promise<boolean> {
+  try {
+    await fetch(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+```
+
+and then:
 
 ```ts
 describe("the stopping hooks", () => {
   test("run in the documented order around the server stopping", async () => {
     calls.length = 0;
+    const reachable: boolean[] = [];
+    let url = "";
 
     class Stopping implements OnModuleDestroy, BeforeApplicationShutdown, OnApplicationShutdown {
       // Asynchronous on purpose: the order below is what fails if the runner
@@ -837,10 +859,12 @@ describe("the stopping hooks", () => {
       async beforeApplicationShutdown(): Promise<void> {
         await Bun.sleep(1);
         calls.push("before");
+        reachable.push(await answers(url));
       }
 
-      onModuleDestroy(): void {
+      async onModuleDestroy(): Promise<void> {
         calls.push("destroy");
+        reachable.push(await answers(url));
       }
 
       onApplicationShutdown(): void {
@@ -853,9 +877,16 @@ describe("the stopping hooks", () => {
 
     application = await AponiaFactory.create(StoppingModule, { logger: false });
     await application.listen(0);
+    url = application.getUrl();
     await application.close();
 
     expect(calls).toEqual(["before", "destroy", "shutdown"]);
+    expect(application.getNativeApplication().server).toBeNull();
+    // The stop happens *between* the two: a hook that ran before it still
+    // reached the server and the hook after it did not. Moving the stop after
+    // `onModuleDestroy` leaves `[true, true]` here, and dropping it leaves
+    // `[true, true]` with the server never stopped.
+    expect(reachable).toEqual([true, false]);
   });
 
   test("run on an application that never listened", async () => {
@@ -915,6 +946,7 @@ describe("the stopping hooks", () => {
       warn(): void {}
       debug(): void {}
       verbose(): void {}
+      fatal(): void {}
 
       error(message: unknown): void {
         reported.push(String(message));
@@ -972,7 +1004,7 @@ const lifecycleKey: unique symbol = Symbol.for("aponia.application.lifecycle");
  * `AponiaElysiaApplication`'s public signature does not change.
  */
 export function attachApplicationShutdown(
-  application: AponiaNativeApplication,
+  application: AponiaNativeApplication<unknown>,
   shutdown: ApplicationShutdown,
 ): void {
   Object.defineProperty(application, lifecycleKey, {
@@ -1074,13 +1106,22 @@ In `packages/platform-elysia/src/application/aponia-elysia-application.ts`, repl
 Run: `bun test packages/platform-elysia/tests/lifecycle.test.ts`
 Expected: 9 pass, 0 fail.
 
-- [ ] **Step 6: Record the fourth reporting call site in the guide**
+- [ ] **Step 6: Record the fourth reporting call site everywhere the rule is enumerated**
 
-In `packages/platform-elysia/AGENTS.md`, the invariant that enumerates the failure-reporting call
-sites currently names three. It becomes four, with the new one described the way the others are:
-the shutdown runner, which reports a hook that threw while the application was stopping and carries
-on, because `close()` may not become a call that cannot complete. Edit that sentence rather than
-adding a new bullet, since it is one rule with one list.
+The rule is one rule with one list, and that list lives in three places. All three gain the new
+site, described the way the others are — the shutdown runner, which reports a hook that threw while
+the application was stopping and carries on, because `close()` may not become a call that cannot
+complete:
+
+1. **`packages/platform-elysia/AGENTS.md`** — the invariant names three call sites. Edit that
+   sentence rather than adding a bullet.
+2. **`packages/common/src/logging/logger.types.ts`** — the `LoggerService` doc comment enumerates
+   the same sites ("the framework's default mapping …; its declared filter hook …; `listen` …; and
+   the devtools server's two rows …"). Add the shutdown runner to that enumeration.
+3. **`docs/logging.md`** — the published prose carries the same list. Add it there too.
+
+A list that names the guarded call sites and omits one is the documentation claiming less than the
+code does, which reads to a reader as permission to do the same.
 
 - [ ] **Step 7: Mirror the stopping half in the conformance lane**
 
