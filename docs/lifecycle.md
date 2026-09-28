@@ -4,13 +4,13 @@ A provider can run code at five moments without a decorator, a descriptor field,
 registration: the framework reads the method off the instance, the way it reads an interceptor's
 halves.
 
-| Hook                        | Runs                                                                                          |
-| --------------------------- | --------------------------------------------------------------------------------------------- |
-| `onModuleInit`              | Once per module, in graph order, after the boot's controller pass and before the gateway pass |
-| `onApplicationBootstrap`    | Once, after every route and gateway is mounted, before the application can listen             |
-| `beforeApplicationShutdown` | Once, at the start of `close()`, before the server stops                                      |
-| `onModuleDestroy`           | Once per module in reverse graph order, after the server has stopped                          |
-| `onApplicationShutdown`     | Once, last                                                                                    |
+| Hook                        | Runs                                                                                                                 |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `onModuleInit`              | Once per hooked provider or controller, in graph order, after the boot's controller pass and before the gateway pass |
+| `onApplicationBootstrap`    | Once, after every route and gateway is mounted, before the application can listen                                    |
+| `beforeApplicationShutdown` | Once, at the start of `close()`, before the server stops                                                             |
+| `onModuleDestroy`           | Once per hooked provider or controller, in the order below reversed, after the server has stopped                    |
+| `onApplicationShutdown`     | Once, last                                                                                                           |
 
 ```ts
 import { Injectable, type OnApplicationShutdown, type OnModuleInit } from "@aponiajs/common";
@@ -35,8 +35,11 @@ carries these hooks exactly the same way, because the instance holds the method.
 
 Modules run in graph order — a module that imports another initializes after it and is destroyed
 before it — and within a module its providers run in declaration order, with its controllers after
-them. Instantiation does not interleave with the hooks: the boot instantiates every module's
-providers and controllers first, so `onModuleInit` orders modules rather than enclosing one.
+them. `onModuleDestroy` is that whole sequence reversed, so a module's controllers are destroyed
+before its providers. Instantiation does not interleave with the hooks: the boot instantiates every
+module's providers and controllers first, so `onModuleInit` orders modules rather than enclosing one.
+
+The hook belongs to a provider, not to the module: a `@Module()` class is never asked.
 
 A hook may return a promise, and the boot awaits it.
 
