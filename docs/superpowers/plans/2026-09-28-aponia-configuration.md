@@ -972,12 +972,17 @@ Expected: FAIL — `application.get is not a function`.
 `packages/platform-elysia/src/application/application-container.ts`:
 
 ```ts
-import { AponiaError, type Token } from "@aponiajs/common";
+import { AponiaError, tokenName, type Token } from "@aponiajs/common";
 import type { AponiaContainer } from "@aponiajs/core";
 
 const containerKey: unique symbol = Symbol.for("aponia.application.container");
 
+// Every export below is internal: none appears in this package's barrel, and the
+// marker is what keeps a future `export *` from publishing them.
+
 /**
+ * @internal
+ *
  * Attaches the boot's container to the application it produced.
  *
  * The property is non-enumerable, non-writable, and non-configurable for the
@@ -995,12 +1000,18 @@ export function attachApplicationContainer(application: object, container: Aponi
   });
 }
 
-/** The container a boot attached, or `undefined` for an application no boot produced. */
+/**
+ * @internal
+ *
+ * The container a boot attached, or `undefined` for an application no boot produced.
+ */
 export function readApplicationContainer(application: unknown): AponiaContainer | undefined {
   return (application as { [containerKey]?: AponiaContainer } | null | undefined)?.[containerKey];
 }
 
 /**
+ * @internal
+ *
  * The value a token resolves to, through the container a boot attached.
  *
  * An application no boot produced holds no container and has no graph to find
@@ -1013,8 +1024,8 @@ export function readApplicationToken<T>(application: unknown, token: Token<T>): 
   if (!container) {
     throw new AponiaError(
       "MISSING_PROVIDER",
-      `Provider "${String(token)}" cannot be read: no boot produced this application, so it holds no container.`,
-      { token: String(token) },
+      `Provider "${tokenName(token)}" cannot be read: no boot produced this application, so it holds no container.`,
+      { token: tokenName(token) },
     );
   }
 
@@ -1045,7 +1056,10 @@ In `aponia-elysia-application.ts`, add the method and its import:
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `bun test packages/platform-elysia/tests/configuration.test.ts`
-Expected: 14 pass.
+Expected: pass, with three cases more than the file held before this task. The
+absolute counts elsewhere in this plan are the count at the moment they were
+written; earlier tasks' fix rounds add cases, so a number that disagrees is a
+stale number rather than a failed case.
 
 - [ ] **Step 5: Mirror the accessor in the conformance lane and commit**
 
