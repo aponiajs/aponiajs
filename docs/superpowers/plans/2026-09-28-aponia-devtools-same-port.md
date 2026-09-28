@@ -490,6 +490,20 @@ git commit -m "docs(devtools): describe the surface the application serves itsel
 - Consumes: every task before it.
 - Produces: the verified branch, bumped and pushed with a pull request.
 
+- [ ] **Step 0: The one sentence Task 3's re-review found in another copy**
+
+`packages/devtools/AGENTS.md:692-693` still carries the clause Task 3's fix removed from
+`docs/devtools.md`: "the ids never restart, because both the window and the counter belong to the
+application rather than to the listener." The window half is true; the counter half is not — it is
+created once per _registration_ by `createRequestCapture` and counts for the life of the capture.
+The re-review put it outside its own diff, which is right, and it reaches this task rather than
+another task's loop for a reason worth stating: left where it is, the branch ships a package guide
+that contradicts the page the fix corrected, and the only remaining seat that would catch it is the
+final review — which would spend a whole cycle on one clause it is already known to need. Correct it
+to what `docs/devtools.md` now says, and grep the guide for any other copy of the claim before
+calling it done, because this is the third time in this branch that a rule corrected in one place
+survived in another.
+
 - [ ] **Step 1: Mirror the public contract in the conformance lane**
 
 The Vite+ lane exists to hold public types and supported runtime behavior. The removed exports and
