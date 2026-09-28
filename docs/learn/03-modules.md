@@ -31,8 +31,10 @@ export class AppModule {}
 A provider is visible to its own module always, and to another module only when
 it appears in `exports` and that module `imports` it. Nothing is global.
 
-Two imported modules exporting the same token raise `AMBIGUOUS_PROVIDER` instead
-of the framework picking a winner.
+Two imported modules that resolve the token to different modules raise
+`AMBIGUOUS_PROVIDER` instead of the framework picking a winner. Two that
+re-export one shared provider agree on it, because both reach the same declaring
+module, so routing one service through two feature modules is legal.
 
 ## Validation happens before the server starts
 

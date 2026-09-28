@@ -1341,6 +1341,29 @@ and `packages/platform-elysia/AGENTS.md`'s bullet about the boot record's symbol
 mention that a second symbol-keyed seam now rides the same instance. `RULES.md`'s Definition of Done
 asks the guides to describe the same enforced reality, so both move in this step.
 
+**A fourth group, and it is the highest-value repair in Task 5.** The branch's final verification
+found that the sentence every document uses for `AMBIGUOUS_PROVIDER` is not what the graph does.
+"Two imports exporting the same token raise `AMBIGUOUS_PROVIDER`" is the shorthand in `AGENTS.md`,
+`packages/core/AGENTS.md`, `packages/core/llms.txt`, `docs/dependency-injection.md` (prose and the
+code table), `docs/learn/03-modules.md`, and `docs/learn/10-errors.md` — and it is false.
+`ModuleGraph.#locate` keys its candidates by the module that **holds** the provider
+(`module-graph.ts:95-119`), so two imports that re-export one shared provider agree and resolve to
+it: the Nest-style diamond is legal. Measured, `.tmp/probe-ambiguous-cases.probe.ts`, five cases:
+a diamond re-export reads `{"port":7001}`; two imports that each declare the token raise
+`AMBIGUOUS_PROVIDER` with both candidates named; a collision below a re-exporting module fails the
+**boot** (`validateExports` → `compileModuleGraph`, `graph-compiler.ts:89`) rather than the read; a
+root that exports the ambiguous token fails the boot; and a provider that injects it fails the boot.
+So the rule needs the resolved-module condition in all six places, plus the diamond in the ones with
+room for it, and `docs/learn/10-errors.md`'s closing "All happen during `AponiaFactory.create`"
+needs the exception this branch creates — `application.get` is a post-boot read, and it is what
+raises `MISSING_PROVIDER` and, at the root, `AMBIGUOUS_PROVIDER` after the boot has succeeded.
+
+A note on how this was found, because it is the round's lesson: the defect was **introduced by this
+plan's own previous fix round**, which had added the ambiguity to `docs/configuration.md` as "if two
+of them export the token". Verifying a repair is a separate act from making it. Every earlier
+review on this branch read the new sentence against the code and passed it; the verification round
+that finally caught it did so by writing a probe for the diamond case nobody had thought to try.
+
 - [ ] **Step 5: Run the documentation gates and commit**
 
 ```bash

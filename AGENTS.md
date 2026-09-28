@@ -146,9 +146,10 @@ provider dependencies, and unresolvable controller dependencies.
 
 `ModuleGraph.locate` resolves a token against the module's own providers first,
 then against imports that **export** that token. A provider that is not exported
-is invisible to importers. Two imports exporting the same token raise
-`AMBIGUOUS_PROVIDER` rather than picking a winner. Resolutions are memoized per
-module.
+is invisible to importers. Two imports that resolve the token to different
+modules raise `AMBIGUOUS_PROVIDER` rather than picking a winner; two that
+re-export one shared provider agree on it, which is what makes a diamond legal.
+Resolutions are memoized per module.
 
 `AponiaContainer` (`packages/core/src/container/container.ts`) caches one instance per
 provider per module — singleton is currently the only scope — and detects

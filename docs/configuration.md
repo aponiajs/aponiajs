@@ -151,10 +151,13 @@ await application.listen(application.get(AppConfig).port);
 The token is reachable exactly when the graph makes it reachable from the root
 module, which is the rule the dependency injection guide states: `locate` checks
 the root's own providers first, so a token the root module declares is reachable
-whether or not it exports it, and then the imports that export the token — if two
-of them do, the read raises `AMBIGUOUS_PROVIDER` rather than picking one.
-Anything else raises `MISSING_PROVIDER` — a token only a module the root never
-imports declares, for instance. So does a read on an application no boot
+whether or not it exports it, and then the imports that export the token —
+ambiguous only when two of them resolve it to different modules, which raises
+`AMBIGUOUS_PROVIDER` rather than picking a winner, since two that re-export one
+shared provider agree. That same lookup runs while the graph compiles, so a
+configuration that anything injects fails the boot there rather than at this
+read. Anything else raises `MISSING_PROVIDER` — a token only a module the root
+never imports declares, for instance. So does a read on an application no boot
 produced, because a hand-constructed wrapper holds no container, and the message
 says which of the two it was. Because the read goes through the container's
 cache, two reads of one token answer the same object.

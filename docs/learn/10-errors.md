@@ -144,7 +144,7 @@ try {
 | `DUPLICATE_MODULE`                    | Two modules share one identity                               |
 | `DUPLICATE_PROVIDER`                  | One module declares a token twice                            |
 | `INVALID_EXPORT`                      | A module exports a token it cannot resolve                   |
-| `AMBIGUOUS_PROVIDER`                  | Two imports export the same token                            |
+| `AMBIGUOUS_PROVIDER`                  | Two imports resolve the token to different modules           |
 | `MISSING_PROVIDER`                    | A dependency resolves to nothing visible                     |
 | `PROVIDER_CYCLE`                      | Providers depend on each other in a cycle                    |
 | `INVALID_PROVIDER`                    | A provider entry is not a descriptor this release can read   |
@@ -170,7 +170,11 @@ Graph errors through `MISSING_PROVIDER` are raised while the module graph
 compiles, and so is `DUPLICATE_ROUTE`, which decides ownership before any route
 registers. Provider cycles are detected while singletons initialize, and
 controller or platform diagnostics are raised while routes mount. All happen
-during `AponiaFactory.create`, before the application can listen.
+during `AponiaFactory.create`, before the application can listen — with one
+exception: `application.get` resolves through the same graph after a successful
+boot, so a token the root cannot reach, and a token two of its imports disagree
+about, raise `MISSING_PROVIDER` and `AMBIGUOUS_PROVIDER` there instead of during
+the boot.
 
 Gateway declaration errors also happen during bootstrap. Invalid envelopes,
 unknown events, and handler failures happen later while the gateway handles a

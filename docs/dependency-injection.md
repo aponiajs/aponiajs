@@ -102,8 +102,9 @@ export class AccountModule {}
 
 `AccountModule` resolves `UserService` and cannot reach `PasswordHasher`.
 Resolution checks the module's own providers first, then the exports of the
-modules it imports. Two imports exporting the same token is an error rather than
-a silent winner.
+modules it imports. Two imports that resolve the token to different modules is an
+error rather than a silent winner; two that re-export one shared provider agree on
+it, because both reach the same declaring module.
 
 ## Failures
 
@@ -118,7 +119,7 @@ they do not throw through the application HTTP error path.
 | `DUPLICATE_MODULE`                    | One module id belongs to two definitions                                    |
 | `DUPLICATE_PROVIDER`                  | A module declares the same token twice                                      |
 | `INVALID_EXPORT`                      | A module exports a token it cannot resolve                                  |
-| `AMBIGUOUS_PROVIDER`                  | Two imports export the same token                                           |
+| `AMBIGUOUS_PROVIDER`                  | Two imports resolve the token to different modules                          |
 | `MISSING_PROVIDER`                    | A dependency cannot be resolved                                             |
 | `PROVIDER_CYCLE`                      | Providers depend on each other in a cycle                                   |
 | `INVALID_PROVIDER`                    | A provider entry is not a provider descriptor this release can read         |
