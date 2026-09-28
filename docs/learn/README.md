@@ -22,7 +22,7 @@ afterwards.
 | [13 · Enhancers](./13-enhancers.md)                             | How a route is guarded, wrapped, and answered when it fails        |
 | [14 · Devtools](./14-devtools.md)                               | How to see what the running application compiled and did           |
 | [15 · Files](./15-files.md)                                     | How a route receives an uploaded file, and how it answers with one |
-| [15 · Lifecycle](./15-lifecycle.md)                             | What runs when the application starts and stops             |
+| [16 · Lifecycle](./16-lifecycle.md)                             | What runs when the application starts and stops                    |
 
 Reference documents live one directory up: [architecture and style](../architecture-and-style.md),
 [dependency injection](../dependency-injection.md),

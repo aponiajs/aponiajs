@@ -1,4 +1,4 @@
-# 15 · Lifecycle
+# 16 · Lifecycle
 
 **Use when:** something has to happen when the application starts, or to be closed when it stops.
 

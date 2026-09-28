@@ -51,6 +51,6 @@ close must not be able to keep every other pool open.
 
 ## `close()` without `listen()`
 
-The stopping hooks run whether or not the application ever listened, which is what makes them
-testable through `application.handle` — the way every suite in this repository drives an
-application — without binding a port.
+The stopping hooks run whether or not the application ever listened, which puts them in reach of a
+suite that drives an application through `application.handle`: it can close the application and see
+the hooks run, without binding a port.
