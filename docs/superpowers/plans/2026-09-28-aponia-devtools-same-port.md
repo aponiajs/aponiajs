@@ -518,5 +518,9 @@ module is caught.
   than deprecated: the package is pre-1.0 on the alpha channel, and a shim would keep the socket
   alive in the code that exists to protect it.
 - **No change to what the surface reports.** `/graph`, `/routes`, and `/flow` read the application
-  through the new store channel instead of through `onStart`'s argument, and their payloads are the
-  same bytes for the same application.
+  through the new store channel instead of through `onStart`'s argument. One visible consequence
+  follows from where the surface is served rather than from what it reports, and it is accepted
+  rather than filtered: the mount is a route in the application's own table, so a devtools-enabled
+  application's `/routes` and `/flow` carry one more row — `ALL /__devtools/*`, the surface's own
+  mount. Excluding it would make the endpoint lie about a route the application answers, and
+  `/routes` reports the mounted table rather than re-deriving it.

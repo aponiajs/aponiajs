@@ -76,11 +76,20 @@ runtime boundary it describes.
   line naming where the surface is mounted, and nothing may move the mount into
   it.
 - An application route that claims a devtools path wins it. The two owners of that
-  path are in one route table, and Elysia resolves a repeated `(method, path)` by
-  the later registration: this plugin is mounted during bootstrap, so a
-  controller's route mounts after it and answers. `tests/devtools-module.test.ts`
-  pins the rule; do not reintroduce a claim about every path under the prefix,
-  because the wildcard owns none of them and the dispatcher decides each one.
+  path are in one route table, and the reason is specificity rather than insertion
+  order — measured: a static `/__devtools/meta` answers whether it is registered
+  before or after this plugin's wildcard, so mounting the plugin last changes
+  nothing, and an insertion-order rule holds only between two registrations of the
+  same pattern. `tests/devtools-module.test.ts` pins the rule from both orders; do
+  not reintroduce a claim about every path under the prefix, because the wildcard
+  owns none of them and the dispatcher decides each one.
+- The surface's own mount is reported by the endpoints that read the table:
+  `/routes` and `/flow` carry one more row — `ALL /__devtools/*` — for a
+  devtools-enabled application than the same application without it, and that is a
+  consequence of serving the surface from the application rather than a defect to
+  filter. `/routes` reports the mounted table and never re-derives it, so a
+  builder that dropped this row would be reporting an application that does not
+  exist. `tests/devtools-module.test.ts` pins the row.
 - A debugging aid's own reports never fail a request. The one report this package
   writes from a handler is `/aot`'s row for a project whose route analysis could
   not be read, and it is guarded through `logging/report-failure.ts`: its sentence

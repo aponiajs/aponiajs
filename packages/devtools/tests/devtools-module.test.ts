@@ -18,7 +18,9 @@ import {
   aponiaVersion,
   devtoolsPathPrefix,
   devtoolsPlugin,
+  type AponiaFlowPayload,
   type AponiaMetaPayload,
+  type AponiaRoutesPayload,
 } from "../src/index.ts";
 
 @Controller("health")
@@ -107,6 +109,18 @@ function captureOutput(): CapturedOutput {
 function devtoolsReports(output: CapturedOutput): readonly string[] {
   return output.rows().filter((row) => row.includes("[Devtools]"));
 }
+
+/**
+ * A logger that records nothing, for the cases that mount the plugin on an
+ * application no boot produced or on one already built: the registration is what
+ * those cases are about, and none of them asserts a log line.
+ */
+const silentLogger: LoggerService = {
+  log: () => {},
+  fatal: () => {},
+  error: () => {},
+  warn: () => {},
+};
 
 test("register returns an inert module when disabled and a plugin module when enabled", () => {
   const disabled = DevtoolsModule.register({ enabled: false });
@@ -221,6 +235,77 @@ test("an application route that claims a devtools path answers it", async () => 
   expect(await response.json()).toEqual({ from: "application" });
 });
 
+test("a route that claims a devtools path wins even when the plugin mounts last", async () => {
+  const application = await AponiaFactory.create(
+    rootWith(DevtoolsModule.register({ enabled: false }), [
+      controllerAnswering(`${devtoolsPathPrefix}/meta`),
+    ]),
+    { logger: false },
+  );
+
+  try {
+    // Mounted after the controller's route is already on the table, which is the
+    // order a caller who reaches for `.use()` on the native application produces.
+    // The path is decided by specificity rather than by which registration came
+    // last: a static route answers here whether it was mounted before or after the
+    // wildcard, and the case above pins the other order.
+    application.getNativeApplication().use(devtoolsPlugin({ enabled: true, logger: silentLogger }));
+
+    const response = await application.handle(
+      new Request(`http://localhost${devtoolsPathPrefix}/meta`),
+    );
+
+    expect(await response.json()).toEqual({ from: "application" });
+
+    // The collision costs the surface one path and not the surface: the wildcard
+    // is mounted all the same, and the endpoints the application's route does not
+    // claim answer behind it.
+    const logs = await application.handle(
+      new Request(`http://localhost${devtoolsPathPrefix}/logs`),
+    );
+
+    expect(logs.status).toBe(200);
+  } finally {
+    await application.close();
+  }
+});
+
+test("routes and flow report the surface's own mount", async () => {
+  const application = await bootWithDevtools({ controllers: [HealthController] });
+
+  // The mount is a route in the application's own table, so the endpoints that
+  // report that table report it. The row is asserted rather than filtered
+  // because `/routes` reports what the application answers and never re-derives
+  // it: a builder that dropped this row would be reporting an application that
+  // does not exist. A devtools-enabled application therefore carries one more
+  // route than the same application without devtools, which is the visible price
+  // of serving the surface from the application.
+  const routes = (await (
+    await application.handle(new Request(`http://localhost${devtoolsPathPrefix}/routes`))
+  ).json()) as AponiaRoutesPayload;
+
+  const mount = Object.freeze({ method: "ALL", path: `${devtoolsPathPrefix}/*` });
+
+  expect(routes.routes).toContainEqual(
+    expect.objectContaining({ ...mount, module: "", controller: "", handler: "", source: null }),
+  );
+
+  // `/flow` reads the same table, so the route is here too. It carries no stages:
+  // the plugin's own hooks are declared on the instance rather than on this
+  // route, so there is no step for the chain to state.
+  const flow = (await (
+    await application.handle(new Request(`http://localhost${devtoolsPathPrefix}/flow`))
+  ).json()) as AponiaFlowPayload;
+
+  expect(flow.routes.map((route) => route.id)).toContain(`ALL ${devtoolsPathPrefix}/*`);
+
+  // The application's own route is reported beside it, so the row is an addition
+  // rather than a replacement.
+  expect(routes.routes).toContainEqual(
+    expect.objectContaining({ method: "GET", path: "/health/ping", handler: "ping" }),
+  );
+});
+
 test("a disabled registration mounts no route at all", async () => {
   const application = await bootWithDevtools({ enabled: false });
 
@@ -232,17 +317,11 @@ test("a disabled registration mounts no route at all", async () => {
 });
 
 test("an application no boot produced answers the endpoints that need no report", async () => {
-  const logger: LoggerService = {
-    log: () => {},
-    fatal: () => {},
-    error: () => {},
-    warn: () => {},
-  };
   // A bare `Elysia` with the plugin mounted by hand: there is no boot behind it,
   // so nothing published an application on the store this request carries, and
   // no boot opened a request record for it either.
   const application = new Elysia({ name: "HandBuilt" }).use(
-    devtoolsPlugin({ enabled: true, logger }),
+    devtoolsPlugin({ enabled: true, logger: silentLogger }),
   );
 
   const meta = await application.handle(new Request(`http://localhost${devtoolsPathPrefix}/meta`));

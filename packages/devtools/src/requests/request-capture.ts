@@ -95,11 +95,11 @@ export interface AnsweredRequest {
  * What tells one application apart from another inside one registration: the
  * application's own object.
  *
- * Elysia hands it to the plugin's `onStart` as `application.store` and to every
- * hook as `context.store`, so it is the one value both halves of the pair see
- * that belongs to the application rather than to the registration — which is
- * what makes it the identity a record is filed under. Its shape is Elysia's and
- * this package never reads it.
+ * It is `application.store`, and Elysia hands the same object to every hook as
+ * `context.store`, so it is the one value both halves of the pair see that
+ * belongs to the application rather than to the registration — which is what
+ * makes it the identity a record is filed under. Its shape is Elysia's and this
+ * package reads it only to compare and to key a `WeakMap`.
  */
 export type ApplicationIdentity = object;
 

@@ -23,7 +23,7 @@ export const devtoolsContractVersion = 2;
  *
  * - `framework` falls back to this release for an application no boot produced
  *   — a plain `Elysia`, or one a caller composed by hand. The endpoint still
- *   answers, because a client that asked a devtools server what it is looking at
+ *   answers, because a client that asked the surface what it is looking at
  *   deserves an answer rather than a `500`, and the fallback is true: this
  *   release is what is serving the report.
  * - `artifacts` reports the release each adopted artifact came from, exactly as
@@ -37,12 +37,12 @@ export const devtoolsContractVersion = 2;
  * symbol key: a boot run by a copy of `@aponiajs/platform-elysia` older than
  * this release answers the same key with a record that has no `artifacts` at
  * all. A record missing the field reads the way one that adopted nothing does —
- * `null` — rather than throwing, because this builder runs inside the plugin's
- * `onStart`, which Elysia neither awaits nor catches, so a throw here takes
- * `listen()` with it.
+ * `null` — rather than throwing, because this builder runs inside a request
+ * handler, where a throw is that request's failure.
  *
- * The payload is frozen and built once: every request of one boot is answered
- * from the same report, so a poll cannot observe a half-changed one.
+ * The payload is frozen and built once per application, when the surface first
+ * answers for it: every later request is answered from the same report, so a
+ * poll cannot observe a half-changed one.
  */
 export function buildMetaPayload(facts: {
   readonly diagnostics: AponiaApplicationDiagnostics | undefined;

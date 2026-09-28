@@ -168,7 +168,8 @@ export interface AponiaFlowRoute {
  * mounted route entry owns the hooks and the schema slots Elysia itself holds —
  * a plugin's `derive`, `resolve`, and lifecycle hooks, and the slots the route
  * validates — which is why this payload is assembled per request rather than
- * frozen at `onStart`: that entry belongs to the running application. The boot
+ * built once for the application: that entry belongs to the running
+ * application. The boot
  * record owns the compiled plan, which is the only place a route's guards and
  * interceptors are still separate, and the application's own enhancer
  * declaration, which no plan carries.

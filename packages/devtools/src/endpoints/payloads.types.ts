@@ -45,7 +45,16 @@ export interface AponiaMetaPayload {
   readonly elysia: string | null;
   /** Which release supplied each artifact the boot adopted. */
   readonly artifacts: AponiaArtifactStamps;
-  /** The moment the devtools server started, as an ISO-8601 timestamp. */
+  /**
+   * The moment this payload was built for the application that serves it, as an
+   * ISO-8601 timestamp — the first request the surface answered here rather
+   * than the moment the application started.
+   *
+   * The boot record carries no start time and this release does not invent one:
+   * the field states what the surface can observe, which is when it first
+   * answered for this application. It is a constant for the life of that
+   * application, because the payload is built once and answered unchanged.
+   */
   readonly startedAt: string;
 }
 

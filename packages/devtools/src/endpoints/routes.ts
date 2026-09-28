@@ -26,8 +26,8 @@ interface MountedNativeRoute {
  *
  * The table is read here, when the request arrives, rather than kept from the
  * boot: it belongs to the running application, which may mount another route on
- * the native instance before it listens, and a devtools server that answered a
- * frozen copy would report a server that no longer exists. The record arrives
+ * the native instance before it listens, and a surface that answered a frozen
+ * copy would report an application that no longer exists. The record arrives
  * already read, because a boot does not change once it has started.
  *
  * The join runs one way only: every route the table holds is reported, and a

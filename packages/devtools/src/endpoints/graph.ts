@@ -33,9 +33,9 @@ export const devtoolsGraphPath = "/graph";
  * `@aponiajs/platform-elysia` that predates this field answers the same key with
  * a record that has none, and one run by a copy newer than this release can
  * answer a compiled root this release cannot lower. Both read as a boot with no
- * graph to report — what the server serves no `/graph` for — rather than throw,
- * since this builder runs inside the plugin's `onStart`, which Elysia neither
- * awaits nor catches, so a throw here takes `listen()` with it.
+ * graph to report — what the surface serves no `/graph` for — rather than throw,
+ * since this builder runs inside a request handler, where a throw is that
+ * request's failure.
  */
 export function buildGraphPayload(
   diagnostics: AponiaApplicationDiagnostics | undefined,

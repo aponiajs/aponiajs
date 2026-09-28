@@ -2,7 +2,7 @@ import { createRingBuffer } from "../buffer/ring-buffer.ts";
 import type { LogBuffer, LogEntry } from "./log-buffer.types.ts";
 
 /**
- * How many log lines one devtools server retains.
+ * How many log lines one devtools surface retains.
  *
  * The spec fixes the buffer's shape and says it is bounded, and names no
  * capacity. A boot writes roughly a dozen lines and a running application
@@ -14,7 +14,7 @@ import type { LogBuffer, LogEntry } from "./log-buffer.types.ts";
 export const defaultLogBufferCapacity = 500;
 
 /**
- * The log stream for one devtools server, built at the capacity it is given.
+ * The log stream for one devtools surface, built at the capacity it is given.
  *
  * A `LogBuffer` is a `RingBuffer<LogEntry>` and nothing more: the record's
  * shape is what the log stream adds, and the boundedness, the cursor, and the

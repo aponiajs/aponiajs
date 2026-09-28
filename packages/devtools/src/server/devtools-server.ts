@@ -91,8 +91,8 @@ function findInstalledElysiaManifest(baseDirectory: string): string | undefined 
 }
 
 /**
- * The endpoints one application answers, built once — with the one payload the
- * running application state rather than the boot.
+ * The endpoints one application answers, built once, with the payloads that
+ * describe the running application read at request time rather than the boot.
  *
  * `/meta` and `/graph` describe a boot, and a boot does not change once it has
  * started, so their payloads are built here and answered unchanged. `/routes`,
@@ -131,6 +131,10 @@ function findInstalledElysiaManifest(baseDirectory: string): string | undefined 
  * Every builder it calls is total — a record this release cannot project is one
  * of the cases they answer rather than throw for — because this runs inside a
  * request handler, where a throw is that request's failure.
+ *
+ * `@internal` — the mounted route and this package's own tests are the only
+ * callers, and it stays off the barrel: `routeRequest` is the dispatcher an
+ * application is told about, and this is the record it is dispatched against.
  */
 export function createHandlers(
   application: Elysia | undefined,
