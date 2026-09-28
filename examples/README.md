@@ -17,6 +17,7 @@ behavior the framework promises.
 | `files`                | Uploads through the body slot, named downloads, and static assets                                      | 3080 | `bun run example:files`                |
 | `lifecycle`            | A provider that announces its own start and stop                                                       | 3090 | `bun run example:lifecycle`            |
 | `configuration`        | A declared configuration, validated once at boot, injected, and read back                              | 3100 | `bun run example:configuration`        |
+| `devtools`             | What a boot compiled and what each request answered, served on loopback                                | 3110 | `bun run example:devtools`             |
 
 Run every suite the way CI does:
 

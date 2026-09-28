@@ -611,4 +611,6 @@ These are the boundaries this package states rather than hides.
 - [Logging](./logging.md): the logger `/logs` records.
 - [Introspection](./introspection.md): the projection `/graph` publishes.
 - [Execution enhancers](./enhancers.md): the stages `/flow` reports.
+- [The devtools example](../examples/devtools/README.md): the surface mounted on a running
+  application, one endpoint at a time.
 - [Published packages](./packages.md): the npm catalog.
