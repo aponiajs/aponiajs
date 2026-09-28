@@ -125,8 +125,9 @@ The surface is served unless `NODE_ENV` is `production`, on loopback and port
 records headers and bodies. `enabled: false` serves nothing at all: no socket and no endpoint. The
 expression in `src/main.ts` is this starter's choice; the framework never reads
 the environment to choose its own behaviour. This application reads it where it
-declares it to: `src/config.ts` validates `PORT` through `provideConfiguration`
-once at boot, and that read is the application's. Both halves of the trade are in the
+declares it to: `src/config.ts` declares the `PORT` schema, and the
+`provideConfiguration(AppConfig)` provider in `src/app.module.ts` validates it
+once at boot — that read is the application's. Both halves of the trade are in the
 [devtools guide](https://github.com/aponiajs/aponiajs/blob/main/docs/devtools.md).
 
 ## Authoring rules

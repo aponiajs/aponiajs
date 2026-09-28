@@ -89,10 +89,10 @@ once, synchronously, before the application listens — and whether or not a
 service injects it. Two codes can fail that instantiation, and each asks for a
 different repair.
 
-| Code                          | `details`                   | Raised when                                                                  |
-| ----------------------------- | --------------------------- | ---------------------------------------------------------------------------- |
-| `INVALID_CONFIGURATION`       | `{ configuration, reason }` | The declaration or the schema's answer cannot be used; `reason` states which |
-| `INVALID_CONFIGURATION_VALUE` | `{ configuration, issues }` | The schema refused the source record                                         |
+| Code                          | `details`                   | Raised when                                                                                                             |
+| ----------------------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `INVALID_CONFIGURATION`       | `{ configuration, reason }` | The declaration or the schema's answer cannot be used; `reason` is `not-a-standard-schema` or `asynchronous-validation` |
+| `INVALID_CONFIGURATION_VALUE` | `{ configuration, issues }` | The schema refused the source record                                                                                    |
 
 `INVALID_CONFIGURATION` is a defect in the declaration rather than in the value.
 `reason: "not-a-standard-schema"` covers both halves of that read, because
@@ -151,7 +151,8 @@ await application.listen(application.get(AppConfig).port);
 The token is reachable exactly when the graph makes it reachable from the root
 module, which is the rule the dependency injection guide states: `locate` checks
 the root's own providers first, so a token the root module declares is reachable
-whether or not it exports it, and then the imports that export the token.
+whether or not it exports it, and then the imports that export the token — if two
+of them do, the read raises `AMBIGUOUS_PROVIDER` rather than picking one.
 Anything else raises `MISSING_PROVIDER` — a token only a module the root never
 imports declares, for instance. So does a read on an application no boot
 produced, because a hand-constructed wrapper holds no container, and the message

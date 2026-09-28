@@ -149,7 +149,7 @@ try {
 | `PROVIDER_CYCLE`                      | Providers depend on each other in a cycle                    |
 | `INVALID_PROVIDER`                    | A provider entry is not a descriptor this release can read   |
 | `UNRESOLVED_CONSTRUCTOR_DEPENDENCIES` | A class provider's constructor dependencies cannot be read   |
-| `INVALID_MODULE`                      | A module descriptor or decorated class is malformed          |
+| `INVALID_MODULE`                      | A class is used as a module without `@Module()`              |
 | `INVALID_CONTROLLER`                  | A controller factory returns something that is not an Elysia |
 | `UNSUPPORTED_CONTROLLER`              | A controller shape the platform cannot mount                 |
 | `DUPLICATE_ROUTE`                     | Two controllers claim one method and path                    |

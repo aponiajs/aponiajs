@@ -813,6 +813,17 @@ settlement names while you are in them: `AGENTS.md:321-333` gains the two new co
 `UNRESOLVED_CONSTRUCTOR_DEPENDENCIES`. Each table's wording for a new row matches the rows beside
 it, and the failure each row describes is the failure the union's member is raised for.
 
+**Third repair, added by the branch's final review.** That last rule is what caught a row this
+plan had not read: `docs/learn/10-errors.md:152` described `INVALID_MODULE` as "A module descriptor
+or decorated class is malformed", and the code raises that member in exactly one place —
+`module-compiler.ts:154`, on a class handed to the graph with no `@Module()` metadata. A malformed
+descriptor never raises it (a bad provider entry is `INVALID_PROVIDER`, a bad controller
+`INVALID_CONTROLLER`), so the row named a cause that cannot produce the code and sent a reader
+looking for the wrong mistake. `docs/dependency-injection.md:126` already states it correctly, and
+the row takes that wording. The `INVALID_CONTROLLER` row beside it was reviewed in the same pass
+and left alone: it is a true gloss of one of that member's five raise sites, and the entry the
+review proposed replacing it with would have dropped the raise site the row does name.
+
 - [ ] **Step 6: Run the tests and the guards**
 
 Run: `bun test packages/platform-elysia/tests/configuration.test.ts`
@@ -1265,15 +1276,23 @@ policy, configuration and secret redaction, …`. Line 565 drops `configuration 
 `secret redaction, `. `AGENTS.md`'s not-implemented list never named configuration, so it is
 unchanged.
 
-Both lists have an implemented half, and both are the scope of record, so the same phrase goes into
-each: add
+**There are three lists, not two, and the third was found by the branch's final review.**
+`docs/learn/01-overview.md:36-45` carries its own implemented list and closes it at `:51` with
+"Treat the lists above as the scope of record before assuming a feature exists", so a reader of the
+learning path is told the same thing the README and the guide tell one. It is a coarser summary —
+it never named file handling or the devtools package either — but the branch changes what is
+implemented, and the two lists it does update would then disagree with the third about the one
+feature this branch ships. The phrase goes into all three.
+
+Each list has an implemented half and states that it is the scope of record, so one phrase goes
+into all three: add
 
 ```markdown
 validated configuration an application declares and injects
 ```
 
-to `README.md`'s implemented paragraph and to `AGENTS.md`'s, in the enumeration style those
-paragraphs already use.
+to `README.md`'s implemented paragraph, to `AGENTS.md`'s, and to
+`docs/learn/01-overview.md`'s, in the enumeration style those paragraphs already use.
 
 - [ ] **Step 3: Narrow the sentences this change makes false**
 
@@ -1288,6 +1307,15 @@ it ships in that package's npm tarball.
 keep their decision (the framework consults no variable to choose its own behaviour) and gain the
 distinction: a declaration an application makes is the application's read, not the framework's. None
 of the three is guarded, so a missed edit ships silently.
+
+Two of the seven carry a second defect the final review found, and it is the one that matters most
+because these two files ship inside every generated application: both said the read happens in
+`src/config.ts` ("`src/config.ts` validates `PORT` through `provideConfiguration`"), and no file of
+that name calls it. `src/config.ts` declares the schema; `src/app.module.ts` lists
+`provideConfiguration(AppConfig)` in `providers`. Both sentences are corrected to name the
+declaration and the provider separately, which is what the same files' own tree note at
+`packages/cli/templates/application/AGENTS.md:65-66` and `docs/cli.md:259-261` already say. A
+reader told to look in `src/config.ts` for the read would edit the wrong file.
 
 - [ ] **Step 4: Add the page to the indexes and the package surfaces**
 
