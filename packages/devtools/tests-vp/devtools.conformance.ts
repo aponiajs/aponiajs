@@ -62,7 +62,20 @@ type DevtoolsContractAssertions = [
   Expect<Equals<AponiaRequestRecordFields, RequestRecord>>,
   Expect<Equals<AponiaAotPayload["graph"], "declared" | "decorated">>,
   Expect<Equals<AponiaAotPayload["invokers"]["accepted"], boolean>>,
+  Expect<Equals<keyof DevtoolsOptions, "enabled" | "logger" | "capture">>,
+  Expect<Equals<Extract<"startDevtoolsServer" | "DevtoolsServer", keyof DevtoolsBarrel>, never>>,
 ];
+
+/**
+ * The barrel as a consumer's `import` sees it, so the exports this release
+ * deleted are asserted absent rather than only documented as absent.
+ *
+ * `DevtoolsServerOptions` is deliberately not in the assertion above: a
+ * type-only export leaves no key here, so only the two value exports the socket
+ * carried are assertable this way. The third name is gone from the import list
+ * at the top of this file, which is where a consumer would have read it.
+ */
+type DevtoolsBarrel = typeof import("../src/index.ts");
 
 /**
  * The request record as a client sees it, restated so the assertion above
@@ -120,11 +133,11 @@ class ConformanceApplicationModule {}
 
 test("keeps the contract assertions referenced", () => {
   const assertions: DevtoolsContractAssertions = Array.from(
-    { length: 14 },
+    { length: 16 },
     () => true,
   ) as DevtoolsContractAssertions;
 
-  expect(assertions).toHaveLength(14);
+  expect(assertions).toHaveLength(16);
 });
 
 test("the registration is a module an application import accepts", () => {
