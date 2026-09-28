@@ -689,8 +689,9 @@ answer rather than only about the row.
 The record's lifetime is asserted through the application too: a case listens,
 services a request, listens a second time, services another, and reads the
 window back — the second `listen()` continues the record the first boot opened
-rather than starting an empty one, and the ids never restart, because both the
-window and the counter belong to the application rather than to the listener.
+rather than starting an empty one, and the ids never restart, because the counter
+belongs to the registration rather than to the record and counts for the life of
+the capture.
 
 The handler build is asserted against a record this release did not write: a case
 attaches a boot record with no `artifacts` — what a copy of the platform older
@@ -860,4 +861,7 @@ every path.
 
 The Vite+ lane stays type-only — it mirrors `DevtoolsOptions` and the payload
 types and makes no request. A conformance run is not the place to assert a
-transport the Bun lane already drives end to end.
+transport the Bun lane already drives end to end, and it could not make one:
+the lane runs on Node, and `createHandlers` reads `import.meta.dir`, which is a
+Bun-only property that reads `undefined` there, so every request through the
+mount throws before it can answer.
