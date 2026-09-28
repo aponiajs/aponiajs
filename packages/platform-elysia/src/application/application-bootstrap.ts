@@ -45,7 +45,7 @@ import type {
   AponiaApplicationOptions,
   ConfiguredAponiaApplicationOptions,
 } from "./application.types.ts";
-import { lifecycleCallable } from "./lifecycle-hooks.ts";
+import { collectLifecycleCalls } from "./lifecycle-hooks.ts";
 
 /**
  * Compile and mount one Aponia module graph onto a native Elysia instance.
@@ -280,28 +280,8 @@ export async function bootstrapAponiaApplication(
   // it. The hooks do not interleave with instantiation: every module's providers
   // and controllers exist before the first hook runs, so what this orders is
   // modules rather than isolating one.
-  for (const module of container.graph.modules) {
-    for (const provider of module.providers) {
-      const call = lifecycleCallable(
-        container.resolveModuleProvider(module, provider.provide),
-        "onModuleInit",
-      );
-      if (call) {
-        await call();
-      }
-    }
-    for (const controller of module.controllers) {
-      if (!isElysiaController(controller)) {
-        continue;
-      }
-      const call = lifecycleCallable(
-        container.instantiateController(module, controller),
-        "onModuleInit",
-      );
-      if (call) {
-        await call();
-      }
-    }
+  for (const call of collectLifecycleCalls(container, "onModuleInit")) {
+    await call();
   }
 
   // The boot's own record, attached to the application it returns: which root
@@ -351,28 +331,8 @@ export async function bootstrapAponiaApplication(
   // Once, after every route and gateway is mounted and no further plugin work is
   // pending: a hook that needs the whole graph — a scheduler, a migration check,
   // a cache warm — has one place to stand, and it is before anything can listen.
-  for (const module of container.graph.modules) {
-    for (const provider of module.providers) {
-      const call = lifecycleCallable(
-        container.resolveModuleProvider(module, provider.provide),
-        "onApplicationBootstrap",
-      );
-      if (call) {
-        await call();
-      }
-    }
-    for (const controller of module.controllers) {
-      if (!isElysiaController(controller)) {
-        continue;
-      }
-      const call = lifecycleCallable(
-        container.instantiateController(module, controller),
-        "onApplicationBootstrap",
-      );
-      if (call) {
-        await call();
-      }
-    }
+  for (const call of collectLifecycleCalls(container, "onApplicationBootstrap")) {
+    await call();
   }
 
   return Object.freeze({ nativeApplication, logger });

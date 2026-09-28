@@ -5,6 +5,7 @@ import {
   Injectable,
   Module,
   createToken,
+  provideAlias,
   provideClass,
   provideValue,
   type OnApplicationBootstrap,
@@ -77,6 +78,86 @@ describe("the starting hooks", () => {
     expect(response.status).toBe(200);
     expect(calls).toContain("dependent:bootstrap");
   });
+
+  test("awaits an asynchronous hook before the next one runs", async () => {
+    calls.length = 0;
+
+    class Slow implements OnModuleInit {
+      async onModuleInit(): Promise<void> {
+        await Bun.sleep(1);
+        calls.push("slow:init");
+      }
+    }
+
+    class Fast implements OnModuleInit {
+      onModuleInit(): void {
+        calls.push("fast:init");
+      }
+    }
+
+    @Module({ providers: [provideClass(Slow, []), provideClass(Fast, [])] })
+    class SlowModule {}
+
+    application = await AponiaFactory.create(SlowModule, { logger: false });
+
+    // The order is the whole assertion: a boot that stopped awaiting would push
+    // `fast:init` first, and every other case in this file is synchronous, so
+    // nothing else here can fail if the await is dropped.
+    expect(calls).toEqual(["slow:init", "fast:init"]);
+  });
+
+  test("runs a controller's onApplicationBootstrap too", async () => {
+    calls.length = 0;
+
+    @Controller("bootstrap")
+    class BootstrappingController implements OnApplicationBootstrap {
+      onApplicationBootstrap(): void {
+        calls.push("controller:bootstrap");
+      }
+
+      @Get()
+      read(): string {
+        return "ok";
+      }
+    }
+
+    @Module({ controllers: [BootstrappingController] })
+    class BootstrappingModule {}
+
+    application = await AponiaFactory.create(BootstrappingModule, { logger: false });
+
+    expect(calls).toEqual(["controller:bootstrap"]);
+  });
+});
+
+describe("the order across modules", () => {
+  test("runs an imported module's hook before its importer's", async () => {
+    calls.length = 0;
+
+    class Inner implements OnModuleInit {
+      onModuleInit(): void {
+        calls.push("inner:init");
+      }
+    }
+
+    class Outer implements OnModuleInit {
+      constructor(readonly inner: Inner) {}
+
+      onModuleInit(): void {
+        calls.push("outer:init");
+      }
+    }
+
+    @Module({ providers: [Inner], exports: [Inner] })
+    class InnerModule {}
+
+    @Module({ imports: [InnerModule], providers: [Outer] })
+    class OuterModule {}
+
+    application = await AponiaFactory.create(OuterModule, { logger: false });
+
+    expect(calls).toEqual(["inner:init", "outer:init"]);
+  });
 });
 
 describe("the reading", () => {
@@ -114,6 +195,40 @@ describe("the reading", () => {
     application = await AponiaFactory.create(ValueModule, { logger: false });
 
     expect(calls).toEqual(["value:init"]);
+  });
+
+  test("calls one instance's hook once, however many entries reach it", async () => {
+    calls.length = 0;
+
+    class Shared {
+      onModuleInit(): void {
+        calls.push("shared:init");
+      }
+    }
+    const alias = createToken<Shared>("SHARED_ALIAS");
+
+    // Two entries, one object: an alias resolves to its target, so a hook that
+    // ran per entry would open this instance's pool twice.
+    @Module({ providers: [provideClass(Shared, []), provideAlias(alias, Shared)] })
+    class SharedModule {}
+
+    application = await AponiaFactory.create(SharedModule, { logger: false });
+
+    expect(calls).toEqual(["shared:init"]);
+  });
+
+  test("ignores a value that cannot carry a method", async () => {
+    calls.length = 0;
+    const count = createToken<number>("COUNT");
+
+    // A non-object instance is the reader's early return: it must be skipped
+    // rather than read, since a primitive has no properties to check.
+    @Module({ providers: [provideValue(count, 42)] })
+    class PrimitiveModule {}
+
+    application = await AponiaFactory.create(PrimitiveModule, { logger: false });
+
+    expect(calls).toEqual([]);
   });
 });
 
