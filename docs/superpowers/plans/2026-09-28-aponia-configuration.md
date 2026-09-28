@@ -664,6 +664,8 @@ export function loadConfiguration<T>(
   configuration: ConfigurationToken<T>,
   options?: ConfigurationOptions,
 ): T {
+  // The fallback is for a token a JavaScript caller built by hand:
+  // `defineConfiguration` always supplies a description.
   const name = configuration.description ?? "configuration";
   const schema = configuration.schema as unknown;
 
@@ -700,6 +702,10 @@ export function loadConfiguration<T>(
   // nothing here can await. Refusing a promise is what keeps an injected value
   // from being a promise a service then has to await for itself.
   if (typeof (result as { then?: unknown } | null)?.then === "function") {
+    // Observed rather than abandoned: refusing the value does not make a rejected
+    // promise handled, and an unhandled rejection outlives the refusal.
+    void (result as Promise<unknown>).catch(() => undefined);
+
     throw new AponiaError(
       "INVALID_CONFIGURATION",
       `Configuration "${name}" was validated by a schema that answers asynchronously, which a provider cannot await.`,
@@ -707,8 +713,26 @@ export function loadConfiguration<T>(
     );
   }
 
-  const outcome = result as
-    { readonly value: T; readonly issues?: undefined } | { readonly issues: readonly unknown[] };
+  const outcome = result as unknown;
+
+  // The same rule one line later: a validator that answers with null, a primitive,
+  // or neither shape is not behaving as a Standard Schema either, and reading a
+  // field off it would be the engine's error rather than this framework's refusal.
+  if (typeof outcome !== "object" || outcome === null) {
+    throw new AponiaError(
+      "INVALID_CONFIGURATION",
+      `Configuration "${name}" was validated by a schema that answered with ${typeof outcome} instead of a result.`,
+      { configuration: name, reason: "not-a-standard-schema" },
+    );
+  }
+
+  if (!("value" in outcome) && !("issues" in outcome)) {
+    throw new AponiaError(
+      "INVALID_CONFIGURATION",
+      `Configuration "${name}" was validated by a schema that answered with neither a value nor issues.`,
+      { configuration: name, reason: "not-a-standard-schema" },
+    );
+  }
 
   if ("issues" in outcome && outcome.issues !== undefined) {
     throw new AponiaError(
@@ -1059,14 +1083,21 @@ import { z } from "zod";
 /**
  * The application's configuration, declared once.
  *
+ * The key is `PORT` because that is the variable's name: a schema declaring
+ * `port` would read a lowercase variable that no `.env` file defines and silently
+ * apply the default whatever `PORT` said. The transform gives the application the
+ * name it wants to read.
+ *
  * `PORT` arrives as a string and the schema coerces it, so `PORT=abc` fails the
  * boot with a stable code instead of reaching `listen` as `NaN`. The default
  * lives here rather than at the read.
  */
 export const AppConfig = defineConfiguration(
-  z.object({
-    port: z.coerce.number().int().positive().default(3000),
-  }),
+  z
+    .object({
+      PORT: z.coerce.number().int().positive().default(3000),
+    })
+    .transform(({ PORT }) => ({ port: PORT })),
   "app.config",
 );
 ```
