@@ -15,6 +15,7 @@ behavior the framework promises.
 | `descriptors`          | The same framework with no decorators at all                                             | 3060 | `bun run example:descriptors`          |
 | `websockets`           | Nest-style gateways backed by native Elysia WebSockets                                   | 3070 | `bun run example:websockets`           |
 | `files`                | Uploads through the body slot, named downloads, and static assets                        | 3080 | `bun run example:files`                |
+| `lifecycle`            | A provider that announces its own start and stop                                         | 3090 | `bun run example:lifecycle`            |
 
 Run every suite the way CI does:
 

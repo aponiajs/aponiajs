@@ -20,6 +20,7 @@
     "example:dependency-injection": "bun run --cwd examples/dependency-injection start",
     "example:descriptors": "bun run --cwd examples/descriptors start",
     "example:files": "bun run --cwd examples/files start",
+    "example:lifecycle": "bun run --cwd examples/lifecycle start",
     "example:multiple-routers": "bun run --cwd examples/multiple-routers start",
     "example:native-plugins": "bun run --cwd examples/native-plugins start",
     "example:request-parameters": "bun run --cwd examples/request-parameters start",
