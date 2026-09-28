@@ -411,7 +411,13 @@ describe("the stopping hooks", () => {
   test("run the stopping hooks once, however many times close is called", async () => {
     calls.length = 0;
 
-    class Once implements OnApplicationShutdown {
+    // One hook in each group, so the case covers both memoised groups and not
+    // only the one after the stop.
+    class Once implements BeforeApplicationShutdown, OnApplicationShutdown {
+      beforeApplicationShutdown(): void {
+        calls.push("before");
+      }
+
       onApplicationShutdown(): void {
         calls.push("shutdown");
       }
@@ -426,7 +432,7 @@ describe("the stopping hooks", () => {
 
     // The pre-seam `close()` was a no-op once the server had stopped, and a
     // teardown hook run twice is a pool closed twice: the plan runs at most once.
-    expect(calls).toEqual(["shutdown"]);
+    expect(calls).toEqual(["before", "shutdown"]);
   });
 
   test("join a close already in flight instead of resolving before it finishes", async () => {
