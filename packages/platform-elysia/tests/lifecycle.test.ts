@@ -219,14 +219,15 @@ describe("the reading", () => {
 
   test("ignores a value that cannot carry a method", async () => {
     calls.length = 0;
-    const count = createToken<number>("COUNT");
+    const nothing = createToken<null>("NOTHING");
 
-    // A non-object instance is the reader's early return: it must be skipped
-    // rather than read, since a primitive has no properties to check.
-    @Module({ providers: [provideValue(count, 42)] })
-    class PrimitiveModule {}
+    // `null` is the input the reader's early return exists for: a number reads a
+    // missing property harmlessly, while a null instance throws on the read
+    // itself, so this case fails if the guard is dropped and a number's would not.
+    @Module({ providers: [provideValue(nothing, null)] })
+    class NullModule {}
 
-    application = await AponiaFactory.create(PrimitiveModule, { logger: false });
+    application = await AponiaFactory.create(NullModule, { logger: false });
 
     expect(calls).toEqual([]);
   });
