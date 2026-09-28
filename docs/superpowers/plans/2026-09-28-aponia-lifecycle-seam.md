@@ -190,8 +190,12 @@ test("a synchronous hook answers nothing and an asynchronous one answers a promi
 
 - [ ] **Step 2: Run it to verify it fails**
 
-Run: `bunx vp test packages/platform-elysia/tests-vp/lifecycle.conformance.ts`
-Expected: FAIL — `@aponiajs/common` has no exported member `OnModuleInit`.
+Run: `bun run check`
+Expected: FAIL — five `TS2305` errors, one per missing contract (`Module '"@aponiajs/common"' has
+no exported member 'OnModuleInit'`, and so on). **The compile error is the red, not the lane's test
+run**: the Vite+ lane strips types without checking them, so `bunx vp test` on this file passes even
+while nothing it imports exists. Every compile-time half in Tasks 2 and 3 is red under
+`bun run check` for the same reason; their runtime cases are the ones `bun test` and `vp test` fail.
 
 - [ ] **Step 3: Write the contracts**
 
@@ -600,6 +604,9 @@ Run: `bun test packages/platform-elysia/tests/lifecycle.test.ts`
 Expected: 5 pass, 0 fail.
 
 - [ ] **Step 6: Mirror the behaviour in the conformance lane**
+
+This case has a runtime red — `bun test` on the platform suite — and its compile-time half is red
+under `bun run check`, which is where the lane's own `vp test` would not catch a type error.
 
 Add to `packages/platform-elysia/tests-vp/lifecycle.conformance.ts`:
 
