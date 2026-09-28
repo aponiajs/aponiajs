@@ -207,5 +207,5 @@ it.
 - [CLI reference](./cli.md): the starter's `src/config.ts` and what the
   generator writes around it.
 - [The configuration example](../examples/configuration/README.md): the declaration, the
-  injected value, and the two failures as a running application.
+  injected value, and the `INVALID_CONFIGURATION_VALUE` refusal as a running application.
 - [Published packages](./packages.md): the npm catalog.

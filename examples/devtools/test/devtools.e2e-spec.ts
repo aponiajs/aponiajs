@@ -1,4 +1,5 @@
 import { afterEach, expect, test } from "bun:test";
+import { aponiaVersion } from "@aponiajs/devtools";
 import type { DevtoolsApplication } from "./application.ts";
 import { createApplication, get, read } from "./application.ts";
 
@@ -17,7 +18,7 @@ test("meta reports the contract and the versions the boot ran", async () => {
   );
 
   expect(meta.contract).toBe(2);
-  expect(meta.framework).toStartWith("0.");
+  expect(meta.framework).toBe(aponiaVersion);
   expect(meta.elysia).toStartWith("1.");
 });
 
@@ -73,8 +74,8 @@ test("requests records a request the application answered", async () => {
     entries: readonly { id: number; method: string; path: string; status: number | null }[];
   }>(`${booted.devtools}/requests`);
 
-  // One request writes two entries under one id — one when it arrived and one
-  // when it was answered — so the answer is the last entry carrying that id.
+  // The case makes one request, and one request writes two entries — the arrival
+  // and the answer — so the answer is the last entry.
   const last = requests.entries.at(-1);
   expect(last).toMatchObject({ method: "GET", path: "/greetings", status: 200 });
 });

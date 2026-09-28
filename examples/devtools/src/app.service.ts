@@ -1,6 +1,6 @@
 import { Injectable } from "@aponiajs/common";
 
-/** A service with state, so `/flow` and `/requests` have something to report. */
+/** A service holding state, so the singleton's counter grows across requests. */
 @Injectable()
 export class AppService {
   #served = 0;

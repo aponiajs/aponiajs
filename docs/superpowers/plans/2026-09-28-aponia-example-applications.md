@@ -494,7 +494,7 @@ container cached.
 In `docs/configuration.md`'s Documentation block, add above the "Published packages" line:
 
 - [The configuration example](../examples/configuration/README.md): the declaration, the
-  injected value, and the two failures as a running application.
+  injected value, and the `INVALID_CONFIGURATION_VALUE` refusal as a running application.
 ````
 
 - [ ] **Step 8: Run the gates for this task and commit**
