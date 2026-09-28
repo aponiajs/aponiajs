@@ -1,9 +1,14 @@
 import {
+  Inject,
+  Injectable,
+  Module,
   defineConfiguration,
   type ConfigurationOptions,
   type ConfigurationToken,
+  type Provider,
 } from "@aponiajs/common";
 import { z } from "zod";
+import { AponiaFactory, provideConfiguration } from "../src/index.ts";
 
 type VitePlusTest = typeof import("vite-plus/test");
 
@@ -29,6 +34,28 @@ type OptionsKeysAssertion = Expect<Equals<keyof ConfigurationOptions, "source">>
 type OptionsSourceAssertion = Expect<
   Equals<ConfigurationOptions["source"], Readonly<Record<string, unknown>> | undefined>
 >;
+
+// The settled contract: a declaration lowers to an ordinary provider.
+const asProvider = provideConfiguration(AppConfig) satisfies Provider;
+
+@Injectable()
+class Reader {
+  constructor(@Inject(AppConfig) readonly config: { port: number }) {}
+}
+
+@Module({ providers: [provideConfiguration(AppConfig), Reader] })
+class ConfigModule {}
+
+test("resolves a declared configuration through a real boot", async () => {
+  const application = await AponiaFactory.create(ConfigModule, { logger: false });
+  try {
+    expect(application).toBeDefined();
+  } finally {
+    await application.close();
+  }
+});
+
+void asProvider;
 
 test("the Vite+ lane keeps a configuration declaration addressable", () => {
   const tokenTypeAssertion: TokenTypeAssertion = true;

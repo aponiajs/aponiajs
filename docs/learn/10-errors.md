@@ -138,29 +138,33 @@ try {
 }
 ```
 
-| Code                          | Raised when                                                  |
-| ----------------------------- | ------------------------------------------------------------ |
-| `MODULE_CYCLE`                | Module imports form a cycle                                  |
-| `DUPLICATE_MODULE`            | Two modules share one identity                               |
-| `DUPLICATE_PROVIDER`          | One module declares a token twice                            |
-| `INVALID_EXPORT`              | A module exports a token it cannot resolve                   |
-| `AMBIGUOUS_PROVIDER`          | Two imports export the same token                            |
-| `MISSING_PROVIDER`            | A dependency resolves to nothing visible                     |
-| `PROVIDER_CYCLE`              | Providers depend on each other in a cycle                    |
-| `INVALID_MODULE`              | A module descriptor or decorated class is malformed          |
-| `INVALID_CONTROLLER`          | A controller factory returns something that is not an Elysia |
-| `UNSUPPORTED_CONTROLLER`      | A controller shape the platform cannot mount                 |
-| `DUPLICATE_ROUTE`             | Two controllers claim one method and path                    |
-| `INVALID_VALIDATION_MODEL`    | A route uses a class without `@Validation()`                 |
-| `INVALID_NATIVE_APPLICATION`  | `configureNative` returned a different instance              |
-| `UNSUPPORTED_ELYSIA_VERSION`  | The installed Elysia moved the route API this platform calls |
-| `APPLICATION_NOT_LISTENING`   | `getUrl()` was called before `listen()`                      |
-| `INVALID_WEBSOCKET_GATEWAY`   | A gateway declaration or lifecycle method is invalid         |
-| `DUPLICATE_WEBSOCKET_GATEWAY` | Two gateways claim the same path                             |
-| `DUPLICATE_WEBSOCKET_HANDLER` | One gateway declares a message event more than once          |
-| `INVALID_WEBSOCKET_MESSAGE`   | A received message is not a valid `{ event, data }` envelope |
-| `UNKNOWN_WEBSOCKET_EVENT`     | A client sends an event the gateway does not subscribe to    |
-| `WEBSOCKET_HANDLER_ERROR`     | A message or lifecycle handler fails                         |
+| Code                                  | Raised when                                                  |
+| ------------------------------------- | ------------------------------------------------------------ |
+| `MODULE_CYCLE`                        | Module imports form a cycle                                  |
+| `DUPLICATE_MODULE`                    | Two modules share one identity                               |
+| `DUPLICATE_PROVIDER`                  | One module declares a token twice                            |
+| `INVALID_EXPORT`                      | A module exports a token it cannot resolve                   |
+| `AMBIGUOUS_PROVIDER`                  | Two imports export the same token                            |
+| `MISSING_PROVIDER`                    | A dependency resolves to nothing visible                     |
+| `PROVIDER_CYCLE`                      | Providers depend on each other in a cycle                    |
+| `INVALID_PROVIDER`                    | A provider entry is not a descriptor this release can read   |
+| `UNRESOLVED_CONSTRUCTOR_DEPENDENCIES` | A class provider's constructor dependencies cannot be read   |
+| `INVALID_MODULE`                      | A module descriptor or decorated class is malformed          |
+| `INVALID_CONTROLLER`                  | A controller factory returns something that is not an Elysia |
+| `UNSUPPORTED_CONTROLLER`              | A controller shape the platform cannot mount                 |
+| `DUPLICATE_ROUTE`                     | Two controllers claim one method and path                    |
+| `INVALID_CONFIGURATION`               | A configuration declares no Standard Schema, or an async one |
+| `INVALID_CONFIGURATION_VALUE`         | A configuration's value is refused by its own schema         |
+| `INVALID_VALIDATION_MODEL`            | A route uses a class without `@Validation()`                 |
+| `INVALID_NATIVE_APPLICATION`          | `configureNative` returned a different instance              |
+| `UNSUPPORTED_ELYSIA_VERSION`          | The installed Elysia moved the route API this platform calls |
+| `APPLICATION_NOT_LISTENING`           | `getUrl()` was called before `listen()`                      |
+| `INVALID_WEBSOCKET_GATEWAY`           | A gateway declaration or lifecycle method is invalid         |
+| `DUPLICATE_WEBSOCKET_GATEWAY`         | Two gateways claim the same path                             |
+| `DUPLICATE_WEBSOCKET_HANDLER`         | One gateway declares a message event more than once          |
+| `INVALID_WEBSOCKET_MESSAGE`           | A received message is not a valid `{ event, data }` envelope |
+| `UNKNOWN_WEBSOCKET_EVENT`             | A client sends an event the gateway does not subscribe to    |
+| `WEBSOCKET_HANDLER_ERROR`             | A message or lifecycle handler fails                         |
 
 Graph errors through `MISSING_PROVIDER` are raised while the module graph
 compiles, and so is `DUPLICATE_ROUTE`, which decides ownership before any route

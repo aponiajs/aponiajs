@@ -15,6 +15,7 @@ Decorated modules, controllers, gateways, and `@Validation()` models are the nor
 - [defineElysiaPlugin](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/plugins/plugin-module.ts): the same registration that also carries the plugin type, reachable as `plugin` at runtime.
 - [defineElysiaWebSocketGateway](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/websockets/gateway-definition.ts): declares a gateway's path, message handlers, and server properties as data instead of through `@WebSocketGateway()` and `@SubscribeMessage()`.
 - [downloadFile](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/routing/download-file.ts): writes the `content-disposition` value that names a download and returns the file the platform streams.
+- [provideConfiguration](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/configuration/provider.ts): turns a declared configuration into the singleton provider that validates it once at boot.
 
 ## Public types
 

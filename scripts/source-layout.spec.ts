@@ -36,6 +36,7 @@ const packageLayouts: readonly PackageLayout[] = [
     files: ["index.ts", "version.ts"],
     directories: [
       "application",
+      "configuration",
       "controllers",
       "errors",
       "inspection",

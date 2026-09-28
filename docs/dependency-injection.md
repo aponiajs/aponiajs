@@ -112,29 +112,33 @@ Framework diagnostics throw `AponiaError` with a stable `code` and frozen
 are delivered in the gateway's `exception` envelope with the same stable code;
 they do not throw through the application HTTP error path.
 
-| Code                          | Raised when                                                                 |
-| ----------------------------- | --------------------------------------------------------------------------- |
-| `MODULE_CYCLE`                | Module imports form a cycle                                                 |
-| `DUPLICATE_MODULE`            | One module id belongs to two definitions                                    |
-| `DUPLICATE_PROVIDER`          | A module declares the same token twice                                      |
-| `INVALID_EXPORT`              | A module exports a token it cannot resolve                                  |
-| `AMBIGUOUS_PROVIDER`          | Two imports export the same token                                           |
-| `MISSING_PROVIDER`            | A dependency cannot be resolved                                             |
-| `PROVIDER_CYCLE`              | Providers depend on each other in a cycle                                   |
-| `INVALID_MODULE`              | A class is used as a module without `@Module()`                             |
-| `INVALID_CONTROLLER`          | A controller is missing `@Controller()`, or a route handler is not callable |
-| `UNSUPPORTED_CONTROLLER`      | A controller cannot be mounted by the platform                              |
-| `DUPLICATE_ROUTE`             | Two controllers claim one method and path                                   |
-| `INVALID_VALIDATION_MODEL`    | A route uses a class without `@Validation()`                                |
-| `INVALID_NATIVE_APPLICATION`  | `configureNative` returned a different Elysia instance                      |
-| `UNSUPPORTED_ELYSIA_VERSION`  | The installed Elysia does not expose the route API this platform calls      |
-| `APPLICATION_NOT_LISTENING`   | `getUrl()` is called before `listen()`                                      |
-| `INVALID_WEBSOCKET_GATEWAY`   | A gateway declaration or lifecycle method is invalid                        |
-| `DUPLICATE_WEBSOCKET_GATEWAY` | Two gateways claim the same path                                            |
-| `DUPLICATE_WEBSOCKET_HANDLER` | One gateway declares the same message event more than once                  |
-| `INVALID_WEBSOCKET_MESSAGE`   | A received WebSocket message is not a valid `{ event, data }` envelope      |
-| `UNKNOWN_WEBSOCKET_EVENT`     | A client sends an event the gateway does not subscribe to                   |
-| `WEBSOCKET_HANDLER_ERROR`     | A message or lifecycle handler fails                                        |
+| Code                                  | Raised when                                                                 |
+| ------------------------------------- | --------------------------------------------------------------------------- |
+| `MODULE_CYCLE`                        | Module imports form a cycle                                                 |
+| `DUPLICATE_MODULE`                    | One module id belongs to two definitions                                    |
+| `DUPLICATE_PROVIDER`                  | A module declares the same token twice                                      |
+| `INVALID_EXPORT`                      | A module exports a token it cannot resolve                                  |
+| `AMBIGUOUS_PROVIDER`                  | Two imports export the same token                                           |
+| `MISSING_PROVIDER`                    | A dependency cannot be resolved                                             |
+| `PROVIDER_CYCLE`                      | Providers depend on each other in a cycle                                   |
+| `INVALID_PROVIDER`                    | A provider entry is not a provider descriptor this release can read         |
+| `UNRESOLVED_CONSTRUCTOR_DEPENDENCIES` | A class provider's constructor dependencies cannot be read                  |
+| `INVALID_MODULE`                      | A class is used as a module without `@Module()`                             |
+| `INVALID_CONTROLLER`                  | A controller is missing `@Controller()`, or a route handler is not callable |
+| `UNSUPPORTED_CONTROLLER`              | A controller cannot be mounted by the platform                              |
+| `DUPLICATE_ROUTE`                     | Two controllers claim one method and path                                   |
+| `INVALID_CONFIGURATION`               | A configuration declares no Standard Schema, or one that answers async      |
+| `INVALID_CONFIGURATION_VALUE`         | A configuration's value is refused by its own schema                        |
+| `INVALID_VALIDATION_MODEL`            | A route uses a class without `@Validation()`                                |
+| `INVALID_NATIVE_APPLICATION`          | `configureNative` returned a different Elysia instance                      |
+| `UNSUPPORTED_ELYSIA_VERSION`          | The installed Elysia does not expose the route API this platform calls      |
+| `APPLICATION_NOT_LISTENING`           | `getUrl()` is called before `listen()`                                      |
+| `INVALID_WEBSOCKET_GATEWAY`           | A gateway declaration or lifecycle method is invalid                        |
+| `DUPLICATE_WEBSOCKET_GATEWAY`         | Two gateways claim the same path                                            |
+| `DUPLICATE_WEBSOCKET_HANDLER`         | One gateway declares the same message event more than once                  |
+| `INVALID_WEBSOCKET_MESSAGE`           | A received WebSocket message is not a valid `{ event, data }` envelope      |
+| `UNKNOWN_WEBSOCKET_EVENT`             | A client sends an event the gateway does not subscribe to                   |
+| `WEBSOCKET_HANDLER_ERROR`             | A message or lifecycle handler fails                                        |
 
 The first three WebSocket codes describe gateway declarations and are raised
 during bootstrap. The last three describe messages after a connection has
