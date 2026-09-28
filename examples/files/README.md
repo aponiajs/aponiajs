@@ -29,4 +29,12 @@ inline under a name outside ASCII, which is percent-encoded per RFC 8187 rather 
 reaching the engine raw. `test/downloads.e2e-spec.ts` asserts both the header and the
 bytes.
 
+## Static assets
+
+`public/` is served under `/assets/*` by a Bun native directory route, mounted through
+`configureNative`. Because that route is composed when the server starts, its suite
+listens on a reserved port and fetches, and it asserts the trade the recipe states: a
+real asset answers `200` with its content type, and a missing one answers Bun's own
+bare `404` rather than Problem Details.
+
 [Every example](../README.md)

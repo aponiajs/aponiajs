@@ -114,3 +114,49 @@ instead of saving. A name carrying a line break, a NUL, or a path separator is r
 with a `TypeError`: a value an application hands a helper while it runs is a caller
 mistake, which is the runtime half of the convention the batch delivery document
 states.
+
+## Static assets
+
+No AponiaJS package serves files. Two paths exist, they are not equivalent, and the
+difference is one an application has to know before it chooses.
+
+| Path                           | Needs                                                  | Inside Elysia's lifecycle | Cost                                                                       |
+| ------------------------------ | ------------------------------------------------------ | ------------------------- | -------------------------------------------------------------------------- |
+| `@elysia/static` via `plugins` | `bun add @elysia/static` in the application            | Yes                       | A dependency the application owns; the framework gains nothing             |
+| Bun native directory route     | `configureNative` setting `native.config.serve.routes` | **No**                    | The route leaves Elysia entirely, and the platform's error mapping with it |
+
+The plugin keeps the request inside Elysia, so the framework's hooks, its enhancers,
+and its error path still apply to it. The native route is Bun's: it answers `404` with
+no content type and no Problem Details, because the platform's default mapping is
+compiled only into the routes the platform mounts. It is also the one that arrives
+with the hardening a file server needs — root-confined opens, canonical-path rejection,
+`Last-Modified` and `ETag`, single-range requests — and it costs no dependency.
+
+```ts
+import { resolve } from "node:path";
+import type { NativeElysiaConfigurator } from "@aponiajs/platform-elysia";
+import type { Elysia } from "elysia";
+
+export const configureStaticAssets: NativeElysiaConfigurator<Elysia> = (native) => {
+  native.config.serve = {
+    ...native.config.serve,
+    routes: {
+      ...native.config.serve?.routes,
+      "/assets/*": { dir: resolve(import.meta.dir, "./public") },
+    },
+  };
+  return native;
+};
+```
+
+Three details decide whether that works. The route belongs on `config.serve`, not in
+the options `listen` takes: the Bun adapter builds the routes it hands to `Bun.serve`
+from the application's own routes merged with `config.serve.routes`, so an
+`options.routes` is overwritten. The prefix must end in `/*`. And `dir` is read
+relative to the process working directory, so resolve it — a relative path works when
+the application is started from its own directory and throws `ENOENT` from anywhere
+else.
+
+Reach for the plugin when the asset route has to behave like a route; reach for the
+native route when it has to be a fast file server and the application accepts that it
+answers the way Bun answers.
