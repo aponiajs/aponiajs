@@ -50,9 +50,9 @@ test("a synchronous hook answers nothing and an asynchronous one answers a promi
   const sync = new SyncHooks();
   const asynchronous = new AsyncHooks();
 
-  // Compiling is the main assertion here — a class that stopped satisfying a
-  // contract fails `bun run check` — and these calls keep the file honest about
-  // what the contracts accept.
+  // Compiling is the whole assertion: a class that stopped satisfying a contract
+  // fails `bun run check`. These calls exercise the two local doubles, and they
+  // cannot fail on a contract change at runtime.
   expect(sync.onModuleInit()).toBeUndefined();
   expect(sync.onApplicationBootstrap()).toBeUndefined();
   expect(sync.onModuleDestroy()).toBeUndefined();

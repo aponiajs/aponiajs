@@ -22,14 +22,14 @@ export interface OnApplicationBootstrap {
   onApplicationBootstrap(): void | Promise<void>;
 }
 
-/** Runs while the application is stopping, after the server has stopped. */
-export interface OnModuleDestroy {
-  onModuleDestroy(): void | Promise<void>;
-}
-
 /** Runs while the application is stopping, before the server stops. */
 export interface BeforeApplicationShutdown {
   beforeApplicationShutdown(): void | Promise<void>;
+}
+
+/** Runs while the application is stopping, after the server has stopped. */
+export interface OnModuleDestroy {
+  onModuleDestroy(): void | Promise<void>;
 }
 
 /** Runs last, once the application has stopped. */
