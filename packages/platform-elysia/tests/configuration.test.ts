@@ -733,5 +733,9 @@ describe("AponiaElysiaApplication.get", () => {
 
     expect(codeOf(thrown)).toBe("MISSING_PROVIDER");
     expect((thrown as AponiaError).message).toContain("no boot produced");
+    // The rendered token, through details rather than the message: `vp check`
+    // reports `String(token)` as a warning and warnings do not fail it, so the
+    // linter is not what pins this.
+    expect((thrown as AponiaError).details).toMatchObject({ token: "app.config" });
   });
 });
