@@ -12,8 +12,15 @@ export const devtoolsMetaPath = "/meta";
  * `durationMs` became nullable, and one request began writing two entries — a
  * change a reader of `1` cannot survive, because it would read a `null` status
  * as a number and count one request twice.
+ *
+ * It moved from `2` to `3` when `/meta`'s `startedAt` changed meaning: the
+ * surface answers on the application's own route table now, so the field is
+ * stamped when the surface first answers for an application rather than when a
+ * socket was bound. No field was added or removed, and a reader of `2` has no
+ * other signal — the shape it validates still parses and the timestamp it reads
+ * is still an ISO-8601 string, while the moment it names is a different one.
  */
-export const devtoolsContractVersion = 2;
+export const devtoolsContractVersion = 3;
 
 /**
  * Builds the payload `/meta` answers with, once per boot.

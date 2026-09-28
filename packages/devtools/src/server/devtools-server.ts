@@ -132,9 +132,11 @@ function findInstalledElysiaManifest(baseDirectory: string): string | undefined 
  * of the cases they answer rather than throw for — because this runs inside a
  * request handler, where a throw is that request's failure.
  *
- * `@internal` — the mounted route and this package's own tests are the only
- * callers, and it stays off the barrel: `routeRequest` is the dispatcher an
- * application is told about, and this is the record it is dispatched against.
+ * @internal
+ *
+ * The mounted route and this package's own tests are the only callers, and it
+ * stays off the barrel: `routeRequest` is the dispatcher an application is told
+ * about, and this is the record it is dispatched against.
  */
 export function createHandlers(
   application: Elysia | undefined,

@@ -18,8 +18,10 @@ export const devtoolsPathPrefix = "/__devtools";
  * safe one: the answer decides whether a request is recorded at all, so a
  * spelling this check is not sure of stays recorded rather than dropped.
  *
- * `@internal` — the plugin's arrival hook is the only caller, and this is not
- * part of the endpoint contract the barrel publishes.
+ * @internal
+ *
+ * The plugin's arrival hook is the only caller, and this is not part of the
+ * endpoint contract the barrel publishes.
  */
 export function isDevtoolsSurfaceRequest(request: Request): boolean {
   let pathname: string;

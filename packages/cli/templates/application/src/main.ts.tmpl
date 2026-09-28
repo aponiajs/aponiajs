@@ -39,12 +39,12 @@ async function bootstrap(): Promise<void> {
       }),
     ],
   });
-  // The port is the validated configuration's, read back from the container the
-  // boot built. A `PORT` the schema refuses fails the boot — the provider is
-  // instantiated inside `AponiaFactory.create` above, before this read runs — so
-  // a malformed value never reaches `listen` as `NaN`. The devtools surface is
-  // mounted on this same address. `NODE_ENV` above stays inline: the `plugins`
-  // option needs it before a container exists to read one from.
+  // The devtools surface is mounted on this same address. The port is the
+  // validated configuration's, read back from the container the boot built. A
+  // `PORT` the schema refuses fails the boot — the provider is instantiated
+  // inside `AponiaFactory.create` above, before this read runs — so a malformed
+  // value never reaches `listen` as `NaN`. `NODE_ENV` above stays inline: the
+  // `plugins` option needs it before a container exists to read one from.
   await application.listen(application.get(AppConfig).port);
 }
 

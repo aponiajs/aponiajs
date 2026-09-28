@@ -121,15 +121,15 @@ both.
 
 Seven endpoints, all `GET`, all under `/__devtools`:
 
-| Endpoint               | Answers                                                                    |
-| ---------------------- | -------------------------------------------------------------------------- |
-| `/__devtools/meta`     | The contract version, the releases in play, and the start time             |
-| `/__devtools/graph`    | The module graph the boot compiled                                         |
-| `/__devtools/routes`   | The routes the application answers, with the binding that serves each      |
-| `/__devtools/flow`     | The stages each route passes through, and its filters                      |
-| `/__devtools/logs`     | The application's log stream, from a cursor                                |
-| `/__devtools/requests` | The requests that reached the record and what answered them, from a cursor |
-| `/__devtools/aot`      | What a build decides, beside what the boot did                             |
+| Endpoint               | Answers                                                                         |
+| ---------------------- | ------------------------------------------------------------------------------- |
+| `/__devtools/meta`     | The contract version, the releases in play, and when the surface first answered |
+| `/__devtools/graph`    | The module graph the boot compiled                                              |
+| `/__devtools/routes`   | The routes the application answers, with the binding that serves each           |
+| `/__devtools/flow`     | The stages each route passes through, and its filters                           |
+| `/__devtools/logs`     | The application's log stream, from a cursor                                     |
+| `/__devtools/requests` | The requests that reached the record and what answered them, from a cursor      |
+| `/__devtools/aot`      | What a build decides, beside what the boot did                                  |
 
 The surface is a route, so `/routes` and `/flow` also report it: both carry one
 more row, `ALL /__devtools/*`, alongside the application's own. That extra row
@@ -153,7 +153,7 @@ A consumer reads `meta` first and decides whether to proceed:
 
 ```ts
 {
-  contract: 2,              // the version of this wire shape
+  contract: 3,              // the version of this wire shape
   framework: "0.6.0-alpha.35", // the release that booted the application
   elysia: "1.4.30",         // the release installed in the application's own tree, or null
   artifacts: {              // which release supplied each adopted artifact
@@ -165,11 +165,17 @@ A consumer reads `meta` first and decides whether to proceed:
 ```
 
 `contract` is the one field whose meaning never changes: it is the version of
-the payload shape, and it moves when a field changes meaning. It is `2` as of
-this release, because a `/requests` entry gained `id`, its `status` and
-`durationMs` became nullable, and one request began writing two entries — a
-reader of `1` would read a `null` status as a number and would count a request
-twice. `framework` is
+the payload shape, and it moves when a field changes meaning. It is `3` as of
+this release, and it has moved twice. It became `2` when a `/requests` entry
+gained `id`, its `status` and `durationMs` became nullable, and one request began
+writing two entries — a reader of `1` would read a `null` status as a number and
+would count a request twice. It became `3` when `startedAt` changed meaning: the
+surface answers on the application's own route table now, so the field names the
+moment the surface first answered for an application rather than the moment a
+socket was bound. Nothing else about it moved — no key left the payload, and the
+value is still an ISO-8601 string — which is exactly why the number has to: a
+reader of `2` validates the same shape and reads a different moment, with no
+other signal that anything changed. `framework` is
 independent of it on purpose — a devtools release can read an older boot and has
 to say which one it read. For an application no `AponiaFactory` boot produced,
 `framework` falls back to the release serving the payload, and every artifact
@@ -578,7 +584,16 @@ These are the boundaries this package states rather than hides.
   `status` and `durationMs` are `null` — but this package's hook has to run for a
   request to be in the record at all, so a request the server rejected before
   Elysia's request phase leaves nothing, and neither does one a plugin mounted
-  ahead of the devtools registration answered first.
+  ahead of the devtools registration answered first. The surface's own traffic is
+  left out as well, and it is left out by **path prefix** rather than by route
+  identity: `/__devtools` and everything beneath it never reaches the record, so
+  the window holds what the application answered rather than the polls watching
+  it. A consequence follows from where that test sits and has to be stated beside
+  it: an application route that claims a `/__devtools` path wins the path (see the
+  collision rule above) and its traffic is nonetheless unrecorded, because the two
+  decisions are made by different mechanisms — the route table picks the more
+  specific owner, while the record reads the request's path prefix — and neither
+  can see the other.
 - **Response bodies are not captured.** Buffering every answer costs in
   proportion to the traffic rather than to the question being asked, and the
   request is usually what is being debugged. An application whose answers are

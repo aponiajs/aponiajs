@@ -326,7 +326,17 @@ runtime boundary it describes.
   `application-container.ts`'s `attachApplicationContainer`, with the same three
   flags and the same reader discipline, and it is what
   `AponiaElysiaApplication.get` reads a token through — a wrapper no boot
-  produced holds no container and raises `MISSING_PROVIDER`.
+  produced holds no container and raises `MISSING_PROVIDER`. The third seam rides
+  the application's own `store` rather than its instance, because its consumer
+  reaches the application from inside a request: `publishApplicationOnStore`
+  writes the application onto `application.store` under
+  `Symbol.for("aponia.application.native")` with the same three flags, and
+  `readApplicationFromStore` is its reader on the barrel — the one internal
+  export that appears there, because the consumer is `@aponiajs/devtools` rather
+  than an application, and Elysia hands a request context the `store` and not the
+  instance. `tests/application-diagnostics.test.ts` pins the publication, the
+  absence a plain `Elysia` reads, and the early return that leaves a value with no
+  `store` unpublished rather than throwing.
 - `defineElysiaControllerRoutes` is the descriptor path's counterpart to
   `@Controller()` and its route decorators: it compiles `ElysiaRoutePlan` values
   through the same lowering a decorated controller uses, so a declared

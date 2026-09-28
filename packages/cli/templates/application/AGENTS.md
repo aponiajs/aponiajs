@@ -121,7 +121,9 @@ is missing exactly what the other wrote.
 
 The surface is served unless `NODE_ENV` is `production`, on the application's own
 port under `/__devtools` — it is part of the route table the application mounts,
-and an application route that claims a devtools path wins it. It is reachable
+and an application route that claims a devtools path wins it, because the more
+specific route answers: a static or parameter route beats this wildcard whether
+it is mounted before or after the plugin. It is reachable
 wherever the application is, and `/requests` records headers and bodies with no
 warning: this is a development surface, and `enabled` is how an application keeps
 it out of production. `enabled: false` mounts nothing at all: no route and no

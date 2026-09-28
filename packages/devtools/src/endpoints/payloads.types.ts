@@ -28,14 +28,18 @@ export interface AponiaArtifactStamps {
  * produced the data being read. The two are independent on purpose — a devtools
  * release can read an older boot, and has to say which one it read.
  *
- * It is `2` as of this release. A request entry gained `id`, `status` and
- * `durationMs` became nullable, and one request began writing two entries, so a
- * reader written against `1` would read a status of `null` as a number and would
- * count a request twice.
+ * It is `3` as of this release. It became `2` when a request entry gained `id`,
+ * `status` and `durationMs` became nullable, and one request began writing two
+ * entries, so a reader written against `1` would read a status of `null` as a
+ * number and would count a request twice. It became `3` when `startedAt` changed
+ * meaning — it is stamped when the surface first answers for an application
+ * rather than when a socket was bound — which is a change no reader of `2` can
+ * detect for itself, because no key left the payload and the value is still an
+ * ISO-8601 string.
  */
 export interface AponiaMetaPayload {
   /** The devtools wire contract this payload is written in. */
-  readonly contract: 2;
+  readonly contract: 3;
   /**
    * The AponiaJS release that booted the application, or — when no boot
    * produced it — the release serving this payload.

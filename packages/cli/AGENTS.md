@@ -253,12 +253,15 @@ separate focused modules. `src/index.ts` is the only public barrel.
   **dependency** — `src/main.ts` imports it at run time — while `@aponiajs/cli`
   stays a devDependency.
 - The starter's own devtools choices, none of which the framework makes for it:
-  the surface is enabled unless `NODE_ENV` is `production`, it is served on the
-  application's own port under `/__devtools` — the address `src/main.ts` already
-  hands to `listen` — and `src/main.ts` hands the **same** logger object to
-  `AponiaFactory.create` and to `devtoolsPlugin`, which is what makes
-  `/__devtools/logs` carry the boot's own lines. They are stated in the
-  template's `AGENTS.md`, `README.md`, `.env.example`, and `src/main.ts`.
+  the surface is enabled unless `NODE_ENV` is `production`, and it is served on
+  the application's own port under `/__devtools` — the address `src/main.ts`
+  already hands to `listen`. Those two are stated in the template's `AGENTS.md`,
+  `README.md`, `.env.example`, and `src/main.ts`. The third choice is the logger:
+  `src/main.ts` hands the **same** object to `AponiaFactory.create` and to
+  `devtoolsPlugin`, which is what makes `/__devtools/logs` carry the boot's own
+  lines, and it is stated in the template's `AGENTS.md`, `README.md`, and
+  `src/main.ts` — not in `.env.example`, which carries environment values and no
+  logger.
 - The starter commits both generated modules and `src/main.ts` adopts both
   artifacts, so a freshly generated application serves through generated route
   invokers and boots from the declared module graph before any build has run.

@@ -28,4 +28,4 @@ rules, are in [`AGENTS.md`](AGENTS.md).
 - [@aponiajs/core](https://www.npmjs.com/package/@aponiajs/core): module graph and dependency injection container
 - [@aponiajs/platform-elysia](https://www.npmjs.com/package/@aponiajs/platform-elysia): bootstrap, HTTP routes, WebSocket gateways, and typed HTTP errors
 - [@aponiajs/cli](https://www.npmjs.com/package/@aponiajs/cli): the `aponia new` and `aponia generate` commands
-- [@aponiajs/devtools](https://www.npmjs.com/package/@aponiajs/devtools): the devtools this starter mounts through the factory's `plugins` option, served on the application's own port and off when `NODE_ENV` is `production`
+- [@aponiajs/devtools](https://www.npmjs.com/package/@aponiajs/devtools): the devtools this starter mounts through the factory's `plugins` option, served on the application's own address and off when `NODE_ENV` is `production`

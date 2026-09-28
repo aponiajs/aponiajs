@@ -155,7 +155,7 @@ test("serves its endpoints on the application's own address", async () => {
   const meta = await application.handle(new Request(`http://localhost${devtoolsPathPrefix}/meta`));
 
   expect(meta.status).toBe(200);
-  expect(await meta.json()).toMatchObject({ contract: 2 });
+  expect(await meta.json()).toMatchObject({ contract: devtoolsContractVersion });
 });
 
 test("answers 404 for a path it does not own and 405 for a method it does not serve", async () => {
@@ -557,9 +557,12 @@ module is caught.
 
 ## What this plan does not do
 
-- **Not a new endpoint, payload, or capture policy.** The seven endpoints, their payload contracts,
-  the request and log buffers, and `capture`'s shape are unchanged; only where they are served from
-  changes.
+- **Not a new endpoint, payload, or capture policy.** The seven endpoints, the request and log
+  buffers, and `capture`'s shape are unchanged; only where they are served from changes — with two
+  consequences that follow from that and are accepted rather than worked around: `/routes` and
+  `/flow` carry the surface's own mount (see above), and `/meta`'s `startedAt` now names the first
+  request the surface answered rather than the moment a socket was bound, which is a field changing
+  meaning rather than being added or removed, so `devtoolsContractVersion` moves from `2` to `3`.
 - **No authentication, no path secret, no production hardening.** The owner's decision is that this
   is a development surface; `enabled` remains the switch, and the docs say so.
 - **No compatibility shim for `port`, `host`, or `startDevtoolsServer`.** They are removed rather

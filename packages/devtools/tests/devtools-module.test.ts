@@ -16,6 +16,7 @@ import { Elysia } from "elysia";
 import {
   DevtoolsModule,
   aponiaVersion,
+  devtoolsContractVersion,
   devtoolsPathPrefix,
   devtoolsPlugin,
   type AponiaFlowPayload,
@@ -183,7 +184,7 @@ test.serial(
       const meta = await fetch(`${application.getUrl()}${devtoolsPathPrefix}/meta`);
 
       expect(meta.status).toBe(200);
-      expect(((await meta.json()) as AponiaMetaPayload).contract).toBe(2);
+      expect(((await meta.json()) as AponiaMetaPayload).contract).toBe(devtoolsContractVersion);
 
       const health = await fetch(`${application.getUrl()}/health/ping`);
 
@@ -205,7 +206,7 @@ test("serves its endpoints on the application's own address", async () => {
   const meta = await application.handle(new Request(`http://localhost${devtoolsPathPrefix}/meta`));
 
   expect(meta.status).toBe(200);
-  expect(await meta.json()).toMatchObject({ contract: 2 });
+  expect(await meta.json()).toMatchObject({ contract: devtoolsContractVersion });
 });
 
 test("answers 404 for a path it does not own and 405 for a method it does not serve", async () => {
@@ -332,7 +333,7 @@ test("an application no boot produced answers the endpoints that need no report"
   // the surface moved onto the application.
   expect(meta.status).toBe(200);
   expect(await meta.json()).toMatchObject({
-    contract: 2,
+    contract: devtoolsContractVersion,
     framework: aponiaVersion,
     artifacts: { invokers: null, descriptors: null },
   });

@@ -451,6 +451,19 @@ runtime boundary it describes.
   still serves `/requests` answering an empty record rather than no endpoint, and
   "this registration was told to record nothing" is itself a fact the record
   states.
+- The surface's own traffic is left out of the record, and the exclusion is by
+  path prefix rather than by route identity: `isDevtoolsSurfaceRequest` answers
+  true for `/__devtools` and everything under it, and the arrival hook returns
+  before stamping or writing. The reason is that the surface is the one client
+  this package can name — a page polling `/requests` would otherwise record
+  itself into the window it is reading, and evict the traffic being watched. The
+  consequence is the rule's other half and has to be stated wherever the
+  exclusion is: an application route that claims a `/__devtools` path wins that
+  path (see the collision rule above) and its traffic is unrecorded, because the
+  two decisions are made by different mechanisms and neither can see the other.
+  This is doctrine rather than a test's description: `/requests` documents what
+  reached the record, and a reader who takes "everything is recorded by default"
+  literally is reading a record that was already filtered.
 - A partly patched logger publishes a stream and names the levels it reached. The
   boundary is the count of levels patched — no level patched at all is the
   absence, one level patched is a tap that installed — and where the first refusal

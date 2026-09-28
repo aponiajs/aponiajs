@@ -126,10 +126,12 @@ const application = await AponiaFactory.create(AppModule, {
   version, the release that booted the application, the Elysia release installed
   in the application's own tree (`null` when there is none), which release
   supplied each artifact the boot adopted (`null` for one it did not), and when
-  it first answered for this application. A reader checks `contract` first and proceeds only on a
-  shape it knows: this release answers `2`, because a `/requests` entry gained
-  `id`, its `status` and `durationMs` became nullable, and one request began
-  writing two entries.
+  it first answered for this application. A reader checks `contract` first and
+  proceeds only on a shape it knows: this release answers `3`, because `startedAt`
+  changed meaning when the surface moved onto the application's own route table,
+  and it became `2` before that, because a `/requests` entry gained `id`, its
+  `status` and `durationMs` became nullable, and one request began writing two
+  entries.
 - **`GET /__devtools/graph` describes the graph the application compiled.** It
   answers the modules with their imports, controllers, providers, dependencies
   and exports, and the WebSocket gateways with their events. The graph is the one
@@ -246,7 +248,13 @@ const application = await AponiaFactory.create(AppModule, {
   is Elysia's rather than this package's: both hook phases run in mount order, so a
   plugin mounted ahead of the devtools registration that answers from its own
   `onRequest` ends the request before this record's hook runs, and that request
-  appears nowhere.
+  appears nowhere. The surface's own traffic is excluded too, and the exclusion is
+  by path prefix rather than by route identity: `/__devtools` and everything under
+  it is never recorded, which is what keeps a page polling `/requests` out of the
+  window it reads. An application route that claims a `/__devtools` path wins it
+  and its traffic is unrecorded all the same, because the route table picking the
+  more specific owner and this record reading the path prefix are different
+  mechanisms.
   `durationMs` is measured from the moment the request reached this package's
   arrival hook to a reading the completion path takes before its first read of
   the context — so the route, the status, the parsed body, and the one microtask
