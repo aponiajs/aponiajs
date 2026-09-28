@@ -666,7 +666,7 @@ export function lifecycleCallable(
   instance: unknown,
   name: LifecycleHookName<LifecycleHookContract>,
 ): LifecycleCall | undefined {
-  if (typeof instance !== "object" || instance === null) {
+  if (instance === null || (typeof instance !== "object" && typeof instance !== "function")) {
     return undefined;
   }
 
@@ -1006,6 +1006,9 @@ describe("the stopping hooks", () => {
 
     expect(calls).toEqual(["refusing", "after"]);
     expect(reported.join("\n")).toContain("could not close the pool");
+    // The context too: a teardown failure reported under the exception
+    // handler's name cannot be told from a request's failure in a log filter.
+    expect(reported.join("\n")).toContain("ApplicationShutdown");
     expect(application.getNativeApplication().server).toBeNull();
   });
 

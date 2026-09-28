@@ -473,8 +473,8 @@ describe("the stopping hooks", () => {
       verbose(): void {}
       fatal(): void {}
 
-      error(message: unknown): void {
-        reported.push(String(message));
+      error(message: unknown, context?: unknown): void {
+        reported.push(`${String(context)}: ${String(message)}`);
       }
     }
 
@@ -503,6 +503,9 @@ describe("the stopping hooks", () => {
 
     expect(calls).toEqual(["refusing", "after"]);
     expect(reported.join("\n")).toContain("could not close the pool");
+    // The context too: a teardown failure reported under the exception
+    // handler's name cannot be told from a request's failure in a log filter.
+    expect(reported.join("\n")).toContain("ApplicationShutdown");
     expect(application.getNativeApplication().server).toBeNull();
   });
 
