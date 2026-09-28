@@ -25,7 +25,13 @@ Promise<void>`. A class written for Nest with a signal parameter stays assignabl
 3. **This seam adds a fourth failure-reporting call site**, and
    `packages/platform-elysia/AGENTS.md` enumerates three. The guide is edited in Task 3, because
    that enumeration is an invariant the repository maintains rather than prose.
-4. **The shutdown plan rides a symbol, not a constructor parameter.**
+4. **The spec's `onModuleInit` row said "before any gateway is compiled", and that is not
+   satisfiable.** `compileElysiaWebSocketGateways` runs near the top of `bootstrapAponiaApplication`,
+   ahead of the provider pass, so no placement that follows the controller pass can precede it. The
+   row now says "before the gateway pass", which is what the hook does precede: gateway instances
+   bound, their routes mounted, and their `afterInit` run. The spec and Task 4's table are corrected
+   together, because Task 4's page is where the sentence was going to be published.
+5. **The shutdown plan rides a symbol, not a constructor parameter.**
    `bootstrapAponiaApplication` already attaches its record under
    `Symbol.for("aponia.application.diagnostics")` with a non-enumerable, non-writable property so
    Elysia's own composition never walks it. The shutdown plan is attached the same way, which is
@@ -100,6 +106,10 @@ in the task named beside it.
    a provider a module exports is the same instance its importers resolve, so a hook called once per
    entry would open one pool twice or start one timer twice for one object. The hooks are a fact
    about the instance. (Task 2)
+7. **An asynchronous hook, and the hook that follows it.** Every case in the first draft of the
+   suite was synchronous, which means a boot that dropped its `await` would have passed all of them:
+   the order a later hook observes is the only assertion that can fail. (Task 2 for the starting
+   half, Task 3 for the stopping half.)
 
 ---
 
@@ -410,6 +420,86 @@ describe("the starting hooks", () => {
     expect(response.status).toBe(200);
     expect(calls).toContain("dependent:bootstrap");
   });
+
+  test("awaits an asynchronous hook before the next one runs", async () => {
+    calls.length = 0;
+
+    class Slow implements OnModuleInit {
+      async onModuleInit(): Promise<void> {
+        await Bun.sleep(1);
+        calls.push("slow:init");
+      }
+    }
+
+    class Fast implements OnModuleInit {
+      onModuleInit(): void {
+        calls.push("fast:init");
+      }
+    }
+
+    @Module({ providers: [provideClass(Slow, []), provideClass(Fast, [])] })
+    class SlowModule {}
+
+    application = await AponiaFactory.create(SlowModule, { logger: false });
+
+    // The order is the whole assertion: a boot that stopped awaiting would push
+    // `fast:init` first, and every other case in this file is synchronous, so
+    // nothing else here can fail if the await is dropped.
+    expect(calls).toEqual(["slow:init", "fast:init"]);
+  });
+
+  test("runs a controller's onApplicationBootstrap too", async () => {
+    calls.length = 0;
+
+    @Controller("bootstrap")
+    class BootstrappingController implements OnApplicationBootstrap {
+      onApplicationBootstrap(): void {
+        calls.push("controller:bootstrap");
+      }
+
+      @Get()
+      read(): string {
+        return "ok";
+      }
+    }
+
+    @Module({ controllers: [BootstrappingController] })
+    class BootstrappingModule {}
+
+    application = await AponiaFactory.create(BootstrappingModule, { logger: false });
+
+    expect(calls).toEqual(["controller:bootstrap"]);
+  });
+});
+
+describe("the order across modules", () => {
+  test("runs an imported module's hook before its importer's", async () => {
+    calls.length = 0;
+
+    class Inner implements OnModuleInit {
+      onModuleInit(): void {
+        calls.push("inner:init");
+      }
+    }
+
+    class Outer implements OnModuleInit {
+      constructor(readonly inner: Inner) {}
+
+      onModuleInit(): void {
+        calls.push("outer:init");
+      }
+    }
+
+    @Module({ providers: [Inner], exports: [Inner] })
+    class InnerModule {}
+
+    @Module({ imports: [InnerModule], providers: [Outer] })
+    class OuterModule {}
+
+    application = await AponiaFactory.create(OuterModule, { logger: false });
+
+    expect(calls).toEqual(["inner:init", "outer:init"]);
+  });
 });
 
 describe("the reading", () => {
@@ -467,6 +557,20 @@ describe("the reading", () => {
     application = await AponiaFactory.create(SharedModule, { logger: false });
 
     expect(calls).toEqual(["shared:init"]);
+  });
+
+  test("ignores a value that cannot carry a method", async () => {
+    calls.length = 0;
+    const count = createToken<number>("COUNT");
+
+    // A non-object instance is the reader's early return: it must be skipped
+    // rather than read, since a primitive has no properties to check.
+    @Module({ providers: [provideValue(count, 42)] })
+    class PrimitiveModule {}
+
+    application = await AponiaFactory.create(PrimitiveModule, { logger: false });
+
+    expect(calls).toEqual([]);
   });
 });
 
@@ -727,7 +831,10 @@ describe("the stopping hooks", () => {
     calls.length = 0;
 
     class Stopping implements OnModuleDestroy, BeforeApplicationShutdown, OnApplicationShutdown {
-      beforeApplicationShutdown(): void {
+      // Asynchronous on purpose: the order below is what fails if the runner
+      // stops awaiting between hooks, and a synchronous set could not tell.
+      async beforeApplicationShutdown(): Promise<void> {
+        await Bun.sleep(1);
         calls.push("before");
       }
 
@@ -1040,13 +1147,13 @@ A provider can run code at five moments without a decorator, a descriptor field,
 registration: the framework reads the method off the instance, the way it reads an interceptor's
 halves.
 
-| Hook                        | Runs                                                                                              |
-| --------------------------- | ------------------------------------------------------------------------------------------------- |
-| `onModuleInit`              | Once per module, in graph order, after the boot's controller pass and before any gateway compiles |
-| `onApplicationBootstrap`    | Once, after every route and gateway is mounted, before the application can listen                 |
-| `beforeApplicationShutdown` | Once, at the start of `close()`, before the server stops                                          |
-| `onModuleDestroy`           | Once per module in reverse graph order, after the server has stopped                              |
-| `onApplicationShutdown`     | Once, last                                                                                        |
+| Hook                        | Runs                                                                                          |
+| --------------------------- | --------------------------------------------------------------------------------------------- |
+| `onModuleInit`              | Once per module, in graph order, after the boot's controller pass and before the gateway pass |
+| `onApplicationBootstrap`    | Once, after every route and gateway is mounted, before the application can listen             |
+| `beforeApplicationShutdown` | Once, at the start of `close()`, before the server stops                                      |
+| `onModuleDestroy`           | Once per module in reverse graph order, after the server has stopped                          |
+| `onApplicationShutdown`     | Once, last                                                                                    |
 
 ```ts
 import { Injectable, type OnApplicationShutdown, type OnModuleInit } from "@aponiajs/common";

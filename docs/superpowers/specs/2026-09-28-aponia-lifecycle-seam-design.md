@@ -82,7 +82,7 @@ requirement. Four consequences follow, and each is a decision rather than a side
 
 | Hook                        | Runs                                                                                                                                 | How often       |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | --------------- |
-| `onModuleInit`              | After the boot's controller pass, once per module in graph order, and before any gateway is compiled                                 | Once per module |
+| `onModuleInit`              | After the boot's controller pass, once per module in graph order, and before the gateway pass                                        | Once per module |
 | `onApplicationBootstrap`    | After the gateway pass and the final plugin await, immediately before the application is handed back — so before anything can listen | Once            |
 | `beforeApplicationShutdown` | On `close()`, before the server stops                                                                                                | Once            |
 | `onModuleDestroy`           | On `close()`, after the server has stopped                                                                                           | Once per module |
