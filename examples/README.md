@@ -16,6 +16,7 @@ behavior the framework promises.
 | `websockets`           | Nest-style gateways backed by native Elysia WebSockets                                                 | 3070 | `bun run example:websockets`           |
 | `files`                | Uploads through the body slot, named downloads, and static assets                                      | 3080 | `bun run example:files`                |
 | `lifecycle`            | A provider that announces its own start and stop                                                       | 3090 | `bun run example:lifecycle`            |
+| `configuration`        | A declared configuration, validated once at boot, injected, and read back                              | 3100 | `bun run example:configuration`        |
 
 Run every suite the way CI does:
 

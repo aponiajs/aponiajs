@@ -17,6 +17,7 @@
     "build": "bun run --workspaces build",
     "dev": "bun run --filter aponiajs dev",
     "example:basic": "bun run --cwd examples/basic start",
+    "example:configuration": "bun run --cwd examples/configuration start",
     "example:dependency-injection": "bun run --cwd examples/dependency-injection start",
     "example:descriptors": "bun run --cwd examples/descriptors start",
     "example:files": "bun run --cwd examples/files start",

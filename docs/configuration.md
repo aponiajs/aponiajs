@@ -206,4 +206,6 @@ it.
 - [Errors](./learn/10-errors.md): the closed code union the two failures join.
 - [CLI reference](./cli.md): the starter's `src/config.ts` and what the
   generator writes around it.
+- [The configuration example](../examples/configuration/README.md): the declaration, the
+  injected value, and the two failures as a running application.
 - [Published packages](./packages.md): the npm catalog.
