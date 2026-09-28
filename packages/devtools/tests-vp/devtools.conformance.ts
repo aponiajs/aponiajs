@@ -71,9 +71,10 @@ type DevtoolsContractAssertions = [
  * deleted are asserted absent rather than only documented as absent.
  *
  * `DevtoolsServerOptions` is deliberately not in the assertion above: a
- * type-only export leaves no key here, so only the two value exports the socket
- * carried are assertable this way. The third name is gone from the import list
- * at the top of this file, which is where a consumer would have read it.
+ * type-only export leaves no key here, so the two value exports the socket
+ * carried are the only ones this form can hold. Its removal is stated by
+ * `packages/devtools/AGENTS.md` and the README rather than pinned here, and
+ * this comment is where that gap is admitted.
  */
 type DevtoolsBarrel = typeof import("../src/index.ts");
 
