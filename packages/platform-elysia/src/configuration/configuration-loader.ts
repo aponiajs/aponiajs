@@ -12,6 +12,8 @@ export function loadConfiguration<T>(
   configuration: ConfigurationToken<T>,
   options?: ConfigurationOptions,
 ): T {
+  // The fallback is for a token a JavaScript caller built by hand:
+  // `defineConfiguration` always supplies a description.
   const name = configuration.description ?? "configuration";
   const schema = configuration.schema as unknown;
 
@@ -26,8 +28,12 @@ export function loadConfiguration<T>(
     );
   }
 
-  const validator = (schema as { readonly "~standard": { validate?: unknown } })["~standard"];
-  if (typeof validator.validate !== "function") {
+  const validator = (schema as { readonly "~standard"?: unknown })["~standard"];
+  if (
+    typeof validator !== "object" ||
+    validator === null ||
+    typeof (validator as { validate?: unknown }).validate !== "function"
+  ) {
     throw new AponiaError(
       "INVALID_CONFIGURATION",
       `Configuration "${name}" was declared with a value that is not a Standard Schema.`,
@@ -38,12 +44,18 @@ export function loadConfiguration<T>(
   // A copy, so the schema sees a stable input and a later change to the
   // environment cannot reach a value that was already validated.
   const source = { ...(options?.source ?? process.env) };
-  const result = (validator.validate as (value: unknown) => unknown)(source);
+  // The cast is the price of the guard above: `validator` is only known to be an
+  // object there, because the check on `validate` cannot narrow it.
+  const result = (validator as { readonly validate: (value: unknown) => unknown }).validate(source);
 
   // A factory is invoked by `Reflect.apply` inside a synchronous resolve, so
   // nothing here can await. Refusing a promise is what keeps an injected value
   // from being a promise a service then has to await for itself.
   if (typeof (result as { then?: unknown } | null)?.then === "function") {
+    // Observed rather than abandoned: refusing the value does not make a rejected
+    // promise handled, and an unhandled rejection outlives the refusal.
+    void (result as Promise<unknown>).catch(() => undefined);
+
     throw new AponiaError(
       "INVALID_CONFIGURATION",
       `Configuration "${name}" was validated by a schema that answers asynchronously, which a provider cannot await.`,
@@ -51,15 +63,34 @@ export function loadConfiguration<T>(
     );
   }
 
-  const outcome = result as
-    | { readonly value: T; readonly issues?: undefined }
-    | { readonly issues: readonly unknown[] };
+  const outcome = result as unknown;
+
+  // The same rule one line later: a validator that answers with null, a primitive,
+  // or neither shape is not behaving as a Standard Schema either, and reading a
+  // field off it would be the engine's error rather than this framework's refusal.
+  if (typeof outcome !== "object" || outcome === null) {
+    throw new AponiaError(
+      "INVALID_CONFIGURATION",
+      `Configuration "${name}" was validated by a schema that answered with ${typeof outcome} instead of a result.`,
+      { configuration: name, reason: "not-a-standard-schema" },
+    );
+  }
+
+  if (!("value" in outcome) && !("issues" in outcome)) {
+    throw new AponiaError(
+      "INVALID_CONFIGURATION",
+      `Configuration "${name}" was validated by a schema that answered with neither a value nor issues.`,
+      { configuration: name, reason: "not-a-standard-schema" },
+    );
+  }
 
   if ("issues" in outcome && outcome.issues !== undefined) {
+    const issues = outcome.issues as readonly unknown[];
+
     throw new AponiaError(
       "INVALID_CONFIGURATION_VALUE",
-      `Configuration "${name}" was refused by its schema with ${outcome.issues.length} issue(s).`,
-      { configuration: name, issues: Object.freeze([...outcome.issues]) },
+      `Configuration "${name}" was refused by its schema with ${issues.length} issue(s).`,
+      { configuration: name, issues: Object.freeze([...issues]) },
     );
   }
 

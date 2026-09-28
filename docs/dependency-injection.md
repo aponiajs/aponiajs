@@ -127,7 +127,7 @@ they do not throw through the application HTTP error path.
 | `INVALID_CONTROLLER`                  | A controller is missing `@Controller()`, or a route handler is not callable |
 | `UNSUPPORTED_CONTROLLER`              | A controller cannot be mounted by the platform                              |
 | `DUPLICATE_ROUTE`                     | Two controllers claim one method and path                                   |
-| `INVALID_CONFIGURATION`               | A configuration declares no Standard Schema, or one that answers async      |
+| `INVALID_CONFIGURATION`               | A configuration's declaration or answer is not one this release can use     |
 | `INVALID_CONFIGURATION_VALUE`         | A configuration's value is refused by its own schema                        |
 | `INVALID_VALIDATION_MODEL`            | A route uses a class without `@Validation()`                                |
 | `INVALID_NATIVE_APPLICATION`          | `configureNative` returned a different Elysia instance                      |

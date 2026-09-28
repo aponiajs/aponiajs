@@ -63,6 +63,92 @@ describe("provideConfiguration", () => {
     await application.close();
   });
 
+  test("reads the process environment, and prefers an explicit source to it", async () => {
+    const environmentSchema = z.object({
+      APONIA_TEST_CONFIG_PORT: z.coerce.number().int().positive().default(3000),
+    });
+    const AppConfig = defineConfiguration(environmentSchema, "app.config");
+    const previous = process.env.APONIA_TEST_CONFIG_PORT;
+    process.env.APONIA_TEST_CONFIG_PORT = "4321";
+    let fromEnvironment: { APONIA_TEST_CONFIG_PORT: number } | undefined;
+    let fromSource: { APONIA_TEST_CONFIG_PORT: number } | undefined;
+
+    @Injectable()
+    class EnvironmentReader {
+      constructor(@Inject(AppConfig) readonly config: { APONIA_TEST_CONFIG_PORT: number }) {
+        fromEnvironment = config;
+      }
+    }
+
+    @Module({ providers: [provideConfiguration(AppConfig), EnvironmentReader] })
+    class EnvironmentModule {}
+
+    @Injectable()
+    class SourceReader {
+      constructor(@Inject(AppConfig) readonly config: { APONIA_TEST_CONFIG_PORT: number }) {
+        fromSource = config;
+      }
+    }
+
+    @Module({
+      providers: [
+        provideConfiguration(AppConfig, { source: { APONIA_TEST_CONFIG_PORT: "5000" } }),
+        SourceReader,
+      ],
+    })
+    class SourceModule {}
+
+    try {
+      const environmentBoot = await AponiaFactory.create(EnvironmentModule, { logger: false });
+      const sourceBoot = await AponiaFactory.create(SourceModule, { logger: false });
+
+      try {
+        // The schema declares a default, so only a real environment read answers 4321.
+        expect(fromEnvironment).toEqual({ APONIA_TEST_CONFIG_PORT: 4321 });
+        // The environment still holds 4321 here, so only a real override answers 5000.
+        expect(fromSource).toEqual({ APONIA_TEST_CONFIG_PORT: 5000 });
+      } finally {
+        await environmentBoot.close();
+        await sourceBoot.close();
+      }
+    } finally {
+      if (previous === undefined) {
+        delete process.env.APONIA_TEST_CONFIG_PORT;
+      } else {
+        process.env.APONIA_TEST_CONFIG_PORT = previous;
+      }
+    }
+  });
+
+  test("injects the validator's own output object rather than a copy of it", async () => {
+    const output = { port: 4000 };
+    const passthrough = {
+      "~standard": {
+        version: 1,
+        vendor: "test",
+        validate: () => ({ value: output }),
+      },
+    };
+    const AppConfig = defineConfiguration(passthrough as never, "app.config");
+    let resolved: { port: number } | undefined;
+
+    @Injectable()
+    class Reader {
+      constructor(@Inject(AppConfig) readonly config: { port: number }) {
+        resolved = config;
+      }
+    }
+
+    @Module({ providers: [provideConfiguration(AppConfig, { source: {} }), Reader] })
+    class AppModule {}
+
+    const application = await AponiaFactory.create(AppModule, { logger: false });
+
+    expect(resolved).toBe(output);
+    expect(resolved).toEqual({ port: 4000 });
+    await application.close();
+  });
+
   test("refuses a malformed value with the issue's path", async () => {
     const AppConfig = defineConfiguration(portSchema, "app.config");
 
@@ -111,13 +197,105 @@ describe("provideConfiguration", () => {
     });
   });
 
-  test("refuses a declaration whose Standard Schema cannot validate", async () => {
+  test("refuses a schema whose ~standard member is not an object", async () => {
+    // The membership test alone is not enough: `{ "~standard": null }` passes it
+    // and then throws reading `.validate`, which is the failure class the guard
+    // exists to prevent.
+    const broken = defineConfiguration({ "~standard": null } as unknown as z.ZodType, "app.config");
+
+    @Module({ providers: [provideConfiguration(broken, { source: {} })] })
+    class AppModule {}
+
+    let thrown: unknown;
+    try {
+      await AponiaFactory.create(AppModule, { logger: false });
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(codeOf(thrown)).toBe("INVALID_CONFIGURATION");
+    expect((thrown as AponiaError).details).toMatchObject({
+      configuration: "app.config",
+      reason: "not-a-standard-schema",
+    });
+  });
+
+  test("refuses a schema whose ~standard member cannot validate", async () => {
     const brokenValidator = defineConfiguration(
       { "~standard": { version: 1, vendor: "test", validate: "nope" } } as never,
       "app.config",
     );
 
     @Module({ providers: [provideConfiguration(brokenValidator, { source: {} })] })
+    class AppModule {}
+
+    let thrown: unknown;
+    try {
+      await AponiaFactory.create(AppModule, { logger: false });
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(codeOf(thrown)).toBe("INVALID_CONFIGURATION");
+    expect((thrown as AponiaError).details).toMatchObject({
+      configuration: "app.config",
+      reason: "not-a-standard-schema",
+    });
+  });
+
+  test("refuses a validator that answers with null", async () => {
+    const answerless = {
+      "~standard": { version: 1, vendor: "test", validate: () => null },
+    };
+    const AppConfig = defineConfiguration(answerless as never, "app.config");
+
+    @Module({ providers: [provideConfiguration(AppConfig, { source: {} })] })
+    class AppModule {}
+
+    let thrown: unknown;
+    try {
+      await AponiaFactory.create(AppModule, { logger: false });
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(codeOf(thrown)).toBe("INVALID_CONFIGURATION");
+    expect((thrown as AponiaError).details).toMatchObject({
+      configuration: "app.config",
+      reason: "not-a-standard-schema",
+    });
+  });
+
+  test("refuses a validator that answers with a primitive", async () => {
+    const answerless = {
+      "~standard": { version: 1, vendor: "test", validate: () => 42 },
+    };
+    const AppConfig = defineConfiguration(answerless as never, "app.config");
+
+    @Module({ providers: [provideConfiguration(AppConfig, { source: {} })] })
+    class AppModule {}
+
+    let thrown: unknown;
+    try {
+      await AponiaFactory.create(AppModule, { logger: false });
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(codeOf(thrown)).toBe("INVALID_CONFIGURATION");
+    expect((thrown as AponiaError).details).toMatchObject({
+      configuration: "app.config",
+      reason: "not-a-standard-schema",
+    });
+  });
+
+  test("refuses a validator that answers with neither a value nor issues", async () => {
+    const answerless = {
+      "~standard": { version: 1, vendor: "test", validate: () => ({}) },
+    };
+    const AppConfig = defineConfiguration(answerless as never, "app.config");
+
+    @Module({ providers: [provideConfiguration(AppConfig, { source: {} })] })
     class AppModule {}
 
     let thrown: unknown;
@@ -159,6 +337,44 @@ describe("provideConfiguration", () => {
       configuration: "app.config",
       reason: "asynchronous-validation",
     });
+  });
+
+  test("observes a rejected promise rather than abandoning it", async () => {
+    const rejecting = {
+      "~standard": {
+        version: 1,
+        vendor: "test",
+        validate: () => Promise.reject(new Error("the schema refused its own answer")),
+      },
+    };
+    const AppConfig = defineConfiguration(rejecting as never, "app.config");
+    const unhandled: unknown[] = [];
+    const record = (reason: unknown): void => {
+      unhandled.push(reason);
+    };
+    process.on("unhandledRejection", record);
+
+    @Module({ providers: [provideConfiguration(AppConfig, { source: {} })] })
+    class AppModule {}
+
+    let thrown: unknown;
+    try {
+      await AponiaFactory.create(AppModule, { logger: false });
+    } catch (error) {
+      thrown = error;
+    }
+
+    // A macrotask turn: a rejection nothing observed is reported once the
+    // microtask queue drains, so this is the moment it would surface.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    process.off("unhandledRejection", record);
+
+    expect(codeOf(thrown)).toBe("INVALID_CONFIGURATION");
+    expect((thrown as AponiaError).details).toMatchObject({
+      configuration: "app.config",
+      reason: "asynchronous-validation",
+    });
+    expect(unhandled).toEqual([]);
   });
 
   test("refuses a missing required key with the issue's path", async () => {

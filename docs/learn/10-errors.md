@@ -153,7 +153,7 @@ try {
 | `INVALID_CONTROLLER`                  | A controller factory returns something that is not an Elysia |
 | `UNSUPPORTED_CONTROLLER`              | A controller shape the platform cannot mount                 |
 | `DUPLICATE_ROUTE`                     | Two controllers claim one method and path                    |
-| `INVALID_CONFIGURATION`               | A configuration declares no Standard Schema, or an async one |
+| `INVALID_CONFIGURATION`               | A configuration's declaration or answer cannot be used       |
 | `INVALID_CONFIGURATION_VALUE`         | A configuration's value is refused by its own schema         |
 | `INVALID_VALIDATION_MODEL`            | A route uses a class without `@Validation()`                 |
 | `INVALID_NATIVE_APPLICATION`          | `configureNative` returned a different instance              |
