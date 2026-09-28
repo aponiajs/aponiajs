@@ -1430,8 +1430,12 @@ In `README.md`, add `[Lifecycle](./docs/lifecycle.md) ·` to the navigation list
 request and transient scopes, …`. Remove `async provider lifecycle, ` from it. `AGENTS.md`'s
 not-implemented list never named it, so it is unchanged.
 
-Both lists have an implemented half, and both are the scope of record, so the same phrase is added
-to each: in `README.md`'s implemented paragraph and in `AGENTS.md`'s, add
+Both lists have an implemented half, and both are the scope of record, so the same phrase goes into
+each — **in place of the vague item each already carries**, `lifecycle management` in `README.md` and
+`lifecycle` in `AGENTS.md`, which sat immediately where the new phrase goes and would otherwise leave
+each list naming the same subject twice. The gateway lifecycle and the per-route hooks are named
+separately in both lists, so the vague item has nothing of its own left to say. In `README.md`'s
+implemented paragraph and in `AGENTS.md`'s, put
 
 ```markdown
 provider and application lifecycle hooks, read from the provider instance
