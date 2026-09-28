@@ -37,6 +37,7 @@ This package records metadata and declares contracts. It never builds a module g
 - [WsResponse, OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/websockets/websocket-gateway.types.ts): gateway response and lifecycle contracts.
 - [WebSocketGatewayMetadata, WebSocketGatewayOptions, WebSocketMessageMetadata, WebSocketParameterKind, WebSocketParameterMetadata](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/websockets/websocket-gateway.types.ts): gateway metadata shapes.
 - [ControllerDefinition](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/controllers/controller.types.ts): the platform-neutral controller descriptor.
+- [OnModuleInit, OnApplicationBootstrap, OnModuleDestroy, BeforeApplicationShutdown, OnApplicationShutdown](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/lifecycle/lifecycle.types.ts): the five moments a provider can hook, read from the instance by the platform.
 
 ## Documentation
 

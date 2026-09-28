@@ -17,6 +17,7 @@ const packageLayouts: readonly PackageLayout[] = [
       "decorators",
       "enhancers",
       "errors",
+      "lifecycle",
       "logging",
       "modules",
       "providers",
