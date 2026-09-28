@@ -1233,7 +1233,7 @@ async function runShutdownHooks(
     try {
       await call();
     } catch (error) {
-      reportThroughLogger(logger, error, "ExceptionsHandler");
+      reportThroughLogger(logger, error, "ApplicationShutdown");
     }
   }
 }
