@@ -1110,3 +1110,30 @@ is the only lane that runs both new suites end to end.
 - **No example for enhancers, logging, errors, testing, or releasing.** The first two
   are covered by existing examples' rows, and the last three are named by
   `docs/learn/01-overview.md` as having no example of their own.
+
+## Follow-up work this plan found and did not take
+
+Asked mid-run why `@aponiajs/cli`'s generator was not used to create these examples. It was not
+used, and the question exposed a real gap — so the answer is measured rather than argued.
+
+`bun packages/cli/bin/aponia.ts new probe-app --skip-install` writes **21 files**. Each example
+needs **11**. Of the 21, **twelve must be deleted** (`.env.example`, `.gitignore`, `AGENTS.md`,
+`aponia.json`, `llms.txt`, `scripts/build.ts`, `scripts/inspect.ts`, `src/app.controller.spec.ts`,
+`src/config.ts`, `src/descriptors.generated.ts`, `src/invokers.generated.ts`,
+`test/app.e2e-spec.ts`); **two of the nine overlapping files must be rewritten**, because the
+generated `package.json` pins the published versions where an example needs `workspace:*` and the
+generated `tsconfig.json` carries no `paths` at all where every example maps `@aponiajs/*` at
+`../../packages/*/src`; and **one is byte-identical** (`vite.config.ts`).
+
+Those twelve deletions are not a preference. `aponia.json`, `scripts/`, and the two
+`*.generated.ts` artifacts are what make the generator's output a **starter that builds**, and this
+plan settles that an example is an application to read and run — which is what all ten examples
+that came before these two are.
+
+**The gap:** `package.json`, `tsconfig.json`, and `vite.config.ts` are hand-copied once per
+example, so the twelfth example makes thirty-six near-duplicate configuration files, and the
+generator cannot help because it only knows the standalone-app shape. The instruction was to keep
+this plan's hand-written path and record the gap, so the fix is left to its own change and it has
+two shapes: an `example` schematic in `@aponiajs/cli` that emits the example form, or a shared base
+configuration the examples extend. Either one belongs with `packages/cli`, which this plan does not
+touch.
