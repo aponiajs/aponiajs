@@ -11,6 +11,9 @@ import {
 } from "@aponiajs/common";
 import { z } from "zod";
 import { AponiaFactory, provideConfiguration } from "../src/index.ts";
+// The loader is package-private and `defineConfiguration` always supplies a
+// description, so the name fallback is reachable only by calling it directly.
+import { loadConfiguration } from "../src/configuration/configuration-loader.ts";
 
 function codeOf(error: unknown): AponiaErrorCode | undefined {
   return error instanceof AponiaError ? error.code : undefined;
@@ -146,6 +149,9 @@ describe("provideConfiguration", () => {
 
     expect(resolved).toBe(output);
     expect(resolved).toEqual({ port: 4000 });
+    // The design settles that the value belongs to the application: not copied,
+    // not frozen. Freezing keeps the same reference, so `toBe` cannot see this.
+    expect(Object.isFrozen(resolved)).toBe(false);
     await application.close();
   });
 
@@ -195,6 +201,52 @@ describe("provideConfiguration", () => {
       configuration: "app.config",
       reason: "not-a-standard-schema",
     });
+  });
+
+  test("refuses a declaration whose schema is not an object at all", async () => {
+    // The first guard's other two disjuncts: a primitive is not an object, and
+    // `typeof null` is "object", so null needs a check of its own.
+    for (const schema of [null, undefined, "a standard schema", 42]) {
+      const notASchema = defineConfiguration(schema as never, "app.config");
+
+      @Module({ providers: [provideConfiguration(notASchema, { source: {} })] })
+      class AppModule {}
+
+      let thrown: unknown;
+      try {
+        await AponiaFactory.create(AppModule, { logger: false });
+      } catch (error) {
+        thrown = error;
+      }
+
+      expect(codeOf(thrown)).toBe("INVALID_CONFIGURATION");
+      expect((thrown as AponiaError).details).toMatchObject({
+        configuration: "app.config",
+        reason: "not-a-standard-schema",
+      });
+    }
+  });
+
+  test("names a token a JavaScript caller built by hand", () => {
+    const handBuilt = {
+      schema: {
+        "~standard": {
+          version: 1,
+          vendor: "test",
+          validate: () => ({ issues: [{ message: "refused" }] }),
+        },
+      },
+    };
+
+    let thrown: unknown;
+    try {
+      loadConfiguration(handBuilt as never, { source: {} });
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(codeOf(thrown)).toBe("INVALID_CONFIGURATION_VALUE");
+    expect((thrown as AponiaError).details).toMatchObject({ configuration: "configuration" });
   });
 
   test("refuses a schema whose ~standard member is not an object", async () => {
@@ -312,6 +364,31 @@ describe("provideConfiguration", () => {
     });
   });
 
+  test("refuses a validator that answers with an undefined issues key", async () => {
+    // A key carrying nothing is the same protocol violation as no key at all:
+    // it otherwise injects `undefined` as the configuration.
+    const answerless = {
+      "~standard": { version: 1, vendor: "test", validate: () => ({ issues: undefined }) },
+    };
+    const AppConfig = defineConfiguration(answerless as never, "app.config");
+
+    @Module({ providers: [provideConfiguration(AppConfig, { source: {} })] })
+    class AppModule {}
+
+    let thrown: unknown;
+    try {
+      await AponiaFactory.create(AppModule, { logger: false });
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(codeOf(thrown)).toBe("INVALID_CONFIGURATION");
+    expect((thrown as AponiaError).details).toMatchObject({
+      configuration: "app.config",
+      reason: "not-a-standard-schema",
+    });
+  });
+
   test("refuses a schema whose validate returns a promise", async () => {
     const asynchronous = {
       "~standard": {
@@ -321,6 +398,39 @@ describe("provideConfiguration", () => {
       },
     };
     const AppConfig = defineConfiguration(asynchronous as never, "app.config");
+
+    @Module({ providers: [provideConfiguration(AppConfig, { source: {} })] })
+    class AppModule {}
+
+    let thrown: unknown;
+    try {
+      await AponiaFactory.create(AppModule, { logger: false });
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(codeOf(thrown)).toBe("INVALID_CONFIGURATION");
+    expect((thrown as AponiaError).details).toMatchObject({
+      configuration: "app.config",
+      reason: "asynchronous-validation",
+    });
+  });
+
+  test("refuses a thenable that carries no catch", async () => {
+    // The promise guard accepts any thenable, so observing the refusal must not
+    // assume the value it observed is a promise.
+    // The thenable is the input under test, so the rule that refuses to add one
+    // is the one thing this case cannot obey.
+    // oxlint-disable-next-line unicorn/no-thenable -- a thenable that is not a promise is the input under test
+    const thenableAnswer = Object.fromEntries([["then", () => undefined]]);
+    const thenable = {
+      "~standard": {
+        version: 1,
+        vendor: "test",
+        validate: () => thenableAnswer,
+      },
+    };
+    const AppConfig = defineConfiguration(thenable as never, "app.config");
 
     @Module({ providers: [provideConfiguration(AppConfig, { source: {} })] })
     class AppModule {}
@@ -466,6 +576,38 @@ describe("provideConfiguration", () => {
 
     expect(codeOf(thrown)).toBe("INVALID_CONFIGURATION_VALUE");
     expect(JSON.stringify((thrown as AponiaError).details)).not.toContain("hunter2");
+  });
+
+  test("validates a copy of the source, so a later change to it cannot reach the value", async () => {
+    const passthrough = {
+      "~standard": {
+        version: 1,
+        vendor: "test",
+        validate: (value: unknown) => ({ value }),
+      },
+    };
+    const AppConfig = defineConfiguration(passthrough as never, "app.config");
+    const source: Record<string, unknown> = { port: "5000" };
+    let resolved: Record<string, unknown> | undefined;
+
+    @Injectable()
+    class Reader {
+      constructor(@Inject(AppConfig) readonly config: Record<string, unknown>) {
+        resolved = config;
+      }
+    }
+
+    @Module({ providers: [provideConfiguration(AppConfig, { source }), Reader] })
+    class AppModule {}
+
+    const application = await AponiaFactory.create(AppModule, { logger: false });
+    source.port = "6000";
+
+    // The schema hands back what it validated, so only a copy keeps the value
+    // the boot validated rather than whatever the caller did to it afterwards.
+    expect(resolved).toEqual({ port: "5000" });
+    expect(resolved).not.toBe(source);
+    await application.close();
   });
 
   test("validates once per boot, however many services inject the value", async () => {

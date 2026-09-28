@@ -54,7 +54,9 @@ export function loadConfiguration<T>(
   if (typeof (result as { then?: unknown } | null)?.then === "function") {
     // Observed rather than abandoned: refusing the value does not make a rejected
     // promise handled, and an unhandled rejection outlives the refusal.
-    void (result as Promise<unknown>).catch(() => undefined);
+    // `Promise.resolve` rather than `.catch` on the result: the guard accepts any
+    // thenable, and a thenable that is not a promise has no `.catch` at all.
+    void Promise.resolve(result).catch(() => undefined);
 
     throw new AponiaError(
       "INVALID_CONFIGURATION",
@@ -71,12 +73,14 @@ export function loadConfiguration<T>(
   if (typeof outcome !== "object" || outcome === null) {
     throw new AponiaError(
       "INVALID_CONFIGURATION",
-      `Configuration "${name}" was validated by a schema that answered with ${typeof outcome} instead of a result.`,
+      `Configuration "${name}" was validated by a schema that answered with ${outcome === null ? "null" : typeof outcome} instead of a result.`,
       { configuration: name, reason: "not-a-standard-schema" },
     );
   }
 
-  if (!("value" in outcome) && !("issues" in outcome)) {
+  // Present-but-undefined `issues` is the same violation: the protocol answers
+  // with one of the two, and a key carrying nothing injects `undefined`.
+  if (!("value" in outcome) && (outcome as { issues?: unknown }).issues === undefined) {
     throw new AponiaError(
       "INVALID_CONFIGURATION",
       `Configuration "${name}" was validated by a schema that answered with neither a value nor issues.`,
