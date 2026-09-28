@@ -18,7 +18,7 @@ This package consumes frozen descriptors only. It never imports `reflect-metadat
 
 - Compilation is eager and fails before an instance exists: duplicate module identity, import cycles, duplicate tokens inside a module, exports of tokens the module cannot resolve, and unresolvable provider or controller dependencies.
 - Modules are identified by `instanceId ?? id`, so two configured instances of one module class stay distinct.
-- A provider left out of a module's `exports` is invisible to importers, and two imports exporting the same token raise `AMBIGUOUS_PROVIDER` instead of picking a winner.
+- A provider left out of a module's `exports` is invisible to importers, and two imports that resolve the token to different modules raise `AMBIGUOUS_PROVIDER` instead of picking a winner, while two that re-export one shared provider agree on it.
 - `AponiaContainer.get` enforces root-module visibility and detects provider dependency cycles while resolving.
 
 ## Documentation

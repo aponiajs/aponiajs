@@ -9,17 +9,18 @@ The Elysia adapter: it lowers decorated classes into descriptors, bootstraps the
 application, maps HTTP routes and WebSocket gateways, and mounts native plugins.
 It depends on `common` and `core`, with `elysia` as a peer.
 
-| Domain         | Owns                                                                                             |
-| -------------- | ------------------------------------------------------------------------------------------------ |
-| `application/` | Factory orchestration, application lifecycle wrapper, public option contracts                    |
-| `modules/`     | `compileRootModule` and decorator-to-descriptor lowering                                         |
-| `controllers/` | Controller descriptors, direct registration, enhancer resolution, `ELYSIA_CONTROLLER`            |
-| `errors/`      | Typed HTTP errors, RFC 9457 Problem Details responses, and the default mapping                   |
-| `inspection/`  | Read-only projection of a compiled application for build-time consumers                          |
-| `plugins/`     | Native plugin module registration and plugin contracts                                           |
-| `routing/`     | Route plans, compiled invokers, schemas, and native context types                                |
-| `websockets/`  | Provider discovery, gateway plans, message dispatch, and native socket types                     |
-| `version.ts`   | The package's own version, read from its manifest, which generated artifacts are checked against |
+| Domain           | Owns                                                                                             |
+| ---------------- | ------------------------------------------------------------------------------------------------ |
+| `application/`   | Factory orchestration, application lifecycle wrapper, public option contracts                    |
+| `configuration/` | The boot-time loader that validates a declared configuration                                     |
+| `modules/`       | `compileRootModule` and decorator-to-descriptor lowering                                         |
+| `controllers/`   | Controller descriptors, direct registration, enhancer resolution, `ELYSIA_CONTROLLER`            |
+| `errors/`        | Typed HTTP errors, RFC 9457 Problem Details responses, and the default mapping                   |
+| `inspection/`    | Read-only projection of a compiled application for build-time consumers                          |
+| `plugins/`       | Native plugin module registration and plugin contracts                                           |
+| `routing/`       | Route plans, compiled invokers, schemas, and native context types                                |
+| `websockets/`    | Provider discovery, gateway plans, message dispatch, and native socket types                     |
+| `version.ts`     | The package's own version, read from its manifest, which generated artifacts are checked against |
 
 `src/index.ts` is the only public barrel. Keep `*.types.ts` colocated with the
 runtime boundary it describes.
@@ -328,7 +329,12 @@ runtime boundary it describes.
   `registerCompiledElysiaRoutes` returns the property keys a supplied invoker
   bound, and the boot hands that set to the record. Consumers
   project this record; they never re-apply a selector's rule to reach the same
-  answer.
+  answer. A second symbol-keyed seam rides the same instance: the boot also
+  attaches its container under `Symbol.for("aponia.application.container")` as
+  `application-container.ts`'s `attachApplicationContainer`, with the same three
+  flags and the same reader discipline, and it is what
+  `AponiaElysiaApplication.get` reads a token through — a wrapper no boot
+  produced holds no container and raises `MISSING_PROVIDER`.
 - `defineElysiaControllerRoutes` is the descriptor path's counterpart to
   `@Controller()` and its route decorators: it compiles `ElysiaRoutePlan` values
   through the same lowering a decorated controller uses, so a declared

@@ -125,11 +125,15 @@ separate focused modules. `src/index.ts` is the only public barrel.
   `defineElysiaWebSocketGateway` from `@aponiajs/platform-elysia`, which is what
   makes an application able to boot without lowering decorated classes. It never
   calls Elysia's route API or `application.ws()` — those stay in the platform, and
-  a generated route or gateway reaches them through its declared plan. It emits
-  exactly the helpers a module's body calls, one import per package, and exports
-  `moduleDescriptorArtifact`, a frozen record of descriptors keyed by module
-  class name beside the release the file was built by — the descriptor half of
-  what the invoker module records, kept in step with the platform's
+  a generated route or gateway reaches them through its declared plan. The import
+  block it writes has two parts and they are not merged: first one line per
+  package supplying a helper the module's body calls, then one line per name the
+  copied application expressions read, deduplicated among themselves. A copied
+  expression reading from a helper's own package therefore adds a second import
+  line from that package, which is expected rather than a duplicate to merge. It
+  exports `moduleDescriptorArtifact`, a frozen record of descriptors keyed by
+  module class name beside the release the file was built by — the descriptor half
+  of what the invoker module records, kept in step with the platform's
   `AponiaModuleDescriptorArtifact` by hand. The platform refuses that artifact
   whole when the release disagrees, when it holds no module record, or when it
   holds no descriptor for the root module the application named, and lowers the

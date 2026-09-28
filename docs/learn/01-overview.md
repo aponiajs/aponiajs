@@ -35,14 +35,14 @@ descriptor form. Both paths stay supported.
 
 Implemented: decorated modules and HTTP controllers, one-schema validation
 models over Standard Schema and native validators, request parameter decorators,
-singleton dependency injection,
-class/value/factory/alias providers, explicit tokens, module imports and
-exports, lifecycle, structured logging, generators, and native Elysia escape
-hatches, RFC 9457 application errors for every supported HTTP error status,
-provider-registered WebSocket gateways backed by native Elysia sockets, and
-guards, interceptors, and exception filters compiled into per-route Elysia
-lifecycle hooks, with the default Problem Details mapping an unhandled failure
-answers through last in each route's error path.
+singleton dependency injection, class/value/factory/alias providers, explicit
+tokens, validated configuration an application declares and injects, module
+imports and exports, provider and application lifecycle hooks, read from the
+provider instance, structured logging, generators, and native Elysia escape
+hatches, RFC 9457 application errors for every supported HTTP error status, provider-registered WebSocket gateways backed by native Elysia
+sockets, and guards, interceptors, and exception filters compiled into per-route
+Elysia lifecycle hooks, with the default Problem Details mapping an unhandled
+failure answers through last in each route's error path.
 
 Not implemented yet: middleware, non-singleton scopes, testing modules, OpenAPI,
 authentication, production WebSocket policies and transport extraction, and

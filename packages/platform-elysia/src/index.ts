@@ -15,6 +15,7 @@ export type {
   NativeElysiaConfigurator,
 } from "./application/application.types.ts";
 export type { AponiaNativeApplication } from "./application/native-application.types.ts";
+export { provideConfiguration } from "./configuration/provider.ts";
 export { compileRootModule } from "./modules/module-compiler.ts";
 export type { AponiaRootModule } from "./modules/module-compiler.types.ts";
 export type { AponiaModuleDescriptorArtifact } from "./modules/module-descriptor-artifact.types.ts";

@@ -51,6 +51,23 @@ test("generates a module-controller-service application", async () => {
   expect(await Bun.file(join(projectDirectory, "src/app.module.ts")).text()).toContain(
     "controllers: [AppController]",
   );
+  // The starter's port is a declared configuration rather than a bare
+  // `Number(Bun.env.PORT ?? 3000)`: the module provides and exports it, and the
+  // declaration lives beside the sources it belongs to.
+  expect(await Bun.file(join(projectDirectory, "src/app.module.ts")).text()).toContain(
+    "provideConfiguration(AppConfig)",
+  );
+  expect(await Bun.file(join(projectDirectory, "src/app.module.ts")).text()).toContain(
+    "exports: [AppConfig]",
+  );
+  expect(await Bun.file(join(projectDirectory, "src/config.ts")).text()).toContain(
+    "defineConfiguration",
+  );
+  // The entrypoint reads the validated value back rather than the environment,
+  // which is the half that makes the declaration the port's only source.
+  expect(await Bun.file(join(projectDirectory, "src/main.ts")).text()).toContain(
+    "application.listen(application.get(AppConfig).port)",
+  );
   expect(await Bun.file(join(projectDirectory, "src/app.controller.ts")).text()).toContain(
     "@Controller()",
   );

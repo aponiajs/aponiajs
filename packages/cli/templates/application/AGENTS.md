@@ -53,6 +53,7 @@ src/
 |-- app.controller.ts
 |-- app.module.ts
 |-- app.service.ts
+|-- config.ts
 |-- descriptors.generated.ts
 |-- invokers.generated.ts
 |-- logger.ts
@@ -60,6 +61,10 @@ src/
 test/
 `-- app.e2e-spec.ts
 ```
+
+`src/config.ts` holds the application's configuration: one schema that validates
+`PORT` once at boot, provided by `AppModule` and read back through
+`application.get(AppConfig)` in `src/main.ts`.
 
 Every later feature is a directory under `src/<resource>/`, holding its module,
 controller, service, models, and tests together.
@@ -119,7 +124,10 @@ The surface is served unless `NODE_ENV` is `production`, on loopback and port
 `devtoolsPlugin` moves the bind — which the start reports, because `/requests`
 records headers and bodies. `enabled: false` serves nothing at all: no socket and no endpoint. The
 expression in `src/main.ts` is this starter's choice; the framework never reads
-the environment on the application's behalf. Both halves of the trade are in the
+the environment to choose its own behaviour. This application reads it where it
+declares it to: `src/config.ts` declares the `PORT` schema, and the
+`provideConfiguration(AppConfig)` provider in `src/app.module.ts` validates it
+once at boot — that read is the application's. Both halves of the trade are in the
 [devtools guide](https://github.com/aponiajs/aponiajs/blob/main/docs/devtools.md).
 
 ## Authoring rules

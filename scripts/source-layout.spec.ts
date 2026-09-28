@@ -13,6 +13,7 @@ const packageLayouts: readonly PackageLayout[] = [
     sourceRoot: "packages/common/src",
     files: ["index.ts"],
     directories: [
+      "configuration",
       "controllers",
       "decorators",
       "enhancers",
@@ -36,6 +37,7 @@ const packageLayouts: readonly PackageLayout[] = [
     files: ["index.ts", "version.ts"],
     directories: [
       "application",
+      "configuration",
       "controllers",
       "errors",
       "inspection",

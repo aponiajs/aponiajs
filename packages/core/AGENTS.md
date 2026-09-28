@@ -39,9 +39,9 @@ container.
   working map.
 - `ModuleGraph.locate` resolves the module's own providers first, then imports
   that **export** the token. A provider left out of `exports` is invisible to
-  importers, and two imports exporting the same token raise
-  `AMBIGUOUS_PROVIDER` instead of picking a winner. Resolutions are memoized per
-  module.
+  importers, and two imports that resolve the token to different modules raise
+  `AMBIGUOUS_PROVIDER` instead of picking a winner, while two that re-export one
+  shared provider agree on it. Resolutions are memoized per module.
 - `AponiaContainer` caches one instance per provider per module — singleton is
   the only scope — and detects provider cycles during resolution.
 - `get()` enforces root-module visibility on purpose. `resolveModuleProvider()`

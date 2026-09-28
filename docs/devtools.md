@@ -49,8 +49,10 @@ export class AppModule {}
 provider, no native plugin, and therefore no socket — so a boot that mounts it
 answers exactly as a boot that never imported the package. The condition above
 is the application's own decision; the framework never reads an environment
-variable on the application's behalf, because an environment variable is not a
-security boundary.
+variable to choose its own behaviour, because an environment variable is not a
+security boundary. A configuration an application declares is that application's
+own read: [`provideConfiguration`](./configuration.md) validates the record the
+application named, and the framework never consults the value it validated.
 
 A registration is an import of a **dynamic** module, and that has a build-time
 consequence. A module is lowered into `descriptors.generated.ts` only when every
@@ -171,11 +173,11 @@ A consumer reads `meta` first and decides whether to proceed:
 ```ts
 {
   contract: 2,              // the version of this wire shape
-  framework: "0.6.0-alpha.29", // the release that booted the application
+  framework: "0.6.0-alpha.30", // the release that booted the application
   elysia: "1.4.30",         // the release installed in the application's own tree, or null
   artifacts: {              // which release supplied each adopted artifact
     invokers: null,         // null: the boot adopted none
-    descriptors: "0.6.0-alpha.29",
+    descriptors: "0.6.0-alpha.30",
   },
   startedAt: "2026-09-26T12:00:00.000Z",
 }

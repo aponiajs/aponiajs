@@ -3,6 +3,7 @@ import { devtoolsPlugin } from "@aponiajs/devtools";
 import { moduleDescriptorArtifact } from "./descriptors.generated.ts";
 import { controllerInvokerArtifact } from "./invokers.generated.ts";
 import { AppModule } from "./app.module.ts";
+import { AppConfig } from "./config.ts";
 import { appLogger } from "./logger.ts";
 
 async function bootstrap(): Promise<void> {
@@ -37,8 +38,13 @@ async function bootstrap(): Promise<void> {
       }),
     ],
   });
-  const port = Number(Bun.env.PORT ?? 3000);
-  await application.listen(port);
+  // The port is the validated configuration's, read back from the container the
+  // boot built. A `PORT` the schema refuses fails the boot — the provider is
+  // instantiated inside `AponiaFactory.create` above, before this read runs — so
+  // a malformed value never reaches `listen` as `NaN`. `NODE_ENV` and
+  // `DEVTOOLS_PORT` above stay inline: the `plugins` option needs them before a
+  // container exists to read one from.
+  await application.listen(application.get(AppConfig).port);
 }
 
 await bootstrap();

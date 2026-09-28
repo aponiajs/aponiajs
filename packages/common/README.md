@@ -15,7 +15,9 @@ bun add @aponiajs/common
 
 The public application authoring API includes `@Module()`, `@Controller()`,
 HTTP method decorators, WebSocket gateway decorators, `@Injectable()`,
-`@Inject()`, and the guard, interceptor, and filter decorators. The public types
+`@Inject()`, `defineConfiguration()` — which returns a `ConfigurationToken`
+carrying the schema its value must satisfy — and the guard, interceptor, and
+filter decorators. The public types
 include the five provider lifecycle contracts — `OnModuleInit`,
 `OnApplicationBootstrap`, `BeforeApplicationShutdown`, `OnModuleDestroy`, and
 `OnApplicationShutdown` — which a provider implements by declaring the method;

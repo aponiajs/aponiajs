@@ -35,7 +35,9 @@ The first Elysia platform slice for Aponia:
 - Nest-style guards, interceptors (`interceptBefore`/`interceptAfter`), and
   exception filters, compiled into per-route Elysia lifecycle hooks;
 - explicit Elysia AOT, lazy-composition, and startup-precompile policy;
-- `handle`, `listen`, and `close` application methods.
+- `provideConfiguration(AppConfig)` — an application-declared configuration,
+  validated once at boot and read back through `application.get(AppConfig)`;
+- `handle`, `listen`, `get`, and `close` application methods.
 
 This package intentionally does not yet implement request scopes, schema
 aggregation, Socket.IO-only gateway semantics, or decorator-wide static route
@@ -249,7 +251,7 @@ versions it was generated against:
 ```ts
 // src/invokers.generated.ts
 export const controllerInvokerArtifact = Object.freeze({
-  framework: "0.6.0-alpha.29",
+  framework: "0.6.0-alpha.30",
   elysia: "1.4.30",
   invokers: new Map([
     [UsersController, (instance: UsersController) => new Map([["ping", () => instance.ping()]])],
@@ -308,7 +310,7 @@ it was generated against:
 ```ts
 // src/descriptors.generated.ts
 export const moduleDescriptorArtifact = Object.freeze({
-  framework: "0.6.0-alpha.29",
+  framework: "0.6.0-alpha.30",
   elysia: "1.4.30",
   modules: Object.freeze({ AppModule: AppModuleDescriptor }),
 });
@@ -960,7 +962,8 @@ only exist once the callback runs; build the application and read
 [introspection guide](../../docs/introspection.md) for the full contract.
 
 [npm package](https://www.npmjs.com/package/@aponiajs/platform-elysia) ·
-[Lifecycle](../../docs/lifecycle.md) ·
+[configuration guide](../../docs/configuration.md) ·
+[lifecycle guide](../../docs/lifecycle.md) ·
 [native plugin guide](../../docs/native-plugins.md) ·
 [Eden Treaty guide](../../docs/eden-treaty.md) ·
 [complete package catalog](../../docs/packages.md)

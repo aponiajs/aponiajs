@@ -34,6 +34,7 @@ src/
 |-- app.controller.ts
 |-- app.module.ts
 |-- app.service.ts
+|-- config.ts
 `-- main.ts
 test/
 `-- app.e2e-spec.ts

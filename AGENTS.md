@@ -146,9 +146,10 @@ provider dependencies, and unresolvable controller dependencies.
 
 `ModuleGraph.locate` resolves a token against the module's own providers first,
 then against imports that **export** that token. A provider that is not exported
-is invisible to importers. Two imports exporting the same token raise
-`AMBIGUOUS_PROVIDER` rather than picking a winner. Resolutions are memoized per
-module.
+is invisible to importers. Two imports that resolve the token to different
+modules raise `AMBIGUOUS_PROVIDER` rather than picking a winner; two that
+re-export one shared provider agree on it, which is what makes a diamond legal.
+Resolutions are memoized per module.
 
 `AponiaContainer` (`packages/core/src/container/container.ts`) caches one instance per
 provider per module — singleton is currently the only scope — and detects
@@ -326,8 +327,9 @@ Failures throw `AponiaError` with a code from the closed `AponiaErrorCode` union
 in `packages/common/src/errors/aponia-error.types.ts` (`MODULE_CYCLE`, `DUPLICATE_MODULE`,
 `DUPLICATE_PROVIDER`, `INVALID_EXPORT`, `AMBIGUOUS_PROVIDER`, `MISSING_PROVIDER`,
 `PROVIDER_CYCLE`, `INVALID_PROVIDER`, `UNRESOLVED_CONSTRUCTOR_DEPENDENCIES`,
+`INVALID_CONFIGURATION`, `INVALID_CONFIGURATION_VALUE`,
 `INVALID_CONTROLLER`, `INVALID_MODULE`,
-`INVALID_NATIVE_APPLICATION`, `APPLICATION_NOT_LISTENING`,
+`INVALID_NATIVE_APPLICATION`, `UNSUPPORTED_ELYSIA_VERSION`, `APPLICATION_NOT_LISTENING`,
 `UNSUPPORTED_CONTROLLER`, `DUPLICATE_ROUTE`, `INVALID_VALIDATION_MODEL`,
 `INVALID_WEBSOCKET_GATEWAY`, `DUPLICATE_WEBSOCKET_GATEWAY`,
 `DUPLICATE_WEBSOCKET_HANDLER`, `INVALID_WEBSOCKET_MESSAGE`,
@@ -378,8 +380,9 @@ create/find-all/find-one/update/remove message handlers. `runCli` prints
 Implemented: decorated modules and HTTP controllers, Standard Schema route
 validation, one-schema validation-model classes, request parameter decorators,
 singleton DI, class/value/factory/alias providers, explicit tokens,
-imports and exports, provider and application lifecycle hooks, read
-from the provider instance, structured logging, generators, native Elysia
+validated configuration an application declares and injects,
+imports and exports, provider and application lifecycle hooks, read from the
+provider instance, structured logging, generators, native Elysia
 escape hatches, application-owned native plugins mounted through
 `AponiaApplicationOptions.plugins`, concise inferred controller registration,
 RFC 9457 application
