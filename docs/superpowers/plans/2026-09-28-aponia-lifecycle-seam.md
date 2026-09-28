@@ -988,6 +988,54 @@ describe("the stopping hooks", () => {
     expect(calls).toEqual(["shutdown"]);
   });
 
+  test("join a close already in flight instead of resolving before it finishes", async () => {
+    calls.length = 0;
+
+    class Slow implements OnApplicationShutdown {
+      async onApplicationShutdown(): Promise<void> {
+        await Bun.sleep(5);
+        calls.push("shutdown");
+      }
+    }
+
+    @Module({ providers: [provideClass(Slow, [])] })
+    class SlowModule {}
+
+    application = await AponiaFactory.create(SlowModule, { logger: false });
+    await application.listen(0);
+
+    await Promise.all([application.close(), application.close()]);
+
+    // Both callers waited for the same teardown: a second call that returned
+    // early would resolve while the first was still running, telling a caller an
+    // application is down that is not.
+    expect(calls).toEqual(["shutdown"]);
+    expect(application.getNativeApplication().server).toBeNull();
+  });
+
+  test("stop a server that was bound after an earlier close", async () => {
+    calls.length = 0;
+
+    class Late implements OnApplicationShutdown {
+      onApplicationShutdown(): void {
+        calls.push("shutdown");
+      }
+    }
+
+    @Module({ providers: [provideClass(Late, [])] })
+    class LateModule {}
+
+    application = await AponiaFactory.create(LateModule, { logger: false });
+    await application.close();
+    await application.listen(0);
+    await application.close();
+
+    // A `close()` before the application listened must not make a later one a
+    // no-op: the listener would outlive the call that was meant to end it.
+    expect(application.getNativeApplication().server).toBeNull();
+    expect(calls).toEqual(["shutdown"]);
+  });
+
   test("carry on when the logger itself throws while reporting", async () => {
     calls.length = 0;
 
@@ -1090,23 +1138,30 @@ const beforeShutdown = collectLifecycleCalls(container, "beforeApplicationShutdo
 const moduleDestroy = [...collectLifecycleCalls(container, "onModuleDestroy")].reverse();
 const applicationShutdown = collectLifecycleCalls(container, "onApplicationShutdown");
 
-// A second `close()` runs nothing. Teardown hooks are not idempotent — a pool
-// closed twice is the defect the seam exists to prevent — and the `close()` this
-// replaces was already a no-op once the server had stopped.
-let stopped = false;
+// Each group of stopping hooks runs once per boot, and a second caller joins the
+// group already running rather than starting another — teardown hooks are not
+// idempotent, and a pool closed twice is the defect this seam exists to prevent.
+//
+// The stop is deliberately not in a group. A `close()` that ran before the
+// application listened must not make a later one a no-op: the server would stay
+// bound and outlive the call that was supposed to end it. Stopping an
+// application with no server costs nothing, so the stop is asked for every time.
+let beforeShutdownDone: Promise<void> | undefined;
+let afterStopDone: Promise<void> | undefined;
 
 attachApplicationShutdown(nativeApplication, async (closeActiveConnections = true) => {
-  if (stopped) {
-    return;
-  }
-  stopped = true;
+  beforeShutdownDone ??= runShutdownHooks(beforeShutdown, logger);
+  await beforeShutdownDone;
 
-  await runShutdownHooks(beforeShutdown, logger);
   if (nativeApplication.server) {
     await nativeApplication.stop(closeActiveConnections);
   }
-  await runShutdownHooks(moduleDestroy, logger);
-  await runShutdownHooks(applicationShutdown, logger);
+
+  afterStopDone ??= (async () => {
+    await runShutdownHooks(moduleDestroy, logger);
+    await runShutdownHooks(applicationShutdown, logger);
+  })();
+  await afterStopDone;
 });
 ```
 
@@ -1205,6 +1260,10 @@ test("runs a provider's onApplicationShutdown through a real close", async () =>
   class HookedModule {}
 
   const application = await AponiaFactory.create(HookedModule, { logger: false });
+  await application.close();
+  // The second close also exercises the once-only rule in this lane: both lanes
+  // mirror framework behaviour, and a teardown that ran twice would show here as
+  // two entries rather than one.
   await application.close();
 
   expect(calls).toEqual(["shutdown"]);
