@@ -244,15 +244,19 @@ separate focused modules. `src/index.ts` is the only public barrel.
   root stays declarable and the declared-graph boot the template promises is
   still the one that happens. `tests/starter-artifact-freshness.test.ts` and the
   packed lane's startup-line assertion are the two guards that would notice, and
-  the packed lane additionally asserts the devtools socket answers, which is what
-  says the option path reached a generated application rather than only being
-  written in it. `@aponiajs/devtools` is therefore a starter **dependency** —
-  `src/main.ts` imports it at run time — while `@aponiajs/cli` stays a
-  devDependency.
+  the packed lane additionally asserts the devtools surface answers on the
+  application's own port, which is what says the option path reached a generated
+  application rather than only being written in it. That request goes to the same
+  server those assertions already booted, and the starter declares no route under
+  `/__devtools`, so the `200` it reads belongs to the plugin's mount rather than
+  to an application route. `@aponiajs/devtools` is therefore a starter
+  **dependency** — `src/main.ts` imports it at run time — while `@aponiajs/cli`
+  stays a devDependency.
 - The starter's own devtools choices, none of which the framework makes for it:
-  the surface is enabled unless `NODE_ENV` is `production`, it binds loopback on
-  `DEVTOOLS_PORT` (default `8000`), and `src/main.ts` hands the **same** logger
-  object to `AponiaFactory.create` and to `devtoolsPlugin`, which is what makes
+  the surface is enabled unless `NODE_ENV` is `production`, it is served on the
+  application's own port under `/__devtools` — the address `src/main.ts` already
+  hands to `listen` — and `src/main.ts` hands the **same** logger object to
+  `AponiaFactory.create` and to `devtoolsPlugin`, which is what makes
   `/__devtools/logs` carry the boot's own lines. They are stated in the
   template's `AGENTS.md`, `README.md`, `.env.example`, and `src/main.ts`.
 - The starter commits both generated modules and `src/main.ts` adopts both

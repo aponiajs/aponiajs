@@ -27,13 +27,14 @@ async function bootstrap(): Promise<void> {
     //
     // `enabled` is this application's decision and the framework never guesses
     // it from the environment: the starter serves the surface unless
-    // `NODE_ENV=production`. The socket binds loopback and `8000` by default;
-    // naming another `host` is permitted and reported, because `/requests`
-    // records headers and bodies.
+    // `NODE_ENV=production`. The surface is mounted on this application's own
+    // route table, under `/__devtools` on the address `listen` is given below,
+    // so it is reachable wherever the application is and `/requests` records
+    // headers and bodies with no warning. `enabled` is what keeps it out of
+    // production.
     plugins: [
       devtoolsPlugin({
         enabled: Bun.env.NODE_ENV !== "production",
-        port: Number(Bun.env.DEVTOOLS_PORT ?? 8000),
         logger: appLogger,
       }),
     ],
@@ -41,9 +42,9 @@ async function bootstrap(): Promise<void> {
   // The port is the validated configuration's, read back from the container the
   // boot built. A `PORT` the schema refuses fails the boot — the provider is
   // instantiated inside `AponiaFactory.create` above, before this read runs — so
-  // a malformed value never reaches `listen` as `NaN`. `NODE_ENV` and
-  // `DEVTOOLS_PORT` above stay inline: the `plugins` option needs them before a
-  // container exists to read one from.
+  // a malformed value never reaches `listen` as `NaN`. The devtools surface is
+  // mounted on this same address. `NODE_ENV` above stays inline: the `plugins`
+  // option needs it before a container exists to read one from.
   await application.listen(application.get(AppConfig).port);
 }
 

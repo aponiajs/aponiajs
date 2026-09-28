@@ -18,7 +18,7 @@ rules, are in [`AGENTS.md`](AGENTS.md).
 - [Native Elysia plugins](https://github.com/aponiajs/aponiajs/blob/main/docs/native-plugins.md): mounting a plugin and typing what it adds
 - [Errors](https://github.com/aponiajs/aponiajs/blob/main/docs/learn/10-errors.md): the closed error-code union and HTTP problem responses
 - [Elysia compatibility](https://github.com/aponiajs/aponiajs/blob/main/docs/elysia-compatibility.md): which Elysia versions this framework supports
-- [Devtools](https://github.com/aponiajs/aponiajs/blob/main/docs/devtools.md): the API an enabled registration serves on loopback by default, and what it does not report
+- [Devtools](https://github.com/aponiajs/aponiajs/blob/main/docs/devtools.md): the API an enabled registration serves on the application's own address, and what it does not report
 - [CLI reference](https://github.com/aponiajs/aponiajs/blob/main/docs/cli.md): the full schematic catalog, aliases, and options
 - [Learning path](https://github.com/aponiajs/aponiajs/blob/main/docs/learn/README.md): the same material as ordered chapters
 
@@ -28,4 +28,4 @@ rules, are in [`AGENTS.md`](AGENTS.md).
 - [@aponiajs/core](https://www.npmjs.com/package/@aponiajs/core): module graph and dependency injection container
 - [@aponiajs/platform-elysia](https://www.npmjs.com/package/@aponiajs/platform-elysia): bootstrap, HTTP routes, WebSocket gateways, and typed HTTP errors
 - [@aponiajs/cli](https://www.npmjs.com/package/@aponiajs/cli): the `aponia new` and `aponia generate` commands
-- [@aponiajs/devtools](https://www.npmjs.com/package/@aponiajs/devtools): the devtools this starter mounts through the factory's `plugins` option, loopback by default and off when `NODE_ENV` is `production`
+- [@aponiajs/devtools](https://www.npmjs.com/package/@aponiajs/devtools): the devtools this starter mounts through the factory's `plugins` option, served on the application's own port and off when `NODE_ENV` is `production`
