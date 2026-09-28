@@ -22,18 +22,26 @@ const AppConfig = defineConfiguration(z.object({ port: z.coerce.number().default
  * widened to the schema's input or stopped extending `InjectionToken` fails
  * `bun run check` here.
  */
-type ConfigurationTokenAssertions = [
-  Expect<Equals<typeof AppConfig, ConfigurationToken<{ port: number }>>>,
-  Expect<Equals<(typeof AppConfig)["id"], symbol>>,
-  Expect<Equals<(typeof AppConfig)["description"], string>>,
-  Expect<Equals<keyof ConfigurationOptions, "source">>,
-  Expect<Equals<ConfigurationOptions["source"], Readonly<Record<string, unknown>> | undefined>>,
-];
+type TokenTypeAssertion = Expect<Equals<typeof AppConfig, ConfigurationToken<{ port: number }>>>;
+type TokenIdAssertion = Expect<Equals<(typeof AppConfig)["id"], symbol>>;
+type TokenDescriptionAssertion = Expect<Equals<(typeof AppConfig)["description"], string>>;
+type OptionsKeysAssertion = Expect<Equals<keyof ConfigurationOptions, "source">>;
+type OptionsSourceAssertion = Expect<
+  Equals<ConfigurationOptions["source"], Readonly<Record<string, unknown>> | undefined>
+>;
 
 test("the Vite+ lane keeps a configuration declaration addressable", () => {
-  const assertions = Array.from({ length: 5 }, () => true) as ConfigurationTokenAssertions;
+  const tokenTypeAssertion: TokenTypeAssertion = true;
+  const tokenIdAssertion: TokenIdAssertion = true;
+  const tokenDescriptionAssertion: TokenDescriptionAssertion = true;
+  const optionsKeysAssertion: OptionsKeysAssertion = true;
+  const optionsSourceAssertion: OptionsSourceAssertion = true;
 
-  expect(assertions).toHaveLength(5);
+  expect(tokenTypeAssertion).toBe(true);
+  expect(tokenIdAssertion).toBe(true);
+  expect(tokenDescriptionAssertion).toBe(true);
+  expect(optionsKeysAssertion).toBe(true);
+  expect(optionsSourceAssertion).toBe(true);
   expect(Object.isFrozen(AppConfig)).toBe(true);
   expect(typeof AppConfig.id).toBe("symbol");
   expect(AppConfig.description).toBe("configuration");

@@ -21,6 +21,7 @@ This package records metadata and declares contracts. It never builds a module g
 - [renderLogValue](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/logging/log-value.ts): the text a logged value is stated as, and `[unrenderable]` for a value it cannot state.
 - [WebSocketGateway, SubscribeMessage, MessageBody, ConnectedSocket, WebSocketServer](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/websockets/websocket-gateway.ts): platform-neutral gateway decorators.
 - [getWebSocketGatewayMetadata, getWebSocketMessageMetadata, getWebSocketParameterMetadata, getWebSocketServerProperties](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/websockets/websocket-gateway.ts): the gateway metadata readers.
+- [defineConfiguration](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/configuration/configuration.ts): declares a configuration as a token that carries the Standard Schema its value must satisfy.
 
 ## Public types
 
@@ -37,7 +38,7 @@ This package records metadata and declares contracts. It never builds a module g
 - [WsResponse, OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/websockets/websocket-gateway.types.ts): gateway response and lifecycle contracts.
 - [WebSocketGatewayMetadata, WebSocketGatewayOptions, WebSocketMessageMetadata, WebSocketParameterKind, WebSocketParameterMetadata](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/websockets/websocket-gateway.types.ts): gateway metadata shapes.
 - [ControllerDefinition](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/controllers/controller.types.ts): the platform-neutral controller descriptor.
-- [defineConfiguration, ConfigurationToken, ConfigurationOptions](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/configuration/configuration.ts): declares a configuration as a token that carries the Standard Schema its value must satisfy.
+- [ConfigurationToken, ConfigurationOptions](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/configuration/configuration.types.ts): the declaration's token type and the options a loader is asked with.
 
 ## Documentation
 
