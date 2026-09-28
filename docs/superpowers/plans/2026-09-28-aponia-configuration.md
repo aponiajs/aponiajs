@@ -1379,6 +1379,23 @@ exception is softened to "can raise", and the rule the whole run keeps relearnin
 where the next round will meet it: **a sentence about a lookup is verified by probing the lookup's
 cases, not by reading the sentence.**
 
+**A sixth repair, from the round that verified the fifth.** `docs/configuration.md` said the loader
+copies the source record "so the schema validates a stable input and a later change to the record
+cannot reach a value that was already validated". The copy is one level deep —
+`{ ...(options?.source ?? process.env) }`, the line Task 2 was told to write — so a record's nested
+objects are shared with it, and a schema that hands back a nested slice hands back the caller's own
+object. Measured, `.tmp/probe-config-copy-depth.probe.ts`: with `source = { database: { url: "one" } }`
+and a schema returning `value.database`, the read answers `{"url":"one"}` before the mutation and
+`{"url":"two"}` after `source.database.url = "two"`, and the value is the caller's object by `===`.
+The clause is deleted rather than qualified, which is this run's rule for a claim that was wrong: what
+remains — the record is copied, so the schema validates a stable input — is what the copy is for and
+what the tracked test pins. **The behaviour itself is left alone and is worth a design round of its
+own**: a deep copy would make a nested `source` behave the way a reader expects, and would also make
+a `source` holding a function, a symbol, or a class instance uncloneable where today it validates.
+
+The commit that carries the sixth repair is the fourth on this branch's documentation, and the ledger
+records all four with their hashes and gate results.
+
 - [ ] **Step 5: Run the documentation gates and commit**
 
 ```bash

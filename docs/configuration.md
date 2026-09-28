@@ -69,8 +69,7 @@ lives in `@aponiajs/platform-elysia`. `provideConfiguration` is the only
 boundary that reaches it; the loader itself is not exported.
 
 The loader copies the source record before the schema sees it, so the schema
-validates a stable input and a later change to the record cannot reach a value
-that was already validated.
+validates a stable input.
 
 ### Choosing the source
 
