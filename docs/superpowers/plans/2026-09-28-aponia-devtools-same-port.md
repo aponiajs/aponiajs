@@ -399,6 +399,20 @@ git commit -m "feat(cli): generate an application whose devtools share its port"
 - Modify: `AGENTS.md`
 - Modify: `packages/devtools/README.md`
 - Modify: `packages/devtools/llms.txt`
+- Modify: `packages/devtools/package.json` (the package's own description names loopback)
+- Modify: `docs/AGENTS.md` (the published-document table's `devtools.md` row)
+- Modify: `packages/platform-elysia/AGENTS.md` (a bullet that argues from the two reports the
+  package no longer writes — the row for a port it could not take, and the notice for a bind outside
+  loopback)
+- Modify: `examples/README.md` (the devtools example's row says "served on loopback")
+
+**These four were added after Task 2's implementer found them, and the reason is worth keeping.**
+This task's file list was measured with a pattern narrow enough to miss them
+(`DEVTOOLS_PORT|startDevtoolsServer|loopbackHostPattern|DevtoolsServer|Bun\.serve|hostname`), while
+the grep the task itself runs is wider. **The grep is the authority and the list is a starting
+point**: every hit gets read, and the ones that are about something else — the other `loopback`
+mentions in the tree are — stay as they are. The four above are the ones the narrow pattern missed
+and the wide one catches.
 
 **Interfaces:**
 
