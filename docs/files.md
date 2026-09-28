@@ -120,29 +120,32 @@ states.
 No AponiaJS package serves files. Two paths exist, they are not equivalent, and the
 difference is one an application has to know before it chooses.
 
-| Path                           | Needs                                                  | Inside Elysia's lifecycle | Cost                                                                       |
-| ------------------------------ | ------------------------------------------------------ | ------------------------- | -------------------------------------------------------------------------- |
-| `@elysia/static` via `plugins` | `bun add @elysia/static` in the application            | Yes                       | A dependency the application owns; the framework gains nothing             |
-| Bun native directory route     | `configureNative` setting `native.config.serve.routes` | **No**                    | The route leaves Elysia entirely, and the platform's error mapping with it |
+| Path                           | Needs                                                  | Inside Elysia's lifecycle | Cost                                                           |
+| ------------------------------ | ------------------------------------------------------ | ------------------------- | -------------------------------------------------------------- |
+| `@elysia/static` via `plugins` | `bun add @elysia/static` in the application            | Yes                       | A dependency the application owns; the framework gains nothing |
+| Bun native directory route     | `configureNative` setting `native.config.serve.routes` | **No**                    | The route leaves Elysia entirely, so no Elysia hook sees it    |
 
-The plugin keeps the request inside Elysia, so the framework's hooks, its enhancers,
-and its error path still apply to it. The native route is Bun's: it answers `404` with
-no content type and no Problem Details, because the platform's default mapping is
-compiled only into the routes the platform mounts. It is also the one that arrives
-with the hardening a file server needs — root-confined opens, canonical-path rejection,
-`Last-Modified` and `ETag`, single-range requests — and it costs no dependency.
+The plugin keeps the request inside Elysia, so Elysia's own lifecycle handles it — but not
+the enhancers or the default Problem Details mapping, which are compiled into the routes
+the platform mounts, and a plugin's route is not one of them. The native route is Bun's,
+and it answers `404` with no content type and no Problem Details for the same reason. It is
+also the one that arrives with the hardening a file server needs — canonical-path
+rejection, `Last-Modified` and a weak `ETag`, single-range `Range` requests — and it costs
+no dependency.
 
 ```ts
 import { resolve } from "node:path";
-import type { NativeElysiaConfigurator } from "@aponiajs/platform-elysia";
 import type { Elysia } from "elysia";
+import type { NativeElysiaConfigurator } from "@aponiajs/platform-elysia";
 
+// `public/` sits beside the file that declares this, and the path is resolved from
+// the file rather than from the working directory.
 export const configureStaticAssets: NativeElysiaConfigurator<Elysia> = (native) => {
   native.config.serve = {
     ...native.config.serve,
     routes: {
       ...native.config.serve?.routes,
-      "/assets/*": { dir: resolve(import.meta.dir, "./public") },
+      "/assets/*": { dir: resolve(import.meta.dir, "../public") },
     },
   };
   return native;
