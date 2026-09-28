@@ -16,7 +16,7 @@ const reportPath = resolve(import.meta.dir, "../data/measurements.csv");
  */
 @Controller("files")
 export class FilesController {
-  @Post("single", { body: t.Object({ file: t.File({ maxSize: "1m" }) }) })
+  @Post("single", { body: t.Object({ file: t.File({ minSize: "1k", maxSize: "1m" }) }) })
   uploadSingle(@Body() body: { file: File }) {
     return { name: body.file.name, size: body.file.size, type: body.file.type };
   }

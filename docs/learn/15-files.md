@@ -11,7 +11,7 @@ import { t } from "elysia";
 
 @Controller("files")
 export class FilesController {
-  @Post()
+  @Post({ body: t.Object({ file: t.File() }) })
   upload(@Body("file") file: File) {
     return { name: file.name, size: file.size };
   }

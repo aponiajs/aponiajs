@@ -19,8 +19,8 @@ bun run --cwd examples/files test
 
 `test/uploads.e2e-spec.ts` asserts each declaration through
 `application.handle(new Request(...))`: the object form, `@Body("file")`, `t.Files()`,
-`t.Form()`, the `maxSize` refusal, the filename rather than the declaration deciding
-`file.type`, and the `422` a whole-body `t.File()` answers.
+`t.Form()`, the `minSize` and `maxSize` refusals, the filename rather than the declaration
+deciding `file.type`, and the `422` a whole-body `t.File()` answers.
 
 ## Downloads
 

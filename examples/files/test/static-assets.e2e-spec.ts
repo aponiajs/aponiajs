@@ -1,31 +1,8 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
-import { createServer } from "node:net";
 import { AponiaFactory, type AponiaElysiaApplication } from "@aponiajs/platform-elysia";
 import { AppModule } from "../src/app.module.ts";
 import { configureStaticAssets } from "../src/static-assets.ts";
-
-/**
- * A native directory route is Bun's, not Elysia's: it is composed when the server
- * starts, so this suite listens on a reserved ephemeral port instead of driving
- * `handle` the way every other lane does.
- */
-async function reservePort(): Promise<number> {
-  const reservation = createServer();
-  await new Promise<void>((resolve, reject) => {
-    reservation.once("error", reject);
-    reservation.listen(0, "127.0.0.1", resolve);
-  });
-  const address = reservation.address();
-  if (!address || typeof address === "string") {
-    reservation.close();
-    throw new Error("Could not reserve an ephemeral test port.");
-  }
-  const port = address.port;
-  await new Promise<void>((resolve, reject) => {
-    reservation.close((error) => (error ? reject(error) : resolve()));
-  });
-  return port;
-}
+import { reservePort } from "./application.ts";
 
 let application: AponiaElysiaApplication;
 

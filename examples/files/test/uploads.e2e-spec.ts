@@ -14,14 +14,15 @@ afterAll(async () => {
 
 describe("uploading a file", () => {
   test("an object schema carries the part to @Body() as a File", async () => {
+    // Comfortably above the route's `minSize`, so the part reaches the handler.
     const response = await upload(
       application,
       "/files/single",
-      form({ file: file("report.dat", "hello") }),
+      form({ file: file("report.dat", new Uint8Array(2048)) }),
     );
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({ name: "report.dat", size: 5 });
+    expect(await response.json()).toMatchObject({ name: "report.dat", size: 2048 });
   });
 
   test("the part's type comes from its filename, not from the declared one", async () => {
@@ -29,10 +30,11 @@ describe("uploading a file", () => {
     // this framework: the multipart parser discards the content type the client
     // declared and maps the filename through a MIME table. `file.type` is therefore
     // a fact about the name the client chose, never about the bytes it sent.
+    // The payload clears the route's `minSize`; its bytes are deliberately not a PNG.
     const response = await upload(
       application,
       "/files/single",
-      form({ file: file("photo.png", "not a png at all", "text/plain") }),
+      form({ file: file("photo.png", "not a png at all".repeat(100), "text/plain") }),
     );
 
     expect(response.status).toBe(200);
@@ -83,6 +85,16 @@ describe("uploading a file", () => {
       application,
       "/files/single",
       form({ file: file("huge.bin", new Uint8Array(1_048_577)) }),
+    );
+
+    expect(response.status).toBe(422);
+  });
+
+  test("a part below the declared minSize is refused before the handler runs", async () => {
+    const response = await upload(
+      application,
+      "/files/single",
+      form({ file: file("tiny.bin", new Uint8Array(512)) }),
     );
 
     expect(response.status).toBe(422);
