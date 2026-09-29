@@ -95,9 +95,9 @@ test("rejects non-callable registration capabilities with frozen structured deta
 
 test("preserves request validation through a method-to-legacy ABI harness", async () => {
   const application = new Elysia();
-  const legacyRoute = application.route;
+  const legacyRoute = Reflect.get(application, "route") as typeof application.route;
   const method: NativeMethodRegistration = function (method, path, hook, handler) {
-    legacyRoute.call(this, method, path, handler, hook);
+    Reflect.apply(legacyRoute, this, [method, path, handler, hook]);
   };
   Object.defineProperty(application, "route", { value: undefined });
   Object.defineProperty(application, "method", { value: method });
