@@ -16,10 +16,8 @@ interface RouteClaim {
 /**
  * Rejects a route declaration that another declaration already owns.
  *
- * Elysia resolves a repeated `(method, path)` by whichever registration wins
- * under its composition policy, so the answering handler changes with
- * `elysia.aot`. An application must never learn its routing from a compiler
- * flag, so the ambiguity fails while the module graph is lowered.
+ * Elysia resolves a repeated `(method, path)` by native registration order.
+ * The module graph must reject the ambiguity before mounting routes.
  *
  * Only the modules reachable from the compiled root through `imports` are
  * considered, which is exactly the set bootstrap mounts: `compileModuleGraph`

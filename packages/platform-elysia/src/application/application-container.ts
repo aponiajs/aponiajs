@@ -91,17 +91,18 @@ export function readApplicationToken<T>(application: unknown, token: Token<T>): 
  * @internal
  */
 export function publishApplicationOnStore(application: object): void {
-  const store = (application as { store?: Record<PropertyKey, unknown> }).store;
-  if (!store) {
+  const state = (application as { readonly state?: unknown }).state;
+  if (typeof state !== "function") {
     return;
   }
 
-  Object.defineProperty(store, nativeApplicationKey, {
-    value: application,
-    enumerable: false,
-    writable: false,
-    configurable: false,
-  });
+  // Elysia 2 constructs request stores from state during composition; there is
+  // no mutable application.store object to publish onto before requests exist.
+  (state as (this: object, key: symbol, value: object) => unknown).call(
+    application,
+    nativeApplicationKey,
+    application,
+  );
 }
 
 /**

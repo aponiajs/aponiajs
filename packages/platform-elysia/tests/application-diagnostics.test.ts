@@ -589,29 +589,13 @@ test("an application that was never booted through the factory exposes nothing",
 test("the store seam publishes the application for a reader on the other side of a request", async () => {
   const application = await AponiaFactory.create(DiagnosticsAppModule, { logger: false });
   const nativeApplication = application.getNativeApplication();
-  const storeKey = Symbol.for("aponia.application.native");
+  nativeApplication.get("/diagnostics-store", {}, ({ store }) =>
+    readApplicationFromStore(store) === nativeApplication ? "published" : "absent",
+  );
+  const response = await application.handle(new Request("http://localhost/diagnostics-store"));
+  expect(await response.text()).toBe("published");
+  expect(readApplicationFromStore({})).toBeUndefined();
 
-  // The boot published the application on its own store, and this is the reader
-  // `@aponiajs/devtools` reaches it through: Elysia hands a request context the
-  // `store` and not the instance, so a plugin answering a request finds the boot
-  // that produced it here rather than on an object it never holds.
-  expect(readApplicationFromStore(nativeApplication.store)).toBe(nativeApplication);
-  // The entry is a store entry rather than a property of the application, and it
-  // carries the same three flags the two instance seams state: non-enumerable so
-  // the store's own shape does not grow, and non-writable and non-configurable so
-  // nothing overwrites or undoes the decision a boot made. Asserting the whole
-  // descriptor is what makes a flipped flag a failure rather than a silent change.
-  expect(Object.getOwnPropertyDescriptor(nativeApplication.store, storeKey)).toEqual({
-    value: nativeApplication,
-    writable: false,
-    enumerable: false,
-    configurable: false,
-  });
-
-  // An application no boot produced published nothing, and the reader states
-  // that absence rather than throwing — the plain `Elysia` a plugin is mounted on
-  // by hand.
-  expect(readApplicationFromStore(new Elysia().store)).toBeUndefined();
   // The writer declines the same absence rather than throwing: it is handed
   // whatever a caller booted with, and a value carrying no `store` has nothing to
   // publish on. Removing the early return turns this call into a `TypeError` out

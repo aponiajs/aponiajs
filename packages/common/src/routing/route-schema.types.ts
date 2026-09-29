@@ -1,4 +1,5 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
+import type { Static, TSchema } from "typebox";
 import type { routeSchemaSlots } from "./route-schema.ts";
 import type { RouteValidatorInput, ValidationModelClass } from "./validation.types.ts";
 
@@ -6,10 +7,8 @@ import type { RouteValidatorInput, ValidationModelClass } from "./validation.typ
  * Platform-native JSON Schema validator, such as TypeBox or the Elysia `t`
  * builder, which describes its inferred value through a `static` member.
  */
-export interface NativeSchema {
-  readonly static: unknown;
-  readonly params: unknown[];
-}
+export type NativeSchema = TSchema &
+  ({ readonly ["~kind"]: string } | { readonly ["~unsafe"]: unknown });
 
 /**
  * Any validator a route slot accepts: a Standard Schema implementation such as
@@ -37,7 +36,7 @@ export type InferValidatorOutput<TValidator> = TValidator extends StandardSchema
   : TValidator extends ValidationModelClass<infer TInstance>
     ? TInstance
     : TValidator extends NativeSchema
-      ? TValidator["static"]
+      ? Static<TValidator>
       : unknown;
 
 type InferSlot<

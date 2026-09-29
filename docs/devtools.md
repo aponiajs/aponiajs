@@ -154,11 +154,11 @@ A consumer reads `meta` first and decides whether to proceed:
 ```ts
 {
   contract: 3,                 // the version of this wire shape
-  framework: "0.6.0-alpha.38", // the release that booted the application
-  elysia: "1.4.30",            // the release installed in the application's own tree, or null
+  framework: "0.6.0-alpha.39", // the release that booted the application
+  elysia: "2.0.0-beta.19",            // the release installed in the application's own tree, or null
   artifacts: {                 // which release supplied each adopted artifact
     invokers: null,            // null: the boot adopted none
-    descriptors: "0.6.0-alpha.38",
+    descriptors: "0.6.0-alpha.39",
   },
   startedAt: "2026-09-26T12:00:00.000Z", // the first request the surface answered here
 }
@@ -401,7 +401,7 @@ counted twice.
 
 The first entry is not redundant. A request whose answer never reaches this
 package leaves only that entry, whose `status` and `durationMs` are `null` — a
-plugin that answered from its own `onRequest` before any later phase ran, for
+plugin that answered from its own `request` before any later phase ran, for
 instance. The absence is **stated rather than filled**: writing an entry only at
 completion would make such a request indistinguishable from one that never
 arrived, and a fallback written at arrival that guessed a status would be
@@ -415,7 +415,7 @@ the status, the duration, the parsed body, and the message a failure published.
 That reach has one boundary, and it is Elysia's rather than this package's: both
 hook phases run in mount order, so the arrival hook records a request only when it
 runs before whatever answers it. A plugin mounted ahead of the devtools
-registration that answers with its own `Response` from `onRequest` therefore ends
+registration that answers with its own `Response` from `request` therefore ends
 the request before this record's hook runs at all, and that request appears
 nowhere. Mount the devtools registration where you want the window to start.
 

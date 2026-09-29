@@ -66,7 +66,7 @@ export type ElysiaErrorHook = (context: ElysiaRouteErrorContext) => unknown;
  * What a route-local `afterHandle` hook is given: the request's own context with
  * the handler's result on it.
  *
- * Elysia sets `response` on the context before the hook runs, and to whatever a
+ * Elysia sets `responseValue` on the context before the hook runs, and to whatever a
  * returning hook ahead of it answered, so an after half reads the current
  * response from here rather than receiving it as an argument.
  *
@@ -74,7 +74,7 @@ export type ElysiaErrorHook = (context: ElysiaRouteErrorContext) => unknown;
  */
 export interface ElysiaRouteAfterHandleContext extends RouteContext {
   /** The handler's result, or what an earlier after half answered with. */
-  readonly response: unknown;
+  readonly responseValue: unknown;
 }
 
 /**

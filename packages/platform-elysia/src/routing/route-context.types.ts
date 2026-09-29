@@ -3,7 +3,8 @@ import type {
   RouteValidatorInput,
   ValidationModelClass,
 } from "@aponiajs/common";
-import type { AnyElysia, Context, InputSchema, SingletonBase, UnwrapRoute } from "elysia";
+import type { AnyElysia, Context, InputSchema, UnwrapRoute } from "elysia";
+import type { SingletonBase } from "elysia/types";
 
 /**
  * One plugin a handler reads from: a native Elysia instance, or the module
@@ -36,7 +37,7 @@ type MergeRecords<TUnion> =
 /**
  * The singleton a controller sees once the plugins are mounted. `use()` merges
  * a plugin's global `~Singleton` into its parent, and its `scoped` `~Ephemeral`
- * derives and resolves reach the routes mounted alongside it, so both are part
+ * derives reach the routes mounted alongside it, so both are part
  * of the context. Plugin-local derives stay inside the plugin and are excluded.
  */
 type MountedSingleton<TPlugins extends ElysiaPluginTypes> = {
@@ -44,9 +45,6 @@ type MountedSingleton<TPlugins extends ElysiaPluginTypes> = {
   store: MergeRecords<PluginUnion<TPlugins>["~Singleton"]["store"]>;
   derive: MergeRecords<
     PluginUnion<TPlugins>["~Singleton"]["derive"] | PluginUnion<TPlugins>["~Ephemeral"]["derive"]
-  >;
-  resolve: MergeRecords<
-    PluginUnion<TPlugins>["~Singleton"]["resolve"] | PluginUnion<TPlugins>["~Ephemeral"]["resolve"]
   >;
 } extends infer TSingleton extends SingletonBase
   ? TSingleton
@@ -59,8 +57,11 @@ type MountedSingleton<TPlugins extends ElysiaPluginTypes> = {
  */
 interface ValidationModelSchema<TOutput> {
   readonly "~standard": {
+    readonly version: 1;
+    readonly vendor: "aponiajs";
+    readonly validate: (input: unknown) => { readonly value: TOutput };
     readonly types: {
-      readonly input: unknown;
+      readonly input: TOutput;
       readonly output: TOutput;
     };
   };

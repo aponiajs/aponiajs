@@ -107,15 +107,13 @@ describe("uploading a file", () => {
       form({ file: file("report.txt", "hello") }),
     );
 
-    // The boundary this example exists to write down: Elysia's own validation
-    // answer, which is not the platform's Problem Details shape.
+    // Elysia 2 reports its own validation failure as a Problem Details response.
     expect(response.status).toBe(422);
-    expect(response.headers.get("content-type")).toContain("application/json");
+    expect(response.headers.get("content-type")).toContain("application/problem+json");
     expect(await response.json()).toMatchObject({
       type: "validation",
       on: "body",
-      expected: "File",
-      found: "File",
+      detail: "must be instance of Blob",
     });
   });
 });

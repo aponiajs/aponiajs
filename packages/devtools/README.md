@@ -150,16 +150,15 @@ const application = await AponiaFactory.create(AppModule, {
   guessed ones, which is also what a callback's route reports for its handler:
   the property key that built it exists only while the callback runs.
 - **`GET /__devtools/flow` reports the stages each route passes through.** The
-  stages a route's own hooks and schema state — a plugin's `derive` and
-  `resolve`, any other lifecycle hook, and each validation slot — are read from
+  stages a route's own hooks and schema state — a plugin's `derive` and any other lifecycle hook, and each validation slot — are read from
   the mounted table when the request arrives, which is why this payload has no
   boot-time variant. The stages its enhancers state — a `guard`, an
   `interceptBefore`, an `interceptAfter` — come from the compiled plan, because
   the platform lowers them into one `beforeHandle` and one `afterHandle` where
   their order is no longer legible; each names the class it runs and the scope
   that declared it. A compiled hook is published as its parts and never as a
-  hook stage, and a contributed hook can only be identified — by the checksum
-  Elysia stamps, never by a plugin name the route does not carry. The route's
+  hook stage, and Elysia 2 retains the native hook function across routes without its plugin
+  scope or checksum; the payload groups that function within each report. The route's
   filters are a list beside the stages rather than a stage in the chain, ordered
   as its own `error` array is, with the Problem Details mapping last. Which
   interceptor halves a route runs is the boot's own record, read from the
@@ -247,7 +246,7 @@ const application = await AponiaFactory.create(AppModule, {
   rather than beginning a new one. One boundary
   is Elysia's rather than this package's: both hook phases run in mount order, so a
   plugin mounted ahead of the devtools registration that answers from its own
-  `onRequest` ends the request before this record's hook runs, and that request
+  `request` ends the request before this record's hook runs, and that request
   appears nowhere. The surface's own traffic is excluded too, and the exclusion is
   by path prefix rather than by route identity: `/__devtools` and everything under
   it is never recorded, which is what keeps a page polling `/requests` out of the

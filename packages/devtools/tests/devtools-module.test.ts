@@ -285,7 +285,7 @@ test("routes and flow report the surface's own mount", async () => {
     await application.handle(new Request(`http://localhost${devtoolsPathPrefix}/routes`))
   ).json()) as AponiaRoutesPayload;
 
-  const mount = Object.freeze({ method: "ALL", path: `${devtoolsPathPrefix}/*` });
+  const mount = Object.freeze({ method: "*", path: `${devtoolsPathPrefix}/*` });
 
   expect(routes.routes).toContainEqual(
     expect.objectContaining({ ...mount, module: "", controller: "", handler: "", source: null }),
@@ -298,7 +298,7 @@ test("routes and flow report the surface's own mount", async () => {
     await application.handle(new Request(`http://localhost${devtoolsPathPrefix}/flow`))
   ).json()) as AponiaFlowPayload;
 
-  expect(flow.routes.map((route) => route.id)).toContain(`ALL ${devtoolsPathPrefix}/*`);
+  expect(flow.routes.map((route) => route.id)).toContain(`* ${devtoolsPathPrefix}/*`);
 
   // The application's own route is reported beside it, so the row is an addition
   // rather than a replacement.

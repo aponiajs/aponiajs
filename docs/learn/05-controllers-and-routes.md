@@ -50,15 +50,14 @@ remains available to Eden Treaty.
 
 ## How a request arrives
 
-The platform compiles each controller into a native Elysia plugin and mounts it
-into the root application:
+The platform compiles controllers into routes on the root native Elysia application:
 
 ```text
 AponiaFactory.create(AppModule)
   -> compileRootModule            reads decorator metadata
   -> createContainer              validates the graph, builds singletons
   -> mount plugin modules         native Elysia plugins first
-  -> mount controllers            plugin.route(method, path, handler, hook)
+  -> mount controllers            application.method(method, path, hook, handler)
   -> application.listen(port)
 ```
 

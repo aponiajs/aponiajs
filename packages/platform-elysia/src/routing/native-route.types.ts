@@ -3,8 +3,7 @@ import type { Elysia } from "elysia";
 import type { ElysiaRouteHook } from "./route-compiler.types.ts";
 
 /**
- * The candidate Elysia 2 registration ABI. Kept at the native boundary while
- * the published peer dependency still describes Elysia 1.4.
+ * The Elysia 2 registration ABI at the native boundary.
  *
  * @internal
  */

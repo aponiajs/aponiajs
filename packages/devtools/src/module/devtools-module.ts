@@ -149,7 +149,7 @@ function createInertModule(): DynamicModule {
  * this instance rather than anything the root application holds — this package
  * registers nothing on the root — so the arrival hook rides the request phase,
  * which Elysia merges from a used plugin unfiltered, and the completion hook is
- * declared `{ as: "global" }`, which is the option the installed Elysia reads for
+ * declared with global scope, which Elysia reads for
  * an after-response hook to reach routes this plugin does not own. The two are
  * separate answers and neither is a tidiness a maintainer may drop: with the
  * local scope the after-response hook never runs for a controller's route, and
@@ -186,7 +186,10 @@ function createDevtoolsPlugin(options: DevtoolsOptions): NativeElysiaPlugin {
 
   return (
     new Elysia({ name: devtoolsPluginName })
-      .onRequest((context) => {
+      // Elysia 2 omits `store` entirely until an instance declares state.
+      // Seed it so a hand-built native application can still serve `/meta`.
+      .state(Symbol.for("aponia.devtools.identity"), true)
+      .request((context) => {
         // The surface's own traffic is the one thing this record leaves out, and
         // `isDevtoolsSurfaceRequest` states why. Skipping the arrival is the whole
         // of it: the completion half writes nothing without a stamp to spend, and
@@ -204,7 +207,7 @@ function createDevtoolsPlugin(options: DevtoolsOptions): NativeElysiaPlugin {
         recordFor(records, context.store, capture);
         capture.arrive(context.request, context.store);
       })
-      .onAfterResponse({ as: "global" }, async (context) => {
+      .afterResponse("global", async (context) => {
         // The closing reading is the first statement of this hook, before the five
         // reads below, because every one of them and everything `toRequestRecord`
         // does with them is this package's own work: a duration that included them
@@ -222,6 +225,7 @@ function createDevtoolsPlugin(options: DevtoolsOptions): NativeElysiaPlugin {
             body: context.body,
             status: context.set.status,
             answer: context.responseValue,
+            failure: "error" in context ? context.error : undefined,
           },
           completedAt,
         );
@@ -235,7 +239,7 @@ function createDevtoolsPlugin(options: DevtoolsOptions): NativeElysiaPlugin {
           surfaceFor(surfaces, store, recordFor(records, store, capture), logs),
         ),
       )
-      .onStart(() => {
+      .setup(() => {
         // Said once, at the moment a listener exists and the address is real. It is
         // a report rather than a mount: the route above answers with or without
         // this line, which is what an application that only handles requests shows.

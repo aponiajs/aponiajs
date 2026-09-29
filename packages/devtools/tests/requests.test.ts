@@ -338,7 +338,7 @@ class BulkModule {}
  * A plugin that refuses two different ways, because the record's boundary
  * between them is a fact about the installed Elysia rather than a preference.
  */
-const gatePlugin = new Elysia({ name: "gate" }).onRequest((context) => {
+const gatePlugin = new Elysia({ name: "gate" }).request((context) => {
   const { pathname } = new URL(context.request.url);
 
   if (pathname === "/gated") {
@@ -574,31 +574,24 @@ test.serial(
   },
 );
 
-test.serial(
-  "a request a plugin answers with an early response is recorded as unanswered",
-  async () => {
-    const application = await bootApplication(GatedModule);
-    try {
-      await ask(application, `/early-refusal`);
+test.serial("an early plugin response records both arrival and completion", async () => {
+  const application = await bootApplication(GatedModule);
+  try {
+    await ask(application, "/early-refusal");
+    const payload = await readRequests(application);
 
-      const payload = await readRequests(application);
-
-      // This plugin's arrival hook rides the request phase, which Elysia merges
-      // in mount order, so it ran before the plugin that answered: the request
-      // is in the record. Nothing ran after that answer — not the after-response
-      // hook of this registration, and not the request phase of a plugin mounted
-      // after the one that answered — so the entry is the one written at
-      // arrival, and its `null` status is this package stating that no answer
-      // was observed rather than inventing one.
-      expect(payload.cursor).toBe(1);
-      expect(payload.entries.map((record) => record.url)).toEqual(["/early-refusal"]);
-      expect(payload.entries[0].status).toBeNull();
-      expect(payload.entries[0].durationMs).toBeNull();
-    } finally {
-      await application.close();
-    }
-  },
-);
+    expect(payload.cursor).toBe(2);
+    expect(payload.entries.map((record) => record.url)).toEqual([
+      "/early-refusal",
+      "/early-refusal",
+    ]);
+    expect(payload.entries[0]?.status).toBeNull();
+    expect(payload.entries[1]?.status).toBe(200);
+    expect(payload.entries[0]?.id).toBe(payload.entries[1]?.id);
+  } finally {
+    await application.close();
+  }
+});
 
 test.serial(
   "an answered request carries one id across a pending entry and its answer",
@@ -1209,6 +1202,7 @@ test.serial("a second listen continues the record the application already opened
     // outlives the listener the same way, because it belongs to the capture rather
     // than to the record: an id that restarted here would let a consumer polling
     // through the restart group two different requests under one id.
+    await application.close();
     await application.listen(0);
     await ask(application, `/users/7`);
 

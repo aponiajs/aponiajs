@@ -179,12 +179,10 @@ runtime boundary it describes.
   declining, so the array continues to what answers next. The
   default hook is synchronous, so a route with no declared filter compiles the
   way it compiled before the mapping existed; a route with one carries an
-  asynchronous hook per filter, because answering may await. A route-local
-  `error` array is read only while Elysia composes routes ahead of time, so
-  `elysia: { aot: false }` disables the mapping and every declared filter —
-  only the `error` hook kind — and `bootstrapAponiaApplication` warns under
-  `RoutesResolver` when the option is set rather than letting that boot look
-  like the default one.
+  asynchronous hook per filter, because answering may await. Elysia 2 beta
+  runs route-local `error` hooks with either boolean `precompile` setting. A
+  plain Error thrown after assigning `set.status` still reaches the default
+  mapping: beta.19 otherwise emits a 500 with its original message.
 - `routing/native-route.ts` is the only module that calls Elysia's route
   registration API. A version that moves it fails there as
   `UNSUPPORTED_ELYSIA_VERSION` instead of as a bare `TypeError` from inside a
@@ -192,8 +190,8 @@ runtime boundary it describes.
 - `modules/route-uniqueness.ts` rejects a route two different declarations
   claim, raising `DUPLICATE_ROUTE` from `compileRootModule` with the method,
   path, both modules, both controllers, and both handler keys. Elysia would
-  otherwise resolve a repeated `(method, path)` by whichever registration wins
-  under `elysia.aot`, so the answering handler would follow a compiler flag.
+  otherwise resolve a repeated `(method, path)` by native registration order,
+  leaving the winner outside the module graph contract.
   The check reasons over the modules reachable from the compiled root by
   `imports` — the set `compileModuleGraph` mounts — because the module
   compiler's working maps also hold definitions the root never reaches. One
@@ -436,24 +434,18 @@ runtime boundary it describes.
 
 ## Elysia version compatibility
 
-The peer range is `^1.4.29`; every workspace manifest must declare the same
-range. Two ranges that disagree make Bun install two copies, and a controller
-typed against one is not assignable to the other.
+The supported peer is pinned to `elysia@2.0.0-beta.19`. All workspace
+manifests, examples, and the generator template must use that exact version.
+`@aponiajs/common` pins `typebox@1.3.0` for native schemas and numeric
+coercion in this beta. The root Elysia instance uses `normalize: "typebox"`.
 
-Elysia 2 is a prerelease on the `next` dist-tag and is not supported. Its
-incompatibilities were verified by running `2.0.0-beta.19`, not by reading the
-release notes, because the published docs are still 1.x:
-
-| Call site                                                                     | Elysia 2                                                                                 |
-| ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `routing/native-route.ts`                                                     | `route(...)` removed; `method(method, path, hook, handler)` swaps the last two arguments |
-| `routing/route-compiler.ts` (`TSchema`)                                       | no longer root-exported; import from `typebox`                                           |
-| `routing/route-context.types.ts` (`SingletonBase`)                            | no longer root-exported; import from `elysia/types`                                      |
-| `routing/route-context.types.ts` (`~Singleton`/`~Ephemeral` `resolve` keys)   | `resolve` removed; its timing folded into `derive`                                       |
-| `errors/http-error.ts` and `errors/http-error.types.ts` (`InvertedStatusMap`) | renamed to `StatusMapBack`                                                               |
-
-`docs/elysia-compatibility.md` is the user-facing half of this. Update both
-together, and re-verify against a real install rather than the blog post.
+`routing/native-route.ts` owns the Elysia 2
+`method(method, path, hook, handler)` ABI. TypeBox types come from `typebox`,
+`SingletonBase` comes from `elysia/types`, and status names use
+`StatusMapBack`. Elysia 2 runs route-local error hooks under either boolean
+`precompile` setting; it gives `responseValue` to `afterHandle`. Keep
+`docs/elysia-compatibility.md` and `docs/elysia-2-migration.md` in step with
+this contract, and verify it against the installed beta.
 
 ## Tests
 

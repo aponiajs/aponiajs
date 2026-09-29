@@ -63,7 +63,7 @@ test("reaches every plugin route through the mounted controller", async () => {
 test("installs a plugin shared by two modules only once", async () => {
   let installations = 0;
   const counted = defineElysiaPlugin(
-    new Elysia({ name: "counted" }).onStart(() => {
+    new Elysia({ name: "counted" }).setup(() => {
       installations += 1;
     }),
     { key: "counted" },

@@ -24,7 +24,7 @@ Bun workspace. Framework packages live in `packages/`:
 
 | Package                     | Owns                                                         | Runtime dependencies                                                                  |
 | --------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
-| `@aponiajs/common`          | Decorators, contracts, tokens, providers, errors, WebSockets | `reflect-metadata` only                                                               |
+| `@aponiajs/common`          | Decorators, contracts, tokens, providers, errors, WebSockets | `reflect-metadata`, `typebox`                                                         |
 | `@aponiajs/core`            | Module graph, visibility rules, dependency injection         | `@aponiajs/common`                                                                    |
 | `@aponiajs/platform-elysia` | Elysia adapter, HTTP routes, WebSocket gateways, plugins     | `common`, `core`, peer `elysia`                                                       |
 | `@aponiajs/cli`             | `aponia new` and `aponia generate` schematics                | `change-case`, `ts-morph`, `yargs-parser`, `fast-glob`, `inflection`, `oxfmt` (exact) |
@@ -166,7 +166,7 @@ that resolves inside an arbitrary module and is not application API.
    `LoggerService` replaces it);
 2. `compileRootModule` then `createContainer`;
 3. create the root `Elysia` named after the root module id with the requested
-   `elysia.aot`/`elysia.precompile` policy, optionally passed through
+   `elysia.precompile` policy, optionally passed through
    `configureNative`, which must return the same instance it receives;
 4. first pass over `container.graph.modules`: `initializeModule` eagerly
    instantiates providers, and `ElysiaPluginModule` modules mount their native
@@ -195,7 +195,7 @@ that resolves inside an arbitrary module and is not application API.
 `routing/route-compiler.ts`.
 That file joins paths, freezes the route plan, converts each declared
 `RouteSchema` into an Elysia hook, generates a fixed invoker, and registers
-`application.route(method, path, handler, hook)`. Handlers receive the Elysia
+`application.method(method, path, hook, handler)`. Handlers receive the Elysia
 context, which `@aponiajs/common` describes platform-neutrally as
 `RouteContext`.
 
@@ -339,23 +339,14 @@ bare `Error`. Argument and generator input mistakes in the CLI use plain
 `Error`/`TypeError`.
 
 Application-owned HTTP failures use `HttpError` from
-`@aponiajs/platform-elysia`. `httpErrors` covers every 4xx and 5xx status in
-Elysia's supported `StatusMap`; responses use RFC 9457
-`application/problem+json` and never serialize the stack or cause. These are
-deliberate application failures. Anything else a handler throws becomes a `500`
-Problem Details response, reported through the system logger, unless a declared
-exception filter answers it first or Elysia's own error path already answers it:
-every route the platform mounts compiles a default Problem Details mapping last
-in its own `error` array, behind the filters it declares, and that mapping
-declines an exception carrying its own `status` or `toResponse()` and every
-status Elysia already decided, so validation `422`s, parse `400`s, a failed
-transform decode, `status()`, and `HttpError` keep the responses Elysia gives
-them. A route-local
-`error` array is read only while Elysia composes routes ahead of time, so
-`elysia: { aot: false }` disables every declared filter and that mapping; an
-unhandled failure then answers Elysia's native `500` carrying the exception's
-message, and `bootstrapAponiaApplication` warns under `RoutesResolver` when the
-option is set.
+`@aponiajs/platform-elysia`. `httpErrors` covers Elysia's 4xx and 5xx statuses
+and returns RFC 9457 `application/problem+json` without stack or cause. Routes
+the platform compiles carry a default mapping behind declared filters, so
+unhandled failures return a fixed-detail 500. Native validation and parse errors,
+`status()`, and exceptions with their own numeric status or `toResponse()` keep
+their native responses. Elysia 2 beta supports a boolean `precompile` option;
+both settings run the route-local error hooks. A status assigned before throwing
+a plain Error does not make that error safe to expose.
 
 ### CLI
 

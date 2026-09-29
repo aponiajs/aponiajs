@@ -13,7 +13,7 @@
     "@aponiajs/common": "workspace:*",
     "@aponiajs/core": "workspace:*",
     "@aponiajs/platform-elysia": "workspace:*",
-    "elysia": "^1.4.30",
+    "elysia": "2.0.0-beta.19",
     "zod": "^4.4.3"
   }
 }

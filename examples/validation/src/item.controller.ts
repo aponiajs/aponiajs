@@ -17,7 +17,7 @@ export class ItemController {
 
   @Get("/", { query: SearchItems })
   search(@Query() query: SearchItems): readonly StoredItem[] {
-    return this.itemStore.search(query.term, query.take ?? 10);
+    return this.itemStore.search(query.term, Number(query.take ?? 10));
   }
 
   @Get("tenant", { headers: TenantHeaders })

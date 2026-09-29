@@ -96,11 +96,11 @@ test("creates safe RFC 9457 defaults", async () => {
   expect(error.toResponse()).not.toBe(response);
 });
 
-test("flows through both Elysia composition policies without an error adapter", async () => {
-  for (const aot of [true, false]) {
+test("flows through both Elysia precompile policies without an error adapter", async () => {
+  for (const precompile of [true, false]) {
     const application = await AponiaFactory.create(errorModule, {
       logger: false,
-      elysia: { aot },
+      elysia: { precompile },
     });
     const response = await application.handle(new Request("http://localhost/missing"));
 

@@ -6,8 +6,8 @@ specific to this package.
 ## What this package owns
 
 The contract layer every other package depends on: decorators, descriptors,
-tokens, providers, errors, and logging. Its only runtime dependency is
-`reflect-metadata`.
+tokens, providers, errors, and logging. Its runtime dependencies include
+`reflect-metadata` and `typebox@1.3.0` for native schema types.
 
 | Domain           | Owns                                                                       |
 | ---------------- | -------------------------------------------------------------------------- |

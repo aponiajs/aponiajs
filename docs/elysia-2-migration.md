@@ -1,54 +1,33 @@
-# Elysia 2 migration work in progress
+# Migrating to Elysia 2 beta
 
-This branch is a migration draft, not an Elysia 2-compatible release. The
-supported peer dependency and workspace installations remain on Elysia 1.4.
-Do not publish or merge this draft as a completed dependency upgrade.
+AponiaJS pins `elysia@2.0.0-beta.19` in its peer dependency, examples, and
+generated starter. Install the same version alongside AponiaJS. The TypeBox
+schema compiler uses `typebox@1.3.0`; a newer TypeBox release may change the
+validation and numeric coercion behavior of this beta.
 
-## Implemented preparation
+## Native code changes
 
-The platform's single native route-registration boundary recognizes the
-candidate `method(method, path, hook, handler)` ABI when `route()` is absent.
-It preserves the receiver and the original handler and schema objects, supplies
-an empty hook when no schema is declared, and does not catch or retry a native
-registration failure. The existing `route(method, path, handler, hook)` path
-remains authoritative when it is present.
+- Register native routes with `method(method, path, hook, handler)`. Native
+  `.get(path, hook, handler)` and `.post(path, hook, handler)` take the hook
+  before the handler as well. AponiaJS controller decorators keep their own
+  signatures.
+- Use Elysia 2 lifecycle methods (`request`, `beforeHandle`, `afterHandle`,
+  `afterResponse`, `error`, `setup`). Read `responseValue` in `afterHandle`.
+- Use `StatusMapBack` and `ElysiaStatus`; import TypeBox schemas from `typebox`
+  and `SingletonBase` from `elysia/types` when writing native types.
+- Return `redirect(url)` instead of assigning `context.set.redirect`. Replace
+  plugin `resolve` with `derive` where its request timing fits.
+- Elysia 2's `precompile` option is a boolean. The former `aot` option and
+  granular precompile object are no longer supported. AponiaJS enables
+  `normalize: "typebox"` on its root application so `t.Numeric()` can decode
+  path and query values under the pinned TypeBox release.
+- Invalid **response** bodies now result in HTTP 500; invalid **request** bodies
+  still result in HTTP 422. Elysia's native validation response uses
+  `application/problem+json`.
 
-Mirrored Bun and Vite+ cases cover the argument order, receiver, empty schema,
-legacy preference, original error propagation, and unsupported-capability
-error. A method-to-legacy harness also checks that request validation survives
-the argument-order adaptation. That harness runs on Elysia 1.4; it is explicitly
-not evidence that an installed Elysia 2 runtime is compatible. These new tests
-have not been executed in the authoring environment.
+Routes registered through `registerRoutes` or `buildPlugin` remain native Elysia
+routes and do not receive AponiaJS guards, interceptors, or exception filters.
+The platform's compiled routes carry the default Problem Details mapping for
+unhandled errors, including when `precompile` is disabled.
 
-## Remaining release blockers
-
-- Verify the published beta in the npm registry. The inspected upstream
-  `kiana/package.json` identifies `2.0.0-beta.19`, but a moving source branch is
-  not a substitute for verifying the published package and its declarations.
-- Install and pin the same verified Elysia 2 beta in every workspace manifest,
-  both platform/devtools peer dependencies, examples, and the CLI starter.
-  Regenerate `bun.lock` with the repository's Bun 1.4.2 toolchain; do not edit
-  package integrity hashes by hand.
-- Migrate schema and context types, including the TypeBox dependency boundary,
-  `SingletonBase`, and plugin derive/resolve inference. Preserve the
-  platform-neutral common/core dependency direction.
-- Migrate status-map and custom-status-response APIs, response settings,
-  native lifecycle options, WebSocket registration, and devtools integrations.
-  Validate every native import against the actual published beta exports.
-- Update native plugin examples, generated descriptor/invoker version stamps,
-  both test lanes, the affected package README, and compatibility/owner guides.
-- Run the synchronized alpha version bump and its release verification. No
-  release version bump has been performed in this draft.
-- Run `bun run check`, `bun run test:coverage`, `bun run test:vite-plus`,
-  `bun run test:examples`, `bun run build`, `bun run test:generated-app`, and
-  `bun run release:dry-run`. Preserve the 95% coverage gate and frozen installs.
-
-## Authoring environment
-
-The current environment has no Bun executable and cannot resolve external
-package or GitHub download hosts. An attempt to add a temporary validation
-workflow was blocked, and that workflow was not created. No build, test,
-package installation, or lockfile regeneration is reported as successful.
-
-See [Elysia compatibility](elysia-compatibility.md) for the currently supported
-release contract.
+See [Elysia compatibility](elysia-compatibility.md) for the version contract.

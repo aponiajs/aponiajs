@@ -1,15 +1,13 @@
 import { AponiaError, type RouteContext } from "@aponiajs/common";
 import { Elysia, t } from "elysia";
 import { registerNativeRoute } from "../src/routing/native-route.ts";
-import type { NativeMethodRegistration } from "../src/routing/native-route.types.ts";
 
 type VitePlusTest = typeof import("vite-plus/test");
 
 declare const test: VitePlusTest["test"];
 declare const expect: VitePlusTest["expect"];
 
-// These tests exercise the candidate ABI, not an installed Elysia 2 runtime.
-// The real-runtime migration suite remains a prerequisite for changing peers.
+// These tests exercise the published Elysia 2 route-registration ABI.
 
 test("passes the schema before the handler and preserves the native method receiver", () => {
   const calls: unknown[][] = [];
@@ -87,20 +85,14 @@ test("rejects non-callable registration capabilities with frozen structured deta
   expect(caught).toEqual(
     expect.objectContaining({
       code: "UNSUPPORTED_ELYSIA_VERSION",
-      details: { method: "GET", path: "/candidate", supported: "1.4.x" },
+      details: { method: "GET", path: "/candidate", supported: "2.0.0-beta.19" },
     }),
   );
   expect(Object.isFrozen((caught as AponiaError).details)).toBe(true);
 });
 
-test("preserves request validation through a method-to-legacy ABI harness", async () => {
+test("preserves request validation through the published Elysia 2 method", async () => {
   const application = new Elysia();
-  const legacyRoute = Reflect.get(application, "route") as typeof application.route;
-  const method: NativeMethodRegistration = function (method, path, hook, handler) {
-    Reflect.apply(legacyRoute, this, [method, path, handler, hook]);
-  };
-  Object.defineProperty(application, "route", { value: undefined });
-  Object.defineProperty(application, "method", { value: method });
 
   registerNativeRoute(application, "POST", "/candidate", (context: RouteContext) => context.body, {
     body: t.Object({ name: t.String() }),

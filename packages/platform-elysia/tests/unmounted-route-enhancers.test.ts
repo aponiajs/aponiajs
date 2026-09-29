@@ -105,11 +105,11 @@ test("a registerRoutes callback's route answers Elysia's own 500, message includ
   // Nothing the platform compiles reaches a route a callback registered: no
   // guard, no interceptor, no declared filter, and no default Problem Details
   // mapping. What the handler throws therefore surfaces through Elysia's own
-  // unknown-error path — a plain-text 500 that repeats the exception's message
+  // unknown-error path — a Problem Details 500 that repeats the exception's message
   // to the client, which is exactly what the mapping exists to prevent.
   expect(response.status).toBe(500);
-  expect(response.headers.get("content-type")).toBeNull();
-  expect(await response.text()).toBe("callback boom");
+  expect(response.headers.get("content-type")).toBe("application/problem+json");
+  expect(await response.json()).toMatchObject({ status: 500, detail: "callback boom" });
   await application.close();
 });
 

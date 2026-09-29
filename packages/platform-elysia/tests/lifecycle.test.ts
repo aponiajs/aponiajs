@@ -343,13 +343,13 @@ describe("the stopping hooks", () => {
       async beforeApplicationShutdown(): Promise<void> {
         await Bun.sleep(1);
         calls.push("before");
-        stoppedWhenCalled.push(application?.getNativeApplication().server === null);
+        stoppedWhenCalled.push(application?.getNativeApplication().server == null);
       }
 
       async onModuleDestroy(): Promise<void> {
         await Bun.sleep(1);
         calls.push("destroy");
-        stoppedWhenCalled.push(application?.getNativeApplication().server === null);
+        stoppedWhenCalled.push(application?.getNativeApplication().server == null);
       }
 
       onApplicationShutdown(): void {
@@ -365,7 +365,7 @@ describe("the stopping hooks", () => {
     await application.close();
 
     expect(calls).toEqual(["before", "destroy", "shutdown"]);
-    expect(application.getNativeApplication().server).toBeNull();
+    expect(application.getNativeApplication().server).toBeUndefined();
     // The server was up when the first hook ran and gone when the second did.
     // A stop moved before `beforeApplicationShutdown` leaves `[true, true]`, one
     // moved after `onModuleDestroy` leaves `[false, false]`, and a deleted stop
@@ -408,7 +408,7 @@ describe("the stopping hooks", () => {
     await application.close(false);
 
     expect(policies).toEqual([true, false]);
-    expect(application.getNativeApplication().server).toBeNull();
+    expect(application.getNativeApplication().server).toBeUndefined();
     // The stopping hooks still run once whatever policy stops the server.
     expect(calls).toEqual(["shutdown"]);
   });
@@ -506,7 +506,7 @@ describe("the stopping hooks", () => {
     // The context too: a teardown failure reported under the exception
     // handler's name cannot be told from a request's failure in a log filter.
     expect(reported.join("\n")).toContain("ApplicationShutdown");
-    expect(application.getNativeApplication().server).toBeNull();
+    expect(application.getNativeApplication().server).toBeUndefined();
   });
 
   test("run the stopping hooks once, however many times close is called", async () => {
@@ -565,7 +565,7 @@ describe("the stopping hooks", () => {
     expect(calls).toEqual(["shutdown"]);
 
     await first;
-    expect(application.getNativeApplication().server).toBeNull();
+    expect(application.getNativeApplication().server).toBeUndefined();
   });
 
   test("stop a server that was bound after an earlier close", async () => {
@@ -587,7 +587,7 @@ describe("the stopping hooks", () => {
 
     // A `close()` before the application listened must not make a later one a
     // no-op: the listener would outlive the call that was meant to end it.
-    expect(application.getNativeApplication().server).toBeNull();
+    expect(application.getNativeApplication().server).toBeUndefined();
     expect(calls).toEqual(["shutdown"]);
   });
 

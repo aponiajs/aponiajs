@@ -149,17 +149,10 @@ describe("downloading a file through an application", () => {
   });
 
   test("shows the raw value the helper exists to replace being refused", async () => {
-    let thrown: unknown;
+    const response = await application.handle(new Request("http://localhost/downloads/raw"));
 
-    try {
-      await application.handle(new Request("http://localhost/downloads/raw"));
-    } catch (error) {
-      thrown = error;
-    }
-
-    // No response at all: the engine rejects the header value while the response
-    // is constructed, and nothing catches it on the way out.
-    expect(thrown).toBeInstanceOf(TypeError);
-    expect((thrown as TypeError).message).toContain("content-disposition");
+    // Elysia 2 catches the invalid header and returns an error response.
+    expect(response.status).toBe(500);
+    expect(response.headers.get("content-type")).toContain("problem+json");
   });
 });

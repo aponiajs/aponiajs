@@ -19,7 +19,7 @@ test("meta reports the contract and the versions the boot ran", async () => {
 
   expect(meta.contract).toBe(devtoolsContractVersion);
   expect(meta.framework).toBe(aponiaVersion);
-  expect(meta.elysia).toStartWith("1.");
+  expect(meta.elysia).toBe("2.0.0-beta.19");
 });
 
 test("graph reports the module the boot compiled", async () => {

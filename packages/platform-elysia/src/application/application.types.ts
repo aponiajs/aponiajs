@@ -1,5 +1,6 @@
 import type { ClassToken, LoggerService, LogLevel } from "@aponiajs/common";
-import type { AnyElysia, Elysia, ElysiaConfig } from "elysia";
+import type { AnyElysia, Elysia } from "elysia";
+import type { ElysiaConfig } from "elysia/types";
 import type { AponiaModuleDescriptorArtifact } from "../modules/module-descriptor-artifact.types.ts";
 import type { NativeElysiaPlugin } from "../plugins/plugin.types.ts";
 import type { AponiaInvokerArtifact } from "../routing/invoker-artifact.types.ts";
@@ -9,21 +10,12 @@ export type NativeElysiaConfigurator<TNativeApplication extends AnyElysia> = (
 ) => TNativeApplication;
 
 export type ElysiaCompilationOptions = Readonly<
-  Pick<ElysiaConfig<undefined>, "aot" | "precompile">
+  Pick<ElysiaConfig<undefined, "local">, "precompile">
 >;
 
 export interface AponiaApplicationOptions {
   readonly logger?: false | LoggerService | readonly LogLevel[];
-  /**
-   * Controls Elysia's route composition. This is distinct from build-time
-   * Aponia source generation and JavaScriptCore's machine-code JIT.
-   *
-   * `aot: false` selects Elysia's generic dynamic dispatcher, which never reads
-   * a route's own `error` array: every declared exception filter and the default
-   * Problem Details mapping live there, so under this policy neither runs and an
-   * unhandled failure answers Elysia's native `500` carrying the exception's
-   * message. Bootstrap warns under `RoutesResolver` when the option is set.
-   */
+  /** Elysia 2's boolean policy for compiling native routes before traffic. */
   readonly elysia?: ElysiaCompilationOptions;
   /**
    * A build-time generated invoker artifact, as `aponia build` writes it. Its

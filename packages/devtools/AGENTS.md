@@ -197,21 +197,13 @@ runtime boundary it describes.
   owns the compiled plan, which is the only place a route's guards and
   interceptors are still separate, and the application's own enhancer
   declaration, which no plan carries.
-- `/flow` publishes a compiled hook as its parts and never as a `hook` stage. The
-  platform lowers a route's guards and the before halves of its interceptors into
-  one `beforeHandle`, and the after halves into one `afterHandle`, so a compiled
-  hook says nothing about its parts: a `guard`, an `interceptBefore`, and an
-  `interceptAfter` stage each name the class the platform resolved, and the parts
-  of one hook keep the order the route declared them in. An entry of a lifecycle
-  array this release cannot identify — no scope it knows and no checksum — is not
-  published as a stage, which is how the compiled hook stays out of the hook
-  stages rather than being reported as one. That rule is read off a release this
-  package does not own, so it is re-checked whenever the Elysia peer range moves:
-  it holds while Elysia stamps a scope on every hook an instance-level API
-  contributes — `"local"` when the caller declares none — and a checksum on the
-  hooks of a named plugin. An Elysia that stopped stamping the scope would make an
-  unscoped contribution indistinguishable from the compiled hook, and it would
-  drop out of the payload silently, which is why a case pins the default stamp.
+- `/flow` publishes a compiled hook as its parts and never as a `hook`
+  stage. The platform tags the two functions built from a compiled route, so
+  Elysia 2's bare lifecycle functions can be distinguished from them. Native
+  function references shared across mounted routes receive one identity per
+  payload. Beta.19 does not stamp plugin scope or checksum on those mounted
+  functions; report no scope rather than guessing. `~deriveEntries` identifies
+  derived functions in the mounted table.
 - `/flow` publishes an interceptor's half only for the classes that declare it.
   The platform calls both halves with an optional call, so a class implementing
   one half runs one half, and a stage for the other would state a step the route
@@ -548,34 +540,10 @@ runtime boundary it describes.
   the other way: the client carried a body, and the installed Elysia reads it as
   `null` while a request that carried none reads `undefined`, so it is stored as
   the text it arrived as rather than folded into that absence.
-- The pair of hooks is two answers a maintainer may not merge, narrow, or make
-  return: the arrival hook rides the request phase, which Elysia merges from a used
-  plugin unfiltered, while the completion hook is declared `{ as: "global" }`,
-  which is the option the installed Elysia reads for an after-response hook to
-  reach routes the plugin does not own — with the local scope the record stays
-  empty however many requests the application answers. A hook that returned a
-  truthy value would be the answer itself, which is the one thing `/requests`
-  claims it cannot change. A request a plugin answers by returning a `Response`
-  from its own `onRequest` runs no later phase at all, so the completion hook
-  never sees it — and the entry written at arrival is what records it, with
-  `status` and `durationMs` `null`. That entry is not a fallback that invents an
-  answer: it states that this record observed none, which is a fact about the
-  request rather than a guess at it, and without it the request would be
-  indistinguishable from one that never arrived. Both hook phases run in mount
-  order, so the arrival hook records a request only when it runs before whatever
-  answers it: a plugin mounted ahead of the devtools registration answers first,
-  and this record is not in the path that answered. One request therefore writes
-  two entries, and two consequences follow. The id they share is allocated by an
-  arrival counter of the capture's own rather than read from the record's write
-  count, because that count is the cursor and it counts entries — an id read from
-  it would differ between one request's two entries and group nothing. The
-  counter is per capture rather than per record, so an id never repeats across
-  two boots of one capture, because a consumer polling through a `listen()` must
-  not group two different requests. It is per capture and not per process — two
-  captures in one process each start at `1` — which is enough: a poll reads one
-  record, and every id that meets in one answer is that record's capture's own.
-  And the record's bound counts entries rather
-  than requests, at twice the request window it names.
+- The request and after-response hooks capture arrival and completion on the
+  same application record. Elysia 2 runs after-response even when a later plugin
+  ends the request early, so both entries are written when arrival ran. A plugin
+  mounted before devtools can still answer before its arrival hook runs.
 - `path` is the pattern when a route matched and the path that arrived when none
   did, and `/routes` is the table that tells the two apart: a pattern the
   application mounted is in it and a path that arrived without matching one is not.

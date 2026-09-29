@@ -1,4 +1,4 @@
-import type { InvertedStatusMap, StatusMap } from "elysia";
+import type { StatusMapBack, StatusMap } from "elysia";
 import type { HttpError } from "./http-error.ts";
 
 type HttpErrorStatusCodeFrom<TStatus extends number> = `${TStatus}` extends
@@ -8,12 +8,12 @@ type HttpErrorStatusCodeFrom<TStatus extends number> = `${TStatus}` extends
   : never;
 
 export type HttpErrorStatusCode = {
-  [TStatus in keyof InvertedStatusMap]: TStatus extends number
+  [TStatus in keyof StatusMapBack]: TStatus extends number
     ? HttpErrorStatusCodeFrom<TStatus>
     : never;
-}[keyof InvertedStatusMap];
+}[keyof StatusMapBack];
 
-export type HttpErrorStatusName = InvertedStatusMap[HttpErrorStatusCode];
+export type HttpErrorStatusName = StatusMapBack[HttpErrorStatusCode];
 
 export type HttpErrorStatus = HttpErrorStatusCode | HttpErrorStatusName;
 

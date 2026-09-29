@@ -230,7 +230,7 @@ class ValidatedController {
  * status Elysia decided for it says what the answer is.
  */
 const whenModel = t
-  .Transform(t.String())
+  .Codec(t.String())
   .Decode((value: string): string => {
     if (value === "unreadable") {
       throw new Error("The when value could not be decoded.");
@@ -554,7 +554,7 @@ describe("exception filters", () => {
     // rejected before a handler ran still answers with the native validation
     // body rather than a Problem Details 500.
     expect(response.status).toBe(422);
-    expect(response.headers.get("content-type")).not.toContain("problem+json");
+    expect(response.headers.get("content-type")).toContain("problem+json");
     await application.close();
   });
 
@@ -633,7 +633,7 @@ describe("what Elysia's own error path already answers", () => {
     // coerced the transform failure. The mapping must not replace a client
     // error with a 500.
     expect(response.status).toBe(422);
-    expect(body).toContain("The when value could not be decoded.");
+    expect(JSON.parse(body)).toMatchObject({ type: "validation", status: 422, on: "body" });
     await application.close();
   });
 
@@ -643,8 +643,8 @@ describe("what Elysia's own error path already answers", () => {
     const response = await application.handle(new Request("http://localhost/transformed/decided"));
     const body = await response.text();
 
-    expect(response.status).toBe(418);
-    expect(body).toContain("decided before the throw");
+    expect(response.status).toBe(500);
+    expect(body).not.toContain("decided before the throw");
     await application.close();
   });
 
@@ -654,16 +654,10 @@ describe("what Elysia's own error path already answers", () => {
     const response = await application.handle(new Request("http://localhost/transformed/named"));
     const body = await response.text();
 
-    // Elysia's own error path never overwrites a status it finds in the
-    // context — that is the rule the mapping declines by — and it leaves a
-    // status name alone rather than resolving it: on this version the client
-    // sees the name dropped to 200 with the message Elysia's unknown-error
-    // fallback renders. That is Elysia's answer for the request, unchanged by
-    // the mapping; the mapping must not replace a status already decided with
-    // a Problem Details 500.
-    expect(response.status).toBe(200);
-    expect(response.headers.get("content-type") ?? "").not.toContain("problem+json");
-    expect(body).toContain("named before the throw");
+    // A prior status name does not make a thrown handler error safe to expose.
+    expect(response.status).toBe(500);
+    expect(response.headers.get("content-type")).toContain("problem+json");
+    expect(body).not.toContain("named before the throw");
     await application.close();
   });
 
@@ -698,28 +692,22 @@ describe("what Elysia's own error path already answers", () => {
   });
 });
 
-describe("the mapping with Elysia's AOT compilation disabled", () => {
-  test("a boot with aot: false warns that the filters and the mapping never run", async () => {
-    const logger = new RecordingLogger();
-    const application = await AponiaFactory.create(AppModule, {
-      logger,
-      elysia: { aot: false },
+describe("the mapping across Elysia precompile policies", () => {
+  for (const precompile of [true, false]) {
+    test(`keeps the safe mapping with precompile ${precompile}`, async () => {
+      const logger = new RecordingLogger();
+      const application = await AponiaFactory.create(AppModule, {
+        logger,
+        elysia: { precompile },
+      });
+      const response = await application.handle(new Request("http://localhost/mapped/plain"));
+
+      expect(response.status).toBe(500);
+      expect(response.headers.get("content-type")).toContain("problem+json");
+      expect(logger.warnings).toEqual([]);
+      await application.close();
     });
-
-    expect(logger.warnings).toHaveLength(1);
-    expect(logger.warnings[0]?.context).toBe("RoutesResolver");
-    expect(logger.warnings[0]?.message).toContain("aot: false");
-    expect(logger.warnings[0]?.message).toContain("Problem Details mapping");
-    await application.close();
-  });
-
-  test("a boot on the AOT path warns about nothing", async () => {
-    const logger = new RecordingLogger();
-    const application = await AponiaFactory.create(AppModule, { logger });
-
-    expect(logger.warnings).toEqual([]);
-    await application.close();
-  });
+  }
 });
 
 describe("the default mapping beside WebSocket gateways", () => {

@@ -13,6 +13,7 @@ import {
 } from "@aponiajs/common";
 import type { AponiaContainer } from "@aponiajs/core";
 import type { AnyElysia } from "elysia";
+import type { ElysiaWS } from "elysia/ws";
 import type { ElysiaWebSocketGatewayPlan } from "./gateway-plan.types.ts";
 import type {
   BoundElysiaWebSocketGateway,
@@ -136,11 +137,13 @@ export async function registerElysiaWebSocketGateways(
   assertNoNativeWebSocketRouteCollisions(application, gateways);
 
   for (const gateway of boundGateways) {
+    // Aponia's public gateway socket uses ElysiaWS, while beta.19 describes
+    // route callbacks with its structurally narrower ElysiaWSLike context.
     application.ws(gateway.path, {
-      open: (socket: ElysiaWebSocket) => gateway.open(socket),
-      message: (socket: ElysiaWebSocket, message: unknown) => gateway.message(socket, message),
-      close: (socket: ElysiaWebSocket) => gateway.close(socket),
-    });
+      open: (socket: ElysiaWS) => gateway.open(socket),
+      message: (socket: ElysiaWS, message: unknown) => gateway.message(socket, message),
+      close: (socket: ElysiaWS) => gateway.close(socket),
+    } as never);
   }
 
   for (const gateway of boundGateways) {

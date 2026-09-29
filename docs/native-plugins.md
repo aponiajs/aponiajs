@@ -266,8 +266,7 @@ calling surface:
 
 ```ts
 const native = await AponiaFactory.createNative(AppModule, {
-  configureNative: (application) =>
-    application.onError(({ error }) => ({ message: String(error) })),
+  configureNative: (application) => application.error(({ error }) => ({ message: String(error) })),
 });
 ```
 
@@ -275,7 +274,7 @@ The managed lifecycle facade remains available:
 
 ```ts
 const application = await AponiaFactory.create(AppModule, {
-  configureNative: (native) => native.onError(({ error }) => ({ message: String(error) })),
+  configureNative: (native) => native.error(({ error }) => ({ message: String(error) })),
 });
 
 const native = application.getNativeApplication();

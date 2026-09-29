@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/devtools",
-  "version": "0.6.0-alpha.38",
+  "version": "0.6.0-alpha.39",
   "description": "Opt-in devtools for a running Aponia application, served by the application itself.",
   "homepage": "https://github.com/aponiajs/aponiajs#readme",
   "bugs": {
@@ -39,9 +39,9 @@
     "@aponiajs/platform-elysia": "workspace:*"
   },
   "devDependencies": {
-    "elysia": "^1.4.30"
+    "elysia": "2.0.0-beta.19"
   },
   "peerDependencies": {
-    "elysia": "^1.4.29"
+    "elysia": "2.0.0-beta.19"
   }
 }

@@ -60,14 +60,14 @@ test("registers a route that declares no schema", async () => {
   expect(await response.text()).toBe("plain");
 });
 
-test("reports an Elysia build that no longer exposes route()", () => {
+test("reports an Elysia build that exposes neither route() nor method()", () => {
   const error = captureRegistrationFailure({} as Elysia);
 
   expect(error).toBeInstanceOf(AponiaError);
   expect(error).toEqual(
     expect.objectContaining({
       code: "UNSUPPORTED_ELYSIA_VERSION",
-      details: { method: "GET", path: "/native", supported: "1.4.x" },
+      details: { method: "GET", path: "/native", supported: "2.0.0-beta.19" },
     }),
   );
 });

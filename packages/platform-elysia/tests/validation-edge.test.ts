@@ -86,10 +86,12 @@ test("lowers a single validation model in the response slot to its raw validator
   const invalid = await application.handle(new Request("http://localhost/response-model/invalid"));
   const route = application
     .getNativeApplication()
-    .router.history.find((candidate) => candidate.path === "/response-model/valid");
+    .routes.find((candidate) => candidate.path === "/response-model/valid");
 
   expect(await valid.json()).toEqual({ name: "Ada" });
-  expect(invalid.status).toBe(422);
-  expect(route?.hooks.response).toBe(userResponseValidator);
+  expect(invalid.status).toBe(500);
+  expect((route?.hooks.response as Record<number, unknown> | undefined)?.[200]).toMatchObject(
+    userResponseValidator,
+  );
   await application.close();
 });

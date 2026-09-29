@@ -53,23 +53,7 @@ interface MountedNativeRoute {
   readonly hooks: unknown;
 }
 
-/**
- * One entry of a lifecycle array, as the table may hold it.
- *
- * `subType` is what Elysia stamps on a hook it built from a higher-level API —
- * `"derive"` for a plugin's `derive`, `"resolve"` for its `resolve` — while
- * `scope` and `checksum` are what it stamps on a hook it can identify at all.
- * The platform's own compiled hook carries none of the three, which is how this
- * endpoint tells the two apart.
- *
- * That discriminator is a statement about a release this package does not own,
- * so it is re-checked whenever the Elysia peer range moves: it holds because
- * Elysia stamps a scope on every hook an instance-level API contributes —
- * `"local"` when the caller declares none — and a checksum on the hooks of a
- * named plugin. An Elysia release that stopped stamping a scope on an unscoped
- * contribution would leave that hook indistinguishable from the compiled one,
- * and it would drop out of this payload silently.
- */
+/** A legacy structured lifecycle entry or an Elysia 2 bare hook function. */
 interface ContributedHook {
   readonly subType: unknown;
   readonly scope: unknown;
@@ -95,7 +79,6 @@ interface OrderedRoute {
   readonly route: AponiaFlowRoute;
 }
 
-const emptyHooks: readonly ContributedHook[] = Object.freeze([]);
 const emptyEnhancers: EnhancerMetadata = Object.freeze({
   guards: Object.freeze([]),
   interceptors: Object.freeze([]),
@@ -150,6 +133,7 @@ export function buildFlowPayload(
   const global = readEnhancers(diagnostics?.globalEnhancers);
   const halves = readInterceptorHalves(diagnostics?.interceptorHalves);
   const routes: OrderedRoute[] = [];
+  const nativeHooks = new Map<Function, number>();
 
   for (const mounted of readMountedRoutes(application)) {
     const { method, path } = mounted;
@@ -160,7 +144,7 @@ export function buildFlowPayload(
     const id = routeKey(method, path);
     const plan = plans.get(id);
     const callback = callbacks.get(id);
-    const drafts = buildStageDrafts(mounted, plan, callback, global, halves);
+    const drafts = buildStageDrafts(mounted, plan, callback, global, halves, nativeHooks);
 
     routes.push(
       Object.freeze({
@@ -206,6 +190,7 @@ function buildStageDrafts(
   callback: AponiaCallbackRouteDiagnostics | undefined,
   global: EnhancerMetadata,
   recorded: ReadonlyMap<ClassToken<unknown>, InterceptorHalves> | undefined,
+  nativeHooks: Map<Function, number>,
 ): readonly StageDraft[] {
   const hooks = readHooks(mounted.hooks);
   const declared = readEnhancers(plan?.route.enhancers);
@@ -221,9 +206,15 @@ function buildStageDrafts(
     ...scopedEnhancers(declared.interceptors, "local"),
   ]);
 
-  appendContributedStages(drafts, hooks.transform, "transform");
+  appendContributedStages(drafts, hooks.transform, "transform", nativeHooks);
   appendValidationStages(drafts, hooks, plan);
-  appendContributedStages(drafts, hooks.beforeHandle, "beforeHandle");
+  appendContributedStages(
+    drafts,
+    hooks.beforeHandle,
+    "beforeHandle",
+    nativeHooks,
+    hooks["~deriveEntries"],
+  );
   appendEnhancerStages(drafts, scopedEnhancers(inherited.guards, "global"), "guard");
   appendEnhancerStages(drafts, scopedEnhancers(declared.guards, "local"), "guard");
   appendEnhancerStages(
@@ -239,7 +230,7 @@ function buildStageDrafts(
     drafts.push(describeHandler(described, plan));
   }
 
-  appendContributedStages(drafts, hooks.afterHandle, "afterHandle");
+  appendContributedStages(drafts, hooks.afterHandle, "afterHandle", nativeHooks);
   appendEnhancerStages(
     drafts,
     Object.freeze([...declaringHalf(interceptors, "interceptAfter", recorded)].reverse()),
@@ -250,20 +241,31 @@ function buildStageDrafts(
 }
 
 /**
- * Whatever Elysia contributed to one lifecycle array, as a stage each.
- *
- * An entry this release can identify is one Elysia stamped a scope or a
- * checksum on. Everything else in the array belongs to whoever mounted the
- * route and carries no identity to report: on a route the platform compiled,
- * that is the compiled hook itself, which is published as its parts and never
- * here.
+ * Publish native hook functions while omitting the functions tagged by the
+ * platform's compiled route. Elysia 2 retains function identity across routes
+ * but no longer exposes plugin scope or checksum on its mounted hook arrays.
  */
 function appendContributedStages(
   drafts: StageDraft[],
   entries: unknown,
   phase: "transform" | "beforeHandle" | "afterHandle",
+  nativeHooks: Map<Function, number>,
+  derives?: unknown,
 ): void {
   for (const entry of readHookEntries(entries)) {
+    if (typeof entry === "function") {
+      if (Reflect.get(entry, Symbol.for("aponia.route.compiledHook")) === true) {
+        continue;
+      }
+      let identity = nativeHooks.get(entry);
+      if (identity === undefined) {
+        identity = nativeHooks.size + 1;
+        nativeHooks.set(entry, identity);
+      }
+      const kind = Array.isArray(derives) && derives.includes(entry) ? "derive" : "hook";
+      drafts.push({ kind, hook: hookIdentity(phase, kind, undefined, identity) });
+      continue;
+    }
     const scope = normalizeScope(entry.scope);
     const checksum = typeof entry.checksum === "number" ? entry.checksum : undefined;
 
@@ -539,13 +541,11 @@ function readHooks(hooks: unknown): Readonly<Record<string, unknown>> {
     : Object.freeze({});
 }
 
-function readHookEntries(value: unknown): readonly ContributedHook[] {
-  if (!Array.isArray(value)) {
-    return emptyHooks;
-  }
-
-  return value.filter(
-    (entry): entry is ContributedHook => typeof entry === "object" && entry !== null,
+function readHookEntries(value: unknown): readonly (ContributedHook | Function)[] {
+  const entries = Array.isArray(value) ? value : value === undefined ? [] : [value];
+  return entries.filter(
+    (entry): entry is ContributedHook | Function =>
+      typeof entry === "function" || (typeof entry === "object" && entry !== null),
   );
 }
 

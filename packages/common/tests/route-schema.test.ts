@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
+import { Type } from "typebox";
 import {
   Get,
   Post,
@@ -74,7 +75,7 @@ test("freezes recorded route schemas", () => {
 
 test("detects Standard Schema validators", () => {
   expect(isStandardSchema(nameSchema)).toBe(true);
-  expect(isStandardSchema({ static: 0, params: [] })).toBe(false);
+  expect(isStandardSchema(Type.String())).toBe(false);
 });
 
 const responseSchemas: Record<number, typeof nameSchema> = {
@@ -108,12 +109,7 @@ test("records cookie and status-specific response schemas", () => {
   });
   expect(isRouteResponseSchemaMap(responseSchemas)).toBe(true);
   expect(isRouteResponseSchemaMap(nameSchema)).toBe(false);
-  expect(
-    isRouteResponseSchemaMap({
-      static: undefined,
-      params: [],
-    }),
-  ).toBe(false);
+  expect(isRouteResponseSchemaMap(Type.String())).toBe(false);
 });
 
 test("copies and freezes a status-specific response schema map", () => {

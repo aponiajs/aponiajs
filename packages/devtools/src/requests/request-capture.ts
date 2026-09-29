@@ -1,4 +1,5 @@
 import type { DevtoolsOptions } from "../module/devtools-module.types.ts";
+import { HttpError } from "@aponiajs/platform-elysia";
 import { createRequestBuffer, defaultRequestBufferCapacity } from "./request-buffer.ts";
 import type { RequestBuffer, RequestRecord } from "./request-buffer.types.ts";
 
@@ -89,6 +90,8 @@ export interface AnsweredRequest {
   readonly status: unknown;
   /** The value the answer carried, as the after-response context reports it. */
   readonly answer: unknown;
+  /** Elysia 2's error value, when the response was produced by its error path. */
+  readonly failure?: unknown;
 }
 
 /**
@@ -570,6 +573,10 @@ async function failureMessage(
   const detail = (published as { readonly detail?: unknown } | null | undefined)?.detail;
   if (typeof detail === "string") {
     return detail;
+  }
+
+  if (context.failure instanceof HttpError) {
+    return context.failure.problem.detail;
   }
 
   return mappedExceptions?.get(context.request);

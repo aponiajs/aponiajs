@@ -32,13 +32,13 @@ let scopedDeriveCalls = 0;
 const clockPlugin = new Elysia({ name: "clock" })
   .decorate("now", () => "2026-07-28T00:00:00.000Z")
   .state("requests", 0)
-  .derive({ as: "global" }, () => ({ traceId: "trace-1" }))
-  .derive({ as: "scoped" }, () => {
+  .derive("global", () => ({ traceId: "trace-1" }))
+  .derive("plugin", () => {
     scopedDeriveCalls += 1;
     return { requestScope: "scoped" };
   })
   .derive(() => ({ pluginOnly: "local" }))
-  .resolve({ as: "global" }, () => ({ tenant: "acme" }));
+  .derive("global", () => ({ tenant: "acme" }));
 
 const cachePlugin = new Elysia({ name: "cache" }).decorate("cache", {
   read: (key: string) => `cached:${key}`,
@@ -235,10 +235,15 @@ test("runs a scoped derive once per request, not once per mounted controller", a
 });
 
 test("resolves an asynchronously configured plugin against the container", async () => {
+  const createSecretPlugin = (service: SecretService) =>
+    new Elysia({ name: "secret" }).decorate("secret", service.secret);
+
   @Controller("configured")
   class ConfiguredController {
     @Get()
-    read(@Ctx() context: ElysiaRouteContext<{}, Elysia<"", SecretSingleton>>): { secret: string } {
+    read(@Ctx() context: ElysiaRouteContext<{}, ReturnType<typeof createSecretPlugin>>): {
+      secret: string;
+    } {
       return { secret: context.secret };
     }
   }
@@ -252,8 +257,7 @@ test("resolves an asynchronously configured plugin against the container", async
         key: "secret",
         imports: [SecretModule],
         inject: [SecretService],
-        useFactory: (service: SecretService) =>
-          new Elysia({ name: "secret" }).decorate("secret", service.secret),
+        useFactory: createSecretPlugin,
       }),
     ],
     controllers: [ConfiguredController],
@@ -266,13 +270,6 @@ test("resolves an asynchronously configured plugin against the container", async
   expect(response.status).toBe(200);
   expect(await response.json()).toEqual({ secret: "s3cret" });
 });
-
-interface SecretSingleton {
-  decorator: { secret: string };
-  store: {};
-  derive: {};
-  resolve: {};
-}
 
 type ClockContext = ElysiaRouteContext<{}, typeof clockPlugin>;
 type ManyContext = ElysiaRouteContext<[typeof clockPlugin, typeof cachePlugin]>;
@@ -343,7 +340,7 @@ test("injects typed store, set, and status parts without materializing the whole
   const routeHandlerSource =
     application
       .getNativeApplication()
-      .router.history.find((route) => route.path === "/context/parts")
+      .routes.find((route) => route.path === "/context/parts")
       ?.handler.toString() ?? "";
   const first = await application.handle(new Request("http://localhost/context/parts"));
   const second = await application.handle(new Request("http://localhost/context/parts"));

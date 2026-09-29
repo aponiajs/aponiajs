@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/platform-elysia",
-  "version": "0.6.0-alpha.38",
+  "version": "0.6.0-alpha.39",
   "description": "Elysia application platform for Aponia HTTP controllers and WebSocket gateways.",
   "homepage": "https://github.com/aponiajs/aponiajs#readme",
   "bugs": {
@@ -38,12 +38,12 @@
     "@aponiajs/core": "workspace:*"
   },
   "devDependencies": {
-    "@elysia/eden": "^1.4.10",
+    "@elysia/eden": "2.0.0-beta.5",
     "arktype": "^2.2.3",
-    "elysia": "^1.4.30",
+    "elysia": "2.0.0-beta.19",
     "zod": "^4.4.3"
   },
   "peerDependencies": {
-    "elysia": "^1.4.29"
+    "elysia": "2.0.0-beta.19"
   }
 }

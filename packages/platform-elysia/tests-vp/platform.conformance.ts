@@ -153,18 +153,16 @@ const registeredHealthModule = defineModule({
 class NativeHealthModule {}
 
 function configureNative(nativeApplication: Elysia) {
-  return nativeApplication.state("aponiaVersion", "typed" as const);
+  return nativeApplication
+    .state("aponiaVersion", "typed" as const)
+    .get("/aponia-version", ({ store }) => store.aponiaVersion);
 }
 
 test("the Vite+ lane mounts a controller from module metadata", async () => {
   const options: ConfiguredAponiaApplicationOptions<ReturnType<typeof configureNative>> = {
     logger: false,
     elysia: {
-      aot: true,
-      precompile: {
-        compose: true,
-        schema: true,
-      },
+      precompile: true,
     },
     configureNative,
   };
@@ -173,19 +171,14 @@ test("the Vite+ lane mounts a controller from module metadata", async () => {
   const healthRoute = application
     .getNativeApplication()
     .compile()
-    .router.history.find((route) => route.path === "/health");
+    .routes.find((route) => route.path === "/health");
   const healthHandlerSource = healthRoute?.handler.toString() ?? "";
-  const compiledHealthRoute = healthRoute?.compile().toString();
+  const stateResponse = await application.handle(new Request("http://localhost/aponia-version"));
 
   expect(await response.text()).toBe("ok");
-  expect(application.getNativeApplication().store.aponiaVersion).toBe("typed");
-  expect(application.getNativeApplication().config.aot).toBe(true);
-  expect(application.getNativeApplication().config.precompile).toEqual({
-    compose: true,
-    schema: true,
-  });
+  expect(await stateResponse.text()).toBe("typed");
+  expect(application.getNativeApplication()["~config"]?.precompile).toBe(true);
   expect(healthHandlerSource.startsWith("()=>")).toBe(true);
-  expect(compiledHealthRoute).not.toContain("await handler(c)");
   await application.close();
 });
 
@@ -220,14 +213,11 @@ test("the Vite+ lane mounts the plugins option and skips an undefined entry", as
 test("the Vite+ lane supports explicit dynamic Elysia composition", async () => {
   const application = await AponiaFactory.create(HealthModule, {
     logger: false,
-    elysia: {
-      aot: false,
-      precompile: false,
-    },
+    elysia: { precompile: false },
   });
   const response = await application.handle(new Request("http://localhost/health"));
 
-  expect(application.getNativeApplication().config.aot).toBe(false);
+  expect(application.getNativeApplication()["~config"]?.precompile).toBe(false);
   expect(await response.text()).toBe("ok");
   await application.close();
 });
@@ -237,21 +227,20 @@ test("the Vite+ lane awaits ambiguous Promise results before after-handle hooks"
   const application = await AponiaFactory.create(AmbiguousPromiseModule, {
     logger: false,
     configureNative: (nativeApplication) =>
-      nativeApplication.onAfterHandle(({ response }) => {
-        observedResponse = response;
+      nativeApplication.afterHandle(({ responseValue }) => {
+        observedResponse = responseValue;
       }),
   });
   const nativeApplication = application.getNativeApplication().compile();
-  const compiledRoute = nativeApplication.router.history
+  const compiledRoute = nativeApplication.routes
     .find((route) => route.path === "/ambiguous-promise")
-    ?.compile()
-    .toString();
+    ?.handler.toString();
   const response = await application.handle(new Request("http://localhost/ambiguous-promise"));
 
   expect(await response.text()).toBe("resolved");
   expect(observedResponse).toBe("resolved");
   expect(observedResponse).not.toBeInstanceOf(Promise);
-  expect(compiledRoute).toContain("await handler(c)");
+  expect(compiledRoute).toContain("async ");
   await application.close();
 });
 
@@ -260,16 +249,15 @@ test("the Vite+ lane awaits a Promise returned without a call expression before 
   const application = await AponiaFactory.create(ConformanceDeferredModule, {
     logger: false,
     configureNative: (nativeApplication) =>
-      nativeApplication.onAfterHandle(({ response }) => {
-        observedResponse = response;
+      nativeApplication.afterHandle(({ responseValue }) => {
+        observedResponse = responseValue;
       }),
   });
   const compiledRoute = application
     .getNativeApplication()
     .compile()
-    .router.history.find((route) => route.path === "/conformance-deferred")
-    ?.compile()
-    .toString();
+    .routes.find((route) => route.path === "/conformance-deferred")
+    ?.handler.toString();
   const response = await application.handle(new Request("http://localhost/conformance-deferred"));
 
   // The union return type leaves design:returntype as Object, and the handler
@@ -278,7 +266,7 @@ test("the Vite+ lane awaits a Promise returned without a call expression before 
   expect(await response.text()).toBe("deferred");
   expect(observedResponse).toBe("deferred");
   expect(observedResponse).not.toBeInstanceOf(Promise);
-  expect(compiledRoute).toContain("await handler(c)");
+  expect(compiledRoute).toContain("async ");
   await application.close();
 });
 
@@ -669,9 +657,8 @@ test("the Vite+ lane injects decorated route parameters", async () => {
   const asyncRouteSource = application
     .getNativeApplication()
     .compile()
-    .router.history.find((route) => route.path === "/conformance-parameters/async/:id")
-    ?.compile()
-    .toString();
+    .routes.find((route) => route.path === "/conformance-parameters/async/:id")
+    ?.handler.toString();
 
   expect(created.headers.get("x-source")).toBe("parameters");
   expect(await created.json()).toEqual({ name: "Ada" });
@@ -683,14 +670,14 @@ test("the Vite+ lane injects decorated route parameters", async () => {
     unused: true,
   });
   expect(await escaped.json()).toEqual({ value: "value" });
-  expect(asyncRouteSource).toContain("await handler(c)");
+  expect(asyncRouteSource).toContain("async ");
   await application.close();
 });
 
 const conformanceClockPlugin = new Elysia({ name: "conformance-clock" })
   .decorate("now", () => "2026-07-28T00:00:00.000Z")
   .state("requests", 0)
-  .derive({ as: "global" }, () => ({ traceId: "trace-1" }))
+  .derive("global", () => ({ traceId: "trace-1" }))
   .derive(() => ({ pluginOnly: "local" }));
 
 @Controller("conformance-plugin-context")

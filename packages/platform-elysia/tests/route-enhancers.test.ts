@@ -133,7 +133,7 @@ describe("compiled route enhancers", () => {
       | { hooks?: Record<string, unknown> }
       | undefined;
     const errorHooks = open?.hooks?.error as
-      | readonly { readonly fn?: (...arguments_: never[]) => unknown }[]
+      | readonly ((...arguments_: never[]) => unknown)[]
       | undefined;
 
     expect(open?.hooks?.beforeHandle).toBeUndefined();
@@ -144,8 +144,8 @@ describe("compiled route enhancers", () => {
     // before the mapping existed.
     expect(Object.keys(open?.hooks ?? {})).toEqual(["error"]);
     expect(errorHooks).toHaveLength(1);
-    expect(typeof errorHooks?.[0]?.fn).toBe("function");
-    expect(errorHooks?.[0]?.fn?.constructor.name).not.toBe("AsyncFunction");
+    expect(typeof errorHooks?.[0]).toBe("function");
+    expect(errorHooks?.[0]?.constructor.name).not.toBe("AsyncFunction");
     await application.close();
   });
 

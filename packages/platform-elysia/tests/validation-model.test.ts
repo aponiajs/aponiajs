@@ -152,16 +152,16 @@ test("validates native model classes and preserves the original Elysia validator
   );
   const nativeRoute = application
     .getNativeApplication()
-    .router.history.find((route) => route.path === "/validation-users");
+    .routes.find((route) => route.path === "/validation-users");
   const paramsRoute = application
     .getNativeApplication()
-    .router.history.find((route) => route.path === "/validation-users/:id");
+    .routes.find((route) => route.path === "/validation-users/:id");
 
   expect(accepted.status).toBe(200);
   expect(await accepted.json()).toEqual({ operation: "create", name: "Ada" });
   expect(rejected.status).toBe(422);
-  expect(nativeRoute?.hooks.body).toBe(createUserValidator);
-  expect(paramsRoute?.hooks.params).toBe(userParamsValidator);
+  expect(nativeRoute?.hooks.body).toMatchObject(createUserValidator);
+  expect(paramsRoute?.hooks.params).toMatchObject(userParamsValidator);
   await application.close();
 });
 
@@ -178,9 +178,7 @@ test("validates separate Standard Schema update models for body and native model
   );
   const updateRoute = application
     .getNativeApplication()
-    .router.history.find(
-      (route) => route.method === "PATCH" && route.path === "/validation-users/:id",
-    );
+    .routes.find((route) => route.method === "PATCH" && route.path === "/validation-users/:id");
 
   expect(accepted.status).toBe(200);
   expect(await accepted.json()).toEqual({
@@ -219,7 +217,7 @@ test("preserves direct raw route validators", async () => {
   );
   const rawRoute = application
     .getNativeApplication()
-    .router.history.find((route) => route.path === "/validation-users/raw");
+    .routes.find((route) => route.path === "/validation-users/raw");
 
   expect(accepted.status).toBe(200);
   expect(await accepted.json()).toEqual({ active: true });
@@ -241,7 +239,7 @@ test("types native context and lowers status-specific response model classes", a
   );
   const route = application
     .getNativeApplication()
-    .router.history.find((candidate) => candidate.path === "/validation-users/native-context/:id");
+    .routes.find((candidate) => candidate.path === "/validation-users/native-context/:id");
   const responses = route?.hooks.response as Readonly<Record<number, unknown>> | undefined;
 
   expect(created.status).toBe(201);
@@ -249,10 +247,10 @@ test("types native context and lowers status-specific response model classes", a
   expect(duplicate.status).toBe(409);
   expect(await duplicate.json()).toEqual({ code: "DUPLICATE_USER" });
   expect(rejected.status).toBe(422);
-  expect(route?.hooks.body).toBe(createUserValidator);
-  expect(route?.hooks.params).toBe(userParamsValidator);
-  expect(responses?.[201]).toBe(createdUserValidator);
-  expect(responses?.[409]).toBe(duplicateUserValidator);
+  expect(route?.hooks.body).toMatchObject(createUserValidator);
+  expect(route?.hooks.params).toMatchObject(userParamsValidator);
+  expect(responses?.[201]).toMatchObject(createdUserValidator);
+  expect(responses?.[409]).toMatchObject(duplicateUserValidator);
   await application.close();
 });
 

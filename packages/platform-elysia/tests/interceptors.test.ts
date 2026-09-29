@@ -567,7 +567,7 @@ describe("interceptors and the schema a route declares", () => {
     // a handler returning it would: an interceptor's answer is validated, never
     // trusted, and it is what the response carries either way.
     const mismatched = await application.handle(new Request("http://localhost/mismatched/answer"));
-    expect(mismatched.status).toBe(422);
+    expect(mismatched.status).toBe(500);
 
     await application.close();
   });

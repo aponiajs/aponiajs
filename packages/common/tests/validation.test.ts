@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
+import { Type } from "typebox";
 import {
   AponiaError,
   Post,
@@ -22,10 +23,7 @@ const nameSchema: StandardSchemaV1<unknown, { name: string }> = {
   },
 };
 
-const nativeSchema = {
-  static: { id: "" },
-  params: [],
-} satisfies NativeSchema;
+const nativeSchema = Type.Object({ id: Type.String() }) satisfies NativeSchema;
 
 const callableNameSchema: StandardSchemaV1<unknown, { name: string }> &
   ((value: unknown) => boolean) = Object.assign(

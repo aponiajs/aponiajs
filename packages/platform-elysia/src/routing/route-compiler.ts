@@ -21,7 +21,7 @@ import {
   type RouteSchema,
   type RouteValidatorInput,
 } from "@aponiajs/common";
-import { type AnySchema, type Elysia, type TSchema } from "elysia";
+import type { AnySchema, Elysia } from "elysia";
 import type { MountedRouteEnhancers, ResolvedFilter } from "../controllers/enhancer-resolver.ts";
 import { isFilterMatch, reportThroughLogger } from "../errors/default-exception-filter.ts";
 import { httpErrors } from "../errors/http-error.ts";
@@ -308,7 +308,8 @@ function createFilterHook(
     }
 
     try {
-      return await filter.instance.catch(context.error, createArgumentsHost(context));
+      const answer = await filter.instance.catch(context.error, createArgumentsHost(context));
+      return answer === null ? undefined : answer;
     } catch (failure) {
       reportThroughLogger(logger, failure, "ExceptionsHandler");
       return undefined;
@@ -464,7 +465,7 @@ function compileRouteHandler(argumentsSource: string, possiblyAsync: boolean): R
  * The handler source is deliberately never consulted. A Promise returned
  * through an expression that is not a call (`return this.pendingLookup`) leaves
  * no trace in the source, so a source pattern that misses it compiles a
- * synchronous invoker, and Elysia then runs `onAfterHandle` before it awaits
+ * synchronous invoker, and Elysia then runs `afterHandle` before it awaits
  * the Promise, exposing the raw Promise to the lifecycle. Classifying an
  * unprovable route as Promise-capable costs one already-settled `await`; the
  * opposite mistake breaks the route contract.
@@ -536,6 +537,16 @@ function toRouteHook(
 
   const errorHook = exceptionHooks === undefined ? {} : { error: exceptionHooks };
 
+  // Elysia 2 stores bare functions in its mounted hook arrays. Mark the two
+  // functions assembled from an Aponia plan so devtools can distinguish them
+  // from native plugin contributions without guessing by array position.
+  const marker = Symbol.for("aponia.route.compiledHook");
+  if (lifecycleHook?.beforeHandle) {
+    Object.defineProperty(lifecycleHook.beforeHandle, marker, { value: true });
+  }
+  if (lifecycleHook?.afterHandle) {
+    Object.defineProperty(lifecycleHook.afterHandle, marker, { value: true });
+  }
   return { ...schemaHook, ...errorHook, ...lifecycleHook };
 }
 
@@ -626,7 +637,7 @@ function createLifecycleHook(
             // so the value a half answers with is what the next one receives and
             // a half that answers nothing keeps what the response carries.
             // `null`, `false`, and `0` are responses, not absences.
-            let response = context.response;
+            let response = context.responseValue;
             for (const interceptor of afterInterceptors) {
               const answered = await interceptor.interceptAfter?.(executionContext, response);
               if (answered !== undefined) {
@@ -695,7 +706,7 @@ function toElysiaSchema(validator: RouteValidatorInput): AnySchema {
   const resolvedValidator = resolveRouteValidator(validator);
   return isStandardSchema(resolvedValidator)
     ? resolvedValidator
-    : (resolvedValidator as unknown as TSchema);
+    : (resolvedValidator as unknown as AnySchema);
 }
 
 function toElysiaResponseSchema(

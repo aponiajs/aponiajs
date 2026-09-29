@@ -162,8 +162,8 @@ test("observes a resolved Promise in onAfterHandle when the supplied invoker is 
   const application = await AponiaFactory.create(InvokerModule, {
     ...createInvokers(mirroringInvokers),
     configureNative: (nativeApplication) =>
-      nativeApplication.onAfterHandle(({ response }) => {
-        observedResponse = response;
+      nativeApplication.afterHandle(({ responseValue }) => {
+        observedResponse = responseValue;
       }),
   });
   const response = await application.handle(new Request("http://localhost/invokers/promise"));

@@ -9,6 +9,7 @@ import {
 } from "@aponiajs/common";
 import { createContainer } from "@aponiajs/core";
 import { Elysia, type AnyElysia } from "elysia";
+import { websocket } from "elysia/websocket";
 import {
   isElysiaController,
   registerElysiaControllerRoutes,
@@ -96,6 +97,7 @@ export async function bootstrapAponiaApplication(
   const container = createContainer(compiledRootModule);
   const webSocketGateways = compileElysiaWebSocketGateways(container.graph.modules);
   const baseApplication = new Elysia({
+    normalize: "typebox",
     ...options.elysia,
     name: compiledRootModule.id,
   });
@@ -152,24 +154,6 @@ export async function bootstrapAponiaApplication(
     container.graph.root,
     globalEnhancerDeclarations,
   );
-
-  // Elysia runs a route's own `error` array only while composing routes ahead of
-  // time: its dynamic dispatcher, which `aot: false` selects, consults the root
-  // application's single `error` hook and each exception's own `toResponse()`
-  // and never the array a route carries. The filters a route declares and the
-  // mapping built below therefore do not run under that policy, and an
-  // unhandled failure answers Elysia's native `500` carrying the exception's
-  // message — the leak the mapping exists to prevent. The policy is a
-  // compatibility escape hatch, so the boot states what it disabled instead of
-  // leaving an application to discover it from a leaked message.
-  if (options.elysia?.aot === false) {
-    logger?.warn(
-      "Elysia's AOT compilation is disabled (elysia: { aot: false }), so declared exception filters " +
-        "and the default Problem Details mapping never run: an unhandled failure answers Elysia's " +
-        "native 500 carrying the exception's message.",
-      "RoutesResolver",
-    );
-  }
 
   // The Problem Details mapping every route carries last is built once, from
   // the logger this boot reports on, and travels with each mount beside the
@@ -367,6 +351,9 @@ export async function bootstrapAponiaApplication(
   publishApplicationOnStore(nativeApplication);
 
   await nativeApplication.modules;
+  if (webSocketGateways.length > 0) {
+    nativeApplication.use(websocket());
+  }
   await registerElysiaWebSocketGateways(nativeApplication, container, webSocketGateways);
   for (const gateway of webSocketGateways) {
     logger?.log(`${gateway.gatewayName} {${gateway.path}}:`, "WebSocketsController");

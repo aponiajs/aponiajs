@@ -163,7 +163,7 @@ test("validates successful and rejected handler responses", async () => {
 
   expect(accepted.status).toBe(200);
   expect(await accepted.json()).toEqual({ name: "Ada" });
-  expect(rejected.status).toBe(422);
+  expect(rejected.status).toBe(500);
   await application.close();
 });
 

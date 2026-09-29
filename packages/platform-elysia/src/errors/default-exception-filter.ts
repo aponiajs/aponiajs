@@ -1,5 +1,5 @@
 import { renderLogValue, type LoggerService } from "@aponiajs/common";
-import { ElysiaCustomStatusResponse } from "elysia";
+import { ElysiaStatus, ParseError, ValidationError } from "elysia";
 import type { ResolvedFilter } from "../controllers/enhancer-resolver.ts";
 import type { ElysiaErrorHook } from "../routing/route-compiler.types.ts";
 import { httpErrors } from "./http-error.ts";
@@ -39,20 +39,14 @@ export function isFilterMatch(filter: ResolvedFilter, exception: unknown): boole
  *
  * It answers an unhandled failure with a `500` Problem Details response that
  * carries neither the stack nor the cause: an application that could turn this
- * off could ship a stack trace, so on Elysia's AOT path it is always present and
- * never removable, and an application overrides it by declaring a filter ahead
- * of it. It is a route-local hook, and Elysia's dynamic dispatcher
- * (`elysia: { aot: false }`) never reads a route's own `error` array: that path
- * runs no declared filter and no mapping, and answers an unhandled failure with
- * Elysia's native `500` carrying the exception's message, which is why
- * `bootstrapAponiaApplication` warns about the policy at boot.
+ * off could expose a handler's error message. Elysia 2's route-local
+ * filters run under both precompile policies.
  *
- * It answers only what Elysia would otherwise answer from its unknown-error
- * fallback. Everything Elysia's own error path decides for itself is declined
- * and reaches the client unchanged — an `HttpError`, Elysia's validation,
- * parse, and status-bearing errors, a thrown `status()`, and a transform decode
- * failure — because a mapping that answered those first would replace a
- * deliberate `422`, `400`, `404`, or Problem Details response with a `500`.
+ * Elysia's validation and parse errors, thrown `status()` responses, and
+ * exceptions with their own numeric status or `toResponse()` retain their
+ * native responses. A handler that sets `set.status` and then throws a plain
+ * Error is still mapped: beta.19 otherwise answers a 500 with that error's
+ * message even when the earlier status is no longer applied.
  *
  * The system logger receives the exception it maps, so an unhandled failure is
  * still reported where an application reads its logs. The call is guarded, and a
@@ -79,8 +73,8 @@ export function createDefaultExceptionFilter(
   logger: LoggerService | undefined,
   mappedExceptions: WeakMap<Request, string>,
 ): ElysiaErrorHook {
-  return ({ error, request, set }) => {
-    if (elysiaAnswersThis(error, set.status)) {
+  return ({ error, request }) => {
+    if (elysiaAnswersThis(error)) {
       return undefined;
     }
 
@@ -209,36 +203,17 @@ function recordMappedException(
 /**
  * Whether Elysia's own error path answers this exception itself.
  *
- * Three of the checks are structural because they describe a contract rather
- * than a version: an exception carrying a numeric `status` is one Elysia seeds
- * the response status from, one exposing `toResponse()` is answered through
- * that response, and an `ElysiaCustomStatusResponse` is the `status()` escape
- * hatch, which states neither and carries the status as its code. Together they
- * cover every framework error Elysia throws — `ValidationError` and
- * `InvalidFileType` answer `422`, `ParseError` and `InvalidCookieSignature`
- * `400`, `NotFoundError` `404`, `InternalServerError` `500` — every application
- * exception written against Elysia's documented custom-error shape, and
- * `HttpError`, which keeps answering through Elysia's native `toResponse()`
- * path exactly as it did before this mapping existed.
- *
- * The fourth check reads the status the response already carries, because the
- * thrown value does not always state one. Elysia only overwrites `set.status`
- * while it is unset or below `300`, so anything at or above `300` was decided
- * before this hook ran: by a handler that set it, or by Elysia's own transform
- * coercion, which answers a failed `t.Transform` decode with `422` and rethrows
- * the decode function's own error — a plain `Error` carrying neither a status
- * nor a `toResponse()`. `500` is excluded because it is the one status Elysia
- * falls back to for a failure it does not know, which is exactly the failure
- * this mapping exists for. A status name counts as decided by the same test,
- * because Elysia's own path applies the same one: it never overwrites a status
- * it finds (and never resolves a name either, so what a name answers is
- * Elysia's answer, not this mapping's to replace).
+ * A native `ElysiaStatus` or validation/parse error retains Elysia's response.
+ * Application errors carrying their own numeric status or `toResponse()` also
+ * retain it. A previously assigned `set.status` alone is not a safe response
+ * decision after a handler throws on Elysia 2 beta.19.
  */
-function elysiaAnswersThis(error: unknown, status: unknown): boolean {
-  if (error instanceof ElysiaCustomStatusResponse) {
-    return true;
-  }
-  if (isDecidedStatus(status)) {
+function elysiaAnswersThis(error: unknown): boolean {
+  if (
+    error instanceof ElysiaStatus ||
+    error instanceof ValidationError ||
+    error instanceof ParseError
+  ) {
     return true;
   }
   if (typeof error !== "object" || error === null) {
@@ -247,24 +222,4 @@ function elysiaAnswersThis(error: unknown, status: unknown): boolean {
 
   const answer = error as { readonly status?: unknown; readonly toResponse?: unknown };
   return typeof answer.status === "number" || typeof answer.toResponse === "function";
-}
-
-/**
- * Whether the response status was already decided when the error reached the
- * hook.
- *
- * This is Elysia's own test, not a new one: its error path seeds the response
- * status from the exception, or leaves a status it finds in the context alone
- * while that status is set and not below `300`, and its unknown-error fallback
- * answers with whatever the context then carries. A number at or above `300`
- * other than the generic `500`, and any status name, therefore belong to an
- * answer already decided — by a handler or by a step of the request — rather
- * than to the fallback.
- */
-function isDecidedStatus(status: unknown): boolean {
-  if (typeof status === "number") {
-    return status >= 300 && status !== 500;
-  }
-
-  return typeof status === "string";
 }

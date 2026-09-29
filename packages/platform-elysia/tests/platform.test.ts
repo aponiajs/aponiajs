@@ -124,7 +124,7 @@ const registeredDescriptorController = defineElysiaController(RegisteredDescript
   path: "/descriptor-registered",
   registerRoutes: (application, controller) => {
     registeredControllerCalls += 1;
-    registeredApplicationNames.push(application.config.name);
+    registeredApplicationNames.push(application["~config"]?.name);
     return application.get("/descriptor-registered", () => controller.read());
   },
 });
@@ -184,12 +184,12 @@ class RightPluginFeatureModule {}
       }),
     ),
     ElysiaPluginModule.register((nativeApplication: Elysia) =>
-      nativeApplication.onRequest(() => {
+      nativeApplication.request(() => {
         modulePluginEvents.push("first");
       }),
     ),
     ElysiaPluginModule.register((nativeApplication: Elysia) =>
-      nativeApplication.onRequest(() => {
+      nativeApplication.request(() => {
         modulePluginEvents.push("second");
       }),
     ),
@@ -254,12 +254,12 @@ test("composes existing Elysia plugins before Aponia controllers", async () => {
   const promisedInstance = Promise.resolve(new Elysia().get("/native-promise", () => "promise"));
   const functionalPlugin = (application: Elysia) =>
     application
-      .onRequest(() => {
+      .request(() => {
         events.push("first");
       })
       .get("/native-function", () => "function");
   const secondPlugin = (application: Elysia) =>
-    application.onRequest(() => {
+    application.request(() => {
       events.push("second");
     });
   const lazyPlugin = Promise.resolve({
@@ -531,56 +531,30 @@ test("closes active native connections by default and permits caller-managed dra
   expect(closePolicies).toEqual([true, false]);
 });
 
-test("passes explicit Elysia AOT and precompile policy to the root application", async () => {
-  const precompile = Object.freeze({ compose: true, schema: true });
-  const observedConfigurations: {
-    readonly aot: boolean | undefined;
-    readonly name: string | undefined;
-    readonly precompile: unknown;
-  }[] = [];
-
+test("passes explicit Elysia precompile policy to the root application", async () => {
   const application = await AponiaFactory.create(MessageModule, {
     logger: false,
-    elysia: {
-      aot: true,
-      // Runtime callers cannot replace the framework-owned application name.
-      name: "IgnoredName",
-      precompile,
-    } as never,
+    elysia: { precompile: true },
     configureNative: (nativeApplication) => {
-      observedConfigurations.push({
-        aot: nativeApplication.config.aot,
-        name: nativeApplication.config.name,
-        precompile: nativeApplication.config.precompile,
-      });
+      expect(nativeApplication["~config"]?.name).toBe("MessageModule");
+      expect(nativeApplication["~config"]?.precompile).toBe(true);
       return nativeApplication;
     },
   });
   const response = await application.handle(new Request("http://localhost/messages"));
 
-  expect(observedConfigurations).toEqual([
-    {
-      aot: true,
-      name: "MessageModule",
-      precompile,
-    },
-  ]);
   expect(await response.text()).toBe("Hello from service");
   await application.close();
 });
 
-test("supports Elysia dynamic composition as an explicit compatibility policy", async () => {
+test("supports disabling Elysia precompilation", async () => {
   const application = await AponiaFactory.create(MessageModule, {
     logger: false,
-    elysia: {
-      aot: false,
-      precompile: false,
-    },
+    elysia: { precompile: false },
   });
   const response = await application.handle(new Request("http://localhost/messages"));
 
-  expect(application.getNativeApplication().config.aot).toBe(false);
-  expect(application.getNativeApplication().config.precompile).toBe(false);
+  expect(application.getNativeApplication()["~config"]?.precompile).toBe(false);
   expect(await response.text()).toBe("Hello from service");
   await application.close();
 });

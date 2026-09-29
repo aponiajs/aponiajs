@@ -75,10 +75,8 @@ arguments it answers anything. Filters run most-specific-first, and the first on
 that answers wins — returning `undefined` or `null` declines, every other value
 answers. What no filter answers is handled by the default Problem Details mapping
 every route the platform mounts carries, which is why an unhandled failure is a
-`500` Problem Details response rather than a stack trace. That mapping is a
-route-local `error` hook too, so under `elysia: { aot: false }` Elysia never
-reads it: neither the mapping nor any declared filter runs, and an unhandled
-failure answers Elysia's native `500` carrying the exception's message.
+`500` Problem Details response rather than a stack trace. That mapping is a route-local `error` hook and runs with both Elysia 2
+`precompile` settings.
 
 Two mount paths never get there at all, and no enhancer above runs on them: a
 controller registered through a `registerRoutes` callback, and a definition

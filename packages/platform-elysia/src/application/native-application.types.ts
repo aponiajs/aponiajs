@@ -1,4 +1,5 @@
-import type { AnyElysia, Elysia, MergeElysiaInstances } from "elysia";
+import type { AnyElysia, Elysia } from "elysia";
+import type { MergeElysiaInstances } from "elysia/types";
 
 type FunctionResult<TFunction> = TFunction extends (
   ...arguments_: infer _TArguments

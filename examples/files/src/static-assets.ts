@@ -19,9 +19,13 @@ export const assetsDirectory = resolve(import.meta.dir, "../public");
  * requires.
  */
 export const configureStaticAssets: NativeElysiaConfigurator<Elysia> = (native) => {
-  native.config.serve = {
-    ...native.config.serve,
-    routes: { ...native.config.serve?.routes, "/assets/*": { dir: assetsDirectory } },
+  const config = native["~config"];
+  if (!config) {
+    throw new Error("Elysia's Bun serve configuration is unavailable.");
+  }
+  config.serve = {
+    ...config.serve,
+    routes: { ...config.serve?.routes, "/assets/*": { dir: assetsDirectory } },
   };
   return native;
 };

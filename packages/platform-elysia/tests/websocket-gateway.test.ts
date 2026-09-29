@@ -18,6 +18,7 @@ import {
 } from "@aponiajs/common";
 import { createContainer } from "@aponiajs/core";
 import { Elysia } from "elysia";
+import { websocket } from "elysia/websocket";
 import {
   bindElysiaWebSocketGateway,
   compileElysiaWebSocketGateways,
@@ -379,7 +380,7 @@ test("waits for promised native plugins before checking WebSocket route collisio
   class PromisedCollisionGateway {}
 
   const promisedPlugin = ElysiaPluginModule.register(
-    Promise.resolve(new Elysia().ws("/promised-collision", { message() {} })),
+    Promise.resolve(new Elysia().use(websocket()).ws("/promised-collision", { message() {} })),
   );
   @Module({
     imports: [promisedPlugin],
