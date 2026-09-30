@@ -69,8 +69,11 @@ export class DevtoolsModule {
  * `aponia build` lowers an `imports` entry only when it is a single identifier
  * naming a declaration read from the project's own source: a registration
  * returns a `DynamicModule` rather than such a declaration, so it declines the
- * module that wrote it in every spelling, and a declined root leaves the
- * committed descriptor artifact serving a graph the registration is not in. A
+ * module that wrote it in every spelling. A declined root leaves an artifact
+ * holding no declaration for it — written without the module, or replaced with an
+ * empty record when the root was the only module a build could lower — so the
+ * boot lowers the decorated root and the registration still mounts, at the cost
+ * of the declared-graph boot. A
  * plugin mounted through this option is not an `imports` entry, so the module
  * that would have been declined stays declarable.
  *

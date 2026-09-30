@@ -62,16 +62,16 @@ The module spelling has a build-time cost. `aponia build` lowers an `imports`
 entry only when it is a single identifier naming a declaration read from the
 project's own source, and a registration returns a `DynamicModule` rather than
 such a declaration, so the module that names one is reported as `DECLINED` in
-every spelling. Where other modules are still lowered the boot then
-compiles the decorated graph instead — the declared-graph boot is given up — and
-where every module is declined the artifact on disk keeps serving the graph it
-already had, which carries no registration, so the devtools never mount and
-nothing says so. The option spelling is the way out of both: it is not an
-`imports` entry, so the root stays declarable. It pays for that with the graph
-instead: no module declares the plugin, so `bun run inspect` does not list it and
-no generated artifact carries it. Both prices are in
-[the guide](../devtools.md), and the `DECLINED module` line a build prints is
-what tells you which case you are in.
+every spelling. The artifact the build leaves behind then holds no declaration
+for that root — it is written without the module, or replaced with an empty
+record when that root was the only module a build could have lowered — so the
+boot refuses it and compiles the decorated graph instead: the registration
+mounts, and the declared-graph boot is given up. The option spelling is the way
+around it: it is not an `imports` entry, so the root stays declarable. It pays
+for that with the graph instead: no module declares the plugin, so `bun run
+inspect` does not list it and no generated artifact carries it. Both prices are
+in [the guide](../devtools.md), and the `DECLINED module` line a build prints
+names the declaration behind it.
 
 `logger` is the application's handover: pass the **same** object you give
 `AponiaFactory.create`, whether you hand it to the module or to `devtoolsPlugin`.

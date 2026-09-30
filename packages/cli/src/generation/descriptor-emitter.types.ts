@@ -70,10 +70,12 @@ export interface ModuleDescriptorProvenance {
 /**
  * A generated descriptor module, or the reasons nothing could be generated.
  *
- * `source` is `undefined` when no module could be emitted, in which case the
- * command writes no descriptor module at all. That is a supported state: the
- * application keeps booting from its decorators, which is the same fallback a
- * declined route leaves behind.
+ * `source` is `undefined` when no module could be emitted. The build then writes
+ * no fresh graph: an application that has never had a descriptor gets none, and
+ * one that already has a descriptor on disk has it replaced with an empty record
+ * (`emitEmptyModuleDescriptorArtifact`) so the platform refuses the stale graph
+ * rather than adopting it. Either way the application keeps booting from its
+ * decorators, which is the same fallback a declined route leaves behind.
  */
 export interface EmittedModuleDescriptors {
   readonly source: string | undefined;

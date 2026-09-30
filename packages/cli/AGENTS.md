@@ -256,9 +256,11 @@ separate focused modules. `src/index.ts` is the only public barrel.
   `plugins` option, never through `AppModule`'s `imports`. A registration returns
   a `DynamicModule` rather than a declaration read from the project's own source,
   so an `imports` entry naming it declines the root in every spelling — the
-  starter's only declarable module — and leaves `descriptors.generated.ts`
-  serving a graph without the registration in it; the option is not an `imports`
-  entry, so the
+  starter's only declarable module — and a build that lowered nothing would
+  replace `descriptors.generated.ts` with an empty record: the boot would refuse
+  it and compile the decorated graph instead, so the registration would mount but
+  the declared-graph boot the template promises would be given up. The option is
+  not an `imports` entry, so the
   root stays declarable and the declared-graph boot the template promises is
   still the one that happens. `tests/starter-artifact-freshness.test.ts` and the
   packed lane's startup-line assertion are the two guards that would notice, and

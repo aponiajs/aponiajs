@@ -80,15 +80,14 @@ const application = await AponiaFactory.create(AppModule, {
   lowers an `imports` entry only when it is a single identifier naming a
   declaration read from the project's own source, and a registration returns a
   `DynamicModule` rather than such a declaration, so the module that declares it
-  is reported as `DECLINED module <Root>: …` in every spelling. An application
-  that hands over that artifact then boots from decorators instead — the
-  registration mounts and the
-  declared-graph boot is given up — and one whose root is the only module a build
-  can lower gets no descriptor written at all, so the artifact on disk keeps
-  serving the graph it already held and the registration does not mount. Read the
-  `DECLINED module` line a build prints. `devtoolsPlugin` is the way around the
-  whole limitation: an option is not an `imports` entry, so the root stays
-  declarable.
+  is reported as `DECLINED module <Root>: …` in every spelling. The artifact the
+  build leaves behind then holds no declaration for that root — it is written
+  without the module, or replaced with an empty record when the root was the only
+  module a build could have lowered — so an application that hands over that
+  artifact boots from decorators instead: the registration mounts, and the
+  declared-graph boot is given up. Read the `DECLINED module` line a build prints.
+  `devtoolsPlugin` is the way around the whole limitation: an option is not an
+  `imports` entry, so the root stays declarable.
 - **The option path is not in the module graph.** No module declares the plugin,
   so nothing about it reaches `bun run inspect` or the artifact
   `aponia build` writes. That is the price of the bullet above, not a defect in

@@ -87,8 +87,10 @@ for the plugins a module cannot:
   it is a single identifier naming a declaration read from the project's own
   source, and a registration returns a `DynamicModule` rather than such a
   declaration, so `SomeModule.register(...)` declines the module that wrote it in
-  every spelling, and a declined _root_ leaves the committed descriptor artifact
-  serving a graph the registration is not in.
+  every spelling, and a declined _root_ leaves an artifact holding no declaration
+  for it — written without the module, or replaced with an empty record when the
+  root was the only module a build could lower — so the boot lowers the decorated
+  root, mounts the registration, and gives up the declared-graph boot.
 - the plugin the application decides on at boot, from a configuration the
   module does not hold.
 

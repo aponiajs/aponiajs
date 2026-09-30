@@ -168,6 +168,67 @@ test("writes no descriptor module when the project declares no @Module()", async
   expect(await Bun.file(join(projectRoot, "src", descriptorModuleFileName)).exists()).toBe(false);
 });
 
+test("does not create a descriptor module when nothing can be declared and none exists", async () => {
+  // The boundary beside the empty-record replacement: with no artifact already on
+  // disk there is nothing to invalidate, so a build that lowers no module still
+  // writes no descriptor rather than creating an empty one out of nothing.
+  const projectRoot = await createProject({
+    module: `import { Module } from "@aponiajs/common";
+import { UsersController } from "./users.controller.ts";
+
+const providers = [];
+
+@Module({ controllers: [UsersController], providers })
+export class UsersModule {}
+`,
+  });
+
+  const result = await generateInvokers({ cwd: projectRoot, dryRun: false });
+
+  expect(result.changes).toEqual([{ kind: "CREATE", path: join("src", invokerModuleFileName) }]);
+  expect(await Bun.file(join(projectRoot, "src", descriptorModuleFileName)).exists()).toBe(false);
+});
+
+test("replaces a descriptor module with an empty record when a source change makes nothing declarable", async () => {
+  const projectRoot = await createProject({
+    module: moduleSource,
+    // Phase 1: the module is declarable, so a descriptor lands on disk.
+  });
+  await generateInvokers({ cwd: projectRoot, dryRun: false });
+  expect(await Bun.file(join(projectRoot, "src", descriptorModuleFileName)).text()).toContain(
+    "UsersModule: UsersModuleDescriptor,",
+  );
+
+  // Phase 2: an `imports` entry that is not an array literal makes the only
+  // module undeclarable, so the emitter lowers nothing.
+  await Bun.write(
+    join(projectRoot, "src", "users", "users.module.ts"),
+    `import { Module } from "@aponiajs/common";
+import { UsersController } from "./users.controller.ts";
+import { UsersService } from "./users.service.ts";
+
+const widgets = [];
+
+@Module({ imports: widgets, controllers: [UsersController], providers: [UsersService] })
+export class UsersModule {}
+`,
+  );
+
+  const result = await generateInvokers({ cwd: projectRoot, dryRun: false });
+
+  // The stale graph does not survive: the file is rewritten as an empty record so
+  // the platform refuses it and lowers the decorated root instead.
+  expect(result.changes).toEqual([
+    { kind: "UPDATE", path: join("src", invokerModuleFileName) },
+    { kind: "UPDATE", path: join("src", descriptorModuleFileName) },
+  ]);
+  const generated = await Bun.file(join(projectRoot, "src", descriptorModuleFileName)).text();
+  expect(generated).toContain("export const moduleDescriptorArtifact = Object.freeze({");
+  expect(generated).toContain("framework:");
+  expect(generated).toContain("modules: Object.freeze({");
+  expect(generated).not.toContain("UsersModule");
+});
+
 test("reports a declined module and still writes the invoker module", async () => {
   const projectRoot = await createProject({
     controllers: controllerSource,

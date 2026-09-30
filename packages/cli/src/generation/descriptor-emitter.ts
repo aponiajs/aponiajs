@@ -310,6 +310,28 @@ export function emitModuleDescriptors(
 }
 
 /**
+ * Renders the artifact a build writes when it can no longer declare the graph.
+ *
+ * A build that lowers nothing — because a source change made the root module
+ * undeclarable and no other module could be lowered — must still replace the
+ * artifact it wrote before. Leaving the previous file on disk would hand the
+ * platform an artifact that matches its stamp, is well-formed, and holds a
+ * declaration for the root the application named, so bootstrap would adopt a
+ * graph missing a declaration the source now writes. The empty record is that
+ * replacement: it carries no module declaration, so `selectRootModuleDescriptor`
+ * refuses it whole and lowers the decorated root instead — the same boot an
+ * application that never had an artifact gets. The shape is unchanged
+ * (`{ framework, elysia, modules }`), so an entrypoint that imports the value
+ * still type-checks.
+ *
+ * @param provenance - The release and Elysia to stamp, exactly as a lowerable
+ *   build stamps its artifact, so a refusal still names both sides.
+ */
+export function emitEmptyModuleDescriptorArtifact(provenance: ModuleDescriptorProvenance): string {
+  return renderModuleFile([], provenance);
+}
+
+/**
  * Reads every file's declarations into one catalog.
  *
  * Both analyses the emitter consumes run per file and know nothing of the

@@ -67,14 +67,14 @@ declaration read from the project's own source, and a `DynamicModule` is a
 runtime value rather than such a declaration, so a root module that names
 `DevtoolsModule.register(...)` in its `imports` is reported as
 `DECLINED module <Root>: …` and is not lowered — in a `const`, inline, or
-otherwise. The
-platform refuses the artifact whole when it holds no declaration for the root the
-application named, so an application whose other modules are still lowered boots
-from its decorators instead — the registration mounts, and `/aot` reports
-`graph: "decorated"` for the root it compiled. Whether the declared-graph boot is
-worth giving up is the application's decision, and
-[the last limitation below](#accepted-limitations) states the case where the
-cost is a registration that does not mount at all.
+otherwise. The build leaves an artifact holding no declaration for that root —
+written without the module, or replaced with an empty record when the root was the
+only module a build could lower — and the platform refuses such an artifact whole,
+so the application boots from its decorators instead: the registration mounts, and
+`/aot` reports `graph: "decorated"` for the root it compiled. Whether the
+declared-graph boot is worth giving up is the application's decision, and [the
+last limitation below](#accepted-limitations) states the same case from the
+build's side.
 
 ### Mounting it without a module import
 
@@ -511,15 +511,17 @@ different owners and fail differently.
   routes its decorators declare.
 
 `graph` states the shape of the root that was compiled, never what the project
-declares, so **`"declared"` is not an endorsement of your source**. A root module
-that registers a dynamic module is declined by `aponia build`, and where nothing
-else could be declared the artifact the project already had keeps serving: such
-an application reports `graph: "declared"` for a source tree that declares a
-registration the compiled graph does not carry, and `/__devtools` never mounts.
-`"decorated"` is the other side of that same decline, taken when other modules
-were still lowered — the registration is in the graph it names, and the
-declared-graph boot was given up for it. The `DECLINED module` line a build
-prints is what separates the two, and [the limitation
+declares, so **`"declared"` is not an endorsement of your source**: an artifact
+the build adopted keeps serving the graph it holds until the next build, and a
+root the build can no longer declare is not adopted at all. A root module that
+registers a dynamic module is that second case, declined by `aponia build`: the
+build writes the artifact without that module, or replaces the artifact on disk
+with an empty record when it was the only module a build could have lowered, so
+bootstrap finds no declaration for the root the application named, refuses the
+artifact whole, and lowers the root from its decorators. Such an application
+reports `graph: "decorated"`, and `/__devtools` mounts, because the registration
+is in the decorated graph it compiled. The `DECLINED module` line a build prints
+is what names the declaration behind it, and [the limitation
 below](#accepted-limitations) states the same case from the build's side.
 
 `@aponiajs/cli` is imported on the first request to this endpoint and never at
@@ -573,14 +575,13 @@ These are the boundaries this package states rather than hides.
   artifact.** The build declines it in every spelling, because an `imports` entry
   has to be a single identifier naming a declaration read from the project's own
   source and a registration returns a `DynamicModule` rather than such a
-  declaration. Where other modules are still
-  lowered the artifact is rewritten without the root, the boot refuses it and
-  compiles the decorated graph instead: the registration mounts, and the
-  declared-graph boot is given up. Where the root is the only module a build can
-  lower, no descriptor is written at all, so the artifact on disk keeps serving
-  the graph it already held — a graph without the registration — and the
-  registration appears to do nothing. That silence is why the `DECLINED module`
-  line a build prints is the one to read, and
+  declaration. The artifact the build leaves behind therefore holds no declaration
+  for the root: it is rewritten without the root where other modules are still
+  lowered, and replaced with an empty record where the root is the only module a
+  build can lower. Either way the boot refuses it and compiles the decorated graph
+  instead: the registration mounts, and the declared-graph boot is given up. The
+  cost is silent — a registration that mounts while the declared graph is given
+  up — which is why the `DECLINED module` line a build prints is the one to read, and
   [`devtoolsPlugin`](#mounting-it-without-a-module-import) is the way around the
   whole limitation: an option is not an `imports` entry, so the root stays
   declarable and the surface still mounts.

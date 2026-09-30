@@ -102,8 +102,11 @@ is a single identifier naming a declaration read from the project's own source,
 and `DevtoolsModule.register(...)` returns a `DynamicModule` rather than such a
 declaration, so it declines the module that wrote it in every spelling, and here
 that module is the root and the only module a build can
-declare: the committed `src/descriptors.generated.ts` would keep serving a graph
-the registration is not in. A plugin mounted through the option is not an
+declare: the build would leave an artifact holding no declaration for the root —
+written without this module, or replaced with an empty record when it was the only
+module a build could lower — so the boot would refuse it and compile the decorated
+graph instead, mounting the registration but losing the declared-graph boot this
+starter commits to. A plugin mounted through the option is not an
 `imports` entry, so the root stays declarable and the application keeps booting
 from the declared graph, which the startup log reports. Move the registration
 into `imports` when the module graph should carry it, and give up that boot for

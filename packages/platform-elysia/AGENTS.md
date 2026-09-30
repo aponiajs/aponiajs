@@ -51,9 +51,11 @@ runtime boundary it describes.
   shapes. The option exists for the plugins no module can declare — an `imports`
   entry is lowered only when it is a single identifier naming a declaration read
   from the project's own source, so a registration's `DynamicModule` declines the
-  module that wrote it in every spelling, and a declined root leaves the
-  committed descriptor artifact serving a graph the registration is not in — and
-  it is deliberately not an `imports` option on the
+  module that wrote it in every spelling, and a declined root leaves the artifact
+  the build writes holding no declaration for it — written without the module, or
+  replaced with an empty record when that root was the only module a build could
+  lower — so the boot lowers the decorated root and the registration still mounts.
+  It is deliberately not an `imports` option on the
   factory, because an option is not in the descriptor and the declared graph
   would miss it for the same reason. Nothing about an entry reaches
   `compileRootModule`, inspection, or a generated artifact, so it is never a

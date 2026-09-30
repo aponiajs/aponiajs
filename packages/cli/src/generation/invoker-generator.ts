@@ -2,7 +2,11 @@ import { join, relative, resolve } from "node:path";
 import findFiles from "fast-glob";
 import { analyzeControllerRoutes } from "./controller-routes.ts";
 import { emitControllerInvokers } from "./controller-invokers.ts";
-import { descriptorModuleFileName, emitModuleDescriptors } from "./descriptor-emitter.ts";
+import {
+  descriptorModuleFileName,
+  emitEmptyModuleDescriptorArtifact,
+  emitModuleDescriptors,
+} from "./descriptor-emitter.ts";
 import { writePendingFiles } from "./file-writer.ts";
 import { formatGeneratedSource } from "./generated-source-formatter.ts";
 import { analyzeModuleDescriptors } from "./module-descriptors.ts";
@@ -37,9 +41,11 @@ export const invokerModuleFileName = "invokers.generated.ts";
  * Both emitters cover what they can prove and decline the rest, so a partially
  * generated application is a supported state and this never has to fail because
  * one declaration was unusual: a declined handler stays on the runtime's compile
- * path, and a declined module keeps booting from its decorators. The descriptor
- * module is only written when at least one module could be declared, so a
- * project that has controllers but no `@Module()` still gets its invokers.
+ * path, and a declined module keeps booting from its decorators. A descriptor
+ * module is written whenever at least one module could be declared, so a project
+ * that has controllers but no `@Module()` still gets its invokers; when none
+ * could be declared and one is already on disk, it is replaced with an empty
+ * record so a stale graph is never adopted.
  *
  * Both modules are written through the project's own formatter, so the file that
  * lands is one the application's `vp check` accepts rather than one that merely
@@ -127,9 +133,12 @@ export async function generateInvokers(
 
   const descriptors = emitModuleDescriptors(analyzed, descriptorPath, provenance);
   // Regenerating is the normal case, so a file is replaced rather than refused
-  // when it is already there. The descriptor module is written only when
-  // something could be declared for it: every application that reaches this
-  // command has controllers, and not all of them declare modules.
+  // when it is already there. A descriptor module is written whenever one could
+  // be declared, and otherwise only to replace one already on disk with an empty
+  // record: leaving the previous file would let the platform adopt a graph the
+  // source no longer declares, which is the one thing this artifact must never
+  // cause. A project that has never had a descriptor and can declare nothing gets
+  // none, so nothing is created out of nothing.
   const pending: PendingFile[] = [
     {
       path: outputPath,
@@ -137,15 +146,15 @@ export async function generateInvokers(
       kind: (await Bun.file(outputPath).exists()) ? "UPDATE" : "CREATE",
     },
   ];
-  if (descriptors.source !== undefined) {
+  const descriptorExists = await Bun.file(descriptorPath).exists();
+  const descriptorSource =
+    descriptors.source ??
+    (descriptorExists ? emitEmptyModuleDescriptorArtifact(provenance) : undefined);
+  if (descriptorSource !== undefined) {
     pending.push({
       path: descriptorPath,
-      content: await formatGeneratedSource(
-        projectRoot,
-        descriptorModuleFileName,
-        descriptors.source,
-      ),
-      kind: (await Bun.file(descriptorPath).exists()) ? "UPDATE" : "CREATE",
+      content: await formatGeneratedSource(projectRoot, descriptorModuleFileName, descriptorSource),
+      kind: descriptorExists ? "UPDATE" : "CREATE",
     });
   }
 

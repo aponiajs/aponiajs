@@ -211,16 +211,13 @@ export class AppModule {}
 
 Both spellings mount the same module at run time, which is why the decline is
 easy to miss: what runs does not change, only what a build can read. The cost is
-the descriptor artifact, and it has two shapes:
-
-- where another module in the project is still lowerable, the artifact is
-  written without the declined module, bootstrap finds no declaration for the
-  root the application named, refuses the artifact whole, and lowers the root
-  from its decorators. The registration mounts, and the declared-graph boot is
-  given up for that root;
-- where the declined module is the only one a build could lower, no descriptor
-  is written at all, so an artifact already on disk keeps serving the graph it
-  held — one the registration is not in — and the registration never mounts.
+the descriptor artifact: the build writes it without the declined module when
+another module is still lowerable, and replaces the artifact on disk with an
+empty record when the declined module is the only one a build could have
+lowered. Either way the artifact holds no declaration for the root the
+application named, so bootstrap refuses it whole and lowers the root from its
+decorators. The registration mounts, and the declared-graph boot is given up for
+that root.
 
 That is why the `DECLINED module` line a build prints is the one to read, and
 why a README should say so rather than imply a spelling gets around it. A

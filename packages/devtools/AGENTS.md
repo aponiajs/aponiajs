@@ -42,7 +42,10 @@ runtime boundary it describes.
   declaration read from the project's own source, and a registration returns a
   `DynamicModule` rather than such a declaration: the module path declines the
   module that wrote it in every spelling, and where that module is the root the
-  committed descriptor artifact keeps serving a graph the registration is not in. The option path pays a price the
+  artifact the build leaves behind holds no declaration for it — written without
+  the module, or replaced with an empty record when the root was the only module
+  a build could lower — so the boot refuses it, lowers the decorated root, mounts
+  the registration, and gives up the declared-graph boot. The option path pays a price the
   module path does not — the plugin is in no module, so it reaches neither the
   module graph, nor `inspectAponiaApplication`, nor a generated artifact — and
   both prices are documented where a user reads them. Keep the two spellings in

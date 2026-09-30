@@ -301,9 +301,11 @@ point:
 identifier naming a declaration read from the project's own source — a module
 class is such a declaration, and a registration result is not one in any
 spelling — so the root — the only module a
-starter build can declare — would be reported as `DECLINED` and the committed
-`descriptors.generated.ts` would keep serving a graph without the registration in
-it. A plugin mounted through the option is not an `imports` entry, so the root
+starter build can declare — would be reported as `DECLINED`, and the build would
+replace the committed `descriptors.generated.ts` with an empty record. The boot
+would refuse it and compile the decorated graph instead, mounting the
+registration but giving up the declared-graph boot this starter commits to. A
+plugin mounted through the option is not an `imports` entry, so the root
 stays declarable and the application keeps booting from the declared graph. The
 [devtools guide](./devtools.md) states what the option path gives up in exchange:
 nothing about the plugin reaches the module graph, so `bun run inspect` does not
@@ -363,9 +365,12 @@ default, and the runtime behaves exactly as before.
 
 `<sourceRoot>/descriptors.generated.ts` holds the application's module graph as
 data — `defineModule` calls with declared controllers and providers — so the
-application can boot without lowering decorated classes at all. It is written
-only when at least one `@Module()` could be read, so a project whose modules are
-all built at run time still gets its invoker module.
+application can boot without lowering decorated classes at all. A build writes it
+when at least one `@Module()` could be read. When none could be read but a
+descriptor module is already on disk, that file is replaced with an empty record
+so the platform refuses the stale graph rather than adopting it; a project whose
+modules are all built at run time and that has never had one gets no descriptor
+module, and still gets its invoker module.
 
 An `imports`, `controllers`, or `exports` entry is lowered only when it is a
 single identifier naming a declaration the build read from the project's own

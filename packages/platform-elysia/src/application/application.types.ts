@@ -85,9 +85,11 @@ export interface AponiaApplicationOptions {
    * declaration read from the project's own source, and a registration such as
    * `DevtoolsModule.register(...)` returns a `DynamicModule` rather than such a
    * declaration, so it declines the module that wrote it in every spelling. A
-   * declined root leaves the committed descriptor artifact either holding the
-   * declaration it already had, which serves a graph the registration is not
-   * in, or holding none for that root, which bootstrap refuses. A plugin
+   * declined root leaves an artifact holding no declaration for it — the build
+   * writes it without the module, or replaces one already on disk with an empty
+   * record when that root was the only module a build could have lowered — and
+   * bootstrap refuses such an artifact whole, so the decorated root is lowered
+   * instead. A plugin
    * mounted here leaves `imports` alone, so the module that would have been
    * declined stays declarable.
    *
