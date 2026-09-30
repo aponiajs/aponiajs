@@ -117,15 +117,12 @@ test.serial(
   "does not fail an out-of-root --path for a schematic without a registration kind",
   async () => {
     const projectRoot = await createProject("aponia-registration-none-");
-    const run = await runGenerate(projectRoot, ["filter", "http", "--path", "generated"]);
+    const run = await runGenerate(projectRoot, ["class", "http", "--path", "generated"]);
 
     expect(run.exitCode).toBe(0);
     expect(run.errors).toEqual([]);
-    expect(run.output).toEqual([
-      "CREATE generated/http.filter.ts",
-      "CREATE generated/http.filter.spec.ts",
-    ]);
-    expect(await Bun.file(join(projectRoot, "generated/http.filter.ts")).exists()).toBe(true);
+    expect(run.output).toEqual(["CREATE generated/http.ts", "CREATE generated/http.spec.ts"]);
+    expect(await Bun.file(join(projectRoot, "generated/http.ts")).exists()).toBe(true);
   },
 );
 

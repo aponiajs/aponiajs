@@ -27,8 +27,8 @@ Options:
 Schematics:
   app, library (lib), class (cl), controller (co), decorator (d),
   filter (f), gateway (ga), guard (gu), interface (itf),
-  interceptor (itc), middleware (mi), module (mo), pipe (pi),
-  provider (pr), resolver (r), resource (res), service (s)
+  interceptor (itc), module (mo), provider (pr), resolver (r),
+  resource (res), service (s)
 
 Controller aliases:
   router, routers, route

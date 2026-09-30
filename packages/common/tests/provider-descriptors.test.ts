@@ -36,6 +36,31 @@ describe("@aponiajs/common provider descriptors", () => {
     expect(aliasProvider.useExisting).toBe(value);
   });
 
+  test("binds a class provider to a separate token when one is given", () => {
+    const repository = createToken<Port>("repository");
+    class Port {
+      read(): string {
+        return "port";
+      }
+    }
+    class SqlRepository implements Port {
+      read(): string {
+        return "sql";
+      }
+    }
+
+    const boundProvider = provideClass(repository, SqlRepository, [] as const);
+    const ownProvider = provideClass(SqlRepository, [] as const);
+
+    expect(Object.isFrozen(boundProvider)).toBe(true);
+    expect(boundProvider.kind).toBe("class");
+    expect(boundProvider.provide).toBe(repository);
+    expect(boundProvider.useClass).toBe(SqlRepository);
+    expect(boundProvider.inject).toEqual([]);
+    expect(ownProvider.provide).toBe(SqlRepository);
+    expect(boundProvider).not.toEqual(ownProvider);
+  });
+
   test("copies caller-owned module collections before freezing them", () => {
     const value = createToken<number>("value");
     const providers = [provideValue(value, 1)];

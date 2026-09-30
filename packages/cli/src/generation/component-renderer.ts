@@ -19,15 +19,11 @@ export function renderComponent(schematic: ComponentSchematic, names: ComponentN
     case "interface":
       return `export interface ${className} {}\n`;
     case "guard":
-      return `export class ${className} {\n  canActivate(): boolean {\n    return true;\n  }\n}\n`;
+      return `import { Injectable, type CanActivate, type ExecutionContext } from "@aponiajs/common";\n\n@Injectable()\nexport class ${className} implements CanActivate {\n  canActivate(_context: ExecutionContext): boolean {\n    return true;\n  }\n}\n`;
     case "interceptor":
-      return `export class ${className} {\n  intercept<T>(next: () => T): T {\n    return next();\n  }\n}\n`;
-    case "middleware":
-      return `export class ${className} {\n  async use(request: Request, next: () => Response | Promise<Response>): Promise<Response> {\n    void request;\n    return next();\n  }\n}\n`;
-    case "pipe":
-      return `export class ${className} {\n  transform<T>(value: T): T {\n    return value;\n  }\n}\n`;
+      return `import { Injectable, type AponiaInterceptor, type ExecutionContext } from "@aponiajs/common";\n\n@Injectable()\nexport class ${className} implements AponiaInterceptor {\n  interceptBefore(_context: ExecutionContext): void {}\n\n  interceptAfter(_context: ExecutionContext, response: unknown): unknown {\n    return response;\n  }\n}\n`;
     case "filter":
-      return `export class ${className} {\n  catch(error: unknown): unknown {\n    return error;\n  }\n}\n`;
+      return `import { Catch, Injectable, type ArgumentsHost, type ExceptionFilter } from "@aponiajs/common";\n\n@Injectable()\n@Catch()\nexport class ${className} implements ExceptionFilter {\n  catch(exception: unknown, _host: ArgumentsHost): unknown {\n    return exception;\n  }\n}\n`;
     default:
       return `export class ${className} {}\n`;
   }

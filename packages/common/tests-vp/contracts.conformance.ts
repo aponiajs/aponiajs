@@ -18,8 +18,10 @@ import {
   getRouteMetadata,
   isRouteResponseSchemaMap,
   isStandardSchema,
+  provideClass,
   provideValue,
   renderLogValue,
+  type ClassProvider,
   type RouteParameterMetadata,
 } from "../src/index.ts";
 import type { RouteResponseSettings } from "../src/index.ts";
@@ -54,6 +56,28 @@ test("common contracts work in the Vite+ lane", () => {
   });
 
   expect(module.id).toBe("common-conformance");
+});
+
+test("the Vite+ lane binds a class provider to a separate token", () => {
+  class Port {
+    read(): string {
+      return "port";
+    }
+  }
+  class Impl implements Port {
+    read(): string {
+      return "impl";
+    }
+  }
+  const token = createToken<Port>("bound-token");
+
+  const bound: ClassProvider<Port, readonly []> = provideClass(token, Impl, [] as const);
+  const own: ClassProvider<Impl, readonly []> = provideClass(Impl, [] as const);
+
+  expect(bound.provide).toBe(token);
+  expect(bound.useClass).toBe(Impl);
+  expect(bound.inject).toEqual([]);
+  expect(own.provide).toBe(Impl);
 });
 
 test("the Vite+ lane preserves exact module collection tuples", () => {

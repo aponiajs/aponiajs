@@ -34,9 +34,7 @@ const expectedPrimaryFiles: Readonly<
   guard: "src/sample.guard.ts",
   interface: "src/sample.interface.ts",
   interceptor: "src/sample.interceptor.ts",
-  middleware: "src/sample.middleware.ts",
   module: "src/sample/sample.module.ts",
-  pipe: "src/sample.pipe.ts",
   provider: "src/sample.ts",
   resolver: "src/sample/sample.resolver.ts",
   resource: "src/sample/sample.module.ts",
@@ -55,9 +53,7 @@ test("supports the complete Nest generate schematic catalog and aliases", () => 
     "guard",
     "interface",
     "interceptor",
-    "middleware",
     "module",
-    "pipe",
     "provider",
     "resolver",
     "resource",
@@ -92,6 +88,57 @@ test.each([
   [["generate", "resource", "users", "--type", "smtp"], 'Unknown resource transport "smtp".'],
 ] as const)("rejects invalid generate command arguments", (arguments_, message) => {
   expect(() => parseArguments(arguments_)).toThrow(message);
+});
+
+test.each([["pipe"], ["pi"], ["middleware"], ["mi"]] as const)(
+  "rejects the removed %s schematic instead of writing a dead file",
+  (schematic) => {
+    expect(() => parseArguments(["generate", schematic, "sample"])).toThrow(
+      `Unknown schematic "${schematic}". Available schematics:`,
+    );
+  },
+);
+
+test("generates resolvable guard, interceptor, and filter scaffolds", async () => {
+  const projectRoot = await createProjectRoot("aponia-enhancers-");
+  for (const schematic of ["guard", "interceptor", "filter"] as const) {
+    await generateSchematic({
+      command: "generate",
+      schematic,
+      name: "access",
+      dryRun: false,
+      skipImport: false,
+      crud: true,
+      type: "rest",
+      cwd: projectRoot,
+    });
+  }
+
+  const guard = await Bun.file(join(projectRoot, "src/access.guard.ts")).text();
+  expect(guard).toContain(
+    'import { Injectable, type CanActivate, type ExecutionContext } from "@aponiajs/common";',
+  );
+  expect(guard).toContain("@Injectable()");
+  expect(guard).toContain("export class AccessGuard implements CanActivate {");
+
+  const interceptor = await Bun.file(join(projectRoot, "src/access.interceptor.ts")).text();
+  expect(interceptor).toContain(
+    'import { Injectable, type AponiaInterceptor, type ExecutionContext } from "@aponiajs/common";',
+  );
+  expect(interceptor).toContain("export class AccessInterceptor implements AponiaInterceptor {");
+
+  const filter = await Bun.file(join(projectRoot, "src/access.filter.ts")).text();
+  expect(filter).toContain(
+    'import { Catch, Injectable, type ArgumentsHost, type ExceptionFilter } from "@aponiajs/common";',
+  );
+  expect(filter).toContain("@Catch()");
+  expect(filter).toContain("export class AccessFilter implements ExceptionFilter {");
+
+  const module = await Bun.file(join(projectRoot, "src/app.module.ts")).text();
+  expect(module).toContain('import { AccessGuard } from "./access.guard.ts";');
+  expect(module).toContain('import { AccessInterceptor } from "./access.interceptor.ts";');
+  expect(module).toContain('import { AccessFilter } from "./access.filter.ts";');
+  expect(module).toContain("providers: [AccessGuard, AccessInterceptor, AccessFilter]");
 });
 
 test("generates every component and resource schematic", async () => {

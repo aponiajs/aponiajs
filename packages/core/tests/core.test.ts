@@ -201,6 +201,36 @@ describe("@aponiajs/core module graph", () => {
     );
   });
 
+  test("names the dependency of a token-bound class a module cannot resolve", () => {
+    const missing = createToken<string>("missing-bound-dependency");
+    const repository = createToken<Repository>("missing-bound-repository");
+
+    class Repository {
+      constructor(readonly connection: string) {}
+
+      read(): string {
+        return this.connection;
+      }
+    }
+    class SqlRepository extends Repository {
+      constructor(connection: string) {
+        super(connection);
+      }
+    }
+
+    const module = defineModule({
+      id: "missing-bound",
+      providers: [provideClass(repository, SqlRepository, [missing] as const)],
+    });
+
+    expect(() => compileModuleGraph(module)).toThrow(
+      expect.objectContaining({
+        code: "MISSING_PROVIDER",
+        details: { module: "missing-bound", token: "missing-bound-dependency" },
+      }),
+    );
+  });
+
   test("deduplicates diamond exports by source module", () => {
     const value = createToken<number>("diamond-value");
     const source = defineModule({
@@ -317,6 +347,66 @@ describe("@aponiajs/core singleton container", () => {
 
     expect(first).toBe(second);
     expect(first.greet("Bun")).toBe("Hello Bun from Hello Aponia");
+  });
+
+  test("resolves a class bound to a separate token and still builds it under its own token", () => {
+    const greeting = createToken<string>("bound-greeting");
+    const repository = createToken<Repository>("bound-repository");
+
+    class Repository {
+      constructor(readonly greeting: string) {}
+
+      read(): string {
+        return this.greeting;
+      }
+    }
+    class SqlRepository extends Repository {}
+
+    const module = defineModule({
+      id: "bound",
+      providers: [
+        provideValue(greeting, "Hello"),
+        provideClass(repository, SqlRepository, [greeting] as const),
+        provideClass(SqlRepository, [greeting] as const),
+      ],
+    });
+
+    const container = createContainer(module);
+    const bound = container.get(repository);
+    const own = container.get(SqlRepository);
+
+    expect(bound).toBeInstanceOf(SqlRepository);
+    expect(bound.read()).toBe("Hello");
+    expect(own).not.toBe(bound);
+    expect(own.read()).toBe("Hello");
+  });
+
+  test("resolves a token-bound class through exports without exposing the class token", () => {
+    const repository = createToken<Port>("exported-bound-repository");
+
+    class Port {
+      read(): string {
+        return "port";
+      }
+    }
+    class SqlRepository implements Port {
+      read(): string {
+        return "sql";
+      }
+    }
+
+    const feature = defineModule({
+      id: "bound-feature",
+      providers: [provideClass(repository, SqlRepository, [] as const)],
+      exports: [repository],
+    });
+    const root = defineModule({ id: "bound-root", imports: [feature] });
+    const container = createContainer(root);
+
+    expect(container.get(repository)).toBeInstanceOf(SqlRepository);
+    expect(() => container.get(SqlRepository)).toThrow(
+      expect.objectContaining({ code: "MISSING_PROVIDER" }),
+    );
   });
 
   test("detects provider dependency cycles", () => {

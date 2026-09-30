@@ -1,6 +1,7 @@
 import {
   createToken,
   defineModule,
+  provideClass,
   provideFactory,
   provideValue,
   type ControllerDefinition,
@@ -25,6 +26,38 @@ test("core resolves a typed singleton graph in the Vite+ lane", () => {
   });
 
   expect(createContainer(module).get(doubled)).toBe(4);
+});
+
+test("the Vite+ lane resolves a class bound to a separate token", () => {
+  const greeting = createToken<string>("bound-conformance-greeting");
+  const repository = createToken<Repository>("bound-conformance-repository");
+
+  class Repository {
+    constructor(readonly greeting: string) {}
+
+    read(): string {
+      return this.greeting;
+    }
+  }
+  class SqlRepository extends Repository {}
+
+  const module = defineModule({
+    id: "bound-conformance",
+    providers: [
+      provideValue(greeting, "Hello"),
+      provideClass(repository, SqlRepository, [greeting] as const),
+    ],
+    exports: [repository],
+  });
+
+  const container = createContainer(module);
+  const bound = container.get(repository);
+
+  expect(bound).toBeInstanceOf(SqlRepository);
+  expect(bound.read()).toBe("Hello");
+  expect(() => container.get(SqlRepository)).toThrow(
+    expect.objectContaining({ code: "MISSING_PROVIDER" }),
+  );
 });
 
 test("the Vite+ lane rejects duplicate provider and controller tokens", () => {
