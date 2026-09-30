@@ -11,10 +11,16 @@ export type {
 } from "./application/application-diagnostics.types.ts";
 export type {
   AponiaApplicationOptions,
+  AponiaListenOptions,
   ConfiguredAponiaApplicationOptions,
   RouteCompilationOptions,
   ElysiaConfigurator,
 } from "./application/application.types.ts";
+export type {
+  AponiaHealthOptions,
+  AponiaHealthResponse,
+  AponiaHealthStatus,
+} from "./application/application-health.types.ts";
 export type { ElysiaApplication } from "./application/native-application.types.ts";
 export { provideConfiguration } from "./configuration/provider.ts";
 export { compileRootModule } from "./modules/module-compiler.ts";

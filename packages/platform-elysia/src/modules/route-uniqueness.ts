@@ -14,6 +14,23 @@ interface RouteClaim {
 }
 
 /**
+ * One route the compiled graph claims, by the names of its claimants.
+ *
+ * This is the read-only projection of a claim, for the caller outside this file
+ * that has to refuse a route of its own — bootstrap's health probes mount
+ * outside the compiled graph and therefore outside the check below. The token
+ * stays out of it for the reason the check itself is not a token comparison:
+ * a name is what an error can state.
+ *
+ * @internal
+ */
+export interface ClaimedElysiaRoute {
+  readonly module: string;
+  readonly controller: string;
+  readonly propertyKey: string;
+}
+
+/**
  * Rejects a route declaration that another declaration already owns.
  *
  * Elysia resolves a repeated `(method, path)` by whichever registration wins,
@@ -43,6 +60,80 @@ interface RouteClaim {
 export function assertUniqueElysiaRoutes(root: ModuleDefinition): void {
   const claims = new Map<string, RouteClaim>();
 
+  for (const registration of routeRegistrations(root)) {
+    const existing = claims.get(registration.key);
+    if (!existing) {
+      claims.set(registration.key, registration.claim);
+      continue;
+    }
+    if (isSameDeclaration(existing, registration.claim)) {
+      continue;
+    }
+
+    throw duplicateRoute(existing, registration.claim, registration.route);
+  }
+}
+
+/**
+ * Every route the compiled graph claims, keyed `"METHOD path"`.
+ *
+ * The walk is the check's own, exposed so a mount that happens outside the
+ * compiled graph can ask the same question the check asks. Bootstrap's health
+ * probes are the caller: they are platform routes rather than controller routes,
+ * so nothing about them reaches this file's check, and a probe path a controller
+ * already answers has to be refused where the probe exists.
+ *
+ * A repeat within the graph is not visible here, because a map keyed by the
+ * route keeps one entry per route — the first declaration in graph order. A
+ * repeat is the check above's business, and it reads the walk this function
+ * reads rather than restating one of its own.
+ *
+ * The entries are frozen and the map is new: this is a result a caller outside
+ * this module holds, and the walk it came from is a working collection.
+ *
+ * @internal
+ */
+export function collectClaimedElysiaRoutes(
+  root: ModuleDefinition,
+): ReadonlyMap<string, ClaimedElysiaRoute> {
+  const projected = new Map<string, ClaimedElysiaRoute>();
+
+  for (const registration of routeRegistrations(root)) {
+    if (projected.has(registration.key)) {
+      continue;
+    }
+
+    const claim = registration.claim;
+    projected.set(
+      registration.key,
+      Object.freeze({
+        module: claim.module.id,
+        controller: claim.controller,
+        propertyKey: String(claim.propertyKey),
+      }),
+    );
+  }
+
+  return projected;
+}
+
+/**
+ * One registration, as the walk reaches it.
+ */
+interface RouteRegistration {
+  readonly key: string;
+  readonly route: CompiledElysiaRoute;
+  readonly claim: RouteClaim;
+}
+
+/**
+ * The walk both functions above read from: every registration in graph order,
+ * including a route two declarations reach, because the check above has to see
+ * the repeat that the projection deliberately collapses.
+ */
+function routeRegistrations(root: ModuleDefinition): readonly RouteRegistration[] {
+  const registrations: RouteRegistration[] = [];
+
   for (const module of reachableModules(root)) {
     for (const controller of module.controllers) {
       if (!isElysiaController(controller)) {
@@ -56,26 +147,21 @@ export function assertUniqueElysiaRoutes(root: ModuleDefinition): void {
       const token = controller.token;
       const controllerName = getTokenName(token);
       for (const route of routes) {
-        const claim: RouteClaim = {
-          module,
-          token,
-          controller: controllerName,
-          propertyKey: route.propertyKey,
-        };
-        const key = `${route.method} ${route.path}`;
-        const existing = claims.get(key);
-        if (!existing) {
-          claims.set(key, claim);
-          continue;
-        }
-        if (isSameDeclaration(existing, claim)) {
-          continue;
-        }
-
-        throw duplicateRoute(existing, claim, route);
+        registrations.push({
+          key: `${route.method} ${route.path}`,
+          route,
+          claim: {
+            module,
+            token,
+            controller: controllerName,
+            propertyKey: route.propertyKey,
+          },
+        });
       }
     }
   }
+
+  return registrations;
 }
 
 /**

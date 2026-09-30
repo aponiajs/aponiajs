@@ -21,7 +21,8 @@ Decorated modules, controllers, gateways, and `@Validation()` models are the nor
 
 - [HandlerContext, RouteInputSchema](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/routing/route-context.types.ts): types a handler's context, taking a route schema, one plugin, or a tuple of plugins.
 - [PluginSource, PluginTypes, ElysiaResponseSettings, ResponseStatus, AppState](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/routing/route-context.types.ts): the native Elysia context fields named individually.
-- [AponiaApplicationOptions, ConfiguredAponiaApplicationOptions, RouteCompilationOptions, ElysiaConfigurator](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/application/application.types.ts): bootstrap options, including the Elysia precompile policy.
+- [AponiaApplicationOptions, AponiaListenOptions, ConfiguredAponiaApplicationOptions, RouteCompilationOptions, ElysiaConfigurator](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/application/application.types.ts): bootstrap options, including the Elysia precompile policy, the `health` probes, and the stop-signal option `listen` accepts.
+- [AponiaHealthOptions, AponiaHealthResponse, AponiaHealthStatus](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/application/application-health.types.ts): the probe path option and the one-member `application/health+json` answer the probes send.
 - [ElysiaApplication](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/application/native-application.types.ts): the native application type the factory composes.
 - [AponiaRootModule](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/modules/module-compiler.types.ts): what `compileRootModule` accepts.
 - [ControllerDescriptor, ControllerRegistrationOptions, ControllerRegistrationResult, RegisteredControllerDefinition, RegisteredApplication](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/controllers/controller.types.ts): controller definition and registration contracts.
@@ -39,7 +40,7 @@ Decorated modules, controllers, gateways, and `@Validation()` models are the nor
 - [WebSocket gateways](../../docs/websockets.md): the `{ event, data }` envelope, responses, lifecycle, and native publish/subscribe.
 - [Logging](../../docs/logging.md): the bootstrap log lines and logger configuration.
 - [Testing an application](../../docs/testing.md): asserting through `application.handle(new Request(...))` without a port.
-- [Lifecycle](../../docs/lifecycle.md): the five moments a provider can hook, and what the framework does when one fails.
+- [Lifecycle](../../docs/lifecycle.md): the five moments a provider can hook, what the framework does when one fails, stopping on a signal, and the readiness and liveness probes.
 - [Controllers and routes](../../docs/learn/05-controllers-and-routes.md): how a request reaches a controller method.
 - [Native plugins](../../docs/learn/08-native-plugins.md): the short walkthrough of mounting an Elysia plugin.
 - [Logging](../../docs/learn/09-logging.md): what the framework prints, and how to replace it.

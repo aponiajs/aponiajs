@@ -1,12 +1,22 @@
 import { AponiaError, type LoggerService, type Token } from "@aponiajs/common";
 import { Elysia, type AnyElysia } from "elysia";
 import { reportThroughLogger } from "../errors/default-exception-filter.ts";
+import type { AponiaListenOptions } from "./application.types.ts";
 import { readApplicationToken } from "./application-container.ts";
 import { readApplicationShutdown } from "./lifecycle-hooks.ts";
+import { installShutdownSignalHandlers } from "./shutdown-signals.ts";
 
 export class AponiaApplication<TNativeApplication extends AnyElysia = Elysia> {
   readonly #nativeApplication: TNativeApplication;
   readonly #logger: LoggerService | undefined;
+  /**
+   * Whether this application already owns the process's stop signals.
+   *
+   * A second `listen` must not install a second set: the installer's own
+   * idempotence is per installation, so two of them would each run the teardown
+   * once and the second would re-raise a signal the first had already answered.
+   */
+  #shutdownSignalsInstalled = false;
 
   constructor(nativeApplication: TNativeApplication, logger: LoggerService | undefined) {
     this.#nativeApplication = nativeApplication;
@@ -31,12 +41,30 @@ export class AponiaApplication<TNativeApplication extends AnyElysia = Elysia> {
     return this.#nativeApplication.handle(request);
   }
 
-  async listen(port: number): Promise<void> {
+  /**
+   * Binds the application to a port and starts serving.
+   *
+   * `options.shutdownSignals` is where this application takes over the process's
+   * stop signals, and it is asked for at the end of a successful start: an
+   * application whose boot failed keeps the process's signals, and one that
+   * asked for none installs nothing.
+   */
+  async listen(port: number, options: AponiaListenOptions = {}): Promise<void> {
     try {
       this.#nativeApplication.listen(port);
       await this.#nativeApplication.modules;
       this.#logger?.log("Aponia application successfully started", "AponiaApplication");
       this.#logger?.log(`Application is running on: ${this.getUrl()}`, "AponiaApplication");
+
+      if (options.shutdownSignals === true && !this.#shutdownSignalsInstalled) {
+        this.#shutdownSignalsInstalled = true;
+        // The bound method rather than a wrapper, so the teardown a signal runs
+        // is stated as what it is: this application's own `close`, with the
+        // documented default for `closeActiveConnections`. The signal path
+        // exercises it in `tests/fixtures/shutdown-signal-app.ts`, in a process
+        // whose own death is what the case reads.
+        installShutdownSignalHandlers(this.close.bind(this), this.#logger);
+      }
     } catch (error) {
       // Reported rather than the reason the caller hears: `reportThroughLogger`
       // guards the logger, so the failure thrown below is still the engine's.

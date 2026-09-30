@@ -21,6 +21,12 @@ The first Elysia platform slice for Aponia:
 - Nest-style lifecycle hooks — `onModuleInit`, `onApplicationBootstrap`,
   `beforeApplicationShutdown`, `onModuleDestroy`, and `onApplicationShutdown` —
   read from the provider instance;
+- opt-in graceful shutdown: `listen(port, { shutdownSignals: true })` runs
+  `close()` on `SIGTERM` and `SIGINT` instead of letting the process end
+  abruptly;
+- readiness and liveness probes mounted by `AponiaFactory.create`'s `health`
+  option, answering `application/health+json` and flipping to `503` the moment
+  the application begins to stop;
 - Standard Schema route validation for `body`, `query`, `params`, `headers`,
   `cookie`, and default or status-specific `response` schemas;
 - Nest-style request parameter decorators — `@Body()`, `@Query()`, `@Param()`,
@@ -916,6 +922,43 @@ costs nothing at runtime — the values are still there, only untyped.
 `configureNative` remains available as an application-level escape hatch. It
 preserves Elysia's accumulated plugin types on `createNative()` and
 `getNativeApplication()`.
+
+## Graceful shutdown and health probes
+
+Both surfaces are opt-in, because each one is a decision about the host process
+rather than about a module graph.
+
+```ts
+const application = await AponiaFactory.create(AppModule, { health: true });
+await application.listen(3000, { shutdownSignals: true });
+```
+
+`shutdownSignals` is asked for on `listen` rather than on `create`, because it
+describes what happens once the application serves traffic, and installing a
+handler at boot would take the process's signals away from every application
+object ever built. What a signal runs is exactly `close()` —
+`beforeApplicationShutdown`, the server stop, `onModuleDestroy`, then
+`onApplicationShutdown`. The listeners are removed the moment the first signal
+arrives, so a second one reaches the runtime's default action and ends the
+process at once; the signal is then re-raised rather than replaced by an exit
+call, so the exit status stays the signal's own. A stopping hook that throws is
+reported and the remaining hooks still run.
+
+`health: true` mounts `GET /health/live` and `GET /health/ready`, and
+`health: { livenessPath, readinessPath }` moves them. Liveness answers
+`200 {"status":"pass"}` for as long as the process answers at all; readiness
+answers the same until the application begins to stop, then
+`503 {"status":"fail"}` — before the first shutdown hook runs, so an
+orchestrator stops routing to an application that has already begun to tear
+down. The responses are `application/health+json` with `Cache-Control:
+no-store`, and the probes carry no hook, so no guard, interceptor, or filter
+runs for one.
+
+Neither surface covers what this release does not ship: there is no drain
+deadline or per-check report, only the single `status` member the IETF
+health-check draft requires, and a signal that arrives before `listen` has
+finished is not caught. See the [lifecycle guide](../../docs/lifecycle.md) for
+the full contract.
 
 ## Bootstrap diagnostics
 

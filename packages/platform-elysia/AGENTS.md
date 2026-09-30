@@ -9,18 +9,18 @@ The Elysia adapter: it lowers decorated classes into descriptors, bootstraps the
 application, maps HTTP routes and WebSocket gateways, and mounts native plugins.
 It depends on `common` and `core`, with `elysia` as a peer.
 
-| Domain           | Owns                                                                                             |
-| ---------------- | ------------------------------------------------------------------------------------------------ |
-| `application/`   | Factory orchestration, application lifecycle wrapper, public option contracts                    |
-| `configuration/` | The boot-time loader that validates a declared configuration                                     |
-| `modules/`       | `compileRootModule` and decorator-to-descriptor lowering                                         |
-| `controllers/`   | Controller descriptors, direct registration, enhancer resolution, `CONTROLLER_KIND`              |
-| `errors/`        | Typed HTTP errors, RFC 9457 Problem Details responses, and the default mapping                   |
-| `inspection/`    | Read-only projection of a compiled application for build-time consumers                          |
-| `plugins/`       | Native plugin module registration and plugin contracts                                           |
-| `routing/`       | Route plans, compiled invokers, schemas, and native context types                                |
-| `websockets/`    | Provider discovery, gateway plans, message dispatch, and native socket types                     |
-| `version.ts`     | The package's own version, read from its manifest, which generated artifacts are checked against |
+| Domain           | Owns                                                                                                                                    |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `application/`   | Factory orchestration, application lifecycle wrapper, readiness and liveness probes, the stop-signal installer, public option contracts |
+| `configuration/` | The boot-time loader that validates a declared configuration                                                                            |
+| `modules/`       | `compileRootModule` and decorator-to-descriptor lowering                                                                                |
+| `controllers/`   | Controller descriptors, direct registration, enhancer resolution, `CONTROLLER_KIND`                                                     |
+| `errors/`        | Typed HTTP errors, RFC 9457 Problem Details responses, and the default mapping                                                          |
+| `inspection/`    | Read-only projection of a compiled application for build-time consumers                                                                 |
+| `plugins/`       | Native plugin module registration and plugin contracts                                                                                  |
+| `routing/`       | Route plans, compiled invokers, schemas, and native context types                                                                       |
+| `websockets/`    | Provider discovery, gateway plans, message dispatch, and native socket types                                                            |
+| `version.ts`     | The package's own version, read from its manifest, which generated artifacts are checked against                                        |
 
 `src/index.ts` is the only public barrel. Keep `*.types.ts` colocated with the
 runtime boundary it describes.
@@ -154,15 +154,18 @@ runtime boundary it describes.
   Details answer intact, because the response depends on the hook returning and a
   logger an application supplies may throw. Such a logger is reported on `stderr` by a direct write —
   the only place this package writes a process stream — because the channel that
-  would normally carry the diagnostic is the one that failed. Four call sites
+  would normally carry the diagnostic is the one that failed. Five call sites
   in this package report a failure and every one of them goes through that seam:
   this mapping,
   `createFilterHook`'s catch, which reports a filter that threw before declining
   to what answers next, `AponiaApplication.listen`'s catch, which reports
-  the failure it is about to rethrow, and `runShutdownHooks`'s catch in
+  the failure it is about to rethrow, `runShutdownHooks`'s catch in
   `application-bootstrap.ts`, which reports a hook that threw while the
   application was stopping and carries on, because `close()` may not become a
-  call that cannot complete. The rule is deliberately narrow —
+  call that cannot complete, and `installShutdownSignalHandlers`'s catch in
+  `application/shutdown-signals.ts`, which reports a teardown that threw before
+  the signal is re-raised, because a stop request has to end the process whether
+  or not the teardown it ran succeeded. The rule is deliberately narrow —
   a call site that reports a failure guards, and a call site that reports
   progress does not, because a throw on a progress line aborts work that has not
   yet reported a failure and aborting it is louder than continuing. So no
@@ -203,7 +206,55 @@ runtime boundary it describes.
   so it carries no route plan and, like inspection, contributes nothing to the
   check. `compileRootModule` is where the check lives so
   `inspectAponiaApplication`, which lowers through it, raises the same code for
-  the same application.
+  the same application. `collectClaimedElysiaRoutes` is that walk's read-only
+  projection, kept for the one mount that happens outside the compiled graph:
+  both functions iterate one shared `routeRegistrations` array rather than
+  restating the walk, because a second walk is a second answer.
+- `AponiaApplicationOptions.health` mounts readiness and liveness probes on the
+  application's own route table, through `routing/native-route.ts` like every
+  other route the platform registers, and `application/application-health.ts`
+  owns the whole of it: which paths the option resolved to, the one-member
+  `application/health+json` answer, and the readiness flag. The flag is the
+  boot's own `ApplicationReadiness`, created in `application-bootstrap.ts` beside
+  the shutdown plan rather than provided by the container, because what a probe
+  answers is not an application's to set and a token would put a mutable
+  lifecycle flag in reach of every route. The plan's first statement is
+  `markShuttingDown()`, before `beforeShutdownDone` is even started, so readiness
+  is `fail` from the moment the stop begins and every hook observes the same
+  answer. Liveness reads nothing: it is `pass` for as long as the process answers
+  at all, which is what keeps an orchestrator from restarting a draining replica.
+  The probes carry no hook, deliberately, so no guard, interceptor, or filter
+  reaches one — an orchestrator polling for readiness may not be able to present
+  credentials. They mount outside the module graph, so nothing about them reaches
+  `compileRootModule`, `inspectAponiaApplication`, or a generated artifact; the
+  collision a controller would create is refused by `compileHealthProbes`
+  instead, with `DUPLICATE_ROUTE` and the module and controller that claimed the
+  path, because Elysia would otherwise answer the repeated `(method, path)` from
+  whichever registration it resolves. `compileHealthProbes` also refuses a
+  liveness and a readiness path that are the same path, with the same code and
+  the narrower details `{ method, path }`: nothing claimed it, the two probes
+  claimed it of each other. The response shape follows the IETF health-check
+  draft, sends only the `status` member it requires, and never `warn` — so a
+  field added here is a decision about that draft rather than a convenience.
+- `AponiaListenOptions.shutdownSignals` is the only place the platform takes the
+  process's stop signals, and it is asked for at the end of a successful
+  `listen` rather than at boot. A boot that installed handlers would take the
+  signals of every process that ever built an application object, which is the
+  compatibility break the opt-in exists to avoid, and `tests/graceful-shutdown.test.ts`
+  pins both halves: no listener appears without the option, and exactly one
+  appears with it. `application/shutdown-signals.ts` owns the installation, and
+  its two safety properties are the reason both loops are written the way they
+  are: the listeners are removed synchronously as the first signal is answered,
+  so a repeat reaches the runtime's default action, and the process is ended by
+  re-raising the signal through `kill` rather than by an exit call, so the status
+  stays the signal's own. `AponiaApplication` keeps one `#shutdownSignalsInstalled`
+  flag, because `close()` followed by a second `listen` is a real path and a second
+  installation would run the teardown twice and re-raise a signal the first set
+  had already answered. Its target is a structural `ShutdownSignalTarget` that
+  defaults to `process`, which is what lets a case observe the listeners and the
+  re-raise without sending the test runner a signal; `tests/graceful-shutdown.test.ts`
+  reads that seam, and `tests/fixtures/shutdown-signal-app.ts` is where the real
+  target is exercised, in a process whose own death is the assertion.
 - Route parameter binding is compiled once while the controller is mounted.
   Generated invokers must expose each used context field directly and call the
   controller with `handler.call(instance, ...)`. A route keeps the synchronous
@@ -491,3 +542,15 @@ Inspection behavior belongs in `tests/inspection.test.ts`, mirrored in
 `tests-vp/inspection.conformance.ts`. Cover shapes, ordering, frozen-ness,
 serialization, and the `AponiaError` codes inspection shares with bootstrap;
 assert on codes, never on message text.
+
+Probe and stop-signal behavior belongs in `tests/health-probes.test.ts` and
+`tests/graceful-shutdown.test.ts`, with the public contracts mirrored in
+`tests-vp/production-lifecycle.conformance.ts`. Neither case may send the lane a
+real signal, so the installer is read through its `ShutdownSignalTarget` seam and
+the two cases that do reach the real `process` restore the listeners they found.
+The one property no in-process case can hold — that a real process answers a real
+`SIGTERM`, finishes its teardown, and only then ends — lives in
+`tests/fixtures/shutdown-signal-app.ts`, a process a case spawns rather than a
+case's own runner. That directory holds applications a case runs, never a test
+file: Bun's default glob does not collect it, and a fixture added there must be
+run only through `Bun.spawn` or `Bun.spawnSync`.

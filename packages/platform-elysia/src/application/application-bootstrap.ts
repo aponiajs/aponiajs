@@ -39,6 +39,11 @@ import {
   registerWebSocketGateways,
 } from "../websockets/websocket-gateway.ts";
 import { aponiaVersion } from "../version.ts";
+import {
+  ApplicationReadiness,
+  compileHealthProbes,
+  mountHealthProbes,
+} from "./application-health.ts";
 import { attachApplicationContainer, publishApplicationOnStore } from "./application-container.ts";
 import {
   attachApplicationDiagnostics,
@@ -115,6 +120,29 @@ export async function bootstrapAponiaApplication(
       "INVALID_NATIVE_APPLICATION",
       "configureNative must return the Elysia application it receives.",
     );
+  }
+
+  // The probes an application asked for are mounted here, before its own plugins
+  // and before any controller, because nothing a probe answers depends on the
+  // graph: the flag they read is this boot's own, so the earliest point an
+  // application can serve is also the earliest one they can. The plan is
+  // compiled against the already-compiled graph first, and that refusal is this
+  // option's only failure — a boot with the option absent does nothing here at
+  // all.
+  //
+  // A plugin that mounts a route at a probe's path through `use()` stays outside
+  // that refusal, exactly as it is outside the compile-time uniqueness check:
+  // a plugin mounts beside the graph, and Elysia answers a repeated path from
+  // whichever registration it resolves.
+  //
+  // The fact they report lives on this boot rather than in the container,
+  // because the shutdown plan below is what flips it and the plan is the boot's
+  // own. Readiness starts at `pass`: a request can only reach the probe once the
+  // application is listening, and nothing listens before the boot returns.
+  const readiness = new ApplicationReadiness();
+  const healthProbes = compileHealthProbes(compiledRootModule, options.health);
+  if (healthProbes) {
+    mountHealthProbes(nativeApplication, readiness, healthProbes);
   }
 
   // The application's own plugins mount here, beside the module-graph pass and
@@ -304,6 +332,13 @@ export async function bootstrapAponiaApplication(
   let afterStopDone: Promise<void> | undefined;
 
   attachApplicationShutdown(nativeApplication, async (closeActiveConnections = true) => {
+    // Before the first hook, and before anything has had a chance to observe a
+    // half-torn-down graph: this is what makes the readiness probe the signal an
+    // orchestrator drains by, rather than a report written once the drain is
+    // already over. It is stated on every call and not only the first, because
+    // the flip is idempotent by nature and reading it from the memoised group
+    // below would make it depend on which caller arrived first.
+    readiness.markShuttingDown();
     beforeShutdownDone ??= runShutdownHooks(beforeShutdown, logger);
     await beforeShutdownDone;
 

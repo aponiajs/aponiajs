@@ -4,6 +4,7 @@ import type { ElysiaConfig, EventScope } from "elysia/types";
 import type { AponiaModuleDescriptorArtifact } from "../modules/module-descriptor-artifact.types.ts";
 import type { ElysiaPlugin } from "../plugins/plugin.types.ts";
 import type { AponiaInvokerArtifact } from "../routing/invoker-artifact.types.ts";
+import type { AponiaHealthOptions } from "./application-health.types.ts";
 
 export type ElysiaConfigurator<TNativeApplication extends AnyElysia> = (
   application: Elysia,
@@ -96,6 +97,28 @@ export interface AponiaApplicationOptions {
    */
   readonly plugins?: readonly (ElysiaPlugin | undefined)[];
   /**
+   * Readiness and liveness probes, mounted on this application's own route
+   * table. `true` mounts the conventional pair; an object moves their paths;
+   * omitting the option mounts nothing.
+   *
+   * Liveness answers `200 application/health+json` for as long as the process
+   * answers at all. Readiness answers the same until this application begins to
+   * stop and `503` from then on, which is what lets an orchestrator stop routing
+   * to an application before its connections end rather than during.
+   *
+   * Both are ordinary routes with no hook, so no guard, interceptor, or filter
+   * runs for one: an orchestrator polling for readiness may not be able to
+   * present credentials, and a probe behind an authentication guard reports
+   * every replica unhealthy at once.
+   *
+   * The probes mount outside the module graph, so nothing about them reaches
+   * `compileRootModule`, `inspectAponiaApplication`, or a generated artifact.
+   * A path a controller already claims fails the boot with `DUPLICATE_ROUTE`
+   * instead, because Elysia would otherwise answer the repeated path from
+   * whichever registration it resolves.
+   */
+  readonly health?: boolean | AponiaHealthOptions;
+  /**
    * Guards every route the platform mounts runs, before the ones a controller
    * or a handler declares.
    *
@@ -131,4 +154,47 @@ export interface ConfiguredAponiaApplicationOptions<
   TNativeApplication extends AnyElysia,
 > extends AponiaApplicationOptions {
   readonly configureNative: ElysiaConfigurator<TNativeApplication>;
+}
+
+/**
+ * What `AponiaApplication.listen` may be asked for beyond the port.
+ *
+ * It is an option on `listen` rather than a factory option, because it describes
+ * what happens once the application serves traffic: an application that is only
+ * ever driven through `application.handle` never binds a listener, and one that
+ * binds one says so at the call that binds it. Installing a handler at boot
+ * would also take the process's signals away from every application that only
+ * built an application object, which is the compatibility break an opt-in
+ * exists to avoid.
+ *
+ * The same object is shaped the way `AponiaApplicationOptions` is — readonly,
+ * optional, and stated where the consequence is — so a reader of one contract
+ * reads the other without a second convention.
+ */
+export interface AponiaListenOptions {
+  /**
+   * Runs `close()` when the process receives `SIGTERM` or `SIGINT`, instead of
+   * letting the runtime's default action end it abruptly. Defaults to `false`,
+   * which installs nothing at all.
+   *
+   * This is opt-in because taking a process's signals is a decision about the
+   * host process rather than about this application: a library that answers
+   * `SIGTERM` for whoever imported it takes that decision away from a program
+   * that may have its own handler, and it breaks every lane that listens without
+   * wanting its process to be owned.
+   *
+   * What a signal runs is exactly the teardown `close()` already documents —
+   * `beforeApplicationShutdown`, then the server stop, then `onModuleDestroy` and
+   * `onApplicationShutdown` — so the readiness probe has already flipped to
+   * `fail` by the time the first hook runs. A second signal is not handled at
+   * all: the listeners are removed the moment the first one arrives, so a repeat
+   * reaches the default action and ends the process at once, which is the escape
+   * hatch a teardown that never returns would otherwise take away. The exit
+   * status is the signal's own, because the signal is re-raised after the
+   * listeners are gone rather than replaced by an exit call.
+   *
+   * A signal that arrives before `listen` has finished starting the application
+   * is not caught: only an application that stopped starting cleanly owns them.
+   */
+  readonly shutdownSignals?: boolean;
 }
