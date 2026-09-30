@@ -89,6 +89,22 @@ separate focused modules. `src/index.ts` is the only public barrel.
   metadata requires the field, so omitting it makes the generated module fail
   the application's own type check; the runtime reads the same `undefined`
   either way.
+- `generation/descriptor-emitter.ts` carries a route's enhancers into the
+  emitted plan as `guards`, `interceptors`, and `filters`, each written only
+  when its list is non-empty, resolved through `generation/source-imports.ts`
+  exactly as a provider token is. Writing a field only when non-empty is what
+  keeps an enhancer-free route byte-identical to what the emitter wrote before
+  it knew about enhancers, which is what keeps the starter's committed
+  `descriptors.generated.ts.tmpl` unchanged. An enhancer class the controller's
+  file cannot name, and an enhancer argument the analysis could not read, both
+  decline the route and sink its module, because a route emitted without a class
+  the application declared would run fewer enhancers than the decorated one — the
+  authorization-bypass shape this carriage exists to remove. The order is the one
+  the runtime runs: `packages/platform-elysia/src/routing/route-compiler.ts`'s
+  `mergeEnhancerMetadata` joins the class scope and the handler scope with guards
+  and interceptors outward-in and filters most-specific-first, and the emitter
+  states that joined list because a declared plan carries one list where a
+  decorated controller has a class to ask per scope.
 - `bundler/aponia-build-plugin.ts` is a thin seam over `generateInvokers`, not a
   second generator: it passes `cwd` and `project` through and prints
   `generation/build-report.ts`. Anything the plugin needs to do differently
@@ -372,6 +388,15 @@ separate focused modules. `src/index.ts` is the only public barrel.
   whole-context fallback for undecorated parameters is applied while mounting
   routes. Arguments it cannot read statically and a parameter decorator on
   anything but a method parameter throw a plain `Error`.
+- `generation/controller-routes.ts` also reads `@UseGuards()`,
+  `@UseInterceptors()`, and `@UseFilters()` at the controller class's own scope
+  and at each handler's, and reports the joined list per route. A class reference
+  is the only argument shape it reads; any other argument — a computed value, a
+  factory call, a spread — is reported in the route's `enhancers.unreadable`
+  rather than dropped. The join is `route-compiler.ts`'s `mergeEnhancerMetadata`
+  repeated by hand: guards and interceptors put the class's own declarations
+  first, filters put the handler's first, and a stacked decorator is read
+  bottom-up because that is the order the runtime applies it in.
 - `generation/module-descriptors.ts` is the same kind of analysis for the module
   authoring surface: it reads one file's `@Module()`, `@Injectable()`,
   `@WebSocketGateway()`, and `@Validation()` classes and reports what each

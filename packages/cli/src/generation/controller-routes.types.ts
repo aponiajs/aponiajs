@@ -88,6 +88,47 @@ export type AnalyzedRouteParameterKind =
   | "store";
 
 /**
+ * The enhancer kinds a controller class or a route handler can declare.
+ *
+ * Mirrors `EnhancerMetadata` in `@aponiajs/common`
+ * (`packages/common/src/enhancers/enhancer.types.ts`). The CLI is independent of
+ * the runtime packages, so the union is declared locally and must be kept in
+ * step with that source by hand.
+ */
+export type AnalyzedEnhancerKind = "filters" | "guards" | "interceptors";
+
+/**
+ * The enhancer class references one scope declares, or a route's joined scopes.
+ *
+ * Each entry is the name the declaring file knows the class by, exactly as the
+ * decorator wrote it: a generated module has to import it from where that file
+ * imported it, which is the same rule every copied expression follows.
+ *
+ * The order is the one the runtime runs the class in, and it is not the same
+ * for every kind. `@UseGuards()` and `@UseInterceptors()` run outward-in, so the
+ * controller's own declarations come first and the handler's follow;
+ * `@UseFilters()` runs most-specific-first, so the handler's own declarations
+ * come first and the controller's follow. `routing/route-compiler.ts`'s
+ * `mergeEnhancerMetadata` joins the two scopes in exactly those orders, and a
+ * generated route reaches the platform with the same list a decorated one
+ * carries.
+ *
+ * A declaration the analysis cannot read is reported in `unreadable` rather than
+ * dropped, so a consumer declines the route instead of emitting a route that is
+ * quietly less guarded than the one the application wrote.
+ */
+export interface AnalyzedEnhancers {
+  /** The guards this scope declares, in the order they run. */
+  readonly guards: readonly string[];
+  /** The interceptors this scope declares, in the order they run. */
+  readonly interceptors: readonly string[];
+  /** The filters this scope declares, in the order they run. */
+  readonly filters: readonly string[];
+  /** Why the declarations cannot be reproduced in generated source, or `undefined` when they can. */
+  readonly unreadable: string | undefined;
+}
+
+/**
  * One route handler parameter that a parameter decorator binds.
  *
  * Only decorated parameters appear. The runtime's fallback for undecorated
@@ -148,6 +189,11 @@ export interface AnalyzedRoute {
   readonly usesArgumentsObject: boolean;
   /** The handler's decorated parameters, ordered by parameter index. */
   readonly parameters: readonly AnalyzedRouteParameter[];
+  /**
+   * The enhancers the route runs: the controller class's own declarations
+   * joined with this handler's, in the order the runtime runs them.
+   */
+  readonly enhancers: AnalyzedEnhancers;
   /**
    * The validation schema the decorator declares, or `undefined` when it
    * declares none.

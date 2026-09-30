@@ -368,6 +368,165 @@ export class PlainController {
     expect(emitted.declined).toEqual([]);
   });
 
+  test("declares the enhancers a route declares, and imports the classes it names", () => {
+    const emitted = emit({
+      "auth.guard.ts": `import { Injectable } from "@aponiajs/common";
+
+@Injectable()
+export class AuthGuard {}
+`,
+      "logging.interceptor.ts": `import { Injectable } from "@aponiajs/common";
+
+@Injectable()
+export class LoggingInterceptor {}
+`,
+      "not-found.filter.ts": `import { Injectable } from "@aponiajs/common";
+
+@Injectable()
+export class NotFoundFilter {}
+`,
+      "users.controller.ts": `import { Controller, Get, UseFilters, UseGuards, UseInterceptors } from "@aponiajs/common";
+import { AuthGuard } from "./auth.guard.ts";
+import { LoggingInterceptor } from "./logging.interceptor.ts";
+import { NotFoundFilter } from "./not-found.filter.ts";
+
+@UseFilters(NotFoundFilter)
+@UseGuards(AuthGuard)
+@Controller("users")
+export class UsersController {
+  @UseInterceptors(LoggingInterceptor)
+  @Get()
+  findAll(): string {
+    return "users";
+  }
+}
+`,
+      "users.module.ts": `import { Module } from "@aponiajs/common";
+import { AuthGuard } from "./auth.guard.ts";
+import { LoggingInterceptor } from "./logging.interceptor.ts";
+import { NotFoundFilter } from "./not-found.filter.ts";
+import { UsersController } from "./users.controller.ts";
+
+@Module({
+  controllers: [UsersController],
+  providers: [AuthGuard, LoggingInterceptor, NotFoundFilter],
+})
+export class UsersModule {}
+`,
+    });
+
+    expect(emitted.declined).toEqual([]);
+    const source = emitted.source ?? "";
+    // Every enhancer class is imported from where the controller's own file
+    // read it, exactly as a provider token is.
+    expect(source).toContain('import { AuthGuard } from "./auth.guard.ts";');
+    expect(source).toContain('import { LoggingInterceptor } from "./logging.interceptor.ts";');
+    expect(source).toContain('import { NotFoundFilter } from "./not-found.filter.ts";');
+    // The declared route carries the classes the decorated route would run, in
+    // the order each kind runs them: the class's guards first, the handler's
+    // interceptor next, and the class's filter last.
+    expect(source).toContain(
+      [
+        "          guards: [AuthGuard],",
+        "          interceptors: [LoggingInterceptor],",
+        "          filters: [NotFoundFilter],",
+      ].join("\n"),
+    );
+  });
+
+  test("writes no enhancer field for a route that declares none", () => {
+    const emitted = emit({
+      "users.controller.ts": `import { Controller, Get } from "@aponiajs/common";
+
+@Controller("users")
+export class UsersController {
+  @Get()
+  findAll() {}
+}
+`,
+      "users.module.ts": `import { Module } from "@aponiajs/common";
+import { UsersController } from "./users.controller.ts";
+
+@Module({ controllers: [UsersController] })
+export class UsersModule {}
+`,
+    });
+
+    expect(emitted.declined).toEqual([]);
+    // An enhancer-free route is byte-for-byte what the emitter wrote before it
+    // knew about enhancers, which is what keeps the starter's committed module
+    // unchanged.
+    expect(emitted.source).not.toContain("guards:");
+    expect(emitted.source).not.toContain("interceptors:");
+    expect(emitted.source).not.toContain("filters:");
+  });
+
+  test("declines a route whose enhancer class the controller's file cannot name", () => {
+    const emitted = emit({
+      "users.controller.ts": `import { Controller, Get, UseGuards } from "@aponiajs/common";
+
+const LocalGuard = class {};
+
+@Controller("users")
+export class UsersController {
+  @UseGuards(LocalGuard)
+  @Get()
+  findAll() {}
+}
+`,
+      "users.module.ts": `import { Module } from "@aponiajs/common";
+import { UsersController } from "./users.controller.ts";
+
+@Module({ controllers: [UsersController] })
+export class UsersModule {}
+`,
+    });
+
+    // A local binding no other file can name is declined rather than emitted,
+    // because a route missing its guard is less protected than the decorated one.
+    expect(emitted.source).toBeUndefined();
+    expect(emitted.declined[0]).toEqual({
+      kind: "route",
+      module: "UsersModule",
+      controller: "UsersController",
+      method: "findAll",
+      reason:
+        '@GET UsersController.findAll in /project/src/users.controller.ts declares the guards "LocalGuard", which is not an import or an export of the file it was written in.',
+    });
+  });
+
+  test("declines a route whose enhancer argument the analysis could not read", () => {
+    const emitted = emit({
+      "users.controller.ts": `import { Controller, Get, UseGuards } from "@aponiajs/common";
+import { guards } from "./guards.ts";
+
+@Controller("users")
+export class UsersController {
+  @UseGuards(...guards)
+  @Get()
+  findAll() {}
+}
+`,
+      "guards.ts": `export const guards: never[] = [];
+`,
+      "users.module.ts": `import { Module } from "@aponiajs/common";
+import { UsersController } from "./users.controller.ts";
+
+@Module({ controllers: [UsersController] })
+export class UsersModule {}
+`,
+    });
+
+    expect(emitted.declined[0]).toEqual({
+      kind: "route",
+      module: "UsersModule",
+      controller: "UsersController",
+      method: "findAll",
+      reason:
+        "@UseGuards in /project/src/users.controller.ts must name each enhancer with a class reference to be read statically.",
+    });
+  });
+
   test("declines a route whose schema cannot be reproduced, and the module declaring it", () => {
     const emitted = emit({
       "users.controller.ts": `import { Body, Controller, Post } from "@aponiajs/common";

@@ -13,6 +13,8 @@ import { readExpressionImports, readSourceImports } from "./source-imports.ts";
 import type { SourceImports } from "./source-imports.types.ts";
 import type {
   AnalyzedController,
+  AnalyzedEnhancerKind,
+  AnalyzedEnhancers,
   AnalyzedRequestMethod,
   AnalyzedRoute,
   AnalyzedRouteParameter,
@@ -71,8 +73,24 @@ const parameterDecorators: ReadonlyMap<string, AnalyzedRouteParameterKind> = new
   ["State", "store"],
 ]);
 
+/**
+ * The enhancer decorators of `@aponiajs/common`, keyed by the name the package
+ * exports (`packages/common/src/enhancers/enhancer-decorators.ts`).
+ */
+const enhancerDecorators: ReadonlyMap<string, AnalyzedEnhancerKind> = new Map([
+  ["UseFilters", "filters"],
+  ["UseGuards", "guards"],
+  ["UseInterceptors", "interceptors"],
+]);
+
 const noControllers: readonly AnalyzedController[] = Object.freeze([]);
 const noRoutes: readonly AnalyzedRoute[] = Object.freeze([]);
+const noEnhancers: AnalyzedEnhancers = Object.freeze({
+  guards: Object.freeze([]),
+  interceptors: Object.freeze([]),
+  filters: Object.freeze([]),
+  unreadable: undefined,
+});
 
 /**
  * What a source file imports from `@aponiajs/common`.
@@ -196,9 +214,12 @@ function analyzeController(
 
   const pathArgument = controllerUse.arguments[0];
   const path = pathArgument === undefined ? "" : readStringLiteral(pathArgument, description);
+  const controllerEnhancers = readEnhancers(declaration.getDecorators(), bindings, filePath);
   const routes = declaration
     .getMethods()
-    .flatMap((method) => analyzeRouteMethod(method, bindings, imports, filePath));
+    .flatMap((method) =>
+      analyzeRouteMethod(method, bindings, imports, filePath, controllerEnhancers),
+    );
 
   return [
     Object.freeze({
@@ -219,6 +240,7 @@ function analyzeRouteMethod(
   bindings: AponiaDecoratorBindings,
   imports: SourceImports,
   filePath: string,
+  controllerEnhancers: AnalyzedEnhancers,
 ): readonly AnalyzedRoute[] {
   const routes = method.getDecorators().flatMap((decorator) => {
     const use = readDecoratorUse(decorator, bindings);
@@ -235,6 +257,10 @@ function analyzeRouteMethod(
   const declaresSynchronousReturn = readsSynchronousReturn(method);
   const declaresParameters = method.getParameters().length > 0;
   const usesArgumentsObject = readsArgumentsObject(method);
+  const enhancers = mergeEnhancers(
+    controllerEnhancers,
+    readEnhancers(method.getDecorators(), bindings, filePath),
+  );
 
   return Object.freeze(
     routes.map(({ use, method: requestMethod }) =>
@@ -248,9 +274,105 @@ function analyzeRouteMethod(
         usesArgumentsObject,
         parameters,
         schema: readRouteSchema(use, imports, filePath),
+        enhancers,
       }),
     ),
   );
+}
+
+/**
+ * Reads the enhancer classes one scope declares: a controller class's own when
+ * the decorators are the class's, or one handler's own when they are the
+ * method's.
+ *
+ * The runtime records a stacked declaration bottom-up, because decorators are
+ * applied in the reverse of the order they were written, and each application
+ * appends its entries to what is already there. Reading the decorators in that
+ * same order is what keeps a class declared twice in one list in the order it
+ * runs.
+ *
+ * Only a plain class reference can be read: any other argument is a value the
+ * runtime computed, and a generated module has no second copy of it. Such an
+ * argument is reported rather than skipped, because a route emitted without it
+ * would be less guarded than the one the application wrote.
+ */
+function readEnhancers(
+  decorators: readonly Decorator[],
+  bindings: AponiaDecoratorBindings,
+  filePath: string,
+): AnalyzedEnhancers {
+  const guards: string[] = [];
+  const interceptors: string[] = [];
+  const filters: string[] = [];
+  let unreadable: string | undefined;
+
+  for (const decorator of [...decorators].reverse()) {
+    const use = readDecoratorUse(decorator, bindings);
+    const kind = use === undefined ? undefined : enhancerDecorators.get(use.name);
+    if (use === undefined || kind === undefined) {
+      continue;
+    }
+
+    const description = describeDecoratorUse(use, filePath);
+    for (const argument of use.arguments) {
+      if (!Node.isIdentifier(argument)) {
+        unreadable ??= `${description} must name each enhancer with a class reference to be read statically.`;
+        continue;
+      }
+
+      const name = argument.getText();
+      switch (kind) {
+        case "guards":
+          guards.push(name);
+          break;
+        case "interceptors":
+          interceptors.push(name);
+          break;
+        case "filters":
+          filters.push(name);
+          break;
+      }
+    }
+  }
+
+  if (
+    guards.length === 0 &&
+    interceptors.length === 0 &&
+    filters.length === 0 &&
+    unreadable === undefined
+  ) {
+    return noEnhancers;
+  }
+
+  return Object.freeze({
+    guards: Object.freeze(guards),
+    interceptors: Object.freeze(interceptors),
+    filters: Object.freeze(filters),
+    unreadable,
+  });
+}
+
+/**
+ * Joins the two scopes a route's enhancers are declared at, in the order the
+ * runtime runs them.
+ *
+ * This mirrors `mergeEnhancerMetadata` in
+ * `packages/platform-elysia/src/routing/route-compiler.ts` by hand: guards and
+ * interceptors run outward-in, so the class's own declarations come first,
+ * while filters run most-specific-first, so the handler's come first. A
+ * generated route states the joined list, because a declared plan carries one
+ * list where a decorated controller has a class to ask per scope.
+ */
+function mergeEnhancers(
+  controller: AnalyzedEnhancers,
+  handler: AnalyzedEnhancers,
+): AnalyzedEnhancers {
+  return Object.freeze({
+    guards: Object.freeze([...controller.guards, ...handler.guards]),
+    interceptors: Object.freeze([...controller.interceptors, ...handler.interceptors]),
+    filters: Object.freeze([...handler.filters, ...controller.filters]),
+    unreadable: controller.unreadable ?? handler.unreadable,
+  });
 }
 
 /**

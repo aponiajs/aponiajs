@@ -10,6 +10,7 @@ import {
 import type { SourceSubstitution } from "./source-imports.ts";
 import type {
   AnalyzedController,
+  AnalyzedEnhancers,
   AnalyzedRoute,
   AnalyzedRouteSchemaSlot,
 } from "./controller-routes.types.ts";
@@ -224,6 +225,11 @@ type PlannedModule =
 
 type ReferenceReading =
   | { readonly kind: "reference"; readonly reference: SourceImport }
+  | { readonly kind: "declined"; readonly reason: string };
+
+/** The enhancer fields one route states, or the reason it cannot state them. */
+type EnhancerFields =
+  | { readonly kind: "fields"; readonly fields: readonly string[] }
   | { readonly kind: "declined"; readonly reason: string };
 
 /**
@@ -669,6 +675,16 @@ function renderRoute(
     return declineRoute(declined, moduleName, controller, route, schemaReason);
   }
 
+  // An enhancer the analysis could not read is as disqualifying as a schema slot
+  // it could not read: emitting the route without the guard, interceptor, or
+  // filter the application declared would leave it less protected than the
+  // decorated one, which is the failure this artifact must never cause. The
+  // module keeps booting from its own decorators instead.
+  const enhancerReason = route.enhancers.unreadable;
+  if (enhancerReason !== undefined) {
+    return declineRoute(declined, moduleName, controller, route, enhancerReason);
+  }
+
   // The property key is what the platform looks the handler up by, and the only
   // key a generated module can name is a plain one. A computed name reaches the
   // analysis as its own source text, which is not the key the runtime recorded.
@@ -735,7 +751,70 @@ function renderRoute(
     fields.push(`schema: { ${slots.join(", ")} },`);
   }
 
+  const enhancers = renderEnhancers(
+    route.enhancers,
+    controller,
+    generatedFile,
+    references,
+    description(controller, route),
+  );
+  if (enhancers.kind === "declined") {
+    return declineRoute(declined, moduleName, controller, route, enhancers.reason);
+  }
+  fields.push(...enhancers.fields);
+
   return { kind: "source", source: ["{", ...indentLines(fields, 1), "}"].join("\n") };
+}
+
+/**
+ * Renders the enhancer classes a route declares, as the names a generated
+ * module has to import for them.
+ *
+ * The list a decorated controller compiles to is the class's own declarations
+ * joined with the handler's, which is what the analysis already reported, so
+ * each name is resolved the way a provider token is: the declaring file's own
+ * import, or a declaration it exports itself. A name the file cannot read is
+ * declined rather than guessed at, because dropping one would leave the route
+ * running fewer enhancers than the application declared.
+ *
+ * A field is written only when its list is non-empty, which keeps an
+ * enhancer-free route — the starter's every route — byte-identical to what the
+ * emitter wrote before it knew about enhancers.
+ */
+function renderEnhancers(
+  enhancers: AnalyzedEnhancers,
+  controller: ControllerDeclaration,
+  generatedFile: string,
+  references: ModuleImport[],
+  description: string,
+): EnhancerFields {
+  const fields: string[] = [];
+
+  for (const [field, names] of [
+    ["guards", enhancers.guards],
+    ["interceptors", enhancers.interceptors],
+    ["filters", enhancers.filters],
+  ] as const) {
+    if (names.length === 0) {
+      continue;
+    }
+
+    const rendered: string[] = [];
+    for (const name of names) {
+      const reference = controller.imports.get(name);
+      if (reference === undefined || reference.kind === "type") {
+        return declinedResult(
+          `${description} declares the ${field} "${name}", which is not an import or an export of the file it was written in.`,
+        );
+      }
+
+      references.push(resolveReference(reference, generatedFile));
+      rendered.push(reference.name);
+    }
+    fields.push(`${field}: [${rendered.join(", ")}],`);
+  }
+
+  return { kind: "fields", fields: Object.freeze(fields) };
 }
 
 /**

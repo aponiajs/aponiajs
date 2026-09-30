@@ -51,6 +51,7 @@ export class UsersController {
             usesArgumentsObject: false,
             declaresSynchronousReturn: false,
             schema: undefined,
+            enhancers: { guards: [], interceptors: [], filters: [], unreadable: undefined },
             parameters: [{ index: 0, kind: "body", property: undefined }],
           },
           {
@@ -62,6 +63,7 @@ export class UsersController {
             usesArgumentsObject: false,
             declaresSynchronousReturn: false,
             schema: undefined,
+            enhancers: { guards: [], interceptors: [], filters: [], unreadable: undefined },
             parameters: [{ index: 0, kind: "query", property: undefined }],
           },
           {
@@ -73,6 +75,7 @@ export class UsersController {
             usesArgumentsObject: false,
             declaresSynchronousReturn: false,
             schema: undefined,
+            enhancers: { guards: [], interceptors: [], filters: [], unreadable: undefined },
             parameters: [{ index: 0, kind: "params", property: "id" }],
           },
           {
@@ -84,6 +87,7 @@ export class UsersController {
             usesArgumentsObject: false,
             declaresSynchronousReturn: false,
             schema: undefined,
+            enhancers: { guards: [], interceptors: [], filters: [], unreadable: undefined },
             parameters: [
               { index: 0, kind: "params", property: "id" },
               { index: 1, kind: "body", property: undefined },
@@ -98,6 +102,7 @@ export class UsersController {
             usesArgumentsObject: false,
             declaresSynchronousReturn: false,
             schema: undefined,
+            enhancers: { guards: [], interceptors: [], filters: [], unreadable: undefined },
             parameters: [{ index: 0, kind: "params", property: undefined }],
           },
         ],
@@ -296,6 +301,7 @@ export default class {
             usesArgumentsObject: false,
             declaresSynchronousReturn: false,
             schema: undefined,
+            enhancers: { guards: [], interceptors: [], filters: [], unreadable: undefined },
             parameters: [],
           },
         ],
@@ -333,6 +339,7 @@ export class UsersController {
             usesArgumentsObject: false,
             declaresSynchronousReturn: false,
             schema: undefined,
+            enhancers: { guards: [], interceptors: [], filters: [], unreadable: undefined },
             parameters: [],
           },
         ],
@@ -400,6 +407,7 @@ export class AliasesController {
         usesArgumentsObject: false,
         declaresSynchronousReturn: false,
         schema: undefined,
+        enhancers: { guards: [], interceptors: [], filters: [], unreadable: undefined },
         parameters: [],
       },
       {
@@ -411,6 +419,7 @@ export class AliasesController {
         usesArgumentsObject: false,
         declaresSynchronousReturn: false,
         schema: undefined,
+        enhancers: { guards: [], interceptors: [], filters: [], unreadable: undefined },
         parameters: [],
       },
     ]);
@@ -461,6 +470,7 @@ export class NamespacedController {
             usesArgumentsObject: false,
             declaresSynchronousReturn: false,
             schema: undefined,
+            enhancers: { guards: [], interceptors: [], filters: [], unreadable: undefined },
             parameters: [],
           },
         ],
@@ -480,6 +490,7 @@ export class NamespacedController {
             usesArgumentsObject: false,
             declaresSynchronousReturn: false,
             schema: undefined,
+            enhancers: { guards: [], interceptors: [], filters: [], unreadable: undefined },
             parameters: [{ index: 0, kind: "query", property: undefined }],
           },
         ],
@@ -534,6 +545,7 @@ export class MixedController {
             usesArgumentsObject: false,
             declaresSynchronousReturn: false,
             schema: undefined,
+            enhancers: { guards: [], interceptors: [], filters: [], unreadable: undefined },
             parameters: [],
           },
         ],
@@ -791,6 +803,176 @@ export class UsersController {
     expect(() => analyzeControllerRoutes(propertyDecorator, "users.controller.ts")).toThrow(
       "@Query in users.controller.ts can only decorate a route handler parameter.",
     );
+  });
+
+  test("reads the enhancers a controller class declares at class scope", () => {
+    const source = `import { Controller, Get, UseGuards, UseInterceptors } from "@aponiajs/common";
+
+@UseInterceptors(LoggingInterceptor)
+@UseGuards(AuthGuard)
+@Controller("users")
+export class UsersController {
+  @Get()
+  findAll() {}
+}
+`;
+
+    const [controller] = analyzeControllerRoutes(source, "users.controller.ts");
+
+    // Both kinds are declared on the class, so both reach every route it
+    // declares; the interceptors merge nothing here either.
+    expect(controller?.routes[0]?.enhancers).toStrictEqual({
+      guards: ["AuthGuard"],
+      interceptors: ["LoggingInterceptor"],
+      filters: [],
+      unreadable: undefined,
+    });
+  });
+
+  test("reads the enhancers a handler declares at method scope", () => {
+    const source = `import { Controller, Get, UseFilters, UseGuards } from "@aponiajs/common";
+
+@Controller("users")
+export class UsersController {
+  @UseFilters(NotFoundFilter)
+  @UseGuards(AuthGuard)
+  @Get(":id")
+  findOne() {}
+}
+`;
+
+    const [controller] = analyzeControllerRoutes(source, "users.controller.ts");
+
+    expect(controller?.routes[0]?.enhancers).toStrictEqual({
+      guards: ["AuthGuard"],
+      interceptors: [],
+      filters: ["NotFoundFilter"],
+      unreadable: undefined,
+    });
+  });
+
+  test("joins class scope and method scope in the order the runtime runs them", () => {
+    const source = `import { Controller, Get, UseFilters, UseGuards, UseInterceptors } from "@aponiajs/common";
+
+@UseFilters(ClassFilter)
+@UseInterceptors(ClassInterceptor)
+@UseGuards(ClassGuard)
+@Controller("users")
+export class UsersController {
+  @UseFilters(MethodFilter)
+  @UseInterceptors(MethodInterceptor)
+  @UseGuards(MethodGuard)
+  @Get()
+  findAll() {}
+}
+`;
+
+    const [controller] = analyzeControllerRoutes(source, "users.controller.ts");
+
+    // Guards and interceptors run outward-in, so the class's own declarations
+    // come first; filters run most-specific-first, so the handler's come first.
+    // This is the order `mergeEnhancerMetadata` in the platform's
+    // `route-compiler.ts` produces for the same source.
+    expect(controller?.routes[0]?.enhancers).toStrictEqual({
+      guards: ["ClassGuard", "MethodGuard"],
+      interceptors: ["ClassInterceptor", "MethodInterceptor"],
+      filters: ["MethodFilter", "ClassFilter"],
+      unreadable: undefined,
+    });
+  });
+
+  test("records a stacked declaration in the order the decorators were applied", () => {
+    const source = `import { Controller, Get, UseGuards } from "@aponiajs/common";
+
+@Controller("users")
+export class UsersController {
+  @UseGuards(OuterGuard)
+  @UseGuards(InnerGuard)
+  @Get()
+  findAll() {}
+}
+`;
+
+    const [controller] = analyzeControllerRoutes(source, "users.controller.ts");
+
+    // Decorators are applied bottom-up, and each application appends its
+    // entries, so the runtime records `InnerGuard` before `OuterGuard`.
+    expect(controller?.routes[0]?.enhancers.guards).toStrictEqual(["InnerGuard", "OuterGuard"]);
+  });
+
+  test("recognizes enhancer decorators imported under an alias or through a namespace import", () => {
+    const aliased = `import { Controller, Get, UseGuards as Guard } from "@aponiajs/common";
+
+@Controller("users")
+export class UsersController {
+  @Guard(AuthGuard)
+  @Get()
+  findAll() {}
+}
+`;
+    const namespaced = `import * as aponia from "@aponiajs/common";
+
+@aponia.Controller("users")
+export class UsersController {
+  @aponia.UseGuards(AuthGuard)
+  @aponia.Get()
+  findAll() {}
+}
+`;
+
+    expect(
+      analyzeControllerRoutes(aliased, "aliased.controller.ts")[0]?.routes[0]?.enhancers.guards,
+    ).toStrictEqual(["AuthGuard"]);
+    expect(
+      analyzeControllerRoutes(namespaced, "namespaced.controller.ts")[0]?.routes[0]?.enhancers
+        .guards,
+    ).toStrictEqual(["AuthGuard"]);
+  });
+
+  test("ignores a same-named enhancer decorator imported from another package", () => {
+    const source = `import { Controller, Get } from "@aponiajs/common";
+import { UseGuards } from "./local-decorators.ts";
+
+@Controller("users")
+export class UsersController {
+  @UseGuards(LocalGuard)
+  @Get()
+  findAll() {}
+}
+`;
+
+    const [controller] = analyzeControllerRoutes(source, "users.controller.ts");
+
+    // The local `UseGuards` is not Aponia's, so nothing is declared — which is
+    // what keeps a generated route from naming a class the runtime never ran.
+    expect(controller?.routes[0]?.enhancers).toStrictEqual({
+      guards: [],
+      interceptors: [],
+      filters: [],
+      unreadable: undefined,
+    });
+  });
+
+  test("reports an enhancer argument that is not a class reference", () => {
+    const source = `import { Controller, Get, UseGuards } from "@aponiajs/common";
+import { readGuards } from "./guards.ts";
+
+@Controller("users")
+export class UsersController {
+  @UseGuards(...readGuards())
+  @Get()
+  findAll() {}
+}
+`;
+
+    const [controller] = analyzeControllerRoutes(source, "users.controller.ts");
+
+    // The declaration is reported rather than dropped, so a consumer declines
+    // the route instead of emitting one that runs fewer guards.
+    expect(controller?.routes[0]?.enhancers.unreadable).toBe(
+      "@UseGuards in users.controller.ts must name each enhancer with a class reference to be read statically.",
+    );
+    expect(controller?.routes[0]?.enhancers.guards).toStrictEqual([]);
   });
 });
 
