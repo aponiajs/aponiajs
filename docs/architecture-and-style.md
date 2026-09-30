@@ -340,9 +340,9 @@ import that carries its own type, so `imports: [clock]` mounts it and
 `typeof`, provided the plugin is exported as a value and a same-named type. The
 [native plugin guide](./native-plugins.md) is the complete reference.
 The mapping
-mirrors Elysia's `.use()`: `decorate`, `state`, `resolve`, and `global` derives
-and resolves are typed, together with `scoped` derives and resolves;
-plugin-local derives are not, because they never reach the controller.
+mirrors Elysia's `.use()`: `decorate`, `state`, and `global` derives are typed,
+together with `plugin`-scoped derives; plugin-local derives are not, because
+they never reach the controller.
 
 ## Bootstrap pattern
 

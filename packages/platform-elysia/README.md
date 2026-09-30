@@ -311,11 +311,17 @@ time, so the decision is made once and applies to the entire application. It is
 used only when it is stamped with this release, carries a module record, and
 holds a declaration for the root module the application named; in every other
 case bootstrap lowers that module from its decorators, exactly as it does when
-the option is omitted. A foreign, stale, truncated, or hand-edited file
-therefore costs the lowering it was meant to remove rather than a boot that
-cannot start. A module renamed since the last build leaves an entry the
-application no longer names, which is the same refusal — the leftover entry is
-never used to serve a request.
+the option is omitted. A foreign or truncated file therefore costs the lowering
+it was meant to remove rather than a boot that cannot start.
+
+There is no freshness check. An artifact stamped with the running release is
+adopted whole, so the graph it holds is the graph that serves until `aponia build`
+refreshes it: a `descriptors.generated.ts` committed before a resource was
+generated still describes the module graph from before that resource, which is
+why the quick start runs `aponia build` before the first request. A module
+renamed since the last build is a different case — the lookup is by the class
+name the application passes, so the leftover entry under the old name is never
+selected and the renamed root is lowered from its decorators.
 
 ### Declared routes
 
@@ -797,7 +803,7 @@ import { Elysia } from "elysia";
 export const clock = new Elysia({ name: "clock" })
   .decorate("now", () => new Date().toISOString())
   .state("requests", 0)
-  .derive({ as: "global" }, () => ({ traceId: crypto.randomUUID() }));
+  .derive("global", () => ({ traceId: crypto.randomUUID() }));
 
 @Controller("health")
 class HealthController {

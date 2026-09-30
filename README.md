@@ -9,13 +9,13 @@
 Create an application, add a feature, and keep its architecture clear as it grows.
 
 [![CI](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml/badge.svg)](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml)
-[![CLI on npm](https://img.shields.io/npm/v/%40aponiajs%2Fcli/alpha?label=CLI%20%28alpha%29&color=c3a7dc)](https://www.npmjs.com/package/@aponiajs/cli)
+[![CLI on npm](https://img.shields.io/npm/v/%40aponiajs%2Fcli/beta?label=CLI%20%28beta%29&color=c3a7dc)](https://www.npmjs.com/package/@aponiajs/cli)
 [![Bun](https://img.shields.io/badge/Bun-1.4.2-f8eddd?logo=bun&logoColor=24232d)](https://bun.sh)
 [![MIT License](https://img.shields.io/badge/license-MIT-f3d5de)](./LICENSE)
 
 [Quick start](#quick-start) · [CLI commands](#cli-commands) · [Documentation](#documentation) · [Examples](./examples/README.md)
 
-<sub>Currently in alpha. AponiaJS is not recommended for production use yet.</sub>
+<sub>Currently in beta. AponiaJS is not recommended for production use yet.</sub>
 
 <sub>Release v1 · codename tanya</sub>
 
@@ -27,7 +27,7 @@ Install [Bun](https://bun.sh), then use the CLI to create an application and add
 a REST resource:
 
 ```bash
-bun add --global @aponiajs/cli
+bun add --global @aponiajs/cli@beta
 aponia new my-api
 cd my-api
 aponia generate resource users --type rest
@@ -57,7 +57,7 @@ resets when the application restarts.
 The starter also serves `GET /` and mounts the development tools under
 `/__devtools`: [`GET /__devtools/meta`](http://localhost:3000/__devtools/meta)
 reports the contract version, framework release, and artifacts its boot adopted.
-You can create the same starter with `bun create aponia my-api`.
+You can create the same starter with `bun create aponia@beta my-api`.
 
 ## What the CLI creates
 

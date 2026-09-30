@@ -10,7 +10,7 @@ the `bun create` entrypoint.
 Install the CLI globally with Bun, then invoke `aponia` directly:
 
 ```bash
-bun add --global @aponiajs/cli
+bun add --global @aponiajs/cli@beta
 aponia --version
 ```
 
@@ -64,8 +64,10 @@ and runtime packages cannot drift to different releases.
 
 ## Generate
 
-The published `@aponiajs/cli` package supports every built-in schematic listed
-by the Nest CLI command reference:
+The published `@aponiajs/cli` package supports the Nest CLI's built-in
+schematics, less the two whose concepts this framework does not have
+(`middleware` and `pipe` — native Elysia plugins are the middleware mechanism,
+and route validation covers transformation):
 
 | Schematic     | Alias | Output                |
 | ------------- | ----- | --------------------- |
@@ -79,9 +81,7 @@ by the Nest CLI command reference:
 | `guard`       | `gu`  | request guard         |
 | `interface`   | `itf` | TypeScript interface  |
 | `interceptor` | `itc` | request interceptor   |
-| `middleware`  | `mi`  | middleware            |
 | `module`      | `mo`  | Aponia module         |
-| `pipe`        | `pi`  | transformation pipe   |
 | `provider`    | `pr`  | injectable provider   |
 | `resolver`    | `r`   | GraphQL resolver      |
 | `resource`    | `res` | complete resource     |
@@ -210,8 +210,10 @@ CLI flags override project-specific `generateOptions`, which override global
 `generateOptions` in `aponia.json`. Both `spec` and `flat` defaults are
 supported. `spec` may be a boolean or a map keyed by schematic name.
 
-Controllers are added to `controllers`, services and providers to `providers`,
-and modules and resources to `imports`. Use `--skip-import` to create files
+Controllers are added to `controllers`; services, providers, gateways, guards,
+interceptors, and filters to `providers` — an enhancer only reaches a route when
+the graph can resolve it, so the schematic declares it; and modules and
+resources to `imports`. Use `--skip-import` to create files
 without changing a module, or `--module <name>` to select the declaring module.
 Registration only searches the configured source root, so `--path` pointing
 outside it leaves no module to update; that run fails with a non-zero exit code
@@ -389,13 +391,20 @@ file:
 ```
 
 Otherwise the artifact is refused whole and the root module you named is lowered
-from its decorators, with the same context reporting why. A refusal is not an
-error: the fallback is the bootstrap the application would have run without the
-option at all, so a stale or hand-edited file costs a cold start rather than a
-boot that cannot start. That is what makes the file an optimization an
-application can ship — and what makes a descriptor left behind by a module
-rename harmless, since the renamed root has no entry and the decorated graph
-answers instead.
+from its decorators, with the same context reporting why. The artifact is refused
+when it carries no module record, when it was built by another framework release,
+or when it holds no declaration for the module you named; a refusal is not an
+error, because the fallback is the bootstrap the application would have run
+without the option at all. A file from another release, or one left behind by a
+module rename, therefore costs a cold start rather than a boot that cannot start,
+which is what makes the file an optimization an application can ship.
+
+A refusal is not a freshness check. An artifact that names the module you passed
+and was built by the release now running is used whole, current or not, so a
+resource generated since the last build is absent from the graph the boot serves:
+its routes answer `404` while the startup log reports an ordinary boot. Run
+`aponia build` after a controller or a module changes to write the new graph into
+the file.
 
 Because the artifact is substituted as a whole, its fallback is per application
 rather than per module. A module the build declined is missing from it, and a
@@ -441,9 +450,10 @@ answer with the handler. Fix what the line names and build again.
 
 The command only reads source, so it never starts the application, never
 connects to anything, and never runs provider factories. Run it again whenever a
-controller or a module changes: a file that is not current still boots the
-application, from the decorators it was lowered from. It is separate from
-`bun run build`, which bundles the application for deployment.
+controller or a module changes: a file left behind keeps serving the graph it
+recorded, so a route added since the last build is missing from the application
+until `aponia build` writes it into the file. It is separate from `bun run build`,
+which bundles the application for deployment.
 
 ### Generating during a bundle
 
@@ -513,12 +523,13 @@ error: the modules are still generated, in the layout the emitter wrote them.
 A build that does not register the plugin behaves exactly as before, and
 `aponia build` remains the way to generate without bundling.
 
-The committed modules go stale when a controller or a module changes, and a
-stale one is refused by the runtime rather than used: each records the framework
-release it was built against, and an artifact from another release — or one that
-holds no declaration for the module the application names — costs a slower cold
-start, never a wrong route or a graph the application no longer declares, until
-the next build rewrites it.
+The committed modules go stale when a controller or a module changes. The invoker
+module is refused when it was built by another release, so a stale one costs a
+slower cold start. The descriptor module is refused on the same release mismatch,
+and also when it holds no declaration for the module the application names — but
+a matching descriptor artifact is used whole, current or not, so a resource
+generated since the last build answers `404` until the next build rewrites the
+file.
 
 ## Safety behavior
 

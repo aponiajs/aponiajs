@@ -16,14 +16,14 @@ separate contract, type assertion, adapter, or custom fetcher.
 The server needs Aponia and Elysia:
 
 ```bash
-bun add @aponiajs/common @aponiajs/platform-elysia elysia
+bun add @aponiajs/common@beta @aponiajs/platform-elysia@beta elysia@2.0.0-beta.19
 ```
 
 The client needs Eden. Keep its Elysia version aligned with the server:
 
 ```bash
 bun add @elysia/eden
-bun add --dev elysia
+bun add --dev elysia@2.0.0-beta.19
 ```
 
 ## Define and export the application

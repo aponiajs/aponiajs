@@ -18,9 +18,12 @@ The `aponiajs` facade remains private until it exports the public framework API.
 
 ## Version Policy
 
-- `0.y.z` identifies initial development. The public API is not stable.
-- Until `1.0.0`, every release is a prerelease. Cut `alpha` by default, move to
-  `beta` when a version is feature complete, and to `rc` when it is frozen. A
+- The release line is on `1.0.0-beta.N`: the version that declares the first
+  stable public API, still collecting field feedback. The public API is not
+  stable until that version ships.
+- Until `1.0.0`, every release is a prerelease. Cut `alpha` for early previews,
+  move to `beta` when a version is feature complete, and to `rc` when it is
+  frozen. A
   stable `X.Y.Z` — which npm serves as `latest` to everyone who types
   `bun add @aponiajs/common` — needs explicit sign-off, not a routine bump.
 - `fix:` commits produce a patch release.
@@ -78,8 +81,8 @@ version-derived dist-tag remains the source of truth; the branch is an
 additional guard and can never override the version.
 
 Feature and fix branches start from the release branch they target and open a
-pull request back into it. During the current prerelease phase,
-`release/alpha` is the default. Promote forward with a dedicated branch and
+pull request back into it. The release line is on the beta channel, so
+`release/beta` is the default. Promote forward with a dedicated branch and
 version transition:
 
 ```text

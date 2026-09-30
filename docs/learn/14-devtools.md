@@ -12,7 +12,7 @@ table — remove the registration and the application answers its own `404` for
 `/__devtools/meta`, and `/routes` and `/flow` lose the row the mount contributes.
 
 ```bash
-bun add @aponiajs/devtools
+bun add @aponiajs/devtools@beta
 ```
 
 ## Register it

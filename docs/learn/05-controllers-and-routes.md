@@ -19,7 +19,9 @@ export class UserController {
 
 `@Get`, `@Post`, `@Put`, `@Patch`, `@Delete`, `@Head`, and `@Options` map to the
 matching HTTP method. The route path joins the controller prefix, so this answers
-`GET /users/:id`.
+`GET /users/:id`. Each accepts either a path, as `@Get(":id")` does, or a schema
+alone — `@Post({ body })` mounts at the controller prefix itself, and
+`@Post("/", { body })` names the path beside the schema.
 
 ## Native inference with less syntax
 

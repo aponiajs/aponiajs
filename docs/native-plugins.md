@@ -17,7 +17,7 @@ export const clock = defineElysiaPlugin(
   new Elysia({ name: "clock" })
     .decorate("now", () => new Date().toISOString())
     .state("requests", 0)
-    .derive({ as: "global" }, () => ({ traceId: crypto.randomUUID() })),
+    .derive("global", () => ({ traceId: crypto.randomUUID() })),
   { key: "clock" },
 );
 export type clock = typeof clock;
@@ -245,15 +245,18 @@ application-owned alias.
 The mapping follows Elysia's own `.use()` rule, so the type matches runtime
 exactly:
 
-| Declared in the plugin            | Reaches a controller | Typed |
-| --------------------------------- | -------------------- | ----- |
-| `.decorate(...)`                  | yes                  | yes   |
-| `.state(...)`                     | yes                  | yes   |
-| `.derive({ as: "global" }, ...)`  | yes                  | yes   |
-| `.resolve({ as: "global" }, ...)` | yes                  | yes   |
-| `.derive({ as: "scoped" }, ...)`  | yes                  | yes   |
-| `.resolve({ as: "scoped" }, ...)` | yes                  | yes   |
-| `.derive(...)` without a scope    | no                   | no    |
+| Declared in the plugin         | Reaches a controller | Typed |
+| ------------------------------ | -------------------- | ----- |
+| `.decorate(...)`               | yes                  | yes   |
+| `.state(...)`                  | yes                  | yes   |
+| `.derive("global", ...)`       | yes                  | yes   |
+| `.derive("plugin", ...)`       | yes                  | yes   |
+| `.derive(...)` without a scope | no                   | no    |
+
+Elysia 2 states the scope as a string — `derive("global", ...)`,
+`derive("plugin", ...)`, or a bare `derive(...)` — and no longer carries
+`resolve`, whose timing belongs to `derive`. The 1.4 object form
+(`.derive({ as: "global" }, ...)`) no longer compiles.
 
 A plugin-local derive stays inside the plugin, because a controller is mounted
 beside the plugin rather than inside it. Naming no plugin costs nothing at

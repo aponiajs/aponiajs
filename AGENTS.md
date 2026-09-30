@@ -498,8 +498,8 @@ so there is no canary branch either.
 
 Create every feature or fix on a dedicated branch from the release branch it is
 intended for, named `feature/<short-kebab-description>` or
-`fix/<short-kebab-description>`. During the current prerelease phase,
-`release/alpha` is the default base and pull-request target. Do not add work
+`fix/<short-kebab-description>`. The release line is on the beta channel, so
+`release/beta` is the default base and pull-request target. Do not add work
 directly to a release branch, a documentation branch, or an unrelated feature
 branch.
 
@@ -519,9 +519,11 @@ transition.
 Use concise Conventional Commit subjects, for example
 `feat(cli): align starter layout with Nest`.
 
-The framework is pre-1.0 and not production ready, so routine work targets
-`release/alpha` and bumps with `version:alpha`. Use `version:beta` and
-`version:rc` only on matching promotion work. Never promote a bare `X.Y.Z` into
+The framework is pre-1.0 and not production ready. Its release line has moved
+onto the beta channel — the workspace is `1.0.0-beta.N` — so routine work
+targets `release/beta` and bumps with `version:beta`. Use `version:alpha` for
+work that belongs on the earlier channel and `version:rc` only on matching
+promotion work. Never promote a bare `X.Y.Z` into
 `main`, which npm would serve as `latest`, without explicit sign-off.
 
 Every push must raise the synchronized workspace version. The root manifest and

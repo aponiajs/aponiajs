@@ -38,17 +38,25 @@ them with `ElysiaStore<AppPlugins>`, `ElysiaSet`, and
 ## Taking the whole context
 
 A handler with no parameter decorators may declare one unannotated parameter to
-receive the context, and `@Ctx()` does the same explicitly. Annotate it with
-`RouteContext<typeof schema>` to stay platform-neutral, or with
-`ElysiaRouteContext<typeof schema>` to keep Elysia's own `status`, `set`,
-`cookie`, `store`, and `redirect` typed:
+receive the context, and `@Ctx()` does the same explicitly. The annotation
+decides what it reads:
+
+| Annotation                                  | From                        | Use when                                               |
+| ------------------------------------------- | --------------------------- | ------------------------------------------------------ |
+| `RouteContext<typeof schema>`               | `@aponiajs/common`          | The handler should stay platform-neutral               |
+| `ElysiaRouteContext<typeof schema>`         | `@aponiajs/platform-elysia` | The handler reads Elysia's own context                 |
+| `ElysiaSet` / `ElysiaStatus<typeof schema>` | `@aponiajs/platform-elysia` | A parameter decorator injects only the response helper |
+
+`ElysiaRouteContext` keeps Elysia's own `status`, `set`, `cookie`, `store`, and
+`redirect` typed; `RouteContext` covers the validated slots and the native
+`Request` without them.
 
 ```ts
 import { Controller, Ctx, Post } from "@aponiajs/common";
 import { type ElysiaRouteContext } from "@aponiajs/platform-elysia";
 
-@Post("/", createUser)
-create(@Ctx() context: ElysiaRouteContext<typeof createUser>) {
+@Post("/", createUserSchema)
+create(@Ctx() context: ElysiaRouteContext<typeof createUserSchema>) {
   context.set.headers["x-created"] = "1";
   return context.body.name === "root"
     ? context.status(403, "forbidden")

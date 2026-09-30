@@ -29,14 +29,18 @@ The lifecycle contexts intentionally mirror the responsibilities in Nest:
 - `AponiaApplication` reports readiness after the server starts listening, and
   reports a failure that stopped `listen()`.
 
-`RoutesResolver` is also where a supplied artifact is reported as refused. Both
-the generated route invokers and the generated module descriptors record the
+`RoutesResolver` also reports the artifact a boot adopted or refused. Both the
+generated route invokers and the generated module descriptors record the
 framework release they were built against, and neither is used when that release
 is not the one running; the module descriptors are also not used when they hold no
-declaration for the root module the application names. Each case logs one line
+declaration for the root module the application names. A refusal logs one line
 naming what it read, and the application boots from the decorated declarations it
-was given, so a stale generated file shows up in the log as a cold start rather
-than as a route that behaves unexpectedly.
+was given, so a file built by another release shows up in the log as a cold start
+rather than as a route that behaves unexpectedly. An adopted artifact is reported
+for the same reason, and adoption is not a freshness check: a descriptor artifact
+built by this release and still naming the root module is used whole even when a
+controller changed since it was written, so the new route is absent while the log
+line reads as an ordinary boot.
 
 The displayed address comes from the Elysia/Bun server instance after the
 listener has started. It is not assembled from the requested port.

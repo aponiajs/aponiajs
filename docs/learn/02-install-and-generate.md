@@ -6,24 +6,27 @@ project.
 ## A new application
 
 ```bash
-bun add --global @aponiajs/cli
+bun add --global @aponiajs/cli@beta
 aponia new my-api
 cd my-api
 bun run dev
 ```
 
-`bun create aponia my-api` reaches the same generator without a global install.
+`bun create aponia@beta my-api` reaches the same generator without a global
+install.
 
 ## An existing project
 
 ```bash
-bun add @aponiajs/common@alpha @aponiajs/platform-elysia@alpha elysia
+bun add @aponiajs/common@beta @aponiajs/platform-elysia@beta elysia@2.0.0-beta.19
 ```
 
 Every public package shares one version, and the channel a release goes to is
 derived from that version: a prerelease publishes under the tag its identifier
 names — `alpha`, `beta`, `rc`, or `canary` — and never under `latest`. The
-current line is an alpha, which is why the `@alpha` tag is what to install today.
+current line is `1.0.0-beta.0`, so the `@beta` tag is what to install today.
+`elysia` is an exact peer of `@aponiajs/platform-elysia`, so it is pinned rather
+than left to resolve the latest release.
 
 ## What the generator writes
 

@@ -52,7 +52,8 @@ export class GreetingService {
 | ---------------------------------------- | ----------------------------------------- |
 | `provideValue(token, value)`             | A ready value                             |
 | `provideFactory(token, inject, factory)` | The factory's result, built once          |
-| `provideClass(Class, inject)`            | An instance constructed from the tokens   |
+| `provideClass(Class, inject)`            | An instance under the class's own token   |
+| `provideClass(token, Class, inject)`     | The same instance under a token you name  |
 | `provideAlias(token, target)`            | Another token's instance under a new name |
 
 ## Scope

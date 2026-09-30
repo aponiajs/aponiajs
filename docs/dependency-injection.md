@@ -46,7 +46,13 @@ provideAlias(LEGACY_GREETING, GREETING);
 
 - `provideValue` registers an existing value.
 - `provideFactory` calls the factory with the resolved `inject` tokens.
-- `provideClass` constructs the class with the resolved `inject` tokens.
+- `provideClass(Class, inject)` constructs the class with the resolved `inject`
+  tokens, under the class's own token.
+- `provideClass(token, Class, inject)` binds that construction to a _different_
+  token, which is how one implementation stands behind a port without the port
+  naming a class: `provideClass(USERS_REPOSITORY, SqlUsersRepository, [Database])`.
+  The class is not reachable under its own token unless a second provider
+  declares it.
 - `provideAlias` points one token at another.
 
 Singleton is currently the only scope: each provider is instantiated once per

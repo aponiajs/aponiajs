@@ -25,6 +25,13 @@ export class UserController {
 }
 ```
 
+The class and the same-named interface are two halves of one model:
+`@Validation()` records the validator, and the interface merges that validator's
+output type into the class. TypeScript cannot contextually type a decorated
+method's parameters, so the merge is what makes `body: CreateUser` mean the
+validated shape rather than an empty class — without it, `body.name` fails to
+compile with _Property 'name' does not exist on type 'CreateUser'_.
+
 A rejected request returns `422` without running the handler.
 
 ## Accepted validators
@@ -92,11 +99,10 @@ Cookie schemas are handed to Elysia unchanged, so validation and
 
 ## Types come from model annotations
 
-TypeScript cannot contextually type a decorated method's parameters, so a
-handler's types still come from what you write, exactly as in NestJS. The
-same-named interface merges the validator output into the model class once;
-controllers then annotate `CreateUser`, `UpdateUser`, or `UserParams` directly.
-The CLI emits that declaration-merging line for generated REST resources.
+A handler's types still come from what you write, exactly as in NestJS.
+Controllers annotate `CreateUser`, `UpdateUser`, or `UserParams` directly, and
+each annotation carries the fields its same-named interface merged in. The CLI
+emits that declaration-merging line for generated REST resources.
 When a method needs the whole native context,
 `ElysiaRouteContext<typeof routeSchema>` and
 `ElysiaStatus<typeof routeSchema>` accept the same model-backed schema and
