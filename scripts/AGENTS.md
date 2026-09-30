@@ -14,6 +14,7 @@ and documentation guards that CI enforces.
 | `coverage-gate.ts`               | Aggregate LCOV floor and runtime-source completeness                     |
 | `agent-guides.spec.ts`           | Guide inventory, aliases, and mandatory per-turn `RULES.md` loading      |
 | `ci-workflows.spec.ts`           | Complete CI, publish, packaging, and dependency-security command matrix  |
+| `cli-runtime-surface.spec.ts`    | The runtime surface `@aponiajs/cli` repeats by hand                      |
 | `source-layout.spec.ts`          | Package owner directories, barrels, type-only modules, local imports     |
 | `toolchain-config.spec.ts`       | The decorator transpiler options and the single Bun version pin          |
 | `package-llms.spec.ts`           | The `llms.txt` every published package ships and lists in `files`        |
@@ -52,6 +53,22 @@ and documentation guards that CI enforces.
   per-turn `RULES.md` loading sequence.
 - `source-layout.spec.ts` protects the domain-first package layout. Update the
   guide and guard together when a real new source domain is introduced.
+- `cli-runtime-surface.spec.ts` reads `@aponiajs/common`'s own source and
+  holds the CLI's hand-copied analysis to it. A decorator, a metadata key, or
+  a union member the runtime declares that no CLI analysis accounts for fails
+  the guard, and the failure names the analysis to teach. `Catch` and its
+  metadata key are the two stated exceptions, because a filter class reaches a
+  generated module as an imported reference and its own decorator runs when
+  that class loads. A floor under the runtime scan and named required entries
+  keep a reader that stopped matching from passing by finding nothing. It also
+  reads two platform-owned artifact shapes — `AponiaInvokerArtifact` and
+  `AponiaModuleDescriptorArtifact` — and holds the CLI's `ControllerInvokerProvenance`
+  type, the `moduleDescriptorArtifact` object literal the descriptor emitter
+  writes, and the token-form correspondence for `AnalyzedTokenKind` to them, in
+  both directions. The rest of what the CLI repeats from
+  `packages/platform-elysia` — the `defineModule` and `defineControllerRoutes`
+  bodies, the gateway plan fields, and the invoker-map shapes — is not part of
+  it.
 - `package-llms.spec.ts` requires every published package to ship an `llms.txt`
   listed in its manifest `files` array, opening with an `H1` naming the package,
   a blockquote summary, and links that resolve. It discovers packages from the
