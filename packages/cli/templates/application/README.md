@@ -47,10 +47,11 @@ declares the `PORT` schema, and the `provideConfiguration(AppConfig)` provider i
 `src/app.module.ts` validates it once at boot.
 
 It is mounted through the factory's `plugins` option instead of `AppModule`'s
-`imports`, and that placement is the point: `aponia build` lowers a module only
-when every `imports` entry names its declaration with a single identifier, so
-`DevtoolsModule.register(...)` in the root module would be a call expression and
-the root would be left out of `src/descriptors.generated.ts` — the file that lets
+`imports`, and that placement is the point: `aponia build` lowers an `imports`
+entry only when it is a single identifier naming a declaration read from the
+project's own source, and `DevtoolsModule.register(...)` returns a
+`DynamicModule` rather than such a declaration, so the root would be left out of
+`src/descriptors.generated.ts` — the file that lets
 a fresh checkout boot from the declared graph. A plugin mounted through the
 option is not an `imports` entry, so the two do not compete. Move the
 registration into `imports` when the module graph should carry it, and give up

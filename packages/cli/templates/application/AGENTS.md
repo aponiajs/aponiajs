@@ -97,10 +97,11 @@ without bundling.
 
 This starter mounts `@aponiajs/devtools` through `AponiaFactory.create`'s
 `plugins` option in `src/main.ts`, and not through `AppModule`'s `imports`. The
-placement is the decision. `aponia build` lowers a module only when every
-`imports` entry names its declaration with a single identifier, so
-`DevtoolsModule.register(...)` — a call expression — declines the module that
-wrote it, and here that module is the root and the only module a build can
+placement is the decision. `aponia build` lowers an `imports` entry only when it
+is a single identifier naming a declaration read from the project's own source,
+and `DevtoolsModule.register(...)` returns a `DynamicModule` rather than such a
+declaration, so it declines the module that wrote it in every spelling, and here
+that module is the root and the only module a build can
 declare: the committed `src/descriptors.generated.ts` would keep serving a graph
 the registration is not in. A plugin mounted through the option is not an
 `imports` entry, so the root stays declarable and the application keeps booting

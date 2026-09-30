@@ -83,10 +83,11 @@ artifacts `aponia build` writes. `imports` stays the place for a plugin a module
 can name (`definePlugin`, `PluginModule.register`); this option is
 for the plugins a module cannot:
 
-- the plugin a call builds. `aponia build` lowers a module only when every
-  `imports` entry names its declaration with a single identifier, so
-  `SomeModule.register(...)` in an `imports` array declines the module that
-  wrote it, and a declined _root_ leaves the committed descriptor artifact
+- the plugin a call builds. `aponia build` lowers an `imports` entry only when
+  it is a single identifier naming a declaration read from the project's own
+  source, and a registration returns a `DynamicModule` rather than such a
+  declaration, so `SomeModule.register(...)` declines the module that wrote it in
+  every spelling, and a declined _root_ leaves the committed descriptor artifact
   serving a graph the registration is not in.
 - the plugin the application decides on at boot, from a configuration the
   module does not hold.

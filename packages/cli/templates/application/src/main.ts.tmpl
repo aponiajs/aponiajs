@@ -13,10 +13,11 @@ async function bootstrap(): Promise<void> {
     logger: appLogger,
     // The devtools surface, mounted on the application rather than declared as a
     // module import, and the difference is what a build can read: `aponia build`
-    // lowers a module only when every `imports` entry names its declaration with
-    // a single identifier, so a `DevtoolsModule.register(...)` in `AppModule`
-    // would be a call expression and would leave the root module out of
-    // `descriptors.generated.ts` — the application would boot from decorators
+    // lowers an `imports` entry only when it is a single identifier naming a
+    // declaration read from the project's own source, and
+    // `DevtoolsModule.register(...)` returns a `DynamicModule` rather than such
+    // a declaration, so naming it in `AppModule` would leave the root module out
+    // of `descriptors.generated.ts` — the application would boot from decorators
     // instead of the declared graph it commits. A plugin mounted here is not an
     // `imports` entry, so the two do not compete.
     //

@@ -58,10 +58,11 @@ not the framework's. A registration that is not
 enabled mounts nothing at all on either path: an inert module on one, and an
 `undefined` the factory mounts nothing for on the other.
 
-The module spelling has a build-time cost. A registration is a call expression,
-and `aponia build` lowers a module only when every `imports` entry names its
-declaration with a single identifier, so the module that declares one is
-reported as `DECLINED`. Where other modules are still lowered the boot then
+The module spelling has a build-time cost. `aponia build` lowers an `imports`
+entry only when it is a single identifier naming a declaration read from the
+project's own source, and a registration returns a `DynamicModule` rather than
+such a declaration, so the module that names one is reported as `DECLINED` in
+every spelling. Where other modules are still lowered the boot then
 compiles the decorated graph instead — the declared-graph boot is given up — and
 where every module is declined the artifact on disk keeps serving the graph it
 already had, which carries no registration, so the devtools never mount and

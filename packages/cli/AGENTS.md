@@ -253,10 +253,12 @@ separate focused modules. `src/index.ts` is the only public barrel.
   starter devDependency for that, and the packed lane installs it into the
   generated project.
 - The starter mounts `@aponiajs/devtools` through `AponiaFactory.create`'s
-  `plugins` option, never through `AppModule`'s `imports`. A registration is a
-  call expression, so an `imports` entry would decline the root — the starter's
-  only declarable module — and leave `descriptors.generated.ts` serving a graph
-  without the registration in it; the option is not an `imports` entry, so the
+  `plugins` option, never through `AppModule`'s `imports`. A registration returns
+  a `DynamicModule` rather than a declaration read from the project's own source,
+  so an `imports` entry naming it declines the root in every spelling — the
+  starter's only declarable module — and leaves `descriptors.generated.ts`
+  serving a graph without the registration in it; the option is not an `imports`
+  entry, so the
   root stays declarable and the declared-graph boot the template promises is
   still the one that happens. `tests/starter-artifact-freshness.test.ts` and the
   packed lane's startup-line assertion are the two guards that would notice, and

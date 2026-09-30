@@ -56,12 +56,15 @@ const scheduler = CronModule.register({ configuration: CronConfig });
 export class AppModule {}
 ```
 
-Declare the registration as a `const` rather than writing the call inline in
-`imports`. `aponia build` lowers a module only when every `imports` entry names
-its registration with a single identifier: `CronModule.register({ ... })` is a
-call expression, and an entry that is one declines the module that wrote it,
-leaving the committed descriptor artifact serving a graph this scheduler is not
-in. Both spellings mount the same module.
+Both spellings mount the same module, and neither is lowered into the descriptor
+artifact `aponia build` writes. `aponia build` lowers an `imports` entry only
+when it is a single identifier naming a declaration read from the project's own
+source, and `CronModule.register({ ... })` returns a `DynamicModule` — a runtime
+value rather than such a declaration — so the module that names it is reported
+as `DECLINED` and left out of `descriptors.generated.ts` in every spelling,
+inline or held in a `const`. The scheduler still mounts and the application
+still boots; what is given up is the declared-graph boot, described in
+[the CLI reference](../../docs/cli.md#module-descriptors).
 
 ## The validated configuration
 

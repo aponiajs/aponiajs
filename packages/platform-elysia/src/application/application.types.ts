@@ -81,9 +81,10 @@ export interface AponiaApplicationOptions {
    * what keeps a plugin in the declared graph.
    *
    * This option is for the plugins a module cannot declare. `aponia build`
-   * lowers a module only when every `imports` entry names its declaration with
-   * a single identifier, so an entry that is a call expression — as
-   * `DevtoolsModule.register(...)` is — declines the module that wrote it. A
+   * lowers an `imports` entry only when it is a single identifier naming a
+   * declaration read from the project's own source, and a registration such as
+   * `DevtoolsModule.register(...)` returns a `DynamicModule` rather than such a
+   * declaration, so it declines the module that wrote it in every spelling. A
    * declined root leaves the committed descriptor artifact either holding the
    * declaration it already had, which serves a graph the registration is not
    * in, or holding none for that root, which bootstrap refuses. A plugin

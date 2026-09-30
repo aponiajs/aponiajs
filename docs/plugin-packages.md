@@ -91,8 +91,8 @@ const widgets = WidgetsModule.register({ configuration: WidgetsConfig });
 export class AppModule {}
 ```
 
-Holding the registration in a `const` rather than writing the call inline in
-`imports` is not cosmetic; see [What a build can read](#what-a-build-can-read).
+Both spellings mount the same module, and neither is lowered into the descriptor
+artifact a build writes; see [What a build can read](#what-a-build-can-read).
 
 ## The seam is `PluginModule.registerAsync`
 
@@ -189,13 +189,18 @@ moments.
 
 ## What a build can read
 
-`aponia build` lowers a module only when every `imports` / `controllers` /
-`exports` entry names its declaration with a **single identifier**. A call
-expression is not one, so `CronModule.register({ ... })` written inline in an
-`imports` array declines the module that wrote it — the build reports it as
-`DECLINED` — and leaves the committed descriptor artifact serving a graph the
-registration is not in. Holding the registration in a `const` and naming that
-in `imports` is what keeps the module inferiorable:
+`aponia build` lowers an `imports` / `controllers` / `exports` entry only when
+the entry is a **single identifier naming a declaration the build read from the
+project's own source** — a `@Module()`, `@Controller()`, `@Injectable()`, or
+`@WebSocketGateway()` class under the configured source root. A registration is
+not one. `WidgetsModule.register({ ... })` returns a `DynamicModule`, which is a
+runtime value rather than a declaration, so the build declines the module that
+wrote it — it reports `DECLINED module <Name>: …` and leaves that module out of
+`descriptors.generated.ts`. **No spelling changes that.** Written inline in
+`imports`, held in a `const` and named there, or spread into the module from the
+package's own source, the registration result is the same value and is declined
+the same way. An entry that names a module class from an installed package
+declines too, because the build reads only the project's own source:
 
 ```ts
 const widgets = WidgetsModule.register({ configuration: WidgetsConfig });
@@ -204,10 +209,28 @@ const widgets = WidgetsModule.register({ configuration: WidgetsConfig });
 export class AppModule {}
 ```
 
-Both spellings mount the same module at run time; the difference is what a build
-can read. The same rule is stated from the consumer's side in
-[Native Elysia Plugins](./native-plugins.md#the-plugins-option), and the reason
-that page gives for the `plugins` option is exactly this decline.
+Both spellings mount the same module at run time, which is why the decline is
+easy to miss: what runs does not change, only what a build can read. The cost is
+the descriptor artifact, and it has two shapes:
+
+- where another module in the project is still lowerable, the artifact is
+  written without the declined module, bootstrap finds no declaration for the
+  root the application named, refuses the artifact whole, and lowers the root
+  from its decorators. The registration mounts, and the declared-graph boot is
+  given up for that root;
+- where the declined module is the only one a build could lower, no descriptor
+  is written at all, so an artifact already on disk keeps serving the graph it
+  held — one the registration is not in — and the registration never mounts.
+
+That is why the `DECLINED module` line a build prints is the one to read, and
+why a README should say so rather than imply a spelling gets around it. A
+consumer who would rather keep the declared-graph boot mounts the raw plugin
+itself through the factory's `plugins` option — no `imports` entry is involved,
+so the root stays declarable — and gives up this module for it, the validated
+configuration included. Nothing about a plugin mounted that way reaches
+`compileRootModule`, `inspectAponiaApplication`, or a generated artifact.
+[Native Elysia Plugins](./native-plugins.md#the-plugins-option) states the same
+trade from the consumer's side.
 
 ## The build configuration
 

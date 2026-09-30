@@ -296,9 +296,11 @@ The starter mounts [devtools](./devtools.md) itself, through the factory's
 logger — and it is served unless `NODE_ENV` is `production`, from the
 application's own address under `/__devtools`. The placement is the
 point:
-`DevtoolsModule.register(...)` in the root module's `imports` is a call
-expression, and `aponia build` lowers a module only when every `imports` entry
-names its declaration with a single identifier, so the root — the only module a
+`DevtoolsModule.register(...)` in the root module's `imports` returns a
+`DynamicModule`, and `aponia build` lowers an entry only when it is a single
+identifier naming a declaration read from the project's own source — a module
+class is such a declaration, and a registration result is not one in any
+spelling — so the root — the only module a
 starter build can declare — would be reported as `DECLINED` and the committed
 `descriptors.generated.ts` would keep serving a graph without the registration in
 it. A plugin mounted through the option is not an `imports` entry, so the root
@@ -364,6 +366,17 @@ data — `defineModule` calls with declared controllers and providers — so the
 application can boot without lowering decorated classes at all. It is written
 only when at least one `@Module()` could be read, so a project whose modules are
 all built at run time still gets its invoker module.
+
+An `imports`, `controllers`, or `exports` entry is lowered only when it is a
+single identifier naming a declaration the build read from the project's own
+source — a `@Module()`, `@Controller()`, `@Injectable()`, or
+`@WebSocketGateway()` class under the configured source root. A call expression
+is not one, and neither is a `const` that holds its result: `CronModule.register({ ... })` returns a
+`DynamicModule`, a runtime value rather than a declaration, so no spelling of it
+is lowered. An entry naming a module class from an installed
+package declines for the same reason, because the build reads only the project's
+own source. Each such entry prints its own `DECLINED` line, and the module that
+wrote it is left out of the artifact whole.
 
 Pass it to the factory from your entrypoint, which goes on naming the root module
 class:

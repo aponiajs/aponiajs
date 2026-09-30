@@ -61,10 +61,13 @@ own read: [`provideConfiguration`](./configuration.md) validates the record the
 application named, and the framework never consults the value it validated.
 
 A registration is an import of a **dynamic** module, and that has a build-time
-consequence. A module is lowered into `descriptors.generated.ts` only when every
-`imports`, `controllers`, and `exports` entry names its declaration with a single
-identifier, so a root module that declares `DevtoolsModule.register(...)` in its
-`imports` is reported as `DECLINED module <Root>: …` and is not lowered. The
+consequence. An `imports`, `controllers`, or `exports` entry is lowered into
+`descriptors.generated.ts` only when it is a single identifier naming a
+declaration read from the project's own source, and a `DynamicModule` is a
+runtime value rather than such a declaration, so a root module that names
+`DevtoolsModule.register(...)` in its `imports` is reported as
+`DECLINED module <Root>: …` and is not lowered — in a `const`, inline, or
+otherwise. The
 platform refuses the artifact whole when it holds no declaration for the root the
 application named, so an application whose other modules are still lowered boots
 from its decorators instead — the registration mounts, and `/aot` reports
@@ -567,8 +570,10 @@ These are the boundaries this package states rather than hides.
   answer for a build that failed, which would change the endpoint's wire contract
   rather than repair a shape.
 - **A root module that registers the devtools is not lowered into the descriptor
-  artifact.** The build declines it, because a registration is a call and an
-  `imports` entry has to be a single identifier. Where other modules are still
+  artifact.** The build declines it in every spelling, because an `imports` entry
+  has to be a single identifier naming a declaration read from the project's own
+  source and a registration returns a `DynamicModule` rather than such a
+  declaration. Where other modules are still
   lowered the artifact is rewritten without the root, the boot refuses it and
   compiles the decorated graph instead: the registration mounts, and the
   declared-graph boot is given up. Where the root is the only module a build can

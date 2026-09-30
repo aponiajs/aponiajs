@@ -66,12 +66,13 @@ export class DevtoolsModule {
  * Both paths build the same plugin through the same construction, so they mount
  * the same hooks and serve the same endpoints. They differ in what `aponia build`
  * can see. `DevtoolsModule.register` belongs in a module's `imports`, and
- * `aponia build` lowers a module only when every `imports` entry names its
- * declaration with a single identifier: an entry that is a call expression
- * declines the module that wrote it, and a declined root leaves the committed
- * descriptor artifact serving a graph the registration is not in. A plugin
- * mounted through this option is not an `imports` entry, so the module that
- * would have been declined stays declarable.
+ * `aponia build` lowers an `imports` entry only when it is a single identifier
+ * naming a declaration read from the project's own source: a registration
+ * returns a `DynamicModule` rather than such a declaration, so it declines the
+ * module that wrote it in every spelling, and a declined root leaves the
+ * committed descriptor artifact serving a graph the registration is not in. A
+ * plugin mounted through this option is not an `imports` entry, so the module
+ * that would have been declined stays declarable.
  *
  * The price is stated rather than hidden: a plugin mounted this way is not in
  * the module graph, so nothing about it reaches the generated descriptor

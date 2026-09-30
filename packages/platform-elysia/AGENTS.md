@@ -49,9 +49,11 @@ runtime boundary it describes.
   order, so a hook declared here runs before one a module's plugin declares;
   `tests/application-plugins.test.ts` pins that order and the option's three
   shapes. The option exists for the plugins no module can declare — an `imports`
-  entry that is a call expression declines the module that wrote it, and a
-  declined root leaves the committed descriptor artifact serving a graph the
-  registration is not in — and it is deliberately not an `imports` option on the
+  entry is lowered only when it is a single identifier naming a declaration read
+  from the project's own source, so a registration's `DynamicModule` declines the
+  module that wrote it in every spelling, and a declined root leaves the
+  committed descriptor artifact serving a graph the registration is not in — and
+  it is deliberately not an `imports` option on the
   factory, because an option is not in the descriptor and the declared graph
   would miss it for the same reason. Nothing about an entry reaches
   `compileRootModule`, inspection, or a generated artifact, so it is never a

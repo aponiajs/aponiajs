@@ -37,11 +37,12 @@ runtime boundary it describes.
   `plugins` option. Both read the same `DevtoolsOptions`, both build the plugin
   through `createDevtoolsPlugin`, and both are gated by `enabled` — one
   construction is what makes "the same mounted behaviour" structural rather than
-  a promise two code paths keep. The option path exists because a registration is
-  a call expression and `aponia build` lowers a module only when every `imports`
-  entry is a single identifier: the module path declines the module that wrote
-  it, and where that module is the root the committed descriptor artifact keeps
-  serving a graph the registration is not in. The option path pays a price the
+  a promise two code paths keep. The option path exists because `aponia build`
+  lowers an `imports` entry only when it is a single identifier naming a
+  declaration read from the project's own source, and a registration returns a
+  `DynamicModule` rather than such a declaration: the module path declines the
+  module that wrote it in every spelling, and where that module is the root the
+  committed descriptor artifact keeps serving a graph the registration is not in. The option path pays a price the
   module path does not — the plugin is in no module, so it reaches neither the
   module graph, nor `inspectAponiaApplication`, nor a generated artifact — and
   both prices are documented where a user reads them. Keep the two spellings in

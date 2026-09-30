@@ -76,11 +76,13 @@ const application = await AponiaFactory.create(AppModule, {
   application where a module contributes it, so its wildcard route and its
   request hooks sit in the application's own route table beside the routes a
   controller mounted — which a boot-time provider could not do.
-- **The module path costs the root module its generated descriptor.** A
-  registration is a call, and `aponia build` lowers a module only when every
-  `imports` entry is a single identifier, so the module that declares it is
-  reported as `DECLINED module <Root>: …`. An application that hands over that
-  artifact then boots from decorators instead — the registration mounts and the
+- **The module path costs the root module its generated descriptor.** The build
+  lowers an `imports` entry only when it is a single identifier naming a
+  declaration read from the project's own source, and a registration returns a
+  `DynamicModule` rather than such a declaration, so the module that declares it
+  is reported as `DECLINED module <Root>: …` in every spelling. An application
+  that hands over that artifact then boots from decorators instead — the
+  registration mounts and the
   declared-graph boot is given up — and one whose root is the only module a build
   can lower gets no descriptor written at all, so the artifact on disk keeps
   serving the graph it already held and the registration does not mount. Read the

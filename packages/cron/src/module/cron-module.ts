@@ -15,13 +15,13 @@ const defaultKey = "cron";
  * export class AppModule {}
  * ```
  *
- * Declared as a `const` rather than inline in `imports`, because `aponia build`
- * lowers a module only when every `imports` entry names its registration with a
- * single identifier: `CronModule.register({ ... })` is a call expression, and an
- * entry that is one declines the module that wrote it. Both spellings mount the
- * same module — the difference is what a build can read, and a registration the
- * build cannot read leaves the committed descriptor artifact serving a graph
- * this scheduler is not in.
+ * Both spellings mount the same module, and neither is lowered into the
+ * descriptor artifact `aponia build` writes: the build lowers an `imports` entry
+ * only when it is a single identifier naming a declaration read from the
+ * project's own source, and a registration returns a `DynamicModule` — a runtime
+ * value rather than such a declaration — so the module that names one is
+ * reported as `DECLINED` in every spelling. The scheduler still mounts and the
+ * application still boots; what is given up is the declared-graph boot.
  *
  * One module carries three things, and they have to be one module rather than
  * three. The scheduler is a provider this registration builds, so it is one
