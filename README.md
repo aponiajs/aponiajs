@@ -1,600 +1,168 @@
 <div align="center">
 
-<img
-  src="./assets/aponia-character.jpg"
-  alt="Aponia from Honkai Impact 3rd with in-game combat footage"
-  width="100%"
-/>
+<img src="./assets/aponia-flower.svg" alt="A small lavender AponiaJS flower" width="88" height="88" />
 
 # AponiaJS
 
-Structured applications for Bun
+**A structured TypeScript framework for Bun and Elysia.**
 
-[Learning path](./docs/learn/README.md) ·
-[Documentation](./docs/architecture-and-style.md) ·
-[Dependency injection](./docs/dependency-injection.md) ·
-[Configuration](./docs/configuration.md) ·
-[WebSockets](./docs/websockets.md) ·
-[Native plugins](./docs/native-plugins.md) ·
-[Introspection](./docs/introspection.md) ·
-[Elysia compatibility](./docs/elysia-compatibility.md) ·
-[Eden Treaty](./docs/eden-treaty.md) ·
-[Testing](./docs/testing.md) ·
-[CLI](./docs/cli.md) ·
-[Files](./docs/files.md) ·
-[Devtools](./docs/devtools.md) ·
-[Lifecycle](./docs/lifecycle.md)
+Create an application, add a feature, and keep its architecture clear as it grows.
 
 [![CI](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml/badge.svg)](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcommon/alpha?label=npm&color=baa9d1)](https://www.npmjs.com/package/@aponiajs/common)
+[![CLI on npm](https://img.shields.io/npm/v/%40aponiajs%2Fcli/alpha?label=CLI%20%28alpha%29&color=c3a7dc)](https://www.npmjs.com/package/@aponiajs/cli)
 [![Bun](https://img.shields.io/badge/Bun-1.4.2-f8eddd?logo=bun&logoColor=24232d)](https://bun.sh)
-[![Elysia](https://img.shields.io/badge/Elysia-1.4-d9ccea)](https://elysiajs.com)
-[![License](https://img.shields.io/badge/License-MIT-e8b9b5)](./LICENSE)
+[![MIT License](https://img.shields.io/badge/license-MIT-f3d5de)](./LICENSE)
 
-Nest-inspired TypeScript architecture with dependency injection, decorated
-controllers, and direct access to Elysia. Supercharged by Bun.
+[Quick start](#quick-start) · [CLI commands](#cli-commands) · [Documentation](#documentation) · [Examples](./examples/README.md)
 
-<sub>Experimental software · Not recommended for production yet</sub>
+<sub>Currently in alpha. AponiaJS is not recommended for production use yet.</sub>
 
 </div>
 
-## Start
+## Quick start
+
+Install [Bun](https://bun.sh), then use the CLI to create an application and add
+a REST resource:
 
 ```bash
 bun add --global @aponiajs/cli
 aponia new my-api
 cd my-api
+aponia generate resource users --type rest
+aponia build
 bun run dev
 ```
 
-Or add AponiaJS to an existing project:
+`aponia generate` writes the resource and registers it in `AppModule`, and
+`aponia build` refreshes the route invokers and module descriptors the
+application boots from. Without that refresh the generated routes are not
+mounted, because the committed descriptors are the whole module graph.
+
+The application starts at `http://localhost:3000`. In another terminal, try
+the generated routes:
 
 ```bash
-bun add @aponiajs/common@alpha @aponiajs/platform-elysia@alpha elysia
+curl http://localhost:3000/users
+curl -X POST http://localhost:3000/users \
+  -H 'content-type: application/json' \
+  -d '{"name":"Ada"}'
 ```
 
-For decorated classes, enable TypeScript's legacy decorators and metadata in
-`tsconfig.json`. `aponia new` configures these options for you:
-
-```json
-{
-  "compilerOptions": {
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
-  }
-}
-```
-
-## Services
-
-A service holds business behavior. `@Injectable()` marks it for constructor
-injection:
-
-```ts
-import { Injectable } from "@aponiajs/common";
-
-@Injectable()
-export class UserService {
-  private readonly users = new Map<string, { id: string; name: string }>();
-
-  create(name: string) {
-    const user = { id: crypto.randomUUID(), name };
-    this.users.set(user.id, user);
-    return user;
-  }
-
-  findOne(id: string) {
-    return this.users.get(id);
-  }
-}
-```
-
-## Controllers
-
-A controller owns routes and delegates to services. Dependencies arrive through
-the constructor:
-
-```ts
-import { Controller, Get, Param } from "@aponiajs/common";
-import { UserService } from "./user.service.ts";
-
-@Controller("users")
-export class UserController {
-  constructor(private readonly userService: UserService) {}
-
-  @Get(":id")
-  findUser(@Param("id") id: string) {
-    return this.userService.findOne(id);
-  }
-}
-```
-
-`@Get`, `@Post`, `@Put`, `@Patch`, `@Delete`, `@Head`, and `@Options` map to the
-matching HTTP method. Paths join with the controller prefix, so this route
-answers `GET /users/:id`.
-
-## Modules
-
-A module wires controllers and providers together and declares what it shares.
-Only exported providers are visible to modules that import it:
-
-```ts
-import { Module } from "@aponiajs/common";
-import { UserController } from "./user.controller.ts";
-import { UserService } from "./user.service.ts";
-
-@Module({
-  controllers: [UserController],
-  providers: [UserService],
-  exports: [UserService],
-})
-export class UserModule {}
-```
-
-`UserService` is visible to any module that imports `UserModule`; a provider
-left out of `exports` stays private to its own module.
-
-## WebSocket gateways
-
-Gateways use the same provider container as services while Elysia handles the
-native WebSocket connection:
-
-```ts
-import { MessageBody, Module, SubscribeMessage, WebSocketGateway } from "@aponiajs/common";
-
-@WebSocketGateway("/events")
-class EventsGateway {
-  @SubscribeMessage("events.echo")
-  echo(@MessageBody() message: unknown): unknown {
-    return message;
-  }
-}
-
-@Module({ providers: [EventsGateway] })
-class EventsModule {}
-```
-
-Clients send `{ "event": "events.echo", "data": value }`. An ordinary return
-value is wrapped with the subscribed event; returning a `WsResponse` selects a
-different event. `@ConnectedSocket()` exposes the native Elysia socket, and
-`@WebSocketServer()` plus the gateway lifecycle interfaces cover initialization,
-connection, and disconnection. See the
-[WebSocket gateway guide](./docs/websockets.md).
-
-## Providers
-
-A class provider is the common case, and the descriptor helpers cover values,
-factories, and aliases. Anything that is not a class needs an explicit token:
-
-```ts
-import {
-  Inject,
-  Injectable,
-  Module,
-  createToken,
-  provideFactory,
-  provideValue,
-} from "@aponiajs/common";
-
-export const APP_NAME = createToken<string>("APP_NAME");
-export const GREETING = createToken<string>("GREETING");
-
-@Injectable()
-export class GreetingService {
-  constructor(@Inject(GREETING) private readonly greeting: string) {}
-}
-
-@Module({
-  providers: [
-    provideValue(APP_NAME, "my-api"),
-    provideFactory(GREETING, [APP_NAME], (name) => `Hello from ${name}`),
-    GreetingService,
-  ],
-  exports: [GREETING, GreetingService],
-})
-export class ConfigModule {}
-```
-
-`provideClass` and `provideAlias` complete the set. Providers are singletons.
-The [dependency injection guide](./docs/dependency-injection.md) covers tokens,
-visibility, and the error codes raised when a graph is wrong.
-
-## Bootstrap
-
-The root module composes the feature modules, and `main.ts` owns the process.
-The factory compiles the module graph, validates it, builds the container, and
-mounts every controller as an Elysia plugin:
-
-```ts
-// src/app.module.ts
-import { Module } from "@aponiajs/common";
-import { UserModule } from "./user/user.module.ts";
-
-@Module({ imports: [UserModule] })
-export class AppModule {}
-```
-
-```ts
-// src/main.ts
-import { AponiaFactory } from "@aponiajs/platform-elysia";
-import { AppModule } from "./app.module.ts";
-
-async function bootstrap(): Promise<void> {
-  const application = await AponiaFactory.create(AppModule);
-  const port = Number(Bun.env.PORT ?? 3000);
-  await application.listen(port);
-}
-
-await bootstrap();
-```
-
-Module cycles, missing exports, duplicate providers, and ambiguous dependencies
-fail here, before the server listens. Application logging is configurable —
-`{ logger: false }` silences it, an array of levels filters it, and a
-`LoggerService` replaces it. See the [logging guide](./docs/logging.md).
-
-For native Elysia tooling and Eden Treaty, keep native routes in the module
-graph and bootstrap the Elysia instance itself:
-
-```ts
-import { defineModule } from "@aponiajs/common";
-import { AponiaFactory, defineElysiaPlugin } from "@aponiajs/platform-elysia";
-import { Elysia } from "elysia";
-
-const routes = defineElysiaPlugin(
-  new Elysia({ name: "routes" }).get("/health", () => ({ status: "ok" as const })),
-  { key: "routes" },
-);
-const NativeAppModule = defineModule({
-  id: "NativeAppModule",
-  imports: [routes],
-});
-
-export const app = await AponiaFactory.createNative(NativeAppModule);
-export type App = typeof app;
-
-app.listen(3000);
-```
-
-The client uses `treaty<App>(url)`, and tests use `treaty(app)` without a
-contract adapter or custom fetcher. The [Eden guide](./docs/eden-treaty.md)
-shows typed controllers, module composition, and why decorator metadata remains
-a runtime-only contract until build-time compilation lands.
-
-## Native-inferred controllers
-
-Use `elysiaController` when you want Aponia dependency injection with native
-Elysia route inference and minimal syntax:
-
-```ts
-import { defineModule, provideClass } from "@aponiajs/common";
-import { elysiaController } from "@aponiajs/platform-elysia";
-
-class UserService {
-  list() {
-    return [{ id: "1", name: "Ada" }];
-  }
-}
-
-class NativeUsersController {
-  constructor(readonly users: UserService) {}
-}
-
-const usersController = elysiaController(NativeUsersController, [UserService], (app, controller) =>
-  app.get("/users", () => controller.users.list()),
-);
-
-export const UsersModule = defineModule({
-  id: "UsersModule",
-  controllers: [usersController],
-  providers: [provideClass(UserService, [])],
-});
-```
-
-Elysia infers `body`, `query`, `params`, `store`, `set`, and `status` in the
-callback. There is no options object, `as const`, manual context annotation, or
-`typeof`. Decorated controllers remain available when Nest-shaped classes are
-the better fit.
-
-## Request parameters
-
-Parameter decorators inject one piece of the request. Each accepts an optional
-name that selects a single property:
-
-| Decorator             | Injects                        |
-| --------------------- | ------------------------------ |
-| `@Body()`             | The validated request body     |
-| `@Query("term")`      | The parsed query string        |
-| `@Param("id")`        | The `id` route parameter       |
-| `@Headers("x-agent")` | Request headers                |
-| `@Cookie("session")`  | Cookies, or one cookie's value |
-| `@Store()`            | The native application store   |
-| `@Req()`              | The native `Request`           |
-| `@Set()` / `@Res()`   | The mutable response settings  |
-| `@Status()`           | Elysia's typed status helper   |
-| `@Ctx()`              | The whole Elysia context       |
-
-```ts
-import { Body, Controller, Get, Param, Post, Query } from "@aponiajs/common";
-
-@Controller("users")
-export class UserController {
-  @Post(":tenant")
-  create(@Param("tenant") tenant: string, @Body() body: { name: string }) {
-    return { tenant, name: body.name };
-  }
-
-  @Get(":id")
-  findOne(@Param("id") id: string, @Query("expand") expand: string | undefined) {
-    return { id, expand };
-  }
-}
-```
-
-Types come from the annotation you write, exactly as in NestJS.
-
-## Validate
-
-Wrap one complete validator in one `@Validation()` class and invalid requests
-never reach the handler. Any [Standard Schema](https://standardschema.dev)
-validator works — Zod, ArkType, Valibot — as do TypeBox and Elysia's `t`:
-
-```ts
-import { Body, Controller, Post, Validation, type InferValidatorOutput } from "@aponiajs/common";
-import { z } from "zod";
-
-const createUserSchema = z.object({
-  name: z.string().min(2),
-});
-
-@Validation(createUserSchema)
-export class CreateUser {}
-export interface CreateUser extends InferValidatorOutput<typeof createUserSchema> {}
-
-@Controller("users")
-export class UserController {
-  @Post("/", { body: CreateUser })
-  create(@Body() body: CreateUser) {
-    return body;
-  }
-}
-```
-
-Create, update, and path-parameter contracts use separate model classes.
-`body`, `query`, `params`, `headers`, `cookie`, and `response` are the available
-slots. A rejected request returns `422` without running the handler. Raw
-validators remain available for low-level integrations.
-
-## Application errors
-
-Default application failures are one expression and serialize as RFC 9457
-Problem Details:
-
-```ts
-import { httpErrors } from "@aponiajs/platform-elysia";
-
-throw httpErrors.notFound("User 42 does not exist.", {
-  code: "USER_NOT_FOUND",
-});
-```
-
-`httpErrors` includes every 4xx and 5xx status supported by Elysia. Each response
-uses `application/problem+json`; optional causes stay server-side and stacks are
-never serialized. Use `httpError(422, detail, options)` when a numeric status is
-clearer. Anything else a handler throws answers a Problem Details `500` through
-the default mapping every route the platform mounts carries last, unless an
-exception filter answers it first. That mapping and every declared filter live
-in a route-local `error` array, which Elysia reads only while it composes routes
-ahead of time: under
-`elysia: { aot: false }` neither runs, and an unhandled failure answers Elysia's
-native `500` carrying the exception's message. See the
-[errors chapter](./docs/learn/10-errors.md) and the
-[enhancers guide](./docs/enhancers.md).
-
-Need Elysia's whole context in a decorated method? Take it with `@Ctx()`, typed
-by the declared schema. This explicit annotation is the advanced decorator
-path; `elysiaController` above needs no context type. Model-backed schemas work
-here too, including response-aware `context.status`:
-
-```ts
-import { Controller, Ctx, Post } from "@aponiajs/common";
-import { type ElysiaRouteContext } from "@aponiajs/platform-elysia";
-import { z } from "zod";
-
-const createUser = { body: z.object({ name: z.string().min(2) }) };
-
-@Controller("users")
-export class UserController {
-  @Post("/", createUser)
-  create(@Ctx() context: ElysiaRouteContext<typeof createUser>) {
-    context.set.headers["x-created"] = "1";
-    return context.body.name === "root"
-      ? context.status(403, "forbidden")
-      : { name: context.body.name };
-  }
-}
-```
-
-## Native Elysia plugins
-
-Existing Elysia plugins install as module imports and reach Elysia's `.use()`
-unchanged:
+`GET /users` starts with an empty collection. `POST /users` creates an item
+with an ID. The generated service stores data in memory, so the collection
+resets when the application restarts.
+
+The starter also serves `GET /` and mounts the development tools under
+`/__devtools`: [`GET /__devtools/meta`](http://localhost:3000/__devtools/meta)
+reports the contract version, framework release, and artifacts its boot adopted.
+You can create the same starter with `bun create aponia my-api`.
+
+## What the CLI creates
+
+`aponia new` prepares a Bun application, installs its dependencies, and adds
+configuration, tests, and build scripts. The REST resource command creates a
+feature under `src/users/` and registers its module in `AppModule`.
+
+| File                                | Responsibility                      |
+| ----------------------------------- | ----------------------------------- |
+| `src/users/users.controller.ts`     | HTTP routes and request handling    |
+| `src/users/users.service.ts`        | Application behavior                |
+| `src/users/users.model.ts`          | Create, update, and path validation |
+| `src/users/users.module.ts`         | Feature registration                |
+| `src/users/entities/user.entity.ts` | Resource entity                     |
+
+The resource also includes controller and service tests. Its generated files
+are ordinary application code that you can adapt to your domain.
+
+## CLI commands
+
+| Command                          | Purpose                                                  |
+| -------------------------------- | -------------------------------------------------------- |
+| `aponia new my-api`              | Create an application and install dependencies.          |
+| `aponia g res users --type rest` | Generate a REST resource with CRUD routes.               |
+| `aponia g module billing`        | Add a module.                                            |
+| `aponia g controller billing`    | Add an HTTP controller.                                  |
+| `aponia g service billing`       | Add an injectable service.                               |
+| `aponia g gateway events`        | Add a WebSocket gateway provider.                        |
+| `aponia build`                   | Refresh generated route invokers and module descriptors. |
+| `aponia --help`                  | List commands and options.                               |
+
+`g` is short for `generate`. The CLI registers generated components in the
+nearest module by default. Use `--module <name>` to select a module, or
+`--skip-import` to handle registration yourself. Add `--no-spec` to skip
+generated tests.
+
+Use `--dry-run` to preview `new`, `generate`, or `build` without writing
+files. `aponia new my-api --skip-install` creates the project without running
+`bun install`. The [complete CLI guide](./docs/cli.md) covers every schematic,
+alias, option, and supported resource transport. GraphQL and microservice
+commands currently generate scaffolds; their runtimes are outside this release.
+
+## Work with a generated application
+
+The starter includes these scripts:
 
 ```bash
-bun add @elysiajs/cors
+bun run dev       # run with file watching
+bun test          # run unit tests
+bun run test:e2e  # run the starter end-to-end test
+bun run check     # format, lint, and type-check
+bun run build     # refresh generated code and bundle
 ```
 
-```ts
-import { Module } from "@aponiajs/common";
-import { ElysiaPluginModule } from "@aponiajs/platform-elysia";
-import { cors } from "@elysiajs/cors";
+`bun run build` refreshes the starter's committed route invoker and module
+descriptor files before bundling; `aponia build` refreshes the same two files
+without bundling. `bun run dev` serves the routes those files describe, so run
+one of them after generating a resource — otherwise its routes are not mounted.
 
-@Module({
-  imports: [ElysiaPluginModule.register(cors(), { key: "cors" })],
-})
-export class AppModule {}
-```
+## Framework capabilities
 
-A stable `key` keeps a plugin imported by several modules installed once. Use
-`ElysiaPluginModule.registerAsync()` when plugin setup needs an injected service;
-the [native plugin guide](./docs/native-plugins.md) has a complete example. An
-application can also mount a plugin itself, through
-`AponiaFactory.create(AppModule, { plugins: [cors()] })`, which takes the same
-`.use()` path before the module graph mounts and reaches no module's `imports`:
-that option is for the plugins a module cannot declare, and it keeps none of
-them in the module graph. `AponiaFactory.createNative(AppModule)` returns the
-composed Elysia instance directly. `AponiaFactory.create(AppModule, { configureNative })` and
-`application.getNativeApplication()` retain the managed lifecycle facade when a
-plugin needs it.
+- **Modules and dependency injection** organize controllers and providers by
+  feature, with explicit exports between modules.
+- **Decorated HTTP routes** keep request handling in controllers and application
+  behavior in services.
+- **Route validation** accepts Elysia validators and
+  [Standard Schema](https://standardschema.dev) implementations.
+- **Native Elysia access** supports plugins and routes alongside Aponia's
+  decorators and explicit descriptors.
 
-What a plugin decorates, stores, or derives is available in every handler at
-runtime. For a decorated controller, include the plugin type in
-`ElysiaRouteContext` and register the same plugin with its module:
+## Documentation
 
-```ts
-import { Controller, Ctx, Get, Module } from "@aponiajs/common";
-import { ElysiaPluginModule, type ElysiaRouteContext } from "@aponiajs/platform-elysia";
-import { Elysia } from "elysia";
+Follow the [learning path](./docs/learn/README.md) for a guided introduction.
+For specific topics, see the [CLI guide](./docs/cli.md),
+[dependency injection](./docs/dependency-injection.md),
+[validation](./docs/learn/06-validation.md), [WebSockets](./docs/websockets.md),
+and [native plugins](./docs/native-plugins.md). The
+[package catalog](./docs/packages.md) describes the published packages.
 
-const clock = new Elysia({ name: "clock" }).decorate("now", () => new Date().toISOString());
+## Run the CLI from this checkout
 
-@Controller("health")
-class HealthController {
-  @Get()
-  read(@Ctx() context: ElysiaRouteContext<typeof clock>) {
-    return { now: context.now() };
-  }
-}
-
-@Module({
-  imports: [ElysiaPluginModule.register(clock, { key: "clock" })],
-  controllers: [HealthController],
-})
-class HealthModule {}
-```
-
-For a schema plus several plugins, use
-`ElysiaRouteContext<typeof schema, [typeof clock, typeof cache]>`. The
-[native plugin guide](./docs/native-plugins.md) covers async plugin setup,
-`defineElysiaPlugin`, and the full type mapping.
-
-## Test
-
-An application answers a `Request` without binding a port, so tests exercise the
-real graph and routes:
-
-```ts
-import { expect, test } from "bun:test";
-import { AponiaFactory } from "@aponiajs/platform-elysia";
-import { AppModule } from "../src/app.module.ts";
-
-test("creates a user", async () => {
-  const application = await AponiaFactory.create(AppModule, { logger: false });
-  const response = await application.handle(
-    new Request("http://localhost/users", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name: "Ada" }),
-    }),
-  );
-
-  expect(response.status).toBe(200);
-});
-```
-
-More patterns, including asserting validation failures and `AponiaError` codes,
-are in the [testing guide](./docs/testing.md).
-
-## Generate
+To try local CLI changes, invoke its Bun entrypoint directly. From the
+repository root (assuming the checkout directory is named `aponiajs`):
 
 ```bash
-aponia new my-api
-aponia generate module users
-aponia generate resource users --type rest
-
-aponia g mo users
-aponia g res users
-```
-
-Every Nest schematic is available, from `class` and `controller` to `resource`
-and `gateway`. A REST resource also generates `users.model.ts` with separate
-create, partial-update, and path-parameter validation classes used directly by
-its controller and service. See the
-[CLI reference](./docs/cli.md) for the full catalog, aliases, and options.
-
-## Packages
-
-| Package                                                                                | Purpose                                          |
-| -------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| [`@aponiajs/common`](https://www.npmjs.com/package/@aponiajs/common)                   | Decorators, contracts, tokens, and logging       |
-| [`@aponiajs/core`](https://www.npmjs.com/package/@aponiajs/core)                       | Module graph and dependency injection            |
-| [`@aponiajs/platform-elysia`](https://www.npmjs.com/package/@aponiajs/platform-elysia) | Elysia adapter and application lifecycle         |
-| [`@aponiajs/cli`](https://www.npmjs.com/package/@aponiajs/cli)                         | Project and component generators                 |
-| [`create-aponia`](https://www.npmjs.com/package/create-aponia)                         | `bun create` entrypoint                          |
-| [`@aponiajs/devtools`](https://www.npmjs.com/package/@aponiajs/devtools)               | Opt-in devtools served by the running app itself |
-
-All public packages share one version, and the channel a release goes to is
-derived from that version: a prerelease publishes under the tag its identifier
-names — `alpha`, `beta`, `rc`, or `canary` — and never under `latest`. The
-current line is an alpha, so `@alpha` is what to install today.
-
-## Current scope
-
-Implemented: decorated modules and HTTP controllers, Standard Schema input and
-status-specific response validation, one-schema validation-model classes,
-request parameter decorators, singleton dependency injection,
-class/value/factory/alias providers, explicit tokens,
-validated configuration an application declares and injects,
-module imports and exports, provider and application lifecycle hooks, read from
-the provider instance, structured logging, project
-generators, and native Elysia escape hatches. Concise controllers preserve
-native callback inference without manual context types, and application errors
-cover every supported 4xx and 5xx status with RFC 9457 responses. Statically
-declared descriptor modules also expose their composed Elysia route type
-directly to Eden Treaty. Provider-registered WebSocket gateways expose
-Nest-style message and lifecycle decorators over Elysia's native socket
-runtime. Nest-style guards, interceptors, and exception filters compile into
-per-route Elysia lifecycle hooks, and an unhandled failure answers an RFC 9457
-`500` unless a declared filter answers it first — on the routes the platform
-mounts from a compiled plan. A controller registered through its own
-`registerRoutes` callback, and a definition mounted through its own
-`buildPlugin`, run no enhancer and answer Elysia's native `500` instead.
-`@aponiajs/devtools` is an opt-in leaf package that mounts an HTTP API on the
-application's own route table under `/__devtools`, on the address the application
-already answers, over what a boot compiled and
-what the application answered; it reports rather than changes.
-
-Not implemented yet: request and transient scopes,
-platform-neutral HTTP packages, full Elysia phase conformance, serialization
-policy, secret redaction, HTTP admission hardening,
-middleware, authentication and authorization, rate limiting, testing packages,
-observability and health, OpenAPI generation, production WebSocket policies and
-the transport-neutral adapter package, decorator-wide Eden inference, and
-microservice transports. Treat that list as the scope of record for the current
-release.
-
-## Develop
-
-```bash
-mise install
 bun install
-bun run check
-bun test
-bun run test:coverage
-bun run test:vite-plus
-bun run build
+bun packages/cli/bin/aponia.ts --help
+bun packages/cli/bin/aponia.ts new my-api --dry-run
+cd ..
+bun ./aponiajs/packages/cli/bin/aponia.ts new my-api
+cd my-api
+bun ../aponiajs/packages/cli/bin/aponia.ts g res users --type rest
+bun run dev
 ```
 
-Every push must raise the synchronized version. Routine work currently targets
-`release/alpha` and uses `bun run version:alpha`; promotion work uses the command
-matching its destination channel. Read the [release guide](./docs/releasing.md)
-for branches, channels, and the publish flow; repository conventions live in
-[AGENTS.md](./AGENTS.md).
+The dry run previews the files. The next command creates an application beside
+the framework checkout. Its dependencies use the version in this checkout, so
+that version must be available from the package registry for the default
+installation to finish.
+
+## Contributing
+
+This repository contains the framework packages and CLI. Start with the
+[repository guide](./AGENTS.md) and [release guide](./docs/releasing.md). Run
+`bun run check`, `bun run test:coverage`, and `bun run test:vite-plus`
+before submitting changes.
 
 ## License
 
 AponiaJS is available under the [MIT License](./LICENSE).
-
-The header features Aponia from _Honkai Impact 3rd_. Game imagery belongs to its
-respective copyright holders. AponiaJS is independently developed and is not
-affiliated with HoYoverse, miHoYo, Bun, Elysia, or NestJS.
