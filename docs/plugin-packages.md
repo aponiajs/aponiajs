@@ -232,6 +232,16 @@ configuration included. Nothing about a plugin mounted that way reaches
 [Native Elysia Plugins](./native-plugins.md#the-plugins-option) states the same
 trade from the consumer's side.
 
+A package can spare its consumers that choice. When its plugin needs nothing the
+container holds, export the value beside the module — `@aponiajs/devtools` ships
+`devtoolsPlugin` next to `DevtoolsModule`, and its README states the same trade —
+and an application that would rather keep the descriptor artifact mounts that
+value through `plugins`: the artifact is adopted and the plugin still serves,
+while what the application gives up is the module, its provider, and the
+read-back. A plugin built from a value the container resolved has nothing to
+export, because it does not exist until the container has built one; cron and
+openapi are that shape.
+
 ## The build configuration
 
 A package whose test `tsconfig.json` maps `@aponiajs/*` to the other packages'
