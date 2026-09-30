@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/devtools",
-  "version": "0.6.0-alpha.39",
+  "version": "0.6.0-alpha.40",
   "description": "Opt-in devtools for a running Aponia application, served by the application itself.",
   "homepage": "https://github.com/aponiajs/aponiajs#readme",
   "bugs": {

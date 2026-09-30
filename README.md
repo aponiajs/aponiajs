@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="./assets/aponia-flower.svg" alt="A small lavender AponiaJS flower" width="88" height="88" />
+<img src="./assets/aponia-mascot.png" alt="The AponiaJS mascot: a winged figure in a laurel crown" width="240" />
 
 # AponiaJS
 
@@ -16,6 +16,8 @@ Create an application, add a feature, and keep its architecture clear as it grow
 [Quick start](#quick-start) · [CLI commands](#cli-commands) · [Documentation](#documentation) · [Examples](./examples/README.md)
 
 <sub>Currently in alpha. AponiaJS is not recommended for production use yet.</sub>
+
+<sub>Release v1 · codename tanya</sub>
 
 </div>
 
@@ -162,6 +164,11 @@ This repository contains the framework packages and CLI. Start with the
 [repository guide](./AGENTS.md) and [release guide](./docs/releasing.md). Run
 `bun run check`, `bun run test:coverage`, and `bun run test:vite-plus`
 before submitting changes.
+
+## Credits
+
+The mascot illustration is third-party artwork, sourced from
+<https://i.redd.it/at5g5eliklph1.png>.
 
 ## License
 
