@@ -5,7 +5,7 @@ import type { AponiaApplicationDiagnostics } from "@aponiajs/platform-elysia";
 import { oneLine } from "../logging/one-line.ts";
 import { reportFailure } from "../logging/report-failure.ts";
 import { aponiaVersion } from "../version.ts";
-import type { AponiaAotController, AponiaAotPayload } from "./aot.types.ts";
+import type { AponiaBuildController, AponiaBuildPayload } from "./aot.types.ts";
 
 /** The path this endpoint is served under, relative to the devtools prefix. */
 export const devtoolsAotPath = "/aot";
@@ -14,10 +14,10 @@ export const devtoolsAotPath = "/aot";
  * The framework half of the payload: the two facts a boot recorded about the
  * artifacts it was offered, validated once and frozen.
  */
-export type AponiaAotFacts = Pick<AponiaAotPayload, "graph" | "invokers">;
+export type AponiaBuildFacts = Pick<AponiaBuildPayload, "graph" | "invokers">;
 
 /** What an analysis that could not be read answers with, frozen once. */
-const noControllers: readonly AponiaAotController[] = Object.freeze([]);
+const noControllers: readonly AponiaBuildController[] = Object.freeze([]);
 
 /**
  * Every analysis this process has read, keyed by project root.
@@ -28,7 +28,7 @@ const noControllers: readonly AponiaAotController[] = Object.freeze([]);
  * this map, and a rejection would be thrown again for each poll of a failure
  * that was reported once.
  */
-const analyses = new Map<string, Promise<readonly AponiaAotController[]>>();
+const analyses = new Map<string, Promise<readonly AponiaBuildController[]>>();
 
 /**
  * Reads the facts `/aot` publishes out of a boot record, or `undefined` when the
@@ -60,7 +60,7 @@ const analyses = new Map<string, Promise<readonly AponiaAotController[]>>();
  */
 export function readAotFacts(
   diagnostics: AponiaApplicationDiagnostics | undefined,
-): AponiaAotFacts | undefined {
+): AponiaBuildFacts | undefined {
   const graph = diagnostics?.graph;
   const invokers = diagnostics?.invokers;
   const reason = invokers?.reason;
@@ -110,9 +110,9 @@ export function readAotFacts(
  * build prints. The two copies are kept in step by hand.
  */
 export function buildAotPayload(
-  facts: AponiaAotFacts,
-  controllers: readonly AponiaAotController[],
-): AponiaAotPayload {
+  facts: AponiaBuildFacts,
+  controllers: readonly AponiaBuildController[],
+): AponiaBuildPayload {
   return Object.freeze({
     graph: facts.graph,
     invokers: facts.invokers,
@@ -139,7 +139,7 @@ export function buildAotPayload(
 export function loadAotAnalysis(
   projectRoot: string,
   logger: LoggerService,
-): Promise<readonly AponiaAotController[]> {
+): Promise<readonly AponiaBuildController[]> {
   const loaded = analyses.get(projectRoot);
 
   if (loaded !== undefined) {
@@ -175,7 +175,7 @@ export function loadAotAnalysis(
 async function analyzeProject(
   projectRoot: string,
   logger: LoggerService,
-): Promise<readonly AponiaAotController[]> {
+): Promise<readonly AponiaBuildController[]> {
   try {
     return await analyzeControllers(projectRoot);
   } catch (error) {
@@ -220,7 +220,7 @@ async function analyzeProject(
  * renders is discarded: this endpoint states the verdicts, not the source they
  * would be written into.
  */
-async function analyzeControllers(projectRoot: string): Promise<readonly AponiaAotController[]> {
+async function analyzeControllers(projectRoot: string): Promise<readonly AponiaBuildController[]> {
   const {
     analyzeControllerRoutes,
     descriptorModuleFileName,
@@ -293,7 +293,7 @@ async function analyzeControllers(projectRoot: string): Promise<readonly AponiaA
 function projectControllers(
   found: readonly { readonly controller: AnalyzedController; readonly file: string }[],
   declined: readonly DeclinedControllerHandler[],
-): readonly AponiaAotController[] {
+): readonly AponiaBuildController[] {
   const reasons = new Map<string, string>();
   for (const entry of declined) {
     reasons.set(`${entry.controller}.${entry.method}`, entry.reason);

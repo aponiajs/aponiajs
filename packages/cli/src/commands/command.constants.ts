@@ -1,4 +1,4 @@
-export const generateSchematics = [
+export const schematicNames = [
   "app",
   "library",
   "class",

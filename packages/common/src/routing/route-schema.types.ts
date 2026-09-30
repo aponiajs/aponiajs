@@ -39,13 +39,13 @@ interface UnsafeSchema {
  * `~refine` from `t.Refine()`, and `~codec` from `t.Decode()`/`t.Encode()`.
  * This is the same marker set Elysia itself accepts as a schema.
  */
-export type NativeSchema = KindSchema | RefineSchema | CodecSchema | UnsafeSchema;
+export type ValidatorSchema = KindSchema | RefineSchema | CodecSchema | UnsafeSchema;
 
 /**
  * Any validator a route slot accepts: a Standard Schema implementation such as
  * Zod, ArkType, or Valibot, or a platform-native JSON Schema validator.
  */
-export type RouteValidator = StandardSchemaV1 | NativeSchema;
+export type RouteValidator = StandardSchemaV1 | ValidatorSchema;
 
 export type RouteResponseSchemaMap = Readonly<Record<number, RouteValidatorInput>>;
 
@@ -69,14 +69,14 @@ export type RouteSchemaSlot = (typeof routeSchemaSlots)[number];
  * request slot, and it is imported as a type only, which leaves `typebox` a
  * compile-time contract with no runtime edge into this package.
  */
-type InferNativeSchemaOutput<TValidator extends NativeSchema> = StaticDecode<TValidator>;
+type InferValidatorSchemaOutput<TValidator extends ValidatorSchema> = StaticDecode<TValidator>;
 
 export type InferValidatorOutput<TValidator> = TValidator extends StandardSchemaV1
   ? StandardSchemaV1.InferOutput<TValidator>
   : TValidator extends ValidationModelClass<infer TInstance>
     ? TInstance
-    : TValidator extends NativeSchema
-      ? InferNativeSchemaOutput<TValidator>
+    : TValidator extends ValidatorSchema
+      ? InferValidatorSchemaOutput<TValidator>
       : unknown;
 
 type InferSlot<
@@ -86,14 +86,14 @@ type InferSlot<
 > = TSchema[TSlot] extends RouteValidatorInput ? InferValidatorOutput<TSchema[TSlot]> : TFallback;
 
 /**
- * Mutable response settings handed to a handler through `@Set()` / `@Res()`.
+ * Mutable response settings handed to a handler through `@ResponseSettings()`.
  *
  * There is deliberately no redirect field. The supported platform ignores an
  * assigned redirect and instead completes the request with its own status, so
  * a handler that redirects returns the platform's inline `redirect(url)`
  * helper rather than advertising a setting the substrate does not honour.
  */
-export interface RouteResponseSettings {
+export interface ResponseSettingsState {
   /** A status code, or a platform-recognized status name such as "Not Found". */
   status?: number | string;
   headers: Record<string, string | number | string[] | undefined>;
@@ -132,5 +132,5 @@ export interface RouteContext<TSchema extends RouteSchema = RouteSchema> {
   readonly cookie: RouteCookies<TSchema>;
   readonly request: Request;
   readonly path: string;
-  readonly set: RouteResponseSettings;
+  readonly set: ResponseSettingsState;
 }

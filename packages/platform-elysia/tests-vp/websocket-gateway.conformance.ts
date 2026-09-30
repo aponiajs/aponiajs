@@ -10,13 +10,13 @@ import { createContainer } from "@aponiajs/core";
 import type { Elysia } from "elysia";
 import type { ElysiaWS } from "elysia/ws";
 import {
-  bindElysiaWebSocketGateway,
-  compileElysiaWebSocketGateways,
+  bindWebSocketGateway,
+  compileWebSocketGateways,
 } from "../src/websockets/websocket-gateway.ts";
 import {
-  defineElysiaWebSocketGateway,
-  type ElysiaWebSocket,
-  type ElysiaWebSocketServer,
+  defineWebSocketGateway,
+  type WebSocketClient,
+  type WebSocketServerRef,
 } from "../src/index.ts";
 
 type VitePlusTest = typeof import("vite-plus/test");
@@ -27,8 +27,8 @@ type Expect<TAssertion extends true> = TAssertion;
 declare const test: VitePlusTest["test"];
 declare const expect: VitePlusTest["expect"];
 
-type ClientAliasAssertion = Expect<Equals<ElysiaWebSocket, ElysiaWS>>;
-type ServerAliasAssertion = Expect<Equals<ElysiaWebSocketServer, Elysia>>;
+type ClientAliasAssertion = Expect<Equals<WebSocketClient, ElysiaWS>>;
+type ServerAliasAssertion = Expect<Equals<WebSocketServerRef, Elysia>>;
 
 @WebSocketGateway("/conformance/")
 class ConformanceGateway {
@@ -52,17 +52,17 @@ const module = defineModule({
 test("the Vite+ lane preserves native WebSocket gateway compilation and dispatch", async () => {
   const clientAliasAssertion: ClientAliasAssertion = true;
   const serverAliasAssertion: ServerAliasAssertion = true;
-  const compiled = compileElysiaWebSocketGateways([module]);
+  const compiled = compileWebSocketGateways([module]);
   const container = createContainer(module);
   const instance = container.resolveModuleProvider(module, ConformanceGateway);
-  const gateway = bindElysiaWebSocketGateway(compiled[0]!, instance);
+  const gateway = bindWebSocketGateway(compiled[0]!, instance);
   const sent: unknown[] = [];
   const socket = {
     send(value: unknown): number {
       sent.push(value);
       return 1;
     },
-  } as unknown as ElysiaWebSocket;
+  } as unknown as WebSocketClient;
 
   await gateway.message(socket, { event: "echo", data: { text: "typed" } });
 
@@ -82,7 +82,7 @@ class DeclaredConformanceGateway {
 const declaredModule = defineModule({
   id: "DeclaredWebSocketConformanceModule",
   providers: [
-    defineElysiaWebSocketGateway(DeclaredConformanceGateway, {
+    defineWebSocketGateway(DeclaredConformanceGateway, {
       path: "/conformance/",
       handlers: [
         {
@@ -96,25 +96,25 @@ const declaredModule = defineModule({
 });
 
 test("the Vite+ lane compiles and dispatches a declared gateway through the same path", async () => {
-  const compiled = compileElysiaWebSocketGateways([declaredModule]);
+  const compiled = compileWebSocketGateways([declaredModule]);
   const instance = createContainer(declaredModule).resolveModuleProvider(
     declaredModule,
     DeclaredConformanceGateway,
   );
-  const gateway = bindElysiaWebSocketGateway(compiled[0]!, instance);
+  const gateway = bindWebSocketGateway(compiled[0]!, instance);
   const sent: unknown[] = [];
   const socket = {
     send(value: unknown): number {
       sent.push(value);
       return 1;
     },
-  } as unknown as ElysiaWebSocket;
+  } as unknown as WebSocketClient;
 
   await gateway.message(socket, { event: "echo", data: { text: "declared" } });
 
   expect(compiled[0]?.path).toBe("/conformance");
   expect(sent).toEqual([{ event: "echo", data: "declared" }]);
-  expect(() => compileElysiaWebSocketGateways([module, declaredModule])).toThrow(
+  expect(() => compileWebSocketGateways([module, declaredModule])).toThrow(
     "WebSocket gateway path",
   );
 });

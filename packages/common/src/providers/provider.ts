@@ -1,4 +1,4 @@
-import type { ClassToken, Constructor, Token, TokenValues } from "../tokens/token.types.ts";
+import type { ClassToken, Constructor, Token, TokenMap } from "../tokens/token.types.ts";
 import type {
   AliasProvider,
   ClassProvider,
@@ -17,7 +17,7 @@ export function provideValue<T>(provide: Token<T>, useValue: T): ValueProvider<T
 export function provideFactory<T, const TDependencies extends readonly Token<unknown>[]>(
   provide: Token<T>,
   inject: TDependencies,
-  useFactory: (...dependencies: TokenValues<TDependencies>) => T,
+  useFactory: (...dependencies: TokenMap<TDependencies>) => T,
 ): FactoryProvider<T, TDependencies> {
   return Object.freeze({
     kind: "factory",
@@ -40,25 +40,25 @@ export function provideFactory<T, const TDependencies extends readonly Token<unk
  * ```
  *
  * In both forms `provide` is the token the container keys the instance by and
- * `inject` is the dependency list `providerDependencies` reports, so a bound
+ * `inject` is the dependency list `getProviderDependencies` reports, so a bound
  * class resolves exactly like one registered under its own token.
  */
 export function provideClass<T, const TDependencies extends readonly Token<unknown>[]>(
-  useClass: ClassToken<T> & Constructor<T, TokenValues<TDependencies>>,
+  useClass: ClassToken<T> & Constructor<T, TokenMap<TDependencies>>,
   inject: TDependencies,
 ): ClassProvider<T, TDependencies>;
 export function provideClass<T, const TDependencies extends readonly Token<unknown>[]>(
   provide: Token<T>,
-  useClass: Constructor<T, TokenValues<TDependencies>>,
+  useClass: Constructor<T, TokenMap<TDependencies>>,
   inject: TDependencies,
 ): ClassProvider<T, TDependencies>;
 export function provideClass<T, const TDependencies extends readonly Token<unknown>[]>(
   provideOrClass: Token<T>,
-  classOrInject: TDependencies | Constructor<T, TokenValues<TDependencies>>,
+  classOrInject: TDependencies | Constructor<T, TokenMap<TDependencies>>,
   injected?: TDependencies,
 ): ClassProvider<T, TDependencies> {
   if (injected === undefined) {
-    const useClass = provideOrClass as ClassToken<T> & Constructor<T, TokenValues<TDependencies>>;
+    const useClass = provideOrClass as ClassToken<T> & Constructor<T, TokenMap<TDependencies>>;
     return Object.freeze({
       kind: "class",
       provide: useClass,
@@ -71,7 +71,7 @@ export function provideClass<T, const TDependencies extends readonly Token<unkno
     kind: "class",
     provide: provideOrClass,
     inject: injected,
-    useClass: classOrInject as Constructor<T, TokenValues<TDependencies>>,
+    useClass: classOrInject as Constructor<T, TokenMap<TDependencies>>,
   });
 }
 

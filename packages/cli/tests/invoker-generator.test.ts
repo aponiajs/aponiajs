@@ -309,12 +309,12 @@ test("fails outside an Aponia project without throwing", async () => {
 
 test("fails with the first decline when no handler could be generated", async () => {
   const projectRoot = await createProject({
-    controllers: `import { Controller, Ctx, Get } from "@aponiajs/common";
+    controllers: `import { Controller, Context, Get } from "@aponiajs/common";
 
 @Controller("whole")
 export class WholeController {
   @Get()
-  read(@Ctx() context: unknown): unknown {
+  read(@Context() context: unknown): unknown {
     return context;
   }
 }

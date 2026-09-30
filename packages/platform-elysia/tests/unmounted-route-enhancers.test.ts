@@ -2,9 +2,9 @@ import { expect, test } from "bun:test";
 import { Injectable, defineModule, provideClass, type CanActivate } from "@aponiajs/common";
 import {
   AponiaFactory,
-  defineElysiaController,
-  defineElysiaControllerRoutes,
-  elysiaController,
+  defineController,
+  defineControllerRoutes,
+  controller,
 } from "../src/index.ts";
 
 class CallbackController {
@@ -18,7 +18,7 @@ class CallbackController {
  * application and registers its own route, so the platform never compiled that
  * route and has nothing to attach a hook to.
  */
-const callbackController = elysiaController(CallbackController, (application) =>
+const callbackController = controller(CallbackController, (application) =>
   application.get("/callback-boom", () => {
     throw new Error("callback boom");
   }),
@@ -45,7 +45,7 @@ class PluginController {
   }
 }
 
-const pluginPlan = defineElysiaControllerRoutes(PluginController, {
+const pluginPlan = defineControllerRoutes(PluginController, {
   path: "plugin",
   routes: [
     {
@@ -61,7 +61,7 @@ const pluginPlan = defineElysiaControllerRoutes(PluginController, {
  * A low-level definition that owns an isolated plugin: bootstrap mounts it with
  * `use()`, and the plugin was built outside a boot, so it resolved no enhancer.
  */
-const pluginOnlyController = defineElysiaController(PluginController, {
+const pluginOnlyController = defineController(PluginController, {
   inject: [] as const,
   buildPlugin: (controller) => pluginPlan.buildPlugin(controller),
 });
@@ -79,7 +79,7 @@ class BootstrapController {
 }
 
 /** The same plan shape, mounted by bootstrap from its compiled plan. */
-const bootstrapPlan = defineElysiaControllerRoutes(BootstrapController, {
+const bootstrapPlan = defineControllerRoutes(BootstrapController, {
   path: "bootstrap",
   routes: [
     {

@@ -9,8 +9,8 @@ import {
   aponiaVersion,
   devtoolsContractVersion,
   devtoolsPathPrefix,
-  resolveElysiaVersion,
-  routeRequest,
+  resolvePeerVersion,
+  handleDevtoolsRequest,
   type AponiaMetaPayload,
   type DevtoolsHandlers,
 } from "../src/index.ts";
@@ -61,7 +61,7 @@ async function ask(
   path: string,
   handlers?: DevtoolsHandlers,
 ): Promise<Response> {
-  return await routeRequest(
+  return await handleDevtoolsRequest(
     new Request(`http://localhost${devtoolsPathPrefix}${path}`),
     handlers ?? createHandlers(application, undefined, undefined, silentLogger),
   );
@@ -88,7 +88,7 @@ const declaredFixtureModule: ModuleDefinition = defineModule({
 test("a non-GET method answers 405 before any path lookup", async () => {
   const handlers: DevtoolsHandlers = { "/meta": () => Response.json({ contract: 1 }) };
 
-  const inside = await routeRequest(
+  const inside = await handleDevtoolsRequest(
     new Request("http://127.0.0.1:1/__devtools/meta", { method: "POST" }),
     handlers,
   );
@@ -97,7 +97,7 @@ test("a non-GET method answers 405 before any path lookup", async () => {
 
   // The method decides before the path is read, so a path this surface does not
   // own answers 405 rather than 404.
-  const outside = await routeRequest(
+  const outside = await handleDevtoolsRequest(
     new Request("http://127.0.0.1:1/not-devtools", { method: "PUT" }),
     handlers,
   );
@@ -120,7 +120,10 @@ test("a path the dispatcher does not own answers 404", async () => {
   ];
 
   for (const path of paths) {
-    const response = await routeRequest(new Request(`http://127.0.0.1:1${path}`), handlers);
+    const response = await handleDevtoolsRequest(
+      new Request(`http://127.0.0.1:1${path}`),
+      handlers,
+    );
     expect(response.status).toBe(404);
   }
 });
@@ -131,13 +134,16 @@ test("the dispatcher hands the request to the handler it found, answer untouched
     "/teapot": () => new Response("short and stout", { status: 418 }),
   };
 
-  const searched = await routeRequest(
+  const searched = await handleDevtoolsRequest(
     new Request("http://127.0.0.1:1/__devtools/meta?verbose=1"),
     handlers,
   );
   expect(await searched.json()).toBe("?verbose=1");
 
-  const teapot = await routeRequest(new Request("http://127.0.0.1:1/__devtools/teapot"), handlers);
+  const teapot = await handleDevtoolsRequest(
+    new Request("http://127.0.0.1:1/__devtools/teapot"),
+    handlers,
+  );
   expect(teapot.status).toBe(418);
 });
 
@@ -230,7 +236,7 @@ test("a record from a copy of the platform older than the artifact stamps answer
 });
 
 test("the Elysia release resolves from the directory a running package sees", () => {
-  expect(resolveElysiaVersion(join(import.meta.dir, "..", "src", "server"))).toBe(
+  expect(resolvePeerVersion(join(import.meta.dir, "..", "src", "server"))).toBe(
     installedElysiaVersion,
   );
 });
@@ -266,7 +272,7 @@ test("a project that never installed Elysia reports no version, whatever the mac
     // reporting a release the application never ran against. The resolver reads
     // only a `node_modules` at or above the directory, so the answer here does
     // not depend on what this machine happens to have cached.
-    expect(resolveElysiaVersion(project.directory)).toBeNull();
+    expect(resolvePeerVersion(project.directory)).toBeNull();
   } finally {
     project.remove();
   }
@@ -276,7 +282,7 @@ test("a manifest that carries no version resolves to nothing rather than to an e
   const project = createStubProject(JSON.stringify({ name: "elysia" }));
 
   try {
-    expect(resolveElysiaVersion(project.directory)).toBeNull();
+    expect(resolvePeerVersion(project.directory)).toBeNull();
   } finally {
     project.remove();
   }
@@ -286,7 +292,7 @@ test("a manifest that cannot be read resolves to nothing rather than throwing", 
   const project = createStubProject("{ not json");
 
   try {
-    expect(resolveElysiaVersion(project.directory)).toBeNull();
+    expect(resolvePeerVersion(project.directory)).toBeNull();
   } finally {
     project.remove();
   }

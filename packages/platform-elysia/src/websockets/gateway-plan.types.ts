@@ -8,7 +8,7 @@ import type { ClassProvider, Token, WebSocketParameterMetadata } from "@aponiajs
  * gateway method plus the `@MessageBody()` and `@ConnectedSocket()` decorators
  * on its parameters.
  */
-export interface ElysiaWebSocketHandlerPlan {
+export interface WebSocketHandlerPlan {
   /** The event the handler subscribes to, exactly as `@SubscribeMessage(event)` declares it. */
   readonly event: string;
   /** The handler's property key, which is how the instance is looked up when a message arrives. */
@@ -27,7 +27,7 @@ export interface ElysiaWebSocketHandlerPlan {
  * A WebSocket gateway declared as data, the descriptor path's counterpart to
  * `@WebSocketGateway()` and its member decorators.
  *
- * `defineElysiaWebSocketGateway` is the factory that turns one of these into
+ * `defineWebSocketGateway` is the factory that turns one of these into
  * the provider a module declares, and it is what build-time descriptor
  * generation emits. A plan never registers itself: `websockets/websocket-gateway.ts`
  * stays the only module that calls `application.ws()`.
@@ -39,14 +39,14 @@ export interface ElysiaWebSocketHandlerPlan {
  * instance while a gateway is bound, and message results, exception frames, and
  * unknown-event handling are owned by the platform's dispatch.
  */
-export interface ElysiaWebSocketGatewayPlan {
+export interface WebSocketGatewayPlan {
   /**
    * The gateway's path. Omitting it means `/ws`, exactly as an argument-less
    * `@WebSocketGateway()` does.
    */
   readonly path?: string;
   /** The gateway's message handlers, in declaration order. */
-  readonly handlers?: readonly ElysiaWebSocketHandlerPlan[];
+  readonly handlers?: readonly WebSocketHandlerPlan[];
   /**
    * The instance properties that receive the root application, as
    * `@WebSocketServer()` marks them.
@@ -54,8 +54,8 @@ export interface ElysiaWebSocketGatewayPlan {
   readonly serverProperties?: readonly (string | symbol)[];
 }
 
-/** The options `defineElysiaWebSocketGateway` accepts. */
-export interface ElysiaWebSocketGatewayOptions<
+/** The options `defineWebSocketGateway` accepts. */
+export interface WebSocketGatewayOptions<
   TDependencies extends readonly Token<unknown>[] = readonly [],
 > {
   /** The tokens the container resolves the gateway's constructor with. */
@@ -63,7 +63,7 @@ export interface ElysiaWebSocketGatewayOptions<
   /** The gateway's path, or `undefined` for `/ws`. */
   readonly path?: string;
   /** The gateway's message handlers, in declaration order. */
-  readonly handlers?: readonly ElysiaWebSocketHandlerPlan[];
+  readonly handlers?: readonly WebSocketHandlerPlan[];
   /** The instance properties that receive the root application. */
   readonly serverProperties?: readonly (string | symbol)[];
 }
@@ -78,10 +78,10 @@ export interface ElysiaWebSocketGatewayOptions<
  * it carries instead of reading `@WebSocketGateway()` and `@SubscribeMessage()`
  * off `useClass`.
  */
-export interface DeclaredElysiaWebSocketGateway<
+export interface DeclaredWebSocketGateway<
   T,
   TDependencies extends readonly Token<unknown>[] = readonly [],
 > extends ClassProvider<T, TDependencies> {
   /** The gateway this provider declares. */
-  readonly gateway: ElysiaWebSocketGatewayPlan;
+  readonly gateway: WebSocketGatewayPlan;
 }

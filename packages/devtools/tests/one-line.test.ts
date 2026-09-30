@@ -7,7 +7,7 @@ import { oneLine } from "../src/logging/one-line.ts";
 // The rendering the two recorded surfaces state a thrown value through, imported
 // from the package's barrel because the last case below is the one place in this
 // suite that compares the two renderings rather than reading this one.
-import { renderLogValue } from "@aponiajs/common";
+import { formatLogValue } from "@aponiajs/common";
 
 /**
  * The one-line form of a thrown reason.
@@ -54,7 +54,7 @@ test("states a value that refuses to be read as unrenderable rather than throwin
 test("states the same literal as the framework's rendering for a value that refuses every read", () => {
   // This case pins the literal both state for a value that refuses every read:
   // `oneLine` answers it for a refusal at either read it makes, and
-  // `renderLogValue` for a value it cannot state. Nothing here is asserted about a
+  // `formatLogValue` for a value it cannot state. Nothing here is asserted about a
   // value that refuses less than everything.
   const refusal: Record<string, unknown> = {};
   refusal.self = refusal;
@@ -70,8 +70,8 @@ test("states the same literal as the framework's rendering for a value that refu
   });
 
   expect(oneLine(refusingEveryRead)).toBe("[unrenderable]");
-  expect(renderLogValue(refusingEveryRead)).toBe("[unrenderable]");
-  expect(oneLine(refusingEveryRead)).toBe(renderLogValue(refusingEveryRead));
+  expect(formatLogValue(refusingEveryRead)).toBe("[unrenderable]");
+  expect(oneLine(refusingEveryRead)).toBe(formatLogValue(refusingEveryRead));
 });
 
 test("states the literal for a refusal the shared rendering still states", () => {
@@ -85,6 +85,6 @@ test("states the literal for a refusal the shared rendering still states", () =>
     },
   };
 
-  expect(renderLogValue(refusingConversion)).toBe("{}");
+  expect(formatLogValue(refusingConversion)).toBe("{}");
   expect(oneLine(refusingConversion)).toBe("[unrenderable]");
 });

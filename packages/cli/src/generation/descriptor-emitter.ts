@@ -45,8 +45,8 @@ export const descriptorModuleFileName = "descriptors.generated.ts";
 const aponiaModuleSpecifier = "@aponiajs/common";
 const platformModuleSpecifier = "@aponiajs/platform-elysia";
 const defineModuleName = "defineModule";
-const defineControllerRoutesName = "defineElysiaControllerRoutes";
-const defineGatewayName = "defineElysiaWebSocketGateway";
+const defineControllerRoutesName = "defineControllerRoutes";
+const defineGatewayName = "defineWebSocketGateway";
 const provideClassName = "provideClass";
 
 /**
@@ -66,7 +66,7 @@ type DescriptorHelper =
  * The module each helper is imported from.
  *
  * `defineModule` and the provider helpers are `@aponiajs/common` contracts, but
- * `defineElysiaControllerRoutes` and `defineElysiaWebSocketGateway` are the
+ * `defineControllerRoutes` and `defineWebSocketGateway` are the
  * platform's own descriptor authoring surface, because compiling a declared
  * controller into native routes and a declared gateway into a native WebSocket
  * route is the platform's job. A generated file therefore imports from both
@@ -233,7 +233,7 @@ type ReferenceReading =
  * `reflect-metadata`, and that lowering is most of what an application does
  * before it can serve a request. This emitter writes the same descriptors as
  * literal source instead, so an application can boot without anyone reading
- * decorator metadata: `defineModule` and `defineElysiaControllerRoutes` are the
+ * decorator metadata: `defineModule` and `defineControllerRoutes` are the
  * platform's own descriptor authoring surface, and the generated module is
  * nothing more than a caller of them.
  *
@@ -589,7 +589,7 @@ function readEntryReference(
 }
 
 /**
- * Renders one declared controller through `defineElysiaControllerRoutes`.
+ * Renders one declared controller through `defineControllerRoutes`.
  *
  * The declared path is the decorator's own path, and the routes carry the facts
  * decorators read out of emitted metadata — the parameter bindings, whether a
@@ -857,7 +857,7 @@ function readsModel(
  * `provideClass` call with the dependencies the analysis read instead, which is
  * the reflection this artifact exists to remove. A class the build read as a
  * gateway is the other case: bootstrap discovers gateways by reflecting on
- * `useClass`, so the emitter writes `defineElysiaWebSocketGateway` with the same
+ * `useClass`, so the emitter writes `defineWebSocketGateway` with the same
  * plan that reflection would have produced.
  *
  * Everything else is copied verbatim, which is exactly what the runtime does with

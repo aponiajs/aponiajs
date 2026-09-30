@@ -1,12 +1,7 @@
 import { treaty, type Treaty } from "@elysia/eden";
 import { defineModule } from "@aponiajs/common";
 import { Elysia, t } from "elysia";
-import {
-  AponiaFactory,
-  defineElysiaController,
-  defineElysiaPlugin,
-  elysiaController,
-} from "../src/index.ts";
+import { AponiaFactory, defineController, definePlugin, controller } from "../src/index.ts";
 
 type VitePlusTest = typeof import("vite-plus/test");
 
@@ -23,7 +18,7 @@ class EdenConformanceController {
   }
 }
 
-const edenConformanceController = defineElysiaController(EdenConformanceController, {
+const edenConformanceController = defineController(EdenConformanceController, {
   inject: [] as const,
   buildPlugin: (controller) =>
     new Elysia({ name: "aponia-eden-conformance" }).get(
@@ -45,7 +40,7 @@ class RegisteredConformanceController {
   }
 }
 
-const registeredConformanceController = elysiaController(
+const registeredConformanceController = controller(
   RegisteredConformanceController,
   (application, controller) =>
     application.get(
@@ -60,7 +55,7 @@ const registeredConformanceController = elysiaController(
       ({ params }) => controller.read(params.id),
     ),
 );
-const edenConformancePlugin = defineElysiaPlugin(
+const edenConformancePlugin = definePlugin(
   new Elysia({ name: "aponia-eden-native-conformance" }).get(
     "/native-conformance",
     {

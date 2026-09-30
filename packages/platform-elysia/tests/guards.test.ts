@@ -12,11 +12,7 @@ import {
   type RequestMethod,
   type RouteContext,
 } from "@aponiajs/common";
-import {
-  AponiaFactory,
-  defineElysiaControllerRoutes,
-  type AponiaElysiaApplication,
-} from "../src/index.ts";
+import { AponiaFactory, defineControllerRoutes, type AponiaApplication } from "../src/index.ts";
 
 const calls: string[] = [];
 
@@ -202,7 +198,7 @@ const declaredGuardModule = defineModule({
   id: "DeclaredGuardModule",
   providers: [provideClass(DeclaredDenyGuard, [])],
   controllers: [
-    defineElysiaControllerRoutes(DeclaredController, {
+    defineControllerRoutes(DeclaredController, {
       path: "declared",
       routes: [{ method: "GET", path: "", propertyKey: "read", guards: [DeclaredDenyGuard] }],
     }),
@@ -215,7 +211,7 @@ const declaredOpenModule = defineModule({
   id: "DeclaredOpenModule",
   providers: [provideClass(GlobalDenyGuard, [])],
   controllers: [
-    defineElysiaControllerRoutes(DeclaredController, {
+    defineControllerRoutes(DeclaredController, {
       path: "declared-open",
       routes: [{ method: "GET", path: "", propertyKey: "read" }],
     }),
@@ -226,7 +222,7 @@ const declaredOpenModule = defineModule({
  * The hook object Elysia mounted for one path, which is what a boot compiled for
  * that route made observable.
  */
-function mountedHooks(application: AponiaElysiaApplication, path: string): Record<string, unknown> {
+function mountedHooks(application: AponiaApplication, path: string): Record<string, unknown> {
   const route = application
     .getNativeApplication()
     .routes.find((candidate) => candidate.path === path);

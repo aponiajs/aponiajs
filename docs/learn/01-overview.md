@@ -26,9 +26,9 @@ lowers one into the other. Dependencies run one way:
 `common ← core ← platform-elysia`.
 
 Descriptors are also a public API. An application can call `defineModule`,
-`elysiaController`, and the `provide*` helpers and skip decorators entirely.
+`controller`, and the `provide*` helpers and skip decorators entirely.
 The concise controller callback keeps native Elysia request inference without a
-manual context type or `typeof`. `defineElysiaController` remains the advanced
+manual context type or `typeof`. `defineController` remains the advanced
 descriptor form. Both paths stay supported.
 
 ## What exists today

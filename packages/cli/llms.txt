@@ -21,7 +21,7 @@ The `aponia` binary is the normal entry point. The same behavior is available pr
 - [parseArguments](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/cli/src/commands/arguments.ts): turns an argument vector into a `CliCommand`, rejecting unknown commands, schematics, options, and transports.
 - [generateProject](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/cli/src/generation/project-generator.ts): renders the application template into a new directory.
 - [generateSchematic](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/cli/src/generation/schematic-generator.ts): plans, renders, and registers one schematic.
-- [generateSchematics](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/cli/src/commands/command.constants.ts): the list of supported schematic names.
+- [schematicNames](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/cli/src/commands/command.constants.ts): the list of supported schematic names.
 
 ## Public types
 

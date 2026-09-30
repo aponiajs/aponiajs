@@ -5,7 +5,7 @@ import {
   type RouteParameterMetadata,
 } from "@aponiajs/common";
 import { z } from "zod";
-import { AponiaFactory, defineElysiaControllerRoutes, type ElysiaRoutePlan } from "../src/index.ts";
+import { AponiaFactory, defineControllerRoutes, type RoutePlan } from "../src/index.ts";
 
 type VitePlusTest = typeof import("vite-plus/test");
 type Equals<TLeft, TRight> =
@@ -41,7 +41,7 @@ class ConformanceDeclaredController {
   }
 }
 
-const conformanceRoutes: readonly ElysiaRoutePlan[] = [
+const conformanceRoutes: readonly RoutePlan[] = [
   {
     method: "GET",
     path: ":id",
@@ -64,24 +64,24 @@ const conformanceRoutes: readonly ElysiaRoutePlan[] = [
  * behaviour they produce.
  */
 type RouteParameterAssertion = Expect<
-  Equals<ElysiaRoutePlan["parameters"], readonly RouteParameterMetadata[] | undefined>
+  Equals<RoutePlan["parameters"], readonly RouteParameterMetadata[] | undefined>
 >;
-type TakesContextAssertion = Expect<Equals<ElysiaRoutePlan["takesContext"], boolean | undefined>>;
+type TakesContextAssertion = Expect<Equals<RoutePlan["takesContext"], boolean | undefined>>;
 type GuardsAssertion = Expect<
-  Equals<ElysiaRoutePlan["guards"], readonly ClassToken<unknown>[] | undefined>
+  Equals<RoutePlan["guards"], readonly ClassToken<unknown>[] | undefined>
 >;
 type InterceptorsAssertion = Expect<
-  Equals<ElysiaRoutePlan["interceptors"], readonly ClassToken<unknown>[] | undefined>
+  Equals<RoutePlan["interceptors"], readonly ClassToken<unknown>[] | undefined>
 >;
 type FiltersAssertion = Expect<
-  Equals<ElysiaRoutePlan["filters"], readonly ClassToken<unknown>[] | undefined>
+  Equals<RoutePlan["filters"], readonly ClassToken<unknown>[] | undefined>
 >;
 
 const conformanceModule = defineModule({
   id: "ConformanceDeclaredModule",
   providers: [provideClass(ConformanceDeclaredService, [])],
   controllers: [
-    defineElysiaControllerRoutes(ConformanceDeclaredController, {
+    defineControllerRoutes(ConformanceDeclaredController, {
       path: "/declared",
       inject: [ConformanceDeclaredService],
       routes: conformanceRoutes,
@@ -146,11 +146,11 @@ class ConformanceSecondClaim {
 const conformanceClaimingModule = defineModule({
   id: "ConformanceClaimingModule",
   controllers: [
-    defineElysiaControllerRoutes(ConformanceFirstClaim, {
+    defineControllerRoutes(ConformanceFirstClaim, {
       path: "/claim",
       routes: [{ method: "GET", path: ":id", propertyKey: "read" }],
     }),
-    defineElysiaControllerRoutes(ConformanceSecondClaim, {
+    defineControllerRoutes(ConformanceSecondClaim, {
       path: "/claim",
       routes: [{ method: "GET", path: ":id", propertyKey: "read" }],
     }),

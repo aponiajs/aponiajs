@@ -28,17 +28,15 @@ export const Headers = createParameterDecorator("headers");
 /** Injects the request cookies, or the value of a single named cookie. */
 export const Cookie = createParameterDecorator("cookie");
 /** Injects application state, or one named state value. */
-export const Store = createParameterDecorator("store");
+export const State = createParameterDecorator("store");
 /** Injects the whole platform request context. */
-export const Ctx = createParameterDecorator("context");
+export const Context = createParameterDecorator("context");
 /** Injects the native `Request`. */
 export const Req = createParameterDecorator("request");
 /** Injects the mutable response settings using the platform context name. */
-export const Set = createParameterDecorator("set");
-/** Nest-style alias for `Set`. */
-export const Res = Set;
+export const ResponseSettings = createParameterDecorator("set");
 /** Injects the platform's type-narrowing response status helper. */
-export const Status = createParameterDecorator("status");
+export const HttpStatus = createParameterDecorator("status");
 
 export function getRouteParameterMetadata(
   target: ClassToken<unknown>,

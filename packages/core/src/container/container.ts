@@ -1,12 +1,12 @@
 import {
   AponiaError,
-  tokenName,
+  getTokenName,
   type ControllerDefinition,
   type ModuleDefinition,
   type Provider,
   type Token,
 } from "@aponiajs/common";
-import { providerDependencies } from "../graph/dependencies.ts";
+import { getProviderDependencies } from "../graph/dependencies.ts";
 import { compileModuleGraph } from "../graph/graph-compiler.ts";
 import type { ProviderLocation } from "../graph/graph.types.ts";
 import type { ModuleGraph } from "../graph/module-graph.ts";
@@ -69,7 +69,7 @@ export class AponiaContainer {
     );
     if (cycleIndex >= 0) {
       const cycle = [...this.#resolving.slice(cycleIndex), location].map(
-        (item) => `${item.module.id}:${tokenName(item.provider.provide)}`,
+        (item) => `${item.module.id}:${getTokenName(item.provider.provide)}`,
       );
       throw new AponiaError(
         "PROVIDER_CYCLE",
@@ -80,7 +80,7 @@ export class AponiaContainer {
 
     this.#resolving.push(location);
     try {
-      const dependencies = providerDependencies(location.provider).map((dependency) =>
+      const dependencies = getProviderDependencies(location.provider).map((dependency) =>
         this.#resolve(this.graph.locate(location.module, dependency)),
       );
       const instance = instantiate(location.provider, dependencies);

@@ -19,13 +19,13 @@ import {
 import { createContainer } from "@aponiajs/core";
 import { Elysia } from "elysia";
 import {
-  bindElysiaWebSocketGateway,
-  compileElysiaWebSocketGateways,
-  registerElysiaWebSocketGateways,
+  bindWebSocketGateway,
+  compileWebSocketGateways,
+  registerWebSocketGateways,
 } from "../src/websockets/websocket-gateway.ts";
-import { AponiaFactory, ElysiaPluginModule, defineElysiaController } from "../src/index.ts";
-import { defineElysiaWebSocketGateway, inspectAponiaApplication } from "../src/index.ts";
-import type { ElysiaWebSocket } from "../src/websockets/websocket-gateway.types.ts";
+import { AponiaFactory, PluginModule, defineController } from "../src/index.ts";
+import { defineWebSocketGateway, inspectAponiaApplication } from "../src/index.ts";
+import type { WebSocketClient } from "../src/websockets/websocket-gateway.types.ts";
 
 class RecordingSocket {
   readonly sent: unknown[] = [];
@@ -37,9 +37,9 @@ class RecordingSocket {
 }
 
 interface NativeWebSocketCallbacks {
-  readonly open: (socket: ElysiaWebSocket) => unknown;
-  readonly message: (socket: ElysiaWebSocket, message: unknown) => unknown;
-  readonly close: (socket: ElysiaWebSocket) => unknown;
+  readonly open: (socket: WebSocketClient) => unknown;
+  readonly message: (socket: WebSocketClient, message: unknown) => unknown;
+  readonly close: (socket: WebSocketClient) => unknown;
 }
 
 @WebSocketGateway(" events/ ")
@@ -65,7 +65,7 @@ class EventsGateway {
   @SubscribeMessage("echo")
   echo(
     @MessageBody("value") value: unknown,
-    @ConnectedSocket() socket: ElysiaWebSocket,
+    @ConnectedSocket() socket: WebSocketClient,
   ): WsResponse {
     return { event: "echo.result", data: { value, connected: socket !== undefined } };
   }
@@ -132,7 +132,7 @@ class MemoryLogger implements LoggerService {
 }
 
 test("discovers a decorated custom-token class provider and mounts its canonical path", async () => {
-  const compiled = compileElysiaWebSocketGateways([eventsModule]);
+  const compiled = compileWebSocketGateways([eventsModule]);
   const container = createContainer(eventsModule);
   const application = new Elysia();
 
@@ -143,7 +143,7 @@ test("discovers a decorated custom-token class provider and mounts its canonical
   expect(Object.isFrozen(compiled[0])).toBe(true);
   expect(Object.isFrozen(compiled[0]?.handlers)).toBe(true);
 
-  await registerElysiaWebSocketGateways(application, container, compiled);
+  await registerWebSocketGateways(application, container, compiled);
   const instance = container.resolveModuleProvider(eventsModule, eventsToken);
 
   expect(application.routes.filter((route) => route.method === "WS")).toHaveLength(1);
@@ -182,11 +182,11 @@ test("forwards native Elysia WebSocket callbacks into the bound gateway", async 
     },
   } as unknown as Elysia;
   const container = createContainer(eventsModule);
-  const compiled = compileElysiaWebSocketGateways([eventsModule]);
+  const compiled = compileWebSocketGateways([eventsModule]);
   const recording = new RecordingSocket();
-  const socket = recording as unknown as ElysiaWebSocket;
+  const socket = recording as unknown as WebSocketClient;
 
-  await registerElysiaWebSocketGateways(nativeApplication, container, compiled);
+  await registerWebSocketGateways(nativeApplication, container, compiled);
   await callbacks!.open(socket);
   await callbacks!.message(socket, { event: "value", data: "native" });
   await callbacks!.close(socket);
@@ -200,12 +200,12 @@ test("forwards native Elysia WebSocket callbacks into the bound gateway", async 
 });
 
 test("binds lifecycle and every supported message return shape without reflection", async () => {
-  const compiled = compileElysiaWebSocketGateways([eventsModule]);
+  const compiled = compileWebSocketGateways([eventsModule]);
   const container = createContainer(eventsModule);
   const instance = container.resolveModuleProvider(eventsModule, eventsToken);
-  const bound = bindElysiaWebSocketGateway(compiled[0]!, instance);
+  const bound = bindWebSocketGateway(compiled[0]!, instance);
   const recording = new RecordingSocket();
-  const socket = recording as unknown as ElysiaWebSocket;
+  const socket = recording as unknown as WebSocketClient;
 
   await bound.initialize(new Elysia());
   await bound.open(socket);
@@ -234,12 +234,12 @@ test("binds lifecycle and every supported message return shape without reflectio
 });
 
 test("sends stable exception envelopes for malformed, unknown, and failed messages", async () => {
-  const gateway = compileElysiaWebSocketGateways([eventsModule])[0]!;
+  const gateway = compileWebSocketGateways([eventsModule])[0]!;
   const container = createContainer(eventsModule);
   const instance = container.resolveModuleProvider(eventsModule, eventsToken);
-  const bound = bindElysiaWebSocketGateway(gateway, instance);
+  const bound = bindWebSocketGateway(gateway, instance);
   const recording = new RecordingSocket();
-  const socket = recording as unknown as ElysiaWebSocket;
+  const socket = recording as unknown as WebSocketClient;
 
   await bound.message(socket, "not-json");
   await bound.message(socket, null);
@@ -304,11 +304,11 @@ test("contains rejected connection and disconnect lifecycle hooks", async () => 
     useClass: RejectingGateway as Constructor<unknown, never[]>,
   });
   const module = defineModule({ id: "RejectingModule", providers: [provider] });
-  const gateway = compileElysiaWebSocketGateways([module])[0]!;
+  const gateway = compileWebSocketGateways([module])[0]!;
   const instance = createContainer(module).resolveModuleProvider(module, RejectingGateway);
-  const bound = bindElysiaWebSocketGateway(gateway, instance);
+  const bound = bindWebSocketGateway(gateway, instance);
   const recording = new RecordingSocket();
-  const socket = recording as unknown as ElysiaWebSocket;
+  const socket = recording as unknown as WebSocketClient;
 
   await Promise.resolve(bound.open(socket));
   expect(bound.close(socket)).toBeUndefined();
@@ -336,7 +336,7 @@ test("ignores decorated classes that are not registered as class providers", () 
     providers: [provideValue(createToken<EventsGateway>("value-gateway"), new EventsGateway())],
   });
 
-  expect(compileElysiaWebSocketGateways([valueModule])).toEqual([]);
+  expect(compileWebSocketGateways([valueModule])).toEqual([]);
 });
 
 test("rejects duplicate canonical gateway paths and native Elysia WS routes", async () => {
@@ -352,14 +352,14 @@ test("rejects duplicate canonical gateway paths and native Elysia WS routes", as
   const secondModule = defineModule({ id: "SecondModule", providers: [second] });
 
   expectAponiaCode(
-    () => compileElysiaWebSocketGateways([firstModule, secondModule]),
+    () => compileWebSocketGateways([firstModule, secondModule]),
     "DUPLICATE_WEBSOCKET_GATEWAY",
   );
 
-  const compiled = compileElysiaWebSocketGateways([firstModule]);
+  const compiled = compileWebSocketGateways([firstModule]);
   const application = new Elysia().ws("//duplicate//", { message() {} });
   try {
-    await registerElysiaWebSocketGateways(application, createContainer(firstModule), compiled);
+    await registerWebSocketGateways(application, createContainer(firstModule), compiled);
     throw new Error("Expected a native WebSocket collision.");
   } catch (error) {
     expect(error).toBeInstanceOf(AponiaError);
@@ -378,7 +378,7 @@ test("waits for promised native plugins before checking WebSocket route collisio
   @WebSocketGateway("/promised-collision")
   class PromisedCollisionGateway {}
 
-  const promisedPlugin = ElysiaPluginModule.register(
+  const promisedPlugin = PluginModule.register(
     Promise.resolve(new Elysia().ws("/promised-collision", { message() {} })),
   );
   @Module({
@@ -406,7 +406,7 @@ test("mounts gateways after promised native plugins finish composing", async () 
   @WebSocketGateway("/after-promised-plugin")
   class GatewayAfterPromisedPlugin {}
 
-  const promisedPlugin = ElysiaPluginModule.register(
+  const promisedPlugin = PluginModule.register(
     Promise.resolve(new Elysia().get("/promised-plugin-ready", () => "ready")),
   );
 
@@ -438,7 +438,7 @@ test("includes controller-owned native routes in WebSocket collision checks", as
   class ControllerCollisionGateway {}
 
   class NativeWebSocketController {}
-  const nativeWebSocketController = defineElysiaController(NativeWebSocketController, {
+  const nativeWebSocketController = defineController(NativeWebSocketController, {
     inject: [] as const,
     buildPlugin: () => new Elysia().ws("/controller-collision", { message() {} }),
   });
@@ -476,7 +476,7 @@ test("rejects duplicate events, invalid definitions, and invalid resolved instan
     providers: [classProvider(DuplicateHandlerGateway)],
   });
   expectAponiaCode(
-    () => compileElysiaWebSocketGateways([duplicateModule]),
+    () => compileWebSocketGateways([duplicateModule]),
     "DUPLICATE_WEBSOCKET_HANDLER",
   );
 
@@ -490,19 +490,16 @@ test("rejects duplicate events, invalid definitions, and invalid resolved instan
     id: "InvalidHandlerModule",
     providers: [classProvider(InvalidHandlerGateway)],
   });
-  expectAponiaCode(
-    () => compileElysiaWebSocketGateways([invalidModule]),
-    "INVALID_WEBSOCKET_GATEWAY",
-  );
+  expectAponiaCode(() => compileWebSocketGateways([invalidModule]), "INVALID_WEBSOCKET_GATEWAY");
 
-  const compiled = compileElysiaWebSocketGateways([eventsModule])[0]!;
+  const compiled = compileWebSocketGateways([eventsModule])[0]!;
   const invalidInstance = Object.create(EventsGateway.prototype) as Record<string, unknown>;
   invalidInstance.echo = 0;
   expectAponiaCode(
-    () => bindElysiaWebSocketGateway(compiled, invalidInstance),
+    () => bindWebSocketGateway(compiled, invalidInstance),
     "INVALID_WEBSOCKET_GATEWAY",
   );
-  expectAponiaCode(() => bindElysiaWebSocketGateway(compiled, null), "INVALID_WEBSOCKET_GATEWAY");
+  expectAponiaCode(() => bindWebSocketGateway(compiled, null), "INVALID_WEBSOCKET_GATEWAY");
 });
 
 test("rejects invalid paths, duplicate parameters, lifecycle members, and server targets", async () => {
@@ -518,7 +515,7 @@ test("rejects invalid paths, duplicate parameters, lifecycle members, and server
     providers: [classProvider(InvalidPathGateway)],
   });
   expectAponiaCode(
-    () => compileElysiaWebSocketGateways([invalidPathModule]),
+    () => compileWebSocketGateways([invalidPathModule]),
     "INVALID_WEBSOCKET_GATEWAY",
   );
 
@@ -534,15 +531,15 @@ test("rejects invalid paths, duplicate parameters, lifecycle members, and server
     providers: [classProvider(DuplicateParameterGateway)],
   });
   expectAponiaCode(
-    () => compileElysiaWebSocketGateways([duplicateParameterModule]),
+    () => compileWebSocketGateways([duplicateParameterModule]),
     "INVALID_WEBSOCKET_GATEWAY",
   );
 
-  const compiled = compileElysiaWebSocketGateways([eventsModule])[0]!;
+  const compiled = compileWebSocketGateways([eventsModule])[0]!;
   const invalidLifecycle = new EventsGateway() as unknown as Record<PropertyKey, unknown>;
   invalidLifecycle.handleConnection = 1;
   expectAponiaCode(
-    () => bindElysiaWebSocketGateway(compiled, invalidLifecycle),
+    () => bindWebSocketGateway(compiled, invalidLifecycle),
     "INVALID_WEBSOCKET_GATEWAY",
   );
 
@@ -552,7 +549,7 @@ test("rejects invalid paths, duplicate parameters, lifecycle members, and server
     value: undefined,
     writable: false,
   });
-  const lockedGateway = bindElysiaWebSocketGateway(compiled, lockedServer);
+  const lockedGateway = bindWebSocketGateway(compiled, lockedServer);
   expectAponiaCode(() => lockedGateway.initialize(new Elysia()), "INVALID_WEBSOCKET_GATEWAY");
 
   const hostileServer = new Proxy(new EventsGateway(), {
@@ -560,7 +557,7 @@ test("rejects invalid paths, duplicate parameters, lifecycle members, and server
       throw new Error("hostile server property");
     },
   });
-  const hostileGateway = bindElysiaWebSocketGateway(compiled, hostileServer);
+  const hostileGateway = bindWebSocketGateway(compiled, hostileServer);
   expectAponiaCode(() => hostileGateway.initialize(new Elysia()), "INVALID_WEBSOCKET_GATEWAY");
 
   @WebSocketGateway("/")
@@ -569,9 +566,9 @@ test("rejects invalid paths, duplicate parameters, lifecycle members, and server
     id: "EmptyModule",
     providers: [classProvider(EmptyGateway)],
   });
-  const emptyPlan = compileElysiaWebSocketGateways([emptyModule])[0]!;
-  const emptyBound = bindElysiaWebSocketGateway(emptyPlan, new EmptyGateway());
-  const socket = new RecordingSocket() as unknown as ElysiaWebSocket;
+  const emptyPlan = compileWebSocketGateways([emptyModule])[0]!;
+  const emptyBound = bindWebSocketGateway(emptyPlan, new EmptyGateway());
+  const socket = new RecordingSocket() as unknown as WebSocketClient;
 
   expect(emptyPlan.path).toBe("/");
   expect(await emptyBound.initialize(new Elysia())).toBeUndefined();
@@ -606,7 +603,7 @@ class DeclaredEventsGateway {
     this.lifecycle.push("close");
   }
 
-  echo(value: unknown, socket: ElysiaWebSocket): WsResponse {
+  echo(value: unknown, socket: WebSocketClient): WsResponse {
     return { event: "echo.result", data: { value, connected: socket !== undefined } };
   }
 
@@ -645,7 +642,7 @@ class DeclaredEventsGateway {
  * entries carry every field the platform's metadata requires — and the tests
  * below are what prove a gateway declared this way behaves as a decorated one.
  */
-const declaredEventsProvider = defineElysiaWebSocketGateway(DeclaredEventsGateway, {
+const declaredEventsProvider = defineWebSocketGateway(DeclaredEventsGateway, {
   path: "/events",
   serverProperties: ["server"],
   handlers: [
@@ -675,8 +672,8 @@ const declaredEventsModule = defineModule({
 });
 
 test("binds a declared gateway provider into the same plan a decorated one compiles to", () => {
-  const decorated = compileElysiaWebSocketGateways([eventsModule]);
-  const declared = compileElysiaWebSocketGateways([declaredEventsModule]);
+  const decorated = compileWebSocketGateways([eventsModule]);
+  const declared = compileWebSocketGateways([declaredEventsModule]);
 
   expect(declared).toHaveLength(1);
   expect(Object.isFrozen(declared[0])).toBe(true);
@@ -739,7 +736,7 @@ test("rejects declared gateways with the same codes and at the same point as dec
 
   expectAponiaCode(
     () =>
-      compileElysiaWebSocketGateways([
+      compileWebSocketGateways([
         declared("FirstDeclaredModule", { path: "/declared-duplicate" }),
         declared("SecondDeclaredModule", { path: "declared-duplicate/" }),
       ]),
@@ -749,17 +746,13 @@ test("rejects declared gateways with the same codes and at the same point as dec
   // The path is claimed by a decorated gateway and a declared one in the same
   // application, which is the collision the check exists for.
   expectAponiaCode(
-    () =>
-      compileElysiaWebSocketGateways([
-        eventsModule,
-        declared("DeclaredModule", { path: "events/" }),
-      ]),
+    () => compileWebSocketGateways([eventsModule, declared("DeclaredModule", { path: "events/" })]),
     "DUPLICATE_WEBSOCKET_GATEWAY",
   );
 
   expectAponiaCode(
     () =>
-      compileElysiaWebSocketGateways([
+      compileWebSocketGateways([
         declared("DuplicateEventModule", {
           handlers: [
             { event: "declared", propertyKey: "echo" },
@@ -782,7 +775,7 @@ test("rejects declared gateways with the same codes and at the same point as dec
     { handlers: [{ event: "declared", propertyKey: "echo", parameters: "not-an-array" }] },
   ]) {
     expectAponiaCode(
-      () => compileElysiaWebSocketGateways([declared("InvalidDeclaredModule", gateway)]),
+      () => compileWebSocketGateways([declared("InvalidDeclaredModule", gateway)]),
       "INVALID_WEBSOCKET_GATEWAY",
     );
   }
@@ -804,7 +797,7 @@ test("boots a declared and a decorated gateway in one application", async () => 
 
   @Module({
     providers: [
-      defineElysiaWebSocketGateway(DeclaredEventsGateway, {
+      defineWebSocketGateway(DeclaredEventsGateway, {
         path: "/declared-mixed",
         handlers: [
           {
@@ -847,14 +840,14 @@ async function runGatewayScript(
   module: Parameters<typeof createContainer>[0],
   token: Token<unknown>,
 ): Promise<GatewayScript> {
-  const compiled = compileElysiaWebSocketGateways([module])[0]!;
+  const compiled = compileWebSocketGateways([module])[0]!;
   const instance = createContainer(module).resolveModuleProvider(module, token) as {
     server?: unknown;
     lifecycle: string[];
   };
-  const bound = bindElysiaWebSocketGateway(compiled, instance);
+  const bound = bindWebSocketGateway(compiled, instance);
   const recording = new RecordingSocket();
-  const socket = recording as unknown as ElysiaWebSocket;
+  const socket = recording as unknown as WebSocketClient;
   const application = new Elysia();
 
   await bound.initialize(application);

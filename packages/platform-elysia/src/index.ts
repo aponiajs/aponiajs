@@ -1,7 +1,7 @@
-export { AponiaElysiaApplication } from "./application/aponia-elysia-application.ts";
+export { AponiaApplication } from "./application/aponia-elysia-application.ts";
 export { AponiaFactory } from "./application/aponia-factory.ts";
-export { readApplicationDiagnostics } from "./application/application-diagnostics.ts";
-export { readApplicationFromStore } from "./application/application-container.ts";
+export { getApplicationDiagnostics } from "./application/application-diagnostics.ts";
+export { getApplicationFromStore } from "./application/application-container.ts";
 export type {
   AponiaApplicationDiagnostics,
   AponiaArtifactProvenance,
@@ -12,10 +12,10 @@ export type {
 export type {
   AponiaApplicationOptions,
   ConfiguredAponiaApplicationOptions,
-  ElysiaCompilationOptions,
-  NativeElysiaConfigurator,
+  RouteCompilationOptions,
+  ElysiaConfigurator,
 } from "./application/application.types.ts";
-export type { AponiaNativeApplication } from "./application/native-application.types.ts";
+export type { ElysiaApplication } from "./application/native-application.types.ts";
 export { provideConfiguration } from "./configuration/provider.ts";
 export { compileRootModule } from "./modules/module-compiler.ts";
 export type { AponiaRootModule } from "./modules/module-compiler.types.ts";
@@ -32,38 +32,35 @@ export type {
   AponiaRouteParameterInspection,
 } from "./inspection/application-inspection.types.ts";
 export type {
-  ElysiaInputSchema,
-  ElysiaPluginSource,
-  ElysiaPluginTypes,
-  ElysiaRouteContext,
-  ElysiaSet,
-  ElysiaStatus,
-  ElysiaStore,
+  RouteInputSchema,
+  PluginSource,
+  PluginTypes,
+  HandlerContext,
+  ElysiaResponseSettings,
+  ResponseStatus,
+  AppState,
 } from "./routing/route-context.types.ts";
-export type {
-  AponiaControllerInvokerFactory,
-  AponiaRouteInvoker,
-} from "./routing/route-compiler.types.ts";
+export type { ControllerHandlerFactory, RouteHandler } from "./routing/route-compiler.types.ts";
 export type { AponiaInvokerArtifact } from "./routing/invoker-artifact.types.ts";
-export type { ElysiaRoutePlan } from "./routing/route-plan.types.ts";
+export type { RoutePlan } from "./routing/route-plan.types.ts";
 export { downloadFile } from "./routing/download-file.ts";
 export type { DownloadFileOptions } from "./routing/download-file.types.ts";
-export { defineElysiaControllerRoutes } from "./controllers/controller-definition.ts";
+export { defineControllerRoutes } from "./controllers/controller-definition.ts";
 export {
-  ELYSIA_CONTROLLER,
-  defineElysiaController,
-  elysiaController,
+  CONTROLLER_KIND,
+  defineController,
+  controller,
 } from "./controllers/controller-definition.ts";
-export type { InterceptorHalves } from "./controllers/enhancer-resolver.ts";
+export type { InterceptorPhases } from "./controllers/enhancer-resolver.ts";
 export type {
-  ElysiaControllerRegistrationResult,
-  ElysiaControllerDefinition,
-  ElysiaControllerPluginOptions,
-  ElysiaControllerRegistrationOptions,
-  ElysiaControllerRoutesOptions,
-  DeclaredElysiaControllerDefinition,
-  RegisteredElysiaControllerDefinition,
-  RegisteredElysiaApplication,
+  ControllerRegistrationResult,
+  ControllerDescriptor,
+  ControllerPluginOptions,
+  ControllerRegistrationOptions,
+  ControllerRoutesOptions,
+  DeclaredControllerDefinition,
+  RegisteredControllerDefinition,
+  RegisteredApplication,
 } from "./controllers/controller.types.ts";
 export { HttpError, httpError, httpErrors } from "./errors/http-error.ts";
 export type { HttpErrorFactories } from "./errors/http-error.ts";
@@ -76,21 +73,18 @@ export type {
   ProblemDetails,
   ResolveHttpErrorStatus,
 } from "./errors/http-error.types.ts";
-export { ElysiaPluginModule, defineElysiaPlugin } from "./plugins/plugin-module.ts";
+export { PluginModule, definePlugin } from "./plugins/plugin-module.ts";
 export type {
-  AsyncElysiaPluginModuleOptions,
-  ElysiaPluginImport,
-  ElysiaPluginModuleOptions,
-  NativeElysiaPlugin,
+  AsyncPluginModuleOptions,
+  PluginImport,
+  PluginModuleOptions,
+  ElysiaPlugin,
 } from "./plugins/plugin.types.ts";
-export { defineElysiaWebSocketGateway } from "./websockets/gateway-definition.ts";
+export { defineWebSocketGateway } from "./websockets/gateway-definition.ts";
 export type {
-  DeclaredElysiaWebSocketGateway,
-  ElysiaWebSocketGatewayOptions,
-  ElysiaWebSocketGatewayPlan,
-  ElysiaWebSocketHandlerPlan,
+  DeclaredWebSocketGateway,
+  WebSocketGatewayOptions,
+  WebSocketGatewayPlan,
+  WebSocketHandlerPlan,
 } from "./websockets/gateway-plan.types.ts";
-export type {
-  ElysiaWebSocket,
-  ElysiaWebSocketServer,
-} from "./websockets/websocket-gateway.types.ts";
+export type { WebSocketClient, WebSocketServerRef } from "./websockets/websocket-gateway.types.ts";

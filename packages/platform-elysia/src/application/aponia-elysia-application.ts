@@ -4,7 +4,7 @@ import { reportThroughLogger } from "../errors/default-exception-filter.ts";
 import { readApplicationToken } from "./application-container.ts";
 import { readApplicationShutdown } from "./lifecycle-hooks.ts";
 
-export class AponiaElysiaApplication<TNativeApplication extends AnyElysia = Elysia> {
+export class AponiaApplication<TNativeApplication extends AnyElysia = Elysia> {
   readonly #nativeApplication: TNativeApplication;
   readonly #logger: LoggerService | undefined;
 

@@ -1,6 +1,6 @@
 import { expect, spyOn, test } from "bun:test";
 import { Logger, Module, type LoggerService } from "@aponiajs/common";
-import { AponiaFactory, type AponiaElysiaApplication } from "@aponiajs/platform-elysia";
+import { AponiaFactory, type AponiaApplication } from "@aponiajs/platform-elysia";
 import { Elysia } from "elysia";
 // The reachability check the tap is reached through, imported from its own module
 // because it is marked `@internal` and deliberately kept off the barrel for this
@@ -10,11 +10,11 @@ import {
   DevtoolsModule,
   createLogBuffer,
   devtoolsPathPrefix,
-  routeRequest,
-  tapLogBuffer,
+  handleDevtoolsRequest,
+  recordLogger,
   type AponiaLogsPayload,
   type LogEntry,
-  type TappedLogStream,
+  type LogStream,
 } from "../src/index.ts";
 // The handler record the mounted route answers through, from the module that owns
 // it rather than the barrel: the surface is a route an application mounts, and
@@ -173,7 +173,7 @@ test("the tap records each line and still writes it through the same logger", ()
   const { logger, calls } = fakeLogger();
   const buffer = createLogBuffer(4);
 
-  const tapped = tapLogBuffer(logger, buffer);
+  const tapped = recordLogger(logger, buffer);
 
   // The stream that records it is the answer, and the logger is the object the
   // caller already held: the lines written through that reference are the lines
@@ -208,7 +208,7 @@ test("a line is recorded even when the logger's own write throws", () => {
       throw new Error("the console is closed");
     },
   };
-  tapLogBuffer(logger, buffer);
+  recordLogger(logger, buffer);
 
   // The failure is the logger's own and still reaches the caller, because the
   // method that was already there is the one that ran. The line it failed to
@@ -228,7 +228,7 @@ test("a line is recorded even when the logger's own write throws", () => {
 test("a context the caller did not name is recorded as empty, with an ISO timestamp", () => {
   const { logger } = fakeLogger();
   const buffer = createLogBuffer(4);
-  tapLogBuffer(logger, buffer);
+  recordLogger(logger, buffer);
 
   logger.log("serving", 1024, "RouterExplorer");
   logger.error("storage is full");
@@ -249,7 +249,7 @@ test("a context the caller did not name is recorded as empty, with an ISO timest
 test("a message is projected to text whatever the logger was handed", () => {
   const { logger } = fakeLogger();
   const buffer = createLogBuffer(8);
-  tapLogBuffer(logger, buffer);
+  recordLogger(logger, buffer);
 
   const circular: Record<string, unknown> = {};
   circular.self = circular;
@@ -283,11 +283,11 @@ test("one logger records into one stream, so a line is never recorded or printed
   const first = createLogBuffer(4);
   const second = createLogBuffer(4);
 
-  expect(tapLogBuffer(logger, first)?.buffer).toBe(first);
+  expect(recordLogger(logger, first)?.buffer).toBe(first);
   // A second registration naming the same logger is answered with the stream that
   // is already recording, so the lines a client polls and the lines the logger
   // writes cannot drift apart.
-  expect(tapLogBuffer(logger, second)?.buffer).toBe(first);
+  expect(recordLogger(logger, second)?.buffer).toBe(first);
 
   logger.log("once");
 
@@ -301,7 +301,7 @@ test("a logger no level could be patched on is answered with no stream, not an e
   const buffer = createLogBuffer(4);
   Object.freeze(logger);
 
-  const tapped = tapLogBuffer(logger, buffer);
+  const tapped = recordLogger(logger, buffer);
 
   // Nothing was installed, so the buffer will never hold a line: handing it back
   // would be an empty stream published over a logger that goes on printing, which
@@ -314,7 +314,7 @@ test("a logger no level could be patched on is answered with no stream, not an e
   expect(buffer.since(0).entries).toEqual([]);
   // A logger nothing could be installed on is not remembered as one that has a
   // stream, so a later tap retries and answers the same absence.
-  expect(tapLogBuffer(logger, buffer)).toBeUndefined();
+  expect(recordLogger(logger, buffer)).toBeUndefined();
 });
 
 test("a logger that refuses one assignment is still recorded and published", () => {
@@ -329,7 +329,7 @@ test("a logger that refuses one assignment is still recorded and published", () 
     writable: false,
   });
 
-  const tapped = tapLogBuffer(logger, buffer);
+  const tapped = recordLogger(logger, buffer);
 
   // The stream is the answer, and that is the boundary this pins: the absence
   // belongs to a logger no level could be patched on, not to every refusal. A
@@ -376,7 +376,7 @@ test("a logger whose first level refuses while a later level accepts is still pu
     writable: false,
   });
 
-  const tapped = tapLogBuffer(logger, buffer);
+  const tapped = recordLogger(logger, buffer);
 
   expect(tapped?.buffer).toBe(buffer);
   expect(tapped?.levels).not.toContain("log");
@@ -401,7 +401,7 @@ test("a stream names the levels the tap reached", () => {
     configurable: true,
   });
 
-  const tapped = tapLogBuffer(logger, createLogBuffer(4));
+  const tapped = recordLogger(logger, createLogBuffer(4));
 
   expect(tapped?.levels).toContain("log");
   expect(tapped?.levels).not.toContain("debug");
@@ -435,7 +435,7 @@ test("a level that refuses its assignment does not cost the levels after it", ()
     writable: false,
   });
 
-  const tapped = tapLogBuffer(logger, createLogBuffer(4));
+  const tapped = recordLogger(logger, createLogBuffer(4));
 
   expect(tapped?.levels).toContain("log");
   expect(tapped?.levels).not.toContain("error");
@@ -472,7 +472,7 @@ test("a level whose read throws does not escape the tap", () => {
   });
 
   const buffer = createLogBuffer(4);
-  const tapped = tapLogBuffer(logger, buffer);
+  const tapped = recordLogger(logger, buffer);
 
   // The level whose read threw is not named as one the tap reached, and it costs
   // only itself: `verbose` is last in the order, so naming it is what shows the
@@ -498,7 +498,7 @@ test("a logger nothing can be read from is answered with no stream", () => {
     },
   });
 
-  expect(tapLogBuffer(logger, createLogBuffer(4))).toBeUndefined();
+  expect(recordLogger(logger, createLogBuffer(4))).toBeUndefined();
 });
 
 test("the reachability check survives a level it cannot read", () => {
@@ -534,8 +534,8 @@ test("the reachability check survives a level it cannot read", () => {
 });
 
 /** One devtools path answered for one application, with the stream it publishes. */
-async function ask(application: Elysia, path: string, logs?: TappedLogStream): Promise<Response> {
-  return await routeRequest(
+async function ask(application: Elysia, path: string, logs?: LogStream): Promise<Response> {
+  return await handleDevtoolsRequest(
     new Request(`http://localhost${devtoolsPathPrefix}${path}`),
     createHandlers(application, logs, undefined, silentLogger),
   );
@@ -544,7 +544,7 @@ async function ask(application: Elysia, path: string, logs?: TappedLogStream): P
 async function readLogs(
   application: Elysia,
   query = "",
-  logs?: TappedLogStream,
+  logs?: LogStream,
 ): Promise<AponiaLogsPayload> {
   const response = await ask(application, `/logs${query}`, logs);
 
@@ -559,7 +559,7 @@ test("logs answers the retained window and answers a poll from the cursor it pub
   logs.write(entry("two"));
 
   const application = new Elysia();
-  const stream: TappedLogStream = { buffer: logs, levels: ["log"] };
+  const stream: LogStream = { buffer: logs, levels: ["log"] };
   const first = await readLogs(application, "", stream);
 
   expect(first.cursor).toBe(2);
@@ -607,7 +607,7 @@ test("a since that is not a cursor reads as the whole retained window", async ()
   logs.write(entry("one"));
 
   const application = new Elysia();
-  const stream: TappedLogStream = { buffer: logs, levels: ["log"] };
+  const stream: LogStream = { buffer: logs, levels: ["log"] };
 
   // A repeated key reads as its first value, which is what a poller sends when
   // it appends its cursor to a query it built.
@@ -785,7 +785,7 @@ function captureOutput(): () => void {
 
 /** One devtools path answered by the surface a real boot mounted. */
 async function readLogsFrom(
-  application: AponiaElysiaApplication,
+  application: AponiaApplication,
   query = "",
 ): Promise<AponiaLogsPayload> {
   const response = await application.handle(
@@ -798,7 +798,7 @@ async function readLogsFrom(
 }
 
 /** The status one devtools path answers on a real boot's own mount. */
-async function statusOn(application: AponiaElysiaApplication, path: string): Promise<number> {
+async function statusOn(application: AponiaApplication, path: string): Promise<number> {
   const response = await application.handle(
     new Request(`http://localhost${devtoolsPathPrefix}${path}`),
   );

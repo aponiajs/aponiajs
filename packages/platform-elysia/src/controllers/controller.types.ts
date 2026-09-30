@@ -1,40 +1,39 @@
-import type { Constructor, ControllerDefinition, Token, TokenValues } from "@aponiajs/common";
+import type { Constructor, ControllerDefinition, Token, TokenMap } from "@aponiajs/common";
 import type { AnyElysia, Elysia } from "elysia";
 import type { CompiledElysiaRoute } from "../routing/route-compiler.types.ts";
-import type { ElysiaRoutePlan } from "../routing/route-plan.types.ts";
-import type { ELYSIA_CONTROLLER } from "./controller.constants.ts";
+import type { RoutePlan } from "../routing/route-plan.types.ts";
+import type { CONTROLLER_KIND } from "./controller.constants.ts";
 
-export interface ElysiaControllerDefinition<
+export interface ControllerDescriptor<
   TController,
   TDependencies extends readonly Token<unknown>[],
   TPlugin extends AnyElysia,
 > extends ControllerDefinition {
-  readonly kind: typeof ELYSIA_CONTROLLER;
+  readonly kind: typeof CONTROLLER_KIND;
   readonly inject: TDependencies;
-  readonly useClass: Constructor<TController, TokenValues<TDependencies>>;
+  readonly useClass: Constructor<TController, TokenMap<TDependencies>>;
   readonly buildPlugin: (controller: TController) => TPlugin;
 }
 
-export type ElysiaControllerRegistrationResult = AnyElysia | void;
+export type ControllerRegistrationResult = AnyElysia | void;
 
-export type RegisteredElysiaApplication<
-  TRegistrationResult extends ElysiaControllerRegistrationResult,
-> = TRegistrationResult extends AnyElysia ? TRegistrationResult : Elysia;
+export type RegisteredApplication<TRegistrationResult extends ControllerRegistrationResult> =
+  TRegistrationResult extends AnyElysia ? TRegistrationResult : Elysia;
 
-export interface RegisteredElysiaControllerDefinition<
+export interface RegisteredControllerDefinition<
   TController,
   TDependencies extends readonly Token<unknown>[],
-  TRegistrationResult extends ElysiaControllerRegistrationResult = void,
-> extends ElysiaControllerDefinition<
+  TRegistrationResult extends ControllerRegistrationResult = void,
+> extends ControllerDescriptor<
   TController,
   TDependencies,
-  RegisteredElysiaApplication<TRegistrationResult>
+  RegisteredApplication<TRegistrationResult>
 > {
   readonly path?: string;
   readonly registerRoutes: (application: Elysia, controller: TController) => TRegistrationResult;
 }
 
-export interface ElysiaControllerPluginOptions<
+export interface ControllerPluginOptions<
   TController,
   TDependencies extends readonly Token<unknown>[],
   TPlugin extends AnyElysia,
@@ -43,26 +42,26 @@ export interface ElysiaControllerPluginOptions<
   readonly buildPlugin: (controller: TController) => TPlugin;
 }
 
-export interface ElysiaControllerRegistrationOptions<
+export interface ControllerRegistrationOptions<
   TController,
   TDependencies extends readonly Token<unknown>[],
-  TRegistrationResult extends ElysiaControllerRegistrationResult = void,
+  TRegistrationResult extends ControllerRegistrationResult = void,
 > {
   readonly inject: TDependencies;
   readonly path?: string;
   readonly registerRoutes: (application: Elysia, controller: TController) => TRegistrationResult;
 }
 
-/** What `defineElysiaControllerRoutes` accepts. */
-export interface ElysiaControllerRoutesOptions<
+/** What `defineControllerRoutes` accepts. */
+export interface ControllerRoutesOptions<
   TDependencies extends readonly Token<unknown>[] = readonly Token<unknown>[],
 > {
   /** The controller's own path, joined onto each route plan's path. */
   readonly path?: string;
-  /** The controller's constructor dependencies, as `defineElysiaController` takes them. */
+  /** The controller's constructor dependencies, as `defineController` takes them. */
   readonly inject?: TDependencies;
   /** The routes this controller declares. */
-  readonly routes: readonly ElysiaRoutePlan[];
+  readonly routes: readonly RoutePlan[];
 }
 
 /**
@@ -74,15 +73,15 @@ export interface ElysiaControllerRoutesOptions<
  *
  * @internal
  */
-export interface DeclaredElysiaControllerDefinition<
+export interface DeclaredControllerDefinition<
   TController,
   TDependencies extends readonly Token<unknown>[],
-> extends RegisteredElysiaControllerDefinition<TController, TDependencies> {
+> extends RegisteredControllerDefinition<TController, TDependencies> {
   readonly compiledRoutes: readonly CompiledElysiaRoute[];
 }
 
 export interface RuntimeElysiaController extends ControllerDefinition {
-  readonly kind: typeof ELYSIA_CONTROLLER;
+  readonly kind: typeof CONTROLLER_KIND;
   readonly path?: string;
   readonly buildPlugin: (controller: never) => AnyElysia;
   /**
@@ -106,5 +105,5 @@ export interface RuntimeElysiaController extends ControllerDefinition {
   readonly registerRoutes?: (
     application: Elysia,
     controller: never,
-  ) => ElysiaControllerRegistrationResult;
+  ) => ControllerRegistrationResult;
 }

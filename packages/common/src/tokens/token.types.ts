@@ -16,6 +16,6 @@ export type Token<T> = ClassToken<T> | InjectionToken<T>;
 
 export type TokenValue<TToken> = TToken extends Token<infer TValue> ? TValue : never;
 
-export type TokenValues<TTokens extends readonly Token<unknown>[]> = {
+export type TokenMap<TTokens extends readonly Token<unknown>[]> = {
   readonly [TIndex in keyof TTokens]: TokenValue<TTokens[TIndex]>;
 };

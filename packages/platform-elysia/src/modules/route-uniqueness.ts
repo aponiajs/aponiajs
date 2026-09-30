@@ -1,4 +1,4 @@
-import { AponiaError, tokenName, type ModuleDefinition, type Token } from "@aponiajs/common";
+import { AponiaError, getTokenName, type ModuleDefinition, type Token } from "@aponiajs/common";
 import { isElysiaController } from "../controllers/controller-definition.ts";
 import type { CompiledElysiaRoute } from "../routing/route-compiler.types.ts";
 
@@ -54,7 +54,7 @@ export function assertUniqueElysiaRoutes(root: ModuleDefinition): void {
       }
 
       const token = controller.token;
-      const controllerName = tokenName(token);
+      const controllerName = getTokenName(token);
       for (const route of routes) {
         const claim: RouteClaim = {
           module,

@@ -19,7 +19,7 @@ import {
 } from "@aponiajs/common";
 import { z } from "zod";
 import {
-  defineElysiaControllerRoutes,
+  defineControllerRoutes,
   inspectAponiaApplication,
   type AponiaApplicationInspection,
   type AponiaApplicationOptions,
@@ -143,7 +143,7 @@ class ConformanceDeclaredInspectionController {
 const conformanceInspectionDeclaredModule = defineModule({
   id: "ConformanceInspectionDeclaredModule",
   controllers: [
-    defineElysiaControllerRoutes(ConformanceDeclaredInspectionController, {
+    defineControllerRoutes(ConformanceDeclaredInspectionController, {
       path: "conformance-declared-inspection",
       inject: [],
       routes: [

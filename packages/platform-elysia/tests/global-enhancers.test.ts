@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { Controller, Get, Module } from "@aponiajs/common";
-import { AponiaFactory, type AponiaElysiaApplication } from "../src/index.ts";
+import { AponiaFactory, type AponiaApplication } from "../src/index.ts";
 
 const calls: string[] = [];
 
@@ -26,7 +26,7 @@ class AppModule {}
  * The hook object Elysia mounts for the controller's only route, which is what a
  * boot compiles for that route made observable.
  */
-function mountedHooks(application: AponiaElysiaApplication): Record<string, unknown> {
+function mountedHooks(application: AponiaApplication): Record<string, unknown> {
   const route = application
     .getNativeApplication()
     .routes.find((candidate) => candidate.path === "/") as { readonly hooks?: unknown } | undefined;

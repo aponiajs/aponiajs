@@ -139,7 +139,7 @@ instances, exactly as they would for a service.
 
 ## Reading it back
 
-The entrypoint reads a resolved value through `AponiaElysiaApplication.get`,
+The entrypoint reads a resolved value through `AponiaApplication.get`,
 which resolves from the root module:
 
 ```ts

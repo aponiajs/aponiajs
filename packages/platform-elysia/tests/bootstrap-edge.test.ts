@@ -1,7 +1,7 @@
 import { expect, spyOn, test } from "bun:test";
 import { Controller, Get, Module, type LoggerService } from "@aponiajs/common";
 import { Elysia } from "elysia";
-import { AponiaElysiaApplication, AponiaFactory } from "../src/index.ts";
+import { AponiaApplication, AponiaFactory } from "../src/index.ts";
 
 class RecordingLogger implements LoggerService {
   readonly records: { readonly context: string; readonly message: string }[] = [];
@@ -121,7 +121,7 @@ test("logs and returns the resolved origin once the native application is listen
       state.server = { url: new URL(`http://localhost:${port}`) };
     },
   } as unknown as Elysia;
-  const application = new AponiaElysiaApplication(nativeApplication, logger);
+  const application = new AponiaApplication(nativeApplication, logger);
 
   await application.listen(4_567);
 

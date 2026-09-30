@@ -97,7 +97,7 @@ export interface AponiaGraphPayload {
  * foreign state, where a decided state belongs would make one boot's routes look
  * interchangeable with another's.
  */
-export type AponiaRouteSource = "generated" | "compiled" | null;
+export type AponiaRouteBinding = "generated" | "compiled" | null;
 
 /**
  * One route the running application answers.
@@ -138,7 +138,7 @@ export interface AponiaMountedRoute {
    * release can name — no binding at all, or a value outside the three it writes,
    * which a foreign copy of the platform can state.
    */
-  readonly source: AponiaRouteSource;
+  readonly source: AponiaRouteBinding;
   /**
    * The context fields the route's handler binds, in declaration order. Empty
    * for a route the recorded plans do not describe: a parameter list belongs to

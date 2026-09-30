@@ -53,7 +53,7 @@ export function isDevtoolsSurfaceRequest(request: Request): boolean {
  * does not carry are all `404`: the record states the paths this surface serves
  * and the dispatcher does not guess at the rest.
  */
-export function routeRequest(
+export function handleDevtoolsRequest(
   request: Request,
   handlers: DevtoolsHandlers,
 ): Response | Promise<Response> {

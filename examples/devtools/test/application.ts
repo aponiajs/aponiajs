@@ -1,7 +1,7 @@
 import { createServer } from "node:net";
 import type { LoggerService } from "@aponiajs/common";
 import { devtoolsPathPrefix, devtoolsPlugin } from "@aponiajs/devtools";
-import { AponiaFactory, type AponiaElysiaApplication } from "@aponiajs/platform-elysia";
+import { AponiaFactory, type AponiaApplication } from "@aponiajs/platform-elysia";
 import { AppModule } from "../src/app.module.ts";
 
 /**
@@ -50,7 +50,7 @@ async function reservePort(): Promise<number> {
 }
 
 export interface DevtoolsApplication {
-  readonly application: AponiaElysiaApplication;
+  readonly application: AponiaApplication;
   /** The surface's base URL: the application's own origin, prefix included. */
   readonly devtools: string;
   readonly logger: RecordingLogger;
@@ -73,7 +73,7 @@ export async function createApplication(enabled = true): Promise<DevtoolsApplica
   };
 }
 
-export function get(application: AponiaElysiaApplication, path: string): Promise<Response> {
+export function get(application: AponiaApplication, path: string): Promise<Response> {
   return Promise.resolve(application.handle(new Request(`http://localhost${path}`)));
 }
 

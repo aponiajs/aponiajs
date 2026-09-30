@@ -17,15 +17,15 @@ import {
 import { Elysia, t } from "elysia";
 import {
   AponiaFactory,
-  defineElysiaController,
-  defineElysiaControllerRoutes,
-  elysiaController,
-  readApplicationDiagnostics,
-  readApplicationFromStore,
-  type AponiaControllerInvokerFactory,
+  defineController,
+  defineControllerRoutes,
+  controller,
+  getApplicationDiagnostics,
+  getApplicationFromStore,
+  type ControllerHandlerFactory,
   type AponiaInvokerArtifact,
   type AponiaModuleDescriptorArtifact,
-  type AponiaRouteInvoker,
+  type RouteHandler,
 } from "../src/index.ts";
 import { publishApplicationOnStore } from "../src/application/application-container.ts";
 import { aponiaVersion } from "../src/version.ts";
@@ -216,7 +216,7 @@ class PluginOnlyDiagnosticsController {
   }
 }
 
-const pluginOnlyController = defineElysiaController(PluginOnlyDiagnosticsController, {
+const pluginOnlyController = defineController(PluginOnlyDiagnosticsController, {
   inject: [] as const,
   buildPlugin: (controller) => new Elysia().get("/plugin-only", () => controller.greet()),
 });
@@ -245,7 +245,7 @@ class CallbackDiagnosticsController {
 const callbackDiagnosticsModule: ModuleDefinition = defineModule({
   id: "CallbackDiagnosticsModule",
   controllers: [
-    elysiaController(CallbackDiagnosticsController, (application, controller) => {
+    controller(CallbackDiagnosticsController, (application, controller) => {
       application.get("/callback-only", () => controller.greet());
       return application;
     }),
@@ -273,21 +273,21 @@ class CompiledBindingController {
 const twoSourceModule: ModuleDefinition = defineModule({
   id: "TwoSourceModule",
   controllers: [
-    defineElysiaControllerRoutes(GeneratedBindingController, {
+    defineControllerRoutes(GeneratedBindingController, {
       path: "generated",
       routes: [{ method: "GET", path: "/", propertyKey: "read", promiseCapable: false }],
     }),
-    defineElysiaControllerRoutes(CompiledBindingController, {
+    defineControllerRoutes(CompiledBindingController, {
       path: "compiled",
       routes: [{ method: "GET", path: "/", propertyKey: "read", promiseCapable: false }],
     }),
   ],
 });
 
-const generatedBindingArtifact = new Map<ClassToken<unknown>, AponiaControllerInvokerFactory>([
+const generatedBindingArtifact = new Map<ClassToken<unknown>, ControllerHandlerFactory>([
   [
     GeneratedBindingController,
-    () => new Map<string | symbol, AponiaRouteInvoker>([["read", () => "generated binding"]]),
+    () => new Map<string | symbol, RouteHandler>([["read", () => "generated binding"]]),
   ],
 ]);
 
@@ -306,7 +306,7 @@ class DeclaredDiagnosticsController {
 const declaredDiagnosticsModule: ModuleDefinition = defineModule({
   id: "DeclaredDiagnosticsModule",
   controllers: [
-    defineElysiaControllerRoutes(DeclaredDiagnosticsController, {
+    defineControllerRoutes(DeclaredDiagnosticsController, {
       path: "declared",
       routes: [{ method: "GET", path: "/", propertyKey: "read", promiseCapable: false }],
     }),
@@ -325,7 +325,7 @@ function descriptorArtifact(
  * exist so a case can state provenance the running platform will not accept.
  */
 function invokerArtifact(
-  invokers: ReadonlyMap<ClassToken<unknown>, AponiaControllerInvokerFactory>,
+  invokers: ReadonlyMap<ClassToken<unknown>, ControllerHandlerFactory>,
   overrides: Partial<Pick<AponiaInvokerArtifact, "framework" | "elysia">> = {},
 ): AponiaInvokerArtifact {
   return Object.freeze({ framework: aponiaVersion, elysia: "1.4.30", invokers, ...overrides });
@@ -336,7 +336,7 @@ test("a booted application exposes its boot decision and compiled routes", async
     logger: false,
     guards: [DiagnosticsGuard],
   });
-  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+  const diagnostics = getApplicationDiagnostics(application.getNativeApplication());
 
   expect(diagnostics?.graph).toBe("decorated");
   expect(diagnostics?.framework).toBe(aponiaVersion);
@@ -372,7 +372,7 @@ test("the record states which interceptor halves each resolved class implements"
     logger: false,
     interceptors: [MethodHalvesInterceptor],
   });
-  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+  const diagnostics = getApplicationDiagnostics(application.getNativeApplication());
   const halves = diagnostics?.interceptorHalves;
 
   expect(halves).toBeInstanceOf(Map);
@@ -398,7 +398,7 @@ test("the record states which interceptor halves each resolved class implements"
 
 test("the record handed out is frozen, one entry at a time", async () => {
   const application = await AponiaFactory.create(DiagnosticsAppModule, { logger: false });
-  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+  const diagnostics = getApplicationDiagnostics(application.getNativeApplication());
 
   expect(Object.isFrozen(diagnostics)).toBe(true);
   expect(Object.isFrozen(diagnostics?.routes)).toBe(true);
@@ -421,7 +421,7 @@ test("the record handed out is frozen, one entry at a time", async () => {
 
 test("the record carries the exception the mapping answered an unhandled failure with", async () => {
   const application = await AponiaFactory.create(FailingDiagnosticsModule, { logger: false });
-  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+  const diagnostics = getApplicationDiagnostics(application.getNativeApplication());
   const request = new Request("http://localhost/explodes");
 
   const response = await application.handle(request);
@@ -444,7 +444,7 @@ test("the record carries the exception the mapping answered an unhandled failure
 test("a logger that throws as it reports the failure leaves the answer and the record intact", async () => {
   const logger = new ThrowingErrorLogger();
   const application = await AponiaFactory.create(FailingDiagnosticsModule, { logger });
-  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+  const diagnostics = getApplicationDiagnostics(application.getNativeApplication());
   const request = new Request("http://localhost/explodes");
   const stderr: string[] = [];
   const stderrWrite = spyOn(process.stderr, "write").mockImplementation((chunk) => {
@@ -532,7 +532,7 @@ test("a stderr write that refuses still leaves the mapping's answer in place", a
 
 test("an exception this platform cannot project leaves the mapping's answer unchanged", async () => {
   const application = await AponiaFactory.create(FailingDiagnosticsModule, { logger: false });
-  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+  const diagnostics = getApplicationDiagnostics(application.getNativeApplication());
   const request = new Request("http://localhost/unrenderable");
 
   const response = await application.handle(request);
@@ -555,7 +555,7 @@ test("an exception this platform cannot project leaves the mapping's answer unch
 
 test("a thrown value that is not an Error is recorded in the projection's own form", async () => {
   const application = await AponiaFactory.create(FailingDiagnosticsModule, { logger: false });
-  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+  const diagnostics = getApplicationDiagnostics(application.getNativeApplication());
   // One case per branch of the rendering both surfaces call — a string, a
   // function, and an object — so each of these branches is shown reached rather
   // than left to the branch an `Error` takes. This boot passes `logger: false`,
@@ -583,7 +583,7 @@ test("a thrown value that is not an Error is recorded in the projection's own fo
 });
 
 test("an application that was never booted through the factory exposes nothing", () => {
-  expect(readApplicationDiagnostics(new Elysia())).toBeUndefined();
+  expect(getApplicationDiagnostics(new Elysia())).toBeUndefined();
 });
 
 test("the store seam publishes the application for a reader on the other side of a request", async () => {
@@ -595,7 +595,7 @@ test("the store seam publishes the application for a reader on the other side of
   // `@aponiajs/devtools` reaches it through: Elysia hands a request context the
   // `store` and not the instance, so a plugin answering a request finds the boot
   // that produced it here rather than on an object it never holds.
-  expect(readApplicationFromStore(nativeApplication["~ext"]?.store)).toBe(nativeApplication);
+  expect(getApplicationFromStore(nativeApplication["~ext"]?.store)).toBe(nativeApplication);
   // The entry is a store entry rather than a property of the application, and it
   // carries the same three flags the two instance seams state: non-enumerable so
   // the store's own shape does not grow, and non-writable and non-configurable so
@@ -611,7 +611,7 @@ test("the store seam publishes the application for a reader on the other side of
   // An application no boot produced published nothing, and the reader states
   // that absence rather than throwing — the plain `Elysia` a plugin is mounted on
   // by hand.
-  expect(readApplicationFromStore(new Elysia()["~ext"]?.store)).toBeUndefined();
+  expect(getApplicationFromStore(new Elysia()["~ext"]?.store)).toBeUndefined();
   // The writer declines the same absence rather than throwing: it is handed
   // whatever a caller booted with, and a value carrying no `store` has nothing to
   // publish on. Removing the early return turns this call into a `TypeError` out
@@ -620,9 +620,9 @@ test("the store seam publishes the application for a reader on the other side of
   // A store that is `null` is the same case as a missing one, and a value that is
   // no object at all reads as the absence rather than throwing at the reader.
   expect(() => publishApplicationOnStore({ store: null })).not.toThrow();
-  expect(readApplicationFromStore(undefined)).toBeUndefined();
-  expect(readApplicationFromStore(null)).toBeUndefined();
-  expect(readApplicationFromStore({})).toBeUndefined();
+  expect(getApplicationFromStore(undefined)).toBeUndefined();
+  expect(getApplicationFromStore(null)).toBeUndefined();
+  expect(getApplicationFromStore({})).toBeUndefined();
 
   await application.close();
 });
@@ -630,8 +630,8 @@ test("the store seam publishes the application for a reader on the other side of
 test("each boot attaches its own record to its own application", async () => {
   const first = await AponiaFactory.create(DiagnosticsAppModule, { logger: false });
   const second = await AponiaFactory.create(DiagnosticsAppModule, { logger: false });
-  const firstDiagnostics = readApplicationDiagnostics(first.getNativeApplication());
-  const secondDiagnostics = readApplicationDiagnostics(second.getNativeApplication());
+  const firstDiagnostics = getApplicationDiagnostics(first.getNativeApplication());
+  const secondDiagnostics = getApplicationDiagnostics(second.getNativeApplication());
 
   expect(firstDiagnostics).toBeDefined();
   expect(secondDiagnostics).toBeDefined();
@@ -670,7 +670,7 @@ test("a boot served by the descriptor artifact reports the declared graph", asyn
     logger: false,
     descriptors: descriptorArtifact({ DiagnosticsAppModule: declaredDiagnosticsModule }),
   });
-  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+  const diagnostics = getApplicationDiagnostics(application.getNativeApplication());
 
   // The root the declaration names rather than the class the caller passed, and
   // the plans that mounted from that same graph. The descriptor stamp is the
@@ -692,7 +692,7 @@ test("a class whose descriptor artifact was refused reports the decorated graph"
       { framework: "0.0.0", elysia: "1.0.0" },
     ),
   });
-  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+  const diagnostics = getApplicationDiagnostics(application.getNativeApplication());
 
   // The artifact named a declared graph, and the boot refused it: a stale
   // artifact must never make the record describe a graph the application is not
@@ -714,7 +714,7 @@ test("a boot served by a dynamic module root reports the decorated graph", async
     instanceId: Symbol("dynamic-diagnostics"),
   };
   const application = await AponiaFactory.create(dynamicRoot, { logger: false });
-  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+  const diagnostics = getApplicationDiagnostics(application.getNativeApplication());
 
   // A dynamic module is not data the container compiles as it stands: its
   // decorators are read and lowered exactly as a class root's are, so it is the
@@ -727,7 +727,7 @@ test("a boot served by a dynamic module root reports the decorated graph", async
 
 test("a controller mounted through the low-level descriptor path contributes no route entry", async () => {
   const application = await AponiaFactory.create(pluginOnlyDiagnosticsModule, { logger: false });
-  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+  const diagnostics = getApplicationDiagnostics(application.getNativeApplication());
   const response = await application.handle(new Request("http://localhost/plugin-only"));
 
   // The route mounted, and the record still reports no compiled plan for it: its
@@ -755,7 +755,7 @@ test("a controller mounted through the low-level descriptor path contributes no 
 
 test("a route a registration callback mounts is reported with the controller that mounted it", async () => {
   const application = await AponiaFactory.create(callbackDiagnosticsModule, { logger: false });
-  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+  const diagnostics = getApplicationDiagnostics(application.getNativeApplication());
   const response = await application.handle(new Request("http://localhost/callback-only"));
 
   // The callback compiled nothing for the platform to read, so the two names
@@ -782,7 +782,7 @@ test("each plan reports the binding that serves it, from one boot that mounts bo
     logger: false,
     invokers: invokerArtifact(generatedBindingArtifact),
   });
-  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+  const diagnostics = getApplicationDiagnostics(application.getNativeApplication());
   const generated = await application.handle(new Request("http://localhost/generated"));
   const compiled = await application.handle(new Request("http://localhost/compiled"));
 
@@ -804,7 +804,7 @@ test("each plan reports the binding that serves it, from one boot that mounts bo
 
 test("a boot with no invoker artifact reports every plan as compiled binding", async () => {
   const application = await AponiaFactory.create(twoSourceModule, { logger: false });
-  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+  const diagnostics = getApplicationDiagnostics(application.getNativeApplication());
 
   // No artifact was supplied, so nothing could have bound a route: every plan is
   // the platform's own compilation, including the controller a supplied map
@@ -816,7 +816,7 @@ test("a boot with no invoker artifact reports every plan as compiled binding", a
 
 test("a boot that adopts no invoker artifact reports the refusal and why", async () => {
   const absent = await AponiaFactory.create(DiagnosticsAppModule, { logger: false });
-  const absentDiagnostics = readApplicationDiagnostics(absent.getNativeApplication());
+  const absentDiagnostics = getApplicationDiagnostics(absent.getNativeApplication());
   expect(absentDiagnostics?.invokers.accepted).toBe(false);
   expect(absentDiagnostics?.invokers.reason).toBeDefined();
   // Nothing was adopted, so no release supplied binding this boot ran.
@@ -827,7 +827,7 @@ test("a boot that adopts no invoker artifact reports the refusal and why", async
     logger: false,
     invokers: invokerArtifact(new Map(), { framework: "0.0.0", elysia: "1.0.0" }),
   });
-  const staleDiagnostics = readApplicationDiagnostics(stale.getNativeApplication());
+  const staleDiagnostics = getApplicationDiagnostics(stale.getNativeApplication());
   expect(staleDiagnostics?.invokers.accepted).toBe(false);
   expect(staleDiagnostics?.invokers.reason).toContain("0.0.0");
   expect(staleDiagnostics?.invokers.reason).toContain(aponiaVersion);
@@ -845,7 +845,7 @@ test("a boot that adopts no invoker artifact reports the refusal and why", async
       invokers: undefined,
     } as unknown as AponiaInvokerArtifact,
   });
-  const malformedDiagnostics = readApplicationDiagnostics(malformed.getNativeApplication());
+  const malformedDiagnostics = getApplicationDiagnostics(malformed.getNativeApplication());
   expect(malformedDiagnostics?.invokers.accepted).toBe(false);
   expect(malformedDiagnostics?.invokers.reason).toContain("no invoker map");
   await malformed.close();
@@ -856,7 +856,7 @@ test("a boot that adopts an invoker artifact reports no reason", async () => {
     logger: false,
     invokers: invokerArtifact(new Map()),
   });
-  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+  const diagnostics = getApplicationDiagnostics(application.getNativeApplication());
 
   expect(diagnostics?.invokers.accepted).toBe(true);
   expect(diagnostics?.invokers.reason).toBeUndefined();

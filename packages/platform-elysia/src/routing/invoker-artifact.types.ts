@@ -1,5 +1,5 @@
 import type { ClassToken } from "@aponiajs/common";
-import type { AponiaControllerInvokerFactory } from "./route-compiler.types.ts";
+import type { ControllerHandlerFactory } from "./route-compiler.types.ts";
 
 /**
  * Build-time generated route invokers together with the provenance that decides
@@ -20,7 +20,7 @@ export interface AponiaInvokerArtifact {
    */
   readonly elysia: string | null;
   /** Invokers keyed by controller class token. */
-  readonly invokers: ReadonlyMap<ClassToken<unknown>, AponiaControllerInvokerFactory>;
+  readonly invokers: ReadonlyMap<ClassToken<unknown>, ControllerHandlerFactory>;
 }
 
 /**
@@ -40,7 +40,7 @@ export interface AponiaInvokerArtifact {
  */
 export interface AponiaInvokerSelection {
   /** The invokers the boot may use, or `undefined` when it compiles its own. */
-  readonly invokers: ReadonlyMap<ClassToken<unknown>, AponiaControllerInvokerFactory> | undefined;
+  readonly invokers: ReadonlyMap<ClassToken<unknown>, ControllerHandlerFactory> | undefined;
   /** Why the artifact was refused, or `undefined` when it was adopted. */
   readonly reason: string | undefined;
   /** The AponiaJS release that emitted the adopted invokers, or `null`. */

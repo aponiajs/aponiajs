@@ -1,7 +1,7 @@
 import {
   AponiaError,
   Logger,
-  tokenName,
+  getTokenName,
   type ClassToken,
   type EnhancerMetadata,
   type LoggerService,
@@ -17,7 +17,7 @@ import {
 import {
   collectEnhancerDeclarations,
   resolveEnhancers,
-  type InterceptorHalves,
+  type InterceptorPhases,
   type MountedExceptionHandling,
   type MountedRouteEnhancers,
   type ResolvedControllerEnhancers,
@@ -30,13 +30,13 @@ import {
 import { compileRootModule, isModuleDefinition } from "../modules/module-compiler.ts";
 import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
 import { selectRootModuleDescriptor } from "../modules/module-descriptor-artifact.ts";
-import { getElysiaPlugin, isElysiaPluginModule } from "../plugins/plugin-module.ts";
+import { getElysiaPlugin, isPluginModule } from "../plugins/plugin-module.ts";
 import { selectInvokerArtifact } from "../routing/invoker-artifact.ts";
-import type { AponiaControllerInvokerFactory } from "../routing/route-compiler.types.ts";
+import type { ControllerHandlerFactory } from "../routing/route-compiler.types.ts";
 import { registerCompiledElysiaRoutes } from "../routing/route-compiler.ts";
 import {
-  compileElysiaWebSocketGateways,
-  registerElysiaWebSocketGateways,
+  compileWebSocketGateways,
+  registerWebSocketGateways,
 } from "../websockets/websocket-gateway.ts";
 import { aponiaVersion } from "../version.ts";
 import { attachApplicationContainer, publishApplicationOnStore } from "./application-container.ts";
@@ -95,7 +95,7 @@ export async function bootstrapAponiaApplication(
     ? "declared"
     : "decorated";
   const container = createContainer(compiledRootModule);
-  const webSocketGateways = compileElysiaWebSocketGateways(container.graph.modules);
+  const webSocketGateways = compileWebSocketGateways(container.graph.modules);
   const baseApplication = new Elysia({
     ...options.elysia,
     name: compiledRootModule.id,
@@ -134,7 +134,7 @@ export async function bootstrapAponiaApplication(
 
   for (const module of container.graph.modules) {
     container.initializeModule(module);
-    if (isElysiaPluginModule(module)) {
+    if (isPluginModule(module)) {
       nativeApplication.use(getElysiaPlugin(container, module));
     }
     logger?.log(`${module.id} dependencies initialized`, "InstanceLoader");
@@ -192,18 +192,18 @@ export async function bootstrapAponiaApplication(
   // and the token a plan carries never states it.
   const generatedInvokers = new Map<Token<unknown>, ReadonlySet<string | symbol>>();
   const callbackRoutes: AponiaCallbackRouteDiagnostics[] = [];
-  const interceptorHalves = new Map<ClassToken<unknown>, InterceptorHalves>();
+  const interceptorHalves = new Map<ClassToken<unknown>, InterceptorPhases>();
   // The application's own declaration resolves first, so it is collected first.
   // Both scopes merge into one map because a class declares one set of halves
   // wherever it is named: a class resolved at both scopes contributes the same
   // two booleans twice, so the later merge overwrites an identical value rather
   // than correcting an earlier one, and no guard is needed to say so.
-  collectInterceptorHalves(interceptorHalves, globalEnhancers.halves);
+  collectInterceptorPhases(interceptorHalves, globalEnhancers.halves);
 
   for (const module of container.graph.modules) {
     for (const controller of module.controllers) {
       if (!isElysiaController(controller)) {
-        const controllerName = tokenName(controller.token);
+        const controllerName = getTokenName(controller.token);
         throw new AponiaError(
           "UNSUPPORTED_CONTROLLER",
           `Controller "${controllerName}" is not supported by the Elysia platform.`,
@@ -221,7 +221,7 @@ export async function bootstrapAponiaApplication(
         module,
         collectEnhancerDeclarations(controller.compiledRoutes ?? []),
       );
-      collectInterceptorHalves(interceptorHalves, resolvedEnhancers.halves);
+      collectInterceptorPhases(interceptorHalves, resolvedEnhancers.halves);
       // The two resolutions travel together from here: every path this
       // controller's routes mount through carries both, which is what makes a
       // global enhancer reach a route mounted through any of them.
@@ -256,8 +256,8 @@ export async function bootstrapAponiaApplication(
       if (!(plugin instanceof Elysia)) {
         throw new AponiaError(
           "INVALID_CONTROLLER",
-          `Controller "${tokenName(controller.token)}" did not build an Elysia plugin.`,
-          { module: module.id, controller: tokenName(controller.token) },
+          `Controller "${getTokenName(controller.token)}" did not build an Elysia plugin.`,
+          { module: module.id, controller: getTokenName(controller.token) },
         );
       }
 
@@ -358,7 +358,7 @@ export async function bootstrapAponiaApplication(
   publishApplicationOnStore(nativeApplication);
 
   await nativeApplication.modules;
-  await registerElysiaWebSocketGateways(nativeApplication, container, webSocketGateways);
+  await registerWebSocketGateways(nativeApplication, container, webSocketGateways);
   for (const gateway of webSocketGateways) {
     logger?.log(`${gateway.gatewayName} {${gateway.path}}:`, "WebSocketsController");
     for (const handler of gateway.handlers) {
@@ -410,9 +410,9 @@ async function runShutdownHooks(
  * working map rather than a record field — the record copies it, once every
  * mount that writes into it is done.
  */
-function collectInterceptorHalves(
-  collected: Map<ClassToken<unknown>, InterceptorHalves>,
-  halves: ReadonlyMap<ClassToken<unknown>, InterceptorHalves>,
+function collectInterceptorPhases(
+  collected: Map<ClassToken<unknown>, InterceptorPhases>,
+  halves: ReadonlyMap<ClassToken<unknown>, InterceptorPhases>,
 ): void {
   for (const [token, declared] of halves) {
     collected.set(token, declared);
@@ -436,7 +436,7 @@ function registerControllerRoutes(
   controller: RuntimeElysiaController,
   application: Elysia,
   instance: unknown,
-  invokers: ReadonlyMap<ClassToken<unknown>, AponiaControllerInvokerFactory> | undefined,
+  invokers: ReadonlyMap<ClassToken<unknown>, ControllerHandlerFactory> | undefined,
   mountedEnhancers: MountedRouteEnhancers,
 ): ReadonlySet<string | symbol> | undefined {
   const compiledRoutes = controller.compiledRoutes;
@@ -477,7 +477,7 @@ function collectCallbackRoutes(
   controller: RuntimeElysiaController,
   mountedRoutes: readonly { readonly method: string; readonly path: string }[],
 ): void {
-  const controllerName = tokenName(controller.token);
+  const controllerName = getTokenName(controller.token);
   for (const route of mountedRoutes) {
     routes.push(
       Object.freeze({
@@ -519,7 +519,7 @@ function logControllerRoutes(
     return;
   }
 
-  const controllerName = tokenName(controller.token);
+  const controllerName = getTokenName(controller.token);
   const controllerPath = controller.path ?? inferControllerPath(routes);
   logger.log(`${controllerName} {${controllerPath}}:`, "RoutesResolver");
   for (const route of routes) {

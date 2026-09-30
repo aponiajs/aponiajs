@@ -125,8 +125,8 @@ that metadata and lowers decorated classes into frozen `ModuleDefinition`,
 `ControllerDefinition`, and `Provider` descriptors. `@aponiajs/core` only ever
 sees descriptors — it never imports `reflect-metadata` or decorator logic.
 Applications can hand-write descriptors instead (`defineModule`,
-`defineElysiaController`, `defineElysiaControllerRoutes`,
-`defineElysiaWebSocketGateway`, `provideValue`/`provideFactory`/`provideClass`/
+`defineController`, `defineControllerRoutes`,
+`defineWebSocketGateway`, `provideValue`/`provideFactory`/`provideClass`/
 `provideAlias`) and skip decorators entirely. Both paths must stay supported.
 
 ### Dependency direction
@@ -169,7 +169,7 @@ that resolves inside an arbitrary module and is not application API.
    `elysia.precompile` policy, optionally passed through
    `configureNative`, which must return the same instance it receives;
 4. first pass over `container.graph.modules`: `initializeModule` eagerly
-   instantiates providers, and `ElysiaPluginModule` modules mount their native
+   instantiates providers, and `PluginModule` modules mount their native
    plugin;
 5. second pass: instantiate each controller; decorated controllers register
    their compiled routes directly on the root application, while low-level
@@ -189,7 +189,7 @@ that resolves inside an arbitrary module and is not application API.
 8. await `nativeApplication.modules` again for any gateway initialization work,
    run the one `onApplicationBootstrap` pass over the graph — after every route
    and gateway is mounted and before anything can listen — and wrap everything
-   in `AponiaElysiaApplication`.
+   in `AponiaApplication`.
 
 `compileDecoratedController` delegates route lowering to
 `routing/route-compiler.ts`.
@@ -212,7 +212,7 @@ name `CreateUser` directly without repeating `typeof`.
 The files under `packages/common/src/routing/route-schema*` own the contract.
 Validators are either Standard Schema implementations (`~standard`, so Zod,
 ArkType, and Valibot) or platform-native JSON Schema validators matched
-structurally through `NativeSchema`, the marker union every TypeBox 1 builder
+structurally through `ValidatorSchema`, the marker union every TypeBox 1 builder
 declares on the type it constructs — `~kind` always, and `~refine`, `~codec`,
 and `~unsafe` from the modifier wrappers — which is the union Elysia itself
 accepts, so an Elysia `t` schema arrives unchanged and no package gains a
@@ -231,12 +231,13 @@ builder in sync when adding one.
 
 Handlers receive their input through parameter decorators
 (`packages/common/src/routing/route-parameters.ts`): `@Body`, `@Query`, `@Param`,
-`@Headers`, `@Cookie`, `@Store`, `@Req`, `@Set`/`@Res`, `@Status`, and `@Ctx`,
+`@Headers`, `@Cookie`, `@State`, `@Req`, `@ResponseSettings`, `@HttpStatus`,
+and `@Context`,
 each optionally naming a single property. Metadata is stored per method under
 `Symbol.for("aponia.route-parameters.metadata")`, and `routing/route-compiler.ts`
 compiles the context-to-argument mapping once while mounting the controller. If
 a handler has no parameter decorators, one declared parameter receives the whole
-context, so `RouteContext` and the platform's `ElysiaRouteContext` stay useful
+context, so `RouteContext` and the platform's `HandlerContext` stay useful
 annotations. A zero-parameter handler skips unused context materialization.
 TypeScript cannot contextually type a decorated method's parameters, which is
 why types come from the handler's own annotations rather than from schema
@@ -251,7 +252,7 @@ bootstrap compiles the plan the provider declares, or the metadata on
 `provider.useClass` when it declares none, and resolves the existing container
 instance through its provider token either way. Never construct a second
 gateway instance or add a separate gateway container.
-`defineElysiaWebSocketGateway` in
+`defineWebSocketGateway` in
 `packages/platform-elysia/src/websockets/gateway-definition.ts` is the declared
 half of that pair, and a plan states only what the decorators record — path,
 handlers, and server properties — because lifecycle is resolved from the
@@ -277,14 +278,14 @@ argument binding once, rejects duplicate canonical paths/events before
 listening, and delegates the upgrade, serialization, native socket,
 publish/subscribe, and backpressure primitives to Elysia. Client-visible errors
 use `{ event: "exception", data: { code, message } }` and never expose a stack
-or cause. Keep `ElysiaWebSocket` and `ElysiaWebSocketServer` as transparent type
+or cause. Keep `WebSocketClient` and `WebSocketServerRef` as transparent type
 aliases over the native Elysia objects.
 
 ### Native plugin context types
 
 Compiling a decorated controller erases the plugin instances a module imports, so
-nothing statically links `ElysiaPluginModule.register(plugin)` to a handler.
-`ElysiaRouteContext<TSchemaOrPlugins, TPlugins>` in
+nothing statically links `PluginModule.register(plugin)` to a handler.
+`HandlerContext<TSchemaOrPlugins, TPlugins>` in
 `packages/platform-elysia/src/routing/route-context.types.ts` closes that gap
 explicitly: it
 accepts one Elysia instance type or a tuple of them and builds the `Singleton`
@@ -292,7 +293,7 @@ that `Context` needs. The first argument holds either a route schema or the
 plugins — an all-optional `InputSchema` also matches an Elysia instance, so the
 conditional tests for the plugin shape first and only then treats the argument as
 a schema. Applications shorten the annotation with their own
-`AppContext<TSchema extends ElysiaInputSchema = {}>` alias rather than a
+`AppContext<TSchema extends RouteInputSchema = {}>` alias rather than a
 framework-level registry; ambient plugin registration through declaration
 merging was rejected because it leaks across a whole compilation.
 For model-backed route schemas, the platform lowers validation classes through
@@ -301,10 +302,10 @@ a type-only Standard Schema projection before handing the schema to Elysia's
 lowering, including response maps; it must never read metadata or construct a
 runtime validator.
 
-`defineElysiaPlugin` in `plugins/plugin-module.ts` is
-`ElysiaPluginModule.register` plus
+`definePlugin` in `plugins/plugin-module.ts` is
+`PluginModule.register` plus
 the plugin it installs, exposed as a real `plugin` property rather than a phantom
-type, so `ElysiaPluginSource` accepts both an Elysia instance and that import.
+type, so `PluginSource` accepts both an Elysia instance and that import.
 Exporting the result as a value beside a same-named type is what lets an
 annotation drop `typeof`; TypeScript has no other way to name a value in a type
 position. The merge mirrors Elysia's own `.use()` signature —

@@ -1,4 +1,4 @@
-import { renderLogValue, type LogLevel, type LoggerService } from "@aponiajs/common";
+import { formatLogValue, type LogLevel, type LoggerService } from "@aponiajs/common";
 import type { LogBuffer, LogEntry } from "./log-buffer.types.ts";
 
 /**
@@ -26,7 +26,7 @@ const recordableLevels = [
  * tap never reached would read the same. It is the levels the tap installed on,
  * in `recordableLevels` order, and it is a copy the caller owns.
  */
-export interface TappedLogStream {
+export interface LogStream {
   /** The buffer that records every line written through the tapped logger. */
   readonly buffer: LogBuffer;
   /** The levels the tap patched, in `recordableLevels` order. */
@@ -43,7 +43,7 @@ export interface TappedLogStream {
  * named publishes the stream a client is already polling rather than a fresh one
  * nothing writes into.
  */
-const tappedLoggers = new WeakMap<object, TappedLogStream>();
+const tappedLoggers = new WeakMap<object, LogStream>();
 
 /**
  * Whether this package can record the lines a value writes: an object with at
@@ -124,10 +124,7 @@ function isCallableMethod(target: Record<string, unknown>, level: LogLevel): boo
  * not a logger is refused. A logger it has tapped before is answered with the
  * stream already recording it, so the two cannot disagree about where a line went.
  */
-export function tapLogBuffer(
-  logger: LoggerService,
-  buffer: LogBuffer,
-): TappedLogStream | undefined {
+export function recordLogger(logger: LoggerService, buffer: LogBuffer): LogStream | undefined {
   const tapped = tappedLoggers.get(logger);
 
   if (tapped !== undefined) {
@@ -190,7 +187,7 @@ export function tapLogBuffer(
  * A value that cannot be keyed — a JavaScript caller can pass anything — is
  * simply not remembered, because the stream handed over is the answer either way.
  */
-function rememberTap(logger: LoggerService, stream: TappedLogStream): void {
+function rememberTap(logger: LoggerService, stream: LogStream): void {
   try {
     tappedLoggers.set(logger, stream);
   } catch {
@@ -201,7 +198,7 @@ function rememberTap(logger: LoggerService, stream: TappedLogStream): void {
 /**
  * One entry, as `/logs` states it.
  *
- * `message` is rendered by `@aponiajs/common`'s `renderLogValue` rather than left
+ * `message` is rendered by `@aponiajs/common`'s `formatLogValue` rather than left
  * to `JSON.stringify`, because a logger's arguments are `unknown` by contract: an
  * `Error` would serialize as `{}`, a function as nothing at all, and a value that
  * refers to itself would fail the payload on the request that asked for it. It is
@@ -214,7 +211,7 @@ function rememberTap(logger: LoggerService, stream: TappedLogStream): void {
  * because a devtools stream states what happened rather than editing it. The
  * rendering may not throw — it runs inside a patched logger method, and one caller
  * of a logger method is the platform's error hook reporting an unhandled failure —
- * and `renderLogValue` is total, so there is nothing here to catch. What a throw
+ * and `formatLogValue` is total, so there is nothing here to catch. What a throw
  * would cost has moved rather than gone: the platform's error hook guards the
  * logger call that reaches this tap, so a throw on that path is caught, announced
  * on `stderr`, and the request is answered all the same, while the line itself goes
@@ -229,7 +226,7 @@ function createLogEntry(
   return Object.freeze({
     level,
     context: namedContext(optionalParameters),
-    message: renderLogValue(message),
+    message: formatLogValue(message),
     timestamp: new Date().toISOString(),
   });
 }

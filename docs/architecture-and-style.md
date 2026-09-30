@@ -313,30 +313,30 @@ export class UserController {
 }
 ```
 
-`@Body()`, `@Query()`, `@Param()`, `@Headers()`, `@Cookie()`, and `@Store()`
+`@Body()`, `@Query()`, `@Param()`, `@Headers()`, `@Cookie()`, and `@State()`
 accept an optional property name that selects a single value. `@Req()` injects
-the native `Request`, `@Set()` the mutable response settings, `@Status()` the
-typed status helper, and `@Ctx()` the whole platform context. `@Res()` is the
-Nest-style alias of `@Set()`.
+the native `Request`, `@ResponseSettings()` the mutable response settings,
+`@HttpStatus()` the typed status helper, and `@Context()` the whole platform
+context.
 
 A handler with no parameter decorators may declare one parameter to receive the
 context. Annotate it with `RouteContext<typeof schema>` to stay platform-neutral,
-or with `ElysiaRouteContext<typeof schema>` from `@aponiajs/platform-elysia` to
+or with `HandlerContext<typeof schema>` from `@aponiajs/platform-elysia` to
 keep `status`, `set`, `cookie`, `store`, and
 `redirect` typed by Elysia itself. Both context helpers accept schemas whose
 slots and response maps contain validation-model classes.
 
 Compiling a decorated controller erases the plugin instances its module imports,
 so a native plugin's additions are present at runtime but untyped by default.
-Name the plugins to type them: `ElysiaRouteContext<typeof clock>` when the route
-has no schema, `ElysiaRouteContext<[typeof clock, typeof jwt]>` for several, and
-`ElysiaRouteContext<typeof schema, typeof clock>` when both matter. An
+Name the plugins to type them: `HandlerContext<typeof clock>` when the route
+has no schema, `HandlerContext<[typeof clock, typeof jwt]>` for several, and
+`HandlerContext<typeof schema, typeof clock>` when both matter. An
 application that always mounts the same plugins declares
-`type AppContext<TSchema extends ElysiaInputSchema = {}> = ElysiaRouteContext<TSchema, AppPlugins>`
+`type AppContext<TSchema extends RouteInputSchema = {}> = HandlerContext<TSchema, AppPlugins>`
 once and annotates handlers with `AppContext` or `AppContext<typeof schema>`.
-`defineElysiaPlugin` goes further: it converts a native plugin into a module
+`definePlugin` goes further: it converts a native plugin into a module
 import that carries its own type, so `imports: [clock]` mounts it and
-`e<clock>` — `ElysiaRouteContext` renamed on import — types it without a
+`e<clock>` — `HandlerContext` renamed on import — types it without a
 `typeof`, provided the plugin is exported as a value and a same-named type. The
 [native plugin guide](./native-plugins.md) is the complete reference.
 The mapping
@@ -400,8 +400,8 @@ machine-code JIT compilation, and build-time Aponia source generation is a
 separate concern.
 
 A build tool can target the same direct-registration path without decorators by
-emitting `defineElysiaController(..., { registerRoutes })` descriptors.
-Hand-authored code normally uses the concise `elysiaController(...)` facade so
+emitting `defineController(..., { registerRoutes })` descriptors.
+Hand-authored code normally uses the concise `controller(...)` facade so
 Elysia contextually infers route input without a manual context type or
 `typeof`. The older `buildPlugin` form remains the compatibility escape hatch
 for a controller that deliberately owns an isolated Elysia plugin.

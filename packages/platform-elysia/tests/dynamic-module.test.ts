@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { Module, type DynamicModule, type ModuleImport } from "@aponiajs/common";
 import { createContainer } from "@aponiajs/core";
 import { Elysia } from "elysia";
-import { ElysiaPluginModule, compileRootModule } from "../src/index.ts";
+import { PluginModule, compileRootModule } from "../src/index.ts";
 
 @Module({})
 class DynamicTestModule {}
@@ -25,29 +25,29 @@ test("rejects self-referencing and two-node dynamic module cycles", () => {
 });
 
 test("keeps static and separately configured instances of one module class", () => {
-  const first = ElysiaPluginModule.register(new Elysia(), {
+  const first = PluginModule.register(new Elysia(), {
     key: "compiler-first",
   });
-  const second = ElysiaPluginModule.register(new Elysia(), {
+  const second = PluginModule.register(new Elysia(), {
     key: "compiler-second",
   });
-  const root = createDynamicModule("ConfiguredInstancesRoot", [ElysiaPluginModule, first, second]);
+  const root = createDynamicModule("ConfiguredInstancesRoot", [PluginModule, first, second]);
 
   const graph = createContainer(compileRootModule(root)).graph;
 
   expect(graph.modules.map((module) => module.id)).toEqual([
-    "ElysiaPluginModule",
-    "ElysiaPluginModule[compiler-first]",
-    "ElysiaPluginModule[compiler-second]",
+    "PluginModule",
+    "PluginModule[compiler-first]",
+    "PluginModule[compiler-second]",
     "ConfiguredInstancesRoot",
   ]);
 });
 
 test("rejects two configured modules with the same stable key", () => {
-  const first = ElysiaPluginModule.register(new Elysia(), {
+  const first = PluginModule.register(new Elysia(), {
     key: "compiler-duplicate",
   });
-  const second = ElysiaPluginModule.register(new Elysia(), {
+  const second = PluginModule.register(new Elysia(), {
     key: "compiler-duplicate",
   });
   const root = createDynamicModule("DuplicateConfiguredRoot", [first, second]);
@@ -58,10 +58,10 @@ test("rejects two configured modules with the same stable key", () => {
 });
 
 test("rejects empty and whitespace-only stable keys", () => {
-  expect(() => ElysiaPluginModule.register(new Elysia(), { key: "" })).toThrow(
+  expect(() => PluginModule.register(new Elysia(), { key: "" })).toThrow(
     "Elysia plugin module key must not be empty.",
   );
-  expect(() => ElysiaPluginModule.register(new Elysia(), { key: "   " })).toThrow(
+  expect(() => PluginModule.register(new Elysia(), { key: "   " })).toThrow(
     "Elysia plugin module key must not be empty.",
   );
 });

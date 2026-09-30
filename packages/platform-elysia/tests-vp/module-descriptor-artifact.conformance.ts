@@ -9,8 +9,8 @@ import {
 import { z } from "zod";
 import {
   AponiaFactory,
-  defineElysiaControllerRoutes,
-  readApplicationDiagnostics,
+  defineControllerRoutes,
+  getApplicationDiagnostics,
   type AponiaApplicationDiagnostics,
   type AponiaApplicationOptions,
   type AponiaArtifactProvenance,
@@ -63,14 +63,14 @@ class ConformanceValidatedModule {}
 
 /**
  * The same application, declared the way `aponia build` writes it: `defineModule`
- * from `@aponiajs/common` and `defineElysiaControllerRoutes` from this package,
+ * from `@aponiajs/common` and `defineControllerRoutes` from this package,
  * which is what makes a committed generated module ordinary source.
  */
 const conformanceDescriptor = defineModule({
   id: "ConformanceDescriptorModule",
   providers: [provideClass(ConformanceDescriptorService, [])],
   controllers: [
-    defineElysiaControllerRoutes(ConformanceDescriptorController, {
+    defineControllerRoutes(ConformanceDescriptorController, {
       path: "conformance-descriptors",
       inject: [ConformanceDescriptorService],
       routes: [
@@ -94,7 +94,7 @@ const conformanceDescriptor = defineModule({
 const conformanceValidatedDescriptor = defineModule({
   id: "ConformanceValidatedModule",
   controllers: [
-    defineElysiaControllerRoutes(ConformanceValidatedController, {
+    defineControllerRoutes(ConformanceValidatedController, {
       path: "conformance-validated",
       inject: [],
       routes: [
@@ -199,7 +199,7 @@ test("the Vite+ lane types the binding each route of a boot record reports", () 
 
 test("the Vite+ lane reads the binding each mounted plan reports", async () => {
   const application = await AponiaFactory.create(ConformanceDescriptorModule, documentedOptions);
-  const diagnostics = readApplicationDiagnostics(application.getNativeApplication());
+  const diagnostics = getApplicationDiagnostics(application.getNativeApplication());
   const routes = diagnostics?.routes ?? [];
 
   // This boot adopted no invoker artifact, so every plan it mounted is the
@@ -214,7 +214,7 @@ test("the Vite+ lane reads the binding each mounted plan reports", async () => {
 
 test("the Vite+ lane stamps an adopted artifact and leaves declared data unstamped", async () => {
   const adopted = await AponiaFactory.create(ConformanceDescriptorModule, documentedOptions);
-  const adoptedDiagnostics = readApplicationDiagnostics(adopted.getNativeApplication());
+  const adoptedDiagnostics = getApplicationDiagnostics(adopted.getNativeApplication());
 
   expect(adoptedDiagnostics?.artifacts.descriptors).toBe(aponiaVersion);
   expect(adoptedDiagnostics?.artifacts.invokers).toBeNull();
@@ -224,7 +224,7 @@ test("the Vite+ lane stamps an adopted artifact and leaves declared data unstamp
   // and no build emitted it, so both stamps stay `null`. "declared" says the
   // container compiled data; only adoption can name the release that wrote it.
   const handwritten = await AponiaFactory.create(conformanceDescriptor, { logger: false });
-  const handwrittenDiagnostics = readApplicationDiagnostics(handwritten.getNativeApplication());
+  const handwrittenDiagnostics = getApplicationDiagnostics(handwritten.getNativeApplication());
 
   expect(handwrittenDiagnostics?.graph).toBe("declared");
   expect(handwrittenDiagnostics?.artifacts).toEqual({ invokers: null, descriptors: null });

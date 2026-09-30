@@ -1,4 +1,4 @@
-import { AponiaError, tokenName, type Token } from "@aponiajs/common";
+import { AponiaError, getTokenName, type Token } from "@aponiajs/common";
 import type { AponiaContainer } from "@aponiajs/core";
 
 // A registered key rather than a fresh symbol: two copies of this package in one
@@ -11,7 +11,7 @@ const containerKey: unique symbol = Symbol.for("aponia.application.container");
 const nativeApplicationKey: unique symbol = Symbol.for("aponia.application.native");
 
 // Every export below is internal: none appears in this package's barrel except
-// `readApplicationFromStore`, whose one consumer is another framework package
+// `getApplicationFromStore`, whose one consumer is another framework package
 // rather than an application, and the marker is what keeps a future `export *`
 // from publishing the rest.
 
@@ -62,8 +62,8 @@ export function readApplicationToken<T>(application: unknown, token: Token<T>): 
   if (!container) {
     throw new AponiaError(
       "MISSING_PROVIDER",
-      `Provider "${tokenName(token)}" cannot be read: no boot produced this application, so it holds no container.`,
-      { token: tokenName(token) },
+      `Provider "${getTokenName(token)}" cannot be read: no boot produced this application, so it holds no container.`,
+      { token: getTokenName(token) },
     );
   }
 
@@ -140,13 +140,13 @@ function rootStoreOf(application: object): Record<PropertyKey, unknown> | undefi
  *
  * `undefined` is the answer for an application no boot produced — a plain
  * `Elysia` a plugin was mounted on by hand — and a consumer reports that absence
- * rather than treating it as an error, exactly as `readApplicationDiagnostics`
+ * rather than treating it as an error, exactly as `getApplicationDiagnostics`
  * does with the record. It is the channel `@aponiajs/devtools` reaches the
  * application through, which is why this one reader is on the barrel.
  *
  * @internal
  */
-export function readApplicationFromStore(store: unknown): object | undefined {
+export function getApplicationFromStore(store: unknown): object | undefined {
   return (store as Record<PropertyKey, unknown> | null | undefined)?.[nativeApplicationKey] as
     | object
     | undefined;

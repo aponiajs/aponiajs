@@ -1,10 +1,10 @@
 /**
- * Options for {@link aponiaBuildPlugin}.
+ * Options for {@link buildPlugin}.
  *
  * Both mirror the matching `aponia build` option, because the plugin runs the
  * same generator the command does.
  */
-export interface AponiaBuildPluginOptions {
+export interface BuildPluginOptions {
   /**
    * Directory to resolve the project from. Defaults to the working directory the
    * bundler runs in, which is the project root for a build script.

@@ -18,10 +18,10 @@ import {
 import { t } from "elysia";
 import {
   AponiaFactory,
-  defineElysiaControllerRoutes,
-  type AponiaElysiaApplication,
+  defineControllerRoutes,
+  type AponiaApplication,
   type AponiaInvokerArtifact,
-  type AponiaRouteInvoker,
+  type RouteHandler,
 } from "../src/index.ts";
 
 const order: string[] = [];
@@ -374,7 +374,7 @@ class SchemaModule {}
  * The hook object Elysia mounted for one path, which is what a boot compiled for
  * that route made observable.
  */
-function mountedHooks(application: AponiaElysiaApplication, path: string): Record<string, unknown> {
+function mountedHooks(application: AponiaApplication, path: string): Record<string, unknown> {
   const route = application
     .getNativeApplication()
     .routes.find((candidate) => candidate.path === path);
@@ -396,7 +396,7 @@ const frameworkVersion = (
 
 /** An artifact shaped the way `aponia build` writes one, holding one controller. */
 function invokerArtifact(
-  invoker: (instance: InvokedController) => ReadonlyMap<string | symbol, AponiaRouteInvoker>,
+  invoker: (instance: InvokedController) => ReadonlyMap<string | symbol, RouteHandler>,
 ): AponiaInvokerArtifact {
   return Object.freeze({
     framework: frameworkVersion,
@@ -618,7 +618,7 @@ describe("interceptors on the declared-descriptor path", () => {
       id: "DeclaredInterceptorModule",
       providers: [provideClass(DeclaredWrappingInterceptor, [])],
       controllers: [
-        defineElysiaControllerRoutes(DeclaredInterceptorController, {
+        defineControllerRoutes(DeclaredInterceptorController, {
           path: "declared",
           routes: [
             {

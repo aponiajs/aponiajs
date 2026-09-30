@@ -111,7 +111,7 @@ export async function generateInvokers(
 
   const provenance = Object.freeze({
     framework: aponiaVersion,
-    elysia: await resolveElysiaVersion(projectRoot),
+    elysia: await resolvePeerVersion(projectRoot),
   });
   const emitted = emitControllerInvokers(
     found.map((entry) => entry.controller),
@@ -162,7 +162,7 @@ export async function generateInvokers(
  * requiring an installed Elysia would make it fail on a checkout that has not
  * been installed yet, which is not a fault in the project being built.
  */
-async function resolveElysiaVersion(projectRoot: string): Promise<string | null> {
+async function resolvePeerVersion(projectRoot: string): Promise<string | null> {
   try {
     const manifestPath = Bun.resolveSync("elysia/package.json", projectRoot);
     const manifest = (await Bun.file(manifestPath).json()) as { version?: unknown };

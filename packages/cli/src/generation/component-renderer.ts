@@ -21,7 +21,7 @@ export function renderComponent(schematic: ComponentSchematic, names: ComponentN
     case "guard":
       return `import { Injectable, type CanActivate, type ExecutionContext } from "@aponiajs/common";\n\n@Injectable()\nexport class ${className} implements CanActivate {\n  canActivate(_context: ExecutionContext): boolean {\n    return true;\n  }\n}\n`;
     case "interceptor":
-      return `import { Injectable, type AponiaInterceptor, type ExecutionContext } from "@aponiajs/common";\n\n@Injectable()\nexport class ${className} implements AponiaInterceptor {\n  interceptBefore(_context: ExecutionContext): void {}\n\n  interceptAfter(_context: ExecutionContext, response: unknown): unknown {\n    return response;\n  }\n}\n`;
+      return `import { Injectable, type Interceptor, type ExecutionContext } from "@aponiajs/common";\n\n@Injectable()\nexport class ${className} implements Interceptor {\n  interceptBefore(_context: ExecutionContext): void {}\n\n  interceptAfter(_context: ExecutionContext, response: unknown): unknown {\n    return response;\n  }\n}\n`;
     case "filter":
       return `import { Catch, Injectable, type ArgumentsHost, type ExceptionFilter } from "@aponiajs/common";\n\n@Injectable()\n@Catch()\nexport class ${className} implements ExceptionFilter {\n  catch(exception: unknown, _host: ArgumentsHost): unknown {\n    return exception;\n  }\n}\n`;
     default:

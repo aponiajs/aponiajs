@@ -1,4 +1,4 @@
-import type { generateSchematics } from "./command.constants.ts";
+import type { schematicNames } from "./command.constants.ts";
 
 export interface NewCommandOptions {
   readonly command: "new";
@@ -7,7 +7,7 @@ export interface NewCommandOptions {
   readonly skipInstall: boolean;
 }
 
-export type GenerateSchematic = (typeof generateSchematics)[number];
+export type GenerateSchematic = (typeof schematicNames)[number];
 
 export type ResourceTransport =
   | "rest"

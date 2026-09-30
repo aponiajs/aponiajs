@@ -14,7 +14,7 @@ It depends on `common` and `core`, with `elysia` as a peer.
 | `application/`   | Factory orchestration, application lifecycle wrapper, public option contracts                    |
 | `configuration/` | The boot-time loader that validates a declared configuration                                     |
 | `modules/`       | `compileRootModule` and decorator-to-descriptor lowering                                         |
-| `controllers/`   | Controller descriptors, direct registration, enhancer resolution, `ELYSIA_CONTROLLER`            |
+| `controllers/`   | Controller descriptors, direct registration, enhancer resolution, `CONTROLLER_KIND`              |
 | `errors/`        | Typed HTTP errors, RFC 9457 Problem Details responses, and the default mapping                   |
 | `inspection/`    | Read-only projection of a compiled application for build-time consumers                          |
 | `plugins/`       | Native plugin module registration and plugin contracts                                           |
@@ -44,7 +44,7 @@ runtime boundary it describes.
   entry is the plugin value itself — nothing resolves from the container on this
   path, so no entry can fail a boot — and an entry that is `undefined` mounts
   nothing, which is the shape a plugin factory states a decision with. The
-  element type is `NativeElysiaPlugin | undefined` from `plugins/plugin.types.ts`
+  element type is `ElysiaPlugin | undefined` from `plugins/plugin.types.ts`
   so an entry is exactly what `.use()` accepts. Both hook phases run in mount
   order, so a hook declared here runs before one a module's plugin declares;
   `tests/application-plugins.test.ts` pins that order and the option's three
@@ -158,7 +158,7 @@ runtime boundary it describes.
   in this package report a failure and every one of them goes through that seam:
   this mapping,
   `createFilterHook`'s catch, which reports a filter that threw before declining
-  to what answers next, `AponiaElysiaApplication.listen`'s catch, which reports
+  to what answers next, `AponiaApplication.listen`'s catch, which reports
   the failure it is about to rethrow, and `runShutdownHooks`'s catch in
   `application-bootstrap.ts`, which reports a hook that threw while the
   application was stopping and carries on, because `close()` may not become a
@@ -171,7 +171,7 @@ runtime boundary it describes.
   is a failure — the row it writes for a route analysis it could not read, which
   a throw would otherwise turn into a failed `/aot` request instead of the
   degraded half that endpoint promises — and it is guarded. The rendering is
-  `@aponiajs/common`'s `renderLogValue`, the same call the devtools log stream
+  `@aponiajs/common`'s `formatLogValue`, the same call the devtools log stream
   renders a line through, so the two surfaces cannot disagree about one failure;
   it is total, and a thrown value that refuses to be rendered is recorded as the
   literal `[unrenderable]` rather than allowed to throw inside the error path. A
@@ -225,8 +225,8 @@ runtime boundary it describes.
   from a supplied map, and a symbol-keyed handler all fall back to compiled
   binding, and an entry for a token no controller uses is ignored. The option is
   never mutated.
-- `AponiaRouteInvoker` declares its context parameter `never`, for the same
-  reason `AponiaControllerInvokerFactory` does with its instance parameter: an
+- `RouteHandler` declares its context parameter `never`, for the same
+  reason `ControllerHandlerFactory` does with its instance parameter: an
   invoker is written against its own route's annotations
   (`@Body() body: CreateUser`), which `RouteContext` cannot describe, and a
   parameter that accepts nothing is the one type every such function is
@@ -283,7 +283,7 @@ runtime boundary it describes.
   the graph compiler is the one outcome this option must never cause.
 - `bootstrapAponiaApplication` attaches one boot record to the native application
   it returns, under `Symbol.for("aponia.application.diagnostics")`, and
-  `readApplicationDiagnostics` is its only reader. The property is non-enumerable,
+  `getApplicationDiagnostics` is its only reader. The property is non-enumerable,
   non-writable, and non-configurable, and the record is frozen: this is a seam,
   not shape, because Elysia composes by walking an instance's keys, and an
   application no boot produced — a plain `Elysia`, a plugin instance — must read
@@ -322,20 +322,20 @@ runtime boundary it describes.
   attaches its container under `Symbol.for("aponia.application.container")` as
   `application-container.ts`'s `attachApplicationContainer`, with the same three
   flags and the same reader discipline, and it is what
-  `AponiaElysiaApplication.get` reads a token through — a wrapper no boot
+  `AponiaApplication.get` reads a token through — a wrapper no boot
   produced holds no container and raises `MISSING_PROVIDER`. The third seam rides
   the application's own `store` rather than its instance, because its consumer
   reaches the application from inside a request: `publishApplicationOnStore`
   writes the application onto `application.store` under
   `Symbol.for("aponia.application.native")` with the same three flags, and
-  `readApplicationFromStore` is its reader on the barrel — the one internal
+  `getApplicationFromStore` is its reader on the barrel — the one internal
   export that appears there, because the consumer is `@aponiajs/devtools` rather
   than an application, and Elysia hands a request context the `store` and not the
   instance. `tests/application-diagnostics.test.ts` pins the publication, the
   absence a plain `Elysia` reads, and the early return that leaves a value with no
   `store` unpublished rather than throwing.
-- `defineElysiaControllerRoutes` is the descriptor path's counterpart to
-  `@Controller()` and its route decorators: it compiles `ElysiaRoutePlan` values
+- `defineControllerRoutes` is the descriptor path's counterpart to
+  `@Controller()` and its route decorators: it compiles `RoutePlan` values
   through the same lowering a decorated controller uses, so a declared
   controller reaches the same native version guard, duplicate-route check,
   startup logging, and `invokers` lookup. A plan never registers itself on
@@ -343,7 +343,7 @@ runtime boundary it describes.
   route API. The two facts decorators read from emitted metadata are declared
   instead: `takesContext` (omitted means the handler receives nothing) and
   `promiseCapable` (omitted means Promise-capable, the direction that cannot
-  change what a lifecycle hook observes). `compileElysiaRoutePlan` synthesizes
+  change what a lifecycle hook observes). `compileRoutePlan` synthesizes
   `declaredParameterCount` rather than leaving it undefined, because
   `undefined` sends the runtime's whole-context fallback back to reading the
   handler's own source, which is the inference this path removes.
@@ -361,20 +361,20 @@ runtime boundary it describes.
   registration, pass its exact raw validator to Elysia, and keep direct
   validators plus native controller registration as escape hatches. Never add
   model reflection or validation work to the request hot path.
-- `ElysiaRouteContext` and `ElysiaStatus` lower model classes through a type-only
+- `HandlerContext` and `ResponseStatus` lower model classes through a type-only
   Standard Schema projection. Keep that projection aligned with runtime route
   lowering, including status-specific response maps; it must never read model
   metadata or construct validators.
 - A direct `registerRoutes` callback may return its fluent Elysia chain to
   preserve the route contract for Eden, or return `void` for compatibility. It
   must never return a different Elysia instance.
-- `elysiaController` is the concise direct-registration facade. Its callback is
+- `controller` is the concise direct-registration facade. Its callback is
   the native escape hatch when Elysia inference is more useful than decorator
-  metadata; `defineElysiaController` remains the advanced descriptor API.
+  metadata; `defineController` remains the advanced descriptor API.
 - `HttpError` serializes application failures as RFC 9457 Problem Details. Its
   response never includes its stack or cause, and the `httpErrors` factory set
   must cover every 4xx and 5xx status exported by the supported Elysia version.
-- `ElysiaRouteContext` merges plugin types the way Elysia's own `.use()` does:
+- `HandlerContext` merges plugin types the way Elysia's own `.use()` does:
   `~Singleton` for `decorator`, `store`, `derive`, and `resolve`, plus
   `~Ephemeral` derives and resolves. `~Volatile` stays excluded because a
   plugin-local derive never reaches a controller mounted beside the plugin.
@@ -382,7 +382,7 @@ runtime boundary it describes.
 - The first type argument accepts either a schema or the plugins. An
   all-optional `InputSchema` also matches an Elysia instance, so the conditional
   tests the plugin shape first.
-- `defineElysiaPlugin` exposes the plugin on a real `plugin` property, never a
+- `definePlugin` exposes the plugin on a real `plugin` property, never a
   phantom type, so the value is inspectable at runtime.
 - Verify a fallback controller's `buildPlugin` result is a real `Elysia`
   instance and raise `INVALID_CONTROLLER` when it is not.
@@ -392,7 +392,7 @@ runtime boundary it describes.
   resolves the existing provider token through `resolveModuleProvider` and never
   constructs a second instance. Both readings produce the same compiled plan, so
   a duplicate path, a duplicate event, and every other rejection come from one
-  check at one moment with one code. `defineElysiaWebSocketGateway` is the
+  check at one moment with one code. `defineWebSocketGateway` is the
   descriptor path's counterpart to those decorators: a plan never registers
   itself, and `websockets/websocket-gateway.ts` stays the only module that calls
   `application.ws()`. A plan states only what a decorator records as metadata —
@@ -409,7 +409,7 @@ runtime boundary it describes.
   registration call, whenever at least one gateway is declared, so
   `@WebSocketGateway()` stays one declaration rather than a pair an application
   has to remember. It is mounted there rather than in
-  `registerElysiaWebSocketGateways`, whose contract is to register the routes a
+  `registerWebSocketGateways`, whose contract is to register the routes a
   plan describes and which is handed applications that carry nothing else.
 - Compile `@MessageBody()` and `@ConnectedSocket()` arguments during bootstrap.
   Preserve `undefined` as no response and every other value as data;
@@ -421,7 +421,7 @@ runtime boundary it describes.
   sent to clients.
 - `inspectAponiaApplication` is a projection, never a second compiler. It runs
   bootstrap's own lowering (`compileRootModule`, then `createContainer`, then
-  `compileElysiaWebSocketGateways`) and reads the resulting descriptors, so it
+  `compileWebSocketGateways`) and reads the resulting descriptors, so it
   constructs no provider and no controller instance and raises the same
   `AponiaError` codes bootstrap raises for the same application. Give it new
   data by reading a descriptor, never by re-deriving compilation.
@@ -437,7 +437,7 @@ runtime boundary it describes.
   in a callback that needs an instance, so it is listed in its module's
   `controllers` and contributes no `routes` entry. Controllers bootstrap would
   refuse still fail inspection with `UNSUPPORTED_CONTROLLER`.
-- Inspection reads each provider's dependencies through `providerDependencies`
+- Inspection reads each provider's dependencies through `getProviderDependencies`
   from `@aponiajs/core`, the same function the container resolves through. Never
   restate that switch here; a new provider kind must land in one place.
 
@@ -456,17 +456,17 @@ Elysia 2 is the supported release. Its changes were verified by running
 `2.0.0-beta.19`, not by reading the release notes, because the published docs
 were still 1.x:
 
-| Call site                                                                                | Elysia 2                                                                                 |
-| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `routing/native-route.ts`                                                                | `route(...)` removed; `method(method, path, hook, handler)` swaps the last two arguments |
-| `routing/route-compiler.ts` (`TSchema`)                                                  | no longer root-exported; import from `typebox`                                           |
-| `routing/route-compiler.ts` (`AnySchema`)                                                | now `TypeBoxSchema \| StandardSchemaV1Like`                                              |
-| `routing/route-context.types.ts` (`SingletonBase`, `MergeElysiaInstances`, `EventScope`) | no longer root-exported; import from `elysia/types`                                      |
-| `routing/route-context.types.ts` (`~Singleton`/`~Ephemeral` `resolve` keys)              | `resolve` removed; its timing folded into `derive`                                       |
-| `websockets/websocket-gateway.types.ts` (`ElysiaWS<Context, Route>`)                     | one type argument; `ElysiaWS<Route>` in `elysia/ws`                                      |
-| `errors/http-error.ts`, `errors/http-error.types.ts` (`InvertedStatusMap`)               | renamed to `StatusMapBack`                                                               |
-| `errors/http-error.ts` (`ElysiaCustomStatusResponse`)                                    | renamed to `ElysiaStatus`                                                                |
-| `application/application.types.ts` (`ElysiaConfig`)                                      | no longer carries `aot`; needs at least two type arguments                               |
+| Call site                                                                                | Elysia 2                                                                                       |
+| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `routing/native-route.ts`                                                                | `route(...)` removed; `method(method, path, hook, handler)` swaps the last two arguments       |
+| `routing/route-compiler.ts` (`TSchema`)                                                  | no longer root-exported; import from `typebox`                                                 |
+| `routing/route-compiler.ts` (`AnySchema`)                                                | now `TypeBoxSchema \| StandardSchemaV1Like`                                                    |
+| `routing/route-context.types.ts` (`SingletonBase`, `MergeElysiaInstances`, `EventScope`) | no longer root-exported; import from `elysia/types`                                            |
+| `routing/route-context.types.ts` (`~Singleton`/`~Ephemeral` `resolve` keys)              | `resolve` removed; its timing folded into `derive`                                             |
+| `websockets/websocket-gateway.types.ts` (`ElysiaWS<Context, Route>`)                     | one type argument; `ElysiaWS<Route>` in `elysia/ws`                                            |
+| `errors/http-error.ts`, `errors/http-error.types.ts` (`InvertedStatusMap`)               | renamed to `StatusMapBack`                                                                     |
+| `errors/http-error.ts` (`ElysiaCustomStatusResponse`)                                    | renamed by Elysia to its own custom-status class, read in `errors/default-exception-filter.ts` |
+| `application/application.types.ts` (`ElysiaConfig`)                                      | no longer carries `aot`; needs at least two type arguments                                     |
 
 `docs/elysia-compatibility.md` is the user-facing half of this. Update both
 together, and re-verify against a real install rather than the blog post.

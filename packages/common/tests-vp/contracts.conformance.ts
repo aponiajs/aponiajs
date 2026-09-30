@@ -2,15 +2,16 @@ import type { StandardSchemaV1 } from "@standard-schema/spec";
 import {
   Body,
   Controller,
+  HttpStatus,
   Inject,
   Module,
   Param,
   Post,
-  Set,
-  Status,
-  Store,
+  ResponseSettings,
+  State,
   createToken,
   defineModule,
+  formatLogValue,
   getConstructorDependencies,
   getControllerMetadata,
   getModuleMetadata,
@@ -20,11 +21,10 @@ import {
   isStandardSchema,
   provideClass,
   provideValue,
-  renderLogValue,
   type ClassProvider,
   type RouteParameterMetadata,
 } from "../src/index.ts";
-import type { RouteResponseSettings } from "../src/index.ts";
+import type { ResponseSettingsState } from "../src/index.ts";
 
 type VitePlusTest = typeof import("vite-plus/test");
 
@@ -40,10 +40,10 @@ type Expect<TAssertion extends true> = TAssertion;
  * assigned redirect, so the response settings type must not offer one.
  */
 type ResponseSettingsAssertions = [
-  Expect<Equals<"redirect" extends keyof RouteResponseSettings ? true : false, false>>,
-  Expect<Equals<RouteResponseSettings["status"], number | string | undefined>>,
+  Expect<Equals<"redirect" extends keyof ResponseSettingsState ? true : false, false>>,
+  Expect<Equals<ResponseSettingsState["status"], number | string | undefined>>,
   Expect<
-    Equals<RouteResponseSettings["headers"], Record<string, string | number | string[] | undefined>>
+    Equals<ResponseSettingsState["headers"], Record<string, string | number | string[] | undefined>>
   >,
 ];
 
@@ -138,9 +138,9 @@ test("the Vite+ lane records native context parameter decorators", () => {
     }
   }
 
-  Store()(NativeContextController.prototype, "read", 0);
-  Set()(NativeContextController.prototype, "read", 1);
-  Status()(NativeContextController.prototype, "read", 2);
+  State()(NativeContextController.prototype, "read", 0);
+  ResponseSettings()(NativeContextController.prototype, "read", 1);
+  HttpStatus()(NativeContextController.prototype, "read", 2);
 
   expect(getRouteParameterMetadata(NativeContextController, "read")).toEqual([
     { index: 0, kind: "store", property: undefined },
@@ -230,7 +230,7 @@ test("the Vite+ lane keeps an overriding subclass's own injection tokens", () =>
 });
 
 test("the Vite+ lane keeps the response settings free of a redirect field", () => {
-  const settings: RouteResponseSettings = { headers: {} };
+  const settings: ResponseSettingsState = { headers: {} };
   settings.status = "No Content";
   settings.headers["x-source"] = "conformance";
   const assertions = Array.from({ length: 3 }, () => true) as ResponseSettingsAssertions;
@@ -249,6 +249,6 @@ test("the Vite+ lane renders a logged value and never throws", () => {
     },
   });
 
-  expect(renderLogValue({ ready: true })).toBe('{"ready":true}');
-  expect(renderLogValue(cyclic)).toBe("[unrenderable]");
+  expect(formatLogValue({ ready: true })).toBe('{"ready":true}');
+  expect(formatLogValue(cyclic)).toBe("[unrenderable]");
 });

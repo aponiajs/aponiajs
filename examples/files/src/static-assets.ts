@@ -1,5 +1,5 @@
 import { resolve } from "node:path";
-import type { NativeElysiaConfigurator } from "@aponiajs/platform-elysia";
+import type { ElysiaConfigurator } from "@aponiajs/platform-elysia";
 import type { Elysia } from "elysia";
 
 /**
@@ -20,7 +20,7 @@ export const assetsDirectory = resolve(import.meta.dir, "../public");
  * application writes the slot directly. The prefix has to end in `/*`; that is
  * the shape Bun's own route requires.
  */
-export const configureStaticAssets: NativeElysiaConfigurator<Elysia> = (native) => {
+export const configureStaticAssets: ElysiaConfigurator<Elysia> = (native) => {
   const config = native["~config"];
 
   native["~config"] = {

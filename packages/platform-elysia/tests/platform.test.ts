@@ -11,12 +11,12 @@ import {
 } from "@aponiajs/common";
 import { Elysia } from "elysia";
 import {
-  AponiaElysiaApplication,
+  AponiaApplication,
   AponiaFactory,
-  ElysiaPluginModule,
+  PluginModule,
   compileRootModule,
-  defineElysiaController,
-  elysiaController,
+  defineController,
+  controller,
 } from "../src/index.ts";
 
 class MemoryLogger implements LoggerService {
@@ -119,7 +119,7 @@ class PluginDescriptorController {
   }
 }
 
-const registeredDescriptorController = defineElysiaController(RegisteredDescriptorController, {
+const registeredDescriptorController = defineController(RegisteredDescriptorController, {
   inject: [] as const,
   path: "/descriptor-registered",
   registerRoutes: (application, controller) => {
@@ -128,7 +128,7 @@ const registeredDescriptorController = defineElysiaController(RegisteredDescript
     return application.get("/descriptor-registered", () => controller.read());
   },
 });
-const pluginDescriptorController = defineElysiaController(PluginDescriptorController, {
+const pluginDescriptorController = defineController(PluginDescriptorController, {
   inject: [] as const,
   buildPlugin: (controller) => {
     pluginControllerCalls += 1;
@@ -155,7 +155,7 @@ class NativePluginConfig {
 })
 class NativePluginConfigModule {}
 
-const sharedPluginModule = ElysiaPluginModule.register((nativeApplication: Elysia) => {
+const sharedPluginModule = PluginModule.register((nativeApplication: Elysia) => {
   sharedPluginRegistrations += 1;
   return nativeApplication.get("/native-shared", () => "shared");
 });
@@ -173,27 +173,25 @@ class RightPluginFeatureModule {}
 @Module({
   imports: [
     MessageServicesModule,
-    ElysiaPluginModule.register(
-      new Elysia().get("/native-module-instance", () => "module-instance"),
-    ),
-    ElysiaPluginModule.register([new Elysia().get("/native-module-array", () => "module-array")]),
-    ElysiaPluginModule.register(
+    PluginModule.register(new Elysia().get("/native-module-instance", () => "module-instance")),
+    PluginModule.register([new Elysia().get("/native-module-array", () => "module-array")]),
+    PluginModule.register(
       Promise.resolve({
         default: (nativeApplication: Elysia) =>
           nativeApplication.get("/native-module-lazy", () => "module-lazy"),
       }),
     ),
-    ElysiaPluginModule.register((nativeApplication: Elysia) =>
+    PluginModule.register((nativeApplication: Elysia) =>
       nativeApplication.request(() => {
         modulePluginEvents.push("first");
       }),
     ),
-    ElysiaPluginModule.register((nativeApplication: Elysia) =>
+    PluginModule.register((nativeApplication: Elysia) =>
       nativeApplication.request(() => {
         modulePluginEvents.push("second");
       }),
     ),
-    ElysiaPluginModule.registerAsync({
+    PluginModule.registerAsync({
       imports: [NativePluginConfigModule],
       inject: [NativePluginConfig] as const,
       useFactory: async (configuration) => {
@@ -457,7 +455,7 @@ test("accepts an empty default logger policy without emitting bootstrap output",
 test.serial("logs and rethrows native listen failures", async () => {
   const nativeApplication = new Elysia();
   const logger = new MemoryLogger();
-  const application = new AponiaElysiaApplication(nativeApplication, logger);
+  const application = new AponiaApplication(nativeApplication, logger);
   const failure = new Error("listen failed");
   const listen = spyOn(nativeApplication, "listen").mockImplementation(() => {
     throw failure;
@@ -523,7 +521,7 @@ test("closes active native connections by default and permits caller-managed dra
       return this;
     },
   } as unknown as Elysia;
-  const application = new AponiaElysiaApplication(nativeApplication, undefined);
+  const application = new AponiaApplication(nativeApplication, undefined);
 
   await application.close();
   await application.close(false);
@@ -620,7 +618,7 @@ test("retains the plugin fallback on a compiled decorated controller", async () 
 
 test("logs the root path for a directly registered controller with no routes", async () => {
   class EmptyController {}
-  const controller = defineElysiaController(EmptyController, {
+  const controller = defineController(EmptyController, {
     inject: [] as const,
     registerRoutes: () => {},
   });
@@ -649,7 +647,7 @@ test("registers an inferred controller without an options object or tuple assert
     constructor(readonly service: CompactService) {}
   }
 
-  const controller = elysiaController(
+  const compactController = controller(
     CompactController,
     [CompactService],
     (application, instance) =>
@@ -657,28 +655,28 @@ test("registers an inferred controller without an options object or tuple assert
   );
   const module = defineModule({
     id: "CompactControllerModule",
-    controllers: [controller],
+    controllers: [compactController],
     providers: [provideClass(CompactService, [])],
   });
   const application = await AponiaFactory.create(module, { logger: false });
   const response = await application.handle(new Request("http://localhost/compact-controller"));
 
   expect(await response.json()).toEqual({ source: "compact" });
-  expect(controller.inject).toEqual([CompactService]);
-  expect(Object.isFrozen(controller)).toBe(true);
-  expect(Object.isFrozen(controller.inject)).toBe(true);
+  expect(compactController.inject).toEqual([CompactService]);
+  expect(Object.isFrozen(compactController)).toBe(true);
+  expect(Object.isFrozen(compactController.inject)).toBe(true);
   await application.close();
 });
 
 test("rejects the dependency form when its registration callback is missing", () => {
   class MissingRegistrationController {}
-  const callWithoutRegistration = elysiaController as unknown as (
+  const callWithoutRegistration = controller as unknown as (
     useClass: typeof MissingRegistrationController,
     inject: readonly [],
   ) => unknown;
 
   expect(() => callWithoutRegistration(MissingRegistrationController, [])).toThrow(
-    "elysiaController requires a route registration callback.",
+    "controller requires a route registration callback.",
   );
 });
 
@@ -709,7 +707,7 @@ test("classifies a controller factory with a non-Elysia result as invalid", asyn
 
 test("rejects direct route registration that returns a different Elysia application", async () => {
   class ReplacedApplicationController {}
-  const controller = defineElysiaController(ReplacedApplicationController, {
+  const controller = defineController(ReplacedApplicationController, {
     inject: [] as const,
     registerRoutes: () => new Elysia(),
   });

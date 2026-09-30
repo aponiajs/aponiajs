@@ -186,7 +186,7 @@ render reads as.
 
 ## Stating a value
 
-`renderLogValue` turns a logged value into the text a surface states it in: a string is its own text,
+`formatLogValue` turns a logged value into the text a surface states it in: a string is its own text,
 a function is its name, an `Error` is its name and message with no stack, and everything else is its
 JSON form with the plain string form behind it. A value that refuses both of those forms is stated as
 `[unrenderable]` rather than allowed to throw, so a surface can report any value it is handed — a

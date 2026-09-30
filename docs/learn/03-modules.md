@@ -46,7 +46,7 @@ controller dependencies. A broken graph never reaches a listening port.
 ## Dynamic modules
 
 A module configured at call time returns a descriptor instead of a class —
-`ElysiaPluginModule.register(plugin, { key })` is the built-in example. Modules
+`PluginModule.register(plugin, { key })` is the built-in example. Modules
 are identified by `instanceId ?? id`, so two configured instances of one class
 stay distinct, and two sharing a key collide with `DUPLICATE_MODULE`.
 

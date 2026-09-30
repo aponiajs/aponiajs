@@ -19,9 +19,9 @@ import { Elysia } from "elysia";
 import {
   aponiaVersion,
   devtoolsPathPrefix,
-  routeRequest,
-  type AponiaAotController,
-  type AponiaAotPayload,
+  handleDevtoolsRequest,
+  type AponiaBuildController,
+  type AponiaBuildPayload,
 } from "../src/index.ts";
 // The handler record the mounted route answers through, from the module that owns
 // it rather than the barrel: the surface is a route an application mounts, and
@@ -35,7 +35,7 @@ import { createHandlers } from "../src/server/devtools-server.ts";
  * on the first request and cached for the process.
  *
  * Every case asks the pair the mounted route calls in process — `createHandlers`
- * and `routeRequest` — and the payload assertions are the wire shape. The mount
+ * and `handleDevtoolsRequest` — and the payload assertions are the wire shape. The mount
  * itself is pinned over `application.handle` in `devtools-module.test.ts`, and
  * the dispatcher's `404` and `405` in `server.test.ts`. Three of the cases are
  * boundaries rather than
@@ -88,7 +88,7 @@ async function ask(
   path: string,
   logger: LoggerService = recordingLogger,
 ): Promise<Response> {
-  return await routeRequest(
+  return await handleDevtoolsRequest(
     new Request(`http://localhost${devtoolsPathPrefix}${path}`),
     createHandlers(application, undefined, undefined, logger),
   );
@@ -97,12 +97,12 @@ async function ask(
 async function readAot(
   application: Elysia,
   logger: LoggerService = recordingLogger,
-): Promise<AponiaAotPayload> {
+): Promise<AponiaBuildPayload> {
   const response = await ask(application, "/aot", logger);
 
   expect(response.status).toBe(200);
 
-  return (await response.json()) as AponiaAotPayload;
+  return (await response.json()) as AponiaBuildPayload;
 }
 
 function createTemporaryDirectory(prefix: string): string {
@@ -160,7 +160,7 @@ const wholeContextReason =
  * decorators: `read` answers two routes through one property key, so it is one
  * handler with one verdict, and `describe` is the one the emitter declines.
  */
-const alphaControllerSource = `import { Controller, Ctx, Get, Param } from "@aponiajs/common";
+const alphaControllerSource = `import { Controller, Context, Get, Param } from "@aponiajs/common";
 
 @Controller("alpha")
 export class AlphaController {
@@ -176,7 +176,7 @@ export class AlphaController {
   }
 
   @Get("context")
-  describe(@Ctx() context: { readonly request: Request }): string {
+  describe(@Context() context: { readonly request: Request }): string {
     return String(context);
   }
 }
@@ -249,7 +249,7 @@ const alphaControllerVerdicts = {
       reason: wholeContextReason,
     },
   ],
-} satisfies AponiaAotController;
+} satisfies AponiaBuildController;
 
 /**
  * What `aponia build` decides about one project, read from the command.
@@ -280,7 +280,7 @@ async function commandDecision(projectRoot: string): Promise<"accepted" | "refus
  * verdicts are asserted beside this, so a loadable but wrong controller list
  * fails the case rather than reading as an agreement.
  */
-function endpointDecision(payload: AponiaAotPayload): "accepted" | "refused" {
+function endpointDecision(payload: AponiaBuildPayload): "accepted" | "refused" {
   return payload.controllers.length === 0 ? "refused" : "accepted";
 }
 
@@ -289,12 +289,12 @@ function endpointDecision(payload: AponiaAotPayload): "accepted" | "refused" {
  * emitter declines, so `aponia build` writes no module at all and names the
  * first decline it found.
  */
-const declinedControllerSource = `import { Controller, Ctx, Get } from "@aponiajs/common";
+const declinedControllerSource = `import { Controller, Context, Get } from "@aponiajs/common";
 
 @Controller("only")
 export class OnlyController {
   @Get()
-  describe(@Ctx() context: { readonly request: Request }): string {
+  describe(@Context() context: { readonly request: Request }): string {
     return String(context);
   }
 }
@@ -329,7 +329,7 @@ test("aot reports the boot's own decision when no project is on disk to analyze"
   expect(response.headers.get("content-type")).toContain("application/json");
   expect(response.headers.get("cache-control")).toBe("no-store");
 
-  const payload = (await response.json()) as AponiaAotPayload;
+  const payload = (await response.json()) as AponiaBuildPayload;
 
   // One assertion for the whole wire shape: a decorated boot was not offered
   // an artifact, so the record carries a refusal reason, and the analysis
@@ -391,7 +391,7 @@ test("a report the logger refuses still answers aot's boot half and the degraded
     const response = await ask(application, "/aot", refusingLogger);
     expect(response.status).toBe(200);
 
-    const payload = (await response.json()) as AponiaAotPayload;
+    const payload = (await response.json()) as AponiaBuildPayload;
 
     expect(payload).toEqual({
       graph: "decorated",
@@ -451,7 +451,7 @@ test("a value the analysis threw that refuses to be read still answers the degra
     // with a `500` where the degraded payload belongs.
     expect(response.status).toBe(200);
 
-    const payload = (await response.json()) as AponiaAotPayload;
+    const payload = (await response.json()) as AponiaBuildPayload;
 
     expect(payload).toEqual({
       graph: "decorated",
@@ -714,7 +714,7 @@ const analyzerModules = () =>
     (key) => key.includes("ts-morph") || key.includes("/cli/src/"),
   ).length;
 const before = analyzerModules();
-const { devtoolsPathPrefix, routeRequest } = await import(${JSON.stringify(join(import.meta.dir, "..", "src", "index.ts"))});
+const { devtoolsPathPrefix, handleDevtoolsRequest } = await import(${JSON.stringify(join(import.meta.dir, "..", "src", "index.ts"))});
 const { createHandlers } = await import(${JSON.stringify(join(import.meta.dir, "..", "src", "server", "devtools-server.ts"))});
 const afterImport = analyzerModules();
 const { Elysia } = await import(${JSON.stringify(Bun.resolveSync("elysia", import.meta.dir))});
@@ -725,7 +725,7 @@ Object.defineProperty(application, Symbol.for("aponia.application.diagnostics"),
 });
 const silentLogger = { log: () => {}, fatal: () => {}, error: () => {}, warn: () => {} };
 const handlers = createHandlers(application, undefined, undefined, silentLogger);
-const response = await routeRequest(
+const response = await handleDevtoolsRequest(
   new Request(\`http://localhost\${devtoolsPathPrefix}/aot\`),
   handlers,
 );

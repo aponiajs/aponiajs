@@ -9,7 +9,7 @@ import {
   getValidationMetadata,
   resolveRouteValidator,
   type InferValidatorOutput,
-  type NativeSchema,
+  type ValidatorSchema,
   type RouteContext,
   type RouteSchema,
   type RouteValidator,
@@ -25,7 +25,7 @@ const nameSchema: StandardSchemaV1<unknown, { name: string }> = {
 
 const nativeSchema = TypeBox.Object({
   id: TypeBox.String(),
-}) satisfies NativeSchema;
+}) satisfies ValidatorSchema;
 
 const callableNameSchema: StandardSchemaV1<unknown, { name: string }> &
   ((value: unknown) => boolean) = Object.assign(

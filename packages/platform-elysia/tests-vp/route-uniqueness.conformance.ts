@@ -2,7 +2,7 @@ import { Controller, Get, Module, type DynamicModule } from "@aponiajs/common";
 import { Elysia } from "elysia";
 import {
   AponiaFactory,
-  ElysiaPluginModule,
+  PluginModule,
   compileRootModule,
   inspectAponiaApplication,
 } from "../src/index.ts";
@@ -98,7 +98,7 @@ class ConformanceSecondConsumerModule {}
 @Module({ imports: [ConformanceFirstConsumerModule, ConformanceSecondConsumerModule] })
 class ConformanceReuseRootModule {}
 
-const conformancePluginModule = ElysiaPluginModule.register(
+const conformancePluginModule = PluginModule.register(
   new Elysia({ name: "conformance-route-uniqueness-plugin" }).get(
     "/conformance-plugin-shared",
     () => "plugin",

@@ -1,4 +1,11 @@
-import { Body, Controller, Get, Post, Set, type RouteResponseSettings } from "@aponiajs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  ResponseSettings,
+  type ResponseSettingsState,
+} from "@aponiajs/common";
 import { downloadFile } from "@aponiajs/platform-elysia";
 import { t } from "elysia";
 import { resolve } from "node:path";
@@ -45,12 +52,12 @@ export class FilesController {
   }
 
   @Get("download")
-  download(@Set() set: RouteResponseSettings) {
+  download(@ResponseSettings() set: ResponseSettingsState) {
     return downloadFile(set, reportPath, "measurements.csv");
   }
 
   @Get("download/named")
-  render(@Set() set: RouteResponseSettings) {
+  render(@ResponseSettings() set: ResponseSettingsState) {
     return downloadFile(set, reportPath, "Ω 2026.csv", { disposition: "inline" });
   }
 }

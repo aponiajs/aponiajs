@@ -1,6 +1,6 @@
 import { expect, spyOn, test } from "bun:test";
 import { Controller, Get, Logger, Module, type LoggerService } from "@aponiajs/common";
-import { AponiaFactory, type AponiaElysiaApplication } from "@aponiajs/platform-elysia";
+import { AponiaFactory, type AponiaApplication } from "@aponiajs/platform-elysia";
 import {
   devtoolsContractVersion,
   devtoolsPlugin,
@@ -54,11 +54,11 @@ function captureOutput(): () => void {
   return () => write.mockRestore();
 }
 
-async function ask(application: AponiaElysiaApplication, path: string): Promise<Response> {
+async function ask(application: AponiaApplication, path: string): Promise<Response> {
   return await application.handle(new Request(`http://localhost${path}`));
 }
 
-async function readRequests(application: AponiaElysiaApplication): Promise<AponiaRequestsPayload> {
+async function readRequests(application: AponiaApplication): Promise<AponiaRequestsPayload> {
   await Bun.sleep(0);
 
   const response = await ask(application, "/__devtools/requests");
@@ -82,7 +82,7 @@ async function readRequests(application: AponiaElysiaApplication): Promise<Aponi
  * very first read and hand the case a `null` status.
  */
 async function waitForEntry(
-  application: AponiaElysiaApplication,
+  application: AponiaApplication,
   match: (record: RequestRecord) => boolean,
 ): Promise<RequestRecord> {
   let seen: readonly RequestRecord[] = [];

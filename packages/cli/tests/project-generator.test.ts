@@ -139,8 +139,8 @@ test("wires the build script to the build plugin and commits what it writes", as
   };
   const ignore = await Bun.file(join(projectDirectory, ".gitignore")).text();
 
-  expect(script).toContain('import { aponiaBuildPlugin } from "@aponiajs/cli"');
-  expect(script).toContain("plugins: [aponiaBuildPlugin()]");
+  expect(script).toContain('import { buildPlugin } from "@aponiajs/cli"');
+  expect(script).toContain("plugins: [buildPlugin()]");
   expect(script).toContain('entrypoints: ["./src/main.ts"]');
   expect(manifest.scripts.build).toBe("bun run scripts/build.ts");
   expect(manifest.devDependencies["@aponiajs/cli"]).toBe(aponiaVersion);

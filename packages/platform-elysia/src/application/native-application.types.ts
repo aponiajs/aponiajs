@@ -68,7 +68,7 @@ type ModuleApplicationPlugins<TModule> = [
  * contribute no inferred routes because TypeScript cannot observe their
  * runtime metadata.
  */
-export type AponiaNativeApplication<
+export type ElysiaApplication<
   TRootModule,
   TConfiguredApplication extends AnyElysia = Elysia,
 > = MergeElysiaInstances<[TConfiguredApplication, ...ModuleApplicationPlugins<TRootModule>]>;

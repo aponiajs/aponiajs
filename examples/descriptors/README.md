@@ -1,7 +1,7 @@
 # Descriptors
 
 The same framework with no decorators anywhere. `defineModule`, `provideValue`,
-`provideClass`, and `elysiaController` build the frozen descriptors the runtime
+`provideClass`, and `controller` build the frozen descriptors the runtime
 consumes. The concise controller callback uses native Elysia inference without
 an options object, `as const`, a manual context annotation, or `typeof`.
 

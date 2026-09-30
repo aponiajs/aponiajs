@@ -7,7 +7,7 @@ export function createToken<T>(description: string): InjectionToken<T> {
   });
 }
 
-export function tokenName(token: Token<unknown>): string {
+export function getTokenName(token: Token<unknown>): string {
   if (typeof token === "function") {
     return token.name || "<anonymous class>";
   }

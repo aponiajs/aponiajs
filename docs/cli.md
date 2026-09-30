@@ -419,7 +419,7 @@ happens on a path the build generated:
 
 - A gateway is declared, not discovered. `@WebSocketGateway()` and
   `@SubscribeMessage()` are read at build time and emitted as a
-  `defineElysiaWebSocketGateway(...)` provider carrying the path, the handlers,
+  `defineWebSocketGateway(...)` provider carrying the path, the handlers,
   and the server properties as data, so bootstrap mounts the same gateway from
   that plan instead of reflecting on the class.
 - A route's schema slot states the validator, not the model class. A
@@ -464,13 +464,13 @@ whatever calls `Bun.build` to move the generation into the bundle itself:
 
 ```ts
 // scripts/build.ts
-import { aponiaBuildPlugin } from "@aponiajs/cli";
+import { buildPlugin } from "@aponiajs/cli";
 
 const result = await Bun.build({
   entrypoints: ["./src/main.ts"],
   outdir: "./dist",
   target: "bun",
-  plugins: [aponiaBuildPlugin()],
+  plugins: [buildPlugin()],
 });
 if (!result.success) process.exit(1);
 ```

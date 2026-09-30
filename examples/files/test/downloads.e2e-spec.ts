@@ -1,10 +1,10 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import { resolve } from "node:path";
-import type { AponiaElysiaApplication } from "@aponiajs/platform-elysia";
+import type { AponiaApplication } from "@aponiajs/platform-elysia";
 import { createApplication, get } from "./application.ts";
 
 const reportPath = resolve(import.meta.dir, "../data/measurements.csv");
-let application: AponiaElysiaApplication;
+let application: AponiaApplication;
 let report: string;
 
 beforeAll(async () => {

@@ -1,13 +1,12 @@
 import { expect, test } from "bun:test";
 import {
   Body,
-  Ctx,
+  Context,
+  HttpStatus,
   Param,
   Query,
-  Res,
-  Set,
-  Status,
-  Store,
+  ResponseSettings,
+  State,
   getRouteParameterMetadata,
 } from "../src/index.ts";
 
@@ -31,10 +30,10 @@ class UserController {
 
 Body()(UserController.prototype, "createUser", 0);
 Param("id")(UserController.prototype, "createUser", 1);
-Ctx()(UserController.prototype, "readContext", 0);
-Store()(UserController.prototype, "readNativeParts", 0);
-Set()(UserController.prototype, "readNativeParts", 1);
-Status()(UserController.prototype, "readNativeParts", 2);
+Context()(UserController.prototype, "readContext", 0);
+State()(UserController.prototype, "readNativeParts", 0);
+ResponseSettings()(UserController.prototype, "readNativeParts", 1);
+HttpStatus()(UserController.prototype, "readNativeParts", 2);
 
 test("records decorated parameters in positional order", () => {
   expect(getRouteParameterMetadata(UserController, "createUser")).toEqual([
@@ -49,13 +48,12 @@ test("records the parameter kind for each decorator", () => {
   ]);
 });
 
-test("records native context parts and keeps Res as the Set alias", () => {
+test("records native context parts for each parameter decorator", () => {
   expect(getRouteParameterMetadata(UserController, "readNativeParts")).toEqual([
     { index: 0, kind: "store", property: undefined },
     { index: 1, kind: "set", property: undefined },
     { index: 2, kind: "status", property: undefined },
   ]);
-  expect(Res).toBe(Set);
 });
 
 test("reports no parameters for an undecorated handler", () => {

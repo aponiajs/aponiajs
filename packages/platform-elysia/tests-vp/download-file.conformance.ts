@@ -1,4 +1,10 @@
-import { Controller, Get, Module, Set, type RouteResponseSettings } from "@aponiajs/common";
+import {
+  Controller,
+  Get,
+  Module,
+  ResponseSettings,
+  type ResponseSettingsState,
+} from "@aponiajs/common";
 import type { ElysiaFile } from "elysia";
 import { AponiaFactory, downloadFile, type DownloadFileOptions } from "../src/index.ts";
 
@@ -11,7 +17,7 @@ declare const expect: VitePlusTest["expect"];
 // returns the file the platform streams. A signature that grew a parameter or
 // started returning a Response fails `bun run check` here.
 const settled = downloadFile satisfies (
-  settings: RouteResponseSettings,
+  settings: ResponseSettingsState,
   path: string,
   filename: string,
   options?: DownloadFileOptions,
@@ -20,7 +26,7 @@ const settled = downloadFile satisfies (
 @Controller("conformance")
 class ConformanceController {
   @Get()
-  read(@Set() set: RouteResponseSettings) {
+  read(@ResponseSettings() set: ResponseSettingsState) {
     // The lane never reads the body, so the path only has to be one that exists
     // wherever the two lanes run from: the repository root.
     return downloadFile(set, "package.json", "conformance.txt");

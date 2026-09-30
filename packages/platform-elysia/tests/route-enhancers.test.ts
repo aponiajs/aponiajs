@@ -13,7 +13,7 @@ import {
   defineModule,
   provideClass,
 } from "@aponiajs/common";
-import { AponiaFactory, defineElysiaControllerRoutes } from "../src/index.ts";
+import { AponiaFactory, defineControllerRoutes } from "../src/index.ts";
 import { compileElysiaRoutes } from "../src/routing/route-compiler.ts";
 
 const gatewayGuardCalls: string[] = [];
@@ -198,7 +198,7 @@ describe("compiled route enhancers", () => {
 describe("declared route enhancers", () => {
   test("carries the enhancers a declared plan states, copied and frozen", async () => {
     const declaredGuards = [AuthGuard];
-    const definition = defineElysiaControllerRoutes(DeclaredController, {
+    const definition = defineControllerRoutes(DeclaredController, {
       path: "/declared",
       routes: [
         {
@@ -238,7 +238,7 @@ describe("declared route enhancers", () => {
         provideClass(ReportingFilter, []),
       ],
       controllers: [
-        defineElysiaControllerRoutes(DeclaredController, {
+        defineControllerRoutes(DeclaredController, {
           path: "/declared",
           routes: [
             {

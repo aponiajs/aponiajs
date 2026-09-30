@@ -5,7 +5,7 @@ import {
   getRouteParameterMetadata,
   isRouteResponseSchemaMap,
   resolveRouteValidator,
-  type AponiaInterceptor,
+  type Interceptor,
   type ArgumentsHost,
   type CanActivate,
   type ClassToken,
@@ -26,7 +26,7 @@ import { isFilterMatch, reportThroughLogger } from "../errors/default-exception-
 import { httpErrors } from "../errors/http-error.ts";
 import { registerNativeRoute } from "./native-route.ts";
 import type {
-  AponiaRouteInvoker,
+  RouteHandler,
   CompiledElysiaRoute,
   ElysiaErrorHook,
   ElysiaRouteAfterHandleContext,
@@ -158,7 +158,7 @@ export function registerCompiledElysiaRoutes(
   instance: unknown,
   routes: readonly CompiledElysiaRoute[],
   mountedEnhancers: MountedRouteEnhancers,
-  invokers?: ReadonlyMap<string | symbol, AponiaRouteInvoker>,
+  invokers?: ReadonlyMap<string | symbol, RouteHandler>,
 ): ReadonlySet<string | symbol> {
   const generatedKeys = new Set<string | symbol>();
 
@@ -180,7 +180,7 @@ export function registerCompiledElysiaRoutes(
       );
     }
 
-    // `AponiaRouteInvoker` is declared with a `never` parameter because an
+    // `RouteHandler` is declared with a `never` parameter because an
     // invoker is written against its own route's annotations, so an artifact's
     // invoker is widened back to the annotation this platform calls one with.
     // The two are the same function at run time; only the variance differs, and
@@ -242,7 +242,7 @@ function routeGuards(
 function routeInterceptors(
   mountedEnhancers: MountedRouteEnhancers,
   route: CompiledElysiaRoute,
-): readonly AponiaInterceptor[] {
+): readonly Interceptor[] {
   const declared = mountedEnhancers.controller.forRoute(route.enhancers).interceptors;
   if (declared.length === 0) {
     return mountedEnhancers.global.interceptors;
@@ -530,7 +530,7 @@ function toRouteHook(
   controller: ClassToken<unknown>,
   handler: (...arguments_: unknown[]) => unknown,
   guards: readonly CanActivate[],
-  interceptors: readonly AponiaInterceptor[],
+  interceptors: readonly Interceptor[],
   exceptionHooks: ElysiaErrorHook[] | undefined,
 ): ElysiaRouteHook | undefined {
   const schemaHook = toSchemaHook(route.schema);
@@ -565,7 +565,7 @@ function createLifecycleHook(
   controller: ClassToken<unknown>,
   handler: (...arguments_: unknown[]) => unknown,
   guards: readonly CanActivate[],
-  interceptors: readonly AponiaInterceptor[],
+  interceptors: readonly Interceptor[],
 ): RouteLifecycleHook | undefined {
   const runsBefore =
     guards.length > 0 ||

@@ -12,10 +12,10 @@ import {
   getModuleMetadata,
   provideFactory,
   provideValue,
-  tokenName,
+  getTokenName,
   type ClassToken,
 } from "../src/index.ts";
-import type { RouteResponseSettings } from "../src/index.ts";
+import type { ResponseSettingsState } from "../src/index.ts";
 
 type Equals<TLeft, TRight> =
   (<T>() => T extends TLeft ? 1 : 2) extends <T>() => T extends TRight ? 1 : 2 ? true : false;
@@ -27,10 +27,10 @@ type Expect<TAssertion extends true> = TAssertion;
  * one.
  */
 type ResponseSettingsAssertions = [
-  Expect<Equals<"redirect" extends keyof RouteResponseSettings ? true : false, false>>,
-  Expect<Equals<RouteResponseSettings["status"], number | string | undefined>>,
+  Expect<Equals<"redirect" extends keyof ResponseSettingsState ? true : false, false>>,
+  Expect<Equals<ResponseSettingsState["status"], number | string | undefined>>,
   Expect<
-    Equals<RouteResponseSettings["headers"], Record<string, string | number | string[] | undefined>>
+    Equals<ResponseSettingsState["headers"], Record<string, string | number | string[] | undefined>>
   >,
 ];
 
@@ -40,7 +40,7 @@ describe("@aponiajs/common", () => {
     const second = createToken<number>("count");
 
     expect(first).not.toBe(second);
-    expect(tokenName(first)).toBe("count");
+    expect(getTokenName(first)).toBe("count");
   });
 
   test("creates immutable module and provider descriptors", () => {
@@ -191,7 +191,7 @@ describe("@aponiajs/common", () => {
   });
 
   test("keeps the response settings writable without advertising a redirect field", () => {
-    const settings: RouteResponseSettings = { headers: {} };
+    const settings: ResponseSettingsState = { headers: {} };
     settings.status = 201;
     settings.headers["x-source"] = "settings";
     settings.headers["retry-after"] = 30;
@@ -238,8 +238,8 @@ describe("@aponiajs/common", () => {
   test("names class tokens and falls back for anonymous classes", () => {
     class NamedDependency {}
 
-    expect(tokenName(NamedDependency)).toBe("NamedDependency");
-    expect(tokenName(createAnonymousClass())).toBe("<anonymous class>");
+    expect(getTokenName(NamedDependency)).toBe("NamedDependency");
+    expect(getTokenName(createAnonymousClass())).toBe("<anonymous class>");
   });
 
   test("copies and freezes structured error details", () => {

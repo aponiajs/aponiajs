@@ -1,12 +1,12 @@
-import { AponiaFactory, type AponiaElysiaApplication } from "@aponiajs/platform-elysia";
+import { AponiaFactory, type AponiaApplication } from "@aponiajs/platform-elysia";
 import { createServer } from "node:net";
 import { AppModule } from "../src/app.module.ts";
 
-export function createApplication(): Promise<AponiaElysiaApplication> {
+export function createApplication(): Promise<AponiaApplication> {
   return AponiaFactory.create(AppModule, { logger: false });
 }
 
-export async function listen(application: AponiaElysiaApplication): Promise<void> {
+export async function listen(application: AponiaApplication): Promise<void> {
   const reservation = createServer();
   await new Promise<void>((resolve, reject) => {
     reservation.once("error", reject);
@@ -24,7 +24,7 @@ export async function listen(application: AponiaElysiaApplication): Promise<void
   await application.listen(port);
 }
 
-export function connect(application: AponiaElysiaApplication): Promise<WebSocket> {
+export function connect(application: AponiaApplication): Promise<WebSocket> {
   const socketUrl = `${application.getUrl().replace("http://", "ws://")}/chat`;
   const socket = new WebSocket(socketUrl);
 

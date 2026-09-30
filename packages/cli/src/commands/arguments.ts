@@ -1,6 +1,6 @@
 import { pascalCase } from "change-case";
 import parseCliArguments from "yargs-parser";
-import { generateSchematics } from "./command.constants.ts";
+import { schematicNames } from "./command.constants.ts";
 import type {
   BuildCommandOptions,
   CliCommand,
@@ -126,7 +126,7 @@ function parseGenerateCommand(arguments_: readonly string[]): GenerateCommandOpt
   const schematic = schematicAliases[schematicName];
   if (!schematic) {
     throw new Error(
-      `Unknown schematic "${schematicName}". Available schematics: ${generateSchematics.join(", ")}.`,
+      `Unknown schematic "${schematicName}". Available schematics: ${schematicNames.join(", ")}.`,
     );
   }
   if (!name) {

@@ -141,8 +141,9 @@ once at boot — that read is the application's. Both halves of the trade are in
   its `exports`.
 - Controllers declare routes with `@Get`, `@Post`, `@Put`, `@Patch`, `@Delete`,
   `@Head`, and `@Options`. Read request input through parameter decorators —
-  `@Body`, `@Query`, `@Param`, `@Headers`, `@Cookie`, `@Store`, `@Req`, `@Set`,
-  and `@Status` — rather than reaching into the raw request.
+  `@Body`, `@Query`, `@Param`, `@Headers`, `@Cookie`, `@State`, `@Req`,
+  `@ResponseSettings`, and `@HttpStatus` — rather than reaching into the raw
+  request.
 - Validation is one schema per class. A REST CRUD resource generates
   `<name>.model.ts` with separate create, update, and path-parameter classes;
   pass those classes to the route decorator instead of combining schemas inline.

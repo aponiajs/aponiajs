@@ -2,7 +2,7 @@ import {
   getCatchMetadata,
   getValidationMetadata,
   routeSchemaSlots,
-  tokenName,
+  getTokenName,
   type ClassToken,
   type EnhancerMetadata,
   type RouteSchemaSlot,
@@ -12,16 +12,16 @@ import type {
   AponiaApplicationDiagnostics,
   AponiaCallbackRouteDiagnostics,
   AponiaCompiledRouteDiagnostics,
-  InterceptorHalves,
+  InterceptorPhases,
 } from "@aponiajs/platform-elysia";
 import type { Elysia } from "elysia";
 import type {
-  AponiaFlowFilter,
-  AponiaFlowPayload,
-  AponiaFlowRoute,
-  AponiaFlowScope,
-  AponiaFlowStage,
-  AponiaFlowStageKind,
+  AponiaRouteTraceFilter,
+  AponiaRouteTracePayload,
+  AponiaRouteTrace,
+  AponiaRouteStageScope,
+  AponiaRouteStage,
+  AponiaRouteStageKind,
 } from "./flow.types.ts";
 import { readRouteParameters } from "./route-parameters.ts";
 import { readRouteSource } from "./route-source.ts";
@@ -79,20 +79,20 @@ interface ContributedHook {
 /** One enhancer with the scope that declared it. */
 interface ScopedEnhancer {
   readonly token: ClassToken<unknown>;
-  readonly scope: AponiaFlowScope;
+  readonly scope: AponiaRouteStageScope;
 }
 
 /** One half of the interceptor lifecycle, as a stage kind. */
 type InterceptorHalf = "interceptBefore" | "interceptAfter";
 
 /** A stage before the graph wires it: everything but its id and its successor. */
-type StageDraft = Omit<AponiaFlowStage, "id" | "next">;
+type StageDraft = Omit<AponiaRouteStage, "id" | "next">;
 
 /** One route with the two keys the payload states its order by. */
 interface OrderedRoute {
   readonly path: string;
   readonly method: string;
-  readonly route: AponiaFlowRoute;
+  readonly route: AponiaRouteTrace;
 }
 
 const emptyHooks: readonly ContributedHook[] = Object.freeze([]);
@@ -144,11 +144,11 @@ const emptyEnhancers: EnhancerMetadata = Object.freeze({
 export function buildFlowPayload(
   application: Elysia,
   diagnostics: AponiaApplicationDiagnostics | undefined,
-): AponiaFlowPayload {
+): AponiaRouteTracePayload {
   const plans = readCompiledPlans(diagnostics);
   const callbacks = readCallbackRoutes(diagnostics);
   const global = readEnhancers(diagnostics?.globalEnhancers);
-  const halves = readInterceptorHalves(diagnostics?.interceptorHalves);
+  const halves = readInterceptorPhases(diagnostics?.interceptorHalves);
   const routes: OrderedRoute[] = [];
 
   for (const mounted of readMountedRoutes(application)) {
@@ -205,7 +205,7 @@ function buildStageDrafts(
   plan: AponiaCompiledRouteDiagnostics | undefined,
   callback: AponiaCallbackRouteDiagnostics | undefined,
   global: EnhancerMetadata,
-  recorded: ReadonlyMap<ClassToken<unknown>, InterceptorHalves> | undefined,
+  recorded: ReadonlyMap<ClassToken<unknown>, InterceptorPhases> | undefined,
 ): readonly StageDraft[] {
   const hooks = readHooks(mounted.hooks);
   const declared = readEnhancers(plan?.route.enhancers);
@@ -312,7 +312,7 @@ function appendEnhancerStages(
   kind: "guard" | "interceptBefore" | "interceptAfter",
 ): void {
   for (const { token, scope } of enhancers) {
-    drafts.push({ kind, scope, enhancer: tokenName(token) });
+    drafts.push({ kind, scope, enhancer: getTokenName(token) });
   }
 }
 
@@ -375,12 +375,12 @@ function describeHandler(
 function describeFilters(
   plan: AponiaCompiledRouteDiagnostics | undefined,
   global: EnhancerMetadata,
-): readonly AponiaFlowFilter[] {
+): readonly AponiaRouteTraceFilter[] {
   if (plan === undefined) {
     return Object.freeze([]);
   }
 
-  const filters: AponiaFlowFilter[] = [];
+  const filters: AponiaRouteTraceFilter[] = [];
 
   for (const token of readEnhancers(plan.route.enhancers).filters) {
     filters.push(describeFilter(token, "local"));
@@ -405,7 +405,10 @@ function describeFilters(
  * this release can name is a fact it can publish; a throw here is a failed
  * request.
  */
-function describeFilter(token: ClassToken<unknown>, scope: AponiaFlowScope): AponiaFlowFilter {
+function describeFilter(
+  token: ClassToken<unknown>,
+  scope: AponiaRouteStageScope,
+): AponiaRouteTraceFilter {
   const declared: unknown = getCatchMetadata(token);
   const caught = Array.isArray(declared)
     ? declared.filter(
@@ -415,9 +418,9 @@ function describeFilter(token: ClassToken<unknown>, scope: AponiaFlowScope): Apo
 
   return Object.freeze({
     kind: "filter",
-    name: tokenName(token),
+    name: getTokenName(token),
     scope,
-    catch: Object.freeze(caught.map((exception) => tokenName(exception))),
+    catch: Object.freeze(caught.map((exception) => getTokenName(exception))),
   });
 }
 
@@ -432,7 +435,7 @@ function describeFilter(token: ClassToken<unknown>, scope: AponiaFlowScope): Apo
  * validation slot, a guard, the invoke — will state more than one successor,
  * and a renderer should never have to know that today's chain is linear.
  */
-function publishStages(id: string, drafts: readonly StageDraft[]): readonly AponiaFlowStage[] {
+function publishStages(id: string, drafts: readonly StageDraft[]): readonly AponiaRouteStage[] {
   return Object.freeze(
     drafts.map((draft, index) =>
       Object.freeze({
@@ -558,7 +561,7 @@ function readHookEntries(value: unknown): readonly ContributedHook[] {
  * local declaration. Any other value is not a scope this release knows, so the
  * stage states no scope rather than a guess.
  */
-function normalizeScope(scope: unknown): AponiaFlowScope | undefined {
+function normalizeScope(scope: unknown): AponiaRouteStageScope | undefined {
   if (scope === "global") {
     return "global";
   }
@@ -567,7 +570,7 @@ function normalizeScope(scope: unknown): AponiaFlowScope | undefined {
 }
 
 /** The stage kind a contributed hook's own subType describes. */
-function contributedKind(subType: unknown): AponiaFlowStageKind {
+function contributedKind(subType: unknown): AponiaRouteStageKind {
   if (subType === "derive") {
     return "derive";
   }
@@ -588,8 +591,8 @@ function contributedKind(subType: unknown): AponiaFlowStageKind {
  */
 function hookIdentity(
   phase: "transform" | "beforeHandle" | "afterHandle",
-  kind: AponiaFlowStageKind,
-  scope: AponiaFlowScope | undefined,
+  kind: AponiaRouteStageKind,
+  scope: AponiaRouteStageScope | undefined,
   checksum: number,
 ): string {
   return [phase, kind, ...(scope === undefined ? [] : [scope]), String(checksum)].join(":");
@@ -608,13 +611,13 @@ function readModelName(schema: unknown, slot: RouteSchemaSlot): string | undefin
 
   const model = validator as ValidationModelClass;
 
-  return getValidationMetadata(model) === undefined ? undefined : tokenName(model);
+  return getValidationMetadata(model) === undefined ? undefined : getTokenName(model);
 }
 
 /** One enhancer per declaration, each carrying the scope that declared it. */
 function scopedEnhancers(
   tokens: readonly ClassToken<unknown>[],
-  scope: AponiaFlowScope,
+  scope: AponiaRouteStageScope,
 ): readonly ScopedEnhancer[] {
   return tokens.map((token) => Object.freeze({ token, scope }));
 }
@@ -631,7 +634,7 @@ function scopedEnhancers(
 function declaringHalf(
   enhancers: readonly ScopedEnhancer[],
   half: InterceptorHalf,
-  recorded: ReadonlyMap<ClassToken<unknown>, InterceptorHalves> | undefined,
+  recorded: ReadonlyMap<ClassToken<unknown>, InterceptorPhases> | undefined,
 ): readonly ScopedEnhancer[] {
   return Object.freeze(enhancers.filter(({ token }) => declaresHalf(token, half, recorded)));
 }
@@ -670,7 +673,7 @@ function declaringHalf(
 function declaresHalf(
   token: ClassToken<unknown>,
   half: InterceptorHalf,
-  recorded: ReadonlyMap<ClassToken<unknown>, InterceptorHalves> | undefined,
+  recorded: ReadonlyMap<ClassToken<unknown>, InterceptorPhases> | undefined,
 ): boolean {
   const declared = recordedHalf(recorded, token, half);
   if (declared !== undefined) {
@@ -699,7 +702,7 @@ function declaresHalf(
  * also what a record carrying no field reaches.
  */
 function recordedHalf(
-  recorded: ReadonlyMap<ClassToken<unknown>, InterceptorHalves> | undefined,
+  recorded: ReadonlyMap<ClassToken<unknown>, InterceptorPhases> | undefined,
   token: ClassToken<unknown>,
   half: InterceptorHalf,
 ): boolean | undefined {
@@ -738,12 +741,12 @@ function recordedHalf(
  * `getPrototypeOf` trap can refuse, and either refusal is answered as no halves
  * rather than thrown out of the handler.
  */
-function readInterceptorHalves(
+function readInterceptorPhases(
   value: unknown,
-): ReadonlyMap<ClassToken<unknown>, InterceptorHalves> | undefined {
+): ReadonlyMap<ClassToken<unknown>, InterceptorPhases> | undefined {
   try {
     return value instanceof Map
-      ? (value as ReadonlyMap<ClassToken<unknown>, InterceptorHalves>)
+      ? (value as ReadonlyMap<ClassToken<unknown>, InterceptorPhases>)
       : undefined;
   } catch {
     return undefined;

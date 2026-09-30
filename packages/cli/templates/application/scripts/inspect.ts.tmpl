@@ -16,7 +16,7 @@ import { AppModule } from "../src/app.module.ts";
  * it names. `logger: false` keeps the line reporting that choice out of the
  * summary, and out of the `--json` document a tool reads.
  *
- * Routes registered through `elysiaController` callbacks do not appear here;
+ * Routes registered through `controller` callbacks do not appear here;
  * their routes only exist once the callback runs against a real application.
  */
 const inspection = inspectAponiaApplication(AppModule, {

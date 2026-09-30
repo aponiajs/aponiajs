@@ -121,8 +121,8 @@ separate focused modules. `src/index.ts` is the only public barrel.
   application named, and a renamed root has none, so the artifact is refused and
   the decorated graph answers instead.
 - `generation/descriptor-emitter.ts` emits the module graph as data:
-  `defineModule` from `@aponiajs/common`, `defineElysiaControllerRoutes` and
-  `defineElysiaWebSocketGateway` from `@aponiajs/platform-elysia`, which is what
+  `defineModule` from `@aponiajs/common`, `defineControllerRoutes` and
+  `defineWebSocketGateway` from `@aponiajs/platform-elysia`, which is what
   makes an application able to boot without lowering decorated classes. It never
   calls Elysia's route API or `application.ws()` — those stay in the platform, and
   a generated route or gateway reaches them through its declared plan. The import
@@ -172,7 +172,7 @@ separate focused modules. `src/index.ts` is the only public barrel.
   leave behind. A schema slot that names a `@Validation()` model is emitted as
   the validator that model declared, so bootstrap never resolves a model class
   while a route mounts; a gateway is emitted as a
-  `defineElysiaWebSocketGateway(...)` provider carrying the plan bootstrap would
+  `defineWebSocketGateway(...)` provider carrying the plan bootstrap would
   otherwise have reflected off `useClass`. What remains is exactly what the
   build did not touch: a module it declined still boots from its own decorators,
   and so does an application that does not pass `moduleDescriptorArtifact` — or
@@ -232,7 +232,7 @@ separate focused modules. `src/index.ts` is the only public barrel.
   belong in `src/<resource>/`.
 - The application starter registers the build plugin. `bun run build` runs
   `scripts/build.ts`, which bundles through `Bun.build` with
-  `aponiaBuildPlugin()`, so both generated modules are rewritten before the
+  `buildPlugin()`, so both generated modules are rewritten before the
   bundler resolves the entrypoint that would read them. `@aponiajs/cli` is a
   starter devDependency for that, and the packed lane installs it into the
   generated project.
@@ -348,7 +348,7 @@ separate focused modules. `src/index.ts` is the only public barrel.
 - Guard, interceptor, and filter schematics register in `providers` beside the
   gateway, and the file they emit is correct as written: `@Injectable()`, the
   `implements` clause for the contract it satisfies — `CanActivate`,
-  `AponiaInterceptor`, `ExceptionFilter` — and `@Catch()` on a filter. A
+  `Interceptor`, `ExceptionFilter` — and `@Catch()` on a filter. A
   scaffold that omits any of them is a class the application cannot boot, since
   an enhancer naming a class the graph cannot reach fails the mount with
   `MISSING_PROVIDER`.

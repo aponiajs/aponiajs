@@ -3,9 +3,9 @@ import type { AponiaGatewayInspection, AponiaModuleInspection } from "@aponiajs/
 import {
   DevtoolsModule,
   devtoolsContractVersion,
-  type AponiaAotPayload,
-  type AponiaFlowPayload,
-  type AponiaFlowRoute,
+  type AponiaBuildPayload,
+  type AponiaRouteTracePayload,
+  type AponiaRouteTrace,
   type AponiaGraphPayload,
   type AponiaLogsPayload,
   type AponiaMetaPayload,
@@ -54,14 +54,14 @@ type DevtoolsContractAssertions = [
   Expect<Equals<AponiaGraphPayload["modules"], readonly AponiaModuleInspection[]>>,
   Expect<Equals<AponiaGraphPayload["gateways"], readonly AponiaGatewayInspection[]>>,
   Expect<Equals<AponiaRoutesPayload["routes"], readonly AponiaMountedRoute[]>>,
-  Expect<Equals<AponiaFlowPayload["routes"], readonly AponiaFlowRoute[]>>,
+  Expect<Equals<AponiaRouteTracePayload["routes"], readonly AponiaRouteTrace[]>>,
   Expect<Equals<AponiaLogsPayload["cursor"], AponiaRequestsPayload["cursor"]>>,
   Expect<Equals<AponiaLogsPayload["entries"], readonly LogEntry[]>>,
   Expect<Equals<AponiaLogsPayload["levels"], readonly string[]>>,
   Expect<Equals<AponiaRequestsPayload["entries"], readonly RequestRecord[]>>,
   Expect<Equals<AponiaRequestRecordFields, RequestRecord>>,
-  Expect<Equals<AponiaAotPayload["graph"], "declared" | "decorated">>,
-  Expect<Equals<AponiaAotPayload["invokers"]["accepted"], boolean>>,
+  Expect<Equals<AponiaBuildPayload["graph"], "declared" | "decorated">>,
+  Expect<Equals<AponiaBuildPayload["invokers"]["accepted"], boolean>>,
   Expect<Equals<keyof DevtoolsOptions, "enabled" | "logger" | "capture">>,
   Expect<Equals<Extract<"startDevtoolsServer" | "DevtoolsServer", keyof DevtoolsBarrel>, never>>,
 ];
@@ -170,7 +170,7 @@ test("every endpoint payload is constructible from the published types", () => {
   };
   const graph: AponiaGraphPayload = { rootModule: "ConformanceModule", modules: [], gateways: [] };
   const routes: AponiaRoutesPayload = { routes: [] };
-  const flow: AponiaFlowPayload = { routes: [] };
+  const flow: AponiaRouteTracePayload = { routes: [] };
   const logs: AponiaLogsPayload = {
     cursor: 1,
     entries: [
@@ -197,7 +197,7 @@ test("every endpoint payload is constructible from the published types", () => {
       },
     ],
   };
-  const aot: AponiaAotPayload = {
+  const aot: AponiaBuildPayload = {
     graph: "decorated",
     invokers: { accepted: false, reason: "refused" },
     controllers: [{ controller: "ConformanceController", handlers: [] }],

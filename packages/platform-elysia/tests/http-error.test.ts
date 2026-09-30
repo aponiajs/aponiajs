@@ -4,7 +4,7 @@ import { StatusMap } from "elysia";
 import {
   AponiaFactory,
   HttpError,
-  elysiaController,
+  controller,
   httpError,
   httpErrors,
   type HttpErrorStatusCode,
@@ -26,7 +26,7 @@ type HttpErrorTypeAssertions = [
 
 class ErrorController {}
 
-const errorController = elysiaController(ErrorController, (application) =>
+const errorController = controller(ErrorController, (application) =>
   application.get("/missing", () => {
     throw httpErrors.notFound("The requested resource does not exist.", {
       code: "RESOURCE_NOT_FOUND",

@@ -18,16 +18,16 @@ import {
 } from "@aponiajs/common";
 import {
   AponiaFactory,
-  ElysiaPluginModule,
-  defineElysiaControllerRoutes,
-  elysiaController,
+  PluginModule,
+  defineControllerRoutes,
+  controller,
 } from "@aponiajs/platform-elysia";
 import { Elysia } from "elysia";
 import {
   devtoolsPathPrefix,
-  routeRequest,
-  type AponiaFlowPayload,
-  type AponiaFlowRoute,
+  handleDevtoolsRequest,
+  type AponiaRouteTracePayload,
+  type AponiaRouteTrace,
 } from "../src/index.ts";
 // The handler record the mounted route answers through, from the module that owns
 // it rather than the barrel: the surface is a route an application mounts, and
@@ -64,22 +64,22 @@ const silentLogger: LoggerService = {
 
 /** One devtools path answered for one application. */
 async function ask(application: Elysia, path: string): Promise<Response> {
-  return await routeRequest(
+  return await handleDevtoolsRequest(
     new Request(`http://localhost${devtoolsPathPrefix}${path}`),
     createHandlers(application, undefined, undefined, silentLogger),
   );
 }
 
-async function readFlow(application: Elysia): Promise<AponiaFlowPayload> {
+async function readFlow(application: Elysia): Promise<AponiaRouteTracePayload> {
   const response = await ask(application, "/flow");
 
   expect(response.status).toBe(200);
 
-  return (await response.json()) as AponiaFlowPayload;
+  return (await response.json()) as AponiaRouteTracePayload;
 }
 
 /** The one route a case is about, or a failure that names the route it wanted. */
-function routeById(payload: AponiaFlowPayload, id: string): AponiaFlowRoute {
+function routeById(payload: AponiaRouteTracePayload, id: string): AponiaRouteTrace {
   const route = payload.routes.find((entry) => entry.id === id);
 
   if (route === undefined) {
@@ -94,7 +94,7 @@ function routeById(payload: AponiaFlowPayload, id: string): AponiaFlowRoute {
  * same route, no stage is unreachable from the first, and the ids are unique
  * within the route.
  */
-function assertStageGraph(route: AponiaFlowRoute): void {
+function assertStageGraph(route: AponiaRouteTrace): void {
   const ids = new Set(route.stages.map((stage) => stage.id));
 
   expect(ids.size).toBe(route.stages.length);
@@ -256,7 +256,7 @@ class ContributedController {
 }
 
 @Module({
-  imports: [ElysiaPluginModule.register(flowPlugin, { key: "flow" })],
+  imports: [PluginModule.register(flowPlugin, { key: "flow" })],
   controllers: [ContributedController],
   providers: [ContributedInterceptor],
 })
@@ -360,7 +360,7 @@ class CallbackController {
 const edgeModule: ModuleDefinition = defineModule({
   id: "FlowEdgeModule",
   controllers: [
-    defineElysiaControllerRoutes(EdgeController, {
+    defineControllerRoutes(EdgeController, {
       path: "edge",
       routes: [
         {
@@ -385,7 +385,7 @@ const edgeModule: ModuleDefinition = defineModule({
         },
       ],
     }),
-    elysiaController(CallbackController, (application, controller) => {
+    controller(CallbackController, (application, controller) => {
       application.get("/callback", () => controller.greet());
       return application;
     }),

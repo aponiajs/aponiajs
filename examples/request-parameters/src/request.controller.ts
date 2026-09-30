@@ -1,24 +1,19 @@
 import {
   Body,
+  Context,
   Controller,
   Cookie,
-  Ctx,
   Get,
   Headers,
+  HttpStatus,
   Param,
   Post,
   Query,
   Req,
-  Res,
-  Set,
-  Status,
-  type RouteResponseSettings,
+  ResponseSettings,
+  type ResponseSettingsState,
 } from "@aponiajs/common";
-import {
-  type ElysiaRouteContext,
-  type ElysiaSet,
-  type ElysiaStatus,
-} from "@aponiajs/platform-elysia";
+import { type HandlerContext, type ResponseStatus } from "@aponiajs/platform-elysia";
 import { createItemSchema, type CreateItem } from "./item.model.ts";
 
 /**
@@ -72,24 +67,27 @@ export class RequestController {
   }
 
   @Get("response")
-  writeResponse(@Res() response: RouteResponseSettings): { written: boolean } {
+  writeResponse(@ResponseSettings() response: ResponseSettingsState): { written: boolean } {
     response.headers["x-source"] = "parameters";
     return { written: true };
   }
 
   @Get("native-response")
-  writeNativeResponse(@Set() set: ElysiaSet, @Status() status: ElysiaStatus): unknown {
+  writeNativeResponse(
+    @ResponseSettings() set: HandlerContext["set"],
+    @HttpStatus() status: ResponseStatus,
+  ): unknown {
     set.headers["x-source"] = "native-parts";
     return status(202, { written: true });
   }
 
   @Get("context")
-  readContext(@Ctx() context: ElysiaRouteContext): { path: string } {
+  readContext(@Context() context: HandlerContext): { path: string } {
     return { path: context.path };
   }
 
   @Get("whole-context")
-  readWholeContext(context: ElysiaRouteContext): { path: string } {
+  readWholeContext(context: HandlerContext): { path: string } {
     return { path: context.path };
   }
 }

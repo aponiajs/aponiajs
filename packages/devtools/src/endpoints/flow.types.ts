@@ -1,6 +1,6 @@
 import type { RouteSchemaSlot } from "@aponiajs/common";
 import type { AponiaRouteParameterInspection } from "@aponiajs/platform-elysia";
-import type { AponiaRouteSource } from "./payloads.types.ts";
+import type { AponiaRouteBinding } from "./payloads.types.ts";
 
 /**
  * The step of a route's chain one stage states.
@@ -14,7 +14,7 @@ import type { AponiaRouteSource } from "./payloads.types.ts";
  * `beforeHandle` and one `afterHandle`, while `invoke` and `handler` say what
  * serves the route and what it calls.
  */
-export type AponiaFlowStageKind =
+export type AponiaRouteStageKind =
   | "derive"
   | "validate"
   | "resolve"
@@ -37,7 +37,7 @@ export type AponiaFlowStageKind =
  * routes and the ones mounted beside it, which is the local half of the same
  * distinction.
  */
-export type AponiaFlowScope = "global" | "local";
+export type AponiaRouteStageScope = "global" | "local";
 
 /**
  * One step of the chain, with the stages that run after it named explicitly.
@@ -48,7 +48,7 @@ export type AponiaFlowScope = "global" | "local";
  * `handler` name. Absence is therefore a statement — "nothing states this" —
  * rather than an empty value a reader has to interpret.
  */
-export interface AponiaFlowStage {
+export interface AponiaRouteStage {
   /**
    * An identifier that is stable and unique within one response, and that every
    * `next` of the same route refers to by. A renderer keys its nodes by it; it
@@ -57,9 +57,9 @@ export interface AponiaFlowStage {
    */
   readonly id: string;
   /** Which step of the chain this stage is. */
-  readonly kind: AponiaFlowStageKind;
+  readonly kind: AponiaRouteStageKind;
   /** Which scope runs the stage. Absent on the kinds no declaration owns. */
-  readonly scope?: AponiaFlowScope;
+  readonly scope?: AponiaRouteStageScope;
   /**
    * The class a `guard` or `intercept*` stage runs. The platform resolved that
    * class itself, so its name is one it can state.
@@ -98,7 +98,7 @@ export interface AponiaFlowStage {
    * published where a decided state belongs would make one boot's routes look
    * interchangeable with another's.
    */
-  readonly source?: AponiaRouteSource;
+  readonly source?: AponiaRouteBinding;
   /** The controller whose method serves the route, when a record names one. */
   readonly controller?: string;
   /**
@@ -124,7 +124,7 @@ export interface AponiaFlowStage {
  * in the order the route's own array runs them — the first entry that answers
  * is the one that decides.
  */
-export interface AponiaFlowFilter {
+export interface AponiaRouteTraceFilter {
   /**
    * `"filter"` for a declared filter, `"default"` for the Problem Details
    * mapping every route the platform compiles carries last.
@@ -133,7 +133,7 @@ export interface AponiaFlowFilter {
   /** The filter class, or the mapping the platform answers unhandled failures with. */
   readonly name: string;
   /** The declaration that contributed a declared filter. Absent on the mapping. */
-  readonly scope?: AponiaFlowScope;
+  readonly scope?: AponiaRouteStageScope;
   /**
    * What `@Catch()` named on a declared filter, as class names. An empty list
    * is a filter that declared no type and answers anything, which is what
@@ -151,13 +151,13 @@ export interface AponiaFlowFilter {
  * rule. `filters` states the route's own `error` array, which is why it is a
  * list on the route rather than a stage in the chain.
  */
-export interface AponiaFlowRoute {
+export interface AponiaRouteTrace {
   /** The method the mounted table reports, upper-cased, and the path it mounted. */
   readonly id: string;
   /** The stages the route runs, in the order it runs them. */
-  readonly stages: readonly AponiaFlowStage[];
+  readonly stages: readonly AponiaRouteStage[];
   /** The route's filters, ordered exactly as its own `error` array is. */
-  readonly filters: readonly AponiaFlowFilter[];
+  readonly filters: readonly AponiaRouteTraceFilter[];
 }
 
 /**
@@ -184,7 +184,7 @@ export interface AponiaFlowRoute {
  * Route entries are sorted by path and then method, in code-unit order, so the
  * payload is deterministic and two polls of one application answer the same order.
  */
-export interface AponiaFlowPayload {
+export interface AponiaRouteTracePayload {
   /** Every mounted route, sorted by path and then method. */
-  readonly routes: readonly AponiaFlowRoute[];
+  readonly routes: readonly AponiaRouteTrace[];
 }

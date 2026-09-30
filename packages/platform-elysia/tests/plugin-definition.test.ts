@@ -1,11 +1,11 @@
 import { expect, test } from "bun:test";
-import { Controller, Ctx, Get, Module, defineModule } from "@aponiajs/common";
+import { Controller, Context, Get, Module, defineModule } from "@aponiajs/common";
 import { Elysia } from "elysia";
-import { AponiaFactory, defineElysiaPlugin, type ElysiaRouteContext as e } from "../src/index.ts";
+import { AponiaFactory, definePlugin, type HandlerContext as e } from "../src/index.ts";
 
 // A plugin exported as a value and a same-named type is usable in both
 // positions, so a handler annotates it without `typeof`.
-const clock = defineElysiaPlugin(
+const clock = definePlugin(
   new Elysia({ name: "clock" })
     .decorate("now", () => "2026-07-28T00:00:00.000Z")
     .state("requests", 0)
@@ -14,13 +14,13 @@ const clock = defineElysiaPlugin(
 );
 type clock = typeof clock;
 
-const cache = defineElysiaPlugin(
+const cache = definePlugin(
   new Elysia({ name: "cache" }).decorate("cache", { read: (key: string) => `cached:${key}` }),
   { key: "cache" },
 );
 type cache = typeof cache;
 
-const descriptorPlugin = defineElysiaPlugin(
+const descriptorPlugin = definePlugin(
   new Elysia({ name: "descriptor-plugin" }).get("/defined-descriptor", () => "descriptor"),
   { key: "descriptor-plugin" },
 );
@@ -32,22 +32,22 @@ const descriptorModule = defineModule({
 @Controller("defined")
 class DefinedController {
   @Get()
-  read(@Ctx() context: e<clock>): { now: string; traceId: string; requests: number } {
+  read(@Context() context: e<clock>): { now: string; traceId: string; requests: number } {
     context.store.requests += 1;
     return { now: context.now(), traceId: context.traceId, requests: context.store.requests };
   }
 
   @Get("both")
-  readBoth(@Ctx() context: e<[clock, cache]>): { now: string; cached: string } {
+  readBoth(@Context() context: e<[clock, cache]>): { now: string; cached: string } {
     return { now: context.now(), cached: context.cache.read("users") };
   }
 }
 
 @Module({ imports: [clock, cache], controllers: [DefinedController] })
-class DefinedModule {}
+class PluginImportsModule {}
 
 async function get(path: string): Promise<Response> {
-  const application = await AponiaFactory.create(DefinedModule, { logger: false });
+  const application = await AponiaFactory.create(PluginImportsModule, { logger: false });
   return application.handle(new Request(`http://localhost${path}`));
 }
 
@@ -74,7 +74,7 @@ test("types several defined plugins at once", async () => {
 
 test("keeps the native plugin reachable on the import it produces", () => {
   expect(clock.plugin).toBeInstanceOf(Elysia);
-  expect(clock.id).toBe("ElysiaPluginModule[clock]");
+  expect(clock.id).toBe("PluginModule[clock]");
   expect(Object.isFrozen(clock)).toBe(true);
 });
 
@@ -92,14 +92,14 @@ test("mounts a defined plugin from a descriptor-authored module", async () => {
 });
 
 test("rejects an empty key exactly as register does", () => {
-  expect(() => defineElysiaPlugin(new Elysia(), { key: "  " })).toThrow(
+  expect(() => definePlugin(new Elysia(), { key: "  " })).toThrow(
     "Elysia plugin module key must not be empty.",
   );
 });
 
 test("keeps two defined plugins with the same key from mounting twice", async () => {
-  const duplicate = defineElysiaPlugin(new Elysia({ name: "duplicate" }), { key: "duplicate" });
-  const other = defineElysiaPlugin(new Elysia({ name: "other" }), { key: "duplicate" });
+  const duplicate = definePlugin(new Elysia({ name: "duplicate" }), { key: "duplicate" });
+  const other = definePlugin(new Elysia({ name: "other" }), { key: "duplicate" });
 
   @Module({ imports: [duplicate, other] })
   class DuplicateModule {}
@@ -120,10 +120,10 @@ type DefinitionTypeAssertions = [
   Expect<Equals<e<[clock, cache]>["cache"], { read: (key: string) => string }>>,
   Expect<Equals<"cache" extends keyof e<clock> ? true : false, false>>,
   Expect<Equals<e<clock>, e<typeof clock>>>,
-  Expect<Equals<e<clock>, ElysiaRouteContextThroughInstance>>,
+  Expect<Equals<e<clock>, HandlerContextThroughInstance>>,
 ];
 
-type ElysiaRouteContextThroughInstance = e<(typeof clock)["plugin"]>;
+type HandlerContextThroughInstance = e<(typeof clock)["plugin"]>;
 
 test("keeps the plugin definition type assertions referenced", () => {
   const assertions: DefinitionTypeAssertions = Array.from(

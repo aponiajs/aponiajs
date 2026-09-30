@@ -3,11 +3,11 @@ import { defineModule, provideClass, type ClassToken, type LoggerService } from 
 import { Elysia, t } from "elysia";
 import {
   AponiaFactory,
-  defineElysiaControllerRoutes,
-  type AponiaControllerInvokerFactory,
+  defineControllerRoutes,
+  type ControllerHandlerFactory,
   type AponiaInvokerArtifact,
-  type AponiaRouteInvoker,
-  type ElysiaRoutePlan,
+  type RouteHandler,
+  type RoutePlan,
 } from "../src/index.ts";
 
 const frameworkVersion = (
@@ -54,7 +54,7 @@ class DeclaredUsersController {
   }
 }
 
-const declaredRoutes: readonly ElysiaRoutePlan[] = [
+const declaredRoutes: readonly RoutePlan[] = [
   {
     method: "GET",
     path: ":id",
@@ -77,7 +77,7 @@ const declaredModule = defineModule({
   id: "DeclaredUsersModule",
   providers: [provideClass(DeclaredUsersService, [])],
   controllers: [
-    defineElysiaControllerRoutes(DeclaredUsersController, {
+    defineControllerRoutes(DeclaredUsersController, {
       path: "/users",
       inject: [DeclaredUsersService],
       routes: declaredRoutes,
@@ -177,11 +177,11 @@ class SecondClaimController {
 const claimingModule = defineModule({
   id: "ClaimingModule",
   controllers: [
-    defineElysiaControllerRoutes(FirstClaimController, {
+    defineControllerRoutes(FirstClaimController, {
       path: "/claim",
       routes: [{ method: "GET", path: ":id", propertyKey: "read" }],
     }),
-    defineElysiaControllerRoutes(SecondClaimController, {
+    defineControllerRoutes(SecondClaimController, {
       path: "/claim",
       routes: [{ method: "GET", path: ":id", propertyKey: "read" }],
     }),
@@ -220,13 +220,13 @@ test("prefers a generated invoker for a declared controller's handler", async ()
   const artifact: AponiaInvokerArtifact = Object.freeze({
     framework: frameworkVersion,
     elysia: "1.4.30",
-    invokers: new Map<ClassToken<unknown>, AponiaControllerInvokerFactory>([
+    invokers: new Map<ClassToken<unknown>, ControllerHandlerFactory>([
       [
         DeclaredUsersController as ClassToken<unknown>,
         (() =>
-          new Map<string | symbol, AponiaRouteInvoker>([
+          new Map<string | symbol, RouteHandler>([
             ["ping", () => "from-invoker"],
-          ])) as unknown as AponiaControllerInvokerFactory,
+          ])) as unknown as ControllerHandlerFactory,
       ],
     ]),
   });
@@ -249,7 +249,7 @@ test("logs a declared controller's routes at startup", async () => {
 });
 
 test("builds a plugin from a declared controller for the fallback path", async () => {
-  const definition = defineElysiaControllerRoutes(DeclaredUsersController, {
+  const definition = defineControllerRoutes(DeclaredUsersController, {
     path: "/users",
     inject: [DeclaredUsersService],
     routes: [{ method: "GET", path: "ping", propertyKey: "ping" }],

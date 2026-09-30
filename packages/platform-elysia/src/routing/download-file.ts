@@ -1,4 +1,4 @@
-import type { RouteResponseSettings } from "@aponiajs/common";
+import type { ResponseSettingsState } from "@aponiajs/common";
 import { file, type ElysiaFile } from "elysia";
 import type { DownloadFileOptions } from "./download-file.types.ts";
 
@@ -99,14 +99,14 @@ function contentDisposition(disposition: "attachment" | "inline", filename: stri
  * single header that names it into the settings the handler was handed, and
  * returns `file(path)` unchanged, so the response stays Elysia's.
  *
- * @param settings - the `@Set()` / `@Res()` object the compiled invoker passes.
+ * @param settings - the `@ResponseSettings()` object the compiled invoker passes.
  * @param path - the file to stream, as `Bun.file` and Elysia's `file` read it.
  * @param filename - the name the client saves or renders, encoded per RFC 8187.
  * @param options - `attachment` (the default) or `inline`.
  * @throws TypeError when `filename` carries a path separator, a line break, or a NUL.
  */
 export function downloadFile(
-  settings: RouteResponseSettings,
+  settings: ResponseSettingsState,
   path: string,
   filename: string,
   options?: DownloadFileOptions,

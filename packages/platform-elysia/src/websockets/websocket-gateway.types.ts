@@ -5,35 +5,35 @@ import type { ElysiaWS } from "elysia/ws";
 /**
  * The native Elysia client supplied to gateway message and lifecycle handlers.
  */
-export type ElysiaWebSocket<TRoute extends RouteSchema = {}> = ElysiaWS<TRoute>;
+export type WebSocketClient<TRoute extends RouteSchema = {}> = ElysiaWS<TRoute>;
 
 /**
  * The native Elysia application injected by `@WebSocketServer()`.
  */
-export type ElysiaWebSocketServer<TApplication extends AnyElysia = Elysia> = TApplication;
+export type WebSocketServerRef<TApplication extends AnyElysia = Elysia> = TApplication;
 
-export interface CompiledElysiaWebSocketHandler {
+export interface CompiledWebSocketHandler {
   readonly event: string;
   readonly propertyKey: string | symbol;
-  readonly createInvoker: (instance: unknown) => ElysiaWebSocketMessageInvoker;
+  readonly createInvoker: (instance: unknown) => WebSocketMessageInvoker;
 }
 
-export interface CompiledElysiaWebSocketGateway {
+export interface CompiledWebSocketGateway {
   readonly module: ModuleDefinition;
   readonly provider: Extract<Provider, { readonly kind: "class" }>;
   readonly token: Token<unknown>;
   readonly gatewayName: string;
   readonly path: string;
-  readonly handlers: readonly CompiledElysiaWebSocketHandler[];
+  readonly handlers: readonly CompiledWebSocketHandler[];
   readonly serverProperties: readonly (string | symbol)[];
 }
 
-export type ElysiaWebSocketMessageInvoker = (socket: ElysiaWebSocket, data: unknown) => unknown;
+export type WebSocketMessageInvoker = (socket: WebSocketClient, data: unknown) => unknown;
 
-export interface BoundElysiaWebSocketGateway {
+export interface BoundWebSocketGateway {
   readonly path: string;
   readonly initialize: (application: AnyElysia) => void | Promise<void>;
-  readonly open: (socket: ElysiaWebSocket) => void | Promise<void>;
-  readonly message: (socket: ElysiaWebSocket, message: unknown) => Promise<void>;
-  readonly close: (socket: ElysiaWebSocket) => void | Promise<void>;
+  readonly open: (socket: WebSocketClient) => void | Promise<void>;
+  readonly message: (socket: WebSocketClient, message: unknown) => Promise<void>;
+  readonly close: (socket: WebSocketClient) => void | Promise<void>;
 }

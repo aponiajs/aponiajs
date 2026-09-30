@@ -1,126 +1,126 @@
 import {
   AponiaError,
-  tokenName,
+  getTokenName,
   type ClassToken,
   type Constructor,
   type ControllerDefinition,
   type RouteParameterKind,
   type Token,
-  type TokenValues,
+  type TokenMap,
 } from "@aponiajs/common";
 import { Elysia, type AnyElysia } from "elysia";
 import { joinPaths, registerCompiledElysiaRoutes } from "../routing/route-compiler.ts";
 import type { CompiledElysiaRoute } from "../routing/route-compiler.types.ts";
-import type { ElysiaRoutePlan } from "../routing/route-plan.types.ts";
-import { ELYSIA_CONTROLLER } from "./controller.constants.ts";
+import type { RoutePlan } from "../routing/route-plan.types.ts";
+import { CONTROLLER_KIND } from "./controller.constants.ts";
 import { unmountedRouteEnhancers } from "./enhancer-resolver.ts";
 import type {
-  DeclaredElysiaControllerDefinition,
-  ElysiaControllerRegistrationResult,
-  ElysiaControllerDefinition,
-  ElysiaControllerPluginOptions,
-  ElysiaControllerRegistrationOptions,
-  ElysiaControllerRoutesOptions,
-  RegisteredElysiaControllerDefinition,
-  RegisteredElysiaApplication,
+  DeclaredControllerDefinition,
+  ControllerRegistrationResult,
+  ControllerDescriptor,
+  ControllerPluginOptions,
+  ControllerRegistrationOptions,
+  ControllerRoutesOptions,
+  RegisteredControllerDefinition,
+  RegisteredApplication,
   RuntimeElysiaController,
 } from "./controller.types.ts";
 
-export { ELYSIA_CONTROLLER } from "./controller.constants.ts";
+export { CONTROLLER_KIND } from "./controller.constants.ts";
 
-export function defineElysiaController<
+export function defineController<
   TController,
   const TDependencies extends readonly Token<unknown>[],
-  const TRegistrationResult extends ElysiaControllerRegistrationResult,
+  const TRegistrationResult extends ControllerRegistrationResult,
 >(
-  useClass: Constructor<TController, TokenValues<TDependencies>>,
-  options: ElysiaControllerRegistrationOptions<TController, TDependencies, TRegistrationResult>,
-): RegisteredElysiaControllerDefinition<TController, TDependencies, TRegistrationResult>;
-export function defineElysiaController<
-  TController,
-  const TDependencies extends readonly Token<unknown>[],
-  const TPlugin extends AnyElysia,
->(
-  useClass: Constructor<TController, TokenValues<TDependencies>>,
-  options: ElysiaControllerPluginOptions<TController, TDependencies, TPlugin>,
-): ElysiaControllerDefinition<TController, TDependencies, TPlugin>;
-export function defineElysiaController<
+  useClass: Constructor<TController, TokenMap<TDependencies>>,
+  options: ControllerRegistrationOptions<TController, TDependencies, TRegistrationResult>,
+): RegisteredControllerDefinition<TController, TDependencies, TRegistrationResult>;
+export function defineController<
   TController,
   const TDependencies extends readonly Token<unknown>[],
   const TPlugin extends AnyElysia,
-  const TRegistrationResult extends ElysiaControllerRegistrationResult,
 >(
-  useClass: Constructor<TController, TokenValues<TDependencies>>,
+  useClass: Constructor<TController, TokenMap<TDependencies>>,
+  options: ControllerPluginOptions<TController, TDependencies, TPlugin>,
+): ControllerDescriptor<TController, TDependencies, TPlugin>;
+export function defineController<
+  TController,
+  const TDependencies extends readonly Token<unknown>[],
+  const TPlugin extends AnyElysia,
+  const TRegistrationResult extends ControllerRegistrationResult,
+>(
+  useClass: Constructor<TController, TokenMap<TDependencies>>,
   options:
-    | ElysiaControllerRegistrationOptions<TController, TDependencies, TRegistrationResult>
-    | ElysiaControllerPluginOptions<TController, TDependencies, TPlugin>,
+    | ControllerRegistrationOptions<TController, TDependencies, TRegistrationResult>
+    | ControllerPluginOptions<TController, TDependencies, TPlugin>,
 ):
-  | RegisteredElysiaControllerDefinition<TController, TDependencies, TRegistrationResult>
-  | ElysiaControllerDefinition<TController, TDependencies, TPlugin> {
-  return createElysiaControllerDefinition(useClass, options);
+  | RegisteredControllerDefinition<TController, TDependencies, TRegistrationResult>
+  | ControllerDescriptor<TController, TDependencies, TPlugin> {
+  return createControllerDefinition(useClass, options);
 }
 
 /**
  * Defines a directly registered Elysia controller with native callback
  * inference and no options object.
  */
-export function elysiaController<
+export function controller<
   TController,
-  const TRegistrationResult extends ElysiaControllerRegistrationResult,
+  const TRegistrationResult extends ControllerRegistrationResult,
 >(
   useClass: Constructor<TController, readonly []>,
   registerRoutes: (application: Elysia, controller: TController) => TRegistrationResult,
-): RegisteredElysiaControllerDefinition<TController, readonly [], TRegistrationResult>;
-export function elysiaController<
+): RegisteredControllerDefinition<TController, readonly [], TRegistrationResult>;
+export function controller<
   TController,
   const TDependencies extends readonly Token<unknown>[],
-  const TRegistrationResult extends ElysiaControllerRegistrationResult,
+  const TRegistrationResult extends ControllerRegistrationResult,
 >(
-  useClass: Constructor<TController, TokenValues<TDependencies>>,
+  useClass: Constructor<TController, TokenMap<TDependencies>>,
   inject: TDependencies,
   registerRoutes: (application: Elysia, controller: TController) => TRegistrationResult,
-): RegisteredElysiaControllerDefinition<TController, TDependencies, TRegistrationResult>;
-export function elysiaController<
+): RegisteredControllerDefinition<TController, TDependencies, TRegistrationResult>;
+export function controller<
   TController,
   const TDependencies extends readonly Token<unknown>[],
-  const TRegistrationResult extends ElysiaControllerRegistrationResult,
+  const TRegistrationResult extends ControllerRegistrationResult,
 >(
-  useClass: Constructor<TController, TokenValues<TDependencies>>,
+  useClass: Constructor<TController, TokenMap<TDependencies>>,
   injectOrRegisterRoutes:
     | TDependencies
     | ((application: Elysia, controller: TController) => TRegistrationResult),
   registerRoutes?: (application: Elysia, controller: TController) => TRegistrationResult,
-): RegisteredElysiaControllerDefinition<TController, TDependencies, TRegistrationResult> {
+): RegisteredControllerDefinition<TController, TDependencies, TRegistrationResult> {
   const usesDependencies = typeof injectOrRegisterRoutes !== "function";
   const resolvedRegisterRoutes = usesDependencies ? registerRoutes : injectOrRegisterRoutes;
   if (!resolvedRegisterRoutes) {
-    throw new TypeError("elysiaController requires a route registration callback.");
+    throw new TypeError("controller requires a route registration callback.");
   }
 
   const inject = (usesDependencies
     ? injectOrRegisterRoutes
     : Object.freeze([])) as unknown as TDependencies;
-  return defineElysiaController(useClass, {
+  return defineController(useClass, {
     inject,
     registerRoutes: resolvedRegisterRoutes,
   });
 }
 
-function createElysiaControllerDefinition<
+function createControllerDefinition<
   TController,
   const TDependencies extends readonly Token<unknown>[],
   const TPlugin extends AnyElysia,
-  const TRegistrationResult extends ElysiaControllerRegistrationResult,
+  const TRegistrationResult extends ControllerRegistrationResult,
 >(
-  useClass: Constructor<TController, TokenValues<TDependencies>>,
+  useClass: Constructor<TController, TokenMap<TDependencies>>,
   options:
-    | ElysiaControllerRegistrationOptions<TController, TDependencies, TRegistrationResult>
-    | ElysiaControllerPluginOptions<TController, TDependencies, TPlugin>,
+    | ControllerRegistrationOptions<TController, TDependencies, TRegistrationResult>
+    | ControllerPluginOptions<TController, TDependencies, TPlugin>,
 ):
-  | RegisteredElysiaControllerDefinition<TController, TDependencies, TRegistrationResult>
-  | ElysiaControllerDefinition<TController, TDependencies, TPlugin> {
+  | RegisteredControllerDefinition<TController, TDependencies, TRegistrationResult>
+  | ControllerDescriptor<TController, TDependencies, TPlugin> {
   const common = {
-    kind: ELYSIA_CONTROLLER,
+    kind: CONTROLLER_KIND,
     token: useClass,
     inject: Object.freeze([...options.inject]) as unknown as TDependencies,
     useClass,
@@ -134,7 +134,7 @@ function createElysiaControllerDefinition<
       buildPlugin: (controller: TController) => {
         const plugin = new Elysia();
         registerRoutesOnApplication(useClass.name, registerRoutes, plugin, controller);
-        return plugin as RegisteredElysiaApplication<TRegistrationResult>;
+        return plugin as RegisteredApplication<TRegistrationResult>;
       },
     });
   }
@@ -159,16 +159,16 @@ function createElysiaControllerDefinition<
  * duplicate-route check, the same startup logging, and the same
  * `AponiaApplicationOptions.invokers` lookup a decorated one does.
  */
-export function defineElysiaControllerRoutes<
+export function defineControllerRoutes<
   TController,
   const TDependencies extends readonly Token<unknown>[] = readonly [],
 >(
-  useClass: Constructor<TController, TokenValues<TDependencies>>,
-  options: ElysiaControllerRoutesOptions<TDependencies>,
-): DeclaredElysiaControllerDefinition<TController, TDependencies> {
+  useClass: Constructor<TController, TokenMap<TDependencies>>,
+  options: ControllerRoutesOptions<TDependencies>,
+): DeclaredControllerDefinition<TController, TDependencies> {
   const controllerPath = options.path ?? "";
   const routes = Object.freeze(
-    options.routes.map((plan) => compileElysiaRoutePlan(plan, controllerPath)),
+    options.routes.map((plan) => compileRoutePlan(plan, controllerPath)),
   );
   const registerRoutes = (application: Elysia, instance: unknown): void => {
     // A registration callback states the routes a caller mounts on its own, and
@@ -185,7 +185,7 @@ export function defineElysiaControllerRoutes<
   };
 
   return Object.freeze({
-    kind: ELYSIA_CONTROLLER,
+    kind: CONTROLLER_KIND,
     token: useClass,
     inject: Object.freeze([...(options.inject ?? [])]) as unknown as TDependencies,
     useClass,
@@ -208,10 +208,7 @@ export function defineElysiaControllerRoutes<
  * settles the decision outright, while `undefined` sends it to reading the
  * handler's own source, which is the inference this path exists to remove.
  */
-function compileElysiaRoutePlan(
-  plan: ElysiaRoutePlan,
-  controllerPath: string,
-): CompiledElysiaRoute {
+function compileRoutePlan(plan: RoutePlan, controllerPath: string): CompiledElysiaRoute {
   const parameters = plan.parameters ?? [];
   const takesContext = parameters.length === 0 && plan.takesContext === true;
   const capabilities: readonly RouteParameterKind[] =
@@ -241,7 +238,7 @@ function compileElysiaRoutePlan(
 export function isElysiaController(
   controller: ControllerDefinition,
 ): controller is RuntimeElysiaController {
-  return controller.kind === ELYSIA_CONTROLLER;
+  return controller.kind === CONTROLLER_KIND;
 }
 
 /**
@@ -266,7 +263,7 @@ export function registerElysiaControllerRoutes(
   }
 
   registerRoutesOnApplication(
-    tokenName(controller.token),
+    getTokenName(controller.token),
     registerRoutes,
     application,
     instance as never,
@@ -275,10 +272,7 @@ export function registerElysiaControllerRoutes(
 
 function registerRoutesOnApplication<TController>(
   controllerName: string,
-  registerRoutes: (
-    application: Elysia,
-    controller: TController,
-  ) => ElysiaControllerRegistrationResult,
+  registerRoutes: (application: Elysia, controller: TController) => ControllerRegistrationResult,
   application: Elysia,
   controller: TController,
 ): void {

@@ -14,7 +14,7 @@ import {
 } from "@aponiajs/common";
 import { t } from "elysia";
 import { z } from "zod";
-import { AponiaFactory, type ElysiaRouteContext, type ElysiaStatus } from "../src/index.ts";
+import { AponiaFactory, type HandlerContext, type ResponseStatus } from "../src/index.ts";
 
 const createUserValidator = t.Object({
   name: t.String({ minLength: 2 }),
@@ -121,7 +121,7 @@ class ValidationUserController {
   }
 
   @Post("native-context/:id", nativeContextRouteSchema)
-  createFromNativeContext(context: ElysiaRouteContext<typeof nativeContextRouteSchema>): unknown {
+  createFromNativeContext(context: HandlerContext<typeof nativeContextRouteSchema>): unknown {
     return context.params.id === 1
       ? context.status(409, { code: "DUPLICATE_USER" })
       : context.status(201, {
@@ -293,8 +293,8 @@ test("rejects an undecorated class with a structured bootstrap error", async () 
 
 type CreateContext = RouteContext<typeof createRouteSchema>;
 type UpdateContext = RouteContext<typeof updateRouteSchema>;
-type NativeContext = ElysiaRouteContext<typeof nativeContextRouteSchema>;
-type EveryModelSlotContext = ElysiaRouteContext<typeof everyModelSlotSchema>;
+type NativeContext = HandlerContext<typeof nativeContextRouteSchema>;
+type EveryModelSlotContext = HandlerContext<typeof everyModelSlotSchema>;
 type Equals<TLeft, TRight> =
   (<T>() => T extends TLeft ? 1 : 2) extends <T>() => T extends TRight ? 1 : 2 ? true : false;
 type Expect<TAssertion extends true> = TAssertion;
@@ -309,12 +309,12 @@ type ValidationModelTypeAssertions = [
   Expect<Equals<EveryModelSlotContext["cookie"]["displayName"]["value"], string>>,
 ];
 
-function assertNativeModelStatus(status: ElysiaStatus<typeof nativeContextRouteSchema>): void {
+function assertNativeModelStatus(status: ResponseStatus<typeof nativeContextRouteSchema>): void {
   status(201, { id: 1, name: "Ada" });
   status(409, { code: "DUPLICATE_USER" });
-  // @ts-expect-error Status 409 requires the declared duplicate-user response.
+  // @ts-expect-error HTTP 409 requires the declared duplicate-user response.
   status(409, { id: 1, name: "Ada" });
-  // @ts-expect-error Status 404 is absent from the response contract.
+  // @ts-expect-error HTTP 404 is absent from the response contract.
   status(404, { code: "NOT_FOUND" });
 }
 

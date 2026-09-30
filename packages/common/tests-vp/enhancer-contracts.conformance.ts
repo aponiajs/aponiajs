@@ -1,11 +1,11 @@
 import {
-  type AponiaInterceptor,
   type ArgumentsHost,
   type CanActivate,
   type ClassToken,
   type ExceptionFilter,
   type ExecutionContext,
   type HttpArgumentsHost,
+  type Interceptor,
   type RequestMethod,
   type RouteContext,
 } from "../src/index.ts";
@@ -45,7 +45,7 @@ type EnhancerContractAssertions = [
   Expect<Equals<ReturnType<CanActivate["canActivate"]>, boolean | Promise<boolean>>>,
   Expect<
     Equals<
-      NonNullable<AponiaInterceptor["interceptBefore"]>,
+      NonNullable<Interceptor["interceptBefore"]>,
       (context: ExecutionContext) => void | Promise<void>
     >
   >,
@@ -54,7 +54,7 @@ type EnhancerContractAssertions = [
   // asynchronous implementation is accepted is proven by the classes below.
   Expect<
     Equals<
-      NonNullable<AponiaInterceptor["interceptAfter"]>,
+      NonNullable<Interceptor["interceptAfter"]>,
       (context: ExecutionContext, response: unknown) => unknown
     >
   >,
@@ -113,7 +113,7 @@ class AsyncExampleGuard implements CanActivate {
   }
 }
 
-class ExampleInterceptor implements AponiaInterceptor {
+class ExampleInterceptor implements Interceptor {
   interceptBefore(_context: ExecutionContext): void {}
 
   interceptAfter(_context: ExecutionContext, response: unknown): unknown {
@@ -121,7 +121,7 @@ class ExampleInterceptor implements AponiaInterceptor {
   }
 }
 
-class AsyncExampleInterceptor implements AponiaInterceptor {
+class AsyncExampleInterceptor implements Interceptor {
   async interceptBefore(_context: ExecutionContext): Promise<void> {}
 
   async interceptAfter(_context: ExecutionContext, response: unknown): Promise<unknown> {
@@ -150,8 +150,8 @@ test("the Vite+ lane accepts a synchronous and an asynchronous guard", async () 
 });
 
 test("the Vite+ lane accepts an interceptor declaring either half alone", async () => {
-  const onlyBefore: AponiaInterceptor = { interceptBefore: () => undefined };
-  const onlyAfter: AponiaInterceptor = { interceptAfter: (_c, response) => response };
+  const onlyBefore: Interceptor = { interceptBefore: () => undefined };
+  const onlyAfter: Interceptor = { interceptAfter: (_c, response) => response };
   const interceptor = new ExampleInterceptor();
   const asyncInterceptor = new AsyncExampleInterceptor();
 

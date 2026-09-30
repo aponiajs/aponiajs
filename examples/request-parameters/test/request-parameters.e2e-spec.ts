@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
-import { type AponiaElysiaApplication } from "@aponiajs/platform-elysia";
+import { type AponiaApplication } from "@aponiajs/platform-elysia";
 import { createApplication, get, send } from "./application.ts";
 
-let application: AponiaElysiaApplication;
+let application: AponiaApplication;
 
 beforeAll(async () => {
   application = await createApplication();
@@ -70,14 +70,14 @@ test("@Req injects the native Request", async () => {
   });
 });
 
-test("@Res writes response settings the client observes", async () => {
+test("@ResponseSettings writes response settings the client observes", async () => {
   const response = await get(application, "/parameters/response");
 
   expect(response.headers.get("x-source")).toBe("parameters");
   expect(await response.json()).toEqual({ written: true });
 });
 
-test("@Set and @Status expose native Elysia response parts", async () => {
+test("@ResponseSettings and @HttpStatus expose native Elysia response parts", async () => {
   const response = await get(application, "/parameters/native-response");
 
   expect(response.status).toBe(202);
@@ -85,7 +85,7 @@ test("@Set and @Status expose native Elysia response parts", async () => {
   expect(await response.json()).toEqual({ written: true });
 });
 
-test("@Ctx injects the whole platform context", async () => {
+test("@Context injects the whole platform context", async () => {
   expect(await (await get(application, "/parameters/context")).json()).toEqual({
     path: "/parameters/context",
   });

@@ -230,7 +230,7 @@ const application = await AponiaFactory.create(AppModule, {
   fixed sentence for every such failure and its `Response` is not on the
   after-response context either, so the boot records the exception the mapping
   answered, and the entry publishes the same account `/logs` states for it, with no
-  stack, both through one definition — `@aponiajs/common`'s `renderLogValue` —
+  stack, both through one definition — `@aponiajs/common`'s `formatLogValue` —
   rather than through a copy each, so the two surfaces cannot disagree about one
   failure. That rendering does not fold, so a message that itself spans lines is
   published with them; the fold-to-one-line rendering is the other one, this

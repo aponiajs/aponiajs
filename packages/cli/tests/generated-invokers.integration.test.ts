@@ -4,7 +4,7 @@ import { join } from "node:path";
 import {
   AponiaFactory,
   type AponiaApplicationOptions,
-  type AponiaControllerInvokerFactory,
+  type ControllerHandlerFactory,
   type AponiaInvokerArtifact,
 } from "@aponiajs/platform-elysia";
 import { analyzeControllerRoutes, emitControllerInvokers } from "../src/index.ts";
@@ -154,10 +154,10 @@ test("a supplied invoker replaces the compiled binding for its handler", async (
   const replaced = {
     framework: aponiaVersion,
     elysia: "1.4.30",
-    invokers: new Map<unknown, AponiaControllerInvokerFactory>([
+    invokers: new Map<unknown, ControllerHandlerFactory>([
       [
         fixture.UsersController,
-        (() => new Map([["read", () => "replaced"]])) as unknown as AponiaControllerInvokerFactory,
+        (() => new Map([["read", () => "replaced"]])) as unknown as ControllerHandlerFactory,
       ],
     ]),
   } as unknown as AponiaInvokerArtifact;

@@ -34,18 +34,18 @@ RFC 9457 Problem Details body:
 `httpErrors` covers every 4xx and 5xx status in the supported Elysia version.
 Common factories include:
 
-| Factory                             | Status |
-| ----------------------------------- | -----: |
-| `httpErrors.badRequest()`           |    400 |
-| `httpErrors.unauthorized()`         |    401 |
-| `httpErrors.forbidden()`            |    403 |
-| `httpErrors.notFound()`             |    404 |
-| `httpErrors.conflict()`             |    409 |
-| `httpErrors.unprocessableContent()` |    422 |
-| `httpErrors.tooManyRequests()`      |    429 |
-| `httpErrors.internalServerError()`  |    500 |
-| `httpErrors.badGateway()`           |    502 |
-| `httpErrors.serviceUnavailable()`   |    503 |
+| Factory                             | HTTP status |
+| ----------------------------------- | ----------: |
+| `httpErrors.badRequest()`           |         400 |
+| `httpErrors.unauthorized()`         |         401 |
+| `httpErrors.forbidden()`            |         403 |
+| `httpErrors.notFound()`             |         404 |
+| `httpErrors.conflict()`             |         409 |
+| `httpErrors.unprocessableContent()` |         422 |
+| `httpErrors.tooManyRequests()`      |         429 |
+| `httpErrors.internalServerError()`  |         500 |
+| `httpErrors.badGateway()`           |         502 |
+| `httpErrors.serviceUnavailable()`   |         503 |
 
 Use `httpError` when a numeric code or standard HTTP status name is clearer:
 

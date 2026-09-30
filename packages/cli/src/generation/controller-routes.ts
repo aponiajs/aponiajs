@@ -56,21 +56,19 @@ const requestMethodDecorators: ReadonlyMap<string, AnalyzedRequestMethod> = new 
 
 /**
  * The parameter decorators of `@aponiajs/common`, keyed by the name the package
- * exports (`packages/common/src/routing/route-parameters.ts`). `Res` is the
- * documented alias of `Set`, so both bind `"set"`.
+ * exports (`packages/common/src/routing/route-parameters.ts`).
  */
 const parameterDecorators: ReadonlyMap<string, AnalyzedRouteParameterKind> = new Map([
   ["Body", "body"],
   ["Cookie", "cookie"],
-  ["Ctx", "context"],
+  ["Context", "context"],
   ["Headers", "headers"],
+  ["HttpStatus", "status"],
   ["Param", "params"],
   ["Query", "query"],
   ["Req", "request"],
-  ["Res", "set"],
-  ["Set", "set"],
-  ["Status", "status"],
-  ["Store", "store"],
+  ["ResponseSettings", "set"],
+  ["State", "store"],
 ]);
 
 const noControllers: readonly AnalyzedController[] = Object.freeze([]);

@@ -24,13 +24,13 @@ The first Elysia platform slice for Aponia:
 - Standard Schema route validation for `body`, `query`, `params`, `headers`,
   `cookie`, and default or status-specific `response` schemas;
 - Nest-style request parameter decorators — `@Body()`, `@Query()`, `@Param()`,
-  `@Headers()`, `@Cookie()`, `@Store()`, `@Req()`, `@Set()`/`@Res()`,
-  `@Status()`, and `@Ctx()`;
+  `@Headers()`, `@Cookie()`, `@State()`, `@Req()`, `@ResponseSettings()`,
+  `@HttpStatus()`, and `@Context()`;
 - Nest-style startup logging for module initialization and route mapping;
 - controller factories that return native Elysia plugins;
 - application-owned native plugins mounted through `AponiaFactory.create`'s
   `plugins` option, beside the ones a module registers;
-- concise `elysiaController(...)` registration with native callback inference;
+- concise `controller(...)` registration with native callback inference;
 - typed RFC 9457 application errors for every supported 4xx and 5xx status;
 - Nest-style guards, interceptors (`interceptBefore`/`interceptAfter`), and
   exception filters, compiled into per-route Elysia lifecycle hooks;
@@ -45,8 +45,8 @@ inference.
 
 Decorated modules, controllers, and validation models are the normal
 application-authoring surface. Direct raw validators remain supported as a
-schema escape hatch, `elysiaController(...)` exposes native Elysia inference
-when it is specifically needed, and `defineElysiaController` remains the
+schema escape hatch, `controller(...)` exposes native Elysia inference
+when it is specifically needed, and `defineController` remains the
 advanced descriptor escape hatch.
 
 See `docs/logging.md` for logger configuration, JSON output, level filtering,
@@ -54,7 +54,7 @@ and custom logger integration.
 
 ```ts
 import { Module } from "@aponiajs/common";
-import { AponiaFactory, ElysiaPluginModule } from "@aponiajs/platform-elysia";
+import { AponiaFactory, PluginModule } from "@aponiajs/platform-elysia";
 
 @Module({})
 class AppModule {}
@@ -77,12 +77,12 @@ import {
   SubscribeMessage,
   WebSocketGateway,
 } from "@aponiajs/common";
-import { AponiaFactory, type ElysiaWebSocket } from "@aponiajs/platform-elysia";
+import { AponiaFactory, type WebSocketClient } from "@aponiajs/platform-elysia";
 
 @WebSocketGateway("/events")
 class EventsGateway {
   @SubscribeMessage("events.echo")
-  echo(@MessageBody() data: unknown, @ConnectedSocket() client: ElysiaWebSocket): unknown {
+  echo(@MessageBody() data: unknown, @ConnectedSocket() client: WebSocketClient): unknown {
     void client.id;
     return data;
   }
@@ -98,7 +98,7 @@ await application.listen(3000);
 Clients send `{ "event": "events.echo", "data": value }` over
 `ws://localhost:3000/events`. Gateways are normal singleton providers, so
 constructor injection and module visibility stay identical to services.
-`ElysiaWebSocket` exposes the real native client wrapper. See the
+`WebSocketClient` exposes the real native client wrapper. See the
 [WebSocket gateway guide](../../docs/websockets.md) for responses, lifecycle,
 errors, and native publish/subscribe.
 
@@ -113,12 +113,12 @@ exception frames.
 
 ```ts
 import { defineModule } from "@aponiajs/common";
-import { defineElysiaWebSocketGateway } from "@aponiajs/platform-elysia";
+import { defineWebSocketGateway } from "@aponiajs/platform-elysia";
 
 const module = defineModule({
   id: "EventsModule",
   providers: [
-    defineElysiaWebSocketGateway(EventsGateway, {
+    defineWebSocketGateway(EventsGateway, {
       path: "/events",
       handlers: [
         {
@@ -145,15 +145,15 @@ instance properties that receive the root Elysia application, as
 ## Native application and Eden Treaty
 
 `createNative` returns the real composed Elysia instance. A statically declared
-module retains route types from `defineElysiaPlugin`, typed controller plugins,
+module retains route types from `definePlugin`, typed controller plugins,
 imported descriptor modules, and `configureNative`:
 
 ```ts
 import { defineModule } from "@aponiajs/common";
-import { AponiaFactory, defineElysiaPlugin } from "@aponiajs/platform-elysia";
+import { AponiaFactory, definePlugin } from "@aponiajs/platform-elysia";
 import { Elysia, t } from "elysia";
 
-const routes = defineElysiaPlugin(
+const routes = definePlugin(
   new Elysia({ name: "routes" }).get("/health", () => ({ status: "ok" as const }), {
     response: t.Object({ status: t.Literal("ok") }),
   }),
@@ -334,13 +334,13 @@ generated-invoker lookup.
 
 ```ts
 import { defineModule, provideClass } from "@aponiajs/common";
-import { defineElysiaControllerRoutes } from "@aponiajs/platform-elysia";
+import { defineControllerRoutes } from "@aponiajs/platform-elysia";
 
 const module = defineModule({
   id: "UsersModule",
   providers: [provideClass(UsersService, [])],
   controllers: [
-    defineElysiaControllerRoutes(UsersController, {
+    defineControllerRoutes(UsersController, {
       path: "/users",
       inject: [UsersService],
       routes: [
@@ -371,17 +371,17 @@ guard stays in one place.
 
 ### The shortest type-safe controller
 
-`elysiaController` skips decorator reflection and gives its callback Elysia's
+`controller` skips decorator reflection and gives its callback Elysia's
 normal contextual typing. Dependency tuples stay literal without `as const`,
 and route schemas infer `body`, `query`, `params`, `store`, `set`, and `status`
 inside the callback without a manual context type or `typeof`:
 
 ```ts
 import { defineModule, provideClass } from "@aponiajs/common";
-import { elysiaController } from "@aponiajs/platform-elysia";
+import { controller } from "@aponiajs/platform-elysia";
 import { t } from "elysia";
 
-const usersController = elysiaController(UsersController, [UsersService], (app, controller) =>
+const usersController = controller(UsersController, [UsersService], (app, controller) =>
   app.state("requests", 0).post(
     "/users",
     ({ body, store, status }) => {
@@ -408,9 +408,9 @@ frozen and also carries an automatically generated `buildPlugin` fallback.
 Use this native-registration escape hatch when its route inference is more
 important than the normal decorated-controller structure.
 
-`defineElysiaController(..., { registerRoutes })` remains available when a build
+`defineController(..., { registerRoutes })` remains available when a build
 tool needs the explicit descriptor shape or a diagnostic `path`.
-`defineElysiaController(..., { buildPlugin })` remains available for a
+`defineController(..., { buildPlugin })` remains available for a
 controller that intentionally owns an isolated plugin.
 
 ## Application errors
@@ -464,13 +464,19 @@ and range support, but the response carries no name. `downloadFile` writes the o
 header that names it and returns the value the platform already streams:
 
 ```ts
-import { Controller, Get, Param, Set, type RouteResponseSettings } from "@aponiajs/common";
+import {
+  Controller,
+  Get,
+  Param,
+  ResponseSettings,
+  type ResponseSettingsState,
+} from "@aponiajs/common";
 import { downloadFile } from "@aponiajs/platform-elysia";
 
 @Controller("reports")
 export class ReportController {
   @Get(":id")
-  read(@Param("id") id: string, @Set() set: RouteResponseSettings) {
+  read(@Param("id") id: string, @ResponseSettings() set: ResponseSettingsState) {
     return downloadFile(set, `/srv/reports/${id}.csv`, `${id}.csv`);
   }
 }
@@ -497,7 +503,7 @@ import {
   UseFilters,
   UseGuards,
   UseInterceptors,
-  type AponiaInterceptor,
+  type Interceptor,
   type CanActivate,
   type ExceptionFilter,
   type ExecutionContext,
@@ -512,7 +518,7 @@ class AuthGuard implements CanActivate {
 }
 
 @Injectable()
-class TimingInterceptor implements AponiaInterceptor {
+class TimingInterceptor implements Interceptor {
   interceptAfter(_context: ExecutionContext, response: unknown): unknown {
     return response;
   }
@@ -580,8 +586,8 @@ schema, and parameter decorators inject the request. Types come from the
 handler's own annotations.
 
 ```ts
-import { Body, Controller, Ctx, Param, Post } from "@aponiajs/common";
-import { type ElysiaRouteContext } from "@aponiajs/platform-elysia";
+import { Body, Controller, Context, Param, Post } from "@aponiajs/common";
+import { type HandlerContext } from "@aponiajs/platform-elysia";
 import { z } from "zod";
 
 const createUser = { body: z.object({ name: z.string().min(2) }) };
@@ -595,7 +601,7 @@ class UserController {
   }
 
   @Post("native", createUser)
-  createNatively(@Ctx() context: ElysiaRouteContext<typeof createUser>) {
+  createNatively(@Context() context: HandlerContext<typeof createUser>) {
     context.set.headers["x-created"] = "1";
     return context.body.name === "root"
       ? context.status(403, "forbidden")
@@ -604,7 +610,7 @@ class UserController {
 }
 ```
 
-`ElysiaRouteContext<typeof schema>` is Elysia's own context type narrowed by the
+`HandlerContext<typeof schema>` is Elysia's own context type narrowed by the
 declared schema, so `status`, `set`, `cookie`, `store`, `redirect`, and plugin
 decorators behave exactly as they do in a plain Elysia handler.
 
@@ -673,25 +679,25 @@ and low-level integrations.
 `@Validation()` records runtime metadata; it does not add TypeScript instance
 properties to the class. The same-named interfaces above merge the validator
 output into each model once, so controller methods only need the model name.
-`ElysiaRouteContext<typeof routeSchema>` and
-`ElysiaStatus<typeof routeSchema>` also lower those model classes at the type
+`HandlerContext<typeof routeSchema>` and
+`ResponseStatus<typeof routeSchema>` also lower those model classes at the type
 boundary, preserving native body, params, cookie, and response-status inference.
 
 Use the native-named parameter decorators when a method needs only those hot
 path fields:
 
 ```ts
-import { Set, Status, Store } from "@aponiajs/common";
+import { ResponseSettings, HttpStatus, State } from "@aponiajs/common";
 import {
-  type ElysiaSet,
-  type ElysiaStatus,
-  type ElysiaStore,
+  type ElysiaResponseSettings,
+  type ResponseStatus,
+  type AppState,
 } from "@aponiajs/platform-elysia";
 
 read(
-  @Store() store: ElysiaStore<typeof clock>,
-  @Set() set: ElysiaSet,
-  @Status() status: ElysiaStatus,
+  @State() store: AppState<typeof clock>,
+  @ResponseSettings() set: ElysiaResponseSettings,
+  @HttpStatus() status: ResponseStatus,
 ) {
   store.requests += 1;
   set.headers["x-source"] = "aponia";
@@ -699,14 +705,13 @@ read(
 }
 ```
 
-`@Res()` is retained as the Nest-style alias of `@Set()`. Each part is read
-directly from the native Elysia context by the compiled invoker; Aponia does not
-create a request wrapper or argument array.
+Each part is read directly from the native Elysia context by the compiled
+invoker; Aponia does not create a request wrapper or argument array.
 
 Keep a route method parameterless when it needs no request data; the adapter
 leaves unused context fields off that hot path. On a method with no parameter
 decorators, a single unannotated parameter receives the whole context, as does
-`@Ctx()` explicitly.
+`@Context()` explicitly.
 
 ## Native Elysia plugins
 
@@ -718,12 +723,12 @@ bun add @elysiajs/cors @elysiajs/jwt
 
 ```ts
 import { Module } from "@aponiajs/common";
-import { ElysiaPluginModule } from "@aponiajs/platform-elysia";
+import { PluginModule } from "@aponiajs/platform-elysia";
 import { cors } from "@elysiajs/cors";
 
 @Module({
   imports: [
-    ElysiaPluginModule.register(cors(), {
+    PluginModule.register(cors(), {
       key: "cors",
     }),
   ],
@@ -736,13 +741,13 @@ plugins that depend on an injectable service, use an async registration:
 
 ```ts
 import { Module } from "@aponiajs/common";
-import { ElysiaPluginModule } from "@aponiajs/platform-elysia";
+import { PluginModule } from "@aponiajs/platform-elysia";
 import { jwt } from "@elysiajs/jwt";
 import { ConfigModule, ConfigService } from "./config/config.module.ts";
 
 @Module({
   imports: [
-    ElysiaPluginModule.registerAsync({
+    PluginModule.registerAsync({
       key: "jwt",
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -793,11 +798,11 @@ container, so no entry can fail a boot.
 
 Compiling a decorated controller erases the plugin instances its module imports,
 so no plugin type reaches a handler on its own. Name the plugins in
-`ElysiaRouteContext` and the context types what they add:
+`HandlerContext` and the context types what they add:
 
 ```ts
-import { Controller, Ctx, Get } from "@aponiajs/common";
-import { type ElysiaRouteContext } from "@aponiajs/platform-elysia";
+import { Controller, Context, Get } from "@aponiajs/common";
+import { type HandlerContext } from "@aponiajs/platform-elysia";
 import { Elysia } from "elysia";
 
 export const clock = new Elysia({ name: "clock" })
@@ -808,7 +813,7 @@ export const clock = new Elysia({ name: "clock" })
 @Controller("health")
 class HealthController {
   @Get()
-  read(@Ctx() context: ElysiaRouteContext<typeof clock>) {
+  read(@Context() context: HandlerContext<typeof clock>) {
     context.store.requests += 1;
     return { now: context.now(), traceId: context.traceId };
   }
@@ -820,8 +825,8 @@ without a schema never writes an empty one. A tuple covers several plugins, and
 the second argument is only needed when both are typed:
 
 ```ts
-ElysiaRouteContext<[typeof clock, typeof cache]>;
-ElysiaRouteContext<typeof createUser, typeof clock>;
+HandlerContext<[typeof clock, typeof cache]>;
+HandlerContext<typeof createUser, typeof clock>;
 ```
 
 An application that always mounts the same plugins declares the pairing once and
@@ -829,11 +834,11 @@ keeps every handler short:
 
 ```ts
 // src/app.context.ts
-import { type ElysiaInputSchema, type ElysiaRouteContext } from "@aponiajs/platform-elysia";
+import { type RouteInputSchema, type HandlerContext } from "@aponiajs/platform-elysia";
 import { cache } from "./cache.plugin.ts";
 import { clock } from "./clock.plugin.ts";
 
-export type AppContext<TSchema extends ElysiaInputSchema = {}> = ElysiaRouteContext<
+export type AppContext<TSchema extends RouteInputSchema = {}> = HandlerContext<
   TSchema,
   [typeof clock, typeof cache]
 >;
@@ -841,54 +846,54 @@ export type AppContext<TSchema extends ElysiaInputSchema = {}> = ElysiaRouteCont
 
 ```ts
 @Get()
-read(@Ctx() context: AppContext) {}
+read(@Context() context: AppContext) {}
 
 @Post("/", createUser)
-create(@Ctx() context: AppContext<typeof createUser>) {}
+create(@Context() context: AppContext<typeof createUser>) {}
 ```
 
 ### Dropping `typeof` in decorated controllers
 
-The `elysiaController(...)` callback shown above is the simple path: Elysia
+The `controller(...)` callback shown above is the simple path: Elysia
 infers the request context directly, so no context annotation or `typeof` is
 needed. The aliases below exist for decorated methods, where TypeScript cannot
 contextually infer a method parameter from a decorator.
 
-`defineElysiaPlugin` converts a native plugin into a module import that also
+`definePlugin` converts a native plugin into a module import that also
 carries the plugin type. Export it beside a same-named type and the plugin is
 usable in both a value and a type position:
 
 ```ts
 // src/clock.plugin.ts
-import { defineElysiaPlugin } from "@aponiajs/platform-elysia";
+import { definePlugin } from "@aponiajs/platform-elysia";
 import { Elysia } from "elysia";
 
-export const clock = defineElysiaPlugin(
+export const clock = definePlugin(
   new Elysia({ name: "clock" }).decorate("now", () => new Date().toISOString()),
   { key: "clock" },
 );
 export type clock = typeof clock;
 ```
 
-The import goes straight into `imports`, with no `ElysiaPluginModule.register`
+The import goes straight into `imports`, with no `PluginModule.register`
 around it, and the annotation needs no `typeof`. Rename the context type on
 import for the shortest form:
 
 ```ts
-import { Controller, Ctx, Get, Module } from "@aponiajs/common";
-import { type ElysiaRouteContext as e } from "@aponiajs/platform-elysia";
+import { Controller, Context, Get, Module } from "@aponiajs/common";
+import { type HandlerContext as e } from "@aponiajs/platform-elysia";
 import { cache } from "./cache.plugin.ts";
 import { clock } from "./clock.plugin.ts";
 
 @Controller("health")
 class HealthController {
   @Get()
-  read(@Ctx() context: e<clock>) {
+  read(@Context() context: e<clock>) {
     return { now: context.now() };
   }
 
   @Get("cached")
-  readCached(@Ctx() context: e<[clock, cache]>) {
+  readCached(@Context() context: e<[clock, cache]>) {
     return { cached: context.cache.read("health") };
   }
 }
@@ -897,8 +902,8 @@ class HealthController {
 class HealthModule {}
 ```
 
-`ElysiaPluginModule.register` and `registerAsync` stay available and unchanged;
-`defineElysiaPlugin` is `register` plus the plugin it installs, and the context
+`PluginModule.register` and `registerAsync` stay available and unchanged;
+`definePlugin` is `register` plus the plugin it installs, and the context
 type accepts either form. The plugin instance itself remains reachable as
 `clock.plugin`.
 
@@ -950,8 +955,8 @@ run against providers that open connections. Pass the `descriptors` artifact
 `aponia build` wrote and the root is resolved through the same selector bootstrap
 uses, so the inspection describes the graph the application actually serves; an
 artifact this release refuses is reported through the `logger` option and the
-decorated module is inspected instead. Routes registered by `elysiaController`
-and `defineElysiaController` callbacks are not included, because their routes
+decorated module is inspected instead. Routes registered by `controller`
+and `defineController` callbacks are not included, because their routes
 only exist once the callback runs; build the application and read
 `getNativeApplication().routes` for the complete native route table. See the
 [introspection guide](../../docs/introspection.md) for the full contract.

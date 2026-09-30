@@ -1,4 +1,4 @@
-import type { AponiaRouteSource } from "./payloads.types.ts";
+import type { AponiaRouteBinding } from "./payloads.types.ts";
 
 /**
  * The binding a record states for one route, or `null` when it states none this
@@ -20,6 +20,6 @@ import type { AponiaRouteSource } from "./payloads.types.ts";
  *
  * @internal
  */
-export function readRouteSource(value: unknown): AponiaRouteSource {
+export function readRouteSource(value: unknown): AponiaRouteBinding {
   return value === "generated" || value === "compiled" ? value : null;
 }

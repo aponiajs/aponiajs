@@ -1,10 +1,10 @@
 import { expect, test } from "bun:test";
 import { MessageBody, Module, SubscribeMessage, WebSocketGateway } from "@aponiajs/common";
 import { createContainer } from "@aponiajs/core";
-import { AponiaFactory, compileRootModule, type ElysiaWebSocket } from "../src/index.ts";
+import { AponiaFactory, compileRootModule, type WebSocketClient } from "../src/index.ts";
 import {
-  bindElysiaWebSocketGateway,
-  compileElysiaWebSocketGateways,
+  bindWebSocketGateway,
+  compileWebSocketGateways,
 } from "../src/websockets/websocket-gateway.ts";
 
 class RecordingSocket {
@@ -62,16 +62,16 @@ function bindEdgeGateway(recording: RecordingSocket): {
   readonly send: (message: unknown) => Promise<void>;
 } {
   const module = compileRootModule(EdgeGatewayModule);
-  const gateway = compileElysiaWebSocketGateways([module])[0];
+  const gateway = compileWebSocketGateways([module])[0];
   if (!gateway) {
     throw new Error("Expected one compiled gateway.");
   }
 
-  const bound = bindElysiaWebSocketGateway(
+  const bound = bindWebSocketGateway(
     gateway,
     createContainer(module).resolveModuleProvider(module, EdgeGateway),
   );
-  const socket = recording as unknown as ElysiaWebSocket;
+  const socket = recording as unknown as WebSocketClient;
 
   return {
     send: async (message: unknown) => {
@@ -154,11 +154,11 @@ class GatewayPairModule {}
 test("keeps each gateway's events isolated while mounting one native route per gateway", async () => {
   const application = await AponiaFactory.create(GatewayPairModule, { logger: false });
   const module = compileRootModule(GatewayPairModule);
-  const alpha = compileElysiaWebSocketGateways([module]).find(
+  const alpha = compileWebSocketGateways([module]).find(
     (gateway) => gateway.path === "/edge-alpha",
   );
   const recording = new RecordingSocket();
-  const socket = recording as unknown as ElysiaWebSocket;
+  const socket = recording as unknown as WebSocketClient;
 
   expect(
     application
@@ -172,7 +172,7 @@ test("keeps each gateway's events isolated while mounting one native route per g
     throw new Error("Expected a compiled /edge-alpha gateway.");
   }
 
-  const bound = bindElysiaWebSocketGateway(
+  const bound = bindWebSocketGateway(
     alpha,
     createContainer(module).resolveModuleProvider(module, AlphaEdgeGateway),
   );

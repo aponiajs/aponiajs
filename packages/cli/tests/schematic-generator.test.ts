@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   generateSchematic,
-  generateSchematics,
+  schematicNames,
   parseArguments,
   type GenerateSchematic,
 } from "../src/index.ts";
@@ -42,7 +42,7 @@ const expectedPrimaryFiles: Readonly<
 };
 
 test("supports the complete Nest generate schematic catalog and aliases", () => {
-  expect(generateSchematics).toEqual([
+  expect(schematicNames).toEqual([
     "app",
     "library",
     "class",
@@ -123,9 +123,9 @@ test("generates resolvable guard, interceptor, and filter scaffolds", async () =
 
   const interceptor = await Bun.file(join(projectRoot, "src/access.interceptor.ts")).text();
   expect(interceptor).toContain(
-    'import { Injectable, type AponiaInterceptor, type ExecutionContext } from "@aponiajs/common";',
+    'import { Injectable, type Interceptor, type ExecutionContext } from "@aponiajs/common";',
   );
-  expect(interceptor).toContain("export class AccessInterceptor implements AponiaInterceptor {");
+  expect(interceptor).toContain("export class AccessInterceptor implements Interceptor {");
 
   const filter = await Bun.file(join(projectRoot, "src/access.filter.ts")).text();
   expect(filter).toContain(
@@ -142,7 +142,7 @@ test("generates resolvable guard, interceptor, and filter scaffolds", async () =
 });
 
 test("generates every component and resource schematic", async () => {
-  for (const schematic of generateSchematics) {
+  for (const schematic of schematicNames) {
     if (schematic === "app" || schematic === "library") continue;
 
     const projectRoot = await createProjectRoot(`aponia-${schematic}-`);

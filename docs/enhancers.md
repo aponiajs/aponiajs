@@ -8,11 +8,11 @@ substituted exactly as it is on a route that declares none.
 
 ## The three kinds
 
-| Kind             | Contract            | Elysia hook                   | Runs                                       |
-| ---------------- | ------------------- | ----------------------------- | ------------------------------------------ |
-| Guard            | `CanActivate`       | `beforeHandle`                | Before the handler; may refuse the request |
-| Interceptor      | `AponiaInterceptor` | `beforeHandle`/`afterHandle`  | Around the handler                         |
-| Exception filter | `ExceptionFilter`   | the route-local `error` array | When the handler or a guard threw          |
+| Kind             | Contract          | Elysia hook                   | Runs                                       |
+| ---------------- | ----------------- | ----------------------------- | ------------------------------------------ |
+| Guard            | `CanActivate`     | `beforeHandle`                | Before the handler; may refuse the request |
+| Interceptor      | `Interceptor`     | `beforeHandle`/`afterHandle`  | Around the handler                         |
+| Exception filter | `ExceptionFilter` | the route-local `error` array | When the handler or a guard threw          |
 
 Their contracts live in `@aponiajs/common` and are platform-neutral:
 
@@ -21,7 +21,7 @@ interface CanActivate {
   canActivate(context: ExecutionContext): boolean | Promise<boolean>;
 }
 
-interface AponiaInterceptor {
+interface Interceptor {
   interceptBefore?(context: ExecutionContext): void | Promise<void>;
   interceptAfter?(context: ExecutionContext, response: unknown): unknown;
 }
@@ -89,10 +89,10 @@ Interceptors have two halves instead of Nest's `next.handle()`:
   what the previous one answered.
 
 ```ts
-import { Injectable, type AponiaInterceptor, type ExecutionContext } from "@aponiajs/common";
+import { Injectable, type Interceptor, type ExecutionContext } from "@aponiajs/common";
 
 @Injectable()
-class TimingInterceptor implements AponiaInterceptor {
+class TimingInterceptor implements Interceptor {
   interceptBefore(): void {
     performance.mark("handler-start");
   }
@@ -167,13 +167,13 @@ responses an application already decided.
 ## Routes mounted without a plan
 
 Every enhancer above compiles onto a route while the platform mounts it from a
-compiled plan: a decorated controller or a `defineElysiaControllerRoutes`
+compiled plan: a decorated controller or a `defineControllerRoutes`
 declaration. Two mount paths are outside that, and **neither carries anything
 this page describes** — not the guards, interceptors, or filters the definition
 declares, not a global enhancer, and not the default mapping:
 
 - a controller registered through a `registerRoutes` callback, which is what
-  `elysiaController(...)` and `defineElysiaController(..., { registerRoutes })`
+  `controller(...)` and `defineController(..., { registerRoutes })`
   build: the callback is handed the real Elysia application and registers its
   own routes, so the platform never sees them and has nothing to attach hooks
   to;
@@ -209,7 +209,7 @@ import {
   UseGuards,
   UseInterceptors,
   type CanActivate,
-  type AponiaInterceptor,
+  type Interceptor,
   type ExceptionFilter,
   type ExecutionContext,
 } from "@aponiajs/common";
@@ -224,7 +224,7 @@ class AuthGuard implements CanActivate {
 }
 
 @Injectable()
-class TimingInterceptor implements AponiaInterceptor {
+class TimingInterceptor implements Interceptor {
   interceptBefore(): void {}
 
   interceptAfter(_context: ExecutionContext, response: unknown): unknown {
@@ -270,13 +270,13 @@ never into a compiled route:
 
 ```ts
 import { defineModule, provideClass } from "@aponiajs/common";
-import { defineElysiaControllerRoutes } from "@aponiajs/platform-elysia";
+import { defineControllerRoutes } from "@aponiajs/platform-elysia";
 
 export const UsersModule = defineModule({
   id: "UsersModule",
   providers: [provideClass(AuthGuard, [])],
   controllers: [
-    defineElysiaControllerRoutes(UsersController, {
+    defineControllerRoutes(UsersController, {
       path: "/users",
       routes: [
         {
@@ -378,7 +378,7 @@ Each of these is a decision, not an omission.
 5. **`ArgumentsHost` and `getType()` are not carried.** One transport.
 6. **Pipes and middleware are absent.** Route validation already covers
    per-slot validation, and Elysia's `derive` and `resolve` — reachable through
-   `ElysiaPluginModule` — are the middleware mechanism.
+   `PluginModule` — are the middleware mechanism.
 
 ## In this repository
 

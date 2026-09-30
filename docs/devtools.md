@@ -452,7 +452,7 @@ different fact from a request that carried none. Four further rules:
   its `Response` is not on the after-response context either, so the boot records
   the exception the mapping answered, and the entry states the same account of it
   that `/logs` states — the name and the message, and no stack. Both surfaces state
-  it through one definition — `@aponiajs/common`'s `renderLogValue` — rather than
+  it through one definition — `@aponiajs/common`'s `formatLogValue` — rather than
   through a copy each, so they cannot disagree about one failure. That rendering
   does not fold, so a message that itself spans lines is stated with them. The
   fold-to-one-line rendering is the other one: this package's own `oneLine`, which
@@ -552,7 +552,7 @@ These are the boundaries this package states rather than hides.
   uses the stale invoker and binds the handler's arguments as the old source
   described. The version stamp catches release drift, not source drift. This
   package reports what happened; it does not prevent it.
-- **`elysiaController` callback routes appear in `/routes` but contribute no
+- **`controller` callback routes appear in `/routes` but contribute no
   symbol-keyed handler name.** They are read off the mounted application, which
   knows the path and method but not the class property that built them.
 - **`/flow` states a read posture rather than total safety.** Every field it

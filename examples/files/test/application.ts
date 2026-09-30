@@ -1,9 +1,9 @@
-import { AponiaFactory, type AponiaElysiaApplication } from "@aponiajs/platform-elysia";
+import { AponiaFactory, type AponiaApplication } from "@aponiajs/platform-elysia";
 import { createServer } from "node:net";
 import { AppModule } from "../src/app.module.ts";
 
 /** Each suite builds the real application and drives it through `handle`. */
-export function createApplication(): Promise<AponiaElysiaApplication> {
+export function createApplication(): Promise<AponiaApplication> {
   return AponiaFactory.create(AppModule, { logger: false });
 }
 
@@ -31,7 +31,7 @@ export async function reservePort(): Promise<number> {
 }
 
 export function get(
-  application: AponiaElysiaApplication,
+  application: AponiaApplication,
   path: string,
   init?: RequestInit,
 ): Promise<Response> {
@@ -43,7 +43,7 @@ export function get(
  * `content-type` header is the engine's to write and must not be set by hand.
  */
 export function upload(
-  application: AponiaElysiaApplication,
+  application: AponiaApplication,
   path: string,
   form: FormData,
 ): Promise<Response> {

@@ -38,7 +38,7 @@ async function createResolvableDirectory(prefix: string): Promise<string> {
 }
 
 const controllerSource = `
-import { Body, Controller, Cookie, Ctx, Get, Param, Post } from "@aponiajs/common";
+import { Body, Controller, Cookie, Context, Get, Param, Post } from "@aponiajs/common";
 
 @Controller("users")
 export class UsersController {
@@ -53,7 +53,7 @@ export class UsersController {
   }
 
   @Get("ctx")
-  takers(@Ctx() whole: unknown): unknown {
+  takers(@Context() whole: unknown): unknown {
     return whole;
   }
 
@@ -164,12 +164,12 @@ test("declines every handler of a controller it was given no specifier for", () 
 test("returns no source when every handler is declined", () => {
   const result = emit(
     `
-import { Controller, Ctx, Get } from "@aponiajs/common";
+import { Controller, Context, Get } from "@aponiajs/common";
 
 @Controller("empty")
 export class EmptyController {
   @Get()
-  read(@Ctx() context: unknown): unknown {
+  read(@Context() context: unknown): unknown {
     return context;
   }
 }
@@ -205,12 +205,12 @@ export class LegacyController {
 
 test("binds the platform response settings and the native request", async () => {
   const { factories, controller } = await loadGenerated(`
-import { Controller, Req, Set, Get } from "@aponiajs/common";
+import { Controller, Req, ResponseSettings, Get } from "@aponiajs/common";
 
 @Controller("native")
 export class UsersController {
   @Get()
-  read(@Set() set: unknown, @Req() request: unknown): string {
+  read(@ResponseSettings() set: unknown, @Req() request: unknown): string {
     return "read";
   }
 }

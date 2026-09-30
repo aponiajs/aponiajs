@@ -129,20 +129,19 @@ selects a single property:
 | `@Param("id")`           | Path parameters                        |
 | `@Headers("x-agent")`    | Request headers                        |
 | `@Cookie("session")`     | Request cookies, or one cookie's value |
-| `@Store()`               | Application state                      |
+| `@State()`               | Application state                      |
 | `@Req()`                 | The native `Request`                   |
-| `@Set()` / `@Res()`      | The mutable response settings          |
-| `@Status()`              | The response status helper             |
-| `@Ctx()`                 | The whole platform context             |
+| `@ResponseSettings()`    | The mutable response settings          |
+| `@HttpStatus()`          | The response status helper             |
+| `@Context()`             | The whole platform context             |
 
 A handler with no parameter decorators may declare one unannotated parameter to
 receive the context, typed platform-neutrally by
 `RouteContext<typeof schema>`. An Elysia application can annotate it with
-`ElysiaRouteContext<typeof schema>` from
-`@aponiajs/platform-elysia` to keep Elysia's own context types. `@Res()` remains
-the Nest-style alias of the native-named `@Set()`.
+`HandlerContext<typeof schema>` from `@aponiajs/platform-elysia` to keep
+Elysia's own context types.
 
-`@Set()` and `@Res()` expose the mutable response settings — a status and
+`@ResponseSettings()` exposes the mutable response settings — a status and
 headers. Redirects are not a response setting: return the platform's inline
 `redirect(url)` helper from the handler, because an assigned redirect on the
 response settings is ignored by the platform.

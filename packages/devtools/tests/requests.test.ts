@@ -6,14 +6,14 @@ import {
   Logger,
   Module,
   Post,
-  Status,
+  HttpStatus,
   type LoggerService,
 } from "@aponiajs/common";
 import {
   AponiaFactory,
-  ElysiaPluginModule,
-  type AponiaElysiaApplication,
-  type ElysiaStatus,
+  PluginModule,
+  type AponiaApplication,
+  type ResponseStatus,
   httpErrors,
 } from "@aponiajs/platform-elysia";
 import { Elysia } from "elysia";
@@ -67,7 +67,7 @@ class UsersController {
   }
 
   @Post()
-  create(@Body() body: unknown, @Status() status: ElysiaStatus): unknown {
+  create(@Body() body: unknown, @HttpStatus() status: ResponseStatus): unknown {
     return status(201, { created: body });
   }
 }
@@ -77,7 +77,7 @@ class UsersController {
  *
  * It refers to itself, so `JSON.stringify` refuses it, and it refuses the plain
  * string form as well — which is what puts it below both fallbacks, at the
- * literal `@aponiajs/common`'s `renderLogValue` states such a value as. That
+ * literal `@aponiajs/common`'s `formatLogValue` states such a value as. That
  * literal is the one thing the rendering shares with the console logger below its
  * own branches, and it is the one both surfaces report, so this is the value that
  * says whether either of them can throw.
@@ -355,7 +355,7 @@ const gatePlugin = new Elysia({ name: "gate" }).request((context) => {
 @Module({
   imports: [
     DevtoolsModule.register({ enabled: true }),
-    ElysiaPluginModule.register(gatePlugin, { key: "gate" }),
+    PluginModule.register(gatePlugin, { key: "gate" }),
   ],
   controllers: [UsersController],
 })
@@ -414,7 +414,7 @@ type DevtoolsRootModule = Parameters<typeof AponiaFactory.create>[0];
  * cases for free, and it is the same one `readRequests` takes before it reads.
  */
 async function ask(
-  application: AponiaElysiaApplication,
+  application: AponiaApplication,
   path: string,
   init?: RequestInit,
 ): Promise<Response> {
@@ -425,7 +425,7 @@ async function ask(
   return response;
 }
 
-async function bootApplication(rootModule: DevtoolsRootModule): Promise<AponiaElysiaApplication> {
+async function bootApplication(rootModule: DevtoolsRootModule): Promise<AponiaApplication> {
   return bootWithLogger(rootModule, false);
 }
 
@@ -437,7 +437,7 @@ async function bootApplication(rootModule: DevtoolsRootModule): Promise<AponiaEl
 async function bootWithLogger(
   rootModule: DevtoolsRootModule,
   logger: LoggerService | false,
-): Promise<AponiaElysiaApplication> {
+): Promise<AponiaApplication> {
   return await AponiaFactory.create(rootModule, { logger });
 }
 
@@ -451,7 +451,7 @@ async function bootWithLogger(
  * answered.
  */
 async function readRequests(
-  application: AponiaElysiaApplication,
+  application: AponiaApplication,
   query = "",
 ): Promise<AponiaRequestsPayload> {
   await Bun.sleep(0);
@@ -1003,7 +1003,7 @@ test.serial(
     //
     // They are read on two loggers, and the second is the reason why. The line a
     // failure writes is produced twice on its way out: this package's tap states
-    // the value through `@aponiajs/common`'s `renderLogValue`, and then hands the
+    // the value through `@aponiajs/common`'s `formatLogValue`, and then hands the
     // call, with the value, to the logger the application installed, which renders
     // it again for the console. The two renderings are different answers rather
     // than one restated, and each shape shows that from one side: the console
@@ -1231,7 +1231,7 @@ test.serial("a second listen continues the record the application already opened
 
 test.serial("two registrations in one process record into their own windows", async () => {
   const first = await bootApplication(CapturedModule);
-  let second: AponiaElysiaApplication | undefined;
+  let second: AponiaApplication | undefined;
   try {
     second = await bootApplication(CapturedTwinModule);
 
@@ -1264,7 +1264,7 @@ test.serial("two registrations in one process record into their own windows", as
 
 test.serial("two applications built from one module keep their records apart", async () => {
   const first = await bootApplication(CapturedModule);
-  let second: AponiaElysiaApplication | undefined;
+  let second: AponiaApplication | undefined;
   try {
     await ask(first, `/users/42`);
     expect((await readRequests(first)).cursor).toBe(2);

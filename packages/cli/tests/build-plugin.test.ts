@@ -10,8 +10,8 @@ import {
   type AponiaModuleDescriptorArtifact,
 } from "@aponiajs/platform-elysia";
 import {
-  aponiaBuildPlugin,
-  aponiaBuildPluginName,
+  buildPlugin,
+  buildPluginName,
   descriptorModuleFileName,
   invokerModuleFileName,
 } from "../src/index.ts";
@@ -151,7 +151,7 @@ test("generates both artifacts before the bundler resolves an entrypoint that im
   expect(await Bun.file(invokerPath).exists()).toBe(false);
   expect(await Bun.file(descriptorPath).exists()).toBe(false);
 
-  const logged = await build(directory, "src/main.ts", [aponiaBuildPlugin({ cwd: directory })]);
+  const logged = await build(directory, "src/main.ts", [buildPlugin({ cwd: directory })]);
 
   expect(logged).toBe(
     [
@@ -170,7 +170,7 @@ test("the artifacts a build writes are the ones the runtime boots from", async (
     "src/users.module.ts": moduleSource,
     "src/main.ts": entryImportingArtifacts,
   });
-  await build(directory, "src/main.ts", [aponiaBuildPlugin({ cwd: directory })]);
+  await build(directory, "src/main.ts", [buildPlugin({ cwd: directory })]);
 
   const [decorated, generated, invokerModule] = await Promise.all([
     import(join(directory, "src", "users.module.ts")) as Promise<{ readonly UsersModule: unknown }>,
@@ -211,9 +211,7 @@ test("fails the build when generation fails instead of bundling the artifact alr
     "src/main.ts": `import { controllerInvokerArtifact } from "./invokers.generated.ts";\nexport const artifact = controllerInvokerArtifact;\n`,
   });
 
-  const failure = await build(directory, "src/main.ts", [
-    aponiaBuildPlugin({ cwd: directory }),
-  ]).then(
+  const failure = await build(directory, "src/main.ts", [buildPlugin({ cwd: directory })]).then(
     () => undefined,
     (reason: unknown) => reason,
   );
@@ -246,7 +244,7 @@ test("a stale artifact is still refused by the runtime the plugin built for", as
     "src/users.module.ts": moduleSource,
     "src/main.ts": entryImportingArtifacts,
   });
-  await build(directory, "src/main.ts", [aponiaBuildPlugin({ cwd: directory })]);
+  await build(directory, "src/main.ts", [buildPlugin({ cwd: directory })]);
 
   const invokerPath = join(directory, "src", invokerModuleFileName);
   const generated = await Bun.file(invokerPath).text();
@@ -286,7 +284,7 @@ test("a descriptor artifact the build wrote is refused once another release touc
     "src/users.module.ts": moduleSource,
     "src/main.ts": entryImportingArtifacts,
   });
-  await build(directory, "src/main.ts", [aponiaBuildPlugin({ cwd: directory })]);
+  await build(directory, "src/main.ts", [buildPlugin({ cwd: directory })]);
 
   const descriptorPath = join(directory, "src", descriptorModuleFileName);
   const generated = await Bun.file(descriptorPath).text();
@@ -356,5 +354,5 @@ async function answers(
 }
 
 test("names the plugin so a build error can be attributed to it", () => {
-  expect(aponiaBuildPlugin().name).toBe(aponiaBuildPluginName);
+  expect(buildPlugin().name).toBe(buildPluginName);
 });

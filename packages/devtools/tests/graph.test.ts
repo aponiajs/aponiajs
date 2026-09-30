@@ -15,7 +15,7 @@ import { Elysia } from "elysia";
 import {
   aponiaVersion,
   devtoolsPathPrefix,
-  routeRequest,
+  handleDevtoolsRequest,
   type AponiaGraphPayload,
 } from "../src/index.ts";
 // The handler record the mounted route answers through, from the module that owns
@@ -46,7 +46,7 @@ const silentLogger: LoggerService = {
  * One devtools path answered for one application.
  *
  * This is the pair the mounted route calls: `createHandlers` builds the record
- * for the application a request reached, and `routeRequest` decides the path
+ * for the application a request reached, and `handleDevtoolsRequest` decides the path
  * beneath the prefix. A case calls them in process rather than mounting the
  * plugin and driving `application.handle`, because the applications these cases
  * assert on are often bare objects — a table, a record, a shape this release did
@@ -55,7 +55,7 @@ const silentLogger: LoggerService = {
  * `404` and `405` in `server.test.ts`.
  */
 async function ask(application: Elysia, path: string): Promise<Response> {
-  return await routeRequest(
+  return await handleDevtoolsRequest(
     new Request(`http://localhost${devtoolsPathPrefix}${path}`),
     createHandlers(application, undefined, undefined, silentLogger),
   );

@@ -1,21 +1,21 @@
 import {
   AponiaError,
   Logger,
-  tokenName,
+  getTokenName,
   type LoggerService,
   type LogLevel,
   type ModuleDefinition,
   type Provider,
 } from "@aponiajs/common";
-import { createContainer, providerDependencies } from "@aponiajs/core";
+import { createContainer, getProviderDependencies } from "@aponiajs/core";
 import { isElysiaController } from "../controllers/controller-definition.ts";
 import type { RuntimeElysiaController } from "../controllers/controller.types.ts";
 import { compileRootModule } from "../modules/module-compiler.ts";
 import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
 import { selectRootModuleDescriptor } from "../modules/module-descriptor-artifact.ts";
 import { aponiaVersion } from "../version.ts";
-import { compileElysiaWebSocketGateways } from "../websockets/websocket-gateway.ts";
-import type { CompiledElysiaWebSocketGateway } from "../websockets/websocket-gateway.types.ts";
+import { compileWebSocketGateways } from "../websockets/websocket-gateway.ts";
+import type { CompiledWebSocketGateway } from "../websockets/websocket-gateway.types.ts";
 import type {
   AponiaApplicationInspection,
   AponiaGatewayInspection,
@@ -65,7 +65,7 @@ export function inspectAponiaApplication(
   );
   const container = createContainer(compileRootModule(rootSelection.rootModule));
   const modules = container.graph.modules;
-  const gateways = compileElysiaWebSocketGateways(modules);
+  const gateways = compileWebSocketGateways(modules);
 
   return Object.freeze({
     rootModule: container.graph.root.id,
@@ -81,26 +81,26 @@ function inspectModule(module: ModuleDefinition): AponiaModuleInspection {
     instanceId: module.instanceId === undefined ? undefined : String(module.instanceId),
     imports: Object.freeze(module.imports.map((imported) => imported.id)),
     controllers: Object.freeze(
-      elysiaControllers(module).map((controller) => tokenName(controller.token)),
+      controllers(module).map((controller) => getTokenName(controller.token)),
     ),
     providers: Object.freeze(module.providers.map(inspectProvider)),
-    exports: Object.freeze(module.exports.map(tokenName)),
+    exports: Object.freeze(module.exports.map(getTokenName)),
   });
 }
 
 function inspectProvider(provider: Provider): AponiaProviderInspection {
   return Object.freeze({
-    token: tokenName(provider.provide),
+    token: getTokenName(provider.provide),
     kind: provider.kind,
     dependencies: Object.freeze(
-      providerDependencies(provider).map((dependency) => tokenName(dependency)),
+      getProviderDependencies(provider).map((dependency) => getTokenName(dependency)),
     ),
   });
 }
 
 function inspectModuleRoutes(module: ModuleDefinition): AponiaRouteInspection[] {
-  return elysiaControllers(module).flatMap((controller) => {
-    const controllerName = tokenName(controller.token);
+  return controllers(module).flatMap((controller) => {
+    const controllerName = getTokenName(controller.token);
     const routes = controller.compiledRoutes ?? [];
 
     return routes.map((route) =>
@@ -124,14 +124,12 @@ function inspectModuleRoutes(module: ModuleDefinition): AponiaRouteInspection[] 
   });
 }
 
-function inspectGateways(
-  gateways: readonly CompiledElysiaWebSocketGateway[],
-): AponiaGatewayInspection[] {
+function inspectGateways(gateways: readonly CompiledWebSocketGateway[]): AponiaGatewayInspection[] {
   return gateways
     .map((gateway) =>
       Object.freeze({
         module: gateway.module.id,
-        token: tokenName(gateway.token),
+        token: getTokenName(gateway.token),
         path: gateway.path,
         events: Object.freeze(gateway.handlers.map((handler) => handler.event)),
       }),
@@ -173,13 +171,13 @@ function isLogLevelList(value: unknown): value is readonly LogLevel[] {
  * Reuses the platform's own controller guard so inspection accepts exactly the
  * controllers bootstrap mounts and rejects the rest identically.
  */
-function elysiaControllers(module: ModuleDefinition): readonly RuntimeElysiaController[] {
+function controllers(module: ModuleDefinition): readonly RuntimeElysiaController[] {
   return module.controllers.map((controller) => {
     if (isElysiaController(controller)) {
       return controller;
     }
 
-    const controllerName = tokenName(controller.token);
+    const controllerName = getTokenName(controller.token);
     throw new AponiaError(
       "UNSUPPORTED_CONTROLLER",
       `Controller "${controllerName}" is not supported by the Elysia platform.`,

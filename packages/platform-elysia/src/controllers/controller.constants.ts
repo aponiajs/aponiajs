@@ -1,1 +1,1 @@
-export const ELYSIA_CONTROLLER = "aponia.elysia.controller";
+export const CONTROLLER_KIND = "aponia.elysia.controller";

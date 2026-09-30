@@ -1,5 +1,5 @@
 import {
-  tokenName,
+  getTokenName,
   type ClassToken,
   type EnhancerMetadata,
   type ModuleDefinition,
@@ -7,7 +7,7 @@ import {
 } from "@aponiajs/common";
 import type { Elysia } from "elysia";
 import { isElysiaController } from "../controllers/controller-definition.ts";
-import type { InterceptorHalves } from "../controllers/enhancer-resolver.ts";
+import type { InterceptorPhases } from "../controllers/enhancer-resolver.ts";
 import type {
   AponiaApplicationDiagnostics,
   AponiaArtifactProvenance,
@@ -73,7 +73,7 @@ export function createApplicationDiagnostics(facts: {
   readonly callbackRoutes: readonly AponiaCallbackRouteDiagnostics[];
   readonly globalEnhancers: EnhancerMetadata;
   readonly mappedExceptions: WeakMap<Request, string>;
-  readonly interceptorHalves: ReadonlyMap<ClassToken<unknown>, InterceptorHalves>;
+  readonly interceptorHalves: ReadonlyMap<ClassToken<unknown>, InterceptorPhases>;
 }): AponiaApplicationDiagnostics {
   return Object.freeze({
     framework: facts.framework,
@@ -128,7 +128,7 @@ export function attachApplicationDiagnostics(
  *
  * @internal
  */
-export function readApplicationDiagnostics(
+export function getApplicationDiagnostics(
   application: Elysia,
 ): AponiaApplicationDiagnostics | undefined {
   return (application as { readonly [diagnosticsKey]?: AponiaApplicationDiagnostics })[
@@ -204,7 +204,7 @@ function collectCompiledRoutes(
         continue;
       }
 
-      const controllerName = tokenName(controller.token);
+      const controllerName = getTokenName(controller.token);
       const generatedKeys = generatedInvokers.get(controller.token);
       for (const route of controller.compiledRoutes ?? []) {
         const source: "generated" | "compiled" =

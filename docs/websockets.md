@@ -15,21 +15,21 @@ import {
   type OnGatewayConnection,
   type WsResponse,
 } from "@aponiajs/common";
-import type { ElysiaWebSocket } from "@aponiajs/platform-elysia";
+import type { WebSocketClient } from "@aponiajs/platform-elysia";
 import { ChatService } from "./chat.service.ts";
 
 @WebSocketGateway("/chat")
-export class ChatGateway implements OnGatewayConnection<ElysiaWebSocket> {
+export class ChatGateway implements OnGatewayConnection<WebSocketClient> {
   constructor(private readonly chatService: ChatService) {}
 
-  handleConnection(client: ElysiaWebSocket): void {
+  handleConnection(client: WebSocketClient): void {
     client.subscribe("chat");
   }
 
   @SubscribeMessage("chat.send")
   sendMessage(
     @MessageBody("text") text: string,
-    @ConnectedSocket() client: ElysiaWebSocket,
+    @ConnectedSocket() client: WebSocketClient,
   ): WsResponse<{ readonly id: string; readonly text: string }> {
     return {
       event: "chat.message",
@@ -61,7 +61,7 @@ the HTTP application's server and port.
 
 ### Declare a gateway as data
 
-Decorators are the authoring surface; `defineElysiaWebSocketGateway` is the same
+Decorators are the authoring surface; `defineWebSocketGateway` is the same
 gateway expressed as data, and it is what `aponia build` writes into
 `descriptors.generated.ts`. The result is an ordinary class provider, so it is
 registered in `@Module({ providers })` exactly as a decorated gateway is — and
@@ -69,14 +69,14 @@ the two can sit in the same application:
 
 ```ts
 import { defineModule } from "@aponiajs/common";
-import { defineElysiaWebSocketGateway } from "@aponiajs/platform-elysia";
+import { defineWebSocketGateway } from "@aponiajs/platform-elysia";
 import { ChatGateway } from "./chat.gateway.ts";
 import { ChatService } from "./chat.service.ts";
 
 export const ChatModule = defineModule({
   id: "ChatModule",
   providers: [
-    defineElysiaWebSocketGateway(ChatGateway, {
+    defineWebSocketGateway(ChatGateway, {
       path: "/chat",
       inject: [ChatService],
       handlers: [
@@ -155,21 +155,21 @@ import {
   type OnGatewayDisconnect,
   type OnGatewayInit,
 } from "@aponiajs/common";
-import type { ElysiaWebSocket, ElysiaWebSocketServer } from "@aponiajs/platform-elysia";
+import type { WebSocketClient, WebSocketServerRef } from "@aponiajs/platform-elysia";
 
 @WebSocketGateway("/events")
 export class EventsGateway
-  implements OnGatewayInit<ElysiaWebSocketServer>, OnGatewayDisconnect<ElysiaWebSocket>
+  implements OnGatewayInit<WebSocketServerRef>, OnGatewayDisconnect<WebSocketClient>
 {
   @WebSocketServer()
-  server!: ElysiaWebSocketServer;
+  server!: WebSocketServerRef;
 
-  afterInit(server: ElysiaWebSocketServer): void {
+  afterInit(server: WebSocketServerRef): void {
     // The native Elysia application is mounted and ready to be configured.
     void server;
   }
 
-  handleDisconnect(client: ElysiaWebSocket): void {
+  handleDisconnect(client: WebSocketClient): void {
     console.log(`${client.id} disconnected`);
   }
 }
@@ -221,7 +221,7 @@ broadcasting:
 @SubscribeMessage("room.join")
 joinRoom(
   @MessageBody("room") room: string,
-  @ConnectedSocket() client: ElysiaWebSocket,
+  @ConnectedSocket() client: WebSocketClient,
 ): void {
   client.subscribe(room);
   client.publish(room, {

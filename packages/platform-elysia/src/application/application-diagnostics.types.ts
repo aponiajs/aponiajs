@@ -1,5 +1,5 @@
 import type { ClassToken, EnhancerMetadata, ModuleDefinition } from "@aponiajs/common";
-import type { InterceptorHalves } from "../controllers/enhancer-resolver.ts";
+import type { InterceptorPhases } from "../controllers/enhancer-resolver.ts";
 import type { CompiledElysiaRoute } from "../routing/route-compiler.types.ts";
 
 /**
@@ -102,7 +102,7 @@ export interface AponiaCallbackRouteDiagnostics {
  * returned under a symbol-keyed, non-enumerable property.
  *
  * This is a seam rather than a public contract: only
- * `bootstrapAponiaApplication` produces one, `readApplicationDiagnostics` is
+ * `bootstrapAponiaApplication` produces one, `getApplicationDiagnostics` is
  * the only reader, and an application no boot produced reads as `undefined`.
  * Each fact is one bootstrap already decided — the graph the root selector
  * served, the invoker artifact's verdict, the release each adopted artifact came
@@ -191,5 +191,5 @@ export interface AponiaApplicationDiagnostics {
    * halves were declared": the class may well implement both, and only the
    * record that states them is missing.
    */
-  readonly interceptorHalves: ReadonlyMap<ClassToken<unknown>, InterceptorHalves>;
+  readonly interceptorHalves: ReadonlyMap<ClassToken<unknown>, InterceptorPhases>;
 }

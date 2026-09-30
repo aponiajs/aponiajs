@@ -10,21 +10,21 @@ import {
 import type { AponiaContainer } from "@aponiajs/core";
 import type { AnyElysia } from "elysia";
 import type {
-  AsyncElysiaPluginModuleOptions,
-  ElysiaPluginImport,
-  ElysiaPluginModuleOptions,
-  NativeElysiaPlugin,
+  AsyncPluginModuleOptions,
+  PluginImport,
+  PluginModuleOptions,
+  ElysiaPlugin,
 } from "./plugin.types.ts";
 
-const ELYSIA_PLUGIN = createToken<NativeElysiaPlugin>("aponia.elysia.native-plugin");
+const ELYSIA_PLUGIN = createToken<ElysiaPlugin>("aponia.elysia.native-plugin");
 
 const keyedModuleIdentityPrefix = "aponia.elysia.plugin-module:";
 
 @Module({})
-export class ElysiaPluginModule {
-  static register<const TPlugin extends NativeElysiaPlugin>(
+export class PluginModule {
+  static register<const TPlugin extends ElysiaPlugin>(
     plugin: TPlugin,
-    options: ElysiaPluginModuleOptions = {},
+    options: PluginModuleOptions = {},
   ): DynamicModule {
     return createPluginModule(
       {
@@ -36,8 +36,8 @@ export class ElysiaPluginModule {
 
   static registerAsync<
     const TDependencies extends readonly Token<unknown>[],
-    const TPlugin extends NativeElysiaPlugin,
-  >(options: AsyncElysiaPluginModuleOptions<TDependencies, TPlugin>): DynamicModule {
+    const TPlugin extends ElysiaPlugin,
+  >(options: AsyncPluginModuleOptions<TDependencies, TPlugin>): DynamicModule {
     return createPluginModule(
       {
         imports: options.imports,
@@ -51,17 +51,17 @@ export class ElysiaPluginModule {
 /**
  * Convert a native Elysia plugin into a module import for either `@Module` or
  * `defineModule`. The result doubles as the plugin type an
- * `ElysiaRouteContext` reads:
+ * `HandlerContext` reads:
  *
  * ```ts
- * export const clock = defineElysiaPlugin(new Elysia({ name: "clock" }), { key: "clock" });
+ * export const clock = definePlugin(new Elysia({ name: "clock" }), { key: "clock" });
  * export type clock = typeof clock;
  * ```
  */
-export function defineElysiaPlugin<const TPlugin extends AnyElysia>(
+export function definePlugin<const TPlugin extends AnyElysia>(
   plugin: TPlugin,
-  options: ElysiaPluginModuleOptions = {},
-): ElysiaPluginImport<TPlugin> {
+  options: PluginModuleOptions = {},
+): PluginImport<TPlugin> {
   const pluginProvider = provideValue(ELYSIA_PLUGIN, plugin);
   const module = createPluginModule(
     {
@@ -80,14 +80,14 @@ export function defineElysiaPlugin<const TPlugin extends AnyElysia>(
   });
 }
 
-export function isElysiaPluginModule(module: ModuleDefinition): boolean {
+export function isPluginModule(module: ModuleDefinition): boolean {
   return module.providers.some((provider) => provider.provide === ELYSIA_PLUGIN);
 }
 
 export function getElysiaPlugin(
   container: AponiaContainer,
   module: ModuleDefinition,
-): NativeElysiaPlugin {
+): ElysiaPlugin {
   return container.resolveModuleProvider(module, ELYSIA_PLUGIN);
 }
 
@@ -100,11 +100,11 @@ function createPluginModule(
   }
 
   const hasStableKey = key !== undefined;
-  const id = hasStableKey ? `ElysiaPluginModule[${key}]` : "ElysiaPluginModule";
+  const id = hasStableKey ? `PluginModule[${key}]` : "PluginModule";
   const instanceId = hasStableKey ? Symbol.for(`${keyedModuleIdentityPrefix}${key}`) : Symbol(id);
 
   return Object.freeze({
-    module: ElysiaPluginModule,
+    module: PluginModule,
     id,
     instanceId,
     imports: Object.freeze([...(metadata.imports ?? [])]),

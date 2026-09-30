@@ -10,7 +10,7 @@ import {
   type ModuleDefinition,
   type Provider,
 } from "@aponiajs/common";
-import { compileModuleGraph, createContainer, providerDependencies } from "../src/index.ts";
+import { compileModuleGraph, createContainer, getProviderDependencies } from "../src/index.ts";
 
 function captureAponiaError(run: () => unknown): AponiaError {
   try {
@@ -275,12 +275,13 @@ describe("@aponiajs/core provider shapes", () => {
   });
 
   test("refuses a kind it cannot read when it is asked directly", () => {
-    // `providerDependencies` is the graph rule the platform reads without building
-    // a graph, so it is reachable with nothing in front of it — and answering
-    // `undefined` to a caller that iterates the answer is how a wrong-shaped
-    // provider became a `TypeError` two frames away from the entry at fault.
+    // `getProviderDependencies` is the graph rule the platform reads without
+    // building a graph, so it is reachable with nothing in front of it — and
+    // answering `undefined` to a caller that iterates the answer is how a
+    // wrong-shaped provider became a `TypeError` two frames away from the entry
+    // at fault.
     const error = captureAponiaError(() =>
-      providerDependencies({ kind: "clazz" } as unknown as Provider),
+      getProviderDependencies({ kind: "clazz" } as unknown as Provider),
     );
 
     expect(error.code).toBe("INVALID_PROVIDER");

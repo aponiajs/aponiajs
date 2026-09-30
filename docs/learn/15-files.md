@@ -35,11 +35,11 @@ cannot name itself with — encoded, so a name outside ASCII arrives intact — 
 the file the platform streams:
 
 ```ts
-import { Get, Set, type RouteResponseSettings } from "@aponiajs/common";
+import { Get, ResponseSettings, type ResponseSettingsState } from "@aponiajs/common";
 import { downloadFile } from "@aponiajs/platform-elysia";
 
 @Get("download")
-download(@Set() set: RouteResponseSettings) {
+download(@ResponseSettings() set: ResponseSettingsState) {
   return downloadFile(set, "/srv/reports/2026.csv", "2026.csv");
 }
 ```

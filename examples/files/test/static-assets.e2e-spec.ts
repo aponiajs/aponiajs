@@ -1,10 +1,10 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
-import { AponiaFactory, type AponiaElysiaApplication } from "@aponiajs/platform-elysia";
+import { AponiaFactory, type AponiaApplication } from "@aponiajs/platform-elysia";
 import { AppModule } from "../src/app.module.ts";
 import { configureStaticAssets } from "../src/static-assets.ts";
 import { reservePort } from "./application.ts";
 
-let application: AponiaElysiaApplication;
+let application: AponiaApplication;
 
 beforeAll(async () => {
   application = await AponiaFactory.create(AppModule, {

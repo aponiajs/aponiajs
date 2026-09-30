@@ -24,7 +24,7 @@ import type { InputSchema } from "elysia";
  * to read the context it is given. Only the platform calls an invoker, and it
  * passes the real route context.
  */
-export type AponiaRouteInvoker = (context: never) => unknown;
+export type RouteHandler = (context: never) => unknown;
 
 /**
  * Builds the invokers of one controller once its instance exists, keyed by the
@@ -33,9 +33,9 @@ export type AponiaRouteInvoker = (context: never) => unknown;
  * The `instance` parameter is deliberately `never` so a factory declared for a
  * concrete controller type stays assignable without a cast.
  */
-export type AponiaControllerInvokerFactory = (
+export type ControllerHandlerFactory = (
   instance: never,
-) => ReadonlyMap<string | symbol, AponiaRouteInvoker>;
+) => ReadonlyMap<string | symbol, RouteHandler>;
 
 /**
  * What a route-local `error` hook is given: the request's own context with the

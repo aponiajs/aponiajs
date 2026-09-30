@@ -1,4 +1,4 @@
-import { renderLogValue, type LoggerService } from "@aponiajs/common";
+import { formatLogValue, type LoggerService } from "@aponiajs/common";
 import { ElysiaStatus } from "elysia";
 import type { ResolvedFilter } from "../controllers/enhancer-resolver.ts";
 import type { ElysiaErrorHook } from "../routing/route-compiler.types.ts";
@@ -165,7 +165,7 @@ function announceLoggerFailure(loggerFailure: unknown, context: string): void {
   try {
     process.stderr.write(
       `[Aponia] ${process.pid} - ERROR [${context}] the configured logger threw while ` +
-        `reporting a failure: ${renderLogValue(loggerFailure)}\n`,
+        `reporting a failure: ${formatLogValue(loggerFailure)}\n`,
     );
   } catch {
     // Nothing left to report to.
@@ -183,7 +183,7 @@ function announceLoggerFailure(loggerFailure: unknown, context: string): void {
  * record's field is named for — `mappedExceptions`, keyed by the request the
  * mapping saw.
  *
- * The rendering is `@aponiajs/common`'s `renderLogValue`, the same call the
+ * The rendering is `@aponiajs/common`'s `formatLogValue`, the same call the
  * devtools log stream renders a line through, so `/requests` and `/logs` cannot
  * disagree about one failure and the literal a value that refuses everything is
  * stated as is the same word on both. It is total, which is why it may be called
@@ -201,7 +201,7 @@ function recordMappedException(
   request: Request,
   error: unknown,
 ): void {
-  mappedExceptions.set(request, renderLogValue(error));
+  mappedExceptions.set(request, formatLogValue(error));
 }
 
 /**

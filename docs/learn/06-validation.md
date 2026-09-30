@@ -75,7 +75,7 @@ also narrows Elysia's `context.status` helper:
 
 ```ts
 import { Controller, Get } from "@aponiajs/common";
-import { type ElysiaRouteContext } from "@aponiajs/platform-elysia";
+import { type HandlerContext } from "@aponiajs/platform-elysia";
 import { t } from "elysia";
 
 const findUser = {
@@ -88,7 +88,7 @@ const findUser = {
 @Controller("users")
 class UserController {
   @Get(":id", findUser)
-  find(context: ElysiaRouteContext<typeof findUser>) {
+  find(context: HandlerContext<typeof findUser>) {
     return context.status(404, { code: "USER_NOT_FOUND" });
   }
 }
@@ -104,8 +104,8 @@ Controllers annotate `CreateUser`, `UpdateUser`, or `UserParams` directly, and
 each annotation carries the fields its same-named interface merged in. The CLI
 emits that declaration-merging line for generated REST resources.
 When a method needs the whole native context,
-`ElysiaRouteContext<typeof routeSchema>` and
-`ElysiaStatus<typeof routeSchema>` accept the same model-backed schema and
+`HandlerContext<typeof routeSchema>` and
+`ResponseStatus<typeof routeSchema>` accept the same model-backed schema and
 preserve body, params, cookie, and status-specific response inference.
 
 Next: [07 · Request parameters](./07-request-parameters.md) ·

@@ -12,7 +12,7 @@ import { AponiaError, type Provider, type Token } from "@aponiajs/common";
  *
  * The shape it deliberately does not accept is the one the framework this one
  * mirrors does: NestJS writes a provider as `{ provide, useValue }`, so a
- * developer arriving from it writes that first, and `providerDependencies` below
+ * developer arriving from it writes that first, and `getProviderDependencies` below
  * would read `kind` off it, find no case, and hand `undefined` to a caller that
  * iterates the answer.
  *
@@ -67,7 +67,7 @@ export function providerShapeProblem(value: unknown): string | undefined {
  *
  * @internal
  */
-export function providerDependencies(provider: Provider): readonly Token<unknown>[] {
+export function getProviderDependencies(provider: Provider): readonly Token<unknown>[] {
   switch (provider.kind) {
     case "value":
       return [];

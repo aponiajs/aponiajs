@@ -35,10 +35,10 @@ may also return a `Promise<boolean>`.
 ## An interceptor
 
 ```ts
-import { Injectable, type AponiaInterceptor, type ExecutionContext } from "@aponiajs/common";
+import { Injectable, type Interceptor, type ExecutionContext } from "@aponiajs/common";
 
 @Injectable()
-class TimingInterceptor implements AponiaInterceptor {
+class TimingInterceptor implements Interceptor {
   interceptBefore(): void {
     performance.mark("handler-start");
   }

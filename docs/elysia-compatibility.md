@@ -68,21 +68,21 @@ packages:
 Elysia 2 is the supported release. AponiaJS registers every route itself, so a
 controller written with AponiaJS decorators does not change; what follows is
 what to know when you reach for Elysia directly — through `configureNative`, an
-`elysiaController(...)` callback, or a native plugin.
+`controller(...)` callback, or a native plugin.
 
-| Area                | Elysia 1.4                                                            | Elysia 2                                       |
-| ------------------- | --------------------------------------------------------------------- | ---------------------------------------------- |
-| Route registration  | `route(method, path, handler, hook)`                                  | `method(method, path, hook, handler)`          |
-| Type re-exports     | `TSchema` from the root                                               | `TSchema` from `typebox`                       |
-| Type re-exports     | `SingletonBase`, `ElysiaConfig`, `MergeElysiaInstances`, `EventScope` | from `elysia/types`                            |
-| WebSocket type      | `ElysiaWS<Context, Route>`                                            | `ElysiaWS<Route>` in `elysia/ws`               |
-| Status helper types | `InvertedStatusMap`                                                   | `StatusMapBack`                                |
-| Status helper types | `ElysiaCustomStatusResponse`                                          | `ElysiaStatus`                                 |
-| Schema union        | `AnySchema`                                                           | `TypeBoxSchema \| StandardSchemaV1Like`        |
-| `ElysiaConfig`      | carries `aot`                                                         | no `aot`; needs at least two type arguments    |
-| Instance config     | `app.config`                                                          | gone                                           |
-| Plugin hook         | `resolve` on its own timing                                           | removed; `derive` takes its timing             |
-| `context.set`       | `redirect` is accepted                                                | removed in favour of returning `redirect(url)` |
+| Area               | Elysia 1.4                                                            | Elysia 2                                       |
+| ------------------ | --------------------------------------------------------------------- | ---------------------------------------------- |
+| Route registration | `route(method, path, handler, hook)`                                  | `method(method, path, hook, handler)`          |
+| Type re-exports    | `TSchema` from the root                                               | `TSchema` from `typebox`                       |
+| Type re-exports    | `SingletonBase`, `ElysiaConfig`, `MergeElysiaInstances`, `EventScope` | from `elysia/types`                            |
+| WebSocket type     | `ElysiaWS<Context, Route>`                                            | `ElysiaWS<Route>` in `elysia/ws`               |
+| HTTP status types  | `InvertedStatusMap`                                                   | `StatusMapBack`                                |
+| HTTP status types  | `ElysiaCustomStatusResponse`                                          | `ResponseStatus`                               |
+| Schema union       | `AnySchema`                                                           | `TypeBoxSchema \| StandardSchemaV1Like`        |
+| `ElysiaConfig`     | carries `aot`                                                         | no `aot`; needs at least two type arguments    |
+| Instance config    | `app.config`                                                          | gone                                           |
+| Plugin hook        | `resolve` on its own timing                                           | removed; `derive` takes its timing             |
+| `context.set`      | `redirect` is accepted                                                | removed in favour of returning `redirect(url)` |
 
 Handing Elysia a hook before the handler in the old order is refused at run
 time, with `[Elysia] .get('/x', handler, hook) is the 1.x order; Elysia 2 takes
@@ -96,7 +96,7 @@ compiled dependency.
 ## Native escape hatches
 
 `configureNative` receives the Elysia instance during bootstrap, and
-`elysiaController` hands you the application to register routes yourself. Those
+`controller` hands you the application to register routes yourself. Those
 callbacks run on your Elysia version directly, so the rules above apply to them
 too — AponiaJS cannot translate an API it does not call.
 

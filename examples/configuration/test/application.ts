@@ -1,4 +1,4 @@
-import { AponiaFactory, type AponiaElysiaApplication } from "@aponiajs/platform-elysia";
+import { AponiaFactory, type AponiaApplication } from "@aponiajs/platform-elysia";
 import { AppModule } from "../src/app.module.ts";
 
 /**
@@ -22,7 +22,7 @@ const configurationKeys = ["PORT", "SERVICE_NAME"] as const;
  */
 export async function createApplication(
   env: Readonly<Record<string, string | undefined>>,
-): Promise<AponiaElysiaApplication> {
+): Promise<AponiaApplication> {
   const saved = new Map<string, string | undefined>();
 
   for (const key of new Set([...configurationKeys, ...Object.keys(env)])) {
@@ -49,6 +49,6 @@ export async function createApplication(
   }
 }
 
-export function get(application: AponiaElysiaApplication, path: string): Promise<Response> {
+export function get(application: AponiaApplication, path: string): Promise<Response> {
   return Promise.resolve(application.handle(new Request(`http://localhost${path}`)));
 }

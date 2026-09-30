@@ -1,12 +1,18 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { Controller, Get, Module, Set, type RouteResponseSettings } from "@aponiajs/common";
+import {
+  Controller,
+  Get,
+  Module,
+  ResponseSettings,
+  type ResponseSettingsState,
+} from "@aponiajs/common";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { unlink } from "node:fs/promises";
-import { AponiaFactory, downloadFile, type AponiaElysiaApplication } from "../src/index.ts";
+import { AponiaFactory, downloadFile, type AponiaApplication } from "../src/index.ts";
 
 /** A settings object shaped like the one the compiled invoker hands a handler. */
-function settings(): RouteResponseSettings {
+function settings(): ResponseSettingsState {
   return { headers: {} };
 }
 
@@ -110,12 +116,12 @@ const downloadPath = join(tmpdir(), `aponia-download-${process.pid}.txt`);
 @Controller("downloads")
 class DownloadController {
   @Get()
-  read(@Set() set: RouteResponseSettings) {
+  read(@ResponseSettings() set: ResponseSettingsState) {
     return downloadFile(set, downloadPath, "Ω 2026.txt");
   }
 
   @Get("raw")
-  readRaw(@Set() set: RouteResponseSettings) {
+  readRaw(@ResponseSettings() set: ResponseSettingsState) {
     // What a handler does without the helper: the raw name reaches the engine.
     set.headers["content-disposition"] = 'attachment; filename="Ω 2026.txt"';
     return "raw";
@@ -126,7 +132,7 @@ class DownloadController {
 class DownloadModule {}
 
 describe("downloading a file through an application", () => {
-  let application: AponiaElysiaApplication;
+  let application: AponiaApplication;
 
   beforeAll(async () => {
     await Bun.write(downloadPath, "measured,at\n1,now\n");

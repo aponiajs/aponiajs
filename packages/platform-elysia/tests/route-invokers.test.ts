@@ -13,9 +13,9 @@ import { t } from "elysia";
 import {
   AponiaFactory,
   type AponiaApplicationOptions,
-  type AponiaControllerInvokerFactory,
+  type ControllerHandlerFactory,
   type AponiaInvokerArtifact,
-  type AponiaRouteInvoker,
+  type RouteHandler,
 } from "../src/index.ts";
 
 const createItemSchema = {
@@ -61,13 +61,13 @@ class UnrelatedService {}
  * Mirrors what the platform compiles: every invoker delegates to the container
  * instance with the argument the parameter decorators select.
  */
-const mirroringInvokers: AponiaControllerInvokerFactory = (instance: InvokerController) =>
-  new Map<string | symbol, AponiaRouteInvoker>([
+const mirroringInvokers: ControllerHandlerFactory = (instance: InvokerController) =>
+  new Map<string | symbol, RouteHandler>([
     ["ping", () => instance.ping()],
     ["promise", async () => instance.readPromise()],
     [
       "createItem",
-      // The parameter is annotated because `AponiaRouteInvoker` declares it as
+      // The parameter is annotated because `RouteHandler` declares it as
       // `never`: the type accepts every invoker shape, so it offers none to
       // infer from. A generated invoker is written the same way, against the
       // fields its own route reads.
@@ -106,17 +106,17 @@ class RecordingLogger implements LoggerService {
  * case can state provenance the running platform will not accept.
  */
 function artifact(
-  invokers: ReadonlyMap<ClassToken<unknown>, AponiaControllerInvokerFactory>,
+  invokers: ReadonlyMap<ClassToken<unknown>, ControllerHandlerFactory>,
   overrides: Partial<Pick<AponiaInvokerArtifact, "framework" | "elysia">> = {},
 ): AponiaInvokerArtifact {
   return Object.freeze({ framework: frameworkVersion, elysia: "1.4.30", invokers, ...overrides });
 }
 
-function createInvokers(factory: AponiaControllerInvokerFactory): AponiaApplicationOptions {
+function createInvokers(factory: ControllerHandlerFactory): AponiaApplicationOptions {
   return {
     logger: false,
     invokers: artifact(
-      new Map<ClassToken<unknown>, AponiaControllerInvokerFactory>([[InvokerController, factory]]),
+      new Map<ClassToken<unknown>, ControllerHandlerFactory>([[InvokerController, factory]]),
     ),
   };
 }
@@ -179,7 +179,7 @@ test("runs a supplied invoker instead of the compiled parameter binding", async 
     InvokerModule,
     createInvokers(
       (instance: InvokerController) =>
-        new Map<string | symbol, AponiaRouteInvoker>([
+        new Map<string | symbol, RouteHandler>([
           ["ping", () => `from-invoker:${instance.readUnmapped()}`],
         ]),
     ),
@@ -193,9 +193,7 @@ test("runs a supplied invoker instead of the compiled parameter binding", async 
 test("compiles handlers whose property key is missing from a supplied map", async () => {
   const application = await AponiaFactory.create(
     InvokerModule,
-    createInvokers(
-      () => new Map<string | symbol, AponiaRouteInvoker>([["ping", () => "from-invoker"]]),
-    ),
+    createInvokers(() => new Map<string | symbol, RouteHandler>([["ping", () => "from-invoker"]])),
   );
   const unmapped = await application.handle(new Request("http://localhost/invokers/unmapped"));
   const symbolRoute = await application.handle(new Request("http://localhost/invokers/symbol"));
@@ -220,9 +218,7 @@ test("ignores an invoker factory for a token that no controller uses", async () 
   const application = await AponiaFactory.create(InvokerModule, {
     logger: false,
     invokers: artifact(
-      new Map<ClassToken<unknown>, AponiaControllerInvokerFactory>([
-        [UnrelatedService, () => new Map()],
-      ]),
+      new Map<ClassToken<unknown>, ControllerHandlerFactory>([[UnrelatedService, () => new Map()]]),
     ),
   });
   const response = await application.handle(new Request("http://localhost/invokers"));
@@ -232,10 +228,8 @@ test("ignores an invoker factory for a token that no controller uses", async () 
 });
 
 test("does not mutate the supplied invoker artifact", async () => {
-  const controllerInvokers = new Map<string | symbol, AponiaRouteInvoker>([
-    ["ping", () => "mirrored"],
-  ]);
-  const invokers = new Map<ClassToken<unknown>, AponiaControllerInvokerFactory>([
+  const controllerInvokers = new Map<string | symbol, RouteHandler>([["ping", () => "mirrored"]]);
+  const invokers = new Map<ClassToken<unknown>, ControllerHandlerFactory>([
     [InvokerController, () => controllerInvokers],
   ]);
   const options: AponiaApplicationOptions = { logger: false, invokers: artifact(invokers) };
@@ -254,11 +248,10 @@ test("refuses an artifact from another framework release and compiles its routes
   const application = await AponiaFactory.create(InvokerModule, {
     logger,
     invokers: artifact(
-      new Map<ClassToken<unknown>, AponiaControllerInvokerFactory>([
+      new Map<ClassToken<unknown>, ControllerHandlerFactory>([
         [
           InvokerController,
-          () =>
-            new Map<string | symbol, AponiaRouteInvoker>([["ping", () => "from-another-release"]]),
+          () => new Map<string | symbol, RouteHandler>([["ping", () => "from-another-release"]]),
         ],
       ]),
       { framework: "0.0.0", elysia: "1.0.0" },
@@ -346,10 +339,10 @@ test("rejects a class-valued route handler even when an invoker is supplied for 
   const error = await AponiaFactory.create(ClassHandlerModule, {
     logger: false,
     invokers: artifact(
-      new Map<ClassToken<unknown>, AponiaControllerInvokerFactory>([
+      new Map<ClassToken<unknown>, ControllerHandlerFactory>([
         [
           ClassHandlerController,
-          () => new Map<string | symbol, AponiaRouteInvoker>([["routeHandler", () => "invoked"]]),
+          () => new Map<string | symbol, RouteHandler>([["routeHandler", () => "invoked"]]),
         ],
       ]),
     ),

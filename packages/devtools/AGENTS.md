@@ -16,7 +16,7 @@ first request so an application that never polls the endpoint never loads it.
 | Domain       | Owns                                                                                                                                                                                                                                             |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `module/`    | `DevtoolsModule.register`, `devtoolsPlugin`, `DevtoolsOptions`, the plugin                                                                                                                                                                       |
-| `server/`    | `createHandlers`, the handler record the mounted route answers through, `routeRequest`, the dispatcher                                                                                                                                           |
+| `server/`    | `createHandlers`, the handler record the mounted route answers through, `handleDevtoolsRequest`, the dispatcher                                                                                                                                  |
 | `endpoints/` | One payload builder and its wire contract per endpoint, `/meta` first, and the readers the endpoints share: the cursor the two cursor endpoints read, and the route facts `/routes` and `/flow` both state — the binding, and the parameter list |
 | `buffer/`    | The bounded cursor buffer `/logs` and `/requests` share, and nothing else                                                                                                                                                                        |
 | `logging/`   | The log stream: its record, its bound, the tap that fills it from a logger through `@aponiajs/common`'s rendering, the one-line form of a thrown reason, and the report a sentence travels on when the logger refuses it                         |
@@ -58,7 +58,7 @@ runtime boundary it describes.
   the switch on both paths rather than whether the call happens, so one options
   object drives both and an application forwarding its configuration cannot mount
   a debug surface it did not ask for.
-- The module is an `ElysiaPluginModule` because the plugin has to be part of the
+- The module is a `PluginModule` because the plugin has to be part of the
   application's own route table and its hooks have to reach routes mounted beside
   it. A plain provider is constructed before any controller mounts and cannot
   register a route; an Elysia plugin a module contributes is merged into the root
@@ -66,7 +66,7 @@ runtime boundary it describes.
   separate devtools container.
 - The surface is a mount, not a server: `createDevtoolsPlugin` registers
   `` `${devtoolsPathPrefix}/*` `` as a route on the application and hands every
-  request that reaches it to `routeRequest`, which owns the `404` for a path it
+  request that reaches it to `handleDevtoolsRequest`, which owns the `404` for a path it
   does not serve and the `405` for a method other than `GET`. Nothing here calls
   `Bun.serve`, binds a port, or reads a host option, and there is no port or host
   option left to read. The surface answers wherever the application does and under
@@ -643,7 +643,7 @@ runtime boundary it describes.
   either. Its `message` is the sentence that response publishes as its `detail`,
   which `tests/requests.test.ts` pins for the thrown `HttpError` and which no
   rendering can state in its place: the record states what the client received,
-  not `renderLogValue`'s `name: message` form.
+  not `formatLogValue`'s `name: message` form.
   That read is structural — the context type the installed Elysia ships declares no
   `error` although the value is on the context at runtime on every path a route
   answered from an exception — and it is guarded, because the value is the
@@ -651,7 +651,7 @@ runtime boundary it describes.
   than the request. `error` is still never the exception's
   stack: this package registers no error hooks and reports an exception where it
   always was, under `ExceptionsHandler` in the log stream, through
-  `@aponiajs/common`'s `renderLogValue` — the same call the platform's mapping
+  `@aponiajs/common`'s `formatLogValue` — the same call the platform's mapping
   records the exception it answered through, so the mapped failure's `error` is
   that rendering's answer rather than a second one kept in step. `status` is the
   status the client received: `set.status` is a number for every answer Elysia
@@ -668,7 +668,7 @@ runtime boundary it describes.
 - The store is the one channel between the boot and this plugin, and it is the
   platform's: `publishApplicationOnStore` writes the application onto its own
   `store` under `Symbol.for("aponia.application.native")`, and
-  `readApplicationFromStore` reads it back. Never reach for a module-level
+  `getApplicationFromStore` reads it back. Never reach for a module-level
   application variable instead — a second source of truth for a fact the boot
   already decided — and never construct a devtools container to carry it.
 - Every endpoint is a `GET`; any other method answers `405` before the path is
@@ -682,7 +682,7 @@ runtime boundary it describes.
   itself, and answers `null` when the walk finds none. The CLI's
   `hasOwnToolchain` guard is the same rule for the same reason.
 - The package reports what a boot decided; it never re-derives it. Read the boot
-  record through `readApplicationDiagnostics` instead of re-applying a
+  record through `getApplicationDiagnostics` instead of re-applying a
   platform selector's rule here.
 
 ## Tests
@@ -691,7 +691,7 @@ runtime boundary it describes.
 
 Boot through `AponiaFactory.create` and assert what an application observes:
 whether the boot mounted the plugin module (the enabled twin reports
-`ElysiaPluginModule[devtools] dependencies initialized`, the disabled twin
+`PluginModule[devtools] dependencies initialized`, the disabled twin
 asserts that line and every `Devtools` report absent) and what the application
 answers for the devtools paths.
 
@@ -714,7 +714,7 @@ boot produced answers the endpoints that need no report — because a surface th
 only worked under `listen()` is exactly what this change removed.
 
 The endpoint payloads are asserted through the same pair the mounted route calls:
-`createHandlers` for the application under test, then `routeRequest` with a
+`createHandlers` for the application under test, then `handleDevtoolsRequest` with a
 `Request` for the path. A case that mounted the plugin instead would add
 `* /__devtools/*` — Elysia 1 recorded `.all()` as `ALL` — to the route table
 `/routes` and `/flow` report, and every
@@ -872,7 +872,7 @@ the client received rather than the one `set.status` still reads. The unhandled
 failure is asserted from the other side, because its message is nowhere on the
 answer: the entry the record holds is compared with the line `/logs` states for
 the same exception. Both surfaces render through `@aponiajs/common`'s
-`renderLogValue`, so the comparison catches drift between them rather than
+`formatLogValue`, so the comparison catches drift between them rather than
 restating two copies: because both read one definition, a divergence in what one
 surface states is a defect rather than a coincidence — the record's half is the
 exception the platform's mapping wrote, and the stream's half is the line this

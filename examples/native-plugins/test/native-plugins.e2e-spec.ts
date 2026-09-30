@@ -1,14 +1,10 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import { Module } from "@aponiajs/common";
-import {
-  AponiaFactory,
-  defineElysiaPlugin,
-  type AponiaElysiaApplication,
-} from "@aponiajs/platform-elysia";
+import { AponiaFactory, definePlugin, type AponiaApplication } from "@aponiajs/platform-elysia";
 import { Elysia } from "elysia";
 import { createApplication, get } from "./application.ts";
 
-let application: AponiaElysiaApplication;
+let application: AponiaApplication;
 
 beforeAll(async () => {
   application = await createApplication();
@@ -62,7 +58,7 @@ test("reaches every plugin route through the mounted controller", async () => {
 
 test("installs a plugin shared by two modules only once", async () => {
   let installations = 0;
-  const counted = defineElysiaPlugin(
+  const counted = definePlugin(
     new Elysia({ name: "counted" }).setup(() => {
       installations += 1;
     }),
@@ -85,8 +81,8 @@ test("installs a plugin shared by two modules only once", async () => {
 });
 
 test("rejects two different plugins registered under one key", () => {
-  const first = defineElysiaPlugin(new Elysia({ name: "first" }), { key: "duplicate" });
-  const second = defineElysiaPlugin(new Elysia({ name: "second" }), { key: "duplicate" });
+  const first = definePlugin(new Elysia({ name: "first" }), { key: "duplicate" });
+  const second = definePlugin(new Elysia({ name: "second" }), { key: "duplicate" });
 
   @Module({ imports: [first, second] })
   class DuplicateKeyModule {}
@@ -97,7 +93,7 @@ test("rejects two different plugins registered under one key", () => {
 });
 
 test("rejects an empty plugin key", () => {
-  expect(() => defineElysiaPlugin(new Elysia(), { key: "   " })).toThrow(
+  expect(() => definePlugin(new Elysia(), { key: "   " })).toThrow(
     "Elysia plugin module key must not be empty.",
   );
 });

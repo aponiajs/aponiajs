@@ -1,12 +1,12 @@
 import { afterEach, expect, test } from "bun:test";
 import { AponiaError } from "@aponiajs/common";
-import type { AponiaElysiaApplication } from "@aponiajs/platform-elysia";
+import type { AponiaApplication } from "@aponiajs/platform-elysia";
 import { AppConfig } from "../src/config.ts";
 import { createApplication, get } from "./application.ts";
 
 const defaultServiceName = "aponia-example-configuration";
 
-let application: AponiaElysiaApplication | undefined;
+let application: AponiaApplication | undefined;
 
 afterEach(async () => {
   await application?.close();

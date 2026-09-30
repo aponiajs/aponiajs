@@ -3,9 +3,9 @@ import { Controller, Get, Module } from "@aponiajs/common";
 import { Elysia, type AnyElysia } from "elysia";
 import {
   AponiaFactory,
-  ElysiaPluginModule,
+  PluginModule,
   type AponiaApplicationOptions,
-  type NativeElysiaPlugin,
+  type ElysiaPlugin,
 } from "../src/index.ts";
 
 @Controller("app-plugins-health")
@@ -58,7 +58,7 @@ test("a plugin supplied by the option is mounted on the root application", async
 });
 
 test("an undefined entry mounts nothing, so the plugin it stands for is absent", async () => {
-  const plugins: readonly (NativeElysiaPlugin | undefined)[] = [
+  const plugins: readonly (ElysiaPlugin | undefined)[] = [
     answeringPlugin("present", "present"),
     undefined,
   ];
@@ -107,7 +107,7 @@ test("the application's own plugins are the outer ones", async () => {
   const optionPlugin = observingPlugin("option", phases);
   const modulePlugin = observingPlugin("module", phases);
 
-  @Module({ imports: [ElysiaPluginModule.register(modulePlugin, { key: "observed" })] })
+  @Module({ imports: [PluginModule.register(modulePlugin, { key: "observed" })] })
   class ObservedModule {}
 
   const application = await AponiaFactory.create(ObservedModule, {

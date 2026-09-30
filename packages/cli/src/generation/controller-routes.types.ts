@@ -72,8 +72,8 @@ export interface AnalyzedRouteSchema {
  * `route-parameters.types.ts`). The CLI is independent of the runtime packages,
  * so the union is declared locally and must be kept in step with that source by
  * hand. Decorator names do not always match their kind: `@Param` binds
- * `"params"`, `@Ctx` binds `"context"`, `@Req` binds `"request"`, and
- * `@Set`/`@Res` both bind `"set"`.
+ * `"params"`, `@Context` binds `"context"`, `@Req` binds `"request"`, and
+ * `@ResponseSettings` binds `"set"`.
  */
 export type AnalyzedRouteParameterKind =
   | "body"

@@ -1,9 +1,9 @@
 import { createToken, defineModule, provideClass, provideValue } from "@aponiajs/common";
-import { elysiaController, httpErrors } from "@aponiajs/platform-elysia";
+import { controller, httpErrors } from "@aponiajs/platform-elysia";
 
 /**
  * The descriptor authoring layer. No decorators anywhere: `defineModule`,
- * `provide*`, and `elysiaController` build the frozen shape directly.
+ * `provide*`, and `controller` build the frozen shape directly.
  */
 const METRICS_NAMESPACE = createToken<string>("METRICS_NAMESPACE");
 
@@ -18,7 +18,7 @@ export class MetricsService {
   }
 }
 
-const metricsController = elysiaController(
+const metricsController = controller(
   class MetricsController {
     constructor(readonly metricsService: MetricsService) {}
   },

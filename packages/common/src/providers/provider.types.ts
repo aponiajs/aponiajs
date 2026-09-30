@@ -1,4 +1,4 @@
-import type { Constructor, Token, TokenValues } from "../tokens/token.types.ts";
+import type { Constructor, Token, TokenMap } from "../tokens/token.types.ts";
 
 export type ProviderScope = "singleton";
 
@@ -18,7 +18,7 @@ export interface FactoryProvider<
 > extends ProviderBase<T> {
   readonly kind: "factory";
   readonly inject: TDependencies;
-  readonly useFactory: (...dependencies: TokenValues<TDependencies>) => T;
+  readonly useFactory: (...dependencies: TokenMap<TDependencies>) => T;
 }
 
 export interface ClassProvider<
@@ -27,7 +27,7 @@ export interface ClassProvider<
 > extends ProviderBase<T> {
   readonly kind: "class";
   readonly inject: TDependencies;
-  readonly useClass: Constructor<T, TokenValues<TDependencies>>;
+  readonly useClass: Constructor<T, TokenMap<TDependencies>>;
 }
 
 export interface AliasProvider<T> extends ProviderBase<T> {

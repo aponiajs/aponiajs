@@ -14,7 +14,7 @@ import {
 import { t } from "elysia";
 import {
   AponiaFactory,
-  defineElysiaControllerRoutes,
+  defineControllerRoutes,
   type AponiaApplicationOptions,
   type AponiaModuleDescriptorArtifact,
 } from "../src/index.ts";
@@ -74,7 +74,7 @@ const declaredDescriptor = defineModule({
   id: "DescriptorRootModule",
   providers: [provideClass(DescriptorUsersService, [])],
   controllers: [
-    defineElysiaControllerRoutes(DescriptorUsersController, {
+    defineControllerRoutes(DescriptorUsersController, {
       path: "users",
       inject: [DescriptorUsersService],
       routes: [

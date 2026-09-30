@@ -8,7 +8,7 @@ import {
   MessageBody,
   Module,
   Post,
-  Set,
+  ResponseSettings,
   SubscribeMessage,
   UseFilters,
   UseGuards,
@@ -17,7 +17,7 @@ import {
   type CanActivate,
   type LoggerService,
   type RouteContext,
-  type RouteResponseSettings,
+  type ResponseSettingsState,
 } from "@aponiajs/common";
 import { t, status } from "elysia";
 import { AponiaFactory, httpErrors } from "../src/index.ts";
@@ -247,19 +247,19 @@ class TransformController {
   }
 
   @Get("decided")
-  decided(@Set() set: RouteResponseSettings): string {
+  decided(@ResponseSettings() set: ResponseSettingsState): string {
     set.status = 418;
     throw new Error("decided before the throw");
   }
 
   @Get("named")
-  named(@Set() set: RouteResponseSettings): string {
+  named(@ResponseSettings() set: ResponseSettingsState): string {
     set.status = "I'm a Teapot";
     throw new Error("named before the throw");
   }
 
   @Get("early")
-  early(@Set() set: RouteResponseSettings): string {
+  early(@ResponseSettings() set: ResponseSettingsState): string {
     set.status = 200;
     throw new Error("decided too early");
   }

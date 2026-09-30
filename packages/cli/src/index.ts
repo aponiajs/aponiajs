@@ -1,5 +1,5 @@
 export { parseArguments } from "./commands/arguments.ts";
-export { generateSchematics } from "./commands/command.constants.ts";
+export { schematicNames } from "./commands/command.constants.ts";
 export type {
   CliCommand,
   GenerateCommandOptions,
@@ -7,8 +7,8 @@ export type {
   ResourceTransport,
 } from "./commands/command.types.ts";
 export { runCli } from "./commands/run-cli.ts";
-export { aponiaBuildPlugin, aponiaBuildPluginName } from "./bundler/aponia-build-plugin.ts";
-export type { AponiaBuildPluginOptions } from "./bundler/aponia-build-plugin.types.ts";
+export { buildPlugin, buildPluginName } from "./bundler/aponia-build-plugin.ts";
+export type { BuildPluginOptions } from "./bundler/aponia-build-plugin.types.ts";
 export { analyzeControllerRoutes } from "./generation/controller-routes.ts";
 export { emitControllerInvokers } from "./generation/controller-invokers.ts";
 export {

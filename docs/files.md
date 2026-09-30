@@ -92,13 +92,19 @@ value escapes `application.handle` as a `TypeError` with no response at all.
 `downloadFile` writes that one value and returns the file:
 
 ```ts
-import { Controller, Get, Param, Set, type RouteResponseSettings } from "@aponiajs/common";
+import {
+  Controller,
+  Get,
+  Param,
+  ResponseSettings,
+  type ResponseSettingsState,
+} from "@aponiajs/common";
 import { downloadFile } from "@aponiajs/platform-elysia";
 
 @Controller("reports")
 export class ReportController {
   @Get(":id")
-  read(@Param("id") id: string, @Set() set: RouteResponseSettings) {
+  read(@Param("id") id: string, @ResponseSettings() set: ResponseSettingsState) {
     return downloadFile(set, `/srv/reports/${id}.csv`, `${id}.csv`);
   }
 }
@@ -148,11 +154,11 @@ takes.
 ```ts
 import { resolve } from "node:path";
 import type { Elysia } from "elysia";
-import type { NativeElysiaConfigurator } from "@aponiajs/platform-elysia";
+import type { ElysiaConfigurator } from "@aponiajs/platform-elysia";
 
 // `../public` from a file under `src/`: the directory is resolved from the file,
 // not from the working directory, so the route answers wherever the process starts.
-export const configureStaticAssets: NativeElysiaConfigurator<Elysia> = (native) => {
+export const configureStaticAssets: ElysiaConfigurator<Elysia> = (native) => {
   native.config.serve = {
     ...native.config.serve,
     routes: {

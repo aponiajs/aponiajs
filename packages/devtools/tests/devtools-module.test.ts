@@ -9,7 +9,7 @@ import {
 } from "@aponiajs/common";
 import {
   AponiaFactory,
-  type AponiaElysiaApplication,
+  type AponiaApplication,
   type AponiaInvokerArtifact,
 } from "@aponiajs/platform-elysia";
 import { Elysia } from "elysia";
@@ -19,7 +19,7 @@ import {
   devtoolsContractVersion,
   devtoolsPathPrefix,
   devtoolsPlugin,
-  type AponiaFlowPayload,
+  type AponiaRouteTracePayload,
   type AponiaMetaPayload,
   type AponiaRoutesPayload,
 } from "../src/index.ts";
@@ -75,7 +75,7 @@ interface BootOptions {
  * mount: the surface is served by the application, so a case does not need a
  * socket, a port, or a report to learn where to send a request.
  */
-async function bootWithDevtools(options: BootOptions = {}): Promise<AponiaElysiaApplication> {
+async function bootWithDevtools(options: BootOptions = {}): Promise<AponiaApplication> {
   const registration = DevtoolsModule.register({ enabled: options.enabled ?? true });
 
   return AponiaFactory.create(rootWith(registration, options.controllers), {
@@ -127,10 +127,7 @@ function devtoolsReports(output: CapturedOutput): readonly string[] {
  * run, so an application that answers one answered it after the setup phase
  * finished. A sleep would have to guess how many ticks the path takes.
  */
-async function askOverSocket(
-  application: AponiaElysiaApplication,
-  path: string,
-): Promise<Response> {
+async function askOverSocket(application: AponiaApplication, path: string): Promise<Response> {
   return fetch(`${application.getUrl()}${path}`);
 }
 
@@ -156,7 +153,7 @@ test("register returns an inert module when disabled and a plugin module when en
 
   const enabled = DevtoolsModule.register({ enabled: true });
 
-  expect(enabled.id).toBe("ElysiaPluginModule[devtools]");
+  expect(enabled.id).toBe("PluginModule[devtools]");
   expect(enabled.providers).toHaveLength(1);
   expect(Object.isFrozen(enabled)).toBe(true);
 });
@@ -181,7 +178,7 @@ test.serial("a listening disabled application mounts no plugin", async () => {
     expect(response.status).toBe(404);
     await application.close();
 
-    expect(output.rows().join("")).not.toContain("ElysiaPluginModule[devtools]");
+    expect(output.rows().join("")).not.toContain("PluginModule[devtools]");
     expect(devtoolsReports(output)).toEqual([]);
   } finally {
     output.restore();
@@ -192,16 +189,14 @@ test.serial(
   "an enabled module mounts its plugin, which serves the application's own address",
   async () => {
     const output = captureOutput();
-    let application: AponiaElysiaApplication | undefined;
+    let application: AponiaApplication | undefined;
     try {
       application = await AponiaFactory.create(
         rootWith(DevtoolsModule.register({ enabled: true }), [HealthController]),
       );
       await application.listen(0);
 
-      expect(output.rows().join("")).toContain(
-        "ElysiaPluginModule[devtools] dependencies initialized",
-      );
+      expect(output.rows().join("")).toContain("PluginModule[devtools] dependencies initialized");
 
       // The surface answers on the address the application serves, and the
       // application's own routes answer beside it. These two requests also wait
@@ -334,7 +329,7 @@ test("routes and flow report the surface's own mount", async () => {
   // route, so there is no step for the chain to state.
   const flow = (await (
     await application.handle(new Request(`http://localhost${devtoolsPathPrefix}/flow`))
-  ).json()) as AponiaFlowPayload;
+  ).json()) as AponiaRouteTracePayload;
 
   expect(flow.routes.map((route) => route.id)).toContain(`* ${devtoolsPathPrefix}/*`);
 

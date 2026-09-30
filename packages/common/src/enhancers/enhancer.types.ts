@@ -44,7 +44,7 @@ export interface CanActivate {
  * forfeits Elysia's source-static handler compilation for every route carrying
  * an enhancer. See the design document.
  */
-export interface AponiaInterceptor {
+export interface Interceptor {
   interceptBefore?(context: ExecutionContext): void | Promise<void>;
 
   /**

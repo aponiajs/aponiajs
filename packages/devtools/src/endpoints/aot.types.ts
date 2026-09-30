@@ -9,7 +9,7 @@
  * internal to that package) rather than naming it, because this is a wire
  * contract: a payload type may not depend on a type a consumer cannot import.
  */
-export type AponiaAotGraph = "declared" | "decorated";
+export type AponiaBuildGraph = "declared" | "decorated";
 
 /**
  * The boot's verdict on the generated invoker artifact.
@@ -19,7 +19,7 @@ export type AponiaAotGraph = "declared" | "decorated";
  * it refused is reported the way it is written: an adopted artifact publishes no
  * reason key, and no placeholder stands in for one that was never stated.
  */
-export interface AponiaAotInvokers {
+export interface AponiaBuildInvokers {
   /** Whether the boot served the application through generated invokers. */
   readonly accepted: boolean;
   /** Why the artifact was refused, absent when there was no refusal. */
@@ -31,7 +31,7 @@ export interface AponiaAotInvokers {
  * for an invoker the emitter rendered, `"compiled"` for a handler it declined,
  * which stays on the running platform's own compile path.
  */
-export type AponiaAotInvoker = "generated" | "compiled";
+export type AponiaBuildInvoker = "generated" | "compiled";
 
 /**
  * One handler the analysis decided about.
@@ -46,21 +46,21 @@ export type AponiaAotInvoker = "generated" | "compiled";
  * generated source cannot name — and the reason is the answer to "why is this
  * handler not optimized", which is the fact this endpoint exists to publish.
  */
-export interface AponiaAotHandler {
+export interface AponiaBuildHandler {
   /** The handler's property key, as the analysis names it. */
   readonly handler: string;
   /** Which binding a build would supply for it. */
-  readonly invoker: AponiaAotInvoker;
+  readonly invoker: AponiaBuildInvoker;
   /** Why the emitter declined it, absent for a handler it emitted. */
   readonly reason?: string | undefined;
 }
 
 /** One `@Controller()` class the analysis read, with its handlers declared order. */
-export interface AponiaAotController {
+export interface AponiaBuildController {
   /** The controller's class name. */
   readonly controller: string;
   /** Its handlers in method declaration order, one entry per property key. */
-  readonly handlers: readonly AponiaAotHandler[];
+  readonly handlers: readonly AponiaBuildHandler[];
 }
 
 /**
@@ -88,11 +88,11 @@ export interface AponiaAotController {
  * reaches, and `invokers.accepted` above is what the boot did with the artifact
  * the build's verdicts would have produced.
  */
-export interface AponiaAotPayload {
+export interface AponiaBuildPayload {
   /** Which root the container compiled. */
-  readonly graph: AponiaAotGraph;
+  readonly graph: AponiaBuildGraph;
   /** The boot's verdict on the generated invoker artifact. */
-  readonly invokers: AponiaAotInvokers;
+  readonly invokers: AponiaBuildInvokers;
   /** Every controller the analysis read, sorted by path, with its per-handler verdicts. */
-  readonly controllers: readonly AponiaAotController[];
+  readonly controllers: readonly AponiaBuildController[];
 }

@@ -28,9 +28,9 @@ container.
   resolve, unresolvable provider dependencies, and unresolvable controller
   dependencies. The shape check runs before any field of an entry is read, because
   a provider can arrive from JavaScript or from a build's descriptor artifact and
-  every read below it assumes a provider. `providerDependencies` answers a kind it
-  does not know with `INVALID_PROVIDER` rather than `undefined`, since it is
-  exported for adapters that read a graph without building one.
+  every read below it assumes a provider. `getProviderDependencies` answers a
+  kind it does not know with `INVALID_PROVIDER` rather than `undefined`, since it
+  is exported for adapters that read a graph without building one.
 - Modules are identified by `instanceId ?? id`. Two configured instances of one
   module class stay distinct through `instanceId`.
 - `ModuleGraph.modules` holds every module reachable from the root through
@@ -47,7 +47,7 @@ container.
 - `get()` enforces root-module visibility on purpose. `resolveModuleProvider()`
   is the platform SPI for resolving inside an arbitrary module and is not
   application API; keep it marked `@internal`.
-- `providerDependencies()` is exported for the same reason: a platform adapter
+- `getProviderDependencies()` is exported for the same reason: a platform adapter
   that describes a graph without building one must read the container's own
   dependency rule rather than restate it. It stays `@internal`.
 

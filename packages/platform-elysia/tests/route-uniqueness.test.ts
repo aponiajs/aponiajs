@@ -11,7 +11,7 @@ import {
 import { createContainer } from "@aponiajs/core";
 import {
   AponiaFactory,
-  ElysiaPluginModule,
+  PluginModule,
   compileRootModule,
   inspectAponiaApplication,
 } from "../src/index.ts";
@@ -157,7 +157,7 @@ class ReuseRootModule {}
 const plugin = new Elysia({ name: "route-uniqueness-plugin" })
   .get("/plugin-shared", () => "plugin")
   .get("/plugin-only", () => "plugin-only");
-const pluginModule = ElysiaPluginModule.register(plugin, { key: "route-uniqueness" });
+const pluginModule = PluginModule.register(plugin, { key: "route-uniqueness" });
 
 @Controller("plugin-shared")
 class PluginSharedController {

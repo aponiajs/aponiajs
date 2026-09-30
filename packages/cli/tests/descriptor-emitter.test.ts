@@ -182,16 +182,14 @@ export class UsersModule {}
     expect(emitted.declined).toEqual([]);
     const source = emitted.source ?? "";
 
-    // `defineElysiaControllerRoutes` is the platform's own descriptor authoring
+    // `defineControllerRoutes` is the platform's own descriptor authoring
     // surface, so the file imports the two packages the helper names live in.
     expect(source).toContain('import { defineModule, provideClass } from "@aponiajs/common";');
-    expect(source).toContain(
-      'import { defineElysiaControllerRoutes } from "@aponiajs/platform-elysia";',
-    );
+    expect(source).toContain('import { defineControllerRoutes } from "@aponiajs/platform-elysia";');
     expect(source).toContain('import { t } from "elysia";');
     expect(source).toContain(
       [
-        "    defineElysiaControllerRoutes(UsersController, {",
+        "    defineControllerRoutes(UsersController, {",
         '      path: "users",',
         "      inject: [UsersService],",
         "      routes: [",
@@ -1349,7 +1347,7 @@ export class UsersModule {}
     ]);
   });
 
-  test("declares a gateway provider through defineElysiaWebSocketGateway", () => {
+  test("declares a gateway provider through defineWebSocketGateway", () => {
     const emitted = emit({
       "events.gateway.ts": `import { ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@aponiajs/common";
 import type { Elysia } from "elysia";
@@ -1380,9 +1378,9 @@ export class EventsModule {}
 
     expect(emitted.declined).toEqual([]);
     expect(emitted.source).toContain(
-      'import { defineElysiaWebSocketGateway } from "@aponiajs/platform-elysia";',
+      'import { defineWebSocketGateway } from "@aponiajs/platform-elysia";',
     );
-    expect(emitted.source).toContain(`defineElysiaWebSocketGateway(EventsGateway, {
+    expect(emitted.source).toContain(`defineWebSocketGateway(EventsGateway, {
       path: "/events",
       inject: [],
       handlers: [
@@ -1439,7 +1437,7 @@ export class EventsModule {}
 
     expect(emitted.declined).toEqual([]);
     expect(emitted.source).toContain(
-      'defineElysiaWebSocketGateway(EventsGateway, {\n      path: "events",\n      inject: [AuditService],',
+      'defineWebSocketGateway(EventsGateway, {\n      path: "events",\n      inject: [AuditService],',
     );
   });
 

@@ -29,13 +29,13 @@ bun add --dev elysia@2.0.0-beta.19
 ## Define and export the application
 
 Native Elysia routes can enter the Aponia module graph through
-`defineElysiaPlugin`. `defineModule` preserves the exact plugin type while
+`definePlugin`. `defineModule` preserves the exact plugin type while
 Aponia still owns application composition:
 
 ```ts
 // backend/src/server.ts
 import { defineModule } from "@aponiajs/common";
-import { AponiaFactory, defineElysiaPlugin } from "@aponiajs/platform-elysia";
+import { AponiaFactory, definePlugin } from "@aponiajs/platform-elysia";
 import { Elysia, t } from "elysia";
 
 const userSchema = t.Object({
@@ -43,7 +43,7 @@ const userSchema = t.Object({
   name: t.String(),
 });
 
-const apiRoutes = defineElysiaPlugin(
+const apiRoutes = definePlugin(
   new Elysia({ name: "api-routes" }).get(
     "/users/:id",
     ({ params }) => ({
@@ -112,13 +112,13 @@ void api.users({ id: 42 }).post();
 ## Use Aponia controllers and dependency injection
 
 Controller descriptors can contribute their native Elysia route types to the
-same application. The concise path is `elysiaController`: its callback gets
+same application. The concise path is `controller`: its callback gets
 Elysia's normal request inference, its dependency tuple needs no assertion, and
 returning the fluent chain preserves the Eden contract:
 
 ```ts
 import { defineModule, provideClass } from "@aponiajs/common";
-import { AponiaFactory, elysiaController } from "@aponiajs/platform-elysia";
+import { AponiaFactory, controller } from "@aponiajs/platform-elysia";
 import { t } from "elysia";
 
 class UsersService {
@@ -131,7 +131,7 @@ class UsersController {
   constructor(readonly users: UsersService) {}
 }
 
-const usersController = elysiaController(UsersController, [UsersService], (app, controller) =>
+const usersController = controller(UsersController, [UsersService], (app, controller) =>
   app.get("/users/:id", ({ params }) => controller.users.find(params.id), {
     params: t.Object({ id: t.Number() }),
     response: t.Object({
@@ -160,10 +160,10 @@ The explicit descriptor form remains available for generators and advanced
 plugin ownership:
 
 ```ts
-import { defineElysiaController } from "@aponiajs/platform-elysia";
+import { defineController } from "@aponiajs/platform-elysia";
 import { Elysia } from "elysia";
 
-const usersController = defineElysiaController(UsersController, {
+const usersController = defineController(UsersController, {
   inject: [UsersService],
   buildPlugin: (controller) =>
     new Elysia({ name: "users-controller" }).get(
@@ -174,13 +174,13 @@ const usersController = defineElysiaController(UsersController, {
 });
 ```
 
-`defineElysiaController(..., { registerRoutes })` is also retained. Returning
+`defineController(..., { registerRoutes })` is also retained. Returning
 nothing remains runtime-compatible for existing direct registrations, but
 TypeScript then has no route chain to add to the exported Eden contract.
 Returning another Elysia instance is rejected during bootstrap because its
 routes would not be mounted on the application that Aponia exposes.
 
-Imported descriptor modules and `defineElysiaPlugin` imports are traversed in
+Imported descriptor modules and `definePlugin` imports are traversed in
 the same order as runtime bootstrap. Routes added by `configureNative` are also
 included:
 
@@ -234,11 +234,11 @@ Aponia lifecycle facade, startup logging, `getUrl`, or `close` is more useful.
 
 TypeScript can preserve routes that are visible in source:
 
-- native applications wrapped by `defineElysiaPlugin`;
-- `elysiaController` registrations that return their fluent Elysia chain;
-- `defineElysiaController` descriptors whose `buildPlugin` returns a typed
+- native applications wrapped by `definePlugin`;
+- `controller` registrations that return their fluent Elysia chain;
+- `defineController` descriptors whose `buildPlugin` returns a typed
   Elysia plugin;
-- `defineElysiaController` direct registrations that return their fluent
+- `defineController` direct registrations that return their fluent
   Elysia chain;
 - all statically declared imports and controllers in a `defineModule` tuple;
 - native routes accumulated by `configureNative`.

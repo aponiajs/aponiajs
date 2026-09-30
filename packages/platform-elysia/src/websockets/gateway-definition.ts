@@ -1,9 +1,9 @@
-import type { ClassToken, Constructor, Token, TokenValues } from "@aponiajs/common";
+import type { ClassToken, Constructor, Token, TokenMap } from "@aponiajs/common";
 import type {
-  DeclaredElysiaWebSocketGateway,
-  ElysiaWebSocketGatewayOptions,
-  ElysiaWebSocketGatewayPlan,
-  ElysiaWebSocketHandlerPlan,
+  DeclaredWebSocketGateway,
+  WebSocketGatewayOptions,
+  WebSocketGatewayPlan,
+  WebSocketHandlerPlan,
 } from "./gateway-plan.types.ts";
 
 /**
@@ -25,13 +25,13 @@ import type {
  * callable — is raised by that same step, at the same moment, with the same
  * code a decorated gateway gets.
  */
-export function defineElysiaWebSocketGateway<
+export function defineWebSocketGateway<
   TGateway,
   const TDependencies extends readonly Token<unknown>[] = readonly [],
 >(
-  useClass: ClassToken<TGateway> & Constructor<TGateway, TokenValues<TDependencies>>,
-  options: ElysiaWebSocketGatewayOptions<TDependencies> = {},
-): DeclaredElysiaWebSocketGateway<TGateway, TDependencies> {
+  useClass: ClassToken<TGateway> & Constructor<TGateway, TokenMap<TDependencies>>,
+  options: WebSocketGatewayOptions<TDependencies> = {},
+): DeclaredWebSocketGateway<TGateway, TDependencies> {
   return Object.freeze({
     kind: "class",
     provide: useClass as Token<TGateway>,
@@ -49,8 +49,8 @@ export function defineElysiaWebSocketGateway<
  * gets from metadata written once at class definition.
  */
 function freezeGatewayPlan(
-  options: ElysiaWebSocketGatewayOptions<readonly Token<unknown>[]>,
-): ElysiaWebSocketGatewayPlan {
+  options: WebSocketGatewayOptions<readonly Token<unknown>[]>,
+): WebSocketGatewayPlan {
   return Object.freeze({
     ...(options.path === undefined ? {} : { path: options.path }),
     handlers: Object.freeze((options.handlers ?? []).map(freezeHandler)),
@@ -58,7 +58,7 @@ function freezeGatewayPlan(
   });
 }
 
-function freezeHandler(handler: ElysiaWebSocketHandlerPlan): ElysiaWebSocketHandlerPlan {
+function freezeHandler(handler: WebSocketHandlerPlan): WebSocketHandlerPlan {
   return Object.freeze({
     event: handler.event,
     propertyKey: handler.propertyKey,

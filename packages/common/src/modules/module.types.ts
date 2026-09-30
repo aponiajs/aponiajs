@@ -28,7 +28,10 @@ type DefinedModuleInstanceId<TOptions extends ModuleOptions> = "instanceId" exte
  * A normalized module descriptor that retains literal collection types while
  * reflecting the empty frozen arrays supplied for omitted options.
  */
-export type DefinedModule<TOptions extends ModuleOptions> = Omit<TOptions, keyof ModuleDefinition> &
+export type ModuleDescriptor<TOptions extends ModuleOptions> = Omit<
+  TOptions,
+  keyof ModuleDefinition
+> &
   Readonly<{
     id: TOptions["id"];
     imports: TOptions extends {

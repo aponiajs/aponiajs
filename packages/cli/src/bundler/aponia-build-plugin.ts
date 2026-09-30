@@ -1,9 +1,9 @@
 import { formatBuildReport } from "../generation/build-report.ts";
 import { generateInvokers } from "../generation/invoker-generator.ts";
-import type { AponiaBuildPluginOptions } from "./aponia-build-plugin.types.ts";
+import type { BuildPluginOptions } from "./aponia-build-plugin.types.ts";
 
 /** The name Bun reports this plugin under in a build error. */
-export const aponiaBuildPluginName = "aponia-build";
+export const buildPluginName = "aponia-build";
 
 /**
  * A Bun plugin that regenerates an application's build artifacts as part of
@@ -18,13 +18,13 @@ export const aponiaBuildPluginName = "aponia-build";
  *
  * ```ts
  * // scripts/build.ts
- * import { aponiaBuildPlugin } from "@aponiajs/cli";
+ * import { buildPlugin } from "@aponiajs/cli";
  *
  * const result = await Bun.build({
  *   entrypoints: ["./src/main.ts"],
  *   outdir: "./dist",
  *   target: "bun",
- *   plugins: [aponiaBuildPlugin()],
+ *   plugins: [buildPlugin()],
  * });
  * if (!result.success) process.exit(1);
  * ```
@@ -50,9 +50,9 @@ export const aponiaBuildPluginName = "aponia-build";
  * this package's emitted declarations, where the declaration bundler cannot
  * resolve it and fails the build.
  */
-export function aponiaBuildPlugin(options: AponiaBuildPluginOptions = {}): Bun.BunPlugin {
+export function buildPlugin(options: BuildPluginOptions = {}): Bun.BunPlugin {
   return {
-    name: aponiaBuildPluginName,
+    name: buildPluginName,
     setup(build) {
       build.onStart(async () => {
         const result = await generateInvokers({

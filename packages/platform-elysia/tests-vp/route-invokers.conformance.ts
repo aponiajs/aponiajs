@@ -11,9 +11,9 @@ import { z } from "zod";
 import {
   AponiaFactory,
   type AponiaApplicationOptions,
-  type AponiaControllerInvokerFactory,
+  type ControllerHandlerFactory,
   type AponiaInvokerArtifact,
-  type AponiaRouteInvoker,
+  type RouteHandler,
 } from "../src/index.ts";
 import { aponiaVersion } from "../src/version.ts";
 
@@ -53,22 +53,19 @@ class ConformanceInvokerModule {}
 type InvokersOption = NonNullable<AponiaApplicationOptions["invokers"]>;
 type InvokersOptionAssertion = Expect<Equals<InvokersOption, AponiaInvokerArtifact>>;
 type InvokerMapAssertion = Expect<
-  Equals<
-    InvokersOption["invokers"],
-    ReadonlyMap<ClassToken<unknown>, AponiaControllerInvokerFactory>
-  >
+  Equals<InvokersOption["invokers"], ReadonlyMap<ClassToken<unknown>, ControllerHandlerFactory>>
 >;
-type RouteInvokerAssertion = Expect<Equals<AponiaRouteInvoker, (context: never) => unknown>>;
+type RouteInvokerAssertion = Expect<Equals<RouteHandler, (context: never) => unknown>>;
 
 /**
  * The shape `aponia build` emits: each invoker's parameter is built from the
  * application's own parameter annotations, so it names the fields that route
- * reads and is assignable to `AponiaRouteInvoker` without a cast. This is what
+ * reads and is assignable to `RouteHandler` without a cast. This is what
  * the artifact's whole purpose rests on, so it is asserted rather than assumed.
  */
 type GeneratedRouteInvoker = (context: { readonly body: { readonly name: string } }) => unknown;
 type GeneratedRouteInvokerAssertion = Expect<
-  GeneratedRouteInvoker extends AponiaRouteInvoker ? true : false
+  GeneratedRouteInvoker extends RouteHandler ? true : false
 >;
 
 /**
@@ -80,10 +77,8 @@ type GeneratedRouteInvokerAssertion = Expect<
  * invoker that reads the context names it, exactly as a generated one is
  * written against its own route's annotations.
  */
-const conformanceInvokers: AponiaControllerInvokerFactory = (
-  instance: ConformanceInvokerController,
-) =>
-  new Map<string | symbol, AponiaRouteInvoker>([
+const conformanceInvokers: ControllerHandlerFactory = (instance: ConformanceInvokerController) =>
+  new Map<string | symbol, RouteHandler>([
     ["ping", () => instance.ping()],
     ["readPromise", async () => instance.readPromise()],
     [
@@ -93,7 +88,7 @@ const conformanceInvokers: AponiaControllerInvokerFactory = (
   ]);
 
 function conformanceArtifact(
-  invokers: ReadonlyMap<ClassToken<unknown>, AponiaControllerInvokerFactory>,
+  invokers: ReadonlyMap<ClassToken<unknown>, ControllerHandlerFactory>,
   framework: string = aponiaVersion,
 ): AponiaInvokerArtifact {
   return Object.freeze({ framework, elysia: "1.4.30", invokers });
@@ -102,7 +97,7 @@ function conformanceArtifact(
 const conformanceOptions: AponiaApplicationOptions = {
   logger: false,
   invokers: conformanceArtifact(
-    new Map<ClassToken<unknown>, AponiaControllerInvokerFactory>([
+    new Map<ClassToken<unknown>, ControllerHandlerFactory>([
       [ConformanceInvokerController, conformanceInvokers],
     ]),
   ),
@@ -122,9 +117,7 @@ const documentedOptions: AponiaApplicationOptions = {
       [
         ConformanceInvokerController,
         (instance: ConformanceInvokerController) =>
-          new Map<string | symbol, AponiaRouteInvoker>([
-            ["ping", () => `${instance.ping()}-documented`],
-          ]),
+          new Map<string | symbol, RouteHandler>([["ping", () => `${instance.ping()}-documented`]]),
       ],
     ]),
   }),
@@ -201,11 +194,10 @@ test("the Vite+ lane refuses an artifact from another framework release", async 
   const application = await AponiaFactory.create(ConformanceInvokerModule, {
     logger: false,
     invokers: conformanceArtifact(
-      new Map<ClassToken<unknown>, AponiaControllerInvokerFactory>([
+      new Map<ClassToken<unknown>, ControllerHandlerFactory>([
         [
           ConformanceInvokerController,
-          () =>
-            new Map<string | symbol, AponiaRouteInvoker>([["ping", () => "from-another-release"]]),
+          () => new Map<string | symbol, RouteHandler>([["ping", () => "from-another-release"]]),
         ],
       ]),
       "0.0.0",

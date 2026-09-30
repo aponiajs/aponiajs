@@ -1,8 +1,8 @@
 import {
   AponiaError,
   getCatchMetadata,
-  tokenName,
-  type AponiaInterceptor,
+  getTokenName,
+  type Interceptor,
   type CanActivate,
   type ClassToken,
   type EnhancerMetadata,
@@ -28,7 +28,7 @@ export interface ResolvedFilter {
 /** The enhancers of one scope, resolved to the instances that run them. */
 export interface ResolvedEnhancers {
   readonly guards: readonly CanActivate[];
-  readonly interceptors: readonly AponiaInterceptor[];
+  readonly interceptors: readonly Interceptor[];
   readonly filters: readonly ResolvedFilter[];
 }
 
@@ -42,7 +42,7 @@ export interface ResolvedEnhancers {
  *
  * @internal
  */
-export interface InterceptorHalves {
+export interface InterceptorPhases {
   readonly before: boolean;
   readonly after: boolean;
 }
@@ -72,7 +72,7 @@ export interface ResolvedControllerEnhancers extends ResolvedEnhancers {
    * The halves each resolved interceptor class implements, keyed by its token.
    * A class resolved at two scopes, or on two routes, is one entry.
    */
-  readonly halves: ReadonlyMap<ClassToken<unknown>, InterceptorHalves>;
+  readonly halves: ReadonlyMap<ClassToken<unknown>, InterceptorPhases>;
 }
 
 /**
@@ -134,7 +134,7 @@ const noResolvedEnhancers: ResolvedEnhancers = Object.freeze({
  * halves a record publishes are the boot's own collection, which it copies, and
  * a mount that resolved nothing has none to publish.
  */
-const noInterceptorHalves: ReadonlyMap<ClassToken<unknown>, InterceptorHalves> = new Map();
+const noInterceptorPhases: ReadonlyMap<ClassToken<unknown>, InterceptorPhases> = new Map();
 
 /**
  * The enhancers a mount that resolves nothing runs: the one a controller
@@ -153,7 +153,7 @@ export const unmountedRouteEnhancers: MountedRouteEnhancers = Object.freeze({
   controller: Object.freeze({
     ...noResolvedEnhancers,
     forRoute: () => noResolvedEnhancers,
-    halves: noInterceptorHalves,
+    halves: noInterceptorPhases,
   }),
   exceptionHandling: Object.freeze({
     defaultFilter: undefined,
@@ -169,7 +169,7 @@ export const unmountedRouteEnhancers: MountedRouteEnhancers = Object.freeze({
  * class field is an own property the prototype never carries. A reader that
  * asks the prototype misses exactly that shape.
  */
-function halvesOf(instance: AponiaInterceptor): InterceptorHalves {
+function halvesOf(instance: Interceptor): InterceptorPhases {
   return Object.freeze({
     before: typeof instance.interceptBefore === "function",
     after: typeof instance.interceptAfter === "function",
@@ -202,7 +202,7 @@ export function resolveEnhancers(
   );
   const interceptors = resolveOnce(
     metadata.interceptors,
-    (interceptor) => container.resolveModuleProvider(module, interceptor) as AponiaInterceptor,
+    (interceptor) => container.resolveModuleProvider(module, interceptor) as Interceptor,
   );
   const filters = resolveOnce(metadata.filters, (filter) =>
     Object.freeze({
@@ -211,7 +211,7 @@ export function resolveEnhancers(
     }),
   );
 
-  const halves = new Map<ClassToken<unknown>, InterceptorHalves>();
+  const halves = new Map<ClassToken<unknown>, InterceptorPhases>();
   for (const [token, interceptor] of interceptors) {
     halves.set(token, halvesOf(interceptor));
   }
@@ -290,8 +290,8 @@ function resolvedInstance<TInstance>(
   if (instance === undefined) {
     throw new AponiaError(
       "MISSING_PROVIDER",
-      `Enhancer "${tokenName(token)}" was not resolved for module "${module.id}".`,
-      { module: module.id, enhancer: tokenName(token) },
+      `Enhancer "${getTokenName(token)}" was not resolved for module "${module.id}".`,
+      { module: module.id, enhancer: getTokenName(token) },
     );
   }
 

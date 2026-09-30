@@ -136,7 +136,7 @@ export class FormsController {
   });
 
   test("maps every supported parameter decorator to its binding kind", () => {
-    const source = `import { Body, Controller, Cookie, Ctx, Headers, Param, Post, Query, Req, Res, Set, Status, Store } from "@aponiajs/common";
+    const source = `import { Body, Controller, Cookie, Context, Headers, HttpStatus, Param, Post, Query, Req, ResponseSettings, State } from "@aponiajs/common";
 
 @Controller("bindings")
 export class BindingsController {
@@ -152,12 +152,11 @@ export class BindingsController {
     @Headers("authorization") authorization: string,
     @Cookie() cookie: unknown,
     @Cookie("session") session: string,
-    @Store() store: unknown,
-    @Ctx() context: unknown,
+    @State() store: unknown,
+    @Context() context: unknown,
     @Req() request: Request,
-    @Set() set: unknown,
-    @Res() res: unknown,
-    @Status() status: unknown,
+    @ResponseSettings() set: unknown,
+    @HttpStatus() status: unknown,
   ) {}
 }
 `;
@@ -179,7 +178,6 @@ export class BindingsController {
       "context",
       "request",
       "set",
-      "set",
       "status",
     ]);
     expect(controller?.routes[0]?.parameters.map((parameter) => parameter.property)).toStrictEqual([
@@ -193,7 +191,6 @@ export class BindingsController {
       "authorization",
       undefined,
       "session",
-      undefined,
       undefined,
       undefined,
       undefined,

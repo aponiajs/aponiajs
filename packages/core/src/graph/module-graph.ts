@@ -1,6 +1,6 @@
 import {
   AponiaError,
-  tokenName,
+  getTokenName,
   type ModuleDefinition,
   type Provider,
   type Token,
@@ -38,12 +38,12 @@ export class ModuleGraph {
             id: module.id,
             imports: Object.freeze(module.imports.map((item) => item.id)),
             controllers: Object.freeze(
-              module.controllers.map((controller) => tokenName(controller.token)),
+              module.controllers.map((controller) => getTokenName(controller.token)),
             ),
             providers: Object.freeze(
-              module.providers.map((provider) => tokenName(provider.provide)),
+              module.providers.map((provider) => getTokenName(provider.provide)),
             ),
-            exports: Object.freeze(module.exports.map(tokenName)),
+            exports: Object.freeze(module.exports.map(getTokenName)),
           }),
         ),
       ),
@@ -55,7 +55,7 @@ export class ModuleGraph {
       throw new AponiaError(
         "MISSING_PROVIDER",
         `Module "${module.id}" is not part of the compiled graph.`,
-        { module: module.id, token: tokenName(token) },
+        { module: module.id, token: getTokenName(token) },
       );
     }
 
@@ -109,10 +109,10 @@ export class ModuleGraph {
       if (candidates.size > 1) {
         throw new AponiaError(
           "AMBIGUOUS_PROVIDER",
-          `Token "${tokenName(token)}" is exported by multiple imports of module "${module.id}".`,
+          `Token "${getTokenName(token)}" is exported by multiple imports of module "${module.id}".`,
           {
             module: module.id,
-            token: tokenName(token),
+            token: getTokenName(token),
             candidates: [...candidates.values()].map((item) => item.module.id),
           },
         );
@@ -147,7 +147,7 @@ export class ModuleGraph {
 function missingProvider(module: ModuleDefinition, token: Token<unknown>): AponiaError {
   return new AponiaError(
     "MISSING_PROVIDER",
-    `Module "${module.id}" cannot resolve token "${tokenName(token)}".`,
-    { module: module.id, token: tokenName(token) },
+    `Module "${module.id}" cannot resolve token "${getTokenName(token)}".`,
+    { module: module.id, token: getTokenName(token) },
   );
 }

@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type { LoggerService } from "@aponiajs/common";
-import { readApplicationDiagnostics } from "@aponiajs/platform-elysia";
+import { getApplicationDiagnostics } from "@aponiajs/platform-elysia";
 import type { Elysia } from "elysia";
 import {
   buildAotPayload,
@@ -16,7 +16,7 @@ import { buildLogsPayload, devtoolsLogsPath } from "../endpoints/logs.ts";
 import { buildMetaPayload, devtoolsMetaPath } from "../endpoints/meta.ts";
 import { buildRequestsPayload, devtoolsRequestsPath } from "../endpoints/requests.ts";
 import { buildRoutesPayload, devtoolsRoutesPath } from "../endpoints/routes.ts";
-import type { TappedLogStream } from "../logging/log-tap.ts";
+import type { LogStream } from "../logging/log-tap.ts";
 import type { RequestBuffer } from "../requests/request-buffer.types.ts";
 import type { DevtoolsHandlers } from "./devtools-server.types.ts";
 
@@ -24,7 +24,7 @@ import type { DevtoolsHandlers } from "./devtools-server.types.ts";
  * The endpoints one application's surface serves.
  *
  * There is no server in this module and no socket behind the package: the
- * surface is a route the plugin mounts on the application, and `routeRequest`
+ * surface is a route the plugin mounts on the application, and `handleDevtoolsRequest`
  * decides what that route answers. What is left here is what has to be decided
  * before a socket could exist — the record the request is dispatched against —
  * and the one fact that is read from the tree rather than from a boot.
@@ -53,7 +53,7 @@ import type { DevtoolsHandlers } from "./devtools-server.types.ts";
  *
  * @internal
  */
-export function resolveElysiaVersion(baseDirectory: string): string | null {
+export function resolvePeerVersion(baseDirectory: string): string | null {
   const manifestPath = findInstalledElysiaManifest(baseDirectory);
 
   if (manifestPath === undefined) {
@@ -135,20 +135,20 @@ function findInstalledElysiaManifest(baseDirectory: string): string | undefined 
  * @internal
  *
  * The mounted route and this package's own tests are the only callers, and it
- * stays off the barrel: `routeRequest` is the dispatcher an application is told
+ * stays off the barrel: `handleDevtoolsRequest` is the dispatcher an application is told
  * about, and this is the record it is dispatched against.
  */
 export function createHandlers(
   application: Elysia | undefined,
-  logs: TappedLogStream | undefined,
+  logs: LogStream | undefined,
   requests: RequestBuffer | undefined,
   logger: LoggerService,
 ): DevtoolsHandlers {
   const diagnostics =
-    application === undefined ? undefined : readApplicationDiagnostics(application);
+    application === undefined ? undefined : getApplicationDiagnostics(application);
   const meta = buildMetaPayload({
     diagnostics,
-    elysia: resolveElysiaVersion(import.meta.dir),
+    elysia: resolvePeerVersion(import.meta.dir),
     startedAt: new Date().toISOString(),
   });
   const graph = buildGraphPayload(diagnostics);

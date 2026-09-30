@@ -1,42 +1,41 @@
 import {
   Body,
   Controller,
-  Ctx,
+  Context,
   Get,
-  Param,
-  Res,
+  HttpStatus,
   Injectable,
   Module,
+  Param,
   Post,
   Query,
-  Set,
-  Status,
-  Store,
+  ResponseSettings,
+  State,
   Validation,
   defineModule,
   type ClassToken,
   type ControllerDefinition,
   type LoggerService,
   type RouteContext,
-  type RouteResponseSettings,
+  type ResponseSettingsState,
   type RouteSchema,
 } from "@aponiajs/common";
 import { Elysia, t } from "elysia";
 import { z } from "zod";
 import {
   AponiaFactory,
-  ElysiaPluginModule,
+  PluginModule,
   compileRootModule,
-  defineElysiaPlugin,
-  elysiaController,
+  definePlugin,
+  controller,
   httpErrors,
   type AponiaApplicationOptions,
   type ConfiguredAponiaApplicationOptions,
-  type ElysiaRouteContext,
-  type ElysiaSet,
-  type ElysiaStatus,
-  type ElysiaStore,
-  type NativeElysiaPlugin,
+  type HandlerContext,
+  type ElysiaResponseSettings,
+  type ResponseStatus,
+  type AppState,
+  type ElysiaPlugin,
 } from "../src/index.ts";
 
 type VitePlusTest = typeof import("vite-plus/test");
@@ -94,10 +93,7 @@ type GlobalFiltersOptionAssertion = Expect<
   Equals<AponiaApplicationOptions["filters"], readonly ClassToken<unknown>[] | undefined>
 >;
 type PluginsOptionAssertion = Expect<
-  Equals<
-    AponiaApplicationOptions["plugins"],
-    readonly (NativeElysiaPlugin | undefined)[] | undefined
-  >
+  Equals<AponiaApplicationOptions["plugins"], readonly (ElysiaPlugin | undefined)[] | undefined>
 >;
 
 @Injectable()
@@ -159,7 +155,7 @@ class RegisteredHealthController {
   }
 }
 
-const registeredHealthController = elysiaController(
+const registeredHealthController = controller(
   RegisteredHealthController,
   (application, controller) =>
     application
@@ -176,7 +172,7 @@ const registeredHealthModule = defineModule({
 @Module({
   imports: [
     HealthServicesModule,
-    ElysiaPluginModule.registerAsync({
+    PluginModule.registerAsync({
       imports: [HealthServicesModule],
       inject: [HealthService] as const,
       useFactory: (healthService) =>
@@ -543,7 +539,7 @@ test("the Vite+ lane validates Standard Schema and native validation-model input
 });
 
 type ConformanceModelContext = RouteContext<typeof conformanceModelSchema>;
-type ConformanceNativeModelContext = ElysiaRouteContext<typeof conformanceNativeContextModelSchema>;
+type ConformanceNativeModelContext = HandlerContext<typeof conformanceNativeContextModelSchema>;
 type ValidationModelConformanceAssertions = [
   Expect<Equals<ConformanceModelContext["body"]["name"], string>>,
   Expect<Equals<ConformanceModelContext["params"]["id"], number>>,
@@ -552,7 +548,7 @@ type ValidationModelConformanceAssertions = [
 ];
 
 function assertConformanceModelStatus(
-  status: ElysiaStatus<typeof conformanceNativeContextModelSchema>,
+  status: ResponseStatus<typeof conformanceNativeContextModelSchema>,
 ): void {
   status(201, { name: "Ada" });
   // @ts-expect-error The model-backed response requires a name.
@@ -578,7 +574,7 @@ const conformanceNativeSchema = {
 @Controller("conformance-native-schema")
 class ConformanceNativeSchemaController {
   @Get(":id", conformanceNativeSchema)
-  read(context: ElysiaRouteContext<typeof conformanceNativeSchema>): unknown {
+  read(context: HandlerContext<typeof conformanceNativeSchema>): unknown {
     return context.params.id === 0
       ? context.status(404, { code: "NOT_FOUND" })
       : {
@@ -625,7 +621,7 @@ class ConformanceParameterController {
   @Post("/", conformanceParameterSchema)
   createUser(
     @Body() body: { name: string },
-    @Res() set: RouteResponseSettings,
+    @ResponseSettings() set: ResponseSettingsState,
   ): {
     name: string;
   } {
@@ -712,7 +708,7 @@ const conformanceClockPlugin = new Elysia({ name: "conformance-clock" })
 @Controller("conformance-plugin-context")
 class ConformancePluginContextController {
   @Get()
-  read(@Ctx() context: ElysiaRouteContext<{}, typeof conformanceClockPlugin>): {
+  read(@Context() context: HandlerContext<{}, typeof conformanceClockPlugin>): {
     now: string;
     traceId: string;
     requests: number;
@@ -729,9 +725,9 @@ class ConformancePluginContextController {
 
   @Get("parts")
   readParts(
-    @Store() store: ElysiaStore<typeof conformanceClockPlugin>,
-    @Set() set: ElysiaSet,
-    @Status() status: ElysiaStatus,
+    @State() store: AppState<typeof conformanceClockPlugin>,
+    @ResponseSettings() set: ElysiaResponseSettings,
+    @HttpStatus() status: ResponseStatus,
   ): unknown {
     store.requests += 1;
     set.headers["x-context-source"] = "parts";
@@ -740,7 +736,7 @@ class ConformancePluginContextController {
 }
 
 @Module({
-  imports: [ElysiaPluginModule.register(conformanceClockPlugin, { key: "conformance-clock" })],
+  imports: [PluginModule.register(conformanceClockPlugin, { key: "conformance-clock" })],
   controllers: [ConformancePluginContextController],
 })
 class ConformancePluginContextModule {}
@@ -766,7 +762,7 @@ test("the Vite+ lane types and exposes native plugin context", async () => {
   await application.close();
 });
 
-const conformanceCachePlugin = defineElysiaPlugin(
+const conformanceCachePlugin = definePlugin(
   new Elysia({ name: "conformance-cache" }).decorate("cache", {
     read: (key: string) => `cached:${key}`,
   }),
@@ -777,7 +773,7 @@ type conformanceCachePlugin = typeof conformanceCachePlugin;
 @Controller("conformance-defined-plugin")
 class ConformanceDefinedPluginController {
   @Get()
-  read(@Ctx() context: ElysiaRouteContext<conformanceCachePlugin>): { cached: string } {
+  read(@Context() context: HandlerContext<conformanceCachePlugin>): { cached: string } {
     return { cached: context.cache.read("users") };
   }
 }

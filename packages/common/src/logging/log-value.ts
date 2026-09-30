@@ -44,7 +44,7 @@ export const unrenderableValue = "[unrenderable]";
  * `JSON.stringify` refuses a value that refers to itself or whose `toJSON` throws,
  * and a function's `name` refuses when it is a getter that throws.
  */
-export function renderLogValue(value: unknown): string {
+export function formatLogValue(value: unknown): string {
   if (typeof value === "string") {
     return value;
   }

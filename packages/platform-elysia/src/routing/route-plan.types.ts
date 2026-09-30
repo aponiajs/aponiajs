@@ -9,7 +9,7 @@ import type {
  * One route a controller declares, as data rather than as decorator metadata.
  *
  * This is the descriptor path's equivalent of `@Get("/path", { body })` plus its
- * parameter decorators. `defineElysiaControllerRoutes` compiles a list of these
+ * parameter decorators. `defineControllerRoutes` compiles a list of these
  * through the same lowering a decorated controller uses, so a generated or
  * hand-written descriptor reaches the same version guard, the same duplicate
  * route check, the same startup log lines, and the same generated-invoker
@@ -31,7 +31,7 @@ import type {
  *   the handler declares. They remain the controller's own declarations:
  *   application-wide enhancers merge at the mount, never into a compiled route.
  */
-export interface ElysiaRoutePlan {
+export interface RoutePlan {
   readonly method: RequestMethod;
   /** The route path, relative to the controller's own path. */
   readonly path: string;

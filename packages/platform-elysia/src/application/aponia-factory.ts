@@ -1,12 +1,12 @@
 import type { AnyElysia } from "elysia";
 import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
 import { bootstrapAponiaApplication } from "./application-bootstrap.ts";
-import { AponiaElysiaApplication } from "./aponia-elysia-application.ts";
+import { AponiaApplication } from "./aponia-elysia-application.ts";
 import type {
   AponiaApplicationOptions,
   ConfiguredAponiaApplicationOptions,
 } from "./application.types.ts";
-import type { AponiaNativeApplication } from "./native-application.types.ts";
+import type { ElysiaApplication } from "./native-application.types.ts";
 
 export class AponiaFactory {
   /**
@@ -18,17 +18,17 @@ export class AponiaFactory {
   >(
     rootModule: TRootModule,
     options: ConfiguredAponiaApplicationOptions<TNativeApplication>,
-  ): Promise<AponiaElysiaApplication<AponiaNativeApplication<TRootModule, TNativeApplication>>>;
+  ): Promise<AponiaApplication<ElysiaApplication<TRootModule, TNativeApplication>>>;
   static create<const TRootModule extends AponiaRootModule>(
     rootModule: TRootModule,
     options?: AponiaApplicationOptions,
-  ): Promise<AponiaElysiaApplication<AponiaNativeApplication<TRootModule>>>;
+  ): Promise<AponiaApplication<ElysiaApplication<TRootModule>>>;
   static async create(
     rootModule: AponiaRootModule,
     options: AponiaApplicationOptions | ConfiguredAponiaApplicationOptions<AnyElysia> = {},
-  ): Promise<AponiaElysiaApplication<AnyElysia>> {
+  ): Promise<AponiaApplication<AnyElysia>> {
     const { nativeApplication, logger } = await bootstrapAponiaApplication(rootModule, options);
-    return new AponiaElysiaApplication(nativeApplication, logger);
+    return new AponiaApplication(nativeApplication, logger);
   }
 
   /**
@@ -43,11 +43,11 @@ export class AponiaFactory {
   >(
     rootModule: TRootModule,
     options: ConfiguredAponiaApplicationOptions<TNativeApplication>,
-  ): Promise<AponiaNativeApplication<TRootModule, TNativeApplication>>;
+  ): Promise<ElysiaApplication<TRootModule, TNativeApplication>>;
   static createNative<const TRootModule extends AponiaRootModule>(
     rootModule: TRootModule,
     options?: AponiaApplicationOptions,
-  ): Promise<AponiaNativeApplication<TRootModule>>;
+  ): Promise<ElysiaApplication<TRootModule>>;
   static async createNative(
     rootModule: AponiaRootModule,
     options: AponiaApplicationOptions | ConfiguredAponiaApplicationOptions<AnyElysia> = {},

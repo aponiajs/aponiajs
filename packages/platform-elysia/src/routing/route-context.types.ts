@@ -8,20 +8,20 @@ import type { SingletonBase } from "elysia/types";
 
 /**
  * One plugin a handler reads from: a native Elysia instance, or the module
- * import `defineElysiaPlugin` produces for it.
+ * import `definePlugin` produces for it.
  */
-export type ElysiaPluginSource = AnyElysia | { readonly plugin: AnyElysia };
+export type PluginSource = AnyElysia | { readonly plugin: AnyElysia };
 
 /**
  * One plugin, or every plugin whose types a handler depends on.
  */
-export type ElysiaPluginTypes = ElysiaPluginSource | readonly ElysiaPluginSource[];
+export type PluginTypes = PluginSource | readonly PluginSource[];
 
 type ResolvePlugin<TSource> = TSource extends { readonly plugin: infer TPlugin extends AnyElysia }
   ? TPlugin
   : TSource;
 
-type PluginUnion<TPlugins extends ElysiaPluginTypes> = ResolvePlugin<
+type PluginUnion<TPlugins extends PluginTypes> = ResolvePlugin<
   TPlugins extends readonly (infer TSource)[] ? TSource : TPlugins
 >;
 
@@ -40,7 +40,7 @@ type MergeRecords<TUnion> =
  * derives and resolves reach the routes mounted alongside it, so both are part
  * of the context. Plugin-local derives stay inside the plugin and are excluded.
  */
-type MountedSingleton<TPlugins extends ElysiaPluginTypes> = {
+type MountedSingleton<TPlugins extends PluginTypes> = {
   decorator: MergeRecords<PluginUnion<TPlugins>["~Singleton"]["decorator"]>;
   store: MergeRecords<PluginUnion<TPlugins>["~Singleton"]["store"]>;
   derive: MergeRecords<
@@ -64,7 +64,7 @@ type MountedSingleton<TPlugins extends ElysiaPluginTypes> = {
  * which is the value a handler hands back to be encoded. A model class
  * describes one instance on both sides, so leaving `input` as `unknown` — as a
  * request-only projection may — reads a model-backed response member back as
- * `unknown` and collapses `ElysiaStatus` to a helper that accepts no status.
+ * `unknown` and collapses `ResponseStatus` to a helper that accepts no status.
  */
 interface ValidationModelSchema<TOutput> {
   readonly "~standard": {
@@ -95,7 +95,7 @@ type LowerAponiaRouteSchema<TSchema extends AponiaRouteSchema> = {
     : LowerValidationModel<TSchema[TSlot]>;
 };
 
-type ResolveElysiaInputSchema<TSchema> = TSchema extends InputSchema
+type ResolveRouteInputSchema<TSchema> = TSchema extends InputSchema
   ? TSchema
   : TSchema extends AponiaRouteSchema
     ? LowerAponiaRouteSchema<TSchema> extends infer TLowered extends InputSchema
@@ -105,7 +105,7 @@ type ResolveElysiaInputSchema<TSchema> = TSchema extends InputSchema
 
 /**
  * The native Elysia request context for a declared route schema. Handlers that
- * take the whole context — through `@Ctx()` or a single unannotated parameter —
+ * take the whole context — through `@Context()` or a single unannotated parameter —
  * keep `status`, `set`, `cookie`, `store`, `redirect`, and plugin decorators
  * fully typed.
  *
@@ -115,53 +115,58 @@ type ResolveElysiaInputSchema<TSchema> = TSchema extends InputSchema
  * writes an empty one:
  *
  * ```ts
- * read(@Ctx() context: ElysiaRouteContext<typeof clock>) {}
- * read(@Ctx() context: ElysiaRouteContext<[typeof clock, typeof cache]>) {}
- * create(@Ctx() context: ElysiaRouteContext<typeof createUser, typeof clock>) {}
+ * read(@Context() context: HandlerContext<typeof clock>) {}
+ * read(@Context() context: HandlerContext<[typeof clock, typeof cache]>) {}
+ * create(@Context() context: HandlerContext<typeof createUser, typeof clock>) {}
  * ```
  *
- * A plugin exported through `defineElysiaPlugin` alongside a same-named type
+ * A plugin exported through `definePlugin` alongside a same-named type
  * drops the `typeof`, which reads best under a short import alias:
  *
  * ```ts
- * import { type ElysiaRouteContext as e } from "@aponiajs/platform-elysia";
+ * import { type HandlerContext as e } from "@aponiajs/platform-elysia";
  *
- * read(@Ctx() context: e<clock>) {}
+ * read(@Context() context: e<clock>) {}
  * ```
  *
  * An application that always mounts the same plugins declares the pairing once
  * and keeps its handlers short:
  *
  * ```ts
- * export type AppContext<TSchema extends ElysiaInputSchema = {}> =
- *   ElysiaRouteContext<TSchema, [typeof clock, typeof cache]>;
+ * export type AppContext<TSchema extends RouteInputSchema = {}> =
+ *   HandlerContext<TSchema, [typeof clock, typeof cache]>;
  * ```
  */
-export type ElysiaRouteContext<
-  TSchemaOrPlugins extends ElysiaInputSchema | ElysiaPluginTypes = {},
-  TPlugins extends ElysiaPluginTypes = never,
-> = TSchemaOrPlugins extends ElysiaPluginTypes
+export type HandlerContext<
+  TSchemaOrPlugins extends RouteInputSchema | PluginTypes = {},
+  TPlugins extends PluginTypes = never,
+> = TSchemaOrPlugins extends PluginTypes
   ? Context<UnwrapRoute<{}, {}, string>, MountedSingleton<TSchemaOrPlugins>>
   : Context<
-      UnwrapRoute<ResolveElysiaInputSchema<TSchemaOrPlugins>, {}, string>,
+      UnwrapRoute<ResolveRouteInputSchema<TSchemaOrPlugins>, {}, string>,
       MountedSingleton<TPlugins>
     >;
 
-/** The exact mutable response settings exposed as `context.set`. */
-export type ElysiaSet = ElysiaRouteContext["set"];
+/**
+ * The exact mutable response settings exposed as `context.set`. Prefixed with
+ * `Elysia` because it is Elysia's own `set` object rather than an Aponia
+ * abstraction: `@aponiajs/common` exports a `ResponseSettings` decorator, so a
+ * handler annotating a parameter with both would otherwise have to alias one.
+ */
+export type ElysiaResponseSettings = HandlerContext["set"];
 
 /** The exact application state contributed by one plugin or a plugin tuple. */
-export type ElysiaStore<TPlugins extends ElysiaPluginTypes = never> = [TPlugins] extends [never]
-  ? ElysiaRouteContext["store"]
-  : ElysiaRouteContext<TPlugins>["store"];
+export type AppState<TPlugins extends PluginTypes = never> = [TPlugins] extends [never]
+  ? HandlerContext["store"]
+  : HandlerContext<TPlugins>["store"];
 
 /** The response-schema-aware status helper exposed as `context.status`. */
-export type ElysiaStatus<TSchema extends ElysiaInputSchema = {}> =
-  ElysiaRouteContext<TSchema>["status"];
+export type ResponseStatus<TSchema extends RouteInputSchema = {}> =
+  HandlerContext<TSchema>["status"];
 
 /**
  * A raw Elysia input schema or an Aponia route schema containing validation
  * model classes. Re-exported so an application can write one context alias
  * without importing either framework's internal schema types.
  */
-export type ElysiaInputSchema = InputSchema | AponiaRouteSchema;
+export type RouteInputSchema = InputSchema | AponiaRouteSchema;

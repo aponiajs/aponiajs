@@ -1,5 +1,5 @@
-import { AponiaError, tokenName, type ModuleDefinition, type Token } from "@aponiajs/common";
-import { providerDependencies, providerShapeProblem } from "./dependencies.ts";
+import { AponiaError, getTokenName, type ModuleDefinition, type Token } from "@aponiajs/common";
+import { getProviderDependencies, providerShapeProblem } from "./dependencies.ts";
 import { ModuleGraph } from "./module-graph.ts";
 
 export function compileModuleGraph(root: ModuleDefinition): ModuleGraph {
@@ -74,8 +74,8 @@ function validateOwnProviders(module: ModuleDefinition): void {
     if (tokens.has(provider.provide)) {
       throw new AponiaError(
         "DUPLICATE_PROVIDER",
-        `Module "${module.id}" declares token "${tokenName(provider.provide)}" more than once.`,
-        { module: module.id, token: tokenName(provider.provide) },
+        `Module "${module.id}" declares token "${getTokenName(provider.provide)}" more than once.`,
+        { module: module.id, token: getTokenName(provider.provide) },
       );
     }
     tokens.add(provider.provide);
@@ -91,8 +91,8 @@ function validateExports(graph: ModuleGraph): void {
         if (error instanceof AponiaError && error.code === "MISSING_PROVIDER") {
           throw new AponiaError(
             "INVALID_EXPORT",
-            `Module "${module.id}" cannot export missing token "${tokenName(token)}".`,
-            { module: module.id, token: tokenName(token) },
+            `Module "${module.id}" cannot export missing token "${getTokenName(token)}".`,
+            { module: module.id, token: getTokenName(token) },
           );
         }
         throw error;
@@ -104,7 +104,7 @@ function validateExports(graph: ModuleGraph): void {
 function validateDependencies(graph: ModuleGraph): void {
   for (const module of graph.modules) {
     for (const provider of module.providers) {
-      for (const dependency of providerDependencies(provider)) {
+      for (const dependency of getProviderDependencies(provider)) {
         graph.locate(module, dependency);
       }
     }
@@ -118,8 +118,8 @@ function validateControllers(graph: ModuleGraph): void {
       if (controllerTokens.has(controller.token)) {
         throw new AponiaError(
           "DUPLICATE_PROVIDER",
-          `Module "${module.id}" declares controller "${tokenName(controller.token)}" more than once.`,
-          { module: module.id, token: tokenName(controller.token) },
+          `Module "${module.id}" declares controller "${getTokenName(controller.token)}" more than once.`,
+          { module: module.id, token: getTokenName(controller.token) },
         );
       }
       controllerTokens.add(controller.token);

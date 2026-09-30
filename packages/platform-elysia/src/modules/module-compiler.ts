@@ -15,7 +15,7 @@ import {
   type Provider,
 } from "@aponiajs/common";
 import { Elysia } from "elysia";
-import { ELYSIA_CONTROLLER } from "../controllers/controller.constants.ts";
+import { CONTROLLER_KIND } from "../controllers/controller.constants.ts";
 import type { RuntimeElysiaController } from "../controllers/controller.types.ts";
 import { unmountedRouteEnhancers } from "../controllers/enhancer-resolver.ts";
 import {
@@ -226,7 +226,7 @@ function compileDecoratedController(controller: ClassToken<unknown>): Controller
     registerCompiledElysiaRoutes(plugin, controller, instance, routes, unmountedRouteEnhancers);
   };
   const definition: RuntimeElysiaController = Object.freeze({
-    kind: ELYSIA_CONTROLLER,
+    kind: CONTROLLER_KIND,
     token: controller,
     path: joinPaths(metadata.path, ""),
     inject: getConstructorDependencies(controller),

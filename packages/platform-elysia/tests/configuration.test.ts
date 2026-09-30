@@ -11,7 +11,7 @@ import {
 } from "@aponiajs/common";
 import { Elysia } from "elysia";
 import { z } from "zod";
-import { AponiaElysiaApplication, AponiaFactory, provideConfiguration } from "../src/index.ts";
+import { AponiaApplication, AponiaFactory, provideConfiguration } from "../src/index.ts";
 // The loader is package-private and `defineConfiguration` always supplies a
 // description, so the name fallback is reachable only by calling it directly.
 import { loadConfiguration } from "../src/configuration/configuration-loader.ts";
@@ -675,7 +675,7 @@ describe("provideConfiguration", () => {
   });
 });
 
-describe("AponiaElysiaApplication.get", () => {
+describe("AponiaApplication.get", () => {
   test("reads back the same object the container resolved", async () => {
     const AppConfig = defineConfiguration(portSchema, "app.config");
 
@@ -722,7 +722,7 @@ describe("AponiaElysiaApplication.get", () => {
 
   test("raises MISSING_PROVIDER on an application no boot produced", () => {
     const AppConfig = defineConfiguration(portSchema, "app.config");
-    const detached = new AponiaElysiaApplication(new Elysia(), undefined);
+    const detached = new AponiaApplication(new Elysia(), undefined);
 
     let thrown: unknown;
     try {

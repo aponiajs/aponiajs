@@ -10,13 +10,13 @@ import {
   UseGuards,
   UseInterceptors,
   defineModule,
-  tokenName,
+  getTokenName,
   type EnhancerMetadata,
   type ModuleDefinition,
   type Token,
 } from "@aponiajs/common";
 import { AponiaContainer, compileModuleGraph } from "@aponiajs/core";
-import { AponiaFactory, compileRootModule, defineElysiaControllerRoutes } from "../src/index.ts";
+import { AponiaFactory, compileRootModule, defineControllerRoutes } from "../src/index.ts";
 import {
   collectEnhancerDeclarations,
   resolveEnhancers,
@@ -123,7 +123,7 @@ class PlannedController {
 const UndeclaredPlannedGuardModule = defineModule({
   id: "UndeclaredPlannedGuardModule",
   controllers: [
-    defineElysiaControllerRoutes(PlannedController, {
+    defineControllerRoutes(PlannedController, {
       path: "planned",
       routes: [{ method: "GET", path: "", propertyKey: "read", guards: [UndeclaredGuard] }],
     }),
@@ -200,7 +200,7 @@ class CountingContainer extends AponiaContainer {
   readonly resolvedTokens: string[] = [];
 
   override resolveModuleProvider<TValue>(module: ModuleDefinition, token: Token<TValue>): TValue {
-    this.resolvedTokens.push(tokenName(token));
+    this.resolvedTokens.push(getTokenName(token));
     return super.resolveModuleProvider(module, token);
   }
 }

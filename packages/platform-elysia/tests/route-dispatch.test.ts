@@ -3,7 +3,7 @@ import {
   Body,
   Controller,
   Cookie,
-  Ctx,
+  Context,
   Get,
   Headers,
   Module,
@@ -11,9 +11,9 @@ import {
   Post,
   Query,
   Req,
-  Res,
+  ResponseSettings,
   type RouteContext,
-  type RouteResponseSettings,
+  type ResponseSettingsState,
 } from "@aponiajs/common";
 import { AponiaFactory, compileRootModule } from "../src/index.ts";
 
@@ -70,7 +70,7 @@ class DispatchController {
     @Param("id") id: string,
     _unused: unknown,
     @Query("name") name: string | undefined,
-    @Res() response: RouteResponseSettings,
+    @ResponseSettings() response: ResponseSettingsState,
   ): Promise<{ id: string; name: string | undefined; unused: boolean }> {
     response.headers["x-powered-by"] = "dispatch";
     return { id, name, unused: _unused === undefined };
@@ -125,13 +125,13 @@ class DispatchController {
   }
 
   @Get("response")
-  readResponse(@Res() response: RouteResponseSettings): string {
+  readResponse(@ResponseSettings() response: ResponseSettingsState): string {
     response.headers["x-dispatch"] = "response";
     return "response";
   }
 
   @Get("context")
-  readContext(@Ctx() context: RouteContext): string {
+  readContext(@Context() context: RouteContext): string {
     return context.path;
   }
 

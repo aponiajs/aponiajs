@@ -2,12 +2,7 @@ import { expect, test } from "bun:test";
 import { Controller, Get, Module, defineModule } from "@aponiajs/common";
 import { treaty, type Treaty } from "@elysia/eden";
 import { Elysia, t } from "elysia";
-import {
-  AponiaFactory,
-  defineElysiaController,
-  defineElysiaPlugin,
-  elysiaController,
-} from "../src/index.ts";
+import { AponiaFactory, defineController, definePlugin, controller } from "../src/index.ts";
 
 type Equals<TLeft, TRight> =
   (<T>() => T extends TLeft ? 1 : 2) extends <T>() => T extends TRight ? 1 : 2 ? true : false;
@@ -55,7 +50,7 @@ class EdenUsersController {
   }
 }
 
-const edenUsersController = defineElysiaController(EdenUsersController, {
+const edenUsersController = defineController(EdenUsersController, {
   inject: [] as const,
   buildPlugin: (controller) =>
     new Elysia({ name: "aponia-eden-users" })
@@ -102,7 +97,7 @@ const nativeHealthPlugin = new Elysia({ name: "aponia-eden-health" }).get(
   },
   () => ({ status: "ok" as const }),
 );
-const nativeVersionImport = defineElysiaPlugin(
+const nativeVersionImport = definePlugin(
   new Elysia({ name: "aponia-eden-version" }).get(
     "/version",
     {
@@ -141,20 +136,18 @@ class RegisteredEdenController {
   }
 }
 
-const registeredEdenController = elysiaController(
-  RegisteredEdenController,
-  (application, controller) =>
-    application.get(
-      "/registered-eden/:id",
-      {
-        params: t.Object({ id: t.Number() }),
-        response: t.Object({
-          id: t.Number(),
-          source: t.Literal("registered"),
-        }),
-      },
-      ({ params }) => controller.read(params.id),
-    ),
+const registeredEdenController = controller(RegisteredEdenController, (application, controller) =>
+  application.get(
+    "/registered-eden/:id",
+    {
+      params: t.Object({ id: t.Number() }),
+      response: t.Object({
+        id: t.Number(),
+        source: t.Literal("registered"),
+      }),
+    },
+    ({ params }) => controller.read(params.id),
+  ),
 );
 const registeredEdenModule = defineModule({
   id: "RegisteredEdenModule",
@@ -277,7 +270,7 @@ function assertInvalidRegisteredEdenCallsAreRejected(client: RegisteredEdenClien
 }
 
 function assertInvalidRegistrationResultsAreRejected(): void {
-  elysiaController(
+  controller(
     RegisteredEdenController,
     // @ts-expect-error A direct registration may only return its Elysia chain or void.
     () => 42,

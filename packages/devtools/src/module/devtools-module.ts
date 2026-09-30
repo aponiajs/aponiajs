@@ -1,14 +1,14 @@
 import { Logger, Module, type DynamicModule } from "@aponiajs/common";
 import {
-  ElysiaPluginModule,
-  readApplicationDiagnostics,
-  readApplicationFromStore,
+  PluginModule,
+  getApplicationDiagnostics,
+  getApplicationFromStore,
 } from "@aponiajs/platform-elysia";
-import type { NativeElysiaPlugin } from "@aponiajs/platform-elysia";
+import type { ElysiaPlugin } from "@aponiajs/platform-elysia";
 import { Elysia } from "elysia";
 import { createLogBuffer, defaultLogBufferCapacity } from "../logging/log-buffer.ts";
-import { isRecordableLogger, tapLogBuffer } from "../logging/log-tap.ts";
-import type { TappedLogStream } from "../logging/log-tap.ts";
+import { isRecordableLogger, recordLogger } from "../logging/log-tap.ts";
+import type { LogStream } from "../logging/log-tap.ts";
 import { createRequestCapture } from "../requests/request-capture.ts";
 import type { RequestCapture } from "../requests/request-capture.ts";
 import type { RequestBuffer } from "../requests/request-buffer.types.ts";
@@ -16,7 +16,7 @@ import { createHandlers } from "../server/devtools-server.ts";
 import {
   devtoolsPathPrefix,
   isDevtoolsSurfaceRequest,
-  routeRequest,
+  handleDevtoolsRequest,
 } from "../server/request-router.ts";
 import type { DevtoolsHandlers } from "../server/devtools-server.types.ts";
 import type { DevtoolsOptions } from "./devtools-module.types.ts";
@@ -40,7 +40,7 @@ export class DevtoolsModule {
   /**
    * Builds the devtools module for one application. A disabled registration is
    * inert — it mounts no provider and no native plugin — while an enabled one
-   * registers the devtools plugin as an `ElysiaPluginModule`, so the surface is
+   * registers the devtools plugin as a `PluginModule`, so the surface is
    * part of the application's route table.
    */
   static register(options: DevtoolsOptions): DynamicModule {
@@ -49,7 +49,7 @@ export class DevtoolsModule {
       return createInertModule();
     }
 
-    return ElysiaPluginModule.register(plugin, { key: devtoolsPluginKey });
+    return PluginModule.register(plugin, { key: devtoolsPluginKey });
   }
 }
 
@@ -88,7 +88,7 @@ export class DevtoolsModule {
  * configuration to this function mounts a debug surface only when it said it
  * wanted one.
  */
-export function devtoolsPlugin(options: DevtoolsOptions): NativeElysiaPlugin | undefined {
+export function devtoolsPlugin(options: DevtoolsOptions): ElysiaPlugin | undefined {
   if (!options.enabled) {
     return undefined;
   }
@@ -133,7 +133,7 @@ function createInertModule(): DynamicModule {
  * pattern.
  *
  * The route is a wildcard over the prefix and nothing more: it hands every
- * request that reaches it to `routeRequest`, which decides the method and the
+ * request that reaches it to `handleDevtoolsRequest`, which decides the method and the
  * path. The `404` for a path under the prefix that no endpoint owns and the
  * `405` for a method other than `GET` are that dispatcher's answers, not the
  * wildcard's, so the mount claims nothing about the paths beneath it.
@@ -174,7 +174,7 @@ function createInertModule(): DynamicModule {
  * are all outside it. Moving that reading down the hook, or back inside
  * `toRequestRecord`, silently charges the application for this package's work.
  */
-function createDevtoolsPlugin(options: DevtoolsOptions): NativeElysiaPlugin {
+function createDevtoolsPlugin(options: DevtoolsOptions): ElysiaPlugin {
   const logs = createLogStream(options.logger);
   const capture = createRequestCapture(options.capture);
   // One boot record per application, keyed by the application's own store — see
@@ -244,9 +244,9 @@ function createDevtoolsPlugin(options: DevtoolsOptions): NativeElysiaPlugin {
       })
       // The mount path, stated once. The wildcard is what makes the route claim
       // the prefix rather than one path, and everything about which paths beneath
-      // it answer — the `404`, the `405` — belongs to `routeRequest` below.
+      // it answer — the `404`, the `405` — belongs to `handleDevtoolsRequest` below.
       .all(`${devtoolsPathPrefix}/*`, ({ request, store }) =>
-        routeRequest(
+        handleDevtoolsRequest(
           request,
           surfaceFor(surfaces, store, recordFor(records, store, capture), logs),
         ),
@@ -367,9 +367,9 @@ function recordFor(
     return opened;
   }
 
-  const application = readApplicationFromStore(store) as Elysia | undefined;
+  const application = getApplicationFromStore(store) as Elysia | undefined;
   const diagnostics =
-    application === undefined ? undefined : readApplicationDiagnostics(application);
+    application === undefined ? undefined : getApplicationDiagnostics(application);
   // One `beginBoot` per application: it opens the window and files the boot's
   // exception table, so a second call would replace the window the application
   // has been answering into.
@@ -395,7 +395,7 @@ function surfaceFor(
   surfaces: WeakMap<object, DevtoolsHandlers>,
   store: object,
   record: ApplicationRecord,
-  logs: TappedLogStream | undefined,
+  logs: LogStream | undefined,
 ): DevtoolsHandlers {
   const built = surfaces.get(store);
 
@@ -445,10 +445,10 @@ function surfaceFor(
  * would announce the silence in exactly that case; absence is true in every one
  * of them.
  */
-function createLogStream(source: DevtoolsOptions["logger"]): TappedLogStream | undefined {
+function createLogStream(source: DevtoolsOptions["logger"]): LogStream | undefined {
   if (!isRecordableLogger(source)) {
     return undefined;
   }
 
-  return tapLogBuffer(source, createLogBuffer(defaultLogBufferCapacity));
+  return recordLogger(source, createLogBuffer(defaultLogBufferCapacity));
 }

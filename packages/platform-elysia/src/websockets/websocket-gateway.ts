@@ -4,7 +4,7 @@ import {
   getWebSocketMessageMetadata,
   getWebSocketParameterMetadata,
   getWebSocketServerProperties,
-  tokenName,
+  getTokenName,
   type AponiaErrorCode,
   type ClassToken,
   type ModuleDefinition,
@@ -13,13 +13,13 @@ import {
 } from "@aponiajs/common";
 import type { AponiaContainer } from "@aponiajs/core";
 import type { AnyElysia } from "elysia";
-import type { ElysiaWebSocketGatewayPlan } from "./gateway-plan.types.ts";
+import type { WebSocketGatewayPlan } from "./gateway-plan.types.ts";
 import type {
-  BoundElysiaWebSocketGateway,
-  CompiledElysiaWebSocketGateway,
-  CompiledElysiaWebSocketHandler,
-  ElysiaWebSocket,
-  ElysiaWebSocketMessageInvoker,
+  BoundWebSocketGateway,
+  CompiledWebSocketGateway,
+  CompiledWebSocketHandler,
+  WebSocketClient,
+  WebSocketMessageInvoker,
 } from "./websocket-gateway.types.ts";
 
 type WebSocketExceptionCode = Extract<
@@ -31,7 +31,7 @@ type MessageHandler = (...arguments_: unknown[]) => unknown;
 type MessageInvokerFactory = (
   handler: MessageHandler,
   instance: unknown,
-) => ElysiaWebSocketMessageInvoker;
+) => WebSocketMessageInvoker;
 type GatewayLifecycleMethod = (argument: unknown) => unknown;
 
 interface IncomingWebSocketMessage {
@@ -47,7 +47,7 @@ const defaultGatewayPath = "/ws";
 
 /**
  * The property a declared gateway provider carries its plan on, which is the
- * field `defineElysiaWebSocketGateway` writes.
+ * field `defineWebSocketGateway` writes.
  */
 const declaredGatewayPlanKey = "gateway";
 
@@ -78,11 +78,11 @@ interface GatewayPlan {
  *
  * @internal
  */
-export function compileElysiaWebSocketGateways(
+export function compileWebSocketGateways(
   modules: readonly ModuleDefinition[],
-): readonly CompiledElysiaWebSocketGateway[] {
-  const gateways: CompiledElysiaWebSocketGateway[] = [];
-  const paths = new Map<string, CompiledElysiaWebSocketGateway>();
+): readonly CompiledWebSocketGateway[] {
+  const gateways: CompiledWebSocketGateway[] = [];
+  const paths = new Map<string, CompiledWebSocketGateway>();
 
   for (const module of modules) {
     for (const provider of module.providers) {
@@ -124,38 +124,38 @@ export function compileElysiaWebSocketGateways(
  *
  * @internal
  */
-export async function registerElysiaWebSocketGateways(
+export async function registerWebSocketGateways(
   application: AnyElysia,
   container: AponiaContainer,
-  gateways: readonly CompiledElysiaWebSocketGateway[],
+  gateways: readonly CompiledWebSocketGateway[],
 ): Promise<void> {
   const boundGateways = gateways.map((gateway) => {
     const instance = container.resolveModuleProvider(gateway.module, gateway.token);
-    return bindElysiaWebSocketGateway(gateway, instance);
+    return bindWebSocketGateway(gateway, instance);
   });
   assertNoNativeWebSocketRouteCollisions(application, gateways);
 
   // `ws` infers its socket context from the hook it is handed, the same way
   // `method` infers a route's schema from one. These handlers are written
-  // against `ElysiaWebSocket` instead, so the call states the signature it
+  // against `WebSocketClient` instead, so the call states the signature it
   // needs. This module is the only place the platform registers a WebSocket
   // route, which is where that cast belongs.
   const nativeApplication = application as unknown as {
     readonly ws: (
       path: string,
       hook: {
-        open(socket: ElysiaWebSocket): unknown;
-        message(socket: ElysiaWebSocket, message: unknown): unknown;
-        close(socket: ElysiaWebSocket): unknown;
+        open(socket: WebSocketClient): unknown;
+        message(socket: WebSocketClient, message: unknown): unknown;
+        close(socket: WebSocketClient): unknown;
       },
     ) => unknown;
   };
 
   for (const gateway of boundGateways) {
     nativeApplication.ws(gateway.path, {
-      open: (socket: ElysiaWebSocket) => gateway.open(socket),
-      message: (socket: ElysiaWebSocket, message: unknown) => gateway.message(socket, message),
-      close: (socket: ElysiaWebSocket) => gateway.close(socket),
+      open: (socket: WebSocketClient) => gateway.open(socket),
+      message: (socket: WebSocketClient, message: unknown) => gateway.message(socket, message),
+      close: (socket: WebSocketClient) => gateway.close(socket),
     });
   }
 
@@ -169,10 +169,10 @@ export async function registerElysiaWebSocketGateways(
  *
  * @internal
  */
-export function bindElysiaWebSocketGateway(
-  gateway: CompiledElysiaWebSocketGateway,
+export function bindWebSocketGateway(
+  gateway: CompiledWebSocketGateway,
   instance: unknown,
-): BoundElysiaWebSocketGateway {
+): BoundWebSocketGateway {
   if (!isObject(instance)) {
     throw invalidGateway(gateway, "The gateway provider did not resolve to an object.");
   }
@@ -190,10 +190,10 @@ export function bindElysiaWebSocketGateway(
       injectWebSocketServer(gateway, instance, application);
       return invokeLifecycle(afterInit, instance, application);
     },
-    open: (socket: ElysiaWebSocket) => invokeSocketLifecycle(handleConnection, instance, socket),
-    message: (socket: ElysiaWebSocket, message: unknown) =>
+    open: (socket: WebSocketClient) => invokeSocketLifecycle(handleConnection, instance, socket),
+    message: (socket: WebSocketClient, message: unknown) =>
       dispatchWebSocketMessage(socket, message, handlers),
-    close: (socket: ElysiaWebSocket) => invokeSocketLifecycle(handleDisconnect, instance, socket),
+    close: (socket: WebSocketClient) => invokeSocketLifecycle(handleDisconnect, instance, socket),
   });
 }
 
@@ -211,7 +211,7 @@ function readGatewayPlan(
   gatewayClass: ClassToken<unknown>,
 ): GatewayPlan | undefined {
   const declared = Reflect.get(provider, declaredGatewayPlanKey) as
-    | ElysiaWebSocketGatewayPlan
+    | WebSocketGatewayPlan
     | undefined;
   if (declared !== undefined) {
     return readDeclaredGatewayPlan(module, gatewayClass, declared);
@@ -342,7 +342,7 @@ function compileGateway(
   provider: Extract<ModuleDefinition["providers"][number], { readonly kind: "class" }>,
   gatewayClass: ClassToken<unknown>,
   plan: GatewayPlan,
-): CompiledElysiaWebSocketGateway {
+): CompiledWebSocketGateway {
   const gatewayName = gatewayClass.name;
   const path = plan.path;
   if (typeof path !== "string" || path.trim().length === 0) {
@@ -354,7 +354,7 @@ function compileGateway(
   }
   const normalizedPath = normalizeGatewayPath(path);
 
-  const handlers: CompiledElysiaWebSocketHandler[] = [];
+  const handlers: CompiledWebSocketHandler[] = [];
   const events = new Map<string, string | symbol>();
   for (const declared of plan.handlers) {
     const existing = events.get(declared.event);
@@ -486,9 +486,9 @@ function parameterExpression(parameter: WebSocketParameterMetadata): string {
 }
 
 async function dispatchWebSocketMessage(
-  socket: ElysiaWebSocket,
+  socket: WebSocketClient,
   message: unknown,
-  handlers: ReadonlyMap<string, ElysiaWebSocketMessageInvoker>,
+  handlers: ReadonlyMap<string, WebSocketMessageInvoker>,
 ): Promise<void> {
   const incoming = parseIncomingMessage(message);
   if (!incoming) {
@@ -519,7 +519,7 @@ async function dispatchWebSocketMessage(
 }
 
 async function emitHandlerResult(
-  socket: ElysiaWebSocket,
+  socket: WebSocketClient,
   subscribedEvent: string,
   result: unknown,
 ): Promise<void> {
@@ -541,7 +541,7 @@ async function emitHandlerResult(
 }
 
 async function emitHandlerValue(
-  socket: ElysiaWebSocket,
+  socket: WebSocketClient,
   subscribedEvent: string,
   value: unknown,
 ): Promise<void> {
@@ -606,7 +606,7 @@ function isSyncIterator(value: unknown): value is IterableIterator<unknown> {
 }
 
 function sendException(
-  socket: ElysiaWebSocket,
+  socket: WebSocketClient,
   code: WebSocketExceptionCode,
   message: string,
 ): void {
@@ -619,7 +619,7 @@ function sendException(
 }
 
 function injectWebSocketServer(
-  gateway: CompiledElysiaWebSocketGateway,
+  gateway: CompiledWebSocketGateway,
   instance: object,
   application: AnyElysia,
 ): void {
@@ -643,7 +643,7 @@ function injectWebSocketServer(
 }
 
 function resolveLifecycleMethod(
-  gateway: CompiledElysiaWebSocketGateway,
+  gateway: CompiledWebSocketGateway,
   instance: object,
   property: "afterInit" | "handleConnection" | "handleDisconnect",
 ): GatewayLifecycleMethod | undefined {
@@ -676,7 +676,7 @@ function invokeLifecycle(
 function invokeSocketLifecycle(
   method: GatewayLifecycleMethod | undefined,
   instance: object,
-  socket: ElysiaWebSocket,
+  socket: WebSocketClient,
 ): void | Promise<void> {
   try {
     const result = invokeLifecycle(method, instance, socket);
@@ -693,7 +693,7 @@ function invokeSocketLifecycle(
 
 function assertNoNativeWebSocketRouteCollisions(
   application: AnyElysia,
-  gateways: readonly CompiledElysiaWebSocketGateway[],
+  gateways: readonly CompiledWebSocketGateway[],
 ): void {
   const nativePaths = new Set(
     application.routes
@@ -735,11 +735,11 @@ function isObject(value: unknown): value is object {
   return (typeof value === "object" && value !== null) || typeof value === "function";
 }
 
-function invalidGateway(gateway: CompiledElysiaWebSocketGateway, message: string): AponiaError {
+function invalidGateway(gateway: CompiledWebSocketGateway, message: string): AponiaError {
   return new AponiaError("INVALID_WEBSOCKET_GATEWAY", message, {
     module: gateway.module.id,
     gateway: gateway.gatewayName,
-    token: tokenName(gateway.token),
+    token: getTokenName(gateway.token),
   });
 }
 

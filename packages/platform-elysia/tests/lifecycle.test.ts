@@ -15,7 +15,7 @@ import {
   type OnModuleDestroy,
   type OnModuleInit,
 } from "@aponiajs/common";
-import { AponiaFactory, type AponiaElysiaApplication } from "../src/index.ts";
+import { AponiaFactory, type AponiaApplication } from "../src/index.ts";
 
 const calls: string[] = [];
 
@@ -54,7 +54,7 @@ class LifecycleController implements OnModuleInit {
 @Module({ providers: [Dependency, Dependent], controllers: [LifecycleController] })
 class AppModule {}
 
-let application: AponiaElysiaApplication | undefined;
+let application: AponiaApplication | undefined;
 
 afterEach(async () => {
   await application?.close();

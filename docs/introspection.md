@@ -96,7 +96,7 @@ Two inspections of the same root module are deeply equal.
 
 ## What it does not include
 
-Routes contributed by `elysiaController` and `defineElysiaController` callbacks
+Routes contributed by `controller` and `defineController` callbacks
 are absent. Those callbacks receive a real Elysia instance and build their
 routes from it, so producing them would mean constructing a controller and
 running the callback — which is exactly what inspecting avoids. Such a

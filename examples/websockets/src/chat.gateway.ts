@@ -9,39 +9,39 @@ import {
   type OnGatewayInit,
   type WsResponse,
 } from "@aponiajs/common";
-import type { ElysiaWebSocket, ElysiaWebSocketServer } from "@aponiajs/platform-elysia";
+import type { WebSocketClient, WebSocketServerRef } from "@aponiajs/platform-elysia";
 import { ChatService } from "./chat.service.ts";
 
 @WebSocketGateway("/chat")
 export class ChatGateway
   implements
-    OnGatewayInit<ElysiaWebSocketServer>,
-    OnGatewayConnection<ElysiaWebSocket>,
-    OnGatewayDisconnect<ElysiaWebSocket>
+    OnGatewayInit<WebSocketServerRef>,
+    OnGatewayConnection<WebSocketClient>,
+    OnGatewayDisconnect<WebSocketClient>
 {
   @WebSocketServer()
-  server!: ElysiaWebSocketServer;
+  server!: WebSocketServerRef;
 
   constructor(private readonly chatService: ChatService) {}
 
-  afterInit(server: ElysiaWebSocketServer): void {
+  afterInit(server: WebSocketServerRef): void {
     if (server !== this.server) {
       throw new Error("The injected WebSocket server must match the lifecycle server.");
     }
   }
 
-  handleConnection(client: ElysiaWebSocket): void {
+  handleConnection(client: WebSocketClient): void {
     client.subscribe("chat");
   }
 
-  handleDisconnect(client: ElysiaWebSocket): void {
+  handleDisconnect(client: WebSocketClient): void {
     client.unsubscribe("chat");
   }
 
   @SubscribeMessage("chat.send")
   send(
     @MessageBody("text") text: string,
-    @ConnectedSocket() client: ElysiaWebSocket,
+    @ConnectedSocket() client: WebSocketClient,
   ): WsResponse<ReturnType<ChatService["createMessage"]>> {
     return {
       event: "chat.message",

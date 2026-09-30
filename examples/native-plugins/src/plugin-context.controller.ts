@@ -1,5 +1,5 @@
-import { Controller, Ctx, Get, Store } from "@aponiajs/common";
-import { type ElysiaRouteContext, type ElysiaStore } from "@aponiajs/platform-elysia";
+import { Context, Controller, Get, State } from "@aponiajs/common";
+import { type HandlerContext, type AppState } from "@aponiajs/platform-elysia";
 import { clock } from "./clock.plugin.ts";
 
 /**
@@ -10,8 +10,8 @@ import { clock } from "./clock.plugin.ts";
 export class PluginContextController {
   @Get()
   read(
-    @Ctx() context: ElysiaRouteContext<clock>,
-    @Store() store: ElysiaStore<clock>,
+    @Context() context: HandlerContext<clock>,
+    @State() store: AppState<clock>,
   ): {
     now: string;
     traceId: string;
@@ -28,14 +28,14 @@ export class PluginContextController {
   }
 
   @Get("plugin-local")
-  readPluginLocal(@Ctx() context: ElysiaRouteContext<clock>): { pluginOnly: string | null } {
+  readPluginLocal(@Context() context: HandlerContext<clock>): { pluginOnly: string | null } {
     const value = (context as Record<string, unknown>).pluginOnly;
 
     return { pluginOnly: typeof value === "string" ? value : null };
   }
 
   @Get("budget")
-  readBudget(@Ctx() context: ElysiaRouteContext): { budget: unknown } {
+  readBudget(@Context() context: HandlerContext): { budget: unknown } {
     return { budget: (context as Record<string, unknown>).budget ?? null };
   }
 }

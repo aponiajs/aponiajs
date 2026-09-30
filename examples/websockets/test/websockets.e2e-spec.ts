@@ -1,8 +1,8 @@
 import { afterEach, expect, test } from "bun:test";
-import type { AponiaElysiaApplication } from "@aponiajs/platform-elysia";
+import type { AponiaApplication } from "@aponiajs/platform-elysia";
 import { connect, createApplication, listen, send } from "./application.ts";
 
-let application: AponiaElysiaApplication | undefined;
+let application: AponiaApplication | undefined;
 let socket: WebSocket | undefined;
 
 afterEach(async () => {

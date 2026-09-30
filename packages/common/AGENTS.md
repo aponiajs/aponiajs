@@ -30,7 +30,7 @@ their owning domain. `src/index.ts` is the package's only public barrel.
 ## Invariants
 
 - No Elysia, HTTP, or Bun runtime API belongs here. Platform-native validators
-  are matched structurally through `NativeSchema`, the marker union every
+  are matched structurally through `ValidatorSchema`, the marker union every
   TypeBox 1 builder declares on the type it constructs (`~kind`, plus `~refine`,
   `~codec`, and `~unsafe` from the modifier wrappers), so an Elysia `t` schema
   arrives with no runtime edge into this package. Reading the value such a

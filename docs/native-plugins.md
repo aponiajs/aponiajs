@@ -6,14 +6,14 @@ what it adds to the request context reaches every controller.
 
 ## Mounting a plugin
 
-`defineElysiaPlugin` converts a native plugin into a module import:
+`definePlugin` converts a native plugin into a module import:
 
 ```ts
 // src/clock.plugin.ts
-import { defineElysiaPlugin } from "@aponiajs/platform-elysia";
+import { definePlugin } from "@aponiajs/platform-elysia";
 import { Elysia } from "elysia";
 
-export const clock = defineElysiaPlugin(
+export const clock = definePlugin(
   new Elysia({ name: "clock" })
     .decorate("now", () => new Date().toISOString())
     .state("requests", 0)
@@ -47,12 +47,12 @@ A published plugin is mounted the same way:
 ```ts
 import { cors } from "@elysiajs/cors";
 
-export const corsPlugin = defineElysiaPlugin(cors(), { key: "cors" });
+export const corsPlugin = definePlugin(cors(), { key: "cors" });
 export type corsPlugin = typeof corsPlugin;
 ```
 
-`ElysiaPluginModule.register(plugin, { key })` is the same registration without
-the plugin type attached, and stays supported. Use `defineElysiaPlugin` unless a
+`PluginModule.register(plugin, { key })` is the same registration without
+the plugin type attached, and stays supported. Use `definePlugin` unless a
 handler never needs the plugin's types.
 
 The `key` is the plugin's identity in the module graph. Two modules importing
@@ -80,7 +80,7 @@ one a module's plugin declares.
 What it is not is part of the module graph. No module declares it, so nothing
 about it reaches `compileRootModule`, `inspectAponiaApplication`, or the
 artifacts `aponia build` writes. `imports` stays the place for a plugin a module
-can name (`defineElysiaPlugin`, `ElysiaPluginModule.register`); this option is
+can name (`definePlugin`, `PluginModule.register`); this option is
 for the plugins a module cannot:
 
 - the plugin a call builds. `aponia build` lowers a module only when every
@@ -105,11 +105,11 @@ than through a module registration the plugin has no part in.
 ## The no-annotation path
 
 When a plugin belongs to one controller, compose it in an
-`elysiaController(...)` callback exactly as native Elysia does:
+`controller(...)` callback exactly as native Elysia does:
 
 ```ts
 import { defineModule } from "@aponiajs/common";
-import { elysiaController } from "@aponiajs/platform-elysia";
+import { controller } from "@aponiajs/platform-elysia";
 import { Elysia } from "elysia";
 
 const clock = new Elysia({ name: "clock" })
@@ -118,7 +118,7 @@ const clock = new Elysia({ name: "clock" })
 
 class HealthController {}
 
-const healthController = elysiaController(HealthController, (app) =>
+const healthController = controller(HealthController, (app) =>
   app.use(clock).get("/health", ({ now, store }) => {
     store.requests += 1;
     return { now: now(), requests: store.requests };
@@ -138,18 +138,18 @@ configuration.
 
 ## Plugins that need injected configuration
 
-`ElysiaPluginModule.registerAsync` builds the plugin from the container, so it
+`PluginModule.registerAsync` builds the plugin from the container, so it
 can read configuration a provider owns:
 
 ```ts
 import { Module } from "@aponiajs/common";
-import { ElysiaPluginModule } from "@aponiajs/platform-elysia";
+import { PluginModule } from "@aponiajs/platform-elysia";
 import { jwt } from "@elysiajs/jwt";
 import { ConfigModule, ConfigService } from "./config/config.module.ts";
 
 @Module({
   imports: [
-    ElysiaPluginModule.registerAsync({
+    PluginModule.registerAsync({
       key: "jwt",
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -167,17 +167,17 @@ that no imported module exports fails with `MISSING_PROVIDER`.
 
 Compiling a decorated controller erases the plugin instances a module imports,
 so no plugin type reaches a handler on its own. Name the plugins in
-`ElysiaRouteContext` and the context types them:
+`HandlerContext` and the context types them:
 
 ```ts
-import { Controller, Ctx, Get } from "@aponiajs/common";
-import { type ElysiaRouteContext } from "@aponiajs/platform-elysia";
+import { Context, Controller, Get } from "@aponiajs/common";
+import { type HandlerContext } from "@aponiajs/platform-elysia";
 import { clock } from "./clock.plugin.ts";
 
 @Controller("health")
 export class HealthController {
   @Get()
-  read(@Ctx() context: ElysiaRouteContext<clock>) {
+  read(@Context() context: HandlerContext<clock>) {
     context.store.requests += 1;
     return { now: context.now(), traceId: context.traceId };
   }
@@ -187,27 +187,27 @@ export class HealthController {
 The first type argument takes either the plugins or a route schema, so a route
 without a schema never writes an empty one:
 
-| Annotation                                            | Types                      |
-| ----------------------------------------------------- | -------------------------- |
-| `ElysiaRouteContext`                                  | neither                    |
-| `ElysiaRouteContext<clock>`                           | one plugin                 |
-| `ElysiaRouteContext<[clock, cache]>`                  | several plugins            |
-| `ElysiaRouteContext<typeof createUser>`               | the route schema           |
-| `ElysiaRouteContext<typeof createUser, [clock, jwt]>` | the schema and the plugins |
+| Annotation                                        | Types                      |
+| ------------------------------------------------- | -------------------------- |
+| `HandlerContext`                                  | neither                    |
+| `HandlerContext<clock>`                           | one plugin                 |
+| `HandlerContext<[clock, cache]>`                  | several plugins            |
+| `HandlerContext<typeof createUser>`               | the route schema           |
+| `HandlerContext<typeof createUser, [clock, jwt]>` | the schema and the plugins |
 
-A plugin exported through `defineElysiaPlugin` beside a same-named type is
+A plugin exported through `definePlugin` beside a same-named type is
 usable in a type position directly, which is why the examples above need no
 `typeof` at each use site. TypeScript cannot contextually type a decorated
 method parameter from decorator metadata, so the export declares the alias
 once. A plugin exported only as a `const` is written
-`ElysiaRouteContext<typeof clock>`.
+`HandlerContext<typeof clock>`.
 
 Rename the context type on import when the annotation should be shorter still:
 
 ```ts
-import { type ElysiaRouteContext as e } from "@aponiajs/platform-elysia";
+import { type HandlerContext as e } from "@aponiajs/platform-elysia";
 
-read(@Ctx() context: e<clock>) {}
+read(@Context() context: e<clock>) {}
 ```
 
 ## Declaring the pairing once
@@ -217,11 +217,11 @@ every handler short:
 
 ```ts
 // src/app.context.ts
-import { type ElysiaInputSchema, type ElysiaRouteContext } from "@aponiajs/platform-elysia";
+import { type RouteInputSchema, type HandlerContext } from "@aponiajs/platform-elysia";
 import { cache } from "./cache.plugin.ts";
 import { clock } from "./clock.plugin.ts";
 
-export type AppContext<TSchema extends ElysiaInputSchema = {}> = ElysiaRouteContext<
+export type AppContext<TSchema extends RouteInputSchema = {}> = HandlerContext<
   TSchema,
   [clock, cache]
 >;
@@ -229,10 +229,10 @@ export type AppContext<TSchema extends ElysiaInputSchema = {}> = ElysiaRouteCont
 
 ```ts
 @Get()
-read(@Ctx() context: AppContext) {}
+read(@Context() context: AppContext) {}
 
 @Post("/", createUser)
-create(@Ctx() context: AppContext<typeof createUser>) {}
+create(@Context() context: AppContext<typeof createUser>) {}
 ```
 
 AponiaJS deliberately has no framework-level plugin registry. Ambient

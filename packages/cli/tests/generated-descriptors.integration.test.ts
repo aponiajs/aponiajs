@@ -422,7 +422,7 @@ test("a generated descriptor module declares every module of the graph", async (
 test("a generated gateway is discovered with the same path and events as the decorated one", async () => {
   const fixture = await generateFixture();
 
-  expect(fixture.source).toContain("defineElysiaWebSocketGateway(EventsGateway, {");
+  expect(fixture.source).toContain("defineWebSocketGateway(EventsGateway, {");
   expect(fixture.source).toContain(
     ['          event: "events.echo",', '          propertyKey: "echo",'].join("\n"),
   );

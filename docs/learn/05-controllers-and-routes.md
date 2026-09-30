@@ -25,15 +25,15 @@ alone — `@Post({ body })` mounts at the controller prefix itself, and
 
 ## Native inference with less syntax
 
-Use `elysiaController` when the shortest type-safe route is more useful than
+Use `controller` when the shortest type-safe route is more useful than
 decorator metadata:
 
 ```ts
 import { defineModule, provideClass } from "@aponiajs/common";
-import { elysiaController } from "@aponiajs/platform-elysia";
+import { controller } from "@aponiajs/platform-elysia";
 import { t } from "elysia";
 
-const usersController = elysiaController(UserController, [UserService], (app, controller) =>
+const usersController = controller(UserController, [UserService], (app, controller) =>
   app.get("/users/:id", ({ params }) => controller.findUser(params.id), {
     params: t.Object({ id: t.String() }),
   }),

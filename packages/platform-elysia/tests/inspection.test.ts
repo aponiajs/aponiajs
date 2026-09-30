@@ -24,8 +24,8 @@ import {
 } from "@aponiajs/common";
 import { z } from "zod";
 import {
-  defineElysiaControllerRoutes,
-  elysiaController,
+  defineControllerRoutes,
+  controller,
   inspectAponiaApplication,
   type AponiaInspectionOptions,
   type AponiaModuleDescriptorArtifact,
@@ -195,9 +195,8 @@ class InspectionRegisteredController {
   }
 }
 
-const inspectionRegisteredController = elysiaController(
-  InspectionRegisteredController,
-  (application) => application.get("/inspections-registered", () => "registered"),
+const inspectionRegisteredController = controller(InspectionRegisteredController, (application) =>
+  application.get("/inspections-registered", () => "registered"),
 );
 
 const inspectionRegisteredModule = defineModule({
@@ -214,7 +213,7 @@ const inspectionDeclaredAppModule = defineModule({
   id: "InspectionDeclaredModule",
   providers: [provideClass(InspectionUserService, [])],
   controllers: [
-    defineElysiaControllerRoutes(InspectionUserController, {
+    defineControllerRoutes(InspectionUserController, {
       path: "inspections-declared",
       inject: [InspectionUserService],
       routes: [

@@ -2,9 +2,8 @@
 
 Request parameter decorators for validated input, cookies, the native request,
 mutable response settings, the typed status helper, and the whole Elysia
-context. The example includes both Nest-style `@Res()` and native-named
-`@Set()`/`@Status()` usage, plus a handler that receives the context without a
-decorator.
+context. The example uses `@ResponseSettings()` and `@HttpStatus()`, plus a
+handler that receives the context without a decorator.
 
 ## Run
 

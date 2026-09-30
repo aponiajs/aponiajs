@@ -31,7 +31,7 @@ otherwise compile at startup, and `descriptors.generated.ts`, which declares the
 module graph as data so the application can boot without its decorators being
 lowered. A declared route states the validator its `@Validation()` model was
 declared with rather than the model class, and a declared gateway states its
-path, handlers, and server properties as a `defineElysiaWebSocketGateway` plan,
+path, handlers, and server properties as a `defineWebSocketGateway` plan,
 so booting from the descriptor module reads no decorator metadata for either.
 Both cover what they can prove and report what they cannot, so an
 application chooses how far to go: pass `controllerInvokerArtifact` and
@@ -54,13 +54,13 @@ stale artifact:
 
 ```ts
 // scripts/build.ts
-import { aponiaBuildPlugin } from "@aponiajs/cli";
+import { buildPlugin } from "@aponiajs/cli";
 
 const result = await Bun.build({
   entrypoints: ["./src/main.ts"],
   outdir: "./dist",
   target: "bun",
-  plugins: [aponiaBuildPlugin()],
+  plugins: [buildPlugin()],
 });
 if (!result.success) process.exit(1);
 ```

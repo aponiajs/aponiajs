@@ -2,14 +2,14 @@ import type { ClassToken, LoggerService, LogLevel } from "@aponiajs/common";
 import type { AnyElysia, Elysia } from "elysia";
 import type { ElysiaConfig, EventScope } from "elysia/types";
 import type { AponiaModuleDescriptorArtifact } from "../modules/module-descriptor-artifact.types.ts";
-import type { NativeElysiaPlugin } from "../plugins/plugin.types.ts";
+import type { ElysiaPlugin } from "../plugins/plugin.types.ts";
 import type { AponiaInvokerArtifact } from "../routing/invoker-artifact.types.ts";
 
-export type NativeElysiaConfigurator<TNativeApplication extends AnyElysia> = (
+export type ElysiaConfigurator<TNativeApplication extends AnyElysia> = (
   application: Elysia,
 ) => TNativeApplication;
 
-export type ElysiaCompilationOptions = Readonly<
+export type RouteCompilationOptions = Readonly<
   Pick<ElysiaConfig<undefined, EventScope>, "precompile">
 >;
 
@@ -29,7 +29,7 @@ export interface AponiaApplicationOptions {
    * release can select, so the option and the warning that described it are
    * gone rather than accepted and ignored.
    */
-  readonly elysia?: ElysiaCompilationOptions;
+  readonly elysia?: RouteCompilationOptions;
   /**
    * A build-time generated invoker artifact, as `aponia build` writes it. Its
    * invokers are keyed by controller class token, and each factory receives the
@@ -76,7 +76,7 @@ export interface AponiaApplicationOptions {
    * nothing about it reaches `compileRootModule`, `inspectAponiaApplication`,
    * or the artifacts `aponia build` writes. That is the trade, and it is why a
    * plugin whose source a module can name belongs in that module's `imports`
-   * (`ElysiaPluginModule.register`, `defineElysiaPlugin`) instead: an import is
+   * (`PluginModule.register`, `definePlugin`) instead: an import is
    * what keeps a plugin in the declared graph.
    *
    * This option is for the plugins a module cannot declare. `aponia build`
@@ -94,7 +94,7 @@ export interface AponiaApplicationOptions {
    * enable returns `undefined` rather than an inert plugin, so a boot cannot
    * mistake it for an enabled one. Every other entry reaches Elysia unchanged.
    */
-  readonly plugins?: readonly (NativeElysiaPlugin | undefined)[];
+  readonly plugins?: readonly (ElysiaPlugin | undefined)[];
   /**
    * Guards every route the platform mounts runs, before the ones a controller
    * or a handler declares.
@@ -130,5 +130,5 @@ export interface AponiaApplicationOptions {
 export interface ConfiguredAponiaApplicationOptions<
   TNativeApplication extends AnyElysia,
 > extends AponiaApplicationOptions {
-  readonly configureNative: NativeElysiaConfigurator<TNativeApplication>;
+  readonly configureNative: ElysiaConfigurator<TNativeApplication>;
 }

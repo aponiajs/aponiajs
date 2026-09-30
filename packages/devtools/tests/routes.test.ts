@@ -13,18 +13,18 @@ import {
 } from "@aponiajs/common";
 import {
   AponiaFactory,
-  defineElysiaController,
-  defineElysiaControllerRoutes,
-  elysiaController,
-  type AponiaControllerInvokerFactory,
+  defineController,
+  defineControllerRoutes,
+  controller,
+  type ControllerHandlerFactory,
   type AponiaInvokerArtifact,
-  type AponiaRouteInvoker,
+  type RouteHandler,
 } from "@aponiajs/platform-elysia";
 import { Elysia } from "elysia";
 import {
   aponiaVersion,
   devtoolsPathPrefix,
-  routeRequest,
+  handleDevtoolsRequest,
   type AponiaRoutesPayload,
 } from "../src/index.ts";
 // The handler record the mounted route answers through, from the module that owns
@@ -34,7 +34,7 @@ import { createHandlers } from "../src/server/devtools-server.ts";
 
 /**
  * The mounted-route endpoint. Every case asks the pair the mounted route calls —
- * `createHandlers` and `routeRequest` — in process, and the payload assertions
+ * `createHandlers` and `handleDevtoolsRequest` — in process, and the payload assertions
  * are the wire shape rather than the builder's internals.
  *
  * They are called directly rather than through `application.handle` because
@@ -62,7 +62,7 @@ const silentLogger: LoggerService = {
 
 /** One devtools path answered for one application. */
 async function ask(application: Elysia, path: string): Promise<Response> {
-  return await routeRequest(
+  return await handleDevtoolsRequest(
     new Request(`http://localhost${devtoolsPathPrefix}${path}`),
     createHandlers(application, undefined, undefined, silentLogger),
   );
@@ -125,11 +125,11 @@ class CompiledRoutesController {
 const twoSourceModule: ModuleDefinition = defineModule({
   id: "TwoSourceRoutesModule",
   controllers: [
-    defineElysiaControllerRoutes(GeneratedRoutesController, {
+    defineControllerRoutes(GeneratedRoutesController, {
       path: "generated",
       routes: [{ method: "GET", path: "/", propertyKey: "read", promiseCapable: false }],
     }),
-    defineElysiaControllerRoutes(CompiledRoutesController, {
+    defineControllerRoutes(CompiledRoutesController, {
       path: "compiled",
       routes: [{ method: "GET", path: "/", propertyKey: "read", promiseCapable: false }],
     }),
@@ -138,16 +138,16 @@ const twoSourceModule: ModuleDefinition = defineModule({
 
 /** An invoker artifact shaped the way `aponia build` writes one. */
 function invokerArtifact(
-  invokers: ReadonlyMap<ClassToken<unknown>, AponiaControllerInvokerFactory>,
+  invokers: ReadonlyMap<ClassToken<unknown>, ControllerHandlerFactory>,
 ): AponiaInvokerArtifact {
   return Object.freeze({ framework: aponiaVersion, elysia: null, invokers });
 }
 
 const generatedBindingArtifact = invokerArtifact(
-  new Map<ClassToken<unknown>, AponiaControllerInvokerFactory>([
+  new Map<ClassToken<unknown>, ControllerHandlerFactory>([
     [
       GeneratedRoutesController,
-      () => new Map<string | symbol, AponiaRouteInvoker>([["read", () => "generated binding"]]),
+      () => new Map<string | symbol, RouteHandler>([["read", () => "generated binding"]]),
     ],
   ]),
 );
@@ -166,7 +166,7 @@ class CallbackRoutesController {
 const callbackRoutesModule: ModuleDefinition = defineModule({
   id: "CallbackRoutesModule",
   controllers: [
-    elysiaController(CallbackRoutesController, (application, controller) => {
+    controller(CallbackRoutesController, (application, controller) => {
       application.get("/callback", () => controller.greet());
       return application;
     }),
@@ -186,7 +186,7 @@ class PluginRoutesController {
 const pluginRoutesModule: ModuleDefinition = defineModule({
   id: "PluginRoutesModule",
   controllers: [
-    defineElysiaController(PluginRoutesController, {
+    defineController(PluginRoutesController, {
       inject: [] as const,
       buildPlugin: (controller) => new Elysia().get("/plugin", () => controller.greet()),
     }),

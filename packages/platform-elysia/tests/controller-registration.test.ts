@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { Elysia } from "elysia";
 import {
-  defineElysiaController,
+  defineController,
   registerElysiaControllerRoutes,
 } from "../src/controllers/controller-definition.ts";
 
@@ -11,14 +11,14 @@ class PluginOnlyController {
   }
 }
 
-const pluginOnlyController = defineElysiaController(PluginOnlyController, {
+const pluginOnlyController = defineController(PluginOnlyController, {
   inject: [] as const,
   buildPlugin: (controller) => new Elysia().get("/plugin-only", () => controller.greet()),
 });
 
 class DirectController {}
 
-const directController = defineElysiaController(DirectController, {
+const directController = defineController(DirectController, {
   inject: [] as const,
   path: "/direct",
   registerRoutes: (application) => application.get("/direct/ping", () => "pong"),
