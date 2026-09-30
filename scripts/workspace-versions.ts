@@ -7,8 +7,10 @@ export const versionedPackageFiles = [
   "packages/common/package.json",
   "packages/core/package.json",
   "packages/create-aponia/package.json",
+  "packages/cron/package.json",
   "packages/devtools/package.json",
   "packages/platform-elysia/package.json",
+  "packages/testing/package.json",
 ] as const;
 
 export const versionedWorkspacePaths = [
@@ -17,8 +19,10 @@ export const versionedWorkspacePaths = [
   "packages/common",
   "packages/core",
   "packages/create-aponia",
+  "packages/cron",
   "packages/devtools",
   "packages/platform-elysia",
+  "packages/testing",
 ] as const;
 
 interface BunLockfile {

@@ -10,8 +10,10 @@ const guideDirectories = [
   "packages/common",
   "packages/core",
   "packages/create-aponia",
+  "packages/cron",
   "packages/devtools",
   "packages/platform-elysia",
+  "packages/testing",
 ] as const;
 
 const rootGuide = await Bun.file("AGENTS.md").text();

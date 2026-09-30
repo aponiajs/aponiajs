@@ -48,6 +48,11 @@ const packageLayouts: readonly PackageLayout[] = [
     ],
   },
   {
+    sourceRoot: "packages/cron/src",
+    files: ["index.ts"],
+    directories: ["module", "scheduler"],
+  },
+  {
     sourceRoot: "packages/devtools/src",
     files: ["index.ts", "version.ts"],
     directories: ["buffer", "endpoints", "logging", "module", "requests", "server"],
@@ -56,6 +61,11 @@ const packageLayouts: readonly PackageLayout[] = [
     sourceRoot: "packages/cli/src",
     files: ["index.ts", "version.ts"],
     directories: ["bundler", "commands", "generation"],
+  },
+  {
+    sourceRoot: "packages/testing/src",
+    files: ["index.ts"],
+    directories: ["application", "overrides"],
   },
   {
     sourceRoot: "packages/aponiajs/src",

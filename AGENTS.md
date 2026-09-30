@@ -29,7 +29,9 @@ Bun workspace. Framework packages live in `packages/`:
 | `@aponiajs/platform-elysia` | Elysia adapter, HTTP routes, WebSocket gateways, plugins     | `common`, `core`, peer `elysia`                                                       |
 | `@aponiajs/cli`             | `aponia new` and `aponia generate` schematics                | `change-case`, `ts-morph`, `yargs-parser`, `fast-glob`, `inflection`, `oxfmt` (exact) |
 | `create-aponia`             | `bun create aponia` entrypoint into the same generator       | `@aponiajs/cli`                                                                       |
+| `@aponiajs/cron`            | Scheduled jobs declared in a module, from validated config   | `common`, `platform-elysia`, `@elysia/cron`, peer `elysia`                            |
 | `@aponiajs/devtools`        | Opt-in devtools served by the running application itself     | `cli`, `common`, `platform-elysia`, peer `elysia`                                     |
+| `@aponiajs/testing`         | Test application builder, provider overrides, teardown       | `common`, `platform-elysia`, peer `elysia`                                            |
 | `aponiajs`                  | Reserved public facade, private and unpublished              | —                                                                                     |
 
 Supporting directories: `examples/` for executable examples, `docs/` for
@@ -65,7 +67,9 @@ being changed:
 | [`packages/platform-elysia`](packages/platform-elysia/AGENTS.md) | Bootstrap, route mapping, native plugins, context types       |
 | [`packages/cli`](packages/cli/AGENTS.md)                         | Schematics, templates, generated layout                       |
 | [`packages/create-aponia`](packages/create-aponia/AGENTS.md)     | The `bun create aponia` entrypoint                            |
+| [`packages/cron`](packages/cron/AGENTS.md)                       | The scheduled-jobs plugin package                             |
 | [`packages/devtools`](packages/devtools/AGENTS.md)               | The opt-in devtools package, served by the application itself |
+| [`packages/testing`](packages/testing/AGENTS.md)                 | The test kit: test applications, provider overrides, teardown |
 | [`packages/aponiajs`](packages/aponiajs/AGENTS.md)               | The reserved, still-private facade                            |
 | [`scripts`](scripts/AGENTS.md)                                   | Release channel derivation and documentation guards           |
 | [`docs`](docs/AGENTS.md)                                         | The published documentation set and what guards it            |
@@ -394,9 +398,15 @@ Problem Details mapping last in each route's error path, and an opt-in devtools
 package, mounted on the application's own route table under `/__devtools`, that
 reports what a boot
 compiled and every request that reached its record, with the answer it observed
-or the absence of one. Not implemented:
-middleware, non-singleton scopes, testing modules, OpenAPI, authentication,
-production WebSocket policies and transport extraction, and microservice
+or the absence of one, a `@aponiajs/cron` plugin package that declares
+scheduled jobs in a module and reads them from a validated configuration over
+`@elysia/cron`, and a `@aponiajs/testing` package that boots an application for a
+test with a teardown a case can rely on, replaces one provider for one boot by
+rewriting the compiled graph, and binds the one real port a WebSocket case
+needs. Not implemented:
+middleware, non-singleton scopes, OpenAPI, authentication,
+production WebSocket policies and transport extraction, job queues and
+distributed scheduling, and microservice
 transports. Treat the two lists above as the scope of record for the current
 release.
 

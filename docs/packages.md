@@ -1,6 +1,6 @@
 # Published Packages
 
-AponiaJS publishes six public packages to the npm registry. Use the live npm
+AponiaJS publishes eight public packages to the npm registry. Use the live npm
 badges and linked registry pages below as the source of truth for the latest
 published version.
 
@@ -12,6 +12,8 @@ published version.
 | [`@aponiajs/cli`](https://www.npmjs.com/package/@aponiajs/cli)                         | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcli)](https://www.npmjs.com/package/@aponiajs/cli)                         | `bun add --global @aponiajs/cli@beta`                         |
 | [`create-aponia`](https://www.npmjs.com/package/create-aponia)                         | [![npm](https://img.shields.io/npm/v/create-aponia)](https://www.npmjs.com/package/create-aponia)                             | `bun create aponia@beta <name>`                               |
 | [`@aponiajs/devtools`](https://www.npmjs.com/package/@aponiajs/devtools)               | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fdevtools)](https://www.npmjs.com/package/@aponiajs/devtools)               | `bun add @aponiajs/devtools@beta`                             |
+| [`@aponiajs/cron`](https://www.npmjs.com/package/@aponiajs/cron)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcron)](https://www.npmjs.com/package/@aponiajs/cron)                       | `bun add @aponiajs/cron@beta`                                 |
+| [`@aponiajs/testing`](https://www.npmjs.com/package/@aponiajs/testing)                 | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Ftesting)](https://www.npmjs.com/package/@aponiajs/testing)                 | `bun add --dev @aponiajs/testing@beta`                        |
 
 The reserved `aponiajs` facade is private in this workspace and is not
 published. Do not install it yet.
@@ -82,6 +84,36 @@ dependency and must be installed by the application.
 [WebSockets](./websockets.md) ·
 [npm](https://www.npmjs.com/package/@aponiajs/platform-elysia)
 
+### `@aponiajs/cron`
+
+Declare scheduled jobs in a module, with the jobs read from a validated
+configuration. The package is an adapter over
+[`@elysia/cron`](https://www.npmjs.com/package/@elysia/cron), which wraps
+[croner](https://github.com/hexagon/croner): AponiaJS contributes a module a
+registration belongs in and a configuration the jobs are validated through, and
+no scheduling engine of its own. It has no persistence, no retries, no
+cross-process coordination, and no distributed lock — a cron expression in one
+process runs in that process.
+
+[Package README](../packages/cron/README.md) ·
+[Authoring a plugin package](./plugin-packages.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/cron)
+
+### `@aponiajs/testing`
+
+Boot an application for a test with `createTestApplication`, replace one provider
+for one boot, and tear the boot down without leaking a listener. It adds no test
+runner and no mocking framework: every `test` and `expect` stays the runner's, and
+`overrideProvider` replaces a provider's descriptor in the compiled module graph
+rather than intercepting modules. A token no module in the graph provides is
+refused at build time with `MISSING_PROVIDER`, and asserting a request needs no
+socket — `application.handle(new Request(...))` reaches the real route table. The
+one real port it can bind exists for the WebSocket case that needs one.
+
+[Package README](../packages/testing/README.md) ·
+[Testing applications](./testing.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/testing)
+
 ### `@aponiajs/devtools`
 
 The opt-in devtools surface for a running application: an HTTP API mounted on the
@@ -118,7 +150,7 @@ same project generator. See the
 
 ## Synchronized versions
 
-All six public packages are released with the same
+All eight public packages are released with the same
 [Semantic Version](https://semver.org). Avoid mixing AponiaJS package versions
 within one application. See [Releasing npm Packages](./releasing.md) for the
 version gate and publication flow.
