@@ -35,7 +35,7 @@
     "test:vite-plus": "vp test",
     "check": "vp check",
     "doctor": "vp env doctor",
-    "version:bump": "bumpp package.json packages/aponiajs/package.json packages/cli/package.json packages/common/package.json packages/core/package.json packages/create-aponia/package.json packages/cron/package.json packages/devtools/package.json packages/platform-elysia/package.json packages/testing/package.json --all --no-commit --no-tag --no-push --execute \"bun run version:sync\"",
+    "version:bump": "bumpp package.json packages/aponiajs/package.json packages/cli/package.json packages/common/package.json packages/core/package.json packages/create-aponia/package.json packages/cron/package.json packages/devtools/package.json packages/openapi/package.json packages/platform-elysia/package.json packages/testing/package.json --all --no-commit --no-tag --no-push --execute \"bun run version:sync\"",
     "version:patch": "bun run version:bump -- --release patch --yes",
     "version:minor": "bun run version:bump -- --release minor --yes",
     "version:major": "bun run version:bump -- --release major --yes",
@@ -48,7 +48,7 @@
     "release:tag": "bun scripts/distribution-tag.ts",
     "release:branch": "bun scripts/release-branch.ts",
     "release:canary": "bun scripts/canary-version.ts",
-    "release:dry-run": "for package in common core platform-elysia cli create-aponia devtools cron testing; do bun pm pack --cwd packages/$package --dry-run; done",
+    "release:dry-run": "for package in common core platform-elysia cli create-aponia devtools cron testing openapi; do bun pm pack --cwd packages/$package --dry-run; done",
     "prepare": "bunx --bun vp config"
   },
   "devDependencies": {

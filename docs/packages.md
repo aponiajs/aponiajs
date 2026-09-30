@@ -1,6 +1,6 @@
 # Published Packages
 
-AponiaJS publishes eight public packages to the npm registry. Use the live npm
+AponiaJS publishes nine public packages to the npm registry. Use the live npm
 badges and linked registry pages below as the source of truth for the latest
 published version.
 
@@ -14,6 +14,7 @@ published version.
 | [`@aponiajs/devtools`](https://www.npmjs.com/package/@aponiajs/devtools)               | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fdevtools)](https://www.npmjs.com/package/@aponiajs/devtools)               | `bun add @aponiajs/devtools@beta`                             |
 | [`@aponiajs/cron`](https://www.npmjs.com/package/@aponiajs/cron)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcron)](https://www.npmjs.com/package/@aponiajs/cron)                       | `bun add @aponiajs/cron@beta`                                 |
 | [`@aponiajs/testing`](https://www.npmjs.com/package/@aponiajs/testing)                 | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Ftesting)](https://www.npmjs.com/package/@aponiajs/testing)                 | `bun add --dev @aponiajs/testing@beta`                        |
+| [`@aponiajs/openapi`](https://www.npmjs.com/package/@aponiajs/openapi)                 | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fopenapi)](https://www.npmjs.com/package/@aponiajs/openapi)                 | `bun add @aponiajs/openapi@beta`                              |
 
 The reserved `aponiajs` facade is private in this workspace and is not
 published. Do not install it yet.
@@ -114,6 +115,22 @@ one real port it can bind exists for the WebSocket case that needs one.
 [Testing applications](./testing.md) ·
 [npm](https://www.npmjs.com/package/@aponiajs/testing)
 
+### `@aponiajs/openapi`
+
+Serve an OpenAPI document for an application's own routes, with the document's
+`title`, `version`, and `description` read from a validated configuration. The
+package is an adapter over
+[`@elysia/openapi`](https://www.npmjs.com/package/@elysia/openapi), which builds
+the document from the route table Elysia compiled: AponiaJS contributes a module
+the plugin is declared in and a configuration the metadata is validated through,
+and no generator of its own. The document describes the routes; it does not
+validate requests, generate clients, or serve any interface but the wrapped
+plugin's.
+
+[Package README](../packages/openapi/README.md) ·
+[OpenAPI](./openapi.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/openapi)
+
 ### `@aponiajs/devtools`
 
 The opt-in devtools surface for a running application: an HTTP API mounted on the
@@ -150,7 +167,7 @@ same project generator. See the
 
 ## Synchronized versions
 
-All eight public packages are released with the same
+All nine public packages are released with the same
 [Semantic Version](https://semver.org). Avoid mixing AponiaJS package versions
 within one application. See [Releasing npm Packages](./releasing.md) for the
 version gate and publication flow.

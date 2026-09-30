@@ -14,6 +14,7 @@ The published documentation set:
 | `native-plugins.md`         | Mounting native Elysia plugins and typing what they add                                                                                   |
 | `plugin-packages.md`        | Authoring a package that ships an Aponia module wrapping a native Elysia plugin                                                           |
 | `files.md`                  | Uploaded files, named downloads, and serving static assets                                                                                |
+| `openapi.md`                | Serving an OpenAPI document for an application's routes, what the document reflects, and what it does not claim                           |
 | `configuration.md`          | Declaring, validating once at boot, injecting, and reading back a configuration                                                           |
 | `lifecycle.md`              | The five moments a provider can hook, what the framework does when one fails, stopping on a signal, and the readiness and liveness probes |
 | `eden-treaty.md`            | Native-style application types consumed through Eden Treaty                                                                               |

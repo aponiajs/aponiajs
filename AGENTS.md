@@ -32,6 +32,7 @@ Bun workspace. Framework packages live in `packages/`:
 | `@aponiajs/cron`            | Scheduled jobs declared in a module, from validated config   | `common`, `platform-elysia`, `@elysia/cron`, peer `elysia`                            |
 | `@aponiajs/devtools`        | Opt-in devtools served by the running application itself     | `cli`, `common`, `platform-elysia`, peer `elysia`                                     |
 | `@aponiajs/testing`         | Test application builder, provider overrides, teardown       | `common`, `platform-elysia`, peer `elysia`                                            |
+| `@aponiajs/openapi`         | OpenAPI document served for an application's routes          | `common`, `platform-elysia`, `@elysia/openapi`, peer `elysia`                         |
 | `aponiajs`                  | Reserved public facade, private and unpublished              | —                                                                                     |
 
 Supporting directories: `examples/` for executable examples, `docs/` for
@@ -70,6 +71,7 @@ being changed:
 | [`packages/cron`](packages/cron/AGENTS.md)                       | The scheduled-jobs plugin package                             |
 | [`packages/devtools`](packages/devtools/AGENTS.md)               | The opt-in devtools package, served by the application itself |
 | [`packages/testing`](packages/testing/AGENTS.md)                 | The test kit: test applications, provider overrides, teardown |
+| [`packages/openapi`](packages/openapi/AGENTS.md)                 | The OpenAPI document package, served by its own registration  |
 | [`packages/aponiajs`](packages/aponiajs/AGENTS.md)               | The reserved, still-private facade                            |
 | [`scripts`](scripts/AGENTS.md)                                   | Release channel derivation and documentation guards           |
 | [`docs`](docs/AGENTS.md)                                         | The published documentation set and what guards it            |
@@ -403,8 +405,10 @@ scheduled jobs in a module and reads them from a validated configuration over
 `@elysia/cron`, and a `@aponiajs/testing` package that boots an application for a
 test with a teardown a case can rely on, replaces one provider for one boot by
 rewriting the compiled graph, and binds the one real port a WebSocket case
-needs. Not implemented:
-middleware, non-singleton scopes, OpenAPI, authentication,
+needs, and a `@aponiajs/openapi` plugin package that serves an OpenAPI document
+for the application's own routes, with the document's metadata read from a
+validated configuration over `@elysia/openapi`. Not implemented:
+middleware, non-singleton scopes, authentication,
 production WebSocket policies and transport extraction, job queues and
 distributed scheduling, and microservice
 transports. Treat the two lists above as the scope of record for the current

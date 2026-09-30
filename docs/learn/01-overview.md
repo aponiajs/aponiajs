@@ -42,9 +42,12 @@ provider instance, structured logging, generators, and native Elysia escape
 hatches, RFC 9457 application errors for every supported HTTP error status, provider-registered WebSocket gateways backed by native Elysia
 sockets, and guards, interceptors, and exception filters compiled into per-route
 Elysia lifecycle hooks, with the default Problem Details mapping an unhandled
-failure answers through last in each route's error path.
+failure answers through last in each route's error path, and an opt-in
+`@aponiajs/openapi` package that serves an OpenAPI document for an
+application's routes, with the document's own metadata from a validated
+configuration.
 
-Not implemented yet: middleware, non-singleton scopes, testing modules, OpenAPI,
+Not implemented yet: middleware, non-singleton scopes, testing modules,
 authentication, production WebSocket policies and transport extraction, and
 microservice transports. The implemented WebSocket gateway preview does not yet
 include the planned transport-neutral adapter, handshake policies, or

@@ -12,6 +12,7 @@ const guideDirectories = [
   "packages/create-aponia",
   "packages/cron",
   "packages/devtools",
+  "packages/openapi",
   "packages/platform-elysia",
   "packages/testing",
 ] as const;

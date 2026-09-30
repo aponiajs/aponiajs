@@ -123,6 +123,7 @@ The current package boundaries are:
 | `@aponiajs/cron`            | module, scheduler                                                             |
 | `@aponiajs/devtools`        | buffer, endpoints, logging, module, requests, server                          |
 | `@aponiajs/testing`         | application, overrides                                                        |
+| `@aponiajs/openapi`         | document, module                                                              |
 
 Keep package tests at `tests/*.test.ts` and Vite+ conformance tests at
 `tests-vp/*.conformance.ts`; those flat locations are part of the configured

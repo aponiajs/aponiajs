@@ -68,6 +68,11 @@ const packageLayouts: readonly PackageLayout[] = [
     directories: ["application", "overrides"],
   },
   {
+    sourceRoot: "packages/openapi/src",
+    files: ["index.ts"],
+    directories: ["document", "module"],
+  },
+  {
     sourceRoot: "packages/aponiajs/src",
     files: ["index.ts"],
     directories: [],
