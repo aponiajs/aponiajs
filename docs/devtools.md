@@ -154,11 +154,11 @@ A consumer reads `meta` first and decides whether to proceed:
 ```ts
 {
   contract: 3,                 // the version of this wire shape
-  framework: "0.6.0-alpha.40", // the release that booted the application
+  framework: "1.0.0-beta.0", // the release that booted the application
   elysia: "1.4.30",            // the release installed in the application's own tree, or null
   artifacts: {                 // which release supplied each adopted artifact
     invokers: null,            // null: the boot adopted none
-    descriptors: "0.6.0-alpha.40",
+    descriptors: "1.0.0-beta.0",
   },
   startedAt: "2026-09-26T12:00:00.000Z", // the first request the surface answered here
 }

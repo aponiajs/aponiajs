@@ -37,14 +37,14 @@ describe("release version gate", () => {
 
     await verifyRelease({
       baseVersion: "0.0.0",
-      releaseTag: "alpha",
+      releaseTag: "beta",
       releaseVersion: currentVersion,
       log: (message) => output.push(message),
     });
 
     expect(output).toEqual([
       `Verified synchronized release version ${currentVersion}.`,
-      "Distribution tag: alpha (alias: next).",
+      "Distribution tag: beta (alias: next).",
     ]);
   });
 
@@ -60,7 +60,7 @@ describe("release version gate", () => {
         releaseTag: "latest",
         log: () => {},
       }),
-    ).rejects.toThrow("may only be published under: alpha, next");
+    ).rejects.toThrow("may only be published under: beta, next");
     expect(
       verifyRelease({
         baseVersion: "not-semver",
