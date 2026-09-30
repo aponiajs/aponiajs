@@ -71,10 +71,16 @@ runtime boundary it describes.
   `Bun.serve`, binds a port, or reads a host option, and there is no port or host
   option left to read. The surface answers wherever the application does and under
   `handle()` as well as `listen()`, because a route registered at bootstrap needs
-  no `onStart` — an application that only calls `handle()` is the entrypoint this
-  mount exists for, not a case to work around. `onStart` is reduced to one log
-  line naming where the surface is mounted, and nothing may move the mount into
-  it.
+  no `setup` — Elysia 1 spelled that hook `onStart` — and an application that only
+  calls `handle()` is the entrypoint this mount exists for, not a case to work
+  around. That hook is reduced to one log line naming where the surface is
+  mounted, and nothing may move the mount into it. The line is written when
+  Elysia enters the phase, which Elysia 2 defers: the listener awaits the TypeBox
+  bridge before it calls the phase whenever any schema in the process was built
+  with `t`, so `await listen()` resolves first and the line lands after it. A
+  case that reads the line therefore asks the socket a question first, because
+  the listener serves nothing until that continuation has run; no case may read
+  the line straight after `listen()`.
 - An application route that claims a devtools path wins it. The two owners of that
   path are in one route table, and the reason is specificity rather than insertion
   order — measured: a static `/__devtools/meta` answers whether it is registered
@@ -84,12 +90,14 @@ runtime boundary it describes.
   not reintroduce a claim about every path under the prefix, because the wildcard
   owns none of them and the dispatcher decides each one.
 - The surface's own mount is reported by the endpoints that read the table:
-  `/routes` and `/flow` carry one more row — `ALL /__devtools/*` — for a
+  `/routes` and `/flow` carry one more row — `* /__devtools/*` — for a
   devtools-enabled application than the same application without it, and that is a
   consequence of serving the surface from the application rather than a defect to
   filter. `/routes` reports the mounted table and never re-derives it, so a
   builder that dropped this row would be reporting an application that does not
-  exist. `tests/devtools-module.test.ts` pins the row.
+  exist. `tests/devtools-module.test.ts` pins the row. The method token is the
+  table's own: Elysia records `.all()` as `*` where Elysia 1 recorded `ALL`, and
+  `/routes` publishes what the table states rather than normalizing it.
 - A debugging aid's own reports never fail a request. The one report this package
   writes from a handler is `/aot`'s row for a project whose route analysis could
   not be read, and it is guarded through `logging/report-failure.ts`: its sentence
@@ -206,12 +214,19 @@ runtime boundary it describes.
   array this release cannot identify — no scope it knows and no checksum — is not
   published as a stage, which is how the compiled hook stays out of the hook
   stages rather than being reported as one. That rule is read off a release this
-  package does not own, so it is re-checked whenever the Elysia peer range moves:
-  it holds while Elysia stamps a scope on every hook an instance-level API
-  contributes — `"local"` when the caller declares none — and a checksum on the
-  hooks of a named plugin. An Elysia that stopped stamping the scope would make an
-  unscoped contribution indistinguishable from the compiled hook, and it would
-  drop out of the payload silently, which is why a case pins the default stamp.
+  package does not own, so it is re-checked whenever the Elysia peer range moves,
+  and the installed Elysia 2 changed what it reads. Elysia 1 stamped a scope and a
+  checksum on the hooks a plugin contributed, which is what made a contributed
+  hook identifiable and therefore publishable; Elysia 2 holds every hook of a
+  plugin, and every hook an instance-level declaration contributes, as a bare
+  function in the route entry's lifecycle array and stamps no scope, no checksum,
+  and no `subType`. Nothing the installed release puts in those arrays is
+  identifiable, so `/flow` publishes no contributed hook as a stage at all: a
+  route's stages come from the compiled plan and from the schema slots, and
+  `tests/flow.test.ts` pins that absence over a real plugin and over a bare
+  declaration. An Elysia that resumed stamping them would publish those
+  contributions as stages again, and the case would have to be rewritten rather
+  than the rule kept.
 - `/flow` publishes an interceptor's half only for the classes that declare it.
   The platform calls both halves with an optional call, so a class implementing
   one half runs one half, and a stage for the other would state a step the route
@@ -263,16 +278,24 @@ runtime boundary it describes.
   stage's position, and every `next` names a stage of the same route. The ids are
   stable within one response and never a cross-response identity, because the
   stages are assembled per request from a table that may have changed.
-- A contributed hook is identified by an identity, never by a name. Elysia
-  identifies a hook by its `subType`, its scope, and a `checksum`, and the plugin
-  that contributed it is not carried on the route, so the identity is derived from
-  the checksum — which groups the same hook across every route it reaches — and no
-  plugin name is reported. A hook that carries no checksum is published with its
-  scope and no identity, because nothing would group it; a hook whose scope this
-  release does not know is published without a scope rather than with a guess.
+- A contributed hook is identified by an identity, never by a name. Where a route
+  entry states them, Elysia identifies a hook by its `subType`, its scope, and a
+  `checksum`, and the plugin that contributed it is not carried on the route, so
+  the identity is derived from the checksum — which groups the same hook across
+  every route it reaches — and no plugin name is reported. A hook that carries no
+  checksum is published with its scope and no identity, because nothing would
+  group it; a hook whose scope this release does not know is published without a
+  scope rather than with a guess.
   `"scoped"` is normalized to `"local"`: a hook scoped to the plugin that
   contributed it reaches that plugin's own routes and the ones mounted beside it,
-  which is the reach of a local declaration.
+  which is the reach of a local declaration. No hook a real table holds reaches
+  any of this, because the installed Elysia 2 stamps none of the three fields —
+  see the bullet above — so the reader is exercised only by a table that states
+  them, which `tests/flow.test.ts` serves: a synthetic foreign table pins an entry
+  whose scope this release does not know, published with its identity and no
+  scope. Keep the reader and the fields it publishes. They are part of the
+  payload's contract, and an Elysia that stamped them again would publish through
+  it rather than needing it re-derived.
 - A route's filters are a list on the route and never a stage in the chain. They
   run when a guard or the handler threw rather than on every request, and the list
   is ordered exactly as the route's own `error` array is — the method's filters,
@@ -494,8 +517,9 @@ runtime boundary it describes.
   application and a later `listen()` continues it rather than starting an empty
   one — that is where the record parts company with a restart, because the object
   the log stream records spans boots while the record belongs to the application.
-  It cannot be an `onStart` call for the same reason the mount cannot: `onStart`
-  never fires for an application that only calls `handle()`.
+  It cannot be a `setup` call for the same reason the mount cannot: `setup` —
+  Elysia 1's `onStart` — never fires for an application that only calls
+  `handle()`.
 - The request-side facts are read at arrival and the answer-side facts at
   completion, and the split is a fact about the installed Elysia rather than a
   preference: by the after-response phase the request no longer states
@@ -550,13 +574,16 @@ runtime boundary it describes.
   the text it arrived as rather than folded into that absence.
 - The pair of hooks is two answers a maintainer may not merge, narrow, or make
   return: the arrival hook rides the request phase, which Elysia merges from a used
-  plugin unfiltered, while the completion hook is declared `{ as: "global" }`,
-  which is the option the installed Elysia reads for an after-response hook to
-  reach routes the plugin does not own — with the local scope the record stays
+  plugin unfiltered, while the completion hook is declared
+  `.afterResponse("global", ...)` — Elysia 1 spelled the same decision
+  `{ as: "global" }` on `onAfterResponse` — which is the call the installed Elysia
+  reads for an after-response hook to
+  reach routes the plugin does not own: with the local scope the record stays
   empty however many requests the application answers. A hook that returned a
   truthy value would be the answer itself, which is the one thing `/requests`
   claims it cannot change. A request a plugin answers by returning a `Response`
-  from its own `onRequest` runs no later phase at all, so the completion hook
+  from its own `request` hook — `onRequest` in Elysia 1 — runs no later phase at
+  all, so the completion hook
   never sees it — and the entry written at arrival is what records it, with
   `status` and `durationMs` `null`. That entry is not a fallback that invents an
   answer: it states that this record observed none, which is a fact about the
@@ -590,14 +617,15 @@ runtime boundary it describes.
   at traffic that is not a development environment's. Redaction replaces a named
   header with the literal and keeps its place, so a consumer can see that one was
   sent and that the tool was told not to show it.
-- `error` carries the failure's message: what the answer published, or — for an
-  unhandled failure the platform mapped — the exception that mapping answered. It
-  is present on a `5xx` whose Problem Details body this after-response hook can
-  still read, and on the mapped failure the sentence below names; every other
-  failure carries none, because a `4xx` is an answer rather than a
-  failure. A `404`, a validation `422`, and an `HttpError` a route threw on purpose
-  carry none, and a `5xx` a handler built itself carries none either, because its
-  body is the one the client already holds. The mapped failure is the one whose
+- `error` carries the failure's message, and it is read from three sources in one
+  order: what the answer published, then — for an unhandled failure the platform
+  mapped — the exception that mapping answered, then the exception the context
+  itself carries. The whole test is the status: a `4xx` is an answer rather than a
+  failure, so a validation `422`, a `404`, and an `HttpError` a route threw with a
+  `4xx` all carry none. Among the `5xx` failures, one whose Problem Details body
+  states a readable `detail` carries that `detail`, and one a handler built itself
+  carries none, because its body is the one the client already holds. The mapped
+  failure is the one whose
   message comes from the exception rather than from the answer, and it is read from
   the boot's own record of the exception the mapping answered: the mapping answers
   one fixed sentence for every unhandled failure and its `Response` is not on the
@@ -607,7 +635,20 @@ runtime boundary it describes.
   this release carries no such field, and the entry then states the absence it
   stated before the field existed. The map is consulted only where the published
   body yielded nothing readable, so it never replaces what the client received.
-  `error` is still never the context's `error`, and still never the exception's
+  The context's own exception is the last source, and it answers the one failure
+  neither of the others can: an application-owned `5xx` an `HttpError` answers —
+  the exception carries its own answer, so the platform's mapping declines to
+  record it, and the installed Elysia builds that Problem Details `Response`
+  without copying it onto the context, so the answer states nothing readable
+  either. Its `message` is the sentence that response publishes as its `detail`,
+  which `tests/requests.test.ts` pins for the thrown `HttpError` and which no
+  rendering can state in its place: the record states what the client received,
+  not `renderLogValue`'s `name: message` form.
+  That read is structural — the context type the installed Elysia ships declares no
+  `error` although the value is on the context at runtime on every path a route
+  answered from an exception — and it is guarded, because the value is the
+  application's and a `Proxy` that refuses the read must cost the message rather
+  than the request. `error` is still never the exception's
   stack: this package registers no error hooks and reports an exception where it
   always was, under `ExceptionsHandler` in the log stream, through
   `@aponiajs/common`'s `renderLogValue` — the same call the platform's mapping
@@ -619,8 +660,8 @@ runtime boundary it describes.
 - The report describes the boot the _request's own_ application carries. The
   application is read from the request's `store`, where the platform published it
   at boot — Elysia's request context carries `store` and not the instance, and
-  `onStart`, the only hook that receives the instance, does not run for an
-  application that never listens. An application no boot produced has nothing
+  `setup` — Elysia 1's `onStart` — the only hook that receives the instance, does
+  not run for an application that never listens. An application no boot produced has nothing
   published there, so the endpoints that need a report answer the documented
   absence rather than throwing or answering an empty `200`: `createHandlers` is
   handed `undefined` and its readers tolerate it.
@@ -675,7 +716,8 @@ only worked under `listen()` is exactly what this change removed.
 The endpoint payloads are asserted through the same pair the mounted route calls:
 `createHandlers` for the application under test, then `routeRequest` with a
 `Request` for the path. A case that mounted the plugin instead would add
-`ALL /__devtools/*` to the route table `/routes` and `/flow` report, and every
+`* /__devtools/*` — Elysia 1 recorded `.all()` as `ALL` — to the route table
+`/routes` and `/flow` report, and every
 exact payload expectation would have to carry a row for the surface itself. The
 dispatcher's own decisions stay in `tests/server.test.ts`, where `405` and `404`
 are cheaper to state than to reach, and the mount that carries them is pinned in
@@ -804,7 +846,8 @@ same way.
 makes rather than the fields it carries. The pair of hooks is pinned where it is a
 boundary rather than a style: the scope decision is the case that would leave the
 record empty, and the unanswered case pins the entry written at arrival — a request
-a plugin answers by returning a `Response` from its own `onRequest` runs no later
+a plugin answers by returning a `Response` from its own `request` hook — Elysia 1
+spelled it `onRequest` — runs no later
 phase, so it is recorded once, with `status` and `durationMs` `null`, and the case
 asserts that absence rather than the missing entry a completion-only writer would
 have left. The two entries of one answered request are pinned together, because

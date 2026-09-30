@@ -21,10 +21,10 @@ function captureRegistrationFailure(application: Elysia): unknown {
   return undefined;
 }
 
-test("registers a route with the argument order Elysia 1.4 expects", () => {
+test("registers a route with the argument order Elysia 2 expects", () => {
   const calls: unknown[][] = [];
   const application = {
-    route: (...arguments_: unknown[]) => {
+    method: (...arguments_: unknown[]) => {
       calls.push(arguments_);
     },
   } as unknown as Elysia;
@@ -33,7 +33,7 @@ test("registers a route with the argument order Elysia 1.4 expects", () => {
 
   registerNativeRoute(application, "POST", "/native", handler, hook);
 
-  expect(calls).toEqual([["POST", "/native", handler, hook]]);
+  expect(calls).toEqual([["POST", "/native", hook, handler]]);
 });
 
 test("forwards the declared schema so a mounted route still validates", async () => {
@@ -60,14 +60,14 @@ test("registers a route that declares no schema", async () => {
   expect(await response.text()).toBe("plain");
 });
 
-test("reports an Elysia build that no longer exposes route()", () => {
+test("reports an Elysia build that no longer exposes method()", () => {
   const error = captureRegistrationFailure({} as Elysia);
 
   expect(error).toBeInstanceOf(AponiaError);
   expect(error).toEqual(
     expect.objectContaining({
       code: "UNSUPPORTED_ELYSIA_VERSION",
-      details: { method: "GET", path: "/native", supported: "1.4.x" },
+      details: { method: "GET", path: "/native", supported: "2.0.x" },
     }),
   );
 });

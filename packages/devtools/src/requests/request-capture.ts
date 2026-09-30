@@ -73,10 +73,10 @@ export interface RequestArrival {
 /**
  * What the capture reads off the context that answered a request.
  *
- * Stated as the five values rather than as the platform's context type, because
- * these are all the record is built from and because Elysia's context type is
- * generic over the route: the capture reads a fact of the answer, not the shape
- * of a route's schema.
+ * Stated as the values rather than as the platform's context type, because these
+ * are all the record is built from and because Elysia's context type is generic
+ * over the route: the capture reads a fact of the answer, not the shape of a
+ * route's schema.
  */
 export interface AnsweredRequest {
   /** The request as it arrived. */
@@ -87,8 +87,34 @@ export interface AnsweredRequest {
   readonly body: unknown;
   /** The status the context carries, as Elysia reports it. */
   readonly status: unknown;
+  /**
+   * Whether the context stated an answer at all.
+   *
+   * The after-response phase runs for one request whose answer it cannot
+   * describe: an answer a plugin produced from its own request hook, which Elysia
+   * finishes without copying a route, a status, an exception, or a response value
+   * onto the context. Reporting that context would state the default `200` for
+   * whatever status the client actually received, so the completion half writes
+   * nothing and the entry stamped at arrival is the record — the same shape this
+   * package reported when the installed Elysia ran no after-response phase for
+   * such a request at all. It is read here rather than derived downstream because
+   * the field's presence is a fact about Elysia's context and nothing else is.
+   */
+  readonly answered: boolean;
   /** The value the answer carried, as the after-response context reports it. */
   readonly answer: unknown;
+  /**
+   * The exception the answer was produced from, as the after-response context
+   * reports it.
+   *
+   * It is read for one case the published body cannot answer: an application-owned
+   * failure — an `HttpError`, say — whose Problem Details `Response` Elysia 2
+   * produces without ever copying it onto the context, so `answer` states nothing
+   * and the `detail` the client received is nowhere the hook can reach. The
+   * exception is the one value that survives, and its `message` is the sentence
+   * that mapping publishes.
+   */
+  readonly error: unknown;
 }
 
 /**
@@ -154,7 +180,8 @@ export interface RequestCapture {
    *
    * The entry is written here rather than at completion, because a request can
    * end without this package ever seeing an answer: a plugin that answers from
-   * its own `onRequest` runs no later phase at all, so an entry written only at
+   * its own `request` hook — Elysia 1's `onRequest` — runs no later phase at all,
+   * so an entry written only at
    * completion would leave that request indistinguishable from one that never
    * arrived. The entry states the absence — `status` and `durationMs` are
    * `null` — in place of the answer this moment cannot know.
@@ -306,6 +333,16 @@ export function createRequestCapture(capture: DevtoolsOptions["capture"]): Reque
       // spent by an earlier completion, leave nothing rather than a partial
       // entry.
       if (arrival === undefined) {
+        return;
+      }
+
+      // An answer the context states nothing about leaves the arrival entry
+      // standing rather than superseding it with a guess — see `answered` on the
+      // context this reads. The stamp is spent all the same: nothing runs after
+      // one request's after-response phase.
+      if (!context.answered) {
+        arrivals.delete(context.request);
+
         return;
       }
 
@@ -556,6 +593,16 @@ function answerStatus(context: AnsweredRequest): number {
  * platform older than this release leaves behind — reads as an absent message
  * rather than as a failed read, which is the answer this hook gave before the map
  * existed.
+ *
+ * The context's own exception is the last source, and it answers the one failure
+ * neither of the others can: an application-owned `5xx` whose Problem Details
+ * `Response` the installed Elysia builds without copying it onto the context, and
+ * which the platform's mapping declines to record because the exception already
+ * answers itself. Its `message` is the sentence that response publishes as its
+ * `detail`, so the record states what the client received rather than a second
+ * account of it. Every read of that value is guarded, because the value is the
+ * application's: a thrown `Proxy` whose `getPrototypeOf` trap refuses the read
+ * would otherwise fail the request this hook is describing.
  */
 async function failureMessage(
   status: number,
@@ -572,7 +619,27 @@ async function failureMessage(
     return detail;
   }
 
-  return mappedExceptions?.get(context.request);
+  const mapped = mappedExceptions?.get(context.request);
+  if (mapped !== undefined) {
+    return mapped;
+  }
+
+  return exceptionMessage(context.error);
+}
+
+/**
+ * The sentence an exception states, or `undefined` when the value is not one or
+ * refuses to be read as one.
+ */
+function exceptionMessage(error: unknown): string | undefined {
+  try {
+    return error instanceof Error ? error.message : undefined;
+  } catch {
+    // The prototype walk is itself a read of the application's value, and a
+    // `Proxy` may refuse it. An absent message is the honest answer where a
+    // failed read would be this request's failure.
+    return undefined;
+  }
 }
 
 /** The answer's body as JSON, or `undefined` when it cannot be read from here. */

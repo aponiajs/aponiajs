@@ -19,6 +19,45 @@ import { AponiaFactory, compileRootModule } from "../src/index.ts";
 
 const escapedBodyProperty = 'quoted"\\\n${value}`';
 
+/**
+ * The two shapes Elysia 2's generated route body takes around the handler's
+ * result. A handler whose return it cannot prove synchronous is awaited
+ * unconditionally; one it can prove is called directly and awaited only when
+ * the result turns out to be a thenable, which is the guard below.
+ */
+const AWAITED_HANDLER_MARKER = "_r=await _r";
+const CONDITIONAL_HANDLER_AWAIT_MARKER = "if(typeof _r?.then==='function')";
+
+/** The assignments Elysia 2's generated body makes for the fields it parses itself. */
+const COOKIE_MATERIALIZED_MARKER = "c.cookie=";
+const QUERY_MATERIALIZED_MARKER = "c.query=";
+
+/**
+ * The body Elysia generates for each mounted route, keyed by path.
+ *
+ * Elysia 2 no longer carries `PublicRoute.compile()` at runtime although its
+ * own types still declare it, so the generated body is read from the
+ * application's compiled-route list instead. That list is in route order, the
+ * same order `routes` reports, which is what pairs the two.
+ */
+function compiledRouteSources(application: {
+  getNativeApplication(): { readonly routes: readonly { readonly path: string }[] };
+}): ReadonlyMap<string, string> {
+  const nativeApplication = application.getNativeApplication() as unknown as {
+    readonly routes: readonly { readonly path: string }[];
+    readonly compiled?: readonly unknown[];
+    compile(): unknown;
+  };
+  nativeApplication.compile();
+  const sources = (nativeApplication.compiled ?? []).map((source) =>
+    typeof source === "function" ? source.toString() : "",
+  );
+
+  return new Map(
+    nativeApplication.routes.map((route, index) => [route.path, sources[index] ?? ""]),
+  );
+}
+
 @Controller("dispatch")
 class DispatchController {
   @Get()
@@ -282,10 +321,7 @@ test("keeps implicit context compatibility for zero-length JavaScript handlers",
 
 test("keeps synchronous routes synchronous without breaking Promise-returning handlers", async () => {
   const application = await AponiaFactory.create(DispatchModule, { logger: false });
-  const nativeApplication = application.getNativeApplication().compile();
-  const compiledRoutes = new Map(
-    nativeApplication.router.history.map((route) => [route.path, route.compile().toString()]),
-  );
+  const compiledRoutes = compiledRouteSources(application);
   const ping = compiledRoutes.get("/dispatch");
   const promised = compiledRoutes.get("/dispatch/promise");
   const newPromise = compiledRoutes.get("/dispatch/new-promise");
@@ -293,13 +329,15 @@ test("keeps synchronous routes synchronous without breaking Promise-returning ha
 
   expect(ping).toBeDefined();
   expect(ping).not.toStartWith("async function");
-  expect(ping).not.toContain("await handler(c)");
+  expect(ping).toContain(CONDITIONAL_HANDLER_AWAIT_MARKER);
+  expect(ping).not.toContain(AWAITED_HANDLER_MARKER);
   expect(promised).toStartWith("async function");
-  expect(promised).toContain("await handler(c)");
+  expect(promised).toContain(AWAITED_HANDLER_MARKER);
   expect(newPromise).toStartWith("async function");
-  expect(newPromise).toContain("await handler(c)");
+  expect(newPromise).toContain(AWAITED_HANDLER_MARKER);
   expect(syncCall).not.toStartWith("async function");
-  expect(syncCall).not.toContain("await handler(c)");
+  expect(syncCall).toContain(CONDITIONAL_HANDLER_AWAIT_MARKER);
+  expect(syncCall).not.toContain(AWAITED_HANDLER_MARKER);
 
   const promisedResponse = await application.handle(
     new Request("http://localhost/dispatch/promise"),
@@ -317,21 +355,17 @@ test("awaits an ambiguous Promise result before running native after-handle hook
   const application = await AponiaFactory.create(AmbiguousPromiseModule, {
     logger: false,
     configureNative: (nativeApplication) =>
-      nativeApplication.onAfterHandle(({ response }) => {
-        observedResponse = response;
+      nativeApplication.afterHandle(({ responseValue }) => {
+        observedResponse = responseValue;
       }),
   });
-  const nativeApplication = application.getNativeApplication().compile();
-  const compiledRoute = nativeApplication.router.history
-    .find((route) => route.path === "/ambiguous-promise")
-    ?.compile()
-    .toString();
+  const compiledRoute = compiledRouteSources(application).get("/ambiguous-promise");
   const response = await application.handle(new Request("http://localhost/ambiguous-promise"));
 
   expect(await response.text()).toBe("resolved");
   expect(observedResponse).toBe("resolved");
   expect(observedResponse).not.toBeInstanceOf(Promise);
-  expect(compiledRoute).toContain("await handler(c)");
+  expect(compiledRoute).toContain(AWAITED_HANDLER_MARKER);
   await application.close();
 });
 
@@ -339,11 +373,9 @@ test("emits fixed route handlers with only their declared context capabilities",
   const application = await AponiaFactory.create(DispatchModule, { logger: false });
   const nativeApplication = application.getNativeApplication().compile();
   const handlers = new Map(
-    nativeApplication.router.history.map((route) => [route.path, route.handler.toString()]),
+    nativeApplication.routes.map((route) => [route.path, route.handler.toString()]),
   );
-  const compiledRoutes = new Map(
-    nativeApplication.router.history.map((route) => [route.path, route.compile().toString()]),
-  );
+  const compiledRoutes = compiledRouteSources(application);
 
   expect(handlers.get("/dispatch")).toContain("handler.call(instance)");
   expect(handlers.get("/dispatch")).toStartWith("()=>");
@@ -374,31 +406,38 @@ test("emits fixed route handlers with only their declared context capabilities",
     expect(source).not.toContain("Reflect.apply");
   }
 
+  // Elysia materializes a context field only when the invoker it was handed
+  // reads it, and its generated body assigns the two it must parse itself.
   const ping = compiledRoutes.get("/dispatch");
   expect(ping).toBeDefined();
-  expect(ping).not.toContain("parseQueryFromURL");
-  expect(ping).not.toContain("parseCookie");
-  expect(ping).not.toContain("getServer");
+  expect(ping).not.toContain(QUERY_MATERIALIZED_MARKER);
+  expect(ping).not.toContain(COOKIE_MATERIALIZED_MARKER);
 
   const item = compiledRoutes.get("/dispatch/items/:id");
-  expect(item).toContain("parseQueryFromURL");
-  expect(item).not.toContain("parseCookie");
-  expect(item).not.toContain("getServer");
+  expect(item).toContain(QUERY_MATERIALIZED_MARKER);
+  expect(item).not.toContain(COOKIE_MATERIALIZED_MARKER);
 
   const body = compiledRoutes.get("/dispatch/body");
-  expect(body).not.toContain("parseQueryFromURL");
-  expect(body).not.toContain("parseCookie");
-  expect(body).not.toContain("getServer");
+  expect(body).not.toContain(QUERY_MATERIALIZED_MARKER);
+  expect(body).not.toContain(COOKIE_MATERIALIZED_MARKER);
 
-  expect(compiledRoutes.get("/dispatch/cookie")).toContain("parseCookie");
-  expect(compiledRoutes.get("/dispatch/request")).not.toContain("parseCookie");
-  expect(compiledRoutes.get("/dispatch/request")).not.toContain("parseQueryFromURL");
-  expect(compiledRoutes.get("/dispatch/context")).toContain("parseCookie");
-  expect(compiledRoutes.get("/dispatch/arguments-literals")).not.toContain("parseCookie");
-  expect(compiledRoutes.get("/dispatch/arguments-literals")).not.toContain("parseQueryFromURL");
-  expect(compiledRoutes.get("/dispatch/arguments-properties")).not.toContain("parseCookie");
-  expect(compiledRoutes.get("/dispatch/arguments-properties")).not.toContain("parseQueryFromURL");
-  expect(compiledRoutes.get("/dispatch/arguments-template")).toContain("parseCookie");
+  expect(compiledRoutes.get("/dispatch/cookie")).toContain(COOKIE_MATERIALIZED_MARKER);
+  expect(compiledRoutes.get("/dispatch/request")).not.toContain(COOKIE_MATERIALIZED_MARKER);
+  expect(compiledRoutes.get("/dispatch/request")).not.toContain(QUERY_MATERIALIZED_MARKER);
+  expect(compiledRoutes.get("/dispatch/context")).toContain(COOKIE_MATERIALIZED_MARKER);
+  expect(compiledRoutes.get("/dispatch/arguments-literals")).not.toContain(
+    COOKIE_MATERIALIZED_MARKER,
+  );
+  expect(compiledRoutes.get("/dispatch/arguments-literals")).not.toContain(
+    QUERY_MATERIALIZED_MARKER,
+  );
+  expect(compiledRoutes.get("/dispatch/arguments-properties")).not.toContain(
+    COOKIE_MATERIALIZED_MARKER,
+  );
+  expect(compiledRoutes.get("/dispatch/arguments-properties")).not.toContain(
+    QUERY_MATERIALIZED_MARKER,
+  );
+  expect(compiledRoutes.get("/dispatch/arguments-template")).toContain(COOKIE_MATERIALIZED_MARKER);
   await application.close();
 });
 
@@ -444,10 +483,7 @@ test("compiles a route Promise-capable when decorator metadata cannot prove a sy
   const application = await AponiaFactory.create(MetadataFreeModule, {
     logger: false,
   });
-  const nativeApplication = application.getNativeApplication().compile();
-  const compiledRoutes = new Map(
-    nativeApplication.router.history.map((route) => [route.path, route.compile().toString()]),
-  );
+  const compiledRoutes = compiledRouteSources(application);
   const literal = await application.handle(new Request("http://localhost/metadata-free/literal"));
   const asyncLiteral = await application.handle(
     new Request("http://localhost/metadata-free/async-literal"),
@@ -465,9 +501,9 @@ test("compiles a route Promise-capable when decorator metadata cannot prove a sy
   expect(await context.text()).toBe("/metadata-free/context");
   // Manually applied decorators record no design:returntype, and none of these
   // handlers is an async function, so nothing proves a synchronous return.
-  expect(compiledRoutes.get("/metadata-free/literal")).toContain("await handler(c)");
-  expect(compiledRoutes.get("/metadata-free/async-literal")).toContain("await handler(c)");
-  expect(compiledRoutes.get("/metadata-free/promise")).toContain("await handler(c)");
+  expect(compiledRoutes.get("/metadata-free/literal")).toContain(AWAITED_HANDLER_MARKER);
+  expect(compiledRoutes.get("/metadata-free/async-literal")).toContain(AWAITED_HANDLER_MARKER);
+  expect(compiledRoutes.get("/metadata-free/promise")).toContain(AWAITED_HANDLER_MARKER);
   await application.close();
 });
 
@@ -476,33 +512,23 @@ test("awaits a Promise returned without a call expression before after-handle ho
   const application = await AponiaFactory.create(CachedModule, {
     logger: false,
     configureNative: (nativeApplication) =>
-      nativeApplication.onAfterHandle(({ response }) => {
-        observedResponse = response;
+      nativeApplication.afterHandle(({ responseValue }) => {
+        observedResponse = responseValue;
       }),
   });
-  const compiledRoute = application
-    .getNativeApplication()
-    .compile()
-    .router.history.find((route) => route.path === "/cached")
-    ?.compile()
-    .toString();
+  const compiledRoute = compiledRouteSources(application).get("/cached");
   const response = await application.handle(new Request("http://localhost/cached"));
 
   expect(await response.text()).toBe("deferred");
   expect(observedResponse).toBe("deferred");
   expect(observedResponse).not.toBeInstanceOf(Promise);
-  expect(compiledRoute).toContain("await handler(c)");
+  expect(compiledRoute).toContain(AWAITED_HANDLER_MARKER);
   await application.close();
 });
 
 test("compiles interface and union return types as Promise-capable", async () => {
   const application = await AponiaFactory.create(CachedModule, { logger: false });
-  const compiledRoutes = new Map(
-    application
-      .getNativeApplication()
-      .compile()
-      .router.history.map((route) => [route.path, route.compile().toString()]),
-  );
+  const compiledRoutes = compiledRouteSources(application);
   const cached = await application.handle(new Request("http://localhost/cached"));
   const interfaceResponse = await application.handle(
     new Request("http://localhost/cached/interface"),
@@ -510,8 +536,8 @@ test("compiles interface and union return types as Promise-capable", async () =>
 
   expect(await cached.text()).toBe("deferred");
   expect(await interfaceResponse.json()).toEqual({ value: "interface" });
-  expect(compiledRoutes.get("/cached")).toContain("await handler(c)");
-  expect(compiledRoutes.get("/cached/interface")).toContain("await handler(c)");
+  expect(compiledRoutes.get("/cached")).toContain(AWAITED_HANDLER_MARKER);
+  expect(compiledRoutes.get("/cached/interface")).toContain(AWAITED_HANDLER_MARKER);
   await application.close();
 });
 
@@ -524,16 +550,11 @@ test("treats an async handler as Promise-capable when its design metadata names 
   const application = await AponiaFactory.create(AsyncHandlerModule, {
     logger: false,
     configureNative: (nativeApplication) =>
-      nativeApplication.onAfterHandle(({ response }) => {
-        observedResponse = response;
+      nativeApplication.afterHandle(({ responseValue }) => {
+        observedResponse = responseValue;
       }),
   });
-  const compiledRoute = application
-    .getNativeApplication()
-    .compile()
-    .router.history.find((route) => route.path === "/async-handler")
-    ?.compile()
-    .toString();
+  const compiledRoute = compiledRouteSources(application).get("/async-handler");
   const response = await application.handle(new Request("http://localhost/async-handler"));
 
   // The misleading metadata really is in place, so the Promise-capable
@@ -542,7 +563,7 @@ test("treats an async handler as Promise-capable when its design metadata names 
   expect(await response.text()).toBe("async-handler");
   expect(observedResponse).toBe("async-handler");
   expect(observedResponse).not.toBeInstanceOf(Promise);
-  expect(compiledRoute).toContain("await handler(c)");
+  expect(compiledRoute).toContain(AWAITED_HANDLER_MARKER);
   await application.close();
 });
 

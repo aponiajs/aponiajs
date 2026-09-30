@@ -79,8 +79,10 @@ export function readApplicationToken<T>(application: unknown, token: Token<T>): 
  * `store` and never the instance, and `onStart` — the only hook handed the
  * instance — does not run for an application that never listens, so a plugin
  * that needs the application at request time has no other channel to read it
- * from. `context.store` is the same object as `application.store` — Elysia hands
- * one root store to both — which is what makes the publication visible there.
+ * from. `context.store` is the same object the application holds at `~ext.store`
+ * — Elysia hands one root store to both, and 2.0 moved the instance-side
+ * accessor from `application.store` to that slot — which is what makes the
+ * publication visible there.
  *
  * The entry is non-enumerable, so it stays out of the store's own shape, and
  * non-writable and non-configurable for the reason the container seam states:
@@ -91,7 +93,7 @@ export function readApplicationToken<T>(application: unknown, token: Token<T>): 
  * @internal
  */
 export function publishApplicationOnStore(application: object): void {
-  const store = (application as { store?: Record<PropertyKey, unknown> }).store;
+  const store = rootStoreOf(application);
   if (!store) {
     return;
   }
@@ -102,6 +104,34 @@ export function publishApplicationOnStore(application: object): void {
     writable: false,
     configurable: false,
   });
+}
+
+/**
+ * The root store an application hands a request, created if it has none.
+ *
+ * Elysia 2 moved the instance-side accessor from `application.store` to the
+ * `~ext` slot, and it materializes that store only once something seeds it — so
+ * an application that declares no state has no `context.store` for a reader to
+ * find this seam on at all. Seeding with the seam's own symbol key creates the
+ * store without adding an entry a request can see: Elysia reads a symbol key
+ * into the store's own shape, and the publication below then defines the seam
+ * on it non-enumerably.
+ */
+function rootStoreOf(application: object): Record<PropertyKey, unknown> | undefined {
+  const native = application as {
+    readonly "~ext"?: { readonly store?: Record<PropertyKey, unknown> };
+    readonly state?: (key: PropertyKey, value: unknown) => unknown;
+  };
+
+  const existing = native["~ext"]?.store;
+  if (existing) {
+    return existing;
+  }
+
+  native.state?.(nativeApplicationKey, undefined);
+  return (application as { readonly "~ext"?: { readonly store?: Record<PropertyKey, unknown> } })[
+    "~ext"
+  ]?.store;
 }
 
 /**

@@ -61,10 +61,11 @@ describe("global enhancers", () => {
     // A global enhancer is the application's declaration, not the route's: the
     // two scopes merge while a route mounts, so the guard reaches a controller
     // that declares none even though the compiled route it mounts from states its
-    // own declarations and nothing else. Elysia keeps a route's hooks as a list,
-    // so the mounted guard is one entry in it.
-    expect(Array.isArray(globalHooks.beforeHandle)).toBe(true);
-    expect(globalHooks.beforeHandle).toHaveLength(1);
+    // own declarations and nothing else. Elysia 2 keeps a route's hook in the
+    // shape it was declared in, and the platform declares the guards and the
+    // interceptor before halves as one merged function, so the mounted guard
+    // reads back as that function rather than as a list holding it.
+    expect(typeof globalHooks.beforeHandle).toBe("function");
     expect(globalCalls).toEqual(["global"]);
     // A plain boot carries no enhancer hook at all.
     expect(plainHooks.beforeHandle).toBeUndefined();

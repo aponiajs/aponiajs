@@ -19,7 +19,10 @@ test("meta reports the contract and the versions the boot ran", async () => {
 
   expect(meta.contract).toBe(devtoolsContractVersion);
   expect(meta.framework).toBe(aponiaVersion);
-  expect(meta.elysia).toStartWith("1.");
+  // The release the endpoint resolves from the application's own tree, which is
+  // the one this workspace installs: the example reports Elysia 2 because that
+  // is what it ran against.
+  expect(meta.elysia).toStartWith("2.");
 });
 
 test("graph reports the module the boot compiled", async () => {

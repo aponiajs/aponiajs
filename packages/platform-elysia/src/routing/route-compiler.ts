@@ -4,7 +4,6 @@ import {
   getRouteMetadata,
   getRouteParameterMetadata,
   isRouteResponseSchemaMap,
-  isStandardSchema,
   resolveRouteValidator,
   type AponiaInterceptor,
   type ArgumentsHost,
@@ -21,7 +20,7 @@ import {
   type RouteSchema,
   type RouteValidatorInput,
 } from "@aponiajs/common";
-import { type AnySchema, type Elysia, type TSchema } from "elysia";
+import { type AnySchema, type Elysia } from "elysia";
 import type { MountedRouteEnhancers, ResolvedFilter } from "../controllers/enhancer-resolver.ts";
 import { isFilterMatch, reportThroughLogger } from "../errors/default-exception-filter.ts";
 import { httpErrors } from "../errors/http-error.ts";
@@ -308,7 +307,13 @@ function createFilterHook(
     }
 
     try {
-      return await filter.instance.catch(context.error, createArgumentsHost(context));
+      const answered = await filter.instance.catch(context.error, createArgumentsHost(context));
+      // The documented contract is that `undefined` and `null` both decline, so
+      // the next entry in the array answers. Elysia 1.4 read the two the same
+      // way; Elysia 2 ends the error path on anything that is not `undefined`,
+      // so a filter declining with `null` is translated rather than allowed to
+      // answer an empty response in the mapping's place.
+      return answered === null ? undefined : answered;
     } catch (failure) {
       reportThroughLogger(logger, failure, "ExceptionsHandler");
       return undefined;
@@ -626,7 +631,7 @@ function createLifecycleHook(
             // so the value a half answers with is what the next one receives and
             // a half that answers nothing keeps what the response carries.
             // `null`, `false`, and `0` are responses, not absences.
-            let response = context.response;
+            let response = context.responseValue;
             for (const interceptor of afterInterceptors) {
               const answered = await interceptor.interceptAfter?.(executionContext, response);
               if (answered !== undefined) {
@@ -686,16 +691,13 @@ function toSchemaHook(schema: RouteSchema | undefined): ElysiaRouteHook | undefi
 }
 
 /**
- * Validation models unwrap once during route registration. Standard Schema
- * validators pass through unchanged. Platform-native TypeBox validators reach
- * the platform through the neutral `NativeSchema` contract, which cannot
- * describe TypeBox's `Kind` symbol, so they are restored here.
+ * Validation models unwrap once during route registration. A Standard Schema
+ * validator and a platform-native TypeBox schema both satisfy the neutral
+ * `RouteValidator` contract, which Elysia accepts as a schema unchanged, so no
+ * branch is needed here.
  */
 function toElysiaSchema(validator: RouteValidatorInput): AnySchema {
-  const resolvedValidator = resolveRouteValidator(validator);
-  return isStandardSchema(resolvedValidator)
-    ? resolvedValidator
-    : (resolvedValidator as unknown as TSchema);
+  return resolveRouteValidator(validator);
 }
 
 function toElysiaResponseSchema(

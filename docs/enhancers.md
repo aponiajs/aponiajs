@@ -143,7 +143,7 @@ supported.
 
 ### The default filter
 
-Every route the platform mounts on Elysia's AOT path carries the default
+Every route the platform mounts from a compiled plan carries the default
 Problem Details mapping last in its own `error` array, behind the filters it
 declares. It maps an unhandled failure to `500` `application/problem+json` with
 a fixed `detail`, reports the exception through the system logger under
@@ -164,13 +164,6 @@ included — so a declared filter that answers one of them replaces that respons
 with its own. Declining them is how the mapping stays out of the way of
 responses an application already decided.
 
-Under `elysia: { aot: false }` the route-local `error` array is never read, so
-no declared filter and not even the default mapping runs; an unhandled failure
-answers Elysia's native `500` carrying the exception's message, and the boot
-warns under `RoutesResolver` when that policy is set. See the
-[route compilation policy](../packages/platform-elysia/README.md#route-compilation-policy)
-and the [errors chapter](./learn/10-errors.md).
-
 ## Routes mounted without a plan
 
 Every enhancer above compiles onto a route while the platform mounts it from a
@@ -188,12 +181,11 @@ declares, not a global enhancer, and not the default mapping:
   plugin outside a boot: with no boot there is no resolution, so the plugin
   mounts the validators its schemas declare and no enhancer hooks at all.
 
-The consequence is the one `elysia: { aot: false }` has: a route mounted that
-way answers exactly the way Elysia answers, and an unhandled failure on it is
-Elysia's native `500` carrying the exception's message rather than a Problem
-Details response. The platform cannot retro-fit hooks onto routes it did not
-compile, so a declaration that has to run belongs on a decorated controller or a
-declared plan.
+A route mounted that way answers exactly the way Elysia answers, and an
+unhandled failure on it is Elysia's native `500` carrying the exception's
+message rather than a Problem Details response. The platform cannot retro-fit
+hooks onto routes it did not compile, so a declaration that has to run belongs
+on a decorated controller or a declared plan.
 
 ## Declaring enhancers
 

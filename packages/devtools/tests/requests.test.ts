@@ -338,7 +338,7 @@ class BulkModule {}
  * A plugin that refuses two different ways, because the record's boundary
  * between them is a fact about the installed Elysia rather than a preference.
  */
-const gatePlugin = new Elysia({ name: "gate" }).onRequest((context) => {
+const gatePlugin = new Elysia({ name: "gate" }).request((context) => {
   const { pathname } = new URL(context.request.url);
 
   if (pathname === "/gated") {
@@ -1204,11 +1204,18 @@ test.serial("a second listen continues the record the application already opened
     // The record belongs to the application rather than to a socket, and this is
     // where the old per-boot window would have parted from it: the record is
     // opened on the first request the plugin sees and memoized by the application,
-    // so the `onStart` a second `listen()` runs opens nothing and the window the
+    // so the `setup` a second `listen()` runs opens nothing and the window the
     // first boot began is the one still served. The counter that mints an id
     // outlives the listener the same way, because it belongs to the capture rather
     // than to the record: an id that restarted here would let a consumer polling
     // through the restart group two different requests under one id.
+    //
+    // The first listener is closed first, which Elysia 2 requires: its adapter
+    // refuses a second `listen()` while a server is active, where Elysia 1
+    // re-bound. Stopping a listener is not the restart the distinction above is
+    // about — the application, its record, and the capture's counter all outlive
+    // the socket, which is exactly what this case reads back.
+    await application.close();
     await application.listen(0);
     await ask(application, `/users/7`);
 

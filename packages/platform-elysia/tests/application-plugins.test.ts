@@ -30,10 +30,10 @@ function answeringPlugin(name: string, answer: string): Elysia {
 /** The phase a plugin mounted through each path observed, in arrival order. */
 function observingPlugin(name: string, phases: string[]): Elysia {
   return new Elysia({ name })
-    .onRequest(() => {
+    .request(() => {
       phases.push(`request:${name}`);
     })
-    .onAfterResponse({ as: "global" }, () => {
+    .afterResponse("global", () => {
       phases.push(`after:${name}`);
     });
 }

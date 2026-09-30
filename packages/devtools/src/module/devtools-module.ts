@@ -122,7 +122,7 @@ function createInertModule(): DynamicModule {
  * route table, so a client reaches it wherever the application is reachable and
  * a request to the prefix is answered by the application rather than by `404`;
  * and it answers under `handle()` as well as under `listen()`, because a route
- * registered when this plugin is mounted needs no `onStart`. What it costs is
+ * registered when this plugin is mounted needs no `setup` hook. What it costs is
  * the property the old shape had: a surface that could be enabled, disabled, or
  * fall over without changing a single answer the application gives is a surface
  * that owns a socket. The mount is a route, and one route can collide with
@@ -138,10 +138,11 @@ function createInertModule(): DynamicModule {
  * `405` for a method other than `GET` are that dispatcher's answers, not the
  * wildcard's, so the mount claims nothing about the paths beneath it.
  *
- * The `onStart` hook below says where the surface is mounted and does nothing
+ * The `setup` hook below says where the surface is mounted and does nothing
  * else. It is not what mounts it, and nothing may move the mount into it:
- * `onStart` does not run for an application that only calls `handle()`, which is
- * exactly the entrypoint this release made the surface reachable through.
+ * `setup` — Elysia 1's `onStart` — does not run for an application that only
+ * calls `handle()`, which is exactly the entrypoint this release made the
+ * surface reachable through.
  *
  * The request record is contributed by the same plugin, and its pair of hooks is
  * built at the same moment for the same reason: registration is what mounts the
@@ -149,14 +150,15 @@ function createInertModule(): DynamicModule {
  * this instance rather than anything the root application holds — this package
  * registers nothing on the root — so the arrival hook rides the request phase,
  * which Elysia merges from a used plugin unfiltered, and the completion hook is
- * declared `{ as: "global" }`, which is the option the installed Elysia reads for
- * an after-response hook to reach routes this plugin does not own. The two are
+ * declared `.afterResponse("global", ...)`, which is how the installed Elysia is
+ * told to reach routes this plugin does not own: Elysia 1 spelled the same
+ * decision `{ as: "global" }` on `onAfterResponse`. The two are
  * separate answers and neither is a tidiness a maintainer may drop: with the
  * local scope the after-response hook never runs for a controller's route, and
  * the record then stays empty however many requests the application answers.
  *
  * The record a boot's requests are filed in is opened by `recordFor`, on the
- * first request the plugin sees, rather than at `onStart` — see there for why it
+ * first request the plugin sees, rather than at `setup` — see there for why it
  * cannot be a hook call, and why the window must not wait for the first poll.
  *
  * Neither hook returns a value, and that is a rule rather than a style: a hook
@@ -186,7 +188,18 @@ function createDevtoolsPlugin(options: DevtoolsOptions): NativeElysiaPlugin {
 
   return (
     new Elysia({ name: devtoolsPluginName })
-      .onRequest((context) => {
+      // An empty state slot, declared so the application's store exists at all.
+      //
+      // Elysia 2 materializes a request's `store` only for an application that
+      // declared state, so an application that declared none hands this plugin a
+      // context without one — and the store is the identity every record in this
+      // package is keyed by, because it is the only per-application value a
+      // request carries. Declaring an empty slot is what makes the key exist
+      // wherever this plugin is mounted, an application's module or a bare
+      // `Elysia` a test built by hand, and it adds no key an application can see:
+      // the store's own shape stays whatever the application declared.
+      .state({})
+      .request((context) => {
         // The surface's own traffic is the one thing this record leaves out, and
         // `isDevtoolsSurfaceRequest` states why. Skipping the arrival is the whole
         // of it: the completion half writes nothing without a stamp to spend, and
@@ -204,7 +217,7 @@ function createDevtoolsPlugin(options: DevtoolsOptions): NativeElysiaPlugin {
         recordFor(records, context.store, capture);
         capture.arrive(context.request, context.store);
       })
-      .onAfterResponse({ as: "global" }, async (context) => {
+      .afterResponse("global", async (context) => {
         // The closing reading is the first statement of this hook, before the five
         // reads below, because every one of them and everything `toRequestRecord`
         // does with them is this package's own work: a duration that included them
@@ -214,6 +227,7 @@ function createDevtoolsPlugin(options: DevtoolsOptions): NativeElysiaPlugin {
         // reading stays here — moving it after that `await` would charge the
         // application for it.
         const completedAt = performance.now();
+        const facts = answerFacts(context);
 
         await capture.complete(
           {
@@ -222,6 +236,8 @@ function createDevtoolsPlugin(options: DevtoolsOptions): NativeElysiaPlugin {
             body: context.body,
             status: context.set.status,
             answer: context.responseValue,
+            error: facts.error,
+            answered: facts.answered,
           },
           completedAt,
         );
@@ -235,7 +251,7 @@ function createDevtoolsPlugin(options: DevtoolsOptions): NativeElysiaPlugin {
           surfaceFor(surfaces, store, recordFor(records, store, capture), logs),
         ),
       )
-      .onStart(() => {
+      .setup(() => {
         // Said once, at the moment a listener exists and the address is real. It is
         // a report rather than a mount: the route above answers with or without
         // this line, which is what an application that only handles requests shows.
@@ -247,12 +263,57 @@ function createDevtoolsPlugin(options: DevtoolsOptions): NativeElysiaPlugin {
 }
 
 /**
+ * What an after-response context states about the answer it followed: the
+ * exception the answer was produced from, and whether the context states an
+ * answer at all.
+ *
+ * Elysia 2 copies a fact of the answer onto the context on every path a route
+ * answers — `responseValue` for the value, `error` for the exception it was
+ * produced from, and a numeric `set.status` for the status it went out with —
+ * and on exactly one path it copies none of them: an answer a plugin produced
+ * from its own request hook, which is finished without a route ever matching.
+ * The phase still runs, so a completion that trusted it would publish the
+ * context's default `200` for whatever status the client actually received.
+ * `responseValue` is read by presence rather than by value, because a handler
+ * that returns nothing states `undefined` there and is still an answer.
+ *
+ * The context type the installed Elysia ships carries no `error`, although the
+ * value is on the context at runtime on every path a route answered from an
+ * exception: measured on a throwing handler and on one that refused with a
+ * status, where `responseValue` is absent and `set.status` is the status the
+ * client received. The read is therefore taken structurally, once, here, rather
+ * than left out of the record — this package registers no error hook, so the
+ * context is the only place the exception the answer was produced from can be
+ * read.
+ *
+ * That shape is a statement about a release this package does not own, so it is
+ * re-checked whenever the Elysia peer range moves: an Elysia that populated one
+ * of the three on the unmatched-answer path would make such an answer reportable
+ * again, and a case would have to be rewritten rather than the rule kept.
+ */
+function answerFacts(context: object): { readonly error: unknown; readonly answered: boolean } {
+  const stated = context as {
+    readonly error?: unknown;
+    readonly set?: { readonly status?: unknown };
+  };
+
+  return {
+    error: stated.error,
+    answered:
+      "responseValue" in stated ||
+      stated.error !== undefined ||
+      typeof stated.set?.status === "number",
+  };
+}
+
+/**
  * The boot record one application's surface answers from: the application
  * itself, as a plugin mounted on it can reach it while answering a request, and
  * the window the boot's requests are filed in.
  *
  * Both facts the server used to be handed at `onStart` are settled on the
- * request path instead, and both for the same reason: `onStart` never fires for
+ * request path instead, and both for the same reason: `setup`, the hook Elysia 2
+ * renamed `onStart` to, never fires for
  * an application that only calls `handle()`, which is exactly the entrypoint
  * this mount made the surface reachable through. The application is read from
  * the store rather than handed in, because `context.store` is the one
@@ -285,7 +346,7 @@ interface ApplicationRecord {
  * where the capture is associated with the boot's own exception table, which is
  * the only place an unhandled failure's message can come from, so it has to have
  * run before the first request this registration records is filed. It cannot be
- * an `onStart` call: `onStart` never fires for an application that only calls
+ * a `setup` call: that hook never fires for an application that only calls
  * `handle()`, so a record opened there would not exist for exactly the
  * applications this mount made reachable, and their captures would report an
  * empty window for traffic they really answered.

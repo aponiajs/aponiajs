@@ -5,10 +5,7 @@ import type { ElysiaWS } from "elysia/ws";
 /**
  * The native Elysia client supplied to gateway message and lifecycle handlers.
  */
-export type ElysiaWebSocket<TContext = unknown, TRoute extends RouteSchema = {}> = ElysiaWS<
-  TContext,
-  TRoute
->;
+export type ElysiaWebSocket<TRoute extends RouteSchema = {}> = ElysiaWS<TRoute>;
 
 /**
  * The native Elysia application injected by `@WebSocketServer()`.

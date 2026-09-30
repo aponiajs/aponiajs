@@ -1,4 +1,4 @@
-import { InvertedStatusMap, StatusMap } from "elysia";
+import { StatusMap, StatusMapBack } from "elysia";
 import type {
   HttpErrorFactory,
   HttpErrorOptions,
@@ -172,7 +172,7 @@ function resolveStatus(status: HttpErrorStatus): {
   readonly title: HttpErrorStatusName;
 } {
   const statusCode = typeof status === "number" ? status : StatusMap[status];
-  const title = typeof status === "number" ? InvertedStatusMap[status] : status;
+  const title = typeof status === "number" ? StatusMapBack[status] : status;
   // A string argument is its own title, so `title === undefined` never fires for
   // one and an unrecognized status name leaves `statusCode` undefined. Both
   // comparisons against undefined then fail, and the failure would be served as

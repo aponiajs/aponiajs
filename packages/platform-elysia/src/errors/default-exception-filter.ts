@@ -1,5 +1,5 @@
 import { renderLogValue, type LoggerService } from "@aponiajs/common";
-import { ElysiaCustomStatusResponse } from "elysia";
+import { ElysiaStatus } from "elysia";
 import type { ResolvedFilter } from "../controllers/enhancer-resolver.ts";
 import type { ElysiaErrorHook } from "../routing/route-compiler.types.ts";
 import { httpErrors } from "./http-error.ts";
@@ -39,13 +39,11 @@ export function isFilterMatch(filter: ResolvedFilter, exception: unknown): boole
  *
  * It answers an unhandled failure with a `500` Problem Details response that
  * carries neither the stack nor the cause: an application that could turn this
- * off could ship a stack trace, so on Elysia's AOT path it is always present and
- * never removable, and an application overrides it by declaring a filter ahead
- * of it. It is a route-local hook, and Elysia's dynamic dispatcher
- * (`elysia: { aot: false }`) never reads a route's own `error` array: that path
- * runs no declared filter and no mapping, and answers an unhandled failure with
- * Elysia's native `500` carrying the exception's message, which is why
- * `bootstrapAponiaApplication` warns about the policy at boot.
+ * off could ship a stack trace, so it is always present and never removable, and
+ * an application overrides it by declaring a filter ahead of it. It is a
+ * route-local hook, and Elysia reads a route's own `error` array under every
+ * configuration this release can select, so the mapping and the filters beside
+ * it run whenever the route does.
  *
  * It answers only what Elysia would otherwise answer from its unknown-error
  * fallback. Everything Elysia's own error path decides for itself is declined
@@ -212,7 +210,7 @@ function recordMappedException(
  * Three of the checks are structural because they describe a contract rather
  * than a version: an exception carrying a numeric `status` is one Elysia seeds
  * the response status from, one exposing `toResponse()` is answered through
- * that response, and an `ElysiaCustomStatusResponse` is the `status()` escape
+ * that response, and an `ElysiaStatus` is the `status()` escape
  * hatch, which states neither and carries the status as its code. Together they
  * cover every framework error Elysia throws — `ValidationError` and
  * `InvalidFileType` answer `422`, `ParseError` and `InvalidCookieSignature`
@@ -235,7 +233,7 @@ function recordMappedException(
  * Elysia's answer, not this mapping's to replace).
  */
 function elysiaAnswersThis(error: unknown, status: unknown): boolean {
-  if (error instanceof ElysiaCustomStatusResponse) {
+  if (error instanceof ElysiaStatus) {
     return true;
   }
   if (isDecidedStatus(status)) {

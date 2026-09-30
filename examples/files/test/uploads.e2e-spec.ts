@@ -26,7 +26,7 @@ describe("uploading a file", () => {
   });
 
   test("the part's type comes from its filename, not from the declared one", async () => {
-    // Measured on bun 1.4.2 / elysia 1.4.30, through raw Elysia as well as through
+    // Measured on bun 1.4.2 / elysia 2.0.0-beta.19, through raw Elysia as well as through
     // this framework: the multipart parser discards the content type the client
     // declared and maps the filename through a MIME table. `file.type` is therefore
     // a fact about the name the client chose, never about the bytes it sent.
@@ -107,15 +107,18 @@ describe("uploading a file", () => {
       form({ file: file("report.txt", "hello") }),
     );
 
-    // The boundary this example exists to write down: Elysia's own validation
-    // answer, which is not the platform's Problem Details shape.
+    // The boundary this example exists to write down. Elysia 1 answered its own
+    // validation failures as a bare `application/json` payload; under Elysia 2
+    // the framework answers every one of them as RFC 9457 Problem Details, so a
+    // refused route and a failed route now carry one content type and one shape.
     expect(response.status).toBe(422);
-    expect(response.headers.get("content-type")).toContain("application/json");
+    expect(response.headers.get("content-type")).toContain("application/problem+json");
     expect(await response.json()).toMatchObject({
       type: "validation",
+      code: "validation",
+      status: 422,
       on: "body",
-      expected: "File",
-      found: "File",
+      detail: expect.stringContaining("Blob"),
     });
   });
 });

@@ -31,8 +31,10 @@ A rejected request returns `422` without running the handler.
 
 Any [Standard Schema](https://standardschema.dev) implementation works — Zod,
 ArkType, Valibot — as do TypeBox and Elysia's `t`. `@aponiajs/common` matches the
-first kind through `~standard` and the second structurally, so TypeBox never
-becomes a dependency of the contract layer.
+first kind through `~standard` and the second by the markers a TypeBox 1 builder
+declares, so a `t.Object()` needs no conversion. Reading the value such a schema
+produces takes a type-only TypeBox import, and that type-only import is the whole
+dependency: nothing in the contract layer reaches TypeBox at runtime.
 
 `@Validation()` accepts exactly one complete validator. Different route
 contracts use different classes:

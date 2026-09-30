@@ -1,15 +1,45 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
+import type { StaticDecode } from "typebox/type";
 import type { routeSchemaSlots } from "./route-schema.ts";
 import type { RouteValidatorInput, ValidationModelClass } from "./validation.types.ts";
 
 /**
- * Platform-native JSON Schema validator, such as TypeBox or the Elysia `t`
- * builder, which describes its inferred value through a `static` member.
+ * The marker a TypeBox constructor declares on the type it builds.
+ *
+ * The four markers are declared as interfaces on purpose. TypeScript gives an
+ * anonymous object type an implicit index signature but withholds one from an
+ * interface, and the implicit one would make every native validator assignable
+ * to `RouteResponseSchemaMap`, collapsing the union `RouteResponseSchema`
+ * states and the narrowing `isRouteResponseSchemaMap` performs on it.
  */
-export interface NativeSchema {
-  readonly static: unknown;
-  readonly params: unknown[];
+interface KindSchema {
+  readonly "~kind": string;
 }
+
+interface RefineSchema {
+  readonly "~refine": unknown;
+}
+
+interface CodecSchema {
+  readonly "~codec": unknown;
+}
+
+interface UnsafeSchema {
+  readonly "~unsafe": unknown;
+}
+
+/**
+ * Platform-native JSON Schema validator: a TypeBox schema, which is what the
+ * Elysia `t` builder constructs.
+ *
+ * TypeBox 1 carries no phantom member describing its inferred value, so a
+ * schema is recognized by the markers its own builders declare. `~kind` is on
+ * every constructed type; the remaining markers are declared by the modifier
+ * wrappers alone — `~unsafe` from `t.Unsafe()` and Elysia's file builders,
+ * `~refine` from `t.Refine()`, and `~codec` from `t.Decode()`/`t.Encode()`.
+ * This is the same marker set Elysia itself accepts as a schema.
+ */
+export type NativeSchema = KindSchema | RefineSchema | CodecSchema | UnsafeSchema;
 
 /**
  * Any validator a route slot accepts: a Standard Schema implementation such as
@@ -32,12 +62,21 @@ export interface RouteSchema {
 
 export type RouteSchemaSlot = (typeof routeSchemaSlots)[number];
 
+/**
+ * Recovers the value a native validator produces. TypeBox computes it from the
+ * schema's shape instead of carrying it as a member, so a mapper is the only
+ * way to read it. `StaticDecode` is the one the platform itself applies to a
+ * request slot, and it is imported as a type only, which leaves `typebox` a
+ * compile-time contract with no runtime edge into this package.
+ */
+type InferNativeSchemaOutput<TValidator extends NativeSchema> = StaticDecode<TValidator>;
+
 export type InferValidatorOutput<TValidator> = TValidator extends StandardSchemaV1
   ? StandardSchemaV1.InferOutput<TValidator>
   : TValidator extends ValidationModelClass<infer TInstance>
     ? TInstance
     : TValidator extends NativeSchema
-      ? TValidator["static"]
+      ? InferNativeSchemaOutput<TValidator>
       : unknown;
 
 type InferSlot<

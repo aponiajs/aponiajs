@@ -22,7 +22,7 @@ import {
   defineElysiaControllerRoutes,
   elysiaController,
 } from "@aponiajs/platform-elysia";
-import { Elysia, t } from "elysia";
+import { Elysia } from "elysia";
 import {
   devtoolsPathPrefix,
   routeRequest,
@@ -156,11 +156,28 @@ class NotFoundFilter {
   }
 }
 
-@Validation(
-  t.Object({
-    limit: t.Optional(t.String()),
-  }),
-)
+/**
+ * The validator the fixture's validation model holds, stated as a Standard
+ * Schema rather than as a TypeBox one.
+ *
+ * The fixture exists to pin that a `validate` stage names the model class its
+ * route declared, and the validator kind does not reach that fact: the platform
+ * resolves the class to the one validator its `@Validation()` decorator holds
+ * and hands that validator to Elysia unchanged, which is one path for both
+ * kinds. A Standard Schema is the kind whose entire shape is stated by
+ * `@standard-schema/spec` and by the value below, so the fixture states a model
+ * without depending on how the platform's native-validator contract names
+ * TypeBox.
+ */
+const listMessagesValidator = {
+  "~standard": {
+    version: 1,
+    vendor: "aponia.devtools",
+    validate: (value: unknown) => ({ value }),
+  },
+} as const;
+
+@Validation(listMessagesValidator)
 class ListMessages {}
 
 @Controller()
@@ -194,23 +211,27 @@ class FlowGateway {
 class GuardedAppModule {}
 
 /**
- * The fixture whose stages Elysia contributes. The plugin is named, because
- * only a named plugin's hooks carry a checksum, and the checksum is the one
- * thing that groups the same hook across the routes it reaches — which is what
- * the payload publishes as the hook's identity. It contributes a hook to the
- * after phase as well, so the case states where Elysia's own after hook runs
- * relative to the platform's compiled one.
+ * The fixture whose plugin contributes hooks.
  *
- * The first route also declares an interceptor, which is what puts a contributed
- * after hook and a compiled after half on one route: without both, the line that
- * publishes Elysia's after hooks ahead of the after halves could move with every
- * case still green.
+ * The plugin is named and contributes a hook to each of the three lifecycle
+ * arrays this endpoint once read, because under Elysia 1 that is exactly what
+ * made them appear as stages, with the checksum grouping one hook across the
+ * routes it reaches. Elysia 2 holds every one of them as a bare function in the
+ * route entry's lifecycle arrays and stamps no scope, checksum, or subType, so
+ * the case below pins the contract the installed release leaves: the hooks are
+ * contributed, the payload publishes none of them, and the stages a route
+ * carries are the ones a source that states them owns.
+ *
+ * The first route also declares an interceptor, which is what puts an
+ * identifiable stage beside the plugin's unidentifiable hooks on one route:
+ * without both, a stage list that reported nothing at all would read the same as
+ * one that reported only what it could name.
  */
 const flowPlugin = new Elysia({ name: "devtools-flow-fixture" })
-  .derive({ as: "global" }, () => ({ requestId: "fixture" }))
-  .resolve({ as: "global" }, () => ({ traceId: "fixture" }))
-  .onBeforeHandle({ as: "global" }, () => {})
-  .onAfterHandle({ as: "global" }, () => {});
+  .derive("global", () => ({ requestId: "fixture" }))
+  .derive("global", () => ({ traceId: "fixture" }))
+  .beforeHandle("global", () => {})
+  .afterHandle("global", () => {});
 
 class ContributedInterceptor {
   interceptBefore(): void {}
@@ -534,80 +555,48 @@ test("every next names a stage the same route declares, and no stage is unreacha
   }
 });
 
-test("a contributed hook reports an identity and never a plugin name", async () => {
+test("a plugin's contributed hooks are published as no stage", async () => {
   const application = await AponiaFactory.createNative(ContributedAppModule, { logger: false });
   const payload = await readFlow(application);
   const first = routeById(payload, "GET /first");
   const second = routeById(payload, "GET /second");
 
-  // The hooks one named plugin contributed, in the order Elysia runs them:
-  // its `derive`, its `resolve`, and a plain before hook ahead of the
-  // platform's compiled one, then the handler, then its after hook — which
-  // Elysia runs before the `afterHandle` the platform compiled, so it is
-  // published before the after halves rather than last. Each is named by its
-  // kind rather than by its plugin, because the plugin that contributed a
-  // hook is not carried on the route. The interceptor beside them is the other
-  // side of that rule: the platform resolved that class itself, so its two
-  // halves carry the class name and the contributed hooks carry none.
-  expect(first.stages.map((stage) => stage.kind)).toEqual([
-    "derive",
-    "resolve",
-    "hook",
-    "interceptBefore",
-    "invoke",
-    "handler",
-    "hook",
-    "interceptAfter",
-  ]);
-  expect(first.stages.map((stage) => stage.scope)).toEqual([
-    "global",
-    "global",
-    "global",
-    "local",
-    undefined,
-    undefined,
-    "global",
-    "local",
+  // The fixture's plugin contributes two derives, a plain before hook, and an
+  // after hook. Elysia 2 holds every one of them as a bare function in the
+  // route entry's lifecycle arrays and stamps neither a scope, a checksum, nor a
+  // subType — measured on the mounted table — so nothing on the route says which
+  // entries a plugin contributed and which the platform compiled. This endpoint
+  // publishes a hook stage only for an entry it can identify, and an
+  // unidentifiable entry is published as no stage, which is also what keeps the
+  // platform's compiled `beforeHandle` and `afterHandle` out of the hook stages.
+  //
+  // What a route therefore carries is what a source that does state its stages
+  // owns: the interceptor's two halves, from the compiled plan. Nothing names a
+  // plugin, because nothing on the route carries one.
+  expect(first.stages.map((stage) => [stage.kind, stage.scope, stage.enhancer])).toEqual([
+    ["interceptBefore", "local", "ContributedInterceptor"],
+    ["invoke", undefined, undefined],
+    ["handler", undefined, undefined],
+    ["interceptAfter", "local", "ContributedInterceptor"],
   ]);
 
-  // No plugin name is reported, because nothing on the route carries one: the
-  // one stage list here that names a class is the interceptor's, which the
-  // plan states rather than Elysia.
-  for (const stage of first.stages) {
-    if (stage.kind === "hook" || stage.kind === "derive" || stage.kind === "resolve") {
-      expect(stage.enhancer).toBeUndefined();
-    }
-  }
-  expect(first.stages[3]?.enhancer).toBe("ContributedInterceptor");
-
-  // The identity is the phase, the kind, the scope, and the checksum: the
-  // checksum is what groups a hook across the routes it reaches, and the
-  // phase is what separates two plain hooks one plugin contributed to the two
-  // halves of one request, which carry the same checksum.
-  const identities = first.stages.map((stage) => stage.hook);
-  expect(identities).toEqual([
-    expect.stringMatching(/^transform:derive:global:-?\d+$/),
-    expect.stringMatching(/^beforeHandle:resolve:global:-?\d+$/),
-    expect.stringMatching(/^beforeHandle:hook:global:-?\d+$/),
+  // The identity field is stated by no stage either: it is derived from the
+  // checksum Elysia stamped on a hook, and no entry the installed release writes
+  // carries one. The foreign-table case at the end of this file pins what the
+  // reader does with a table that does.
+  expect(first.stages.map((stage) => stage.hook)).toEqual([
     undefined,
     undefined,
     undefined,
-    expect.stringMatching(/^afterHandle:hook:global:-?\d+$/),
     undefined,
   ]);
 
-  // The same hook reaching two routes reports the same identity, which is
-  // what makes the field an identity rather than a per-route label. The second
-  // route declares no interceptor, so it runs the stages its own entry and the
-  // plan state alone and carries the same three hook identities in the same
-  // order.
-  expect(second.stages.map((stage) => stage.hook)).toEqual([
-    identities[0],
-    identities[1],
-    identities[2],
-    undefined,
-    undefined,
-    identities[6],
+  // The second route declares no interceptor, so its own chain is the whole of
+  // what this payload can state about it: the plugin's hooks reach it too, and
+  // identify themselves no better there.
+  expect(second.stages.map((stage) => [stage.kind, stage.hook])).toEqual([
+    ["invoke", undefined],
+    ["handler", undefined],
   ]);
 });
 
@@ -757,59 +746,65 @@ test("a record whose interceptor halves this release cannot read falls back to t
   }
 });
 
-test("a hook that declares no scope is published with the scope Elysia stamped", async () => {
-  // Every other fixture declares `as`, so the scope the payload reads would keep
-  // looking right even if Elysia stopped stamping one: this endpoint tells a
-  // contributed hook from the platform's compiled one by that stamp, and a hook
-  // it cannot identify is left out rather than published. A hook that declares
-  // no scope at all is where that rule would go wrong silently, so both shapes
-  // are pinned here.
+test("a hook that declares no scope is published as no stage", async () => {
+  // A hook an instance-level lifecycle API declares reaches the route entry as
+  // a bare function, with no scope, no checksum, and no subType — Elysia 2
+  // stopped stamping the scope, where Elysia 1 stamped the default `"local"` on
+  // one the caller declared none for. There is therefore nothing on the route
+  // that tells such a hook from the platform's compiled one, and this endpoint
+  // publishes a hook stage only for an entry it can identify.
   const bare = new Elysia();
-  bare.onBeforeHandle(() => {});
+  bare.beforeHandle(() => {});
   bare.get("/", () => "bare");
-  // An unnamed instance stamps the default scope and no checksum, so the scope
-  // is the only thing that makes this entry a stage: without it the hook would
-  // be indistinguishable from a compiled one and would vanish from the payload.
+
+  // An application no boot produced: the mounted table is the whole source, and
+  // the hook it holds names nothing. The route is still reported, because the
+  // table is what the application answers.
   expect(await readFlow(bare)).toEqual({
-    routes: [
-      {
-        id: "GET /",
-        stages: [{ id: "GET /#0", kind: "hook", scope: "local", next: [] }],
-        filters: [],
-      },
-    ],
+    routes: [{ id: "GET /", stages: [], filters: [] }],
   });
 
-  // The same declaration on a booted application, whose root instance is named:
-  // the scope is still the default Elysia stamps, and the name gives the hook a
-  // checksum, so the identity is published beside it.
+  // The same declaration beside a booted application's compiled routes, so both
+  // halves of the rule are in one table: what a source can name is published,
+  // and what it cannot is not.
   const application = await AponiaFactory.createNative(GuardedAppModule, { logger: false });
-  application.onBeforeHandle(() => {});
+  application.beforeHandle(() => {});
   application.get("/undeclared", () => "undeclared");
-  const route = routeById(await readFlow(application), "GET /undeclared");
+  const payload = await readFlow(application);
 
-  expect(route.stages.map((stage) => [stage.kind, stage.scope])).toEqual([["hook", "local"]]);
-  expect(route.stages[0]?.hook).toMatch(/^beforeHandle:hook:local:-?\d+$/);
+  // The platform lowered the guarded route's guard and interceptor into one
+  // `beforeHandle` and one `afterHandle`, and the payload publishes the parts
+  // rather than the hooks: that is what the rule above buys.
+  expect(routeById(payload, "GET /guarded").stages.map((stage) => stage.kind)).toEqual([
+    "validate",
+    "guard",
+    "interceptBefore",
+    "bind",
+    "invoke",
+    "handler",
+    "interceptAfter",
+  ]);
+
+  // The route the application mounted after the boot carries no plan and
+  // therefore no stage the record owns, so the instance-level hook is the only
+  // entry it has and the payload states none of it.
+  expect(routeById(payload, "GET /undeclared")).toEqual({
+    id: "GET /undeclared",
+    stages: [],
+    filters: [],
+  });
 });
 
-test("a hook Elysia identifies by scope alone is published without an identity", async () => {
-  // An application this package knows nothing about: a plain instance that
-  // registered a global hook and then a route. Elysia stamps the hook with a
-  // scope and no checksum — a checksum comes from a named plugin, and this
-  // instance has no name. The identity is derived from the checksum, so there
-  // is none to report: nothing would group that hook with the same one reaching
-  // another route, and a per-route label would be the opposite of an identity.
+test("a hook Elysia scopes globally is published as no stage", async () => {
+  // The other declaration shape an instance-level API accepts: a scope named
+  // rather than defaulted. Elysia 2 stamps neither, so the payload cannot tell
+  // this hook from an unscoped one and publishes it the same way — as no stage.
   const application = new Elysia();
-  application.onBeforeHandle({ as: "global" }, () => {});
+  application.beforeHandle("global", () => {});
   application.get("/", () => "native");
+
   expect(await readFlow(application)).toEqual({
-    routes: [
-      {
-        id: "GET /",
-        stages: [{ id: "GET /#0", kind: "hook", scope: "global", next: [] }],
-        filters: [],
-      },
-    ],
+    routes: [{ id: "GET /", stages: [], filters: [] }],
   });
 });
 

@@ -112,6 +112,29 @@ function devtoolsReports(output: CapturedOutput): readonly string[] {
 }
 
 /**
+ * Asks a listening application a question over its own socket.
+ *
+ * The two lifecycle cases below read the mount report the plugin writes from
+ * Elysia's setup phase, and under Elysia 2 that phase runs from a continuation
+ * of `listen()` rather than inside it whenever any schema in the process was
+ * built with `t`: the listener awaits the TypeBox bridge before it enters the
+ * phase, so `await listen()` resolves first and the line lands a tick later.
+ * Elysia 1 ran the phase inline, which is why a case cannot read the report
+ * straight after `listen()` any more.
+ *
+ * The wait is a request rather than a sleep, because the socket is the barrier
+ * itself: the listener serves nothing it is handed until that continuation has
+ * run, so an application that answers one answered it after the setup phase
+ * finished. A sleep would have to guess how many ticks the path takes.
+ */
+async function askOverSocket(
+  application: AponiaElysiaApplication,
+  path: string,
+): Promise<Response> {
+  return fetch(`${application.getUrl()}${path}`);
+}
+
+/**
  * A logger that records nothing, for the cases that mount the plugin on an
  * application no boot produced or on one already built: the registration is what
  * those cases are about, and none of them asserts a log line.
@@ -148,6 +171,14 @@ test.serial("a listening disabled application mounts no plugin", async () => {
       rootWith(DevtoolsModule.register({ enabled: false })),
     );
     await application.listen(0);
+
+    // One request, for the reason `askOverSocket` states: an application that
+    // answers over its socket has run the setup phase a mounted plugin would
+    // have written its report from, so the absences below are read after the
+    // moment they could have been contradicted rather than before it.
+    const response = await askOverSocket(application, `${devtoolsPathPrefix}/meta`);
+
+    expect(response.status).toBe(404);
     await application.close();
 
     expect(output.rows().join("")).not.toContain("ElysiaPluginModule[devtools]");
@@ -172,24 +203,27 @@ test.serial(
         "ElysiaPluginModule[devtools] dependencies initialized",
       );
 
-      // One report, written at `onStart`, and it names where the surface is
-      // mounted: there is no second socket behind it, so there is no address of
-      // its own for the row to publish.
-      const reports = devtoolsReports(output);
-      expect(reports).toHaveLength(1);
-      expect(reports[0]).toContain(devtoolsPathPrefix);
-
       // The surface answers on the address the application serves, and the
-      // application's own routes answer beside it.
-      const meta = await fetch(`${application.getUrl()}${devtoolsPathPrefix}/meta`);
+      // application's own routes answer beside it. These two requests also wait
+      // for the setup phase the report below is written from, which Elysia 2
+      // runs from a continuation of `listen()` — see `askOverSocket`.
+      const meta = await askOverSocket(application, `${devtoolsPathPrefix}/meta`);
 
       expect(meta.status).toBe(200);
       expect(((await meta.json()) as AponiaMetaPayload).contract).toBe(devtoolsContractVersion);
 
-      const health = await fetch(`${application.getUrl()}/health/ping`);
+      const health = await askOverSocket(application, "/health/ping");
 
       expect(health.status).toBe(200);
       expect(await health.text()).toBe("pong");
+
+      // One report, written when the application started, and it names where the
+      // surface is mounted: there is no second socket behind it, so there is no
+      // address of its own for the row to publish.
+      const reports = devtoolsReports(output);
+
+      expect(reports).toHaveLength(1);
+      expect(reports[0]).toContain(devtoolsPathPrefix);
     } finally {
       // Closing in the `finally` rather than after the last assertion: a failing
       // assertion would otherwise leave the application listening for the rest of
@@ -285,7 +319,11 @@ test("routes and flow report the surface's own mount", async () => {
     await application.handle(new Request(`http://localhost${devtoolsPathPrefix}/routes`))
   ).json()) as AponiaRoutesPayload;
 
-  const mount = Object.freeze({ method: "ALL", path: `${devtoolsPathPrefix}/*` });
+  // The wildcard method is the name the mounted table states, and Elysia 2
+  // records `.all()` as `"*"` where Elysia 1 recorded `"ALL"`. `/routes` publishes
+  // the table's own token rather than normalizing it, so the row moves with the
+  // engine.
+  const mount = Object.freeze({ method: "*", path: `${devtoolsPathPrefix}/*` });
 
   expect(routes.routes).toContainEqual(
     expect.objectContaining({ ...mount, module: "", controller: "", handler: "", source: null }),
@@ -298,7 +336,7 @@ test("routes and flow report the surface's own mount", async () => {
     await application.handle(new Request(`http://localhost${devtoolsPathPrefix}/flow`))
   ).json()) as AponiaFlowPayload;
 
-  expect(flow.routes.map((route) => route.id)).toContain(`ALL ${devtoolsPathPrefix}/*`);
+  expect(flow.routes.map((route) => route.id)).toContain(`* ${devtoolsPathPrefix}/*`);
 
   // The application's own route is reported beside it, so the row is an addition
   // rather than a replacement.
@@ -387,16 +425,16 @@ test.serial("an application that only handles requests still answers the surface
       new Request(`http://localhost${devtoolsPathPrefix}/meta`),
     );
 
-    // `onStart` never fires for an application that never listens, which is the
-    // whole reason the surface is mounted rather than started: it answers here
-    // all the same.
+    // `setup` — Elysia 1's `onStart` — never fires for an application that never
+    // listens, which is the whole reason the surface is mounted rather than
+    // started: it answers here all the same.
     expect(response.status).toBe(200);
     expect(() => application.getUrl()).toThrow(
       expect.objectContaining({ code: "APPLICATION_NOT_LISTENING" }),
     );
 
-    // And `onStart` is only where the plugin says where the mount is, so nothing
-    // was reported for a boot that did not reach it.
+    // And that phase is only where the plugin says where the mount is, so
+    // nothing was reported for a boot that did not reach it.
     expect(devtoolsReports(output)).toEqual([]);
   } finally {
     output.restore();

@@ -133,7 +133,7 @@ describe("compiled route enhancers", () => {
       | { hooks?: Record<string, unknown> }
       | undefined;
     const errorHooks = open?.hooks?.error as
-      | readonly { readonly fn?: (...arguments_: never[]) => unknown }[]
+      | readonly ((...arguments_: never[]) => unknown)[]
       | undefined;
 
     expect(open?.hooks?.beforeHandle).toBeUndefined();
@@ -141,11 +141,12 @@ describe("compiled route enhancers", () => {
     // The default mapping is compiled into every route's own `error` array, so
     // that array is the one hook a route declaring no enhancer gains. It is
     // synchronous, which is what leaves the route compiling the way it compiled
-    // before the mapping existed.
+    // before the mapping existed. Elysia 2 keeps a route's hooks as bare
+    // handlers, so the array entry is the mapping itself.
     expect(Object.keys(open?.hooks ?? {})).toEqual(["error"]);
     expect(errorHooks).toHaveLength(1);
-    expect(typeof errorHooks?.[0]?.fn).toBe("function");
-    expect(errorHooks?.[0]?.fn?.constructor.name).not.toBe("AsyncFunction");
+    expect(typeof errorHooks?.[0]).toBe("function");
+    expect(errorHooks?.[0]?.constructor.name).not.toBe("AsyncFunction");
     await application.close();
   });
 

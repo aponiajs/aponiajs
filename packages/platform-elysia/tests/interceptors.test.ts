@@ -565,9 +565,12 @@ describe("interceptors and the schema a route declares", () => {
 
     // A half that answers with a value the schema does not accept fails the way
     // a handler returning it would: an interceptor's answer is validated, never
-    // trusted, and it is what the response carries either way.
+    // trusted, and it is what the response carries either way. That failure is
+    // the server breaking the contract it declared rather than the caller
+    // sending something wrong, which is the rule `route-schema.test.ts` pins
+    // for a handler's own answer.
     const mismatched = await application.handle(new Request("http://localhost/mismatched/answer"));
-    expect(mismatched.status).toBe(422);
+    expect(mismatched.status).toBe(500);
 
     await application.close();
   });

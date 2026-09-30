@@ -166,7 +166,7 @@ that resolves inside an arbitrary module and is not application API.
    `LoggerService` replaces it);
 2. `compileRootModule` then `createContainer`;
 3. create the root `Elysia` named after the root module id with the requested
-   `elysia.aot`/`elysia.precompile` policy, optionally passed through
+   `elysia.precompile` policy, optionally passed through
    `configureNative`, which must return the same instance it receives;
 4. first pass over `container.graph.modules`: `initializeModule` eagerly
    instantiates providers, and `ElysiaPluginModule` modules mount their native
@@ -212,8 +212,14 @@ name `CreateUser` directly without repeating `typeof`.
 The files under `packages/common/src/routing/route-schema*` own the contract.
 Validators are either Standard Schema implementations (`~standard`, so Zod,
 ArkType, and Valibot) or platform-native JSON Schema validators matched
-structurally through `NativeSchema` (`static`/`params`, which is how TypeBox and
-Elysia `t` arrive without `common` depending on TypeBox). The platform resolves
+structurally through `NativeSchema`, the marker union every TypeBox 1 builder
+declares on the type it constructs — `~kind` always, and `~refine`, `~codec`,
+and `~unsafe` from the modifier wrappers — which is the union Elysia itself
+accepts, so an Elysia `t` schema arrives unchanged and no package gains a
+runtime TypeBox edge. TypeBox carries no phantom member describing the value a
+schema produces, so `InferValidatorOutput` reads it through a type-only
+`StaticDecode` import; `common` declares `typebox` as a compile-time-only
+dependency for exactly that. The platform resolves
 a validation-model token once while routes mount and passes its original
 validator to Elysia unchanged; a declared route states that validator directly,
 which is what takes the resolution off its startup path. Raw validators remain
@@ -350,12 +356,7 @@ in its own `error` array, behind the filters it declares, and that mapping
 declines an exception carrying its own `status` or `toResponse()` and every
 status Elysia already decided, so validation `422`s, parse `400`s, a failed
 transform decode, `status()`, and `HttpError` keep the responses Elysia gives
-them. A route-local
-`error` array is read only while Elysia composes routes ahead of time, so
-`elysia: { aot: false }` disables every declared filter and that mapping; an
-unhandled failure then answers Elysia's native `500` carrying the exception's
-message, and `bootstrapAponiaApplication` warns under `RoutesResolver` when the
-option is set.
+them.
 
 ### CLI
 

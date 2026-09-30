@@ -61,19 +61,15 @@ const edenUsersController = defineElysiaController(EdenUsersController, {
     new Elysia({ name: "aponia-eden-users" })
       .get(
         "/users/search",
-        ({ query, headers }) => controller.search(query.q, headers["x-tenant"]),
         {
           query: t.Object({ q: t.String() }),
           headers: t.Object({ "x-tenant": t.String() }),
           response: searchResultSchema,
         },
+        ({ query, headers }) => controller.search(query.q, headers["x-tenant"]),
       )
       .get(
         "/users/:id",
-        ({ params, status }) => {
-          const user = controller.find(params.id);
-          return user ?? status(404, { code: "USER_NOT_FOUND" as const });
-        },
         {
           params: t.Object({ id: t.Number() }),
           response: {
@@ -81,30 +77,38 @@ const edenUsersController = defineElysiaController(EdenUsersController, {
             404: userNotFoundSchema,
           },
         },
-      )
-      .post("/users", ({ body, status }) => status(201, controller.create(body.name)), {
-        body: createUserSchema,
-        response: {
-          201: userSchema,
+        ({ params, status }) => {
+          const user = controller.find(params.id);
+          return user ?? status(404, { code: "USER_NOT_FOUND" as const });
         },
-      }),
+      )
+      .post(
+        "/users",
+        {
+          body: createUserSchema,
+          response: {
+            201: userSchema,
+          },
+        },
+        ({ body, status }) => status(201, controller.create(body.name)),
+      ),
 });
 
 const edenUsersPlugin = edenUsersController.buildPlugin(new EdenUsersController());
 const nativeHealthPlugin = new Elysia({ name: "aponia-eden-health" }).get(
   "/health",
-  () => ({ status: "ok" as const }),
   {
     response: t.Object({ status: t.Literal("ok") }),
   },
+  () => ({ status: "ok" as const }),
 );
 const nativeVersionImport = defineElysiaPlugin(
   new Elysia({ name: "aponia-eden-version" }).get(
     "/version",
-    () => ({ channel: "alpha" as const }),
     {
       response: t.Object({ channel: t.Literal("alpha") }),
     },
+    () => ({ channel: "alpha" as const }),
   ),
   { key: "eden-version" },
 );
@@ -140,13 +144,17 @@ class RegisteredEdenController {
 const registeredEdenController = elysiaController(
   RegisteredEdenController,
   (application, controller) =>
-    application.get("/registered-eden/:id", ({ params }) => controller.read(params.id), {
-      params: t.Object({ id: t.Number() }),
-      response: t.Object({
-        id: t.Number(),
-        source: t.Literal("registered"),
-      }),
-    }),
+    application.get(
+      "/registered-eden/:id",
+      {
+        params: t.Object({ id: t.Number() }),
+        response: t.Object({
+          id: t.Number(),
+          source: t.Literal("registered"),
+        }),
+      },
+      ({ params }) => controller.read(params.id),
+    ),
 );
 const registeredEdenModule = defineModule({
   id: "RegisteredEdenModule",

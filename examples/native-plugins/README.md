@@ -18,6 +18,6 @@ bun run example:native-plugins
 bun run --cwd examples/native-plugins test
 ```
 
-`test/native-plugins.e2e-spec.ts` asserts decorators, state, global and scoped derives, a plugin-local derive staying inside the plugin, deduplication by key, and the duplicate-key failure.
+`test/native-plugins.e2e-spec.ts` asserts decorators, state, global and plugin-scoped derives, a plugin-local derive staying inside the plugin, deduplication by key, and the duplicate-key failure.
 
 [Every example](../README.md)

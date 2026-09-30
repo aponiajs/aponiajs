@@ -34,7 +34,7 @@ The first Elysia platform slice for Aponia:
 - typed RFC 9457 application errors for every supported 4xx and 5xx status;
 - Nest-style guards, interceptors (`interceptBefore`/`interceptAfter`), and
   exception filters, compiled into per-route Elysia lifecycle hooks;
-- explicit Elysia AOT, lazy-composition, and startup-precompile policy;
+- explicit Elysia lazy-composition and startup-precompile policy;
 - `provideConfiguration(AppConfig)` — an application-declared configuration,
   validated once at boot and read back through `application.get(AppConfig)`;
 - `handle`, `listen`, `get`, and `close` application methods.
@@ -206,7 +206,6 @@ Use the `elysia` option to control Elysia's own route composition:
 ```ts
 const application = await AponiaFactory.create(AppModule, {
   elysia: {
-    aot: true,
     precompile: {
       compose: true,
       schema: true,
@@ -215,21 +214,12 @@ const application = await AponiaFactory.create(AppModule, {
 });
 ```
 
-`aot: true` enables Elysia's route-specific JavaScript composition.
-`precompile: true`, or the granular object above, moves that composition before
-the application starts accepting traffic. Leaving `precompile` disabled keeps
-Elysia composition lazy. Set `aot: false` only when the generic dynamic Elysia
-dispatcher is required for compatibility.
+`precompile: true`, or the granular object above, moves Elysia's route-specific
+JavaScript composition before the application starts accepting traffic. Leaving
+`precompile` disabled keeps Elysia composition lazy.
 
-That dispatcher reads no route's own `error` array, so under `aot: false` the
-exception filters a route declares and the default Problem Details mapping do
-not run, and an unhandled failure answers Elysia's native `500` carrying the
-exception's message. A boot states this under `RoutesResolver` when the option
-is set.
-
-These settings are not native machine-code AOT. Elysia generates JavaScript,
-and JavaScriptCore remains responsible for interpreter and machine-code JIT
-tiers.
+This is not native machine-code AOT. Elysia generates JavaScript, and
+JavaScriptCore remains responsible for interpreter and machine-code JIT tiers.
 
 ### Build-time generated invokers
 
@@ -252,7 +242,7 @@ versions it was generated against:
 // src/invokers.generated.ts
 export const controllerInvokerArtifact = Object.freeze({
   framework: "1.0.0-beta.0",
-  elysia: "1.4.30",
+  elysia: "2.0.0-beta.19",
   invokers: new Map([
     [UsersController, (instance: UsersController) => new Map([["ping", () => instance.ping()]])],
   ]),
@@ -311,7 +301,7 @@ it was generated against:
 // src/descriptors.generated.ts
 export const moduleDescriptorArtifact = Object.freeze({
   framework: "1.0.0-beta.0",
-  elysia: "1.4.30",
+  elysia: "2.0.0-beta.19",
   modules: Object.freeze({ AppModule: AppModuleDescriptor }),
 });
 ```
@@ -450,17 +440,16 @@ stack or cause, and reserved Problem Details members cannot be replaced through
 extensions.
 
 Errors a handler throws that no exception filter answers do not escape as a
-stack trace either: on Elysia's AOT path every route the platform mounts carries
+stack trace either: every route the platform mounts from a compiled plan carries
 a default Problem Details mapping last in its own error path, so they answer
 `500` `application/problem+json` with a fixed `detail` and are reported through
 the system logger under `ExceptionsHandler`. An answer Elysia's own error path
 already decided is declined rather than translated, so a rejected request still
 answers the native `422`, a failed `t.Transform` decode keeps its `422` and the
 decode error's message, a thrown `status(...)` keeps its response, and an
-`HttpError` keeps its own. The mapping is a route-local hook, so it is part of
-what `aot: false` disables — and it only exists on routes the platform mounted
-itself: a route a `registerRoutes` callback or a definition's own `buildPlugin`
-mounted runs no declared filter and no mapping either.
+`HttpError` keeps its own. The mapping only exists on routes the platform
+mounted itself: a route a `registerRoutes` callback or a definition's own
+`buildPlugin` mounted runs no declared filter and no mapping either.
 
 ## Downloads
 
@@ -928,8 +917,8 @@ Elysia instance fails with `INVALID_CONTROLLER`. Both are reported during
 A route that two different declarations claim — two controllers, or two handlers
 of one controller — fails with `DUPLICATE_ROUTE` while the module graph
 compiles, naming the method, the path, and both claimants. Elysia would
-otherwise resolve the repeat by whichever registration wins under `elysia.aot`,
-so the handler that answered would depend on a compilation flag. One declaration
+otherwise resolve the repeat by whichever registration wins, so the handler that
+answered would depend on mount order. One declaration
 reached through two modules is not a collision: a dynamic module merged onto a
 decorated class reaches the controller twice and still registers one route. A
 route a native plugin provides is outside the check, because a plugin mounts

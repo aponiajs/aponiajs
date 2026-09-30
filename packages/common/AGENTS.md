@@ -30,8 +30,13 @@ their owning domain. `src/index.ts` is the package's only public barrel.
 ## Invariants
 
 - No Elysia, HTTP, or Bun runtime API belongs here. Platform-native validators
-  are matched structurally through `NativeSchema` (`static`/`params`) so TypeBox
-  never becomes a dependency.
+  are matched structurally through `NativeSchema`, the marker union every
+  TypeBox 1 builder declares on the type it constructs (`~kind`, plus `~refine`,
+  `~codec`, and `~unsafe` from the modifier wrappers), so an Elysia `t` schema
+  arrives with no runtime edge into this package. Reading the value such a
+  schema produces needs the type-level `StaticDecode` mapper, which is imported
+  as a type only: `typebox` stays a declared compile-time contract and never a
+  runtime dependency.
 - Decorators only write `reflect-metadata` entries under
   `Symbol.for("aponia.*.metadata")`. They build no graph, no routes, no
   container. `@Injectable()` stays a no-op that exists for

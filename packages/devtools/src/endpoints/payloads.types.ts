@@ -213,7 +213,7 @@ export interface AponiaLogsPayload {
  * consumer lagging more than one window behind never reads an answer the bounded
  * record has already evicted. An entry whose `status` is
  * `null` is a request this record saw arrive and read no answer for — a plugin
- * that answered from its own `onRequest` before any later phase ran, or an answer
+ * that answered from its own `request` hook before any later phase ran, or an answer
  * outside the window the consumer read. The absence is stated rather
  * than filled: an entry written at completion alone would make that request
  * indistinguishable from one that never arrived. The entry carries the path that

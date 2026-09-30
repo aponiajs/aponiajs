@@ -101,16 +101,12 @@ whatever answers next — so a filter that throws an `HttpError` still leaves th
 request to the mapping's `500` rather than answering with that `HttpError`. The
 [enhancers chapter](./13-enhancers.md) covers declaring filters of your own.
 
-Two edges of this path are worth knowing before relying on them. A status _name_
+One edge of this path is worth knowing before relying on it. A status _name_
 assigned to `set.status` before a throw is not resolved by Elysia on this path:
 the client sees the name dropped to `200` with the message Elysia's
 unknown-error fallback renders, and the mapping leaves that answer alone the way
 it leaves any status Elysia already decided — write the number, or throw
-`status(...)`, when the status must survive a failure. And the mapping is a
-route-local `error` hook, which Elysia reads only while it composes routes ahead
-of time: under `elysia: { aot: false }` no declared filter and no mapping runs,
-an unhandled failure answers Elysia's native `500` carrying the exception's
-message, and bootstrap warns under `RoutesResolver` about the policy.
+`status(...)`, when the status must survive a failure.
 
 The mapping also only exists on the routes the platform mounts itself. A
 controller registered through a `registerRoutes` callback, and a plugin a

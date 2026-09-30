@@ -9,7 +9,7 @@ const clock = defineElysiaPlugin(
   new Elysia({ name: "clock" })
     .decorate("now", () => "2026-07-28T00:00:00.000Z")
     .state("requests", 0)
-    .derive({ as: "global" }, () => ({ traceId: "trace-1" })),
+    .derive("global", () => ({ traceId: "trace-1" })),
   { key: "clock" },
 );
 type clock = typeof clock;

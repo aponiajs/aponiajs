@@ -86,10 +86,17 @@ test("lowers a single validation model in the response slot to its raw validator
   const invalid = await application.handle(new Request("http://localhost/response-model/invalid"));
   const route = application
     .getNativeApplication()
-    .router.history.find((candidate) => candidate.path === "/response-model/valid");
+    .routes.find((candidate) => candidate.path === "/response-model/valid");
 
   expect(await valid.json()).toEqual({ name: "Ada" });
-  expect(invalid.status).toBe(422);
-  expect(route?.hooks.response).toBe(userResponseValidator);
+  // Elysia 2 answers a response the schema refuses with its own 500: the server
+  // produced a value it promised not to, so the failure is the application's
+  // rather than the caller's. Elysia 1 answered 422 here.
+  expect(invalid.status).toBe(500);
+  // Elysia 2 normalises a single response validator into a status map — the
+  // success status keys the validator the platform handed it, structurally
+  // equal to the declared one because Elysia keeps its own copy.
+  const responses = route?.hooks.response as Readonly<Record<number, unknown>> | undefined;
+  expect(responses?.[200]).toEqual(userResponseValidator);
   await application.close();
 });

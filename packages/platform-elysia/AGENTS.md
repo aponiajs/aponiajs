@@ -180,11 +180,7 @@ runtime boundary it describes.
   default hook is synchronous, so a route with no declared filter compiles the
   way it compiled before the mapping existed; a route with one carries an
   asynchronous hook per filter, because answering may await. A route-local
-  `error` array is read only while Elysia composes routes ahead of time, so
-  `elysia: { aot: false }` disables the mapping and every declared filter —
-  only the `error` hook kind — and `bootstrapAponiaApplication` warns under
-  `RoutesResolver` when the option is set rather than letting that boot look
-  like the default one.
+  `error` array runs under every compilation policy this release can select.
 - `routing/native-route.ts` is the only module that calls Elysia's route
   registration API. A version that moves it fails there as
   `UNSUPPORTED_ELYSIA_VERSION` instead of as a bare `TypeError` from inside a
@@ -192,8 +188,9 @@ runtime boundary it describes.
 - `modules/route-uniqueness.ts` rejects a route two different declarations
   claim, raising `DUPLICATE_ROUTE` from `compileRootModule` with the method,
   path, both modules, both controllers, and both handler keys. Elysia would
-  otherwise resolve a repeated `(method, path)` by whichever registration wins
-  under `elysia.aot`, so the answering handler would follow a compiler flag.
+  otherwise resolve a repeated `(method, path)` by whichever registration wins,
+  so the answering handler would depend on mount order rather than being
+  refused.
   The check reasons over the modules reachable from the compiled root by
   `imports` — the set `compileModuleGraph` mounts — because the module
   compiler's working maps also hold definitions the root never reaches. One
@@ -354,10 +351,11 @@ runtime boundary it describes.
   constructor with `INVALID_CONTROLLER` while the controller mounts. A class
   passes the callable check and then throws a raw engine message on every
   request, so the guard must run before an invoker is selected for that route.
-- `toElysiaSchema` is the single boundary where a `NativeSchema` is restored to
-  a TypeBox `TSchema`. Cookie validators and every member of a status-specific
-  response map pass through that boundary. Nothing else in the workspace may
-  assume TypeBox.
+- `toElysiaSchema` unwraps a validation model to the raw validator Elysia
+  receives. Cookie validators and every member of a status-specific response map
+  pass through that boundary. A Standard Schema validator and a TypeBox schema
+  each satisfy Elysia's `AnySchema` on their own, so the boundary narrows nothing
+  and no other file in the workspace may assume TypeBox.
 - Decorated modules, controllers, and `@Validation()` model classes are the
   normal application path. Resolve each validation model once inside route
   registration, pass its exact raw validator to Elysia, and keep direct
@@ -404,6 +402,15 @@ runtime boundary it describes.
 - Canonical gateway paths and message events are unique before routes mount.
   One gateway maps to one native `application.ws()` route. A collision with a
   configured or plugin-provided native WS route must fail deterministically.
+  Elysia 2 carries no WebSocket support in its core entrypoint: `.ws()` throws
+  while the router builds — at `listen()`, far from the gateway that declared
+  the route — unless the `websocket` capability from `elysia/websocket` is
+  mounted first. Bootstrap mounts it on the root application once, before the
+  registration call, whenever at least one gateway is declared, so
+  `@WebSocketGateway()` stays one declaration rather than a pair an application
+  has to remember. It is mounted there rather than in
+  `registerElysiaWebSocketGateways`, whose contract is to register the routes a
+  plan describes and which is handed applications that carry nothing else.
 - Compile `@MessageBody()` and `@ConnectedSocket()` arguments during bootstrap.
   Preserve `undefined` as no response and every other value as data;
   `WsResponse`, Promise, generator, and async-generator results retain their
@@ -436,21 +443,30 @@ runtime boundary it describes.
 
 ## Elysia version compatibility
 
-The peer range is `^1.4.29`; every workspace manifest must declare the same
-range. Two ranges that disagree make Bun install two copies, and a controller
-typed against one is not assignable to the other.
+The peer dependency is an exact pin, `elysia: "2.0.0-beta.19"`, beside
+`typebox: "^1.3.0"`. Every workspace manifest must declare the same pin. A pin
+that disagrees makes Bun install two copies, and a controller typed against one
+is not assignable to the other. The Elysia pin is exact rather than a caret
+because `^2.0.0-beta.19` also accepts `2.0.0-exp.64`: semver compares
+prerelease identifiers as strings, and `exp` sorts above `beta`, so a caret
+would install an experiment release. `typebox` is a peer because Elysia 2
+declares it as one and no longer re-exports `TSchema` from its root.
 
-Elysia 2 is a prerelease on the `next` dist-tag and is not supported. Its
-incompatibilities were verified by running `2.0.0-beta.19`, not by reading the
-release notes, because the published docs are still 1.x:
+Elysia 2 is the supported release. Its changes were verified by running
+`2.0.0-beta.19`, not by reading the release notes, because the published docs
+were still 1.x:
 
-| Call site                                                                     | Elysia 2                                                                                 |
-| ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `routing/native-route.ts`                                                     | `route(...)` removed; `method(method, path, hook, handler)` swaps the last two arguments |
-| `routing/route-compiler.ts` (`TSchema`)                                       | no longer root-exported; import from `typebox`                                           |
-| `routing/route-context.types.ts` (`SingletonBase`)                            | no longer root-exported; import from `elysia/types`                                      |
-| `routing/route-context.types.ts` (`~Singleton`/`~Ephemeral` `resolve` keys)   | `resolve` removed; its timing folded into `derive`                                       |
-| `errors/http-error.ts` and `errors/http-error.types.ts` (`InvertedStatusMap`) | renamed to `StatusMapBack`                                                               |
+| Call site                                                                                | Elysia 2                                                                                 |
+| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `routing/native-route.ts`                                                                | `route(...)` removed; `method(method, path, hook, handler)` swaps the last two arguments |
+| `routing/route-compiler.ts` (`TSchema`)                                                  | no longer root-exported; import from `typebox`                                           |
+| `routing/route-compiler.ts` (`AnySchema`)                                                | now `TypeBoxSchema \| StandardSchemaV1Like`                                              |
+| `routing/route-context.types.ts` (`SingletonBase`, `MergeElysiaInstances`, `EventScope`) | no longer root-exported; import from `elysia/types`                                      |
+| `routing/route-context.types.ts` (`~Singleton`/`~Ephemeral` `resolve` keys)              | `resolve` removed; its timing folded into `derive`                                       |
+| `websockets/websocket-gateway.types.ts` (`ElysiaWS<Context, Route>`)                     | one type argument; `ElysiaWS<Route>` in `elysia/ws`                                      |
+| `errors/http-error.ts`, `errors/http-error.types.ts` (`InvertedStatusMap`)               | renamed to `StatusMapBack`                                                               |
+| `errors/http-error.ts` (`ElysiaCustomStatusResponse`)                                    | renamed to `ElysiaStatus`                                                                |
+| `application/application.types.ts` (`ElysiaConfig`)                                      | no longer carries `aot`; needs at least two type arguments                               |
 
 `docs/elysia-compatibility.md` is the user-facing half of this. Update both
 together, and re-verify against a real install rather than the blog post.

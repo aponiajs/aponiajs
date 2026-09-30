@@ -7,16 +7,30 @@ detail.
 
 ## Supported version
 
-`@aponiajs/platform-elysia` declares the range it supports as a peer dependency:
+`@aponiajs/platform-elysia` declares the version it supports as a peer
+dependency, and it is an exact pin rather than a range:
 
 ```json
 "peerDependencies": {
-  "elysia": "^1.4.29"
+  "elysia": "2.0.0-beta.19",
+  "typebox": "^1.3.0"
 }
 ```
 
-Install any Elysia 1.4.x release. The examples, the generator template, and this
-repository all pin `^1.4.30`, the newest patch.
+Every workspace manifest, every example, and the generator template declares
+that same pin.
+
+The Elysia pin is exact on purpose, because a caret over a prerelease does not
+mean what it looks like. `^2.0.0-beta.19` also matches `2.0.0-exp.64`: semver
+compares prerelease identifiers as strings, `exp` sorts above `beta`, and an
+identifier is compared only when the version core matches, so the caret would
+accept an Elysia experiment release. The exact pin is what keeps an installed
+tree on the release this framework was verified against.
+
+`typebox` is a peer because Elysia 2 declares it as one and no longer
+re-exports `TSchema` from its root. A caret range has no prerelease hazard here,
+so it carries one. An application that types a schema writes `TSchema` from
+`typebox` directly.
 
 ## When the installed version is wrong
 
@@ -26,10 +40,10 @@ listens. The failure is an `AponiaError` with the code
 the route that could not be registered.
 
 ```text
-AponiaError: The installed Elysia does not expose route(), so "GET /health" cannot be mounted.
-AponiaJS supports Elysia 1.4.x, where routes are registered with
-route(method, path, handler, hook). Elysia 2 replaced it with
-method(method, path, hook, handler) and is not supported yet.
+AponiaError: The installed Elysia does not expose method(), so "GET /health" cannot be mounted.
+AponiaJS supports Elysia 2.0.x, where routes are registered with
+method(method, path, hook, handler). Elysia 1.4 registers them with
+route(method, path, handler, hook) and is no longer supported.
 ```
 
 Nothing is registered on a partially mounted application: the error aborts
@@ -46,24 +60,38 @@ Declare one range across the whole workspace, including example and fixture
 packages:
 
 ```json
-"elysia": "^1.4.30"
+"elysia": "2.0.0-beta.19"
 ```
 
-## What changes in Elysia 2
+## Migrating from Elysia 1.4
 
-Elysia 2 is published on the `next` dist-tag as a prerelease and is not
-supported yet. Its route registration API is incompatible at the call site:
+Elysia 2 is the supported release. AponiaJS registers every route itself, so a
+controller written with AponiaJS decorators does not change; what follows is
+what to know when you reach for Elysia directly — through `configureNative`, an
+`elysiaController(...)` callback, or a native plugin.
 
-| Area                | Elysia 1.4                               | Elysia 2                              |
-| ------------------- | ---------------------------------------- | ------------------------------------- |
-| Route registration  | `route(method, path, handler, hook)`     | `method(method, path, hook, handler)` |
-| Type re-exports     | `TSchema`, `SingletonBase` from the root | moved to `elysia/types` or `typebox`  |
-| Status helper types | `InvertedStatusMap`                      | `StatusMapBack`                       |
-| `context.set`       | `redirect` is accepted                   | removed in favour of `redirect(url)`  |
-| Plugin `resolve`    | separate hook on its own timing          | removed; `derive` takes its timing    |
+| Area                | Elysia 1.4                                                            | Elysia 2                                       |
+| ------------------- | --------------------------------------------------------------------- | ---------------------------------------------- |
+| Route registration  | `route(method, path, handler, hook)`                                  | `method(method, path, hook, handler)`          |
+| Type re-exports     | `TSchema` from the root                                               | `TSchema` from `typebox`                       |
+| Type re-exports     | `SingletonBase`, `ElysiaConfig`, `MergeElysiaInstances`, `EventScope` | from `elysia/types`                            |
+| WebSocket type      | `ElysiaWS<Context, Route>`                                            | `ElysiaWS<Route>` in `elysia/ws`               |
+| Status helper types | `InvertedStatusMap`                                                   | `StatusMapBack`                                |
+| Status helper types | `ElysiaCustomStatusResponse`                                          | `ElysiaStatus`                                 |
+| Schema union        | `AnySchema`                                                           | `TypeBoxSchema \| StandardSchemaV1Like`        |
+| `ElysiaConfig`      | carries `aot`                                                         | no `aot`; needs at least two type arguments    |
+| Instance config     | `app.config`                                                          | gone                                           |
+| Plugin hook         | `resolve` on its own timing                                           | removed; `derive` takes its timing             |
+| `context.set`       | `redirect` is accepted                                                | removed in favour of returning `redirect(url)` |
 
-AponiaJS pins its peer range to 1.4.x so a mismatched pair fails loudly instead
-of mounting routes that silently lose validation or context values.
+Handing Elysia a hook before the handler in the old order is refused at run
+time, with `[Elysia] .get('/x', handler, hook) is the 1.x order; Elysia 2 takes
+(path, hook, handler) — see the 2.0 migration guide`.
+
+AponiaJS's own route registration lives in `routing/native-route.ts`, the only
+module that calls that native API, so a moved signature fails there as
+`UNSUPPORTED_ELYSIA_VERSION` instead of as a bare `TypeError` from inside a
+compiled dependency.
 
 ## Native escape hatches
 

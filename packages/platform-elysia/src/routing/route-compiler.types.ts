@@ -73,8 +73,13 @@ export type ElysiaErrorHook = (context: ElysiaRouteErrorContext) => unknown;
  * @internal
  */
 export interface ElysiaRouteAfterHandleContext extends RouteContext {
-  /** The handler's result, or what an earlier after half answered with. */
-  readonly response: unknown;
+  /**
+   * The handler's result, or what an earlier after half answered with.
+   *
+   * Elysia 1.4 called this field `response`; Elysia 2 hands the same value under
+   * `responseValue`.
+   */
+  readonly responseValue: unknown;
 }
 
 /**

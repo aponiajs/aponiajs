@@ -13,7 +13,7 @@ import type { RingBuffer, RingBufferRead } from "../buffer/ring-buffer.types.ts"
  * fault: a consumer lagging more than one window behind never reads an answer the
  * bounded buffer has already evicted. The pending entry is not redundant:
  * a request whose answer never reaches this package — a plugin that answered
- * from its own `onRequest`, so that no later phase ran at all — would otherwise
+ * from its own `request` hook, so that no later phase ran at all — would otherwise
  * leave no trace, and would be indistinguishable from a request that never
  * arrived.
  *

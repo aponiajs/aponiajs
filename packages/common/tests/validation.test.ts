@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
+import * as TypeBox from "typebox/type";
 import {
   AponiaError,
   Post,
@@ -22,10 +23,9 @@ const nameSchema: StandardSchemaV1<unknown, { name: string }> = {
   },
 };
 
-const nativeSchema = {
-  static: { id: "" },
-  params: [],
-} satisfies NativeSchema;
+const nativeSchema = TypeBox.Object({
+  id: TypeBox.String(),
+}) satisfies NativeSchema;
 
 const callableNameSchema: StandardSchemaV1<unknown, { name: string }> &
   ((value: unknown) => boolean) = Object.assign(
@@ -131,12 +131,13 @@ type ValidationTypeAssertions = [
   Expect<Equals<InferValidatorOutput<typeof CreateUser>, CreateUser>>,
   Expect<Equals<ModelContext["body"], CreateUser>>,
   Expect<Equals<InferValidatorOutput<typeof callableNameSchema>, { name: string }>>,
+  Expect<Equals<InferValidatorOutput<typeof nativeSchema>, { id: string }>>,
 ];
 
 test("keeps validation-model declaration type assertions referenced", () => {
-  const assertions: ValidationTypeAssertions = [true, true, true, true];
+  const assertions: ValidationTypeAssertions = [true, true, true, true, true];
 
-  expect(assertions).toEqual([true, true, true, true]);
+  expect(assertions).toEqual([true, true, true, true, true]);
 });
 
 test("shares validation metadata across separate common package instances", async () => {

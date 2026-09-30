@@ -18,7 +18,7 @@ container, and the generators run wherever an Aponia application runs, and an
 application that never registers this package never loads it.
 
 The surface is a mount, not a server: it registers one wildcard route,
-`ALL /__devtools/*`, on the application's own route table, and answers wherever
+`* /__devtools/*`, on the application's own route table, and answers wherever
 the application answers — under `application.handle()` as well as `listen()`.
 Two consequences follow, and both are the owner's decision rather than a side
 effect. An application route that claims a devtools path wins it, because the two
@@ -93,7 +93,7 @@ const application = await AponiaFactory.create(AppModule, {
   it, and `imports` stays the place for a plugin a module can name.
 - **The surface is a route, so `/routes` and `/flow` report it.** A
   devtools-enabled application carries one more row than the same application
-  without it — `ALL /__devtools/*` for the mount, which `/routes` reports as the
+  without it — `* /__devtools/*` for the mount, which `/routes` reports as the
   table really is rather than re-deriving one without it.
 - **The surface stops with the application.** `close()` removes its route with
   the application, so nothing outlives the listener that mounted it.
@@ -158,8 +158,14 @@ const application = await AponiaFactory.create(AppModule, {
   the platform lowers them into one `beforeHandle` and one `afterHandle` where
   their order is no longer legible; each names the class it runs and the scope
   that declared it. A compiled hook is published as its parts and never as a
-  hook stage, and a contributed hook can only be identified — by the checksum
-  Elysia stamps, never by a plugin name the route does not carry. The route's
+  hook stage, and the installed Elysia 2 leaves the hook stages empty of
+  contributions: it holds every hook a plugin or an instance-level declaration
+  contributes as a bare function in the route entry's lifecycle array, stamping
+  no scope, no checksum, and no `subType`, so nothing in those arrays can be told
+  apart from the compiled hook and none of it is published. A hook that does
+  carry an identity — a scope this release knows, or a checksum — is published as
+  its own stage, and that identity is derived from the checksum rather than from a
+  plugin name the route does not carry. The route's
   filters are a list beside the stages rather than a stage in the chain, ordered
   as its own `error` array is, with the Problem Details mapping last. Which
   interceptor halves a route runs is the boot's own record, read from the
@@ -203,7 +209,7 @@ const application = await AponiaFactory.create(AppModule, {
   the request arrives and states `status: null` and `durationMs: null` — this
   record saw the request and read no answer for it, which is neither an invented
   status nor a missing entry, and is what makes a request a plugin answered from
-  its own `onRequest` legible instead of absent. The second is written when the
+  its own `request` hook legible instead of absent. The second is written when the
   answer completes, and carries the
   `method`, the `path` (the route pattern that matched, or the path that arrived
   when none did), the `url` as it arrived, the `status`, the `durationMs`, the
@@ -215,10 +221,11 @@ const application = await AponiaFactory.create(AppModule, {
   `null` is stored as the text `null` for the same reason, since the client carried
   one; `error` carries the failure's message
   — what the answer published, or, for an unhandled failure the platform mapped,
-  the exception that mapping answered — so it is present on a `5xx` whose Problem
-  Details body the tool can read and on that mapped failure, absent on a `4xx`,
-  which is an answer rather than a failure, and absent where there is nothing to
-  read: a `5xx` a handler built itself. An unhandled failure the platform mapped is the one failure whose
+  the exception that mapping answered, or, for an application-owned `5xx` an
+  `HttpError` answers, the exception the context carries, whose `message` is the
+  `detail` that response published. The status is the whole test: a `4xx` — an
+  answer rather than a failure — carries none, and so does a `5xx` a handler built
+  itself, whose body is the one the client already holds. An unhandled failure the platform mapped is the one failure whose
   message comes from the exception rather than the answer: the mapping answers one
   fixed sentence for every such failure and its `Response` is not on the
   after-response context either, so the boot records the exception the mapping
@@ -247,7 +254,7 @@ const application = await AponiaFactory.create(AppModule, {
   rather than beginning a new one. One boundary
   is Elysia's rather than this package's: both hook phases run in mount order, so a
   plugin mounted ahead of the devtools registration that answers from its own
-  `onRequest` ends the request before this record's hook runs, and that request
+  `request` hook ends the request before this record's hook runs, and that request
   appears nowhere. The surface's own traffic is excluded too, and the exclusion is
   by path prefix rather than by route identity: `/__devtools` and everything under
   it is never recorded, which is what keeps a page polling `/requests` out of the

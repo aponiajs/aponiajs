@@ -135,8 +135,24 @@ export async function registerElysiaWebSocketGateways(
   });
   assertNoNativeWebSocketRouteCollisions(application, gateways);
 
+  // `ws` infers its socket context from the hook it is handed, the same way
+  // `method` infers a route's schema from one. These handlers are written
+  // against `ElysiaWebSocket` instead, so the call states the signature it
+  // needs. This module is the only place the platform registers a WebSocket
+  // route, which is where that cast belongs.
+  const nativeApplication = application as unknown as {
+    readonly ws: (
+      path: string,
+      hook: {
+        open(socket: ElysiaWebSocket): unknown;
+        message(socket: ElysiaWebSocket, message: unknown): unknown;
+        close(socket: ElysiaWebSocket): unknown;
+      },
+    ) => unknown;
+  };
+
   for (const gateway of boundGateways) {
-    application.ws(gateway.path, {
+    nativeApplication.ws(gateway.path, {
       open: (socket: ElysiaWebSocket) => gateway.open(socket),
       message: (socket: ElysiaWebSocket, message: unknown) => gateway.message(socket, message),
       close: (socket: ElysiaWebSocket) => gateway.close(socket),

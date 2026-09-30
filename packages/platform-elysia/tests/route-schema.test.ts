@@ -163,7 +163,10 @@ test("validates successful and rejected handler responses", async () => {
 
   expect(accepted.status).toBe(200);
   expect(await accepted.json()).toEqual({ name: "Ada" });
-  expect(rejected.status).toBe(422);
+  // A response the route's own schema refuses is the server breaking the
+  // contract it declared, so Elysia 2 answers 500 rather than the 422 Elysia 1
+  // answered: the caller sent nothing wrong.
+  expect(rejected.status).toBe(500);
   await application.close();
 });
 

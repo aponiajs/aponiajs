@@ -149,17 +149,13 @@ describe("downloading a file through an application", () => {
   });
 
   test("shows the raw value the helper exists to replace being refused", async () => {
-    let thrown: unknown;
+    const response = await application.handle(new Request("http://localhost/downloads/raw"));
 
-    try {
-      await application.handle(new Request("http://localhost/downloads/raw"));
-    } catch (error) {
-      thrown = error;
-    }
-
-    // No response at all: the engine rejects the header value while the response
-    // is constructed, and nothing catches it on the way out.
-    expect(thrown).toBeInstanceOf(TypeError);
-    expect((thrown as TypeError).message).toContain("content-disposition");
+    // The engine rejects the header value while the response is constructed, so
+    // the raw value never reaches a client: Elysia 2 catches that failure where
+    // Elysia 1 let it escape `handle` as a TypeError and answers with its own
+    // 500 instead. The body says the header is what it refused.
+    expect(response.status).toBe(500);
+    expect(await response.text()).toContain("content-disposition");
   });
 });

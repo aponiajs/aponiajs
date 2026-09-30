@@ -28,7 +28,6 @@ const edenConformanceController = defineElysiaController(EdenConformanceControll
   buildPlugin: (controller) =>
     new Elysia({ name: "aponia-eden-conformance" }).get(
       "/eden-conformance/:id",
-      ({ params }) => controller.read(params.id),
       {
         params: t.Object({ id: t.Number() }),
         response: t.Object({
@@ -36,6 +35,7 @@ const edenConformanceController = defineElysiaController(EdenConformanceControll
           source: t.Literal("aponia"),
         }),
       },
+      ({ params }) => controller.read(params.id),
     ),
 });
 
@@ -48,21 +48,25 @@ class RegisteredConformanceController {
 const registeredConformanceController = elysiaController(
   RegisteredConformanceController,
   (application, controller) =>
-    application.get("/registered-conformance/:id", ({ params }) => controller.read(params.id), {
-      params: t.Object({ id: t.Number() }),
-      response: t.Object({
-        id: t.Number(),
-        source: t.Literal("registered"),
-      }),
-    }),
+    application.get(
+      "/registered-conformance/:id",
+      {
+        params: t.Object({ id: t.Number() }),
+        response: t.Object({
+          id: t.Number(),
+          source: t.Literal("registered"),
+        }),
+      },
+      ({ params }) => controller.read(params.id),
+    ),
 );
 const edenConformancePlugin = defineElysiaPlugin(
   new Elysia({ name: "aponia-eden-native-conformance" }).get(
     "/native-conformance",
-    () => ({ source: "native" as const }),
     {
       response: t.Object({ source: t.Literal("native") }),
     },
+    () => ({ source: "native" as const }),
   ),
   { key: "eden-native-conformance" },
 );

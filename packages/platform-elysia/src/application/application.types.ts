@@ -1,5 +1,6 @@
 import type { ClassToken, LoggerService, LogLevel } from "@aponiajs/common";
-import type { AnyElysia, Elysia, ElysiaConfig } from "elysia";
+import type { AnyElysia, Elysia } from "elysia";
+import type { ElysiaConfig, EventScope } from "elysia/types";
 import type { AponiaModuleDescriptorArtifact } from "../modules/module-descriptor-artifact.types.ts";
 import type { NativeElysiaPlugin } from "../plugins/plugin.types.ts";
 import type { AponiaInvokerArtifact } from "../routing/invoker-artifact.types.ts";
@@ -9,7 +10,7 @@ export type NativeElysiaConfigurator<TNativeApplication extends AnyElysia> = (
 ) => TNativeApplication;
 
 export type ElysiaCompilationOptions = Readonly<
-  Pick<ElysiaConfig<undefined>, "aot" | "precompile">
+  Pick<ElysiaConfig<undefined, EventScope>, "precompile">
 >;
 
 export interface AponiaApplicationOptions {
@@ -18,11 +19,15 @@ export interface AponiaApplicationOptions {
    * Controls Elysia's route composition. This is distinct from build-time
    * Aponia source generation and JavaScriptCore's machine-code JIT.
    *
-   * `aot: false` selects Elysia's generic dynamic dispatcher, which never reads
-   * a route's own `error` array: every declared exception filter and the default
-   * Problem Details mapping live there, so under this policy neither runs and an
-   * unhandled failure answers Elysia's native `500` carrying the exception's
-   * message. Bootstrap warns under `RoutesResolver` when the option is set.
+   * `precompile: true` compiles every route handler when the application
+   * listens rather than on the first request that reaches it.
+   *
+   * Elysia 1.4 also offered `aot`, whose `false` selected a dispatcher that
+   * never read a route's own `error` array — where every declared exception
+   * filter and the default Problem Details mapping live. Elysia 2 has no such
+   * mode: a route-local `error` handler runs under every configuration this
+   * release can select, so the option and the warning that described it are
+   * gone rather than accepted and ignored.
    */
   readonly elysia?: ElysiaCompilationOptions;
   /**

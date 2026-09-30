@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
+import * as TypeBox from "typebox/type";
 import {
   Get,
   Post,
@@ -7,8 +8,11 @@ import {
   isRouteResponseSchemaMap,
   isStandardSchema,
   routeSchemaSlots,
+  type InferValidatorOutput,
   type RouteContext,
   type RouteResponseSchemaMap,
+  type RouteSchema,
+  type RouteValidator,
 } from "../src/index.ts";
 
 const nameSchema: StandardSchemaV1<unknown, { name: string }> = {
@@ -21,6 +25,40 @@ const nameSchema: StandardSchemaV1<unknown, { name: string }> = {
         : { issues: [{ message: "name is required" }] },
   },
 };
+
+/**
+ * A real TypeBox schema, which is what the supported platform's `t` builder
+ * constructs. The neutral contract has to recognize the value itself, so the
+ * fixture is a built schema rather than an object shaped like one.
+ */
+const nativeObjectSchema = TypeBox.Object({
+  name: TypeBox.String({ minLength: 1 }),
+});
+
+/** A codec decodes a wire value, so its slot value is the decoded one. */
+const nativeDecodedSchema = TypeBox.Decode(TypeBox.String(), (value: string) => value.length);
+
+const nativeRouteSchema = {
+  body: nativeObjectSchema,
+  response: { 201: nativeObjectSchema },
+} satisfies RouteSchema;
+
+/** The same built schema in every slot, so no slot escapes the native contract. */
+const everyNativeSlotSchema = {
+  body: nativeObjectSchema,
+  query: nativeObjectSchema,
+  params: nativeObjectSchema,
+  headers: nativeObjectSchema,
+  cookie: nativeObjectSchema,
+  response: nativeObjectSchema,
+} satisfies RouteSchema;
+
+/** Every marker a TypeBox builder declares, including the modifier wrappers. */
+const nativeSchemaVariants = [
+  nativeObjectSchema,
+  TypeBox.Optional(nativeObjectSchema),
+  TypeBox.Unsafe<Date>({ type: "string" }),
+] satisfies readonly RouteValidator[];
 
 const bodySchema = { body: nameSchema };
 
@@ -74,7 +112,7 @@ test("freezes recorded route schemas", () => {
 
 test("detects Standard Schema validators", () => {
   expect(isStandardSchema(nameSchema)).toBe(true);
-  expect(isStandardSchema({ static: 0, params: [] })).toBe(false);
+  expect(isStandardSchema(nativeObjectSchema)).toBe(false);
 });
 
 const responseSchemas: Record<number, typeof nameSchema> = {
@@ -108,12 +146,7 @@ test("records cookie and status-specific response schemas", () => {
   });
   expect(isRouteResponseSchemaMap(responseSchemas)).toBe(true);
   expect(isRouteResponseSchemaMap(nameSchema)).toBe(false);
-  expect(
-    isRouteResponseSchemaMap({
-      static: undefined,
-      params: [],
-    }),
-  ).toBe(false);
+  expect(isRouteResponseSchemaMap(nativeObjectSchema)).toBe(false);
 });
 
 test("copies and freezes a status-specific response schema map", () => {
@@ -152,14 +185,83 @@ test("preserves a raw response validator instance and freezes the route schema",
   expect(Object.isFrozen(route?.schema)).toBe(true);
 });
 
+class NativeSchemaController {
+  createUser(): string {
+    return "created";
+  }
+
+  readUser(): string {
+    return "read";
+  }
+}
+
+Post(nativeRouteSchema)(
+  NativeSchemaController.prototype,
+  "createUser",
+  Object.getOwnPropertyDescriptor(NativeSchemaController.prototype, "createUser")!,
+);
+
+Post(everyNativeSlotSchema)(
+  NativeSchemaController.prototype,
+  "readUser",
+  Object.getOwnPropertyDescriptor(NativeSchemaController.prototype, "readUser")!,
+);
+
+test("records a built TypeBox schema in the slots it is declared in", () => {
+  const [route] = getRouteMetadata(NativeSchemaController);
+
+  expect(route?.schema?.body).toBe(nativeObjectSchema);
+  expect(route?.schema?.response).toEqual({ 201: nativeObjectSchema });
+  expect(Object.isFrozen(route?.schema)).toBe(true);
+});
+
+test("records a built TypeBox schema in every route schema slot", () => {
+  const [, route] = getRouteMetadata(NativeSchemaController);
+
+  expect(route?.schema?.body).toBe(nativeObjectSchema);
+  expect(route?.schema?.query).toBe(nativeObjectSchema);
+  expect(route?.schema?.params).toBe(nativeObjectSchema);
+  expect(route?.schema?.headers).toBe(nativeObjectSchema);
+  expect(route?.schema?.cookie).toBe(nativeObjectSchema);
+  expect(route?.schema?.response).toBe(nativeObjectSchema);
+});
+
+test("recognizes a built TypeBox schema as a raw validator, not a status map", () => {
+  expect(isStandardSchema(nativeObjectSchema)).toBe(false);
+  expect(isRouteResponseSchemaMap(nativeObjectSchema)).toBe(false);
+  expect(nativeSchemaVariants.every((variant) => isStandardSchema(variant) === false)).toBe(true);
+});
+
 type Equals<TLeft, TRight> =
   (<T>() => T extends TLeft ? 1 : 2) extends <T>() => T extends TRight ? 1 : 2 ? true : false;
 type Expect<TAssertion extends true> = TAssertion;
 type CookieContext = RouteContext<{ cookie: typeof nameSchema }>;
-type RouteSchemaTypeAssertions = [Expect<Equals<CookieContext["cookie"]["name"]["value"], string>>];
+type NativeRouteContext = RouteContext<typeof nativeRouteSchema>;
+type EveryNativeSlotContext = RouteContext<typeof everyNativeSlotSchema>;
+type RouteSchemaTypeAssertions = [
+  Expect<Equals<CookieContext["cookie"]["name"]["value"], string>>,
+  Expect<Equals<InferValidatorOutput<typeof nativeObjectSchema>, { name: string }>>,
+  Expect<Equals<NativeRouteContext["body"], { name: string }>>,
+  Expect<Equals<InferValidatorOutput<typeof nativeDecodedSchema>, number>>,
+  Expect<Equals<EveryNativeSlotContext["body"], { name: string }>>,
+  Expect<Equals<EveryNativeSlotContext["query"], { name: string }>>,
+  Expect<Equals<EveryNativeSlotContext["params"], { name: string }>>,
+  Expect<Equals<EveryNativeSlotContext["headers"], { name: string }>>,
+  Expect<Equals<EveryNativeSlotContext["cookie"]["name"]["value"], string>>,
+];
 
 test("keeps route schema type assertions referenced", () => {
-  const assertions: RouteSchemaTypeAssertions = [true];
+  const assertions: RouteSchemaTypeAssertions = [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+  ];
 
-  expect(assertions).toEqual([true]);
+  expect(assertions).toEqual([true, true, true, true, true, true, true, true, true]);
 });

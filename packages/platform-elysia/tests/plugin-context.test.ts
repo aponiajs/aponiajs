@@ -32,13 +32,13 @@ let scopedDeriveCalls = 0;
 const clockPlugin = new Elysia({ name: "clock" })
   .decorate("now", () => "2026-07-28T00:00:00.000Z")
   .state("requests", 0)
-  .derive({ as: "global" }, () => ({ traceId: "trace-1" }))
-  .derive({ as: "scoped" }, () => {
+  .derive("global", () => ({ traceId: "trace-1" }))
+  .derive("plugin", () => {
     scopedDeriveCalls += 1;
     return { requestScope: "scoped" };
   })
   .derive(() => ({ pluginOnly: "local" }))
-  .resolve({ as: "global" }, () => ({ tenant: "acme" }));
+  .derive("global", () => ({ tenant: "acme" }));
 
 const cachePlugin = new Elysia({ name: "cache" }).decorate("cache", {
   read: (key: string) => `cached:${key}`,
@@ -164,7 +164,7 @@ test("exposes plugin state to a controller handler", async () => {
   expect(await response.json()).toEqual({ requests: 1 });
 });
 
-test("exposes global and scoped derives and global resolves", async () => {
+test("exposes global and plugin-scoped derives", async () => {
   const response = await get("/context/derived");
 
   expect(response.status).toBe(200);
@@ -238,7 +238,9 @@ test("resolves an asynchronously configured plugin against the container", async
   @Controller("configured")
   class ConfiguredController {
     @Get()
-    read(@Ctx() context: ElysiaRouteContext<{}, Elysia<"", SecretSingleton>>): { secret: string } {
+    read(@Ctx() context: ElysiaRouteContext<{}, Elysia<"", "local", SecretSingleton>>): {
+      secret: string;
+    } {
       return { secret: context.secret };
     }
   }
@@ -271,7 +273,6 @@ interface SecretSingleton {
   decorator: { secret: string };
   store: {};
   derive: {};
-  resolve: {};
 }
 
 type ClockContext = ElysiaRouteContext<{}, typeof clockPlugin>;
@@ -343,7 +344,7 @@ test("injects typed store, set, and status parts without materializing the whole
   const routeHandlerSource =
     application
       .getNativeApplication()
-      .router.history.find((route) => route.path === "/context/parts")
+      .routes.find((route) => route.path === "/context/parts")
       ?.handler.toString() ?? "";
   const first = await application.handle(new Request("http://localhost/context/parts"));
   const second = await application.handle(new Request("http://localhost/context/parts"));

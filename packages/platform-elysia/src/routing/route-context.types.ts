@@ -3,7 +3,8 @@ import type {
   RouteValidatorInput,
   ValidationModelClass,
 } from "@aponiajs/common";
-import type { AnyElysia, Context, InputSchema, SingletonBase, UnwrapRoute } from "elysia";
+import type { AnyElysia, Context, InputSchema, UnwrapRoute } from "elysia";
+import type { SingletonBase } from "elysia/types";
 
 /**
  * One plugin a handler reads from: a native Elysia instance, or the module
@@ -56,11 +57,19 @@ type MountedSingleton<TPlugins extends ElysiaPluginTypes> = {
  * A type-only Standard Schema projection lets Elysia infer a validation
  * model's instance shape without exposing or reconstructing its runtime
  * validator. Runtime lowering remains owned by the route compiler.
+ *
+ * Both directions carry the instance type because Elysia reads a validator in
+ * both directions: a request slot through the Standard Schema's `output`, which
+ * is the value validation produces, and a response slot through its `input`,
+ * which is the value a handler hands back to be encoded. A model class
+ * describes one instance on both sides, so leaving `input` as `unknown` — as a
+ * request-only projection may — reads a model-backed response member back as
+ * `unknown` and collapses `ElysiaStatus` to a helper that accepts no status.
  */
 interface ValidationModelSchema<TOutput> {
   readonly "~standard": {
     readonly types: {
-      readonly input: unknown;
+      readonly input: TOutput;
       readonly output: TOutput;
     };
   };

@@ -386,7 +386,6 @@ Elysia to compose routes and schemas before listening:
 ```ts
 const application = await AponiaFactory.create(AppModule, {
   elysia: {
-    aot: true,
     precompile: {
       compose: true,
       schema: true,
@@ -396,18 +395,9 @@ const application = await AponiaFactory.create(AppModule, {
 ```
 
 Without `precompile`, Elysia performs its JavaScript route composition lazily.
-`aot: false` selects Elysia's generic dynamic dispatcher. Neither option
-produces native machine code: JavaScriptCore still owns machine-code JIT
-compilation, and build-time Aponia source generation is a separate concern.
-
-`aot: false` is a compatibility escape hatch, not a performance switch. The
-dynamic dispatcher never reads a route's own `error` array, so declared
-exception filters and the default Problem Details mapping do not run, and an
-unhandled failure answers Elysia's native `500` carrying the exception's
-message. Bootstrap warns under `RoutesResolver` when the policy is set; see the
-[errors chapter](./learn/10-errors.md) and
-[execution enhancers](./enhancers.md). Leave `aot` at its default unless a
-native plugin forces otherwise.
+`precompile` does not produce native machine code: JavaScriptCore still owns
+machine-code JIT compilation, and build-time Aponia source generation is a
+separate concern.
 
 A build tool can target the same direct-registration path without decorators by
 emitting `defineElysiaController(..., { registerRoutes })` descriptors.
