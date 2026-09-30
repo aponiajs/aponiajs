@@ -2,6 +2,17 @@
   "name": "create-aponia",
   "version": "1.0.0-beta.0",
   "description": "Create a Bun-first Aponia application.",
+  "keywords": [
+    "aponia",
+    "aponiajs",
+    "bun",
+    "create",
+    "elysia",
+    "scaffolding",
+    "starter",
+    "template",
+    "typescript"
+  ],
   "homepage": "https://github.com/aponiajs/aponiajs#readme",
   "bugs": {
     "url": "https://github.com/aponiajs/aponiajs/issues"

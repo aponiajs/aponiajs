@@ -2,6 +2,17 @@
   "name": "@aponiajs/platform-elysia",
   "version": "1.0.0-beta.0",
   "description": "Elysia application platform for Aponia HTTP controllers and WebSocket gateways.",
+  "keywords": [
+    "aponia",
+    "aponiajs",
+    "bun",
+    "dependency-injection",
+    "elysia",
+    "http",
+    "rest-api",
+    "routing",
+    "typescript"
+  ],
   "homepage": "https://github.com/aponiajs/aponiajs#readme",
   "bugs": {
     "url": "https://github.com/aponiajs/aponiajs/issues"

@@ -2,6 +2,17 @@
   "name": "@aponiajs/core",
   "version": "1.0.0-beta.0",
   "description": "Module graph and dependency injection runtime for Aponia.",
+  "keywords": [
+    "aponia",
+    "aponiajs",
+    "bun",
+    "container",
+    "dependency-injection",
+    "elysia",
+    "ioc",
+    "module-graph",
+    "typescript"
+  ],
   "homepage": "https://github.com/aponiajs/aponiajs#readme",
   "bugs": {
     "url": "https://github.com/aponiajs/aponiajs/issues"

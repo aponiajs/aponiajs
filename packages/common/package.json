@@ -2,6 +2,17 @@
   "name": "@aponiajs/common",
   "version": "1.0.0-beta.0",
   "description": "Platform-neutral contracts for Aponia modules, dependency injection, and WebSocket gateways.",
+  "keywords": [
+    "aponia",
+    "aponiajs",
+    "bun",
+    "contracts",
+    "decorators",
+    "dependency-injection",
+    "elysia",
+    "metadata",
+    "typescript"
+  ],
   "homepage": "https://github.com/aponiajs/aponiajs#readme",
   "bugs": {
     "url": "https://github.com/aponiajs/aponiajs/issues"
