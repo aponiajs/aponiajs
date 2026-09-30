@@ -163,6 +163,10 @@ export class AuthModule {}
 `imports` lists the modules whose exports the factory resolves against. A token
 that no imported module exports fails with `MISSING_PROVIDER`.
 
+A package that wraps a plugin for other applications builds its module this way,
+then registers more than a plugin. See
+[Authoring a Plugin Package](./plugin-packages.md).
+
 ## Typing what a plugin adds
 
 Compiling a decorated controller erases the plugin instances a module imports,
@@ -311,6 +315,7 @@ test("exposes the clock decorator", async () => {
 `plugin-definition.test.ts` exercise every case above, including compile-time
 assertions that fail `bun run check` when a plugin type is lost or widened.
 
+[Authoring a plugin package](./plugin-packages.md) ·
 [Architecture and style](./architecture-and-style.md) ·
 [Eden Treaty](./eden-treaty.md) ·
 [Testing](./testing.md) ·
