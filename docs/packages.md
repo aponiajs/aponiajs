@@ -1,6 +1,6 @@
 # Published Packages
 
-AponiaJS publishes ten public packages to the npm registry. Use the live npm
+AponiaJS publishes eleven public packages to the npm registry. Use the live npm
 badges and linked registry pages below as the source of truth for the latest
 published version.
 
@@ -16,6 +16,7 @@ published version.
 | [`@aponiajs/cors`](https://www.npmjs.com/package/@aponiajs/cors)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcors)](https://www.npmjs.com/package/@aponiajs/cors)                       | `bun add @aponiajs/cors@beta`                                 |
 | [`@aponiajs/testing`](https://www.npmjs.com/package/@aponiajs/testing)                 | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Ftesting)](https://www.npmjs.com/package/@aponiajs/testing)                 | `bun add --dev @aponiajs/testing@beta`                        |
 | [`@aponiajs/openapi`](https://www.npmjs.com/package/@aponiajs/openapi)                 | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fopenapi)](https://www.npmjs.com/package/@aponiajs/openapi)                 | `bun add @aponiajs/openapi@beta`                              |
+| [`@aponiajs/opentelemetry`](https://www.npmjs.com/package/@aponiajs/opentelemetry)     | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fopentelemetry)](https://www.npmjs.com/package/@aponiajs/opentelemetry)     | `bun add @aponiajs/opentelemetry@beta`                        |
 
 The reserved `aponiajs` facade is private in this workspace and is not
 published. Do not install it yet.
@@ -165,6 +166,24 @@ An application that declares its configuration does read one, through
 [Devtools guide](./devtools.md) ·
 [npm](https://www.npmjs.com/package/@aponiajs/devtools)
 
+### `@aponiajs/opentelemetry`
+
+Trace an application's routes with OpenTelemetry, with the policy read from a
+validated configuration. The package is an adapter over
+[`@elysia/opentelemetry`](https://www.npmjs.com/package/@elysia/opentelemetry):
+AponiaJS contributes a module the plugin is declared in and a configuration the
+service name, body recording, header capture, and URL redaction are validated
+through, and no tracing backend of its own. **It ships no exporter and no
+instrumentation** — the span processors, the exporters, and the instrumentations
+are the application's, passed to `register` because they are live objects a
+configuration cannot carry. Its sharpest limit is the wrapped plugin's: the
+plugin's `NodeSDK` is process-global, so the first registration in a process owns
+it and every later one is inert, and `application.close()` does not stop it.
+
+[Package README](../packages/opentelemetry/README.md) ·
+[Authoring a plugin package](./plugin-packages.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/opentelemetry)
+
 ## Project creation and CLI
 
 Install the published CLI globally with Bun and invoke its `aponia` binary
@@ -184,7 +203,7 @@ same project generator. See the
 
 ## Synchronized versions
 
-All ten public packages are released with the same
+All eleven public packages are released with the same
 [Semantic Version](https://semver.org). Avoid mixing AponiaJS package versions
 within one application. See [Releasing npm Packages](./releasing.md) for the
 version gate and publication flow.

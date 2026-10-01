@@ -11,6 +11,7 @@ export const versionedPackageFiles = [
   "packages/cron/package.json",
   "packages/devtools/package.json",
   "packages/openapi/package.json",
+  "packages/opentelemetry/package.json",
   "packages/platform-elysia/package.json",
   "packages/testing/package.json",
 ] as const;
@@ -25,6 +26,7 @@ export const versionedWorkspacePaths = [
   "packages/cron",
   "packages/devtools",
   "packages/openapi",
+  "packages/opentelemetry",
   "packages/platform-elysia",
   "packages/testing",
 ] as const;

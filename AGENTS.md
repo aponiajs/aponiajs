@@ -34,6 +34,7 @@ Bun workspace. Framework packages live in `packages/`:
 | `@aponiajs/devtools`        | Opt-in devtools served by the running application itself        | `cli`, `common`, `platform-elysia`, peer `elysia`                                     |
 | `@aponiajs/testing`         | Test application builder, provider overrides, teardown          | `common`, `platform-elysia`, peer `elysia`                                            |
 | `@aponiajs/openapi`         | OpenAPI document served for an application's routes             | `common`, `platform-elysia`, `@elysia/openapi`, peer `elysia`                         |
+| `@aponiajs/opentelemetry`   | Tracing through a validated config, no backend or exporter      | `common`, `platform-elysia`, `@elysia/opentelemetry`, peer `elysia`                   |
 | `aponiajs`                  | Reserved public facade, private and unpublished                 | —                                                                                     |
 
 Supporting directories: `examples/` for executable examples, `docs/` for
@@ -62,23 +63,24 @@ Every package and supporting directory carries its own `AGENTS.md` with the
 invariants that apply there. Read this file first, then the one next to the code
 being changed:
 
-| Guide                                                            | Covers                                                        |
-| ---------------------------------------------------------------- | ------------------------------------------------------------- |
-| [`packages/common`](packages/common/AGENTS.md)                   | Decorators, descriptors, tokens, errors, logging              |
-| [`packages/core`](packages/core/AGENTS.md)                       | Module graph, visibility, container                           |
-| [`packages/platform-elysia`](packages/platform-elysia/AGENTS.md) | Bootstrap, route mapping, native plugins, context types       |
-| [`packages/cli`](packages/cli/AGENTS.md)                         | Schematics, templates, generated layout                       |
-| [`packages/create-aponia`](packages/create-aponia/AGENTS.md)     | The `bun create aponia` entrypoint                            |
-| [`packages/cron`](packages/cron/AGENTS.md)                       | The scheduled-jobs plugin package                             |
-| [`packages/cors`](packages/cors/AGENTS.md)                       | The cross-origin plugin package                               |
-| [`packages/devtools`](packages/devtools/AGENTS.md)               | The opt-in devtools package, served by the application itself |
-| [`packages/testing`](packages/testing/AGENTS.md)                 | The test kit: test applications, provider overrides, teardown |
-| [`packages/openapi`](packages/openapi/AGENTS.md)                 | The OpenAPI document package, served by its own registration  |
-| [`packages/aponiajs`](packages/aponiajs/AGENTS.md)               | The reserved, still-private facade                            |
-| [`scripts`](scripts/AGENTS.md)                                   | Release channel derivation and documentation guards           |
-| [`docs`](docs/AGENTS.md)                                         | The published documentation set and what guards it            |
-| [`docs/learn`](docs/learn/README.md)                             | The ordered chapters that teach the framework                 |
-| [`examples`](examples/AGENTS.md)                                 | Executable applications built with the framework              |
+| Guide                                                            | Covers                                                          |
+| ---------------------------------------------------------------- | --------------------------------------------------------------- |
+| [`packages/common`](packages/common/AGENTS.md)                   | Decorators, descriptors, tokens, errors, logging                |
+| [`packages/core`](packages/core/AGENTS.md)                       | Module graph, visibility, container                             |
+| [`packages/platform-elysia`](packages/platform-elysia/AGENTS.md) | Bootstrap, route mapping, native plugins, context types         |
+| [`packages/cli`](packages/cli/AGENTS.md)                         | Schematics, templates, generated layout                         |
+| [`packages/create-aponia`](packages/create-aponia/AGENTS.md)     | The `bun create aponia` entrypoint                              |
+| [`packages/cron`](packages/cron/AGENTS.md)                       | The scheduled-jobs plugin package                               |
+| [`packages/cors`](packages/cors/AGENTS.md)                       | The cross-origin plugin package                                 |
+| [`packages/devtools`](packages/devtools/AGENTS.md)               | The opt-in devtools package, served by the application itself   |
+| [`packages/testing`](packages/testing/AGENTS.md)                 | The test kit: test applications, provider overrides, teardown   |
+| [`packages/openapi`](packages/openapi/AGENTS.md)                 | The OpenAPI document package, served by its own registration    |
+| [`packages/opentelemetry`](packages/opentelemetry/AGENTS.md)     | The OpenTelemetry tracing package, and its process-global limit |
+| [`packages/aponiajs`](packages/aponiajs/AGENTS.md)               | The reserved, still-private facade                              |
+| [`scripts`](scripts/AGENTS.md)                                   | Release channel derivation and documentation guards             |
+| [`docs`](docs/AGENTS.md)                                         | The published documentation set and what guards it              |
+| [`docs/learn`](docs/learn/README.md)                             | The ordered chapters that teach the framework                   |
+| [`examples`](examples/AGENTS.md)                                 | Executable applications built with the framework                |
 
 `scripts/agent-guides.spec.ts` keeps that list and the symlinks honest, and
 `scripts/learning-path.spec.ts` keeps the numbered chapters in `docs/learn/`
@@ -411,7 +413,12 @@ needs, a `@aponiajs/openapi` plugin package that serves an OpenAPI document
 for the application's own routes, with the document's metadata read from a
 validated configuration over `@elysia/openapi`, and a `@aponiajs/cors` plugin
 package that answers cross-origin requests, with the policy read from a
-validated configuration over `@elysia/cors`. Not implemented:
+validated configuration over `@elysia/cors`, and a `@aponiajs/opentelemetry`
+plugin package that records spans for the application's own routes, with the
+policy read from a validated configuration over `@elysia/opentelemetry` and the
+span processors, exporters, and instrumentations supplied by the application,
+because the wrapped plugin's SDK is process-global and the first registration in
+a process owns it. Not implemented:
 middleware, non-singleton scopes, authentication,
 production WebSocket policies and transport extraction, job queues and
 distributed scheduling, and microservice

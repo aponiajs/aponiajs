@@ -125,6 +125,7 @@ The current package boundaries are:
 | `@aponiajs/devtools`        | buffer, endpoints, logging, module, requests, server                          |
 | `@aponiajs/testing`         | application, overrides                                                        |
 | `@aponiajs/openapi`         | document, module                                                              |
+| `@aponiajs/opentelemetry`   | module, tracing                                                               |
 
 Keep package tests at `tests/*.test.ts` and Vite+ conformance tests at
 `tests-vp/*.conformance.ts`; those flat locations are part of the configured

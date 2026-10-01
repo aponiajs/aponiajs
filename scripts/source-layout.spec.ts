@@ -78,6 +78,11 @@ const packageLayouts: readonly PackageLayout[] = [
     directories: ["document", "module"],
   },
   {
+    sourceRoot: "packages/opentelemetry/src",
+    files: ["index.ts"],
+    directories: ["module", "tracing"],
+  },
+  {
     sourceRoot: "packages/aponiajs/src",
     files: ["index.ts"],
     directories: [],
