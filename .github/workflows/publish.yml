@@ -111,7 +111,7 @@ jobs:
 
       - name: Pack publishable workspaces
         run: |
-          mkdir -p release-artifacts/{01-common,02-core,03-platform-elysia,04-cli,05-create-aponia,06-devtools,07-cron,08-testing,09-openapi}
+          mkdir -p release-artifacts/{01-common,02-core,03-platform-elysia,04-cli,05-create-aponia,06-devtools,07-cron,08-testing,09-openapi,10-cors}
           bun pm pack --cwd packages/common --destination "$GITHUB_WORKSPACE/release-artifacts/01-common"
           bun pm pack --cwd packages/core --destination "$GITHUB_WORKSPACE/release-artifacts/02-core"
           bun pm pack --cwd packages/platform-elysia --destination "$GITHUB_WORKSPACE/release-artifacts/03-platform-elysia"
@@ -121,6 +121,7 @@ jobs:
           bun pm pack --cwd packages/cron --destination "$GITHUB_WORKSPACE/release-artifacts/07-cron"
           bun pm pack --cwd packages/testing --destination "$GITHUB_WORKSPACE/release-artifacts/08-testing"
           bun pm pack --cwd packages/openapi --destination "$GITHUB_WORKSPACE/release-artifacts/09-openapi"
+          bun pm pack --cwd packages/cors --destination "$GITHUB_WORKSPACE/release-artifacts/10-cors"
 
       - name: Publish packages in dependency order
         working-directory: ${{ runner.temp }}
@@ -140,7 +141,7 @@ jobs:
           ALIAS_TAGS: ${{ steps.distribution.outputs.aliases }}
           VERSION: ${{ steps.distribution.outputs.version }}
         run: |
-          for package in @aponiajs/common @aponiajs/core @aponiajs/platform-elysia @aponiajs/cli create-aponia @aponiajs/devtools @aponiajs/cron @aponiajs/testing @aponiajs/openapi; do
+          for package in @aponiajs/common @aponiajs/core @aponiajs/platform-elysia @aponiajs/cli create-aponia @aponiajs/devtools @aponiajs/cron @aponiajs/cors @aponiajs/testing @aponiajs/openapi; do
             for alias in $ALIAS_TAGS; do
               npm dist-tag add "$package@$VERSION" "$alias"
             done

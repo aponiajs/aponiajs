@@ -180,6 +180,23 @@
         "@aponiajs/common": "workspace:*",
       },
     },
+    "packages/cors": {
+      "name": "@aponiajs/cors",
+      "version": "1.0.0-beta.1",
+      "dependencies": {
+        "@aponiajs/common": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
+        "@elysia/cors": "2.0.0-beta.1",
+      },
+      "devDependencies": {
+        "@aponiajs/cli": "workspace:*",
+        "elysia": "2.0.0-beta.19",
+        "zod": "^4.4.3",
+      },
+      "peerDependencies": {
+        "elysia": "2.0.0-beta.19",
+      },
+    },
     "packages/create-aponia": {
       "name": "create-aponia",
       "version": "1.0.0-beta.1",
@@ -284,6 +301,8 @@
 
     "@aponiajs/core": ["@aponiajs/core@workspace:packages/core"],
 
+    "@aponiajs/cors": ["@aponiajs/cors@workspace:packages/cors"],
+
     "@aponiajs/cron": ["@aponiajs/cron@workspace:packages/cron"],
 
     "@aponiajs/devtools": ["@aponiajs/devtools@workspace:packages/devtools"],
@@ -329,6 +348,8 @@
     "@babel/runtime": ["@babel/runtime@7.29.7", "", {}, "sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw=="],
 
     "@blazediff/core": ["@blazediff/core@1.9.1", "", {}, "sha512-ehg3jIkYKulZh+8om/O25vkvSsXXwC+skXmyA87FFx6A/45eqOkZsBltMw/TVteb0mloiGT8oGRTcjRAz66zaA=="],
+
+    "@elysia/cors": ["@elysia/cors@2.0.0-beta.1", "", { "peerDependencies": { "elysia": ">= 2.0.0-beta.1" } }, "sha512-dHb21xI4Dm7wcf5+rWLiLSwJARLAewnOzRjRk0wRMfBiLGA1t/CXsblzKUtwYRFhQCteUEGdhEace+6PF0UUKw=="],
 
     "@elysia/cron": ["@elysia/cron@2.0.0-beta.1", "", { "dependencies": { "croner": "^6.0.3" }, "peerDependencies": { "elysia": ">= 2.0.0-beta.1" } }, "sha512-7n/EJeXuwZ+e45qoJgENCephqNureuM/TLksCxqKnubmixbJR8RT68TsPjczFv7MA1wLNMkeVdTx24xr/FMsjg=="],
 

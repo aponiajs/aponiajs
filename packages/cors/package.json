@@ -1,0 +1,58 @@
+{
+  "name": "@aponiajs/cors",
+  "version": "1.0.0-beta.1",
+  "description": "Answer cross-origin requests for an Aponia application, with the CORS policy read from a validated configuration.",
+  "keywords": [
+    "aponia",
+    "aponiajs",
+    "bun",
+    "cors",
+    "elysia",
+    "http",
+    "typescript"
+  ],
+  "homepage": "https://github.com/aponiajs/aponiajs#readme",
+  "bugs": {
+    "url": "https://github.com/aponiajs/aponiajs/issues"
+  },
+  "license": "MIT",
+  "author": "AponiaJS contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aponiajs/aponiajs.git",
+    "directory": "packages/cors"
+  },
+  "files": [
+    "dist",
+    "llms.txt"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "bunx --bun vp pack",
+    "dev": "bunx --bun vp pack --watch",
+    "test": "bun test",
+    "test:vite-plus": "vp test",
+    "check": "bunx --bun vp check",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "@aponiajs/common": "workspace:*",
+    "@aponiajs/platform-elysia": "workspace:*",
+    "@elysia/cors": "2.0.0-beta.1"
+  },
+  "devDependencies": {
+    "@aponiajs/cli": "workspace:*",
+    "elysia": "2.0.0-beta.19",
+    "zod": "^4.4.3"
+  },
+  "peerDependencies": {
+    "elysia": "2.0.0-beta.19"
+  }
+}

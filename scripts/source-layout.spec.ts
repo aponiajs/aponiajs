@@ -53,6 +53,11 @@ const packageLayouts: readonly PackageLayout[] = [
     directories: ["module", "scheduler"],
   },
   {
+    sourceRoot: "packages/cors/src",
+    files: ["index.ts"],
+    directories: ["module", "policy"],
+  },
+  {
     sourceRoot: "packages/devtools/src",
     files: ["index.ts", "version.ts"],
     directories: ["buffer", "endpoints", "logging", "module", "requests", "server"],

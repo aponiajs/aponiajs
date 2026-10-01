@@ -236,8 +236,8 @@ and an application that would rather keep the descriptor artifact mounts that
 value through `plugins`: the artifact is adopted and the plugin still serves,
 while what the application gives up is the module, its provider, and the
 read-back. A plugin built from a value the container resolved has nothing to
-export, because it does not exist until the container has built one; cron and
-openapi are that shape.
+export, because it does not exist until the container has built one; cron,
+openapi, and cors are that shape.
 
 ## The build configuration
 

@@ -1,6 +1,6 @@
 # Published Packages
 
-AponiaJS publishes nine public packages to the npm registry. Use the live npm
+AponiaJS publishes ten public packages to the npm registry. Use the live npm
 badges and linked registry pages below as the source of truth for the latest
 published version.
 
@@ -13,6 +13,7 @@ published version.
 | [`create-aponia`](https://www.npmjs.com/package/create-aponia)                         | [![npm](https://img.shields.io/npm/v/create-aponia)](https://www.npmjs.com/package/create-aponia)                             | `bun create aponia@beta <name>`                               |
 | [`@aponiajs/devtools`](https://www.npmjs.com/package/@aponiajs/devtools)               | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fdevtools)](https://www.npmjs.com/package/@aponiajs/devtools)               | `bun add @aponiajs/devtools@beta`                             |
 | [`@aponiajs/cron`](https://www.npmjs.com/package/@aponiajs/cron)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcron)](https://www.npmjs.com/package/@aponiajs/cron)                       | `bun add @aponiajs/cron@beta`                                 |
+| [`@aponiajs/cors`](https://www.npmjs.com/package/@aponiajs/cors)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcors)](https://www.npmjs.com/package/@aponiajs/cors)                       | `bun add @aponiajs/cors@beta`                                 |
 | [`@aponiajs/testing`](https://www.npmjs.com/package/@aponiajs/testing)                 | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Ftesting)](https://www.npmjs.com/package/@aponiajs/testing)                 | `bun add --dev @aponiajs/testing@beta`                        |
 | [`@aponiajs/openapi`](https://www.npmjs.com/package/@aponiajs/openapi)                 | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fopenapi)](https://www.npmjs.com/package/@aponiajs/openapi)                 | `bun add @aponiajs/openapi@beta`                              |
 
@@ -100,6 +101,22 @@ process runs in that process.
 [Authoring a plugin package](./plugin-packages.md) ·
 [npm](https://www.npmjs.com/package/@aponiajs/cron)
 
+### `@aponiajs/cors`
+
+Answer cross-origin requests for an application's routes, with the policy read
+from a validated configuration. The package is an adapter over
+[`@elysia/cors`](https://www.npmjs.com/package/@elysia/cors): AponiaJS
+contributes a module a registration belongs in and a configuration the origins,
+methods, headers, and credentials are validated through, and no CORS
+implementation of its own. It is the smallest package in the set — a literal
+policy needs no package at all — and it carries one boundary worth stating: an
+origin that is a `RegExp` or a function is code rather than data, so it is not
+expressible through a configuration and belongs with the raw plugin.
+
+[Package README](../packages/cors/README.md) ·
+[Authoring a plugin package](./plugin-packages.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/cors)
+
 ### `@aponiajs/testing`
 
 Boot an application for a test with `createTestApplication`, replace one provider
@@ -167,7 +184,7 @@ same project generator. See the
 
 ## Synchronized versions
 
-All nine public packages are released with the same
+All ten public packages are released with the same
 [Semantic Version](https://semver.org). Avoid mixing AponiaJS package versions
 within one application. See [Releasing npm Packages](./releasing.md) for the
 version gate and publication flow.

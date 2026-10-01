@@ -9,6 +9,7 @@ const guideDirectories = [
   "packages/cli",
   "packages/common",
   "packages/core",
+  "packages/cors",
   "packages/create-aponia",
   "packages/cron",
   "packages/devtools",

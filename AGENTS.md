@@ -22,18 +22,19 @@ it satisfies both this guide and `RULES.md`.
 
 Bun workspace. Framework packages live in `packages/`:
 
-| Package                     | Owns                                                         | Runtime dependencies                                                                  |
-| --------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
-| `@aponiajs/common`          | Decorators, contracts, tokens, providers, errors, WebSockets | `reflect-metadata` only                                                               |
-| `@aponiajs/core`            | Module graph, visibility rules, dependency injection         | `@aponiajs/common`                                                                    |
-| `@aponiajs/platform-elysia` | Elysia adapter, HTTP routes, WebSocket gateways, plugins     | `common`, `core`, peer `elysia`                                                       |
-| `@aponiajs/cli`             | `aponia new` and `aponia generate` schematics                | `change-case`, `ts-morph`, `yargs-parser`, `fast-glob`, `inflection`, `oxfmt` (exact) |
-| `create-aponia`             | `bun create aponia` entrypoint into the same generator       | `@aponiajs/cli`                                                                       |
-| `@aponiajs/cron`            | Scheduled jobs declared in a module, from validated config   | `common`, `platform-elysia`, `@elysia/cron`, peer `elysia`                            |
-| `@aponiajs/devtools`        | Opt-in devtools served by the running application itself     | `cli`, `common`, `platform-elysia`, peer `elysia`                                     |
-| `@aponiajs/testing`         | Test application builder, provider overrides, teardown       | `common`, `platform-elysia`, peer `elysia`                                            |
-| `@aponiajs/openapi`         | OpenAPI document served for an application's routes          | `common`, `platform-elysia`, `@elysia/openapi`, peer `elysia`                         |
-| `aponiajs`                  | Reserved public facade, private and unpublished              | —                                                                                     |
+| Package                     | Owns                                                            | Runtime dependencies                                                                  |
+| --------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `@aponiajs/common`          | Decorators, contracts, tokens, providers, errors, WebSockets    | `reflect-metadata` only                                                               |
+| `@aponiajs/core`            | Module graph, visibility rules, dependency injection            | `@aponiajs/common`                                                                    |
+| `@aponiajs/platform-elysia` | Elysia adapter, HTTP routes, WebSocket gateways, plugins        | `common`, `core`, peer `elysia`                                                       |
+| `@aponiajs/cli`             | `aponia new` and `aponia generate` schematics                   | `change-case`, `ts-morph`, `yargs-parser`, `fast-glob`, `inflection`, `oxfmt` (exact) |
+| `create-aponia`             | `bun create aponia` entrypoint into the same generator          | `@aponiajs/cli`                                                                       |
+| `@aponiajs/cron`            | Scheduled jobs declared in a module, from validated config      | `common`, `platform-elysia`, `@elysia/cron`, peer `elysia`                            |
+| `@aponiajs/cors`            | Cross-origin policy declared in a module, from validated config | `common`, `platform-elysia`, `@elysia/cors`, peer `elysia`                            |
+| `@aponiajs/devtools`        | Opt-in devtools served by the running application itself        | `cli`, `common`, `platform-elysia`, peer `elysia`                                     |
+| `@aponiajs/testing`         | Test application builder, provider overrides, teardown          | `common`, `platform-elysia`, peer `elysia`                                            |
+| `@aponiajs/openapi`         | OpenAPI document served for an application's routes             | `common`, `platform-elysia`, `@elysia/openapi`, peer `elysia`                         |
+| `aponiajs`                  | Reserved public facade, private and unpublished                 | —                                                                                     |
 
 Supporting directories: `examples/` for executable examples, `docs/` for
 published documentation, `scripts/`
@@ -69,6 +70,7 @@ being changed:
 | [`packages/cli`](packages/cli/AGENTS.md)                         | Schematics, templates, generated layout                       |
 | [`packages/create-aponia`](packages/create-aponia/AGENTS.md)     | The `bun create aponia` entrypoint                            |
 | [`packages/cron`](packages/cron/AGENTS.md)                       | The scheduled-jobs plugin package                             |
+| [`packages/cors`](packages/cors/AGENTS.md)                       | The cross-origin plugin package                               |
 | [`packages/devtools`](packages/devtools/AGENTS.md)               | The opt-in devtools package, served by the application itself |
 | [`packages/testing`](packages/testing/AGENTS.md)                 | The test kit: test applications, provider overrides, teardown |
 | [`packages/openapi`](packages/openapi/AGENTS.md)                 | The OpenAPI document package, served by its own registration  |
@@ -405,9 +407,11 @@ scheduled jobs in a module and reads them from a validated configuration over
 `@elysia/cron`, and a `@aponiajs/testing` package that boots an application for a
 test with a teardown a case can rely on, replaces one provider for one boot by
 rewriting the compiled graph, and binds the one real port a WebSocket case
-needs, and a `@aponiajs/openapi` plugin package that serves an OpenAPI document
+needs, a `@aponiajs/openapi` plugin package that serves an OpenAPI document
 for the application's own routes, with the document's metadata read from a
-validated configuration over `@elysia/openapi`. Not implemented:
+validated configuration over `@elysia/openapi`, and a `@aponiajs/cors` plugin
+package that answers cross-origin requests, with the policy read from a
+validated configuration over `@elysia/cors`. Not implemented:
 middleware, non-singleton scopes, authentication,
 production WebSocket policies and transport extraction, job queues and
 distributed scheduling, and microservice

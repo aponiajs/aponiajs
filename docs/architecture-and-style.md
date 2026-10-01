@@ -120,6 +120,7 @@ The current package boundaries are:
 | `@aponiajs/core`            | container, graph                                                              |
 | `@aponiajs/platform-elysia` | application, controllers, modules, plugins, routing                           |
 | `@aponiajs/cli`             | commands, generation                                                          |
+| `@aponiajs/cors`            | module, policy                                                                |
 | `@aponiajs/cron`            | module, scheduler                                                             |
 | `@aponiajs/devtools`        | buffer, endpoints, logging, module, requests, server                          |
 | `@aponiajs/testing`         | application, overrides                                                        |
