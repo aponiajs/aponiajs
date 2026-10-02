@@ -498,6 +498,19 @@ test("resource honors transport and CRUD choices", async () => {
   });
 
   expect(await Bun.file(join(graphqlRoot, "src/users/users.resolver.ts")).exists()).toBe(true);
+  // A graphql resource is an unconnected scaffold: the resolver is emitted
+  // beside the service, but the module registers only the service — a provider
+  // the container built for a transport nobody mounted would run nowhere. The
+  // file's own comment names the seam to connect (`GraphQLModule.register`).
+  expect(await Bun.file(join(graphqlRoot, "src/users/users.resolver.ts")).text()).toContain(
+    "graphql-code-first transport scaffold. This class is not registered anywhere",
+  );
+  expect(await Bun.file(join(graphqlRoot, "src/users/users.module.ts")).text()).toContain(
+    "providers: [UsersService]",
+  );
+  expect(await Bun.file(join(graphqlRoot, "src/users/users.module.ts")).text()).not.toContain(
+    "UsersResolver",
+  );
   expect(await Bun.file(join(graphqlRoot, "src/users/dto/create-user.input.ts")).text()).toContain(
     "CreateUserInput",
   );

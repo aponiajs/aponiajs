@@ -91,7 +91,12 @@ guards, interceptors, and filters are registered in the nearest Aponia module
 unless `--skip-import` is used: controllers under `controllers`, enhancers and
 gateways under `providers`, and modules under `imports`.
 Resource transports include REST, GraphQL code-first, GraphQL schema-first,
-microservices, and WebSockets. Gateway schematics emit
+microservices, and WebSockets. REST generates a mounted controller and WebSockets
+generate a mounted gateway; GraphQL and microservice transports generate
+unconnected scaffolds — the class is emitted beside the service, but the module
+registers only the service, and each file's own comment names the seam to
+connect — because no GraphQL decorator layer and no microservice transport
+exists yet. Gateway schematics emit
 `@WebSocketGateway("/<resource>")`; CRUD WebSocket resources also emit
 `@SubscribeMessage()` handlers for create, read, update, and remove events with
 `@MessageBody()` input binding.

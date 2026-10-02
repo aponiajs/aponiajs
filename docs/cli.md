@@ -119,8 +119,13 @@ does not consume the argument after it, so `aponia new --dry-run my-api` reads
 
 Resources additionally support `--crud` / `--no-crud` and these transports:
 `rest`, `graphql-code-first`, `graphql-schema-first`, `microservice`, and `ws`.
-REST resources generate a controller; GraphQL resources generate a resolver;
-WebSocket resources generate a provider-registered gateway. A CRUD WebSocket
+REST resources generate a mounted controller; GraphQL resources generate an
+unconnected resolver scaffold — the class is emitted beside the service, but the
+module registers only the service, and the file's own comment names the seam to
+connect (`GraphQLModule.register` with the service in `inject`); microservice
+resources generate an unconnected controller scaffold the same way, because
+microservice transports are not implemented; and WebSocket resources generate a
+provider-registered gateway. A CRUD WebSocket
 resource maps `<resource>.create`, `.findAll`, `.findOne`, `.update`, and
 `.remove` through `@SubscribeMessage()` and injects event data with
 `@MessageBody()`. A standalone gateway is immediately mountable:

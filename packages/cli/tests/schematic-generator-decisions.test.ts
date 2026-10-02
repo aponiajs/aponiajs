@@ -176,7 +176,7 @@ test("places resource files in the source root when flat is set and omits specs 
   ]);
 });
 
-test("generates a controller transport scaffold with DTO inputs for a microservice resource", async () => {
+test("generates an unconnected scaffold for a microservice resource", async () => {
   const projectRoot = await createProjectRoot("aponia-microservice-resource-");
 
   const result = await generateSchematic(
@@ -194,11 +194,18 @@ test("generates a controller transport scaffold with DTO inputs for a microservi
     { kind: "CREATE", path: "src/orders/orders.controller.spec.ts" },
     { kind: "UPDATE", path: "src/app.module.ts" },
   ]);
+  // Microservice transports are not implemented, so the scaffold stays
+  // unconnected: the class is emitted beside the service, but the module
+  // registers only the service. The file's own comment is the other half of
+  // the claim — it states that the class is not registered anywhere.
   expect(await Bun.file(join(projectRoot, "src/orders/orders.controller.ts")).text()).toContain(
-    "microservice transport scaffold",
+    "microservice transport scaffold. This class is not registered anywhere",
   );
   expect(await Bun.file(join(projectRoot, "src/orders/orders.module.ts")).text()).toContain(
-    "controllers: [OrdersController]",
+    "providers: [OrdersService]",
+  );
+  expect(await Bun.file(join(projectRoot, "src/orders/orders.module.ts")).text()).not.toContain(
+    "OrdersController",
   );
 });
 

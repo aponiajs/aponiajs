@@ -3,13 +3,22 @@ import type { ResourceTransport } from "../commands/command.types.ts";
 import type { ComponentNames } from "./component-names.types.ts";
 import { resourceTransportStem } from "./schematic-definitions.ts";
 
-export function renderResourceModule(names: ComponentNames, transportStem: string): string {
-  const transportClass = `${names.className}${pascalCase(transportStem)}`;
-  const metadata =
-    transportStem === "controller"
-      ? `controllers: [${transportClass}],\n  providers: [${names.className}Service],`
-      : `providers: [${transportClass}, ${names.className}Service],`;
-  return `import { Module } from "@aponiajs/common";\nimport { ${transportClass} } from "./${names.fileName}.${transportStem}.ts";\nimport { ${names.className}Service } from "./${names.fileName}.service.ts";\n\n@Module({\n  ${metadata}\n})\nexport class ${names.className}Module {}\n`;
+export function renderResourceModule(names: ComponentNames, type: ResourceTransport): string {
+  const stem = resourceTransportStem(type);
+  const transportClass = `${names.className}${pascalCase(stem)}`;
+  if (type === "rest") {
+    return `import { Module } from "@aponiajs/common";\nimport { ${transportClass} } from "./${names.fileName}.${stem}.ts";\nimport { ${names.className}Service } from "./${names.fileName}.service.ts";\n\n@Module({\n  controllers: [${transportClass}],\n  providers: [${names.className}Service],\n})\nexport class ${names.className}Module {}\n`;
+  }
+  if (type === "ws") {
+    return `import { Module } from "@aponiajs/common";\nimport { ${transportClass} } from "./${names.fileName}.${stem}.ts";\nimport { ${names.className}Service } from "./${names.fileName}.service.ts";\n\n@Module({\n  providers: [${transportClass}, ${names.className}Service],\n})\nexport class ${names.className}Module {}\n`;
+  }
+  // A scaffold for a transport the platform does not answer: the class is
+  // emitted beside the service, but the module registers only the service. The
+  // unregistered class is intentional — a provider the container built for a
+  // transport nobody mounted would run nowhere — and the emitted file's own
+  // comment names the seam to connect (`GraphQLModule.register` for graphql,
+  // a transport package for `microservice`) before the class is registered.
+  return `import { Module } from "@aponiajs/common";\nimport { ${names.className}Service } from "./${names.fileName}.service.ts";\n\n@Module({\n  providers: [${names.className}Service],\n})\nexport class ${names.className}Module {}\n`;
 }
 
 export function renderResourceController(names: ComponentNames, crud: boolean): string {
@@ -58,21 +67,28 @@ export function renderEntity(names: ComponentNames): string {
   return `export class ${names.singularClassName} {\n  id = "";\n  name = "";\n}\n`;
 }
 
-export function renderResourceTransport(
-  names: ComponentNames,
-  type: ResourceTransport,
-  crud: boolean,
-): string {
-  const stem = resourceTransportStem(type);
-  const className = `${names.className}${pascalCase(stem)}`;
-  if (type === "ws") {
-    return renderWebSocketGateway(names, className, crud);
-  }
-
+export function renderMicroserviceScaffold(names: ComponentNames, crud: boolean): string {
+  const className = `${names.className}Controller`;
   const method = crud
     ? `\n  findAll() {\n    return this.${names.propertyName}Service.findAll();\n  }\n`
     : "";
-  return `import { ${names.className}Service } from "./${names.fileName}.service.ts";\n\n/** ${type} transport scaffold. Connect this class to the matching Aponia platform package. */\nexport class ${className} {\n  constructor(private readonly ${names.propertyName}Service: ${names.className}Service) {}\n${method}}\n`;
+  return `import { ${names.className}Service } from "./${names.fileName}.service.ts";\n\n/** microservice transport scaffold. This class is not registered anywhere: microservice transports are not implemented, so connect it to a transport before using it. */\nexport class ${className} {\n  constructor(private readonly ${names.propertyName}Service: ${names.className}Service) {}\n${method}}\n`;
+}
+
+export function renderGraphqlResolverScaffold(
+  names: ComponentNames,
+  type: Extract<ResourceTransport, "graphql-code-first" | "graphql-schema-first">,
+  crud: boolean,
+): string {
+  const className = `${names.className}Resolver`;
+  // The resolver resolves against `@aponiajs/graphql`: the factory's
+  // `useFactory` is where this service is read, and the module's `inject` is
+  // what provides it. It stays a plain class — nothing registers it — so the
+  // comment names the seam to connect.
+  const method = crud
+    ? `\n  users() {\n    return this.${names.propertyName}Service.findAll();\n  }\n`
+    : "";
+  return `import { ${names.className}Service } from "./${names.fileName}.service.ts";\n\n/** ${type} transport scaffold. This class is not registered anywhere: return its methods from the \`useFactory\` passed to \`GraphQLModule.register\`, with this service in \`inject\`. */\nexport class ${className} {\n  constructor(private readonly ${names.propertyName}Service: ${names.className}Service) {}\n${method}}\n`;
 }
 
 export function renderResourceServiceSpec(names: ComponentNames): string {
@@ -101,7 +117,11 @@ export function renderResourceTransportSpec(
   return `import { expect, test } from "bun:test";\nimport { ${className} } from "./${names.fileName}.${stem}.ts";\nimport { ${names.className}Service } from "./${names.fileName}.service.ts";\n\ntest("${className} is defined", () => {\n  expect(new ${className}(new ${names.className}Service())).toBeDefined();\n});\n`;
 }
 
-function renderWebSocketGateway(names: ComponentNames, className: string, crud: boolean): string {
+export function renderWebSocketGateway(
+  names: ComponentNames,
+  className: string,
+  crud: boolean,
+): string {
   const commonImport = crud
     ? `import { MessageBody, SubscribeMessage, WebSocketGateway } from "@aponiajs/common";`
     : `import { WebSocketGateway } from "@aponiajs/common";`;
