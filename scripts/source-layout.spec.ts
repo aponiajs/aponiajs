@@ -73,6 +73,11 @@ const packageLayouts: readonly PackageLayout[] = [
     directories: ["application", "overrides"],
   },
   {
+    sourceRoot: "packages/graphql/src",
+    files: ["index.ts"],
+    directories: ["endpoint", "module"],
+  },
+  {
     sourceRoot: "packages/openapi/src",
     files: ["index.ts"],
     directories: ["document", "module"],

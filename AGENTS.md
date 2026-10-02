@@ -32,6 +32,7 @@ Bun workspace. Framework packages live in `packages/`:
 | `@aponiajs/cron`            | Scheduled jobs declared in a module, from validated config      | `common`, `platform-elysia`, `@elysia/cron`, peer `elysia`                            |
 | `@aponiajs/cors`            | Cross-origin policy declared in a module, from validated config | `common`, `platform-elysia`, `@elysia/cors`, peer `elysia`                            |
 | `@aponiajs/devtools`        | Opt-in devtools served by the running application itself        | `cli`, `common`, `platform-elysia`, peer `elysia`                                     |
+| `@aponiajs/graphql`         | GraphQL endpoint served in a module, from validated config      | `common`, `platform-elysia`, `@elysia/graphql-yoga`, peer `elysia`                    |
 | `@aponiajs/testing`         | Test application builder, provider overrides, teardown          | `common`, `platform-elysia`, peer `elysia`                                            |
 | `@aponiajs/openapi`         | OpenAPI document served for an application's routes             | `common`, `platform-elysia`, `@elysia/openapi`, peer `elysia`                         |
 | `@aponiajs/opentelemetry`   | Tracing through a validated config, no backend or exporter      | `common`, `platform-elysia`, `@elysia/opentelemetry`, peer `elysia`                   |
@@ -73,6 +74,7 @@ being changed:
 | [`packages/cron`](packages/cron/AGENTS.md)                       | The scheduled-jobs plugin package                               |
 | [`packages/cors`](packages/cors/AGENTS.md)                       | The cross-origin plugin package                                 |
 | [`packages/devtools`](packages/devtools/AGENTS.md)               | The opt-in devtools package, served by the application itself   |
+| [`packages/graphql`](packages/graphql/AGENTS.md)                 | The GraphQL endpoint package, served by its own registration    |
 | [`packages/testing`](packages/testing/AGENTS.md)                 | The test kit: test applications, provider overrides, teardown   |
 | [`packages/openapi`](packages/openapi/AGENTS.md)                 | The OpenAPI document package, served by its own registration    |
 | [`packages/opentelemetry`](packages/opentelemetry/AGENTS.md)     | The OpenTelemetry tracing package, and its process-global limit |
@@ -413,7 +415,10 @@ needs, a `@aponiajs/openapi` plugin package that serves an OpenAPI document
 for the application's own routes, with the document's metadata read from a
 validated configuration over `@elysia/openapi`, and a `@aponiajs/cors` plugin
 package that answers cross-origin requests, with the policy read from a
-validated configuration over `@elysia/cors`, and a `@aponiajs/opentelemetry`
+validated configuration over `@elysia/cors`, and a `@aponiajs/graphql` plugin
+package that serves a GraphQL endpoint in a module, with the mount path read
+from a validated configuration over `@elysia/graphql-yoga` and the schema
+supplied by the application through an injected factory, and a `@aponiajs/opentelemetry`
 plugin package that records spans for the application's own routes, with the
 policy read from a validated configuration over `@elysia/opentelemetry` and the
 span processors, exporters, and instrumentations supplied by the application,

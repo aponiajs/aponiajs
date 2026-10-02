@@ -13,6 +13,7 @@ const guideDirectories = [
   "packages/create-aponia",
   "packages/cron",
   "packages/devtools",
+  "packages/graphql",
   "packages/openapi",
   "packages/opentelemetry",
   "packages/platform-elysia",

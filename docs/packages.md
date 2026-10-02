@@ -1,6 +1,6 @@
 # Published Packages
 
-AponiaJS publishes eleven public packages to the npm registry. Use the live npm
+AponiaJS publishes twelve public packages to the npm registry. Use the live npm
 badges and linked registry pages below as the source of truth for the latest
 published version.
 
@@ -12,6 +12,7 @@ published version.
 | [`@aponiajs/cli`](https://www.npmjs.com/package/@aponiajs/cli)                         | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcli)](https://www.npmjs.com/package/@aponiajs/cli)                         | `bun add --global @aponiajs/cli@beta`                         |
 | [`create-aponia`](https://www.npmjs.com/package/create-aponia)                         | [![npm](https://img.shields.io/npm/v/create-aponia)](https://www.npmjs.com/package/create-aponia)                             | `bun create aponia@beta <name>`                               |
 | [`@aponiajs/devtools`](https://www.npmjs.com/package/@aponiajs/devtools)               | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fdevtools)](https://www.npmjs.com/package/@aponiajs/devtools)               | `bun add @aponiajs/devtools@beta`                             |
+| [`@aponiajs/graphql`](https://www.npmjs.com/package/@aponiajs/graphql)                 | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fgraphql)](https://www.npmjs.com/package/@aponiajs/graphql)                 | `bun add @aponiajs/graphql@beta`                              |
 | [`@aponiajs/cron`](https://www.npmjs.com/package/@aponiajs/cron)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcron)](https://www.npmjs.com/package/@aponiajs/cron)                       | `bun add @aponiajs/cron@beta`                                 |
 | [`@aponiajs/cors`](https://www.npmjs.com/package/@aponiajs/cors)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcors)](https://www.npmjs.com/package/@aponiajs/cors)                       | `bun add @aponiajs/cors@beta`                                 |
 | [`@aponiajs/testing`](https://www.npmjs.com/package/@aponiajs/testing)                 | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Ftesting)](https://www.npmjs.com/package/@aponiajs/testing)                 | `bun add --dev @aponiajs/testing@beta`                        |
@@ -118,6 +119,23 @@ expressible through a configuration and belongs with the raw plugin.
 [Authoring a plugin package](./plugin-packages.md) ·
 [npm](https://www.npmjs.com/package/@aponiajs/cors)
 
+### `@aponiajs/graphql`
+
+Serve a GraphQL endpoint for an application's queries, with the mount path read
+from a validated configuration. The package is an adapter over
+[`@elysia/graphql-yoga`](https://www.npmjs.com/package/@elysia/graphql-yoga),
+which wraps Yoga: AponiaJS contributes a module the plugin is declared in and a
+configuration the path is validated through, and no schema of its own. The
+schema is the application's — `typeDefs` plus `resolvers`, or a prebuilt
+`GraphQLSchema` — returned from an injected factory so resolvers close over
+providers. The module sets both the plugin's `path` and yoga's `graphqlEndpoint`
+from the one declared value, which is what makes a non-default endpoint answer
+instead of returning `404`.
+
+[Package README](../packages/graphql/README.md) ·
+[Authoring a plugin package](./plugin-packages.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/graphql)
+
 ### `@aponiajs/testing`
 
 Boot an application for a test with `createTestApplication`, replace one provider
@@ -203,7 +221,7 @@ same project generator. See the
 
 ## Synchronized versions
 
-All eleven public packages are released with the same
+All twelve public packages are released with the same
 [Semantic Version](https://semver.org). Avoid mixing AponiaJS package versions
 within one application. See [Releasing npm Packages](./releasing.md) for the
 version gate and publication flow.

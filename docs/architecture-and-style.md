@@ -123,6 +123,7 @@ The current package boundaries are:
 | `@aponiajs/cors`            | module, policy                                                                |
 | `@aponiajs/cron`            | module, scheduler                                                             |
 | `@aponiajs/devtools`        | buffer, endpoints, logging, module, requests, server                          |
+| `@aponiajs/graphql`         | endpoint, module                                                              |
 | `@aponiajs/testing`         | application, overrides                                                        |
 | `@aponiajs/openapi`         | document, module                                                              |
 | `@aponiajs/opentelemetry`   | module, tracing                                                               |
