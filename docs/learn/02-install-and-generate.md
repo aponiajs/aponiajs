@@ -24,7 +24,7 @@ bun add @aponiajs/common@beta @aponiajs/platform-elysia@beta elysia@2.0.0-beta.1
 Every public package shares one version, and the channel a release goes to is
 derived from that version: a prerelease publishes under the tag its identifier
 names — `alpha`, `beta`, `rc`, or `canary` — and never under `latest`. The
-current line is `1.0.0-beta.1`, so the `@beta` tag is what to install today.
+current line is `1.0.0-beta.2`, so the `@beta` tag is what to install today.
 `elysia` is an exact peer of `@aponiajs/platform-elysia`, so it is pinned rather
 than left to resolve the latest release.
 
