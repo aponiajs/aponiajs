@@ -80,6 +80,14 @@ export function lifecycleCallable(
  * a timer started twice for one object — the hooks are a fact about the
  * instance, and this is what makes them one.
  *
+ * **Singletons only.** A provider that declares a `"request"` or `"transient"`
+ * scope has no hook timing yet — its instances do not exist when this runs —
+ * so scoped entries are skipped rather than resolved. Resolving one here would
+ * fail the boot with `UNSUPPORTED_PROVIDER_SCOPE` for a declaration the
+ * container otherwise accepts. Grouping is by (module, scope) in shape: when a
+ * scope lands, its instances get their own collection point with their own
+ * timing, and this pass keeps collecting exactly the singleton group.
+ *
  * @internal
  */
 export function collectLifecycleCalls(
@@ -103,6 +111,9 @@ export function collectLifecycleCalls(
 
   for (const module of container.graph.modules) {
     for (const provider of module.providers) {
+      if (provider.scope !== undefined && provider.scope !== "singleton") {
+        continue;
+      }
       collect(container.resolveModuleProvider(module, provider.provide));
     }
     for (const controller of module.controllers) {

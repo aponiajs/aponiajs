@@ -26,16 +26,17 @@ type Expect<TAssertion extends true> = TAssertion;
  */
 type EnhancerContractAssertions = [
   Expect<Equals<ExecutionContext extends ArgumentsHost ? true : false, true>>,
-  Expect<Equals<keyof ArgumentsHost, "getContext" | "switchToHttp">>,
+  Expect<Equals<keyof ArgumentsHost, "getContext" | "switchToHttp" | "getType">>,
   Expect<
     Equals<
       keyof ExecutionContext,
-      "getClass" | "getHandler" | "getRoute" | "getContext" | "switchToHttp"
+      "getClass" | "getHandler" | "getRoute" | "getContext" | "switchToHttp" | "getType"
     >
   >,
   Expect<Equals<keyof HttpArgumentsHost, "getRequest">>,
   Expect<Equals<ReturnType<ArgumentsHost["getContext"]>, RouteContext>>,
   Expect<Equals<ReturnType<ArgumentsHost["switchToHttp"]>, HttpArgumentsHost>>,
+  Expect<Equals<ReturnType<ArgumentsHost["getType"]>, "http">>,
   Expect<Equals<ReturnType<HttpArgumentsHost["getRequest"]>, RouteContext>>,
   Expect<Equals<ReturnType<ExecutionContext["getClass"]>, ClassToken<unknown>>>,
   Expect<Equals<ReturnType<ExecutionContext["getHandler"]>, (...arguments_: never[]) => unknown>>,
@@ -85,6 +86,7 @@ const conformanceHttpHost: HttpArgumentsHost = {
 const conformanceArgumentsHost: ArgumentsHost = {
   getContext: () => conformanceRequest,
   switchToHttp: () => conformanceHttpHost,
+  getType: () => "http",
 };
 
 /**
@@ -178,9 +180,9 @@ test("the Vite+ lane accepts a filter taking an arguments host", async () => {
 });
 
 test("the Vite+ lane keeps the enhancer contract assertions referenced", () => {
-  const assertions = Array.from({ length: 18 }, () => true) as EnhancerContractAssertions;
+  const assertions = Array.from({ length: 19 }, () => true) as EnhancerContractAssertions;
 
-  expect(assertions).toHaveLength(18);
+  expect(assertions).toHaveLength(19);
   expect(conformanceExecutionContext.getHandler()).toBeTypeOf("function");
   expect(conformanceExecutionContext.getRoute()).toEqual({
     method: "GET",

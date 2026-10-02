@@ -10,6 +10,14 @@
  *
  * Nothing in this package calls them: `@aponiajs/common` states the contract,
  * and the platform owns the timing.
+ *
+ * Every hook below runs on singleton instances only. A provider that declares
+ * a `"request"` or `"transient"` scope has no hook timing yet: calling
+ * `onModuleInit` once per request would turn a boot hook into a request hook,
+ * and a transient instance that is never cached has no moment a destroy hook
+ * could attach to. Scoped instances therefore receive no calls until the
+ * scope lands, and the platform collects calls only from the singleton
+ * instances it created at boot.
  */
 
 /** Runs once its module's providers and controllers exist. */

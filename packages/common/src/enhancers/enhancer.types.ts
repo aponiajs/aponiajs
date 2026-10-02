@@ -18,11 +18,14 @@ export interface HttpArgumentsHost {
  * What a filter is given. One transport exists, so the per-transport dispatch
  * Nest's `ArgumentsHost` performs is not carried: `switchToHttp()` is the only
  * switch, and it is a thin alias over `getContext()` kept because migrated Nest
- * code calls it on nearly every guard.
+ * code calls it on nearly every guard. `getType()` answers the constant
+ * `"http"` for the same reason — a second transport must force an explicit
+ * decision here rather than arriving as another string nobody matched on.
  */
 export interface ArgumentsHost {
   getContext(): RouteContext;
   switchToHttp(): HttpArgumentsHost;
+  getType(): "http";
 }
 
 /** What a guard and an interceptor are given. */

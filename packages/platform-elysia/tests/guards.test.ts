@@ -104,6 +104,7 @@ interface ContextProbe {
   route?: Readonly<{ readonly method: RequestMethod; readonly path: string }>;
   context?: RouteContext;
   request?: RouteContext;
+  transport?: string;
 }
 
 const probe: ContextProbe = {};
@@ -117,6 +118,7 @@ class ContextProbeGuard {
     probe.route = context.getRoute();
     probe.context = context.getContext();
     probe.request = context.switchToHttp().getRequest();
+    probe.transport = context.getType();
 
     return true;
   }
@@ -305,6 +307,7 @@ describe("the context a guard receives", () => {
     // `switchToHttp().getRequest()` and `getContext()` are the same object, which
     // is the request the context describes.
     expect(probe.request).toBe(probe.context);
+    expect(probe.transport).toBe("http");
     expect(probe.context?.request.url).toBe("http://localhost/probe");
     expect(probe.context?.path).toBe("/probe");
 

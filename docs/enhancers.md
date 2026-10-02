@@ -41,10 +41,13 @@ Guards and interceptors are handed an `ExecutionContext`; a filter is handed an
 | `getRoute()`                  | `{ method, path }`, with the fully joined path  |
 | `getContext()`                | The request's `RouteContext`                    |
 | `switchToHttp().getRequest()` | The same `RouteContext`                         |
+| `getType()`                   | `"http"`, always                                |
 
 `switchToHttp()` is a thin alias over `getContext()`, kept because migrated Nest
 code calls it on nearly every guard. Nest's per-transport `ArgumentsHost` is not
-carried: there is one transport, so `getType()` would only ever answer `"http"`.
+carried: there is one transport, so `getType()` answers the constant `"http"`.
+A second transport must force an explicit decision at that member rather than
+arriving as another string nobody matched on.
 
 ## Guards
 
@@ -339,6 +342,25 @@ order, rather than as two hooks whose relative order Elysia's registration would
 decide. The after halves run in reverse over the concatenated list, so one
 interceptor's halves bracket everything it wraps. Filters run most-specific-first
 because the first entry that answers ends the chain.
+
+## Run order
+
+One request passes the route's stages in this order, and the order is the
+contract — a future stage is inserted at its reserved position, never by
+reordering what runs today:
+
+1. guards, in declaration order (application, controller, handler);
+2. interceptor `interceptBefore` halves, in the same order;
+3. the handler;
+4. interceptor `interceptAfter` halves, reversed — the outermost declaration
+   answers last;
+5. exception filters, most-specific-first (handler, controller, application);
+6. the default Problem Details mapping, always last.
+
+`interceptBefore` cannot short-circuit and `afterHandle` never runs when a
+guard or the handler threw: those are Elysia's semantics, not this platform's
+choice. A middleware or pipe stage, if one ever lands, runs before the
+guards — reserving that position now is what keeps the order above stable.
 
 ## Resolution
 

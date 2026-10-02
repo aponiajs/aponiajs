@@ -40,6 +40,7 @@ export class AponiaContainer {
 
   initializeModule(module: ModuleDefinition): void {
     for (const provider of module.providers) {
+      assertSupportedScope(provider);
       this.#resolve({ module, provider });
     }
   }
@@ -59,6 +60,14 @@ export class AponiaContainer {
   }
 
   #resolve(location: ProviderLocation): unknown {
+    // `"request"` and `"transient"` are reserved lifetimes the container does
+    // not instantiate yet. Refusing here — rather than serving a singleton
+    // where a fresh instance was promised — is what keeps the declaration
+    // honest until the scope lands. The check also runs in `initializeModule`
+    // so a scoped provider fails the boot in the eager pass rather than only
+    // when something first resolves it.
+    assertSupportedScope(location.provider);
+
     const moduleInstances = this.#instances.get(location.module);
     if (moduleInstances?.has(location.provider)) {
       return moduleInstances.get(location.provider);
@@ -106,6 +115,30 @@ export class AponiaContainer {
 
 export function createContainer(root: ModuleDefinition): AponiaContainer {
   return new AponiaContainer(compileModuleGraph(root));
+}
+
+/**
+ * Refuses a provider whose declared lifetime this release cannot honor.
+ *
+ * A single rule shared by the eager `initializeModule` pass and the lazy
+ * `#resolve` path, so a scoped provider fails the boot whichever reaches it
+ * first. `undefined` and `"singleton"` are the supported shape — every
+ * provider written before scopes existed declares nothing — and anything else
+ * is a promise the container must not silently downgrade to a singleton.
+ */
+function assertSupportedScope(provider: Provider): void {
+  if (provider.scope === undefined || provider.scope === "singleton") {
+    return;
+  }
+
+  throw new AponiaError(
+    "UNSUPPORTED_PROVIDER_SCOPE",
+    `Provider "${getTokenName(provider.provide)}" declares scope "${provider.scope}", which this release does not instantiate.`,
+    {
+      token: getTokenName(provider.provide),
+      scope: provider.scope,
+    },
+  );
 }
 
 function instantiate(provider: Provider, dependencies: readonly unknown[]): unknown {

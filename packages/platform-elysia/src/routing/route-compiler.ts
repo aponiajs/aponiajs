@@ -335,6 +335,7 @@ function createArgumentsHost(context: RouteContext): ArgumentsHost {
   return Object.freeze({
     getContext: () => context,
     switchToHttp: () => httpHost,
+    getType: () => "http" as const,
   });
 }
 
@@ -670,6 +671,7 @@ function createExecutionContext(
     getRoute: () => route,
     getContext: () => context,
     switchToHttp: () => httpHost,
+    getType: () => "http" as const,
   });
 }
 

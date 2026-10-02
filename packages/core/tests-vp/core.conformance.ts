@@ -139,3 +139,21 @@ test("the Vite+ lane keeps one instance per exported provider and root visibilit
     }),
   );
 });
+
+test("the Vite+ lane refuses a provider that declares a reserved scope", () => {
+  const scoped = createToken<number>("conformance-scoped");
+
+  const module = defineModule({
+    id: "conformance-scope",
+    providers: [provideValue(scoped, 1, { scope: "request" })],
+  });
+
+  const container = createContainer(module);
+
+  expect(() => container.get(scoped)).toThrow(
+    expect.objectContaining({
+      code: "UNSUPPORTED_PROVIDER_SCOPE",
+      details: { token: "conformance-scoped", scope: "request" },
+    }),
+  );
+});
