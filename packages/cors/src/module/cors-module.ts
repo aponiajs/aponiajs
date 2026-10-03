@@ -48,6 +48,9 @@ export class CorsModule {
    * @Module({ imports: [CorsModule.register({ configuration: CorsConfig })] })
    * export class AppModule {}
    * ```
+   *
+   * @param options - The configuration, literal source, and module key.
+   * @returns A frozen registration the application's `imports` accepts.
    */
   static register(options: CorsModuleOptions): DynamicModule {
     const { configuration, source, key } = options;

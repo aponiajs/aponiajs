@@ -1,3 +1,9 @@
+/**
+ * The closed union of failure codes every framework boundary throws with.
+ *
+ * Tests assert on the code, never on message text; a new failure mode extends
+ * this union rather than throwing a bare `Error`.
+ */
 export type AponiaErrorCode =
   | "MODULE_CYCLE"
   | "DUPLICATE_MODULE"

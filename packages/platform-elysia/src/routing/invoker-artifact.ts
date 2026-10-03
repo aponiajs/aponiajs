@@ -23,6 +23,13 @@ import type { AponiaInvokerArtifact, AponiaInvokerSelection } from "./invoker-ar
  * artifact. Only adoption has one: a refused artifact was built by some other
  * release by definition, and reporting that number would name the provenance of
  * binding this boot did not use.
+ *
+ * @param artifact - The generated artifact the application passed, if any.
+ * @param frameworkVersion - The running release the stamp is compared against.
+ * @param logger - The system logger the refusal is reported through.
+ * @returns The adopted invokers, or the reason for their absence.
+ *
+ * @internal
  */
 export function selectInvokerArtifact(
   artifact: AponiaInvokerArtifact | undefined,

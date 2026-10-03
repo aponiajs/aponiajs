@@ -28,19 +28,65 @@ const emptyEnhancerMetadata: EnhancerMetadata = Object.freeze({
 
 const emptyExceptions: readonly ClassToken<unknown>[] = Object.freeze([]);
 
-/** Declares the guards that run for a controller, or for one of its handlers. */
+/**
+ * Declares the guards that run for a controller, or for one of its handlers.
+ *
+ * Entries are classes the module graph resolves as providers; a guard answers
+ * `false` to refuse with `403`, and throws its own `HttpError` for any other
+ * status.
+ *
+ * @param guards - The guard classes, in the order they run.
+ * @returns A decorator recording the frozen guard list at class or method scope.
+ *
+ * @example
+ * ```ts
+ * @UseGuards(AuthGuard)
+ * @Controller("users")
+ * class UsersController {}
+ * ```
+ */
 export function UseGuards(...guards: readonly ClassToken<unknown>[]): EnhancerDecorator {
   return createEnhancerDecorator("guards", guards);
 }
 
-/** Declares the interceptors that wrap a controller, or one of its handlers. */
+/**
+ * Declares the interceptors that wrap a controller, or one of its handlers.
+ *
+ * `interceptBefore` halves run in declaration order; `interceptAfter` halves
+ * run over the same list reversed.
+ *
+ * @param interceptors - The interceptor classes, in the order they run.
+ * @returns A decorator recording the frozen interceptor list at class or method scope.
+ *
+ * @example
+ * ```ts
+ * @UseInterceptors(LoggingInterceptor)
+ * @Controller("users")
+ * class UsersController {}
+ * ```
+ */
 export function UseInterceptors(
   ...interceptors: readonly ClassToken<unknown>[]
 ): EnhancerDecorator {
   return createEnhancerDecorator("interceptors", interceptors);
 }
 
-/** Declares the filters that answer for a controller, or one of its handlers. */
+/**
+ * Declares the filters that answer for a controller, or one of its handlers.
+ *
+ * Filters run most-specific-first: the handler's own before the controller's,
+ * then the application's, then the default Problem Details mapping.
+ *
+ * @param filters - The filter classes, in the order they are consulted.
+ * @returns A decorator recording the frozen filter list at class or method scope.
+ *
+ * @example
+ * ```ts
+ * @UseFilters(DomainFilter)
+ * @Controller("users")
+ * class UsersController {}
+ * ```
+ */
 export function UseFilters(...filters: readonly ClassToken<unknown>[]): EnhancerDecorator {
   return createEnhancerDecorator("filters", filters);
 }
@@ -50,6 +96,21 @@ export function UseFilters(...filters: readonly ClassToken<unknown>[]): Enhancer
  * exactly as Nest applies it, so the matched types travel with the class that
  * `@UseFilters(SomeFilter)` names. `@Catch()` with no arguments matches
  * anything.
+ *
+ * @param exceptions - The error classes the filter answers, matched with
+ * `instanceof` in declaration order.
+ * @returns A class decorator recording the frozen exception list.
+ *
+ * @example
+ * ```ts
+ * @Catch(HttpError)
+ * @Injectable()
+ * class DomainFilter implements ExceptionFilter {
+ *   catch(exception: unknown, host: ArgumentsHost): unknown {
+ *     return undefined;
+ *   }
+ * }
+ * ```
  */
 export function Catch(...exceptions: readonly ClassToken<unknown>[]): ClassDecorator {
   assertEnhancerClasses(exceptions, "@Catch");
@@ -62,6 +123,9 @@ export function Catch(...exceptions: readonly ClassToken<unknown>[]): ClassDecor
 /**
  * The types a filter answers, or an empty list when it declared none, which
  * means it catches anything.
+ *
+ * @param filter - The filter class to read.
+ * @returns The frozen exception list, or an empty list for a catch-all.
  */
 export function getCatchMetadata(filter: ClassToken<unknown>): readonly ClassToken<unknown>[] {
   const exceptions = Reflect.getOwnMetadata(catchMetadataKey, filter) as
@@ -76,6 +140,10 @@ export function getCatchMetadata(filter: ClassToken<unknown>): readonly ClassTok
  * omitted, the named method's own when it is given. The two scopes are read
  * separately and concatenated by the platform in scope order, so a declaration
  * is reported once however the route that carries it was reached.
+ *
+ * @param target - The controller class to read.
+ * @param propertyKey - The handler method to read, or the class scope when omitted.
+ * @returns The frozen enhancer metadata of that scope.
  */
 export function getEnhancerMetadata(
   target: ClassToken<unknown>,

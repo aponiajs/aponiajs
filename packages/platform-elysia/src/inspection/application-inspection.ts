@@ -52,6 +52,16 @@ import type {
  * Repeated calls with the same root module and options return deeply equal data:
  * modules keep graph order, providers and gateway events keep declaration order,
  * and routes and gateways are sorted by their documented keys.
+ *
+ * @param rootModule - The root class, descriptor, or descriptor artifact to project.
+ * @param options - The descriptor artifact and logger inspection reads through.
+ * @returns The frozen, JSON-serializable projection of the compiled application.
+ * @throws An `AponiaError` with the same code bootstrap raises for the same application.
+ *
+ * @example
+ * ```ts
+ * const inspection = inspectAponiaApplication(AppModule);
+ * ```
  */
 export function inspectAponiaApplication(
   rootModule: AponiaRootModule,

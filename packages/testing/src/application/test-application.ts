@@ -25,7 +25,11 @@ export class TestApplication {
     return this.#application;
   }
 
-  /** Reads a token back from this boot, with the application's own visibility rules. */
+  /** Reads a token back from this boot, with the application's own visibility rules.
+   *
+   * @param token - The token to resolve.
+   * @returns The cached singleton instance.
+   */
   get<T>(token: Token<T>): T {
     return this.#application.get(token);
   }
@@ -34,6 +38,9 @@ export class TestApplication {
    * Answers a request through the real module graph, the real container, and the
    * real routes, without binding a port. This is the headline path: nothing here
    * has to be closed, and a case that only calls it never opens a socket.
+   *
+   * @param request - The request to answer.
+   * @returns The response the routes produced.
    */
   handle(request: Request): Response | Promise<Response> {
     return this.#application.handle(request);
@@ -46,6 +53,8 @@ export class TestApplication {
    * Port `0` asks the operating system for a free port and `getUrl()` reports the
    * one it granted, so nothing here reserves and releases a port first — the
    * reservation would leave a window in which another process could take it.
+   *
+   * @returns The HTTP and WebSocket URLs the bound port serves.
    */
   async listen(): Promise<TestServer> {
     await this.#application.listen(0);

@@ -26,6 +26,22 @@ import {
 import type { AponiaRootModule } from "./module-compiler.types.ts";
 import { assertUniqueElysiaRoutes } from "./route-uniqueness.ts";
 
+/**
+ * Lowers a root module into the frozen descriptor the graph compiles.
+ *
+ * A descriptor root passes through (after the duplicate-route check); a
+ * decorated class or dynamic module is lowered from its metadata. Both
+ * authoring paths stay supported.
+ *
+ * @param rootModule - The root class, descriptor, or descriptor artifact selection.
+ * @returns The frozen root descriptor the container builds from.
+ * @throws An `AponiaError` with the graph or route code naming the invalid declaration.
+ *
+ * @example
+ * ```ts
+ * const root = compileRootModule(AppModule);
+ * ```
+ */
 export function compileRootModule(rootModule: AponiaRootModule): ModuleDefinition {
   const compiledRoot = isModuleDefinition(rootModule)
     ? rootModule

@@ -7,6 +7,12 @@ import { AponiaError, type ConfigurationOptions, type ConfigurationToken } from 
  * It is not exported from the package: `provideConfiguration` is the boundary,
  * and a loader an application could call directly would be a second way to
  * build a value the graph never sees.
+ *
+ * @param configuration - The declaration whose schema validates the value.
+ * @param options - The literal record to validate instead of `process.env`.
+ * @returns The validated value the token resolves to.
+ * @throws An `AponiaError` with `INVALID_CONFIGURATION` or
+ * `INVALID_CONFIGURATION_VALUE`.
  */
 export function loadConfiguration<T>(
   configuration: ConfigurationToken<T>,

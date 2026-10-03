@@ -1,3 +1,4 @@
+/** The severity levels a log line carries, quietest first. */
 export type LogLevel = "fatal" | "error" | "warn" | "log" | "debug" | "verbose";
 
 /**
@@ -42,13 +43,22 @@ export interface LoggerService {
   verbose?(message: unknown, ...optionalParameters: unknown[]): void;
 }
 
+/** The options `ConsoleLogger` constructs with: context, format, and levels. */
 export interface ConsoleLoggerOptions {
+  /** The levels that print; absent prints all, empty prints none. */
   readonly logLevels?: readonly LogLevel[];
+  /** Prefixes each line with a timestamp. */
   readonly timestamp?: boolean;
+  /** The bracketed name each line carries; defaults to `"Aponia"`. */
   readonly prefix?: string;
+  /** Renders lines as JSON rather than text. */
   readonly json?: boolean;
+  /** Colors level names; defaults to the opposite of `json`. */
   readonly colors?: boolean;
+  /** The context the instance starts with. */
   readonly context?: string;
+  /** Folds nested values past this width or depth for one-line output. */
   readonly compact?: boolean | number;
+  /** The inspection depth nested values render to. */
   readonly depth?: number;
 }

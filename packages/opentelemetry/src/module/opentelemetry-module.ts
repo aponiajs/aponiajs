@@ -54,6 +54,10 @@ export class OpentelemetryModule {
    * @Module({ imports: [OpentelemetryModule.register({ configuration: OpentelemetryConfig })] })
    * export class AppModule {}
    * ```
+   *
+   * @param options - The configuration, runtime processors and instrumentations,
+   * literal source, and module key.
+   * @returns A frozen registration the application's `imports` accepts.
    */
   static register(options: OpentelemetryModuleOptions): DynamicModule {
     const { configuration, source, key, ...runtime } = options;

@@ -8,9 +8,27 @@ import type {
 } from "./application.types.ts";
 import type { ElysiaApplication } from "./native-application.types.ts";
 
+/**
+ * The entrypoint every Aponia application boots through.
+ *
+ * `create` returns the managed lifecycle facade; `createNative` returns the
+ * composed Elysia instance itself for native tooling such as Eden Treaty.
+ * Both share one bootstrap: logger, graph compile, Elysia creation, plugin
+ * mount, controller mount, lifecycle passes.
+ */
 export class AponiaFactory {
   /**
-   * Bootstrap an application behind Aponia's managed lifecycle facade.
+   * Bootstraps an application behind Aponia's managed lifecycle facade.
+   *
+   * @param rootModule - The root class, descriptor, or descriptor artifact.
+   * @param options - Logger, native plugins, enhancers, artifacts, and Elysia policy.
+   * @returns The application wrapper with `handle`, `listen`, `get`, and `close`.
+   *
+   * @example
+   * ```ts
+   * const application = await AponiaFactory.create(AppModule);
+   * await application.listen(3000);
+   * ```
    */
   static create<
     const TRootModule extends AponiaRootModule,
@@ -32,10 +50,19 @@ export class AponiaFactory {
   }
 
   /**
-   * Bootstrap and return the composed Elysia instance itself.
+   * Bootstraps and returns the composed Elysia instance itself.
    *
    * Statically declared native plugins and controller plugins retain their
    * exact route types for native Elysia tooling such as Eden Treaty.
+   *
+   * @param rootModule - The root class, descriptor, or descriptor artifact.
+   * @param options - Logger, native plugins, enhancers, artifacts, and Elysia policy.
+   * @returns The composed native Elysia application.
+   *
+   * @example
+   * ```ts
+   * const native = await AponiaFactory.createNative(AppModule);
+   * ```
    */
   static createNative<
     const TRootModule extends AponiaRootModule,

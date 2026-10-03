@@ -28,14 +28,42 @@ export interface ArgumentsHost {
   getType(): "http";
 }
 
-/** What a guard and an interceptor are given. */
+/** What a guard and an interceptor are given: the host plus the route's class, handler, and mounted path. */
 export interface ExecutionContext extends ArgumentsHost {
+  /**
+   * The controller class the route belongs to.
+   *
+   * @returns The controller token the route was mounted from.
+   */
   getClass<T>(): ClassToken<T>;
+  /**
+   * The controller's own method, not the platform's invoker.
+   *
+   * @returns The handler the guard protects.
+   */
   getHandler(): (...arguments_: never[]) => unknown;
+  /**
+   * The mounted route, with the fully joined path.
+   *
+   * @returns The method and path the request was handled by.
+   */
   getRoute(): Readonly<{ readonly method: RequestMethod; readonly path: string }>;
 }
 
+/**
+ * A guard: answers whether the request reaches the handler.
+ *
+ * Returning `false` refuses with `403`; throwing an `HttpError` answers any
+ * other status (notably `401`). A guard that throws anything else is a
+ * failure, and reaches the exception filters.
+ */
 export interface CanActivate {
+  /**
+   * Decides whether the request proceeds.
+   *
+   * @param context - The route, handler, and request the guard protects.
+   * @returns `true` to proceed, `false` to refuse with `403`.
+   */
   canActivate(context: ExecutionContext): boolean | Promise<boolean>;
 }
 
@@ -58,11 +86,21 @@ export interface Interceptor {
   interceptAfter?(context: ExecutionContext, response: unknown): unknown;
 }
 
+/**
+ * A filter: answers an exception the route threw, or declines it.
+ *
+ * Filters run most-specific-first; the first entry that answers wins, and the
+ * default Problem Details mapping answers last what every filter declined.
+ */
 export interface ExceptionFilter {
   /**
    * Answers the exception, or returns `undefined` or `null` to decline it,
    * leaving the decision to whatever answers next. A returned Promise is
    * awaited, so an asynchronous filter is supported.
+   *
+   * @param exception - The thrown value to answer.
+   * @param host - The request the exception escaped from.
+   * @returns The response, or `undefined`/`null` to decline.
    */
   catch(exception: unknown, host: ArgumentsHost): unknown;
 }

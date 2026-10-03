@@ -6,6 +6,14 @@ import type { GenerateProjectOptions, GenerateProjectResult } from "./project-ge
 
 const projectNamePattern = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
 
+/**
+ * Generates a project from the starter template: names, versions, and
+ * install state resolved, files planned or written.
+ *
+ * @param options - The project name and creation flags.
+ * @returns The project directory, files, and install state.
+ * @throws A plain `Error` for a project name outside the kebab-case shape.
+ */
 export async function generateProject(
   options: GenerateProjectOptions,
 ): Promise<GenerateProjectResult> {

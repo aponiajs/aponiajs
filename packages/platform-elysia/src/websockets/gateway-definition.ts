@@ -24,6 +24,15 @@ import type {
  * rejection — a duplicate path, a duplicate event, a handler that is not
  * callable — is raised by that same step, at the same moment, with the same
  * code a decorated gateway gets.
+ *
+ * @param useClass - The gateway class to construct.
+ * @param options - The gateway plan: path, handlers, server properties, and inject list.
+ * @returns A frozen class provider carrying the gateway plan.
+ *
+ * @example
+ * ```ts
+ * providers: [defineWebSocketGateway(EventsGateway, { path: "/events" })],
+ * ```
  */
 export function defineWebSocketGateway<
   TGateway,

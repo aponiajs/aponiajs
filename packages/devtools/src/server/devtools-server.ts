@@ -51,6 +51,9 @@ import type { DevtoolsHandlers } from "./devtools-server.types.ts";
  * that is not installed: the payload reports what it read, and a guess would be
  * worse than an absence.
  *
+ * @param baseDirectory - The directory whose tree the walk starts from.
+ * @returns The installed Elysia version, or `null` when the walk finds none.
+ *
  * @internal
  */
 export function resolvePeerVersion(baseDirectory: string): string | null {

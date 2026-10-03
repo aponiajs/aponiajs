@@ -52,6 +52,11 @@ export function isDevtoolsSurfaceRequest(request: Request): boolean {
  * call it. An unclaimed suffix, the bare prefix, and a trailing slash the record
  * does not carry are all `404`: the record states the paths this surface serves
  * and the dispatcher does not guess at the rest.
+ *
+ * @param request - The request to dispatch.
+ * @param handlers - The handler record the surface built for the application.
+ * @returns The handler's response, `405` for a non-`GET` method, or `404` for an
+ * unowned path.
  */
 export function handleDevtoolsRequest(
   request: Request,

@@ -44,11 +44,8 @@ export const buildPluginName = "aponia-build";
  * exactly as it did before, and `aponia build` remains the way to generate
  * without bundling.
  *
- * The return type is Bun's ambient `Bun.BunPlugin` rather than an imported
- * `BunPlugin`, because `bun-types` declares it in the global `Bun` namespace and
- * declares no matching export from the `"bun"` module. An import survives into
- * this package's emitted declarations, where the declaration bundler cannot
- * resolve it and fails the build.
+ * @param options - The working directory and project the generation reads.
+ * @returns A Bun plugin for the `plugins` array.
  */
 export function buildPlugin(options: BuildPluginOptions = {}): Bun.BunPlugin {
   return {

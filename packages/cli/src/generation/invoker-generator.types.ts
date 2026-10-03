@@ -1,6 +1,7 @@
 import type { DeclinedDescriptor } from "./descriptor-emitter.types.ts";
 import type { SchematicChange } from "./schematic.types.ts";
 
+/** The `aponia build` options: working directory, project, and dry-run flag. */
 export interface GenerateInvokersOptions {
   /** Directory to resolve the project from. Defaults to the working directory. */
   readonly cwd?: string;
@@ -10,8 +11,11 @@ export interface GenerateInvokersOptions {
   readonly project?: string;
 }
 
+/** What a build reports: its change lines, dry-run state, and declines. */
 export interface GenerateInvokersResult {
+  /** The change lines `runCli` prints. */
   readonly changes: readonly SchematicChange[];
+  /** `true` when nothing was written. */
   readonly dryRun: boolean;
   /**
    * Every module and route this build could not lower into the generated

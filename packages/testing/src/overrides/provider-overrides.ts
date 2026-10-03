@@ -17,6 +17,11 @@ import type { ProviderOverrides } from "./provider-overrides.types.ts";
  * returning a graph that changed nothing: a test that believes it stubbed a
  * dependency still boots, still passes, and asserts against the real one, which
  * is a worse outcome than a refused build.
+ *
+ * @param root - The compiled root to rewrite.
+ * @param overrides - The replacement provider per overridden token.
+ * @returns The rewritten root, frozen like the graph it replaces.
+ * @throws An `AponiaError` with `MISSING_PROVIDER` for an unprovided token.
  */
 export function applyProviderOverrides(
   root: ModuleDefinition,

@@ -15,6 +15,22 @@ import { primaryFile, registrationFor, symbolFor } from "./schematic-definitions
 import type { GenerateSchematicOptions, GenerateSchematicResult } from "./schematic.types.ts";
 import { generateApplication, generateLibrary } from "./workspace-generators.ts";
 
+/**
+ * Plans, renders, registers, and writes one schematic: a component, a
+ * resource, an application, or a library.
+ *
+ * Configuration lookup, file planning, rendering, module registration, and
+ * filesystem writes stay in focused collaborators; this function only
+ * orchestrates them.
+ *
+ * @param options - The schematic, name, transport, flags, and project root.
+ * @returns The `CREATE`/`UPDATE` change lines `runCli` prints.
+ *
+ * @example
+ * ```ts
+ * await generateSchematic({ schematic: "resource", name: "users", type: "rest" });
+ * ```
+ */
 export async function generateSchematic(
   options: GenerateSchematicOptions,
 ): Promise<GenerateSchematicResult> {

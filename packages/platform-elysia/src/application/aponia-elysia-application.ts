@@ -6,6 +6,13 @@ import { readApplicationToken } from "./application-container.ts";
 import { readApplicationShutdown } from "./lifecycle-hooks.ts";
 import { installShutdownSignalHandlers } from "./shutdown-signals.ts";
 
+/**
+ * The managed lifecycle facade every booted application is wrapped in.
+ *
+ * `handle` answers without a port, `listen` binds one, `get` reads the
+ * container the boot built, and `close` runs the shutdown plan whether or
+ * not anything ever listened.
+ */
 export class AponiaApplication<TNativeApplication extends AnyElysia = Elysia> {
   readonly #nativeApplication: TNativeApplication;
   readonly #logger: LoggerService | undefined;
@@ -23,6 +30,11 @@ export class AponiaApplication<TNativeApplication extends AnyElysia = Elysia> {
     this.#logger = logger;
   }
 
+  /**
+   * The native Elysia application the boot composed.
+   *
+   * @returns The composed instance, for native tooling such as Eden Treaty.
+   */
   getNativeApplication(): TNativeApplication {
     return this.#nativeApplication;
   }
@@ -32,11 +44,31 @@ export class AponiaApplication<TNativeApplication extends AnyElysia = Elysia> {
    *
    * Root visibility applies, exactly as it does for any other read from the root:
    * a token this application cannot reach raises `MISSING_PROVIDER`.
+   *
+   * @param token - The token to resolve.
+   * @returns The cached singleton instance.
+   * @throws An `AponiaError` with `MISSING_PROVIDER` or `AMBIGUOUS_PROVIDER`.
+   *
+   * @example
+   * ```ts
+   * const greeting = application.get(GREETING);
+   * ```
    */
   get<T>(token: Token<T>): T {
     return readApplicationToken(this.#nativeApplication, token);
   }
 
+  /**
+   * Answers a request against the composed route table, without a port.
+   *
+   * @param request - The request to answer.
+   * @returns The response the routes produced.
+   *
+   * @example
+   * ```ts
+   * const response = await application.handle(new Request("http://localhost/users"));
+   * ```
+   */
   handle(request: Request): Response | Promise<Response> {
     return this.#nativeApplication.handle(request);
   }
@@ -48,6 +80,15 @@ export class AponiaApplication<TNativeApplication extends AnyElysia = Elysia> {
    * stop signals, and it is asked for at the end of a successful start: an
    * application whose boot failed keeps the process's signals, and one that
    * asked for none installs nothing.
+   *
+   * @param port - The port to listen on.
+   * @param options - The opt-in stop-signal takeover.
+   * @throws Whatever the engine's listen throws, reported through the logger first.
+   *
+   * @example
+   * ```ts
+   * await application.listen(3000);
+   * ```
    */
   async listen(port: number, options: AponiaListenOptions = {}): Promise<void> {
     try {

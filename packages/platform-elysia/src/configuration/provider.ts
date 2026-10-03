@@ -13,6 +13,15 @@ import { loadConfiguration } from "./configuration-loader.ts";
  * is instantiated once per module in the boot's first pass, it is visible only
  * where the graph says it is, and a module that declares it twice in one module
  * fails like any other duplicate.
+ *
+ * @param configuration - The declaration whose schema validates the value.
+ * @param options - The literal record to validate instead of `process.env`.
+ * @returns A frozen factory provider the module's `providers` accepts.
+ *
+ * @example
+ * ```ts
+ * providers: [provideConfiguration(CorsConfig, { source: {} })],
+ * ```
  */
 export function provideConfiguration<T>(
   configuration: ConfigurationToken<T>,

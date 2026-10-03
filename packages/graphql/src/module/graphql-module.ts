@@ -68,6 +68,9 @@ export class GraphQLModule {
    * })
    * export class AppModule {}
    * ```
+   *
+   * @param options - The configuration, injected factory, literal source, and module key.
+   * @returns A frozen registration the application's `imports` accepts.
    */
   static register<const TDependencies extends readonly Token<unknown>[] = readonly []>(
     options: GraphQLModuleOptions<TDependencies>,

@@ -9,6 +9,18 @@ import type { ConfigurationToken } from "./configuration.types.ts";
  * The declaration is checked when the provider is instantiated, not here: a
  * throw at module evaluation would fail in an import order nobody controls,
  * where a boot failure carries a stable code and a readable message.
+ *
+ * @param schema - The Standard Schema the value must satisfy.
+ * @param description - The name failures print; defaults to `"configuration"`.
+ * @returns A frozen token carrying its schema, the module's `providers` accept.
+ *
+ * @example
+ * ```ts
+ * const corsConfig = defineConfiguration(
+ *   z.object({ CORS_ORIGINS: z.string().min(1) }),
+ *   "cors.config",
+ * );
+ * ```
  */
 export function defineConfiguration<const TSchema extends StandardSchemaV1>(
   schema: TSchema,

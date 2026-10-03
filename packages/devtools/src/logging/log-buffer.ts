@@ -20,6 +20,9 @@ export const defaultLogBufferCapacity = 500;
  * shape is what the log stream adds, and the boundedness, the cursor, and the
  * read are the shared buffer's, so `/logs` and every other cursor endpoint
  * behave identically by construction.
+ *
+ * @param capacity - The lines retained; older lines drop past it.
+ * @returns The empty bounded log buffer.
  */
 export function createLogBuffer(capacity: number): LogBuffer {
   return createRingBuffer<LogEntry>(capacity);

@@ -15,34 +15,30 @@
 export const unrenderableValue = "[unrenderable]";
 
 /**
- * The account of a value, as the text a surface states it in: a string is its own
- * text, a function is its name, an `Error` is its name and message with no stack,
- * and anything else is its JSON form with the plain string form behind it. A value
- * that refuses both of those forms is stated as the literal rather than allowed to
- * throw.
+ * Renders a thrown value as the text a surface states it in: a string is its
+ * own text, a function is its name, an `Error` is its name and message with
+ * no stack, and anything else is its JSON form with the plain string form
+ * behind it.
  *
- * Two surfaces in this framework record a thrown value, and both state one through
- * this rendering: the devtools log stream's entry for a line, and the exception the
- * platform's default mapping records for `/requests`. One definition rather than a
- * copy each, so two surfaces reporting one failure cannot disagree about it, and
- * the literal a value that refuses everything is stated as is the same word on both
- * by construction.
+ * It may not throw, whatever it is handed: a value that refuses every form is
+ * stated as `"[unrenderable]"` rather than allowed to throw inside the error
+ * path, where a throw would replace the application's answer.
  *
  * The text is not folded to one line. A string keeps its newlines, because a
  * surface states what happened rather than editing it.
  *
- * It may not throw, whatever it is handed, and the totality is the function's own
- * rather than its callers': this rendering exists to be used where a failure is
- * reported, and the platform reports one by recording the exception from inside a
- * hook whose return value is the response the client receives, through this call
- * and without a guard, so a throw here would replace the application's answer with
- * the engine's own page. The devtools log stream's half of that report is guarded
- * by the platform instead. Every read of the value below is inside the
- * guard except the `typeof` test that answers a string, because `typeof` is the
- * one read that cannot be made to throw; the guard covers the whole of the rest
- * rather than the reads somebody thought of — a `Proxy` refuses `instanceof`,
- * `JSON.stringify` refuses a value that refers to itself or whose `toJSON` throws,
- * and a function's `name` refuses when it is a getter that throws.
+ * Two surfaces in this framework record a thrown value through this rendering:
+ * the devtools log stream's entry for a line, and the exception the platform's
+ * default mapping records for `/requests`. One definition rather than a copy
+ * each, so two surfaces reporting one failure cannot disagree about it.
+ *
+ * @param value - The value to render.
+ * @returns The text the surface states.
+ *
+ * @example
+ * ```ts
+ * formatLogValue(new Error("down")); // "Error: down"
+ * ```
  */
 export function formatLogValue(value: unknown): string {
   if (typeof value === "string") {

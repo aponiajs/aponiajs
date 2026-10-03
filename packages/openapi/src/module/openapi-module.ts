@@ -41,6 +41,9 @@ export class OpenApiModule {
    * @Module({ imports: [OpenApiModule.register({ configuration: OpenApiConfig })] })
    * export class AppModule {}
    * ```
+   *
+   * @param options - The configuration, literal source, mount path, and module key.
+   * @returns A frozen registration the application's `imports` accepts.
    */
   static register(options: OpenApiModuleOptions): DynamicModule {
     const { configuration, source, key, path } = options;

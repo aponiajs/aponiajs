@@ -35,6 +35,9 @@ export const defaultRequestBufferCapacity = 1000;
  * own buffer rather than how the buffer answers a read: the log stream writes
  * one entry per line, while one answered request writes two, which is why this
  * capacity and the log stream's state different facts.
+ *
+ * @param capacity - The entries retained; the cursor counts entries, not requests.
+ * @returns The empty bounded request buffer.
  */
 export function createRequestBuffer(capacity: number): RequestBuffer {
   return createRingBuffer<RequestRecord>(capacity);

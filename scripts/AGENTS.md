@@ -3,24 +3,25 @@
 Read the [repository guide](../AGENTS.md) first. This directory holds the release
 and documentation guards that CI enforces.
 
-| File                             | Owns                                                                     |
-| -------------------------------- | ------------------------------------------------------------------------ |
-| `distribution-tag.ts`            | The single mapping from a version to its npm channel, plus canary stamps |
-| `release-branch.ts`              | The enforced mapping from persistent release branches to primary tags    |
-| `verify-release.ts`              | The release gate: synchronized version, valid SemVer, allowed tag        |
-| `sync-version-references.ts`     | Version references in the Bun lockfile                                   |
-| `workspace-versions.ts`          | The list of manifests that must share one version                        |
-| `canary-version.ts`              | Stamping `X.Y.Z-canary.<stamp>.<sha>` in CI, never committed             |
-| `coverage-gate.ts`               | Aggregate LCOV floor and runtime-source completeness                     |
-| `agent-guides.spec.ts`           | Guide inventory, aliases, and mandatory per-turn `RULES.md` loading      |
-| `ci-workflows.spec.ts`           | Complete CI, publish, packaging, and dependency-security command matrix  |
-| `cli-runtime-surface.spec.ts`    | The runtime surface `@aponiajs/cli` repeats by hand                      |
-| `source-layout.spec.ts`          | Package owner directories, barrels, type-only modules, local imports     |
-| `toolchain-config.spec.ts`       | The decorator transpiler options and the single Bun version pin          |
-| `package-llms.spec.ts`           | The `llms.txt` every published package ships and lists in `files`        |
-| `retired-literals.spec.ts`       | Literals a published surface may no longer state                         |
-| `documentation-versions.spec.ts` | Release stamps in the published documents                                |
-| `*.spec.ts`                      | Guard tests over the above and over documentation wording                |
+| File                             | Owns                                                                       |
+| -------------------------------- | -------------------------------------------------------------------------- |
+| `distribution-tag.ts`            | The single mapping from a version to its npm channel, plus canary stamps   |
+| `release-branch.ts`              | The enforced mapping from persistent release branches to primary tags      |
+| `verify-release.ts`              | The release gate: synchronized version, valid SemVer, allowed tag          |
+| `sync-version-references.ts`     | Version references in the Bun lockfile                                     |
+| `workspace-versions.ts`          | The list of manifests that must share one version                          |
+| `canary-version.ts`              | Stamping `X.Y.Z-canary.<stamp>.<sha>` in CI, never committed               |
+| `coverage-gate.ts`               | Aggregate LCOV floor and runtime-source completeness                       |
+| `agent-guides.spec.ts`           | Guide inventory, aliases, and mandatory per-turn `RULES.md` loading        |
+| `ci-workflows.spec.ts`           | Complete CI, publish, packaging, and dependency-security command matrix    |
+| `cli-runtime-surface.spec.ts`    | The runtime surface `@aponiajs/cli` repeats by hand                        |
+| `source-layout.spec.ts`          | Package owner directories, barrels, type-only modules, local imports       |
+| `toolchain-config.spec.ts`       | The decorator transpiler options and the single Bun version pin            |
+| `package-llms.spec.ts`           | The `llms.txt` every published package ships and lists in `files`          |
+| `retired-literals.spec.ts`       | Literals a published surface may no longer state                           |
+| `documentation-versions.spec.ts` | Release stamps in the published documents                                  |
+| `api-docs.spec.ts`               | JSDoc completeness over every package barrel the API reference builds from |
+| `*.spec.ts`                      | Guard tests over the above and over documentation wording                  |
 
 ## Invariants
 

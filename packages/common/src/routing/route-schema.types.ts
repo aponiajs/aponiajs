@@ -47,19 +47,29 @@ export type ValidatorSchema = KindSchema | RefineSchema | CodecSchema | UnsafeSc
  */
 export type RouteValidator = StandardSchemaV1 | ValidatorSchema;
 
+/** A status-keyed map of response validators. */
 export type RouteResponseSchemaMap = Readonly<Record<number, RouteValidatorInput>>;
 
+/** A `response` slot: one validator for `200`, or a map of statuses to validators. */
 export type RouteResponseSchema = RouteValidatorInput | RouteResponseSchemaMap;
 
+/** A route schema: one validator per slot the route declares. */
 export interface RouteSchema {
+  /** The request body validator. */
   readonly body?: RouteValidatorInput;
+  /** The query validator. */
   readonly query?: RouteValidatorInput;
+  /** The path-parameter validator. */
   readonly params?: RouteValidatorInput;
+  /** The header validator. */
   readonly headers?: RouteValidatorInput;
+  /** The cookie validator. */
   readonly cookie?: RouteValidatorInput;
+  /** The response validator, or a status-keyed map of them. */
   readonly response?: RouteResponseSchema;
 }
 
+/** A route schema slot name. */
 export type RouteSchemaSlot = (typeof routeSchemaSlots)[number];
 
 /**
@@ -71,6 +81,11 @@ export type RouteSchemaSlot = (typeof routeSchemaSlots)[number];
  */
 type InferValidatorSchemaOutput<TValidator extends ValidatorSchema> = StaticDecode<TValidator>;
 
+/**
+ * Recovers the value a validator produces: a Standard Schema's inferred
+ * output, a validation-model class's instance fields, or a TypeBox schema's
+ * statically decoded value.
+ */
 export type InferValidatorOutput<TValidator> = TValidator extends StandardSchemaV1
   ? StandardSchemaV1.InferOutput<TValidator>
   : TValidator extends ValidationModelClass<infer TInstance>
@@ -123,14 +138,25 @@ type RouteCookies<TSchema extends RouteSchema> = Record<string, RouteCookie<unkn
 /**
  * Request context handed to a decorated route handler. Slots covered by a
  * validator are typed from that validator's output.
+ *
+ * The platform builds one per request; a handler with no parameter decorators
+ * receives the whole context when it declares exactly one parameter.
  */
 export interface RouteContext<TSchema extends RouteSchema = RouteSchema> {
+  /** The validated body, or `unknown` when the route declares no `body` slot. */
   readonly body: InferSlot<TSchema, "body", unknown>;
+  /** The parsed query, typed from the `query` slot when declared. */
   readonly query: InferSlot<TSchema, "query", Record<string, string | undefined>>;
+  /** The path parameters, typed from the `params` slot when declared. */
   readonly params: InferSlot<TSchema, "params", Record<string, string>>;
+  /** The request headers, typed from the `headers` slot when declared. */
   readonly headers: InferSlot<TSchema, "headers", Record<string, string | undefined>>;
+  /** The request cookies, typed from the `cookie` slot when declared. */
   readonly cookie: RouteCookies<TSchema>;
+  /** The native `Request` the context was built from. */
   readonly request: Request;
+  /** The fully joined route path the request was handled by. */
   readonly path: string;
+  /** The mutable response settings the handler answers through. */
   readonly set: ResponseSettingsState;
 }

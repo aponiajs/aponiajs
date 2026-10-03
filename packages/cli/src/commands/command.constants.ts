@@ -1,3 +1,4 @@
+/** The schematics `aponia generate` accepts, aliases included elsewhere. */
 export const schematicNames = [
   "app",
   "library",

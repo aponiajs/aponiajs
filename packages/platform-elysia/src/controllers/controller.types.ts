@@ -4,22 +4,28 @@ import type { CompiledElysiaRoute } from "../routing/route-compiler.types.ts";
 import type { RoutePlan } from "../routing/route-plan.types.ts";
 import type { CONTROLLER_KIND } from "./controller.constants.ts";
 
+/** A descriptor-first controller carrying a native plugin. */
 export interface ControllerDescriptor<
   TController,
   TDependencies extends readonly Token<unknown>[],
   TPlugin extends AnyElysia,
 > extends ControllerDefinition {
   readonly kind: typeof CONTROLLER_KIND;
+  /** The dependency list the construction resolves. */
   readonly inject: TDependencies;
   readonly useClass: Constructor<TController, TokenMap<TDependencies>>;
+  /** Builds the native plugin from the constructed controller. */
   readonly buildPlugin: (controller: TController) => TPlugin;
 }
 
+/** What a direct-registration callback returns: a fluent chain, or nothing. */
 export type ControllerRegistrationResult = AnyElysia | void;
 
+/** The application a registration callback returns: the chain, or a plain Elysia. */
 export type RegisteredApplication<TRegistrationResult extends ControllerRegistrationResult> =
   TRegistrationResult extends AnyElysia ? TRegistrationResult : Elysia;
 
+/** A descriptor-first controller carrying a registration callback. */
 export interface RegisteredControllerDefinition<
   TController,
   TDependencies extends readonly Token<unknown>[],
@@ -29,26 +35,35 @@ export interface RegisteredControllerDefinition<
   TDependencies,
   RegisteredApplication<TRegistrationResult>
 > {
+  /** The controller's own path, joined onto each route it mounts. */
   readonly path?: string;
+  /** Mounts the controller's routes on the shared root application. */
   readonly registerRoutes: (application: Elysia, controller: TController) => TRegistrationResult;
 }
 
+/** The `defineController` options for a plugin-carrying controller. */
 export interface ControllerPluginOptions<
   TController,
   TDependencies extends readonly Token<unknown>[],
   TPlugin extends AnyElysia,
 > {
+  /** The dependency list the construction resolves. */
   readonly inject: TDependencies;
+  /** Builds the native plugin from the constructed controller. */
   readonly buildPlugin: (controller: TController) => TPlugin;
 }
 
+/** The `defineController` options for a callback-registered controller. */
 export interface ControllerRegistrationOptions<
   TController,
   TDependencies extends readonly Token<unknown>[],
   TRegistrationResult extends ControllerRegistrationResult = void,
 > {
+  /** The dependency list the construction resolves. */
   readonly inject: TDependencies;
+  /** The controller's own path, joined onto each route it mounts. */
   readonly path?: string;
+  /** Mounts the controller's routes on the shared root application. */
   readonly registerRoutes: (application: Elysia, controller: TController) => TRegistrationResult;
 }
 
@@ -80,6 +95,7 @@ export interface DeclaredControllerDefinition<
   readonly compiledRoutes: readonly CompiledElysiaRoute[];
 }
 
+/** A mounted runtime controller: compiled plans plus the registration callback. */
 export interface RuntimeElysiaController extends ControllerDefinition {
   readonly kind: typeof CONTROLLER_KIND;
   readonly path?: string;

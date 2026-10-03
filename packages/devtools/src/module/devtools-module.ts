@@ -42,6 +42,9 @@ export class DevtoolsModule {
    * inert — it mounts no provider and no native plugin — while an enabled one
    * registers the devtools plugin as a `PluginModule`, so the surface is
    * part of the application's route table.
+   *
+   * @param options - The enabled switch, logger handover, and capture policy.
+   * @returns A frozen registration the application's `imports` accepts.
    */
   static register(options: DevtoolsOptions): DynamicModule {
     const plugin = devtoolsPlugin(options);
@@ -91,6 +94,9 @@ export class DevtoolsModule {
  * options object drives both paths: an application that forwards its devtools
  * configuration to this function mounts a debug surface only when it said it
  * wanted one.
+ *
+ * @param options - The enabled switch, logger handover, and capture policy.
+ * @returns The native plugin to mount, or `undefined` when disabled.
  */
 export function devtoolsPlugin(options: DevtoolsOptions): ElysiaPlugin | undefined {
   if (!options.enabled) {

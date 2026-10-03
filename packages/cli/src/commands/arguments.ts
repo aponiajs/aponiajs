@@ -54,6 +54,21 @@ const resourceTransports = new Set<ResourceTransport>([
   "ws",
 ]);
 
+/**
+ * Parses raw CLI arguments into a typed command.
+ *
+ * Driven by `yargs-parser` rather than hand-rolled parsing; flags that take
+ * no value reject an attached value instead of ignoring it.
+ *
+ * @param arguments_ - The raw command-line arguments, without the binary name.
+ * @returns The parsed command: `new`, `generate`, `build`, `help`, or `version`.
+ * @throws A plain `Error` for an unknown command or an invalid flag value.
+ *
+ * @example
+ * ```ts
+ * parseArguments(["generate", "controller", "users"]);
+ * ```
+ */
 export function parseArguments(arguments_: readonly string[]): CliCommand {
   const [command = "help", ...rest] = arguments_;
 

@@ -45,6 +45,13 @@ interface CronHandle {
  * anything was ever served. An object the module graph can resolve is what makes
  * `close()` able to stop it, so the handles live here and the plugin is handed
  * this object's state slot to fill.
+ *
+ * @param jobs - The validated jobs this boot schedules, in declaration order.
+ *
+ * @example
+ * ```ts
+ * const scheduler = application.get(CronScheduler);
+ * ```
  */
 export class CronScheduler implements OnApplicationShutdown {
   readonly #jobs: readonly CronJob[];
@@ -84,6 +91,8 @@ export class CronScheduler implements OnApplicationShutdown {
    * Read from the handles the plugin wrote rather than from the declaration, so
    * this is what is really scheduled: the two agree while the plugin is the only
    * writer, and a disagreement is the case worth being able to see.
+   *
+   * @returns The scheduled job names.
    */
   get scheduled(): readonly string[] {
     return Object.keys(this.#handles);
@@ -96,6 +105,8 @@ export class CronScheduler implements OnApplicationShutdown {
    * plugin per job. It is built here rather than in the module because the
    * handles belong to one boot's scheduler, and the module's factory is the
    * framework's only seam for handing a per-boot value to a plugin.
+   *
+   * @returns The native plugin the module mounts.
    */
   createPlugin(): ElysiaPlugin {
     const plugin = new Elysia({ name: pluginName }).state({

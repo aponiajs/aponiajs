@@ -7,8 +7,17 @@ import {
 } from "@aponiajs/common";
 import type { GraphInspection, ProviderLocation } from "./graph.types.ts";
 
+/**
+ * The compiled module graph: every module reachable from the root, in
+ * post-order, with memoized token resolution.
+ *
+ * Construct through {@link compileModuleGraph}, which validates before any
+ * instance exists.
+ */
 export class ModuleGraph {
+  /** The root the walk started from; `get` resolves against this module. */
   readonly root: ModuleDefinition;
+  /** Every reachable module, once each, in post-order. */
   readonly modules: readonly ModuleDefinition[];
 
   readonly #moduleSet: ReadonlySet<ModuleDefinition>;
@@ -50,6 +59,24 @@ export class ModuleGraph {
     });
   }
 
+  /**
+   * Resolves a token to the module and provider that own it.
+   *
+   * The module's own providers win; imports are consulted only when they
+   * export the token. Two importers that resolve to different modules fail
+   * with `AMBIGUOUS_PROVIDER`; two that re-export one shared provider agree.
+   * Resolutions are memoized per module.
+   *
+   * @param module - The module to resolve from.
+   * @param token - The token to resolve.
+   * @returns The frozen location owning the token.
+   * @throws An `AponiaError` with `MISSING_PROVIDER` or `AMBIGUOUS_PROVIDER`.
+   *
+   * @example
+   * ```ts
+   * const location = graph.locate(module, GREETING);
+   * ```
+   */
   locate(module: ModuleDefinition, token: Token<unknown>): ProviderLocation {
     if (!this.#moduleSet.has(module)) {
       throw new AponiaError(

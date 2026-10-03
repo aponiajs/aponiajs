@@ -2,6 +2,24 @@ import { AponiaError, getTokenName, type ModuleDefinition, type Token } from "@a
 import { getProviderDependencies, providerShapeProblem } from "./dependencies.ts";
 import { ModuleGraph } from "./module-graph.ts";
 
+/**
+ * Compiles the module graph from a root definition, validating eagerly before
+ * any instance exists.
+ *
+ * Identity is `instanceId ?? id`; cycles, duplicate tokens, unexported
+ * exports, and unresolvable dependencies all fail here with their codes.
+ *
+ * @param root - The root module definition the walk starts from.
+ * @returns The compiled graph in post-order.
+ * @throws An `AponiaError` with `DUPLICATE_MODULE`, `MODULE_CYCLE`,
+ * `INVALID_PROVIDER`, `DUPLICATE_PROVIDER`, `INVALID_EXPORT`,
+ * `MISSING_PROVIDER`, or `AMBIGUOUS_PROVIDER`.
+ *
+ * @example
+ * ```ts
+ * const graph = compileModuleGraph(AppModuleDefinition);
+ * ```
+ */
 export function compileModuleGraph(root: ModuleDefinition): ModuleGraph {
   const modules: ModuleDefinition[] = [];
   const modulesByIdentity = new Map<string | symbol, ModuleDefinition>();

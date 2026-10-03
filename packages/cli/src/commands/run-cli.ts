@@ -6,6 +6,20 @@ import { aponiaVersion } from "../version.ts";
 import { parseArguments } from "./arguments.ts";
 import { helpText } from "./help-text.ts";
 
+/**
+ * Runs the CLI from parsed arguments to printed change lines.
+ *
+ * Prints `CREATE`/`UPDATE` lines and returns an exit code — it never throws.
+ * A generation failure rejects the build rather than reporting and skipping.
+ *
+ * @param arguments_ - The raw command-line arguments, without the binary name.
+ * @returns The process exit code: `0` on success, non-zero on failure.
+ *
+ * @example
+ * ```ts
+ * const code = await runCli(["generate", "controller", "users"]);
+ * ```
+ */
 export async function runCli(arguments_: readonly string[]): Promise<number> {
   try {
     const command = parseArguments(arguments_);

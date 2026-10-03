@@ -19,8 +19,33 @@ interface StoredWebSocketParameterMetadata extends WebSocketParameterMetadata {
   readonly propertyKey: string | symbol;
 }
 
+/**
+ * Declares a WebSocket gateway: a class provider whose message handlers the
+ * platform mounts as one native route.
+ *
+ * A gateway is a provider in `@Module({ providers })`, resolved as the
+ * existing singleton instance — never a second construction.
+ */
 export function WebSocketGateway(): ClassDecorator;
+/**
+ * Declares a WebSocket gateway at a path.
+ *
+ * @param path - The mount path; defaults to `"/ws"`.
+ * @returns A class decorator recording the frozen gateway metadata.
+ *
+ * @example
+ * ```ts
+ * @WebSocketGateway("/events")
+ * class EventsGateway {}
+ * ```
+ */
 export function WebSocketGateway(path: string): ClassDecorator;
+/**
+ * Declares a WebSocket gateway with options.
+ *
+ * @param options - The gateway options carrying the mount path.
+ * @returns A class decorator recording the frozen gateway metadata.
+ */
 export function WebSocketGateway(options: WebSocketGatewayOptions): ClassDecorator;
 export function WebSocketGateway(
   pathOrOptions: string | WebSocketGatewayOptions = {},
@@ -37,6 +62,24 @@ export function WebSocketGateway(
   };
 }
 
+/**
+ * Declares a named message handler on a gateway.
+ *
+ * Incoming socket messages are the `{ event, data }` envelope; a handler's
+ * ordinary result is emitted under the subscribed event, `WsResponse` selects
+ * a different one, and `undefined` sends nothing.
+ *
+ * @param event - The message event this method answers; must be non-empty.
+ * @returns A method decorator recording the frozen message metadata.
+ * @throws A `TypeError` when the event is empty or the target is not an
+ * instance method.
+ *
+ * @example
+ * ```ts
+ * @SubscribeMessage("orders.create")
+ * create(@MessageBody() input: CreateOrderDto) {}
+ * ```
+ */
 export function SubscribeMessage(event: string): MethodDecorator {
   if (typeof event !== "string" || event.trim().length === 0) {
     throw new TypeError("@SubscribeMessage requires a non-empty event name.");
@@ -69,7 +112,12 @@ export function SubscribeMessage(event: string): MethodDecorator {
   };
 }
 
-/** Injects the incoming message data, or one of its properties. */
+/**
+ * Injects the incoming message data, or one of its properties.
+ *
+ * @param property - The data property to inject, or the whole data when omitted.
+ * @returns A parameter decorator recording the binding.
+ */
 export function MessageBody(property?: string): ParameterDecorator {
   if (property !== undefined && typeof property !== "string") {
     throw new TypeError("@MessageBody property must be a string.");
@@ -78,12 +126,23 @@ export function MessageBody(property?: string): ParameterDecorator {
   return createParameterDecorator("message-body", property);
 }
 
-/** Injects the native client associated with the incoming message. */
+/**
+ * Injects the native client associated with the incoming message.
+ *
+ * @returns A parameter decorator recording the binding.
+ */
 export function ConnectedSocket(): ParameterDecorator {
   return createParameterDecorator("connected-socket");
 }
 
-/** Injects the platform WebSocket server into a gateway property. */
+/**
+ * Injects the platform WebSocket server into a gateway property.
+ *
+ * The server is the root application, assigned before `afterInit` runs.
+ *
+ * @returns A property decorator recording the server property.
+ * @throws A `TypeError` when applied to anything but an instance property.
+ */
 export function WebSocketServer(): PropertyDecorator {
   return (target, propertyKey) => {
     if (typeof target === "function" || isMethodOrAccessor(target, propertyKey)) {
@@ -106,6 +165,12 @@ export function WebSocketServer(): PropertyDecorator {
   };
 }
 
+/**
+ * Reads the gateway metadata `@WebSocketGateway()` recorded, own-class only.
+ *
+ * @param target - The gateway class to read.
+ * @returns The frozen gateway metadata, or `undefined` when the class declares none.
+ */
 export function getWebSocketGatewayMetadata(
   target: ClassToken<unknown>,
 ): Readonly<WebSocketGatewayMetadata> | undefined {
@@ -114,6 +179,12 @@ export function getWebSocketGatewayMetadata(
     | undefined;
 }
 
+/**
+ * Reads the message metadata `@SubscribeMessage()` recorded, in declaration order.
+ *
+ * @param target - The gateway class to read.
+ * @returns The frozen message metadata list, empty when the class declares none.
+ */
 export function getWebSocketMessageMetadata(
   target: ClassToken<unknown>,
 ): readonly WebSocketMessageMetadata[] {
@@ -124,6 +195,14 @@ export function getWebSocketMessageMetadata(
   return Object.freeze([...messages]);
 }
 
+/**
+ * Reads the parameter bindings the message parameter decorators recorded for
+ * one handler, in parameter order.
+ *
+ * @param target - The gateway class to read.
+ * @param propertyKey - The handler method to read.
+ * @returns The frozen binding list, empty when the handler declares none.
+ */
 export function getWebSocketParameterMetadata(
   target: ClassToken<unknown>,
   propertyKey: string | symbol,
@@ -141,6 +220,12 @@ export function getWebSocketParameterMetadata(
   );
 }
 
+/**
+ * Reads the server properties `@WebSocketServer()` recorded.
+ *
+ * @param target - The gateway class to read.
+ * @returns The frozen property list, empty when the class declares none.
+ */
 export function getWebSocketServerProperties(
   target: ClassToken<unknown>,
 ): readonly (string | symbol)[] {

@@ -41,6 +41,9 @@ export class CronModule {
    * @Module({ imports: [CronModule.register({ configuration: CronConfig })] })
    * export class AppModule {}
    * ```
+   *
+   * @param options - The configuration, literal source, and module key.
+   * @returns A frozen registration the application's `imports` accepts.
    */
   static register(options: CronModuleOptions): DynamicModule {
     const { configuration, source, key } = options;

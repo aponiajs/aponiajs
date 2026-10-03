@@ -69,10 +69,23 @@ const httpErrorDefinitions = [
 
 type HttpErrorDefinition = (typeof httpErrorDefinitions)[number];
 
+/** The frozen per-status factory set `httpErrors` answers with. */
 export type HttpErrorFactories = {
   readonly [TDefinition in HttpErrorDefinition as TDefinition[0]]: HttpErrorFactory<TDefinition[1]>;
 };
 
+/**
+ * An application-owned HTTP failure, serialized as RFC 9457 Problem Details.
+ *
+ * The response never carries the stack or the cause. A route's default
+ * mapping declines an `HttpError` — it carries its own `toResponse()` — so
+ * Elysia's native error path answers it.
+ *
+ * @example
+ * ```ts
+ * throw httpErrors.notFound("No user with that id.");
+ * ```
+ */
 export class HttpError<const TStatus extends HttpErrorStatus = HttpErrorStatus> extends Error {
   readonly status: ResolveHttpErrorStatus<TStatus>;
   readonly code: string;
@@ -109,6 +122,20 @@ export class HttpError<const TStatus extends HttpErrorStatus = HttpErrorStatus> 
   }
 }
 
+/**
+ * Builds an `HttpError` for any 4xx or 5xx status the supported Elysia
+ * version carries.
+ *
+ * @param status - The status code or name to answer with.
+ * @param detail - The problem detail, defaulting to the status title.
+ * @param options - The problem type, instance, code, headers, and extensions.
+ * @returns A frozen `HttpError` answering `application/problem+json`.
+ *
+ * @example
+ * ```ts
+ * throw httpError(404, "No user with that id.");
+ * ```
+ */
 export function httpError<const TStatus extends HttpErrorStatus>(
   status: TStatus,
   detail?: string,
@@ -126,6 +153,16 @@ export function httpError<const TStatus extends HttpErrorStatus>(
   return new HttpError(status, normalizeOptions(detailOrOptions, options));
 }
 
+/**
+ * The per-status factories covering every 4xx and 5xx status: `notFound`,
+ * `forbidden`, `unauthorized`, and the rest, each taking the same
+ * detail-and-options shape as {@link httpError}.
+ *
+ * @example
+ * ```ts
+ * throw httpErrors.forbidden("A guard refused this request.");
+ * ```
+ */
 export const httpErrors = Object.freeze(
   Object.fromEntries(
     httpErrorDefinitions.map(([name, status]) => [name, createHttpErrorFactory(status)]),

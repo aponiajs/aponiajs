@@ -13,6 +13,13 @@ const colorByLevel: Readonly<Record<LogLevel, number>> = {
   verbose: 36,
 };
 
+/**
+ * The structured console logger the system uses unless replaced.
+ *
+ * Construct with a context string, an options object, or both; `setContext`
+ * renames the instance for the lines that follow, and `resetContext` restores
+ * the construction value.
+ */
 export class ConsoleLogger implements LoggerService {
   static lastTimestampAt: number | undefined;
 
@@ -46,14 +53,26 @@ export class ConsoleLogger implements LoggerService {
     };
   }
 
+  /**
+   * Renames the instance for the lines that follow.
+   *
+   * @param context - The context subsequent lines carry.
+   */
   setContext(context: string): void {
     this.#context = context;
   }
 
+  /** Restores the context the instance was constructed with. */
   resetContext(): void {
     this.#context = this.#originalContext;
   }
 
+  /**
+   * Answers whether a level prints under the configured `logLevels`.
+   *
+   * @param level - The level to test.
+   * @returns `true` when the level prints.
+   */
   isLevelEnabled(level: LogLevel): boolean {
     const configured = this.#options.logLevels;
     if (!configured) {
@@ -205,4 +224,10 @@ export class ConsoleLogger implements LoggerService {
   }
 }
 
+/**
+ * The logger a boot hands to `AponiaFactory.create` by default.
+ *
+ * No behavior beyond `ConsoleLogger`: the subclass exists so an application
+ * names the framework's own logger without reaching for the configurable one.
+ */
 export class Logger extends ConsoleLogger {}

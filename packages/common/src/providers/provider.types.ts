@@ -17,11 +17,13 @@ interface ProviderBase<T> {
   readonly scope?: ProviderScope;
 }
 
+/** A value provider: the token resolves to an existing value as-is. */
 export interface ValueProvider<T> extends ProviderBase<T> {
   readonly kind: "value";
   readonly useValue: T;
 }
 
+/** A factory provider: the container calls the factory once with its resolved dependencies. */
 export interface FactoryProvider<
   T,
   TDependencies extends readonly Token<unknown>[] = readonly Token<unknown>[],
@@ -31,6 +33,7 @@ export interface FactoryProvider<
   readonly useFactory: (...dependencies: TokenMap<TDependencies>) => T;
 }
 
+/** A class provider: the container constructs the class with its resolved dependencies. */
 export interface ClassProvider<
   T,
   TDependencies extends readonly Token<unknown>[] = readonly Token<unknown>[],
@@ -40,11 +43,17 @@ export interface ClassProvider<
   readonly useClass: Constructor<T, TokenMap<TDependencies>>;
 }
 
+/** An alias provider: the token resolves to whatever another token resolves to. */
 export interface AliasProvider<T> extends ProviderBase<T> {
   readonly kind: "alias";
   readonly useExisting: Token<T>;
 }
 
+/**
+ * Anything a module's `providers` accepts: a value, a factory, a class, or
+ * an alias. Each arm carries an optional `scope` naming the lifetime the
+ * instance is kept for; only `"singleton"` instantiates today.
+ */
 export type Provider =
   | {
       readonly kind: "value";

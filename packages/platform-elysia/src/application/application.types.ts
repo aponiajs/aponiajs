@@ -6,15 +6,24 @@ import type { ElysiaPlugin } from "../plugins/plugin.types.ts";
 import type { AponiaInvokerArtifact } from "../routing/invoker-artifact.types.ts";
 import type { AponiaHealthOptions } from "./application-health.types.ts";
 
+/**
+ * Receives the root Elysia instance and returns it, optionally configured.
+ *
+ * Must return the instance it receives; a different instance breaks the
+ * mount the bootstrap performs around it.
+ */
 export type ElysiaConfigurator<TNativeApplication extends AnyElysia> = (
   application: Elysia,
 ) => TNativeApplication;
 
+/** The Elysia route-compilation policy the boot passes through. */
 export type RouteCompilationOptions = Readonly<
   Pick<ElysiaConfig<undefined, EventScope>, "precompile">
 >;
 
+/** The options `AponiaFactory.create` boots with: logging, plugins, enhancers, artifacts, and Elysia policy. */
 export interface AponiaApplicationOptions {
+  /** `false` disables logging, an array sets levels, a service replaces the logger. */
   readonly logger?: false | LoggerService | readonly LogLevel[];
   /**
    * Controls Elysia's route composition. This is distinct from build-time
@@ -153,9 +162,11 @@ export interface AponiaApplicationOptions {
   readonly filters?: readonly ClassToken<unknown>[];
 }
 
+/** The factory options plus the native configurator preserving Eden route types. */
 export interface ConfiguredAponiaApplicationOptions<
   TNativeApplication extends AnyElysia,
 > extends AponiaApplicationOptions {
+  /** Receives the root Elysia instance and returns it, optionally configured. */
   readonly configureNative: ElysiaConfigurator<TNativeApplication>;
 }
 

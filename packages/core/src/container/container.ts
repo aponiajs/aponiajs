@@ -11,6 +11,14 @@ import { compileModuleGraph } from "../graph/graph-compiler.ts";
 import type { ProviderLocation } from "../graph/graph.types.ts";
 import type { ModuleGraph } from "../graph/module-graph.ts";
 
+/**
+ * The dependency injection container: one cached instance per provider per
+ * module, resolved through the compiled module graph.
+ *
+ * Construct through {@link createContainer}, which compiles the graph first.
+ * `get` enforces root-module visibility; platforms resolve inside an
+ * arbitrary module through `resolveModuleProvider`.
+ */
 export class AponiaContainer {
   readonly graph: ModuleGraph;
 
@@ -22,6 +30,23 @@ export class AponiaContainer {
     this.graph = graph;
   }
 
+  /**
+   * Resolves a token against the root module.
+   *
+   * A provider that is not exported to the root is invisible here and fails
+   * with `MISSING_PROVIDER`; two importers that disagree fail with
+   * `AMBIGUOUS_PROVIDER`.
+   *
+   * @param token - The token to resolve.
+   * @returns The cached singleton instance.
+   * @throws An `AponiaError` with `MISSING_PROVIDER`, `AMBIGUOUS_PROVIDER`,
+   * `PROVIDER_CYCLE`, or `UNSUPPORTED_PROVIDER_SCOPE`.
+   *
+   * @example
+   * ```ts
+   * const greeting = container.get(GREETING);
+   * ```
+   */
   get<T>(token: Token<T>): T {
     const location = this.graph.locate(this.graph.root, token);
     return this.#resolve(location) as T;
@@ -38,6 +63,17 @@ export class AponiaContainer {
     return this.#resolve(location) as T;
   }
 
+  /**
+   * Eagerly instantiates every singleton provider a module declares.
+   *
+   * A provider that declares a `"request"` or `"transient"` scope fails here
+   * with `UNSUPPORTED_PROVIDER_SCOPE`: its instances do not exist at boot, so
+   * there is nothing to create yet.
+   *
+   * @param module - The module whose providers to instantiate.
+   * @throws An `AponiaError` with `UNSUPPORTED_PROVIDER_SCOPE` for a scoped
+   * provider, or the resolution codes `get` throws.
+   */
   initializeModule(module: ModuleDefinition): void {
     for (const provider of module.providers) {
       assertSupportedScope(provider);
@@ -113,6 +149,22 @@ export class AponiaContainer {
   }
 }
 
+/**
+ * Compiles the module graph from a root definition and returns its container.
+ *
+ * Graph validation runs eagerly, before any instance exists: duplicate module
+ * identity, import cycles, duplicate tokens, unresolvable dependencies.
+ *
+ * @param root - The root module definition the graph walks from.
+ * @returns A container over the compiled graph.
+ * @throws An `AponiaError` with the graph code naming the invalid declaration.
+ *
+ * @example
+ * ```ts
+ * const container = createContainer(AppModuleDefinition);
+ * const greeting = container.get(GREETING);
+ * ```
+ */
 export function createContainer(root: ModuleDefinition): AponiaContainer {
   return new AponiaContainer(compileModuleGraph(root));
 }

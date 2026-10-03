@@ -26,6 +26,18 @@ import type {
  * boots, or a graph it declared itself. Nothing is compiled until `compile()` is
  * called, which is where an override naming a token no module provides is
  * refused.
+ *
+ * @param rootModule - The root the test boots.
+ * @param options - The factory's own options, with `logger` defaulting to `false`.
+ * @returns A builder accepting `overrideProvider` calls before `compile()`.
+ *
+ * @example
+ * ```ts
+ * const application = await createTestApplication(AppModule)
+ *   .overrideProvider(GREETING)
+ *   .useValue("Hello from the test")
+ *   .compile();
+ * ```
  */
 export function createTestApplication(
   rootModule: ModuleImport,

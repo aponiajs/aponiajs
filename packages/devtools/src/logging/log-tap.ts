@@ -123,6 +123,10 @@ function isCallableMethod(target: Record<string, unknown>, level: LogLevel): boo
  * that logger goes on printing every line — the same false answer a value that is
  * not a logger is refused. A logger it has tapped before is answered with the
  * stream already recording it, so the two cannot disagree about where a line went.
+ *
+ * @param logger - The logger to tap in place.
+ * @param buffer - The buffer tapped lines are recorded into.
+ * @returns The stream recording the logger, or `undefined` when no level patched.
  */
 export function recordLogger(logger: LoggerService, buffer: LogBuffer): LogStream | undefined {
   const tapped = tappedLoggers.get(logger);

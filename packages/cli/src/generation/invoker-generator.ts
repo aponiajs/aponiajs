@@ -54,6 +54,14 @@ export const invokerModuleFileName = "invokers.generated.ts";
  *
  * Nothing here runs the application. The analysis reads source, which is why a
  * controller that only exists after some side effect is invisible to it.
+ *
+ * @param options - The working directory, project, and dry-run flag.
+ * @returns The written files and the descriptors the emitters declined.
+ *
+ * @example
+ * ```ts
+ * await generateInvokers({ cwd: projectRoot, dryRun: false });
+ * ```
  */
 export async function generateInvokers(
   options: GenerateInvokersOptions,

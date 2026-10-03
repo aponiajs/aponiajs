@@ -28,6 +28,18 @@ import type {
 
 export { CONTROLLER_KIND } from "./controller.constants.ts";
 
+/**
+ * Defines a descriptor-first controller: routes, plugins, or a registration
+ * callback stated as data rather than decorators.
+ *
+ * Both authoring paths stay supported: the application keeps its decorators,
+ * while the generated module supplies the same controller without anyone
+ * reading `reflect-metadata` at startup.
+ *
+ * @param useClass - The controller class to construct.
+ * @param options - The registration options: routes, plugins, or callback.
+ * @returns A frozen controller descriptor the module's `controllers` accepts.
+ */
 export function defineController<
   TController,
   const TDependencies extends readonly Token<unknown>[],
@@ -36,6 +48,13 @@ export function defineController<
   useClass: Constructor<TController, TokenMap<TDependencies>>,
   options: ControllerRegistrationOptions<TController, TDependencies, TRegistrationResult>,
 ): RegisteredControllerDefinition<TController, TDependencies, TRegistrationResult>;
+/**
+ * Defines a descriptor-first controller carrying a native plugin.
+ *
+ * @param useClass - The controller class to construct.
+ * @param options - The plugin options the descriptor carries.
+ * @returns A frozen controller descriptor the module's `controllers` accepts.
+ */
 export function defineController<
   TController,
   const TDependencies extends readonly Token<unknown>[],
@@ -158,6 +177,18 @@ function createControllerDefinition<
  * controller defined this way reaches the same native version guard, the same
  * duplicate-route check, the same startup logging, and the same
  * `AponiaApplicationOptions.invokers` lookup a decorated one does.
+ *
+ * @param useClass - The controller class to construct.
+ * @param options - The path, route plans, and inject list.
+ * @returns A frozen declared controller the module's `controllers` accepts.
+ *
+ * @example
+ * ```ts
+ * defineControllerRoutes(UsersController, {
+ *   path: "users",
+ *   routes: [{ method: "GET", path: "/", propertyKey: "findAll" }],
+ * });
+ * ```
  */
 export function defineControllerRoutes<
   TController,
@@ -235,6 +266,14 @@ function compileRoutePlan(plan: RoutePlan, controllerPath: string): CompiledElys
   });
 }
 
+/**
+ * Answers whether a controller descriptor carries compiled route plans.
+ *
+ * @param controller - The controller descriptor to test.
+ * @returns `true` when the descriptor mounts through compiled plans.
+ *
+ * @internal
+ */
 export function isElysiaController(
   controller: ControllerDefinition,
 ): controller is RuntimeElysiaController {
