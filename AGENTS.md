@@ -22,21 +22,21 @@ it satisfies both this guide and `RULES.md`.
 
 Bun workspace. Framework packages live in `packages/`:
 
-| Package                     | Owns                                                            | Runtime dependencies                                                                  |
-| --------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `@aponiajs/common`          | Decorators, contracts, tokens, providers, errors, WebSockets    | `reflect-metadata` only                                                               |
-| `@aponiajs/core`            | Module graph, visibility rules, dependency injection            | `@aponiajs/common`                                                                    |
-| `@aponiajs/platform-elysia` | Elysia adapter, HTTP routes, WebSocket gateways, plugins        | `common`, `core`, peer `elysia`                                                       |
-| `@aponiajs/cli`             | `aponia new` and `aponia generate` schematics                   | `change-case`, `ts-morph`, `yargs-parser`, `fast-glob`, `inflection`, `oxfmt` (exact) |
-| `create-aponia`             | `bun create aponia` entrypoint into the same generator          | `@aponiajs/cli`                                                                       |
-| `@aponiajs/cron`            | Scheduled jobs declared in a module, from validated config      | `common`, `platform-elysia`, `@elysia/cron`, peer `elysia`                            |
-| `@aponiajs/cors`            | Cross-origin policy declared in a module, from validated config | `common`, `platform-elysia`, `@elysia/cors`, peer `elysia`                            |
-| `@aponiajs/devtools`        | Opt-in devtools served by the running application itself        | `cli`, `common`, `platform-elysia`, peer `elysia`                                     |
-| `@aponiajs/graphql`         | GraphQL endpoint served in a module, from validated config      | `common`, `platform-elysia`, `@elysia/graphql-yoga`, peer `elysia`                    |
-| `@aponiajs/testing`         | Test application builder, provider overrides, teardown          | `common`, `platform-elysia`, peer `elysia`                                            |
-| `@aponiajs/openapi`         | OpenAPI document served for an application's routes             | `common`, `platform-elysia`, `@elysia/openapi`, peer `elysia`                         |
-| `@aponiajs/opentelemetry`   | Tracing through a validated config, no backend or exporter      | `common`, `platform-elysia`, `@elysia/opentelemetry`, peer `elysia`                   |
-| `aponiajs`                  | Reserved public facade, private and unpublished                 | —                                                                                     |
+| Package                     | Owns                                                            | Runtime dependencies                                                     |
+| --------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `@aponiajs/common`          | Decorators, contracts, tokens, providers, errors, WebSockets    | `reflect-metadata` only                                                  |
+| `@aponiajs/core`            | Module graph, visibility rules, dependency injection            | `@aponiajs/common`                                                       |
+| `@aponiajs/platform-elysia` | Elysia adapter, HTTP routes, WebSocket gateways, plugins        | `common`, `core`, peer `elysia`                                          |
+| `@aponiajs/cli`             | `aponia new` and `aponia generate` schematics                   | `change-case`, `ts-morph`, `yargs-parser`, `inflection`, `oxfmt` (exact) |
+| `create-aponia`             | `bun create aponia` entrypoint into the same generator          | `@aponiajs/cli`                                                          |
+| `@aponiajs/cron`            | Scheduled jobs declared in a module, from validated config      | `common`, `platform-elysia`, `@elysia/cron`, peer `elysia`               |
+| `@aponiajs/cors`            | Cross-origin policy declared in a module, from validated config | `common`, `platform-elysia`, `@elysia/cors`, peer `elysia`               |
+| `@aponiajs/devtools`        | Opt-in devtools served by the running application itself        | `cli`, `common`, `platform-elysia`, peer `elysia`                        |
+| `@aponiajs/graphql`         | GraphQL endpoint served in a module, from validated config      | `common`, `platform-elysia`, `@elysia/graphql-yoga`, peer `elysia`       |
+| `@aponiajs/testing`         | Test application builder, provider overrides, teardown          | `common`, `platform-elysia`, peer `elysia`                               |
+| `@aponiajs/openapi`         | OpenAPI document served for an application's routes             | `common`, `platform-elysia`, `@elysia/openapi`, peer `elysia`            |
+| `@aponiajs/opentelemetry`   | Tracing through a validated config, no backend or exporter      | `common`, `platform-elysia`, `@elysia/opentelemetry`, peer `elysia`      |
+| `aponiajs`                  | Reserved public facade, private and unpublished                 | —                                                                        |
 
 Supporting directories: `examples/` for executable examples, `docs/` for
 published documentation, `scripts/`

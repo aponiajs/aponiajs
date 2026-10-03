@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/cli",
-  "version": "1.0.0-beta.3",
+  "version": "1.0.0-beta.4",
   "description": "Bun-native project generator and command-line interface for Aponia.",
   "keywords": [
     "aponia",
@@ -50,7 +50,6 @@
   },
   "dependencies": {
     "change-case": "^5.4.4",
-    "fast-glob": "^3.3.3",
     "inflection": "^3.0.2",
     "oxfmt": "0.60.0",
     "ts-morph": "^28.0.0",

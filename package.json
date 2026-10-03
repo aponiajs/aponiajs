@@ -1,6 +1,6 @@
 {
   "name": "aponiajs-workspace",
-  "version": "1.0.0-beta.3",
+  "version": "1.0.0-beta.4",
   "private": true,
   "description": "Bun-first application architecture powered by Elysia.",
   "license": "MIT",
@@ -64,7 +64,10 @@
     "vite-plus": "^0.2.9"
   },
   "overrides": {
+    "@opentelemetry/propagator-jaeger": "2.9.0",
+    "@opentelemetry/sdk-node": "0.217.0",
     "exact-mirror": "^1.2.6",
+    "protobufjs": "8.8.0",
     "vite": "npm:@voidzero-dev/vite-plus-core@0.2.9",
     "vitest": "4.1.10"
   },

@@ -203,7 +203,7 @@ from source, so a module whose `imports` name one is declined — the build prin
 `DECLINED module AppModule` — and the descriptor artifact holds nothing for it.
 The application still boots: the platform lowers such a root from its decorators
 and the tracing still serves. What the decline costs is the lowering, not the
-tracing. `tests/generated-descriptors.test.ts` pins all three halves of that,
+tracing. `tests/opentelemetry-module.test.ts` pins all three halves of that,
 including the contrast with a module the build does lower.
 
 Unlike `@aponiajs/devtools`, **no plugin value can be exported beside this

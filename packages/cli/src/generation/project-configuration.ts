@@ -1,6 +1,6 @@
-import findFiles from "fast-glob";
 import { readdir } from "node:fs/promises";
 import { dirname, join, relative, resolve, sep } from "node:path";
+import { scanSourceFiles } from "./file-scanner.ts";
 import type { GenerateSchematic } from "../commands/command.types.ts";
 import type {
   AponiaConfiguration,
@@ -102,11 +102,7 @@ export function toImportPath(moduleFile: string, generatedFile: string): string 
 }
 
 async function listModuleFiles(directory: string): Promise<string[]> {
-  return findFiles("**/*.module.ts", {
-    absolute: true,
-    cwd: directory,
-    onlyFiles: true,
-  });
+  return scanSourceFiles("**/*.module.ts", directory);
 }
 
 async function safeReadDirectory(directory: string): Promise<string[]> {

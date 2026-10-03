@@ -1,5 +1,4 @@
 import { join, relative, resolve } from "node:path";
-import findFiles from "fast-glob";
 import { analyzeControllerRoutes } from "./controller-routes.ts";
 import { emitControllerInvokers } from "./controller-invokers.ts";
 import {
@@ -17,6 +16,7 @@ import {
   toImportPath,
 } from "./project-configuration.ts";
 import { collectSourceImports } from "./source-imports.ts";
+import { scanSourceFiles } from "./file-scanner.ts";
 import type { AnalyzedController } from "./controller-routes.types.ts";
 import type { DescriptorSourceFile } from "./descriptor-emitter.types.ts";
 import type { GenerateInvokersOptions, GenerateInvokersResult } from "./invoker-generator.types.ts";
@@ -76,16 +76,12 @@ export async function generateInvokers(
   const outputPath = join(sourceRoot, invokerModuleFileName);
   const descriptorPath = join(sourceRoot, descriptorModuleFileName);
 
-  const sourceFiles = await findFiles("**/*.ts", {
-    cwd: sourceRoot,
-    absolute: true,
-    ignore: [
-      "**/*.spec.ts",
-      "**/*.test.ts",
-      `**/${invokerModuleFileName}`,
-      `**/${descriptorModuleFileName}`,
-    ],
-  });
+  const sourceFiles = await scanSourceFiles("**/*.ts", sourceRoot, [
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    `**/${invokerModuleFileName}`,
+    `**/${descriptorModuleFileName}`,
+  ]);
 
   const found: { readonly controller: AnalyzedController; readonly file: string }[] = [];
   const analyzed: DescriptorSourceFile[] = [];

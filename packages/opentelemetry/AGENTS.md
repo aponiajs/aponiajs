@@ -65,13 +65,16 @@ OpentelemetryConfiguration` field by field and pins that
   registration's `service.name` while its own processor receives nothing. The
   README states this as the sharpest limit in the package. Do not describe the
   module as giving an application its own tracer.
-- **Which SDK owns the process must not be a premise of a test.** Two test files
-  in this package boot applications in one Bun process, so a case that asserts on
-  the span _list_ is order-dependent while a case that asserts through
-  `getCurrentSpan()` is not. `tests/generated-descriptors.test.ts` reads the span
-  from inside the handler for exactly that reason. A new case that needs its own
-  exporter belongs in the file whose registration is the first one, or must state
-  what it does about the process.
+- **Which SDK owns the process must not be a premise of a test.** Every
+  registration in this package boots in one Bun process, so a case that asserts
+  on the span _list_ belongs beside the one registration that owns the process
+  while a case that asserts through `getCurrentSpan()` does not depend on it.
+  The generated-descriptor cases read the span from inside the handler for
+  exactly that reason, and they live in the same file for it too: a second file
+  booting a registration first would steal the SDK the first file's exporter
+  depends on. A new case that needs its own exporter belongs beside the
+  registration that owns the process, or must state what it does about the
+  process.
 - **Stopping is a provider hook, and what it can stop is bounded.** The module
   provides one `OpentelemetryShutdown` that owns the declared `spanProcessors` and
   shuts them down in `onApplicationShutdown`. It does not reach a processor the
@@ -130,11 +133,11 @@ The Bun lane owns:
 8. two registrations under one key being refused as `DUPLICATE_MODULE`;
 9. `listen()` over a real socket, on an application of its own so the rest of the
    file keeps its own;
-10. `tests/generated-descriptors.test.ts` pins the `aponia build` consequence: a
-    module whose `imports` name a registration is declined, the artifact holds
-    nothing for it, the application boots and traces anyway because the platform
-    lowers the root from its decorators, and a module the build _does_ lower is
-    traced only when it imports the registration.
+10. the `aponia build` consequence, in the same file for the process-global
+    reason above: a module whose `imports` name a registration is declined, the
+    artifact holds nothing for it, the application boots and traces anyway
+    because the platform lowers the root from its decorators, and a module the
+    build _does_ lower is traced only when it imports the registration.
 
 The Vite+ lane mirrors the contract and the observable answers. It must not call
 `listen()`: the lane runs on Node, where Elysia 2 has no adapter and a listen

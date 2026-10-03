@@ -31,8 +31,11 @@ separate focused modules. `src/index.ts` is the only public barrel.
 
 ## Invariants
 
-- Reuse before build. CLI parsing, AST manipulation, globbing, case conversion,
-  and inflection all come from maintained packages. Do not hand-roll them back.
+- Reuse before build. CLI parsing, AST manipulation, case conversion, and
+  inflection all come from maintained packages. File discovery is the one
+  exception: it reads through the runtime's own `Bun.Glob`, because the
+  maintained glob package carried a transitive advisory with no published fix.
+  Do not hand-roll glob matching back; the matcher stays the runtime's.
 - `runCli` prints `CREATE`/`UPDATE` change lines and returns an exit code. It
   never throws.
 - Argument and generator input mistakes use plain `Error`/`TypeError`, not
