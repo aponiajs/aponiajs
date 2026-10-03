@@ -1,0 +1,56 @@
+# @aponiajs/common
+
+> Platform-neutral decorators and public contracts for AponiaJS modules, dependency injection, HTTP routes, and WebSocket gateways.
+
+This package records metadata and declares contracts. It never builds a module graph, a route, or a container, and it depends on no platform, so `@aponiajs/core` and `@aponiajs/platform-elysia` can consume the same declarations. Install it with `bun add @aponiajs/common`.
+
+## What this package exports
+
+- [Module, Controller, Injectable, Inject](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/decorators/decorators.ts): module, controller, and injection decorators.
+- [Get, Post, Put, Patch, Delete, Head, Options](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/decorators/decorators.ts): HTTP method decorators, each accepting an optional route schema.
+- [getModuleMetadata, getControllerMetadata, getRouteMetadata, getConstructorDependencies](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/decorators/decorators.ts): read the metadata a decorator recorded.
+- [Body, Query, Param, Headers, Cookie, State, Req, ResponseSettings, HttpStatus, Context](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/route-parameters.ts): parameter decorators, each optionally naming one property.
+- [routeParameterKinds, getRouteParameterMetadata](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/route-parameters.ts): the parameter kind constants and their metadata reader.
+- [Validation, resolveRouteValidator, getValidationMetadata](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/validation.ts): binds one validator to a validation-model class used in a route schema.
+- [routeSchemaSlots, isStandardSchema, isRouteResponseSchemaMap](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/route-schema.ts): the schema slot names and the validator guards the platform uses.
+- [defineModule](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/modules/module.ts): the descriptor-first alternative to `@Module()`.
+- [provideValue, provideClass, provideFactory, provideAlias](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/providers/provider.ts): provider descriptors for hand-written modules.
+- [createToken, getTokenName](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/tokens/token.ts): explicit injection tokens.
+- [AponiaError](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/errors/aponia-error.ts): every framework failure, carrying one code and frozen structured details.
+- [ConsoleLogger, Logger](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/logging/console-logger.ts): the default structured logger.
+- [formatLogValue](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/logging/log-value.ts): the text a logged value is stated as, and `[unrenderable]` for a value it cannot state.
+- [WebSocketGateway, SubscribeMessage, MessageBody, ConnectedSocket, WebSocketServer](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/websockets/websocket-gateway.ts): platform-neutral gateway decorators.
+- [getWebSocketGatewayMetadata, getWebSocketMessageMetadata, getWebSocketParameterMetadata, getWebSocketServerProperties](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/websockets/websocket-gateway.ts): the gateway metadata readers.
+- [defineConfiguration](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/configuration/configuration.ts): declares a configuration as a token that carries the Standard Schema its value must satisfy.
+
+## Public types
+
+- [AponiaErrorCode](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/errors/aponia-error.types.ts): the closed union of framework failure codes.
+- [RouteContext, RouteSchema, RouteValidator, RouteCookie, RouteResponseSchema, InferValidatorOutput](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/route-schema.types.ts): the platform-neutral handler context and route schema contract.
+- [RouteSchemaSlot, RouteResponseSchemaMap, ResponseSettingsState, ValidatorSchema](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/route-schema.types.ts): the schema slots and the structural match for platform-native JSON Schema validators.
+- [RouteParameterKind, RouteParameterMetadata](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/route-parameters.types.ts): parameter decorator metadata.
+- [ValidationModelClass, ValidationMetadata, RouteValidatorInput](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/validation.types.ts): the validation-model contract.
+- [ModuleDefinition, ModuleDescriptor, ModuleOptions, DynamicModule](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/modules/module.types.ts): the frozen module descriptor.
+- [Provider, ClassProvider, ValueProvider, FactoryProvider, AliasProvider, ProviderScope](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/providers/provider.types.ts): provider contracts.
+- [InjectionToken, ClassToken, Constructor, TokenValue, TokenMap](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/tokens/token.types.ts): token contracts.
+- [ModuleMetadata, ControllerMetadata, RouteMetadata, ModuleClass, ModuleImport, ModuleProvider, RequestMethod](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/decorators/decorators.types.ts): decorator inputs and recorded shapes.
+- [LoggerService, LogLevel, ConsoleLoggerOptions](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/logging/logger.types.ts): logger contracts.
+- [WsResponse, OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/websockets/websocket-gateway.types.ts): gateway response and lifecycle contracts.
+- [WebSocketGatewayMetadata, WebSocketGatewayOptions, WebSocketMessageMetadata, WebSocketParameterKind, WebSocketParameterMetadata](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/websockets/websocket-gateway.types.ts): gateway metadata shapes.
+- [ControllerDefinition](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/controllers/controller.types.ts): the platform-neutral controller descriptor.
+- [ConfigurationToken, ConfigurationOptions](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/configuration/configuration.types.ts): the declaration's token type and the options a loader is asked with.
+- [OnModuleInit, OnApplicationBootstrap, BeforeApplicationShutdown, OnModuleDestroy, OnApplicationShutdown](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/lifecycle/lifecycle.types.ts): the five moments a provider can hook, in the order a boot reaches them, read from the instance by the platform.
+
+## Documentation
+
+- [Package README](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/README.md): install, the decorator surface, validation models, and the request parameter table.
+- [Dependency injection](../../docs/dependency-injection.md): tokens, visibility, providers, and the error codes raised on failure.
+- [WebSocket gateways](../../docs/websockets.md): the `{ event, data }` envelope, responses, and lifecycle methods.
+- [Logging](../../docs/logging.md): logger configuration, JSON output, and level filtering.
+- [Lifecycle](../../docs/lifecycle.md): the five moments a provider can hook, and what the framework does when it fails.
+- [Modules](../../docs/learn/03-modules.md): how code is grouped and what a module exposes.
+- [Controllers and routes](../../docs/learn/05-controllers-and-routes.md): how a request reaches a controller method.
+- [Validation](../../docs/learn/06-validation.md): how invalid requests are rejected before the handler.
+- [Request parameters](../../docs/learn/07-request-parameters.md): taking one piece of the request instead of the whole context.
+- [Errors](../../docs/learn/10-errors.md): which failures are raised, when, and how to assert on them.
+- [Published packages](../../docs/packages.md): the npm catalog and install commands.

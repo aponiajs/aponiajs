@@ -1,0 +1,61 @@
+{
+  "name": "@aponiajs/openapi",
+  "version": "1.0.0-beta.4",
+  "description": "Serve an OpenAPI document for an Aponia application's routes, with the document's own metadata from a validated configuration.",
+  "keywords": [
+    "api",
+    "aponia",
+    "aponiajs",
+    "bun",
+    "documentation",
+    "elysia",
+    "openapi",
+    "scalar",
+    "swagger",
+    "typescript"
+  ],
+  "homepage": "https://github.com/aponiajs/aponiajs#readme",
+  "bugs": {
+    "url": "https://github.com/aponiajs/aponiajs/issues"
+  },
+  "license": "MIT",
+  "author": "AponiaJS contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aponiajs/aponiajs.git",
+    "directory": "packages/openapi"
+  },
+  "files": [
+    "dist",
+    "llms.txt"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "bunx --bun vp pack",
+    "dev": "bunx --bun vp pack --watch",
+    "test": "bun test",
+    "test:vite-plus": "vp test",
+    "check": "bunx --bun vp check",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "@aponiajs/common": "workspace:*",
+    "@aponiajs/platform-elysia": "workspace:*",
+    "@elysia/openapi": "2.0.0-beta.4"
+  },
+  "devDependencies": {
+    "@aponiajs/cli": "workspace:*",
+    "elysia": "2.0.0-beta.19",
+    "zod": "^4.4.3"
+  },
+  "peerDependencies": {
+    "elysia": "2.0.0-beta.19"
+  }
+}

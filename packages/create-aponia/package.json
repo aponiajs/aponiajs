@@ -1,7 +1,18 @@
 {
   "name": "create-aponia",
-  "version": "0.6.0-alpha.12",
+  "version": "1.0.0-beta.4",
   "description": "Create a Bun-first Aponia application.",
+  "keywords": [
+    "aponia",
+    "aponiajs",
+    "bun",
+    "create",
+    "elysia",
+    "scaffolding",
+    "starter",
+    "template",
+    "typescript"
+  ],
   "homepage": "https://github.com/aponiajs/aponiajs#readme",
   "bugs": {
     "url": "https://github.com/aponiajs/aponiajs/issues"
@@ -17,7 +28,8 @@
     "create-aponia": "./dist/create-aponia.mjs"
   },
   "files": [
-    "dist"
+    "dist",
+    "llms.txt"
   ],
   "type": "module",
   "publishConfig": {

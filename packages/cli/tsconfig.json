@@ -6,7 +6,14 @@
     "module": "Preserve",
     "moduleResolution": "Bundler",
     "types": ["bun"],
+    "paths": {
+      "@aponiajs/common": ["../common/src/index.ts"],
+      "@aponiajs/core": ["../core/src/index.ts"],
+      "@aponiajs/platform-elysia": ["../platform-elysia/src/index.ts"]
+    },
     "strict": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "noUnusedLocals": true,
     "declaration": true,
     "noEmit": true,

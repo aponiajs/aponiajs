@@ -1,0 +1,58 @@
+# @aponiajs/cors
+
+> Answer cross-origin requests for an Aponia application, with the policy read from a validated configuration. A thin adapter over `@elysia/cors`: AponiaJS contributes a module the plugin is declared in and a validated configuration the origins, methods, headers, and credentials come from, and no CORS implementation of its own.
+
+**This package implements no CORS.** Every header, preflight answer, and matching rule is `@elysia/cors`'s. Its contribution is a module the policy is declared in — so it is a graph node, in the compiled graph and in devtools — and a validated configuration. For a literal policy that is close to no contribution at all: mounting `PluginModule.register(cors({ origin: ["https://app.example"] }), { key: "cors" })` in an `imports` needs no package.
+
+**A reader who wants the raw plugin should use [`@elysia/cors`](https://www.npmjs.com/package/@elysia/cors) directly.** The one thing a configuration cannot carry is an origin that is a `RegExp` or a `(request) => boolean` function: both are code, not data. `CorsConfiguration.origins` is a list of exact origin strings, and the raw plugin is the path for a pattern or a predicate.
+
+## What this package exports
+
+```ts
+import { CorsModule } from "@aponiajs/cors";
+import type { CorsConfiguration, CorsModuleOptions } from "@aponiajs/cors";
+```
+
+- `CorsModule` — `CorsModule.register(options)` returns the `DynamicModule` an application's `imports` accepts.
+- `CorsConfiguration` — the value the module validates and exports: `origins` (required, non-empty), `methods`, `allowedHeaders`, `exposeHeaders`, `credentials`, `maxAge`, and `preflight`.
+- `CorsModuleOptions` — `configuration`, `source`, and `key`.
+
+## Declaring a policy
+
+```ts
+import { Module } from "@aponiajs/common";
+import { CorsModule } from "@aponiajs/cors";
+import { CorsConfig } from "./config.ts";
+
+const cors = CorsModule.register({ configuration: CorsConfig });
+
+@Module({ imports: [cors], controllers: [WidgetsController] })
+export class AppModule {}
+```
+
+`key` defaults to `"cors"`, and two registrations sharing one are refused as `DUPLICATE_MODULE`.
+
+## The defaults this package changed
+
+`origins` is required, and `credentials` defaults to `false`, because the wrapped plugin defaults `origin` to `true` — reflecting any request's `Origin` — and `credentials` to `true`, which together ship `Access-Control-Allow-Origin: <any site>` beside `Access-Control-Allow-Credentials: true`. An application that wants credentialed requests asks for them, and must then name its origins: `origins: ["*"]` together with `credentials: true` is refused at boot, because a browser rejects that pair.
+
+Omitted `methods`, `allowedHeaders`, `exposeHeaders`, `maxAge`, and `preflight` keep the plugin's own defaults, which echo the request for the three header lists.
+
+## One registration per application
+
+Elysia mounts a *named* plugin once, and this plugin is named. Two registrations under distinct keys that resolve equal policies produce two graph nodes and one native mount; two that resolve different policies both mount and both answer, which is a union of two policies rather than a selection. One registration per application is the supported shape.
+
+## `aponia build`
+
+A registration is a `DynamicModule`, not a `@Module()` class the build can read from source, so a module whose `imports` name one is declined and the descriptor artifact holds nothing for it. The application still boots: the platform lowers such a root from its decorators, and the policy answers. Unlike `@aponiajs/devtools`, no plugin value can be exported beside the module, because the plugin is built from a container-resolved configuration. Mounting the raw plugin through `AponiaApplicationOptions.plugins` keeps the artifact and gives up the module and its validation.
+
+## Errors
+
+`AponiaError` with `INVALID_CONFIGURATION_VALUE`, carrying `{ configuration, issues }`, when the schema rejects the value, when the value it produced has no usable `origins`, when any field is the wrong shape, or when `"*"` is combined with `credentials: true`. The issue list is total: every field that fails is reported at once. `INVALID_CONFIGURATION` covers a declaration that is not a Standard Schema or whose validation answers asynchronously.
+
+## Links
+
+- [Package README](./README.md)
+- [`@elysia/cors` on npm](https://www.npmjs.com/package/@elysia/cors)
+- [Plugin package authoring](../../docs/plugin-packages.md)
+- [Published packages](../../docs/packages.md)

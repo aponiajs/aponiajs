@@ -101,6 +101,136 @@ describe("@aponiajs/core module graph", () => {
     );
   });
 
+  test("rejects duplicate module identities", () => {
+    const first = defineModule({ id: "duplicate" });
+    const second = defineModule({ id: "duplicate" });
+    const root = defineModule({
+      id: "duplicate-root",
+      imports: [first, second],
+    });
+
+    expect(() => compileModuleGraph(root)).toThrow(
+      expect.objectContaining({
+        code: "DUPLICATE_MODULE",
+        details: { module: "duplicate" },
+      }),
+    );
+  });
+
+  test("allows configured modules with distinct instance identities", () => {
+    const first = defineModule({
+      id: "configured",
+      instanceId: Symbol("first"),
+    });
+    const second = defineModule({
+      id: "configured",
+      instanceId: Symbol("second"),
+    });
+    const root = defineModule({
+      id: "configured-root",
+      imports: [first, second],
+    });
+
+    expect(compileModuleGraph(root).modules).toEqual([first, second, root]);
+  });
+
+  test("rejects duplicate provider and controller tokens", () => {
+    const value = createToken<number>("duplicate-value");
+    const duplicateProviders = defineModule({
+      id: "duplicate-providers",
+      providers: [provideValue(value, 1), provideValue(value, 2)],
+    });
+
+    class DuplicateController {}
+    const controller: ControllerDefinition = {
+      kind: "test",
+      token: DuplicateController,
+      inject: [],
+      useClass: DuplicateController,
+    };
+    const duplicateControllers = defineModule({
+      id: "duplicate-controllers",
+      controllers: [controller, controller],
+    });
+
+    expect(() => compileModuleGraph(duplicateProviders)).toThrow(
+      expect.objectContaining({
+        code: "DUPLICATE_PROVIDER",
+        details: { module: "duplicate-providers", token: "duplicate-value" },
+      }),
+    );
+    expect(() => compileModuleGraph(duplicateControllers)).toThrow(
+      expect.objectContaining({
+        code: "DUPLICATE_PROVIDER",
+        details: { module: "duplicate-controllers", token: "DuplicateController" },
+      }),
+    );
+  });
+
+  test("rejects unresolvable provider and controller dependencies eagerly", () => {
+    const missing = createToken<string>("missing");
+    const result = createToken<string>("result");
+    const providerModule = defineModule({
+      id: "missing-provider-dependency",
+      providers: [provideFactory(result, [missing] as const, (value) => value)],
+    });
+
+    class MissingDependencyController {}
+    const controller: ControllerDefinition = {
+      kind: "test",
+      token: MissingDependencyController,
+      inject: [missing],
+      useClass: MissingDependencyController,
+    };
+    const controllerModule = defineModule({
+      id: "missing-controller-dependency",
+      controllers: [controller],
+    });
+
+    expect(() => compileModuleGraph(providerModule)).toThrow(
+      expect.objectContaining({
+        code: "MISSING_PROVIDER",
+        details: { module: "missing-provider-dependency", token: "missing" },
+      }),
+    );
+    expect(() => compileModuleGraph(controllerModule)).toThrow(
+      expect.objectContaining({
+        code: "MISSING_PROVIDER",
+        details: { module: "missing-controller-dependency", token: "missing" },
+      }),
+    );
+  });
+
+  test("names the dependency of a token-bound class a module cannot resolve", () => {
+    const missing = createToken<string>("missing-bound-dependency");
+    const repository = createToken<Repository>("missing-bound-repository");
+
+    class Repository {
+      constructor(readonly connection: string) {}
+
+      read(): string {
+        return this.connection;
+      }
+    }
+    class SqlRepository extends Repository {
+      constructor(connection: string) {
+        super(connection);
+      }
+    }
+
+    const module = defineModule({
+      id: "missing-bound",
+      providers: [provideClass(repository, SqlRepository, [missing] as const)],
+    });
+
+    expect(() => compileModuleGraph(module)).toThrow(
+      expect.objectContaining({
+        code: "MISSING_PROVIDER",
+        details: { module: "missing-bound", token: "missing-bound-dependency" },
+      }),
+    );
+  });
+
   test("deduplicates diamond exports by source module", () => {
     const value = createToken<number>("diamond-value");
     const source = defineModule({
@@ -156,6 +286,20 @@ describe("@aponiajs/core module graph", () => {
       expect.objectContaining({ code: "AMBIGUOUS_PROVIDER" }),
     );
   });
+
+  test("rejects lookups from outside the compiled graph", () => {
+    const value = createToken<number>("outside-value");
+    const root = defineModule({ id: "inside" });
+    const outside = defineModule({ id: "outside" });
+    const graph = compileModuleGraph(root);
+
+    expect(() => graph.locate(outside, value)).toThrow(
+      expect.objectContaining({
+        code: "MISSING_PROVIDER",
+        details: { module: "outside", token: "outside-value" },
+      }),
+    );
+  });
 });
 
 describe("@aponiajs/core singleton container", () => {
@@ -205,6 +349,66 @@ describe("@aponiajs/core singleton container", () => {
     expect(first.greet("Bun")).toBe("Hello Bun from Hello Aponia");
   });
 
+  test("resolves a class bound to a separate token and still builds it under its own token", () => {
+    const greeting = createToken<string>("bound-greeting");
+    const repository = createToken<Repository>("bound-repository");
+
+    class Repository {
+      constructor(readonly greeting: string) {}
+
+      read(): string {
+        return this.greeting;
+      }
+    }
+    class SqlRepository extends Repository {}
+
+    const module = defineModule({
+      id: "bound",
+      providers: [
+        provideValue(greeting, "Hello"),
+        provideClass(repository, SqlRepository, [greeting] as const),
+        provideClass(SqlRepository, [greeting] as const),
+      ],
+    });
+
+    const container = createContainer(module);
+    const bound = container.get(repository);
+    const own = container.get(SqlRepository);
+
+    expect(bound).toBeInstanceOf(SqlRepository);
+    expect(bound.read()).toBe("Hello");
+    expect(own).not.toBe(bound);
+    expect(own.read()).toBe("Hello");
+  });
+
+  test("resolves a token-bound class through exports without exposing the class token", () => {
+    const repository = createToken<Port>("exported-bound-repository");
+
+    class Port {
+      read(): string {
+        return "port";
+      }
+    }
+    class SqlRepository implements Port {
+      read(): string {
+        return "sql";
+      }
+    }
+
+    const feature = defineModule({
+      id: "bound-feature",
+      providers: [provideClass(repository, SqlRepository, [] as const)],
+      exports: [repository],
+    });
+    const root = defineModule({ id: "bound-root", imports: [feature] });
+    const container = createContainer(root);
+
+    expect(container.get(repository)).toBeInstanceOf(SqlRepository);
+    expect(() => container.get(SqlRepository)).toThrow(
+      expect.objectContaining({ code: "MISSING_PROVIDER" }),
+    );
+  });
+
   test("detects provider dependency cycles", () => {
     const first = createToken<string>("first");
     const second = createToken<string>("second");
@@ -220,6 +424,24 @@ describe("@aponiajs/core singleton container", () => {
     expect(() => createContainer(module).get(first)).toThrow(
       expect.objectContaining({ code: "PROVIDER_CYCLE" }),
     );
+  });
+
+  test("keeps non-exported imported providers outside root visibility", () => {
+    const privateValue = createToken<number>("private-value");
+    const feature = defineModule({
+      id: "private-feature",
+      providers: [provideValue(privateValue, 42)],
+    });
+    const root = defineModule({
+      id: "private-root",
+      imports: [feature],
+    });
+    const container = createContainer(root);
+
+    expect(() => container.get(privateValue)).toThrow(
+      expect.objectContaining({ code: "MISSING_PROVIDER" }),
+    );
+    expect(container.resolveModuleProvider(feature, privateValue)).toBe(42);
   });
 
   test("keeps shared provider and controller definitions local to each module", () => {

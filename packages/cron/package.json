@@ -1,0 +1,59 @@
+{
+  "name": "@aponiajs/cron",
+  "version": "1.0.0-beta.4",
+  "description": "Declare scheduled jobs in an Aponia module, with options from a validated configuration.",
+  "keywords": [
+    "aponia",
+    "aponiajs",
+    "background-jobs",
+    "bun",
+    "cron",
+    "elysia",
+    "jobs",
+    "scheduler",
+    "typescript"
+  ],
+  "homepage": "https://github.com/aponiajs/aponiajs#readme",
+  "bugs": {
+    "url": "https://github.com/aponiajs/aponiajs/issues"
+  },
+  "license": "MIT",
+  "author": "AponiaJS contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aponiajs/aponiajs.git",
+    "directory": "packages/cron"
+  },
+  "files": [
+    "dist",
+    "llms.txt"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "bunx --bun vp pack",
+    "dev": "bunx --bun vp pack --watch",
+    "test": "bun test",
+    "test:vite-plus": "vp test",
+    "check": "bunx --bun vp check",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "@aponiajs/common": "workspace:*",
+    "@aponiajs/platform-elysia": "workspace:*",
+    "@elysia/cron": "2.0.0-beta.1"
+  },
+  "devDependencies": {
+    "elysia": "2.0.0-beta.19",
+    "zod": "^4.4.3"
+  },
+  "peerDependencies": {
+    "elysia": "2.0.0-beta.19"
+  }
+}

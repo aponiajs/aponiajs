@@ -1,0 +1,71 @@
+# @aponiajs/testing
+
+> Boot an Aponia application for a test with one call, replace a provider for one boot, and tear it down without leaking a listener. It boots a real application through `AponiaFactory.create`; what it adds is sane defaults, provider overrides, and a stop a case can rely on.
+
+**This is not a test runner and not a mocking framework.** Every `test`, `it`, and `expect` stays the runner's — this package depends on none of them and works beside `bun:test`, `vite-plus/test`, and `node:test` alike. `overrideProvider` replaces one provider's descriptor in the compiled module graph: it does not record calls, does not stub one method of a real object, and has no module-interception macro, so a dependency a module imported directly is beyond its reach. A case that needs a call log writes its own object and passes it with `useValue`.
+
+**This is not an in-memory HTTP server.** `application.handle(new Request(...))` calls the real route table, the real container, and the real handlers with no socket bound; it fakes nothing. `listen()` is the opposite — it binds a real port, and exists only because a WebSocket upgrade needs one. A reader who wants none of this should keep using `@aponiajs/platform-elysia` directly.
+
+**A token no module in the graph provides is refused at build time** with `AponiaError` and the code `MISSING_PROVIDER`, carrying `{ token }`. A stub registered for a token nothing provides would otherwise leave every test green while the code under test used the real dependency.
+
+## What this package exports
+
+```ts
+import { createTestApplication, TestApplication } from "@aponiajs/testing";
+import type { TestApplicationBuilder, TestProviderOverride } from "@aponiajs/testing";
+import type { TestApplicationOptions, TestServer } from "@aponiajs/testing";
+```
+
+- `createTestApplication(rootModule, options?)` — returns the builder. The root is anything the factory accepts: a decorated class, a `DynamicModule`, or a `ModuleDefinition`. `options` is `AponiaApplicationOptions`, with one difference: `logger` defaults to `false`.
+- `TestApplication` — the boot. `application`, `get(token)`, `handle(request)`, `listen()`, `close()`, and `Symbol.asyncDispose`.
+- `TestApplicationBuilder` — `overrideProvider(token)` and `compile()`.
+- `TestProviderOverride` — `useValue`, `useFactory`, `useClass`, `useExisting`.
+- `TestServer` — `url` and `webSocketUrl`, the `http://` and `ws://` forms of the one bound socket.
+
+## Booting and asserting without a server
+
+```ts
+import { createTestApplication } from "@aponiajs/testing";
+import { AppModule } from "../src/app.module.ts";
+
+const application = await createTestApplication(AppModule).compile();
+
+try {
+  const response = await application.handle(new Request("http://localhost/users"));
+  expect(response.status).toBe(200);
+} finally {
+  await application.close();
+}
+```
+
+`handle` binds no port, and a case that only calls it never opens a socket. `await using application = ...` is the shorter form: `TestApplication` is an `AsyncDisposable`, and `close()` is idempotent.
+
+## Replacing a provider
+
+```ts
+const application = await createTestApplication(AppModule)
+  .overrideProvider(UsersRepository)
+  .useValue({ findById: async () => undefined })
+  .compile();
+```
+
+An override is keyed by the token the graph provides, and the rewrite walks the whole compiled graph, so a provider an imported module exports is replaced wherever in the graph it lives. The application's own module is never touched, so two boots from one module class share nothing. `useFactory(factory, inject?)` and `useClass(Substitute, inject?)` state their dependency tokens explicitly, because a hand-written stub carries no decorator metadata. Declaring the same token twice is one decision, and the later declaration wins.
+
+Nothing is compiled until `compile()` is called — an override rewrites the compiled graph, so it is declared before the boot rather than applied to a running application. With nothing overridden, `compile()` hands the root straight to `AponiaFactory.create` and the boot is that call exactly.
+
+## A real socket
+
+```ts
+const server = await application.listen();
+const socket = new WebSocket(`${server.webSocketUrl}/chat`);
+```
+
+Port `0` asks the operating system for a free port and `getUrl()` reports the one it granted, so nothing reserves a port and releases it first — the dance that leaves a window in which another process takes the port before the application binds it. Nothing else in this package opens a port.
+
+## Links
+
+- [Package README](./README.md)
+- [Testing applications](../../docs/testing.md)
+- [Lifecycle](../../docs/lifecycle.md)
+- [Dependency injection](../../docs/dependency-injection.md)
+- [Published packages](../../docs/packages.md)

@@ -4,22 +4,42 @@ This repository **is** the AponiaJS framework, not an application built with it.
 Changes here become published npm packages, so treat every edit as public API
 work: contracts first, escape hatches preserved, versions synchronized.
 
+## Mandatory Per-Turn Policy Loading
+
+At the start of every agent turn in this repository, before planning, editing,
+or running repository commands:
+
+1. Read this `AGENTS.md` completely.
+2. Read [`RULES.md`](RULES.md) completely and apply every repository-wide
+   coverage and coding-style rule.
+3. Read the owner-specific `AGENTS.md` next to every area that will be changed.
+
+Repeat this sequence on every turn. Do not rely on memory from a previous turn,
+a prior summary, or an earlier session. No repository change is complete unless
+it satisfies both this guide and `RULES.md`.
+
 ## Project Structure & Module Organization
 
 Bun workspace. Framework packages live in `packages/`:
 
-| Package                     | Owns                                                      | Runtime dependencies                                                 |
-| --------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------- |
-| `@aponiajs/common`          | Decorators, contracts, tokens, providers, errors, logging | `reflect-metadata` only                                              |
-| `@aponiajs/core`            | Module graph, visibility rules, dependency injection      | `@aponiajs/common`                                                   |
-| `@aponiajs/platform-elysia` | Elysia adapter, bootstrap, route mapping, plugin modules  | `common`, `core`, peer `elysia`                                      |
-| `@aponiajs/cli`             | `aponia new` and `aponia generate` schematics             | `change-case`, `ts-morph`, `yargs-parser`, `fast-glob`, `inflection` |
-| `create-aponia`             | `bun create aponia` entrypoint into the same generator    | `@aponiajs/cli`                                                      |
-| `aponiajs`                  | Reserved public facade, private and unpublished           | —                                                                    |
+| Package                     | Owns                                                            | Runtime dependencies                                                     |
+| --------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `@aponiajs/common`          | Decorators, contracts, tokens, providers, errors, WebSockets    | `reflect-metadata` only                                                  |
+| `@aponiajs/core`            | Module graph, visibility rules, dependency injection            | `@aponiajs/common`                                                       |
+| `@aponiajs/platform-elysia` | Elysia adapter, HTTP routes, WebSocket gateways, plugins        | `common`, `core`, peer `elysia`                                          |
+| `@aponiajs/cli`             | `aponia new` and `aponia generate` schematics                   | `change-case`, `ts-morph`, `yargs-parser`, `inflection`, `oxfmt` (exact) |
+| `create-aponia`             | `bun create aponia` entrypoint into the same generator          | `@aponiajs/cli`                                                          |
+| `@aponiajs/cron`            | Scheduled jobs declared in a module, from validated config      | `common`, `platform-elysia`, `@elysia/cron`, peer `elysia`               |
+| `@aponiajs/cors`            | Cross-origin policy declared in a module, from validated config | `common`, `platform-elysia`, `@elysia/cors`, peer `elysia`               |
+| `@aponiajs/devtools`        | Opt-in devtools served by the running application itself        | `cli`, `common`, `platform-elysia`, peer `elysia`                        |
+| `@aponiajs/graphql`         | GraphQL endpoint served in a module, from validated config      | `common`, `platform-elysia`, `@elysia/graphql-yoga`, peer `elysia`       |
+| `@aponiajs/testing`         | Test application builder, provider overrides, teardown          | `common`, `platform-elysia`, peer `elysia`                               |
+| `@aponiajs/openapi`         | OpenAPI document served for an application's routes             | `common`, `platform-elysia`, `@elysia/openapi`, peer `elysia`            |
+| `@aponiajs/opentelemetry`   | Tracing through a validated config, no backend or exporter      | `common`, `platform-elysia`, `@elysia/opentelemetry`, peer `elysia`      |
+| `aponiajs`                  | Reserved public facade, private and unpublished                 | —                                                                        |
 
 Supporting directories: `examples/` for executable examples, `docs/` for
-published documentation, `ROADMAP.md` for milestones and architecture plans,
-`scripts/`
+published documentation, `scripts/`
 for release and documentation guards, `packages/cli/templates/` for generated
 application sources.
 
@@ -28,6 +48,15 @@ Vite+ conformance tests in `packages/*/tests-vp/*.conformance.ts`, CLI end-to-en
 in `packages/cli/e2e/*.e2e.ts`. Generated applications follow Nest's flat starter
 layout; later resources belong in `src/<resource>/`.
 
+Framework package source is domain-first. `src/index.ts` is the only public
+barrel; implementation files live under owner directories such as
+`routing/`, `graph/`, or `generation/`. Type-only contracts use `*.types.ts`
+beside the implementation that owns them, not a package-wide `types/`
+directory. Constants use `*.constants.ts` only when runtime and type modules
+both need the same value. Keep tests at their documented flat paths because the
+Bun test glob depends on that layout. `scripts/source-layout.spec.ts` guards
+these boundaries.
+
 `AGENTS.md` is the real file; `CLAUDE.md` and `GEMINI.md` are symlinks to it.
 Edit `AGENTS.md`.
 
@@ -35,18 +64,25 @@ Every package and supporting directory carries its own `AGENTS.md` with the
 invariants that apply there. Read this file first, then the one next to the code
 being changed:
 
-| Guide                                                            | Covers                                                  |
-| ---------------------------------------------------------------- | ------------------------------------------------------- |
-| [`packages/common`](packages/common/AGENTS.md)                   | Decorators, descriptors, tokens, errors, logging        |
-| [`packages/core`](packages/core/AGENTS.md)                       | Module graph, visibility, container                     |
-| [`packages/platform-elysia`](packages/platform-elysia/AGENTS.md) | Bootstrap, route mapping, native plugins, context types |
-| [`packages/cli`](packages/cli/AGENTS.md)                         | Schematics, templates, generated layout                 |
-| [`packages/create-aponia`](packages/create-aponia/AGENTS.md)     | The `bun create aponia` entrypoint                      |
-| [`packages/aponiajs`](packages/aponiajs/AGENTS.md)               | The reserved, still-private facade                      |
-| [`scripts`](scripts/AGENTS.md)                                   | Release channel derivation and documentation guards     |
-| [`docs`](docs/AGENTS.md)                                         | The published documentation set and what guards it      |
-| [`docs/learn`](docs/learn/README.md)                             | The ordered chapters that teach the framework           |
-| [`examples`](examples/AGENTS.md)                                 | Executable applications built with the framework        |
+| Guide                                                            | Covers                                                          |
+| ---------------------------------------------------------------- | --------------------------------------------------------------- |
+| [`packages/common`](packages/common/AGENTS.md)                   | Decorators, descriptors, tokens, errors, logging                |
+| [`packages/core`](packages/core/AGENTS.md)                       | Module graph, visibility, container                             |
+| [`packages/platform-elysia`](packages/platform-elysia/AGENTS.md) | Bootstrap, route mapping, native plugins, context types         |
+| [`packages/cli`](packages/cli/AGENTS.md)                         | Schematics, templates, generated layout                         |
+| [`packages/create-aponia`](packages/create-aponia/AGENTS.md)     | The `bun create aponia` entrypoint                              |
+| [`packages/cron`](packages/cron/AGENTS.md)                       | The scheduled-jobs plugin package                               |
+| [`packages/cors`](packages/cors/AGENTS.md)                       | The cross-origin plugin package                                 |
+| [`packages/devtools`](packages/devtools/AGENTS.md)               | The opt-in devtools package, served by the application itself   |
+| [`packages/graphql`](packages/graphql/AGENTS.md)                 | The GraphQL endpoint package, served by its own registration    |
+| [`packages/testing`](packages/testing/AGENTS.md)                 | The test kit: test applications, provider overrides, teardown   |
+| [`packages/openapi`](packages/openapi/AGENTS.md)                 | The OpenAPI document package, served by its own registration    |
+| [`packages/opentelemetry`](packages/opentelemetry/AGENTS.md)     | The OpenTelemetry tracing package, and its process-global limit |
+| [`packages/aponiajs`](packages/aponiajs/AGENTS.md)               | The reserved, still-private facade                              |
+| [`scripts`](scripts/AGENTS.md)                                   | Release channel derivation and documentation guards             |
+| [`docs`](docs/AGENTS.md)                                         | The published documentation set and what guards it              |
+| [`docs/learn`](docs/learn/README.md)                             | The ordered chapters that teach the framework                   |
+| [`examples`](examples/AGENTS.md)                                 | Executable applications built with the framework                |
 
 `scripts/agent-guides.spec.ts` keeps that list and the symlinks honest, and
 `scripts/learning-path.spec.ts` keeps the numbered chapters in `docs/learn/`
@@ -60,6 +96,8 @@ contiguous, indexed, and chained.
   lists them.
 - `bun run build`: build every workspace package (`vp pack` per package).
 - `bun test`: run the Bun suite across workspaces.
+- `bun run test:coverage`: run the complete Bun lane and enforce the repository's
+  95% line and function coverage floor.
 - `bun run test:vite-plus`: run the Vite+ conformance lane.
 - `bun run test:examples`: run both example applications end to end. Bun's
   default glob skips `*.e2e-spec.ts`, so this script is how they reach CI.
@@ -87,18 +125,20 @@ Keep internal Vite+ configuration behind Bun package scripts.
 Decorators are a thin metadata surface; the runtime consumes immutable
 descriptors. Understanding this split is required before touching framework code.
 
-`@Module`, `@Controller`, `@Injectable`, `@Inject`, and the HTTP method
-decorators in `packages/common/src/decorators.ts` only write `reflect-metadata`
+`@Module`, `@Controller`, `@Injectable`, `@Inject`, `@Validation`, and the HTTP
+method decorators under `packages/common/src/` only write `reflect-metadata`
 entries under `Symbol.for("aponia.*.metadata")` keys. They build no graph, no
-routes, and no container. `@Injectable()` is intentionally a no-op that exists so
-`emitDecoratorMetadata` records `design:paramtypes`.
+routes, and no container. `@Injectable()` is intentionally a no-op that exists
+so `emitDecoratorMetadata` records `design:paramtypes`.
 
-`compileRootModule` in `packages/platform-elysia/src/decorated-module.ts` reads
+`compileRootModule` in
+`packages/platform-elysia/src/modules/module-compiler.ts` reads
 that metadata and lowers decorated classes into frozen `ModuleDefinition`,
 `ControllerDefinition`, and `Provider` descriptors. `@aponiajs/core` only ever
 sees descriptors — it never imports `reflect-metadata` or decorator logic.
 Applications can hand-write descriptors instead (`defineModule`,
-`defineElysiaController`, `provideValue`/`provideFactory`/`provideClass`/
+`defineController`, `defineControllerRoutes`,
+`defineWebSocketGateway`, `provideValue`/`provideFactory`/`provideClass`/
 `provideAlias`) and skip decorators entirely. Both paths must stay supported.
 
 ### Dependency direction
@@ -110,7 +150,7 @@ cross-package imports use the package name, resolved through workspace links
 
 ### Module graph and visibility
 
-`compileModuleGraph` (`packages/core/src/graph.ts`) walks imports depth-first,
+`compileModuleGraph` (`packages/core/src/graph/graph-compiler.ts`) walks imports depth-first,
 identifies modules by `instanceId ?? id`, and validates eagerly at compile time,
 before any instance exists: duplicate module identity, import cycles, duplicate
 tokens inside a module, exports of tokens the module cannot resolve, unresolvable
@@ -118,11 +158,12 @@ provider dependencies, and unresolvable controller dependencies.
 
 `ModuleGraph.locate` resolves a token against the module's own providers first,
 then against imports that **export** that token. A provider that is not exported
-is invisible to importers. Two imports exporting the same token raise
-`AMBIGUOUS_PROVIDER` rather than picking a winner. Resolutions are memoized per
-module.
+is invisible to importers. Two imports that resolve the token to different
+modules raise `AMBIGUOUS_PROVIDER` rather than picking a winner; two that
+re-export one shared provider agree on it, which is what makes a diamond legal.
+Resolutions are memoized per module.
 
-`AponiaContainer` (`packages/core/src/container.ts`) caches one instance per
+`AponiaContainer` (`packages/core/src/container/container.ts`) caches one instance per
 provider per module — singleton is currently the only scope — and detects
 provider dependency cycles during resolution. `get()` deliberately enforces
 root-module visibility; `resolveModuleProvider()` is the internal platform SPI
@@ -130,72 +171,153 @@ that resolves inside an arbitrary module and is not application API.
 
 ### Bootstrap order
 
-`AponiaFactory.create` (`packages/platform-elysia/src/application.ts`):
+`AponiaFactory.create`
+(`packages/platform-elysia/src/application/aponia-factory.ts`):
 
 1. create the system logger (`false` disables, an array sets log levels, a
    `LoggerService` replaces it);
 2. `compileRootModule` then `createContainer`;
-3. create the root `Elysia` named after the root module id, optionally passed
-   through `configureNative`, which must return the same instance it receives;
+3. create the root `Elysia` named after the root module id with the requested
+   `elysia.precompile` policy, optionally passed through
+   `configureNative`, which must return the same instance it receives;
 4. first pass over `container.graph.modules`: `initializeModule` eagerly
-   instantiates providers, and `ElysiaPluginModule` modules mount their native
+   instantiates providers, and `PluginModule` modules mount their native
    plugin;
-5. second pass: instantiate each controller, call `buildPlugin`, verify the
-   result is a real `Elysia` instance, log `RoutesResolver`/`RouterExplorer`
-   lines, and `use()` it into the root application;
-6. await `nativeApplication.modules` and wrap everything in
-   `AponiaElysiaApplication`.
+5. second pass: instantiate each controller; decorated controllers register
+   their compiled routes directly on the root application, while low-level
+   descriptors fall back to `buildPlugin`, real-`Elysia` validation, and
+   `use()`; log `RoutesResolver`/`RouterExplorer` lines for both paths; then
+   run `onModuleInit` over every hooked provider and controller, modules in
+   graph order, which is the moment between the controller pass and the gateway
+   pass;
+6. await `nativeApplication.modules` so promised, asynchronous, and
+   controller-owned native plugins finish contributing routes before WebSocket
+   collision checks;
+7. compile one gateway plan per class provider — the one it declares, or the one
+   read off `@WebSocketGateway()`/`@SubscribeMessage()` on `useClass` — reject
+   duplicate paths and message events, resolve the existing singleton provider
+   instance, register one native `application.ws()` route, inject
+   `@WebSocketServer()` properties, and run `afterInit`;
+8. await `nativeApplication.modules` again for any gateway initialization work,
+   run the one `onApplicationBootstrap` pass over the graph — after every route
+   and gateway is mounted and before anything can listen — and wrap everything
+   in `AponiaApplication`.
 
-Route mapping itself lives in `compileDecoratedController`: it joins the
-controller path with each route path, converts the declared `RouteSchema` into an
-Elysia hook, and registers `plugin.route(method, path, handler, hook)`. Handlers
-receive the Elysia context, which `@aponiajs/common` describes platform-neutrally
-as `RouteContext`.
+`compileDecoratedController` delegates route lowering to
+`routing/route-compiler.ts`.
+That file joins paths, freezes the route plan, converts each declared
+`RouteSchema` into an Elysia hook, generates a fixed invoker, and registers
+`application.route(method, path, handler, hook)`. Handlers receive the Elysia
+context, which `@aponiajs/common` describes platform-neutrally as
+`RouteContext`.
 
 ### Route validation
 
 Route decorators accept an optional schema (`@Post("/", { body })` or
-`@Post({ body })`). `packages/common/src/route-schema.ts` owns the contract:
-validators are either Standard Schema implementations (`~standard`, so Zod,
+`@Post({ body })`). Each slot accepts either a raw validator or one class
+decorated with `@Validation(validator)`. Validation models are deliberately
+one-schema-per-class: create, update, and path-parameter contracts are separate
+classes rather than several schemas composed into one decorator. A same-named
+interface derives the class instance fields from its validator, so controllers
+name `CreateUser` directly without repeating `typeof`.
+
+The files under `packages/common/src/routing/route-schema*` own the contract.
+Validators are either Standard Schema implementations (`~standard`, so Zod,
 ArkType, and Valibot) or platform-native JSON Schema validators matched
-structurally through `NativeSchema` (`static`/`params`, which is how TypeBox and
-Elysia `t` arrive without `common` depending on TypeBox). Elysia validates both
-kinds natively, so `toElysiaSchema` in `decorated-module.ts` only restores the
-TypeBox type at that single boundary. Slots are `body`, `query`, `params`,
-`headers`, and `response`; keep `routeSchemaSlots`, `RouteContext`, and the
-platform hook builder in sync when adding one.
+structurally through `ValidatorSchema`, the marker union every TypeBox 1 builder
+declares on the type it constructs — `~kind` always, and `~refine`, `~codec`,
+and `~unsafe` from the modifier wrappers — which is the union Elysia itself
+accepts, so an Elysia `t` schema arrives unchanged and no package gains a
+runtime TypeBox edge. TypeBox carries no phantom member describing the value a
+schema produces, so `InferValidatorOutput` reads it through a type-only
+`StaticDecode` import; `common` declares `typebox` as a compile-time-only
+dependency for exactly that. The platform resolves
+a validation-model token once while routes mount and passes its original
+validator to Elysia unchanged; a declared route states that validator directly,
+which is what takes the resolution off its startup path. Raw validators remain
+the low-level escape hatch. Slots are `body`, `query`, `params`, `headers`,
+`cookie`, and `response`;
+`response` accepts either one validator or a status-specific validator map.
+Keep `routeSchemaSlots`, `RouteContext`, model inference, and the platform hook
+builder in sync when adding one.
 
 Handlers receive their input through parameter decorators
-(`packages/common/src/route-parameters.ts`): `@Body`, `@Query`, `@Param`,
-`@Headers`, `@Cookie`, `@Req`, `@Res`, `@Ctx`, each optionally naming a single
-property. Metadata is stored per method under
-`Symbol.for("aponia.route-parameters.metadata")`, and `bindParameters` in
-`decorated-module.ts` maps the context onto the argument list at request time. A
-handler with no parameter decorators receives the whole context as its only
-argument, so `RouteContext` and the platform's `ElysiaRouteContext` stay useful
-annotations. TypeScript cannot contextually type a decorated method's
-parameters, which is why types come from the handler's own annotations rather
-than from schema inference — do not reintroduce an inference-based route API to
-work around it.
+(`packages/common/src/routing/route-parameters.ts`): `@Body`, `@Query`, `@Param`,
+`@Headers`, `@Cookie`, `@State`, `@Req`, `@ResponseSettings`, `@HttpStatus`,
+and `@Context`,
+each optionally naming a single property. Metadata is stored per method under
+`Symbol.for("aponia.route-parameters.metadata")`, and `routing/route-compiler.ts`
+compiles the context-to-argument mapping once while mounting the controller. If
+a handler has no parameter decorators, one declared parameter receives the whole
+context, so `RouteContext` and the platform's `HandlerContext` stay useful
+annotations. A zero-parameter handler skips unused context materialization.
+TypeScript cannot contextually type a decorated method's parameters, which is
+why types come from the handler's own annotations rather than from schema
+inference — do not reintroduce an inference-based route API to work around it.
+
+### WebSocket gateways
+
+Gateway decorators live in
+`packages/common/src/websockets/websocket-gateway.ts` and remain
+platform-neutral. A gateway is a class provider in `@Module({ providers })`:
+bootstrap compiles the plan the provider declares, or the metadata on
+`provider.useClass` when it declares none, and resolves the existing container
+instance through its provider token either way. Never construct a second
+gateway instance or add a separate gateway container.
+`defineWebSocketGateway` in
+`packages/platform-elysia/src/websockets/gateway-definition.ts` is the declared
+half of that pair, and a plan states only what the decorators record — path,
+handlers, and server properties — because lifecycle is resolved from the
+instance.
+
+`@WebSocketGateway()` defaults to `/ws` and accepts a path string or
+`{ path }`. `@SubscribeMessage(event)` records named handlers;
+`@MessageBody()`/`@MessageBody("property")` and `@ConnectedSocket()` describe
+their arguments; `@WebSocketServer()` receives the root Elysia application.
+`OnGatewayInit`, `OnGatewayConnection`, and `OnGatewayDisconnect` use
+`afterInit`, `handleConnection`, and `handleDisconnect`.
+
+Native WebSocket has no named-message protocol, so the Elysia adapter owns one
+documented JSON envelope: incoming messages are `{ event, data }`. Ordinary
+handler results are emitted under the subscribed event, `WsResponse` selects a
+different event, and `undefined` sends nothing. Preserve `null`, `false`, and
+`0`. Promise, generator, and async-generator results are supported without
+adding RxJS. Socket.IO namespaces, rooms managed by an adapter, and
+acknowledgement callbacks are not emulated.
+
+`packages/platform-elysia/src/websockets/websocket-gateway.ts` compiles message
+argument binding once, rejects duplicate canonical paths/events before
+listening, and delegates the upgrade, serialization, native socket,
+publish/subscribe, and backpressure primitives to Elysia. Client-visible errors
+use `{ event: "exception", data: { code, message } }` and never expose a stack
+or cause. Keep `WebSocketClient` and `WebSocketServerRef` as transparent type
+aliases over the native Elysia objects.
 
 ### Native plugin context types
 
 Compiling a decorated controller erases the plugin instances a module imports, so
-nothing statically links `ElysiaPluginModule.register(plugin)` to a handler.
-`ElysiaRouteContext<TSchemaOrPlugins, TPlugins>` in
-`packages/platform-elysia/src/route-context.ts` closes that gap explicitly: it
+nothing statically links `PluginModule.register(plugin)` to a handler.
+`HandlerContext<TSchemaOrPlugins, TPlugins>` in
+`packages/platform-elysia/src/routing/route-context.types.ts` closes that gap
+explicitly: it
 accepts one Elysia instance type or a tuple of them and builds the `Singleton`
 that `Context` needs. The first argument holds either a route schema or the
 plugins — an all-optional `InputSchema` also matches an Elysia instance, so the
 conditional tests for the plugin shape first and only then treats the argument as
 a schema. Applications shorten the annotation with their own
-`AppContext<TSchema extends ElysiaInputSchema = {}>` alias rather than a
+`AppContext<TSchema extends RouteInputSchema = {}>` alias rather than a
 framework-level registry; ambient plugin registration through declaration
 merging was rejected because it leaks across a whole compilation.
+For model-backed route schemas, the platform lowers validation classes through
+a type-only Standard Schema projection before handing the schema to Elysia's
+`Context` types. Keep that projection aligned with bootstrap-time runtime
+lowering, including response maps; it must never read metadata or construct a
+runtime validator.
 
-`defineElysiaPlugin` in `plugin-module.ts` is `ElysiaPluginModule.register` plus
+`definePlugin` in `plugins/plugin-module.ts` is
+`PluginModule.register` plus
 the plugin it installs, exposed as a real `plugin` property rather than a phantom
-type, so `ElysiaPluginSource` accepts both an Elysia instance and that import.
+type, so `PluginSource` accepts both an Elysia instance and that import.
 Exporting the result as a value beside a same-named type is what lets an
 annotation drop `typeof`; TypeScript has no other way to name a value in a type
 position. The merge mirrors Elysia's own `.use()` signature —
@@ -206,46 +328,107 @@ Keep the type and that runtime behavior in step; `tests/plugin-context.test.ts`
 asserts both, and its compile-time assertions fail `bun run check` when the
 mapping widens or drops a plugin type.
 
-Elysia compiles handlers by statically reading their source (sucrose), so a route
-handler must receive the context as a direct call argument, as in
-`handler.call(instance, ...bindParameters(parameters, context))`. Hiding it
-behind `Reflect.apply(handler, instance, [context])` makes Elysia skip building
-and applying parts of the context, and `set.headers` silently stops working.
+Elysia compiles handlers by statically reading their source (sucrose), so
+generated route invokers must expose every context field they use directly and
+call the controller with `handler.call(instance, ...)`. Binding is compiled and
+cached during bootstrap. Synchronous handlers must stay off Elysia's async
+composition path, and any handler whose function kind and emitted
+`design:returntype` cannot prove a synchronous return stays Promise-capable;
+the handler's own source is never consulted. Never forward every request
+through a generic context mapper. Hiding context
+behind `Reflect.apply`, or passing the whole context to a generic helper,
+respectively drops required fields or makes Elysia materialize every optional
+field. Both break the route contract or its hot path.
 
 ### Errors
 
 Failures throw `AponiaError` with a code from the closed `AponiaErrorCode` union
-in `packages/common/src/error.ts` (`MODULE_CYCLE`, `DUPLICATE_MODULE`,
+in `packages/common/src/errors/aponia-error.types.ts` (`MODULE_CYCLE`, `DUPLICATE_MODULE`,
 `DUPLICATE_PROVIDER`, `INVALID_EXPORT`, `AMBIGUOUS_PROVIDER`, `MISSING_PROVIDER`,
-`PROVIDER_CYCLE`, `INVALID_CONTROLLER`, `INVALID_MODULE`,
-`INVALID_NATIVE_APPLICATION`, `APPLICATION_NOT_LISTENING`,
-`UNSUPPORTED_CONTROLLER`) plus frozen structured `details`. Tests assert on those
-codes; extend the union instead of throwing a bare `Error`. Argument and
-generator input mistakes in the CLI use plain `Error`/`TypeError`.
+`PROVIDER_CYCLE`, `INVALID_PROVIDER`, `UNRESOLVED_CONSTRUCTOR_DEPENDENCIES`,
+`INVALID_CONFIGURATION`, `INVALID_CONFIGURATION_VALUE`,
+`INVALID_CONTROLLER`, `INVALID_MODULE`,
+`INVALID_NATIVE_APPLICATION`, `UNSUPPORTED_ELYSIA_VERSION`, `APPLICATION_NOT_LISTENING`,
+`UNSUPPORTED_CONTROLLER`, `DUPLICATE_ROUTE`, `INVALID_VALIDATION_MODEL`,
+`INVALID_WEBSOCKET_GATEWAY`, `DUPLICATE_WEBSOCKET_GATEWAY`,
+`DUPLICATE_WEBSOCKET_HANDLER`, `INVALID_WEBSOCKET_MESSAGE`,
+`UNKNOWN_WEBSOCKET_EVENT`, `WEBSOCKET_HANDLER_ERROR`) plus frozen structured
+`details`. Tests assert on those codes; extend the union instead of throwing a
+bare `Error`. Argument and generator input mistakes in the CLI use plain
+`Error`/`TypeError`.
+
+Application-owned HTTP failures use `HttpError` from
+`@aponiajs/platform-elysia`. `httpErrors` covers every 4xx and 5xx status in
+Elysia's supported `StatusMap`; responses use RFC 9457
+`application/problem+json` and never serialize the stack or cause. These are
+deliberate application failures. Anything else a handler throws becomes a `500`
+Problem Details response, reported through the system logger, unless a declared
+exception filter answers it first or Elysia's own error path already answers it:
+every route the platform mounts compiles a default Problem Details mapping last
+in its own `error` array, behind the filters it declares, and that mapping
+declines an exception carrying its own `status` or `toResponse()` and every
+status Elysia already decided, so validation `422`s, parse `400`s, a failed
+transform decode, `status()`, and `HttpError` keep the responses Elysia gives
+them.
 
 ### CLI
 
 Independent of the runtime packages and driven by libraries rather than
-hand-rolled parsing. `arguments.ts` parses with `yargs-parser` and owns the
-schematic alias table; `component-names.ts` derives names with `change-case` and
-`inflection` and rejects absolute or traversing paths; `project-generator.ts`
-renders `templates/application`; `schematic-generator.ts` owns schematic
-definitions, `aponia.json` configuration, and flat/spec resolution;
-`module-registration.ts` rewrites `@Module()` metadata in generated sources with
-`ts-morph`. A REST CRUD resource also emits `<name>.schema.ts`, which owns the
-route schemas the generated controller passes to its decorators and from which
-both DTOs derive their types with `Static<typeof …>`. `runCli` prints `CREATE`/`UPDATE` change lines and returns an exit
-code — it never throws.
+hand-rolled parsing. `commands/arguments.ts` parses with `yargs-parser`;
+`generation/component-names.ts` derives names with `change-case` and
+`inflection`; `generation/project-generator.ts` renders
+`templates/application`; `generation/schematic-generator.ts` orchestrates
+configuration, planning, rendering, module registration, and writes through
+focused collaborators in the same directory.
+`generation/module-registration.ts` rewrites `@Module()` metadata with
+`ts-morph`. A REST CRUD resource also emits `<name>.model.ts`; that file owns
+separate `@Validation()` classes for create input, partial update input, and
+shared path parameters. Controllers and services use those classes directly,
+while non-REST transports retain ordinary DTO files. Gateway schematics emit
+`@WebSocketGateway()` providers; WebSocket CRUD resources generate stable
+create/find-all/find-one/update/remove message handlers. `runCli` prints
+`CREATE`/`UPDATE` change lines and returns an exit code — it never throws.
 
 ### Current scope
 
 Implemented: decorated modules and HTTP controllers, Standard Schema route
-validation, request parameter decorators, singleton DI, class/value/factory/alias providers, explicit tokens,
-imports and exports, lifecycle, structured logging, generators, native Elysia
-escape hatches. Not implemented: guards, interceptors, middleware, exception filters, Problem Details errors,
-non-singleton scopes, testing modules, OpenAPI, authentication, WebSockets,
-microservice transports. Check
-`ROADMAP.md` before assuming a feature belongs somewhere.
+validation, one-schema validation-model classes, request parameter decorators,
+singleton DI, class/value/factory/alias providers, explicit tokens,
+validated configuration an application declares and injects,
+imports and exports, provider and application lifecycle hooks, read from the
+provider instance, structured logging, generators, native Elysia
+escape hatches, application-owned native plugins mounted through
+`AponiaApplicationOptions.plugins`, concise inferred controller registration,
+RFC 9457 application
+errors, provider-registered Elysia WebSocket gateways, and guards, interceptors,
+and exception filters compiled into per-route lifecycle hooks, with the default
+Problem Details mapping last in each route's error path, and an opt-in devtools
+package, mounted on the application's own route table under `/__devtools`, that
+reports what a boot
+compiled and every request that reached its record, with the answer it observed
+or the absence of one, a `@aponiajs/cron` plugin package that declares
+scheduled jobs in a module and reads them from a validated configuration over
+`@elysia/cron`, and a `@aponiajs/testing` package that boots an application for a
+test with a teardown a case can rely on, replaces one provider for one boot by
+rewriting the compiled graph, and binds the one real port a WebSocket case
+needs, a `@aponiajs/openapi` plugin package that serves an OpenAPI document
+for the application's own routes, with the document's metadata read from a
+validated configuration over `@elysia/openapi`, and a `@aponiajs/cors` plugin
+package that answers cross-origin requests, with the policy read from a
+validated configuration over `@elysia/cors`, and a `@aponiajs/graphql` plugin
+package that serves a GraphQL endpoint in a module, with the mount path read
+from a validated configuration over `@elysia/graphql-yoga` and the schema
+supplied by the application through an injected factory, and a `@aponiajs/opentelemetry`
+plugin package that records spans for the application's own routes, with the
+policy read from a validated configuration over `@elysia/opentelemetry` and the
+span processors, exporters, and instrumentations supplied by the application,
+because the wrapped plugin's SDK is process-global and the first registration in
+a process owns it. Not implemented:
+middleware, non-singleton scopes, authentication,
+production WebSocket policies and transport extraction, job queues and
+distributed scheduling, and microservice
+transports. Treat the two lists above as the scope of record for the current
+release.
 
 ## Coding Style & Naming Conventions
 
@@ -297,10 +480,12 @@ for a boundary, adopt it instead of inventing an Aponia-only shape.
 ## Testing Guidelines
 
 Add tests for every behavioral change. Bun owns the primary suite; Vite+ tests
-protect toolchain compatibility. No coverage threshold is enforced, so prioritize
-module boundaries, dependency resolution, route mapping, CLI output, and failure
-cases. Run `bun run check`, `bun test`, and `bun run test:vite-plus` before
-submitting.
+protect toolchain compatibility. The aggregate coverage gate requires at least
+95% line and function coverage and fails when an executable runtime source is
+missing from LCOV. Prioritize module boundaries, dependency resolution, route
+mapping, CLI output, and failure cases. Run `bun run check`,
+`bun run test:coverage`, and `bun run test:vite-plus` before submitting. Follow
+[`RULES.md`](RULES.md) for change-level coverage and additional lane requirements.
 
 The two lanes are mirrored, not shared. Bun runs `packages/*/tests/*.test.ts`
 against workspace links; Vite+ runs `packages/*/tests-vp/*.conformance.ts`, whose
@@ -308,6 +493,18 @@ include glob and `@aponiajs/*` source aliases live in the root `vite.config.ts`.
 New framework behavior normally needs a case in both.
 `packages/cli/e2e/generated-application.e2e.ts` packs the CLI and boots the
 generated application, so it is slow and excluded from the default lanes.
+
+Every package `tsconfig.json` declares `experimentalDecorators` and
+`emitDecoratorMetadata`, and `scripts/toolchain-config.spec.ts` holds that. Bun
+selects its transpiler configuration from the **process working directory**, so a
+package that omits them does not fail loudly when a command runs from its own
+directory: decorators transpile with stage-3 semantics, `design:paramtypes` is
+never emitted, a decorated controller gets an empty route plan, and the
+application answers `404` without throwing. That is why `bun run --filter
+@aponiajs/cli test` once failed while the same tests passed from the repository
+root, and it is a live hazard for an application started from a directory whose
+own `tsconfig.json` lacks the options — check the consumer's configuration before
+suspecting the framework.
 
 Prefer exercising public entrypoints: build an application with
 `AponiaFactory.create` and assert through `application.handle(new Request(...))`,
@@ -317,23 +514,48 @@ synchronization — a documentation edit can fail the suite.
 
 ## Commit & Pull Request Guidelines
 
-Create every feature on a dedicated branch from the latest `main`, named
-`feature/<short-kebab-description>`. Do not add feature work directly to `main`,
-a documentation branch, or an unrelated feature branch.
+Persistent release branches follow npm's primary distribution channels:
 
-After every successful push to a feature branch, ensure that an open pull request
-targets `main`. Create the pull request immediately when none exists; otherwise
-confirm that the existing pull request includes the pushed commit. The pull
-request title must follow Conventional Commits, and its description must
-summarize the intent, affected areas, and validation results.
+| Branch          | Required version | Primary dist-tag |
+| --------------- | ---------------- | ---------------- |
+| `release/alpha` | `X.Y.Z-alpha.N`  | `alpha`          |
+| `release/beta`  | `X.Y.Z-beta.N`   | `beta`           |
+| `release/rc`    | `X.Y.Z-rc.N`     | `rc`             |
+| `main`          | stable `X.Y.Z`   | `latest`         |
+
+`next` is an npm alias over the newest alpha, beta, or rc and never owns a
+branch. Canary versions are stamped and published by CI without being committed,
+so there is no canary branch either.
+
+Create every feature or fix on a dedicated branch from the release branch it is
+intended for, named `feature/<short-kebab-description>` or
+`fix/<short-kebab-description>`. The release line is on the beta channel, so
+`release/beta` is the default base and pull-request target. Do not add work
+directly to a release branch, a documentation branch, or an unrelated feature
+branch.
+
+After every successful push, ensure that an open pull request targets the same
+release branch the work started from. Create the pull request immediately when
+none exists; otherwise confirm that the existing pull request includes the
+pushed commit. The pull request title must follow Conventional Commits, and its
+description must summarize the intent, affected areas, and validation results.
+
+Promote a release forward only: `release/alpha` → `release/beta` →
+`release/rc` → `main`. Create a dedicated promotion branch from the source
+channel, run the matching `version:beta`, `version:rc`, or `version:promote`
+command, and open a pull request into the next channel. Never merge a less
+mature channel directly into a more mature branch without the matching version
+transition.
 
 Use concise Conventional Commit subjects, for example
 `feat(cli): align starter layout with Nest`.
 
-The framework is pre-1.0 and not production ready, so every release is a
-prerelease: bump with `version:alpha` (or `version:beta` / `version:rc`) and
-never cut a bare `X.Y.Z`, which npm would serve as `latest`, without explicit
-sign-off.
+The framework is pre-1.0 and not production ready. Its release line has moved
+onto the beta channel — the workspace is `1.0.0-beta.N` — so routine work
+targets `release/beta` and bumps with `version:beta`. Use `version:alpha` for
+work that belongs on the earlier channel and `version:rc` only on matching
+promotion work. Never promote a bare `X.Y.Z` into
+`main`, which npm would serve as `latest`, without explicit sign-off.
 
 Every push must raise the synchronized workspace version. The root manifest and
 all publishable packages share one version; run the smallest valid

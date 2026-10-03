@@ -3,14 +3,26 @@
 **Use when:** reusing an existing Elysia plugin, or adding something to the
 request context that every controller can read.
 
-Convert the plugin into a module import once, then mount it:
+For a plugin owned by one controller, use the native callback path and let
+Elysia infer everything:
+
+```ts
+const healthController = controller(HealthController, (app) =>
+  app.use(clock).get("/health", ({ now }) => ({ now: now() })),
+);
+```
+
+That form needs no manual context type or `typeof`.
+
+For a plugin shared by several controllers, convert it into a module import once
+and mount it:
 
 ```ts
 // src/clock.plugin.ts
-import { defineElysiaPlugin } from "@aponiajs/platform-elysia";
+import { definePlugin } from "@aponiajs/platform-elysia";
 import { Elysia } from "elysia";
 
-export const clock = defineElysiaPlugin(
+export const clock = definePlugin(
   new Elysia({ name: "clock" }).decorate("now", () => new Date().toISOString()),
   { key: "clock" },
 );
@@ -33,14 +45,14 @@ so name the plugins in the context type:
 
 ```ts
 @Get()
-read(@Ctx() context: ElysiaRouteContext<clock>) {
+read(@Context() context: HandlerContext<clock>) {
   return { now: context.now() };
 }
 ```
 
 The first type argument takes either the plugins or a route schema, a tuple
 covers several, and the second argument is only needed when both matter. A
-plugin exported through `defineElysiaPlugin` beside a same-named type needs no
+plugin exported through `definePlugin` beside a same-named type needs no
 `typeof`.
 
 ## What actually reaches a controller
@@ -51,7 +63,7 @@ excludes it for exactly that reason.
 
 ## Plugins that need configuration
 
-`ElysiaPluginModule.registerAsync` builds the plugin from the container, so it
+`PluginModule.registerAsync` builds the plugin from the container, so it
 can read a `ConfigService` before constructing the plugin.
 
 Next: [09 · Logging](./09-logging.md) ·

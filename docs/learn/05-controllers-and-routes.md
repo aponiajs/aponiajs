@@ -19,7 +19,36 @@ export class UserController {
 
 `@Get`, `@Post`, `@Put`, `@Patch`, `@Delete`, `@Head`, and `@Options` map to the
 matching HTTP method. The route path joins the controller prefix, so this answers
-`GET /users/:id`.
+`GET /users/:id`. Each accepts either a path, as `@Get(":id")` does, or a schema
+alone — `@Post({ body })` mounts at the controller prefix itself, and
+`@Post("/", { body })` names the path beside the schema.
+
+## Native inference with less syntax
+
+Use `controller` when the shortest type-safe route is more useful than
+decorator metadata:
+
+```ts
+import { defineModule, provideClass } from "@aponiajs/common";
+import { controller } from "@aponiajs/platform-elysia";
+import { t } from "elysia";
+
+const usersController = controller(UserController, [UserService], (app, controller) =>
+  app.get("/users/:id", ({ params }) => controller.findUser(params.id), {
+    params: t.Object({ id: t.String() }),
+  }),
+);
+
+export const UsersModule = defineModule({
+  id: "UsersModule",
+  controllers: [usersController],
+  providers: [provideClass(UserService, [])],
+});
+```
+
+The Elysia callback infers its request fields directly. It needs no options
+object, tuple assertion, context annotation, or `typeof`, and its returned chain
+remains available to Eden Treaty.
 
 ## How a request arrives
 

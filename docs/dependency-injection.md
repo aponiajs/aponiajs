@@ -1,8 +1,9 @@
 # Dependency Injection
 
 Aponia resolves dependencies from a module graph that is compiled and validated
-before the application starts. Every failure below is raised at compile time,
-not on the first request.
+before the application starts. Graph and bootstrap configuration failures are
+raised before the application listens. WebSocket message failures can also be
+raised later, while a connected client sends messages.
 
 ## Providers
 
@@ -45,11 +46,24 @@ provideAlias(LEGACY_GREETING, GREETING);
 
 - `provideValue` registers an existing value.
 - `provideFactory` calls the factory with the resolved `inject` tokens.
-- `provideClass` constructs the class with the resolved `inject` tokens.
+- `provideClass(Class, inject)` constructs the class with the resolved `inject`
+  tokens, under the class's own token.
+- `provideClass(token, Class, inject)` binds that construction to a _different_
+  token, which is how one implementation stands behind a port without the port
+  naming a class: `provideClass(USERS_REPOSITORY, SqlUsersRepository, [Database])`.
+  The class is not reachable under its own token unless a second provider
+  declares it.
 - `provideAlias` points one token at another.
 
 Singleton is currently the only scope: each provider is instantiated once per
 module that owns it, and the instance is cached.
+
+`"request"` and `"transient"` are reserved lifetimes a declaration can state
+today through the trailing `scope` option — `provideValue(token, value, {
+scope: "request" })` — but the container does not instantiate them yet:
+resolving one fails with `UNSUPPORTED_PROVIDER_SCOPE` rather than silently
+serving a singleton where a fresh instance was promised. Lifecycle hooks run
+on singleton instances only, for the same reason.
 
 ## Tokens
 
@@ -75,6 +89,12 @@ export class AppController {
 `createToken<T>(description)` returns a frozen, unique token carrying its value
 type. The description is only used in diagnostics.
 
+Constructor dependencies follow the constructor that actually runs. A subclass
+that declares no constructor of its own runs the parent's, so it resolves the
+parent's reflected parameter types and its `@Inject()` tokens. A subclass that
+declares its own constructor reads its own metadata, and only the sources it
+does not declare fall back to the parent's.
+
 ## Visibility
 
 A provider is private to its module until the module exports it, and an importer
@@ -95,28 +115,48 @@ export class AccountModule {}
 
 `AccountModule` resolves `UserService` and cannot reach `PasswordHasher`.
 Resolution checks the module's own providers first, then the exports of the
-modules it imports. Two imports exporting the same token is an error rather than
-a silent winner.
+modules it imports. Two imports that resolve the token to different modules is an
+error rather than a silent winner; two that re-export one shared provider agree on
+it, because both reach the same declaring module.
 
 ## Failures
 
-Every failure throws `AponiaError` with a stable `code` and frozen `details`, so
-assertions never depend on message text:
+Framework diagnostics throw `AponiaError` with a stable `code` and frozen
+`details`, so assertions never depend on message text. WebSocket message failures
+are delivered in the gateway's `exception` envelope with the same stable code;
+they do not throw through the application HTTP error path.
 
-| Code                         | Raised when                                                                 |
-| ---------------------------- | --------------------------------------------------------------------------- |
-| `MODULE_CYCLE`               | Module imports form a cycle                                                 |
-| `DUPLICATE_MODULE`           | One module id belongs to two definitions                                    |
-| `DUPLICATE_PROVIDER`         | A module declares the same token twice                                      |
-| `INVALID_EXPORT`             | A module exports a token it cannot resolve                                  |
-| `AMBIGUOUS_PROVIDER`         | Two imports export the same token                                           |
-| `MISSING_PROVIDER`           | A dependency cannot be resolved                                             |
-| `PROVIDER_CYCLE`             | Providers depend on each other in a cycle                                   |
-| `INVALID_MODULE`             | A class is used as a module without `@Module()`                             |
-| `INVALID_CONTROLLER`         | A controller is missing `@Controller()`, or a route handler is not callable |
-| `UNSUPPORTED_CONTROLLER`     | A controller cannot be mounted by the platform                              |
-| `INVALID_NATIVE_APPLICATION` | `configureNative` returned a different Elysia instance                      |
-| `APPLICATION_NOT_LISTENING`  | `getUrl()` is called before `listen()`                                      |
+| Code                                  | Raised when                                                                 |
+| ------------------------------------- | --------------------------------------------------------------------------- |
+| `MODULE_CYCLE`                        | Module imports form a cycle                                                 |
+| `DUPLICATE_MODULE`                    | One module id belongs to two definitions                                    |
+| `DUPLICATE_PROVIDER`                  | A module declares the same token twice                                      |
+| `INVALID_EXPORT`                      | A module exports a token it cannot resolve                                  |
+| `AMBIGUOUS_PROVIDER`                  | Two imports resolve the token to different modules                          |
+| `MISSING_PROVIDER`                    | A dependency cannot be resolved                                             |
+| `PROVIDER_CYCLE`                      | Providers depend on each other in a cycle                                   |
+| `INVALID_PROVIDER`                    | A provider entry is not a provider descriptor this release can read         |
+| `UNRESOLVED_CONSTRUCTOR_DEPENDENCIES` | A class provider's constructor dependencies cannot be read                  |
+| `INVALID_MODULE`                      | A class is used as a module without `@Module()`                             |
+| `INVALID_CONTROLLER`                  | A controller is missing `@Controller()`, or a route handler is not callable |
+| `UNSUPPORTED_CONTROLLER`              | A controller cannot be mounted by the platform                              |
+| `DUPLICATE_ROUTE`                     | Two controllers claim one method and path                                   |
+| `INVALID_CONFIGURATION`               | A configuration's declaration or answer is not one this release can use     |
+| `INVALID_CONFIGURATION_VALUE`         | A configuration's value is refused by its own schema                        |
+| `INVALID_VALIDATION_MODEL`            | A route uses a class without `@Validation()`                                |
+| `INVALID_NATIVE_APPLICATION`          | `configureNative` returned a different Elysia instance                      |
+| `UNSUPPORTED_ELYSIA_VERSION`          | The installed Elysia does not expose the route API this platform calls      |
+| `APPLICATION_NOT_LISTENING`           | `getUrl()` is called before `listen()`                                      |
+| `INVALID_WEBSOCKET_GATEWAY`           | A gateway declaration or lifecycle method is invalid                        |
+| `DUPLICATE_WEBSOCKET_GATEWAY`         | Two gateways claim the same path                                            |
+| `DUPLICATE_WEBSOCKET_HANDLER`         | One gateway declares the same message event more than once                  |
+| `INVALID_WEBSOCKET_MESSAGE`           | A received WebSocket message is not a valid `{ event, data }` envelope      |
+| `UNKNOWN_WEBSOCKET_EVENT`             | A client sends an event the gateway does not subscribe to                   |
+| `WEBSOCKET_HANDLER_ERROR`             | A message or lifecycle handler fails                                        |
+
+The first three WebSocket codes describe gateway declarations and are raised
+during bootstrap. The last three describe messages after a connection has
+opened; they are sent to the client through the gateway's `exception` envelope.
 
 ```ts
 import { AponiaError } from "@aponiajs/common";

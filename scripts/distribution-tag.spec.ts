@@ -3,6 +3,7 @@ import {
   assertPublishable,
   createCanaryVersion,
   distributionTags,
+  isDistributionTag,
   parseVersion,
   resolveDistribution,
 } from "./distribution-tag.ts";
@@ -53,6 +54,8 @@ describe("distribution tags", () => {
       "is not a supported distribution tag",
     );
     expect(distributionTags).toEqual(["latest", "alpha", "beta", "rc", "next", "canary"]);
+    expect(isDistributionTag("alpha")).toBe(true);
+    expect(isDistributionTag("stable")).toBe(false);
   });
 
   test("derives a sortable canary version from a commit", () => {
@@ -71,5 +74,11 @@ describe("distribution tags", () => {
     expect(() => createCanaryVersion("0.4.0-rc.1", "abc1234def5678", new Date())).toThrow(
       "cannot be derived from the rc channel",
     );
+  });
+
+  test("rejects a commit identifier that is not a hexadecimal SHA", () => {
+    expect(() =>
+      createCanaryVersion("0.4.0", "not-a-sha", new Date("2026-07-27T12:30:45Z")),
+    ).toThrow("not-a-sha is not a commit SHA.");
   });
 });

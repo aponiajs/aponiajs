@@ -1,0 +1,17 @@
+{
+  "name": "@aponiajs/example-files",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/main.ts",
+    "build": "bun build ./src/main.ts --outdir ./dist --target bun",
+    "test": "bun test ../../examples/files/test/*.e2e-spec.ts",
+    "check": "vp check"
+  },
+  "dependencies": {
+    "@aponiajs/common": "workspace:*",
+    "@aponiajs/platform-elysia": "workspace:*",
+    "elysia": "2.0.0-beta.19"
+  }
+}

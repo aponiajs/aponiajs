@@ -1,7 +1,16 @@
 import { expect, test } from "bun:test";
 import { AponiaFactory } from "@aponiajs/platform-elysia";
-import { Elysia } from "elysia";
+import { Elysia, ElysiaError } from "elysia";
 import { AppModule } from "../src/app.module.ts";
+
+/**
+ * Elysia 1 handed an error hook the framework's `code` string; Elysia 2 hands it
+ * the exception instead, and the code is a member of the typed error. The slug is
+ * read off `ElysiaError.code`, which every framework failure carries.
+ */
+function errorCode(error: unknown): string {
+  return error instanceof ElysiaError ? String(error.code) : "unknown";
+}
 
 test("answers requests without binding a port", async () => {
   const application = await AponiaFactory.create(AppModule, { logger: false });
@@ -46,11 +55,11 @@ test("rejects a configureNative hook that returns another instance", () => {
 test("applies the error handler installed through configureNative", async () => {
   const application = await AponiaFactory.create(AppModule, {
     logger: false,
-    configureNative: (native) => native.onError(({ code }) => ({ handled: String(code) })),
+    configureNative: (native) => native.error(({ error }) => ({ handled: errorCode(error) })),
   });
 
   const response = await application.handle(new Request("http://localhost/nowhere"));
 
-  expect(await response.json()).toEqual({ handled: "NOT_FOUND" });
+  expect(await response.json()).toEqual({ handled: "not-found" });
   await application.close();
 });

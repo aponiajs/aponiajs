@@ -1,30 +1,100 @@
 import {
   Body,
   Controller,
-  Ctx,
+  Context,
   Get,
-  Param,
-  Res,
+  HttpStatus,
   Injectable,
   Module,
+  Param,
   Post,
+  Query,
+  ResponseSettings,
+  State,
+  Validation,
+  defineModule,
+  type ClassToken,
+  type ControllerDefinition,
+  type LoggerService,
   type RouteContext,
-  type RouteResponseSettings,
+  type ResponseSettingsState,
+  type RouteSchema,
 } from "@aponiajs/common";
-import { Elysia } from "elysia";
+import { Elysia, t } from "elysia";
 import { z } from "zod";
 import {
   AponiaFactory,
-  ElysiaPluginModule,
-  defineElysiaPlugin,
+  PluginModule,
+  compileRootModule,
+  definePlugin,
+  controller,
+  httpErrors,
+  type AponiaApplicationOptions,
   type ConfiguredAponiaApplicationOptions,
-  type ElysiaRouteContext,
+  type HandlerContext,
+  type ElysiaResponseSettings,
+  type ResponseStatus,
+  type AppState,
+  type ElysiaPlugin,
 } from "../src/index.ts";
 
 type VitePlusTest = typeof import("vite-plus/test");
+type Equals<TLeft, TRight> =
+  (<T>() => T extends TLeft ? 1 : 2) extends <T>() => T extends TRight ? 1 : 2 ? true : false;
+type Expect<TAssertion extends true> = TAssertion;
 
 declare const test: VitePlusTest["test"];
 declare const expect: VitePlusTest["expect"];
+
+/**
+ * The two shapes Elysia 2's generated route body takes around the handler's
+ * result. A handler whose return it cannot prove synchronous is awaited
+ * unconditionally; one it can prove is called directly and awaited only when
+ * the result turns out to be a thenable, which is the guard below.
+ */
+const AWAITED_HANDLER_MARKER = "_r=await _r";
+const CONDITIONAL_HANDLER_AWAIT_MARKER = "if(typeof _r?.then==='function')";
+
+/**
+ * The body Elysia generates for each mounted route, keyed by path.
+ *
+ * Elysia 2 no longer carries `PublicRoute.compile()` at runtime although its
+ * own types still declare it, so the generated body is read from the
+ * application's compiled-route list instead. That list is in route order, the
+ * same order `routes` reports, which is what pairs the two.
+ */
+function compiledRouteSources(application: {
+  getNativeApplication(): { readonly routes: readonly { readonly path: string }[] };
+}): ReadonlyMap<string, string> {
+  const nativeApplication = application.getNativeApplication() as unknown as {
+    readonly routes: readonly { readonly path: string }[];
+    readonly compiled?: readonly unknown[];
+    compile(): unknown;
+  };
+  nativeApplication.compile();
+  const sources = (nativeApplication.compiled ?? []).map((source) =>
+    typeof source === "function" ? source.toString() : "",
+  );
+
+  return new Map(
+    nativeApplication.routes.map((route, index) => [route.path, sources[index] ?? ""]),
+  );
+}
+
+const conformanceNotFound = httpErrors.notFound();
+type HttpErrorConformanceAssertion = Expect<Equals<typeof conformanceNotFound.status, 404>>;
+type GlobalGuardsOptionAssertion = Expect<
+  Equals<AponiaApplicationOptions["guards"], readonly ClassToken<unknown>[] | undefined>
+>;
+type GlobalInterceptorsOptionAssertion = Expect<
+  Equals<AponiaApplicationOptions["interceptors"], readonly ClassToken<unknown>[] | undefined>
+>;
+type GlobalFiltersOptionAssertion = Expect<
+  Equals<AponiaApplicationOptions["filters"], readonly ClassToken<unknown>[] | undefined>
+>;
+type PluginsOptionAssertion = Expect<
+  Equals<AponiaApplicationOptions["plugins"], readonly (ElysiaPlugin | undefined)[] | undefined>
+>;
 
 @Injectable()
 class HealthService {
@@ -55,10 +125,54 @@ class HealthServicesModule {}
 })
 class HealthModule {}
 
+@Controller("ambiguous-promise")
+class AmbiguousPromiseController {
+  @Get()
+  read(): unknown {
+    return Promise.resolve("resolved");
+  }
+}
+
+@Module({ controllers: [AmbiguousPromiseController] })
+class AmbiguousPromiseModule {}
+
+@Controller("conformance-deferred")
+class ConformanceDeferredController {
+  readonly pendingLookup: Promise<string> = Promise.resolve("deferred");
+
+  @Get()
+  read(): string | Promise<string> | undefined {
+    return this.pendingLookup;
+  }
+}
+
+@Module({ controllers: [ConformanceDeferredController] })
+class ConformanceDeferredModule {}
+
+class RegisteredHealthController {
+  read(): string {
+    return "registered";
+  }
+}
+
+const registeredHealthController = controller(
+  RegisteredHealthController,
+  (application, controller) =>
+    application
+      .get("/registered-health", () => controller.read())
+      .get("/registered-error", () => {
+        throw httpErrors.notFound("The conformance resource does not exist.");
+      }),
+);
+const registeredHealthModule = defineModule({
+  id: "RegisteredHealthModule",
+  controllers: [registeredHealthController],
+});
+
 @Module({
   imports: [
     HealthServicesModule,
-    ElysiaPluginModule.registerAsync({
+    PluginModule.registerAsync({
       imports: [HealthServicesModule],
       inject: [HealthService] as const,
       useFactory: (healthService) =>
@@ -76,13 +190,132 @@ function configureNative(nativeApplication: Elysia) {
 test("the Vite+ lane mounts a controller from module metadata", async () => {
   const options: ConfiguredAponiaApplicationOptions<ReturnType<typeof configureNative>> = {
     logger: false,
+    elysia: {
+      precompile: true,
+    },
     configureNative,
   };
   const application = await AponiaFactory.create(HealthModule, options);
   const response = await application.handle(new Request("http://localhost/health"));
+  const healthRoute = application
+    .getNativeApplication()
+    .compile()
+    .routes.find((route) => route.path === "/health");
+  const healthHandlerSource = healthRoute?.handler.toString() ?? "";
+  const compiledHealthRoute = compiledRouteSources(application).get("/health");
 
   expect(await response.text()).toBe("ok");
-  expect(application.getNativeApplication().store.aponiaVersion).toBe("typed");
+  expect(application.getNativeApplication()["~ext"]?.store?.aponiaVersion).toBe("typed");
+  expect(application.getNativeApplication()["~config"]?.precompile).toBe(true);
+  expect(healthHandlerSource.startsWith("()=>")).toBe(true);
+  // The invoker the platform compiled is proven synchronous, so Elysia leaves
+  // the handler's result unawaited unless it turns out to be a thenable.
+  expect(compiledHealthRoute).toContain(CONDITIONAL_HANDLER_AWAIT_MARKER);
+  await application.close();
+});
+
+test("the Vite+ lane types the global enhancer options", () => {
+  const guardsAssertion: GlobalGuardsOptionAssertion = true;
+  const interceptorsAssertion: GlobalInterceptorsOptionAssertion = true;
+  const filtersAssertion: GlobalFiltersOptionAssertion = true;
+  const pluginsAssertion: PluginsOptionAssertion = true;
+
+  expect(guardsAssertion).toBe(true);
+  expect(interceptorsAssertion).toBe(true);
+  expect(filtersAssertion).toBe(true);
+  expect(pluginsAssertion).toBe(true);
+});
+
+test("the Vite+ lane mounts the plugins option and skips an undefined entry", async () => {
+  const application = await AponiaFactory.create(HealthModule, {
+    logger: false,
+    plugins: [
+      new Elysia({ name: "conformance-option-plugin" }).get("/option-health", () => "ok"),
+      undefined,
+    ],
+  });
+  const mounted = await application.handle(new Request("http://localhost/option-health"));
+  const absent = await application.handle(new Request("http://localhost/skipped-health"));
+
+  expect(await mounted.text()).toBe("ok");
+  expect(absent.status).toBe(404);
+  await application.close();
+});
+
+test("the Vite+ lane supports a boot with precompilation explicitly disabled", async () => {
+  const application = await AponiaFactory.create(HealthModule, {
+    logger: false,
+    elysia: {
+      precompile: false,
+    },
+  });
+  const response = await application.handle(new Request("http://localhost/health"));
+
+  expect(application.getNativeApplication()["~config"]?.precompile).toBe(false);
+  expect(await response.text()).toBe("ok");
+  await application.close();
+});
+
+test("the Vite+ lane awaits ambiguous Promise results before after-handle hooks", async () => {
+  let observedResponse: unknown;
+  const application = await AponiaFactory.create(AmbiguousPromiseModule, {
+    logger: false,
+    configureNative: (nativeApplication) =>
+      nativeApplication.afterHandle(({ responseValue }) => {
+        observedResponse = responseValue;
+      }),
+  });
+  const compiledRoute = compiledRouteSources(application).get("/ambiguous-promise");
+  const response = await application.handle(new Request("http://localhost/ambiguous-promise"));
+
+  expect(await response.text()).toBe("resolved");
+  expect(observedResponse).toBe("resolved");
+  expect(observedResponse).not.toBeInstanceOf(Promise);
+  expect(compiledRoute).toContain(AWAITED_HANDLER_MARKER);
+  await application.close();
+});
+
+test("the Vite+ lane awaits a Promise returned without a call expression before after-handle hooks", async () => {
+  let observedResponse: unknown;
+  const application = await AponiaFactory.create(ConformanceDeferredModule, {
+    logger: false,
+    configureNative: (nativeApplication) =>
+      nativeApplication.afterHandle(({ responseValue }) => {
+        observedResponse = responseValue;
+      }),
+  });
+  const compiledRoute = compiledRouteSources(application).get("/conformance-deferred");
+  const response = await application.handle(new Request("http://localhost/conformance-deferred"));
+
+  // The union return type leaves design:returntype as Object, and the handler
+  // returns the Promise through an identifier, so nothing can prove the
+  // handler synchronous.
+  expect(await response.text()).toBe("deferred");
+  expect(observedResponse).toBe("deferred");
+  expect(observedResponse).not.toBeInstanceOf(Promise);
+  expect(compiledRoute).toContain(AWAITED_HANDLER_MARKER);
+  await application.close();
+});
+
+test("the Vite+ lane mounts a directly registered controller descriptor", async () => {
+  const typeAssertion: HttpErrorConformanceAssertion = true;
+  const application = await AponiaFactory.create(registeredHealthModule, {
+    logger: false,
+  });
+  const response = await application.handle(new Request("http://localhost/registered-health"));
+  const errorResponse = await application.handle(new Request("http://localhost/registered-error"));
+
+  expect(typeAssertion).toBe(true);
+  expect(await response.text()).toBe("registered");
+  expect(errorResponse.status).toBe(404);
+  expect(errorResponse.headers.get("content-type")).toBe("application/problem+json");
+  expect(await errorResponse.json()).toEqual({
+    type: "about:blank",
+    title: "Not Found",
+    status: 404,
+    detail: "The conformance resource does not exist.",
+    code: "NOT_FOUND",
+  });
   await application.close();
 });
 
@@ -94,6 +327,93 @@ test("the Vite+ lane resolves native plugin factories from module imports", asyn
 
   expect(await response.text()).toBe("ok");
   await application.close();
+});
+
+test("the Vite+ lane classifies a non-Elysia controller result as invalid", async () => {
+  const invalidModule = defineModule({
+    id: "InvalidControllerModule",
+    controllers: [
+      {
+        kind: "aponia.elysia.controller",
+        token: class BrokenController {},
+        inject: [],
+        useClass: class BrokenController {},
+        buildPlugin: () => ({}),
+      } as never,
+    ],
+  });
+  const error = await AponiaFactory.create(invalidModule, { logger: false }).then(
+    () => undefined,
+    (reason: unknown) => reason,
+  );
+
+  expect(error).toEqual(
+    expect.objectContaining({
+      code: "INVALID_CONTROLLER",
+    }),
+  );
+});
+
+test("the Vite+ lane rejects missing decorator metadata", async () => {
+  class UndecoratedModule {}
+  const moduleError = await AponiaFactory.create(UndecoratedModule, { logger: false }).then(
+    () => undefined,
+    (reason: unknown) => reason,
+  );
+
+  class UndecoratedController {}
+  class InvalidControllerModule {}
+  Module({ controllers: [UndecoratedController] })(InvalidControllerModule);
+  const controllerError = await AponiaFactory.create(InvalidControllerModule, {
+    logger: false,
+  }).then(
+    () => undefined,
+    (reason: unknown) => reason,
+  );
+
+  expect(moduleError).toEqual(expect.objectContaining({ code: "INVALID_MODULE" }));
+  expect(controllerError).toEqual(expect.objectContaining({ code: "INVALID_CONTROLLER" }));
+});
+
+test("the Vite+ lane rejects static module cycles and reuses repeated imports", () => {
+  class FirstModule {}
+  class SecondModule {}
+  Module({ imports: [SecondModule] })(FirstModule);
+  Module({ imports: [FirstModule] })(SecondModule);
+
+  expect(() => compileRootModule(FirstModule)).toThrow(
+    expect.objectContaining({ code: "MODULE_CYCLE" }),
+  );
+
+  class SharedModule {}
+  class RootModule {}
+  const descriptor = defineModule({ id: "DescriptorImport" });
+  Module({})(SharedModule);
+  Module({ imports: [descriptor, SharedModule, SharedModule] })(RootModule);
+
+  const compiled = compileRootModule(RootModule);
+  expect(compiled.imports[0]).toBe(descriptor);
+  expect(compiled.imports[1]).toBe(compiled.imports[2]);
+});
+
+test("the Vite+ lane rejects foreign controller descriptors", async () => {
+  class ForeignController {}
+  const controller: ControllerDefinition = {
+    kind: "foreign.controller",
+    token: ForeignController,
+    inject: [],
+    useClass: ForeignController,
+  };
+  const module = defineModule({
+    id: "ForeignControllerModule",
+    controllers: [controller],
+  });
+  const error = await AponiaFactory.create(module, { logger: false }).then(
+    () => undefined,
+    (reason: unknown) => reason,
+  );
+
+  expect(error).toEqual(expect.objectContaining({ code: "UNSUPPORTED_CONTROLLER" }));
 });
 
 const createUserSchema = {
@@ -137,6 +457,163 @@ test("the Vite+ lane validates route input with a Standard Schema validator", as
   await application.close();
 });
 
+const conformanceCreateValidator = z.object({
+  name: z.string().min(2),
+});
+
+@Validation(conformanceCreateValidator)
+class ConformanceCreateUser {
+  declare readonly name: string;
+}
+
+const conformanceParamsValidator = t.Object({
+  id: t.Numeric({ minimum: 1 }),
+});
+
+@Validation(conformanceParamsValidator)
+class ConformanceUserParams {
+  declare readonly id: number;
+}
+
+const conformanceModelSchema = {
+  body: ConformanceCreateUser,
+  params: ConformanceUserParams,
+} satisfies RouteSchema;
+
+const conformanceNativeContextModelSchema = {
+  body: ConformanceCreateUser,
+  params: ConformanceUserParams,
+  response: {
+    201: ConformanceCreateUser,
+  },
+} satisfies RouteSchema;
+
+@Controller("conformance-validation-models")
+class ConformanceValidationModelController {
+  @Post(":id", conformanceModelSchema)
+  create(
+    @Param("id") id: number,
+    @Body() body: ConformanceCreateUser,
+  ): {
+    id: number;
+    name: string;
+  } {
+    return { id, name: body.name };
+  }
+}
+
+@Module({ controllers: [ConformanceValidationModelController] })
+class ConformanceValidationModelModule {}
+
+test("the Vite+ lane validates Standard Schema and native validation-model inputs", async () => {
+  const application = await AponiaFactory.create(ConformanceValidationModelModule, {
+    logger: false,
+  });
+  const accepted = await application.handle(
+    new Request("http://localhost/conformance-validation-models/42", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "Ada" }),
+    }),
+  );
+  const rejectedBody = await application.handle(
+    new Request("http://localhost/conformance-validation-models/42", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "A" }),
+    }),
+  );
+  const rejectedParams = await application.handle(
+    new Request("http://localhost/conformance-validation-models/0", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "Ada" }),
+    }),
+  );
+
+  expect(accepted.status).toBe(200);
+  expect(await accepted.json()).toEqual({ id: 42, name: "Ada" });
+  expect(rejectedBody.status).toBe(422);
+  expect(rejectedParams.status).toBe(422);
+  await application.close();
+});
+
+type ConformanceModelContext = RouteContext<typeof conformanceModelSchema>;
+type ConformanceNativeModelContext = HandlerContext<typeof conformanceNativeContextModelSchema>;
+type ValidationModelConformanceAssertions = [
+  Expect<Equals<ConformanceModelContext["body"]["name"], string>>,
+  Expect<Equals<ConformanceModelContext["params"]["id"], number>>,
+  Expect<Equals<ConformanceNativeModelContext["body"]["name"], string>>,
+  Expect<Equals<ConformanceNativeModelContext["params"]["id"], number>>,
+];
+
+function assertConformanceModelStatus(
+  status: ResponseStatus<typeof conformanceNativeContextModelSchema>,
+): void {
+  status(201, { name: "Ada" });
+  // @ts-expect-error The model-backed response requires a name.
+  status(201, { id: 1 });
+}
+
+test("the Vite+ lane keeps validation-model route types referenced", () => {
+  const assertions: ValidationModelConformanceAssertions = [true, true, true, true];
+
+  expect(assertions).toEqual([true, true, true, true]);
+  expect(typeof assertConformanceModelStatus).toBe("function");
+});
+
+const conformanceNativeSchema = {
+  params: t.Object({ id: t.Numeric() }),
+  cookie: t.Cookie({ session: t.String({ minLength: 3 }) }),
+  response: {
+    200: t.Object({ id: t.Number(), session: t.String() }),
+    404: t.Object({ code: t.Literal("NOT_FOUND") }),
+  },
+};
+
+@Controller("conformance-native-schema")
+class ConformanceNativeSchemaController {
+  @Get(":id", conformanceNativeSchema)
+  read(context: HandlerContext<typeof conformanceNativeSchema>): unknown {
+    return context.params.id === 0
+      ? context.status(404, { code: "NOT_FOUND" })
+      : {
+          id: context.params.id,
+          session: context.cookie.session.value,
+        };
+  }
+}
+
+@Module({ controllers: [ConformanceNativeSchemaController] })
+class ConformanceNativeSchemaModule {}
+
+test("the Vite+ lane validates cookies and status-specific responses", async () => {
+  const application = await AponiaFactory.create(ConformanceNativeSchemaModule, {
+    logger: false,
+  });
+  const found = await application.handle(
+    new Request("http://localhost/conformance-native-schema/42", {
+      headers: { cookie: "session=abc" },
+    }),
+  );
+  const missing = await application.handle(
+    new Request("http://localhost/conformance-native-schema/0", {
+      headers: { cookie: "session=abc" },
+    }),
+  );
+  const invalidCookie = await application.handle(
+    new Request("http://localhost/conformance-native-schema/42", {
+      headers: { cookie: "session=x" },
+    }),
+  );
+
+  expect(await found.json()).toEqual({ id: 42, session: "abc" });
+  expect(missing.status).toBe(404);
+  expect(await missing.json()).toEqual({ code: "NOT_FOUND" });
+  expect(invalidCookie.status).toBe(422);
+  await application.close();
+});
+
 const conformanceParameterSchema = { body: z.object({ name: z.string().min(2) }) };
 
 @Controller("conformance-parameters")
@@ -144,7 +621,7 @@ class ConformanceParameterController {
   @Post("/", conformanceParameterSchema)
   createUser(
     @Body() body: { name: string },
-    @Res() set: RouteResponseSettings,
+    @ResponseSettings() set: ResponseSettingsState,
   ): {
     name: string;
   } {
@@ -155,6 +632,20 @@ class ConformanceParameterController {
   @Get(":id")
   findUser(@Param("id") id: string): { id: string } {
     return { id };
+  }
+
+  @Get("async/:id")
+  async findUserAsync(
+    @Param("id") id: string,
+    _unused: unknown,
+    @Query("name") name: string | undefined,
+  ): Promise<{ id: string; name: string | undefined; unused: boolean }> {
+    return { id, name, unused: _unused === undefined };
+  }
+
+  @Post("escaped")
+  selectEscapedBodyProperty(@Body('quoted"key') value: string): { value: string } {
+    return { value };
   }
 }
 
@@ -180,24 +671,44 @@ test("the Vite+ lane injects decorated route parameters", async () => {
     }),
   );
   const found = await application.handle(new Request("http://localhost/conformance-parameters/42"));
+  const foundAsync = await application.handle(
+    new Request("http://localhost/conformance-parameters/async/42?name=Ada"),
+  );
+  const escaped = await application.handle(
+    new Request("http://localhost/conformance-parameters/escaped", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ 'quoted"key': "value" }),
+    }),
+  );
+  const asyncRouteSource = compiledRouteSources(application).get(
+    "/conformance-parameters/async/:id",
+  );
 
   expect(created.headers.get("x-source")).toBe("parameters");
   expect(await created.json()).toEqual({ name: "Ada" });
   expect(rejected.status).toBe(422);
   expect(await found.json()).toEqual({ id: "42" });
+  expect(await foundAsync.json()).toEqual({
+    id: "42",
+    name: "Ada",
+    unused: true,
+  });
+  expect(await escaped.json()).toEqual({ value: "value" });
+  expect(asyncRouteSource).toContain(AWAITED_HANDLER_MARKER);
   await application.close();
 });
 
 const conformanceClockPlugin = new Elysia({ name: "conformance-clock" })
   .decorate("now", () => "2026-07-28T00:00:00.000Z")
   .state("requests", 0)
-  .derive({ as: "global" }, () => ({ traceId: "trace-1" }))
+  .derive("global", () => ({ traceId: "trace-1" }))
   .derive(() => ({ pluginOnly: "local" }));
 
 @Controller("conformance-plugin-context")
 class ConformancePluginContextController {
   @Get()
-  read(@Ctx() context: ElysiaRouteContext<{}, typeof conformanceClockPlugin>): {
+  read(@Context() context: HandlerContext<{}, typeof conformanceClockPlugin>): {
     now: string;
     traceId: string;
     requests: number;
@@ -211,10 +722,21 @@ class ConformancePluginContextController {
       pluginOnly: (context as Record<string, unknown>).pluginOnly ?? null,
     };
   }
+
+  @Get("parts")
+  readParts(
+    @State() store: AppState<typeof conformanceClockPlugin>,
+    @ResponseSettings() set: ElysiaResponseSettings,
+    @HttpStatus() status: ResponseStatus,
+  ): unknown {
+    store.requests += 1;
+    set.headers["x-context-source"] = "parts";
+    return status(202, { requests: store.requests });
+  }
 }
 
 @Module({
-  imports: [ElysiaPluginModule.register(conformanceClockPlugin, { key: "conformance-clock" })],
+  imports: [PluginModule.register(conformanceClockPlugin, { key: "conformance-clock" })],
   controllers: [ConformancePluginContextController],
 })
 class ConformancePluginContextModule {}
@@ -224,6 +746,9 @@ test("the Vite+ lane types and exposes native plugin context", async () => {
   const response = await application.handle(
     new Request("http://localhost/conformance-plugin-context"),
   );
+  const parts = await application.handle(
+    new Request("http://localhost/conformance-plugin-context/parts"),
+  );
 
   expect(await response.json()).toEqual({
     now: "2026-07-28T00:00:00.000Z",
@@ -231,10 +756,13 @@ test("the Vite+ lane types and exposes native plugin context", async () => {
     requests: 1,
     pluginOnly: null,
   });
+  expect(parts.status).toBe(202);
+  expect(parts.headers.get("x-context-source")).toBe("parts");
+  expect(await parts.json()).toEqual({ requests: 2 });
   await application.close();
 });
 
-const conformanceCachePlugin = defineElysiaPlugin(
+const conformanceCachePlugin = definePlugin(
   new Elysia({ name: "conformance-cache" }).decorate("cache", {
     read: (key: string) => `cached:${key}`,
   }),
@@ -245,7 +773,7 @@ type conformanceCachePlugin = typeof conformanceCachePlugin;
 @Controller("conformance-defined-plugin")
 class ConformanceDefinedPluginController {
   @Get()
-  read(@Ctx() context: ElysiaRouteContext<conformanceCachePlugin>): { cached: string } {
+  read(@Context() context: HandlerContext<conformanceCachePlugin>): { cached: string } {
     return { cached: context.cache.read("users") };
   }
 }
@@ -263,5 +791,36 @@ test("the Vite+ lane mounts and types a defined native plugin", async () => {
   );
 
   expect(await response.json()).toEqual({ cached: "cached:users" });
+  await application.close();
+});
+
+@Controller("exploding")
+class ExplodingController {
+  @Get()
+  explode(): never {
+    throw new Error("the raw exception");
+  }
+}
+
+@Module({ controllers: [ExplodingController] })
+class ExplodingModule {}
+
+/** A logger whose `error` refuses, supplied by an application rather than built by the framework. */
+const refusingLogger: LoggerService = {
+  log(): void {},
+  fatal(): void {},
+  warn(): void {},
+  error(): void {
+    throw new Error("the logger refused to report the failure");
+  },
+};
+
+test("the Vite+ lane answers Problem Details when the configured logger throws", async () => {
+  const application = await AponiaFactory.create(ExplodingModule, { logger: refusingLogger });
+
+  const response = await application.handle(new Request("http://localhost/exploding"));
+
+  expect(response.status).toBe(500);
+  expect(response.headers.get("content-type")).toContain("application/problem+json");
   await application.close();
 });

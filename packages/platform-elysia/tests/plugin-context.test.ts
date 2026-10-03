@@ -1,12 +1,26 @@
 import { expect, test } from "bun:test";
-import { Controller, Ctx, Get, Injectable, Module, Param, Post } from "@aponiajs/common";
+import {
+  Controller,
+  Context,
+  Get,
+  HttpStatus,
+  Injectable,
+  Module,
+  Param,
+  Post,
+  ResponseSettings,
+  State,
+} from "@aponiajs/common";
 import { Elysia } from "elysia";
 import { z } from "zod";
 import {
   AponiaFactory,
-  ElysiaPluginModule,
-  type ElysiaInputSchema,
-  type ElysiaRouteContext,
+  PluginModule,
+  type RouteInputSchema,
+  type HandlerContext,
+  type ElysiaResponseSettings,
+  type ResponseStatus,
+  type AppState,
 } from "../src/index.ts";
 
 type Equals<TLeft, TRight> =
@@ -18,13 +32,13 @@ let scopedDeriveCalls = 0;
 const clockPlugin = new Elysia({ name: "clock" })
   .decorate("now", () => "2026-07-28T00:00:00.000Z")
   .state("requests", 0)
-  .derive({ as: "global" }, () => ({ traceId: "trace-1" }))
-  .derive({ as: "scoped" }, () => {
+  .derive("global", () => ({ traceId: "trace-1" }))
+  .derive("plugin", () => {
     scopedDeriveCalls += 1;
     return { requestScope: "scoped" };
   })
   .derive(() => ({ pluginOnly: "local" }))
-  .resolve({ as: "global" }, () => ({ tenant: "acme" }));
+  .derive("global", () => ({ tenant: "acme" }));
 
 const cachePlugin = new Elysia({ name: "cache" }).decorate("cache", {
   read: (key: string) => `cached:${key}`,
@@ -38,7 +52,7 @@ class SecretService {
 const createUserSchema = { body: z.object({ name: z.string().min(2) }) };
 
 /** The alias an application declares once for the plugins it always mounts. */
-type ApplicationContext<TSchema extends ElysiaInputSchema = {}> = ElysiaRouteContext<
+type ApplicationContext<TSchema extends RouteInputSchema = {}> = HandlerContext<
   TSchema,
   [typeof clockPlugin, typeof cachePlugin]
 >;
@@ -46,18 +60,18 @@ type ApplicationContext<TSchema extends ElysiaInputSchema = {}> = ElysiaRouteCon
 @Controller("context")
 class ContextController {
   @Get("decorator")
-  readDecorator(@Ctx() context: ElysiaRouteContext<{}, typeof clockPlugin>): { now: string } {
+  readDecorator(@Context() context: HandlerContext<{}, typeof clockPlugin>): { now: string } {
     return { now: context.now() };
   }
 
   @Get("store")
-  readStore(@Ctx() context: ElysiaRouteContext<{}, typeof clockPlugin>): { requests: number } {
+  readStore(@Context() context: HandlerContext<{}, typeof clockPlugin>): { requests: number } {
     context.store.requests += 1;
     return { requests: context.store.requests };
   }
 
   @Get("derived")
-  readDerived(@Ctx() context: ElysiaRouteContext<{}, typeof clockPlugin>): {
+  readDerived(@Context() context: HandlerContext<{}, typeof clockPlugin>): {
     traceId: string;
     requestScope: string;
     tenant: string;
@@ -70,14 +84,14 @@ class ContextController {
   }
 
   @Get("plugin-local")
-  readPluginLocal(@Ctx() context: ElysiaRouteContext<{}, typeof clockPlugin>): {
+  readPluginLocal(@Context() context: HandlerContext<{}, typeof clockPlugin>): {
     pluginOnly: unknown;
   } {
     return { pluginOnly: (context as Record<string, unknown>).pluginOnly ?? null };
   }
 
   @Get("many")
-  readMany(@Ctx() context: ElysiaRouteContext<[typeof clockPlugin, typeof cachePlugin]>): {
+  readMany(@Context() context: HandlerContext<[typeof clockPlugin, typeof cachePlugin]>): {
     now: string;
     cached: string;
   } {
@@ -85,36 +99,47 @@ class ContextController {
   }
 
   @Get("short")
-  readShort(@Ctx() context: ElysiaRouteContext<typeof clockPlugin>): { now: string } {
+  readShort(@Context() context: HandlerContext<typeof clockPlugin>): { now: string } {
     return { now: context.now() };
   }
 
   @Get("alias/:id")
   readThroughAlias(
     @Param("id") id: string,
-    @Ctx() context: ApplicationContext,
+    @Context() context: ApplicationContext,
   ): { id: string; now: string; cached: string } {
     return { id, now: context.now(), cached: context.cache.read(id) };
   }
 
   @Post("schema", createUserSchema)
   readSchemaAndPlugin(
-    @Ctx() context: ElysiaRouteContext<typeof createUserSchema, typeof clockPlugin>,
+    @Context() context: HandlerContext<typeof createUserSchema, typeof clockPlugin>,
   ): { name: string; traceId: string } {
     context.set.headers["x-clock"] = context.now();
     return { name: context.body.name, traceId: context.traceId };
   }
 
   @Get("untyped")
-  readUntyped(@Ctx() context: ElysiaRouteContext): { now: unknown } {
+  readUntyped(@Context() context: HandlerContext): { now: unknown } {
     return { now: (context as Record<string, unknown>).now === undefined ? null : "present" };
+  }
+
+  @Get("parts")
+  readNativeParts(
+    @State() store: AppState<typeof clockPlugin>,
+    @ResponseSettings() set: ElysiaResponseSettings,
+    @HttpStatus() status: ResponseStatus,
+  ): unknown {
+    store.requests += 1;
+    set.headers["x-context-source"] = "parts";
+    return status(202, { requests: store.requests });
   }
 }
 
 @Module({
   imports: [
-    ElysiaPluginModule.register(clockPlugin, { key: "clock" }),
-    ElysiaPluginModule.register(cachePlugin, { key: "cache" }),
+    PluginModule.register(clockPlugin, { key: "clock" }),
+    PluginModule.register(cachePlugin, { key: "cache" }),
   ],
   controllers: [ContextController],
 })
@@ -139,7 +164,7 @@ test("exposes plugin state to a controller handler", async () => {
   expect(await response.json()).toEqual({ requests: 1 });
 });
 
-test("exposes global and scoped derives and global resolves", async () => {
+test("exposes global and plugin-scoped derives", async () => {
   const response = await get("/context/derived");
 
   expect(response.status).toBe(200);
@@ -213,7 +238,9 @@ test("resolves an asynchronously configured plugin against the container", async
   @Controller("configured")
   class ConfiguredController {
     @Get()
-    read(@Ctx() context: ElysiaRouteContext<{}, Elysia<"", SecretSingleton>>): { secret: string } {
+    read(@Context() context: HandlerContext<{}, Elysia<"", "local", SecretSingleton>>): {
+      secret: string;
+    } {
       return { secret: context.secret };
     }
   }
@@ -223,7 +250,7 @@ test("resolves an asynchronously configured plugin against the container", async
 
   @Module({
     imports: [
-      ElysiaPluginModule.registerAsync({
+      PluginModule.registerAsync({
         key: "secret",
         imports: [SecretModule],
         inject: [SecretService],
@@ -246,15 +273,14 @@ interface SecretSingleton {
   decorator: { secret: string };
   store: {};
   derive: {};
-  resolve: {};
 }
 
-type ClockContext = ElysiaRouteContext<{}, typeof clockPlugin>;
-type ManyContext = ElysiaRouteContext<[typeof clockPlugin, typeof cachePlugin]>;
-type ShortContext = ElysiaRouteContext<typeof clockPlugin>;
+type ClockContext = HandlerContext<{}, typeof clockPlugin>;
+type ManyContext = HandlerContext<[typeof clockPlugin, typeof cachePlugin]>;
+type ShortContext = HandlerContext<typeof clockPlugin>;
 type AliasedSchemaContext = ApplicationContext<typeof createUserSchema>;
-type BareContext = ElysiaRouteContext;
-type SchemaContext = ElysiaRouteContext<typeof createUserSchema, typeof clockPlugin>;
+type BareContext = HandlerContext;
+type SchemaContext = HandlerContext<typeof createUserSchema, typeof clockPlugin>;
 
 /**
  * Elysia keeps the literal types a plugin declares, so the context carries them
@@ -281,15 +307,18 @@ type PluginTypeAssertions = [
   Expect<Equals<ShortContext["body"], unknown>>,
   Expect<Equals<AliasedSchemaContext["body"], { name: string }>>,
   Expect<Equals<AliasedSchemaContext["cache"], ManyContext["cache"]>>,
+  Expect<Equals<AppState<typeof clockPlugin>, ClockContext["store"]>>,
+  Expect<Equals<ElysiaResponseSettings, ClockContext["set"]>>,
+  Expect<Equals<ResponseStatus, ClockContext["status"]>>,
 ];
 
 test("keeps the plugin context type assertions referenced", () => {
   const assertions: PluginTypeAssertions = Array.from(
-    { length: 19 },
+    { length: 22 },
     () => true,
   ) as PluginTypeAssertions;
 
-  expect(assertions).toHaveLength(19);
+  expect(assertions).toHaveLength(22);
 });
 
 test("types plugins passed in the first argument", async () => {
@@ -308,4 +337,26 @@ test("serves a handler annotated with an application context alias", async () =>
     now: "2026-07-28T00:00:00.000Z",
     cached: "cached:42",
   });
+});
+
+test("injects typed store, set, and status parts without materializing the whole context", async () => {
+  const application = await AponiaFactory.create(ContextModule, { logger: false });
+  const routeHandlerSource =
+    application
+      .getNativeApplication()
+      .routes.find((route) => route.path === "/context/parts")
+      ?.handler.toString() ?? "";
+  const first = await application.handle(new Request("http://localhost/context/parts"));
+  const second = await application.handle(new Request("http://localhost/context/parts"));
+
+  expect(routeHandlerSource).toContain("context.store");
+  expect(routeHandlerSource).toContain("context.set");
+  expect(routeHandlerSource).toContain("context.status");
+  expect(routeHandlerSource).not.toContain("handler.call(instance,context)");
+  expect(first.status).toBe(202);
+  expect(first.headers.get("x-context-source")).toBe("parts");
+  expect(await first.json()).toEqual({ requests: 1 });
+  expect(second.status).toBe(202);
+  expect(await second.json()).toEqual({ requests: 2 });
+  await application.close();
 });

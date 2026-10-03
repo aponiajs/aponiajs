@@ -10,9 +10,11 @@ context.
 | `@Param("id")`        | Path parameters                |
 | `@Headers("x-agent")` | Request headers                |
 | `@Cookie("session")`  | Cookies, or one cookie's value |
+| `@State()`            | Typed application state        |
 | `@Req()`              | The native `Request`           |
-| `@Res()`              | The mutable response settings  |
-| `@Ctx()`              | The whole Elysia context       |
+| `@ResponseSettings()` | Mutable response settings      |
+| `@HttpStatus()`       | The typed status helper        |
+| `@Context()`          | The whole Elysia context       |
 
 Each accepts an optional name that selects a single property:
 
@@ -28,20 +30,32 @@ findOne(@Param("id") id: string, @Query("expand") expand: string | undefined) {
 }
 ```
 
+Annotate the injected values with `AppState<AppPlugins>`, `ElysiaResponseSettings`, and
+`ResponseStatus<typeof schema>` from `@aponiajs/platform-elysia` when exact plugin
+or response types matter.
+
 ## Taking the whole context
 
-A handler with no parameter decorators receives the context as its only
-argument, and `@Ctx()` does the same explicitly. Annotate it with
-`RouteContext<typeof schema>` to stay platform-neutral, or with
-`ElysiaRouteContext<typeof schema>` to keep Elysia's own `status`, `set`,
-`cookie`, `store`, and `redirect` typed:
+A handler with no parameter decorators may declare one unannotated parameter to
+receive the context, and `@Context()` does the same explicitly. The annotation
+decides what it reads:
+
+| Annotation                                                 | From                        | Use when                                               |
+| ---------------------------------------------------------- | --------------------------- | ------------------------------------------------------ |
+| `RouteContext<typeof schema>`                              | `@aponiajs/common`          | The handler should stay platform-neutral               |
+| `HandlerContext<typeof schema>`                            | `@aponiajs/platform-elysia` | The handler reads Elysia's own context                 |
+| `ElysiaResponseSettings` / `ResponseStatus<typeof schema>` | `@aponiajs/platform-elysia` | A parameter decorator injects only the response helper |
+
+`HandlerContext` keeps Elysia's own `status`, `set`, `cookie`, `store`, and
+`redirect` typed; `RouteContext` covers the validated slots and the native
+`Request` without them.
 
 ```ts
-import { Controller, Ctx, Post } from "@aponiajs/common";
-import { type ElysiaRouteContext } from "@aponiajs/platform-elysia";
+import { Context, Controller, Post } from "@aponiajs/common";
+import { type HandlerContext } from "@aponiajs/platform-elysia";
 
-@Post("/", createUser)
-create(@Ctx() context: ElysiaRouteContext<typeof createUser>) {
+@Post("/", createUserSchema)
+create(@Context() context: HandlerContext<typeof createUserSchema>) {
   context.set.headers["x-created"] = "1";
   return context.body.name === "root"
     ? context.status(403, "forbidden")
