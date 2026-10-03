@@ -341,6 +341,29 @@ added: `scripts/package-llms.spec.ts`, `scripts/coverage-gate.ts`, and the root
 `bun run --workspaces` scripts. The root `package.json` `workspaces` glob already
 covers `packages/*`.
 
+## The standard registration shape
+
+Every package above follows one declaration, and a new one keeps it rather than
+inventing its own: `Module.register({ configuration, source?, key?, ...runtime })`
+returns a `DynamicModule` built on `PluginModule.registerAsync`, provides the
+configuration it consumes through `provideConfiguration`, exports that token so
+the application reads the same validated value back, and names its identity
+with `key` (defaulting to the package's own name). What varies is only what
+`register` takes beside the configuration:
+
+- config-only (`cors`, `openapi`): the validated value is the whole policy;
+- config plus runtime options (`opentelemetry`): live objects a configuration
+  cannot carry — processors, exporters, instrumentations — arrive as ordinary
+  `register` fields, and the module spreads the validated value after them so
+  the configuration stays authoritative;
+- config plus injected factory (`graphql`): `imports`/`inject`/`useFactory`
+  resolve providers from the container so the plugin is built from values only
+  a boot holds.
+
+A package that needs more than these three — a second token, a per-key handle,
+its own lifecycle beyond a provider hook — states it in its README as the
+limitation it is rather than widening this shape quietly.
+
 ## In this repository
 
 `packages/cron/` is the worked example, and its two lanes are what a new

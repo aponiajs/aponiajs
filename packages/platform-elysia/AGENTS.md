@@ -93,7 +93,11 @@ runtime boundary it describes.
 - A route's enhancers compile onto the route-local hooks their kind maps to:
   guards and an interceptor's `interceptBefore` join one `beforeHandle`, an
   interceptor's `interceptAfter` is an `afterHandle`, and a filter joins the
-  route's `error` array the next bullet describes. Guards and before halves
+  route's `error` array the next bullet describes. The run order is the
+  contract (`docs/enhancers.md` `## Run order`): guards, before halves, the
+  handler, after halves reversed, filters most-specific-first, the default
+  mapping last. A middleware or pipe stage, if one ever lands, runs before
+  the guards — that position is reserved, not implemented. Guards and before halves
   share one hook function so their order is the one the code states — the guards
   in declaration order, with the application's own declarations before the
   route's, then the before halves — rather than the order Elysia's own

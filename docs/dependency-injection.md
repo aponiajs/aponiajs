@@ -58,6 +58,13 @@ provideAlias(LEGACY_GREETING, GREETING);
 Singleton is currently the only scope: each provider is instantiated once per
 module that owns it, and the instance is cached.
 
+`"request"` and `"transient"` are reserved lifetimes a declaration can state
+today through the trailing `scope` option — `provideValue(token, value, {
+scope: "request" })` — but the container does not instantiate them yet:
+resolving one fails with `UNSUPPORTED_PROVIDER_SCOPE` rather than silently
+serving a singleton where a fresh instance was promised. Lifecycle hooks run
+on singleton instances only, for the same reason.
+
 ## Tokens
 
 A class is its own token. Anything else — a string, a configuration object, a
