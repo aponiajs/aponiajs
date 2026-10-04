@@ -16,6 +16,7 @@ Decorated modules, controllers, gateways, and `@Validation()` models are the nor
 - [defineWebSocketGateway](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/websockets/gateway-definition.ts): declares a gateway's path, message handlers, and server properties as data instead of through `@WebSocketGateway()` and `@SubscribeMessage()`.
 - [downloadFile](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/routing/download-file.ts): writes the `content-disposition` value that names a download and returns the file the platform streams.
 - [provideConfiguration](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/configuration/provider.ts): turns a declared configuration into the singleton provider that validates it once at boot.
+- [RequestContextService, RequestContextModule](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/request-context/request-context-module.ts): per-request AsyncLocalStorage store and service exposing request ID, standard Request, and typed token storage.
 
 ## Public types
 
@@ -31,10 +32,12 @@ Decorated modules, controllers, gateways, and `@Validation()` models are the nor
 - [WebSocketClient, WebSocketServerRef](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/websockets/websocket-gateway.types.ts): transparent aliases over the native Elysia socket and server objects.
 - [WebSocketGatewayPlan, WebSocketGatewayOptions, WebSocketHandlerPlan, DeclaredWebSocketGateway](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/websockets/gateway-plan.types.ts): the declared gateway's plan, its option contract, and the provider it compiles to.
 - [DownloadFileOptions](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/routing/download-file.types.ts): `attachment` or `inline`, the disposition a download is named with.
+- [RequestContext, RequestContextModuleOptions](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/request-context/request-context.types.ts): request context contract and module options.
 
 ## Documentation
 
 - [Package README](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/README.md): bootstrap, gateways, route compilation policy, native plugins, and application errors.
+- [Request context](../../docs/request-context.md): per-request async local storage, request ID correlation, and token storage.
 - [End-to-end types with Eden Treaty](../../docs/eden-treaty.md): `createNative`, client inference, and the inference boundary.
 - [Native Elysia plugins](../../docs/native-plugins.md): mounting a plugin and typing what it adds to the context.
 - [WebSocket gateways](../../docs/websockets.md): the `{ event, data }` envelope, responses, lifecycle, and native publish/subscribe.

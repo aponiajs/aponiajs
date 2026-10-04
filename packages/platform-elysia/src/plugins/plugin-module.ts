@@ -16,7 +16,11 @@ import type {
   ElysiaPlugin,
 } from "./plugin.types.ts";
 
-const ELYSIA_PLUGIN = createToken<ElysiaPlugin>("aponia.elysia.native-plugin");
+/**
+ * The private token marking a provider as carrying a native Elysia plugin to mount.
+ * @internal
+ */
+export const ELYSIA_PLUGIN = createToken<ElysiaPlugin>("aponia.elysia.native-plugin");
 
 const keyedModuleIdentityPrefix = "aponia.elysia.plugin-module:";
 

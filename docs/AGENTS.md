@@ -23,6 +23,7 @@ The published documentation set:
 | `enhancers.md`              | Guards, interceptors, and exception filters on a route's hooks                                                                            |
 | `logging.md`                | Logger configuration and the bootstrap log lines                                                                                          |
 | `testing.md`                | Testing applications through `application.handle`, and the `@aponiajs/testing` kit                                                        |
+| `request-context.md`        | The per-request async local storage context, request ID correlation, and injectable service                                               |
 | `cli.md`                    | The generator catalog, aliases, and options                                                                                               |
 | `devtools.md`               | The opt-in devtools API, mounted on the application's own route table, and what each endpoint does and does not report                    |
 | `packages.md`               | The published package catalog                                                                                                             |

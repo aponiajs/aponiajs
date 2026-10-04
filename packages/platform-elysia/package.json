@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/platform-elysia",
-  "version": "1.0.0-beta.4",
+  "version": "1.0.0-beta.5",
   "description": "Elysia application platform for Aponia HTTP controllers and WebSocket gateways.",
   "keywords": [
     "aponia",

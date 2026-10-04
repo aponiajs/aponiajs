@@ -247,7 +247,7 @@ versions it was generated against:
 ```ts
 // src/invokers.generated.ts
 export const controllerInvokerArtifact = Object.freeze({
-  framework: "1.0.0-beta.4",
+  framework: "1.0.0-beta.5",
   elysia: "2.0.0-beta.19",
   invokers: new Map([
     [UsersController, (instance: UsersController) => new Map([["ping", () => instance.ping()]])],
@@ -306,7 +306,7 @@ it was generated against:
 ```ts
 // src/descriptors.generated.ts
 export const moduleDescriptorArtifact = Object.freeze({
-  framework: "1.0.0-beta.4",
+  framework: "1.0.0-beta.5",
   elysia: "2.0.0-beta.19",
   modules: Object.freeze({ AppModule: AppModuleDescriptor }),
 });
@@ -979,6 +979,36 @@ route a native plugin provides is outside the check, because a plugin mounts
 through `use()` and a controller deliberately overriding one is Elysia's own
 behavior.
 
+## Request context
+
+`RequestContextModule` establishes a per-request `AsyncLocalStorage` store exposing the
+in-flight `Request`, a correlation `requestId`, and typed key-value storage.
+
+```ts
+import { Module } from "@aponiajs/common";
+import { RequestContextModule } from "@aponiajs/platform-elysia";
+
+@Module({
+  imports: [RequestContextModule.forRoot()],
+})
+export class AppModule {}
+```
+
+Inject `RequestContextService` into any provider to read the current context:
+
+```ts
+@Injectable()
+export class OrderService {
+  constructor(private readonly context: RequestContextService) {}
+
+  process() {
+    return this.context.current()?.requestId;
+  }
+}
+```
+
+See the [request context guide](../../docs/request-context.md) for options, header sanitization, and typed token storage.
+
 ## Inspecting an application
 
 `inspectAponiaApplication` projects a root module into frozen, JSON-serializable
@@ -1007,6 +1037,7 @@ only exist once the callback runs; build the application and read
 [npm package](https://www.npmjs.com/package/@aponiajs/platform-elysia) ·
 [configuration guide](../../docs/configuration.md) ·
 [lifecycle guide](../../docs/lifecycle.md) ·
+[request context guide](../../docs/request-context.md) ·
 [native plugin guide](../../docs/native-plugins.md) ·
 [Eden Treaty guide](../../docs/eden-treaty.md) ·
 [complete package catalog](../../docs/packages.md)

@@ -43,6 +43,7 @@ const packageLayouts: readonly PackageLayout[] = [
       "inspection",
       "modules",
       "plugins",
+      "request-context",
       "routing",
       "websockets",
     ],

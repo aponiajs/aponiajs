@@ -94,3 +94,9 @@ export type {
   WebSocketHandlerPlan,
 } from "./websockets/gateway-plan.types.ts";
 export type { WebSocketClient, WebSocketServerRef } from "./websockets/websocket-gateway.types.ts";
+export { RequestContextService } from "./request-context/request-context.service.ts";
+export { RequestContextModule } from "./request-context/request-context-module.ts";
+export type {
+  RequestContext,
+  RequestContextModuleOptions,
+} from "./request-context/request-context.types.ts";
