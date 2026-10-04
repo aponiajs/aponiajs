@@ -39,9 +39,9 @@
   },
   "devDependencies": {
     "@elysia/eden": "^1.4.10",
-    "arktype": "^2.2.3",
+    "arktype": "^2.2.6",
     "elysia": "^1.4.30",
-    "zod": "^4.4.3"
+    "zod": "^4.6.5"
   },
   "peerDependencies": {
     "elysia": "^1.4.29"
