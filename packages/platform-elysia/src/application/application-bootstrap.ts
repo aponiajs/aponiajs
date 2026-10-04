@@ -1,7 +1,11 @@
 import {
   AponiaError,
   Logger,
+  LOGGER,
+  NOOP_LOGGER,
   getTokenName,
+  notifySystemLogger,
+  provideValue,
   type ClassToken,
   type EnhancerMetadata,
   type LoggerService,
@@ -71,6 +75,9 @@ export async function bootstrapAponiaApplication(
   options: AponiaApplicationOptions | ConfiguredAponiaApplicationOptions<AnyElysia> = {},
 ): Promise<ApplicationBootstrapResult> {
   const logger = createSystemLogger(options.logger);
+  if (logger !== undefined) {
+    notifySystemLogger(logger);
+  }
   logger?.log("Starting Aponia application...", "AponiaFactory");
 
   // Resolved once, before any controller mounts, so a refused artifact costs a
@@ -99,7 +106,9 @@ export async function bootstrapAponiaApplication(
   const graph: "declared" | "decorated" = isModuleDefinition(rootSelection.rootModule)
     ? "declared"
     : "decorated";
-  const container = createContainer(compiledRootModule);
+  const container = createContainer(compiledRootModule, [
+    provideValue(LOGGER, logger ?? NOOP_LOGGER),
+  ]);
   const webSocketGateways = compileWebSocketGateways(container.graph.modules);
   const baseApplication = new Elysia({
     ...options.elysia,
@@ -367,6 +376,7 @@ export async function bootstrapAponiaApplication(
     nativeApplication,
     createApplicationDiagnostics({
       framework: aponiaVersion,
+      logger,
       graph,
       invokers: {
         accepted: invokerSelection.invokers !== undefined,

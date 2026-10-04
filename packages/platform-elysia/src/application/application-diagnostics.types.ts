@@ -1,4 +1,9 @@
-import type { ClassToken, EnhancerMetadata, ModuleDefinition } from "@aponiajs/common";
+import type {
+  ClassToken,
+  EnhancerMetadata,
+  LoggerService,
+  ModuleDefinition,
+} from "@aponiajs/common";
 import type { InterceptorPhases } from "../controllers/enhancer-resolver.ts";
 import type { CompiledElysiaRoute } from "../routing/route-compiler.types.ts";
 
@@ -116,6 +121,8 @@ export interface AponiaCallbackRouteDiagnostics {
 export interface AponiaApplicationDiagnostics {
   /** The AponiaJS release that booted the application. */
   readonly framework: string;
+  /** The boot logger, or `undefined` when logging was disabled. */
+  readonly logger?: LoggerService | undefined;
   /**
    * Which root the container compiled: `"declared"` when that root is a
    * `ModuleDefinition` — the artifact's descriptor, or one the caller passed —

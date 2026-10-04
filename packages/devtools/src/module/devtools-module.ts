@@ -1,4 +1,4 @@
-import { Logger, Module, type DynamicModule } from "@aponiajs/common";
+import { Logger, Module, observeSystemLogger, type DynamicModule } from "@aponiajs/common";
 import {
   PluginModule,
   getApplicationDiagnostics,
@@ -7,7 +7,7 @@ import {
 import type { ElysiaPlugin } from "@aponiajs/platform-elysia";
 import { Elysia } from "elysia";
 import { createLogBuffer, defaultLogBufferCapacity } from "../logging/log-buffer.ts";
-import { isRecordableLogger, recordLogger } from "../logging/log-tap.ts";
+import { isRecordableLogger, recordLogger, getTappedLogStream } from "../logging/log-tap.ts";
 import type { LogStream } from "../logging/log-tap.ts";
 import { createRequestCapture } from "../requests/request-capture.ts";
 import type { RequestCapture } from "../requests/request-capture.ts";
@@ -26,6 +26,12 @@ const devtoolsPluginKey = "devtools";
 const devtoolsModuleId = "DevtoolsModule";
 
 const devtoolsLogger = new Logger("Devtools", { timestamp: true });
+
+// Tap any observed system logger into its own buffer so that applications enabling
+// devtools without an explicit logger option still capture boot and provider lines.
+observeSystemLogger((logger) => {
+  recordLogger(logger, createLogBuffer(defaultLogBufferCapacity));
+});
 
 /**
  * The module an application imports to opt in to the devtools surface.
@@ -185,7 +191,7 @@ function createInertModule(): DynamicModule {
  * `toRequestRecord`, silently charges the application for this package's work.
  */
 function createDevtoolsPlugin(options: DevtoolsOptions): ElysiaPlugin {
-  const logs = createLogStream(options.logger);
+  const getLogs = createLogStream(options.logger);
   const capture = createRequestCapture(options.capture);
   // One boot record per application, keyed by the application's own store — see
   // `recordFor` — and one endpoint record per application that reached the
@@ -258,7 +264,7 @@ function createDevtoolsPlugin(options: DevtoolsOptions): ElysiaPlugin {
       .all(`${devtoolsPathPrefix}/*`, ({ request, store }) =>
         handleDevtoolsRequest(
           request,
-          surfaceFor(surfaces, store, recordFor(records, store, capture), logs),
+          surfaceFor(surfaces, store, recordFor(records, store, capture), options.logger, getLogs),
         ),
       )
       .setup(() => {
@@ -405,12 +411,27 @@ function surfaceFor(
   surfaces: WeakMap<object, DevtoolsHandlers>,
   store: object,
   record: ApplicationRecord,
-  logs: LogStream | undefined,
+  optionsLogger: DevtoolsOptions["logger"],
+  getLogs: () => LogStream | undefined,
 ): DevtoolsHandlers {
   const built = surfaces.get(store);
 
   if (built !== undefined) {
     return built;
+  }
+
+  const diagnostics =
+    record.application === undefined ? undefined : getApplicationDiagnostics(record.application);
+
+  let logs: LogStream | undefined;
+  if (optionsLogger === false) {
+    logs = undefined;
+  } else if (isRecordableLogger(optionsLogger)) {
+    logs = getLogs();
+  } else if (optionsLogger === undefined) {
+    logs = diagnostics?.logger ? getTappedLogStream(diagnostics.logger) : undefined;
+  } else {
+    logs = undefined;
   }
 
   const handlers = createHandlers(record.application, logs, record.requests, devtoolsLogger);
@@ -455,10 +476,23 @@ function surfaceFor(
  * would announce the silence in exactly that case; absence is true in every one
  * of them.
  */
-function createLogStream(source: DevtoolsOptions["logger"]): LogStream | undefined {
-  if (!isRecordableLogger(source)) {
-    return undefined;
+function createLogStream(source: DevtoolsOptions["logger"]): () => LogStream | undefined {
+  if (source === false) {
+    return () => undefined;
   }
 
-  return recordLogger(source, createLogBuffer(defaultLogBufferCapacity));
+  const buffer = createLogBuffer(defaultLogBufferCapacity);
+  let stream: LogStream | undefined;
+
+  if (source === undefined) {
+    observeSystemLogger((logger) => {
+      if (stream === undefined) {
+        stream = recordLogger(logger, buffer);
+      }
+    });
+  } else if (isRecordableLogger(source)) {
+    stream = recordLogger(source, buffer);
+  }
+
+  return () => stream;
 }

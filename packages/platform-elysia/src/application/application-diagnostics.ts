@@ -2,6 +2,7 @@ import {
   getTokenName,
   type ClassToken,
   type EnhancerMetadata,
+  type LoggerService,
   type ModuleDefinition,
   type Token,
 } from "@aponiajs/common";
@@ -64,6 +65,7 @@ const diagnosticsKey: unique symbol = Symbol.for("aponia.application.diagnostics
  */
 export function createApplicationDiagnostics(facts: {
   readonly framework: string;
+  readonly logger?: LoggerService | undefined;
   readonly graph: "declared" | "decorated";
   readonly invokers: AponiaInvokerDiagnostics;
   readonly artifacts: AponiaArtifactProvenance;
@@ -77,6 +79,7 @@ export function createApplicationDiagnostics(facts: {
 }): AponiaApplicationDiagnostics {
   return Object.freeze({
     framework: facts.framework,
+    logger: facts.logger,
     graph: facts.graph,
     invokers: Object.freeze({ accepted: facts.invokers.accepted, reason: facts.invokers.reason }),
     artifacts: Object.freeze({

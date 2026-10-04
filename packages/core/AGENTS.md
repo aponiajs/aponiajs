@@ -38,10 +38,10 @@ container.
   validation that must agree with mounting reads it instead of a compiler's
   working map.
 - `ModuleGraph.locate` resolves the module's own providers first, then imports
-  that **export** the token. A provider left out of `exports` is invisible to
-  importers, and two imports that resolve the token to different modules raise
-  `AMBIGUOUS_PROVIDER` instead of picking a winner, while two that re-export one
-  shared provider agree on it. Resolutions are memoized per module.
+  that **export** the token, then predefined providers as a final fallback. A provider
+  left out of `exports` is invisible to importers, and two imports that resolve the token
+  to different modules raise `AMBIGUOUS_PROVIDER` instead of picking a winner, while two
+  that re-export one shared provider agree on it. Resolutions are memoized per module.
 - `AponiaContainer` caches one instance per provider per module — singleton is
   the only scope that instantiates, and detects provider cycles during resolution.
   `"request"` and `"transient"` are reserved lifetimes a declaration can state;

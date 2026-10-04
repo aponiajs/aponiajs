@@ -1,7 +1,10 @@
 import {
   AponiaError,
   Logger,
+  LOGGER,
+  NOOP_LOGGER,
   getTokenName,
+  provideValue,
   type LoggerService,
   type LogLevel,
   type ModuleDefinition,
@@ -73,7 +76,9 @@ export function inspectAponiaApplication(
     aponiaVersion,
     resolveInspectionLogger(options.logger),
   );
-  const container = createContainer(compileRootModule(rootSelection.rootModule));
+  const container = createContainer(compileRootModule(rootSelection.rootModule), [
+    provideValue(LOGGER, NOOP_LOGGER),
+  ]);
   const modules = container.graph.modules;
   const gateways = compileWebSocketGateways(modules);
 

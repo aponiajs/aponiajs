@@ -165,8 +165,11 @@ export class AponiaContainer {
  * const greeting = container.get(GREETING);
  * ```
  */
-export function createContainer(root: ModuleDefinition): AponiaContainer {
-  return new AponiaContainer(compileModuleGraph(root));
+export function createContainer(
+  root: ModuleDefinition,
+  predefined?: readonly Provider[],
+): AponiaContainer {
+  return new AponiaContainer(compileModuleGraph(root, predefined));
 }
 
 /**

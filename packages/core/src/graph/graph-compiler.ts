@@ -1,4 +1,10 @@
-import { AponiaError, getTokenName, type ModuleDefinition, type Token } from "@aponiajs/common";
+import {
+  AponiaError,
+  getTokenName,
+  type ModuleDefinition,
+  type Provider,
+  type Token,
+} from "@aponiajs/common";
 import { getProviderDependencies, providerShapeProblem } from "./dependencies.ts";
 import { ModuleGraph } from "./module-graph.ts";
 
@@ -20,7 +26,10 @@ import { ModuleGraph } from "./module-graph.ts";
  * const graph = compileModuleGraph(AppModuleDefinition);
  * ```
  */
-export function compileModuleGraph(root: ModuleDefinition): ModuleGraph {
+export function compileModuleGraph(
+  root: ModuleDefinition,
+  predefined?: readonly Provider[],
+): ModuleGraph {
   const modules: ModuleDefinition[] = [];
   const modulesByIdentity = new Map<string | symbol, ModuleDefinition>();
   const visiting: ModuleDefinition[] = [];
@@ -64,7 +73,7 @@ export function compileModuleGraph(root: ModuleDefinition): ModuleGraph {
   };
 
   visit(root);
-  const graph = new ModuleGraph(root, modules);
+  const graph = new ModuleGraph(root, modules, predefined);
   validateExports(graph);
   validateDependencies(graph);
   validateControllers(graph);

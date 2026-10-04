@@ -46,6 +46,14 @@ export interface LogStream {
 const tappedLoggers = new WeakMap<object, LogStream>();
 
 /**
+ * Reads the existing log stream for a tapped logger, or undefined when it was not tapped.
+ * @internal
+ */
+export function getTappedLogStream(logger: object): LogStream | undefined {
+  return tappedLoggers.get(logger);
+}
+
+/**
  * Whether this package can record the lines a value writes: an object with at
  * least one callable `LoggerService` method.
  *

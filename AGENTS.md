@@ -157,7 +157,8 @@ tokens inside a module, exports of tokens the module cannot resolve, unresolvabl
 provider dependencies, and unresolvable controller dependencies.
 
 `ModuleGraph.locate` resolves a token against the module's own providers first,
-then against imports that **export** that token. A provider that is not exported
+then against imports that **export** that token, then against predefined providers
+as a final fallback. A provider that is not exported
 is invisible to importers. Two imports that resolve the token to different
 modules raise `AMBIGUOUS_PROVIDER` rather than picking a winner; two that
 re-export one shared provider agree on it, which is what makes a diamond legal.

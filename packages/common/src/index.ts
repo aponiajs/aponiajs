@@ -61,6 +61,8 @@ export type {
 } from "./lifecycle/lifecycle.types.ts";
 export { ConsoleLogger, Logger } from "./logging/console-logger.ts";
 export { formatLogValue } from "./logging/log-value.ts";
+export { LOGGER } from "./logging/logger-token.ts";
+export { NOOP_LOGGER, notifySystemLogger, observeSystemLogger } from "./logging/logger-observer.ts";
 export type { ConsoleLoggerOptions, LoggerService, LogLevel } from "./logging/logger.types.ts";
 export { defineModule } from "./modules/module.ts";
 export type { ModuleDefinition, ModuleDescriptor, ModuleOptions } from "./modules/module.types.ts";

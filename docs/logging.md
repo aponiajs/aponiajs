@@ -197,3 +197,27 @@ each, so two surfaces reporting one failure cannot disagree about it, and the li
 refuses everything is stated as is the same word on both by construction. Reach for it when you publish
 a surface of your own and need to state a value the way the framework's does. The console logger prints
 its own form for a terminal reader and answers the same literal when a value refuses it.
+
+## Injecting the logger into providers
+
+Inject the system logger into any provider or controller using `@Inject(LOGGER)`:
+
+```ts
+import { Inject, Injectable, LOGGER, type LoggerService } from "@aponiajs/common";
+
+@Injectable()
+export class OrdersService {
+  constructor(@Inject(LOGGER) private readonly logger: LoggerService) {}
+
+  placeOrder() {
+    this.logger.log("Order placed", "OrdersService");
+  }
+}
+```
+
+The `LOGGER` token resolves across every module without declaring an import:
+
+- It automatically resolves to the boot logger (the default `Logger`, a level-filtered logger, or a custom `LoggerService`).
+- If `logger: false` is configured, it resolves to `NOOP_LOGGER`, which safely discards all calls without failing the boot.
+- If an application provides its own binding for `LOGGER` inside a module, the module-declared provider takes precedence.
+- Provider log lines written through `LOGGER` are automatically captured by `@aponiajs/devtools` and displayed on `/__devtools/logs`.

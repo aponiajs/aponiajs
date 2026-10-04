@@ -98,19 +98,12 @@ const application = await AponiaFactory.create(AppModule, {
   table really is rather than re-deriving one without it.
 - **The surface stops with the application.** `close()` removes its route with
   the application, so nothing outlives the listener that mounted it.
-- **The log stream is the application's own, and it is handed over twice.** Pass
-  the same logger to the registration — `DevtoolsModule.register` or
-  `devtoolsPlugin` — and to `AponiaFactory.create`:
-  registration patches that object **in place**, so every line it writes — the
-  framework's and the application's — is recorded without anything being replaced,
-  and the stream starts there, before the boot writes, so the lines a boot reports
-  about itself are in it. That is the condition this option states rather than
-  hides: the framework never exposes the logger it builds for itself, so an
-  application that names `false`, names a level array, or names nothing at all has
-  no object to record from, and a logger no level could be patched on — every
-  assignment refused, as a frozen one refuses them all — records nothing either; a
-  registration with no stream to publish serves no `/logs` rather than an empty
-  stream that would read as "nothing is being logged". The boundary is the number
+- **The log stream observes the system logger automatically.** Registration
+  observes the boot logger through `observeSystemLogger`, tapping that object
+  **in place** before bootstrap lines are written. The `logger` option remains
+  supported as an explicit override. Every line written — the framework's and
+  the application's — is recorded without anything being replaced. An application
+  that names `logger: false` produces no log stream, so `/logs` is not served. The boundary is the number
   of levels patched, never where the first refusal landed: a logger the tap
   patched at least one level of — one that accepts a level and refuses the next,
   or one whose `log` refuses while its `fatal` accepts — publishes its stream, and

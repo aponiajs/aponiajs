@@ -157,3 +157,14 @@ test("the Vite+ lane refuses a provider that declares a reserved scope", () => {
     }),
   );
 });
+
+test("the Vite+ lane resolves a predefined provider as fallback", () => {
+  const predefinedToken = createToken<string>("conformance-predefined");
+  const module = defineModule({
+    id: "conformance-predefined-root",
+  });
+  const container = createContainer(module, [
+    provideValue(predefinedToken, "conformance-fallback"),
+  ]);
+  expect(container.get(predefinedToken)).toBe("conformance-fallback");
+});

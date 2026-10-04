@@ -23,9 +23,14 @@ export class ModuleGraph {
   readonly #moduleSet: ReadonlySet<ModuleDefinition>;
   readonly #providersByModule: ReadonlyMap<ModuleDefinition, ReadonlyMap<Token<unknown>, Provider>>;
   readonly #exportsByModule: ReadonlyMap<ModuleDefinition, ReadonlySet<Token<unknown>>>;
+  readonly #predefinedProviders: ReadonlyMap<Token<unknown>, Provider>;
   readonly #locationsByModule = new Map<ModuleDefinition, Map<Token<unknown>, ProviderLocation>>();
 
-  constructor(root: ModuleDefinition, modules: readonly ModuleDefinition[]) {
+  constructor(
+    root: ModuleDefinition,
+    modules: readonly ModuleDefinition[],
+    predefined?: readonly Provider[],
+  ) {
     this.root = root;
     this.modules = Object.freeze([...modules]);
     this.#moduleSet = new Set(modules);
@@ -36,6 +41,9 @@ export class ModuleGraph {
       ]),
     );
     this.#exportsByModule = new Map(modules.map((module) => [module, new Set(module.exports)]));
+    this.#predefinedProviders = new Map(
+      (predefined ?? []).map((provider) => [provider.provide, provider]),
+    );
   }
 
   inspect(): GraphInspection {
@@ -130,6 +138,12 @@ export class ModuleGraph {
       }
 
       if (candidates.size === 0) {
+        const predefined = this.#predefinedProviders.get(token);
+        if (predefined) {
+          const location = Object.freeze({ module: this.root, provider: predefined });
+          this.#cacheLocation(module, token, location);
+          return location;
+        }
         throw missingProvider(module, token);
       }
 
