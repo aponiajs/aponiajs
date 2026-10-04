@@ -143,6 +143,7 @@ export type {
   WebSocketGatewayMetadata,
   WebSocketGatewayOptions,
   WebSocketMessageMetadata,
+  WebSocketMessageSchema,
   WebSocketParameterKind,
   WebSocketParameterMetadata,
   WsResponse,

@@ -5,14 +5,23 @@ import {
   getWebSocketParameterMetadata,
   getWebSocketServerProperties,
   getTokenName,
+  isStandardSchema,
+  resolveRouteValidator,
   type AponiaErrorCode,
+  type CanActivate,
   type ClassToken,
+  type ExecutionContext,
+  type HttpArgumentsHost,
   type ModuleDefinition,
+  type RouteContext,
+  type RouteValidatorInput,
+  type WebSocketMessageSchema,
   type WebSocketParameterMetadata,
   type WsResponse,
 } from "@aponiajs/common";
 import type { AponiaContainer } from "@aponiajs/core";
-import type { AnyElysia } from "elysia";
+import { type AnyElysia, TypeBoxValidator } from "elysia";
+import { httpErrors } from "../errors/http-error.ts";
 import type { WebSocketGatewayPlan } from "./gateway-plan.types.ts";
 import type {
   BoundWebSocketGateway,
@@ -55,12 +64,15 @@ const declaredGatewayPlanKey = "gateway";
 interface GatewayHandlerPlan {
   readonly event: string;
   readonly propertyKey: string | symbol;
+  readonly schema?: WebSocketMessageSchema | undefined;
   readonly parameters: readonly WebSocketParameterMetadata[];
 }
 
 /** Everything a gateway declares, however it was authored. */
 interface GatewayPlan {
   readonly path: string;
+  readonly maxPayloadLength?: number | undefined;
+  readonly guards?: readonly ClassToken<CanActivate>[] | undefined;
   readonly handlers: readonly GatewayHandlerPlan[];
   readonly serverProperties: readonly (string | symbol)[];
 }
@@ -131,7 +143,10 @@ export async function registerWebSocketGateways(
 ): Promise<void> {
   const boundGateways = gateways.map((gateway) => {
     const instance = container.resolveModuleProvider(gateway.module, gateway.token);
-    return bindWebSocketGateway(gateway, instance);
+    const resolvedGuards = (gateway.guards ?? []).map(
+      (guardToken) => container.resolveModuleProvider(gateway.module, guardToken) as CanActivate,
+    );
+    return bindWebSocketGateway(gateway, instance, resolvedGuards);
   });
   assertNoNativeWebSocketRouteCollisions(application, gateways);
 
@@ -144,6 +159,8 @@ export async function registerWebSocketGateways(
     readonly ws: (
       path: string,
       hook: {
+        beforeHandle?: (context: any) => unknown;
+        maxPayloadLength?: number;
         open(socket: WebSocketClient): unknown;
         message(socket: WebSocketClient, message: unknown): unknown;
         close(socket: WebSocketClient): unknown;
@@ -153,6 +170,10 @@ export async function registerWebSocketGateways(
 
   for (const gateway of boundGateways) {
     nativeApplication.ws(gateway.path, {
+      ...(gateway.beforeHandle !== undefined ? { beforeHandle: gateway.beforeHandle } : {}),
+      ...(gateway.maxPayloadLength !== undefined
+        ? { maxPayloadLength: gateway.maxPayloadLength }
+        : {}),
       open: (socket: WebSocketClient) => gateway.open(socket),
       message: (socket: WebSocketClient, message: unknown) => gateway.message(socket, message),
       close: (socket: WebSocketClient) => gateway.close(socket),
@@ -172,6 +193,7 @@ export async function registerWebSocketGateways(
 export function bindWebSocketGateway(
   gateway: CompiledWebSocketGateway,
   instance: unknown,
+  guards: readonly CanActivate[] = [],
 ): BoundWebSocketGateway {
   if (!isObject(instance)) {
     throw invalidGateway(gateway, "The gateway provider did not resolve to an object.");
@@ -184,16 +206,57 @@ export function bindWebSocketGateway(
   const handleConnection = resolveLifecycleMethod(gateway, instance, "handleConnection");
   const handleDisconnect = resolveLifecycleMethod(gateway, instance, "handleDisconnect");
 
+  const beforeHandle =
+    guards.length > 0
+      ? async (context: { readonly request: Request }) => {
+          const executionContext = createGatewayExecutionContext(gateway, instance, context);
+          for (const guard of guards) {
+            const allowed = await guard.canActivate(executionContext);
+            if (allowed === false) {
+              throw httpErrors.forbidden("A guard refused this WebSocket connection.");
+            }
+          }
+          return undefined;
+        }
+      : undefined;
+
   return Object.freeze({
     path: gateway.path,
+    maxPayloadLength: gateway.maxPayloadLength,
+    beforeHandle,
     initialize: (application: AnyElysia) => {
       injectWebSocketServer(gateway, instance, application);
       return invokeLifecycle(afterInit, instance, application);
     },
     open: (socket: WebSocketClient) => invokeSocketLifecycle(handleConnection, instance, socket),
     message: (socket: WebSocketClient, message: unknown) =>
-      dispatchWebSocketMessage(socket, message, handlers),
+      dispatchWebSocketMessage(socket, message, handlers, gateway.maxPayloadLength),
     close: (socket: WebSocketClient) => invokeSocketLifecycle(handleDisconnect, instance, socket),
+  });
+}
+
+function createGatewayExecutionContext(
+  gateway: CompiledWebSocketGateway,
+  instance: unknown,
+  context: { readonly request: Request },
+): ExecutionContext {
+  const routeContext = context as unknown as RouteContext;
+  const httpHost: HttpArgumentsHost = Object.freeze({ getRequest: () => routeContext });
+
+  const handler = (
+    isObject(instance) &&
+    typeof (instance as Record<string, unknown>).handleConnection === "function"
+      ? (instance as Record<string, unknown>).handleConnection
+      : () => {}
+  ) as (...arguments_: never[]) => unknown;
+
+  return Object.freeze({
+    getClass: <T>() => gateway.provider.useClass as ClassToken<T>,
+    getHandler: () => handler,
+    getRoute: () => Object.freeze({ method: "GET" as const, path: gateway.path }),
+    getContext: () => routeContext,
+    switchToHttp: () => httpHost,
+    getType: () => "http" as const,
   });
 }
 
@@ -224,10 +287,13 @@ function readGatewayPlan(
 
   return {
     path: metadata.path,
+    maxPayloadLength: metadata.maxPayloadLength,
+    guards: metadata.guards,
     handlers: getWebSocketMessageMetadata(gatewayClass).map((message) =>
       Object.freeze({
         event: message.event,
         propertyKey: message.propertyKey,
+        schema: message.schema,
         parameters: getWebSocketParameterMetadata(gatewayClass, message.propertyKey),
       }),
     ),
@@ -276,8 +342,40 @@ function readDeclaredGatewayPlan(
     throw invalidGatewayDeclaration(module, gatewayName, "must declare its path as a string.");
   }
 
+  const maxPayloadLength = Reflect.get(plan, "maxPayloadLength");
+  if (
+    maxPayloadLength !== undefined &&
+    (typeof maxPayloadLength !== "number" ||
+      !Number.isSafeInteger(maxPayloadLength) ||
+      maxPayloadLength <= 0)
+  ) {
+    throw invalidGatewayDeclaration(
+      module,
+      gatewayName,
+      'must declare "maxPayloadLength" as a positive integer.',
+    );
+  }
+
+  const guards = Reflect.get(plan, "guards");
+  if (guards !== undefined) {
+    if (!Array.isArray(guards)) {
+      throw invalidGatewayDeclaration(module, gatewayName, 'must declare "guards" as an array.');
+    }
+    for (const guard of guards) {
+      if (typeof guard !== "function") {
+        throw invalidGatewayDeclaration(
+          module,
+          gatewayName,
+          'must declare "guards" containing only guard classes.',
+        );
+      }
+    }
+  }
+
   return {
     path: path ?? defaultGatewayPath,
+    maxPayloadLength: typeof maxPayloadLength === "number" ? maxPayloadLength : undefined,
+    guards: guards ? Object.freeze([...(guards as readonly ClassToken<CanActivate>[])]) : undefined,
     handlers: Object.freeze(
       handlers.map((handler) => readDeclaredGatewayHandler(module, gatewayName, handler)),
     ),
@@ -330,9 +428,22 @@ function readDeclaredGatewayHandler(
     );
   }
 
+  const schema = Reflect.get(handler, "schema");
+  if (
+    schema !== undefined &&
+    (typeof schema !== "object" || schema === null || Array.isArray(schema))
+  ) {
+    throw invalidGatewayDeclaration(
+      module,
+      gatewayName,
+      'must declare handler "schema" as an object.',
+    );
+  }
+
   return Object.freeze({
     event,
     propertyKey,
+    schema: schema as WebSocketMessageSchema | undefined,
     parameters: parameters as readonly WebSocketParameterMetadata[],
   });
 }
@@ -384,10 +495,16 @@ function compileGateway(
     const parameters = declared.parameters;
     assertDistinctParameterIndexes(module, gatewayName, declared.propertyKey, parameters);
     const invokerFactory = compileMessageInvoker(parameters);
+    const validateData =
+      declared.schema?.data !== undefined
+        ? compileDataValidator(resolveRouteValidator(declared.schema.data as RouteValidatorInput))
+        : undefined;
+
     handlers.push(
       Object.freeze({
         event: declared.event,
         propertyKey: declared.propertyKey,
+        schema: declared.schema,
         createInvoker: (instance: unknown) => {
           const handler = isObject(instance)
             ? Reflect.get(instance, declared.propertyKey)
@@ -400,7 +517,18 @@ function compileGateway(
               "The resolved message handler is not callable.",
             );
           }
-          return invokerFactory(handler as MessageHandler, instance);
+          const baseInvoker = invokerFactory(handler as MessageHandler, instance);
+          if (validateData === undefined) {
+            return baseInvoker;
+          }
+          return async (socket: WebSocketClient, data: unknown) => {
+            const validation = await validateData(data);
+            if (!validation.success) {
+              sendException(socket, "INVALID_WEBSOCKET_MESSAGE", "Invalid WebSocket message data.");
+              return undefined;
+            }
+            return baseInvoker(socket, validation.value);
+          };
         },
       }),
     );
@@ -413,9 +541,54 @@ function compileGateway(
     token: provider.provide,
     gatewayName,
     path: normalizedPath,
+    maxPayloadLength: plan.maxPayloadLength,
+    guards: plan.guards,
     handlers: Object.freeze(handlers),
     serverProperties: Object.freeze([...plan.serverProperties]),
   });
+}
+
+type DataValidator = (
+  data: unknown,
+) => Promise<{ readonly success: true; readonly value: unknown } | { readonly success: false }>;
+
+function compileDataValidator(validator: unknown): DataValidator {
+  if (isStandardSchema(validator as any)) {
+    const standard = (validator as any)["~standard"];
+    return async (data: unknown) => {
+      const result = await standard.validate(data);
+      if (result.issues && result.issues.length > 0) {
+        return { success: false };
+      }
+      return { success: true, value: "value" in result ? result.value : data };
+    };
+  }
+
+  if (typeof validator === "object" && validator !== null) {
+    const typebox = new TypeBoxValidator(validator as any);
+    return async (data: unknown) => {
+      if (typebox.Check(data)) {
+        return { success: true, value: data };
+      }
+      return { success: false };
+    };
+  }
+
+  if (typeof validator === "function") {
+    return async (data: unknown) => {
+      try {
+        const result = await (validator as (val: unknown) => unknown)(data);
+        if (result === false) {
+          return { success: false };
+        }
+        return { success: true, value: result === true ? data : result };
+      } catch {
+        return { success: false };
+      }
+    };
+  }
+
+  return async (data: unknown) => ({ success: true, value: data });
 }
 
 function assertDistinctParameterIndexes(
@@ -485,11 +658,41 @@ function parameterExpression(parameter: WebSocketParameterMetadata): string {
   return `(typeof data==="object"&&data!==null?data[${property}]:undefined)`;
 }
 
+function payloadByteLength(message: unknown): number {
+  if (typeof message === "string") {
+    return Buffer.byteLength(message);
+  }
+  if (message instanceof ArrayBuffer) {
+    return message.byteLength;
+  }
+  if (ArrayBuffer.isView(message)) {
+    return message.byteLength;
+  }
+  if (typeof message === "object" && message !== null) {
+    try {
+      return Buffer.byteLength(JSON.stringify(message));
+    } catch {
+      return 0;
+    }
+  }
+  return 0;
+}
+
 async function dispatchWebSocketMessage(
   socket: WebSocketClient,
   message: unknown,
   handlers: ReadonlyMap<string, WebSocketMessageInvoker>,
+  maxPayloadLength?: number,
 ): Promise<void> {
+  if (maxPayloadLength !== undefined && payloadByteLength(message) > maxPayloadLength) {
+    sendException(
+      socket,
+      "INVALID_WEBSOCKET_MESSAGE",
+      `WebSocket message exceeds the maximum payload limit of ${maxPayloadLength} bytes.`,
+    );
+    return;
+  }
+
   const incoming = parseIncomingMessage(message);
   if (!incoming) {
     sendException(

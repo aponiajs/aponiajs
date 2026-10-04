@@ -62,6 +62,10 @@ function freezeGatewayPlan(
 ): WebSocketGatewayPlan {
   return Object.freeze({
     ...(options.path === undefined ? {} : { path: options.path }),
+    ...(options.maxPayloadLength === undefined
+      ? {}
+      : { maxPayloadLength: options.maxPayloadLength }),
+    ...(options.guards === undefined ? {} : { guards: Object.freeze([...options.guards]) }),
     handlers: Object.freeze((options.handlers ?? []).map(freezeHandler)),
     serverProperties: Object.freeze([...(options.serverProperties ?? [])]),
   });
@@ -71,6 +75,7 @@ function freezeHandler(handler: WebSocketHandlerPlan): WebSocketHandlerPlan {
   return Object.freeze({
     event: handler.event,
     propertyKey: handler.propertyKey,
+    ...(handler.schema === undefined ? {} : { schema: Object.freeze({ ...handler.schema }) }),
     ...(handler.parameters === undefined
       ? {}
       : { parameters: Object.freeze([...handler.parameters]) }),

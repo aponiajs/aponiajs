@@ -118,3 +118,75 @@ test("the Vite+ lane compiles and dispatches a declared gateway through the same
     "WebSocket gateway path",
   );
 });
+
+test("the Vite+ lane validates message schema on declared gateways", async () => {
+  const schema = {
+    "~standard": {
+      version: 1,
+      vendor: "test",
+      validate: (value: unknown) => {
+        if (
+          typeof value === "object" &&
+          value !== null &&
+          "msg" in value &&
+          typeof (value as { msg: unknown }).msg === "string"
+        ) {
+          return { value };
+        }
+        return { issues: [{ message: "invalid msg" }] };
+      },
+    },
+  };
+
+  class GuardedConformanceGateway {
+    echo(msg: unknown): unknown {
+      return msg;
+    }
+  }
+
+  const guardedModule = defineModule({
+    id: "GuardedConformanceModule",
+    providers: [
+      defineWebSocketGateway(GuardedConformanceGateway, {
+        path: "/guarded-conformance",
+        maxPayloadLength: 200,
+        handlers: [
+          {
+            event: "test.event",
+            schema: { data: schema },
+            propertyKey: "echo",
+            parameters: [{ index: 0, kind: "message-body", property: "msg" }],
+          },
+        ],
+      }),
+    ],
+  });
+
+  const compiled = compileWebSocketGateways([guardedModule]);
+  const instance = createContainer(guardedModule).resolveModuleProvider(
+    guardedModule,
+    GuardedConformanceGateway,
+  );
+  const gateway = bindWebSocketGateway(compiled[0]!, instance);
+  const sent: unknown[] = [];
+  const socket = {
+    send(value: unknown): number {
+      sent.push(value);
+      return 1;
+    },
+  } as unknown as WebSocketClient;
+
+  // Valid payload
+  await gateway.message(socket, { event: "test.event", data: { msg: "valid" } });
+  expect(sent[0]).toEqual({ event: "test.event", data: "valid" });
+
+  // Invalid payload
+  await gateway.message(socket, { event: "test.event", data: { msg: 999 } });
+  expect(sent[1]).toEqual({
+    event: "exception",
+    data: {
+      code: "INVALID_WEBSOCKET_MESSAGE",
+      message: "Invalid WebSocket message data.",
+    },
+  });
+});

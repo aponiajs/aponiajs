@@ -104,6 +104,8 @@ await application.listen(3000);
 Clients send `{ "event": "events.echo", "data": value }` over
 `ws://localhost:3000/events`. Gateways are normal singleton providers, so
 constructor injection and module visibility stay identical to services.
+`@SubscribeMessage` supports per-message validation with Standard Schema and
+TypeBox, and `@WebSocketGateway` accepts handshake upgrade guards and payload bounds.
 `WebSocketClient` exposes the real native client wrapper. See the
 [WebSocket gateway guide](../../docs/websockets.md) for responses, lifecycle,
 errors, and native publish/subscribe.
@@ -247,7 +249,7 @@ versions it was generated against:
 ```ts
 // src/invokers.generated.ts
 export const controllerInvokerArtifact = Object.freeze({
-  framework: "1.0.0-beta.6",
+  framework: "1.0.0-beta.7",
   elysia: "2.0.0-beta.19",
   invokers: new Map([
     [UsersController, (instance: UsersController) => new Map([["ping", () => instance.ping()]])],
@@ -306,7 +308,7 @@ it was generated against:
 ```ts
 // src/descriptors.generated.ts
 export const moduleDescriptorArtifact = Object.freeze({
-  framework: "1.0.0-beta.6",
+  framework: "1.0.0-beta.7",
   elysia: "2.0.0-beta.19",
   modules: Object.freeze({ AppModule: AppModuleDescriptor }),
 });

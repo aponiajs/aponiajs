@@ -1,9 +1,11 @@
 import "reflect-metadata";
+import type { CanActivate } from "../enhancers/enhancer.types.ts";
 import type { ClassToken } from "../tokens/token.types.ts";
 import type {
   WebSocketGatewayMetadata,
   WebSocketGatewayOptions,
   WebSocketMessageMetadata,
+  WebSocketMessageSchema,
   WebSocketParameterKind,
   WebSocketParameterMetadata,
 } from "./websocket-gateway.types.ts";
@@ -50,8 +52,7 @@ export function WebSocketGateway(options: WebSocketGatewayOptions): ClassDecorat
 export function WebSocketGateway(
   pathOrOptions: string | WebSocketGatewayOptions = {},
 ): ClassDecorator {
-  const path = normalizeGatewayPath(pathOrOptions);
-  const metadata: WebSocketGatewayMetadata = Object.freeze({ path });
+  const metadata = normalizeGatewayOptions(pathOrOptions);
 
   return (target) => {
     if (typeof target !== "function") {
@@ -80,9 +81,15 @@ export function WebSocketGateway(
  * create(@MessageBody() input: CreateOrderDto) {}
  * ```
  */
-export function SubscribeMessage(event: string): MethodDecorator {
+export function SubscribeMessage(event: string, schema?: WebSocketMessageSchema): MethodDecorator {
   if (typeof event !== "string" || event.trim().length === 0) {
     throw new TypeError("@SubscribeMessage requires a non-empty event name.");
+  }
+  if (
+    schema !== undefined &&
+    (typeof schema !== "object" || schema === null || Array.isArray(schema))
+  ) {
+    throw new TypeError("@SubscribeMessage schema must be an object.");
   }
 
   return (target, propertyKey, descriptor) => {
@@ -98,6 +105,8 @@ export function SubscribeMessage(event: string): MethodDecorator {
       (Reflect.getOwnMetadata(webSocketMessageMetadataKey, target) as
         | readonly WebSocketMessageMetadata[]
         | undefined) ?? [];
+    const frozenSchema = schema !== undefined ? Object.freeze({ ...schema }) : undefined;
+
     Reflect.defineMetadata(
       webSocketMessageMetadataKey,
       Object.freeze([
@@ -105,6 +114,7 @@ export function SubscribeMessage(event: string): MethodDecorator {
         Object.freeze({
           event,
           propertyKey,
+          ...(frozenSchema !== undefined ? { schema: frozenSchema } : {}),
         }),
       ]),
       target,
@@ -236,15 +246,55 @@ export function getWebSocketServerProperties(
   return Object.freeze([...properties]);
 }
 
-function normalizeGatewayPath(pathOrOptions: string | WebSocketGatewayOptions): string {
-  const path = typeof pathOrOptions === "string" ? pathOrOptions : pathOrOptions.path;
-  if (path === undefined) {
-    return "/ws";
+function normalizeGatewayOptions(
+  pathOrOptions: string | WebSocketGatewayOptions,
+): WebSocketGatewayMetadata {
+  if (typeof pathOrOptions === "string") {
+    if (pathOrOptions.length === 0) {
+      throw new TypeError("@WebSocketGateway path must be a non-empty string.");
+    }
+    return Object.freeze({ path: pathOrOptions });
   }
+
+  if (typeof pathOrOptions !== "object" || pathOrOptions === null) {
+    throw new TypeError("@WebSocketGateway options must be an object or a string.");
+  }
+
+  const path = pathOrOptions.path ?? "/ws";
   if (typeof path !== "string" || path.length === 0) {
     throw new TypeError("@WebSocketGateway path must be a non-empty string.");
   }
-  return path;
+
+  let maxPayloadLength: number | undefined;
+  if (pathOrOptions.maxPayloadLength !== undefined) {
+    if (
+      typeof pathOrOptions.maxPayloadLength !== "number" ||
+      !Number.isSafeInteger(pathOrOptions.maxPayloadLength) ||
+      pathOrOptions.maxPayloadLength <= 0
+    ) {
+      throw new TypeError("@WebSocketGateway maxPayloadLength must be a positive integer.");
+    }
+    maxPayloadLength = pathOrOptions.maxPayloadLength;
+  }
+
+  let guards: readonly ClassToken<CanActivate>[] | undefined;
+  if (pathOrOptions.guards !== undefined) {
+    if (!Array.isArray(pathOrOptions.guards)) {
+      throw new TypeError("@WebSocketGateway guards must be an array.");
+    }
+    for (const guard of pathOrOptions.guards) {
+      if (typeof guard !== "function") {
+        throw new TypeError("@WebSocketGateway guards must contain only guard classes.");
+      }
+    }
+    guards = Object.freeze([...pathOrOptions.guards]);
+  }
+
+  return Object.freeze({
+    path,
+    ...(maxPayloadLength !== undefined ? { maxPayloadLength } : {}),
+    ...(guards !== undefined ? { guards } : {}),
+  });
 }
 
 function createParameterDecorator(

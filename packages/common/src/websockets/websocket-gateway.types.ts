@@ -1,12 +1,27 @@
+import type { CanActivate } from "../enhancers/enhancer.types.ts";
+import type { ClassToken } from "../tokens/token.types.ts";
+
 /** The `@WebSocketGateway()` declaration as written. */
 export interface WebSocketGatewayOptions {
   /** The mount path; defaults to `"/ws"`. */
   readonly path?: string;
+  /** Maximum incoming message payload length in bytes. */
+  readonly maxPayloadLength?: number;
+  /** Handshake guards executed before upgrading the socket connection. */
+  readonly guards?: readonly ClassToken<CanActivate>[];
 }
 
-/** The lowered gateway metadata: the mount path, always present. */
+/** The lowered gateway metadata: the mount path, payload limits, and upgrade guards. */
 export interface WebSocketGatewayMetadata {
   readonly path: string;
+  readonly maxPayloadLength?: number | undefined;
+  readonly guards?: readonly ClassToken<CanActivate>[] | undefined;
+}
+
+/** Schema describing the structure of an incoming WebSocket message. */
+export interface WebSocketMessageSchema {
+  /** A Standard Schema or platform-native validator describing the incoming message `data`. */
+  readonly data?: unknown;
 }
 
 /** One message handler `@SubscribeMessage()` declared, in declaration order. */
@@ -15,6 +30,8 @@ export interface WebSocketMessageMetadata {
   readonly event: string;
   /** The handler method carrying this event. */
   readonly propertyKey: string | symbol;
+  /** The optional schema validating the message payload. */
+  readonly schema?: WebSocketMessageSchema | undefined;
 }
 
 /** The message piece a gateway handler parameter binds to. */

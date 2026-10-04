@@ -71,3 +71,34 @@ test("the Vite+ lane preserves default and own-only gateway metadata", () => {
   expect(getWebSocketGatewayMetadata(ChildGateway)).toBeUndefined();
   expect(() => SubscribeMessage("")).toThrow(TypeError);
 });
+
+test("the Vite+ lane preserves schemas, guards, and payload limits metadata", () => {
+  class GuardMock {
+    canActivate(): boolean {
+      return true;
+    }
+  }
+
+  class SecureGateway {
+    handle(): void {}
+  }
+
+  const schema = { data: { type: "string" } };
+  WebSocketGateway({ path: "/secure-ws", guards: [GuardMock], maxPayloadLength: 1024 })(
+    SecureGateway,
+  );
+  SubscribeMessage("secure.event", schema)(
+    SecureGateway.prototype,
+    "handle",
+    Object.getOwnPropertyDescriptor(SecureGateway.prototype, "handle")!,
+  );
+
+  expect(getWebSocketGatewayMetadata(SecureGateway)).toEqual({
+    path: "/secure-ws",
+    guards: [GuardMock],
+    maxPayloadLength: 1024,
+  });
+  expect(getWebSocketMessageMetadata(SecureGateway)).toEqual([
+    { event: "secure.event", propertyKey: "handle", schema },
+  ]);
+});

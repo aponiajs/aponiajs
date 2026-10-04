@@ -59,6 +59,52 @@ export class ChatModule {}
 upgrade path; `{ path: "/chat" }` is the equivalent object form. Gateways share
 the HTTP application's server and port.
 
+### Gateway options, handshake guards, and payload bounds
+
+`@WebSocketGateway()` accepts configuration options:
+
+```ts
+@WebSocketGateway({
+  path: "/chat",
+  guards: [AuthGuard],
+  maxPayloadLength: 65536,
+})
+export class ChatGateway {}
+```
+
+- `path`: The mount path (defaults to `"/ws"`).
+- `guards`: Handshake guards executed during the HTTP upgrade phase before the
+  socket connects. If any guard returns `false` or throws, the connection is
+  rejected immediately with HTTP 403 Forbidden without opening the socket or
+  invoking `handleConnection()`.
+- `maxPayloadLength`: Maximum incoming message payload length in bytes. Messages
+  exceeding this bound are safely rejected with an exception frame.
+
+### Message schema validation
+
+Validate incoming message payloads by passing a schema to `@SubscribeMessage`:
+
+```ts
+import { t } from "elysia";
+
+const ChatMessageSchema = t.Object({
+  text: t.String({ minLength: 1 }),
+});
+
+@SubscribeMessage("chat.send", { data: ChatMessageSchema })
+sendMessage(@MessageBody("text") text: string): WsResponse<{ text: string }> {
+  return {
+    event: "chat.message",
+    data: { text },
+  };
+}
+```
+
+The `data` schema accepts Standard Schema validators (Zod, ArkType, Valibot),
+TypeBox validators, or `@Validation()` model classes. When validation fails, the
+handler is never invoked and an `INVALID_WEBSOCKET_MESSAGE` exception frame is
+sent to the client.
+
 ### Declare a gateway as data
 
 Decorators are the authoring surface; `defineWebSocketGateway` is the same
@@ -78,10 +124,13 @@ export const ChatModule = defineModule({
   providers: [
     defineWebSocketGateway(ChatGateway, {
       path: "/chat",
+      guards: [AuthGuard],
+      maxPayloadLength: 65536,
       inject: [ChatService],
       handlers: [
         {
           event: "chat.send",
+          schema: { data: ChatMessageSchema },
           propertyKey: "sendMessage",
           parameters: [
             { index: 0, kind: "message-body", property: "text" },
@@ -91,6 +140,7 @@ export const ChatModule = defineModule({
       ],
     }),
     ChatService,
+    AuthGuard,
   ],
 });
 ```

@@ -1,4 +1,11 @@
-import type { ClassProvider, Token, WebSocketParameterMetadata } from "@aponiajs/common";
+import type {
+  CanActivate,
+  ClassProvider,
+  ClassToken,
+  Token,
+  WebSocketMessageSchema,
+  WebSocketParameterMetadata,
+} from "@aponiajs/common";
 
 /**
  * One message handler a gateway declares, as data rather than as decorator
@@ -13,6 +20,8 @@ export interface WebSocketHandlerPlan {
   readonly event: string;
   /** The handler's property key, which is how the instance is looked up when a message arrives. */
   readonly propertyKey: string | symbol;
+  /** Optional schema validating the message data. */
+  readonly schema?: WebSocketMessageSchema | undefined;
   /**
    * The handler's parameter bindings, in declaration order.
    *
@@ -45,6 +54,10 @@ export interface WebSocketGatewayPlan {
    * `@WebSocketGateway()` does.
    */
   readonly path?: string;
+  /** Maximum incoming message payload length in bytes. */
+  readonly maxPayloadLength?: number | undefined;
+  /** Handshake guards executed before upgrading the socket connection. */
+  readonly guards?: readonly ClassToken<CanActivate>[] | undefined;
   /** The gateway's message handlers, in declaration order. */
   readonly handlers?: readonly WebSocketHandlerPlan[];
   /**
@@ -62,6 +75,10 @@ export interface WebSocketGatewayOptions<
   readonly inject?: TDependencies;
   /** The gateway's path, or `undefined` for `/ws`. */
   readonly path?: string;
+  /** Maximum incoming message payload length in bytes. */
+  readonly maxPayloadLength?: number;
+  /** Handshake guards executed before upgrading the socket connection. */
+  readonly guards?: readonly ClassToken<CanActivate>[];
   /** The gateway's message handlers, in declaration order. */
   readonly handlers?: readonly WebSocketHandlerPlan[];
   /** The instance properties that receive the root application. */
