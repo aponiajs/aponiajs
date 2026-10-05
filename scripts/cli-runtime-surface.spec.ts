@@ -421,6 +421,7 @@ const decoratorAnalyses: ReadonlyMap<string, string> = new Map([
  */
 const unreadDecorators: ReadonlyMap<string, string> = new Map([
   ["Catch", "a filter class is imported by reference, so its own decorator runs when it loads"],
+  ["UsePipes", "pipes are applied during route parameter binding and runtime execution"],
 ]);
 
 /** The analysis that must account for each metadata key `packages/common` reads. */
@@ -454,6 +455,7 @@ const unreadMetadataKeys: ReadonlyMap<string, string> = new Map([
     "aponia.injectable.metadata",
     "injectable scope metadata is read during runtime module compilation",
   ],
+  ["aponia.pipes.metadata", "pipe metadata is resolved during runtime route compilation"],
 ]);
 
 /** How a runtime declaration is read. */
@@ -1253,9 +1255,9 @@ describe("CLI runtime surface guard", () => {
   });
 
   test("a decorator the CLI does not recognise is reported with the analysis that must read it", () => {
-    const withUnknownDecorator = Object.freeze([...runtimeDecorators, "UsePipes"]);
+    const withUnknownDecorator = Object.freeze([...runtimeDecorators, "UseImaginaryDecorator"]);
     const analyses = new Map(decoratorAnalyses).set(
-      "UsePipes",
+      "UseImaginaryDecorator",
       "controller-routes.ts's enhancerDecorators",
     );
 
@@ -1277,19 +1279,23 @@ describe("CLI runtime surface guard", () => {
         recognizedNamesByAnalysis,
       ),
       "a decorator the CLI cannot read but is mapped to one must name that analysis",
-    ).toEqual(["UsePipes must be recognised by controller-routes.ts's enhancerDecorators"]);
+    ).toEqual([
+      "UseImaginaryDecorator must be recognised by controller-routes.ts's enhancerDecorators",
+    ]);
   });
 
   test("a decorator no analysis claims is reported as unmapped", () => {
     expect(
       findCoverageProblems(
-        ["UsePipes"],
+        ["UseImaginaryDecorator"],
         decoratorAnalyses,
         unreadDecorators,
         recognizedNamesByAnalysis,
       ),
       "a runtime decorator nothing maps is the drift this guard exists for",
-    ).toEqual(["UsePipes is neither mapped to a CLI analysis nor listed as deliberately unread"]);
+    ).toEqual([
+      "UseImaginaryDecorator is neither mapped to a CLI analysis nor listed as deliberately unread",
+    ]);
   });
 
   test("a union member the CLI does not carry fails in both directions", () => {

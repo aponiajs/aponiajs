@@ -217,6 +217,80 @@ that is not declared fails the boot with `MISSING_PROVIDER`. The
 [enhancers guide](../../docs/enhancers.md) covers precedence, resolution, and the
 default filter.
 
+## Pipes and parameter transformation
+
+Parameter transformation and validation pipes implement `PipeTransform`:
+
+```ts
+import {
+  Controller,
+  DefaultValuePipe,
+  Get,
+  Param,
+  ParseIntPipe,
+  Query,
+  UsePipes,
+  type ArgumentMetadata,
+  type PipeTransform,
+} from "@aponiajs/common";
+
+@Controller("items")
+export class ItemsController {
+  @Get(":id")
+  findOne(@Param("id", ParseIntPipe) id: number) {
+    return { id, isNumber: typeof id === "number" };
+  }
+
+  @Get()
+  findPage(@Query("page", new DefaultValuePipe(1), ParseIntPipe) page: number) {
+    return { page };
+  }
+}
+```
+
+Built-in transformation pipes:
+
+- `ParseIntPipe`: parses string into integer or throws 400 Bad Request.
+- `ParseFloatPipe`: parses string into floating-point number.
+- `ParseBoolPipe`: parses boolean strings (`"true"`, `"false"`).
+- `ParseUUIDPipe`: validates UUID v4 string format.
+- `DefaultValuePipe`: supplies a fallback default when input is `undefined` or `null`.
+
+Method-level and controller-level pipes can be attached via `@UsePipes()`.
+
+## Route Middleware
+
+Route middleware implements `AponiaMiddleware` and is configured via module `configure(consumer)` seams:
+
+```ts
+import {
+  Injectable,
+  Module,
+  type AponiaMiddleware,
+  type AponiaModule,
+  type MiddlewareConsumer,
+  type RouteContext,
+} from "@aponiajs/common";
+
+@Injectable()
+export class LoggerMiddleware implements AponiaMiddleware {
+  async use(context: RouteContext, next: () => Promise<unknown>): Promise<unknown> {
+    console.log(`[Request] ${context.request.method} ${context.request.url}`);
+    return await next();
+  }
+}
+
+@Module({
+  controllers: [UsersController],
+  providers: [LoggerMiddleware],
+})
+export class AppModule implements AponiaModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(LoggerMiddleware).exclude("public/*").forRoutes(UsersController);
+  }
+}
+```
+
 ## WebSocket gateways
 
 `@WebSocketGateway()` marks a class provider as a gateway, and

@@ -1,4 +1,5 @@
 import "reflect-metadata";
+import type { PipeType } from "../pipes/pipe.types.ts";
 import type { ClassToken } from "../tokens/token.types.ts";
 import type { RouteParameterKind, RouteParameterMetadata } from "./route-parameters.types.ts";
 
@@ -136,8 +137,25 @@ export function getRouteParameterMetadata(
 }
 
 function createParameterDecorator(kind: RouteParameterKind) {
-  return (property?: string): ParameterDecorator =>
-    (target, propertyKey, parameterIndex) => {
+  return (
+    propertyOrPipe?: string | PipeType,
+    ...additionalPipes: readonly PipeType[]
+  ): ParameterDecorator => {
+    let property: string | undefined;
+    let pipes: readonly PipeType[];
+
+    if (typeof propertyOrPipe === "string") {
+      property = propertyOrPipe;
+      pipes = additionalPipes;
+    } else if (propertyOrPipe !== undefined) {
+      property = undefined;
+      pipes = [propertyOrPipe, ...additionalPipes];
+    } else {
+      property = undefined;
+      pipes = additionalPipes;
+    }
+
+    return (target, propertyKey, parameterIndex) => {
       if (propertyKey === undefined) {
         throw new TypeError(`@${kind} can only decorate a route handler parameter.`);
       }
@@ -152,10 +170,16 @@ function createParameterDecorator(kind: RouteParameterKind) {
         propertyKey,
         Object.freeze([
           ...methodParameters,
-          Object.freeze({ index: parameterIndex, kind, property }),
+          Object.freeze({
+            index: parameterIndex,
+            kind,
+            property,
+            ...(pipes.length > 0 ? { pipes: Object.freeze([...pipes]) } : {}),
+          }),
         ]),
       );
 
       Reflect.defineMetadata(routeParametersMetadataKey, updated, target);
     };
+  };
 }

@@ -9,6 +9,7 @@ import {
   type ClassToken,
   type EnhancerMetadata,
   type LoggerService,
+  type MiddlewareConsumer,
   type Token,
 } from "@aponiajs/common";
 import { createContainer } from "@aponiajs/core";
@@ -31,6 +32,8 @@ import {
   createDefaultExceptionFilter,
   reportThroughLogger,
 } from "../errors/default-exception-filter.ts";
+import { createMiddlewareConsumer } from "../middleware/middleware-consumer.ts";
+import { mountMiddleware } from "../middleware/middleware-pipeline.ts";
 import { compileRootModule, isModuleDefinition } from "../modules/module-compiler.ts";
 import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
 import { selectRootModuleDescriptor } from "../modules/module-descriptor-artifact.ts";
@@ -189,13 +192,36 @@ export async function bootstrapAponiaApplication(
     nativeApplication.use(plugin);
   }
 
+  const { consumer: middlewareConsumer, getConfigs: getMiddlewareConfigs } =
+    createMiddlewareConsumer();
+
   for (const module of container.graph.modules) {
     container.initializeModule(module);
     if (isPluginModule(module)) {
       nativeApplication.use(getElysiaPlugin(container, module));
     }
+    if (typeof module.configure === "function") {
+      module.configure(middlewareConsumer);
+    } else if (
+      module.moduleClass !== undefined &&
+      typeof (module.moduleClass.prototype as { configure?: unknown })?.configure === "function"
+    ) {
+      let moduleInstance: { configure?: (consumer: MiddlewareConsumer) => void };
+      try {
+        moduleInstance = container.get(module.moduleClass) as {
+          configure?: (consumer: MiddlewareConsumer) => void;
+        };
+      } catch {
+        moduleInstance = Reflect.construct(module.moduleClass, []) as {
+          configure?: (consumer: MiddlewareConsumer) => void;
+        };
+      }
+      moduleInstance.configure?.(middlewareConsumer);
+    }
     logger?.log(`${module.id} dependencies initialized`, "InstanceLoader");
   }
+
+  mountMiddleware(nativeApplication, getMiddlewareConfigs(), container);
 
   // The global enhancers are the application's own declaration, so they resolve
   // once, through the root module, rather than per controller: one instance

@@ -1,10 +1,13 @@
 import {
   AponiaError,
   getEnhancerMetadata,
+  getPipesMetadata,
   getRouteMetadata,
   getRouteParameterMetadata,
   isRouteResponseSchemaMap,
   resolveRouteValidator,
+  type ArgumentMetadata,
+  type ArgumentType,
   type Interceptor,
   type ArgumentsHost,
   type CanActivate,
@@ -15,6 +18,7 @@ import {
   type LoggerService,
   type RequestMethod,
   type RouteContext,
+  type RouteParameterKind,
   type RouteParameterMetadata,
   type RouteResponseSchema,
   type RouteSchema,
@@ -24,6 +28,7 @@ import { type AnySchema, type Elysia } from "elysia";
 import type { MountedRouteEnhancers, ResolvedFilter } from "../controllers/enhancer-resolver.ts";
 import { isFilterMatch, reportThroughLogger } from "../errors/default-exception-filter.ts";
 import { httpErrors } from "../errors/http-error.ts";
+import { executePipes, resolvePipe, type ResolvedPipe } from "../pipes/pipe-resolver.ts";
 import { registerNativeRoute } from "./native-route.ts";
 import type {
   RouteHandler,
@@ -44,12 +49,19 @@ export function compileElysiaRoutes(
   controllerPath: string,
 ): readonly CompiledElysiaRoute[] {
   const controllerEnhancers = getEnhancerMetadata(controller);
+  const controllerPipes = getPipesMetadata(controller) ?? [];
   const routes = getRouteMetadata(controller).map((route): CompiledElysiaRoute => {
     const parameters = getRouteParameterMetadata(controller, route.propertyKey);
     const prototypeHandler = Object.getOwnPropertyDescriptor(
       controller.prototype,
       route.propertyKey,
     )?.value as unknown;
+    const methodPipes =
+      getPipesMetadata(controller.prototype, route.propertyKey) ??
+      (typeof prototypeHandler === "function" || typeof prototypeHandler === "object"
+        ? (getPipesMetadata(prototypeHandler as object) ?? [])
+        : []);
+    const routePipes = Object.freeze([...controllerPipes, ...methodPipes]);
     const parameterTypes = Reflect.getMetadata(
       "design:paramtypes",
       controller.prototype,
@@ -81,7 +93,9 @@ export function compileElysiaRoutes(
       capabilities: Object.freeze([...new Set(capabilities)]),
       schema: route.schema,
       declaredParameterCount,
+      declaredParameterTypes: parameterTypes,
       declaredReturnKind: classifyDeclaredReturnKind(returnType),
+      pipes: routePipes,
       enhancers: mergeEnhancerMetadata(
         controllerEnhancers,
         getEnhancerMetadata(controller, route.propertyKey),
@@ -354,6 +368,75 @@ function isClassConstructor(handler: (...arguments_: unknown[]) => unknown): boo
   return /^class[\s{/]/.test(Function.prototype.toString.call(handler).trimStart());
 }
 
+function hasRouteOrParameterPipes(route: CompiledElysiaRoute): boolean {
+  if (route.pipes !== undefined && route.pipes.length > 0) {
+    return true;
+  }
+  return route.parameters.some(
+    (parameter) => parameter.pipes !== undefined && parameter.pipes.length > 0,
+  );
+}
+
+function isPipedParameterKind(kind: RouteParameterKind): boolean {
+  return (
+    kind === "body" ||
+    kind === "query" ||
+    kind === "params" ||
+    kind === "headers" ||
+    kind === "cookie"
+  );
+}
+
+interface ParameterExecutionPlan {
+  readonly index: number;
+  readonly kind: RouteParameterKind;
+  readonly property?: string;
+  readonly pipes: readonly ResolvedPipe[];
+  readonly metadata: ArgumentMetadata;
+}
+
+function extractContextSourceValue(context: RouteContext, kind: RouteParameterKind): unknown {
+  switch (kind) {
+    case "context":
+      return context;
+    case "set":
+      return context.set;
+    case "request":
+      return context.request;
+    case "body":
+      return context.body;
+    case "query":
+      return context.query;
+    case "params":
+      return context.params;
+    case "headers":
+      return context.headers;
+    case "cookie":
+      return context.cookie;
+    default:
+      return (context as unknown as Record<string, unknown>)[kind];
+  }
+}
+
+function extractParameterValue(
+  context: RouteContext,
+  kind: RouteParameterKind,
+  property?: string,
+): unknown {
+  const source = extractContextSourceValue(context, kind);
+  if (property === undefined) {
+    return source;
+  }
+  if (typeof source === "object" && source !== null) {
+    const val = (source as Record<string, unknown>)[property];
+    if (kind === "cookie") {
+      return (val as { value?: unknown } | undefined)?.value;
+    }
+    return val;
+  }
+  return undefined;
+}
+
 /**
  * Compiles parameter metadata once during bootstrap so request dispatch neither
  * allocates an argument array nor hides precise context usage from Elysia's
@@ -364,6 +447,56 @@ function createRouteHandler(
   instance: unknown,
   route: CompiledElysiaRoute,
 ): (context: RouteContext) => unknown {
+  if (hasRouteOrParameterPipes(route) && route.parameters.length > 0) {
+    const argumentCount = (route.parameters.at(-1)?.index ?? -1) + 1;
+    const parameterPlans = Object.freeze(
+      route.parameters.map((param): ParameterExecutionPlan => {
+        const pipesToApply = [
+          ...(isPipedParameterKind(param.kind) ? (route.pipes ?? []) : []),
+          ...(param.pipes ?? []),
+        ];
+        const resolved = Object.freeze(pipesToApply.map((p) => resolvePipe(p)));
+        const argType: ArgumentType =
+          param.kind === "params"
+            ? "param"
+            : param.kind === "body" ||
+                param.kind === "query" ||
+                param.kind === "headers" ||
+                param.kind === "cookie"
+              ? param.kind
+              : "custom";
+        const declaredType = route.declaredParameterTypes?.[param.index];
+        const metatype =
+          typeof declaredType === "function" ? (declaredType as ClassToken<unknown>) : undefined;
+        const metadata: ArgumentMetadata = Object.freeze({
+          type: argType,
+          data: param.property,
+          metatype,
+        });
+        return Object.freeze({
+          index: param.index,
+          kind: param.kind,
+          property: param.property,
+          pipes: resolved,
+          metadata,
+        });
+      }),
+    );
+
+    return async (context: RouteContext) => {
+      const arguments_ = Array.from({ length: argumentCount }, () => undefined as unknown);
+      for (const plan of parameterPlans) {
+        const rawValue = extractParameterValue(context, plan.kind, plan.property);
+        if (plan.pipes.length > 0) {
+          arguments_[plan.index] = await executePipes(plan.pipes, rawValue, plan.metadata);
+        } else {
+          arguments_[plan.index] = rawValue;
+        }
+      }
+      return await handler.call(instance, ...arguments_);
+    };
+  }
+
   if (route.parameters.length === 0) {
     const argumentsSource = expectsContextArgument(handler, route.declaredParameterCount)
       ? "context"

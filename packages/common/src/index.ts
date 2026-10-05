@@ -68,6 +68,13 @@ export { formatLogValue } from "./logging/log-value.ts";
 export { LOGGER } from "./logging/logger-token.ts";
 export { NOOP_LOGGER, notifySystemLogger, observeSystemLogger } from "./logging/logger-observer.ts";
 export type { ConsoleLoggerOptions, LoggerService, LogLevel } from "./logging/logger.types.ts";
+export type {
+  AponiaMiddleware,
+  AponiaModule,
+  MiddlewareConfigProxy,
+  MiddlewareConsumer,
+  RouteTarget,
+} from "./middleware/middleware.types.ts";
 export { defineModule } from "./modules/module.ts";
 export type {
   ModuleDefinition,
@@ -82,6 +89,22 @@ export {
   resolveForwardRef,
 } from "./modules/forward-ref.ts";
 export type { ForwardReference } from "./modules/forward-ref.types.ts";
+export {
+  DefaultValuePipe,
+  ParseBoolPipe,
+  ParseFloatPipe,
+  ParseIntPipe,
+  ParseUUIDPipe,
+} from "./pipes/built-in-pipes.ts";
+export type { ParsePipeOptions } from "./pipes/built-in-pipes.ts";
+export { UsePipes, getPipesMetadata } from "./pipes/pipe-decorators.ts";
+export { pipeMetadataKey } from "./pipes/pipe.constants.ts";
+export type {
+  ArgumentMetadata,
+  ArgumentType,
+  PipeTransform,
+  PipeType,
+} from "./pipes/pipe.types.ts";
 export { provideAlias, provideClass, provideFactory, provideValue } from "./providers/provider.ts";
 export { Scope } from "./providers/provider.constants.ts";
 export type {

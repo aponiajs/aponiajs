@@ -100,3 +100,5 @@ export type {
   RequestContext,
   RequestContextModuleOptions,
 } from "./request-context/request-context.types.ts";
+export { createMiddlewareConsumer } from "./middleware/middleware-consumer.ts";
+export type { ResolvedMiddlewareConfig } from "./middleware/middleware-consumer.types.ts";

@@ -95,6 +95,7 @@ function compileModuleImports(rootModule: ModuleImport): ModuleDefinition {
       const isGlobal = isGlobalModule(moduleClass) || (metadata.global ?? false);
       const definition: ModuleDefinition = Object.freeze({
         id: moduleClass.name,
+        moduleClass,
         ...(isGlobal ? { global: true } : {}),
         imports: Object.freeze((metadata.imports ?? []).map(compile)),
         controllers: Object.freeze((metadata.controllers ?? []).map(compileDecoratedController)),
@@ -127,6 +128,7 @@ function compileModuleImports(rootModule: ModuleImport): ModuleDefinition {
       const definition: ModuleDefinition = Object.freeze({
         id: dynamicModule.id,
         instanceId: dynamicModule.instanceId,
+        moduleClass: dynamicModule.module,
         ...(isGlobal ? { global: true } : {}),
         imports: Object.freeze((mergedMetadata.imports ?? []).map(compile)),
         controllers: Object.freeze(

@@ -1,6 +1,7 @@
 import type { ControllerDefinition } from "../controllers/controller.types.ts";
+import type { MiddlewareConsumer } from "../middleware/middleware.types.ts";
 import type { Provider } from "../providers/provider.types.ts";
-import type { Token } from "../tokens/token.types.ts";
+import type { ClassToken, Token } from "../tokens/token.types.ts";
 import type { ForwardReference } from "./forward-ref.types.ts";
 
 /** An imported module descriptor or forward reference to one. */
@@ -17,6 +18,10 @@ export interface ModuleDefinition {
   readonly instanceId?: symbol;
   /** Whether exported providers are visible globally across the graph. */
   readonly global?: boolean;
+  /** The constructor token of the decorated module class, if lowered from one. */
+  readonly moduleClass?: ClassToken<unknown>;
+  /** Optional middleware configuration hook. */
+  readonly configure?: (consumer: MiddlewareConsumer) => void;
   /** The already-lowered modules this module resolves against. */
   readonly imports: readonly ModuleImportDescriptor[];
   /** The controllers this module mounts. */
@@ -32,6 +37,8 @@ export interface ModuleOptions {
   readonly id: string;
   readonly instanceId?: symbol;
   readonly global?: boolean;
+  readonly moduleClass?: ClassToken<unknown>;
+  readonly configure?: (consumer: MiddlewareConsumer) => void;
   readonly imports?: readonly ModuleImportDescriptor[];
   readonly controllers?: readonly ControllerDefinition[];
   readonly providers?: readonly Provider[];

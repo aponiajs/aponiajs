@@ -349,18 +349,20 @@ One request passes the route's stages in this order, and the order is the
 contract — a future stage is inserted at its reserved position, never by
 reordering what runs today:
 
-1. guards, in declaration order (application, controller, handler);
-2. interceptor `interceptBefore` halves, in the same order;
-3. the handler;
-4. interceptor `interceptAfter` halves, reversed — the outermost declaration
+1. route middleware (`AponiaMiddleware`), in configured order;
+2. guards, in declaration order (application, controller, handler);
+3. interceptor `interceptBefore` halves, in the same order;
+4. pipes (`PipeTransform`, `@UsePipes()`), transforming and validating parameters;
+5. the handler;
+6. interceptor `interceptAfter` halves, reversed — the outermost declaration
    answers last;
-5. exception filters, most-specific-first (handler, controller, application);
-6. the default Problem Details mapping, always last.
+7. exception filters, most-specific-first (handler, controller, application);
+8. the default Problem Details mapping, always last.
 
 `interceptBefore` cannot short-circuit and `afterHandle` never runs when a
 guard or the handler threw: those are Elysia's semantics, not this platform's
-choice. A middleware or pipe stage, if one ever lands, runs before the
-guards — reserving that position now is what keeps the order above stable.
+choice. Route middleware runs before the guards, allowing request inspection,
+tracing, and early short-circuiting.
 
 ## Resolution
 
@@ -398,9 +400,9 @@ Each of these is a decision, not an omission.
    Routes mount during `AponiaFactory.create`; the equivalent is an option.
 4. **Enhancers must be declared providers.** Nest instantiates them implicitly.
 5. **`ArgumentsHost` and `getType()` are not carried.** One transport.
-6. **Pipes and middleware are absent.** Route validation already covers
-   per-slot validation, and Elysia's `derive` and `resolve` — reachable through
-   `PluginModule` — are the middleware mechanism.
+6. **Middleware and pipes use descriptor-backed ahead-of-time compilation.**
+   `AponiaMiddleware` mounts via module `configure(consumer)` seams, and
+   `PipeTransform` integrates directly with parameter decorators and `@UsePipes()`.
 
 ## In this repository
 

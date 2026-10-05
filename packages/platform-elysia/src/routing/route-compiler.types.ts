@@ -1,5 +1,6 @@
 import type {
   EnhancerMetadata,
+  PipeType,
   RequestMethod,
   RouteContext,
   RouteParameterKind,
@@ -124,6 +125,10 @@ export interface CompiledElysiaRoute {
   readonly schema: RouteSchema | undefined;
   readonly declaredParameterCount: number | undefined;
   readonly declaredReturnKind: "promise" | "synchronous" | "unknown";
+  /** Emitted TypeScript parameter types if decorator metadata was available. */
+  readonly declaredParameterTypes?: readonly unknown[];
+  /** The pipes applied to this route from controller and method levels. */
+  readonly pipes?: readonly PipeType[];
   /** The enhancers this route declares, before any global ones are merged. */
   readonly enhancers: EnhancerMetadata;
 }

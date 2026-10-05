@@ -40,14 +40,16 @@ The first Elysia platform slice for Aponia:
 - typed RFC 9457 application errors for every supported 4xx and 5xx status;
 - Nest-style guards, interceptors (`interceptBefore`/`interceptAfter`), and
   exception filters, compiled into per-route Elysia lifecycle hooks;
+- Nest-style parameter and route pipes (`PipeTransform`, `@UsePipes()`, built-in transformation pipes);
+- Nest-style route middleware (`AponiaMiddleware`, `MiddlewareConsumer`, `configure()` seam);
+- Provider scopes (`Scope.DEFAULT`, `Scope.REQUEST`, `Scope.TRANSIENT`) with per-request ambient async context;
 - explicit Elysia lazy-composition and startup-precompile policy;
 - `provideConfiguration(AppConfig)` — an application-declared configuration,
   validated once at boot and read back through `application.get(AppConfig)`;
 - `handle`, `listen`, `get`, and `close` application methods.
 
-This package intentionally does not yet implement request scopes, schema
-aggregation, Socket.IO-only gateway semantics, or decorator-wide static route
-inference.
+This package intentionally does not yet implement schema aggregation, Socket.IO-only
+gateway semantics, or decorator-wide static route inference.
 
 Decorated modules, controllers, and validation models are the normal
 application-authoring surface. Direct raw validators remain supported as a
@@ -249,7 +251,7 @@ versions it was generated against:
 ```ts
 // src/invokers.generated.ts
 export const controllerInvokerArtifact = Object.freeze({
-  framework: "1.0.0-beta.9",
+  framework: "1.0.0-beta.10",
   elysia: "2.0.0-beta.19",
   invokers: new Map([
     [UsersController, (instance: UsersController) => new Map([["ping", () => instance.ping()]])],
@@ -308,7 +310,7 @@ it was generated against:
 ```ts
 // src/descriptors.generated.ts
 export const moduleDescriptorArtifact = Object.freeze({
-  framework: "1.0.0-beta.9",
+  framework: "1.0.0-beta.10",
   elysia: "2.0.0-beta.19",
   modules: Object.freeze({ AppModule: AppModuleDescriptor }),
 });
