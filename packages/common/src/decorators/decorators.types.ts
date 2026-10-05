@@ -1,17 +1,30 @@
+import type { ForwardReference } from "../modules/forward-ref.types.ts";
 import type { ModuleDefinition } from "../modules/module.types.ts";
-import type { Provider } from "../providers/provider.types.ts";
+import type { Provider, ProviderScope } from "../providers/provider.types.ts";
 import type { RouteSchema } from "../routing/route-schema.types.ts";
 import type { ClassToken, Token } from "../tokens/token.types.ts";
 
+/** Options accepted by the `@Injectable()` decorator. */
+export interface InjectableOptions {
+  /** The lifetime a provider instance is kept for: singleton, request, or transient. */
+  readonly scope?: ProviderScope;
+}
+
 /** A class carrying `@Module()` metadata. */
 export type ModuleClass = ClassToken<unknown>;
-/** Anything a module's `imports` accepts: a class, a lowered descriptor, or a registration. */
-export type ModuleImport = ModuleClass | ModuleDefinition | DynamicModule;
+/** Anything a module's `imports` accepts: a class, a lowered descriptor, a registration, or a forward reference. */
+export type ModuleImport =
+  | ModuleClass
+  | ModuleDefinition
+  | DynamicModule
+  | ForwardReference<ModuleClass | ModuleDefinition | DynamicModule>;
 /** Anything a module's `providers` accepts: a class, or a provider descriptor. */
 export type ModuleProvider = ClassToken<unknown> | Provider;
 
 /** The `@Module()` declaration as written, before lowering. */
 export interface ModuleMetadata {
+  /** Whether exported providers are visible globally without explicit imports. */
+  readonly global?: boolean;
   /** The already-lowered or to-be-lowered modules this module resolves against. */
   readonly imports?: readonly ModuleImport[];
   /** The controller classes this module mounts. */

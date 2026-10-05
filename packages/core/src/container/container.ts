@@ -1,6 +1,8 @@
 import {
   AponiaError,
   getTokenName,
+  isForwardRef,
+  resolveForwardRef,
   type ControllerDefinition,
   type ModuleDefinition,
   type Provider,
@@ -10,6 +12,11 @@ import { getProviderDependencies } from "../graph/dependencies.ts";
 import { compileModuleGraph } from "../graph/graph-compiler.ts";
 import type { ProviderLocation } from "../graph/graph.types.ts";
 import type { ModuleGraph } from "../graph/module-graph.ts";
+
+/**
+ * A callback function returning the active request context object, or undefined outside a request.
+ */
+export type RequestContextAccessor = () => object | undefined;
 
 /**
  * The dependency injection container: one cached instance per provider per
@@ -25,9 +32,20 @@ export class AponiaContainer {
   readonly #instances = new Map<ModuleDefinition, Map<Provider, unknown>>();
   readonly #controllers = new Map<ModuleDefinition, Map<ControllerDefinition, unknown>>();
   readonly #resolving: ProviderLocation[] = [];
+  readonly #requestInstances = new WeakMap<object, Map<ModuleDefinition, Map<Provider, unknown>>>();
+  #contextAccessor?: RequestContextAccessor;
 
   constructor(graph: ModuleGraph) {
     this.graph = graph;
+  }
+
+  /**
+   * Sets the ambient request context accessor used to resolve request-scoped providers.
+   *
+   * @param accessor - Function returning the active request context object, or undefined.
+   */
+  setRequestContextAccessor(accessor: RequestContextAccessor | undefined): void {
+    this.#contextAccessor = accessor;
   }
 
   /**
@@ -38,18 +56,19 @@ export class AponiaContainer {
    * `AMBIGUOUS_PROVIDER`.
    *
    * @param token - The token to resolve.
-   * @returns The cached singleton instance.
+   * @param context - Optional request context object for request-scoped resolution.
+   * @returns The resolved instance.
    * @throws An `AponiaError` with `MISSING_PROVIDER`, `AMBIGUOUS_PROVIDER`,
-   * `PROVIDER_CYCLE`, or `UNSUPPORTED_PROVIDER_SCOPE`.
+   * `PROVIDER_CYCLE`, `UNSUPPORTED_PROVIDER_SCOPE`, or `MISSING_REQUEST_CONTEXT`.
    *
    * @example
    * ```ts
    * const greeting = container.get(GREETING);
    * ```
    */
-  get<T>(token: Token<T>): T {
+  get<T>(token: Token<T>, context?: object): T {
     const location = this.graph.locate(this.graph.root, token);
-    return this.#resolve(location) as T;
+    return this.#resolve(location, context) as T;
   }
 
   /**
@@ -58,25 +77,24 @@ export class AponiaContainer {
    *
    * @internal
    */
-  resolveModuleProvider<T>(module: ModuleDefinition, token: Token<T>): T {
+  resolveModuleProvider<T>(module: ModuleDefinition, token: Token<T>, context?: object): T {
     const location = this.graph.locate(module, token);
-    return this.#resolve(location) as T;
+    return this.#resolve(location, context) as T;
   }
 
   /**
    * Eagerly instantiates every singleton provider a module declares.
    *
-   * A provider that declares a `"request"` or `"transient"` scope fails here
-   * with `UNSUPPORTED_PROVIDER_SCOPE`: its instances do not exist at boot, so
-   * there is nothing to create yet.
+   * Providers declaring `"request"` or `"transient"` scope are deferred.
    *
    * @param module - The module whose providers to instantiate.
-   * @throws An `AponiaError` with `UNSUPPORTED_PROVIDER_SCOPE` for a scoped
-   * provider, or the resolution codes `get` throws.
    */
   initializeModule(module: ModuleDefinition): void {
     for (const provider of module.providers) {
       assertSupportedScope(provider);
+      if (provider.scope === "request" || provider.scope === "transient") {
+        continue;
+      }
       this.#resolve({ module, provider });
     }
   }
@@ -87,26 +105,44 @@ export class AponiaContainer {
       return moduleControllers.get(controller) as T;
     }
 
-    const dependencies = controller.inject.map((dependency) =>
-      this.#resolve(this.graph.locate(module, dependency)),
-    );
+    const dependencies = controller.inject.map((dependency) => {
+      const unwrapped = resolveForwardRef(dependency);
+      return this.#resolve(this.graph.locate(module, unwrapped));
+    });
     const instance = Reflect.construct(controller.useClass, dependencies) as T;
     this.#moduleCache(this.#controllers, module).set(controller, instance);
     return instance;
   }
 
-  #resolve(location: ProviderLocation): unknown {
-    // `"request"` and `"transient"` are reserved lifetimes the container does
-    // not instantiate yet. Refusing here — rather than serving a singleton
-    // where a fresh instance was promised — is what keeps the declaration
-    // honest until the scope lands. The check also runs in `initializeModule`
-    // so a scoped provider fails the boot in the eager pass rather than only
-    // when something first resolves it.
+  #resolve(location: ProviderLocation, context?: object): unknown {
     assertSupportedScope(location.provider);
 
-    const moduleInstances = this.#instances.get(location.module);
-    if (moduleInstances?.has(location.provider)) {
-      return moduleInstances.get(location.provider);
+    const activeContext = context ?? this.#contextAccessor?.();
+
+    if (location.provider.scope === "request") {
+      if (!activeContext) {
+        throw new AponiaError(
+          "MISSING_REQUEST_CONTEXT",
+          `Cannot resolve request-scoped provider "${getTokenName(location.provider.provide)}" outside of an active request context.`,
+          {
+            module: location.module.id,
+            token: getTokenName(location.provider.provide),
+          },
+        );
+      }
+
+      const contextModules = this.#requestInstances.get(activeContext);
+      if (contextModules) {
+        const moduleInstances = contextModules.get(location.module);
+        if (moduleInstances?.has(location.provider)) {
+          return moduleInstances.get(location.provider);
+        }
+      }
+    } else if (location.provider.scope !== "transient") {
+      const moduleInstances = this.#instances.get(location.module);
+      if (moduleInstances?.has(location.provider)) {
+        return moduleInstances.get(location.provider);
+      }
     }
 
     const cycleIndex = this.#resolving.findIndex(
@@ -125,15 +161,71 @@ export class AponiaContainer {
 
     this.#resolving.push(location);
     try {
-      const dependencies = getProviderDependencies(location.provider).map((dependency) =>
-        this.#resolve(this.graph.locate(location.module, dependency)),
-      );
+      const dependencies = getProviderDependencies(location.provider).map((dependency) => {
+        const unwrapped = resolveForwardRef(dependency);
+        const depLocation = this.graph.locate(location.module, unwrapped);
+        const inResolving = this.#resolving.some(
+          (item) => item.module === depLocation.module && item.provider === depLocation.provider,
+        );
+        if (inResolving && isForwardRef(dependency)) {
+          return this.#createForwardRefProxy(depLocation, activeContext);
+        }
+        return this.#resolve(depLocation, activeContext);
+      });
       const instance = instantiate(location.provider, dependencies);
-      this.#moduleCache(this.#instances, location.module).set(location.provider, instance);
+
+      if (location.provider.scope === "request") {
+        let contextModules = this.#requestInstances.get(activeContext!);
+        if (!contextModules) {
+          contextModules = new Map();
+          this.#requestInstances.set(activeContext!, contextModules);
+        }
+        let moduleInstances = contextModules.get(location.module);
+        if (!moduleInstances) {
+          moduleInstances = new Map();
+          contextModules.set(location.module, moduleInstances);
+        }
+        moduleInstances.set(location.provider, instance);
+      } else if (location.provider.scope !== "transient") {
+        this.#moduleCache(this.#instances, location.module).set(location.provider, instance);
+      }
+
       return instance;
     } finally {
       this.#resolving.pop();
     }
+  }
+
+  #createForwardRefProxy(location: ProviderLocation, context?: object): unknown {
+    const resolveInstance = (): unknown =>
+      this.resolveModuleProvider(location.module, location.provider.provide, context);
+    const target = {};
+    return new Proxy(target, {
+      get(_target, prop, receiver) {
+        const instance = resolveInstance();
+        const value = Reflect.get(instance as object, prop, receiver);
+        if (typeof value === "function") {
+          return value.bind(instance);
+        }
+        return value;
+      },
+      has(_target, prop) {
+        const instance = resolveInstance();
+        return Reflect.has(instance as object, prop);
+      },
+      set(_target, prop, value, receiver) {
+        const instance = resolveInstance();
+        return Reflect.set(instance as object, prop, value, receiver);
+      },
+      apply(_target, thisArg, argArray) {
+        const instance = resolveInstance();
+        return Reflect.apply(instance as Function, thisArg, argArray);
+      },
+      getPrototypeOf() {
+        const instance = resolveInstance();
+        return Reflect.getPrototypeOf(instance as object);
+      },
+    });
   }
 
   #moduleCache<TKey extends object>(
@@ -182,16 +274,22 @@ export function createContainer(
  * is a promise the container must not silently downgrade to a singleton.
  */
 function assertSupportedScope(provider: Provider): void {
-  if (provider.scope === undefined || provider.scope === "singleton") {
+  const scope: string | undefined = provider.scope as string | undefined;
+  if (
+    scope === undefined ||
+    scope === "singleton" ||
+    scope === "request" ||
+    scope === "transient"
+  ) {
     return;
   }
 
   throw new AponiaError(
     "UNSUPPORTED_PROVIDER_SCOPE",
-    `Provider "${getTokenName(provider.provide)}" declares scope "${provider.scope}", which this release does not instantiate.`,
+    `Provider "${getTokenName(provider.provide)}" declares scope "${scope}", which this release does not instantiate.`,
     {
       token: getTokenName(provider.provide),
-      scope: provider.scope,
+      scope,
     },
   );
 }

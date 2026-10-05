@@ -9,7 +9,7 @@ import {
   type ModuleImport,
 } from "@aponiajs/common";
 import { AponiaFactory, getApplicationDiagnostics } from "@aponiajs/platform-elysia";
-import { createTestApplication, TestApplication } from "../src/index.ts";
+import { createTestApplication, Test, TestApplication } from "../src/index.ts";
 import type { TestApplicationBuilder, TestProviderOverride } from "../src/index.ts";
 import type { TestApplicationOptions, TestServer } from "../src/index.ts";
 import type { AnyElysia, Elysia } from "elysia";
@@ -101,8 +101,8 @@ type TestingBarrel = typeof import("../src/index.ts");
 type TestingBarrelAssertions = [
   Expect<
     Equals<
-      Extract<keyof TestingBarrel, "createTestApplication" | "TestApplication">,
-      "createTestApplication" | "TestApplication"
+      Extract<keyof TestingBarrel, "createTestApplication" | "TestApplication" | "Test">,
+      "createTestApplication" | "TestApplication" | "Test"
     >
   >,
 ];
@@ -187,4 +187,23 @@ test("boots as the factory does when nothing is overridden, and closes twice", a
 
   const assertions: TestingBarrelAssertions = [true];
   expect(assertions).toHaveLength(1);
+});
+
+test("the Vite+ lane creates testing module and resolves providers with overrides", async () => {
+  const moduleRef = await Test.createTestingModule({
+    controllers: [ConformanceController],
+    providers: [provideValue(CONFORMANCE_GREETER, { greet: () => "conformance-real" })],
+  })
+    .overrideProvider(CONFORMANCE_GREETER)
+    .useValue({ greet: (name: string) => `conformance-mock-${name}` })
+    .compile();
+
+  const greeter = moduleRef.get(CONFORMANCE_GREETER);
+  expect(greeter.greet("VitePlus")).toBe("conformance-mock-VitePlus");
+
+  const app = await moduleRef.createAponiaApplication();
+  const res = await app.handle(new Request("http://localhost/greeting"));
+  expect(await res.text()).toBe("conformance-mock-Ada");
+
+  await moduleRef.close();
 });

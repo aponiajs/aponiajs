@@ -12,9 +12,16 @@
  * directly.
  */
 export { createTestApplication } from "./application/test-application-builder.ts";
+export { Test } from "./application/testing-module.ts";
 export { TestApplication } from "./application/test-application.ts";
 export type {
   TestApplicationBuilder,
   TestProviderOverride,
 } from "./application/test-application-builder.types.ts";
+export type {
+  OverrideFactoryOptions,
+  OverrideProviderBuilder,
+  TestingModule,
+  TestingModuleBuilder,
+} from "./application/testing-module.types.ts";
 export type { TestApplicationOptions, TestServer } from "./application/test-application.types.ts";

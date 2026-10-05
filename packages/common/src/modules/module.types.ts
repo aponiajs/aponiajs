@@ -1,6 +1,10 @@
 import type { ControllerDefinition } from "../controllers/controller.types.ts";
 import type { Provider } from "../providers/provider.types.ts";
 import type { Token } from "../tokens/token.types.ts";
+import type { ForwardReference } from "./forward-ref.types.ts";
+
+/** An imported module descriptor or forward reference to one. */
+export type ModuleImportDescriptor = ModuleDefinition | ForwardReference<ModuleDefinition>;
 
 /**
  * A lowered module: the frozen descriptor the graph compiles, never the
@@ -11,8 +15,10 @@ export interface ModuleDefinition {
   readonly id: string;
   /** The configured-instance identity, keeping two instances of one class distinct. */
   readonly instanceId?: symbol;
+  /** Whether exported providers are visible globally across the graph. */
+  readonly global?: boolean;
   /** The already-lowered modules this module resolves against. */
-  readonly imports: readonly ModuleDefinition[];
+  readonly imports: readonly ModuleImportDescriptor[];
   /** The controllers this module mounts. */
   readonly controllers: readonly ControllerDefinition[];
   /** The providers this module declares. */
@@ -25,7 +31,8 @@ export interface ModuleDefinition {
 export interface ModuleOptions {
   readonly id: string;
   readonly instanceId?: symbol;
-  readonly imports?: readonly ModuleDefinition[];
+  readonly global?: boolean;
+  readonly imports?: readonly ModuleImportDescriptor[];
   readonly controllers?: readonly ControllerDefinition[];
   readonly providers?: readonly Provider[];
   readonly exports?: readonly Token<unknown>[];

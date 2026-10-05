@@ -1,6 +1,8 @@
 import {
   AponiaError,
   getTokenName,
+  isForwardRef,
+  resolveForwardRef,
   type ModuleDefinition,
   type Provider,
   type Token,
@@ -62,7 +64,12 @@ export function compileModuleGraph(
     }
 
     visiting.push(module);
-    for (const imported of module.imports) {
+    for (const rawImport of module.imports) {
+      const isForward = isForwardRef(rawImport);
+      const imported = resolveForwardRef(rawImport);
+      if (isForward && visiting.includes(imported)) {
+        continue;
+      }
       visit(imported);
     }
     visiting.pop();
@@ -131,8 +138,24 @@ function validateExports(graph: ModuleGraph): void {
 function validateDependencies(graph: ModuleGraph): void {
   for (const module of graph.modules) {
     for (const provider of module.providers) {
+      const providerScope = provider.scope ?? "singleton";
       for (const dependency of getProviderDependencies(provider)) {
-        graph.locate(module, dependency);
+        const location = graph.locate(module, resolveForwardRef(dependency));
+        const dependencyScope = location.provider.scope ?? "singleton";
+
+        if (providerScope === "singleton" && dependencyScope === "request") {
+          throw new AponiaError(
+            "INVALID_SCOPE_HIERARCHY",
+            `Singleton provider "${getTokenName(provider.provide)}" in module "${module.id}" cannot depend on request-scoped provider "${getTokenName(location.provider.provide)}" in module "${location.module.id}".`,
+            {
+              module: module.id,
+              provider: getTokenName(provider.provide),
+              providerScope,
+              dependency: getTokenName(location.provider.provide),
+              dependencyScope,
+            },
+          );
+        }
       }
     }
   }
@@ -152,7 +175,20 @@ function validateControllers(graph: ModuleGraph): void {
       controllerTokens.add(controller.token);
 
       for (const dependency of controller.inject) {
-        graph.locate(module, dependency);
+        const location = graph.locate(module, resolveForwardRef(dependency));
+        const dependencyScope = location.provider.scope ?? "singleton";
+        if (dependencyScope === "request") {
+          throw new AponiaError(
+            "INVALID_SCOPE_HIERARCHY",
+            `Singleton controller "${getTokenName(controller.token)}" in module "${module.id}" cannot depend on request-scoped provider "${getTokenName(location.provider.provide)}" in module "${location.module.id}".`,
+            {
+              module: module.id,
+              controller: getTokenName(controller.token),
+              dependency: getTokenName(location.provider.provide),
+              dependencyScope,
+            },
+          );
+        }
       }
     }
   }

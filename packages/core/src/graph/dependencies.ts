@@ -1,4 +1,4 @@
-import { AponiaError, type Provider, type Token } from "@aponiajs/common";
+import { AponiaError, type InjectionDependency, type Provider } from "@aponiajs/common";
 
 /**
  * Why a value cannot serve as a provider, or `undefined` when it can.
@@ -67,7 +67,7 @@ export function providerShapeProblem(value: unknown): string | undefined {
  *
  * @internal
  */
-export function getProviderDependencies(provider: Provider): readonly Token<unknown>[] {
+export function getProviderDependencies(provider: Provider): readonly InjectionDependency[] {
   switch (provider.kind) {
     case "value":
       return [];

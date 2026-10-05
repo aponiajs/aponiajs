@@ -540,6 +540,9 @@ function planModule(
   }
 
   const body: string[] = [`id: ${JSON.stringify(declaration.name)},`];
+  if (declaration.module.global) {
+    body.push("global: true,");
+  }
   if (importedModules.length > 0) {
     body.push(...renderCollection("imports", importedModules));
   }

@@ -181,6 +181,41 @@ test("stores a created user", () => {
 A controller is an ordinary class too: pass a stub service to its constructor
 when the assertion is about controller behavior rather than routing.
 
+## Testing modules with `Test.createTestingModule`
+
+When testing a service or controller that has dependency injection relationships
+across modules, use `Test.createTestingModule` from `@aponiajs/testing`:
+
+```ts
+import { expect, test } from "bun:test";
+import { Test, type TestingModule } from "@aponiajs/testing";
+import { UsersModule } from "../src/users/users.module.ts";
+import { UsersService } from "../src/users/users.service.ts";
+import { DatabaseService } from "../src/database/database.service.ts";
+
+test("finds users with stubbed database", async () => {
+  const moduleRef: TestingModule = await Test.createTestingModule({
+    imports: [UsersModule],
+  })
+    .overrideProvider(DatabaseService)
+    .useValue({ query: () => [{ id: "1", name: "Ada" }] })
+    .compile();
+
+  const service = moduleRef.get(UsersService);
+  expect(await service.findAll()).toEqual([{ id: "1", name: "Ada" }]);
+
+  await moduleRef.close();
+});
+```
+
+`Test.createTestingModule` accepts module metadata or a root module class. Once
+compiled, `moduleRef` supports:
+
+- `moduleRef.get(token)`: resolves a provider or controller synchronously from the DI container.
+- `moduleRef.resolve(token, context?)`: resolves a provider asynchronously, including scoped providers.
+- `moduleRef.createAponiaApplication(options?)`: creates and boots a complete `AponiaApplication` from this testing module with overrides preserved.
+- `moduleRef.close()`: runs lifecycle teardown hooks (`onModuleDestroy`).
+
 Constructing directly stops being the right shape the moment the assertion is
 about what a **request** receives from a stubbed dependency, because then the
 route, the parameter binding, the validation, and the response mapping are all

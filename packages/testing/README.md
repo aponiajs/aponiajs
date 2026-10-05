@@ -74,6 +74,35 @@ Nothing is compiled until `compile()` is called. That ordering is load-bearing:
 an override is a rewrite of the compiled graph, so it has to be declared before
 the boot rather than applied to a running application.
 
+## Creating a testing module (`Test.createTestingModule`)
+
+For unit and integration tests focusing on services, repositories, or individual
+modules without necessarily starting a web server, use `Test.createTestingModule`:
+
+```ts
+import { Test, type TestingModule } from "@aponiajs/testing";
+import { UsersModule } from "../src/users/users.module.ts";
+import { UsersService } from "../src/users/users.service.ts";
+import { DatabaseService } from "../src/database/database.service.ts";
+
+const moduleRef: TestingModule = await Test.createTestingModule({
+  imports: [UsersModule],
+})
+  .overrideProvider(DatabaseService)
+  .useValue({ query: () => [] })
+  .compile();
+
+const service = moduleRef.get(UsersService);
+expect(await service.findAll()).toEqual([]);
+```
+
+`moduleRef` provides:
+
+- `.get(token)`: resolves a provider or controller synchronously from the test container.
+- `.resolve(token, context?)`: resolves a provider asynchronously, including scoped providers.
+- `.createAponiaApplication(options?)`: boots a full `AponiaApplication` from this testing module with all overrides intact.
+- `.close()`: runs lifecycle teardown hooks (`onModuleDestroy`).
+
 ## Replacing a provider
 
 ```ts

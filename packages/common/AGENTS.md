@@ -53,11 +53,12 @@ their owning domain. `src/index.ts` is the package's only public barrel.
   own-only and immutable, and resolving it preserves the original validator
   instance.
 - Everything a public API returns is frozen.
-- `ProviderScope` reserves `"request"` and `"transient"` beside `"singleton"`,
-  and every `provide*` factory accepts and freezes a trailing `scope` option.
-  Only singleton instantiates; resolving anything else fails with
-  `UNSUPPORTED_PROVIDER_SCOPE` rather than serving a singleton where a fresh
-  instance was promised.
+- `ProviderScope` supports `"singleton"`, `"request"`, and `"transient"` via
+  the `Scope` enum (`Scope.DEFAULT`, `Scope.REQUEST`, `Scope.TRANSIENT`), and
+  every `provide*` factory accepts and freezes a trailing `scope` option.
+  Singleton instantiates per module, transient instantiates per injection,
+  and request instantiates per incoming request context. Resolving an unsupported
+  scope fails with `UNSUPPORTED_PROVIDER_SCOPE`.
 - `defineModule` normalizes omitted collections to frozen empty tuples while
   retaining exact declared import, controller, provider, and export tuples.
   Do not intersect those fields with the broad `ModuleDefinition` arrays.

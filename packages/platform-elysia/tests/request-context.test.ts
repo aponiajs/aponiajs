@@ -6,6 +6,7 @@ import {
   Get,
   Injectable,
   Module,
+  Scope,
   UseGuards,
   type CanActivate,
   type ExecutionContext,
@@ -95,6 +96,53 @@ class OrderController {
   @Get("/throw")
   fail() {
     throw new Error("Deliberate controller failure");
+  }
+}
+
+let scopedInstanceCount = 0;
+
+@Injectable({ scope: Scope.REQUEST })
+class RequestScopedIdService {
+  readonly instanceId = ++scopedInstanceCount;
+  constructor(readonly context: RequestContextService) {}
+
+  getRequestId(): string | undefined {
+    return this.context.current()?.requestId;
+  }
+}
+
+@Injectable({ scope: Scope.REQUEST })
+class RequestScopedConsumerService {
+  constructor(readonly idService: RequestScopedIdService) {}
+}
+
+let captured1A: RequestScopedConsumerService | undefined;
+let captured1B: RequestScopedConsumerService | undefined;
+let captured2: RequestScopedConsumerService | undefined;
+
+let globalAppRef: { get<T>(token: unknown): T } | undefined;
+
+@Controller("/scoped-test")
+class ScopedTestController {
+  constructor(readonly context: RequestContextService) {}
+
+  @Get("/first")
+  first() {
+    captured1A = globalAppRef!.get(RequestScopedConsumerService);
+    captured1B = globalAppRef!.get(RequestScopedConsumerService);
+    return {
+      instanceId: captured1A!.idService.instanceId,
+      requestId: captured1A!.idService.getRequestId(),
+    };
+  }
+
+  @Get("/second")
+  second() {
+    captured2 = globalAppRef!.get(RequestScopedConsumerService);
+    return {
+      instanceId: captured2!.idService.instanceId,
+      requestId: captured2!.idService.getRequestId(),
+    };
   }
 }
 
@@ -341,5 +389,39 @@ describe("RequestContextModule integration", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("x-request-id")).toBeNull();
+  });
+
+  test("resolves request-scoped provider per in-flight request", async () => {
+    @Module({
+      imports: [RequestContextModule.forRoot()],
+      controllers: [ScopedTestController],
+      providers: [RequestScopedIdService, RequestScopedConsumerService],
+    })
+    class ScopedAppModule {}
+
+    const app = await AponiaFactory.create(ScopedAppModule, { logger: false });
+    globalAppRef = app;
+
+    const res1 = await app.handle(
+      new Request("http://localhost/scoped-test/first", {
+        headers: { "x-request-id": "req-one" },
+      }),
+    );
+    const body1 = (await res1.json()) as { instanceId: number; requestId: string };
+    expect(body1.requestId).toBe("req-one");
+
+    const res2 = await app.handle(
+      new Request("http://localhost/scoped-test/second", {
+        headers: { "x-request-id": "req-two" },
+      }),
+    );
+    const body2 = (await res2.json()) as { instanceId: number; requestId: string };
+    expect(body2.requestId).toBe("req-two");
+
+    expect(captured1A).toBeDefined();
+    expect(captured1A).toBe(captured1B);
+    expect(captured1A).not.toBe(captured2);
+    expect(captured1A!.idService.instanceId).toBe(1);
+    expect(captured2!.idService.instanceId).toBe(2);
   });
 });

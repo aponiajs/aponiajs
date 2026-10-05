@@ -190,13 +190,19 @@ describe("@aponiajs/core module graph", () => {
     expect(() => compileModuleGraph(providerModule)).toThrow(
       expect.objectContaining({
         code: "MISSING_PROVIDER",
-        details: { module: "missing-provider-dependency", token: "missing" },
+        details: expect.objectContaining({
+          module: "missing-provider-dependency",
+          token: "missing",
+        }),
       }),
     );
     expect(() => compileModuleGraph(controllerModule)).toThrow(
       expect.objectContaining({
         code: "MISSING_PROVIDER",
-        details: { module: "missing-controller-dependency", token: "missing" },
+        details: expect.objectContaining({
+          module: "missing-controller-dependency",
+          token: "missing",
+        }),
       }),
     );
   });
@@ -226,7 +232,10 @@ describe("@aponiajs/core module graph", () => {
     expect(() => compileModuleGraph(module)).toThrow(
       expect.objectContaining({
         code: "MISSING_PROVIDER",
-        details: { module: "missing-bound", token: "missing-bound-dependency" },
+        details: expect.objectContaining({
+          module: "missing-bound",
+          token: "missing-bound-dependency",
+        }),
       }),
     );
   });
@@ -296,7 +305,7 @@ describe("@aponiajs/core module graph", () => {
     expect(() => graph.locate(outside, value)).toThrow(
       expect.objectContaining({
         code: "MISSING_PROVIDER",
-        details: { module: "outside", token: "outside-value" },
+        details: expect.objectContaining({ module: "outside", token: "outside-value" }),
       }),
     );
   });

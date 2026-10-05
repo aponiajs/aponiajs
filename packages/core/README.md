@@ -6,16 +6,15 @@
 bun add @aponiajs/core @aponiajs/common
 ```
 
-The initial Aponia runtime foundation:
+The Aponia dependency injection and module runtime:
 
-- deterministic module graph compilation;
+- deterministic module graph compilation with actionable diagnostic hints;
 - explicit module imports and provider exports;
+- global modules (`@Global()`) providing app-wide visible providers;
 - value, factory, class, and alias providers;
-- singleton dependency resolution without decorators or reflection;
-- stable diagnostics for invalid graphs and dependency cycles.
-
-Async providers, request scope, lifecycle hooks, HTTP, and Elysia integration are
-intentionally outside this first implementation.
+- full provider lifetimes (`Scope.DEFAULT`, `Scope.REQUEST`, `Scope.TRANSIENT`);
+- circular dependency resolution via `forwardRef()`;
+- stable diagnostics for invalid graphs, dependency cycles, and scope hierarchy.
 
 Most HTTP applications receive this package through
 `@aponiajs/platform-elysia`. Install it directly when building a platform

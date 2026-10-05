@@ -1,8 +1,13 @@
 import {
   AponiaError,
+  forwardRef,
   getConstructorDependencies,
   getControllerMetadata,
+  getInjectableMetadata,
   getModuleMetadata,
+  isForwardRef,
+  isGlobalModule,
+  resolveForwardRef,
   type ClassToken,
   type Constructor,
   type ControllerDefinition,
@@ -10,6 +15,7 @@ import {
   type ModuleClass,
   type ModuleDefinition,
   type ModuleImport,
+  type ModuleImportDescriptor,
   type ModuleMetadata,
   type ModuleProvider,
   type Provider,
@@ -43,9 +49,10 @@ import { assertUniqueElysiaRoutes } from "./route-uniqueness.ts";
  * ```
  */
 export function compileRootModule(rootModule: AponiaRootModule): ModuleDefinition {
-  const compiledRoot = isModuleDefinition(rootModule)
-    ? rootModule
-    : compileModuleImports(rootModule);
+  const unwrapped = resolveForwardRef(rootModule);
+  const compiledRoot = isModuleDefinition(unwrapped)
+    ? unwrapped
+    : (compileModuleImports(unwrapped) as ModuleDefinition);
   assertUniqueElysiaRoutes(compiledRoot);
   return compiledRoot;
 }
@@ -55,7 +62,13 @@ function compileModuleImports(rootModule: ModuleImport): ModuleDefinition {
   const compiledDynamicModules = new Map<DynamicModule, ModuleDefinition>();
   const visiting: ModuleImport[] = [];
 
-  const compile = (moduleImport: ModuleImport): ModuleDefinition => {
+  const compile = (moduleImport: ModuleImport): ModuleImportDescriptor => {
+    if (isForwardRef(moduleImport)) {
+      return forwardRef(() => {
+        const unwrapped = moduleImport.forwardRef();
+        return compile(unwrapped) as ModuleDefinition;
+      });
+    }
     if (typeof moduleImport === "function") {
       return compileClass(moduleImport);
     }
@@ -79,8 +92,10 @@ function compileModuleImports(rootModule: ModuleImport): ModuleDefinition {
 
     visiting.push(moduleClass);
     try {
+      const isGlobal = isGlobalModule(moduleClass) || (metadata.global ?? false);
       const definition: ModuleDefinition = Object.freeze({
         id: moduleClass.name,
+        ...(isGlobal ? { global: true } : {}),
         imports: Object.freeze((metadata.imports ?? []).map(compile)),
         controllers: Object.freeze((metadata.controllers ?? []).map(compileDecoratedController)),
         providers: Object.freeze((metadata.providers ?? []).map(compileProvider)),
@@ -108,9 +123,11 @@ function compileModuleImports(rootModule: ModuleImport): ModuleDefinition {
     const mergedMetadata = mergeModuleMetadata(metadata, dynamicModule);
     visiting.push(dynamicModule);
     try {
+      const isGlobal = isGlobalModule(dynamicModule.module) || (mergedMetadata.global ?? false);
       const definition: ModuleDefinition = Object.freeze({
         id: dynamicModule.id,
         instanceId: dynamicModule.instanceId,
+        ...(isGlobal ? { global: true } : {}),
         imports: Object.freeze((mergedMetadata.imports ?? []).map(compile)),
         controllers: Object.freeze(
           (mergedMetadata.controllers ?? []).map(compileDecoratedController),
@@ -125,7 +142,7 @@ function compileModuleImports(rootModule: ModuleImport): ModuleDefinition {
     }
   };
 
-  return compile(rootModule);
+  return resolveForwardRef(compile(rootModule));
 }
 
 /**
@@ -138,15 +155,20 @@ function compileModuleImports(rootModule: ModuleImport): ModuleDefinition {
  *
  * @internal
  */
-export function isModuleDefinition(moduleImport: ModuleImport): moduleImport is ModuleDefinition {
+export function isModuleDefinition(moduleImport: unknown): moduleImport is ModuleDefinition {
   return (
-    typeof moduleImport !== "function" &&
+    typeof moduleImport === "object" &&
+    moduleImport !== null &&
+    !isForwardRef(moduleImport) &&
     "controllers" in moduleImport &&
     !("module" in moduleImport)
   );
 }
 
 function moduleImportName(moduleImport: ModuleImport): string {
+  if (isForwardRef(moduleImport)) {
+    return moduleImportName(moduleImport.forwardRef());
+  }
   if (typeof moduleImport === "function") {
     return moduleImport.name;
   }
@@ -215,11 +237,14 @@ function compileProvider(provider: ModuleProvider): Provider {
     );
   }
 
+  const scope = getInjectableMetadata(provider)?.scope;
+
   return Object.freeze({
     kind: "class",
     provide: provider,
     inject,
     useClass: provider as Constructor<unknown, never[]>,
+    ...(scope === undefined ? {} : { scope }),
   });
 }
 

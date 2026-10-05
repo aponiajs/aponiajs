@@ -55,15 +55,74 @@ provideAlias(LEGACY_GREETING, GREETING);
   declares it.
 - `provideAlias` points one token at another.
 
-Singleton is currently the only scope: each provider is instantiated once per
-module that owns it, and the instance is cached.
+## Scopes
 
-`"request"` and `"transient"` are reserved lifetimes a declaration can state
-today through the trailing `scope` option — `provideValue(token, value, {
-scope: "request" })` — but the container does not instantiate them yet:
-resolving one fails with `UNSUPPORTED_PROVIDER_SCOPE` rather than silently
-serving a singleton where a fresh instance was promised. Lifecycle hooks run
-on singleton instances only, for the same reason.
+Aponia supports three provider lifetime scopes via the `Scope` object:
+
+```ts
+import { Injectable, Scope } from "@aponiajs/common";
+
+@Injectable({ scope: Scope.REQUEST })
+export class RequestContextTracker {}
+
+@Injectable({ scope: Scope.TRANSIENT })
+export class UniqueIdGenerator {}
+```
+
+- **`Scope.DEFAULT` (`"singleton"`)**: The default scope. Instantiated once per owning module, cached and shared across the application.
+- **`Scope.REQUEST` (`"request"`)**: Instantiated once per incoming request context. Cached for the duration of the request in connection with `RequestContextModule`. Outside of a request context, resolving a request-scoped provider raises `MISSING_REQUEST_CONTEXT`. Singleton providers and controllers cannot depend directly on request-scoped providers (`INVALID_SCOPE_HIERARCHY`).
+- **`Scope.TRANSIENT` (`"transient"`)**: A fresh instance is created on every injection or resolution.
+
+Descriptor providers also accept a trailing `scope` option:
+`provideClass(UniqueIdGenerator, [], { scope: Scope.TRANSIENT })`.
+
+## Global Modules
+
+By default, modules are encapsulated. If a module provides utility services that should be accessible everywhere without needing explicit `imports` in every feature module, mark it with `@Global()`:
+
+```ts
+import { Global, Module } from "@aponiajs/common";
+
+@Global()
+@Module({
+  providers: [DatabaseService],
+  exports: [DatabaseService],
+})
+export class DatabaseModule {}
+```
+
+Exported providers from global modules are visible across the entire module graph. Hand-written descriptors declare `global: true` on `defineModule({ id: "db", global: true, ... })`.
+
+## Circular Dependencies
+
+When two modules or two providers mutually depend on each other, use `forwardRef()` to defer evaluation:
+
+```ts
+import { Module, forwardRef } from "@aponiajs/common";
+
+@Module({
+  imports: [forwardRef(() => AuthModule)],
+  providers: [UserService],
+  exports: [UserService],
+})
+export class UserModule {}
+```
+
+For circular provider dependencies, inject with `@Inject(forwardRef(() => Service))`:
+
+```ts
+import { Inject, Injectable, forwardRef } from "@aponiajs/common";
+
+@Injectable()
+export class UserService {
+  constructor(
+    @Inject(forwardRef(() => AuthService))
+    private readonly authService: AuthService,
+  ) {}
+}
+```
+
+The container resolves cyclic provider dependencies transparently using lazy Proxies once both instances are constructed.
 
 ## Tokens
 
@@ -133,8 +192,11 @@ they do not throw through the application HTTP error path.
 | `DUPLICATE_PROVIDER`                  | A module declares the same token twice                                      |
 | `INVALID_EXPORT`                      | A module exports a token it cannot resolve                                  |
 | `AMBIGUOUS_PROVIDER`                  | Two imports resolve the token to different modules                          |
-| `MISSING_PROVIDER`                    | A dependency cannot be resolved                                             |
+| `MISSING_PROVIDER`                    | A dependency cannot be resolved (includes contextual hints in details)      |
 | `PROVIDER_CYCLE`                      | Providers depend on each other in a cycle                                   |
+| `INVALID_SCOPE_HIERARCHY`             | A singleton provider or controller depends on a request-scoped provider     |
+| `MISSING_REQUEST_CONTEXT`             | A request-scoped provider is resolved outside an active request context     |
+| `UNSUPPORTED_PROVIDER_SCOPE`          | A provider declares an unsupported or unrecognized lifetime scope           |
 | `INVALID_PROVIDER`                    | A provider entry is not a provider descriptor this release can read         |
 | `UNRESOLVED_CONSTRUCTOR_DEPENDENCIES` | A class provider's constructor dependencies cannot be read                  |
 | `INVALID_MODULE`                      | A class is used as a module without `@Module()`                             |

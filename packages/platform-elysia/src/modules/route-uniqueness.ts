@@ -1,4 +1,10 @@
-import { AponiaError, getTokenName, type ModuleDefinition, type Token } from "@aponiajs/common";
+import {
+  AponiaError,
+  getTokenName,
+  resolveForwardRef,
+  type ModuleDefinition,
+  type Token,
+} from "@aponiajs/common";
 import { isElysiaController } from "../controllers/controller-definition.ts";
 import type { CompiledElysiaRoute } from "../routing/route-compiler.types.ts";
 
@@ -206,8 +212,11 @@ function reachableModules(root: ModuleDefinition): readonly ModuleDefinition[] {
     }
     visited.add(module);
 
-    for (const imported of module.imports) {
-      visit(imported);
+    for (const rawImport of module.imports) {
+      const imported = resolveForwardRef(rawImport);
+      if (imported) {
+        visit(imported);
+      }
     }
     modules.push(module);
   };

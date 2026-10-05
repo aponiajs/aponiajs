@@ -1,4 +1,10 @@
-import type { ClassToken, Constructor, Token, TokenMap } from "../tokens/token.types.ts";
+import type {
+  ClassToken,
+  Constructor,
+  InjectionDependency,
+  Token,
+  TokenMap,
+} from "../tokens/token.types.ts";
 import type {
   AliasProvider,
   ClassProvider,
@@ -68,7 +74,7 @@ export function provideValue<T>(
  * const greeting = provideFactory(GREETING, [APP_NAME], (name) => `Hello from ${name}`);
  * ```
  */
-export function provideFactory<T, const TDependencies extends readonly Token<unknown>[]>(
+export function provideFactory<T, const TDependencies extends readonly InjectionDependency[]>(
   provide: Token<T>,
   inject: TDependencies,
   useFactory: (...dependencies: TokenMap<TDependencies>) => T,
@@ -99,7 +105,7 @@ export function provideFactory<T, const TDependencies extends readonly Token<unk
  * provideClass(UsersService, []);
  * ```
  */
-export function provideClass<T, const TDependencies extends readonly Token<unknown>[]>(
+export function provideClass<T, const TDependencies extends readonly InjectionDependency[]>(
   useClass: ClassToken<T> & Constructor<T, TokenMap<TDependencies>>,
   inject: TDependencies,
   options?: ProviderScopeOption,
@@ -123,13 +129,13 @@ export function provideClass<T, const TDependencies extends readonly Token<unkno
  * provideClass(USERS_REPOSITORY, SqlUsersRepository, [Database]);
  * ```
  */
-export function provideClass<T, const TDependencies extends readonly Token<unknown>[]>(
+export function provideClass<T, const TDependencies extends readonly InjectionDependency[]>(
   provide: Token<T>,
   useClass: Constructor<T, TokenMap<TDependencies>>,
   inject: TDependencies,
   options?: ProviderScopeOption,
 ): ClassProvider<T, TDependencies>;
-export function provideClass<T, const TDependencies extends readonly Token<unknown>[]>(
+export function provideClass<T, const TDependencies extends readonly InjectionDependency[]>(
   provideOrClass: Token<T>,
   classOrInject: TDependencies | Constructor<T, TokenMap<TDependencies>>,
   injected?: TDependencies | ProviderScopeOption,

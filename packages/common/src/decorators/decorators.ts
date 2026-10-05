@@ -1,9 +1,11 @@
 import "reflect-metadata";
+import type { ForwardReference } from "../modules/forward-ref.types.ts";
 import { isRouteResponseSchemaMap } from "../routing/route-schema.ts";
 import type { RouteSchema } from "../routing/route-schema.types.ts";
 import type { ClassToken, Token } from "../tokens/token.types.ts";
 import type {
   ControllerMetadata,
+  InjectableOptions,
   ModuleClass,
   ModuleMetadata,
   RequestMethod,
@@ -12,6 +14,8 @@ import type {
 } from "./decorators.types.ts";
 
 const moduleMetadataKey = Symbol.for("aponia.module.metadata");
+const globalMetadataKey = Symbol.for("aponia.global.metadata");
+const injectableMetadataKey = Symbol.for("aponia.injectable.metadata");
 const controllerMetadataKey = Symbol.for("aponia.controller.metadata");
 const routeMetadataKey = Symbol.for("aponia.route.metadata");
 const injectedTokensMetadataKey = Symbol.for("aponia.injected-tokens.metadata");
@@ -46,23 +50,71 @@ export function Module(metadata: ModuleMetadata): ClassDecorator {
 }
 
 /**
- * Marks a class as injectable so `emitDecoratorMetadata` records its
- * constructor parameter types.
+ * Marks a module as global: its exported providers become available to every
+ * module in the compiled graph without importing it explicitly.
  *
- * The decorator itself is a no-op: it builds no graph and no container.
- * Without it, a class nothing decorates resolves to no dependencies however
- * many parameters its constructor takes.
- *
- * @returns A class decorator recording nothing but its own presence.
+ * @returns A class decorator recording the global module metadata.
  *
  * @example
  * ```ts
- * @Injectable()
- * class UsersService {}
+ * @Global()
+ * @Module({ providers: [DatabaseService], exports: [DatabaseService] })
+ * class DatabaseModule {}
  * ```
  */
-export function Injectable(): ClassDecorator {
-  return () => {};
+export function Global(): ClassDecorator {
+  return (target) => {
+    Reflect.defineMetadata(globalMetadataKey, true, target);
+  };
+}
+
+/**
+ * Reads whether a class carries `@Global()` metadata.
+ *
+ * @param target - The module class to inspect.
+ * @returns True when decorated with `@Global()`.
+ */
+export function isGlobalModule(target: object): boolean {
+  return Reflect.getMetadata(globalMetadataKey, target) === true;
+}
+
+/**
+ * Marks a class as injectable so `emitDecoratorMetadata` records its
+ * constructor parameter types, and optionally configures its lifetime scope.
+ *
+ * @param options - Configuration options such as provider scope.
+ * @returns A class decorator recording the injectable metadata.
+ *
+ * @example
+ * ```ts
+ * @Injectable({ scope: Scope.REQUEST })
+ * class RequestIdService {}
+ * ```
+ */
+export function Injectable(options?: InjectableOptions): ClassDecorator {
+  return (target) => {
+    if (options?.scope) {
+      Reflect.defineMetadata(
+        injectableMetadataKey,
+        Object.freeze({ scope: options.scope }),
+        target,
+      );
+    }
+  };
+}
+
+/**
+ * Reads the injectable metadata `@Injectable()` recorded on a class.
+ *
+ * @param target - The injectable class to inspect.
+ * @returns The frozen injectable options, or undefined.
+ */
+export function getInjectableMetadata(
+  target: ClassToken<unknown>,
+): Readonly<InjectableOptions> | undefined {
+  return Reflect.getMetadata(injectableMetadataKey, target) as
+    | Readonly<InjectableOptions>
+    | undefined;
 }
 
 /**
@@ -101,13 +153,15 @@ export function Controller(path = ""): ClassDecorator {
  * constructor(@Inject(APP_NAME) private readonly appName: string) {}
  * ```
  */
-export function Inject(token: Token<unknown>): ParameterDecorator {
+export function Inject(
+  token: Token<unknown> | ForwardReference<Token<unknown>>,
+): ParameterDecorator {
   return (target, _propertyKey, parameterIndex) => {
     const constructor = typeof target === "function" ? target : target.constructor;
     const parameters =
       (Reflect.getOwnMetadata(injectedTokensMetadataKey, constructor) as
-        | ReadonlyMap<number, Token<unknown>>
-        | undefined) ?? new Map<number, Token<unknown>>();
+        | ReadonlyMap<number, Token<unknown> | ForwardReference<Token<unknown>>>
+        | undefined) ?? new Map<number, Token<unknown> | ForwardReference<Token<unknown>>>();
     const updatedParameters = new Map(parameters);
     updatedParameters.set(parameterIndex, token);
     Reflect.defineMetadata(injectedTokensMetadataKey, updatedParameters, constructor);
@@ -267,7 +321,9 @@ export function getRouteMetadata(target: ClassToken<unknown>): readonly RouteMet
  * @param target - The class to read.
  * @returns The frozen dependency list the container resolves.
  */
-export function getConstructorDependencies(target: ClassToken<unknown>): readonly Token<unknown>[] {
+export function getConstructorDependencies(
+  target: ClassToken<unknown>,
+): readonly (Token<unknown> | ForwardReference<Token<unknown>>)[] {
   const reflected =
     (Reflect.getMetadata("design:paramtypes", target) as readonly unknown[] | undefined) ?? [];
   // Explicit tokens deliberately share the reach of `design:paramtypes`: a
@@ -276,7 +332,7 @@ export function getConstructorDependencies(target: ClassToken<unknown>): readonl
   // keep the inherited reflected types but silently drop the inherited tokens.
   // Own metadata still wins, because it shadows the inherited entry.
   const explicit = Reflect.getMetadata(injectedTokensMetadataKey, target) as
-    | ReadonlyMap<number, Token<unknown>>
+    | ReadonlyMap<number, Token<unknown> | ForwardReference<Token<unknown>>>
     | undefined;
   const explicitLength = explicit
     ? Math.max(0, ...[...explicit.keys()].map((index) => index + 1))

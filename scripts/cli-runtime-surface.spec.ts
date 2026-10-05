@@ -362,6 +362,16 @@ const cliAnalyses: ReadonlyMap<string, readonly CliReading[]> = new Map([
       },
     ],
   ],
+  [
+    "module-descriptors.ts's @Global",
+    [
+      {
+        file: moduleDescriptorsFile,
+        kind: "string-constant",
+        name: "globalDecoratorName",
+      },
+    ],
+  ],
 ]);
 
 /** The analysis that must recognise each decorator `packages/common` exports. */
@@ -388,6 +398,7 @@ const decoratorAnalyses: ReadonlyMap<string, string> = new Map([
   ["UseGuards", "controller-routes.ts's enhancerDecorators"],
   ["UseInterceptors", "controller-routes.ts's enhancerDecorators"],
   ["Module", "module-descriptors.ts's @Module"],
+  ["Global", "module-descriptors.ts's @Global"],
   ["Injectable", "module-descriptors.ts's @Injectable"],
   ["Inject", "module-descriptors.ts's @Inject"],
   ["Validation", "module-descriptors.ts's @Validation"],
@@ -416,6 +427,7 @@ const unreadDecorators: ReadonlyMap<string, string> = new Map([
 const metadataKeyAnalyses: ReadonlyMap<string, string> = new Map([
   ["aponia.controller.metadata", "controller-routes.ts's @Controller"],
   ["aponia.module.metadata", "module-descriptors.ts's @Module"],
+  ["aponia.global.metadata", "module-descriptors.ts's @Global"],
   ["aponia.route.metadata", "controller-routes.ts's requestMethodDecorators"],
   ["aponia.route-parameters.metadata", "controller-routes.ts's parameterDecorators"],
   ["aponia.injected-tokens.metadata", "module-descriptors.ts's @Inject"],
@@ -433,6 +445,14 @@ const unreadMetadataKeys: ReadonlyMap<string, string> = new Map([
   [
     "aponia.enhancer-catch.metadata",
     "a filter class is imported by reference, so its own decorator runs when it loads",
+  ],
+  [
+    "aponia.forward-ref",
+    "forward references are resolved at graph compilation time in the runtime",
+  ],
+  [
+    "aponia.injectable.metadata",
+    "injectable scope metadata is read during runtime module compilation",
   ],
 ]);
 

@@ -1,4 +1,5 @@
-import type { InjectionToken, Token } from "./token.types.ts";
+import { resolveForwardRef } from "../modules/forward-ref.ts";
+import type { InjectionDependency, InjectionToken } from "./token.types.ts";
 
 /**
  * Mints an explicit injection token for a value no class names.
@@ -31,10 +32,11 @@ export function createToken<T>(description: string): InjectionToken<T> {
  * @param token - The token to name.
  * @returns The name failure details carry.
  */
-export function getTokenName(token: Token<unknown>): string {
-  if (typeof token === "function") {
-    return token.name || "<anonymous class>";
+export function getTokenName(token: InjectionDependency): string {
+  const unwrapped = resolveForwardRef(token);
+  if (typeof unwrapped === "function") {
+    return unwrapped.name || "<anonymous class>";
   }
 
-  return token.description;
+  return unwrapped.description;
 }

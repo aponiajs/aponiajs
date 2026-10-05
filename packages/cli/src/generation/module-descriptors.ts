@@ -29,6 +29,7 @@ import type {
 const aponiaModuleSpecifier = "@aponiajs/common";
 const controllerDecoratorName = "Controller";
 const moduleDecoratorName = "Module";
+const globalDecoratorName = "Global";
 const injectableDecoratorName = "Injectable";
 const injectDecoratorName = "Inject";
 const gatewayDecoratorName = "WebSocketGateway";
@@ -177,7 +178,8 @@ export function analyzeModuleDescriptors(
 
     const moduleUse = uses.find((use) => use.name === moduleDecoratorName);
     if (moduleUse) {
-      modules.push(analyzeModule(declaration, moduleUse, bindings, filePath));
+      const isGlobal = uses.some((use) => use.name === globalDecoratorName);
+      modules.push(analyzeModule(declaration, moduleUse, bindings, filePath, isGlobal));
     }
 
     const controllerUse = uses.find((use) => use.name === controllerDecoratorName);
@@ -301,6 +303,7 @@ function analyzeModule(
   use: AponiaDecoratorUse,
   bindings: AponiaDecoratorBindings,
   filePath: string,
+  isGlobal?: boolean,
 ): AnalyzedModule {
   const description = describeDecoratorUse(use, filePath);
   const options = readOnlyArgument(use, description, "exactly one options object");
@@ -309,6 +312,7 @@ function analyzeModule(
 
   return Object.freeze({
     className: readClassName(declaration),
+    ...(isGlobal ? { global: true } : {}),
     imports: collections.imports,
     controllers: collections.controllers,
     providers: collections.providers,

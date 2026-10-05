@@ -3,11 +3,15 @@ import {
   AponiaError,
   Controller,
   Get,
+  Global,
+  Inject,
   Injectable,
   Module,
   createToken,
+  forwardRef,
   provideClass,
   provideValue,
+  resolveForwardRef,
   type DynamicModule,
 } from "@aponiajs/common";
 import { AponiaFactory, compileRootModule } from "../src/index.ts";
@@ -64,7 +68,9 @@ test("merges decorated module metadata with the dynamic module that configures i
 
   expect(compiled.id).toBe("MergedEdgeModule");
   expect(compiled.instanceId).toBe(mergedDynamicModule.instanceId);
-  expect(compiled.imports.map((module) => module.id)).toEqual(["DynamicMergeImportModule"]);
+  expect(compiled.imports.map((module) => resolveForwardRef(module).id)).toEqual([
+    "DynamicMergeImportModule",
+  ]);
   expect(compiled.controllers.map((controller) => controller.token)).toEqual([
     BaseMergeController,
     DynamicMergeController,
@@ -195,4 +201,136 @@ test("accepts an empty dependency list the application stated itself", () => {
   const compiled = compileRootModule(ExplicitlyEmptyModule);
 
   expect(compiled.providers).toHaveLength(1);
+});
+
+test("compiles @Global() decorated modules with global: true", () => {
+  @Injectable()
+  class GlobalService {
+    read(): string {
+      return "from-global";
+    }
+  }
+
+  @Global()
+  @Module({
+    providers: [GlobalService],
+    exports: [GlobalService],
+  })
+  class AppGlobalModule {}
+
+  const compiled = compileRootModule(AppGlobalModule);
+  expect(compiled.global).toBe(true);
+});
+
+test("makes @Global() exported provider accessible to controllers across modules without import", async () => {
+  @Injectable()
+  class SharedDbService {
+    query(): string {
+      return "db-result";
+    }
+  }
+
+  @Global()
+  @Module({
+    providers: [SharedDbService],
+    exports: [SharedDbService],
+  })
+  class DbGlobalModule {}
+
+  @Controller("consumer")
+  class ConsumerController {
+    constructor(private readonly db: SharedDbService) {}
+
+    @Get()
+    get(): string {
+      return this.db.query();
+    }
+  }
+
+  @Module({
+    controllers: [ConsumerController],
+  })
+  class FeatureModule {}
+
+  @Module({
+    imports: [DbGlobalModule, FeatureModule],
+  })
+  class RootAppModule {}
+
+  const application = await AponiaFactory.create(RootAppModule, { logger: false });
+  const response = await application.handle(new Request("http://localhost/consumer"));
+
+  expect(await response.text()).toBe("db-result");
+  await application.close();
+});
+
+test("boots decorated circular modules and providers with forwardRef", async () => {
+  let UsersModuleRef: any;
+  let AuthModuleRef: any;
+
+  @Injectable()
+  class UsersService {
+    constructor(@Inject(forwardRef(() => AuthService)) private readonly authService: any) {}
+
+    whoAmI(): string {
+      return "UsersService";
+    }
+
+    askAuth(): string {
+      return `Users asks ${this.authService.whoAmI()}`;
+    }
+  }
+
+  @Injectable()
+  class AuthService {
+    constructor(
+      @Inject(forwardRef(() => UsersService)) private readonly usersService: UsersService,
+    ) {}
+
+    whoAmI(): string {
+      return "AuthService";
+    }
+
+    askUsers(): string {
+      return `Auth asks ${this.usersService.whoAmI()}`;
+    }
+  }
+
+  @Controller("auth")
+  class AuthController {
+    constructor(private readonly authService: AuthService) {}
+
+    @Get()
+    get(): string {
+      return this.authService.askUsers();
+    }
+  }
+
+  @Module({
+    imports: [forwardRef(() => AuthModuleRef)],
+    providers: [UsersService],
+    exports: [UsersService],
+  })
+  class UsersModule {}
+  UsersModuleRef = UsersModule;
+
+  @Module({
+    imports: [forwardRef(() => UsersModuleRef)],
+    controllers: [AuthController],
+    providers: [AuthService],
+    exports: [AuthService],
+  })
+  class AuthModule {}
+  AuthModuleRef = AuthModule;
+
+  @Module({
+    imports: [UsersModule, AuthModule],
+  })
+  class RootModule {}
+
+  const application = await AponiaFactory.create(RootModule, { logger: false });
+  const response = await application.handle(new Request("http://localhost/auth"));
+
+  expect(await response.text()).toBe("Auth asks UsersService");
+  await application.close();
 });

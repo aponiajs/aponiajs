@@ -42,11 +42,12 @@ container.
   left out of `exports` is invisible to importers, and two imports that resolve the token
   to different modules raise `AMBIGUOUS_PROVIDER` instead of picking a winner, while two
   that re-export one shared provider agree on it. Resolutions are memoized per module.
-- `AponiaContainer` caches one instance per provider per module — singleton is
-  the only scope that instantiates, and detects provider cycles during resolution.
-  `"request"` and `"transient"` are reserved lifetimes a declaration can state;
-  resolving one fails with `UNSUPPORTED_PROVIDER_SCOPE` from both the eager and
-  lazy paths, and lifecycle collection skips scoped entries.
+- `AponiaContainer` manages singleton, request, and transient lifetimes:
+  singleton caches per module, request caches per active request context, and
+  transient instantiates fresh on each resolution. Provider and controller cycles
+  are detected during resolution, with cyclic dependencies declared via
+  `forwardRef` resolved transparently via lazy proxies. Singleton providers and
+  controllers cannot depend on request-scoped providers (`INVALID_SCOPE_HIERARCHY`).
 - `get()` enforces root-module visibility on purpose. `resolveModuleProvider()`
   is the platform SPI for resolving inside an arbitrary module and is not
   application API; keep it marked `@internal`.

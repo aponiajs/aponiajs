@@ -1,4 +1,11 @@
-import { AponiaError, getTokenName, type ModuleDefinition, type Token } from "@aponiajs/common";
+import {
+  AponiaError,
+  forwardRef,
+  getTokenName,
+  isForwardRef,
+  type ModuleDefinition,
+  type Token,
+} from "@aponiajs/common";
 import type { ProviderOverrides } from "./provider-overrides.types.ts";
 
 /**
@@ -36,7 +43,12 @@ export function applyProviderOverrides(
       return cached;
     }
 
-    const imports = module.imports.map(rewrite);
+    const imports = module.imports.map((rawImport) => {
+      if (isForwardRef(rawImport)) {
+        return forwardRef(() => rewrite(rawImport.forwardRef()));
+      }
+      return rewrite(rawImport);
+    });
     const providers = module.providers.map((provider) => {
       const replacement = overrides.get(provider.provide);
       if (!replacement) {

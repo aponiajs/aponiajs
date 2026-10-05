@@ -1,3 +1,5 @@
+import type { ForwardReference } from "../modules/forward-ref.types.ts";
+
 declare const tokenType: unique symbol;
 
 /** A constructor signature factories accept as a dependency list shape. */
@@ -23,10 +25,18 @@ export interface InjectionToken<T> {
 /** Anything the container resolves by: a class, or an explicit token. */
 export type Token<T> = ClassToken<T> | InjectionToken<T>;
 
+/** Any dependency injectable into a provider or controller: a token or forward reference. */
+export type InjectionDependency<T = unknown> = Token<T> | ForwardReference<Token<T>>;
+
 /** The value type a token resolves to. */
-export type TokenValue<TToken> = TToken extends Token<infer TValue> ? TValue : never;
+export type TokenValue<TToken> =
+  TToken extends Token<infer TValue>
+    ? TValue
+    : TToken extends ForwardReference<Token<infer TValue>>
+      ? TValue
+      : never;
 
 /** The tuple of value types a dependency list resolves to, in order. */
-export type TokenMap<TTokens extends readonly Token<unknown>[]> = {
+export type TokenMap<TTokens extends readonly unknown[]> = {
   readonly [TIndex in keyof TTokens]: TokenValue<TTokens[TIndex]>;
 };

@@ -35,6 +35,7 @@ import { compileRootModule, isModuleDefinition } from "../modules/module-compile
 import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
 import { selectRootModuleDescriptor } from "../modules/module-descriptor-artifact.ts";
 import { getElysiaPlugin, isPluginModule } from "../plugins/plugin-module.ts";
+import { RequestContextService } from "../request-context/request-context.service.ts";
 import { selectInvokerArtifact } from "../routing/invoker-artifact.ts";
 import type { ControllerHandlerFactory } from "../routing/route-compiler.types.ts";
 import { registerCompiledElysiaRoutes } from "../routing/route-compiler.ts";
@@ -109,6 +110,25 @@ export async function bootstrapAponiaApplication(
   const container = createContainer(compiledRootModule, [
     provideValue(LOGGER, logger ?? NOOP_LOGGER),
   ]);
+  try {
+    const requestContextLocation = container.graph.locate(
+      container.graph.root,
+      RequestContextService,
+    );
+    container.setRequestContextAccessor(() => {
+      try {
+        const service = container.resolveModuleProvider(
+          requestContextLocation.module,
+          RequestContextService,
+        );
+        return service.current();
+      } catch {
+        return undefined;
+      }
+    });
+  } catch {
+    // RequestContextService not in graph
+  }
   const webSocketGateways = compileWebSocketGateways(container.graph.modules);
   const baseApplication = new Elysia({
     ...options.elysia,

@@ -78,6 +78,8 @@ export type AnalyzedConstructorDependency =
 export interface AnalyzedModule {
   /** The class name exactly as declared, or `""` for an anonymous class. */
   readonly className: string;
+  /** Whether the module is decorated with `@Global()`. */
+  readonly global?: boolean;
   /** The collections the decorator declares, in declaration order. */
   readonly imports: readonly AnalyzedModuleEntry[];
   readonly controllers: readonly AnalyzedModuleEntry[];

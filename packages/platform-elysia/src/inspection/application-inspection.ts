@@ -5,6 +5,7 @@ import {
   NOOP_LOGGER,
   getTokenName,
   provideValue,
+  resolveForwardRef,
   type LoggerService,
   type LogLevel,
   type ModuleDefinition,
@@ -94,7 +95,7 @@ function inspectModule(module: ModuleDefinition): AponiaModuleInspection {
   return Object.freeze({
     id: module.id,
     instanceId: module.instanceId === undefined ? undefined : String(module.instanceId),
-    imports: Object.freeze(module.imports.map((imported) => imported.id)),
+    imports: Object.freeze(module.imports.map((imported) => resolveForwardRef(imported).id)),
     controllers: Object.freeze(
       controllers(module).map((controller) => getTokenName(controller.token)),
     ),

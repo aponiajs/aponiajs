@@ -1,6 +1,7 @@
 import {
   AponiaError,
   getTokenName,
+  resolveForwardRef,
   type ModuleDefinition,
   type Provider,
   type Token,
@@ -19,6 +20,8 @@ export class ModuleGraph {
   readonly root: ModuleDefinition;
   /** Every reachable module, once each, in post-order. */
   readonly modules: readonly ModuleDefinition[];
+  /** Every module declared as global whose exports are available everywhere. */
+  readonly globalModules: readonly ModuleDefinition[];
 
   readonly #moduleSet: ReadonlySet<ModuleDefinition>;
   readonly #providersByModule: ReadonlyMap<ModuleDefinition, ReadonlyMap<Token<unknown>, Provider>>;
@@ -33,6 +36,7 @@ export class ModuleGraph {
   ) {
     this.root = root;
     this.modules = Object.freeze([...modules]);
+    this.globalModules = Object.freeze(modules.filter((module) => module.global === true));
     this.#moduleSet = new Set(modules);
     this.#providersByModule = new Map(
       modules.map((module) => [
@@ -53,7 +57,7 @@ export class ModuleGraph {
         this.modules.map((module) =>
           Object.freeze({
             id: module.id,
-            imports: Object.freeze(module.imports.map((item) => item.id)),
+            imports: Object.freeze(module.imports.map((item) => resolveForwardRef(item).id)),
             controllers: Object.freeze(
               module.controllers.map((controller) => getTokenName(controller.token)),
             ),
@@ -90,7 +94,11 @@ export class ModuleGraph {
       throw new AponiaError(
         "MISSING_PROVIDER",
         `Module "${module.id}" is not part of the compiled graph.`,
-        { module: module.id, token: getTokenName(token) },
+        {
+          module: module.id,
+          token: getTokenName(token),
+          hints: Object.freeze([`Ensure module "${module.id}" is imported by the root module.`]),
+        },
       );
     }
 
@@ -122,13 +130,14 @@ export class ModuleGraph {
     }
 
     if (visited.has(module)) {
-      throw missingProvider(module, token);
+      throw this.#missingProvider(module, token);
     }
     visited.add(module);
 
     try {
       const candidates = new Map<ModuleDefinition, ProviderLocation>();
-      for (const imported of module.imports) {
+      for (const rawImport of module.imports) {
+        const imported = resolveForwardRef(rawImport);
         if (!this.#exportsByModule.get(imported)?.has(token)) {
           continue;
         }
@@ -138,13 +147,44 @@ export class ModuleGraph {
       }
 
       if (candidates.size === 0) {
+        const globalCandidates = new Map<ModuleDefinition, ProviderLocation>();
+        for (const globalMod of this.globalModules) {
+          if (globalMod === module) {
+            continue;
+          }
+          if (this.#exportsByModule.get(globalMod)?.has(token)) {
+            const location = this.#locate(globalMod, token, visited);
+            globalCandidates.set(location.module, location);
+          }
+        }
+
+        if (globalCandidates.size === 1) {
+          const location = globalCandidates.values().next().value;
+          if (location) {
+            this.#cacheLocation(module, token, location);
+            return location;
+          }
+        }
+
+        if (globalCandidates.size > 1) {
+          throw new AponiaError(
+            "AMBIGUOUS_PROVIDER",
+            `Token "${getTokenName(token)}" is exported by multiple global modules: ${[...globalCandidates.values()].map((item) => item.module.id).join(", ")}.`,
+            {
+              module: module.id,
+              token: getTokenName(token),
+              candidates: [...globalCandidates.values()].map((item) => item.module.id),
+            },
+          );
+        }
+
         const predefined = this.#predefinedProviders.get(token);
         if (predefined) {
           const location = Object.freeze({ module: this.root, provider: predefined });
           this.#cacheLocation(module, token, location);
           return location;
         }
-        throw missingProvider(module, token);
+        throw this.#missingProvider(module, token);
       }
 
       if (candidates.size > 1) {
@@ -161,7 +201,7 @@ export class ModuleGraph {
 
       const location = candidates.values().next().value;
       if (!location) {
-        throw missingProvider(module, token);
+        throw this.#missingProvider(module, token);
       }
 
       this.#cacheLocation(module, token, location);
@@ -183,12 +223,57 @@ export class ModuleGraph {
     }
     moduleLocations.set(token, location);
   }
-}
 
-function missingProvider(module: ModuleDefinition, token: Token<unknown>): AponiaError {
-  return new AponiaError(
-    "MISSING_PROVIDER",
-    `Module "${module.id}" cannot resolve token "${getTokenName(token)}".`,
-    { module: module.id, token: getTokenName(token) },
-  );
+  #missingProvider(module: ModuleDefinition, token: Token<unknown>): AponiaError {
+    const tokenDescription = getTokenName(token);
+    const hints: string[] = [];
+
+    const declaringModules = this.modules.filter((m) =>
+      m.providers.some((p) => p.provide === token),
+    );
+
+    if (declaringModules.length === 0) {
+      hints.push(
+        `No module in the compiled graph declares token "${tokenDescription}". Did you forget to add it to "${module.id}.providers" or import a module providing it?`,
+      );
+    } else {
+      for (const declaring of declaringModules) {
+        const isImported = module.imports.some(
+          (rawImport) => resolveForwardRef(rawImport) === declaring,
+        );
+        const isExported = declaring.exports.includes(token);
+
+        if (declaring.global && !isExported) {
+          hints.push(
+            `Module "${declaring.id}" is marked as global, but does not export "${tokenDescription}". Add "${tokenDescription}" to "${declaring.id}.exports".`,
+          );
+        } else if (isImported && !isExported) {
+          hints.push(
+            `Token "${tokenDescription}" is declared in imported module "${declaring.id}", but "${declaring.id}" does not export it. Add "${tokenDescription}" to "${declaring.id}.exports".`,
+          );
+        } else if (!isImported && isExported) {
+          hints.push(
+            `Token "${tokenDescription}" is exported by module "${declaring.id}", but "${module.id}" does not import "${declaring.id}". Add "${declaring.id}" to "${module.id}.imports".`,
+          );
+        } else if (!isImported && !isExported) {
+          hints.push(
+            `Token "${tokenDescription}" is declared in module "${declaring.id}". Add "${declaring.id}" to "${module.id}.imports" and add "${tokenDescription}" to "${declaring.id}.exports".`,
+          );
+        }
+      }
+    }
+
+    const hintSection =
+      hints.length > 0 ? ` Hints:\n${hints.map((h) => `  - ${h}`).join("\n")}` : "";
+
+    return new AponiaError(
+      "MISSING_PROVIDER",
+      `Module "${module.id}" cannot resolve token "${tokenDescription}".${hintSection}`,
+      {
+        module: module.id,
+        token: tokenDescription,
+        hints: Object.freeze(hints),
+      },
+    );
+  }
 }

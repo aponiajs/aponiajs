@@ -1,16 +1,10 @@
-import type { Constructor, Token, TokenMap } from "../tokens/token.types.ts";
+import type { Constructor, InjectionDependency, Token, TokenMap } from "../tokens/token.types.ts";
+import type { Scope } from "./provider.constants.ts";
 
 /**
- * The lifetime a provider instance is kept for.
- *
- * Only `"singleton"` is instantiated today: one instance per provider per
- * module, created at boot. `"request"` and `"transient"` are reserved so a
- * declaration can state the lifetime it needs before the container honors it —
- * resolving a provider that names either fails with
- * `UNSUPPORTED_PROVIDER_SCOPE` until the scope is implemented, rather than
- * silently serving a singleton where a fresh instance was promised.
+ * The lifetime a provider instance is kept for: singleton, request, or transient.
  */
-export type ProviderScope = "singleton" | "request" | "transient";
+export type ProviderScope = (typeof Scope)[keyof typeof Scope];
 
 interface ProviderBase<T> {
   readonly provide: Token<T>;
@@ -26,7 +20,7 @@ export interface ValueProvider<T> extends ProviderBase<T> {
 /** A factory provider: the container calls the factory once with its resolved dependencies. */
 export interface FactoryProvider<
   T,
-  TDependencies extends readonly Token<unknown>[] = readonly Token<unknown>[],
+  TDependencies extends readonly InjectionDependency[] = readonly InjectionDependency[],
 > extends ProviderBase<T> {
   readonly kind: "factory";
   readonly inject: TDependencies;
@@ -36,7 +30,7 @@ export interface FactoryProvider<
 /** A class provider: the container constructs the class with its resolved dependencies. */
 export interface ClassProvider<
   T,
-  TDependencies extends readonly Token<unknown>[] = readonly Token<unknown>[],
+  TDependencies extends readonly InjectionDependency[] = readonly InjectionDependency[],
 > extends ProviderBase<T> {
   readonly kind: "class";
   readonly inject: TDependencies;
@@ -64,14 +58,14 @@ export type Provider =
   | {
       readonly kind: "factory";
       readonly provide: Token<unknown>;
-      readonly inject: readonly Token<unknown>[];
+      readonly inject: readonly InjectionDependency[];
       readonly useFactory: (...dependencies: never[]) => unknown;
       readonly scope?: ProviderScope;
     }
   | {
       readonly kind: "class";
       readonly provide: Token<unknown>;
-      readonly inject: readonly Token<unknown>[];
+      readonly inject: readonly InjectionDependency[];
       readonly useClass: Constructor<unknown, never[]>;
       readonly scope?: ProviderScope;
     }

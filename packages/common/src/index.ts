@@ -8,6 +8,7 @@ export {
   Controller,
   Delete,
   Get,
+  Global,
   Head,
   Inject,
   Injectable,
@@ -18,12 +19,15 @@ export {
   Put,
   getConstructorDependencies,
   getControllerMetadata,
+  getInjectableMetadata,
   getModuleMetadata,
   getRouteMetadata,
+  isGlobalModule,
 } from "./decorators/decorators.ts";
 export type {
   ControllerMetadata,
   DynamicModule,
+  InjectableOptions,
   ModuleClass,
   ModuleImport,
   ModuleMetadata,
@@ -65,8 +69,21 @@ export { LOGGER } from "./logging/logger-token.ts";
 export { NOOP_LOGGER, notifySystemLogger, observeSystemLogger } from "./logging/logger-observer.ts";
 export type { ConsoleLoggerOptions, LoggerService, LogLevel } from "./logging/logger.types.ts";
 export { defineModule } from "./modules/module.ts";
-export type { ModuleDefinition, ModuleDescriptor, ModuleOptions } from "./modules/module.types.ts";
+export type {
+  ModuleDefinition,
+  ModuleDescriptor,
+  ModuleImportDescriptor,
+  ModuleOptions,
+} from "./modules/module.types.ts";
+export {
+  FORWARD_REF_SYMBOL,
+  forwardRef,
+  isForwardRef,
+  resolveForwardRef,
+} from "./modules/forward-ref.ts";
+export type { ForwardReference } from "./modules/forward-ref.types.ts";
 export { provideAlias, provideClass, provideFactory, provideValue } from "./providers/provider.ts";
+export { Scope } from "./providers/provider.constants.ts";
 export type {
   AliasProvider,
   ClassProvider,
@@ -120,6 +137,7 @@ export { createToken, getTokenName } from "./tokens/token.ts";
 export type {
   ClassToken,
   Constructor,
+  InjectionDependency,
   InjectionToken,
   Token,
   TokenMap,

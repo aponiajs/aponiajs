@@ -1,4 +1,10 @@
-import type { Constructor, ControllerDefinition, Token, TokenMap } from "@aponiajs/common";
+import type {
+  Constructor,
+  ControllerDefinition,
+  InjectionDependency,
+  Token,
+  TokenMap,
+} from "@aponiajs/common";
 import type { AnyElysia, Elysia } from "elysia";
 import type { CompiledElysiaRoute } from "../routing/route-compiler.types.ts";
 import type { RoutePlan } from "../routing/route-plan.types.ts";
@@ -7,7 +13,7 @@ import type { CONTROLLER_KIND } from "./controller.constants.ts";
 /** A descriptor-first controller carrying a native plugin. */
 export interface ControllerDescriptor<
   TController,
-  TDependencies extends readonly Token<unknown>[],
+  TDependencies extends readonly InjectionDependency[],
   TPlugin extends AnyElysia,
 > extends ControllerDefinition {
   readonly kind: typeof CONTROLLER_KIND;
@@ -28,7 +34,7 @@ export type RegisteredApplication<TRegistrationResult extends ControllerRegistra
 /** A descriptor-first controller carrying a registration callback. */
 export interface RegisteredControllerDefinition<
   TController,
-  TDependencies extends readonly Token<unknown>[],
+  TDependencies extends readonly InjectionDependency[],
   TRegistrationResult extends ControllerRegistrationResult = void,
 > extends ControllerDescriptor<
   TController,
@@ -44,7 +50,7 @@ export interface RegisteredControllerDefinition<
 /** The `defineController` options for a plugin-carrying controller. */
 export interface ControllerPluginOptions<
   TController,
-  TDependencies extends readonly Token<unknown>[],
+  TDependencies extends readonly InjectionDependency[],
   TPlugin extends AnyElysia,
 > {
   /** The dependency list the construction resolves. */
@@ -56,7 +62,7 @@ export interface ControllerPluginOptions<
 /** The `defineController` options for a callback-registered controller. */
 export interface ControllerRegistrationOptions<
   TController,
-  TDependencies extends readonly Token<unknown>[],
+  TDependencies extends readonly InjectionDependency[],
   TRegistrationResult extends ControllerRegistrationResult = void,
 > {
   /** The dependency list the construction resolves. */
@@ -69,7 +75,7 @@ export interface ControllerRegistrationOptions<
 
 /** What `defineControllerRoutes` accepts. */
 export interface ControllerRoutesOptions<
-  TDependencies extends readonly Token<unknown>[] = readonly Token<unknown>[],
+  TDependencies extends readonly InjectionDependency[] = readonly InjectionDependency[],
 > {
   /** The controller's own path, joined onto each route plan's path. */
   readonly path?: string;

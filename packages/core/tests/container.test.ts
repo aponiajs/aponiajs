@@ -3,13 +3,15 @@ import {
   AponiaError,
   createToken,
   defineModule,
+  forwardRef,
   provideAlias,
   provideClass,
   provideFactory,
   provideValue,
   type ControllerDefinition,
+  type ModuleDefinition,
 } from "@aponiajs/common";
-import { createContainer } from "../src/index.ts";
+import { compileModuleGraph, createContainer } from "../src/index.ts";
 
 function captureAponiaError(run: () => unknown): AponiaError {
   try {
@@ -180,7 +182,7 @@ describe("@aponiajs/core container edges", () => {
     expect(() => container.resolveModuleProvider(feature, rootOnly)).toThrow(
       expect.objectContaining({
         code: "MISSING_PROVIDER",
-        details: { module: "spi-feature", token: "root-only" },
+        details: expect.objectContaining({ module: "spi-feature", token: "root-only" }),
       }),
     );
   });
@@ -217,5 +219,86 @@ describe("@aponiajs/core container edges", () => {
 
     expect(calls).toBe(1);
     expect(container.get(shared).value).toBe("shared");
+  });
+
+  test("resolves circular provider dependencies when declared with forwardRef", () => {
+    const serviceAToken = createToken<ServiceA>("service-a");
+    const serviceBToken = createToken<ServiceB>("service-b");
+
+    class ServiceA {
+      constructor(readonly b: ServiceB) {}
+
+      getName(): string {
+        return "ServiceA";
+      }
+
+      callB(): string {
+        return `A calls ${this.b.getName()}`;
+      }
+    }
+
+    class ServiceB {
+      constructor(readonly a: ServiceA) {}
+
+      getName(): string {
+        return "ServiceB";
+      }
+
+      callA(): string {
+        return `B calls ${this.a.getName()}`;
+      }
+    }
+
+    const module = defineModule({
+      id: "circular-providers",
+      providers: [
+        provideClass(serviceAToken, ServiceA, [forwardRef(() => serviceBToken)]),
+        provideClass(serviceBToken, ServiceB, [forwardRef(() => serviceAToken)]),
+      ],
+      exports: [serviceAToken, serviceBToken],
+    });
+
+    const container = createContainer(module);
+    const a = container.get(serviceAToken);
+    const b = container.get(serviceBToken);
+
+    expect(a).toBeInstanceOf(ServiceA);
+    expect(b).toBeInstanceOf(ServiceB);
+    expect(a.callB()).toBe("A calls ServiceB");
+    expect(b.callA()).toBe("B calls ServiceA");
+  });
+
+  test("compiles circular module imports when declared with forwardRef", () => {
+    const tokenA = createToken<string>("token-a");
+    const tokenB = createToken<string>("token-b");
+
+    let moduleB: ModuleDefinition;
+
+    const moduleA = defineModule({
+      id: "module-a",
+      imports: [forwardRef(() => moduleB)],
+      providers: [provideValue(tokenA, "value-a")],
+      exports: [tokenA],
+    });
+
+    moduleB = defineModule({
+      id: "module-b",
+      imports: [forwardRef(() => moduleA)],
+      providers: [provideValue(tokenB, "value-b")],
+      exports: [tokenB],
+    });
+
+    const root = defineModule({
+      id: "circular-root",
+      imports: [moduleA, moduleB],
+    });
+
+    const graph = compileModuleGraph(root);
+    expect(graph.locate(moduleA, tokenB).module).toBe(moduleB);
+    expect(graph.locate(moduleB, tokenA).module).toBe(moduleA);
+
+    const container = createContainer(root);
+    expect(container.resolveModuleProvider(moduleA, tokenB)).toBe("value-b");
+    expect(container.resolveModuleProvider(moduleB, tokenA)).toBe("value-a");
   });
 });
