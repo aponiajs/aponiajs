@@ -46,7 +46,7 @@ export function selectInvokerArtifact(
 
   // A hand-written or truncated artifact is refused the same way a stale one
   // is. The option is typed, but a JavaScript caller has no type checker.
-  if (!(artifact.invokers instanceof Map)) {
+  if (typeof artifact !== "object" || artifact === null || !(artifact.invokers instanceof Map)) {
     return refuse("The generated invoker artifact carries no invoker map.", logger);
   }
 

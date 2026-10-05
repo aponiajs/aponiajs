@@ -548,3 +548,15 @@ a changed shape is that failure with the tool's own name on it.
 would make "which contract does this server speak" a question with seven answers,
 and the `/meta` payload that states the version is read once, before any endpoint
 is called.
+
+## Elysia 2 Modernization Baseline and Status (2026-10-05)
+
+1. **Compilation Layers Disambiguation:**
+   - **Elysia runtime configuration:** `ElysiaConfig.aot` from Elysia 1.4 is removed in Elysia 2.0; route composition uses `precompile: true | false`.
+   - **Elysia native build-time compilation:** Elysia 2 provides an opt-in Bun build plugin (`elysia/plugin/aot/bun`) and `elysia/compiled` which serializes JIT-compiled handler manifests at bundle time.
+   - **AponiaJS build artifacts:** `aponia build` emits `invokers.generated.ts` and `descriptors.generated.ts` to bind controller method arguments and represent module topology without runtime reflection. Devtools `/__devtools/aot` inspects Aponia's build artifacts, not Elysia's native AOT manifests.
+2. **Item Statuses:**
+   - **Item 3, 4, 6, 7, 8, 10:** Implemented in `packages/devtools` and `packages/platform-elysia`.
+   - **Item 15a (`/aot` failure caching):** Implemented in `packages/devtools/src/endpoints/aot.ts` with in-flight deduplication and bounded exponential retry backoff.
+   - **Item 15b (shared analyzer):** Implemented via `analyzeBuildProject` in `@aponiajs/cli` without running application code or loading CLI at boot.
+   - **Item 14 (invoker freshness):** Maintained through framework release provenance (`frameworkVersion` matching).

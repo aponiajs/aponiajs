@@ -1187,3 +1187,9 @@ git commit -m "feat(flow): read interceptor halves from the mount, not the proto
 **Review Focus coverage.** (1) Task 3 Step 1 asserts `status` is `null` and the doc step states the meaning. (2) Task 3 Step 1 asserts one `id` across two entries and a poller's superseding read. (3) Task 3 Step 1 asserts an empty record under `capture: false`. (4) Task 2 Step 1 asserts both sides of the refusal boundary. (5) Task 5 Step 1 and Task 6 Step 1 each assert a foreign/absent record still answers.
 
 **Ordering.** Task 1 is independent. Task 2 is independent. Task 3 carries the contract bump, so it lands before Tasks 4 and 5, which extend the same record. Task 4 depends on Task 3's `RequestRecord`. Task 5 depends on Task 3's completion path. Task 6 is independent of all of them.
+
+## Modernization Baseline Note (2026-10-05)
+
+- **Completed from this plan:** Tasks 1, 2, 3, 5, 6 (Task 4 was withdrawn during design).
+- **AOT & Build tasks:** Tasks #15a (bounded retry/deduped `/aot` analysis) and #15b (shared `analyzeBuildProject` in CLI) are implemented.
+- **Elysia 2 Compilation:** `ElysiaConfig.aot` runtime option was removed in Elysia 2 in favor of `precompile`, while Elysia 2's build-time AOT plugin is separate from Aponia's `aponia build` artifacts. Devtools `/aot` continues reporting Aponia build artifacts and diagnostics.

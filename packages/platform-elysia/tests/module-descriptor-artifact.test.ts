@@ -341,6 +341,37 @@ test("ignores an artifact that is absent rather than empty", async () => {
   await application.close();
 });
 
+test("falls back to decorated lowering when an artifact carries null or malformed descriptor collections", async () => {
+  const logger = new RecordingLogger();
+  const application = await AponiaFactory.create(DescriptorRootModule, {
+    logger,
+    descriptors: artifact({
+      DescriptorRootModule: {
+        ...declaredDescriptor,
+        imports: [null as unknown as never],
+      },
+    }),
+  });
+  const response = await application.handle(new Request("http://localhost/users/7"));
+  expect(await response.text()).toBe("read:7");
+  const refusal = logger.records.find((record) => record.context === "RoutesResolver");
+  expect(refusal?.message).toContain("is not a module descriptor");
+  await application.close();
+});
+
+test("falls back to decorated lowering when artifact value is null", async () => {
+  const logger = new RecordingLogger();
+  const application = await AponiaFactory.create(DescriptorRootModule, {
+    logger,
+    descriptors: null as unknown as never,
+  });
+  const response = await application.handle(new Request("http://localhost/users/7"));
+  expect(await response.text()).toBe("read:7");
+  const refusal = logger.records.find((record) => record.context === "RoutesResolver");
+  expect(refusal?.message).toContain("carry no artifact record");
+  await application.close();
+});
+
 test("does not mutate the supplied artifact", async () => {
   const artifactValue = generatedArtifact();
   const modules = artifactValue.modules;

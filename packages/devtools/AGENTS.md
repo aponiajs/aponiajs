@@ -337,32 +337,16 @@ runtime boundary it describes.
   would load both into every application that enables the devtools whether or not
   anyone opens `/aot`, while this endpoint is polled by a person and a
   `bun --watch` loop that is never polled pays nothing. The result is cached for
-  the life of the process, keyed by project root, and what is cached is the
-  promise rather than its result, so two polls arriving together read the project
-  once. A failure is cached the same way — one row under `Devtools`, one reading
-  of the project rather than a walk per poll — and its cost is stated rather than
-  hidden: a project fixed on disk keeps reading as unreadable until the process
-  restarts.
-- The analysis mirrors `aponia build`'s rules instead of calling it, because the
-  command writes files and refuses a project it cannot build while this endpoint
-  only reports what a build would decide. The configuration file, the source root
-  and its escape guard, the ignore list, the sorted walk, the duplicate class
-  name, and the import specifier are repeated from
-  `packages/cli/src/generation/invoker-generator.ts` and
-  `generation/project-configuration.ts`, with `Bun.Glob` in place of the command's
-  `fast-glob` because a runtime package reaches its glob through the runtime. The
-  refusal sentences are the command's own, so the row a developer reads here names
-  what a build would say about the same project, and `tests/aot.test.ts` reads them
-  back out of `generateInvokers` rather than copying them into the case, so a
-  wording change on either side fails there instead of shipping. The two rules no
-  sentence states are read from the command too: a case holds a controller double
-  in a file the build's ignore list leaves out — under both the configured source
-  root and the default one — and compares this endpoint's verdict for that project
-  with `generateInvokers`' own decision for it, so a change to either copy of the
-  ignore list or of the source-root resolution fails there rather than reporting
-  verdicts over a file set a build no longer reads. The default
-  project is the one mirrored, because `/aot` has no way to name another one. Keep
-  the copies in step by hand.
+  the life of the process, keyed by project root, and in-flight loading is
+  deduplicated across concurrent polls. A failure is backed off exponentially
+  rather than permanently cached: polls during backoff return the degraded
+  verdict immediately without parsing source or spamming logs, while subsequent
+  polls after backoff retry the analysis so a fixed project recovers.
+- The analysis shares `@aponiajs/cli`'s pure `analyzeBuildProject` instead of
+  duplicating file-discovery and emitter-decision rules by hand. It reads the
+  configuration, source root, and emitters without side effects, while `/aot`
+  formats only the read-only verdicts. The dynamic import ensures neither
+  `ts-morph` nor the CLI package is loaded at boot time.
 - A handler's verdict is the emitter's, never re-applied here.
   `emitControllerInvokers` decides which handler is emitted and which is declined,
   and the reason beside a `"compiled"` handler is the sentence that emitter

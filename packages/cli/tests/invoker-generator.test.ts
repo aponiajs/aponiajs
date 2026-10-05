@@ -95,6 +95,34 @@ async function createProject(
   return projectRoot;
 }
 
+test("read-only build analysis shares emission with generation without writing artifacts", async () => {
+  const cli = await import("../src/index.ts");
+  expect("analyzeBuildProject" in cli).toBe(true);
+  const projectRoot = await createProject({ module: moduleSource });
+  const analysis = await cli.analyzeBuildProject({ cwd: projectRoot });
+  expect(analysis.controllers.map((entry) => entry.className)).toEqual(["UsersController"]);
+  expect(analysis.invokers.source).toContain('"read"');
+  expect(analysis.descriptors.source).toContain("UsersModuleDescriptor");
+  expect(Object.isFrozen(analysis)).toBe(true);
+  expect(Object.isFrozen(analysis.controllers)).toBe(true);
+  expect(await Bun.file(analysis.invokerPath).exists()).toBe(false);
+  expect(await Bun.file(analysis.descriptorPath).exists()).toBe(false);
+  await generateInvokers({ cwd: projectRoot, dryRun: false });
+  expect(await Bun.file(analysis.invokerPath).text()).toContain("UsersController");
+});
+
+test("read-only build analysis distinguishes an empty project from an unreadable project", async () => {
+  const cli = await import("../src/index.ts");
+  expect("analyzeBuildProject" in cli).toBe(true);
+  const projectRoot = await createProject();
+  await rm(join(projectRoot, "src", "users"), { recursive: true });
+  const analysis = await cli.analyzeBuildProject({ cwd: projectRoot });
+  expect(analysis.controllers).toEqual([]);
+  expect(analysis.invokers.source).toBeUndefined();
+  const unreadableRoot = await createTemporaryDirectory("aponia-unreadable-");
+  expect(cli.analyzeBuildProject({ cwd: unreadableRoot })).rejects.toThrow("aponia.json");
+});
+
 test("writes a generated invoker module beside the sources", async () => {
   const projectRoot = await createProject();
 

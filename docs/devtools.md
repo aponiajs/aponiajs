@@ -526,9 +526,9 @@ below](#accepted-limitations) states the same case from the build's side.
 
 `@aponiajs/cli` is imported on the first request to this endpoint and never at
 boot, because it carries `ts-morph` and a formatter an application that never
-polls the endpoint should not load. The result — including a failure — is cached
-for the life of the process, so a project fixed on disk keeps reading as
-unreadable until the process restarts.
+polls the endpoint should not load. Successful results live for the life of the
+process, while failures retry on a later poll with exponential backoff rather
+than permanently locking the process into an unreadable state.
 
 The two degradations are different and are not to be collapsed:
 

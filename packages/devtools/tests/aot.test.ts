@@ -470,6 +470,44 @@ test("a value the analysis threw that refuses to be read still answers the degra
   }
 });
 
+test("aot retries a repaired project after backoff without parsing or logging each poll", async () => {
+  const projectRoot = createTemporaryDirectory("aponia-aot-retry-");
+  process.chdir(projectRoot);
+  const application = await AponiaFactory.createNative(AppModule, { logger: false });
+  let now = 100_000;
+  const clock = spyOn(Date, "now").mockImplementation(() => now);
+  try {
+    expect((await readAot(application)).controllers).toEqual([]);
+    writeProjectFile(projectRoot, "aponia.json", projectConfiguration);
+    writeProjectFile(projectRoot, "src/alpha.controller.ts", alphaControllerSource);
+    expect((await readAot(application)).controllers).toEqual([]);
+    expect(warnings).toHaveLength(1);
+    now += 1_000;
+    const [first, second] = await Promise.all([readAot(application), readAot(application)]);
+    expect(first.controllers).toEqual([alphaControllerVerdicts]);
+    expect(second).toEqual(first);
+    expect(warnings).toHaveLength(1);
+    writeProjectFile(projectRoot, "src/alpha.controller.ts", "invalid changed source");
+    now += 60_000;
+    expect(await readAot(application)).toEqual(first);
+  } finally {
+    clock.mockRestore();
+  }
+});
+
+test("aot treats successfully analyzed empty projects as cached success without warnings", async () => {
+  const projectRoot = createTemporaryDirectory("aponia-aot-success-empty-");
+  writeProjectFile(projectRoot, "aponia.json", projectConfiguration);
+  writeProjectFile(projectRoot, "src/plain.ts", "export class Plain {}\n");
+  process.chdir(projectRoot);
+  const application = await AponiaFactory.createNative(AppModule, { logger: false });
+  expect((await readAot(application)).controllers).toEqual([]);
+  expect(warnings).toEqual([]);
+  writeProjectFile(projectRoot, "src/alpha.controller.ts", alphaControllerSource);
+  expect((await readAot(application)).controllers).toEqual([]);
+  expect(warnings).toEqual([]);
+});
+
 test("aot reports the emitter's verdicts for the project it is started in", async () => {
   const projectRoot = createTemporaryDirectory("aponia-aot-project-");
   writeProjectFile(projectRoot, "aponia.json", projectConfiguration);
@@ -588,15 +626,7 @@ test("aot leaves the controller list empty for a project a build would refuse", 
     `{ "sourceRoot": ${JSON.stringify(relative(escapingRoot, outside))} }\n`,
   );
 
-  // A project that reads perfectly and holds no controller: the third refusal a
-  // build can reach, and the one every application passes through between
-  // `aponia new` and its first controller. Its source root exists and holds a
-  // file, so the scan itself succeeds and the refusal is the analysis's own.
-  const controllerless = createTemporaryDirectory("aponia-aot-controllerless-");
-  writeProjectFile(controllerless, "aponia.json", projectConfiguration);
-  writeProjectFile(controllerless, "src/plain.ts", "export class Plain {}\n");
-
-  for (const projectRoot of [duplicateNames, escapingRoot, controllerless]) {
+  for (const projectRoot of [duplicateNames, escapingRoot]) {
     process.chdir(projectRoot);
     const application = await AponiaFactory.createNative(AppModule, { logger: false });
     const payload = await readAot(application);

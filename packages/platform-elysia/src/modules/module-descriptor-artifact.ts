@@ -103,6 +103,14 @@ function readDeclaredModules(
   frameworkVersion: string,
   logger: LoggerService | undefined,
 ): Readonly<Record<string, ModuleDefinition>> | undefined {
+  if (typeof artifact !== "object" || artifact === null) {
+    logger?.log(
+      "The generated module descriptors carry no artifact record, so the decorated root module is lowered instead.",
+      "RoutesResolver",
+    );
+    return undefined;
+  }
+
   const modules: unknown = artifact.modules;
   if (typeof modules !== "object" || modules === null || Array.isArray(modules)) {
     logger?.log(
@@ -143,8 +151,11 @@ function isModuleDefinition(value: unknown): value is ModuleDefinition {
   return (
     typeof candidate.id === "string" &&
     Array.isArray(candidate.imports) &&
+    candidate.imports.every((entry) => typeof entry === "object" && entry !== null) &&
     Array.isArray(candidate.controllers) &&
+    candidate.controllers.every((entry) => typeof entry === "object" && entry !== null) &&
     Array.isArray(candidate.providers) &&
+    candidate.providers.every((entry) => typeof entry === "object" && entry !== null) &&
     Array.isArray(candidate.exports)
   );
 }

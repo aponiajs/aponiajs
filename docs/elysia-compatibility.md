@@ -84,6 +84,12 @@ what to know when you reach for Elysia directly — through `configureNative`, a
 | Plugin hook        | `resolve` on its own timing                                           | removed; `derive` takes its timing             |
 | `context.set`      | `redirect` is accepted                                                | removed in favour of returning `redirect(url)` |
 
+In Elysia 2, runtime route compilation is controlled via `precompile: true | false`.
+The old runtime `aot` configuration option on `ElysiaConfig` was removed; Elysia 2
+provides build-time compilation instead through an optional build plugin
+(`elysia/plugin/aot/bun`), which is separate from AponiaJS's own source-generation
+tooling (`aponia build`).
+
 Handing Elysia a hook before the handler in the old order is refused at run
 time, with `[Elysia] .get('/x', handler, hook) is the 1.x order; Elysia 2 takes
 (path, hook, handler) — see the 2.0 migration guide`.

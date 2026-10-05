@@ -185,7 +185,12 @@ export function registerCompiledElysiaRoutes(
     // invoker is widened back to the annotation this platform calls one with.
     // The two are the same function at run time; only the variance differs, and
     // the compiler's own handler needs no widening.
-    const suppliedInvoker = invokers?.get(route.propertyKey);
+    const rawSuppliedInvoker = invokers?.get(route.propertyKey);
+    const suppliedInvoker =
+      typeof rawSuppliedInvoker === "function" &&
+      !/^class[\s{/]/.test(Function.prototype.toString.call(rawSuppliedInvoker).trimStart())
+        ? rawSuppliedInvoker
+        : undefined;
     if (suppliedInvoker !== undefined) {
       generatedKeys.add(route.propertyKey);
     }

@@ -335,6 +335,49 @@ test("rejects a class-valued route handler during bootstrap", async () => {
   );
 });
 
+test("falls back to compiled binding when a supplied invoker is not a callable function", async () => {
+  const application = await AponiaFactory.create(InvokerModule, {
+    logger: false,
+    invokers: artifact(
+      new Map<ClassToken<unknown>, ControllerHandlerFactory>([
+        [
+          InvokerController,
+          () =>
+            new Map<string | symbol, RouteHandler>([
+              ["ping", "not-a-function" as unknown as RouteHandler],
+            ]),
+        ],
+      ]),
+    ),
+  });
+
+  const response = await application.handle(new Request("http://localhost/invokers"));
+  expect(await response.text()).toBe("compiled");
+  await application.close();
+});
+
+test("falls back to compiled binding when a supplied invoker is a class constructor", async () => {
+  class NotAHandler {}
+  const application = await AponiaFactory.create(InvokerModule, {
+    logger: false,
+    invokers: artifact(
+      new Map<ClassToken<unknown>, ControllerHandlerFactory>([
+        [
+          InvokerController,
+          () =>
+            new Map<string | symbol, RouteHandler>([
+              ["ping", NotAHandler as unknown as RouteHandler],
+            ]),
+        ],
+      ]),
+    ),
+  });
+
+  const response = await application.handle(new Request("http://localhost/invokers"));
+  expect(await response.text()).toBe("compiled");
+  await application.close();
+});
+
 test("rejects a class-valued route handler even when an invoker is supplied for it", async () => {
   const error = await AponiaFactory.create(ClassHandlerModule, {
     logger: false,

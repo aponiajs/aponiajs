@@ -38,7 +38,12 @@ export type {
   AnalyzedTypedDependency,
   AnalyzedUnreadableDependency,
 } from "./generation/module-descriptors.types.ts";
-export { generateInvokers, invokerModuleFileName } from "./generation/invoker-generator.ts";
+export { generateInvokers } from "./generation/invoker-generator.ts";
+export { analyzeBuildProject, invokerModuleFileName } from "./generation/build-project-analysis.ts";
+export type {
+  AnalyzeBuildProjectOptions,
+  BuildProjectAnalysis,
+} from "./generation/build-project-analysis.types.ts";
 export type {
   GenerateInvokersOptions,
   GenerateInvokersResult,
