@@ -11,7 +11,12 @@ import {
 } from "@aponiajs/common";
 import { Elysia } from "elysia";
 import { z } from "zod";
-import { AponiaApplication, AponiaFactory, provideConfiguration } from "../src/index.ts";
+import {
+  AponiaApplication,
+  AponiaFactory,
+  provideConfiguration,
+  provideConfigurationAsync,
+} from "../src/index.ts";
 // The loader is package-private and `defineConfiguration` always supplies a
 // description, so the name fallback is reachable only by calling it directly.
 import { loadConfiguration } from "../src/configuration/configuration-loader.ts";
@@ -737,5 +742,32 @@ describe("AponiaApplication.get", () => {
     // reports `String(token)` as a warning and warnings do not fail it, so the
     // linter is not what pins this.
     expect((thrown as AponiaError).details).toMatchObject({ token: "app.config" });
+  });
+
+  test("resolves async configuration with provideConfigurationAsync", async () => {
+    const AppConfig = defineConfiguration(portSchema, "async.app.config");
+
+    @Injectable()
+    class AsyncReader {
+      constructor(@Inject(AppConfig) readonly configPromise: Promise<{ port: number }>) {}
+    }
+
+    @Module({
+      providers: [
+        provideConfigurationAsync(AppConfig, {
+          useFactory: async () => {
+            await new Promise((resolve) => setTimeout(resolve, 5));
+            return { source: { port: "8080" } };
+          },
+        }),
+        AsyncReader,
+      ],
+    })
+    class AppModule {}
+
+    const app = await AponiaFactory.create(AppModule, { logger: false });
+    const reader = app.get(AsyncReader);
+    const resolved = await reader.configPromise;
+    expect(resolved.port).toBe(8080);
   });
 });

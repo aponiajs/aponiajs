@@ -22,7 +22,8 @@ export type {
   AponiaHealthStatus,
 } from "./application/application-health.types.ts";
 export type { ElysiaApplication } from "./application/native-application.types.ts";
-export { provideConfiguration } from "./configuration/provider.ts";
+export { provideConfiguration, provideConfigurationAsync } from "./configuration/provider.ts";
+export type { AsyncConfigurationOptions } from "./configuration/provider.ts";
 export { compileRootModule } from "./modules/module-compiler.ts";
 export type { AponiaRootModule } from "./modules/module-compiler.types.ts";
 export type { AponiaModuleDescriptorArtifact } from "./modules/module-descriptor-artifact.types.ts";
