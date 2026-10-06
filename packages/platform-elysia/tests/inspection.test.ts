@@ -17,6 +17,7 @@ import {
   provideClass,
   provideFactory,
   provideValue,
+  Scope,
   type ControllerDefinition,
   type DynamicModule,
   type LoggerService,
@@ -398,6 +399,16 @@ test("projects every provider kind with the dependencies the container resolves"
   ]);
   expect(inspection.modules[0]?.exports).toEqual(["INSPECTION_CONFIG"]);
   expect(inspection.rootModule).toBe("InspectionProviderModule");
+});
+
+test("projects the provider scope when configured", () => {
+  class ScopedService {}
+  const module = defineModule({
+    id: "ScopedModule",
+    providers: [provideClass(ScopedService, [], { scope: Scope.REQUEST })],
+  });
+  const inspection = inspectAponiaApplication(module);
+  expect(inspection.modules[0]?.providers[0]?.scope).toBe("request");
 });
 
 test("projects the configured instance identity of a dynamic module", () => {

@@ -202,6 +202,15 @@ it and every later one is inert, and `application.close()` does not stop it.
 [Authoring a plugin package](./plugin-packages.md) ·
 [npm](https://www.npmjs.com/package/@aponiajs/opentelemetry)
 
+### `@aponiajs/mcp`
+
+Standardized Model Context Protocol (MCP 2024-11-05) server, tool registry, and
+stateless HTTP transports for AI agent integrations and developer toolchains.
+
+[Package README](../packages/mcp/README.md) ·
+[MCP guide](./mcp.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/mcp)
+
 ## Project creation and CLI
 
 Install the published CLI globally with Bun and invoke its `aponia` binary
@@ -221,7 +230,7 @@ same project generator. See the
 
 ## Synchronized versions
 
-All twelve public packages are released with the same
+All thirteen public packages are released with the same
 [Semantic Version](https://semver.org). Avoid mixing AponiaJS package versions
 within one application. See [Releasing npm Packages](./releasing.md) for the
 version gate and publication flow.

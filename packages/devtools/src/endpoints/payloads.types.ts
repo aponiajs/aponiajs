@@ -5,6 +5,20 @@ import type {
 } from "@aponiajs/platform-elysia";
 import type { LogEntry } from "../logging/log-buffer.types.ts";
 import type { RequestRecord } from "../requests/request-buffer.types.ts";
+import type {
+  DevtoolsGraphDiagnostics,
+  DevtoolsGraphEdge,
+  DevtoolsGraphNode,
+} from "./linkable-graph.types.ts";
+
+export type {
+  DevtoolsGraphDiagnostics,
+  DevtoolsGraphEdge,
+  DevtoolsGraphEdgeType,
+  DevtoolsGraphNode,
+  DevtoolsGraphNodeType,
+  LinkableGraphPayload,
+} from "./linkable-graph.types.ts";
 
 /**
  * Which release supplied each artifact a boot adopted.
@@ -80,6 +94,12 @@ export interface AponiaGraphPayload {
   readonly modules: readonly AponiaModuleInspection[];
   /** Every gateway the compiled graph registers, sorted by canonical path. */
   readonly gateways: readonly AponiaGatewayInspection[];
+  /** Optional linkable nodes for visual graph renderers. */
+  readonly nodes?: readonly DevtoolsGraphNode[];
+  /** Optional directed edges representing imports, exports, declarations, and injections. */
+  readonly edges?: readonly DevtoolsGraphEdge[];
+  /** Optional structural graph diagnostics. */
+  readonly diagnostics?: DevtoolsGraphDiagnostics;
 }
 
 /**

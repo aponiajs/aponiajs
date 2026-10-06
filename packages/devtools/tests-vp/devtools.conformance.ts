@@ -98,6 +98,8 @@ interface AponiaRequestRecordFields {
   readonly error?: string;
   readonly headers?: Readonly<Record<string, string>>;
   readonly body?: string;
+  readonly store?: Readonly<Record<string, unknown>>;
+  readonly state?: Readonly<Record<string, unknown>>;
 }
 
 /**

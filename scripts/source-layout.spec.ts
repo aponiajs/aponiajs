@@ -65,7 +65,16 @@ const packageLayouts: readonly PackageLayout[] = [
   {
     sourceRoot: "packages/devtools/src",
     files: ["index.ts", "version.ts"],
-    directories: ["buffer", "endpoints", "logging", "module", "requests", "server"],
+    directories: [
+      "buffer",
+      "endpoints",
+      "logging",
+      "mcp",
+      "module",
+      "requests",
+      "server",
+      "source",
+    ],
   },
   {
     sourceRoot: "packages/cli/src",
@@ -81,6 +90,11 @@ const packageLayouts: readonly PackageLayout[] = [
     sourceRoot: "packages/graphql/src",
     files: ["index.ts"],
     directories: ["endpoint", "module"],
+  },
+  {
+    sourceRoot: "packages/mcp/src",
+    files: ["index.ts"],
+    directories: ["protocol", "server", "tools"],
   },
   {
     sourceRoot: "packages/openapi/src",

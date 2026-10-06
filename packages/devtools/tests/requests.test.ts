@@ -414,7 +414,7 @@ type DevtoolsRootModule = Parameters<typeof AponiaFactory.create>[0];
  * cases for free, and it is the same one `readRequests` takes before it reads.
  */
 async function ask(
-  application: AponiaApplication,
+  application: AponiaApplication<any>,
   path: string,
   init?: RequestInit,
 ): Promise<Response> {
@@ -425,7 +425,7 @@ async function ask(
   return response;
 }
 
-async function bootApplication(rootModule: DevtoolsRootModule): Promise<AponiaApplication> {
+async function bootApplication(rootModule: DevtoolsRootModule): Promise<AponiaApplication<any>> {
   return bootWithLogger(rootModule, false);
 }
 
@@ -437,7 +437,7 @@ async function bootApplication(rootModule: DevtoolsRootModule): Promise<AponiaAp
 async function bootWithLogger(
   rootModule: DevtoolsRootModule,
   logger: LoggerService | false,
-): Promise<AponiaApplication> {
+): Promise<AponiaApplication<any>> {
   return await AponiaFactory.create(rootModule, { logger });
 }
 
@@ -451,7 +451,7 @@ async function bootWithLogger(
  * answered.
  */
 async function readRequests(
-  application: AponiaApplication,
+  application: AponiaApplication<any>,
   query = "",
 ): Promise<AponiaRequestsPayload> {
   await Bun.sleep(0);
@@ -1287,5 +1287,40 @@ test.serial("two applications built from one module keep their records apart", a
   } finally {
     await first.close();
     await second?.close();
+  }
+});
+
+test("captures store and state snapshots when present on answered requests", async () => {
+  @Controller()
+  class StoreTestController {
+    @Get("/store-test")
+    test(): string {
+      return "ok";
+    }
+  }
+
+  @Module({
+    controllers: [StoreTestController],
+    imports: [DevtoolsModule.register({ enabled: true })],
+  })
+  class StoreTestModule {}
+
+  const application = await AponiaFactory.create(StoreTestModule, {
+    configureNative: (native) => native.state("customKey", "customValue"),
+    logger: false,
+  });
+
+  try {
+    const res = await ask(application, "/store-test");
+    expect(res.status).toBe(200);
+
+    const payload = await readRequests(application);
+    const completedRecord = payload.entries.find(
+      (e) => e.path === "/store-test" && e.status === 200,
+    );
+    expect(completedRecord).toBeDefined();
+    expect(completedRecord?.store?.customKey).toBe("customValue");
+  } finally {
+    await application.close();
   }
 });

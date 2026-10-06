@@ -1,0 +1,64 @@
+{
+  "name": "@aponiajs/mcp",
+  "version": "1.0.0-beta.20",
+  "description": "Standardized Model Context Protocol (MCP 2024-11-05) server, tool registry, and transports for AponiaJS.",
+  "keywords": [
+    "agents",
+    "ai",
+    "aponia",
+    "aponiajs",
+    "bun",
+    "elysia",
+    "json-rpc",
+    "llm",
+    "mcp",
+    "model-context-protocol"
+  ],
+  "homepage": "https://github.com/aponiajs/aponiajs#readme",
+  "bugs": {
+    "url": "https://github.com/aponiajs/aponiajs/issues"
+  },
+  "license": "MIT",
+  "author": "AponiaJS contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aponiajs/aponiajs.git",
+    "directory": "packages/mcp"
+  },
+  "files": [
+    "dist",
+    "llms.txt"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "bunx --bun vp pack",
+    "dev": "bunx --bun vp pack --watch",
+    "test": "bun test",
+    "test:vite-plus": "vp test",
+    "check": "bunx --bun vp check",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "@aponiajs/common": "workspace:*"
+  },
+  "devDependencies": {
+    "@aponiajs/cli": "workspace:*",
+    "@aponiajs/platform-elysia": "workspace:*",
+    "elysia": "2.0.0-beta.19"
+  },
+  "peerDependencies": {
+    "elysia": "2.0.0-beta.19"
+  },
+  "peerDependenciesMeta": {
+    "elysia": {
+      "optional": true
+    }
+  }
+}

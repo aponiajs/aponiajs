@@ -36,6 +36,11 @@ export interface AponiaProviderInspection {
    * class or factory, and nothing for a value.
    */
   readonly dependencies: readonly string[];
+  /**
+   * The configured lifecycle scope: "singleton", "request", or "transient",
+   * or absent when using the default singleton lifetime.
+   */
+  readonly scope?: "singleton" | "request" | "transient";
 }
 
 /**

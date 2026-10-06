@@ -1,0 +1,25 @@
+# @aponiajs/mcp
+
+> Standardized Model Context Protocol (MCP 2024-11-05) server, tool registry, and transports for AponiaJS.
+
+`@aponiajs/mcp` provides a lightweight, specification-compliant implementation of the Model Context Protocol (version `2024-11-05`) powered by JSON-RPC 2.0. It exposes standard tool registration, structured validation, and transport adapters for AI agent integrations across the AponiaJS ecosystem.
+
+## What this package exports
+
+- [McpServer](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/server/mcp-server.ts): Standard MCP server implementation supporting tool execution, capability negotiation, and lifecycle management.
+- [McpToolRegistry](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/tools/tool-registry.ts): Dynamic registry for declaring, validating, and dispatching MCP tools.
+- [defineMcpTool](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/tools/define-tool.ts): Helper for declaring type-safe MCP tools with JSON Schema argument definitions.
+- [MCP_PROTOCOL_VERSION](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/protocol/protocol.constants.ts): The official specification version string (`"2024-11-05"`).
+- [createStatelessHttpHandler](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/server/http-handler.ts): HTTP dispatcher for servicing MCP discovery GET requests and JSON-RPC 2.0 POST requests.
+
+## Behavior a consumer can rely on
+
+- Adheres strictly to the official Model Context Protocol (MCP) standard `2024-11-05`.
+- Implements standard `initialize`, `ping`, `tools/list`, and `tools/call` JSON-RPC 2.0 methods.
+- Returns immutable, frozen tool definitions and structured JSON-RPC responses.
+- Standard error codes follow JSON-RPC 2.0 specification: parse errors (`-32700`), invalid requests (`-32600`), unknown methods (`-32601`), invalid params (`-32602`), and internal errors (`-32603`).
+
+## Documentation
+
+- [MCP Specification Guide](../../docs/mcp.md): Complete Model Context Protocol integration and usage documentation.
+- [Published packages](../../docs/packages.md): The npm catalog and install commands.

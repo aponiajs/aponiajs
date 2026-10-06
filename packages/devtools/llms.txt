@@ -19,6 +19,7 @@ The package is a leaf: nothing in the framework depends on it. An application re
 - [AponiaLogsPayload](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/devtools/src/endpoints/payloads.types.ts): the `GET /__devtools/logs` payload, the entries after one cursor, the cursor to poll from next, and the levels the stream reached.
 - [AponiaRequestsPayload](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/devtools/src/endpoints/payloads.types.ts): the `GET /__devtools/requests` payload, the requests that reached the record after one cursor — one entry when a request arrives and one when it is answered, both carrying the request's `id` — and the cursor to poll from next.
 - [AponiaBuildPayload](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/devtools/src/endpoints/aot.types.ts): the `GET /__devtools/aot` payload — the graph the container compiled and the boot's verdict on the generated invoker artifact, beside a build's per-handler verdicts for the project the application was started in.
+- [createDevtoolsMcpServer, devtoolsMcpPath](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/devtools/src/mcp/mcp-server.ts): the embedded Model Context Protocol (MCP) server at `/__devtools/mcp` (GET discovery, POST JSON-RPC 2.0).
 - [createRequestBuffer](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/devtools/src/requests/request-buffer.ts): the bounded request record `/requests` publishes, and the capacity a registration retains.
 
 ## Behavior a consumer can rely on

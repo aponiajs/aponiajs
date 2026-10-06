@@ -239,3 +239,26 @@ test("a record whose compiled root this release cannot project serves no graph",
   expect((await ask(application, "/meta")).status).toBe(200);
   expect((await ask(application, "/graph")).status).toBe(404);
 });
+
+test("graph returns linkable nodes, edges, and diagnostics when view=graph is requested", async () => {
+  const application = await AponiaFactory.createNative(AppModule, { logger: false });
+  const response = await ask(application, "/graph?view=graph");
+  expect(response.status).toBe(200);
+
+  const payload = (await response.json()) as any;
+  expect(payload.nodes).toBeDefined();
+  expect(payload.edges).toBeDefined();
+  expect(payload.diagnostics).toBeDefined();
+
+  expect(payload.nodes.some((n: any) => n.id === "module:AppModule")).toBe(true);
+  expect(payload.nodes.some((n: any) => n.id === "controller:GraphController")).toBe(true);
+  expect(payload.nodes.some((n: any) => n.id === "provider:GraphService")).toBe(true);
+  expect(
+    payload.edges.some(
+      (e: any) =>
+        e.source === "module:AppModule" &&
+        e.target === "module:GraphSupportModule" &&
+        e.type === "MODULE_IMPORTS",
+    ),
+  ).toBe(true);
+});

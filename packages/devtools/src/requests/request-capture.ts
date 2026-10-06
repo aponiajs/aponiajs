@@ -115,6 +115,10 @@ export interface AnsweredRequest {
    * that mapping publishes.
    */
   readonly error: unknown;
+  /** The application store snapshot, if accessible. */
+  readonly store?: unknown;
+  /** The request-scoped state snapshot, if accessible. */
+  readonly state?: unknown;
 }
 
 /**
@@ -448,6 +452,8 @@ export async function toRequestRecord(
   const status = answerStatus(context);
   const body = capture.body ? captureBody(context.body, capture.bodyLimit) : undefined;
   const error = await failureMessage(status, context, mappedExceptions);
+  const store = captureStoreSnapshot(context.store);
+  const state = captureStoreSnapshot(context.state);
 
   return Object.freeze({
     id: arrival.id,
@@ -460,7 +466,27 @@ export async function toRequestRecord(
     ...(arrival.headers === undefined ? {} : { headers: arrival.headers }),
     ...(body === undefined ? {} : { body }),
     ...(error === undefined ? {} : { error }),
+    ...(store === undefined ? {} : { store }),
+    ...(state === undefined ? {} : { state }),
   });
+}
+
+function captureStoreSnapshot(data: unknown): Readonly<Record<string, unknown>> | undefined {
+  if (typeof data !== "object" || data === null) {
+    return undefined;
+  }
+  const result: Record<string, unknown> = {};
+  for (const key of Object.keys(data)) {
+    if (key.startsWith("_") || key.includes("aponia")) continue;
+    try {
+      const val = (data as Record<string, unknown>)[key];
+      if (typeof val === "function") continue;
+      result[key] = val;
+    } catch {
+      // Ignore unreadable properties
+    }
+  }
+  return Object.keys(result).length > 0 ? Object.freeze(result) : undefined;
 }
 
 /** The pattern Elysia matched, or `undefined` when this request matched none. */

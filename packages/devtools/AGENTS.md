@@ -21,6 +21,8 @@ first request so an application that never polls the endpoint never loads it.
 | `buffer/`    | The bounded cursor buffer `/logs` and `/requests` share, and nothing else                                                                                                                                                                        |
 | `logging/`   | The log stream: its record, its bound, the tap that fills it from a logger through `@aponiajs/common`'s rendering, the one-line form of a thrown reason, and the report a sentence travels on when the logger refuses it                         |
 | `requests/`  | The request record: its entry, its bound, and the capture that fills it                                                                                                                                                                          |
+| `mcp/`       | `createDevtoolsMcpServer`, `devtoolsMcpPath`, `handleMcpRequest`, the official MCP tools and server                                                                                                                                              |
+| `source/`    | `resolveSourceCode`, source code location, and component implementation extraction                                                                                                                                                               |
 
 `src/index.ts` is the only public barrel. Keep `*.types.ts` colocated with the
 runtime boundary it describes.

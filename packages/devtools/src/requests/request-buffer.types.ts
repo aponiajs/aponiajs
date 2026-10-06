@@ -87,6 +87,10 @@ export interface RequestRecord {
   readonly headers?: Readonly<Record<string, string>>;
   /** The request body the route parsed, cut at the policy's limit and marked when it was. */
   readonly body?: string;
+  /** Shallow snapshot of Elysia store properties recorded when answered. */
+  readonly store?: Readonly<Record<string, unknown>>;
+  /** Shallow snapshot of request-scoped state recorded when answered. */
+  readonly state?: Readonly<Record<string, unknown>>;
 }
 
 /** The application's request record: a bounded cursor buffer of {@link RequestRecord}. */

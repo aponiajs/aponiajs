@@ -14,6 +14,7 @@ const guideDirectories = [
   "packages/cron",
   "packages/devtools",
   "packages/graphql",
+  "packages/mcp",
   "packages/openapi",
   "packages/opentelemetry",
   "packages/platform-elysia",

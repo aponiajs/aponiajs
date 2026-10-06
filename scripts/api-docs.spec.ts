@@ -19,6 +19,7 @@ const packageBarrels = [
   "packages/cors/src/index.ts",
   "packages/devtools/src/index.ts",
   "packages/graphql/src/index.ts",
+  "packages/mcp/src/index.ts",
   "packages/testing/src/index.ts",
   "packages/openapi/src/index.ts",
   "packages/opentelemetry/src/index.ts",

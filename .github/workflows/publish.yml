@@ -111,7 +111,7 @@ jobs:
 
       - name: Pack publishable workspaces
         run: |
-          mkdir -p release-artifacts/{01-common,02-core,03-platform-elysia,04-cli,05-create-aponia,06-devtools,07-cron,08-graphql,09-testing,10-openapi,11-cors,12-opentelemetry}
+          mkdir -p release-artifacts/{01-common,02-core,03-platform-elysia,04-cli,05-create-aponia,06-devtools,07-cron,08-graphql,09-testing,10-openapi,11-cors,12-opentelemetry,13-mcp}
           bun pm pack --cwd packages/common --destination "$GITHUB_WORKSPACE/release-artifacts/01-common"
           bun pm pack --cwd packages/core --destination "$GITHUB_WORKSPACE/release-artifacts/02-core"
           bun pm pack --cwd packages/platform-elysia --destination "$GITHUB_WORKSPACE/release-artifacts/03-platform-elysia"
@@ -124,6 +124,7 @@ jobs:
           bun pm pack --cwd packages/openapi --destination "$GITHUB_WORKSPACE/release-artifacts/10-openapi"
           bun pm pack --cwd packages/cors --destination "$GITHUB_WORKSPACE/release-artifacts/11-cors"
           bun pm pack --cwd packages/opentelemetry --destination "$GITHUB_WORKSPACE/release-artifacts/12-opentelemetry"
+          bun pm pack --cwd packages/mcp --destination "$GITHUB_WORKSPACE/release-artifacts/13-mcp"
 
       - name: Publish packages in dependency order
         working-directory: ${{ runner.temp }}
@@ -143,7 +144,7 @@ jobs:
           ALIAS_TAGS: ${{ steps.distribution.outputs.aliases }}
           VERSION: ${{ steps.distribution.outputs.version }}
         run: |
-          for package in @aponiajs/common @aponiajs/core @aponiajs/platform-elysia @aponiajs/cli create-aponia @aponiajs/devtools @aponiajs/cron @aponiajs/graphql @aponiajs/cors @aponiajs/testing @aponiajs/openapi @aponiajs/opentelemetry; do
+          for package in @aponiajs/common @aponiajs/core @aponiajs/platform-elysia @aponiajs/cli create-aponia @aponiajs/devtools @aponiajs/cron @aponiajs/graphql @aponiajs/cors @aponiajs/testing @aponiajs/openapi @aponiajs/opentelemetry @aponiajs/mcp; do
             for alias in $ALIAS_TAGS; do
               npm dist-tag add "$package@$VERSION" "$alias"
             done

@@ -111,6 +111,7 @@ function inspectProvider(provider: Provider): AponiaProviderInspection {
     dependencies: Object.freeze(
       getProviderDependencies(provider).map((dependency) => getTokenName(dependency)),
     ),
+    ...(provider.scope ? { scope: provider.scope } : {}),
   });
 }
 

@@ -20,6 +20,18 @@ export { recordLogger } from "./logging/log-tap.ts";
 export type { LogStream } from "./logging/log-tap.ts";
 export { createRequestBuffer, defaultRequestBufferCapacity } from "./requests/request-buffer.ts";
 export { aponiaVersion } from "./version.ts";
+export { buildLinkableGraph } from "./endpoints/linkable-graph.ts";
+export { createDevtoolsMcpServer, devtoolsMcpPath } from "./mcp/mcp-server.ts";
+export { resolveSourceCode } from "./source/source-resolver.ts";
+export type { SourceCodeResult, SourceResolverOptions } from "./source/source-resolver.types.ts";
+export type {
+  DevtoolsGraphDiagnostics,
+  DevtoolsGraphEdge,
+  DevtoolsGraphEdgeType,
+  DevtoolsGraphNode,
+  DevtoolsGraphNodeType,
+  LinkableGraphPayload,
+} from "./endpoints/linkable-graph.types.ts";
 export type { DevtoolsHandlers, DevtoolsRequestHandler } from "./server/devtools-server.types.ts";
 export type {
   AponiaBuildController,

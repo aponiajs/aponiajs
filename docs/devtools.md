@@ -122,17 +122,18 @@ both.
 
 ## The API
 
-Seven endpoints, all `GET`, all under `/__devtools`:
+Eight endpoints, all under `/__devtools`:
 
-| Endpoint               | Answers                                                                         |
-| ---------------------- | ------------------------------------------------------------------------------- |
-| `/__devtools/meta`     | The contract version, the releases in play, and when the surface first answered |
-| `/__devtools/graph`    | The module graph the boot compiled                                              |
-| `/__devtools/routes`   | The routes the application answers, with the binding that serves each           |
-| `/__devtools/flow`     | The stages each route passes through, and its filters                           |
-| `/__devtools/logs`     | The application's log stream, from a cursor                                     |
-| `/__devtools/requests` | The requests that reached the record and what answered them, from a cursor      |
-| `/__devtools/aot`      | What a build decides, beside what the boot did                                  |
+| Endpoint               | Answers                                                                              |
+| ---------------------- | ------------------------------------------------------------------------------------ |
+| `/__devtools/meta`     | The contract version, the releases in play, and when the surface first answered      |
+| `/__devtools/graph`    | The module graph the boot compiled, with optional linkable nodes and edges           |
+| `/__devtools/routes`   | The routes the application answers, with the binding that serves each                |
+| `/__devtools/flow`     | The stages each route passes through, and its filters                                |
+| `/__devtools/logs`     | The application's log stream, from a cursor                                          |
+| `/__devtools/requests` | The requests that reached the record and what answered them, with state snapshots    |
+| `/__devtools/aot`      | What a build decides, beside what the boot did                                       |
+| `/__devtools/mcp`      | Model Context Protocol (MCP) server for AI assistants (GET discovery, POST JSON-RPC) |
 
 The surface is a route, so `/routes` and `/flow` also report it: both carry one
 more row, `ALL /__devtools/*`, alongside the application's own. That extra row
@@ -157,11 +158,11 @@ A consumer reads `meta` first and decides whether to proceed:
 ```ts
 {
   contract: 3,                 // the version of this wire shape
-  framework: "1.0.0-beta.19", // the release that booted the application
+  framework: "1.0.0-beta.20", // the release that booted the application
   elysia: "2.0.0-beta.19",            // the release installed in the application's own tree, or null
   artifacts: {                 // which release supplied each adopted artifact
     invokers: null,            // null: the boot adopted none
-    descriptors: "1.0.0-beta.19",
+    descriptors: "1.0.0-beta.20",
   },
   startedAt: "2026-09-26T12:00:00.000Z", // the first request the surface answered here
 }
@@ -543,6 +544,35 @@ The two degradations are different and are not to be collapsed:
   degraded half into a failed request: the sentence is written to `stderr`
   instead, the line naming the refusal.
 
+### `/mcp` — Model Context Protocol for AI Assistants
+
+`/__devtools/mcp` mounts an embedded Model Context Protocol (MCP) server directly inside the running application using the official `@modelcontextprotocol/sdk`. It enables AI coding assistants (such as Cursor, Windsurf, and Claude Code) to interactively inspect runtime architecture, trace routes, and view source code without manual file searching.
+
+`GET /__devtools/mcp` provides protocol readiness and discovery. `POST /__devtools/mcp` accepts JSON-RPC 2.0 messages for standard tool discovery and execution.
+
+Available MCP tools:
+
+| Tool                        | Purpose                                                                                            |
+| --------------------------- | -------------------------------------------------------------------------------------------------- |
+| `get_source_code`           | Inspect the source code implementation of any controller, service, or handler                      |
+| `inspect_application_graph` | Inspect the complete linkable DI graph (modules, controllers, providers, scopes, and dependencies) |
+| `inspect_route_pipeline`    | Trace the lifecycle execution chain for a specific route                                           |
+| `inspect_store_state`       | Read current in-memory snapshots of the Elysia store                                               |
+| `query_recent_requests`     | Query recent request records with status, latency, and state snapshots                             |
+| `read_application_logs`     | Stream recent application logs emitted through `LoggerService`                                     |
+
+To connect Cursor or Claude Code, add the running development server to your MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "aponia-devtools": {
+      "url": "http://localhost:3000/__devtools/mcp"
+    }
+  }
+}
+```
+
 ## Accepted limitations
 
 These are the boundaries this package states rather than hides.
@@ -624,4 +654,5 @@ These are the boundaries this package states rather than hides.
 - [Execution enhancers](./enhancers.md): the stages `/flow` reports.
 - [The devtools example](../examples/devtools/README.md): the surface mounted on a running
   application, one endpoint at a time.
+- [Model Context Protocol (MCP)](./mcp.md): the standard MCP protocol server mounted at `/__devtools/mcp`.
 - [Published packages](./packages.md): the npm catalog.

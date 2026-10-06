@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/devtools",
-  "version": "1.0.0-beta.19",
+  "version": "1.0.0-beta.20",
   "description": "Opt-in devtools for a running Aponia application, served by the application itself.",
   "keywords": [
     "aponia",
@@ -46,7 +46,9 @@
   "dependencies": {
     "@aponiajs/cli": "workspace:*",
     "@aponiajs/common": "workspace:*",
-    "@aponiajs/platform-elysia": "workspace:*"
+    "@aponiajs/mcp": "workspace:*",
+    "@aponiajs/platform-elysia": "workspace:*",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "elysia": "2.0.0-beta.19"
