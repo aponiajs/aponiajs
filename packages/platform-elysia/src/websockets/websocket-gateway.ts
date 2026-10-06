@@ -522,7 +522,11 @@ function compileGateway(
             return baseInvoker;
           }
           return async (socket: WebSocketClient, data: unknown) => {
-            const validation = await validateData(data);
+            const validationPromise = validateData(data);
+            const validation =
+              typeof (validationPromise as Promise<DataValidationResult>)?.then === "function"
+                ? await validationPromise
+                : (validationPromise as DataValidationResult);
             if (!validation.success) {
               sendException(socket, "INVALID_WEBSOCKET_MESSAGE", "Invalid WebSocket message data.");
               return undefined;
@@ -548,15 +552,25 @@ function compileGateway(
   });
 }
 
-type DataValidator = (
-  data: unknown,
-) => Promise<{ readonly success: true; readonly value: unknown } | { readonly success: false }>;
+type DataValidationResult =
+  | { readonly success: true; readonly value: unknown }
+  | { readonly success: false };
+
+type DataValidator = (data: unknown) => DataValidationResult | Promise<DataValidationResult>;
 
 function compileDataValidator(validator: unknown): DataValidator {
   if (isStandardSchema(validator as any)) {
     const standard = (validator as any)["~standard"];
-    return async (data: unknown) => {
-      const result = await standard.validate(data);
+    return (data: unknown) => {
+      const result = standard.validate(data);
+      if (typeof (result as Promise<unknown>)?.then === "function") {
+        return (result as Promise<any>).then((asyncRes) => {
+          if (asyncRes.issues && asyncRes.issues.length > 0) {
+            return { success: false };
+          }
+          return { success: true, value: "value" in asyncRes ? asyncRes.value : data };
+        });
+      }
       if (result.issues && result.issues.length > 0) {
         return { success: false };
       }
@@ -566,7 +580,7 @@ function compileDataValidator(validator: unknown): DataValidator {
 
   if (typeof validator === "object" && validator !== null) {
     const typebox = new TypeBoxValidator(validator as any);
-    return async (data: unknown) => {
+    return (data: unknown) => {
       if (typebox.Check(data)) {
         return { success: true, value: data };
       }
@@ -575,9 +589,20 @@ function compileDataValidator(validator: unknown): DataValidator {
   }
 
   if (typeof validator === "function") {
-    return async (data: unknown) => {
+    return (data: unknown) => {
       try {
-        const result = await (validator as (val: unknown) => unknown)(data);
+        const result = (validator as (val: unknown) => unknown)(data);
+        if (typeof (result as Promise<unknown>)?.then === "function") {
+          return (result as Promise<unknown>).then(
+            (asyncRes) => {
+              if (asyncRes === false) {
+                return { success: false };
+              }
+              return { success: true, value: asyncRes === true ? data : asyncRes };
+            },
+            () => ({ success: false }),
+          );
+        }
         if (result === false) {
           return { success: false };
         }
@@ -588,7 +613,7 @@ function compileDataValidator(validator: unknown): DataValidator {
     };
   }
 
-  return async (data: unknown) => ({ success: true, value: data });
+  return (data: unknown) => ({ success: true, value: data });
 }
 
 function assertDistinctParameterIndexes(

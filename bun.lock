@@ -141,11 +141,11 @@
     },
     "packages/aponiajs": {
       "name": "aponiajs",
-      "version": "1.0.0-beta.13",
+      "version": "1.0.0-beta.14",
     },
     "packages/cli": {
       "name": "@aponiajs/cli",
-      "version": "1.0.0-beta.13",
+      "version": "1.0.0-beta.14",
       "bin": {
         "aponia": "./bin/aponia.ts",
       },
@@ -162,7 +162,7 @@
     },
     "packages/common": {
       "name": "@aponiajs/common",
-      "version": "1.0.0-beta.13",
+      "version": "1.0.0-beta.14",
       "dependencies": {
         "@standard-schema/spec": "^1.1.0",
         "reflect-metadata": "^0.2.2",
@@ -174,14 +174,14 @@
     },
     "packages/core": {
       "name": "@aponiajs/core",
-      "version": "1.0.0-beta.13",
+      "version": "1.0.0-beta.14",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
       },
     },
     "packages/cors": {
       "name": "@aponiajs/cors",
-      "version": "1.0.0-beta.13",
+      "version": "1.0.0-beta.14",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -198,7 +198,7 @@
     },
     "packages/create-aponia": {
       "name": "create-aponia",
-      "version": "1.0.0-beta.13",
+      "version": "1.0.0-beta.14",
       "bin": {
         "create-aponia": "./dist/create-aponia.mjs",
       },
@@ -208,7 +208,7 @@
     },
     "packages/cron": {
       "name": "@aponiajs/cron",
-      "version": "1.0.0-beta.13",
+      "version": "1.0.0-beta.14",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -224,7 +224,7 @@
     },
     "packages/devtools": {
       "name": "@aponiajs/devtools",
-      "version": "1.0.0-beta.13",
+      "version": "1.0.0-beta.14",
       "dependencies": {
         "@aponiajs/cli": "workspace:*",
         "@aponiajs/common": "workspace:*",
@@ -239,7 +239,7 @@
     },
     "packages/graphql": {
       "name": "@aponiajs/graphql",
-      "version": "1.0.0-beta.13",
+      "version": "1.0.0-beta.14",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -258,7 +258,7 @@
     },
     "packages/openapi": {
       "name": "@aponiajs/openapi",
-      "version": "1.0.0-beta.13",
+      "version": "1.0.0-beta.14",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -275,7 +275,7 @@
     },
     "packages/opentelemetry": {
       "name": "@aponiajs/opentelemetry",
-      "version": "1.0.0-beta.13",
+      "version": "1.0.0-beta.14",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -293,7 +293,7 @@
     },
     "packages/platform-elysia": {
       "name": "@aponiajs/platform-elysia",
-      "version": "1.0.0-beta.13",
+      "version": "1.0.0-beta.14",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/core": "workspace:*",
@@ -312,7 +312,7 @@
     },
     "packages/testing": {
       "name": "@aponiajs/testing",
-      "version": "1.0.0-beta.13",
+      "version": "1.0.0-beta.14",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
