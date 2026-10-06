@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/opentelemetry",
-  "version": "1.0.0-beta.17",
+  "version": "1.0.0-beta.18",
   "description": "Trace an Aponia application's routes with OpenTelemetry, with the policy read from a validated configuration.",
   "keywords": [
     "aponia",
