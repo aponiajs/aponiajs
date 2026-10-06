@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/cron",
-  "version": "1.0.0-beta.20",
+  "version": "1.0.0-beta.21",
   "description": "Declare scheduled jobs in an Aponia module, with options from a validated configuration.",
   "keywords": [
     "aponia",

@@ -81,6 +81,18 @@ export type {
   ResolveHttpErrorStatus,
 } from "./errors/http-error.types.ts";
 export { PluginModule, definePlugin } from "./plugins/plugin-module.ts";
+export { createServicePlugin } from "./plugins/service-plugin.ts";
+export { createEnhancerPlugin } from "./plugins/enhancer-plugin.ts";
+export { wrapElysiaPlugin } from "./plugins/elysia-bridge-plugin.ts";
+export type {
+  AsyncPluginOptions,
+  ElysiaBridgePluginDefinition,
+  ElysiaBridgePluginModule,
+  EnhancerPluginDefinition,
+  EnhancerPluginModule,
+  ServicePluginDefinition,
+  ServicePluginModule,
+} from "./plugins/plugin-builder.types.ts";
 export type {
   AsyncPluginModuleOptions,
   PluginImport,

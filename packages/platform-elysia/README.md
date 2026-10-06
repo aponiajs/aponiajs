@@ -971,6 +971,16 @@ costs nothing at runtime — the values are still there, only untyped.
 preserves Elysia's accumulated plugin types on `createNative()` and
 `getNativeApplication()`.
 
+### Standard plugin builders
+
+For authoring reusable plugin packages, `@aponiajs/platform-elysia` exposes three standard builders:
+
+- `createServicePlugin`: creates client and database provider modules (`.forRoot()` and `.forRootAsync()`).
+- `createEnhancerPlugin`: creates route guard, interceptor, and filter modules.
+- `wrapElysiaPlugin`: bridges existing Elysia plugins directly into Aponia modules.
+
+See the [plugin packages guide](../../docs/plugin-packages.md) for full contracts.
+
 ## Graceful shutdown and health probes
 
 Both surfaces are opt-in, because each one is a decision about the host process

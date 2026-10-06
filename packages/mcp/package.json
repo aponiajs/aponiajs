@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/mcp",
-  "version": "1.0.0-beta.20",
+  "version": "1.0.0-beta.21",
   "description": "Standardized Model Context Protocol (MCP 2024-11-05) server, tool registry, and transports for AponiaJS.",
   "keywords": [
     "agents",

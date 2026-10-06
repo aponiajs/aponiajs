@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/openapi",
-  "version": "1.0.0-beta.20",
+  "version": "1.0.0-beta.21",
   "description": "Serve an OpenAPI document for an Aponia application's routes, with the document's own metadata from a validated configuration.",
   "keywords": [
     "api",

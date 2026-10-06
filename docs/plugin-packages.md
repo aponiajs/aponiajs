@@ -36,6 +36,69 @@ around it adds a name and a version to maintain. The honest value of this
 pattern is narrow, and a README that claims more than it delivers is the first
 defect the next reader meets.
 
+## Standard plugin authoring builders
+
+While low-level adapters assemble `DynamicModule` with `PluginModule.registerAsync`,
+AponiaJS provides three standardized high-level builder functions under `@aponiajs/platform-elysia`:
+
+### 1. Service/Client Provider (`createServicePlugin`)
+
+For plugins that establish connections or provide injectable client services (e.g., Database, Redis, Mailer, SDKs).
+
+```ts
+import { createServicePlugin } from "@aponiajs/platform-elysia";
+import { DatabaseClient } from "./database-client.ts";
+
+export const DatabaseModule = createServicePlugin({
+  name: "database",
+  service: DatabaseClient,
+  factory: (options: { url: string }) => {
+    return new DatabaseClient(options.url);
+  },
+});
+```
+
+An application consumes it seamlessly:
+
+```ts
+@Module({
+  imports: [
+    DatabaseModule.forRoot({ url: "postgres://localhost:5432/db" }),
+    // Or asynchronous configuration:
+    // DatabaseModule.forRootAsync({ inject: [Config], useFactory: (c) => ({ url: c.url }) }),
+  ],
+})
+export class AppModule {}
+```
+
+### 2. Enhancer/Guard Provider (`createEnhancerPlugin`)
+
+For plugins contributing route guards, interceptors, or filters.
+
+```ts
+import { createEnhancerPlugin } from "@aponiajs/platform-elysia";
+import { SecurityGuard } from "./security.guard.ts";
+
+export const SecurityModule = createEnhancerPlugin({
+  name: "security",
+  guards: [SecurityGuard],
+});
+```
+
+### 3. Native Elysia Bridge (`wrapElysiaPlugin`)
+
+For wrapping community and official Elysia plugins into first-class Aponia modules.
+
+```ts
+import { wrapElysiaPlugin } from "@aponiajs/platform-elysia";
+import { swagger } from "@elysiajs/swagger";
+
+export const SwaggerModule = wrapElysiaPlugin({
+  name: "swagger",
+  plugin: (options) => swagger(options),
+});
+```
+
 ## The smallest complete registration
 
 ```ts
