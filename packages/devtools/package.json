@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/devtools",
-  "version": "1.0.0-beta.21",
+  "version": "1.0.0-beta.22",
   "description": "Opt-in devtools for a running Aponia application, served by the application itself.",
   "keywords": [
     "aponia",
