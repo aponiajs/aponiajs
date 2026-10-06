@@ -58,6 +58,7 @@ export function resolvePipe(pipe: PipeType, container?: AponiaContainer): Resolv
 
 /**
  * Executes a pipeline of pipes sequentially over an argument value.
+ * Uses a sync fast-path when pipe transforms return synchronously.
  *
  * @param pipes - The sequence of resolved pipes to execute.
  * @param initialValue - The incoming argument value.
@@ -70,8 +71,9 @@ export async function executePipes(
   metadata: ArgumentMetadata,
 ): Promise<unknown> {
   let current = initialValue;
-  for (const pipe of pipes) {
-    current = await pipe.instance.transform(current, metadata);
+  for (let i = 0; i < pipes.length; i++) {
+    const result = pipes[i]!.instance.transform(current, metadata);
+    current = typeof (result as Promise<unknown>)?.then === "function" ? await result : result;
   }
   return current;
 }
