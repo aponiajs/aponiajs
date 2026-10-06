@@ -28,8 +28,10 @@ export class AppModule {}
 
 ## Visibility
 
-A provider is visible to its own module always, and to another module only when
-it appears in `exports` and that module `imports` it. Nothing is global.
+A provider is visible to its own module always, and to another module when
+it appears in `exports` and that module `imports` it.
+
+For shared cross-cutting infrastructure (such as database or telemetry services), modules can be marked with `@Global()`, making their exported providers visible everywhere without explicit feature imports.
 
 Two imported modules that resolve the token to different modules raise
 `AMBIGUOUS_PROVIDER` instead of the framework picking a winner. Two that

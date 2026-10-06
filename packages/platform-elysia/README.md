@@ -44,8 +44,8 @@ The first Elysia platform slice for Aponia:
 - Nest-style route middleware (`AponiaMiddleware`, `MiddlewareConsumer`, `configure()` seam);
 - Provider scopes (`Scope.DEFAULT`, `Scope.REQUEST`, `Scope.TRANSIENT`) with per-request ambient async context;
 - explicit Elysia lazy-composition and startup-precompile policy;
-- `provideConfiguration(AppConfig)` — an application-declared configuration,
-  validated once at boot and read back through `application.get(AppConfig)`;
+- `provideConfiguration(AppConfig)` / `provideConfigurationAsync(AppConfig, options)` — an application-declared configuration,
+  validated synchronously or asynchronously and read back through `application.get(AppConfig)`;
 - `handle`, `listen`, `get`, and `close` application methods.
 
 This package intentionally does not yet implement schema aggregation, Socket.IO-only
@@ -251,7 +251,7 @@ versions it was generated against:
 ```ts
 // src/invokers.generated.ts
 export const controllerInvokerArtifact = Object.freeze({
-  framework: "1.0.0-beta.16",
+  framework: "1.0.0-beta.17",
   elysia: "2.0.0-beta.19",
   invokers: new Map([
     [UsersController, (instance: UsersController) => new Map([["ping", () => instance.ping()]])],
@@ -310,7 +310,7 @@ it was generated against:
 ```ts
 // src/descriptors.generated.ts
 export const moduleDescriptorArtifact = Object.freeze({
-  framework: "1.0.0-beta.16",
+  framework: "1.0.0-beta.17",
   elysia: "2.0.0-beta.19",
   modules: Object.freeze({ AppModule: AppModuleDescriptor }),
 });
@@ -588,6 +588,50 @@ controller registered through its own `registerRoutes` callback owns its routes'
 hooks, and a definition mounted through its own `buildPlugin` resolves nothing,
 so neither runs a declared enhancer, a global enhancer, or the default mapping.
 See the [enhancers guide](../../docs/enhancers.md).
+
+## Pipes and parameter transformation
+
+Parameter and route pipes implement the `PipeTransform` contract:
+
+```ts
+import { Injectable, UsePipes, type PipeTransform, type ArgumentMetadata } from "@aponiajs/common";
+
+@Injectable()
+export class ParseIntPipe implements PipeTransform<string, number> {
+  transform(value: string, metadata: ArgumentMetadata): number {
+    const val = parseInt(value, 10);
+    if (isNaN(val)) throw new Error("Validation failed");
+    return val;
+  }
+}
+```
+
+Apply pipes via `@UsePipes(ParseIntPipe)` at handler/controller level, or directly on route parameters `@Param("id", ParseIntPipe) id: number`. Synchronous transforms evaluate without microtask overhead.
+
+## Route Middleware
+
+Route middleware implements `AponiaMiddleware` and is mounted via module `configure(consumer: MiddlewareConsumer)`:
+
+```ts
+import { Injectable, type AponiaMiddleware, type RouteContext } from "@aponiajs/common";
+
+@Injectable()
+export class LoggerMiddleware implements AponiaMiddleware {
+  use(context: RouteContext, next: () => Promise<void> | void) {
+    console.log(`Request: ${context.request.url}`);
+    return next();
+  }
+}
+```
+
+```ts
+@Module({})
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoggerMiddleware).forRoutes("*");
+  }
+}
+```
 
 ## Routes with the native Elysia context
 

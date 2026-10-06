@@ -35,24 +35,16 @@ descriptor form. Both paths stay supported.
 
 Implemented: decorated modules and HTTP controllers, one-schema validation
 models over Standard Schema and native validators, request parameter decorators,
-singleton dependency injection, class/value/factory/alias providers, explicit
-tokens, validated configuration an application declares and injects, module
-imports and exports, provider and application lifecycle hooks, read from the
+singleton and scoped (`REQUEST`, `TRANSIENT`) dependency injection, class/value/factory/alias providers, explicit
+tokens, validated synchronous and asynchronous configuration an application declares and injects, module
+imports and exports, global modules (`@Global()`), circular references (`forwardRef()`), provider and application lifecycle hooks, read from the
 provider instance, structured logging, generators, and native Elysia escape
 hatches, RFC 9457 application errors for every supported HTTP error status, provider-registered WebSocket gateways backed by native Elysia
-sockets, and guards, interceptors, and exception filters compiled into per-route
+sockets with payload validation and handshake guards, parameter and route pipes (`PipeTransform`, `@UsePipes()`), route middleware (`AponiaMiddleware`), request context (`RequestContextModule`), and guards, interceptors, and exception filters compiled into per-route
 Elysia lifecycle hooks, with the default Problem Details mapping an unhandled
-failure answers through last in each route's error path, and an opt-in
-`@aponiajs/openapi` package that serves an OpenAPI document for an
-application's routes, with the document's own metadata from a validated
-configuration.
+failure answers through last in each route's error path, and opt-in plugin packages (`@aponiajs/openapi`, `@aponiajs/cors`, `@aponiajs/cron`, `@aponiajs/graphql`, `@aponiajs/opentelemetry`, `@aponiajs/testing`, `@aponiajs/devtools`).
 
-Not implemented yet: middleware, non-singleton scopes, testing modules,
-authentication, production WebSocket policies and transport extraction, and
-microservice transports. The implemented WebSocket gateway preview does not yet
-include the planned transport-neutral adapter, handshake policies, or
-per-message schema layer. Treat the lists above as the scope of record before
-assuming a feature exists.
+Not implemented yet: authentication, distributed job queues, and microservice transports. Treat the lists above as the scope of record before assuming a feature exists.
 
 Most chapters that follow have a runnable counterpart in
 [`examples/`](../../examples/README.md): one application per topic, each with

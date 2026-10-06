@@ -120,13 +120,14 @@ one of them after generating a resource — otherwise its routes are not mounted
 ## Framework capabilities
 
 - **Modules and dependency injection** organize controllers and providers by
-  feature, with explicit exports between modules.
+  feature, with explicit exports, provider scopes (`DEFAULT`, `REQUEST`, `TRANSIENT`), `@Global()` modules, and `forwardRef()`.
 - **Decorated HTTP routes** keep request handling in controllers and application
   behavior in services.
-- **Route validation** accepts Elysia validators and
-  [Standard Schema](https://standardschema.dev) implementations.
-- **Native Elysia access** supports plugins and routes alongside Aponia's
-  decorators and explicit descriptors.
+- **Route validation** accepts Elysia validators, TypeBox, and
+  [Standard Schema](https://standardschema.dev) implementations (Zod, Valibot, ArkType).
+- **Execution Enhancers & Pipes** provide guards, interceptors, exception filters, parameter pipes (`PipeTransform`, `@UsePipes()`), and route middleware (`AponiaMiddleware`).
+- **Synchronous & Asynchronous Configuration** safely loads and validates process environment variables or dynamic remote secrets at boot.
+- **Native Elysia access & Eden Treaty** supports native plugins, WebSockets, and end-to-end type inference alongside Aponia's decorators and descriptors.
 
 ## Documentation
 

@@ -38,7 +38,7 @@ The framework is pre-1.0, so every release is a prerelease. Cutting a bare
 
 Branch from the release channel the work targets and open the pull request back
 into that same branch. Routine prerelease work currently starts from
-`release/alpha`; `release/beta`, `release/rc`, and `main` accept progressively
+`release/beta`; `release/rc` and `main` accept progressively
 more mature promotion or fix work. Every push must carry a greater synchronized
 workspace version.
 

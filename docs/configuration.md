@@ -81,6 +81,29 @@ which is what a test uses to validate a literal without touching `process.env`:
 class AppModule {}
 ```
 
+### Asynchronous dynamic configuration
+
+When configuration source values must be loaded asynchronously (e.g. from a remote secrets manager, vault, or asynchronous file loader), use `provideConfigurationAsync`:
+
+```ts
+import { provideConfigurationAsync } from "@aponiajs/platform-elysia";
+
+@Module({
+  providers: [
+    provideConfigurationAsync(AppConfig, {
+      useFactory: async () => {
+        const remoteSecret = await fetchVaultSecret("db-config");
+        return { source: { PORT: remoteSecret.port } };
+      },
+    }),
+  ],
+  exports: [AppConfig],
+})
+export class AppModule {}
+```
+
+The bound configuration token resolves to `Promise<TConfig>`, allowing services to await the fully validated configuration cleanly upon injection.
+
 ## Validation at boot
 
 The provider is instantiated in the boot's first pass, so the value is validated

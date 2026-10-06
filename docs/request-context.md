@@ -125,9 +125,7 @@ generated ID.
 
 ## Deliberate scope and boundaries
 
-- **Singleton providers:** `RequestContextService` is a singleton service over an
-  `AsyncLocalStorage` store. AponiaJS retains singleton dependency injection; this
-  module does not introduce request-scoped providers or request-scoped containers.
+- **Provider Scopes integration:** `RequestContextModule` supplies the ambient request execution context that powers `Scope.REQUEST` providers. Within an active request, request-scoped providers instantiate once and remain cached for that request.
 - **Error handling:** When a route handler throws, the default Problem Details error
   mapping executes within the request lifecycle, ensuring the correlation header
   is preserved on error responses (including `500 Internal Server Error`).
