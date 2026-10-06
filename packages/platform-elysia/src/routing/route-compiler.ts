@@ -847,17 +847,29 @@ function createLifecycleHook(
               handler,
               context,
             );
-            for (const guard of guards) {
-              if ((await guard.canActivate(executionContext)) === false) {
+
+            // Fast-path: Execute guards with sync short-circuit when possible
+            for (let i = 0; i < guards.length; i++) {
+              const result = guards[i]!.canActivate(executionContext);
+              const allowed =
+                typeof (result as Promise<boolean>)?.then === "function" ? await result : result;
+              if (allowed === false) {
                 throw httpErrors.forbidden("A guard refused this request.");
               }
             }
+
             // A before half cannot short-circuit: Elysia's behavior when a
             // `beforeHandle` returns a value while `afterHandle` hooks are also
             // registered for the same route is not established, so what one
             // answers is not read.
-            for (const interceptor of interceptors) {
-              await interceptor.interceptBefore?.(executionContext);
+            for (let i = 0; i < interceptors.length; i++) {
+              const interceptor = interceptors[i]!;
+              if (interceptor.interceptBefore !== undefined) {
+                const res = interceptor.interceptBefore(executionContext);
+                if (typeof (res as Promise<unknown>)?.then === "function") {
+                  await res;
+                }
+              }
             }
 
             return undefined;

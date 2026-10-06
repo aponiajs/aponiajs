@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/core",
-  "version": "1.0.0-beta.12",
+  "version": "1.0.0-beta.13",
   "description": "Module graph and dependency injection runtime for Aponia.",
   "keywords": [
     "aponia",

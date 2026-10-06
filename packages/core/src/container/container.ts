@@ -29,6 +29,7 @@ export type RequestContextAccessor = () => object | undefined;
 export class AponiaContainer {
   readonly graph: ModuleGraph;
 
+  // Cache of singleton provider instances scoped per ModuleDefinition
   readonly #instances = new Map<ModuleDefinition, Map<Provider, unknown>>();
   readonly #controllers = new Map<ModuleDefinition, Map<ControllerDefinition, unknown>>();
   readonly #resolving: ProviderLocation[] = [];
