@@ -164,6 +164,6 @@ describe("AuthGuard & RolesGuard", () => {
         }),
       }),
     };
-    await expect(defaultGuard.canActivate(badScheme as any)).rejects.toThrow();
+    expect(() => defaultGuard.canActivate(badScheme as any)).toThrow();
   });
 });

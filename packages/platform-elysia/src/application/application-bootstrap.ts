@@ -386,27 +386,30 @@ export async function bootstrapAponiaApplication(
   let beforeShutdownDone: Promise<void> | undefined;
   let afterStopDone: Promise<void> | undefined;
 
-  attachApplicationShutdown(nativeApplication, async (closeActiveConnections = true) => {
-    // Before the first hook, and before anything has had a chance to observe a
-    // half-torn-down graph: this is what makes the readiness probe the signal an
-    // orchestrator drains by, rather than a report written once the drain is
-    // already over. It is stated on every call and not only the first, because
-    // the flip is idempotent by nature and reading it from the memoised group
-    // below would make it depend on which caller arrived first.
-    readiness.markShuttingDown();
-    beforeShutdownDone ??= runShutdownHooks(beforeShutdown, logger);
-    await beforeShutdownDone;
+  attachApplicationShutdown(
+    nativeApplication,
+    async (closeActiveConnections = true, signal?: string) => {
+      // Before the first hook, and before anything has had a chance to observe a
+      // half-torn-down graph: this is what makes the readiness probe the signal an
+      // orchestrator drains by, rather than a report written once the drain is
+      // already over. It is stated on every call and not only the first, because
+      // the flip is idempotent by nature and reading it from the memoised group
+      // below would make it depend on which caller arrived first.
+      readiness.markShuttingDown();
+      beforeShutdownDone ??= runShutdownHooks(beforeShutdown, logger, signal);
+      await beforeShutdownDone;
 
-    if (nativeApplication.server) {
-      await nativeApplication.stop(closeActiveConnections);
-    }
+      if (nativeApplication.server) {
+        await nativeApplication.stop(closeActiveConnections);
+      }
 
-    afterStopDone ??= (async () => {
-      await runShutdownHooks(moduleDestroy, logger);
-      await runShutdownHooks(applicationShutdown, logger);
-    })();
-    await afterStopDone;
-  });
+      afterStopDone ??= (async () => {
+        await runShutdownHooks(moduleDestroy, logger);
+        await runShutdownHooks(applicationShutdown, logger, signal);
+      })();
+      await afterStopDone;
+    },
+  );
 
   // The boot's own record, attached to the application it returns: which root
   // the container compiled, what it decided about the invoker artifact, which
@@ -481,10 +484,11 @@ export async function bootstrapAponiaApplication(
 async function runShutdownHooks(
   calls: readonly LifecycleCall[],
   logger: LoggerService | undefined,
+  signal?: string,
 ): Promise<void> {
   for (const call of calls) {
     try {
-      await call();
+      await call(signal);
     } catch (error) {
       reportThroughLogger(logger, error, "ApplicationShutdown");
     }

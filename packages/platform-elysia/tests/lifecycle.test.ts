@@ -633,4 +633,33 @@ describe("the stopping hooks", () => {
     // and `close()` must still resolve.
     expect(calls).toEqual(["refusing", "after"]);
   });
+
+  test("passes the triggering signal to beforeApplicationShutdown and onApplicationShutdown", async () => {
+    calls.length = 0;
+    const receivedSignals: { before?: string; shutdown?: string } = {};
+
+    class SignalAware implements BeforeApplicationShutdown, OnApplicationShutdown {
+      beforeApplicationShutdown(signal?: string): void {
+        calls.push("before");
+        receivedSignals.before = signal;
+      }
+
+      onApplicationShutdown(signal?: string): void {
+        calls.push("shutdown");
+        receivedSignals.shutdown = signal;
+      }
+    }
+
+    @Module({ providers: [provideClass(SignalAware, [])] })
+    class SignalAwareModule {}
+
+    application = await AponiaFactory.create(SignalAwareModule, { logger: false });
+    await application.close(true, "SIGTERM");
+
+    expect(calls).toEqual(["before", "shutdown"]);
+    expect(receivedSignals).toEqual({
+      before: "SIGTERM",
+      shutdown: "SIGTERM",
+    });
+  });
 });

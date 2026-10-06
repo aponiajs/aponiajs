@@ -101,10 +101,10 @@ export class AponiaApplication<TNativeApplication extends AnyElysia = Elysia> {
         this.#shutdownSignalsInstalled = true;
         // The bound method rather than a wrapper, so the teardown a signal runs
         // is stated as what it is: this application's own `close`, with the
-        // documented default for `closeActiveConnections`. The signal path
-        // exercises it in `tests/fixtures/shutdown-signal-app.ts`, in a process
-        // whose own death is what the case reads.
-        installShutdownSignalHandlers(this.close.bind(this), this.#logger);
+        // documented default for `closeActiveConnections` and passing the signal.
+        // The signal path exercises it in `tests/fixtures/shutdown-signal-app.ts`,
+        // in a process whose own death is what the case reads.
+        installShutdownSignalHandlers((signal) => this.close(true, signal), this.#logger);
       }
     } catch (error) {
       // Reported rather than the reason the caller hears: `reportThroughLogger`
@@ -126,12 +126,12 @@ export class AponiaApplication<TNativeApplication extends AnyElysia = Elysia> {
     return server.url.origin;
   }
 
-  async close(closeActiveConnections = true): Promise<void> {
+  async close(closeActiveConnections = true, signal?: string): Promise<void> {
     // A boot attaches the plan; an application no boot produced has none, and
     // keeps the behaviour this method had before the seam existed.
     const shutdown = readApplicationShutdown(this.#nativeApplication);
     if (shutdown) {
-      await shutdown(closeActiveConnections);
+      await shutdown(closeActiveConnections, signal);
       return;
     }
 

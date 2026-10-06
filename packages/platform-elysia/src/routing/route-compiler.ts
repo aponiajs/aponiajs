@@ -508,22 +508,99 @@ function createRouteHandler(
     );
 
     return async (context: RouteContext) => {
-      const arguments_ = Array.from({ length: argumentCount }, () => undefined as unknown);
-      for (const plan of parameterPlans) {
-        const rawValue = extractParameterValue(
-          context,
-          plan.kind,
-          plan.property,
-          plan.factory,
-          plan.data,
-        );
-        if (plan.pipes.length > 0) {
-          arguments_[plan.index] = await executePipes(plan.pipes, rawValue, plan.metadata);
-        } else {
-          arguments_[plan.index] = rawValue;
+      // Fast path: avoid dynamic array allocation by pre-sizing and direct indexing
+      switch (argumentCount) {
+        case 1: {
+          const plan0 = parameterPlans[0]!;
+          const raw0 = extractParameterValue(
+            context,
+            plan0.kind,
+            plan0.property,
+            plan0.factory,
+            plan0.data,
+          );
+          const arg0 =
+            plan0.pipes.length > 0 ? await executePipes(plan0.pipes, raw0, plan0.metadata) : raw0;
+          return await handler.call(instance, arg0);
+        }
+        case 2: {
+          const plan0 = parameterPlans[0]!;
+          const raw0 = extractParameterValue(
+            context,
+            plan0.kind,
+            plan0.property,
+            plan0.factory,
+            plan0.data,
+          );
+          const arg0 =
+            plan0.pipes.length > 0 ? await executePipes(plan0.pipes, raw0, plan0.metadata) : raw0;
+
+          const plan1 = parameterPlans[1]!;
+          const raw1 = extractParameterValue(
+            context,
+            plan1.kind,
+            plan1.property,
+            plan1.factory,
+            plan1.data,
+          );
+          const arg1 =
+            plan1.pipes.length > 0 ? await executePipes(plan1.pipes, raw1, plan1.metadata) : raw1;
+          return await handler.call(instance, arg0, arg1);
+        }
+        case 3: {
+          const plan0 = parameterPlans[0]!;
+          const raw0 = extractParameterValue(
+            context,
+            plan0.kind,
+            plan0.property,
+            plan0.factory,
+            plan0.data,
+          );
+          const arg0 =
+            plan0.pipes.length > 0 ? await executePipes(plan0.pipes, raw0, plan0.metadata) : raw0;
+
+          const plan1 = parameterPlans[1]!;
+          const raw1 = extractParameterValue(
+            context,
+            plan1.kind,
+            plan1.property,
+            plan1.factory,
+            plan1.data,
+          );
+          const arg1 =
+            plan1.pipes.length > 0 ? await executePipes(plan1.pipes, raw1, plan1.metadata) : raw1;
+
+          const plan2 = parameterPlans[2]!;
+          const raw2 = extractParameterValue(
+            context,
+            plan2.kind,
+            plan2.property,
+            plan2.factory,
+            plan2.data,
+          );
+          const arg2 =
+            plan2.pipes.length > 0 ? await executePipes(plan2.pipes, raw2, plan2.metadata) : raw2;
+          return await handler.call(instance, arg0, arg1, arg2);
+        }
+        default: {
+          const arguments_: unknown[] = Array.from({ length: argumentCount });
+          for (let i = 0; i < parameterPlans.length; i++) {
+            const plan = parameterPlans[i]!;
+            const rawValue = extractParameterValue(
+              context,
+              plan.kind,
+              plan.property,
+              plan.factory,
+              plan.data,
+            );
+            arguments_[plan.index] =
+              plan.pipes.length > 0
+                ? await executePipes(plan.pipes, rawValue, plan.metadata)
+                : rawValue;
+          }
+          return await handler.call(instance, ...arguments_);
         }
       }
-      return await handler.call(instance, ...arguments_);
     };
   }
 

@@ -211,6 +211,24 @@ describe("installing the shutdown signal handlers", () => {
     expect(probe.kills).toEqual([{ pid: probe.target.pid, signal: "SIGTERM" }]);
   });
 
+  test("passes the received signal to the teardown callback", async () => {
+    const probe = createSignalTarget();
+    let receivedSignal: ShutdownSignal | undefined;
+    installShutdownSignalHandlers(
+      (signal) => {
+        receivedSignal = signal;
+        return Promise.resolve();
+      },
+      undefined,
+      probe.target,
+    );
+
+    probe.emit("SIGTERM");
+    await settle();
+
+    expect(receivedSignal).toBe("SIGTERM");
+  });
+
   test("reports a teardown that threw and still ends the process", async () => {
     const probe = createSignalTarget();
     const logger = new FailureRecorder();

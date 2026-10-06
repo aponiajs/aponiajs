@@ -26,7 +26,7 @@ export type LifecycleHookContract =
  *
  * @internal
  */
-export type LifecycleCall = () => void | Promise<void>;
+export type LifecycleCall = (signal?: string) => void | Promise<void>;
 
 /**
  * The member names the five contracts contribute, gathered member by member.
@@ -131,7 +131,10 @@ export function collectLifecycleCalls(
  *
  * @internal
  */
-export type ApplicationShutdown = (closeActiveConnections?: boolean) => Promise<void>;
+export type ApplicationShutdown = (
+  closeActiveConnections?: boolean,
+  signal?: string,
+) => Promise<void>;
 
 const lifecycleKey: unique symbol = Symbol.for("aponia.application.lifecycle");
 

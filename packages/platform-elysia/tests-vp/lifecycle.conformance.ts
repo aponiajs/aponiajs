@@ -30,8 +30,8 @@ class SyncHooks
   onModuleInit(): void {}
   onApplicationBootstrap(): void {}
   onModuleDestroy(): void {}
-  beforeApplicationShutdown(): void {}
-  onApplicationShutdown(): void {}
+  beforeApplicationShutdown(_signal?: string): void {}
+  onApplicationShutdown(_signal?: string): void {}
 }
 
 class AsyncHooks
@@ -45,8 +45,8 @@ class AsyncHooks
   async onModuleInit(): Promise<void> {}
   async onApplicationBootstrap(): Promise<void> {}
   async onModuleDestroy(): Promise<void> {}
-  async beforeApplicationShutdown(): Promise<void> {}
-  async onApplicationShutdown(): Promise<void> {}
+  async beforeApplicationShutdown(_signal?: string): Promise<void> {}
+  async onApplicationShutdown(_signal?: string): Promise<void> {}
 }
 
 test("a synchronous hook answers nothing and an asynchronous one answers a promise", () => {
@@ -87,10 +87,12 @@ test("runs a provider's onModuleInit through a real boot", async () => {
 
 test("runs a provider's onApplicationShutdown through a real close", async () => {
   const calls: string[] = [];
+  let receivedSignal: string | undefined;
 
   class Hooked implements OnApplicationShutdown {
-    onApplicationShutdown(): void {
+    onApplicationShutdown(signal?: string): void {
       calls.push("shutdown");
+      receivedSignal = signal;
     }
   }
 
@@ -98,11 +100,12 @@ test("runs a provider's onApplicationShutdown through a real close", async () =>
   class HookedModule {}
 
   const application = await AponiaFactory.create(HookedModule, { logger: false });
-  await application.close();
+  await application.close(true, "SIGINT");
   // The second close also exercises the once-only rule in this lane: both lanes
   // mirror framework behaviour, and a teardown that ran twice would show here as
   // two entries rather than one.
   await application.close();
 
   expect(calls).toEqual(["shutdown"]);
+  expect(receivedSignal).toBe("SIGINT");
 });

@@ -69,7 +69,7 @@ export interface ShutdownSignalTarget {
  * @internal
  */
 export function installShutdownSignalHandlers(
-  teardown: () => Promise<void>,
+  teardown: (signal: ShutdownSignal) => Promise<void>,
   logger: LoggerService | undefined,
   target: ShutdownSignalTarget = process,
 ): void {
@@ -83,7 +83,7 @@ export function installShutdownSignalHandlers(
 
   const finish = async (signal: ShutdownSignal): Promise<void> => {
     try {
-      await teardown();
+      await teardown(signal);
     } catch (error) {
       reportThroughLogger(logger, error, "AponiaApplication");
     } finally {
