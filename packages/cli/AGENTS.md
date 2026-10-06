@@ -368,19 +368,13 @@ separate focused modules. `src/index.ts` is the only public barrel.
   providers. WebSocket CRUD resources use stable
   `<resource>.create|findAll|findOne|update|remove` message events and
   `@MessageBody()` bindings; keep REST and GraphQL output unchanged.
-- Guard, interceptor, and filter schematics register in `providers` beside the
-  gateway, and the file they emit is correct as written: `@Injectable()`, the
-  `implements` clause for the contract it satisfies — `CanActivate`,
-  `Interceptor`, `ExceptionFilter` — and `@Catch()` on a filter. A
-  scaffold that omits any of them is a class the application cannot boot, since
-  an enhancer naming a class the graph cannot reach fails the mount with
-  `MISSING_PROVIDER`.
-- The schematic catalog carries no `middleware` and no `pipe`, and the absence
-  is the decision rather than a gap: the framework has neither concept, native
-  Elysia plugins are its middleware mechanism, and route validation covers
-  transformation, so a generator for either would emit a file nothing consumes.
-  `aponia g middleware`, `aponia g pipe`, and the `mi`/`pi` aliases fail through
-  the ordinary unknown-schematic `Error`, which names the available schematics.
+- Guard, interceptor, filter, middleware, and pipe schematics register in
+  `providers` beside the gateway, and the files they emit are correct as written:
+  `@Injectable()`, and the `implements` clause for the contract each satisfies —
+  `CanActivate`, `Interceptor`, `ExceptionFilter`, `AponiaMiddleware`,
+  `PipeTransform` — and `@Catch()` on a filter. A scaffold that omits any of them
+  is a class the application cannot boot, since an enhancer naming a class the
+  graph cannot reach fails the mount with `MISSING_PROVIDER`.
 - Documentation wording is guarded: `scripts/documentation.spec.ts` requires
   `bun add --global @aponiajs/cli` and forbids `bunx aponia` across `README.md`,
   `docs/cli.md`, `docs/packages.md`, and this package's README.

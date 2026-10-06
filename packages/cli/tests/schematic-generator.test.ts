@@ -34,7 +34,9 @@ const expectedPrimaryFiles: Readonly<
   guard: "src/sample.guard.ts",
   interface: "src/sample.interface.ts",
   interceptor: "src/sample.interceptor.ts",
+  middleware: "src/sample.middleware.ts",
   module: "src/sample/sample.module.ts",
+  pipe: "src/sample.pipe.ts",
   provider: "src/sample.ts",
   resolver: "src/sample/sample.resolver.ts",
   resource: "src/sample/sample.module.ts",
@@ -53,7 +55,9 @@ test("supports the complete Nest generate schematic catalog and aliases", () => 
     "guard",
     "interface",
     "interceptor",
+    "middleware",
     "module",
+    "pipe",
     "provider",
     "resolver",
     "resource",
@@ -90,14 +94,57 @@ test.each([
   expect(() => parseArguments(arguments_)).toThrow(message);
 });
 
-test.each([["pipe"], ["pi"], ["middleware"], ["mi"]] as const)(
-  "rejects the removed %s schematic instead of writing a dead file",
-  (schematic) => {
-    expect(() => parseArguments(["generate", schematic, "sample"])).toThrow(
-      `Unknown schematic "${schematic}". Available schematics:`,
-    );
-  },
-);
+test.each([
+  ["pipe", "pipe"],
+  ["pi", "pipe"],
+  ["middleware", "middleware"],
+  ["mi", "middleware"],
+] as const)("accepts %s as %s schematic", (alias, schematic) => {
+  expect(parseArguments(["generate", alias, "sample"])).toMatchObject({
+    command: "generate",
+    schematic,
+    name: "sample",
+  });
+});
+
+test("generates resolvable pipe and middleware scaffolds", async () => {
+  const projectRoot = await createProjectRoot("aponia-pipe-mw-");
+  for (const schematic of ["pipe", "middleware"] as const) {
+    await generateSchematic({
+      command: "generate",
+      schematic,
+      name: "sample",
+      dryRun: false,
+      skipImport: false,
+      crud: true,
+      type: "rest",
+      cwd: projectRoot,
+    });
+  }
+
+  const pipe = await Bun.file(join(projectRoot, "src/sample.pipe.ts")).text();
+  expect(pipe).toContain(
+    'import { Injectable, type ArgumentMetadata, type PipeTransform } from "@aponiajs/common";',
+  );
+  expect(pipe).toContain("@Injectable()");
+  expect(pipe).toContain("export class SamplePipe implements PipeTransform {");
+  expect(pipe).toContain("transform(value: unknown, metadata: ArgumentMetadata): unknown {");
+
+  const middleware = await Bun.file(join(projectRoot, "src/sample.middleware.ts")).text();
+  expect(middleware).toContain(
+    'import { Injectable, type AponiaMiddleware, type RouteContext } from "@aponiajs/common";',
+  );
+  expect(middleware).toContain("@Injectable()");
+  expect(middleware).toContain("export class SampleMiddleware implements AponiaMiddleware {");
+  expect(middleware).toContain(
+    "use(context: RouteContext, next: () => Promise<unknown>): unknown {",
+  );
+
+  const module = await Bun.file(join(projectRoot, "src/app.module.ts")).text();
+  expect(module).toContain('import { SamplePipe } from "./sample.pipe.ts";');
+  expect(module).toContain('import { SampleMiddleware } from "./sample.middleware.ts";');
+  expect(module).toContain("providers: [SamplePipe, SampleMiddleware]");
+});
 
 test("generates resolvable guard, interceptor, and filter scaffolds", async () => {
   const projectRoot = await createProjectRoot("aponia-enhancers-");

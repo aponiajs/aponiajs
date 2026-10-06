@@ -8,7 +8,7 @@ The published surface is the globally installed `aponia` binary (`bun add --glob
 
 - [aponia new <name>](../../docs/cli.md): creates a project from the application template, and also installs its dependencies unless `--skip-install` is passed; `--dry-run` reports the planned files without writing.
 - [aponia generate <schematic> <name>](../../docs/cli.md): generates one schematic, registering it in the nearest Aponia module unless `--skip-import` is passed.
-- [Schematic catalog](../../docs/cli.md): application, library, class, controller, decorator, filter, gateway, guard, interface, interceptor, module, provider, resolver, resource, and service, with Nest aliases.
+- [Schematic catalog](../../docs/cli.md): application, library, class, controller, decorator, filter, gateway, guard, interface, interceptor, middleware, module, pipe, provider, resolver, resource, and service, with Nest aliases.
 - [aponia g resource <name> --type rest](../../docs/cli.md): REST, GraphQL code-first, GraphQL schema-first, microservice, and WebSocket resource transports; a REST resource also emits validated create, update, and path-parameter models.
 - [aponia g gateway <name>](../../docs/cli.md): emits a `@WebSocketGateway()` provider, and a WebSocket CRUD resource emits the create, find-all, find-one, update, and remove message handlers.
 - [aponia --version, aponia --help](../../docs/cli.md): print the CLI version or the usage summary.

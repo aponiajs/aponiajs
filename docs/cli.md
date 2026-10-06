@@ -65,9 +65,7 @@ and runtime packages cannot drift to different releases.
 ## Generate
 
 The published `@aponiajs/cli` package supports the Nest CLI's built-in
-schematics, less the two whose concepts this framework does not have
-(`middleware` and `pipe` — native Elysia plugins are the middleware mechanism,
-and route validation covers transformation):
+schematics:
 
 | Schematic     | Alias | Output                |
 | ------------- | ----- | --------------------- |
@@ -81,7 +79,9 @@ and route validation covers transformation):
 | `guard`       | `gu`  | request guard         |
 | `interface`   | `itf` | TypeScript interface  |
 | `interceptor` | `itc` | request interceptor   |
+| `middleware`  | `mi`  | route middleware      |
 | `module`      | `mo`  | Aponia module         |
+| `pipe`        | `pi`  | parameter pipe        |
 | `provider`    | `pr`  | injectable provider   |
 | `resolver`    | `r`   | GraphQL resolver      |
 | `resource`    | `res` | complete resource     |

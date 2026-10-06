@@ -79,16 +79,12 @@ still generates without bundling.
 
 The generate command supports the Aponia schematic catalog: application,
 library, class, controller, decorator, filter, gateway, guard, interface,
-interceptor, module, provider, resolver, resource, and service. Nest aliases are
+interceptor, middleware, module, pipe, provider, resolver, resource, and service. Nest aliases are
 supported, and `router`, `routers`, and `route` map to Aponia controllers.
-Nest's `middleware` and `pipe` schematics are deliberately absent: the framework
-has neither concept, native Elysia plugins are the middleware mechanism, and
-route validation covers transformation, so a generator would emit a file nothing
-consumes.
 
 Generated controllers, providers, services, modules, resources, gateways,
-guards, interceptors, and filters are registered in the nearest Aponia module
-unless `--skip-import` is used: controllers under `controllers`, enhancers and
+guards, interceptors, pipes, middleware, and filters are registered in the nearest Aponia module
+unless `--skip-import` is used: controllers under `controllers`, enhancers, pipes, middleware, and
 gateways under `providers`, and modules under `imports`.
 Resource transports include REST, GraphQL code-first, GraphQL schema-first,
 microservices, and WebSockets. REST generates a mounted controller and WebSockets

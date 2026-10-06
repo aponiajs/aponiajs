@@ -24,6 +24,10 @@ export function renderComponent(schematic: ComponentSchematic, names: ComponentN
       return `import { Injectable, type Interceptor, type ExecutionContext } from "@aponiajs/common";\n\n@Injectable()\nexport class ${className} implements Interceptor {\n  interceptBefore(_context: ExecutionContext): void {}\n\n  interceptAfter(_context: ExecutionContext, response: unknown): unknown {\n    return response;\n  }\n}\n`;
     case "filter":
       return `import { Catch, Injectable, type ArgumentsHost, type ExceptionFilter } from "@aponiajs/common";\n\n@Injectable()\n@Catch()\nexport class ${className} implements ExceptionFilter {\n  catch(exception: unknown, _host: ArgumentsHost): unknown {\n    return exception;\n  }\n}\n`;
+    case "middleware":
+      return `import { Injectable, type AponiaMiddleware, type RouteContext } from "@aponiajs/common";\n\n@Injectable()\nexport class ${className} implements AponiaMiddleware {\n  use(context: RouteContext, next: () => Promise<unknown>): unknown {\n    return next();\n  }\n}\n`;
+    case "pipe":
+      return `import { Injectable, type ArgumentMetadata, type PipeTransform } from "@aponiajs/common";\n\n@Injectable()\nexport class ${className} implements PipeTransform {\n  transform(value: unknown, metadata: ArgumentMetadata): unknown {\n    return value;\n  }\n}\n`;
     default:
       return `export class ${className} {}\n`;
   }
