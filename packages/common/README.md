@@ -258,6 +258,21 @@ Built-in transformation pipes:
 
 Method-level and controller-level pipes can be attached via `@UsePipes()`.
 
+## Custom Parameter Decorators & Reflector
+
+Extract custom request properties using `createParamDecorator`:
+
+```ts
+import { createParamDecorator, SetMetadata, Reflector } from "@aponiajs/common";
+
+export const CurrentUser = createParamDecorator((data: string | undefined, ctx) => {
+  const user = (ctx as any).user;
+  return data ? user?.[data] : user;
+});
+
+export const Roles = (...roles: string[]) => SetMetadata("roles", roles);
+```
+
 ## Route Middleware
 
 Route middleware implements `AponiaMiddleware` and is configured via module `configure(consumer)` seams:

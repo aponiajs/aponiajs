@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/testing",
-  "version": "1.0.0-beta.10",
+  "version": "1.0.0-beta.11",
   "description": "Boot an Aponia application for a test, with provider overrides and a teardown a case can rely on.",
   "keywords": [
     "aponia",

@@ -46,6 +46,8 @@ export {
   getEnhancerMetadata,
 } from "./enhancers/enhancer-decorators.ts";
 export type { EnhancerMetadata } from "./enhancers/enhancer-decorators.types.ts";
+export { SetMetadata, customMetadataPrefix, getCustomMetadata } from "./enhancers/metadata.ts";
+export { Reflector } from "./enhancers/reflector.ts";
 export type {
   ArgumentsHost,
   CanActivate,
@@ -128,7 +130,10 @@ export {
   State,
   getRouteParameterMetadata,
   routeParameterKinds,
+  routeParametersMetadataKey,
 } from "./routing/route-parameters.ts";
+export { createParamDecorator } from "./routing/custom-parameter.ts";
+export type { CustomParamFactory } from "./routing/custom-parameter.types.ts";
 export type {
   RouteParameterKind,
   RouteParameterMetadata,

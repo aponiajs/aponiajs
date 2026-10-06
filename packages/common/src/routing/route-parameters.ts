@@ -20,9 +20,13 @@ export const routeParameterKinds = [
   "request",
   "set",
   "status",
+  "custom",
 ] as const;
 
-const routeParametersMetadataKey = Symbol.for("aponia.route-parameters.metadata");
+/**
+ * Symbol key storing route parameter bindings metadata on controller prototypes.
+ */
+export const routeParametersMetadataKey = Symbol.for("aponia.route-parameters.metadata");
 
 /**
  * Injects the validated request body, or one of its properties.

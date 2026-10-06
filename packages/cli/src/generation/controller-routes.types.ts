@@ -79,6 +79,7 @@ export type AnalyzedRouteParameterKind =
   | "body"
   | "cookie"
   | "context"
+  | "custom"
   | "headers"
   | "params"
   | "query"

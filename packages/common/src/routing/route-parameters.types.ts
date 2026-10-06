@@ -1,4 +1,5 @@
 import type { PipeType } from "../pipes/pipe.types.ts";
+import type { CustomParamFactory } from "./custom-parameter.types.ts";
 import type { routeParameterKinds } from "./route-parameters.ts";
 
 /** The request piece a handler parameter binds to. */
@@ -12,6 +13,10 @@ export interface RouteParameterMetadata {
   readonly kind: RouteParameterKind;
   /** The named property to read, or the whole piece when `undefined`. */
   readonly property: string | undefined;
+  /** Custom parameter factory callback when kind is "custom". */
+  readonly factory?: CustomParamFactory<unknown, unknown>;
+  /** Custom data passed to custom parameter factory. */
+  readonly data?: unknown;
   /** The pipes applied to this parameter, if any. */
   readonly pipes?: readonly PipeType[];
 }

@@ -8,6 +8,7 @@ import {
   resolveRouteValidator,
   type ArgumentMetadata,
   type ArgumentType,
+  type CustomParamFactory,
   type Interceptor,
   type ArgumentsHost,
   type CanActivate,
@@ -377,6 +378,10 @@ function hasRouteOrParameterPipes(route: CompiledElysiaRoute): boolean {
   );
 }
 
+function hasCustomParameters(route: CompiledElysiaRoute): boolean {
+  return route.parameters.some((parameter) => parameter.kind === "custom");
+}
+
 function isPipedParameterKind(kind: RouteParameterKind): boolean {
   return (
     kind === "body" ||
@@ -391,6 +396,8 @@ interface ParameterExecutionPlan {
   readonly index: number;
   readonly kind: RouteParameterKind;
   readonly property?: string;
+  readonly factory?: CustomParamFactory<unknown, unknown>;
+  readonly data?: unknown;
   readonly pipes: readonly ResolvedPipe[];
   readonly metadata: ArgumentMetadata;
 }
@@ -422,7 +429,13 @@ function extractParameterValue(
   context: RouteContext,
   kind: RouteParameterKind,
   property?: string,
+  factory?: CustomParamFactory<unknown, unknown>,
+  data?: unknown,
 ): unknown {
+  if (kind === "custom") {
+    return factory !== undefined ? factory(data, context) : undefined;
+  }
+
   const source = extractContextSourceValue(context, kind);
   if (property === undefined) {
     return source;
@@ -447,7 +460,10 @@ function createRouteHandler(
   instance: unknown,
   route: CompiledElysiaRoute,
 ): (context: RouteContext) => unknown {
-  if (hasRouteOrParameterPipes(route) && route.parameters.length > 0) {
+  if (
+    (hasRouteOrParameterPipes(route) || hasCustomParameters(route)) &&
+    route.parameters.length > 0
+  ) {
     const argumentCount = (route.parameters.at(-1)?.index ?? -1) + 1;
     const parameterPlans = Object.freeze(
       route.parameters.map((param): ParameterExecutionPlan => {
@@ -468,15 +484,23 @@ function createRouteHandler(
         const declaredType = route.declaredParameterTypes?.[param.index];
         const metatype =
           typeof declaredType === "function" ? (declaredType as ClassToken<unknown>) : undefined;
+        const dataString =
+          typeof param.data === "string"
+            ? param.data
+            : typeof param.property === "string"
+              ? param.property
+              : undefined;
         const metadata: ArgumentMetadata = Object.freeze({
           type: argType,
-          data: param.property,
+          data: dataString,
           metatype,
         });
         return Object.freeze({
           index: param.index,
           kind: param.kind,
           property: param.property,
+          factory: param.factory,
+          data: param.data,
           pipes: resolved,
           metadata,
         });
@@ -486,7 +510,13 @@ function createRouteHandler(
     return async (context: RouteContext) => {
       const arguments_ = Array.from({ length: argumentCount }, () => undefined as unknown);
       for (const plan of parameterPlans) {
-        const rawValue = extractParameterValue(context, plan.kind, plan.property);
+        const rawValue = extractParameterValue(
+          context,
+          plan.kind,
+          plan.property,
+          plan.factory,
+          plan.data,
+        );
         if (plan.pipes.length > 0) {
           arguments_[plan.index] = await executePipes(plan.pipes, rawValue, plan.metadata);
         } else {

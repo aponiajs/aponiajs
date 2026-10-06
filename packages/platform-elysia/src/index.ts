@@ -102,3 +102,6 @@ export type {
 } from "./request-context/request-context.types.ts";
 export { createMiddlewareConsumer } from "./middleware/middleware-consumer.ts";
 export type { ResolvedMiddlewareConfig } from "./middleware/middleware-consumer.types.ts";
+export { AuthGuard } from "./controllers/auth-guard.ts";
+export { RolesGuard } from "./controllers/roles-guard.ts";
+export type { AuthGuardOptions, AuthenticatedUser } from "./controllers/security.types.ts";
