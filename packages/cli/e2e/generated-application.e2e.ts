@@ -56,17 +56,18 @@ test("packed workspaces generate an application that installs, validates, builds
         "03-platform-elysia",
         bunTemporaryDirectory,
       ),
+      mcp: await packWorkspace("packages/mcp", archiveDirectory, "04-mcp", bunTemporaryDirectory),
       devtools: await packWorkspace(
         "packages/devtools",
         archiveDirectory,
-        "04-devtools",
+        "05-devtools",
         bunTemporaryDirectory,
       ),
-      cli: await packWorkspace("packages/cli", archiveDirectory, "05-cli", bunTemporaryDirectory),
+      cli: await packWorkspace("packages/cli", archiveDirectory, "06-cli", bunTemporaryDirectory),
       createAponia: await packWorkspace(
         "packages/create-aponia",
         archiveDirectory,
-        "06-create-aponia",
+        "07-create-aponia",
         bunTemporaryDirectory,
       ),
     } as const;
@@ -158,6 +159,7 @@ test("packed workspaces generate an application that installs, validates, builds
       workspaceManifest.version,
     );
     expect(generatedManifest.dependencies["@aponiajs/core"]).toBeUndefined();
+    expect(generatedManifest.dependencies["@aponiajs/mcp"]).toBeUndefined();
     // The starter's `src/main.ts` mounts the devtools through the factory's
     // `plugins` option, so the application depends on it at run time.
     expect(generatedManifest.dependencies["@aponiajs/devtools"]).toBe(workspaceManifest.version);
@@ -172,6 +174,7 @@ test("packed workspaces generate an application that installs, validates, builds
       ["@aponiajs/devtools", "dependencies", archives.devtools],
       ["@aponiajs/cli", "devDependencies", archives.cli],
     ] as const;
+    const localOverrides = [["@aponiajs/mcp", archives.mcp]] as const;
     let localManifest = await Bun.file(generatedManifestPath).text();
     for (const [packageName, section, archive] of localPackages) {
       for (const target of [section, "overrides"] as const) {
@@ -186,6 +189,18 @@ test("packed workspaces generate an application that installs, validates, builds
           }),
         );
       }
+    }
+    for (const [packageName, archive] of localOverrides) {
+      localManifest = applyEdits(
+        localManifest,
+        modify(localManifest, ["overrides", packageName], `file:${archive}`, {
+          formattingOptions: {
+            eol: "\n",
+            insertSpaces: true,
+            tabSize: 2,
+          },
+        }),
+      );
     }
     await Bun.write(generatedManifestPath, localManifest);
 
@@ -287,6 +302,16 @@ async function assertInstalledPackageGraph(
   await assertPackageDependency(
     join(projectDirectory, "node_modules/@aponiajs/platform-elysia/package.json"),
     "@aponiajs/core",
+    version,
+  );
+  await assertPackageDependency(
+    join(projectDirectory, "node_modules/@aponiajs/devtools/package.json"),
+    "@aponiajs/mcp",
+    version,
+  );
+  await assertPackageDependency(
+    join(projectDirectory, "node_modules/@aponiajs/mcp/package.json"),
+    "@aponiajs/common",
     version,
   );
 }
