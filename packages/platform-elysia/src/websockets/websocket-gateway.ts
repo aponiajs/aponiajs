@@ -773,7 +773,7 @@ async function emitHandlerValue(
   subscribedEvent: string,
   value: unknown,
 ): Promise<void> {
-  const resolved = await value;
+  const resolved = typeof (value as Promise<unknown>)?.then === "function" ? await value : value;
   if (resolved === undefined) {
     return;
   }
@@ -793,16 +793,16 @@ function parseIncomingMessage(message: unknown): IncomingWebSocketMessage | unde
       return undefined;
     }
   }
-  if (!isObject(candidate)) {
+  if (typeof candidate !== "object" || candidate === null) {
     return undefined;
   }
 
   try {
-    const event = Reflect.get(candidate, "event") as unknown;
+    const event = (candidate as Record<string, unknown>).event;
     if (typeof event !== "string" || event.trim().length === 0) {
       return undefined;
     }
-    return { event, data: Reflect.get(candidate, "data") as unknown };
+    return { event, data: (candidate as Record<string, unknown>).data };
   } catch {
     return undefined;
   }
