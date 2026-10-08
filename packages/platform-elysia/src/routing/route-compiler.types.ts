@@ -39,6 +39,15 @@ export type ControllerHandlerFactory = (
 ) => ReadonlyMap<string | symbol, RouteHandler>;
 
 /**
+ * Direct property binding descriptor for monomorphic invokers.
+ */
+export interface ParameterBinding {
+  readonly index: number;
+  readonly source: string;
+  readonly key?: string;
+}
+
+/**
  * What a route-local `error` hook is given: the request's own context with the
  * thrown value on it.
  *

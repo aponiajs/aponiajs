@@ -37,7 +37,10 @@ import type {
   ElysiaErrorHook,
   ElysiaRouteAfterHandleContext,
   ElysiaRouteHook,
+  ParameterBinding,
 } from "./route-compiler.types.ts";
+
+export type { ParameterBinding } from "./route-compiler.types.ts";
 
 /**
  * Lowers every decorated route into a stable plan shared by child-plugin and
@@ -709,6 +712,75 @@ function compileRouteHandler(argumentsSource: string, possiblyAsync: boolean): R
   ) as RouteHandlerFactory;
   routeHandlerFactories.set(cacheKey, factory);
   return factory;
+}
+
+/**
+ * Compiles a direct monomorphic invoker for controller methods.
+ * Strips context arguments on zero-parameter endpoints and provides direct
+ * property accessors without generic spreading for single- and multi-param handlers.
+ *
+ * @internal
+ */
+export function compileDirectMonomorphicInvoker(
+  instance: any,
+  handlerName: string,
+  paramBindings: readonly ParameterBinding[],
+  isSync: boolean,
+): Function {
+  // 1. Zero-argument context stripping (Pure Raw Elysia speed)
+  if (paramBindings.length === 0) {
+    return isSync
+      ? function zeroArgSyncInvoker() {
+          return instance[handlerName]();
+        }
+      : async function zeroArgAsyncInvoker() {
+          return await instance[handlerName]();
+        };
+  }
+
+  // 2. Direct property bindings (1 param)
+  if (paramBindings.length === 1) {
+    const b0 = paramBindings[0]!;
+    const src = b0.source;
+    const key = b0.key;
+
+    if (key) {
+      return isSync
+        ? function singlePropSyncInvoker(c: any) {
+            return instance[handlerName](c[src]?.[key]);
+          }
+        : async function singlePropAsyncInvoker(c: any) {
+            return await instance[handlerName](c[src]?.[key]);
+          };
+    }
+
+    return isSync
+      ? function singleSourceSyncInvoker(c: any) {
+          return instance[handlerName](c[src]);
+        }
+      : async function singleSourceAsyncInvoker(c: any) {
+          return await instance[handlerName](c[src]);
+        };
+  }
+
+  // 3. Multi-property bindings
+  return isSync
+    ? function multiParamSyncInvoker(c: any) {
+        const args = Array.from<unknown>({ length: paramBindings.length });
+        for (let i = 0; i < paramBindings.length; i++) {
+          const b = paramBindings[i]!;
+          args[i] = b.key ? c[b.source]?.[b.key] : c[b.source];
+        }
+        return instance[handlerName](...args);
+      }
+    : async function multiParamAsyncInvoker(c: any) {
+        const args = Array.from<unknown>({ length: paramBindings.length });
+        for (let i = 0; i < paramBindings.length; i++) {
+          const b = paramBindings[i]!;
+          args[i] = b.key ? c[b.source]?.[b.key] : c[b.source];
+        }
+        return await instance[handlerName](...args);
+      };
 }
 
 /**
