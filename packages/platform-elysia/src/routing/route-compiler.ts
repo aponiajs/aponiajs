@@ -30,6 +30,7 @@ import { httpErrors } from "../errors/http-error.ts";
 import { compileUnrolledGuards } from "../enhancers/enhancer-pipeline.ts";
 import { StaticRouteExecutionContext } from "../enhancers/static-execution-context.ts";
 import { executePipes, resolvePipe, type ResolvedPipe } from "../pipes/pipe-resolver.ts";
+import { isMethodSynchronous } from "./ast-sync-analyzer.ts";
 import { registerNativeRoute } from "./native-route.ts";
 import type {
   RouteHandler,
@@ -98,7 +99,7 @@ export function compileElysiaRoutes(
       schema: route.schema,
       declaredParameterCount,
       declaredParameterTypes: parameterTypes,
-      declaredReturnKind: classifyDeclaredReturnKind(returnType),
+      declaredReturnKind: classifyDeclaredReturnKind(returnType, parameterTypes, prototypeHandler),
       pipes: routePipes,
       enhancers: mergeEnhancerMetadata(
         controllerEnhancers,
@@ -137,6 +138,8 @@ function mergeEnhancerMetadata(
 
 function classifyDeclaredReturnKind(
   returnType: unknown,
+  parameterTypes?: readonly unknown[],
+  prototypeHandler?: unknown,
 ): CompiledElysiaRoute["declaredReturnKind"] {
   if (returnType === Promise) {
     return "promise";
@@ -144,7 +147,22 @@ function classifyDeclaredReturnKind(
 
   // TypeScript emits Object for unknown, object, interfaces, and unions. None
   // of those categories can prove a synchronous return.
-  return returnType === undefined || returnType === Object ? "unknown" : "synchronous";
+  if (returnType === Object) {
+    return "unknown";
+  }
+
+  if (returnType === undefined) {
+    if (
+      parameterTypes !== undefined &&
+      typeof prototypeHandler === "function" &&
+      isMethodSynchronous(prototypeHandler)
+    ) {
+      return "synchronous";
+    }
+    return "unknown";
+  }
+
+  return "synchronous";
 }
 
 /**
@@ -700,7 +718,7 @@ function compileRouteHandler(argumentsSource: string, possiblyAsync: boolean): R
   const parameter = argumentsSource ? "context" : "()";
   const routeHandlerSource = possiblyAsync
     ? `async ${parameter}=>${invocation}`
-    : `${parameter}=>{const result=${invocation};return result}`;
+    : `${parameter}=>${invocation}`;
 
   // Elysia's AOT compiler also generates functions. Property names in this
   // source are JSON-encoded, while handler and instance remain closed values.
