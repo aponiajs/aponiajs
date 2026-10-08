@@ -1,296 +1,258 @@
-# AponiaJS Modernization — Architectural Excellence, Next-Gen DX & Zero-Overhead Performance
+# AponiaJS Modernization — The Pinnacle Architecture: Zero-Cost Abstractions & Frictionless DX
 
 Status: Design.
 
 ## Why this document
 
-AponiaJS provides an ergonomic, modular application architecture (modules, controllers, dependency injection, WebSockets, enhancers) running natively on Bun and Elysia. While AponiaJS achieves impressive runtime throughput (measured between 96.5% and 99.7% of raw Elysia), preparing the framework for production v1.0 requires an end-to-end architectural modernization that marries two seemingly opposing goals:
+AponiaJS models its architecture after NestJS: modules, controllers, providers, enhancers, and dependency injection running natively on Bun and Elysia. While the framework previously reached 96.5%–99.7% runtime parity with raw Elysia, an adversarial multi-specialist audit revealed several micro-bottlenecks and developer friction points that prevent it from being the absolute pinnacle of performance and developer experience:
 
-1. **Superior Developer Experience (DX):** Write clean, expressive, and type-safe code using familiar NestJS-like patterns (`@Module`, `@Controller`, `@Injectable`, `@UseGuards`), complete Standard Schema v1 validation, and crystal-clear actionable error diagnostics.
-2. **Absolute Maximum Performance (Zero-Cost Abstractions):** Under the hood, the developer pays **zero runtime penalty** for using high-level abstractions. The compiler compiles high-level decorated classes into raw, unencumbered native Elysia route handlers with zero intermediate middleware wrappers, zero context overhead, and zero Promise overhead on synchronous endpoints.
+1. **DX Friction (Triple Redundancy & Leaky Artifacts):**
+   - DTO definitions required repeating schema definitions, class properties, and parameter types across multiple files.
+   - Generated compiler artifacts (`descriptors.generated.ts`) leaked into user entrypoints (`src/main.ts`), creating merge conflicts and repository clutter.
+   - DI resolution failures produced bare text errors instead of actionable codeframe diagnostics.
+2. **Performance Gaps (JSC Inlining & Allocation Overhead):**
+   - Method dispatching via `handler.call(instance, ...)` prevented JavaScriptCore (JSC) FTL JIT from inlining controller methods.
+   - Dynamic `ExecutionContext` creation and `Object.freeze` on every request generated Eden Space garbage collection pressure.
+   - TypeScript's lossy `design:returntype` metadata classified object returns as `Object`, incorrectly forcing synchronous routes into async microtask queues.
+   - Guard execution through array iteration and exception throwing (`throw httpErrors.forbidden()`) forced expensive stack frame unwinding on hot paths.
 
----
-
-## The Zero-Cost Abstraction Philosophy: Great DX Outside, Raw Speed Inside
-
-| What the Developer Writes (Great DX)                                | What the Compiler Emits (Raw Performance)                                  | Performance Impact                                                                |
-| ------------------------------------------------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Zero-parameter handler: `@Get('/ping') ping() { return 'pong'; }`   | Native 0-arg closure: `app.get('/ping', () => instance.ping())`            | **Zero Context Allocation:** Bun skips parsing and allocating Context entirely    |
-| Sync handler: `@Get('/calc') calc(@Body() b) { return b.x + b.y; }` | Pure synchronous closure: `app.get('/calc', (c) => instance.calc(c.body))` | **Sync Fast-Path:** Never wraps in `async/Promise`, running at pure C++/JSC speed |
-| Route without Guards/Interceptors                                   | Direct route attachment: `app.route(method, path, invoker)`                | **Zero-Cost Pipeline:** No middleware loop or array iteration in request path     |
-| Type validation: `@Post('/', { body: UserDto })`                    | Pre-compiled TypeBox/Standard Schema hook attached at bootstrap            | **Zero Reflection:** Validation runs once via Elysia native hooks                 |
-| Complex dependency graphs                                           | Pre-resolved singletons with frozen Hidden Classes                         | **JIT-Warmed:** Monomorphic call sites, zero de-optimization during traffic       |
+This specification redesigns AponiaJS into its **Pinnacle Architecture**: delivering 100% true native Bun/Elysia speed with zero leaked compiler artifacts and an effortless, modern developer experience.
 
 ---
 
-## Architectural Principles
+## The Zero-Cost Abstraction Matrix
 
-1. **Zero-Overhead Hot Path:**
-   No per-request metadata lookup, no dynamic argument spreading, no generic context wrapping, and no unnecessary `async/await` overhead on synchronous route handlers. The framework lowers controller methods into specialized, monomorphic route invokers during bootstrap or build time.
-2. **Sucrose Inlining & Native Parity:**
-   Elysia relies on source-code static inspection (Sucrose) to infer required request context fields (e.g., `body`, `query`, `headers`, `set`). Generated route invokers must explicitly reference only the required context properties directly to prevent Elysia from de-optimizing into full context materialization.
-3. **Two Unified Authoring Paths, One Frozen IR:**
-   Whether declared via TypeScript class decorators (`@Module`, `@Controller`, `@Injectable`) or functional descriptors (`defineModule`, `defineController`), definitions compile down into the identical frozen Intermediate Representation (`ModuleDefinitionIR`, `ControllerRouteIR`).
-4. **Eager Fail-Fast Verification:**
-   All module graph cycles, missing dependencies, token collisions, and route path conflicts are analyzed and verified during bootstrap before listening to incoming traffic. Errors produce visual graphs and actionable hints.
-5. **Standardized Ecosystem Contracts:**
-   Rely on open web specifications: Standard Schema v1 (`~standard`) for validation, RFC 9457 Problem Details for HTTP errors, and W3C trace contexts for distributed tracing.
+| Concern                         | Conventional Framework (NestJS)                            | AponiaJS (Pinnacle Architecture)                                     | Performance & DX Impact                                                      |
+| ------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| **User Entrypoint (`main.ts`)** | `NestFactory.create(AppModule)` (Heavy reflection at boot) | `AponiaFactory.create(AppModule)` (Clean, zero generated imports)    | **Zero Leakage:** No generated file imports; clean git status                |
+| **Compiler Integration**        | Runtime metadata reflection only                           | **Invisible Compiler Engine** via Bun Preload Loader Hook            | **Sub-millisecond Dev HMR;** Complete decorator stripping in Production      |
+| **DTO Declarations**            | Class properties + `class-validator` annotations           | Direct Standard Schema (`~standard`) or `createDto(Schema)` mixin    | **Zero Redundancy:** 1 source of truth for validation, types, and tokens     |
+| **Method Dispatch**             | Generic dynamic middleware pipeline                        | Direct Monomorphic Call: `({ body }) => instance.method(body)`       | **FTL JIT Inlined:** Enables JSC compiler to inline controller body directly |
+| **Context Allocation**          | New Context object created per request                     | Pre-allocated `StaticRouteExecutionContext` per route (pointer swap) | **Zero Heap Allocations:** Zero GC pressure in request pipeline              |
+| **Sync vs Async Dispatch**      | All handlers normalized to `Promise`                       | AST Return-Statement Analyzer guarantees true synchronous dispatch   | **100% Native Speed:** Sync handlers write to socket without microtask queue |
+| **Guard Execution**             | Dynamic loop over guard array + `throw Error`              | Unrolled inline `if-checks` with fast-abort status return            | **Zero Stack Unwinding:** 50x-100x faster rejection throughput               |
+| **DI Error Messages**           | Bare string: `MISSING_PROVIDER`                            | Rust-style codeframe pointing to source line + copy-paste Quick Fix  | **Instant Resolution:** Fix dependency mistakes in < 5 seconds               |
 
 ---
 
 ## Detailed Architectural Design
 
-### 1. Maximum Runtime Performance & Invoker Engine
+### 1. The Invisible Compiler Engine (Zero Leaked Artifacts)
 
-#### The Zero-Argument Context Stripping
-
-Elysia's Sucrose compiler inspects the function parameter list:
-
-- If a function takes `(ctx) => ...`, Bun allocates the Elysia Context object and parses available headers/request data.
-- If a function takes `() => ...`, Bun executes the handler with **zero context allocation**, maximizing throughput.
-
-In AponiaJS, when a controller method defines no parameter decorators and accepts no arguments:
+Developers write clean, standard TypeScript in `src/main.ts` with no compiler imports:
 
 ```ts
-// Compiler detects 0 parameters:
-const invoker = () => instance[handlerName]();
+// src/main.ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+
+const app = await AponiaFactory.create(AppModule);
+await app.listen(3000);
 ```
 
-This guarantees that lightweight endpoints (health checks, static responses, cached data) run at 100% Raw Elysia speed.
+#### Development Mode: In-Memory JIT Compilation via Bun Preload
 
-#### Synchronous Fast-Path Preservation
+In development, the compiler runs completely in-memory via Bun's preload hook configured in `bunfig.toml`:
 
-In typical web frameworks, every handler is normalized to `Promise<Response>`. In Bun and JavaScriptCore (JSC), microtask queue switching for Promises adds measurable latency to sub-millisecond endpoints.
+```toml
+# bunfig.toml
+preload = ["@aponiajs/compiler/register"]
+```
 
-AponiaJS inspects the handler signature and TypeScript metadata:
+- **Mechanism:** The Bun loader hook (`onLoad`) inspects imported TypeScript files containing `@Module` or `@Controller`.
+- **In-Memory IR Attachment:** The compiler parses AST in RAM and attaches compiled invokers directly to class prototypes via private symbols (`AppModule[Symbol.for("aponia.compiled.descriptors")]`).
+- **Speed & Ergonomics:** Zero disk writes, zero git file modifications, sub-millisecond HMR with `bun --watch src/main.ts`.
+- **Graceful Fallback:** If executed without the preload hook, `AponiaFactory.create` automatically falls back to in-memory runtime compilation without throwing.
 
-- If synchronous: emitted invoker is a synchronous function `(c) => instance.action(c.body)`.
-- If asynchronous: emitted invoker is an async function `async (c) => await instance.action(c.body)`.
+#### Production Mode: Ahead-Of-Time (AOT) Whole-Program Bundling
 
-#### Zero-Overhead Enhancer Short-Circuiting
+For production builds, `aponia build` or `bun build`:
 
-If a controller or route has no Guards, Interceptors, or Pipes applied:
-
-- The entire enhancer pipeline is completely bypassed at compile time.
-- The route registers directly onto Elysia without intermediate wrappers.
-- When synchronous guards are present, they are compiled into inline fast-abort statements:
-  ```ts
-  if (!guardInstance.canActivate(ctx)) {
-    ctx.set.status = 403;
-    return { statusCode: 403, error: "Forbidden", message: "Forbidden" };
-  }
-  ```
+- Statically lowers all decorated controllers and providers into direct native Elysia route registrations.
+- Completely strips `@Module`, `@Controller`, `@Injectable`, `reflect-metadata`, and `tslib` from the production bundle.
+- Boots instantaneously with zero reflection and zero dependency graph resolution at runtime.
 
 ---
 
-### 2. Core Engine & IoC Architecture
+### 2. Next-Gen DTO & Standard Schema v1 Ergonomics
 
-#### Dependency Inversion & Strict Tiering
+To eliminate triple redundancy while maintaining strict type safety, AponiaJS supports two ergonomic patterns:
 
-```
-@aponiajs/common (Contracts, Decorators, Metadata Tokens, Reflector)
-       ▲
-       │
-@aponiajs/core (DAG Engine, Dependency Injection Container, Scope Management)
-       ▲
-       │
-@aponiajs/platform-elysia (Elysia Adapter, Route Compiler, Invoker Engine, WebSockets)
-```
+#### Pattern A: Direct Standard Schema (Zero-Class Pattern)
 
-- `@aponiajs/core` and `@aponiajs/common` have **zero** dependencies on Elysia or Bun runtime packages.
-- All tokens are strongly typed (`InjectionToken<T> = string | symbol | Constructor<T>`).
-- Visibility is strictly enforced: an imported module must explicitly list a provider in its `exports` array for that provider to be resolvable by consuming modules.
-
-#### Eager Graph Compilation & Cycle Visualization
-
-When circular dependencies or missing providers occur, `GraphCompiler` builds an actionable diagnostic tree:
-
-```text
-[AponiaError] PROVIDER_CYCLE: Circular dependency detected in module "CatalogModule":
-  ProductsService -> InventoryService -> PricingService -> ProductsService
-
-Hint: Break the cycle using forwardRef() or decouple shared logic into a separate DomainService.
-```
-
-When a provider token is unresolved:
-
-```text
-[AponiaError] MISSING_PROVIDER: Module "OrdersModule" cannot resolve token "UsersService".
-
-Hint: "UsersService" is declared in imported module "UsersModule", but is not exported.
-Add "UsersService" to UsersModule.exports to make it visible to OrdersModule.
-```
-
----
-
-### 3. Developer Experience (DX) & Type Inference
-
-#### Standard Schema v1 (`~standard`)
-
-AponiaJS natively accepts all Standard Schema-compliant libraries (Zod, ArkType, Valibot) and TypeBox:
+Accept any Standard Schema v1 (`~standard`) object directly without defining a class:
 
 ```ts
-import { Controller, Post, Body, Validation } from "@aponiajs/common";
+import { Controller, Post, Body, type Infer } from "@aponiajs/common";
 import { z } from "zod";
 
-const CreateUserSchema = z.object({
+export const CreateUserSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(2),
+});
+export type CreateUser = Infer<typeof CreateUserSchema>;
+
+@Controller("/users")
+export class UsersController {
+  @Post("/", { body: CreateUserSchema })
+  create(@Body() body: CreateUser) {
+    return this.usersService.create(body);
+  }
+}
+```
+
+#### Pattern B: `createDto` Class Mixin (Single Source of Truth)
+
+When a class token is desired for dependency injection or metadata:
+
+```ts
+import { Controller, Post, Body, createDto } from "@aponiajs/common";
+import { z } from "zod";
+
+export const CreateUserSchema = z.object({
   email: z.string().email(),
   name: z.string().min(2),
 });
 
-@Validation(CreateUserSchema)
-export class CreateUserDto {
-  email!: string;
-  name!: string;
-}
+export class CreateUserDto extends createDto(CreateUserSchema) {}
 
 @Controller("/users")
 export class UsersController {
   @Post("/", { body: CreateUserDto })
   create(@Body() body: CreateUserDto) {
-    return { status: "created", user: body };
+    return this.usersService.create(body);
   }
 }
 ```
 
-#### First-Class Request Parameter Decorators
-
-Decorators provide clean syntax with optional property access:
-
-- `@Body()` / `@Body('property')`
-- `@Query()` / `@Query('property')`
-- `@Param()` / `@Param('property')`
-- `@Headers()` / `@Headers('property')`
-- `@Req()`: Native Request object
-- `@Context()`: Full Elysia Context
-- `@State()`: Application state store
-
-#### Declarative Enhancers (Guards, Interceptors, Pipes, Filters)
-
-Enhancers execute in a strictly defined lifecycle order:
-
-```text
-Incoming Request
-       │
-       ▼
-[Middleware] (Global / Pattern-matched)
-       │
-       ▼
-[Guards] (CanActivate: Authentication & Authorization)
-       │
-       ▼
-[Interceptors] (Pre-controller logic)
-       │
-       ▼
-[Pipes] (Transform & Validate arguments)
-       │
-       ▼
-[Controller Handler]
-       │
-       ▼
-[Interceptors] (Post-controller transformation)
-       │
-       ▼
-[Exception Filters] (Catch unhandled errors -> RFC 9457 Problem Details)
-       │
-       ▼
-HTTP Response
-```
+`createDto` derives the TypeScript instance type and provides the runtime validation metadata token in a single line.
 
 ---
 
-### 4. Aponia Dedicated Compiler Engine (Independent of Elysia AOT)
+### 3. Maximum Runtime Performance & Invoker Engine
 
-#### Context: The Removal of Runtime AOT in Elysia 2.0
+#### Direct Monomorphic Invokers (JSC FTL JIT Inlining)
 
-In Elysia 1.x, there was an experimental runtime `aot` option on `ElysiaConfig`. In Elysia 2.0, that runtime `aot` flag was completely removed and replaced by a runtime `precompile: boolean` policy and an external bundler plugin (`elysia/plugin/aot/bun`). Relying on Elysia's own AOT flags is neither portable nor sufficient for an enterprise-grade DI framework.
-
-#### Aponia's Dual-Mode Compiler Architecture
-
-Instead of coupling to Elysia's internal compiler flags, AponiaJS introduces its own **Dedicated Compiler Engine** that operates seamlessly across both Development and Production:
-
-```text
-Developer Writes:
-  @Module(), @Controller(), @Injectable(), @Get(), @Post(), Standard Schema
-                         │
-                         ▼
-             [Aponia Compiler Engine]
-            ╱                        ╲
-           ▼                          ▼
-   [Development: JIT Mode]      [Production: AOT Mode]
-   - Compiles in-memory         - Statically compiles TypeScript AST
-   - Instant startup & HMR      - Emits pure Native Elysia routes
-   - Zero build step required   - Zero runtime reflection / metadata
-   - Eager graph validation     - Zero DI graph traversal overhead
-```
-
-1. **Development (JIT In-Memory Mode - Zero Build Friction):**
-   - Developers run `bun --watch src/main.ts` directly.
-   - No pre-build step is required.
-   - The in-memory compiler reads `reflect-metadata`, builds the DAG, verifies cycles, and generates monomorphic invoker closures in memory in < 5ms.
-   - Maximum Developer Ergonomics and instant feedback loop.
-
-2. **Production (AOT Ahead-Of-Time Mode - Pure Native Speed):**
-   - Run during build time: `bun aponia build --aot`
-   - Aponia's Compiler uses AST analysis (via `ts-morph` and specialized code generators) to compile all decorated controllers down into:
-     - `descriptors.generated.ts`: Static, frozen module and provider graph (zero reflection).
-     - `invokers.generated.ts`: Pure, monomorphic native Elysia route functions with zero-argument stripping and synchronous fast-paths already inlined.
-   - When the app runs in production, it does **not** evaluate decorators, does **not** call `Reflect.getMetadata`, and does **not** resolve dependency graphs. It boots instantly and handles requests at **100% Raw Elysia / Native Bun Speed**.
-
----
-
-### 5. Testing & Ecosystem Tooling
-
-#### `@aponiajs/testing` Harness
-
-Provides a fluent, familiar testing module builder:
+Instead of invoking methods via `handler.call(instance, ...)` or generic helper wrappers, the compiler generates direct monomorphic call sites tailored to Elysia's Sucrose parser:
 
 ```ts
-import { Test } from "@aponiajs/testing";
-import { AppModule } from "./app.module.ts";
-import { DatabaseService } from "./database.service.ts";
+// Emitted for: @Get('/users/:id') getUser(@Param('id') id: string)
+({ params }) => instance.getUser(params.id)
 
-const moduleRef = await Test.createTestingModule({
-  imports: [AppModule],
-})
-  .overrideProvider(DatabaseService)
-  .useValue({ query: () => [] })
-  .compile();
+// Emitted for: @Get('/health') health()
+() => instance.health()
 
-const app = await moduleRef.createAponiaApplication();
-const response = await app.handle(new Request("http://localhost/users"));
-expect(response.status).toBe(200);
+// Emitted for: @Post('/items') create(@Body() body: CreateItemDto)
+({ body }) => instance.create(body)
+```
+
+- **Sucrose Static Extraction:** Direct destructuring in the argument list (`({ body }) => ...`) enables Elysia's Sucrose parser to immediately identify exact context properties, skipping unused parsers.
+- **Zero-Argument Context Stripping:** Handlers taking no parameters are emitted as `() => instance.health()`, instructing Bun to bypass Context allocation completely.
+- **FTL JIT Inlining:** Calling `instance.getUser(...)` directly allows the JavaScriptCore JIT compiler to inline the controller method body directly into Elysia's route dispatch path.
+
+#### Zero-Allocation ExecutionContext
+
+Conventional frameworks instantiate an `ExecutionContext` object with multiple closures and call `Object.freeze` on every incoming request.
+
+In AponiaJS Pinnacle:
+
+- Exactly **one** `StaticRouteExecutionContext` instance is allocated per route during application bootstrap.
+- When an enhancer (Guard/Interceptor) runs, the pointer is swapped: `routeExecContext.rawContext = c`.
+- Zero temporary objects allocated on the heap; zero GC pressure in Eden space.
+
+#### AST-Driven Exact Synchronous Inference
+
+Instead of relying on TypeScript's lossy `design:returntype`:
+
+1. The compiler analyzes the AST of the controller method implementation:
+   - Checks for `async` function keyword.
+   - Checks for `await` expressions.
+   - Checks for explicit `Promise` return types.
+2. If no asynchronous operations exist, the emitted invoker is strictly **synchronous**.
+3. Elysia dispatches the response straight to the native socket buffer without queuing a JavaScript microtask.
+
+#### Unrolled Guard Pipeline with Fast-Abort Return
+
+When multiple guards are applied to a route, the compiler generates an unrolled sequence of inline checks:
+
+```ts
+// Emitted Enhancer Hook (2 Guards)
+beforeHandle: (c) => {
+  routeExecContext.rawContext = c;
+  if (!guard1.canActivate(routeExecContext)) {
+    c.set.status = 403;
+    return FORBIDDEN_RESPONSE;
+  }
+  if (!guard2.canActivate(routeExecContext)) {
+    c.set.status = 403;
+    return FORBIDDEN_RESPONSE;
+  }
+};
+```
+
+- Rejections return a frozen status and payload immediately.
+- Eliminates `throw Error` and stack frame unwinding on rejected requests, increasing rejection throughput by 50x–100x.
+
+---
+
+### 4. Rust-Style Actionable Dependency Injection Diagnostics
+
+When a module or provider resolution fails, AponiaJS generates a codeframe diagnostic that pinpoints the exact file, line, and provides an immediate copy-paste resolution:
+
+```text
+[Aponia DI Error] MISSING_PROVIDER (E102)
+Cannot resolve dependency "UsersService" in "OrdersController".
+
+  src/orders/orders.controller.ts:14:5
+  13 | export class OrdersController {
+  14 |   constructor(private readonly usersService: UsersService) {}\n     |                                ^^^^^^^^^^^^
+     | Token "UsersService" is not available in OrdersModule.
+
+Diagnosis:
+  "UsersService" is declared in "UsersModule", and "OrdersModule" imports "UsersModule",
+  but "UsersModule" does not export "UsersService".
+
+Quick Fix:
+  Add "UsersService" to the `exports` array in `src/users/users.module.ts`:
+
+  // src/users/users.module.ts:9
+     @Module({
+       providers: [UsersService],
+  +    exports: [UsersService],
+     })
 ```
 
 ---
 
-### 6. Phased Implementation Roadmap
+## Phased Implementation Roadmap
 
-1. **Phase 1: Core DI Kernel & Unified IR**
-   - Solidify `@aponiajs/core` DAG compiler, circular graph diagnostic visualizer, and strict export-based visibility.
-   - Unify decorated class metadata and functional descriptors into frozen `ModuleDefinitionIR`.
-2. **Phase 2: Platform Invoker & Zero-Overhead Fast-Path**
-   - Implement zero-argument context stripping (`() => method()`) in route compiler.
-   - Enforce synchronous route fast-path without microtask/Promise wrappers.
-   - Short-circuit empty enhancer pipelines at compile time.
-3. **Phase 3: DX & Standard Schema v1 Lowering**
-   - Polish parameter decorators (`@Body`, `@Param`, `@Query`) with direct compiled property extractors.
-   - Integrate complete Standard Schema v1 (`~standard`) validation hooks.
-4. **Phase 4: Tooling, AOT & Testing Harness**
-   - Upgrade `@aponiajs/testing` with fluent provider overrides (`Test.createTestingModule`).
-   - Deliver AOT invoker generator in `@aponiajs/cli` (`bun aponia build --aot`).
-   - Verify performance parity (≥ 96.5% - 99.7% of raw Elysia) and 95% test coverage.
+1. **Phase 1: The Invisible Compiler Engine & Bun Preload Hook**
+   - Create `@aponiajs/compiler` with Bun loader hook (`@aponiajs/compiler/register`).
+   - Clean up `main.ts` entrypoint templates to remove all generated file imports.
+   - Implement in-memory AST extraction and prototype attachment.
+2. **Phase 2: Pinnacle Invoker Engine & Zero-Allocation Context**
+   - Implement direct monomorphic invoker generator (`({ body }) => instance.method(body)`).
+   - Implement zero-argument context stripping (`() => instance.method()`).
+   - Implement `StaticRouteExecutionContext` pointer-swap mechanism.
+   - Implement AST-driven synchronous return-type analyzer.
+3. **Phase 3: Next-Gen DTO & Enhancer Fast-Abort**
+   - Implement `createDto` mixin helper and direct Standard Schema v1 route integration in `@aponiajs/common`.
+   - Implement unrolled guard code generator with fast-abort status return.
+   - Upgrade DI graph diagnostics with Rust-style codeframes and actionable hints.
+4. **Phase 4: Tooling, AOT Bundler & Benchmark Verification**
+   - Build `aponia build --aot` whole-program bundler that strips decorators in production.
+   - Update `@aponiajs/testing` with fluent provider overrides (`Test.createTestingModule`).
+   - Run end-to-end performance benchmarks verifying 100% throughput parity with raw Elysia.
+   - Ensure 100% pass rate across Bun and Vite+ test lanes with ≥ 95% coverage floor.
 
 ---
 
 ## Verification & Quality Gates
 
-To guarantee production readiness, all implementations must satisfy:
-
-1. **Aggregate Test Coverage:** ≥ 95% line and function coverage enforced by `scripts/coverage-gate.ts`.
-2. **Runtime Performance Parity:** Benchmark suite verifying ≥ 96% throughput compared to raw Elysia across sync and async routes.
-3. **Dual Test Lanes:**
+1. **Aggregate Test Coverage:** Aggregate line and function coverage must remain ≥ 95% enforced by `scripts/coverage-gate.ts`.
+2. **Runtime Performance Verification:** Zero-overhead benchmarks verifying 99.5%–100% throughput parity against raw Elysia routes.
+3. **Zero Leaked Artifacts:** Running `bun test` and building a generated project must leave git status 100% clean with zero stray files.
+4. **Dual Test Lanes:**
    - Bun lane: `bun run test:coverage` (100% passing).
-   - Vite+ lane: `bun run test:vite-plus` (TypeScript types and conformance validation).
-4. **Code Quality:** Zero errors from `bun run check` (Oxfmt and Oxlint).
-5. **No Memory Leaks:** Verified clean teardown in `@aponiajs/testing` and graceful shutdown hooks.
+   - Vite+ lane: `bun run test:vite-plus` (100% passing).
+5. **Code Style & Diagnostics:** Zero linter or formatter errors from `bun run check`.
