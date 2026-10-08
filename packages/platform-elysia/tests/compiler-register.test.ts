@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import type { OnLoadArgs, PluginBuilder } from "bun";
+import type { OnLoadArgs } from "bun";
 import { Controller, Get, Module } from "@aponiajs/common";
 import { AponiaFactory } from "../src/application/aponia-factory.ts";
 import {
@@ -68,16 +68,15 @@ describe("In-Memory Compiler", () => {
 
     const fakeBuilder = {
       onLoad(
-        options: { readonly filter: RegExp },
-        callback: (args: OnLoadArgs) => unknown,
-      ): PluginBuilder {
+        options: { filter: RegExp },
+        callback: (args: { path: string }) => Promise<{ contents: string; loader: string }>,
+      ): void {
         registeredFilter = options.filter;
-        registeredCallback = callback;
-        return fakeBuilder as unknown as PluginBuilder;
+        registeredCallback = callback as (args: OnLoadArgs) => unknown;
       },
-    } as unknown as PluginBuilder;
+    };
 
-    await aponiaCompilerPlugin.setup(fakeBuilder);
+    aponiaCompilerPlugin.setup(fakeBuilder);
     expect(registeredFilter).toBeDefined();
     expect(registeredFilter?.test("app.module.ts")).toBe(true);
     expect(registeredFilter?.test("users.controller.ts")).toBe(true);
