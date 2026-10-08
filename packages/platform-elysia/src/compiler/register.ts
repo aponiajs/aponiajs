@@ -4,8 +4,16 @@ import { COMPILED_DESCRIPTOR_SYMBOL } from "./in-memory-compiler.ts";
 
 export const aponiaCompilerPlugin: BunPlugin = {
   name: "aponia-in-memory-compiler",
-  setup(_build): void {
-    // Hooks into module resolution to pre-populate metadata caches in RAM
+  setup(build): void {
+    if (typeof build?.onLoad === "function") {
+      build.onLoad({ filter: /\.(module|controller)\.ts$/ }, async (args) => {
+        const contents = await Bun.file(args.path).text();
+        return {
+          contents,
+          loader: "ts",
+        };
+      });
+    }
   },
 };
 

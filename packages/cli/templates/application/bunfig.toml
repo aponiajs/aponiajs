@@ -1,1 +1,1 @@
-preload = ["@aponiajs/compiler/register"]
+preload = ["@aponiajs/platform-elysia/register"]

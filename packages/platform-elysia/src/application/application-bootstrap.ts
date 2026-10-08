@@ -34,7 +34,8 @@ import {
 } from "../errors/default-exception-filter.ts";
 import { createMiddlewareConsumer } from "../middleware/middleware-consumer.ts";
 import { mountMiddleware } from "../middleware/middleware-pipeline.ts";
-import { compileRootModule, isModuleDefinition } from "../modules/module-compiler.ts";
+import { compileModuleInMemory } from "../compiler/in-memory-compiler.ts";
+import { isModuleDefinition } from "../modules/module-compiler.ts";
 import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
 import { selectRootModuleDescriptor } from "../modules/module-descriptor-artifact.ts";
 import { getElysiaPlugin, isPluginModule } from "../plugins/plugin-module.ts";
@@ -102,7 +103,7 @@ export async function bootstrapAponiaApplication(
     aponiaVersion,
     logger,
   );
-  const compiledRootModule = compileRootModule(rootSelection.rootModule);
+  const compiledRootModule = compileModuleInMemory(rootSelection.rootModule);
   // Which graph served the application is decided by the shape of the root the
   // selector resolved, never by re-reading the artifact: a descriptor is data
   // the container compiles as it stands, while a class and a dynamic module both

@@ -29,11 +29,17 @@ export function compileModuleInMemory(moduleClass: AponiaRootModule): ModuleDefi
   }
 
   const compiled = compileRootModule(moduleClass);
-  Object.defineProperty(moduleClass, COMPILED_DESCRIPTOR_SYMBOL, {
-    value: compiled,
-    writable: false,
-    configurable: false,
-    enumerable: false,
-  });
+  if (
+    (typeof moduleClass === "function" || typeof moduleClass === "object") &&
+    moduleClass !== null &&
+    Object.isExtensible(moduleClass)
+  ) {
+    Object.defineProperty(moduleClass, COMPILED_DESCRIPTOR_SYMBOL, {
+      value: compiled,
+      writable: false,
+      configurable: false,
+      enumerable: false,
+    });
+  }
   return compiled;
 }

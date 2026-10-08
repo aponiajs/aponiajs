@@ -1,5 +1,7 @@
 import { describe, expect, it } from "bun:test";
-import type { PluginBuilder } from "bun";
+import type { OnLoadArgs, PluginBuilder } from "bun";
+import { Controller, Get, Module } from "@aponiajs/common";
+import { AponiaFactory } from "../src/application/aponia-factory.ts";
 import {
   COMPILED_DESCRIPTOR_SYMBOL,
   compileModuleInMemory,
@@ -32,10 +34,66 @@ describe("In-Memory Compiler", () => {
     expect(compileRootModule(SampleModule)).toBe(compiled);
   });
 
-  it("registers Bun plugin and provides setup hook", async () => {
+  it("boots via AponiaFactory.create using in-memory compiled module", async () => {
+    @Controller("/jit")
+    class JitController {
+      @Get("/hello")
+      hello(): string {
+        return "hello from jit";
+      }
+    }
+
+    @Module({ controllers: [JitController] })
+    class JitAppModule {}
+
+    // Pre-compile in memory
+    const compiled = compileModuleInMemory(JitAppModule);
+    expect(
+      (JitAppModule as unknown as Record<PropertyKey, unknown>)[COMPILED_DESCRIPTOR_SYMBOL],
+    ).toBe(compiled);
+
+    // AponiaFactory.create uses the cached descriptor directly
+    const app = await AponiaFactory.create(JitAppModule, { logger: false });
+    const response = await app.handle(new Request("http://localhost/jit/hello"));
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe("hello from jit");
+    await app.close();
+  });
+
+  it("registers Bun plugin and onLoad hook filters and loads module files", async () => {
     expect(aponiaCompilerPlugin.name).toBe("aponia-in-memory-compiler");
-    const fakeBuilder = {} as unknown as PluginBuilder;
+
+    let registeredFilter: RegExp | undefined;
+    let registeredCallback: ((args: OnLoadArgs) => unknown) | undefined;
+
+    const fakeBuilder = {
+      onLoad(
+        options: { readonly filter: RegExp },
+        callback: (args: OnLoadArgs) => unknown,
+      ): PluginBuilder {
+        registeredFilter = options.filter;
+        registeredCallback = callback;
+        return fakeBuilder as unknown as PluginBuilder;
+      },
+    } as unknown as PluginBuilder;
+
     await aponiaCompilerPlugin.setup(fakeBuilder);
-    expect(typeof aponiaCompilerPlugin.setup).toBe("function");
+    expect(registeredFilter).toBeDefined();
+    expect(registeredFilter?.test("app.module.ts")).toBe(true);
+    expect(registeredFilter?.test("users.controller.ts")).toBe(true);
+    expect(registeredFilter?.test("users.service.ts")).toBe(false);
+
+    expect(registeredCallback).toBeDefined();
+    // Execute onLoad callback against a known file
+    const result = (await registeredCallback!({
+      path: import.meta.path,
+      namespace: "file",
+      loader: "ts",
+      defer: async (): Promise<void> => {},
+    })) as { readonly contents: string; readonly loader: string } | undefined;
+
+    expect(result).toBeDefined();
+    expect(result?.loader).toBe("ts");
+    expect(result?.contents).toContain("In-Memory Compiler");
   });
 });
