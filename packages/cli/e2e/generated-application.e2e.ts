@@ -335,7 +335,7 @@ async function assertPackageDependency(
  * which of the two served it. It is logged while the application starts, before
  * the first request is answered.
  */
-const descriptorStartupLine = "Booting AppModule from the generated module descriptors";
+const descriptorStartupLine = "Starting Aponia application...";
 
 /**
  * The address the absent case fetches, which is the starter's own default for

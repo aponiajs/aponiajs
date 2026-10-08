@@ -31,11 +31,7 @@
   "type": "module",
   "exports": {
     ".": "./dist/index.mjs",
-    "./register": {
-      "bun": "./src/compiler/register.ts",
-      "import": "./dist/compiler/register.mjs",
-      "default": "./dist/compiler/register.mjs"
-    },
+    "./register": "./dist/register.mjs",
     "./package.json": "./package.json"
   },
   "publishConfig": {
