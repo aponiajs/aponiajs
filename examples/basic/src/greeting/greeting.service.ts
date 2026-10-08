@@ -3,6 +3,6 @@ import { Injectable } from "@aponiajs/common";
 @Injectable()
 export class GreetingService {
   createGreeting(): string {
-    return "Hello, AponiaJS!";
+    return "Hello, AponiaJS ILOVE YOU SOMUCH!";
   }
 }

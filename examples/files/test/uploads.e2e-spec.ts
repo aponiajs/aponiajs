@@ -26,7 +26,7 @@ describe("uploading a file", () => {
   });
 
   test("the part's type comes from its filename, not from the declared one", async () => {
-    // Measured on bun 1.4.2 / elysia 2.0.0-beta.19, through raw Elysia as well as through
+    // Measured on bun 1.4.2 / elysia 2.0.0-beta.24, through raw Elysia as well as through
     // this framework: the multipart parser discards the content type the client
     // declared and maps the filename through a MIME table. `file.type` is therefore
     // a fact about the name the client chose, never about the bytes it sent.
