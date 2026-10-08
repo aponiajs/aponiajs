@@ -94,8 +94,8 @@ export interface ElysiaRouteAfterHandleContext extends RouteContext {
  * @internal
  */
 export interface ElysiaRouteHook extends InputSchema<never> {
-  /** Runs before the handler, and answers the request instead of it when it throws. */
-  beforeHandle?(context: RouteContext): Promise<void>;
+  /** Runs before the handler, and answers the request instead of it when it throws or refuses. */
+  beforeHandle?(context: RouteContext): unknown;
   /**
    * Runs after the handler, and answers with what the response should carry.
    * Elysia replaces the response with a value this returns, and keeps the

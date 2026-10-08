@@ -41,6 +41,7 @@ const packageLayouts: readonly PackageLayout[] = [
       "application",
       "configuration",
       "controllers",
+      "enhancers",
       "errors",
       "inspection",
       "middleware",

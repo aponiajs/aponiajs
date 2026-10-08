@@ -14,10 +14,8 @@ import {
   type CanActivate,
   type ClassToken,
   type EnhancerMetadata,
-  type ExecutionContext,
   type HttpArgumentsHost,
   type LoggerService,
-  type RequestMethod,
   type RouteContext,
   type RouteParameterKind,
   type RouteParameterMetadata,
@@ -29,6 +27,8 @@ import { type AnySchema, type Elysia } from "elysia";
 import type { MountedRouteEnhancers, ResolvedFilter } from "../controllers/enhancer-resolver.ts";
 import { isFilterMatch, reportThroughLogger } from "../errors/default-exception-filter.ts";
 import { httpErrors } from "../errors/http-error.ts";
+import { compileUnrolledGuards } from "../enhancers/enhancer-pipeline.ts";
+import { StaticRouteExecutionContext } from "../enhancers/static-execution-context.ts";
 import { executePipes, resolvePipe, type ResolvedPipe } from "../pipes/pipe-resolver.ts";
 import { registerNativeRoute } from "./native-route.ts";
 import type {
@@ -209,6 +209,9 @@ export function registerCompiledElysiaRoutes(
     if (suppliedInvoker !== undefined) {
       generatedKeys.add(route.propertyKey);
     }
+    const hasCustomFilters =
+      mountedEnhancers.controller.forRoute(route.enhancers).filters.length > 0 ||
+      mountedEnhancers.global.filters.length > 0;
     registerNativeRoute(
       application,
       route.method,
@@ -223,6 +226,7 @@ export function registerCompiledElysiaRoutes(
         routeGuards(mountedEnhancers, route),
         routeInterceptors(mountedEnhancers, route),
         routeExceptionHooks(mountedEnhancers, route),
+        hasCustomFilters,
       ),
     );
   }
@@ -778,9 +782,17 @@ function toRouteHook(
   guards: readonly CanActivate[],
   interceptors: readonly Interceptor[],
   exceptionHooks: ElysiaErrorHook[] | undefined,
+  hasCustomFilters = false,
 ): ElysiaRouteHook | undefined {
   const schemaHook = toSchemaHook(route.schema);
-  const lifecycleHook = createLifecycleHook(route, controller, handler, guards, interceptors);
+  const lifecycleHook = createLifecycleHook(
+    route,
+    controller,
+    handler,
+    guards,
+    interceptors,
+    hasCustomFilters,
+  );
   if (lifecycleHook === undefined && exceptionHooks === undefined) {
     return schemaHook;
   }
@@ -789,6 +801,14 @@ function toRouteHook(
 
   return { ...schemaHook, ...errorHook, ...lifecycleHook };
 }
+
+const defaultForbiddenResponse = Object.freeze({
+  type: "about:blank",
+  title: "Forbidden",
+  status: 403,
+  detail: "A guard refused this request.",
+  code: "FORBIDDEN",
+});
 
 /**
  * The lifecycle members one route runs around its handler, or `undefined` when
@@ -812,10 +832,12 @@ function createLifecycleHook(
   handler: (...arguments_: unknown[]) => unknown,
   guards: readonly CanActivate[],
   interceptors: readonly Interceptor[],
+  hasCustomFilters = false,
 ): RouteLifecycleHook | undefined {
-  const runsBefore =
-    guards.length > 0 ||
-    interceptors.some((interceptor) => interceptor.interceptBefore !== undefined);
+  const hasInterceptBefore = interceptors.some(
+    (interceptor) => interceptor.interceptBefore !== undefined,
+  );
+  const runsBefore = guards.length > 0 || hasInterceptBefore;
   const runsAfter = interceptors.some((interceptor) => interceptor.interceptAfter !== undefined);
   if (!runsBefore && !runsAfter) {
     return undefined;
@@ -831,67 +853,68 @@ function createLifecycleHook(
   // order their before halves ran in.
   const afterInterceptors = Object.freeze([...interceptors].reverse());
 
-  return {
-    ...(runsBefore
-      ? {
-          // Refusal is the throw and nothing else: the thrown `HttpError` carries
-          // its own `toResponse()`, so on a route that declares no filter the
-          // default mapping declines it and Elysia's native error path answers a
-          // 403 Problem Details. A filter this route declares runs first and is
-          // consulted for the refusal like any other exception — nothing here
-          // shields an `HttpError` from the filters a route declares.
-          async beforeHandle(context: RouteContext): Promise<void> {
-            const executionContext = createExecutionContext(
-              routeDescription,
-              controller,
-              handler,
-              context,
-            );
+  const execContext = new StaticRouteExecutionContext(controller, handler, routeDescription);
 
-            // Fast-path: Execute guards with sync short-circuit when possible
-            for (let i = 0; i < guards.length; i++) {
-              const result = guards[i]!.canActivate(executionContext);
-              const allowed =
-                typeof (result as Promise<boolean>)?.then === "function" ? await result : result;
-              if (allowed === false) {
-                throw httpErrors.forbidden("A guard refused this request.");
-              }
+  const guardHook =
+    !hasCustomFilters && guards.length > 0
+      ? compileUnrolledGuards(guards, execContext, defaultForbiddenResponse)
+      : undefined;
+
+  let beforeHandle: ((context: RouteContext) => unknown) | undefined;
+  if (runsBefore) {
+    if (guardHook !== undefined && !hasInterceptBefore) {
+      beforeHandle = guardHook as (context: RouteContext) => unknown;
+    } else {
+      beforeHandle = async function (context: RouteContext): Promise<unknown> {
+        if (guardHook !== undefined) {
+          const guardResult = guardHook(context);
+          if (guardResult !== undefined) {
+            const settled = guardResult instanceof Promise ? await guardResult : guardResult;
+            if (settled !== undefined) {
+              return settled;
             }
-
-            // A before half cannot short-circuit: Elysia's behavior when a
-            // `beforeHandle` returns a value while `afterHandle` hooks are also
-            // registered for the same route is not established, so what one
-            // answers is not read.
-            for (let i = 0; i < interceptors.length; i++) {
-              const interceptor = interceptors[i]!;
-              if (interceptor.interceptBefore !== undefined) {
-                const res = interceptor.interceptBefore(executionContext);
-                if (typeof (res as Promise<unknown>)?.then === "function") {
-                  await res;
-                }
-              }
+          }
+        } else if (guards.length > 0) {
+          execContext.swap(context);
+          for (let i = 0; i < guards.length; i++) {
+            const result = guards[i]!.canActivate(execContext);
+            const allowed =
+              typeof (result as Promise<boolean>)?.then === "function" ? await result : result;
+            if (allowed === false) {
+              throw httpErrors.forbidden("A guard refused this request.");
             }
-
-            return undefined;
-          },
+          }
         }
-      : {}),
+
+        for (let i = 0; i < interceptors.length; i++) {
+          const interceptor = interceptors[i]!;
+          if (interceptor.interceptBefore !== undefined) {
+            execContext.swap(context);
+            const res = interceptor.interceptBefore(execContext);
+            if (typeof (res as Promise<unknown>)?.then === "function") {
+              await res;
+            }
+          }
+        }
+
+        return undefined;
+      };
+    }
+  }
+
+  return {
+    ...(runsBefore && beforeHandle ? { beforeHandle } : {}),
     ...(runsAfter
       ? {
           async afterHandle(context: ElysiaRouteAfterHandleContext): Promise<unknown> {
-            const executionContext = createExecutionContext(
-              routeDescription,
-              controller,
-              handler,
-              context,
-            );
+            execContext.swap(context);
             // `undefined` is the one answer that leaves the response as it is,
             // so the value a half answers with is what the next one receives and
             // a half that answers nothing keeps what the response carries.
             // `null`, `false`, and `0` are responses, not absences.
             let response = context.responseValue;
             for (const interceptor of afterInterceptors) {
-              const answered = await interceptor.interceptAfter?.(executionContext, response);
+              const answered = await interceptor.interceptAfter?.(execContext, response);
               if (answered !== undefined) {
                 response = answered;
               }
@@ -902,34 +925,6 @@ function createLifecycleHook(
         }
       : {}),
   };
-}
-
-/**
- * What a guard running for one request is given about the route it protects.
- *
- * The object is built per request because it carries the request's own context,
- * and built here rather than per guard so every guard on a route sees the same
- * one.
- */
-function createExecutionContext(
-  route: Readonly<{ readonly method: RequestMethod; readonly path: string }>,
-  controller: ClassToken<unknown>,
-  handler: (...arguments_: unknown[]) => unknown,
-  context: RouteContext,
-): ExecutionContext {
-  const httpHost: HttpArgumentsHost = Object.freeze({ getRequest: () => context });
-
-  return Object.freeze({
-    // The token is one class, while the type argument is the guard's own claim
-    // about it: nothing at run time could check that claim, so it is the one
-    // place this contract is answered with a cast.
-    getClass: <TController>() => controller as ClassToken<TController>,
-    getHandler: () => handler as (...arguments_: never[]) => unknown,
-    getRoute: () => route,
-    getContext: () => context,
-    switchToHttp: () => httpHost,
-    getType: () => "http" as const,
-  });
 }
 
 function toSchemaHook(schema: RouteSchema | undefined): ElysiaRouteHook | undefined {
