@@ -6,6 +6,7 @@ import {
   type Provider,
   type Token,
 } from "@aponiajs/common";
+import { formatMissingProviderDiagnostic } from "./diagnostic-formatter.ts";
 import type { GraphInspection, ProviderLocation } from "./graph.types.ts";
 
 /**
@@ -266,13 +267,28 @@ export class ModuleGraph {
     const hintSection =
       hints.length > 0 ? ` Hints:\n${hints.map((h) => `  - ${h}`).join("\n")}` : "";
 
+    const declaring = declaringModules[0];
+    const isImported = declaring
+      ? module.imports.some((rawImport) => resolveForwardRef(rawImport) === declaring)
+      : undefined;
+    const isExported = declaring ? declaring.exports.includes(token) : undefined;
+
+    const diagnostic = formatMissingProviderDiagnostic({
+      token: tokenDescription,
+      requestingModule: module.id,
+      declaringModule: declaring?.id,
+      isImported,
+      isExported,
+    });
+
     return new AponiaError(
       "MISSING_PROVIDER",
-      `Module "${module.id}" cannot resolve token "${tokenDescription}".${hintSection}`,
+      `${diagnostic}\n\nModule "${module.id}" cannot resolve token "${tokenDescription}".${hintSection}`,
       {
         module: module.id,
         token: tokenDescription,
         hints: Object.freeze(hints),
+        diagnostic,
       },
     );
   }
