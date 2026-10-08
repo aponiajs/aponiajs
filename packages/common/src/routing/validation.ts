@@ -43,9 +43,14 @@ export function Validation(validator: RouteValidator): ClassDecorator {
 export function getValidationMetadata(
   target: ValidationModelClass,
 ): Readonly<ValidationMetadata> | undefined {
-  return Reflect.getOwnMetadata(validationMetadataKey, target) as
-    | Readonly<ValidationMetadata>
-    | undefined;
+  const metadata = Reflect.getOwnMetadata(validationMetadataKey, target);
+  if (!metadata) {
+    return undefined;
+  }
+  if (isStandardSchema(metadata)) {
+    return Object.freeze({ validator: metadata });
+  }
+  return metadata as Readonly<ValidationMetadata>;
 }
 
 /**
@@ -69,6 +74,15 @@ export function resolveRouteValidator(input: RouteValidatorInput): RouteValidato
   const metadata = getValidationMetadata(input);
   if (metadata) {
     return metadata.validator;
+  }
+
+  if ("schema" in input && isStandardSchema((input as { readonly schema: unknown }).schema)) {
+    return (input as { readonly schema: RouteValidator }).schema;
+  }
+
+  const inheritedMetadata = Reflect.getMetadata(validationMetadataKey, input);
+  if (inheritedMetadata) {
+    return isStandardSchema(inheritedMetadata) ? inheritedMetadata : inheritedMetadata.validator;
   }
 
   throw new AponiaError(

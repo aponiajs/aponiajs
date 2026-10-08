@@ -54,6 +54,9 @@ their owning domain. `src/index.ts` is the package's only public barrel.
   `Symbol.for("aponia.validation.metadata")`. Validation-model metadata is
   own-only and immutable, and resolving it preserves the original validator
   instance.
+- `createDto` derives a strongly typed DTO class constructor from a Standard
+  Schema v1 validator, associating the validation metadata and freezing the
+  base class.
 - Everything a public API returns is frozen.
 - `ProviderScope` supports `"singleton"`, `"request"`, and `"transient"` via
   the `Scope` enum (`Scope.DEFAULT`, `Scope.REQUEST`, `Scope.TRANSIENT`), and

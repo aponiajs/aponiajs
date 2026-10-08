@@ -134,6 +134,8 @@ export {
 } from "./routing/route-parameters.ts";
 export { createParamDecorator } from "./routing/custom-parameter.ts";
 export type { CustomParamFactory } from "./routing/custom-parameter.types.ts";
+export { createDto } from "./routing/dto.ts";
+export type { DtoConstructor, Infer } from "./routing/dto.ts";
 export type {
   RouteParameterKind,
   RouteParameterMetadata,

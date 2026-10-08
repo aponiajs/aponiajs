@@ -12,6 +12,7 @@ This package records metadata and declares contracts. It never builds a module g
 - [Body, Query, Param, Headers, Cookie, State, Req, ResponseSettings, HttpStatus, Context](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/route-parameters.ts): parameter decorators, each optionally naming one property.
 - [routeParameterKinds, getRouteParameterMetadata](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/route-parameters.ts): the parameter kind constants and their metadata reader.
 - [Validation, resolveRouteValidator, getValidationMetadata](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/validation.ts): binds one validator to a validation-model class used in a route schema.
+- [createDto](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/dto.ts): derives a strongly typed DTO class constructor from a Standard Schema v1 validator.
 - [routeSchemaSlots, isStandardSchema, isRouteResponseSchemaMap](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/route-schema.ts): the schema slot names and the validator guards the platform uses.
 - [defineModule](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/modules/module.ts): the descriptor-first alternative to `@Module()`.
 - [provideValue, provideClass, provideFactory, provideAlias](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/providers/provider.ts): provider descriptors for hand-written modules.
@@ -31,6 +32,7 @@ This package records metadata and declares contracts. It never builds a module g
 - [RouteSchemaSlot, RouteResponseSchemaMap, ResponseSettingsState, ValidatorSchema](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/route-schema.types.ts): the schema slots and the structural match for platform-native JSON Schema validators.
 - [RouteParameterKind, RouteParameterMetadata](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/route-parameters.types.ts): parameter decorator metadata.
 - [ValidationModelClass, ValidationMetadata, RouteValidatorInput](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/validation.types.ts): the validation-model contract.
+- [DtoConstructor, Infer](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/dto.ts): constructor and output inference types for Standard Schema DTOs.
 - [ModuleDefinition, ModuleDescriptor, ModuleOptions, DynamicModule](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/modules/module.types.ts): the frozen module descriptor.
 - [Provider, ClassProvider, ValueProvider, FactoryProvider, AliasProvider, ProviderScope](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/providers/provider.types.ts): provider contracts.
 - [InjectionToken, ClassToken, Constructor, TokenValue, TokenMap](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/tokens/token.types.ts): token contracts.

@@ -1,6 +1,5 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import type { RouteResponseSchema, RouteResponseSchemaMap } from "./route-schema.types.ts";
-import type { RouteValidatorInput } from "./validation.types.ts";
 
 /**
  * The route schema slots a route decorator accepts, in canonical order.
@@ -26,8 +25,11 @@ export const routeSchemaSlots = [
  * @param validator - The slot value to test.
  * @returns `true` when the value carries the Standard Schema marker.
  */
-export function isStandardSchema(validator: RouteValidatorInput): validator is StandardSchemaV1 {
-  return "~standard" in validator;
+export function isStandardSchema(validator: unknown): validator is StandardSchemaV1 {
+  return (
+    (typeof validator === "object" && validator !== null && "~standard" in validator) ||
+    (typeof validator === "function" && "~standard" in validator)
+  );
 }
 
 /**
