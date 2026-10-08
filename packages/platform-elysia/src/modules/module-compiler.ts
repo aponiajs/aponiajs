@@ -50,6 +50,17 @@ import { assertUniqueElysiaRoutes } from "./route-uniqueness.ts";
  */
 export function compileRootModule(rootModule: AponiaRootModule): ModuleDefinition {
   const unwrapped = resolveForwardRef(rootModule);
+  if (
+    (typeof unwrapped === "function" || typeof unwrapped === "object") &&
+    unwrapped !== null &&
+    (unwrapped as unknown as Record<PropertyKey, unknown>)[
+      Symbol.for("aponia.compiled.descriptors")
+    ] !== undefined
+  ) {
+    return (unwrapped as unknown as Record<PropertyKey, unknown>)[
+      Symbol.for("aponia.compiled.descriptors")
+    ] as ModuleDefinition;
+  }
   const compiledRoot = isModuleDefinition(unwrapped)
     ? unwrapped
     : (compileModuleImports(unwrapped) as ModuleDefinition);

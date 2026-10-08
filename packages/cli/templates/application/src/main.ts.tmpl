@@ -1,52 +1,5 @@
 import { AponiaFactory } from "@aponiajs/platform-elysia";
-import { devtoolsPlugin } from "@aponiajs/devtools";
-import { moduleDescriptorArtifact } from "./descriptors.generated.ts";
-import { controllerInvokerArtifact } from "./invokers.generated.ts";
 import { AppModule } from "./app.module.ts";
-import { AppConfig } from "./config.ts";
-import { appLogger } from "./logger.ts";
 
-async function bootstrap(): Promise<void> {
-  const application = await AponiaFactory.create(AppModule, {
-    descriptors: moduleDescriptorArtifact,
-    invokers: controllerInvokerArtifact,
-    logger: appLogger,
-    // The devtools surface, mounted on the application rather than declared as a
-    // module import, and the difference is what a build can read: `aponia build`
-    // lowers an `imports` entry only when it is a single identifier naming a
-    // declaration read from the project's own source, and
-    // `DevtoolsModule.register(...)` returns a `DynamicModule` rather than such
-    // a declaration, so naming it in `AppModule` would leave the root module out
-    // of `descriptors.generated.ts` — the application would boot from decorators
-    // instead of the declared graph it commits. A plugin mounted here is not an
-    // `imports` entry, so the two do not compete.
-    //
-    // The price is stated rather than hidden: nothing about a plugin mounted
-    // this way reaches the module graph or the generated descriptor artifact.
-    // What is mounted is the same either way, so move the registration into
-    // `AppModule`'s `imports` when the graph should carry it.
-    //
-    // `enabled` is this application's decision and the framework never guesses
-    // it from the environment: the starter serves the surface unless
-    // `NODE_ENV=production`. The surface is mounted on this application's own
-    // route table, under `/__devtools` on the address `listen` is given below,
-    // so it is reachable wherever the application is and `/requests` records
-    // headers and bodies with no warning. `enabled` is what keeps it out of
-    // production.
-    plugins: [
-      devtoolsPlugin({
-        enabled: Bun.env.NODE_ENV !== "production",
-        logger: appLogger,
-      }),
-    ],
-  });
-  // The devtools surface is mounted on this same address. The port is the
-  // validated configuration's, read back from the container the boot built. A
-  // `PORT` the schema refuses fails the boot — the provider is instantiated
-  // inside `AponiaFactory.create` above, before this read runs — so a malformed
-  // value never reaches `listen` as `NaN`. `NODE_ENV` above stays inline: the
-  // `plugins` option needs it before a container exists to read one from.
-  await application.listen(application.get(AppConfig).port);
-}
-
-await bootstrap();
+const app = await AponiaFactory.create(AppModule);
+await app.listen(3000);

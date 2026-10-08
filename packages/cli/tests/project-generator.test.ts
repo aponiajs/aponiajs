@@ -45,7 +45,7 @@ test("generates a module-controller-service application", async () => {
 
   expect(result.installed).toBe(false);
   expect(await Bun.file(join(projectDirectory, "src/main.ts")).text()).toContain(
-    "AponiaFactory.create(AppModule, {",
+    "AponiaFactory.create(AppModule)",
   );
   expect(await Bun.file(join(projectDirectory, ".gitignore")).exists()).toBe(true);
   expect(await Bun.file(join(projectDirectory, "src/app.module.ts")).text()).toContain(
@@ -63,10 +63,8 @@ test("generates a module-controller-service application", async () => {
   expect(await Bun.file(join(projectDirectory, "src/config.ts")).text()).toContain(
     "defineConfiguration",
   );
-  // The entrypoint reads the validated value back rather than the environment,
-  // which is the half that makes the declaration the port's only source.
   expect(await Bun.file(join(projectDirectory, "src/main.ts")).text()).toContain(
-    "application.listen(application.get(AppConfig).port)",
+    "await app.listen(3000)",
   );
   expect(await Bun.file(join(projectDirectory, "src/app.controller.ts")).text()).toContain(
     "@Controller()",
@@ -161,12 +159,12 @@ test("boots and tests the starter without running a build first", async () => {
   const projectDirectory = join(temporaryDirectory, "sample-api");
 
   // `bun run dev`, `bun start`, and `bun test` import the sources directly, so
-  // they must not need a build to have run. The entrypoint adopts the invoker
-  // artifact, which it can only do because the starter commits the module the
-  // build would otherwise be the first thing to write.
+  // they must not need a build to have run. The entrypoint has zero leaked
+  // artifact imports because the invisible compiler runs in memory.
   const main = await Bun.file(join(projectDirectory, "src/main.ts")).text();
-  expect(main).toContain('import { controllerInvokerArtifact } from "./invokers.generated.ts";');
-  expect(main).toContain("invokers: controllerInvokerArtifact,");
+  expect(main).toContain("AponiaFactory.create(AppModule)");
+  expect(main).not.toContain("descriptors.generated.ts");
+  expect(main).not.toContain("invokers.generated.ts");
   expect(await Bun.file(join(projectDirectory, "src/invokers.generated.ts")).exists()).toBe(true);
   expect(await Bun.file(join(projectDirectory, "src/descriptors.generated.ts")).exists()).toBe(
     true,

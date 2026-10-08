@@ -118,3 +118,7 @@ export type { ResolvedMiddlewareConfig } from "./middleware/middleware-consumer.
 export { AuthGuard } from "./controllers/auth-guard.ts";
 export { RolesGuard } from "./controllers/roles-guard.ts";
 export type { AuthGuardOptions, AuthenticatedUser } from "./controllers/security.types.ts";
+export {
+  compileModuleInMemory,
+  COMPILED_DESCRIPTOR_SYMBOL,
+} from "./compiler/in-memory-compiler.ts";

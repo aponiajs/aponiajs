@@ -12,6 +12,7 @@ It depends on `common` and `core`, with `elysia` as a peer.
 | Domain           | Owns                                                                                                                                    |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | `application/`   | Factory orchestration, application lifecycle wrapper, readiness and liveness probes, the stop-signal installer, public option contracts |
+| `compiler/`      | In-memory JIT compilation, Bun preload hook, and descriptor caching                                                                     |
 | `configuration/` | The boot-time loader that validates a declared configuration                                                                            |
 | `modules/`       | `compileRootModule` and decorator-to-descriptor lowering                                                                                |
 | `controllers/`   | Controller descriptors, direct registration, enhancer resolution, `CONTROLLER_KIND`                                                     |
