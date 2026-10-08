@@ -199,18 +199,43 @@ HTTP Response
 
 ---
 
-### 4. Ahead-Of-Time (AOT) Code Generation
+### 4. Aponia Dedicated Compiler Engine (Independent of Elysia AOT)
 
-For applications requiring ultra-fast cold starts (e.g., serverless environments or microservices), `@aponiajs/cli` provides AOT compilation commands:
+#### Context: The Removal of Runtime AOT in Elysia 2.0
 
-```bash
-bun aponia build --aot
+In Elysia 1.x, there was an experimental runtime `aot` option on `ElysiaConfig`. In Elysia 2.0, that runtime `aot` flag was completely removed and replaced by a runtime `precompile: boolean` policy and an external bundler plugin (`elysia/plugin/aot/bun`). Relying on Elysia's own AOT flags is neither portable nor sufficient for an enterprise-grade DI framework.
+
+#### Aponia's Dual-Mode Compiler Architecture
+
+Instead of coupling to Elysia's internal compiler flags, AponiaJS introduces its own **Dedicated Compiler Engine** that operates seamlessly across both Development and Production:
+
+```text
+Developer Writes:
+  @Module(), @Controller(), @Injectable(), @Get(), @Post(), Standard Schema
+                         │
+                         ▼
+             [Aponia Compiler Engine]
+            ╱                        ╲
+           ▼                          ▼
+   [Development: JIT Mode]      [Production: AOT Mode]
+   - Compiles in-memory         - Statically compiles TypeScript AST
+   - Instant startup & HMR      - Emits pure Native Elysia routes
+   - Zero build step required   - Zero runtime reflection / metadata
+   - Eager graph validation     - Zero DI graph traversal overhead
 ```
 
-This generates:
+1. **Development (JIT In-Memory Mode - Zero Build Friction):**
+   - Developers run `bun --watch src/main.ts` directly.
+   - No pre-build step is required.
+   - The in-memory compiler reads `reflect-metadata`, builds the DAG, verifies cycles, and generates monomorphic invoker closures in memory in < 5ms.
+   - Maximum Developer Ergonomics and instant feedback loop.
 
-1. `descriptors.generated.ts`: Pre-lowered frozen module and controller definitions, eliminating reflection and decorator overhead at startup.
-2. `invokers.generated.ts`: Pre-compiled static route invokers mapped directly to Elysia route registration.
+2. **Production (AOT Ahead-Of-Time Mode - Pure Native Speed):**
+   - Run during build time: `bun aponia build --aot`
+   - Aponia's Compiler uses AST analysis (via `ts-morph` and specialized code generators) to compile all decorated controllers down into:
+     - `descriptors.generated.ts`: Static, frozen module and provider graph (zero reflection).
+     - `invokers.generated.ts`: Pure, monomorphic native Elysia route functions with zero-argument stripping and synchronous fast-paths already inlined.
+   - When the app runs in production, it does **not** evaluate decorators, does **not** call `Reflect.getMetadata`, and does **not** resolve dependency graphs. It boots instantly and handles requests at **100% Raw Elysia / Native Bun Speed**.
 
 ---
 
