@@ -6,20 +6,24 @@
   "scripts": {
     "dev": "bun --watch src/main.ts",
     "start": "bun src/main.ts",
-    "build": "bun build ./src/main.ts --outdir ./dist --target bun",
+    "build": "bun run scripts/build.ts",
     "test": "bun test",
     "test:e2e": "bun test ./test/app.e2e-spec.ts",
+    "inspect": "bun run scripts/inspect.ts",
     "check": "vp check"
   },
   "dependencies": {
     "@aponiajs/common": "{{APONIA_VERSION}}",
+    "@aponiajs/devtools": "{{APONIA_VERSION}}",
     "@aponiajs/platform-elysia": "{{APONIA_VERSION}}",
-    "elysia": "^1.4.29"
+    "elysia": "2.0.0-beta.24",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/bun": "^1.3.14",
+    "@aponiajs/cli": "{{APONIA_VERSION}}",
+    "@types/bun": "^1.4.2",
     "typescript": "^7.0.2",
-    "vite-plus": "^0.2.4"
+    "vite-plus": "^0.2.9"
   },
-  "packageManager": "bun@1.3.14"
+  "packageManager": "bun@1.4.2"
 }

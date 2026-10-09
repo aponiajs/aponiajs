@@ -1,0 +1,74 @@
+# @aponiajs/opentelemetry
+
+> Trace an Aponia application's routes with OpenTelemetry, with the policy read from a validated configuration. A thin adapter over `@elysia/opentelemetry`: AponiaJS contributes a module the plugin is declared in and a validated configuration the service name, body recording, header capture, and URL redaction come from, and no tracing backend of its own.
+
+**This package is not a tracing backend and ships no exporter.** No OTLP client, no Jaeger or Tempo or Honeycomb client, no collector configuration, and no query surface. The root span, the per-stage spans, the attributes, the propagation, and the `NodeSDK` startup are `@elysia/opentelemetry`'s. For a policy that is a literal in source, mounting `PluginModule.register(opentelemetry({ serviceName: "api" }), { key: "opentelemetry" })` in an `imports` needs no package.
+
+**The span processors, the exporters, and the instrumentations are the application's.** They are live objects, so no configuration can carry them; they are passed to `OpentelemetryModule.register` beside `configuration`.
+
+**A reader who wants the raw plugin should use [`@elysia/opentelemetry`](https://www.npmjs.com/package/@elysia/opentelemetry) directly.**
+
+## What this package exports
+
+```ts
+import { OpentelemetryModule } from "@aponiajs/opentelemetry";
+import type { OpentelemetryConfiguration, OpentelemetryModuleOptions } from "@aponiajs/opentelemetry";
+```
+
+- `OpentelemetryModule` — `OpentelemetryModule.register(options)` returns the `DynamicModule` an application's `imports` accepts.
+- `OpentelemetryConfiguration` — the value the module validates and exports: `serviceName` (required), `recordBody`, `headersToSpanAttributes`, and `spanUrlRedaction`.
+- `OpentelemetryModuleOptions` — `configuration`, `source`, `key`, plus the wrapped plugin's own options with those four fields removed: `spanProcessors`, `instrumentations`, `contextManager`, `checkIfShouldTrace`, and the rest of the `NodeSDK` options.
+
+## Declaring a policy
+
+```ts
+import { Module, defineConfiguration } from "@aponiajs/common";
+import { OpentelemetryModule } from "@aponiajs/opentelemetry";
+import { z } from "zod";
+
+const OpentelemetryConfig = defineConfiguration(
+  z
+    .object({ OTEL_SERVICE_NAME: z.string().min(1) })
+    .transform(({ OTEL_SERVICE_NAME }) => ({ serviceName: OTEL_SERVICE_NAME })),
+  "opentelemetry",
+);
+
+const tracing = OpentelemetryModule.register({
+  configuration: OpentelemetryConfig,
+  spanProcessors: [new BatchSpanProcessor(new OTLPTraceExporter())],
+});
+
+@Module({ imports: [tracing], controllers: [WidgetsController] })
+export class AppModule {}
+```
+
+`key` defaults to `"opentelemetry"`, and two registrations sharing one are refused as `DUPLICATE_MODULE`.
+
+## One registration per process
+
+The wrapped plugin's `NodeSDK` is process-global. The first registration in a process starts it; every later one mounts its Elysia plugin but its `serviceName`, its span processors, and every other `NodeSDK` option never take effect, and spans are exported through the first registration's configuration. A distinct `key` does not buy a second tracer, because the plugin names itself and declares no seed, so Elysia deduplicates it by name. `application.close()` does not stop the SDK either: the plugin keeps it in a closure that no lifecycle hook reaches.
+
+The module provides one provider that shuts down the span processors you declared in `onApplicationShutdown`. A processor you built but did not pass to `register`, and an exporter `NodeSDK` constructed from its own options, are outside its reach.
+
+## The default this package changed
+
+`serviceName` is required, because the wrapped plugin defaults it to `"Elysia"` — a name every service would have to overwrite to be told apart in a trace. An empty string is refused too, because the plugin's default applies only to `undefined`.
+
+## What the wrapped plugin already does
+
+A request is a root span named for the route. The trace context is async-local, so handlers, injected services, and guards all see the request's span through `getCurrentSpan()`. A guard's `httpErrors.forbidden(...)` produces the platform's `403` Problem Details answer and an `Error` child span, and the root span is left `UNSET`. An unhandled failure produces the platform's `500` Problem Details answer — carrying no thrown message, stack, or cause — and the root span is set to `ERROR` with an `exception` event.
+
+## Errors
+
+`AponiaError` with `INVALID_CONFIGURATION_VALUE`, carrying `{ configuration, issues }`, when the schema rejects the value, when a field is the wrong shape, when `serviceName` is missing or empty, or when a recorded request body is combined with a credential-bearing request header (`authorization`, `proxy-authorization`, `cookie`, or `"*"`). The issue list is total: every field that fails is reported at once. `INVALID_CONFIGURATION` covers a declaration that is not a Standard Schema or whose validation answers asynchronously.
+
+## `aponia build`
+
+A registration is a `DynamicModule`, not a `@Module()` class the build can read from source, so a module whose `imports` name one is declined (`DECLINED module <Name>`) and the descriptor artifact holds nothing for it. The application still boots, because the platform lowers such a root from its decorators, and the tracing still serves. Unlike `@aponiajs/devtools`, no plugin value can be exported beside the module, because the plugin is built from a container-resolved configuration. Mounting the raw plugin through `AponiaApplicationOptions.plugins` keeps the artifact and gives up the module and its validation.
+
+## Links
+
+- [Package README](./README.md)
+- [`@elysia/opentelemetry` on npm](https://www.npmjs.com/package/@elysia/opentelemetry)
+- [Plugin package authoring](../../docs/plugin-packages.md)
+- [Published packages](../../docs/packages.md)

@@ -52,15 +52,15 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.3.14
+          bun-version: 1.4.2
 
       - name: Set up Node for npm trusted publishing
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: "24"
           registry-url: https://registry.npmjs.org
@@ -95,10 +95,13 @@ jobs:
       - name: Verify workspace
         run: |
           bun run check
-          bun test
+          bun run test:coverage
+          bun run test:examples
           bun run test:vite-plus
           bun run build
           bun run test:generated-app
+          bun run release:dry-run
+          bun audit --audit-level=high
 
       - name: Verify release version
         env:
@@ -108,12 +111,20 @@ jobs:
 
       - name: Pack publishable workspaces
         run: |
-          mkdir -p release-artifacts/{01-common,02-core,03-platform-elysia,04-cli,05-create-aponia}
+          mkdir -p release-artifacts/{01-common,02-core,03-platform-elysia,04-cli,05-create-aponia,06-devtools,07-cron,08-graphql,09-testing,10-openapi,11-cors,12-opentelemetry,13-mcp}
           bun pm pack --cwd packages/common --destination "$GITHUB_WORKSPACE/release-artifacts/01-common"
           bun pm pack --cwd packages/core --destination "$GITHUB_WORKSPACE/release-artifacts/02-core"
           bun pm pack --cwd packages/platform-elysia --destination "$GITHUB_WORKSPACE/release-artifacts/03-platform-elysia"
           bun pm pack --cwd packages/cli --destination "$GITHUB_WORKSPACE/release-artifacts/04-cli"
           bun pm pack --cwd packages/create-aponia --destination "$GITHUB_WORKSPACE/release-artifacts/05-create-aponia"
+          bun pm pack --cwd packages/devtools --destination "$GITHUB_WORKSPACE/release-artifacts/06-devtools"
+          bun pm pack --cwd packages/cron --destination "$GITHUB_WORKSPACE/release-artifacts/07-cron"
+          bun pm pack --cwd packages/graphql --destination "$GITHUB_WORKSPACE/release-artifacts/08-graphql"
+          bun pm pack --cwd packages/testing --destination "$GITHUB_WORKSPACE/release-artifacts/09-testing"
+          bun pm pack --cwd packages/openapi --destination "$GITHUB_WORKSPACE/release-artifacts/10-openapi"
+          bun pm pack --cwd packages/cors --destination "$GITHUB_WORKSPACE/release-artifacts/11-cors"
+          bun pm pack --cwd packages/opentelemetry --destination "$GITHUB_WORKSPACE/release-artifacts/12-opentelemetry"
+          bun pm pack --cwd packages/mcp --destination "$GITHUB_WORKSPACE/release-artifacts/13-mcp"
 
       - name: Publish packages in dependency order
         working-directory: ${{ runner.temp }}
@@ -133,7 +144,7 @@ jobs:
           ALIAS_TAGS: ${{ steps.distribution.outputs.aliases }}
           VERSION: ${{ steps.distribution.outputs.version }}
         run: |
-          for package in @aponiajs/common @aponiajs/core @aponiajs/platform-elysia @aponiajs/cli create-aponia; do
+          for package in @aponiajs/common @aponiajs/core @aponiajs/platform-elysia @aponiajs/cli create-aponia @aponiajs/devtools @aponiajs/cron @aponiajs/graphql @aponiajs/cors @aponiajs/testing @aponiajs/openapi @aponiajs/opentelemetry @aponiajs/mcp; do
             for alias in $ALIAS_TAGS; do
               npm dist-tag add "$package@$VERSION" "$alias"
             done

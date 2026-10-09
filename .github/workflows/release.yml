@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+      - release/alpha
+      - release/beta
+      - release/rc
 
 permissions: {}
 
@@ -19,14 +22,14 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.3.14
+          bun-version: 1.4.2
 
       - name: Verify synchronized version
         env:
@@ -38,6 +41,9 @@ jobs:
       - name: Resolve release version and distribution tag
         id: distribution
         run: bun run release:tag
+
+      - name: Verify release branch matches the distribution tag
+        run: bun run release:branch
 
       - name: Create tag and GitHub release
         env:

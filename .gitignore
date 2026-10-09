@@ -1,11 +1,28 @@
 node_modules
 dist
+coverage
 .tmp
 *.log
 .DS_Store
 !.vscode/
 !.vscode/settings.json
 !.vscode/extensions.json
+
+# Local agent tooling and generated research inputs
+.agents/
+.claude/
+.superpowers/
+skills-lock.json
+research.md
+
+# Superpowers, specs, and design plans
+.superpowers/
+docs/superpowers/
+*superpower*
+specs/
+plans/
+*.spec.md
+*.plan.md
 
 # dotenv environment variable files
 .env

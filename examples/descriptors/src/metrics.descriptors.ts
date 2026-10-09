@@ -1,10 +1,9 @@
 import { createToken, defineModule, provideClass, provideValue } from "@aponiajs/common";
-import { defineElysiaController } from "@aponiajs/platform-elysia";
-import { Elysia } from "elysia";
+import { controller, httpErrors } from "@aponiajs/platform-elysia";
 
 /**
  * The descriptor authoring layer. No decorators anywhere: `defineModule`,
- * `provide*`, and `defineElysiaController` build the frozen shape directly.
+ * `provide*`, and `controller` build the frozen shape directly.
  */
 const METRICS_NAMESPACE = createToken<string>("METRICS_NAMESPACE");
 
@@ -19,17 +18,19 @@ export class MetricsService {
   }
 }
 
-const metricsController = defineElysiaController(
+const metricsController = controller(
   class MetricsController {
     constructor(readonly metricsService: MetricsService) {}
   },
-  {
-    inject: [MetricsService],
-    buildPlugin: (controller) =>
-      new Elysia({ name: "metrics-controller" }).get("/metrics", () =>
-        controller.metricsService.record(),
-      ),
-  },
+  [MetricsService],
+  (application, controller) =>
+    application
+      .get("/metrics", () => controller.metricsService.record())
+      .get("/metrics/missing", () => {
+        throw httpErrors.notFound("The requested metric does not exist.", {
+          code: "METRIC_NOT_FOUND",
+        });
+      }),
 );
 
 export const metricsModule = defineModule({

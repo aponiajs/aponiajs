@@ -6,8 +6,16 @@ export const versionedPackageFiles = [
   "packages/cli/package.json",
   "packages/common/package.json",
   "packages/core/package.json",
+  "packages/cors/package.json",
   "packages/create-aponia/package.json",
+  "packages/cron/package.json",
+  "packages/devtools/package.json",
+  "packages/graphql/package.json",
+  "packages/mcp/package.json",
+  "packages/openapi/package.json",
+  "packages/opentelemetry/package.json",
   "packages/platform-elysia/package.json",
+  "packages/testing/package.json",
 ] as const;
 
 export const versionedWorkspacePaths = [
@@ -15,8 +23,16 @@ export const versionedWorkspacePaths = [
   "packages/cli",
   "packages/common",
   "packages/core",
+  "packages/cors",
   "packages/create-aponia",
+  "packages/cron",
+  "packages/devtools",
+  "packages/graphql",
+  "packages/mcp",
+  "packages/openapi",
+  "packages/opentelemetry",
   "packages/platform-elysia",
+  "packages/testing",
 ] as const;
 
 interface BunLockfile {

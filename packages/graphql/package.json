@@ -1,0 +1,60 @@
+{
+  "name": "@aponiajs/graphql",
+  "version": "1.0.0-beta.24",
+  "description": "Serve a GraphQL endpoint for an Aponia application, with the mount path read from a validated configuration.",
+  "keywords": [
+    "aponia",
+    "aponiajs",
+    "bun",
+    "elysia",
+    "graphql",
+    "graphql-yoga",
+    "typescript"
+  ],
+  "homepage": "https://github.com/aponiajs/aponiajs#readme",
+  "bugs": {
+    "url": "https://github.com/aponiajs/aponiajs/issues"
+  },
+  "license": "MIT",
+  "author": "AponiaJS contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aponiajs/aponiajs.git",
+    "directory": "packages/graphql"
+  },
+  "files": [
+    "dist",
+    "llms.txt"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "bunx --bun vp pack",
+    "dev": "bunx --bun vp pack --watch",
+    "test": "bun test",
+    "test:vite-plus": "vp test",
+    "check": "bunx --bun vp check",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "@aponiajs/common": "workspace:*",
+    "@aponiajs/platform-elysia": "workspace:*",
+    "@elysia/graphql-yoga": "2.0.0-beta.1"
+  },
+  "devDependencies": {
+    "@aponiajs/cli": "workspace:*",
+    "@graphql-tools/schema": "^10.1.3",
+    "elysia": "2.0.0-beta.24",
+    "graphql": "^17.0.2",
+    "zod": "^4.4.3"
+  },
+  "peerDependencies": {
+    "elysia": "2.0.0-beta.24"
+  }
+}

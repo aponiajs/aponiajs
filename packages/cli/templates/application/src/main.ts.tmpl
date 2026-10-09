@@ -1,10 +1,20 @@
 import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { devtoolsPlugin } from "@aponiajs/devtools";
 import { AppModule } from "./app.module.ts";
+import { AppConfig } from "./config.ts";
+import { appLogger } from "./logger.ts";
 
 async function bootstrap(): Promise<void> {
-  const application = await AponiaFactory.create(AppModule);
-  const port = Number(Bun.env.PORT ?? 3000);
-  await application.listen(port);
+  const application = await AponiaFactory.create(AppModule, {
+    logger: appLogger,
+    plugins: [
+      devtoolsPlugin({
+        enabled: Bun.env.NODE_ENV !== "production",
+        logger: appLogger,
+      }),
+    ],
+  });
+  await application.listen(application.get(AppConfig).port);
 }
 
 await bootstrap();

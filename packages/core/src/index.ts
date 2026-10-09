@@ -1,8 +1,13 @@
-export { AponiaContainer, createContainer } from "./container.ts";
 export {
-  ModuleGraph,
-  compileModuleGraph,
-  type GraphInspection,
-  type ModuleInspection,
-  type ProviderLocation,
-} from "./graph.ts";
+  AponiaContainer,
+  createContainer,
+  type RequestContextAccessor,
+} from "./container/container.ts";
+export {
+  formatMissingProviderDiagnostic,
+  type DiagnosticContext,
+} from "./graph/diagnostic-formatter.ts";
+export { getProviderDependencies } from "./graph/dependencies.ts";
+export { compileModuleGraph } from "./graph/graph-compiler.ts";
+export type { GraphInspection, ModuleInspection, ProviderLocation } from "./graph/graph.types.ts";
+export { ModuleGraph } from "./graph/module-graph.ts";

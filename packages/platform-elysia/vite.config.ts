@@ -10,6 +10,10 @@ export default defineConfig({
     include: ["tests-vp/**/*.conformance.ts"],
   },
   pack: {
+    entry: {
+      index: "src/index.ts",
+      register: "src/compiler/register.ts",
+    },
     tsconfig: "tsconfig.build.json",
     dts: {
       tsgo: true,

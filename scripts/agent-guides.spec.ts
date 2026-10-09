@@ -9,8 +9,16 @@ const guideDirectories = [
   "packages/cli",
   "packages/common",
   "packages/core",
+  "packages/cors",
   "packages/create-aponia",
+  "packages/cron",
+  "packages/devtools",
+  "packages/graphql",
+  "packages/mcp",
+  "packages/openapi",
+  "packages/opentelemetry",
   "packages/platform-elysia",
+  "packages/testing",
 ] as const;
 
 const rootGuide = await Bun.file("AGENTS.md").text();
@@ -26,6 +34,13 @@ describe("agent guides", () => {
     for (const directory of guideDirectories) {
       expect(rootGuide).toContain(`(${directory}/AGENTS.md)`);
     }
+  });
+
+  test("loads the repository rules on every agent turn", async () => {
+    expect(await Bun.file("RULES.md").exists()).toBe(true);
+    expect(rootGuide).toContain("At the start of every agent turn");
+    expect(rootGuide).toContain("Read [`RULES.md`](RULES.md) completely");
+    expect(rootGuide).toContain("Do not rely on memory from a previous turn");
   });
 
   test("each guide points back at the repository guide", async () => {

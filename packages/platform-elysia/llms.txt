@@ -1,0 +1,52 @@
+# @aponiajs/platform-elysia
+
+> The Elysia adapter that bootstraps an AponiaJS module graph into a running Bun HTTP and WebSocket server.
+
+Decorated modules, controllers, gateways, and `@Validation()` models are the normal authoring surface here; direct validators, `controller`, `defineController`, and `defineWebSocketGateway` stay available as escape hatches, and native Elysia plugins mount unchanged. Install it with `bun add @aponiajs/common @aponiajs/platform-elysia elysia`; `elysia` is a peer dependency.
+
+## What this package exports
+
+- [AponiaFactory](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/application/aponia-factory.ts): `create()` bootstraps an application, `createNative()` returns the exact composed Elysia instance for native tooling and Eden Treaty.
+- [AponiaApplication](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/application/aponia-elysia-application.ts): the application wrapper with `handle`, `listen`, `get`, and `close`.
+- [compileRootModule](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/modules/module-compiler.ts): lowers decorator metadata into the frozen descriptors `@aponiajs/core` consumes.
+- [defineController, controller, CONTROLLER_KIND](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/controllers/controller-definition.ts): descriptor-first controller definitions and the concise native-registration facade.
+- [HttpError, httpError, httpErrors](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/errors/http-error.ts): deliberate application failures serialized as RFC 9457 `application/problem+json`.
+- [PluginModule](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/plugins/plugin-module.ts): `register()` and `registerAsync()` mount a native Elysia plugin as a module import.
+- [definePlugin](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/plugins/plugin-module.ts): the same registration that also carries the plugin type, reachable as `plugin` at runtime.
+- [createServicePlugin, createEnhancerPlugin, wrapElysiaPlugin](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/plugins/service-plugin.ts): standardized builders for authoring service, enhancer, and Elysia bridge plugin packages with `.forRoot()` and `.forRootAsync()`.
+- [defineWebSocketGateway](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/websockets/gateway-definition.ts): declares a gateway's path, message handlers, and server properties as data instead of through `@WebSocketGateway()` and `@SubscribeMessage()`.
+- [downloadFile](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/routing/download-file.ts): writes the `content-disposition` value that names a download and returns the file the platform streams.
+- [provideConfiguration](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/configuration/provider.ts): turns a declared configuration into the singleton provider that validates it once at boot.
+- [RequestContextService, RequestContextModule](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/request-context/request-context-module.ts): per-request AsyncLocalStorage store and service exposing request ID, standard Request, and typed token storage.
+
+## Public types
+
+- [HandlerContext, RouteInputSchema](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/routing/route-context.types.ts): types a handler's context, taking a route schema, one plugin, or a tuple of plugins.
+- [PluginSource, PluginTypes, ElysiaResponseSettings, ResponseStatus, AppState](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/routing/route-context.types.ts): the native Elysia context fields named individually.
+- [AponiaApplicationOptions, AponiaListenOptions, ConfiguredAponiaApplicationOptions, RouteCompilationOptions, ElysiaConfigurator](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/application/application.types.ts): bootstrap options, including the Elysia precompile policy, the `health` probes, and the stop-signal option `listen` accepts.
+- [AponiaHealthOptions, AponiaHealthResponse, AponiaHealthStatus](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/application/application-health.types.ts): the probe path option and the one-member `application/health+json` answer the probes send.
+- [ElysiaApplication](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/application/native-application.types.ts): the native application type the factory composes.
+- [AponiaRootModule](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/modules/module-compiler.types.ts): what `compileRootModule` accepts.
+- [ControllerDescriptor, ControllerRegistrationOptions, ControllerRegistrationResult, RegisteredControllerDefinition, RegisteredApplication](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/controllers/controller.types.ts): controller definition and registration contracts.
+- [HttpErrorStatus, HttpErrorStatusCode, HttpErrorStatusName, HttpErrorFactory, HttpErrorOptions, HttpErrorFactories, ProblemDetails, ResolveHttpErrorStatus](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/errors/http-error.types.ts): the typed error status surface.
+- [PluginImport, PluginModuleOptions, AsyncPluginModuleOptions, ElysiaPlugin](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/plugins/plugin.types.ts): plugin registration contracts.
+- [WebSocketClient, WebSocketServerRef](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/websockets/websocket-gateway.types.ts): transparent aliases over the native Elysia socket and server objects.
+- [WebSocketGatewayPlan, WebSocketGatewayOptions, WebSocketHandlerPlan, DeclaredWebSocketGateway](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/websockets/gateway-plan.types.ts): the declared gateway's plan, its option contract, and the provider it compiles to.
+- [DownloadFileOptions](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/routing/download-file.types.ts): `attachment` or `inline`, the disposition a download is named with.
+- [RequestContext, RequestContextModuleOptions](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/request-context/request-context.types.ts): request context contract and module options.
+
+## Documentation
+
+- [Package README](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/README.md): bootstrap, gateways, route compilation policy, native plugins, and application errors.
+- [Request context](../../docs/request-context.md): per-request async local storage, request ID correlation, and token storage.
+- [End-to-end types with Eden Treaty](../../docs/eden-treaty.md): `createNative`, client inference, and the inference boundary.
+- [Native Elysia plugins](../../docs/native-plugins.md): mounting a plugin and typing what it adds to the context.
+- [WebSocket gateways](../../docs/websockets.md): the `{ event, data }` envelope, responses, lifecycle, and native publish/subscribe.
+- [Logging](../../docs/logging.md): the bootstrap log lines and logger configuration.
+- [Testing an application](../../docs/testing.md): asserting through `application.handle(new Request(...))` without a port.
+- [Lifecycle](../../docs/lifecycle.md): the five moments a provider can hook, what the framework does when one fails, stopping on a signal, and the readiness and liveness probes.
+- [Controllers and routes](../../docs/learn/05-controllers-and-routes.md): how a request reaches a controller method.
+- [Native plugins](../../docs/learn/08-native-plugins.md): the short walkthrough of mounting an Elysia plugin.
+- [Logging](../../docs/learn/09-logging.md): what the framework prints, and how to replace it.
+- [Testing](../../docs/learn/11-testing.md): exercising a real application without a port.
+- [Published packages](../../docs/packages.md): the npm catalog and install commands.

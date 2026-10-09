@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="title">
+  <title id="title">A small lavender flower</title>
+  <circle cx="60" cy="60" r="54" fill="#f6f0fc" />
+  <g fill="#c9b0e6">
+    <ellipse cx="60" cy="37" rx="15" ry="25" />
+    <ellipse cx="82" cy="53" rx="15" ry="25" transform="rotate(72 82 53)" />
+    <ellipse cx="74" cy="79" rx="15" ry="25" transform="rotate(144 74 79)" />
+    <ellipse cx="46" cy="79" rx="15" ry="25" transform="rotate(216 46 79)" />
+    <ellipse cx="38" cy="53" rx="15" ry="25" transform="rotate(288 38 53)" />
+  </g>
+  <circle cx="60" cy="60" r="17" fill="#f8d9db" />
+  <circle cx="55" cy="58" r="1.8" fill="#725d85" />
+  <circle cx="65" cy="58" r="1.8" fill="#725d85" />
+  <path d="M56 64c2.2 2.5 5.8 2.5 8 0" fill="none" stroke="#725d85" stroke-linecap="round" stroke-width="1.8" />
+</svg>

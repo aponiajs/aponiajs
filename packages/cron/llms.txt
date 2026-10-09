@@ -1,0 +1,91 @@
+# @aponiajs/cron
+
+> Declare scheduled jobs in an Aponia module, with the jobs read from a validated configuration. A thin adapter over `@elysia/cron` (which wraps croner): AponiaJS contributes a module a registration belongs in and a validated configuration the jobs come from, and no scheduling engine of its own.
+
+**This is not a job queue.** There is no persistence, no retries, no cross-process coordination, and no distributed lock. A cron expression in one process runs in that process: two instances of an application running the same registration both run the same jobs, at the same moment, once each. A job that did not run because the process was down did not run, and nothing replays it. An application that needs work to happen exactly once across a fleet needs a different package.
+
+**A reader who wants the raw plugin should use [`@elysia/cron`](https://www.npmjs.com/package/@elysia/cron) directly.** Nothing here is unavailable there, and mounting it through an Aponia `PluginModule` costs a few lines. What this package adds is declaration through a module and validation of the options, and nothing else.
+
+## What this package exports
+
+```ts
+import { CronModule, CronScheduler } from "@aponiajs/cron";
+import type { CronJob, CronJobContext, CronJobOptions, CronConfiguration, CronModuleOptions } from "@aponiajs/cron";
+```
+
+- `CronModule` — `CronModule.register(options)` returns the `DynamicModule` an application's `imports` accepts.
+- `CronScheduler` — the per-boot scheduler, which the module exports, so `application.get(CronScheduler)` reaches the boot's own jobs and the names the engine actually has.
+- `CronJob`, `CronJobContext`, `CronJobOptions`, `CronConfiguration` — the job contract. `CronJobOptions` is derived from `@elysia/cron`'s own `CronConfig`, so it cannot drift from the engine.
+- `CronModuleOptions` — `configuration`, `source`, and `key`.
+
+## Declaring a scheduler
+
+```ts
+import { Module } from "@aponiajs/common";
+import { CronModule } from "@aponiajs/cron";
+import { CronConfig } from "./config.ts";
+
+const scheduler = CronModule.register({ configuration: CronConfig });
+
+@Module({ imports: [scheduler] })
+export class AppModule {}
+```
+
+Both spellings mount the same module, and neither is lowered into the descriptor artifact `aponia build` writes. The build lowers an `imports` entry only when it is a single identifier naming a declaration read from the project's own source, and `CronModule.register({ ... })` returns a `DynamicModule` — a runtime value rather than such a declaration — so the module that names it is reported as `DECLINED` and left out of `descriptors.generated.ts` in every spelling, inline or held in a `const`. The scheduler still mounts and the application still boots; what is given up is the declared-graph boot.
+
+`key` names the module's identity and defaults to `"cron"`. Two registrations that share one key are one module identity, which the graph refuses as a duplicate rather than quietly scheduling one set of jobs twice. One registration per application is the supported shape: two registrations with distinct keys both mount and both run, but they are one `CronScheduler` token, so reading one back raises `AMBIGUOUS_PROVIDER`. `source` overrides what the configuration's schema validates — a literal record instead of `process.env` — which is what a test passes.
+
+## The validated configuration
+
+The jobs come from a `defineConfiguration` declaration, not from an object literal. The schema validates the parameters; the transform that reads them builds the jobs, which is why a job's `run` can be a closure over the application's own services and its pattern can still be a value an operator set:
+
+```ts
+import { defineConfiguration } from "@aponiajs/common";
+import { z } from "zod";
+
+export const CronConfig = defineConfiguration(
+  z
+    .object({
+      CRON_PATTERN: z.string().min(1).default("*/5 * * * * *"),
+      CRON_TIMEZONE: z.string().min(1).default("UTC"),
+    })
+    .transform(({ CRON_PATTERN, CRON_TIMEZONE }) => ({
+      jobs: [
+        {
+          name: "invoices",
+          pattern: CRON_PATTERN,
+          options: { timezone: CRON_TIMEZONE, protect: true },
+          run: ({ options }) => sendInvoices({ protect: options.protect }),
+        },
+      ],
+    })),
+  "cron.config",
+);
+```
+
+The module provides this token itself and exports it, so the application can read the same validated value back through `application.get(CronConfig)`.
+
+## A job
+
+`name` and `pattern` are both required and both must be non-empty; the scheduler checks that before it mounts anything. `pattern` is a cron expression, an ISO 8601 time, or a date, exactly as croner accepts it — six fields include seconds, five do not. `options` is forwarded to croner untouched: `timezone`, `maxRuns`, `protect`, `paused`, `startAt`, `stopAt`, `utcOffset`, `interval`, `legacyMode`, `context`, `catch`, `kill`, and `unref`. `run` is called once per tick with a frozen `CronJobContext` — the job's own `name`, `pattern`, and the options this package forwarded — and may be asynchronous. Its return value is ignored. `protect: true` skips a tick while the previous one is still running.
+
+`run` receives a context, not the Elysia store. That is the one place this adapter's contract differs from the plugin it wraps: `@elysia/cron` calls `run` with the store — its own type claims `Cron`, which is not the value it passes — and a scheduled job here has no use for a store. A job lifted out of a raw `@elysia/cron` call needs its parameter changed and nothing else.
+
+## Lifecycle
+
+Jobs start when the module mounts — while the application is being built, before anything listens — and are ended by `application.close()`, whether or not the application ever listened. The stop runs through the boot's `CronScheduler.onApplicationShutdown`. One registration declared by one module class is one `DynamicModule`, so two applications built from it in one process hold two schedulers, and stopping one leaves the other's jobs running.
+
+## Errors
+
+A refused configuration raises `AponiaError` with `INVALID_CONFIGURATION_VALUE` — the schema rejected the value, or the value the schema produced is not a list of jobs — carrying `{ configuration, issues }` in both cases, so one shape covers a refusal wherever it landed. `INVALID_CONFIGURATION` is `provideConfiguration`'s own refusal of a declaration that is not a Standard Schema or whose validation answers asynchronously.
+
+A job's own throw is not one of these. It is the engine's, it is not retried, and `options.catch` is how a job asks croner to survive one.
+
+## Links
+
+- [Package README](./README.md)
+- [`@elysia/cron` on npm](https://www.npmjs.com/package/@elysia/cron)
+- [croner](https://github.com/hexagon/croner)
+- [Configuration](../common/README.md)
+- [Native plugins](../../docs/native-plugins.md)
+- [Published packages](../../docs/packages.md)
