@@ -279,16 +279,13 @@ export type App = typeof app;
 
 When an application is built or run with `@aponiajs/cli` (or Bun preload),
 `aponia build` generates `descriptors.generated.ts` containing the lowered
-descriptors for all decorated controllers. Exporting `ElysiaApplication<typeof AppModuleDescriptor>`
-or passing the descriptor automatically provides the full route tree to Eden Treaty
-while preserving the standard bootstrap lifecycle:
+descriptors for all decorated controllers. The application bootstraps with the
+canonical `AponiaFactory.create(AppModule)` function without any manual descriptor wiring:
 
 ```ts
-import { AponiaFactory, type ElysiaApplication } from "@aponiajs/platform-elysia";
+// src/main.ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
 import { AppModule } from "./app.module.ts";
-import type { AppModuleDescriptor } from "./descriptors.generated.ts";
-
-export type App = ElysiaApplication<typeof AppModuleDescriptor>;
 
 export async function bootstrap(): Promise<void> {
   const application = await AponiaFactory.create(AppModule);
@@ -298,6 +295,18 @@ export async function bootstrap(): Promise<void> {
 if (import.meta.main) {
   await bootstrap();
 }
+```
+
+Frontend consumers and tests import the typed application contract via
+`ElysiaApplication<typeof AppModuleDescriptor>` from `descriptors.generated.ts`:
+
+```ts
+import { treaty } from "@elysia/eden";
+import type { ElysiaApplication } from "@aponiajs/platform-elysia";
+import type { AppModuleDescriptor } from "./descriptors.generated.ts";
+
+export type App = ElysiaApplication<typeof AppModuleDescriptor>;
+export const api = treaty<App>("http://localhost:3120");
 ```
 
 ## Test without opening a port

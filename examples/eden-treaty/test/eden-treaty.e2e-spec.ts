@@ -1,15 +1,14 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import { treaty, type Treaty } from "@elysia/eden";
 import type { AponiaApplication } from "@aponiajs/platform-elysia";
-import type { App } from "../src/main.ts";
-import { createApplication } from "./application.ts";
+import { createApplication, type App } from "./application.ts";
 
-let application: AponiaApplication<App>;
+let application: AponiaApplication;
 let client: Treaty.Create<App>;
 
 beforeAll(async () => {
   application = await createApplication();
-  client = treaty(application.getNativeApplication());
+  client = treaty<App>(application.getNativeApplication() as unknown as App);
 });
 
 afterAll(async () => {
