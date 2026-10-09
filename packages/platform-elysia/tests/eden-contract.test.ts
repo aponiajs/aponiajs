@@ -2,6 +2,7 @@ import { expect, test } from "bun:test";
 import { Controller, Get, Module, createDto, defineModule } from "@aponiajs/common";
 import { treaty, type Treaty } from "@elysia/eden";
 import { Elysia, t } from "elysia";
+import { type as arkType } from "arktype";
 import { z } from "zod";
 import {
   AponiaFactory,
@@ -430,6 +431,10 @@ class DeclaredEdenProductController {
   updateTag(data: { tag: string }) {
     return { tag: data.tag };
   }
+
+  updateMetadata(data: { sku: string; stock: number }) {
+    return data;
+  }
 }
 
 const ProductDto = createDto(
@@ -451,6 +456,11 @@ const TypeBoxTagDto = createDto(
     tag: t.String(),
   }),
 );
+
+const ArkMetadata = arkType({
+  sku: "string",
+  stock: "number",
+});
 
 const declaredProductsController = defineControllerRoutes(DeclaredEdenProductController, {
   path: "products",
@@ -487,6 +497,16 @@ const declaredProductsController = defineControllerRoutes(DeclaredEdenProductCon
         response: TypeBoxTagDto,
       },
     },
+    {
+      method: "PUT",
+      path: ":id/metadata",
+      propertyKey: "updateMetadata",
+      parameters: [{ index: 0, kind: "body", property: undefined }],
+      schema: {
+        body: ArkMetadata,
+        response: ArkMetadata,
+      },
+    },
   ] as const,
 });
 
@@ -505,14 +525,16 @@ test("infers full Eden Treaty types from defineControllerRoutes with inline and 
   type ProductGet = ReturnType<ClientType["products"]>["get"];
   type ProductPost = ClientType["products"]["post"];
   type ProductPatch = ReturnType<ClientType["products"]>["patch"];
+  type ProductPut = ReturnType<ClientType["products"]>["metadata"]["put"];
 
   type Assertions = [
     Expect<Equals<Treaty.Data<ProductGet>, { id: number; title: string }>>,
     Expect<Equals<Treaty.Data<ProductPost>, { id: number; title: string; price: number }>>,
     Expect<Equals<Treaty.Data<ProductPatch>, { tag: string }>>,
+    Expect<Equals<Treaty.Data<ProductPut>, { sku: string; stock: number }>>,
   ];
-  const assertions: Assertions = [true, true, true];
-  expect(assertions).toHaveLength(3);
+  const assertions: Assertions = [true, true, true, true];
+  expect(assertions).toHaveLength(4);
 
   const getRes = await client.products({ id: 5 }).get();
   expect(getRes.data).toEqual({ id: 5, title: "product-5" });
@@ -523,6 +545,9 @@ test("infers full Eden Treaty types from defineControllerRoutes with inline and 
   const patchRes = await client.products({ id: 5 }).patch({ tag: "featured" });
   expect(patchRes.data).toEqual({ tag: "featured" });
 
+  const putRes = await client.products({ id: 5 }).metadata.put({ sku: "WDG-1", stock: 50 });
+  expect(putRes.data).toEqual({ sku: "WDG-1", stock: 50 });
+
   function assertInvalidProductCalls(c: ClientType) {
     // @ts-expect-error Path param must be a number or string, not boolean
     void c.products({ id: true }).get();
@@ -530,6 +555,8 @@ test("infers full Eden Treaty types from defineControllerRoutes with inline and 
     void c.products.post({ title: "Bad", price: "free" });
     // @ts-expect-error Patch body requires string tag
     void c.products({ id: 5 }).patch({ tag: 999 });
+    // @ts-expect-error Put body requires string sku and number stock
+    void c.products({ id: 5 }).metadata.put({ sku: 123, stock: "many" });
   }
   expect(assertInvalidProductCalls).toBeFunction();
 });

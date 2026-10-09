@@ -1,5 +1,9 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import type { RouteResponseSchema, RouteResponseSchemaMap } from "./route-schema.types.ts";
+import type {
+  RouteResponseSchema,
+  RouteResponseSchemaMap,
+  ValidatorSchema,
+} from "./route-schema.types.ts";
 
 /**
  * The route schema slots a route decorator accepts, in canonical order.
@@ -29,6 +33,25 @@ export function isStandardSchema(validator: unknown): validator is StandardSchem
   return (
     (typeof validator === "object" && validator !== null && "~standard" in validator) ||
     (typeof validator === "function" && "~standard" in validator)
+  );
+}
+
+/**
+ * Answers whether a value is a platform-native TypeBox JSON Schema validator.
+ *
+ * Checks for the TypeBox schema markers: `~kind`, `~refine`, `~codec`, or `~unsafe`.
+ *
+ * @param validator - The value to test.
+ * @returns `true` when the value carries any TypeBox validator marker.
+ */
+export function isValidatorSchema(validator: unknown): validator is ValidatorSchema {
+  return (
+    typeof validator === "object" &&
+    validator !== null &&
+    ("~kind" in validator ||
+      "~refine" in validator ||
+      "~codec" in validator ||
+      "~unsafe" in validator)
   );
 }
 

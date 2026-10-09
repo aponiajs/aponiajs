@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import { AponiaError } from "../errors/aponia-error.ts";
-import { isStandardSchema } from "./route-schema.ts";
+import { isStandardSchema, isValidatorSchema } from "./route-schema.ts";
 import type { RouteValidator } from "./route-schema.types.ts";
 import type {
   RouteValidatorInput,
@@ -47,10 +47,7 @@ export function getValidationMetadata(
   if (!metadata) {
     return undefined;
   }
-  if (
-    isStandardSchema(metadata) ||
-    (typeof metadata === "object" && metadata !== null && "~kind" in metadata)
-  ) {
+  if (isStandardSchema(metadata) || isValidatorSchema(metadata)) {
     return Object.freeze({ validator: metadata as RouteValidator });
   }
   return metadata as Readonly<ValidationMetadata>;
@@ -85,12 +82,7 @@ export function resolveRouteValidator(input: RouteValidatorInput): RouteValidato
 
   const inheritedMetadata = Reflect.getMetadata(validationMetadataKey, input);
   if (inheritedMetadata) {
-    if (
-      isStandardSchema(inheritedMetadata) ||
-      (typeof inheritedMetadata === "object" &&
-        inheritedMetadata !== null &&
-        "~kind" in inheritedMetadata)
-    ) {
+    if (isStandardSchema(inheritedMetadata) || isValidatorSchema(inheritedMetadata)) {
       return inheritedMetadata as RouteValidator;
     }
     return inheritedMetadata.validator;

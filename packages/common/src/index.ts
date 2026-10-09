@@ -143,6 +143,7 @@ export type {
 export {
   isRouteResponseSchemaMap,
   isStandardSchema,
+  isValidatorSchema,
   routeSchemaSlots,
 } from "./routing/route-schema.ts";
 export type {
