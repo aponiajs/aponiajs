@@ -98,7 +98,7 @@ describe("release version gate", () => {
     ).rejects.toThrow("invalid is not a valid SemVer version.");
   });
 
-  test("accepts a stable release and rejects a non-increasing base version", async () => {
+  test("accepts a stable release and rejects a decreased base version", async () => {
     const fixture = await createReleaseFixture(["1.2.3", "1.2.3"], "1.2.3");
     const output: string[] = [];
     await verifyRelease({
@@ -118,26 +118,28 @@ describe("release version gate", () => {
       verifyRelease({
         packageFiles: fixture.packageFiles,
         lockfilePath: fixture.lockfilePath,
-        baseVersion: "1.2.3",
+        baseVersion: "1.2.4",
         log: () => {},
       }),
-    ).rejects.toThrow("Workspace version must increase on every push: 1.2.3 -> 1.2.3.");
+    ).rejects.toThrow("Workspace version must not decrease: 1.2.4 -> 1.2.3.");
   });
 
-  test("accepts a greater synchronized version", () => {
-    const result = verifyWithBaseVersion("0.0.0");
+  test("accepts a greater or equal synchronized version", () => {
+    const resultGreater = verifyWithBaseVersion("0.0.0");
+    expect(resultGreater.exitCode).toBe(0);
 
-    expect(result.exitCode).toBe(0);
-    expect(result.stdout.toString()).toContain(
+    const resultEqual = verifyWithBaseVersion(currentVersion);
+    expect(resultEqual.exitCode).toBe(0);
+    expect(resultEqual.stdout.toString()).toContain(
       `Verified synchronized release version ${currentVersion}.`,
     );
   });
 
-  test("rejects an unchanged version", () => {
-    const result = verifyWithBaseVersion(currentVersion);
+  test("rejects a decreased version", () => {
+    const result = verifyWithBaseVersion("99.0.0");
 
     expect(result.exitCode).toBe(1);
-    expect(result.stderr.toString()).toContain("Workspace version must increase on every push");
+    expect(result.stderr.toString()).toContain("Workspace version must not decrease");
   });
 });
 

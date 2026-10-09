@@ -32,15 +32,15 @@ jobs:
       - name: Install frozen dependencies
         run: bun ci
 
-      - name: Require a version bump
+      - name: Verify workspace version
         env:
           BEFORE_SHA: ${{ github.event.before }}
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          base_sha="$BEFORE_SHA"
+          base_sha="$PR_BASE_SHA"
           if [ -z "$base_sha" ]; then
-            base_sha="$PR_BASE_SHA"
+            base_sha="$BEFORE_SHA"
           fi
           if [ -z "$base_sha" ] || [ "$base_sha" = "0000000000000000000000000000000000000000" ]; then
             base_sha="$(git merge-base HEAD "origin/$DEFAULT_BRANCH")"

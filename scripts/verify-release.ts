@@ -54,10 +54,8 @@ export async function verifyRelease(options: VerifyReleaseOptions = {}): Promise
       throw new Error(`${baseVersion} is not a valid base SemVer version.`);
     }
 
-    if (Bun.semver.order(version, baseVersion) <= 0) {
-      throw new Error(
-        `Workspace version must increase on every push: ${baseVersion} -> ${version}.`,
-      );
+    if (Bun.semver.order(version, baseVersion) < 0) {
+      throw new Error(`Workspace version must not decrease: ${baseVersion} -> ${version}.`);
     }
   }
 

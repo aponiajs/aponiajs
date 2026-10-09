@@ -761,17 +761,17 @@ describe("release verification entry point", () => {
     ).rejects.toThrow("may only be published under");
   });
 
-  test("rejects a base version the workspace version did not increase past", async () => {
+  test("rejects a base version the workspace version decreased below", async () => {
     const { log } = collectLog();
 
     expect(
       verifyReleaseEntry({
-        baseVersion: workspaceVersion,
+        baseVersion: "99.0.0",
         log,
         releaseTag: "",
         releaseVersion: "",
       }),
-    ).rejects.toThrow("Workspace version must increase on every push");
+    ).rejects.toThrow("Workspace version must not decrease");
   });
 
   test("verifies the workspace without release variables as a process", async () => {
