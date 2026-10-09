@@ -122,13 +122,4 @@ export {
   compileModuleInMemory,
   COMPILED_DESCRIPTOR_SYMBOL,
 } from "./compiler/in-memory-compiler.ts";
-export { defineRoutes, createEdenContract } from "./routing/eden-contract.ts";
-export type {
-  EdenApp,
-  EdenRouteSet,
-  ExtractPathParams,
-  InferredEdenRoutes,
-  RouteDefinition,
-  TypedRoutePlan,
-  WithEdenRoutes,
-} from "./routing/route-eden.types.ts";
+export type { InferredEdenRoutes, TypedRoutePlan } from "./routing/route-eden.types.ts";

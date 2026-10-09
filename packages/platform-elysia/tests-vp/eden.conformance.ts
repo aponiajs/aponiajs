@@ -7,9 +7,7 @@ import {
   defineController,
   defineControllerRoutes,
   definePlugin,
-  defineRoutes,
   controller,
-  type EdenApp,
 } from "../src/index.ts";
 
 type VitePlusTest = typeof import("vite-plus/test");
@@ -243,26 +241,4 @@ test("the Vite+ lane preserves routes from defineControllerRoutes", async () => 
 
   const res = await client["conformance-items"]({ id: 99 }).get();
   expect(res.data).toEqual({ id: 99, name: "item-99" });
-});
-
-test("the Vite+ lane preserves routes from defineRoutes and EdenApp", async () => {
-  const itemRoutes = defineRoutes("virtual-items", [
-    {
-      method: "GET",
-      path: ":id",
-      schema: {
-        params: t.Object({ id: t.Number() }),
-        response: ItemDto,
-      },
-    },
-  ] as const);
-
-  const application = await createEdenConformanceApplication();
-  type App = EdenApp<typeof application, typeof itemRoutes>;
-  type CustomClient = Treaty.Create<App>;
-
-  type GetCall = ReturnType<CustomClient["virtual-items"]>["get"];
-  type Assertions = [Expect<Equals<Treaty.Data<GetCall>, { id: number; name: string }>>];
-  const assertions: Assertions = [true];
-  expect(assertions).toHaveLength(1);
 });

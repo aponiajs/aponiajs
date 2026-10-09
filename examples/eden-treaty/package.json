@@ -1,0 +1,21 @@
+{
+  "name": "@aponiajs/example-eden-treaty",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/main.ts",
+    "start": "bun run src/main.ts",
+    "build": "bun build ./src/main.ts --outdir ./dist --target bun",
+    "test": "bun test ../../examples/eden-treaty/test/*.e2e-spec.ts",
+    "check": "vp check"
+  },
+  "dependencies": {
+    "@aponiajs/common": "workspace:*",
+    "@aponiajs/core": "workspace:*",
+    "@aponiajs/platform-elysia": "workspace:*",
+    "@elysia/eden": "2.0.0-beta.6",
+    "elysia": "2.0.0-beta.24",
+    "zod": "^4.4.3"
+  }
+}

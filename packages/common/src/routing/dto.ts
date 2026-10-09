@@ -4,9 +4,15 @@ import { Validation } from "./validation.ts";
 const validationMetadataKey = Symbol.for("aponia.validation.metadata");
 
 /**
- * Infers the output type from a Standard Schema v1 validator.
+ * Infers the output type from a Standard Schema v1 validator or DTO constructor.
  */
-export type Infer<T> = T extends StandardSchemaV1 ? StandardSchemaV1.InferOutput<T> : never;
+export type Infer<T> = T extends StandardSchemaV1
+  ? StandardSchemaV1.InferOutput<T>
+  : T extends { readonly schema: infer S extends StandardSchemaV1 }
+    ? StandardSchemaV1.InferOutput<S>
+    : T extends new (...arguments_: never[]) => infer R
+      ? R
+      : never;
 
 /**
  * Constructor signature of a class created with `createDto`.

@@ -1,5 +1,4 @@
 import type { InferValidatorOutput, RequestMethod, RouteSchema } from "@aponiajs/common";
-import type { Elysia } from "elysia";
 import type { CreateEden, RouteBase } from "elysia/types";
 import type { RoutePlan } from "./route-plan.types.ts";
 
@@ -112,19 +111,6 @@ export type InferredEdenRoutes<TPrefix extends string, TRoutes extends readonly 
   : RouteBase;
 
 /**
- * A typed route definition for Eden Treaty.
- */
-export interface RouteDefinition<
-  TMethod extends string = string,
-  TPath extends string = string,
-  TSchema extends RouteSchema = RouteSchema,
-> {
-  readonly method: TMethod;
-  readonly path?: TPath;
-  readonly schema?: TSchema;
-}
-
-/**
  * A declared route plan carrying compile-time method, path, and schema literals.
  */
 export interface TypedRoutePlan<
@@ -136,58 +122,3 @@ export interface TypedRoutePlan<
   readonly path: TPath;
   readonly schema?: TSchema;
 }
-
-/**
- * A container holding declared routes with phantom `~routes` for Eden Treaty.
- */
-export interface EdenRouteSet<TPrefix extends string, TRoutes extends readonly unknown[]> {
-  readonly prefix: TPrefix;
-  readonly routes: TRoutes;
-  readonly "~routes": InferredEdenRoutes<TPrefix, TRoutes>;
-}
-
-/**
- * Extracts the `~routes` map from an `EdenRouteSet` or a tuple of them.
- */
-export type UnpackEdenRoutes<TRoutes> = (
-  TRoutes extends { readonly "~routes": infer R }
-    ? R
-    : TRoutes extends readonly [infer THead, ...infer TTail]
-      ? UnpackEdenRoutes<THead> & UnpackEdenRoutes<TTail>
-      : TRoutes extends readonly []
-        ? {}
-        : TRoutes
-) extends infer TRoutesResult extends RouteBase
-  ? TRoutesResult
-  : RouteBase;
-
-/**
- * Attaches Eden routes onto an Elysia application type.
- */
-export type WithEdenRoutes<TApp, TRoutes> =
-  TApp extends Elysia<
-    infer BasePath,
-    infer Scope,
-    infer Singleton,
-    infer Definitions,
-    infer Metadata,
-    infer ExistingRoutes,
-    infer Ephemeral,
-    infer Volatile
-  >
-    ? Elysia<
-        BasePath,
-        Scope,
-        Singleton,
-        Definitions,
-        Metadata,
-        ExistingRoutes & UnpackEdenRoutes<TRoutes>,
-        Ephemeral,
-        Volatile
-      >
-    : never;
-
-/**
- * Type alias for `WithEdenRoutes`.
- */
-export type EdenApp<TApp, TRoutes> = WithEdenRoutes<TApp, TRoutes>;

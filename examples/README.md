@@ -18,6 +18,7 @@ behavior the framework promises.
 | `lifecycle`            | A provider that announces its own start and stop                                                       | 3090 | `bun run example:lifecycle`            |
 | `configuration`        | A declared configuration, validated once at boot, injected, and read back                              | 3100 | `bun run example:configuration`        |
 | `devtools`             | What a boot compiled and what each request answered, served by the app itself                          | 3110 | `bun run example:devtools`             |
+| `eden-treaty`          | End-to-end type safety with Eden Treaty, path-agnostic DTOs, and inline schemas                        | 3120 | `bun run example:eden-treaty`          |
 
 Run every suite the way CI does:
 

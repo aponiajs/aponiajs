@@ -5,14 +5,10 @@ import { Elysia, t } from "elysia";
 import { z } from "zod";
 import {
   AponiaFactory,
-  createEdenContract,
   defineController,
   defineControllerRoutes,
   definePlugin,
-  defineRoutes,
   controller,
-  type EdenApp,
-  type WithEdenRoutes,
 } from "../src/index.ts";
 
 type Equals<TLeft, TRight> =
@@ -509,54 +505,4 @@ test("infers full Eden Treaty types from defineControllerRoutes with inline and 
     void c.products.post({ title: "Bad", price: "free" });
   }
   expect(assertInvalidProductCalls).toBeFunction();
-});
-
-test("preserves typed Eden contracts using defineRoutes and WithEdenRoutes / EdenApp", async () => {
-  const productRoutes = defineRoutes("items", [
-    {
-      method: "GET",
-      path: ":id",
-      schema: {
-        params: t.Object({ id: t.Number() }),
-        response: ProductDto,
-      },
-    },
-    {
-      method: "POST",
-      path: "",
-      schema: {
-        body: CreateProductDto,
-        response: { 201: ProductDto },
-      },
-    },
-  ] as const);
-
-  const application = await AponiaFactory.createNative(RuntimeOnlyModule, {
-    logger: false,
-  });
-
-  type TypedApp = EdenApp<typeof application, typeof productRoutes>;
-  type CustomClient = Treaty.Create<TypedApp>;
-
-  type GetCall = ReturnType<CustomClient["items"]>["get"];
-  type PostCall = CustomClient["items"]["post"];
-
-  type Assertions = [
-    Expect<Equals<Treaty.Data<GetCall>, { id: number; title: string }>>,
-    Expect<Equals<Treaty.Data<PostCall>, { id: number; title: string }>>,
-    Expect<Equals<TypedApp, WithEdenRoutes<typeof application, typeof productRoutes>>>,
-  ];
-  const assertions: Assertions = [true, true, true];
-  expect(assertions).toHaveLength(3);
-
-  function assertInvalidItemCalls(c: CustomClient) {
-    // @ts-expect-error Path param must match route
-    void c.items({ id: true }).get();
-    // @ts-expect-error Post body requires title and price
-    void c.items.post({ title: 123 });
-  }
-  expect(assertInvalidItemCalls).toBeFunction();
-
-  const contract = createEdenContract<"sample", typeof productRoutes.routes>();
-  expect(contract).toBeDefined();
 });

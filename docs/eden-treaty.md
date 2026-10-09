@@ -275,22 +275,23 @@ export const app = await AponiaFactory.createNative(AppModule);
 export type App = typeof app;
 ```
 
-## Connecting Decorated Controllers with `defineRoutes` and `EdenApp`
+## Connecting Decorated Controllers with Descriptor Artifacts
 
-For applications authored with `@Controller()` and `@Get()`/`@Post()` decorators,
-`defineRoutes` and `WithEdenRoutes` (aliased as `EdenApp`) project declared
-routes onto the exported application type without runtime overhead:
+When an application is built or run with `@aponiajs/cli` (or Bun preload),
+`aponia build` generates `descriptors.generated.ts` containing the lowered
+descriptors for all decorated controllers. Passing `moduleDescriptorArtifact`
+to `createNative` automatically projects the full route tree into Eden Treaty
+while preserving the decorated `@Controller()` authoring style:
 
 ```ts
-import { defineRoutes, type EdenApp } from "@aponiajs/platform-elysia";
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+import { moduleDescriptorArtifact } from "./descriptors.generated.ts";
 
-export const userRoutes = defineRoutes("users", [
-  { method: "GET", path: ":id", schema: { response: UserDto } },
-  { method: "POST", path: "", schema: { body: CreateUserDto, response: UserDto } },
-] as const);
-
-export const app = await AponiaFactory.createNative(AppModule);
-export type App = EdenApp<typeof app, typeof userRoutes>;
+export const app = await AponiaFactory.createNative(AppModule, {
+  descriptors: moduleDescriptorArtifact,
+});
+export type App = typeof app;
 ```
 
 ## Test without opening a port
@@ -339,7 +340,7 @@ TypeScript can preserve routes that are visible in source:
 
 - native applications wrapped by `definePlugin`;
 - `defineControllerRoutes` descriptors carrying declared route plans;
-- application routes augmented with `defineRoutes` and `EdenApp` / `WithEdenRoutes`;
+- decorated modules booted with `moduleDescriptorArtifact`;
 - `controller` registrations that return their fluent Elysia chain;
 - `defineController` descriptors whose `buildPlugin` returns a typed
   Elysia plugin;
