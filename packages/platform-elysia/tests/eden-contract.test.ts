@@ -426,6 +426,10 @@ class DeclaredEdenProductController {
   createProduct(data: { title: string; price: number }) {
     return { id: 101, title: data.title, price: data.price };
   }
+
+  updateTag(data: { tag: string }) {
+    return { tag: data.tag };
+  }
 }
 
 const ProductDto = createDto(
@@ -439,6 +443,12 @@ const CreateProductDto = createDto(
   z.object({
     title: z.string(),
     price: z.number(),
+  }),
+);
+
+const TypeBoxTagDto = createDto(
+  t.Object({
+    tag: t.String(),
   }),
 );
 
@@ -467,6 +477,16 @@ const declaredProductsController = defineControllerRoutes(DeclaredEdenProductCon
         },
       },
     },
+    {
+      method: "PATCH",
+      path: ":id",
+      propertyKey: "updateTag",
+      parameters: [{ index: 0, kind: "body", property: undefined }],
+      schema: {
+        body: TypeBoxTagDto,
+        response: TypeBoxTagDto,
+      },
+    },
   ] as const,
 });
 
@@ -484,13 +504,15 @@ test("infers full Eden Treaty types from defineControllerRoutes with inline and 
   type ClientType = typeof client;
   type ProductGet = ReturnType<ClientType["products"]>["get"];
   type ProductPost = ClientType["products"]["post"];
+  type ProductPatch = ReturnType<ClientType["products"]>["patch"];
 
   type Assertions = [
     Expect<Equals<Treaty.Data<ProductGet>, { id: number; title: string }>>,
     Expect<Equals<Treaty.Data<ProductPost>, { id: number; title: string; price: number }>>,
+    Expect<Equals<Treaty.Data<ProductPatch>, { tag: string }>>,
   ];
-  const assertions: Assertions = [true, true];
-  expect(assertions).toHaveLength(2);
+  const assertions: Assertions = [true, true, true];
+  expect(assertions).toHaveLength(3);
 
   const getRes = await client.products({ id: 5 }).get();
   expect(getRes.data).toEqual({ id: 5, title: "product-5" });
@@ -498,11 +520,16 @@ test("infers full Eden Treaty types from defineControllerRoutes with inline and 
   const postRes = await client.products.post({ title: "Widget", price: 29.99 });
   expect(postRes.data).toEqual({ id: 101, title: "Widget", price: 29.99 });
 
+  const patchRes = await client.products({ id: 5 }).patch({ tag: "featured" });
+  expect(patchRes.data).toEqual({ tag: "featured" });
+
   function assertInvalidProductCalls(c: ClientType) {
     // @ts-expect-error Path param must be a number or string, not boolean
     void c.products({ id: true }).get();
     // @ts-expect-error Post body requires number price
     void c.products.post({ title: "Bad", price: "free" });
+    // @ts-expect-error Patch body requires string tag
+    void c.products({ id: 5 }).patch({ tag: 999 });
   }
   expect(assertInvalidProductCalls).toBeFunction();
 });

@@ -47,8 +47,11 @@ export function getValidationMetadata(
   if (!metadata) {
     return undefined;
   }
-  if (isStandardSchema(metadata)) {
-    return Object.freeze({ validator: metadata });
+  if (
+    isStandardSchema(metadata) ||
+    (typeof metadata === "object" && metadata !== null && "~kind" in metadata)
+  ) {
+    return Object.freeze({ validator: metadata as RouteValidator });
   }
   return metadata as Readonly<ValidationMetadata>;
 }
@@ -76,13 +79,21 @@ export function resolveRouteValidator(input: RouteValidatorInput): RouteValidato
     return metadata.validator;
   }
 
-  if ("schema" in input && isStandardSchema((input as { readonly schema: unknown }).schema)) {
+  if ("schema" in input && (input as { readonly schema: unknown }).schema !== undefined) {
     return (input as { readonly schema: RouteValidator }).schema;
   }
 
   const inheritedMetadata = Reflect.getMetadata(validationMetadataKey, input);
   if (inheritedMetadata) {
-    return isStandardSchema(inheritedMetadata) ? inheritedMetadata : inheritedMetadata.validator;
+    if (
+      isStandardSchema(inheritedMetadata) ||
+      (typeof inheritedMetadata === "object" &&
+        inheritedMetadata !== null &&
+        "~kind" in inheritedMetadata)
+    ) {
+      return inheritedMetadata as RouteValidator;
+    }
+    return inheritedMetadata.validator;
   }
 
   throw new AponiaError(

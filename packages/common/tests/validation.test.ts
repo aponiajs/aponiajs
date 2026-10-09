@@ -56,9 +56,17 @@ test("records one immutable validator metadata entry on its declaring class", ()
 });
 
 test("resolves validation models and preserves raw validator instances", () => {
+  class ChildCreateUser extends CreateUser {}
+
   expect(resolveRouteValidator(CreateUser)).toBe(nameSchema);
+  expect(resolveRouteValidator(ChildCreateUser)).toBe(nameSchema);
   expect(resolveRouteValidator(nameSchema)).toBe(nameSchema);
   expect(resolveRouteValidator(nativeSchema)).toBe(nativeSchema);
+
+  class RawMetadataBase {}
+  Reflect.defineMetadata(Symbol.for("aponia.validation.metadata"), nativeSchema, RawMetadataBase);
+  class ChildRawMetadata extends RawMetadataBase {}
+  expect(resolveRouteValidator(ChildRawMetadata)).toBe(nativeSchema);
 });
 
 test("checks callable Standard Schema validators before constructor resolution", () => {
