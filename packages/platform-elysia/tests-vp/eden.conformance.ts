@@ -1,7 +1,16 @@
 import { treaty, type Treaty } from "@elysia/eden";
-import { defineModule } from "@aponiajs/common";
+import { createDto, defineModule } from "@aponiajs/common";
 import { Elysia, t } from "elysia";
-import { AponiaFactory, defineController, definePlugin, controller } from "../src/index.ts";
+import { z } from "zod";
+import {
+  AponiaFactory,
+  defineController,
+  defineControllerRoutes,
+  definePlugin,
+  defineRoutes,
+  controller,
+  type EdenApp,
+} from "../src/index.ts";
 
 type VitePlusTest = typeof import("vite-plus/test");
 
@@ -185,4 +194,75 @@ test("the Vite+ lane composes multiple controller styles and a native plugin", a
   expect(pluginResult.data).toEqual({ id: 11, source: "aponia" });
   expect(registeredResult.data).toEqual({ id: 12, source: "registered" });
   expect(nativeResult.data).toEqual({ source: "native" });
+});
+
+class ConformanceItemController {
+  find(id: number) {
+    return { id, name: `item-${id}` };
+  }
+}
+
+const ItemDto = createDto(
+  z.object({
+    id: z.number(),
+    name: z.string(),
+  }),
+);
+
+const declaredItemController = defineControllerRoutes(ConformanceItemController, {
+  path: "conformance-items",
+  routes: [
+    {
+      method: "GET",
+      path: ":id",
+      propertyKey: "find",
+      parameters: [{ index: 0, kind: "params", property: "id" }],
+      schema: {
+        params: t.Object({ id: t.Number() }),
+        response: ItemDto,
+      },
+    },
+  ] as const,
+});
+
+const declaredItemModule = defineModule({
+  id: "DeclaredItemModule",
+  controllers: [declaredItemController],
+});
+
+test("the Vite+ lane preserves routes from defineControllerRoutes", async () => {
+  const application = await AponiaFactory.createNative(declaredItemModule, {
+    logger: false,
+  });
+  const client = treaty(application);
+
+  type ItemGet = ReturnType<(typeof client)["conformance-items"]>["get"];
+  type Assertions = [Expect<Equals<Treaty.Data<ItemGet>, { id: number; name: string }>>];
+  const assertions: Assertions = [true];
+  expect(assertions).toHaveLength(1);
+
+  const res = await client["conformance-items"]({ id: 99 }).get();
+  expect(res.data).toEqual({ id: 99, name: "item-99" });
+});
+
+test("the Vite+ lane preserves routes from defineRoutes and EdenApp", async () => {
+  const itemRoutes = defineRoutes("virtual-items", [
+    {
+      method: "GET",
+      path: ":id",
+      schema: {
+        params: t.Object({ id: t.Number() }),
+        response: ItemDto,
+      },
+    },
+  ] as const);
+
+  const application = await createEdenConformanceApplication();
+  type App = EdenApp<typeof application, typeof itemRoutes>;
+  type CustomClient = Treaty.Create<App>;
+
+  type GetCall = ReturnType<CustomClient["virtual-items"]>["get"];
+  type Assertions = [Expect<Equals<Treaty.Data<GetCall>, { id: number; name: string }>>];
+  const assertions: Assertions = [true];
+  expect(assertions).toHaveLength(1);
 });

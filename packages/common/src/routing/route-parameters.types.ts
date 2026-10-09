@@ -12,7 +12,7 @@ export interface RouteParameterMetadata {
   /** The request piece this parameter reads. */
   readonly kind: RouteParameterKind;
   /** The named property to read, or the whole piece when `undefined`. */
-  readonly property: string | undefined;
+  readonly property?: string | undefined;
   /** Custom parameter factory callback when kind is "custom". */
   readonly factory?: CustomParamFactory<unknown, unknown>;
   /** Custom data passed to custom parameter factory. */

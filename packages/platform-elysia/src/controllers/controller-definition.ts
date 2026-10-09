@@ -11,6 +11,7 @@ import {
 import { Elysia, type AnyElysia } from "elysia";
 import { joinPaths, registerCompiledElysiaRoutes } from "../routing/route-compiler.ts";
 import type { CompiledElysiaRoute } from "../routing/route-compiler.types.ts";
+import type { InferredEdenRoutes } from "../routing/route-eden.types.ts";
 import type { RoutePlan } from "../routing/route-plan.types.ts";
 import { CONTROLLER_KIND } from "./controller.constants.ts";
 import { unmountedRouteEnhancers } from "./enhancer-resolver.ts";
@@ -193,10 +194,12 @@ function createControllerDefinition<
 export function defineControllerRoutes<
   TController,
   const TDependencies extends readonly Token<unknown>[] = readonly [],
+  const TPath extends string = "",
+  const TRoutes extends readonly RoutePlan[] = readonly RoutePlan[],
 >(
   useClass: Constructor<TController, TokenMap<TDependencies>>,
-  options: ControllerRoutesOptions<TDependencies>,
-): DeclaredControllerDefinition<TController, TDependencies> {
+  options: ControllerRoutesOptions<TDependencies, TPath, TRoutes>,
+): DeclaredControllerDefinition<TController, TDependencies, InferredEdenRoutes<TPath, TRoutes>> {
   const controllerPath = options.path ?? "";
   const routes = Object.freeze(
     options.routes.map((plan) => compileRoutePlan(plan, controllerPath)),
@@ -226,9 +229,20 @@ export function defineControllerRoutes<
     buildPlugin: (controller: TController) => {
       const plugin = new Elysia();
       registerRoutes(plugin, controller);
-      return plugin;
+      return plugin as unknown as Elysia<
+        "",
+        "local",
+        any,
+        any,
+        any,
+        InferredEdenRoutes<TPath, TRoutes>
+      >;
     },
-  });
+  }) as unknown as DeclaredControllerDefinition<
+    TController,
+    TDependencies,
+    InferredEdenRoutes<TPath, TRoutes>
+  >;
 }
 
 /**

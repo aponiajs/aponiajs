@@ -16,14 +16,14 @@ separate contract, type assertion, adapter, or custom fetcher.
 The server needs Aponia and Elysia:
 
 ```bash
-bun add @aponiajs/common@beta @aponiajs/platform-elysia@beta elysia@2.0.0-beta.19
+bun add @aponiajs/common@beta @aponiajs/platform-elysia@beta elysia@2.0.0-beta.24
 ```
 
 The client needs Eden. Keep its Elysia version aligned with the server:
 
 ```bash
 bun add @elysia/eden
-bun add --dev elysia@2.0.0-beta.19
+bun add --dev elysia@2.0.0-beta.24
 ```
 
 ## Define and export the application
@@ -190,6 +190,109 @@ const app = await AponiaFactory.createNative(AppModule, {
 });
 ```
 
+## High-DX Route Descriptors with `defineControllerRoutes`
+
+`defineControllerRoutes` declares controller routes as data while preserving
+their static types for Eden Treaty without manual `new Elysia()` chaining.
+DTOs are path-agnostic contracts, and validation schemas can be declared either
+inline or as separate DTOs:
+
+```ts
+import { createDto, defineModule, provideClass } from "@aponiajs/common";
+import { AponiaFactory, defineControllerRoutes } from "@aponiajs/platform-elysia";
+import { t } from "elysia";
+import { z } from "zod";
+
+// DTOs require no path — they are pure validation and transport contracts
+const UserDto = createDto(
+  z.object({
+    id: z.number(),
+    name: z.string(),
+  }),
+);
+
+const CreateUserDto = createDto(
+  z.object({
+    name: z.string().min(2),
+  }),
+);
+
+class UsersService {
+  find(id: number) {
+    return { id, name: `user-${id}` };
+  }
+  create(data: { name: string }) {
+    return { id: 42, name: data.name };
+  }
+}
+
+class UsersController {
+  constructor(readonly users: UsersService) {}
+  find(id: number) {
+    return this.users.find(id);
+  }
+  create(data: { name: string }) {
+    return this.users.create(data);
+  }
+}
+
+export const usersController = defineControllerRoutes(UsersController, {
+  path: "users",
+  inject: [UsersService],
+  routes: [
+    {
+      method: "GET",
+      path: ":id",
+      propertyKey: "find",
+      parameters: [{ index: 0, kind: "params", property: "id" }],
+      schema: {
+        params: t.Object({ id: t.Number() }),
+        response: UserDto, // Separate DTO
+      },
+    },
+    {
+      method: "POST",
+      path: "",
+      propertyKey: "create",
+      parameters: [{ index: 0, kind: "body" }],
+      schema: {
+        body: CreateUserDto, // Separate DTO
+        response: {
+          201: t.Object({ id: t.Number(), name: t.String() }), // Inline schema
+        },
+      },
+    },
+  ] as const,
+});
+
+const AppModule = defineModule({
+  id: "AppModule",
+  providers: [provideClass(UsersService, [])],
+  controllers: [usersController],
+});
+
+export const app = await AponiaFactory.createNative(AppModule);
+export type App = typeof app;
+```
+
+## Connecting Decorated Controllers with `defineRoutes` and `EdenApp`
+
+For applications authored with `@Controller()` and `@Get()`/`@Post()` decorators,
+`defineRoutes` and `WithEdenRoutes` (aliased as `EdenApp`) project declared
+routes onto the exported application type without runtime overhead:
+
+```ts
+import { defineRoutes, type EdenApp } from "@aponiajs/platform-elysia";
+
+export const userRoutes = defineRoutes("users", [
+  { method: "GET", path: ":id", schema: { response: UserDto } },
+  { method: "POST", path: "", schema: { body: CreateUserDto, response: UserDto } },
+] as const);
+
+export const app = await AponiaFactory.createNative(AppModule);
+export type App = EdenApp<typeof app, typeof userRoutes>;
+```
+
 ## Test without opening a port
 
 Treaty accepts the returned Elysia instance directly:
@@ -235,6 +338,8 @@ Aponia lifecycle facade, startup logging, `getUrl`, or `close` is more useful.
 TypeScript can preserve routes that are visible in source:
 
 - native applications wrapped by `definePlugin`;
+- `defineControllerRoutes` descriptors carrying declared route plans;
+- application routes augmented with `defineRoutes` and `EdenApp` / `WithEdenRoutes`;
 - `controller` registrations that return their fluent Elysia chain;
 - `defineController` descriptors whose `buildPlugin` returns a typed
   Elysia plugin;

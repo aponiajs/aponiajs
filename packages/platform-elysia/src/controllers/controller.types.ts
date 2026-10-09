@@ -6,6 +6,7 @@ import type {
   TokenMap,
 } from "@aponiajs/common";
 import type { AnyElysia, Elysia } from "elysia";
+import type { RouteBase } from "elysia/types";
 import type { CompiledElysiaRoute } from "../routing/route-compiler.types.ts";
 import type { RoutePlan } from "../routing/route-plan.types.ts";
 import type { CONTROLLER_KIND } from "./controller.constants.ts";
@@ -76,13 +77,15 @@ export interface ControllerRegistrationOptions<
 /** What `defineControllerRoutes` accepts. */
 export interface ControllerRoutesOptions<
   TDependencies extends readonly InjectionDependency[] = readonly InjectionDependency[],
+  TPath extends string = string,
+  TRoutes extends readonly RoutePlan[] = readonly RoutePlan[],
 > {
   /** The controller's own path, joined onto each route plan's path. */
-  readonly path?: string;
+  readonly path?: TPath;
   /** The controller's constructor dependencies, as `defineController` takes them. */
   readonly inject?: TDependencies;
   /** The routes this controller declares. */
-  readonly routes: readonly RoutePlan[];
+  readonly routes: TRoutes;
 }
 
 /**
@@ -97,7 +100,12 @@ export interface ControllerRoutesOptions<
 export interface DeclaredControllerDefinition<
   TController,
   TDependencies extends readonly Token<unknown>[],
-> extends RegisteredControllerDefinition<TController, TDependencies> {
+  TRoutes extends RouteBase = {},
+> extends RegisteredControllerDefinition<
+  TController,
+  TDependencies,
+  Elysia<"", "local", any, any, any, TRoutes>
+> {
   readonly compiledRoutes: readonly CompiledElysiaRoute[];
 }
 

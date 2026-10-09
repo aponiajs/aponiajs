@@ -6,7 +6,7 @@ import {
   type ModuleDefinition,
   type Token,
 } from "@aponiajs/common";
-import type { Elysia } from "elysia";
+import type { AnyElysia, Elysia } from "elysia";
 import { isElysiaController } from "../controllers/controller-definition.ts";
 import type { InterceptorPhases } from "../controllers/enhancer-resolver.ts";
 import type {
@@ -132,7 +132,7 @@ export function attachApplicationDiagnostics(
  * @internal
  */
 export function getApplicationDiagnostics(
-  application: Elysia,
+  application: AnyElysia,
 ): AponiaApplicationDiagnostics | undefined {
   return (application as { readonly [diagnosticsKey]?: AponiaApplicationDiagnostics })[
     diagnosticsKey

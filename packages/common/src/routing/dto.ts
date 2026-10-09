@@ -13,8 +13,9 @@ export type Infer<T> = T extends StandardSchemaV1 ? StandardSchemaV1.InferOutput
  *
  * Provides both the typed instance representation and the static schema reference.
  */
-export type DtoConstructor<T extends StandardSchemaV1> = {
-  new (): StandardSchemaV1.InferOutput<T>;
+export type DtoConstructor<T extends StandardSchemaV1> = (new (
+  ...arguments_: never[]
+) => StandardSchemaV1.InferOutput<T>) & {
   readonly schema: T;
 };
 

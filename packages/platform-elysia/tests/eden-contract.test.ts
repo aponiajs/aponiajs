@@ -1,8 +1,19 @@
 import { expect, test } from "bun:test";
-import { Controller, Get, Module, defineModule } from "@aponiajs/common";
+import { Controller, Get, Module, createDto, defineModule } from "@aponiajs/common";
 import { treaty, type Treaty } from "@elysia/eden";
 import { Elysia, t } from "elysia";
-import { AponiaFactory, defineController, definePlugin, controller } from "../src/index.ts";
+import { z } from "zod";
+import {
+  AponiaFactory,
+  createEdenContract,
+  defineController,
+  defineControllerRoutes,
+  definePlugin,
+  defineRoutes,
+  controller,
+  type EdenApp,
+  type WithEdenRoutes,
+} from "../src/index.ts";
 
 type Equals<TLeft, TRight> =
   (<T>() => T extends TLeft ? 1 : 2) extends <T>() => T extends TRight ? 1 : 2 ? true : false;
@@ -409,4 +420,143 @@ test("preserves every Eden route across multiple controller styles and plugins",
   expect(registered.data).toEqual({ id: 10, source: "registered" });
   expect(health.data).toEqual({ status: "ok" });
   expect(version.data).toEqual({ channel: "alpha" });
+});
+
+class DeclaredEdenProductController {
+  findById(id: number) {
+    return { id, title: `product-${id}` };
+  }
+
+  createProduct(data: { title: string; price: number }) {
+    return { id: 101, title: data.title, price: data.price };
+  }
+}
+
+const ProductDto = createDto(
+  z.object({
+    id: z.number(),
+    title: z.string(),
+  }),
+);
+
+const CreateProductDto = createDto(
+  z.object({
+    title: z.string(),
+    price: z.number(),
+  }),
+);
+
+const declaredProductsController = defineControllerRoutes(DeclaredEdenProductController, {
+  path: "products",
+  routes: [
+    {
+      method: "GET",
+      path: ":id",
+      propertyKey: "findById",
+      parameters: [{ index: 0, kind: "params", property: "id" }],
+      schema: {
+        params: t.Object({ id: t.Number() }),
+        response: ProductDto,
+      },
+    },
+    {
+      method: "POST",
+      path: "",
+      propertyKey: "createProduct",
+      parameters: [{ index: 0, kind: "body", property: undefined }],
+      schema: {
+        body: CreateProductDto,
+        response: {
+          201: t.Object({ id: t.Number(), title: t.String(), price: t.Number() }),
+        },
+      },
+    },
+  ] as const,
+});
+
+const declaredProductsModule = defineModule({
+  id: "DeclaredProductsModule",
+  controllers: [declaredProductsController],
+});
+
+test("infers full Eden Treaty types from defineControllerRoutes with inline and DTO schemas", async () => {
+  const application = await AponiaFactory.createNative(declaredProductsModule, {
+    logger: false,
+  });
+  const client = treaty(application);
+
+  type ClientType = typeof client;
+  type ProductGet = ReturnType<ClientType["products"]>["get"];
+  type ProductPost = ClientType["products"]["post"];
+
+  type Assertions = [
+    Expect<Equals<Treaty.Data<ProductGet>, { id: number; title: string }>>,
+    Expect<Equals<Treaty.Data<ProductPost>, { id: number; title: string; price: number }>>,
+  ];
+  const assertions: Assertions = [true, true];
+  expect(assertions).toHaveLength(2);
+
+  const getRes = await client.products({ id: 5 }).get();
+  expect(getRes.data).toEqual({ id: 5, title: "product-5" });
+
+  const postRes = await client.products.post({ title: "Widget", price: 29.99 });
+  expect(postRes.data).toEqual({ id: 101, title: "Widget", price: 29.99 });
+
+  function assertInvalidProductCalls(c: ClientType) {
+    // @ts-expect-error Path param must be a number or string, not boolean
+    void c.products({ id: true }).get();
+    // @ts-expect-error Post body requires number price
+    void c.products.post({ title: "Bad", price: "free" });
+  }
+  expect(assertInvalidProductCalls).toBeFunction();
+});
+
+test("preserves typed Eden contracts using defineRoutes and WithEdenRoutes / EdenApp", async () => {
+  const productRoutes = defineRoutes("items", [
+    {
+      method: "GET",
+      path: ":id",
+      schema: {
+        params: t.Object({ id: t.Number() }),
+        response: ProductDto,
+      },
+    },
+    {
+      method: "POST",
+      path: "",
+      schema: {
+        body: CreateProductDto,
+        response: { 201: ProductDto },
+      },
+    },
+  ] as const);
+
+  const application = await AponiaFactory.createNative(RuntimeOnlyModule, {
+    logger: false,
+  });
+
+  type TypedApp = EdenApp<typeof application, typeof productRoutes>;
+  type CustomClient = Treaty.Create<TypedApp>;
+
+  type GetCall = ReturnType<CustomClient["items"]>["get"];
+  type PostCall = CustomClient["items"]["post"];
+
+  type Assertions = [
+    Expect<Equals<Treaty.Data<GetCall>, { id: number; title: string }>>,
+    Expect<Equals<Treaty.Data<PostCall>, { id: number; title: string }>>,
+    Expect<Equals<TypedApp, WithEdenRoutes<typeof application, typeof productRoutes>>>,
+  ];
+  const assertions: Assertions = [true, true, true];
+  expect(assertions).toHaveLength(3);
+
+  function assertInvalidItemCalls(c: CustomClient) {
+    // @ts-expect-error Path param must match route
+    void c.items({ id: true }).get();
+    // @ts-expect-error Post body requires title and price
+    void c.items.post({ title: 123 });
+  }
+  expect(assertInvalidItemCalls).toBeFunction();
+
+  const contract = createEdenContract<"sample", typeof productRoutes.routes>();
+  expect(contract).toBeDefined();
 });
