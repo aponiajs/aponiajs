@@ -1,5 +1,5 @@
 import { Injectable } from "@aponiajs/common";
-import type { CreateUserInput, User } from "../models/user.dto.ts";
+import type { CreateUserInput, User } from "../models/user.schema.ts";
 
 @Injectable()
 export class UsersService {

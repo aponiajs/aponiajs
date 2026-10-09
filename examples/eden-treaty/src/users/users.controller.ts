@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Post } from "@aponiajs/common";
 import { t } from "elysia";
-import { CreateUserDto, type CreateUserInput, UserDto } from "../models/user.dto.ts";
+import { CreateUserSchema, type CreateUserInput, UserSchema } from "../models/user.schema.ts";
 import { UsersService } from "./users.service.ts";
 
 @Controller("users")
@@ -16,15 +16,15 @@ export class UsersController {
 
   @Get(":id", {
     params: t.Object({ id: t.Number() }),
-    response: UserDto,
+    response: UserSchema,
   })
   findById(@Param("id") id: number) {
     return this.usersService.findById(id);
   }
 
   @Post("", {
-    body: CreateUserDto,
-    response: UserDto,
+    body: CreateUserSchema,
+    response: UserSchema,
   })
   create(@Body() body: CreateUserInput) {
     return this.usersService.create(body);

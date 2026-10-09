@@ -2,7 +2,7 @@
 import { defineModule, provideClass } from "@aponiajs/common";
 import { defineControllerRoutes } from "@aponiajs/platform-elysia";
 import { t } from "elysia";
-import { CreateUserDto, UserDto } from "./models/user.dto.ts";
+import { CreateUserSchema, UserSchema } from "./models/user.schema.ts";
 import { UsersController } from "./users/users.controller.ts";
 import { UsersService } from "./users/users.service.ts";
 
@@ -28,7 +28,7 @@ const UsersModuleDescriptor = defineModule({
           parameters: [{ index: 0, kind: "params", property: "id" }],
           schema: {
             params: t.Object({ id: t.Number() }),
-            response: UserDto,
+            response: UserSchema,
           },
         },
         {
@@ -37,8 +37,8 @@ const UsersModuleDescriptor = defineModule({
           propertyKey: "create",
           parameters: [{ index: 0, kind: "body", property: undefined }],
           schema: {
-            body: CreateUserDto,
-            response: UserDto,
+            body: CreateUserSchema,
+            response: UserSchema,
           },
         },
       ] as const,
