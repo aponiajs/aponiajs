@@ -49,9 +49,9 @@
     "@aponiajs/platform-elysia": "workspace:*"
   },
   "devDependencies": {
-    "elysia": "2.0.0-beta.19"
+    "elysia": "2.0.0-beta.24"
   },
   "peerDependencies": {
-    "elysia": "2.0.0-beta.19"
+    "elysia": "2.0.0-beta.24"
   }
 }

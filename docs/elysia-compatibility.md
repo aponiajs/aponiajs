@@ -12,7 +12,7 @@ dependency, and it is an exact pin rather than a range:
 
 ```json
 "peerDependencies": {
-  "elysia": "2.0.0-beta.19",
+  "elysia": "2.0.0-beta.24",
   "typebox": "^1.3.0"
 }
 ```
@@ -21,7 +21,7 @@ Every workspace manifest, every example, and the generator template declares
 that same pin.
 
 The Elysia pin is exact on purpose, because a caret over a prerelease does not
-mean what it looks like. `^2.0.0-beta.19` also matches `2.0.0-exp.64`: semver
+mean what it looks like. `^2.0.0-beta.24` also matches `2.0.0-exp.64`: semver
 compares prerelease identifiers as strings, `exp` sorts above `beta`, and an
 identifier is compared only when the version core matches, so the caret would
 accept an Elysia experiment release. The exact pin is what keeps an installed
@@ -60,7 +60,7 @@ Declare one range across the whole workspace, including example and fixture
 packages:
 
 ```json
-"elysia": "2.0.0-beta.19"
+"elysia": "2.0.0-beta.24"
 ```
 
 ## Migrating from Elysia 1.4

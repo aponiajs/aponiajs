@@ -33,7 +33,7 @@ const publishedSurfaces = [
  * record that reports which descriptor artifact served a boot. They are an
  * allow-list rather than a scan for every version-shaped string,
  * because the same documents cite other projects' versions that are correct as
- * they stand: `docs/elysia-compatibility.md` pins `2.0.0-beta.19` for Elysia
+ * they stand: `docs/elysia-compatibility.md` pins `2.0.0-beta.24` for Elysia
  * beside `^1.3.0` for typebox, and the platform's own guide names
  * `2.0.0-exp.64` as the release a caret on that pin would reach. A guard
  * that policed every version-shaped string would fail on the day it was written.

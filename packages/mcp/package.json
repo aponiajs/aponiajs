@@ -51,10 +51,10 @@
   "devDependencies": {
     "@aponiajs/cli": "workspace:*",
     "@aponiajs/platform-elysia": "workspace:*",
-    "elysia": "2.0.0-beta.19"
+    "elysia": "2.0.0-beta.24"
   },
   "peerDependencies": {
-    "elysia": "2.0.0-beta.19"
+    "elysia": "2.0.0-beta.24"
   },
   "peerDependenciesMeta": {
     "elysia": {

@@ -18,7 +18,7 @@ install.
 ## An existing project
 
 ```bash
-bun add @aponiajs/common@beta @aponiajs/platform-elysia@beta elysia@2.0.0-beta.19
+bun add @aponiajs/common@beta @aponiajs/platform-elysia@beta elysia@2.0.0-beta.24
 ```
 
 Every public package shares one version, and the channel a release goes to is

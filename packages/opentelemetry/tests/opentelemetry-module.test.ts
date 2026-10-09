@@ -779,7 +779,7 @@ const frameworkVersion = (
  * from another release — so a stated value keeps this file from depending on what
  * the machine happened to install.
  */
-const provenance = Object.freeze({ framework: frameworkVersion, elysia: "2.0.0-beta.19" });
+const provenance = Object.freeze({ framework: frameworkVersion, elysia: "2.0.0-beta.24" });
 
 const temporaryDirectories: string[] = [];
 

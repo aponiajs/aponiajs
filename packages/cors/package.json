@@ -49,10 +49,10 @@
   },
   "devDependencies": {
     "@aponiajs/cli": "workspace:*",
-    "elysia": "2.0.0-beta.19",
+    "elysia": "2.0.0-beta.24",
     "zod": "^4.4.3"
   },
   "peerDependencies": {
-    "elysia": "2.0.0-beta.19"
+    "elysia": "2.0.0-beta.24"
   }
 }
