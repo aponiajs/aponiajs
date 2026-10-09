@@ -1,7 +1,20 @@
-import { expect, test } from "bun:test";
-import { createEdenClient } from "./application.ts";
+import { afterAll, beforeAll, expect, test } from "bun:test";
+import { treaty, type Treaty } from "@elysia/eden";
+import type { AponiaApplication } from "@aponiajs/platform-elysia";
+import type { App } from "../src/main.ts";
+import { createApplication } from "./application.ts";
 
-const client = createEdenClient();
+let application: AponiaApplication<App>;
+let client: Treaty.Create<App>;
+
+beforeAll(async () => {
+  application = await createApplication();
+  client = treaty(application.getNativeApplication());
+});
+
+afterAll(async () => {
+  await application.close();
+});
 
 test("fetches all users with inline schema inference", async () => {
   const result = await client.users.get();

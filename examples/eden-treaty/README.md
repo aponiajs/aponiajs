@@ -7,7 +7,7 @@ using Elysia's **Eden Treaty** with AponiaJS.
 
 - **Path-Agnostic DTOs**: DTOs (`createDto`) are pure data transfer objects without any route path.
 - **Dual Schema Support**: Validation schemas can be declared **inline** directly in decorators (e.g. `t.Object(...)`) or as **separated DTO classes** (e.g. `CreateUserDto`).
-- **Zero-Boilerplate Route Export**: The application exports its native Elysia instance and typed route tree (`EdenApp`) for `treaty<App>()`.
+- **Standard Application Lifecycle**: The application bootstraps using the canonical `bootstrap()` function and `AponiaFactory.create(AppModule)` matching all other framework applications, while exporting `type App = ElysiaApplication<typeof AppModuleDescriptor>` for Eden Treaty.
 
 ## Run
 

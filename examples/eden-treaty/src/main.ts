@@ -1,9 +1,15 @@
-import { AponiaFactory } from "@aponiajs/platform-elysia";
-import { AppModuleDescriptor } from "./descriptors.generated.ts";
+import { AponiaFactory, type ElysiaApplication } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+import type { AppModuleDescriptor } from "./descriptors.generated.ts";
 
-export const app = await AponiaFactory.createNative(AppModuleDescriptor);
-export type App = typeof app;
+export type App = ElysiaApplication<typeof AppModuleDescriptor>;
+
+export async function bootstrap(): Promise<void> {
+  const application = await AponiaFactory.create(AppModule);
+  const port = Number(Bun.env.PORT ?? 3120);
+  await application.listen(port);
+}
 
 if (import.meta.main) {
-  app.listen(3120);
+  await bootstrap();
 }

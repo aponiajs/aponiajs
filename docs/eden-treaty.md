@@ -279,19 +279,25 @@ export type App = typeof app;
 
 When an application is built or run with `@aponiajs/cli` (or Bun preload),
 `aponia build` generates `descriptors.generated.ts` containing the lowered
-descriptors for all decorated controllers. Passing `moduleDescriptorArtifact`
-to `createNative` automatically projects the full route tree into Eden Treaty
-while preserving the decorated `@Controller()` authoring style:
+descriptors for all decorated controllers. Exporting `ElysiaApplication<typeof AppModuleDescriptor>`
+or passing the descriptor automatically provides the full route tree to Eden Treaty
+while preserving the standard bootstrap lifecycle:
 
 ```ts
-import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AponiaFactory, type ElysiaApplication } from "@aponiajs/platform-elysia";
 import { AppModule } from "./app.module.ts";
-import { moduleDescriptorArtifact } from "./descriptors.generated.ts";
+import type { AppModuleDescriptor } from "./descriptors.generated.ts";
 
-export const app = await AponiaFactory.createNative(AppModule, {
-  descriptors: moduleDescriptorArtifact,
-});
-export type App = typeof app;
+export type App = ElysiaApplication<typeof AppModuleDescriptor>;
+
+export async function bootstrap(): Promise<void> {
+  const application = await AponiaFactory.create(AppModule);
+  await application.listen(Number(Bun.env.PORT ?? 3120));
+}
+
+if (import.meta.main) {
+  await bootstrap();
+}
 ```
 
 ## Test without opening a port
