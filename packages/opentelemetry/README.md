@@ -215,9 +215,8 @@ rather keep the descriptor artifact untouched mounts the raw plugin through
 
 ## OpenTelemetry and the request-context proposal
 
-This package and the request-context design in
-`docs/superpowers/specs/2026-09-27-aponia-request-context-design.md` are
-independent, and neither replaces the other.
+This package and the framework's request-context design are independent, and
+neither replaces the other.
 
 The spec designs an Aponia-owned `AsyncLocalStorage` store holding a
 `RequestContextService.current()` for a correlation id and application-defined

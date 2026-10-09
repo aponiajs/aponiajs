@@ -15,6 +15,15 @@ coverage
 skills-lock.json
 research.md
 
+# Superpowers, specs, and design plans
+.superpowers/
+docs/superpowers/
+*superpower*
+specs/
+plans/
+*.spec.md
+*.plan.md
+
 # dotenv environment variable files
 .env
 .env.*
