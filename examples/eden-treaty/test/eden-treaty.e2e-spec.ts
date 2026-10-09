@@ -8,7 +8,7 @@ let client: Treaty.Create<App>;
 
 beforeAll(async () => {
   application = await createApplication();
-  client = treaty<App>(application.getNativeApplication() as unknown as App);
+  client = treaty(application.getNativeApplication<App>());
 });
 
 afterAll(async () => {

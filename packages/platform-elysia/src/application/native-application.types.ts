@@ -72,3 +72,14 @@ export type ElysiaApplication<
   TRootModule,
   TConfiguredApplication extends AnyElysia = Elysia,
 > = MergeElysiaInstances<[TConfiguredApplication, ...ModuleApplicationPlugins<TRootModule>]>;
+
+/**
+ * Resolves the native Elysia application type suitable for Eden Treaty.
+ *
+ * Accepts an existing Elysia instance, a ModuleDefinition, or a descriptor
+ * artifact selection.
+ */
+export type TreatyApp<
+  TTarget,
+  TConfiguredApplication extends AnyElysia = Elysia,
+> = TTarget extends AnyElysia ? TTarget : ElysiaApplication<TTarget, TConfiguredApplication>;

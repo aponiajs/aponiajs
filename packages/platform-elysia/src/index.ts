@@ -123,3 +123,4 @@ export {
   COMPILED_DESCRIPTOR_SYMBOL,
 } from "./compiler/in-memory-compiler.ts";
 export type { InferredEdenRoutes, TypedRoutePlan } from "./routing/route-eden.types.ts";
+export type { TreatyApp } from "./application/native-application.types.ts";

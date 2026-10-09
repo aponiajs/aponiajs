@@ -35,7 +35,9 @@ export class AponiaApplication<TNativeApplication extends AnyElysia = Elysia> {
    *
    * @returns The composed instance, for native tooling such as Eden Treaty.
    */
-  getNativeApplication(): TNativeApplication {
+  getNativeApplication(): TNativeApplication;
+  getNativeApplication<TApp extends AnyElysia>(): TApp;
+  getNativeApplication(): AnyElysia {
     return this.#nativeApplication;
   }
 
