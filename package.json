@@ -54,13 +54,13 @@
   "devDependencies": {
     "@aponiajs/common": "workspace:*",
     "@aponiajs/platform-elysia": "workspace:*",
-    "@types/bun": "^1.4.2",
+    "@types/bun": "^1.4.3",
     "bumpp": "^12.3.0",
     "elysia": "^1.4.30",
     "jsonc-parser": "^3.3.1",
     "typescript": "^7.0.2",
     "vite": "npm:@voidzero-dev/vite-plus-core@0.2.9",
-    "vite-plus": "^0.2.9"
+    "vite-plus": "^1.2.0"
   },
   "overrides": {
     "vite": "npm:@voidzero-dev/vite-plus-core@0.2.9",
