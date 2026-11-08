@@ -13,6 +13,8 @@ and documentation guards that CI enforces.
 | `workspace-versions.ts`          | The list of manifests that must share one version                           |
 | `canary-version.ts`              | Stamping `X.Y.Z-canary.<stamp>.<sha>` in CI, never committed                |
 | `coverage-gate.ts`               | Aggregate LCOV floor and runtime-source completeness                        |
+| `public-api.ts`                  | The frozen public surface snapshot and its verify/freeze entries            |
+| `build-docs-site.ts`             | The static documentation site generated from `docs/`                        |
 | `agent-guides.spec.ts`           | Guide inventory, aliases, and mandatory per-turn `RULES.md` loading         |
 | `ci-workflows.spec.ts`           | Complete CI, publish, packaging, and dependency-security command matrix     |
 | `cli-runtime-surface.spec.ts`    | The runtime surface `@aponiajs/cli` repeats by hand                         |
@@ -23,6 +25,8 @@ and documentation guards that CI enforces.
 | `documentation-versions.spec.ts` | Release stamps in the published documents                                   |
 | `api-docs.spec.ts`               | JSDoc completeness over every package barrel the API reference builds from  |
 | `*.spec.ts`                      | Guard tests over the above and over documentation wording                   |
+| `docs-site.spec.ts`              | Page coverage, navigation, and link rewriting of the generated site         |
+| `public-api.spec.ts`             | Barrel parsing, difference reporting, and the committed snapshot            |
 
 ## Invariants
 
@@ -48,6 +52,11 @@ and documentation guards that CI enforces.
   `GITHUB_OUTPUT`, which creates the file when a pipeline runs the script before
   the file exists. The append replaces a read-then-rewrite, so a path whose
   directory is missing or unwritable still fails instead of being ignored.
+- `build-docs-site.ts` owns the published site and nothing else: it reads the
+  repository Markdown, rewrites links that stay inside `docs/`, and points a
+  link that leaves it at the repository blob URL. It never invents content, so
+  a page missing from the site means a page missing from `docs/`. The generated
+  output is `docs-site/`, which is ignored by Git.
 - Guard specs make documentation part of the test suite. A wording edit in
   `README.md`, `docs/cli.md`, `docs/packages.md`, or `packages/cli/README.md`
   can fail `bun test`.

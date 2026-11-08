@@ -1,7 +1,7 @@
 {
   "name": "@aponiajs/mcp",
   "version": "1.0.0-beta.24",
-  "description": "Standardized Model Context Protocol (MCP 2024-11-05) server, tool registry, and transports for AponiaJS.",
+  "description": "Model Context Protocol server and tool registry for AponiaJS, with handshake version negotiation and server/discover.",
   "keywords": [
     "agents",
     "ai",

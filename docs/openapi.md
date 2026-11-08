@@ -123,6 +123,9 @@ document rather than in a message:
   field: left in, the document carries a path item no validator accepts. The
   registration mounts the plugin with `exclude.methods: ["options", "ws"]` for
   that reason.
+- **A deprecated route is marked.** `@Deprecated()` sets `detail.deprecated`, so
+  the operation carries `deprecated: true` next to the route's deprecation
+  headers.
 
 ## One document per application
 

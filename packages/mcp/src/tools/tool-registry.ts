@@ -36,6 +36,7 @@ export class McpToolRegistry {
       name: tool.name,
       description: tool.description,
       inputSchema: tool.inputSchema,
+      ...(tool.outputSchema === undefined ? {} : { outputSchema: tool.outputSchema }),
     }));
   }
 

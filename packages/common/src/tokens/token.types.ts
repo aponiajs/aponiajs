@@ -25,16 +25,29 @@ export interface InjectionToken<T> {
 /** Anything the container resolves by: a class, or an explicit token. */
 export type Token<T> = ClassToken<T> | InjectionToken<T>;
 
-/** Any dependency injectable into a provider or controller: a token or forward reference. */
-export type InjectionDependency<T = unknown> = Token<T> | ForwardReference<Token<T>>;
+/** A dependency whose absence resolves to `undefined` instead of failing the boot. */
+export interface OptionalInjection<T = unknown> {
+  /** The token that is resolved when it is visible. */
+  readonly token: Token<T> | ForwardReference<Token<T>>;
+  /** Marks the dependency as optional. */
+  readonly optional: true;
+}
+
+/** Any dependency injectable into a provider or controller: a token, a forward reference, or an optional wrapper. */
+export type InjectionDependency<T = unknown> =
+  | Token<T>
+  | ForwardReference<Token<T>>
+  | OptionalInjection<T>;
 
 /** The value type a token resolves to. */
 export type TokenValue<TToken> =
-  TToken extends Token<infer TValue>
-    ? TValue
-    : TToken extends ForwardReference<Token<infer TValue>>
+  TToken extends OptionalInjection<infer TValue>
+    ? TValue | undefined
+    : TToken extends Token<infer TValue>
       ? TValue
-      : never;
+      : TToken extends ForwardReference<Token<infer TValue>>
+        ? TValue
+        : never;
 
 /** The tuple of value types a dependency list resolves to, in order. */
 export type TokenMap<TTokens extends readonly unknown[]> = {

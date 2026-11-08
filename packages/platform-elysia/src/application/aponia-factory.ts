@@ -2,6 +2,7 @@ import type { AnyElysia } from "elysia";
 import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
 import { bootstrapAponiaApplication } from "./application-bootstrap.ts";
 import { AponiaApplication } from "./aponia-elysia-application.ts";
+import { AponiaApplicationContext } from "./application-context.ts";
 import type {
   AponiaApplicationOptions,
   ConfiguredAponiaApplicationOptions,
@@ -17,6 +18,23 @@ import type { ElysiaApplication } from "./native-application.types.ts";
  * mount, controller mount, lifecycle passes.
  */
 export class AponiaFactory {
+  /**
+   * Boots a module graph without an HTTP listener.
+   *
+   * Providers initialize and their lifecycle hooks run; controllers are not
+   * mounted. Use it for workers, command-line tasks, and container tests.
+   *
+   * @param rootModule - The root class, descriptor, or descriptor artifact.
+   * @param options - Logger and descriptor options.
+   * @returns The context, with `get`, `resolve`, and `close`.
+   */
+  static createApplicationContext(
+    rootModule: AponiaRootModule,
+    options: Pick<AponiaApplicationOptions, "logger" | "descriptors"> = {},
+  ): Promise<AponiaApplicationContext> {
+    return AponiaApplicationContext.create(rootModule, options);
+  }
+
   /**
    * Bootstraps an application behind Aponia's managed lifecycle facade.
    *

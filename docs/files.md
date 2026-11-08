@@ -2,9 +2,9 @@
 
 A file is a body value. Elysia parses a multipart request into a `File`, the `body`
 slot validates it, and `@Body()` hands it to the handler exactly as it hands over any
-other parsed body. There is no Aponia file type, no file parameter decorator, and no
-file schema slot, because none of them would add anything the substrate does not
-already do.
+other parsed body. `@UploadedFile()` and `@UploadedFiles()` are convenience aliases
+for `@Body("file")` and `@Body("files")`; they add no separate file type, schema slot,
+or transport.
 
 ## Uploads
 
@@ -12,7 +12,9 @@ already do.
 | -------------------------------------- | ---------------------------------------------------------------------------- |
 | `body: t.Object({ file: t.File() })`   | `200`; `@Body()` is `{ file }` and `file instanceof File` is true            |
 | `@Body("file")` over that same schema  | `200`; the parameter is the `File` directly                                  |
+| `@UploadedFile()` over that schema     | `200`; the same `File`, bound from the `file` body field                     |
 | `body: t.Object({ files: t.Files() })` | `200`; the body is `{ files: File[] }`                                       |
+| `@UploadedFiles()` over that schema    | `200`; the same `File[]`, bound from the `files` body field                  |
 | `body: t.Form({ file: t.File() })`     | `200`; the body is the parsed form, with the part as a `File`                |
 | `body: t.File()`                       | **`422`**, `Expected kind 'File'` — `expected` and `found` are both `"File"` |
 

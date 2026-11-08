@@ -1,4 +1,5 @@
 import type { AnalyzedController } from "./controller-routes.types.ts";
+import type { AnalyzedModule } from "./module-descriptors.types.ts";
 import type {
   ControllerInvokerProvenance,
   EmittedControllerInvokers,
@@ -18,6 +19,8 @@ export interface BuildProjectAnalysis {
   readonly invokerPath: string;
   readonly descriptorPath: string;
   readonly controllers: readonly AnalyzedController[];
+  /** Every module declaration the analysis read, across all source files. */
+  readonly modules: readonly AnalyzedModule[];
   readonly provenance: ControllerInvokerProvenance;
   readonly invokers: EmittedControllerInvokers;
   readonly descriptors: EmittedModuleDescriptors;

@@ -14,6 +14,7 @@ export {
   Injectable,
   Module,
   Options,
+  Optional,
   Patch,
   Post,
   Put,
@@ -21,6 +22,7 @@ export {
   getControllerMetadata,
   getInjectableMetadata,
   getModuleMetadata,
+  getOptionalParameters,
   getRouteMetadata,
   isGlobalModule,
 } from "./decorators/decorators.ts";
@@ -78,6 +80,7 @@ export type {
   RouteTarget,
 } from "./middleware/middleware.types.ts";
 export { defineModule } from "./modules/module.ts";
+export { ModuleRef } from "./modules/module-ref.ts";
 export type {
   ModuleDefinition,
   ModuleDescriptor,
@@ -128,6 +131,8 @@ export {
   Req,
   ResponseSettings,
   State,
+  UploadedFile,
+  UploadedFiles,
   getRouteParameterMetadata,
   routeParameterKinds,
   routeParametersMetadataKey,
@@ -136,6 +141,23 @@ export { createParamDecorator } from "./routing/custom-parameter.ts";
 export type { CustomParamFactory } from "./routing/custom-parameter.types.ts";
 export { createDto } from "./routing/dto.ts";
 export type { DtoConstructor, Infer } from "./routing/dto.ts";
+export { Serialize, getResponseSerializer } from "./routing/response-serializer.ts";
+export {
+  Deprecated,
+  applyDeprecationHeaders,
+  getDeprecationMetadata,
+} from "./routing/deprecation.ts";
+export type { DeprecationMetadata, DeprecationOptions } from "./routing/deprecation.ts";
+export type { ResponseSerializer } from "./routing/response-serializer.ts";
+export {
+  VERSION_NEUTRAL,
+  Version,
+  VersioningType,
+  getVersionMetadata,
+  versionPathSegment,
+} from "./routing/versioning.ts";
+export type { VersionValue } from "./routing/versioning.ts";
+export { Sse, isSseRoute } from "./routing/sse.ts";
 export type {
   RouteParameterKind,
   RouteParameterMetadata,
@@ -164,12 +186,41 @@ export type {
   ValidationMetadata,
   ValidationModelClass,
 } from "./routing/validation.types.ts";
-export { createToken, getTokenName } from "./tokens/token.ts";
+export {
+  EventPattern,
+  MESSAGE_HANDLER_ERROR_CODE,
+  MessagePattern,
+  Payload,
+  UNKNOWN_MESSAGE_PATTERN_CODE,
+  getMessagePatternMetadata,
+  getMessagePayloadProperty,
+  messageFailure,
+  messagePatternMetadataKey,
+  messagePayloadMetadataKey,
+} from "./microservices/message-pattern.ts";
+export type {
+  MessagePatternKind,
+  MessagePatternMetadata,
+} from "./microservices/message-pattern.ts";
+export type {
+  MicroserviceFailure,
+  MicroserviceHandler,
+  MicroserviceMessage,
+  MicroserviceReply,
+  MicroserviceTransport,
+} from "./microservices/microservice.types.ts";
+export {
+  createToken,
+  getTokenName,
+  isOptionalInjection,
+  optionalDependency,
+} from "./tokens/token.ts";
 export type {
   ClassToken,
   Constructor,
   InjectionDependency,
   InjectionToken,
+  OptionalInjection,
   Token,
   TokenMap,
   TokenValue,

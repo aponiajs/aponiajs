@@ -1,0 +1,25 @@
+# @aponiajs/events
+
+> In-process typed events for an AponiaJS application, with ordered awaitable handlers, `@OnEvent()` listeners, and aggregate handler-error reporting.
+
+## What this package exports
+
+- `EventEmitterModule.register()`: the dynamic module an application imports.
+- `EventEmitter`: `on`, `once`, `off`, `emit`, `listenerCount`, and `bind`.
+- `OnEvent(event)`: a method decorator that records a listener.
+- `getEventHandlers(instance)`: reads the listener metadata a class declares.
+
+## Behavior a consumer can rely on
+
+- Handlers run in registration order; `emit` awaits each handler.
+- Every handler runs even when an earlier one throws; `emit` then throws one `EVENT_HANDLER_ERROR` with a frozen failure list.
+- `once` removes the handler before invoking it.
+- `on` and `bind` return unsubscribe functions.
+- Payloads are passed by reference and are not cloned or serialized.
+- Delivery is in-process only; durable delivery belongs to a queue or outbox.
+
+## Documentation
+
+- [Package README](README.md)
+- [Published packages](../../docs/packages.md)
+- [npm](https://www.npmjs.com/package/@aponiajs/events)

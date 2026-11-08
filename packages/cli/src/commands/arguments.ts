@@ -6,6 +6,10 @@ import type {
   CliCommand,
   GenerateCommandOptions,
   GenerateSchematic,
+  LibraryCommandOptions,
+  McpCommandOptions,
+  AgentClient,
+  AgentCommandOptions,
   NewCommandOptions,
   ResourceTransport,
 } from "./command.types.ts";
@@ -96,7 +100,47 @@ export function parseArguments(arguments_: readonly string[]): CliCommand {
     return parseBuildCommand(rest);
   }
 
+  if (command === "library") {
+    return parseLibraryCommand(rest);
+  }
+
+  if (command === "manifest") {
+    if (rest.length > 0) {
+      throw new Error(`Unexpected argument "${rest[0]}".`);
+    }
+    return { command: "manifest" };
+  }
+
+  if (command === "mcp") {
+    return parseMcpCommand(rest);
+  }
+
+  if (command === "agent") {
+    return parseAgentCommand(rest);
+  }
+
   throw new Error(`Unknown command "${command}".`);
+}
+
+function parseLibraryCommand(arguments_: readonly string[]): LibraryCommandOptions {
+  const parsed = parseOptions(arguments_);
+  const [action, ...positionals] = parsed._;
+  if (action !== "check" && action !== "search") {
+    throw new Error('The library command requires the "check" or "search" action.');
+  }
+  if (positionals.length > 1) {
+    throw new Error(`Unexpected argument "${positionals[1]}".`);
+  }
+  assertKnownOptions(parsed, ["json", "path", "publish"]);
+
+  return {
+    command: "library",
+    action,
+    path: action === "check" ? (positionals[0] ?? readStringOption(parsed, "path")) : undefined,
+    json: readBooleanOption(parsed, "json", false),
+    publish: action === "check" ? readBooleanOption(parsed, "publish", false) : false,
+    ...(action === "search" ? { query: positionals[0] ?? "" } : {}),
+  };
 }
 
 function parseBuildCommand(arguments_: readonly string[]): BuildCommandOptions {
@@ -161,6 +205,7 @@ function parseGenerateCommand(arguments_: readonly string[]): GenerateCommandOpt
     "flat",
     "module",
     "path",
+    "publish",
     "project",
     "skip-import",
     "spec",
@@ -185,6 +230,7 @@ function parseGenerateCommand(arguments_: readonly string[]): GenerateCommandOpt
     project: readStringOption(parsed, "project"),
     crud: readBooleanOption(parsed, "crud", true),
     type: type as ResourceTransport,
+    publish: readBooleanOption(parsed, "publish", false),
   };
 }
 
@@ -197,9 +243,13 @@ interface ParsedOptions extends Readonly<Record<string, unknown>> {
 // mean, and it keeps `aponia new --dry-run app` reading `app` as the project
 // name: a declared boolean never consumes the token after it.
 const valueLessOptions = [
+  "allow-exec",
+  "allow-write",
   "crud",
   "dry-run",
   "flat",
+  "json",
+  "publish",
   "skip-import",
   "skip-install",
   "spec",
@@ -210,6 +260,58 @@ const optionAliases: Readonly<Record<string, string[]>> = {
   project: ["p"],
   "skip-install": ["s"],
 };
+
+function parseMcpCommand(arguments_: readonly string[]): McpCommandOptions {
+  const parsed = parseOptions(arguments_);
+  if (parsed._.length > 0) {
+    throw new Error(`Unexpected argument "${parsed._[0]}".`);
+  }
+  assertKnownOptions(parsed, ["allow-exec", "allow-write", "cwd", "project"]);
+  return {
+    command: "mcp",
+    cwd: readStringOption(parsed, "cwd"),
+    project: readStringOption(parsed, "project"),
+    allowWrite: readBooleanOption(parsed, "allow-write", false),
+    allowExec: readBooleanOption(parsed, "allow-exec", false),
+  };
+}
+
+function parseAgentCommand(arguments_: readonly string[]): AgentCommandOptions {
+  const parsed = parseOptions(arguments_);
+  const [action, ...positionals] = parsed._;
+  if (action !== "init") {
+    throw new Error('The agent command requires the "init" action.');
+  }
+  if (positionals.length > 0) {
+    throw new Error(`Unexpected argument "${positionals[0]}".`);
+  }
+  assertKnownOptions(parsed, ["clients", "cwd", "dry-run"]);
+  const clients = readClients(readStringOption(parsed, "clients"));
+  return {
+    command: "agent",
+    action: "init",
+    clients,
+    dryRun: readBooleanOption(parsed, "dry-run", false),
+    cwd: readStringOption(parsed, "cwd"),
+  };
+}
+
+function readClients(value: string | undefined): readonly AgentClient[] {
+  if (value === undefined) {
+    return Object.freeze(["codex", "claude", "cursor"]);
+  }
+  const clients = value
+    .split(",")
+    .map((client) => client.trim())
+    .filter(Boolean);
+  const valid = new Set<AgentClient>(["codex", "claude", "cursor"]);
+  for (const client of clients) {
+    if (!valid.has(client as AgentClient)) {
+      throw new Error(`Unknown agent client "${client}".`);
+    }
+  }
+  return Object.freeze([...new Set(clients as AgentClient[])]);
+}
 
 // The option a spelling names, when that option takes no value.
 function valueLessOptionFor(spelling: string): string | undefined {
@@ -243,7 +345,7 @@ function parseOptions(arguments_: readonly string[]): ParsedOptions {
   return parseCliArguments([...arguments_], {
     alias: optionAliases,
     boolean: [...valueLessOptions],
-    string: ["module", "path", "project", "type"],
+    string: ["clients", "cwd", "module", "path", "project", "type"],
     configuration: {
       "camel-case-expansion": false,
       "dot-notation": false,

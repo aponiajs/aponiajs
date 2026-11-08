@@ -47,6 +47,9 @@ describe("WebSocket gateway and message schema metadata", () => {
       path: "/chat",
       guards: [MockGuard],
       maxPayloadLength: 65536,
+      origins: ["https://app.example"],
+      idleTimeoutMs: 30_000,
+      sendPings: true,
     })
     class SecureGateway {}
 
@@ -55,9 +58,13 @@ describe("WebSocket gateway and message schema metadata", () => {
       path: "/chat",
       guards: [MockGuard],
       maxPayloadLength: 65536,
+      origins: ["https://app.example"],
+      idleTimeoutMs: 30_000,
+      sendPings: true,
     });
     expect(Object.isFrozen(metadata)).toBe(true);
     expect(Object.isFrozen(metadata?.guards)).toBe(true);
+    expect(Object.isFrozen(metadata?.origins)).toBe(true);
   });
 
   test("@WebSocketGateway rejects invalid maxPayloadLength and guards", () => {
@@ -77,6 +84,36 @@ describe("WebSocket gateway and message schema metadata", () => {
       @WebSocketGateway({ guards: ["not-a-class" as never] })
       class InvalidGuardItemGateway {}
       void InvalidGuardItemGateway;
+    }).toThrow(TypeError);
+
+    expect(() => {
+      @WebSocketGateway({ origins: "not-an-array" as never })
+      class InvalidOriginsGateway {}
+      void InvalidOriginsGateway;
+    }).toThrow(TypeError);
+
+    expect(() => {
+      @WebSocketGateway({ origins: [] })
+      class EmptyOriginsGateway {}
+      void EmptyOriginsGateway;
+    }).toThrow(TypeError);
+
+    expect(() => {
+      @WebSocketGateway({ origins: ["" as never] })
+      class BlankOriginGateway {}
+      void BlankOriginGateway;
+    }).toThrow(TypeError);
+
+    expect(() => {
+      @WebSocketGateway({ idleTimeoutMs: 0 })
+      class InvalidIdleGateway {}
+      void InvalidIdleGateway;
+    }).toThrow(TypeError);
+
+    expect(() => {
+      @WebSocketGateway({ sendPings: "yes" as never })
+      class InvalidPingsGateway {}
+      void InvalidPingsGateway;
     }).toThrow(TypeError);
   });
 });

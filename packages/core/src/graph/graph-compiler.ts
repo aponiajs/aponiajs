@@ -2,6 +2,7 @@ import {
   AponiaError,
   getTokenName,
   isForwardRef,
+  isOptionalInjection,
   resolveForwardRef,
   type ModuleDefinition,
   type Provider,
@@ -140,7 +141,17 @@ function validateDependencies(graph: ModuleGraph): void {
     for (const provider of module.providers) {
       const providerScope = provider.scope ?? "singleton";
       for (const dependency of getProviderDependencies(provider)) {
-        const location = graph.locate(module, resolveForwardRef(dependency));
+        const optional = isOptionalInjection(dependency);
+        const token = optional ? dependency.token : dependency;
+        let location: ReturnType<typeof graph.locate>;
+        try {
+          location = graph.locate(module, resolveForwardRef(token));
+        } catch (error) {
+          if (optional && error instanceof AponiaError && error.code === "MISSING_PROVIDER") {
+            continue;
+          }
+          throw error;
+        }
         const dependencyScope = location.provider.scope ?? "singleton";
 
         if (providerScope === "singleton" && dependencyScope === "request") {
@@ -175,7 +186,17 @@ function validateControllers(graph: ModuleGraph): void {
       controllerTokens.add(controller.token);
 
       for (const dependency of controller.inject) {
-        const location = graph.locate(module, resolveForwardRef(dependency));
+        const optional = isOptionalInjection(dependency);
+        const token = optional ? dependency.token : dependency;
+        let location: ReturnType<typeof graph.locate>;
+        try {
+          location = graph.locate(module, resolveForwardRef(token));
+        } catch (error) {
+          if (optional && error instanceof AponiaError && error.code === "MISSING_PROVIDER") {
+            continue;
+          }
+          throw error;
+        }
         const dependencyScope = location.provider.scope ?? "singleton";
         if (dependencyScope === "request") {
           throw new AponiaError(

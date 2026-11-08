@@ -5,12 +5,15 @@ import {
   Inject,
   Injectable,
   Module,
+  Optional,
   Post,
   createToken,
   getConstructorDependencies,
   getControllerMetadata,
   getModuleMetadata,
+  getOptionalParameters,
   getRouteMetadata,
+  isOptionalInjection,
   provideValue,
 } from "../src/index.ts";
 
@@ -121,5 +124,46 @@ describe("@aponiajs/common decorator metadata edges", () => {
 
     expect(getConstructorDependencies(ParentConsumer)).toEqual([ReflectedDependency]);
     expect(getConstructorDependencies(ChildConsumer)).toEqual([ReflectedDependency]);
+  });
+
+  test("wraps an explicitly injected token when the parameter is optional", () => {
+    class OptionalConsumer {}
+    const dependency = createToken<string>("optional-explicit");
+    Inject(dependency)(OptionalConsumer, undefined, 0);
+    Optional()(OptionalConsumer, undefined, 0);
+
+    const [first] = getConstructorDependencies(OptionalConsumer);
+
+    expect(getOptionalParameters(OptionalConsumer)).toEqual(new Set([0]));
+    expect(isOptionalInjection(first)).toBe(true);
+    expect(first).toEqual({ token: dependency, optional: true });
+    expect(Object.isFrozen(first)).toBe(true);
+  });
+
+  test("wraps a reflected parameter type when the parameter is optional", () => {
+    class ReflectedOptionalDependency {}
+    class ReflectedOptionalConsumer {}
+    Reflect.defineMetadata(
+      "design:paramtypes",
+      [ReflectedOptionalDependency],
+      ReflectedOptionalConsumer,
+    );
+    Optional()(ReflectedOptionalConsumer, undefined, 0);
+
+    expect(getConstructorDependencies(ReflectedOptionalConsumer)).toEqual([
+      { token: ReflectedOptionalDependency, optional: true },
+    ]);
+  });
+
+  test("inherits optional parameter markers through the prototype chain", () => {
+    class InheritedOptionalConsumer {}
+    class ChildInheritedOptionalConsumer extends InheritedOptionalConsumer {}
+    const dependency = createToken<string>("inherited-optional");
+    Inject(dependency)(InheritedOptionalConsumer, undefined, 0);
+    Optional()(InheritedOptionalConsumer, undefined, 0);
+
+    expect(getConstructorDependencies(ChildInheritedOptionalConsumer)).toEqual([
+      { token: dependency, optional: true },
+    ]);
   });
 });

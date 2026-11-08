@@ -68,6 +68,9 @@ the HTTP application's server and port.
   path: "/chat",
   guards: [AuthGuard],
   maxPayloadLength: 65536,
+  origins: ["https://app.example"],
+  idleTimeoutMs: 30_000,
+  sendPings: true,
 })
 export class ChatGateway {}
 ```
@@ -79,6 +82,18 @@ export class ChatGateway {}
   invoking `handleConnection()`.
 - `maxPayloadLength`: Maximum incoming message payload length in bytes. Messages
   exceeding this bound are safely rejected with an exception frame.
+- `origins`: The browser origins allowed to open the socket. Each entry is
+  compared to the handshake `Origin` header exactly, and a connection with a
+  different origin, or with no `Origin` at all, is rejected with `403` before
+  the socket opens. A non-browser client that sends no `Origin` is refused while
+  an allowlist is configured, so leave `origins` unset when the deployment does
+  not need the browser check.
+- `idleTimeoutMs`: Closes a socket that has been silent for this long. The
+  native server states the window in whole seconds, so the value is rounded up
+  and clamped to at least one second. Pair it with `sendPings` when a proxy
+  closes idle connections.
+- `sendPings`: Asks the native server to send ping frames, which keeps a socket
+  alive through an idle proxy. It is off by default.
 
 ### Message schema validation
 

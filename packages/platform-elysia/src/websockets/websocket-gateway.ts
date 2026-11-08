@@ -73,6 +73,9 @@ interface GatewayPlan {
   readonly path: string;
   readonly maxPayloadLength?: number | undefined;
   readonly guards?: readonly ClassToken<CanActivate>[] | undefined;
+  readonly origins?: readonly string[] | undefined;
+  readonly idleTimeoutMs?: number | undefined;
+  readonly sendPings?: boolean | undefined;
   readonly handlers: readonly GatewayHandlerPlan[];
   readonly serverProperties: readonly (string | symbol)[];
 }
@@ -161,6 +164,8 @@ export async function registerWebSocketGateways(
       hook: {
         beforeHandle?: (context: any) => unknown;
         maxPayloadLength?: number;
+        idleTimeout?: number;
+        sendPings?: boolean;
         open(socket: WebSocketClient): unknown;
         message(socket: WebSocketClient, message: unknown): unknown;
         close(socket: WebSocketClient): unknown;
@@ -174,6 +179,10 @@ export async function registerWebSocketGateways(
       ...(gateway.maxPayloadLength !== undefined
         ? { maxPayloadLength: gateway.maxPayloadLength }
         : {}),
+      ...(gateway.idleTimeoutMs === undefined
+        ? {}
+        : { idleTimeout: Math.max(1, Math.ceil(gateway.idleTimeoutMs / 1_000)) }),
+      ...(gateway.sendPings === undefined ? {} : { sendPings: gateway.sendPings }),
       open: (socket: WebSocketClient) => gateway.open(socket),
       message: (socket: WebSocketClient, message: unknown) => gateway.message(socket, message),
       close: (socket: WebSocketClient) => gateway.close(socket),
@@ -206,9 +215,16 @@ export function bindWebSocketGateway(
   const handleConnection = resolveLifecycleMethod(gateway, instance, "handleConnection");
   const handleDisconnect = resolveLifecycleMethod(gateway, instance, "handleDisconnect");
 
+  const origins = gateway.origins;
   const beforeHandle =
-    guards.length > 0
+    origins !== undefined || guards.length > 0
       ? async (context: { readonly request: Request }) => {
+          if (origins !== undefined) {
+            const origin = context.request.headers.get("origin");
+            if (origin === null || !origins.includes(origin)) {
+              throw httpErrors.forbidden("The WebSocket origin is not allowed.");
+            }
+          }
           const executionContext = createGatewayExecutionContext(gateway, instance, context);
           for (const guard of guards) {
             const allowed = await guard.canActivate(executionContext);
@@ -223,6 +239,8 @@ export function bindWebSocketGateway(
   return Object.freeze({
     path: gateway.path,
     maxPayloadLength: gateway.maxPayloadLength,
+    idleTimeoutMs: gateway.idleTimeoutMs,
+    sendPings: gateway.sendPings,
     beforeHandle,
     initialize: (application: AnyElysia) => {
       injectWebSocketServer(gateway, instance, application);
@@ -289,6 +307,9 @@ function readGatewayPlan(
     path: metadata.path,
     maxPayloadLength: metadata.maxPayloadLength,
     guards: metadata.guards,
+    origins: metadata.origins,
+    idleTimeoutMs: metadata.idleTimeoutMs,
+    sendPings: metadata.sendPings,
     handlers: getWebSocketMessageMetadata(gatewayClass).map((message) =>
       Object.freeze({
         event: message.event,
@@ -356,6 +377,25 @@ function readDeclaredGatewayPlan(
     );
   }
 
+  const idleTimeoutMs = Reflect.get(plan, "idleTimeoutMs");
+  if (
+    idleTimeoutMs !== undefined &&
+    (typeof idleTimeoutMs !== "number" ||
+      !Number.isSafeInteger(idleTimeoutMs) ||
+      idleTimeoutMs <= 0)
+  ) {
+    throw invalidGatewayDeclaration(
+      module,
+      gatewayName,
+      'must declare "idleTimeoutMs" as a positive integer.',
+    );
+  }
+
+  const sendPings = Reflect.get(plan, "sendPings");
+  if (sendPings !== undefined && typeof sendPings !== "boolean") {
+    throw invalidGatewayDeclaration(module, gatewayName, 'must declare "sendPings" as a boolean.');
+  }
+
   const guards = Reflect.get(plan, "guards");
   if (guards !== undefined) {
     if (!Array.isArray(guards)) {
@@ -372,10 +412,33 @@ function readDeclaredGatewayPlan(
     }
   }
 
+  const origins = Reflect.get(plan, "origins");
+  if (origins !== undefined) {
+    if (!Array.isArray(origins) || origins.length === 0) {
+      throw invalidGatewayDeclaration(
+        module,
+        gatewayName,
+        'must declare "origins" as a non-empty array.',
+      );
+    }
+    for (const origin of origins) {
+      if (typeof origin !== "string" || origin.trim() === "") {
+        throw invalidGatewayDeclaration(
+          module,
+          gatewayName,
+          'must declare "origins" containing only non-empty strings.',
+        );
+      }
+    }
+  }
+
   return {
     path: path ?? defaultGatewayPath,
     maxPayloadLength: typeof maxPayloadLength === "number" ? maxPayloadLength : undefined,
     guards: guards ? Object.freeze([...(guards as readonly ClassToken<CanActivate>[])]) : undefined,
+    origins: origins ? Object.freeze([...(origins as readonly string[])]) : undefined,
+    idleTimeoutMs: typeof idleTimeoutMs === "number" ? idleTimeoutMs : undefined,
+    sendPings: typeof sendPings === "boolean" ? sendPings : undefined,
     handlers: Object.freeze(
       handlers.map((handler) => readDeclaredGatewayHandler(module, gatewayName, handler)),
     ),
@@ -547,6 +610,9 @@ function compileGateway(
     path: normalizedPath,
     maxPayloadLength: plan.maxPayloadLength,
     guards: plan.guards,
+    origins: plan.origins,
+    idleTimeoutMs: plan.idleTimeoutMs,
+    sendPings: plan.sendPings,
     handlers: Object.freeze(handlers),
     serverProperties: Object.freeze([...plan.serverProperties]),
   });

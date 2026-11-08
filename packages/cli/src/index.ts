@@ -39,6 +39,8 @@ export type {
   AnalyzedUnreadableDependency,
 } from "./generation/module-descriptors.types.ts";
 export { generateInvokers } from "./generation/invoker-generator.ts";
+export { checkLibrary } from "./library/check-library.ts";
+export type { LibraryCheckOptions, LibraryCheckResult } from "./library/check-library.types.ts";
 export { analyzeBuildProject, invokerModuleFileName } from "./generation/build-project-analysis.ts";
 export type {
   AnalyzeBuildProjectOptions,

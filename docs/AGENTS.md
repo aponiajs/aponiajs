@@ -14,6 +14,17 @@ The published documentation set:
 | `native-plugins.md`         | Mounting native Elysia plugins and typing what they add                                                                                   |
 | `plugin-packages.md`        | Authoring a package that ships an Aponia module wrapping a native Elysia plugin                                                           |
 | `files.md`                  | Uploaded files, named downloads, and serving static assets                                                                                |
+| `libraries.md`              | Authoring, checking, and publishing an AponiaJS library                                                                                   |
+| `auth.md`                   | Bearer JWT authentication, OIDC discovery, refresh rotation, revocation, guards, and password hashing                                     |
+| `audit.md`                  | Bounded, redacting audit events and the store contract                                                                                    |
+| `tenancy.md`                | Request-scoped tenant resolution, guard, and identifier policy                                                                            |
+| `queues.md`                 | In-process jobs, retries, dead letters, idempotency, and the transactional outbox                                                         |
+| `database.md`               | The Drizzle boundary, transaction variants, repositories, and ordered SQL migrations                                                      |
+| `deployment.md`             | The process shape, readiness and liveness, shutdown, configuration, and which state needs a shared store                                  |
+| `stability.md`              | The frozen public API snapshot, how a change is recorded, and the deprecation policy                                                      |
+| `threat-model.md`           | Trust boundaries, the control behind each threat, residual risks, and the review checklist                                                |
+| `metrics.md`                | The Prometheus registry, recorded request metrics, scrape endpoint, and series bounds                                                     |
+| `migrating-from-nest.md`    | The package, authoring, validation, error, and CLI mapping from NestJS to AponiaJS                                                        |
 | `openapi.md`                | Serving an OpenAPI document for an application's routes, what the document reflects, and what it does not claim                           |
 | `configuration.md`          | Declaring, validating once at boot, injecting, and reading back a configuration                                                           |
 | `lifecycle.md`              | The five moments a provider can hook, what the framework does when one fails, stopping on a signal, and the readiness and liveness probes |
@@ -28,7 +39,24 @@ The published documentation set:
 | `devtools.md`               | The opt-in devtools API, mounted on the application's own route table, and what each endpoint does and does not report                    |
 | `packages.md`               | The published package catalog                                                                                                             |
 | `releasing.md`              | Channels, the version gate, and the publish flow                                                                                          |
+| `agent/`                    | The read-only MCP surface, tools, recipes, and security defaults                                                                          |
 | `learn/`                    | The ordered chapters that teach the same material in sequence                                                                             |
+
+## The generated site
+
+`bun run docs:build` renders every page here, plus `learn/` and `agent/`, into a
+static site under `docs-site/` with a shared navigation, an index, and a
+previous/next chain inside each group. Internal `.md` links become `.html`
+links; a link that leaves `docs/` points at the repository blob URL. The site is
+built from these files, so a page only appears there if it exists here, and
+`scripts/docs-site.spec.ts` fails when a document has no page or a page keeps a
+relative `.md` link. The site also writes `search-index.json` and renders a
+search box on every page; the index carries each page's title, headings, and a
+plain-text excerpt.
+
+`.github/workflows/docs.yml` builds the same site on every push to `main` and
+publishes it to GitHub Pages. It runs the command the workstation runs; do not
+give the workflow its own generator or its own copy of the Markdown.
 
 ## The learning path
 

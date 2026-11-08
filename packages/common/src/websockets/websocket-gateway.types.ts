@@ -9,6 +9,24 @@ export interface WebSocketGatewayOptions {
   readonly maxPayloadLength?: number;
   /** Handshake guards executed before upgrading the socket connection. */
   readonly guards?: readonly ClassToken<CanActivate>[];
+  /**
+   * The browser origins allowed to open a socket, when an allowlist is wanted.
+   *
+   * Each entry is compared to the handshake `Origin` header exactly. A request
+   * without an `Origin` header is refused while a list is configured, because
+   * the header is what a browser proves its origin with; a non-browser client
+   * has to be allowed by the deployment in another way.
+   */
+  readonly origins?: readonly string[];
+  /**
+   * Closes a socket that has been silent for this many milliseconds.
+   *
+   * The native server states this in whole seconds, so a value is rounded up
+   * and clamped to at least one second.
+   */
+  readonly idleTimeoutMs?: number;
+  /** Sends the server's own ping frames while a socket is open; defaults off. */
+  readonly sendPings?: boolean;
 }
 
 /** The lowered gateway metadata: the mount path, payload limits, and upgrade guards. */
@@ -16,6 +34,12 @@ export interface WebSocketGatewayMetadata {
   readonly path: string;
   readonly maxPayloadLength?: number | undefined;
   readonly guards?: readonly ClassToken<CanActivate>[] | undefined;
+  /** The browser origins the handshake must name, when one is configured. */
+  readonly origins?: readonly string[] | undefined;
+  /** The idle window in milliseconds, when one is declared. */
+  readonly idleTimeoutMs?: number | undefined;
+  /** Whether the server sends ping frames. */
+  readonly sendPings?: boolean | undefined;
 }
 
 /** Schema describing the structure of an incoming WebSocket message. */

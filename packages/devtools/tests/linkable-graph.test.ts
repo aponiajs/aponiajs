@@ -59,6 +59,8 @@ describe("linkable-graph", () => {
           events: ["ping"],
         },
       ],
+      invokers: { accepted: false, reason: "No generated invoker artifact was supplied." },
+      artifacts: { invokers: null, descriptors: null },
     };
 
     const graph = buildLinkableGraph(inspection);

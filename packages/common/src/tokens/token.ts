@@ -1,5 +1,5 @@
 import { resolveForwardRef } from "../modules/forward-ref.ts";
-import type { InjectionDependency, InjectionToken } from "./token.types.ts";
+import type { InjectionDependency, InjectionToken, OptionalInjection } from "./token.types.ts";
 
 /**
  * Mints an explicit injection token for a value no class names.
@@ -24,6 +24,35 @@ export function createToken<T>(description: string): InjectionToken<T> {
 }
 
 /**
+ * Wraps a token so a missing provider resolves to `undefined`.
+ *
+ * `@Optional()` uses this for decorated constructors; descriptor authors use it
+ * directly when they declare their own dependency lists.
+ *
+ * @param token - The token whose absence is allowed.
+ * @returns A frozen optional injection wrapper.
+ */
+export function optionalDependency<T>(token: OptionalInjection<T>["token"]): OptionalInjection<T> {
+  return Object.freeze({ token, optional: true });
+}
+
+/**
+ * Whether a dependency declaration marks a provider as optional.
+ *
+ * @param dependency - The dependency to inspect.
+ * @returns True for an optional injection wrapper.
+ */
+export function isOptionalInjection(dependency: unknown): dependency is OptionalInjection<unknown> {
+  return (
+    typeof dependency === "object" &&
+    dependency !== null &&
+    "optional" in dependency &&
+    dependency.optional === true &&
+    "token" in dependency
+  );
+}
+
+/**
  * Reads the printable name of a token for failure messages.
  *
  * A class token answers its class name (or `"<anonymous class>"` when it has
@@ -33,7 +62,8 @@ export function createToken<T>(description: string): InjectionToken<T> {
  * @returns The name failure details carry.
  */
 export function getTokenName(token: InjectionDependency): string {
-  const unwrapped = resolveForwardRef(token);
+  const dependency = isOptionalInjection(token) ? token.token : token;
+  const unwrapped = resolveForwardRef(dependency);
   if (typeof unwrapped === "function") {
     return unwrapped.name || "<anonymous class>";
   }

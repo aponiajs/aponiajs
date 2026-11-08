@@ -695,6 +695,10 @@ function renderRoute(
   declined: DeclinedDescriptor[],
   moduleName: string,
 ): Emission {
+  if (route.unreadable !== undefined) {
+    return declineRoute(declined, moduleName, controller, route, route.unreadable);
+  }
+
   const schemaReason = route.schema?.unreadable;
   if (schemaReason !== undefined) {
     return declineRoute(declined, moduleName, controller, route, schemaReason);
@@ -1015,7 +1019,15 @@ function renderProvider(
   }
 
   if (provider.gateway !== undefined) {
-    return renderGatewayProvider(provider.gateway, reference.name, inject.source, description);
+    return renderGatewayProvider(
+      provider.gateway,
+      reference.name,
+      inject.source,
+      description,
+      provider,
+      generatedFile,
+      references,
+    );
   }
 
   return {
@@ -1044,6 +1056,9 @@ function renderGatewayProvider(
   name: string,
   inject: string,
   description: string,
+  provider: ProviderDeclaration,
+  generatedFile: string,
+  references: ModuleImport[],
 ): ProviderEmission {
   const reason = gateway.unreadable[0];
   if (reason !== undefined) {
@@ -1059,6 +1074,34 @@ function renderGatewayProvider(
   }
 
   const fields: string[] = [`path: ${JSON.stringify(path)},`, `inject: ${inject},`];
+  if (gateway.maxPayloadLength !== undefined) {
+    fields.push(`maxPayloadLength: ${gateway.maxPayloadLength},`);
+  }
+  if (gateway.guards.length > 0) {
+    const rendered: string[] = [];
+    for (const guard of gateway.guards) {
+      const reference = provider.imports.get(guard);
+      if (reference === undefined || reference.kind === "type") {
+        return declinedResult(
+          `${description} declares the guard "${guard}", which is not an import or an export of the file it was written in.`,
+        );
+      }
+      references.push(resolveReference(reference, generatedFile));
+      rendered.push(reference.name);
+    }
+    fields.push(`guards: [${rendered.join(", ")}],`);
+  }
+  if (gateway.origins.length > 0) {
+    fields.push(
+      `origins: [${gateway.origins.map((origin) => JSON.stringify(origin)).join(", ")}],`,
+    );
+  }
+  if (gateway.idleTimeoutMs !== undefined) {
+    fields.push(`idleTimeoutMs: ${gateway.idleTimeoutMs},`);
+  }
+  if (gateway.sendPings !== undefined) {
+    fields.push(`sendPings: ${gateway.sendPings},`);
+  }
   if (gateway.handlers.length > 0) {
     fields.push(...renderCollection("handlers", gateway.handlers.map(renderGatewayHandler)));
   }

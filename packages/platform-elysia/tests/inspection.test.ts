@@ -451,6 +451,20 @@ test("sorts gateways by canonical path regardless of declaration order", () => {
   ]);
 });
 
+test("reports whether a supplied invoker artifact is accepted", () => {
+  const accepted = inspectAponiaApplication(InspectionAppModule, {
+    invokers: { framework: aponiaVersion, elysia: null, invokers: new Map() },
+  });
+  const stale = inspectAponiaApplication(InspectionAppModule, {
+    invokers: { framework: "0.0.0", elysia: null, invokers: new Map() },
+  });
+
+  expect(accepted.invokers).toEqual({ accepted: true, reason: undefined });
+  expect(accepted.artifacts.invokers).toBe(aponiaVersion);
+  expect(stale.invokers.accepted).toBe(false);
+  expect(stale.invokers.reason).toContain("built by AponiaJS 0.0.0");
+});
+
 test("returns empty collections for an application without controllers or gateways", () => {
   const inspection = inspectAponiaApplication(inspectionEmptyModule);
 
@@ -468,6 +482,8 @@ test("returns empty collections for an application without controllers or gatewa
     ],
     routes: [],
     gateways: [],
+    invokers: { accepted: false, reason: "No generated invoker artifact was supplied." },
+    artifacts: { invokers: null, descriptors: null },
   });
 });
 
@@ -582,6 +598,8 @@ test("returns a JSON document that never leaks a symbol, function, or validator"
       },
     ],
     gateways: [],
+    invokers: { accepted: false, reason: "No generated invoker artifact was supplied." },
+    artifacts: { invokers: null, descriptors: null },
   });
 });
 

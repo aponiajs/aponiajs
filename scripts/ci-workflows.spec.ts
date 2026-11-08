@@ -61,3 +61,14 @@ test("coverage tooling protects both line and function regressions", async () =>
   expect(configuration).toContain("coverageSkipTestFiles = true");
   expect(manifest.scripts["test:coverage"]).toContain("scripts/coverage-gate.ts");
 });
+
+test("the documentation site is built and published from the same sources", async () => {
+  const workflow = await Bun.file(".github/workflows/docs.yml").text();
+
+  expect(workflow).toContain("bun run docs:build");
+  expect(workflow).toContain("actions/upload-pages-artifact@v5");
+  expect(workflow).toContain("path: docs-site");
+  expect(workflow).toContain("actions/deploy-pages@v5");
+  expect(workflow).toContain("pages: write");
+  expect(workflow).toContain("branches: [main]");
+});

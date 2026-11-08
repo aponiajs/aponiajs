@@ -5,6 +5,7 @@ import {
   AponiaError,
   Body,
   Controller,
+  Deprecated,
   Get,
   MessageBody,
   Module,
@@ -547,6 +548,34 @@ test("reflects every declared schema slot on the operation that declared it", as
       properties: { ok: { type: "boolean" } },
       required: ["ok"],
     });
+  } finally {
+    await application.close();
+  }
+});
+
+test("marks a deprecated route in the served document", async (): Promise<void> => {
+  const OpenApiConfig = metadataOf("deprecated");
+
+  @Controller("legacy")
+  @Deprecated({ link: "https://api.example.com/v2/legacy" })
+  class LegacyController {
+    @Get()
+    read(): string {
+      return "legacy";
+    }
+  }
+
+  @Module({
+    imports: [OpenApiModule.register({ configuration: OpenApiConfig, source: {} })],
+    controllers: [LegacyController],
+  })
+  class AppModule {}
+
+  const application = await AponiaFactory.create(AppModule, { logger: false });
+  try {
+    const document = await serve(application, "/openapi/json");
+
+    expect(document.paths["/legacy"]?.get?.deprecated).toBe(true);
   } finally {
     await application.close();
   }

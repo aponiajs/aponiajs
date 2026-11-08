@@ -1,4 +1,4 @@
-import type { ClassToken, LoggerService, LogLevel } from "@aponiajs/common";
+import type { ClassToken, LoggerService, LogLevel, MicroserviceTransport } from "@aponiajs/common";
 import type { AnyElysia, Elysia } from "elysia";
 import type { ElysiaConfig, EventScope } from "elysia/types";
 import type { AponiaModuleDescriptorArtifact } from "../modules/module-descriptor-artifact.types.ts";
@@ -25,6 +25,29 @@ export type RouteCompilationOptions = Readonly<
 export interface AponiaApplicationOptions {
   /** `false` disables logging, an array sets levels, a service replaces the logger. */
   readonly logger?: false | LoggerService | readonly LogLevel[];
+  /** Refuses to boot when a compiled route has no generated invoker. */
+  readonly strictCodegen?: boolean;
+  /**
+   * How a versioned route is negotiated.
+   *
+   * `uri` is the default and mounts `@Version("2")` at `/v2/...`. `header`
+   * mounts the same versioned path and lets a client reach it from the plain
+   * path with `<header>: 2`; `media-type` reads a `version` parameter from
+   * `Accept`. The router still holds one path per version, so the served
+   * OpenAPI document and introspection name the versioned path.
+   */
+  readonly versioning?: AponiaVersioningOptions;
+  /**
+   * Transports that deliver messages to the decorated handlers this boot
+   * compiled.
+   *
+   * Each transport connects once every provider and controller exists, and
+   * closes on application shutdown before module-destroy hooks run. A pattern
+   * two controllers claim fails the boot with `DUPLICATE_MESSAGE_PATTERN`, and
+   * an invalid transport fails it with `INVALID_MICROSERVICE_TRANSPORT`, so a
+   * partially connected application is never returned.
+   */
+  readonly microservices?: readonly MicroserviceTransport[];
   /**
    * Controls Elysia's route composition. This is distinct from build-time
    * Aponia source generation and JavaScriptCore's machine-code JIT.
@@ -160,6 +183,18 @@ export interface AponiaApplicationOptions {
    * way `guards` are, the same mounts excluded.
    */
   readonly filters?: readonly ClassToken<unknown>[];
+}
+
+/** The version-negotiation options `AponiaFactory.create` accepts. */
+export interface AponiaVersioningOptions {
+  /** The strategy; defaults to `uri`. */
+  readonly type?: "uri" | "header" | "media-type";
+  /** The request header for `header`; defaults to `x-api-version`. */
+  readonly header?: string;
+  /** The `Accept` parameter for `media-type`; defaults to `version`. */
+  readonly parameter?: string;
+  /** The version used when a request states none. */
+  readonly defaultVersion?: string;
 }
 
 /** The factory options plus the native configurator preserving Eden route types. */

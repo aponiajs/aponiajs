@@ -71,6 +71,8 @@ const parameterDecorators: ReadonlyMap<string, AnalyzedRouteParameterKind> = new
   ["Req", "request"],
   ["ResponseSettings", "set"],
   ["State", "store"],
+  ["UploadedFile", "body"],
+  ["UploadedFiles", "body"],
 ]);
 
 /**
@@ -215,10 +217,36 @@ function analyzeController(
   const pathArgument = controllerUse.arguments[0];
   const path = pathArgument === undefined ? "" : readStringLiteral(pathArgument, description);
   const controllerEnhancers = readEnhancers(declaration.getDecorators(), bindings, filePath);
+  const controllerSerializer = declaration
+    .getDecorators()
+    .map((decorator) => readDecoratorUse(decorator, bindings))
+    .some((use) => use?.name === "Serialize");
+  const controllerVersion = declaration
+    .getDecorators()
+    .map((decorator) => readDecoratorUse(decorator, bindings))
+    .some((use) => use?.name === "Version");
+  const controllerDeprecated = declaration
+    .getDecorators()
+    .map((decorator) => readDecoratorUse(decorator, bindings))
+    .some((use) => use?.name === "Deprecated");
+  const controllerSse = declaration
+    .getDecorators()
+    .map((decorator) => readDecoratorUse(decorator, bindings))
+    .some((use) => use?.name === "Sse");
   const routes = declaration
     .getMethods()
     .flatMap((method) =>
-      analyzeRouteMethod(method, bindings, imports, filePath, controllerEnhancers),
+      analyzeRouteMethod(
+        method,
+        bindings,
+        imports,
+        filePath,
+        controllerEnhancers,
+        controllerSerializer,
+        controllerVersion,
+        controllerDeprecated,
+        controllerSse,
+      ),
     );
 
   return [
@@ -241,6 +269,10 @@ function analyzeRouteMethod(
   imports: SourceImports,
   filePath: string,
   controllerEnhancers: AnalyzedEnhancers,
+  controllerSerializer: boolean,
+  controllerVersion: boolean,
+  controllerDeprecated: boolean,
+  controllerSse: boolean,
 ): readonly AnalyzedRoute[] {
   const routes = method.getDecorators().flatMap((decorator) => {
     const use = readDecoratorUse(decorator, bindings);
@@ -261,6 +293,39 @@ function analyzeRouteMethod(
     controllerEnhancers,
     readEnhancers(method.getDecorators(), bindings, filePath),
   );
+  const methodSerializer = method
+    .getDecorators()
+    .map((decorator) => readDecoratorUse(decorator, bindings))
+    .some((use) => use?.name === "Serialize");
+  const serializerReason =
+    controllerSerializer || methodSerializer
+      ? "a controller or route with @Serialize() is lowered from its decorators; generated descriptors cannot carry a serializer yet"
+      : undefined;
+  const methodVersion = method
+    .getDecorators()
+    .map((decorator) => readDecoratorUse(decorator, bindings))
+    .some((use) => use?.name === "Version");
+  const versionReason =
+    controllerVersion || methodVersion
+      ? "a controller or route with @Version() is lowered from its decorators; generated descriptors cannot carry a version yet"
+      : undefined;
+  const methodDeprecated = method
+    .getDecorators()
+    .map((decorator) => readDecoratorUse(decorator, bindings))
+    .some((use) => use?.name === "Deprecated");
+  const deprecationReason =
+    controllerDeprecated || methodDeprecated
+      ? "a controller or route with @Deprecated() is lowered from its decorators; generated descriptors cannot carry a deprecation policy yet"
+      : undefined;
+  const methodSse = method
+    .getDecorators()
+    .map((decorator) => readDecoratorUse(decorator, bindings))
+    .some((use) => use?.name === "Sse");
+  const sseReason =
+    controllerSse || methodSse
+      ? "a controller or route with @Sse() is lowered from its decorators; generated descriptors cannot carry an SSE route yet"
+      : undefined;
+  const unreadable = serializerReason ?? versionReason ?? deprecationReason ?? sseReason;
 
   return Object.freeze(
     routes.map(({ use, method: requestMethod }) =>
@@ -275,6 +340,7 @@ function analyzeRouteMethod(
         parameters,
         schema: readRouteSchema(use, imports, filePath),
         enhancers,
+        ...(unreadable === undefined ? {} : { unreadable }),
       }),
     ),
   );

@@ -42,6 +42,35 @@ runtime boundary it describes.
   pass before the wrapper is returned.
   `configureNative` must return the instance it receives. The application's own
   enhancer declarations resolve between the first pass and the controller loop.
+- `AponiaFactory.createApplicationContext` boots the provider graph without a
+  listener or controller mount. It runs provider lifecycle hooks and owns the
+  same shutdown order; `collectLifecycleCalls(..., false)` is the provider-only
+  pass. A worker context must not instantiate controllers.
+- A route's `@Serialize()` is applied in the compiled `afterHandle`, after the
+  interceptor `after` halves and before Elysia sends the response. A serializer
+  is a claim about the response, so a route carrying one mounts an `afterHandle`
+  even when it has no interceptors.
+- A route's `@Version()` is part of its compiled path: `@Version("1")` mounts
+  under `/v1`, and a handler declaration overrides the controller's. Route
+  uniqueness sees the versioned path.
+- `versioning.type` selects negotiation at the fetch boundary, not a second
+  mount. `header` and `media-type` compile one table from the booted routes
+  (literal paths, `:param`, `:param?`, and `*`) and rewrite a request to the
+  version's `/vN` prefix before Elysia routes it, so the selected route's
+  hooks and validation run unchanged. A version no handler declared answers
+  `400` with `API_VERSION_NOT_FOUND`; an unversioned route is never rewritten.
+  The table is derived from `controller.compiledRoutes`, so inspection and
+  OpenAPI still name one `/vN` path per version.
+- A route's `@Sse()` mounts a `beforeHandle` that sets `text/event-stream`,
+  `cache-control: no-cache`, and `connection: keep-alive`, even when the route
+  has no guard or interceptor. The `sse()` helper marks each yielded payload.
+- `strictCodegen: true` refuses a compiled route without a generated invoker
+  with `UNSAFE_CODE_GENERATION`. The framework default stays `false` for
+  descriptor-less applications; an application opts in explicitly.
+- `LazyModuleLoader` compiles a module graph after boot, runs provider-only
+  lifecycle hooks, and returns a `LazyModuleRef` with `get` and idempotent
+  `close`. It does not mount controllers or inherit the parent's private
+  providers.
 - `AponiaApplicationOptions.plugins` mounts native plugins on the root
   application from the options, beside the module-graph pass and before it, and
   it is a whole-plugin mount rather than an alternative module registration. An

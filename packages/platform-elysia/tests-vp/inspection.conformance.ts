@@ -330,6 +330,8 @@ test("the Vite+ lane returns frozen, serializable, and deterministic inspection 
       },
     ],
     gateways: [],
+    invokers: { accepted: false, reason: "No generated invoker artifact was supplied." },
+    artifacts: { invokers: null, descriptors: null },
   });
 });
 
@@ -350,6 +352,8 @@ test("the Vite+ lane returns empty collections for an application without contro
     ],
     routes: [],
     gateways: [],
+    invokers: { accepted: false, reason: "No generated invoker artifact was supplied." },
+    artifacts: { invokers: null, descriptors: null },
   });
 });
 

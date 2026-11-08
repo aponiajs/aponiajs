@@ -1013,3 +1013,79 @@ export class FactsController {
     ["property", true, false],
   ]);
 });
+
+test("reports a controller or route carrying @Serialize as unreadable", () => {
+  const source = `import { Controller, Get, Serialize } from "@aponiajs/common";
+
+@Controller("serialized")
+export class SerializedController {
+  @Get()
+  @Serialize((value: unknown) => ({ value }))
+  read() {
+    return "value";
+  }
+}
+`;
+
+  const routes = analyzeControllerRoutes(source, "serialized.controller.ts")[0]?.routes ?? [];
+
+  expect(routes).toHaveLength(1);
+  expect(routes[0]?.unreadable).toContain("@Serialize");
+});
+
+test("reports a controller or route carrying @Version as unreadable", () => {
+  const source = `import { Controller, Get, Version } from "@aponiajs/common";
+
+@Controller("versioned")
+@Version("1")
+export class VersionedController {
+  @Get()
+  read() {
+    return "value";
+  }
+}
+`;
+
+  const routes = analyzeControllerRoutes(source, "versioned.controller.ts")[0]?.routes ?? [];
+
+  expect(routes).toHaveLength(1);
+  expect(routes[0]?.unreadable).toContain("@Version");
+});
+
+test("reports a controller or route carrying @Deprecated as unreadable", () => {
+  const source = `import { Controller, Deprecated, Get } from "@aponiajs/common";
+
+@Controller("legacy")
+export class LegacyController {
+  @Get()
+  @Deprecated()
+  read() {
+    return "value";
+  }
+}
+`;
+
+  const routes = analyzeControllerRoutes(source, "legacy.controller.ts")[0]?.routes ?? [];
+
+  expect(routes).toHaveLength(1);
+  expect(routes[0]?.unreadable).toContain("@Deprecated");
+});
+
+test("reports a controller or route carrying @Sse as unreadable", () => {
+  const source = `import { Controller, Get, Sse } from "@aponiajs/common";
+
+@Controller("events")
+export class EventsController {
+  @Get()
+  @Sse()
+  read() {
+    return "events";
+  }
+}
+`;
+
+  const routes = analyzeControllerRoutes(source, "events.controller.ts")[0]?.routes ?? [];
+
+  expect(routes).toHaveLength(1);
+  expect(routes[0]?.unreadable).toContain("@Sse");
+});

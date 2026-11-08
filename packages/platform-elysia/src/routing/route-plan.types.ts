@@ -2,6 +2,7 @@ import type {
   ClassToken,
   RequestMethod,
   RouteParameterMetadata,
+  ResponseSerializer,
   RouteSchema,
 } from "@aponiajs/common";
 
@@ -55,4 +56,10 @@ export interface RoutePlan {
   readonly interceptors?: readonly ClassToken<unknown>[];
   /** Filters this route declares. Each filter's matched types come from its own `@Catch()`. */
   readonly filters?: readonly ClassToken<unknown>[];
+  /** A serializer for this route's result. */
+  readonly serializer?: ResponseSerializer;
+  /** The URI version segment this route mounts under. */
+  readonly version?: string;
+  /** Whether this route is a Server-Sent Events route. */
+  readonly sse?: boolean;
 }

@@ -108,14 +108,21 @@ Component options follow Nest conventions:
 --module <name>
 --project, -p <name>
 --path <path>
+--publish
+--json
 ```
 
 The flags that take no value — `--dry-run`, `--skip-install`, `--flat`,
-`--spec`, `--skip-import`, `--crud`, and the short aliases `-d` and `-s` — reject
+`--spec`, `--skip-import`, `--crud`, `--publish`, and the short aliases `-d` and `-s` — reject
 an attached value instead of ignoring it, so `--dry-run=true` exits non-zero and
 writes nothing. Negate one with `--no-flat`, `--no-spec`, or `--no-crud`. A flag
 does not consume the argument after it, so `aponia new --dry-run my-api` reads
 `my-api` as the project name.
+
+`aponia g library <name>` creates a private workspace package by default. Add
+`--publish` to generate a publishable package with `exports`, `files`,
+`publishConfig`, both test lanes, `llms.txt`, `AGENTS.md`, and
+`aponia.library.json`.
 
 Resources additionally support `--crud` / `--no-crud` and these transports:
 `rest`, `graphql-code-first`, `graphql-schema-first`, `microservice`, and `ws`.
@@ -123,9 +130,10 @@ REST resources generate a mounted controller; GraphQL resources generate an
 unconnected resolver scaffold — the class is emitted beside the service, but the
 module registers only the service, and the file's own comment names the seam to
 connect (`GraphQLModule.register` with the service in `inject`); microservice
-resources generate an unconnected controller scaffold the same way, because
-microservice transports are not implemented; and WebSocket resources generate a
-provider-registered gateway. A CRUD WebSocket
+resources generate a registered `@Controller()` whose methods carry
+`@MessagePattern()` — connect a transport in
+`AponiaFactory.create({ microservices: [transport] })`; and WebSocket resources
+generate a provider-registered gateway. A CRUD WebSocket
 resource maps `<resource>.create`, `.findAll`, `.findOne`, `.update`, and
 `.remove` through `@SubscribeMessage()` and injects event data with
 `@MessageBody()`. A standalone gateway is immediately mountable:
@@ -263,6 +271,11 @@ my-api/
     `-- app.e2e-spec.ts
 ```
 
+An application can set `strictCodegen: true` on `AponiaFactory.create` to refuse
+a route the build could not lower with `UNSAFE_CODE_GENERATION` instead of
+compiling its handler at runtime. The committed `invokers.generated.ts` and
+`descriptors.generated.ts` are refreshed by `aponia build`.
+
 `src/config.ts` declares the application's configuration: one schema validates
 `PORT` once at boot, provided by `AppModule` and read back through
 `application.get(AppConfig)` in `src/main.ts`. The [configuration
@@ -325,6 +338,50 @@ This is standard mode and intentionally matches the flat starter structure
 created by `nest new`. Generated resources belong directly under
 `src/<resource>` and are imported by `AppModule`; the CLI does not create an
 artificial `src/modules/app` directory.
+
+## Libraries
+
+`aponia g library <name>` creates a private workspace package. Add `--publish`
+for a publishable package with `exports`, `files`, `publishConfig`, both test
+lanes, `llms.txt`, `AGENTS.md`, and `aponia.library.json`.
+
+```bash
+aponia g library widgets --publish
+aponia library check packages/widgets --publish
+aponia library check packages/widgets --json
+aponia library search security
+```
+
+`aponia library check` is read-only and exits non-zero when the package surface,
+the library manifest, or a required documentation file is missing. See
+[Authoring a library](./libraries.md) for the contract and the generated layout.
+`aponia library search <query>` reads the bundled catalog; `--json` prints it.
+
+## Manifest
+
+`aponia manifest` prints the framework contract as JSON. It lists the published
+packages, framework version, decorators, metadata keys, error codes, route slots,
+schematics, lifecycle hooks, and supported versioning strategies. The contract
+is guarded by `scripts/framework-contract.spec.ts` against the runtime sources,
+so an agent can treat it as the machine-readable surface of one release.
+
+## MCP
+
+`aponia mcp --cwd <path> [--project <name>]` starts a project-scoped Model
+Context Protocol server over newline-delimited JSON-RPC on stdio. The default
+surface is read-only and exposes `aponia_manifest`, `aponia_recipe`,
+`aponia_inspect_project`, `aponia_library_check`, and `aponia_explain_error`.
+`--allow-write` adds `aponia_plan_generate` / `aponia_apply_generate`;
+`--allow-exec` adds `aponia_verify` with the `fast`, `full`, and `contract`
+scopes. Apply requires `confirm: true` and a live plan id.
+stdout carries protocol frames only; diagnostics go to stderr. See the
+[agent surface](./agent/README.md) for client configuration and security
+defaults.
+
+`aponia agent init --clients codex,claude,cursor` installs the same canonical
+guidance into `AGENTS.md`, `.agents/skills/aponia/SKILL.md`,
+`.claude/skills/aponia/SKILL.md`, and `.cursor/rules/aponia.mdc`. `--dry-run`
+reports the files without writing them.
 
 ## Build
 

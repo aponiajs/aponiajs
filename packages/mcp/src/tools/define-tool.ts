@@ -18,6 +18,16 @@ export function defineMcpTool<TArgs = Record<string, unknown>>(
       required: Object.freeze([...(definition.inputSchema.required ?? [])]),
       additionalProperties: definition.inputSchema.additionalProperties,
     }),
+    ...(definition.outputSchema === undefined
+      ? {}
+      : {
+          outputSchema: Object.freeze({
+            type: "object" as const,
+            properties: Object.freeze({ ...definition.outputSchema.properties }),
+            required: Object.freeze([...(definition.outputSchema.required ?? [])]),
+            additionalProperties: definition.outputSchema.additionalProperties,
+          }),
+        }),
     handler: definition.handler,
   });
 }

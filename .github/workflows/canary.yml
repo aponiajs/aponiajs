@@ -63,7 +63,7 @@ jobs:
 
       - name: Pack publishable workspaces
         run: |
-          mkdir -p canary-artifacts/{01-common,02-core,03-platform-elysia,04-cli,05-create-aponia,06-devtools,07-cron,08-graphql,09-testing,10-openapi,11-cors,12-opentelemetry}
+          mkdir -p canary-artifacts/{01-common,02-core,03-platform-elysia,04-cli,05-create-aponia,06-devtools,07-cron,08-graphql,09-testing,10-openapi,11-cors,12-opentelemetry,13-mcp,14-cache,15-events,16-http,17-rate-limit,18-security,19-session,20-compression,21-auth,22-audit,23-tenancy,24-queue,25-database,26-metrics,27-idempotency,28-microservices,29-serverless}
           bun pm pack --cwd packages/common --destination "$GITHUB_WORKSPACE/canary-artifacts/01-common"
           bun pm pack --cwd packages/core --destination "$GITHUB_WORKSPACE/canary-artifacts/02-core"
           bun pm pack --cwd packages/platform-elysia --destination "$GITHUB_WORKSPACE/canary-artifacts/03-platform-elysia"
@@ -76,6 +76,23 @@ jobs:
           bun pm pack --cwd packages/openapi --destination "$GITHUB_WORKSPACE/canary-artifacts/10-openapi"
           bun pm pack --cwd packages/cors --destination "$GITHUB_WORKSPACE/canary-artifacts/11-cors"
           bun pm pack --cwd packages/opentelemetry --destination "$GITHUB_WORKSPACE/canary-artifacts/12-opentelemetry"
+          bun pm pack --cwd packages/mcp --destination "$GITHUB_WORKSPACE/canary-artifacts/13-mcp"
+          bun pm pack --cwd packages/cache --destination "$GITHUB_WORKSPACE/canary-artifacts/14-cache"
+          bun pm pack --cwd packages/events --destination "$GITHUB_WORKSPACE/canary-artifacts/15-events"
+          bun pm pack --cwd packages/http --destination "$GITHUB_WORKSPACE/canary-artifacts/16-http"
+          bun pm pack --cwd packages/rate-limit --destination "$GITHUB_WORKSPACE/canary-artifacts/17-rate-limit"
+          bun pm pack --cwd packages/security --destination "$GITHUB_WORKSPACE/canary-artifacts/18-security"
+          bun pm pack --cwd packages/session --destination "$GITHUB_WORKSPACE/canary-artifacts/19-session"
+          bun pm pack --cwd packages/compression --destination "$GITHUB_WORKSPACE/canary-artifacts/20-compression"
+          bun pm pack --cwd packages/auth --destination "$GITHUB_WORKSPACE/canary-artifacts/21-auth"
+          bun pm pack --cwd packages/audit --destination "$GITHUB_WORKSPACE/canary-artifacts/22-audit"
+          bun pm pack --cwd packages/tenancy --destination "$GITHUB_WORKSPACE/canary-artifacts/23-tenancy"
+          bun pm pack --cwd packages/queue --destination "$GITHUB_WORKSPACE/canary-artifacts/24-queue"
+          bun pm pack --cwd packages/database --destination "$GITHUB_WORKSPACE/canary-artifacts/25-database"
+          bun pm pack --cwd packages/metrics --destination "$GITHUB_WORKSPACE/canary-artifacts/26-metrics"
+          bun pm pack --cwd packages/idempotency --destination "$GITHUB_WORKSPACE/canary-artifacts/27-idempotency"
+          bun pm pack --cwd packages/microservices --destination "$GITHUB_WORKSPACE/canary-artifacts/28-microservices"
+          bun pm pack --cwd packages/serverless --destination "$GITHUB_WORKSPACE/canary-artifacts/29-serverless"
 
       - name: Publish packages in dependency order
         working-directory: ${{ runner.temp }}

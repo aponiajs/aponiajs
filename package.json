@@ -14,6 +14,10 @@
     "examples/*"
   ],
   "scripts": {
+    "api:freeze": "bun run scripts/public-api.ts --update",
+    "api:verify": "bun run scripts/public-api.ts",
+    "bench": "bun run benchmarks/http-throughput.ts",
+    "docs:build": "bun run scripts/build-docs-site.ts",
     "build": "bun run --workspaces build",
     "dev": "bun run --filter aponiajs dev",
     "example:basic": "bun run --cwd examples/basic start",
@@ -26,6 +30,7 @@
     "example:lifecycle": "bun run --cwd examples/lifecycle start",
     "example:multiple-routers": "bun run --cwd examples/multiple-routers start",
     "example:native-plugins": "bun run --cwd examples/native-plugins start",
+    "example:reference": "bun run --cwd examples/reference start",
     "example:request-parameters": "bun run --cwd examples/request-parameters start",
     "example:validation": "bun run --cwd examples/validation start",
     "example:websockets": "bun run --cwd examples/websockets start",
@@ -36,7 +41,7 @@
     "test:vite-plus": "vp test",
     "check": "vp check",
     "doctor": "vp env doctor",
-    "version:bump": "bumpp package.json packages/aponiajs/package.json packages/cli/package.json packages/common/package.json packages/core/package.json packages/cors/package.json packages/create-aponia/package.json packages/cron/package.json packages/devtools/package.json packages/graphql/package.json packages/mcp/package.json packages/openapi/package.json packages/opentelemetry/package.json packages/platform-elysia/package.json packages/testing/package.json --all --no-commit --no-tag --no-push --execute \"bun run version:sync\"",
+    "version:bump": "bumpp package.json packages/aponiajs/package.json packages/audit/package.json packages/auth/package.json packages/cache/package.json packages/cli/package.json packages/common/package.json packages/compression/package.json packages/core/package.json packages/cors/package.json packages/create-aponia/package.json packages/cron/package.json packages/database/package.json packages/devtools/package.json packages/events/package.json packages/graphql/package.json packages/http/package.json packages/idempotency/package.json packages/mcp/package.json packages/metrics/package.json packages/microservices/package.json packages/serverless/package.json packages/openapi/package.json packages/opentelemetry/package.json packages/platform-elysia/package.json packages/queue/package.json packages/rate-limit/package.json packages/security/package.json packages/session/package.json packages/tenancy/package.json packages/testing/package.json --all --no-commit --no-tag --no-push --execute \"bun run version:sync\"",
     "version:patch": "bun run version:bump -- --release patch --yes",
     "version:minor": "bun run version:bump -- --release minor --yes",
     "version:major": "bun run version:bump -- --release major --yes",
@@ -50,7 +55,7 @@
     "release:tag": "bun scripts/distribution-tag.ts",
     "release:branch": "bun scripts/release-branch.ts",
     "release:canary": "bun scripts/canary-version.ts",
-    "release:dry-run": "for package in common core platform-elysia cli create-aponia devtools cron cors graphql mcp testing openapi opentelemetry; do bun pm pack --cwd packages/$package --dry-run; done",
+    "release:dry-run": "for package in audit auth cache compression events http idempotency common core platform-elysia queue cli create-aponia devtools cron database cors graphql mcp metrics microservices serverless testing openapi opentelemetry rate-limit security session tenancy; do bun pm pack --cwd packages/$package --dry-run; done",
     "prepare": "bunx --bun vp config"
   },
   "devDependencies": {
@@ -60,6 +65,7 @@
     "bumpp": "^12.3.0",
     "elysia": "2.0.0-beta.24",
     "jsonc-parser": "^3.3.1",
+    "marked": "^18.1.3",
     "typebox": "^1.3.34",
     "typescript": "^7.0.2",
     "vite": "npm:@voidzero-dev/vite-plus-core@0.2.9",

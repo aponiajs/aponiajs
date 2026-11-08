@@ -95,6 +95,27 @@ default `closeActiveConnections` is used; the signal path does not choose a diff
 - **A signal that arrives before `listen` has finished is not caught.** Only an application that
   started cleanly owns the process's signals.
 
+## Standalone application context
+
+A worker, a command-line task, or a container test does not need an HTTP listener.
+`AponiaFactory.createApplicationContext` boots the provider graph, runs the starting hooks,
+and returns a context with `get`, `resolve`, and `close`:
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./src/app.module.ts";
+
+const context = await AponiaFactory.createApplicationContext(AppModule, { logger: false });
+const service = context.get(UsersService);
+
+await context.close();
+```
+
+Providers initialize and their `onModuleInit`, `onApplicationBootstrap`, `beforeApplicationShutdown`,
+`onModuleDestroy`, and `onApplicationShutdown` hooks run exactly as they do in an HTTP application.
+Controllers are not mounted and no route is compiled, so a controller constructor has no side effect
+on a worker boot. `close()` is idempotent: a second call runs no hook again.
+
 ## Readiness and liveness
 
 An orchestrator needs to ask two different questions: whether the process is alive, and whether
@@ -138,3 +159,23 @@ The probes mount outside the module graph, so nothing about them reaches `compil
 `inspectAponiaApplication`, or a generated artifact. A probe path a controller already claims fails
 the boot with `DUPLICATE_ROUTE` instead, because Elysia would otherwise answer the repeated path
 from whichever registration it resolves.
+
+## Lazy modules
+
+`LazyModuleLoader` loads one module graph after the application has booted. It
+compiles the graph, initializes its providers, runs `onModuleInit` and
+`onApplicationBootstrap`, and returns a `LazyModuleRef` with `get` and `close`:
+
+```ts
+const loader = application.get(LazyModuleLoader);
+const ref = await loader.load(() =>
+  import("./reports/reports.module.ts").then((m) => m.ReportsModule),
+);
+const reports = ref.get(ReportsService);
+await ref.close();
+```
+
+`close` runs `beforeApplicationShutdown`, `onModuleDestroy`, and
+`onApplicationShutdown` once. The lazy graph has its own root visibility; it
+does not inherit the parent application's non-exported providers. Controllers
+are not mounted by a lazy load.

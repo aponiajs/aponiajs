@@ -7,7 +7,7 @@ import {
   renderCreateDto,
   renderEntity,
   renderGraphqlResolverScaffold,
-  renderMicroserviceScaffold,
+  renderMicroserviceController,
   renderResourceController,
   renderResourceModel,
   renderResourceModule,
@@ -130,7 +130,7 @@ export function createResourceFiles(
       createFile(
         directory,
         `${names.fileName}.controller.ts`,
-        renderMicroserviceScaffold(names, options.crud),
+        renderMicroserviceController(names, options.crud),
       ),
     );
   } else {
@@ -155,7 +155,7 @@ export function createResourceFiles(
       createFile(
         directory,
         `${names.fileName}.${fileStem}.spec.ts`,
-        renderResourceTransportSpec(names, fileStem, options.crud),
+        renderResourceTransportSpec(names, fileStem, options.crud, options.type === "microservice"),
       ),
     );
   }

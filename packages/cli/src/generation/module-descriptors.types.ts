@@ -188,6 +188,25 @@ export interface AnalyzedGateway {
    * read — see `unreadable`.
    */
   readonly path: string | undefined;
+  /**
+   * The incoming message size limit the decorator states, or `undefined` when it
+   * states none.
+   */
+  readonly maxPayloadLength: number | undefined;
+  /**
+   * The handshake guard class names the decorator states, in declaration order.
+   *
+   * The names are resolved to imports when the provider is emitted; a name the
+   * declaring file cannot name disqualifies the gateway, because dropping it
+   * would mount a socket with fewer guards than the application declared.
+   */
+  readonly guards: readonly string[];
+  /** The browser origins the handshake may name, in declaration order. */
+  readonly origins: readonly string[];
+  /** The idle window in milliseconds the decorator states. */
+  readonly idleTimeoutMs: number | undefined;
+  /** Whether the decorator asks the server to send pings. */
+  readonly sendPings: boolean | undefined;
   /** The constructor's dependencies, ordered by parameter index. */
   readonly dependencies: readonly AnalyzedConstructorDependency[];
   /** The message handlers the class declares, in declaration order. */

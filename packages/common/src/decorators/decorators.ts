@@ -2,7 +2,8 @@ import "reflect-metadata";
 import type { ForwardReference } from "../modules/forward-ref.types.ts";
 import { isRouteResponseSchemaMap } from "../routing/route-schema.ts";
 import type { RouteSchema } from "../routing/route-schema.types.ts";
-import type { ClassToken, Token } from "../tokens/token.types.ts";
+import { optionalDependency } from "../tokens/token.ts";
+import type { ClassToken, InjectionDependency, Token } from "../tokens/token.types.ts";
 import type {
   ControllerMetadata,
   InjectableOptions,
@@ -19,6 +20,7 @@ const injectableMetadataKey = Symbol.for("aponia.injectable.metadata");
 const controllerMetadataKey = Symbol.for("aponia.controller.metadata");
 const routeMetadataKey = Symbol.for("aponia.route.metadata");
 const injectedTokensMetadataKey = Symbol.for("aponia.injected-tokens.metadata");
+const optionalParametersMetadataKey = Symbol.for("aponia.optional-parameters.metadata");
 
 /**
  * Declares a module: the grouping of controllers, providers, and imports the
@@ -166,6 +168,51 @@ export function Inject(
     updatedParameters.set(parameterIndex, token);
     Reflect.defineMetadata(injectedTokensMetadataKey, updatedParameters, constructor);
   };
+}
+
+/**
+ * Marks a constructor parameter as optional.
+ *
+ * A provider the graph cannot resolve at that parameter injects `undefined`
+ * instead of failing the boot. Ambiguous providers still fail, because two
+ * visible candidates are a declaration problem rather than an absent one.
+ *
+ * @returns A parameter decorator recording the optional parameter index.
+ *
+ * @example
+ * ```ts
+ * constructor(@Optional() readonly cache?: CacheService) {}
+ * ```
+ */
+export function Optional(): ParameterDecorator {
+  return (target, _propertyKey, parameterIndex) => {
+    const constructor = typeof target === "function" ? target : target.constructor;
+    const parameters =
+      (Reflect.getOwnMetadata(optionalParametersMetadataKey, constructor) as
+        | ReadonlySet<number>
+        | undefined) ?? new Set<number>();
+    const updatedParameters = new Set(parameters);
+    updatedParameters.add(parameterIndex);
+    Reflect.defineMetadata(optionalParametersMetadataKey, updatedParameters, constructor);
+  };
+}
+
+/**
+ * Reads the constructor parameter indexes `@Optional()` marked.
+ *
+ * The reach matches `getConstructorDependencies`: a subclass without its own
+ * constructor runs the parent's constructor and therefore inherits the parent's
+ * optional parameters.
+ *
+ * @param target - The class to read.
+ * @returns The optional parameter indexes, or undefined when none were marked.
+ */
+export function getOptionalParameters(
+  target: ClassToken<unknown>,
+): ReadonlySet<number> | undefined {
+  return Reflect.getMetadata(optionalParametersMetadataKey, target) as
+    | ReadonlySet<number>
+    | undefined;
 }
 
 /**
@@ -323,7 +370,7 @@ export function getRouteMetadata(target: ClassToken<unknown>): readonly RouteMet
  */
 export function getConstructorDependencies(
   target: ClassToken<unknown>,
-): readonly (Token<unknown> | ForwardReference<Token<unknown>>)[] {
+): readonly InjectionDependency[] {
   const reflected =
     (Reflect.getMetadata("design:paramtypes", target) as readonly unknown[] | undefined) ?? [];
   // Explicit tokens deliberately share the reach of `design:paramtypes`: a
@@ -338,9 +385,13 @@ export function getConstructorDependencies(
     ? Math.max(0, ...[...explicit.keys()].map((index) => index + 1))
     : 0;
   const length = Math.max(reflected.length, explicitLength);
+  const optional = getOptionalParameters(target);
 
   return Object.freeze(
-    Array.from({ length }, (_, index) => explicit?.get(index) ?? asToken(reflected[index], target)),
+    Array.from({ length }, (_, index) => {
+      const dependency = explicit?.get(index) ?? asToken(reflected[index], target);
+      return optional?.has(index) ? optionalDependency(dependency) : dependency;
+    }),
   );
 }
 

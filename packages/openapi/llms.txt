@@ -39,7 +39,7 @@ The document is served at `"/openapi/json"` and the interface at `"/openapi"`, b
 
 What the platform lowered from the route decorations, and nothing else: the path and method of each route, `requestBody` from a declared `body`, `parameters` from `query`, `params`, `headers`, and `cookie`, and `responses` from a declared `response` — one validator as the `200` answer, a status map as the status-specific answers. A route with no schema is still an operation.
 
-Two absences to know: `components.schemas` is empty, because AponiaJS registers no model and every declared schema is inlined into the operation that declared it; and a WebSocket gateway is not in the document, because the platform mounts it as a route whose method is `ws`, which is not an OpenAPI path-item field — the plugin is mounted with `exclude.methods: ["options", "ws"]` for that reason. `operationId`, `summary`, `tags`, `security`, and `servers` are not populated: the framework declares none of them.
+Two absences to know: `components.schemas` is empty, because AponiaJS registers no model and every declared schema is inlined into the operation that declared it; and a WebSocket gateway is not in the document, because the platform mounts it as a route whose method is `ws`, which is not an OpenAPI path-item field — the plugin is mounted with `exclude.methods: ["options", "ws"]` for that reason. `operationId`, `summary`, `tags`, `security`, and `servers` are not populated: the framework declares none of them. A route marked with `@Deprecated()` is marked `deprecated: true` in the operation.
 
 ## One document per application
 

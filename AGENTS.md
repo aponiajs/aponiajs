@@ -22,22 +22,38 @@ it satisfies both this guide and `RULES.md`.
 
 Bun workspace. Framework packages live in `packages/`:
 
-| Package                     | Owns                                                            | Runtime dependencies                                                     |
-| --------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `@aponiajs/common`          | Decorators, contracts, tokens, providers, errors, WebSockets    | `reflect-metadata` only                                                  |
-| `@aponiajs/core`            | Module graph, visibility rules, dependency injection            | `@aponiajs/common`                                                       |
-| `@aponiajs/platform-elysia` | Elysia adapter, HTTP routes, WebSocket gateways, plugins        | `common`, `core`, peer `elysia`                                          |
-| `@aponiajs/cli`             | `aponia new` and `aponia generate` schematics                   | `change-case`, `ts-morph`, `yargs-parser`, `inflection`, `oxfmt` (exact) |
-| `create-aponia`             | `bun create aponia` entrypoint into the same generator          | `@aponiajs/cli`                                                          |
-| `@aponiajs/cron`            | Scheduled jobs declared in a module, from validated config      | `common`, `platform-elysia`, `@elysia/cron`, peer `elysia`               |
-| `@aponiajs/cors`            | Cross-origin policy declared in a module, from validated config | `common`, `platform-elysia`, `@elysia/cors`, peer `elysia`               |
-| `@aponiajs/devtools`        | Opt-in devtools served by the running application itself        | `cli`, `common`, `platform-elysia`, peer `elysia`                        |
-| `@aponiajs/graphql`         | GraphQL endpoint served in a module, from validated config      | `common`, `platform-elysia`, `@elysia/graphql-yoga`, peer `elysia`       |
-| `@aponiajs/mcp`             | Standardized Model Context Protocol (2024-11-05) server & tools | `common`, peer `elysia`                                                  |
-| `@aponiajs/testing`         | Test application builder, provider overrides, teardown          | `common`, `platform-elysia`, peer `elysia`                               |
-| `@aponiajs/openapi`         | OpenAPI document served for an application's routes             | `common`, `platform-elysia`, `@elysia/openapi`, peer `elysia`            |
-| `@aponiajs/opentelemetry`   | Tracing through a validated config, no backend or exporter      | `common`, `platform-elysia`, `@elysia/opentelemetry`, peer `elysia`      |
-| `aponiajs`                  | Reserved public facade, private and unpublished                 | —                                                                        |
+| Package                     | Owns                                                             | Runtime dependencies                                                     |
+| --------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `@aponiajs/common`          | Decorators, contracts, tokens, providers, errors, WebSockets     | `reflect-metadata` only                                                  |
+| `@aponiajs/core`            | Module graph, visibility rules, dependency injection             | `@aponiajs/common`                                                       |
+| `@aponiajs/cache`           | Bounded application cache, TTL, pluggable store                  | `common`                                                                 |
+| `@aponiajs/compression`     | Brotli/gzip response compression, threshold negotiation          | `common`, `platform-elysia`, peer `elysia`                               |
+| `@aponiajs/events`          | Typed in-process events, ordered handlers, listeners             | `common`, `reflect-metadata`                                             |
+| `@aponiajs/http`            | SSRF-safe outbound HTTP, timeouts, bounded responses             | `common`, `ipaddr.js`                                                    |
+| `@aponiajs/rate-limit`      | Fixed-window request limiting, guard, store                      | `common`, `platform-elysia`, peer `elysia`                               |
+| `@aponiajs/security`        | Security headers and signed double-submit CSRF                   | `common`, `platform-elysia`, peer `elysia`                               |
+| `@aponiajs/session`         | Signed session cookies, session service, bounded store           | `common`, `platform-elysia`, peer `elysia`                               |
+| `@aponiajs/auth`            | JWT authentication, guards, refresh rotation, revocation         | `common`, `platform-elysia`, `jose`, peer `elysia`                       |
+| `@aponiajs/audit`           | Bounded, redacting audit events and store                        | `common`                                                                 |
+| `@aponiajs/tenancy`         | Request-scoped tenant service and guard                          | `common`, `platform-elysia`, peer `elysia`                               |
+| `@aponiajs/queue`           | In-process job queue, retries, dead letters, outbox              | `common`                                                                 |
+| `@aponiajs/database`        | Drizzle boundary, repositories, SQL migrations                   | `common`, `drizzle-orm`                                                  |
+| `@aponiajs/metrics`         | Prometheus registry, request instrumentation, scrape endpoint    | `common`, `platform-elysia`, peer `elysia`                               |
+| `@aponiajs/idempotency`     | Idempotent request replay, conflict detection, store             | `common`, `platform-elysia`, peer `elysia`                               |
+| `@aponiajs/microservices`   | Message-pattern transports and the in-memory reference transport | `common`                                                                 |
+| `@aponiajs/serverless`      | AWS Lambda and Web Fetch adapters for an application             | —                                                                        |
+| `@aponiajs/platform-elysia` | Elysia adapter, HTTP routes, WebSocket gateways, plugins         | `common`, `core`, peer `elysia`                                          |
+| `@aponiajs/cli`             | `aponia new` and `aponia generate` schematics                    | `change-case`, `ts-morph`, `yargs-parser`, `inflection`, `oxfmt` (exact) |
+| `create-aponia`             | `bun create aponia` entrypoint into the same generator           | `@aponiajs/cli`                                                          |
+| `@aponiajs/cron`            | Scheduled jobs declared in a module, from validated config       | `common`, `platform-elysia`, `@elysia/cron`, peer `elysia`               |
+| `@aponiajs/cors`            | Cross-origin policy declared in a module, from validated config  | `common`, `platform-elysia`, `@elysia/cors`, peer `elysia`               |
+| `@aponiajs/devtools`        | Opt-in devtools served by the running application itself         | `cli`, `common`, `platform-elysia`, peer `elysia`                        |
+| `@aponiajs/graphql`         | GraphQL endpoint served in a module, from validated config       | `common`, `platform-elysia`, `@elysia/graphql-yoga`, peer `elysia`       |
+| `@aponiajs/mcp`             | Model Context Protocol server, version negotiation, discovery    | `common`, peer `elysia`                                                  |
+| `@aponiajs/testing`         | Test application builder, provider overrides, teardown           | `common`, `platform-elysia`, peer `elysia`                               |
+| `@aponiajs/openapi`         | OpenAPI document served for an application's routes              | `common`, `platform-elysia`, `@elysia/openapi`, peer `elysia`            |
+| `@aponiajs/opentelemetry`   | Tracing through a validated config, no backend or exporter       | `common`, `platform-elysia`, `@elysia/opentelemetry`, peer `elysia`      |
+| `aponiajs`                  | Reserved public facade, private and unpublished                  | —                                                                        |
 
 Supporting directories: `examples/` for executable examples, `docs/` for
 published documentation, `scripts/`
@@ -69,6 +85,20 @@ being changed:
 | ---------------------------------------------------------------- | ---------------------------------------------------------------- |
 | [`packages/common`](packages/common/AGENTS.md)                   | Decorators, descriptors, tokens, errors, logging                 |
 | [`packages/core`](packages/core/AGENTS.md)                       | Module graph, visibility, container                              |
+| [`packages/cache`](packages/cache/AGENTS.md)                     | The bounded application-cache package                            |
+| [`packages/compression`](packages/compression/AGENTS.md)         | The Brotli/gzip response-compression package                     |
+| [`packages/events`](packages/events/AGENTS.md)                   | The typed in-process event package                               |
+| [`packages/http`](packages/http/AGENTS.md)                       | The SSRF-safe outbound HTTP package                              |
+| [`packages/rate-limit`](packages/rate-limit/AGENTS.md)           | The fixed-window rate-limit package                              |
+| [`packages/security`](packages/security/AGENTS.md)               | The security headers and CSRF package                            |
+| [`packages/session`](packages/session/AGENTS.md)                 | The signed session cookie package                                |
+| [`packages/auth`](packages/auth/AGENTS.md)                       | The JWT authentication and authorization package                 |
+| [`packages/audit`](packages/audit/AGENTS.md)                     | The bounded audit-event package                                  |
+| [`packages/tenancy`](packages/tenancy/AGENTS.md)                 | The request-scoped multi-tenancy package                         |
+| [`packages/queue`](packages/queue/AGENTS.md)                     | The job queue and transactional outbox package                   |
+| [`packages/database`](packages/database/AGENTS.md)               | The Drizzle database boundary, repositories, and migrations      |
+| [`packages/metrics`](packages/metrics/AGENTS.md)                 | The Prometheus metrics registry, plugin, and scrape endpoint     |
+| [`packages/idempotency`](packages/idempotency/AGENTS.md)         | The idempotent request replay package                            |
 | [`packages/platform-elysia`](packages/platform-elysia/AGENTS.md) | Bootstrap, route mapping, native plugins, context types          |
 | [`packages/cli`](packages/cli/AGENTS.md)                         | Schematics, templates, generated layout                          |
 | [`packages/create-aponia`](packages/create-aponia/AGENTS.md)     | The `bun create aponia` entrypoint                               |
@@ -80,6 +110,8 @@ being changed:
 | [`packages/testing`](packages/testing/AGENTS.md)                 | The test kit: test applications, provider overrides, teardown    |
 | [`packages/openapi`](packages/openapi/AGENTS.md)                 | The OpenAPI document package, served by its own registration     |
 | [`packages/opentelemetry`](packages/opentelemetry/AGENTS.md)     | The OpenTelemetry tracing package, and its process-global limit  |
+| [`packages/microservices`](packages/microservices/AGENTS.md)     | Message-pattern transports and the in-memory reference transport |
+| [`packages/serverless`](packages/serverless/AGENTS.md)           | AWS Lambda and Web Fetch adapters for an application             |
 | [`packages/aponiajs`](packages/aponiajs/AGENTS.md)               | The reserved, still-private facade                               |
 | [`scripts`](scripts/AGENTS.md)                                   | Release channel derivation and documentation guards              |
 | [`docs`](docs/AGENTS.md)                                         | The published documentation set and what guards it               |
@@ -270,11 +302,14 @@ gateway instance or add a separate gateway container.
 `defineWebSocketGateway` in
 `packages/platform-elysia/src/websockets/gateway-definition.ts` is the declared
 half of that pair, and a plan states only what the decorators record — path,
+payload limit, handshake guards, origin allowlist, idle timeout, ping policy,
 handlers, and server properties — because lifecycle is resolved from the
 instance.
 
-`@WebSocketGateway()` defaults to `/ws` and accepts a path string or
-`{ path }`. `@SubscribeMessage(event)` records named handlers;
+`@WebSocketGateway()` defaults to `/ws` and accepts a path string or an options
+object with `path`, `maxPayloadLength`, `guards`, `origins`, `idleTimeoutMs`, and
+`sendPings`.
+`@SubscribeMessage(event)` records named handlers;
 `@MessageBody()`/`@MessageBody("property")` and `@ConnectedSocket()` describe
 their arguments; `@WebSocketServer()` receives the root Elysia application.
 `OnGatewayInit`, `OnGatewayConnection`, and `OnGatewayDisconnect` use
@@ -391,47 +426,56 @@ while non-REST transports retain ordinary DTO files. Gateway schematics emit
 `@WebSocketGateway()` providers; WebSocket CRUD resources generate stable
 create/find-all/find-one/update/remove message handlers. `runCli` prints
 `CREATE`/`UPDATE` change lines and returns an exit code — it never throws.
+`aponia g library <name> --publish` emits a publishable package with exports,
+both test lanes, `aponia.library.json`, `llms.txt`, `AGENTS.md`, and a Vite+
+build; `aponia library check` validates that surface read-only.
+`aponia manifest` prints the guarded framework contract (decorators, metadata
+keys, error codes, route slots, schematics, lifecycle, packages, and version).
+`aponia mcp` serves that contract and the read-only inspection tools over stdio;
+`--allow-write` adds guarded plan/apply and `--allow-exec` adds bounded
+verification. `aponia agent init` installs client guidance from one source.
+`aponia library search` reads the curated library catalog, which
+`scripts/library-catalog.spec.ts` keeps aligned with published packages.
 
 ### Current scope
 
-Implemented: decorated modules and HTTP controllers, Standard Schema route
-validation, one-schema validation-model classes, request parameter decorators,
-singleton DI, class/value/factory/alias providers, explicit tokens,
-validated configuration an application declares and injects,
-imports and exports, provider and application lifecycle hooks, read from the
-provider instance, structured logging, generators, native Elysia
-escape hatches, application-owned native plugins mounted through
-`AponiaApplicationOptions.plugins`, concise inferred controller registration,
-RFC 9457 application
-errors, provider-registered Elysia WebSocket gateways, and guards, interceptors,
-and exception filters compiled into per-route lifecycle hooks, with the default
-Problem Details mapping last in each route's error path, and an opt-in devtools
-package, mounted on the application's own route table under `/__devtools`, that
-reports what a boot
-compiled and every request that reached its record, with the answer it observed
-or the absence of one, a `@aponiajs/cron` plugin package that declares
-scheduled jobs in a module and reads them from a validated configuration over
-`@elysia/cron`, and a `@aponiajs/testing` package that boots an application for a
-test with a teardown a case can rely on, replaces one provider for one boot by
-rewriting the compiled graph, and binds the one real port a WebSocket case
-needs, a `@aponiajs/openapi` plugin package that serves an OpenAPI document
-for the application's own routes, with the document's metadata read from a
-validated configuration over `@elysia/openapi`, and a `@aponiajs/cors` plugin
-package that answers cross-origin requests, with the policy read from a
-validated configuration over `@elysia/cors`, and a `@aponiajs/graphql` plugin
-package that serves a GraphQL endpoint in a module, with the mount path read
-from a validated configuration over `@elysia/graphql-yoga` and the schema
-supplied by the application through an injected factory, and a `@aponiajs/opentelemetry`
-plugin package that records spans for the application's own routes, with the
-policy read from a validated configuration over `@elysia/opentelemetry` and the
-span processors, exporters, and instrumentations supplied by the application,
-because the wrapped plugin's SDK is process-global and the first registration in
-a process owns it. Not implemented:
-middleware, non-singleton scopes, authentication,
-production WebSocket policies and transport extraction, job queues and
-distributed scheduling, and microservice
-transports. Treat the two lists above as the scope of record for the current
-release.
+Implemented: decorated modules and HTTP controllers, hand-written descriptors,
+Standard Schema and native validator route validation, one-schema validation
+models, request parameter decorators, singleton/request/transient DI, optional
+injection (`@Optional()`), `ModuleRef`, class/value/factory/alias providers,
+explicit tokens, validated configuration, module imports and exports, global
+modules, `forwardRef()`, provider and application lifecycle hooks, standalone
+application contexts (`AponiaFactory.createApplicationContext`), structured
+logging, generators, native Elysia escape hatches, application-owned native
+plugins mounted through `AponiaApplicationOptions.plugins`, concise inferred
+controller registration, RFC 9457 application errors, provider-registered
+WebSocket gateways, middleware, guards, interceptors, exception filters,
+parameter and route pipes, response serialization (`@Serialize()`), request
+context, API versioning (`@Version()` with URI, header, and media-type
+negotiation), route deprecation headers
+(`@Deprecated()`), Server-Sent Events (`@Sse()`),
+opt-in strict code generation (`strictCodegen`), bearer JWT authentication with
+OIDC discovery, refresh-token rotation, and access-token revocation
+(`@aponiajs/auth`), bounded audit events
+(`@aponiajs/audit`), multi-tenancy (`@aponiajs/tenancy`), health probes, lazy
+module loading (`LazyModuleLoader`),
+graceful shutdown,
+and the opt-in packages `@aponiajs/openapi`, `@aponiajs/cors`, `@aponiajs/cron`,
+`@aponiajs/graphql`, `@aponiajs/opentelemetry`, `@aponiajs/testing`,
+`@aponiajs/devtools`, `@aponiajs/cache`, `@aponiajs/events`, `@aponiajs/http`,
+`@aponiajs/rate-limit`, `@aponiajs/security`, `@aponiajs/session`,
+`@aponiajs/compression`, `@aponiajs/queue` (in-process jobs and outbox),
+`@aponiajs/database` (Drizzle transactions, repositories, and SQL migrations),
+`@aponiajs/metrics` (a Prometheus registry, request instrumentation, and a
+scrape endpoint), `@aponiajs/idempotency` (idempotent request replay), and
+message-pattern microservices (`@aponiajs/microservices`: the transport
+contract, an in-memory reference transport, and `@MessagePattern()` /
+`@EventPattern()` handlers dispatched by the boot), and serverless adapters
+(`@aponiajs/serverless`: Web Fetch and AWS Lambda).
+Not implemented: distributed queue brokers and durable outboxes, bundled
+distributed revocation and refresh stores (the contracts accept an application
+store), MVC adapters, and production WebSocket transport extraction. Treat this
+list as the scope of record for the current release.
 
 ## Coding Style & Naming Conventions
 

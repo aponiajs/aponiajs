@@ -6,15 +6,19 @@ This package records metadata and declares contracts. It never builds a module g
 
 ## What this package exports
 
-- [Module, Controller, Injectable, Inject](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/decorators/decorators.ts): module, controller, and injection decorators.
+- [Module, Controller, Injectable, Inject, Optional](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/decorators/decorators.ts): module, controller, and injection decorators, including optional injection.
 - [Get, Post, Put, Patch, Delete, Head, Options](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/decorators/decorators.ts): HTTP method decorators, each accepting an optional route schema.
 - [getModuleMetadata, getControllerMetadata, getRouteMetadata, getConstructorDependencies](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/decorators/decorators.ts): read the metadata a decorator recorded.
-- [Body, Query, Param, Headers, Cookie, State, Req, ResponseSettings, HttpStatus, Context](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/route-parameters.ts): parameter decorators, each optionally naming one property.
+- [Body, UploadedFile, UploadedFiles, Query, Param, Headers, Cookie, State, Req, ResponseSettings, HttpStatus, Context](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/route-parameters.ts): parameter decorators, each optionally naming one property; the upload decorators bind multipart body fields.
 - [routeParameterKinds, getRouteParameterMetadata](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/route-parameters.ts): the parameter kind constants and their metadata reader.
 - [Validation, resolveRouteValidator, getValidationMetadata](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/validation.ts): binds one validator to a validation-model class used in a route schema.
 - [createDto](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/dto.ts): derives a strongly typed DTO class constructor from a Standard Schema v1 validator.
+- [Serialize, getResponseSerializer](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/response-serializer.ts): a controller or route response serializer and its reader.
+- [Version, VersioningType, getVersionMetadata](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/versioning.ts): a version decorator, its reader, and the strategy names the platform negotiates.
+- [Sse, isSseRoute](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/sse.ts): the Server-Sent Events route marker and its reader.
 - [routeSchemaSlots, isStandardSchema, isRouteResponseSchemaMap](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/route-schema.ts): the schema slot names and the validator guards the platform uses.
 - [defineModule](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/modules/module.ts): the descriptor-first alternative to `@Module()`.
+- [ModuleRef](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/modules/module-ref.ts): the abstract module-scoped provider lookup a module injects.
 - [provideValue, provideClass, provideFactory, provideAlias](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/providers/provider.ts): provider descriptors for hand-written modules.
 - [createToken, getTokenName](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/tokens/token.ts): explicit injection tokens.
 - [AponiaError](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/errors/aponia-error.ts): every framework failure, carrying one code and frozen structured details.
@@ -29,6 +33,7 @@ This package records metadata and declares contracts. It never builds a module g
 
 - [AponiaErrorCode](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/errors/aponia-error.types.ts): the closed union of framework failure codes.
 - [RouteContext, RouteSchema, RouteValidator, RouteCookie, RouteResponseSchema, InferValidatorOutput](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/route-schema.types.ts): the platform-neutral handler context and route schema contract.
+- [ResponseSerializer](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/response-serializer.ts): the serializer contract `@Serialize()` accepts.
 - [RouteSchemaSlot, RouteResponseSchemaMap, ResponseSettingsState, ValidatorSchema](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/route-schema.types.ts): the schema slots and the structural match for platform-native JSON Schema validators.
 - [RouteParameterKind, RouteParameterMetadata](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/route-parameters.types.ts): parameter decorator metadata.
 - [ValidationModelClass, ValidationMetadata, RouteValidatorInput](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/src/routing/validation.types.ts): the validation-model contract.

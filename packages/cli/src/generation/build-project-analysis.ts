@@ -12,6 +12,7 @@ import {
 import { collectSourceImports } from "./source-imports.ts";
 import { scanSourceFiles } from "./file-scanner.ts";
 import type { AnalyzedController } from "./controller-routes.types.ts";
+import type { AnalyzedModule } from "./module-descriptors.types.ts";
 import type { DescriptorSourceFile } from "./descriptor-emitter.types.ts";
 import type {
   AnalyzeBuildProjectOptions,
@@ -55,6 +56,7 @@ export async function analyzeBuildProject(
     `**/${descriptorModuleFileName}`,
   ]);
   const controllers: AnalyzedController[] = [];
+  const modules: AnalyzedModule[] = [];
   const analyzed: DescriptorSourceFile[] = [];
   const imports: Record<string, string> = {};
   for (const file of sourceFiles.toSorted()) {
@@ -76,6 +78,7 @@ export async function analyzeBuildProject(
       descriptors: analyzeModuleDescriptors(source, file),
       controllers: found,
     });
+    modules.push(...analyzed.at(-1)!.descriptors.modules);
   }
   const provenance = Object.freeze({
     framework: aponiaVersion,
@@ -87,6 +90,7 @@ export async function analyzeBuildProject(
     invokerPath,
     descriptorPath,
     controllers: Object.freeze(controllers),
+    modules: Object.freeze(modules),
     provenance,
     invokers: emitControllerInvokers(controllers, imports, provenance),
     descriptors: emitModuleDescriptors(analyzed, descriptorPath, provenance),

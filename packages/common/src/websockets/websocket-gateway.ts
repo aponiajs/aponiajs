@@ -290,10 +290,46 @@ function normalizeGatewayOptions(
     guards = Object.freeze([...pathOrOptions.guards]);
   }
 
+  let origins: readonly string[] | undefined;
+  if (pathOrOptions.origins !== undefined) {
+    if (!Array.isArray(pathOrOptions.origins) || pathOrOptions.origins.length === 0) {
+      throw new TypeError("@WebSocketGateway origins must be a non-empty array.");
+    }
+    for (const origin of pathOrOptions.origins) {
+      if (typeof origin !== "string" || origin.trim() === "") {
+        throw new TypeError("@WebSocketGateway origins must contain only non-empty strings.");
+      }
+    }
+    origins = Object.freeze([...pathOrOptions.origins]);
+  }
+
+  let idleTimeoutMs: number | undefined;
+  if (pathOrOptions.idleTimeoutMs !== undefined) {
+    if (
+      typeof pathOrOptions.idleTimeoutMs !== "number" ||
+      !Number.isSafeInteger(pathOrOptions.idleTimeoutMs) ||
+      pathOrOptions.idleTimeoutMs <= 0
+    ) {
+      throw new TypeError("@WebSocketGateway idleTimeoutMs must be a positive integer.");
+    }
+    idleTimeoutMs = pathOrOptions.idleTimeoutMs;
+  }
+
+  let sendPings: boolean | undefined;
+  if (pathOrOptions.sendPings !== undefined) {
+    if (typeof pathOrOptions.sendPings !== "boolean") {
+      throw new TypeError("@WebSocketGateway sendPings must be a boolean.");
+    }
+    sendPings = pathOrOptions.sendPings;
+  }
+
   return Object.freeze({
     path,
     ...(maxPayloadLength !== undefined ? { maxPayloadLength } : {}),
     ...(guards !== undefined ? { guards } : {}),
+    ...(origins !== undefined ? { origins } : {}),
+    ...(idleTimeoutMs !== undefined ? { idleTimeoutMs } : {}),
+    ...(sendPings !== undefined ? { sendPings } : {}),
   });
 }
 

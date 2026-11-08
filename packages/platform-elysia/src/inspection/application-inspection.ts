@@ -17,6 +17,7 @@ import type { RuntimeElysiaController } from "../controllers/controller.types.ts
 import { compileRootModule } from "../modules/module-compiler.ts";
 import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
 import { selectRootModuleDescriptor } from "../modules/module-descriptor-artifact.ts";
+import { selectInvokerArtifact } from "../routing/invoker-artifact.ts";
 import { aponiaVersion } from "../version.ts";
 import { compileWebSocketGateways } from "../websockets/websocket-gateway.ts";
 import type { CompiledWebSocketGateway } from "../websockets/websocket-gateway.types.ts";
@@ -82,12 +83,25 @@ export function inspectAponiaApplication(
   ]);
   const modules = container.graph.modules;
   const gateways = compileWebSocketGateways(modules);
+  const invokers = selectInvokerArtifact(
+    options.invokers,
+    aponiaVersion,
+    resolveInspectionLogger(options.logger),
+  );
 
   return Object.freeze({
     rootModule: container.graph.root.id,
     modules: Object.freeze(modules.map(inspectModule)),
     routes: Object.freeze(modules.flatMap(inspectModuleRoutes).toSorted(compareRoutes)),
     gateways: Object.freeze(inspectGateways(gateways)),
+    invokers: Object.freeze({
+      accepted: invokers.invokers !== undefined,
+      reason: invokers.reason,
+    }),
+    artifacts: Object.freeze({
+      invokers: invokers.builtBy,
+      descriptors: rootSelection.builtBy,
+    }),
   });
 }
 

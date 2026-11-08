@@ -93,6 +93,7 @@ export function lifecycleCallable(
 export function collectLifecycleCalls(
   container: AponiaContainer,
   name: LifecycleHookName<LifecycleHookContract>,
+  includeControllers = true,
 ): LifecycleCall[] {
   const calls: LifecycleCall[] = [];
   const collected = new Set<unknown>();
@@ -116,9 +117,11 @@ export function collectLifecycleCalls(
       }
       collect(container.resolveModuleProvider(module, provider.provide));
     }
-    for (const controller of module.controllers) {
-      if (isElysiaController(controller)) {
-        collect(container.instantiateController(module, controller));
+    if (includeControllers) {
+      for (const controller of module.controllers) {
+        if (isElysiaController(controller)) {
+          collect(container.instantiateController(module, controller));
+        }
       }
     }
   }

@@ -364,12 +364,12 @@ function analyzeGateway(
     throw new Error(`${description} must declare at most one path or options object.`);
   }
 
-  const path = readGatewayPath(use.arguments.at(0), description);
+  const options = readGatewayOptions(use.arguments.at(0), description);
   const dependencies = readDependencies(declaration, bindings, filePath);
   const handlers = readGatewayHandlers(declaration, bindings, filePath);
   const serverProperties = readGatewayServerProperties(declaration, bindings, filePath);
   const reasons = [
-    ...(path.reason === undefined ? [] : [path.reason]),
+    ...options.reasons,
     ...dependencies.reasons,
     ...handlers.reasons,
     ...serverProperties.reasons,
@@ -377,7 +377,12 @@ function analyzeGateway(
 
   return Object.freeze({
     className: readClassName(declaration),
-    path: path.value,
+    path: options.path,
+    maxPayloadLength: options.maxPayloadLength,
+    guards: options.guards,
+    origins: options.origins,
+    idleTimeoutMs: options.idleTimeoutMs,
+    sendPings: options.sendPings,
     dependencies: dependencies.dependencies,
     handlers: handlers.handlers,
     serverProperties: serverProperties.properties,
@@ -983,6 +988,133 @@ function readGatewayPath(argument: Node | undefined, description: string): Gatew
     : unreadableGatewayPath(description);
 }
 
+/** The options one `@WebSocketGateway()` declares, and what could not be read. */
+interface GatewayOptionsReading {
+  readonly path: string | undefined;
+  readonly maxPayloadLength: number | undefined;
+  readonly guards: readonly string[];
+  readonly origins: readonly string[];
+  readonly idleTimeoutMs: number | undefined;
+  readonly sendPings: boolean | undefined;
+  readonly reasons: readonly string[];
+}
+
+/**
+ * Reads the whole options object, not only its path.
+ *
+ * A generated gateway has to state the payload limit and the handshake guards
+ * the decorator stated: dropping either would mount a socket the application did
+ * not declare. A value the analysis cannot read statically is a reason, the same
+ * way an unreadable path is.
+ */
+function readGatewayOptions(
+  argument: Node | undefined,
+  description: string,
+): GatewayOptionsReading {
+  const path = readGatewayPath(argument, description);
+  if (argument === undefined || Node.isStringLiteral(argument)) {
+    return {
+      path: path.value,
+      maxPayloadLength: undefined,
+      guards: Object.freeze([]),
+      origins: Object.freeze([]),
+      idleTimeoutMs: undefined,
+      sendPings: undefined,
+      reasons: path.reason === undefined ? Object.freeze([]) : Object.freeze([path.reason]),
+    };
+  }
+  if (!Node.isObjectLiteralExpression(argument)) {
+    return {
+      path: path.value,
+      maxPayloadLength: undefined,
+      guards: Object.freeze([]),
+      origins: Object.freeze([]),
+      idleTimeoutMs: undefined,
+      sendPings: undefined,
+      reasons: path.reason === undefined ? Object.freeze([]) : Object.freeze([path.reason]),
+    };
+  }
+
+  const reasons: string[] = path.reason === undefined ? [] : [path.reason];
+  let maxPayloadLength: number | undefined;
+  let guards: string[] = [];
+  let origins: string[] = [];
+  let idleTimeoutMs: number | undefined;
+  let sendPings: boolean | undefined;
+
+  for (const property of argument.getProperties()) {
+    const name = readPropertyName(property);
+    if (name === undefined) {
+      continue;
+    }
+    const initializer = Node.isPropertyAssignment(property) ? property.getInitializer() : undefined;
+    if (name === "maxPayloadLength") {
+      const value = Node.isNumericLiteral(initializer) ? initializer.getLiteralValue() : undefined;
+      if (typeof value !== "number" || value <= 0 || !Number.isSafeInteger(value)) {
+        reasons.push(`${description} must declare maxPayloadLength as a positive integer.`);
+        continue;
+      }
+      maxPayloadLength = value;
+      continue;
+    }
+    if (name === "guards") {
+      if (!Node.isArrayLiteralExpression(initializer)) {
+        reasons.push(`${description} declares guards this analysis cannot read statically.`);
+        continue;
+      }
+      const elements = initializer.getElements();
+      if (!elements.every((element) => Node.isIdentifier(element))) {
+        reasons.push(`${description} declares guards this analysis cannot read statically.`);
+        continue;
+      }
+      guards = elements.map((element) => element.getText());
+      continue;
+    }
+    if (name === "origins") {
+      const elements = Node.isArrayLiteralExpression(initializer)
+        ? initializer.getElements()
+        : undefined;
+      if (
+        elements === undefined ||
+        elements.length === 0 ||
+        !elements.every((element) => Node.isStringLiteral(element))
+      ) {
+        reasons.push(`${description} declares origins this analysis cannot read statically.`);
+        continue;
+      }
+      origins = elements.map((element) => element.getLiteralValue());
+      continue;
+    }
+    if (name === "idleTimeoutMs") {
+      const value = Node.isNumericLiteral(initializer) ? initializer.getLiteralValue() : undefined;
+      if (typeof value !== "number" || value <= 0 || !Number.isSafeInteger(value)) {
+        reasons.push(`${description} must declare idleTimeoutMs as a positive integer.`);
+        continue;
+      }
+      idleTimeoutMs = value;
+      continue;
+    }
+    if (name === "sendPings") {
+      const text = initializer?.getText();
+      if (text !== "true" && text !== "false") {
+        reasons.push(`${description} declares sendPings this analysis cannot read statically.`);
+        continue;
+      }
+      sendPings = text === "true";
+    }
+  }
+
+  return {
+    path: path.value,
+    maxPayloadLength,
+    guards: Object.freeze(guards),
+    origins: Object.freeze(origins),
+    idleTimeoutMs,
+    sendPings,
+    reasons: Object.freeze(reasons),
+  };
+}
+
 /**
  * Rejects an empty path for the same reason the runtime does, so the analysis
  * never reports a path the framework would refuse at startup.
@@ -1061,6 +1193,18 @@ function readDependency(
   bindings: AponiaDecoratorBindings,
   filePath: string,
 ): AnalyzedConstructorDependency {
+  const usesOptional = parameter
+    .getDecorators()
+    .map((decorator) => readDecoratorUse(decorator, bindings))
+    .some((use) => use?.name === "Optional");
+  if (usesOptional) {
+    return Object.freeze({
+      index,
+      source: "unreadable",
+      reason: `The constructor parameter at index ${index} in ${filePath} is marked @Optional(); generated descriptors cannot carry optional dependencies yet, so this class boots from decorators.`,
+    });
+  }
+
   const injectUse = parameter
     .getDecorators()
     .map((decorator) => readDecoratorUse(decorator, bindings))

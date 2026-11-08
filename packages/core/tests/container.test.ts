@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   AponiaError,
+  ModuleRef,
   createToken,
   defineModule,
   forwardRef,
@@ -8,6 +9,7 @@ import {
   provideClass,
   provideFactory,
   provideValue,
+  optionalDependency,
   type ControllerDefinition,
   type ModuleDefinition,
 } from "@aponiajs/common";
@@ -300,5 +302,95 @@ describe("@aponiajs/core container edges", () => {
     const container = createContainer(root);
     expect(container.resolveModuleProvider(moduleA, tokenB)).toBe("value-b");
     expect(container.resolveModuleProvider(moduleB, tokenA)).toBe("value-a");
+  });
+
+  test("resolves an optional dependency that is absent to undefined", () => {
+    const missing = createToken<string>("missing-optional");
+    const consumer = createToken<string>("optional-consumer");
+    const module = defineModule({
+      id: "optional-missing",
+      providers: [
+        provideFactory(consumer, [optionalDependency(missing)] as const, (value) =>
+          value === undefined ? "absent" : value,
+        ),
+      ],
+    });
+
+    expect(createContainer(module).get(consumer)).toBe("absent");
+  });
+
+  test("resolves an optional dependency that is visible to its value", () => {
+    const present = createToken<string>("present-optional");
+    const consumer = createToken<string>("optional-present-consumer");
+    const module = defineModule({
+      id: "optional-present",
+      providers: [
+        provideValue(present, "visible"),
+        provideFactory(consumer, [optionalDependency(present)] as const, (value) => value),
+      ],
+    });
+
+    expect(createContainer(module).get(consumer)).toBe("visible");
+  });
+
+  test("keeps an ambiguous optional dependency a failure", () => {
+    const ambiguous = createToken<string>("ambiguous-optional");
+    const left = defineModule({
+      id: "ambiguous-left",
+      providers: [provideValue(ambiguous, "left")],
+      exports: [ambiguous],
+    });
+    const right = defineModule({
+      id: "ambiguous-right",
+      providers: [provideValue(ambiguous, "right")],
+      exports: [ambiguous],
+    });
+    const root = defineModule({
+      id: "ambiguous-root",
+      imports: [left, right],
+      providers: [
+        provideFactory(
+          createToken<string>("ambiguous-consumer"),
+          [optionalDependency(ambiguous)] as const,
+          (value) => value,
+        ),
+      ],
+    });
+
+    const error = captureAponiaError(() => createContainer(root));
+
+    expect(error.code).toBe("AMBIGUOUS_PROVIDER");
+  });
+
+  test("makes ModuleRef resolve a provider that is local to the receiving module", () => {
+    const local = createToken<string>("module-ref-local");
+    const observed = createToken<string>("module-ref-observed");
+    const feature = defineModule({
+      id: "module-ref-feature",
+      providers: [
+        provideValue(local, "local-value"),
+        provideFactory(observed, [ModuleRef] as const, (ref) => ref.get(local)),
+      ],
+    });
+    const root = defineModule({ id: "module-ref-root", imports: [feature] });
+    const container = createContainer(root);
+
+    expect(container.resolveModuleProvider(feature, observed)).toBe("local-value");
+    expect(container.resolveModuleProvider(feature, ModuleRef).get(local)).toBe("local-value");
+  });
+
+  test("keeps ModuleRef lookups scoped to the module that received it", () => {
+    const privateToken = createToken<string>("module-ref-private");
+    const feature = defineModule({
+      id: "module-ref-private-feature",
+      providers: [provideValue(privateToken, "private")],
+    });
+    const root = defineModule({ id: "module-ref-private-root", imports: [feature] });
+    const container = createContainer(root);
+
+    expect(() => container.get(ModuleRef).get(privateToken)).toThrow(
+      expect.objectContaining({ code: "MISSING_PROVIDER" }),
+    );
+    expect(container.resolveModuleProvider(feature, ModuleRef).get(privateToken)).toBe("private");
   });
 });

@@ -1,9 +1,15 @@
 import {
   AponiaError,
+  applyDeprecationHeaders,
+  getDeprecationMetadata,
   getEnhancerMetadata,
   getPipesMetadata,
   getRouteMetadata,
   getRouteParameterMetadata,
+  getResponseSerializer,
+  getVersionMetadata,
+  isSseRoute,
+  versionPathSegment,
   isRouteResponseSchemaMap,
   resolveRouteValidator,
   type ArgumentMetadata,
@@ -90,9 +96,16 @@ export function compileElysiaRoutes(
       capabilities.push("context");
     }
 
+    const version =
+      getVersionMetadata(controller.prototype, route.propertyKey) ?? getVersionMetadata(controller);
+    const path =
+      typeof version === "string"
+        ? joinPaths(versionPathSegment(version), joinPaths(controllerPath, route.path))
+        : joinPaths(controllerPath, route.path);
+
     return Object.freeze({
       method: route.method,
-      path: joinPaths(controllerPath, route.path),
+      path,
       propertyKey: route.propertyKey,
       parameters,
       capabilities: Object.freeze([...new Set(capabilities)]),
@@ -105,6 +118,13 @@ export function compileElysiaRoutes(
         controllerEnhancers,
         getEnhancerMetadata(controller, route.propertyKey),
       ),
+      serializer:
+        getResponseSerializer(controller.prototype, route.propertyKey) ??
+        getResponseSerializer(controller),
+      ...(typeof version === "string" ? { version } : {}),
+      ...(isSseRoute(controller.prototype, route.propertyKey) || isSseRoute(controller)
+        ? { sse: true }
+        : {}),
     });
   });
 
@@ -195,6 +215,7 @@ export function registerCompiledElysiaRoutes(
   routes: readonly CompiledElysiaRoute[],
   mountedEnhancers: MountedRouteEnhancers,
   invokers?: ReadonlyMap<string | symbol, RouteHandler>,
+  strictCodegen = false,
 ): ReadonlySet<string | symbol> {
   const generatedKeys = new Set<string | symbol>();
 
@@ -229,10 +250,33 @@ export function registerCompiledElysiaRoutes(
         : undefined;
     if (suppliedInvoker !== undefined) {
       generatedKeys.add(route.propertyKey);
+    } else if (strictCodegen) {
+      throw new AponiaError(
+        "UNSAFE_CODE_GENERATION",
+        `Route "${route.method} ${route.path}" has no generated invoker and strict code generation is enabled.`,
+        {
+          controller: controller.name,
+          handler: String(route.propertyKey),
+          method: route.method,
+          path: route.path,
+        },
+      );
     }
     const hasCustomFilters =
       mountedEnhancers.controller.forRoute(route.enhancers).filters.length > 0 ||
       mountedEnhancers.global.filters.length > 0;
+    const deprecation =
+      getDeprecationMetadata(controller.prototype, route.propertyKey) ??
+      getDeprecationMetadata(controller);
+    const hook = toRouteHook(
+      route,
+      controller,
+      callableHandler,
+      routeGuards(mountedEnhancers, route),
+      routeInterceptors(mountedEnhancers, route),
+      routeExceptionHooks(mountedEnhancers, route),
+      hasCustomFilters,
+    );
     registerNativeRoute(
       application,
       route.method,
@@ -240,15 +284,7 @@ export function registerCompiledElysiaRoutes(
       suppliedInvoker === undefined
         ? createRouteHandler(callableHandler, instance, route)
         : (suppliedInvoker as (context: RouteContext) => unknown),
-      toRouteHook(
-        route,
-        controller,
-        callableHandler,
-        routeGuards(mountedEnhancers, route),
-        routeInterceptors(mountedEnhancers, route),
-        routeExceptionHooks(mountedEnhancers, route),
-        hasCustomFilters,
-      ),
+      deprecation === undefined ? hook : mergeDeprecationHook(hook, deprecation),
     );
   }
 
@@ -865,6 +901,33 @@ type RouteLifecycleHook = Pick<ElysiaRouteHook, "beforeHandle" | "afterHandle">;
  * copy of it, so a controller with no enhancers gains no `beforeHandle`, no
  * `afterHandle`, and no `ExecutionContext` is ever built for one.
  */
+/** Prepends the deprecation header writer so it runs before guards and the handler. */
+function mergeDeprecationHook(
+  hook: ReturnType<typeof toRouteHook>,
+  metadata: NonNullable<ReturnType<typeof getDeprecationMetadata>>,
+): NonNullable<ReturnType<typeof toRouteHook>> {
+  const setHeaders = (context: {
+    readonly set: { readonly headers: Record<string, string | number | string[] | undefined> };
+  }): void => {
+    applyDeprecationHeaders(context.set.headers, metadata);
+  };
+  const beforeHandle = hook === undefined ? undefined : Reflect.get(hook, "beforeHandle");
+  const detail = hook === undefined ? undefined : Reflect.get(hook, "detail");
+  return {
+    ...hook,
+    detail: {
+      ...(typeof detail === "object" && detail !== null ? detail : {}),
+      deprecated: true,
+    },
+    beforeHandle:
+      beforeHandle === undefined
+        ? [setHeaders]
+        : Array.isArray(beforeHandle)
+          ? [setHeaders, ...beforeHandle]
+          : [setHeaders, beforeHandle],
+  } as unknown as NonNullable<ReturnType<typeof toRouteHook>>;
+}
+
 function toRouteHook(
   route: CompiledElysiaRoute,
   controller: ClassToken<unknown>,
@@ -927,8 +990,10 @@ function createLifecycleHook(
   const hasInterceptBefore = interceptors.some(
     (interceptor) => interceptor.interceptBefore !== undefined,
   );
-  const runsBefore = guards.length > 0 || hasInterceptBefore;
-  const runsAfter = interceptors.some((interceptor) => interceptor.interceptAfter !== undefined);
+  const runsBefore = guards.length > 0 || hasInterceptBefore || route.sse === true;
+  const runsAfter =
+    interceptors.some((interceptor) => interceptor.interceptAfter !== undefined) ||
+    route.serializer !== undefined;
   if (!runsBefore && !runsAfter) {
     return undefined;
   }
@@ -952,10 +1017,15 @@ function createLifecycleHook(
 
   let beforeHandle: ((context: RouteContext) => unknown) | undefined;
   if (runsBefore) {
-    if (guardHook !== undefined && !hasInterceptBefore) {
+    if (guardHook !== undefined && !hasInterceptBefore && route.sse !== true) {
       beforeHandle = guardHook as (context: RouteContext) => unknown;
     } else {
       beforeHandle = async function (context: RouteContext): Promise<unknown> {
+        if (route.sse === true) {
+          context.set.headers["content-type"] = "text/event-stream";
+          context.set.headers["cache-control"] = "no-cache";
+          context.set.headers["connection"] = "keep-alive";
+        }
         if (guardHook !== undefined) {
           const guardResult = guardHook(context);
           if (guardResult !== undefined) {
@@ -1008,6 +1078,10 @@ function createLifecycleHook(
               if (answered !== undefined) {
                 response = answered;
               }
+            }
+
+            if (route.serializer !== undefined) {
+              response = await route.serializer(response, context);
             }
 
             return response;

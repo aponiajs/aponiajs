@@ -1,5 +1,7 @@
 export { AponiaApplication } from "./application/aponia-elysia-application.ts";
 export { AponiaFactory } from "./application/aponia-factory.ts";
+export { AponiaApplicationContext } from "./application/application-context.ts";
+export { LazyModuleLoader, LazyModuleRef } from "./application/lazy-module-loader.ts";
 export { getApplicationDiagnostics } from "./application/application-diagnostics.ts";
 export { getApplicationFromStore } from "./application/application-container.ts";
 export type {
@@ -11,6 +13,7 @@ export type {
 } from "./application/application-diagnostics.types.ts";
 export type {
   AponiaApplicationOptions,
+  AponiaVersioningOptions,
   AponiaListenOptions,
   ConfiguredAponiaApplicationOptions,
   RouteCompilationOptions,
@@ -51,6 +54,8 @@ export type { ControllerHandlerFactory, RouteHandler } from "./routing/route-com
 export type { AponiaInvokerArtifact } from "./routing/invoker-artifact.types.ts";
 export type { RoutePlan } from "./routing/route-plan.types.ts";
 export { downloadFile } from "./routing/download-file.ts";
+export { sse } from "elysia";
+export type { SSEPayload as SseEvent } from "elysia";
 export type { DownloadFileOptions } from "./routing/download-file.types.ts";
 export { defineControllerRoutes } from "./controllers/controller-definition.ts";
 export {

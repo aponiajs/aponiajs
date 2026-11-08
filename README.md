@@ -78,16 +78,22 @@ are ordinary application code that you can adapt to your domain.
 
 ## CLI commands
 
-| Command                          | Purpose                                                  |
-| -------------------------------- | -------------------------------------------------------- |
-| `aponia new my-api`              | Create an application and install dependencies.          |
-| `aponia g res users --type rest` | Generate a REST resource with CRUD routes.               |
-| `aponia g module billing`        | Add a module.                                            |
-| `aponia g controller billing`    | Add an HTTP controller.                                  |
-| `aponia g service billing`       | Add an injectable service.                               |
-| `aponia g gateway events`        | Add a WebSocket gateway provider.                        |
-| `aponia build`                   | Refresh generated route invokers and module descriptors. |
-| `aponia --help`                  | List commands and options.                               |
+| Command                                 | Purpose                                                  |
+| --------------------------------------- | -------------------------------------------------------- |
+| `aponia new my-api`                     | Create an application and install dependencies.          |
+| `aponia g res users --type rest`        | Generate a REST resource with CRUD routes.               |
+| `aponia g module billing`               | Add a module.                                            |
+| `aponia g controller billing`           | Add an HTTP controller.                                  |
+| `aponia g service billing`              | Add an injectable service.                               |
+| `aponia g gateway events`               | Add a WebSocket gateway provider.                        |
+| `aponia g library widgets --publish`    | Add a publishable library package.                       |
+| `aponia library check packages/widgets` | Validate a library's package and contract.               |
+| `aponia library search security`        | Search the bundled library catalog.                      |
+| `aponia manifest`                       | Print the framework contract for agents and tools.       |
+| `aponia mcp`                            | Start the read-only project MCP server over stdio.       |
+| `aponia agent init`                     | Install Codex, Claude Code, and Cursor guidance.         |
+| `aponia build`                          | Refresh generated route invokers and module descriptors. |
+| `aponia --help`                         | List commands and options.                               |
 
 `g` is short for `generate`. The CLI registers generated components in the
 nearest module by default. Use `--module <name>` to select a module, or
@@ -96,7 +102,9 @@ generated tests.
 
 Use `--dry-run` to preview `new`, `generate`, or `build` without writing
 files. `aponia new my-api --skip-install` creates the project without running
-`bun install`. The [complete CLI guide](./docs/cli.md) covers every schematic,
+`bun install`. The [complete CLI guide](./docs/cli.md) covers every schematic, `bun run
+docs:build` renders the whole documentation set into a static site, and
+`bun run api:verify` holds the published exports to `docs/public-api.json`.
 alias, option, and supported resource transport. GraphQL and microservice
 commands currently generate scaffolds; their runtimes are outside this release.
 
@@ -123,9 +131,30 @@ one of them after generating a resource — otherwise its routes are not mounted
   feature, with explicit exports, provider scopes (`DEFAULT`, `REQUEST`, `TRANSIENT`), `@Global()` modules, and `forwardRef()`.
 - **Decorated HTTP routes** keep request handling in controllers and application
   behavior in services.
+- **Response serialization** provides `@Serialize()` on a controller or handler, applied after interceptors and after the handler.
+- **URI API versioning** provides `@Version()` on a controller or handler, mounting routes under `/v<version>`.
+- **Server-Sent Events** provide `@Sse()` plus the `sse()` payload helper for event-stream routes.
+- **Multipart uploads** are native body values, with `@UploadedFile()` and `@UploadedFiles()` aliases over the validated body.
+- **Strict code generation** lets an application refuse a route with no compiled invoker instead of falling back to runtime code generation.
+- **Lazy modules** load a module graph after boot, run its provider hooks, and expose an explicit `close()`.
+- **Authentication and authorization** provide bearer JWT verification, `AuthGuard`, `RolesGuard`, `PermissionsGuard`, `Public()`, request-scoped current user, refresh-token rotation, access-token revocation, and Bun-native password hashing.
+- **Audit events** provide a bounded, redacting `AuditService` and a pluggable store for security and business records.
+- **Multi-tenancy** provides a request-scoped `TenantService`, `TenantGuard`, safe tenant identifiers, and an explicit required/optional policy.
+- **Jobs and outbox** provide an in-process `QueueService` with bounded retries, exponential backoff, a dead letter queue, and idempotent enqueue, plus an `OutboxService` that delivers recorded messages after a transaction.
+- **Metrics** provide a bounded Prometheus registry, `http_requests_total` and `http_request_duration_seconds` instrumentation, and a scrape endpoint mounted on the application's own route table.
+- **Idempotency** provides `IdempotencyModule`, which replays a mutating request against its key, refuses a key reused with a different body, and stores answers through a pluggable contract.
+- **Database** provides a Drizzle-first `DatabaseService` transaction boundary, a typed `createRepository`, and ordered SQL migrations applied during initialization; the application constructs the database and picks the dialect.
 - **Route validation** accepts Elysia validators, TypeBox, and
   [Standard Schema](https://standardschema.dev) implementations (Zod, Valibot, ArkType).
 - **Execution Enhancers & Pipes** provide guards, interceptors, exception filters, parameter pipes (`PipeTransform`, `@UsePipes()`), and route middleware (`AponiaMiddleware`).
+- **Bounded application caching** provides `CacheService` with TTL, a prefixed key space, and a pluggable store; the default memory store is capped and evicts the oldest insertion.
+- **Typed application events** provide an in-process `EventEmitter` with ordered awaitable handlers, `@OnEvent()` listeners, and aggregate handler-error reporting.
+- **Request rate limiting** provides `RateLimitGuard`, route overrides, standard `RateLimit-*` headers, and a bounded pluggable store with `429` Problem Details refusals.
+- **SSRF-safe outbound HTTP** provides `HttpService` with private-network blocking, redirect re-validation, timeouts, bounded responses, idempotent retries, and Standard Schema validation.
+- **Security headers and CSRF** provide conservative response headers by default and opt-in signed double-submit CSRF protection for cookie-based routes.
+- **Signed sessions** provide a `SessionService` with start, update, read, and destroy operations, a signed `HttpOnly` cookie, and a bounded pluggable store.
+- **Brotli/gzip compression** negotiates `Accept-Encoding`, compresses only compressible bodies above a threshold, and appends `Vary: Accept-Encoding`.
+- **Standalone application contexts** boot the provider graph without an HTTP listener for workers, command-line tasks, and container tests.
 - **Synchronous & Asynchronous Configuration** safely loads and validates process environment variables or dynamic remote secrets at boot.
 - **Native Elysia access & Eden Treaty** supports native plugins, WebSockets, and end-to-end type inference alongside Aponia's decorators and descriptors.
 
@@ -135,8 +164,12 @@ Follow the [learning path](./docs/learn/README.md) for a guided introduction.
 For specific topics, see the [CLI guide](./docs/cli.md),
 [dependency injection](./docs/dependency-injection.md),
 [validation](./docs/learn/06-validation.md), [WebSockets](./docs/websockets.md),
-and [native plugins](./docs/native-plugins.md). The
+[native plugins](./docs/native-plugins.md), [jobs and outbox](./docs/queues.md),
+[database](./docs/database.md), [metrics](./docs/metrics.md), [deployment](./docs/deployment.md), and
+[migrating from NestJS](./docs/migrating-from-nest.md). The
 [package catalog](./docs/packages.md) describes the published packages.
+Security policy and the [threat model](./docs/threat-model.md) describe what the
+framework defends against and what a deployment still owns.
 
 ## Run the CLI from this checkout
 

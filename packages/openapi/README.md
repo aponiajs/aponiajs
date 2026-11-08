@@ -147,6 +147,9 @@ Two things follow that a reader should know rather than discover:
   field: left in, it is an object no validator accepts. This package mounts the
   plugin with `exclude.methods: ["options", "ws"]` for that reason, so the HTTP
   operations stand alone.
+- **A deprecated route is marked.** `@Deprecated()` writes the route's
+  `detail.deprecated` flag, so the operation carries `deprecated: true` beside
+  the response headers the route sends.
 
 ## One document per application
 

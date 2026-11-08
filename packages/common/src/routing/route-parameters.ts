@@ -41,6 +41,24 @@ export const routeParametersMetadataKey = Symbol.for("aponia.route-parameters.me
  */
 export const Body = createParameterDecorator("body");
 /**
+ * Injects one uploaded file from the parsed multipart body.
+ *
+ * @param property - The body field carrying the file; defaults to `file`.
+ * @returns A parameter decorator recording the binding.
+ */
+export function UploadedFile(property = "file"): ParameterDecorator {
+  return Body(property);
+}
+/**
+ * Injects several uploaded files from one multipart body field.
+ *
+ * @param property - The body field carrying the files; defaults to `files`.
+ * @returns A parameter decorator recording the binding.
+ */
+export function UploadedFiles(property = "files"): ParameterDecorator {
+  return Body(property);
+}
+/**
  * Injects the parsed query string, or one of its properties.
  *
  * @param property - The query key to inject, or the whole query when omitted.

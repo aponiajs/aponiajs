@@ -1,0 +1,28 @@
+# @aponiajs/cache
+
+> Bounded in-memory caching for an AponiaJS application, with TTL, an injectable `CacheService`, and a small pluggable `CacheStore` contract.
+
+## What this package exports
+
+- `CacheModule.register({ ttlMs?, maxEntries?, keyPrefix?, store? })`: the dynamic module an application imports.
+- `CacheService`: `get`, `set`, `delete`, `clear`, and `wrap`; every key is prefixed by the registration.
+- `MemoryCacheStore`: a bounded process-local store with lazy expiry and oldest-insertion eviction.
+- `CacheStore`: the synchronous or asynchronous store contract.
+- `CACHE_STORE`: the token a custom store is provided under.
+
+## Behavior a consumer can rely on
+
+- `undefined` is never stored; writing it deletes the entry.
+- `wrap` runs one factory per key at a time; concurrent misses share the run, and a rejection is shared without being cached.
+- A non-positive TTL deletes the entry instead of storing it forever.
+- Values are stored by reference; the package does not clone, serialize, or encrypt them.
+- The memory store is bounded by `maxEntries` and evicts the oldest insertion.
+- Expiry is lazy, so no timer is created per entry.
+- An invalid option fails the boot with `INVALID_CONFIGURATION_VALUE` and a frozen issue list.
+- This is not a distributed cache, session store, or durable queue.
+
+## Documentation
+
+- [Package README](README.md)
+- [Published packages](../../docs/packages.md)
+- [npm](https://www.npmjs.com/package/@aponiajs/cache)

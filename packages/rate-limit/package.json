@@ -1,0 +1,57 @@
+{
+  "name": "@aponiajs/rate-limit",
+  "version": "1.0.0-beta.24",
+  "description": "Bounded request rate limiting for an Aponia application, with a route guard and a pluggable store.",
+  "keywords": [
+    "aponia",
+    "aponiajs",
+    "bun",
+    "elysia",
+    "rate-limit",
+    "security",
+    "throttle",
+    "typescript"
+  ],
+  "homepage": "https://github.com/aponiajs/aponiajs#readme",
+  "bugs": {
+    "url": "https://github.com/aponiajs/aponiajs/issues"
+  },
+  "license": "MIT",
+  "author": "AponiaJS contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aponiajs/aponiajs.git",
+    "directory": "packages/rate-limit"
+  },
+  "files": [
+    "dist",
+    "llms.txt"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "bunx --bun vp pack",
+    "dev": "bunx --bun vp pack --watch",
+    "test": "bun test",
+    "test:vite-plus": "vp test",
+    "check": "bunx --bun vp check",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "@aponiajs/common": "workspace:*",
+    "@aponiajs/platform-elysia": "workspace:*"
+  },
+  "devDependencies": {
+    "@aponiajs/core": "workspace:*",
+    "elysia": "2.0.0-beta.24"
+  },
+  "peerDependencies": {
+    "elysia": "2.0.0-beta.24"
+  }
+}

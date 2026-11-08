@@ -54,6 +54,22 @@ their owning domain. `src/index.ts` is the package's only public barrel.
   `Symbol.for("aponia.validation.metadata")`. Validation-model metadata is
   own-only and immutable, and resolving it preserves the original validator
   instance.
+- `@Optional()` records parameter indexes under
+  `Symbol.for("aponia.optional-parameters.metadata")`, and
+  `getConstructorDependencies` wraps those entries with `optionalDependency`.
+  `ModuleRef` is the abstract token a module-bound reference implements; both
+  surfaces stay platform-neutral.
+- `@Serialize()` records a serializer under
+  `Symbol.for("aponia.response-serializer.metadata")`. A method serializer
+  overrides a controller serializer; both are read by the platform after the
+  handler and its interceptor `after` halves.
+- `@Version()` records a URI version under
+  `Symbol.for("aponia.version.metadata")`. The platform prefixes a versioned
+  route with `/v<version>`; a handler declaration overrides a controller
+  declaration.
+- `@Sse()` records a Server-Sent Events marker under
+  `Symbol.for("aponia.sse.metadata")`. The platform sets the event-stream
+  headers before the handler; the application's payload is wrapped with `sse()`.
 - `createDto` derives a strongly typed DTO class constructor from a Standard
   Schema v1 validator, associating the validation metadata and freezing the
   base class.

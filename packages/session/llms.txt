@@ -1,0 +1,25 @@
+# @aponiajs/session
+
+> Signed session cookies and a bounded session store for an AponiaJS application, with `SessionService` start, regenerate, update, read, and destroy operations.
+
+## What this package exports
+
+- `SessionModule.register({ secret, cookieName?, ttlMs?, store?, maxSessions?, cookie?, rolling?, key? })`: the module registration an application imports.
+- `SessionService`: `current`, `start`, `regenerate`, `update`, `destroy`, `get`, and `clear`.
+- `MemorySessionStore`: a bounded process-local store with lazy expiry and oldest-insertion eviction.
+- `Session`, `SessionStore`, `SessionCookieOptions`, `SessionModuleOptions`: the public contracts.
+
+## Behavior a consumer can rely on
+
+- The cookie carries a signed session id, never session data.
+- The cookie is `HttpOnly`; the application reads the session through the service.
+- `start` creates a session, `regenerate` replaces its id (deleting the old entry), `update` replaces data, and `destroy` removes the cookie.
+- A tampered or expired cookie is ignored and cleared.
+- The memory store is bounded and evicts the oldest insertion.
+- An invalid option fails the boot with `INVALID_SESSION_OPTIONS` and a frozen issue list.
+
+## Documentation
+
+- [Package README](README.md)
+- [Published packages](../../docs/packages.md)
+- [npm](https://www.npmjs.com/package/@aponiajs/session)

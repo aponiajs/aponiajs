@@ -403,7 +403,8 @@ separate focused modules. `src/index.ts` is the only public barrel.
   `@WebSocketGateway()`, and `@Validation()` classes and reports what each
   declares, including the constructor dependencies `@Inject()` names by parameter
   index and the declared parameter types for the rest, a gateway's handlers with
-  their parameter bindings and server properties, and each model's validator. It
+  their parameter bindings, server properties, payload limit, handshake guards,
+  origin allowlist, idle timeout, ping policy, and each model's validator. It
   emits nothing. It repeats `controller-routes.ts`'s recognition rule — and its
   binding lookup — rather than sharing it, because that file's copy is private to
   it; keep the two in step by hand.
@@ -423,6 +424,37 @@ separate focused modules. `src/index.ts` is the only public barrel.
   plain `Error` is reserved for a decorator whose arguments contradict its
   documented signature and for an empty gateway path, which the runtime rejects
   too.
+- A controller or route carrying `@Serialize()` is reported as unreadable, so
+  the build declines that module and the application boots from its decorators.
+  Generated descriptors do not carry serializers yet; dropping one silently
+  would change the response contract.
+- A controller or route carrying `@Version()` is reported as unreadable for the
+  same reason: generated descriptors do not carry a version prefix yet.
+- A controller or route carrying `@Sse()` is reported as unreadable for the same
+  reason: generated descriptors do not carry an SSE route yet.
+- A controller or route carrying `@Deprecated()` is reported as unreadable for
+  the same reason: generated descriptors do not carry a deprecation policy yet.
+- `generateLibrary` emits a private workspace package by default and a
+  publishable package with `--publish`. The publishable form carries `exports`,
+  `files`, `publishConfig`, both test lanes, `aponia.library.json`, `llms.txt`,
+  and `AGENTS.md`. `aponia library check` validates the package and library
+  contracts without writing files.
+- `src/contracts/framework-contract.ts` is the machine-readable framework
+  contract `aponia manifest` prints. `scripts/framework-contract.spec.ts`
+  guards it against the error union, metadata keys, published packages, route
+  slots, schematics, lifecycle hooks, decorators, and workspace version.
+- `src/agent/` owns the read-only stdio MCP surface. `mcp-stdio.ts` keeps
+  stdout protocol-only, and every tool is read-only: no write, shell, or network
+  capability is exposed yet. `aponia_library_check` confines its path to the
+  workspace root.
+- `initAgent` writes an Aponia marker block to `AGENTS.md` and selected client
+  skill files. It is idempotent and preserves user content outside the marker.
+  `--allow-write` exposes plan/apply; `--allow-exec` exposes only the allowlisted
+  verification scripts.
+- `src/library/catalog.ts` is the curated library catalog. Every `official`
+  entry must name a published workspace package; the guard spec enforces that,
+  and the same data backs `aponia library search` and
+  `aponia_search_libraries`.
 
 ## Tests
 

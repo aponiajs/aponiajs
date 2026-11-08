@@ -21,6 +21,7 @@ export interface ServedParameter {
 /** One operation, read as far as the cases below assert it. */
 export interface ServedOperation {
   readonly operationId?: string;
+  readonly deprecated?: boolean;
   readonly parameters?: readonly ServedParameter[];
   readonly requestBody?: {
     readonly content: Readonly<Record<string, { readonly schema: unknown }>>;

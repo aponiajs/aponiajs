@@ -15,7 +15,9 @@ import type { AponiaApplicationOptions } from "../application/application.types.
  * what gets printed — a level list is the caller asking for the platform's
  * logger. Whichever way the artifact is decided, one line reports it.
  */
-export type AponiaInspectionOptions = Readonly<Pick<AponiaApplicationOptions, "descriptors">> & {
+export type AponiaInspectionOptions = Readonly<
+  Pick<AponiaApplicationOptions, "descriptors" | "invokers">
+> & {
   readonly logger?: AponiaApplicationOptions["logger"];
 };
 
@@ -105,4 +107,14 @@ export interface AponiaApplicationInspection {
   readonly modules: readonly AponiaModuleInspection[];
   readonly routes: readonly AponiaRouteInspection[];
   readonly gateways: readonly AponiaGatewayInspection[];
+  /** The inspection's verdict on the generated invoker artifact, as a boot reports it. */
+  readonly invokers: {
+    readonly accepted: boolean;
+    readonly reason: string | undefined;
+  };
+  /** The release that supplied each artifact the inspection adopted, or `null`. */
+  readonly artifacts: {
+    readonly invokers: string | null;
+    readonly descriptors: string | null;
+  };
 }

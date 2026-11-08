@@ -5,6 +5,7 @@ import type {
   RouteContext,
   RouteParameterKind,
   RouteParameterMetadata,
+  ResponseSerializer,
   RouteSchema,
 } from "@aponiajs/common";
 import type { InputSchema } from "elysia";
@@ -140,4 +141,10 @@ export interface CompiledElysiaRoute {
   readonly pipes?: readonly PipeType[];
   /** The enhancers this route declares, before any global ones are merged. */
   readonly enhancers: EnhancerMetadata;
+  /** A serializer for this route's result, when one is declared. */
+  readonly serializer?: ResponseSerializer;
+  /** The URI version this route mounts under, when one is declared. */
+  readonly version?: string;
+  /** Whether this route is a Server-Sent Events route. */
+  readonly sse?: boolean;
 }

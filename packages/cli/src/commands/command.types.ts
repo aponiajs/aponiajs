@@ -49,6 +49,8 @@ export interface GenerateCommandOptions {
   readonly crud: boolean;
   /** The resource transport to scaffold. */
   readonly type: ResourceTransport;
+  /** Generate a publishable library package instead of a private workspace package. */
+  readonly publish?: boolean;
 }
 
 /** The `aponia build` command: regeneration flags. */
@@ -61,10 +63,67 @@ export interface BuildCommandOptions {
   readonly project?: string;
 }
 
+/** The `aponia library check` command. */
+export interface LibraryCommandOptions {
+  /** Always `"library"`. */
+  readonly command: "library";
+  /** Always `"check"`. */
+  readonly action: "check" | "search";
+  /** The library directory, relative to the working directory. */
+  readonly path?: string;
+  /** Print the result as JSON. */
+  readonly json: boolean;
+  /** Require a publishable package rather than a private workspace package. */
+  readonly publish: boolean;
+  /** The search query for the `search` action. */
+  readonly query?: string;
+}
+
+/** The `aponia manifest` command. */
+export interface ManifestCommandOptions {
+  /** Always `"manifest"`. */
+  readonly command: "manifest";
+}
+
+/** The secure, read-only `aponia mcp` command. */
+export interface McpCommandOptions {
+  /** Always `"mcp"`. */
+  readonly command: "mcp";
+  /** The project root the tools resolve against. */
+  readonly cwd?: string;
+  /** The named project in `aponia.json`. */
+  readonly project?: string;
+  /** Allow plan/apply generation over MCP. */
+  readonly allowWrite?: boolean;
+  /** Allow bounded command verification over MCP. */
+  readonly allowExec?: boolean;
+}
+
+/** The agent clients `aponia agent init` can install guidance for. */
+export type AgentClient = "codex" | "claude" | "cursor";
+
+/** The `aponia agent init` command. */
+export interface AgentCommandOptions {
+  /** Always `"agent"`. */
+  readonly command: "agent";
+  /** Always `"init"`. */
+  readonly action: "init";
+  /** The clients to write guidance for. */
+  readonly clients: readonly AgentClient[];
+  /** Plan without writing. */
+  readonly dryRun: boolean;
+  /** The project root. */
+  readonly cwd?: string;
+}
+
 /** Anything `parseArguments` answers: a command, or the `help`/`version` signals. */
 export type CliCommand =
   | NewCommandOptions
   | GenerateCommandOptions
   | BuildCommandOptions
+  | LibraryCommandOptions
+  | ManifestCommandOptions
+  | McpCommandOptions
+  | AgentCommandOptions
   | { readonly command: "help" }
   | { readonly command: "version" };

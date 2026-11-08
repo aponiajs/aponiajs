@@ -69,6 +69,14 @@ import {
   collectLifecycleCalls,
   type LifecycleCall,
 } from "./lifecycle-hooks.ts";
+import { LazyModuleLoader } from "./lazy-module-loader.ts";
+import { installVersionRouting } from "./versioning.ts";
+import {
+  collectMessageHandlers,
+  startMicroserviceTransports,
+  type MicroserviceHandlerTable,
+  type MicroserviceRuntime,
+} from "../microservices/microservice-runtime.ts";
 
 /**
  * Compile and mount one Aponia module graph onto a native Elysia instance.
@@ -111,8 +119,10 @@ export async function bootstrapAponiaApplication(
   const graph: "declared" | "decorated" = isModuleDefinition(rootSelection.rootModule)
     ? "declared"
     : "decorated";
+  const lazyModuleLoader = new LazyModuleLoader(logger);
   const container = createContainer(compiledRootModule, [
     provideValue(LOGGER, logger ?? NOOP_LOGGER),
+    provideValue(LazyModuleLoader, lazyModuleLoader),
   ]);
   try {
     const requestContextLocation = container.graph.locate(
@@ -277,6 +287,8 @@ export async function bootstrapAponiaApplication(
   const generatedInvokers = new Map<Token<unknown>, ReadonlySet<string | symbol>>();
   const callbackRoutes: AponiaCallbackRouteDiagnostics[] = [];
   const interceptorHalves = new Map<ClassToken<unknown>, InterceptorPhases>();
+  const messageHandlers: MicroserviceHandlerTable = new Map();
+  let microserviceRuntime: MicroserviceRuntime | undefined;
   // The application's own declaration resolves first, so it is collected first.
   // Both scopes merge into one map because a class declares one set of halves
   // wherever it is named: a class resolved at both scopes contributes the same
@@ -296,6 +308,7 @@ export async function bootstrapAponiaApplication(
       }
 
       const instance = container.instantiateController(module, controller);
+      collectMessageHandlers(messageHandlers, controller, instance);
       // Every enhancer this controller's routes declare is resolved here, while
       // the controller mounts: an undeclared or unreachable class fails the
       // mount with the same MISSING_PROVIDER a missing dependency raises, and
@@ -322,6 +335,7 @@ export async function bootstrapAponiaApplication(
           instance,
           invokerSelection.invokers,
           mountedEnhancers,
+          options.strictCodegen === true,
         );
         // The table grew by exactly the routes this controller mounted, which is
         // the slice the boot reports on `RoutesResolver` and the only observation
@@ -405,6 +419,7 @@ export async function bootstrapAponiaApplication(
       }
 
       afterStopDone ??= (async () => {
+        await microserviceRuntime?.close();
         await runShutdownHooks(moduleDestroy, logger);
         await runShutdownHooks(applicationShutdown, logger, signal);
       })();
@@ -463,12 +478,26 @@ export async function bootstrapAponiaApplication(
 
   await nativeApplication.modules;
 
+  // Header and media-type negotiation is a fetch wrapper over the versioned
+  // mounts; it is installed after every route exists and before anything can
+  // listen, so the table is complete and handle() behaves the same way.
+  installVersionRouting(nativeApplication, container.graph.modules, options.versioning);
+
   // Once, after every route and gateway is mounted and no further plugin work is
   // pending: a hook that needs the whole graph — a scheduler, a migration check,
   // a cache warm — has one place to stand, and it is before anything can listen.
   for (const call of collectLifecycleCalls(container, "onApplicationBootstrap")) {
     await call();
   }
+
+  // Transports connect last: every provider and controller exists, the
+  // application bootstrap hooks have run, and no route is half-mounted, so the
+  // first message a broker holds can never reach an incomplete graph.
+  microserviceRuntime = await startMicroserviceTransports(
+    options.microservices,
+    messageHandlers,
+    logger,
+  );
 
   return Object.freeze({ nativeApplication, logger });
 }
@@ -482,7 +511,8 @@ export async function bootstrapAponiaApplication(
  * This is a failure-reporting call site and goes through the same guarded seam
  * the default mapping does.
  */
-async function runShutdownHooks(
+/** @internal */
+export async function runShutdownHooks(
   calls: readonly LifecycleCall[],
   logger: LoggerService | undefined,
   signal?: string,
@@ -534,6 +564,7 @@ function registerControllerRoutes(
   instance: unknown,
   invokers: ReadonlyMap<ClassToken<unknown>, ControllerHandlerFactory> | undefined,
   mountedEnhancers: MountedRouteEnhancers,
+  strictCodegen: boolean,
 ): ReadonlySet<string | symbol> | undefined {
   const compiledRoutes = controller.compiledRoutes;
   if (!compiledRoutes) {
@@ -552,6 +583,7 @@ function registerControllerRoutes(
     compiledRoutes,
     mountedEnhancers,
     createInvokers?.(instance as never),
+    strictCodegen,
   );
 }
 
@@ -587,7 +619,8 @@ function collectCallbackRoutes(
   }
 }
 
-function createSystemLogger(
+/** @internal */
+export function createSystemLogger(
   loggerOption: AponiaApplicationOptions["logger"],
 ): LoggerService | undefined {
   if (loggerOption === false) {

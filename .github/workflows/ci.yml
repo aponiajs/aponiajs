@@ -71,6 +71,9 @@ jobs:
       - name: Run Vite+ checks through Bun
         run: bun run check
 
+      - name: Build the documentation site
+        run: bun run docs:build
+
   bun_tests:
     name: Bun tests and coverage
     runs-on: ubuntu-latest

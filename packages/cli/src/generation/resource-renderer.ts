@@ -12,6 +12,9 @@ export function renderResourceModule(names: ComponentNames, type: ResourceTransp
   if (type === "ws") {
     return `import { Module } from "@aponiajs/common";\nimport { ${transportClass} } from "./${names.fileName}.${stem}.ts";\nimport { ${names.className}Service } from "./${names.fileName}.service.ts";\n\n@Module({\n  providers: [${transportClass}, ${names.className}Service],\n})\nexport class ${names.className}Module {}\n`;
   }
+  if (type === "microservice") {
+    return `import { Module } from "@aponiajs/common";\nimport { ${transportClass} } from "./${names.fileName}.${stem}.ts";\nimport { ${names.className}Service } from "./${names.fileName}.service.ts";\n\n@Module({\n  controllers: [${transportClass}],\n  providers: [${names.className}Service],\n})\nexport class ${names.className}Module {}\n`;
+  }
   // A scaffold for a transport the platform does not answer: the class is
   // emitted beside the service, but the module registers only the service. The
   // unregistered class is intentional — a provider the container built for a
@@ -67,12 +70,13 @@ export function renderEntity(names: ComponentNames): string {
   return `export class ${names.singularClassName} {\n  id = "";\n  name = "";\n}\n`;
 }
 
-export function renderMicroserviceScaffold(names: ComponentNames, crud: boolean): string {
+export function renderMicroserviceController(names: ComponentNames, crud: boolean): string {
   const className = `${names.className}Controller`;
-  const method = crud
-    ? `\n  findAll() {\n    return this.${names.propertyName}Service.findAll();\n  }\n`
-    : "";
-  return `import { ${names.className}Service } from "./${names.fileName}.service.ts";\n\n/** microservice transport scaffold. This class is not registered anywhere: microservice transports are not implemented, so connect it to a transport before using it. */\nexport class ${className} {\n  constructor(private readonly ${names.propertyName}Service: ${names.className}Service) {}\n${method}}\n`;
+  if (!crud) {
+    return `import { Controller } from "@aponiajs/common";\nimport { ${names.className}Service } from "./${names.fileName}.service.ts";\n\n/** Connect a transport in \`AponiaFactory.create({ microservices: [transport] })\` to receive these messages. */\n@Controller("${names.routePath}")\nexport class ${className} {\n  constructor(private readonly ${names.propertyName}Service: ${names.className}Service) {}\n}\n`;
+  }
+
+  return `import { Controller, MessagePattern, Payload } from "@aponiajs/common";\nimport type { Create${names.singularClassName}Dto } from "./dto/create-${names.singularFileName}.dto.ts";\nimport type { Update${names.singularClassName}Dto } from "./dto/update-${names.singularFileName}.dto.ts";\nimport { ${names.className}Service } from "./${names.fileName}.service.ts";\n\n/** Connect a transport in \`AponiaFactory.create({ microservices: [transport] })\` to receive these messages. */\n@Controller("${names.routePath}")\nexport class ${className} {\n  constructor(private readonly ${names.propertyName}Service: ${names.className}Service) {}\n\n  @MessagePattern("${names.routePath}.create")\n  create(@Payload() input: Create${names.singularClassName}Dto) {\n    return this.${names.propertyName}Service.create(input);\n  }\n\n  @MessagePattern("${names.routePath}.findAll")\n  findAll() {\n    return this.${names.propertyName}Service.findAll();\n  }\n\n  @MessagePattern("${names.routePath}.findOne")\n  findOne(@Payload("id") id: string) {\n    return this.${names.propertyName}Service.findOne(id);\n  }\n\n  @MessagePattern("${names.routePath}.update")\n  update(@Payload() input: { readonly id: string; readonly input: Update${names.singularClassName}Dto }) {\n    return this.${names.propertyName}Service.update(input.id, input.input);\n  }\n\n  @MessagePattern("${names.routePath}.remove")\n  remove(@Payload("id") id: string) {\n    return this.${names.propertyName}Service.remove(id);\n  }\n}\n`;
 }
 
 export function renderGraphqlResolverScaffold(
@@ -99,8 +103,21 @@ export function renderResourceTransportSpec(
   names: ComponentNames,
   stem: string,
   crud: boolean,
+  messageTransport = false,
 ): string {
   const className = `${names.className}${pascalCase(stem)}`;
+  if (messageTransport) {
+    const expected = crud
+      ? `[
+    "${names.routePath}.create",
+    "${names.routePath}.findAll",
+    "${names.routePath}.findOne",
+    "${names.routePath}.update",
+    "${names.routePath}.remove",
+  ]`
+      : "[]";
+    return `import { expect, test } from "bun:test";\nimport { getMessagePatternMetadata } from "@aponiajs/common";\nimport { ${className} } from "./${names.fileName}.${stem}.ts";\nimport { ${names.className}Service } from "./${names.fileName}.service.ts";\n\ntest("${className} exposes its message contract", () => {\n  const controller = new ${className}(new ${names.className}Service());\n\n  expect(controller).toBeDefined();\n  expect([...getMessagePatternMetadata(${className}.prototype).values()].map(({ pattern }) => pattern)).toEqual(${expected});\n});\n`;
+  }
   if (stem === "gateway") {
     const expectedEvents = crud
       ? `[

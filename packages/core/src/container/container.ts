@@ -2,8 +2,12 @@ import {
   AponiaError,
   getTokenName,
   isForwardRef,
+  isOptionalInjection,
+  ModuleRef,
+  provideValue,
   resolveForwardRef,
   type ControllerDefinition,
+  type InjectionDependency,
   type ModuleDefinition,
   type Provider,
   type Token,
@@ -68,6 +72,9 @@ export class AponiaContainer {
    * ```
    */
   get<T>(token: Token<T>, context?: object): T {
+    if (token === ModuleRef) {
+      return new ContainerModuleRef(this, this.graph.root) as T;
+    }
     const location = this.graph.locate(this.graph.root, token);
     return this.#resolve(location, context) as T;
   }
@@ -79,6 +86,9 @@ export class AponiaContainer {
    * @internal
    */
   resolveModuleProvider<T>(module: ModuleDefinition, token: Token<T>, context?: object): T {
+    if (token === ModuleRef) {
+      return new ContainerModuleRef(this, module) as T;
+    }
     const location = this.graph.locate(module, token);
     return this.#resolve(location, context) as T;
   }
@@ -106,10 +116,9 @@ export class AponiaContainer {
       return moduleControllers.get(controller) as T;
     }
 
-    const dependencies = controller.inject.map((dependency) => {
-      const unwrapped = resolveForwardRef(dependency);
-      return this.#resolve(this.graph.locate(module, unwrapped));
-    });
+    const dependencies = controller.inject.map((dependency) =>
+      this.#resolveDependency(module, dependency),
+    );
     const instance = Reflect.construct(controller.useClass, dependencies) as T;
     this.#moduleCache(this.#controllers, module).set(controller, instance);
     return instance;
@@ -162,17 +171,9 @@ export class AponiaContainer {
 
     this.#resolving.push(location);
     try {
-      const dependencies = getProviderDependencies(location.provider).map((dependency) => {
-        const unwrapped = resolveForwardRef(dependency);
-        const depLocation = this.graph.locate(location.module, unwrapped);
-        const inResolving = this.#resolving.some(
-          (item) => item.module === depLocation.module && item.provider === depLocation.provider,
-        );
-        if (inResolving && isForwardRef(dependency)) {
-          return this.#createForwardRefProxy(depLocation, activeContext);
-        }
-        return this.#resolve(depLocation, activeContext);
-      });
+      const dependencies = getProviderDependencies(location.provider).map((dependency) =>
+        this.#resolveDependency(location.module, dependency, activeContext),
+      );
       const instance = instantiate(location.provider, dependencies);
 
       if (location.provider.scope === "request") {
@@ -229,6 +230,36 @@ export class AponiaContainer {
     });
   }
 
+  #resolveDependency(
+    module: ModuleDefinition,
+    dependency: InjectionDependency,
+    context?: object,
+  ): unknown {
+    const optional = isOptionalInjection(dependency);
+    const token = optional ? dependency.token : dependency;
+
+    if (token === ModuleRef) {
+      return new ContainerModuleRef(this, module);
+    }
+
+    const unwrapped = resolveForwardRef(token);
+    try {
+      const location = this.graph.locate(module, unwrapped);
+      const inResolving = this.#resolving.some(
+        (item) => item.module === location.module && item.provider === location.provider,
+      );
+      if (inResolving && isForwardRef(token)) {
+        return this.#createForwardRefProxy(location, context);
+      }
+      return this.#resolve(location, context);
+    } catch (error) {
+      if (optional && error instanceof AponiaError && error.code === "MISSING_PROVIDER") {
+        return undefined;
+      }
+      throw error;
+    }
+  }
+
   #moduleCache<TKey extends object>(
     cache: Map<ModuleDefinition, Map<TKey, unknown>>,
     module: ModuleDefinition,
@@ -262,7 +293,32 @@ export function createContainer(
   root: ModuleDefinition,
   predefined?: readonly Provider[],
 ): AponiaContainer {
-  return new AponiaContainer(compileModuleGraph(root, predefined));
+  return new AponiaContainer(
+    compileModuleGraph(root, [
+      provideValue(ModuleRef, undefined as unknown as ModuleRef),
+      ...(predefined ?? []),
+    ]),
+  );
+}
+
+/** A `ModuleRef` bound to the module whose provider received it. */
+class ContainerModuleRef extends ModuleRef {
+  readonly #container: AponiaContainer;
+  readonly #module: ModuleDefinition;
+
+  constructor(container: AponiaContainer, module: ModuleDefinition) {
+    super();
+    this.#container = container;
+    this.#module = module;
+  }
+
+  get<T>(token: Token<T>): T {
+    return this.#container.resolveModuleProvider(this.#module, token);
+  }
+
+  resolve<T>(token: Token<T>, context?: object): T {
+    return this.#container.resolveModuleProvider(this.#module, token, context);
+  }
 }
 
 /**

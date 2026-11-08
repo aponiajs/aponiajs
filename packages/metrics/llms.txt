@@ -1,0 +1,27 @@
+# @aponiajs/metrics
+
+> Prometheus metrics for an AponiaJS application: a bounded registry, request instrumentation, and a scrape endpoint on the application's own route table.
+
+## What this package exports
+
+- `MetricsModule.register({ path?, registry?, prefix?, maxSeriesPerMetric?, buckets?, exclude? })`: the module an application imports.
+- `metricsPlugin(options?)`: the native plugin, for an application that mounts plugins through `AponiaFactory.create`.
+- `MetricsRegistry`: `counter`, `gauge`, `histogram`, `render`, `clear`.
+- `MetricsExceptionFilter`: the global filter that records failed request statuses.
+- `metricsContentType`, `defaultHistogramBuckets`.
+- Types: `Counter`, `Gauge`, `Histogram`, `MetricLabels`, `MetricOptions`, `HistogramOptions`, `MetricsRegistryOptions`, `MetricsPluginOptions`, `MetricsModuleOptions`.
+
+## Behavior a consumer can rely on
+
+- The scrape endpoint defaults to `GET /metrics` and answers `text/plain; version=0.0.4`.
+- The plugin records `http_requests_total` and `http_request_duration_seconds` using the registered route template, not the request path, as the `route` label.
+- `process_uptime_seconds`, `process_resident_memory_bytes`, and `process_heap_used_bytes` are published by default; `processMetrics: false` omits them.
+- `registerCollector` refreshes gauges before every render.
+- `MetricsExceptionFilter` records failed statuses and declines the response, so the application's own error path still answers.
+- Every metric is bounded by `maxSeriesPerMetric`; a new label set past the cap is dropped.
+- The registry is process-local; a multi-process deployment scrapes each process.
+
+## Documentation
+
+- [Package README](README.md)
+- [Agent surface](../../docs/agent/README.md)

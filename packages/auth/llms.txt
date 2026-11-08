@@ -1,0 +1,35 @@
+# @aponiajs/auth
+
+> JWT authentication, role and permission guards, request-scoped current user, refresh-token rotation, access-token revocation, and Bun-native password hashing for an AponiaJS application.
+
+## What this package exports
+
+- `AuthModule.register({ jwt | oidc, refresh?, revocation? })`: the module an application imports. `jwt` states a local secret; `oidc` states an issuer.
+- `JwtService`: `sign` and `verify`; `keys`/`activeKid` rotate signing secrets, `kid` is read from the token header, and an unknown kid is refused.
+- `OidcService`: `discover`, `verify`, `clear`; reads `<issuer>/.well-known/openid-configuration` and verifies against the published key set.
+- `AuthGuard`, `RolesGuard`, `PermissionsGuard`: the bearer/cookie, role, and permission guards.
+- `AuthService`: `current()` returns the authenticated user for the request.
+- `Roles`, `Permissions`, `Public`: authorization decorators.
+- `PasswordService`: `hash` and `verify` through Bun's password API.
+- `RefreshTokenService`: `issue`, `rotate`, `revoke`, `revokeFamily`, `clear`; stores only a token digest.
+- `RevocationService`: `revoke(jti, expiresAt)`, `isRevoked(jti)`, `clear`.
+- `MemoryRefreshTokenStore`, `MemoryRevocationStore`: bounded process-local stores.
+- `AUTH_USER`: the request-context token the user is stored under.
+
+## Behavior a consumer can rely on
+
+- The JWT secret must be at least 32 characters.
+- A missing, invalid, or expired token answers `401`; a missing role or permission answers `403`.
+- `Roles()` requires at least one named role; `Permissions()` requires every named permission.
+- `Public()` bypasses authentication.
+- The package mounts no route and reads no environment variable.
+- `token.cookieName` adds a cookie transport; the Authorization header wins when both are present, and a cookie token needs CSRF protection.
+- Rotating a refresh token consumes the previous one; replaying it answers `INVALID_REFRESH_TOKEN`.
+- `AuthGuard` rejects a verified access token whose `jti` is revoked.
+- `refresh.store` and `revocation.store` accept shared-state implementations; the defaults are process-local and bounded.
+
+## Documentation
+
+- [Package README](README.md)
+- [Agent surface](../../docs/agent/README.md)
+- [npm](https://www.npmjs.com/package/@aponiajs/auth)

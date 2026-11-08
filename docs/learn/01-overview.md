@@ -35,16 +35,17 @@ descriptor form. Both paths stay supported.
 
 Implemented: decorated modules and HTTP controllers, one-schema validation
 models over Standard Schema and native validators, request parameter decorators,
-singleton and scoped (`REQUEST`, `TRANSIENT`) dependency injection, class/value/factory/alias providers, explicit
+singleton, request, and transient dependency injection, optional injection (`@Optional()`), `ModuleRef`, class/value/factory/alias providers, explicit
 tokens, validated synchronous and asynchronous configuration an application declares and injects, module
 imports and exports, global modules (`@Global()`), circular references (`forwardRef()`), provider and application lifecycle hooks, read from the
 provider instance, structured logging, generators, and native Elysia escape
 hatches, RFC 9457 application errors for every supported HTTP error status, provider-registered WebSocket gateways backed by native Elysia
-sockets with payload validation and handshake guards, parameter and route pipes (`PipeTransform`, `@UsePipes()`), route middleware (`AponiaMiddleware`), request context (`RequestContextModule`), and guards, interceptors, and exception filters compiled into per-route
+sockets with payload validation and handshake guards, parameter and route pipes (`PipeTransform`, `@UsePipes()`), route middleware (`AponiaMiddleware`), request context (`RequestContextModule`), response serialization (`@Serialize()`), API versioning (`@Version()` with URI, header, and media-type negotiation), message-pattern microservices (`@MessagePattern()`, `@EventPattern()`, and transports), serverless adapters (Web Fetch and AWS Lambda), Server-Sent Events (`@Sse()`), lazy module loading (`LazyModuleLoader`), and guards, interceptors, and exception filters compiled into per-route
 Elysia lifecycle hooks, with the default Problem Details mapping an unhandled
-failure answers through last in each route's error path, and opt-in plugin packages (`@aponiajs/openapi`, `@aponiajs/cors`, `@aponiajs/cron`, `@aponiajs/graphql`, `@aponiajs/opentelemetry`, `@aponiajs/testing`, `@aponiajs/devtools`).
+failure answers through last in each route's error path, standalone application
+contexts (`AponiaFactory.createApplicationContext`), and opt-in packages (`@aponiajs/openapi`, `@aponiajs/cors`, `@aponiajs/cron`, `@aponiajs/graphql`, `@aponiajs/opentelemetry`, `@aponiajs/testing`, `@aponiajs/devtools`, `@aponiajs/cache`, `@aponiajs/compression`, `@aponiajs/events`, `@aponiajs/http`, `@aponiajs/rate-limit`, `@aponiajs/security`, `@aponiajs/session`, `@aponiajs/auth` (JWT and OIDC discovery, refresh rotation, revocation), `@aponiajs/audit`, `@aponiajs/tenancy`, `@aponiajs/database` (Drizzle transactions, repositories, and SQL migrations), `@aponiajs/queue` (in-process jobs and outbox), `@aponiajs/metrics` (a Prometheus registry and scrape endpoint), and `@aponiajs/idempotency` (idempotent request replay)).
 
-Not implemented yet: authentication, distributed job queues, and microservice transports. Treat the lists above as the scope of record before assuming a feature exists.
+Not implemented yet: distributed queue brokers and durable outboxes, distributed auth stores, and MVC adapters. Treat the lists above as the scope of record before assuming a feature exists.
 
 Most chapters that follow have a runnable counterpart in
 [`examples/`](../../examples/README.md): one application per topic, each with

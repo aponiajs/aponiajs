@@ -21,6 +21,7 @@ const packageLayouts: readonly PackageLayout[] = [
       "lifecycle",
       "logging",
       "middleware",
+      "microservices",
       "modules",
       "pipes",
       "providers",
@@ -35,6 +36,41 @@ const packageLayouts: readonly PackageLayout[] = [
     directories: ["container", "graph"],
   },
   {
+    sourceRoot: "packages/cache/src",
+    files: ["index.ts"],
+    directories: ["module", "service", "store"],
+  },
+  {
+    sourceRoot: "packages/compression/src",
+    files: ["index.ts"],
+    directories: ["module", "policy"],
+  },
+  {
+    sourceRoot: "packages/events/src",
+    files: ["index.ts"],
+    directories: ["emitter", "listener", "module"],
+  },
+  {
+    sourceRoot: "packages/http/src",
+    files: ["index.ts"],
+    directories: ["client", "module", "security"],
+  },
+  {
+    sourceRoot: "packages/rate-limit/src",
+    files: ["index.ts"],
+    directories: ["guard", "module", "service", "store"],
+  },
+  {
+    sourceRoot: "packages/security/src",
+    files: ["index.ts"],
+    directories: ["module", "policy"],
+  },
+  {
+    sourceRoot: "packages/session/src",
+    files: ["index.ts"],
+    directories: ["module", "policy", "service", "store"],
+  },
+  {
     sourceRoot: "packages/platform-elysia/src",
     files: ["index.ts", "version.ts"],
     directories: [
@@ -46,6 +82,7 @@ const packageLayouts: readonly PackageLayout[] = [
       "errors",
       "inspection",
       "middleware",
+      "microservices",
       "modules",
       "pipes",
       "plugins",
@@ -81,7 +118,7 @@ const packageLayouts: readonly PackageLayout[] = [
   {
     sourceRoot: "packages/cli/src",
     files: ["index.ts", "version.ts"],
-    directories: ["bundler", "commands", "generation"],
+    directories: ["agent", "bundler", "commands", "contracts", "generation", "library"],
   },
   {
     sourceRoot: "packages/testing/src",
@@ -96,7 +133,7 @@ const packageLayouts: readonly PackageLayout[] = [
   {
     sourceRoot: "packages/mcp/src",
     files: ["index.ts"],
-    directories: ["protocol", "server", "tools"],
+    directories: ["prompts", "protocol", "resources", "server", "tools"],
   },
   {
     sourceRoot: "packages/openapi/src",
@@ -112,6 +149,60 @@ const packageLayouts: readonly PackageLayout[] = [
     sourceRoot: "packages/aponiajs/src",
     files: ["index.ts"],
     directories: [],
+  },
+  {
+    sourceRoot: "packages/auth/src",
+    files: ["index.ts"],
+    directories: [
+      "authentication",
+      "authorization",
+      "jwt",
+      "module",
+      "oidc",
+      "password",
+      "refresh",
+      "revocation",
+    ],
+  },
+  {
+    sourceRoot: "packages/audit/src",
+    files: ["index.ts"],
+    directories: ["module", "service", "store"],
+  },
+  {
+    sourceRoot: "packages/database/src",
+    files: ["index.ts"],
+    directories: ["database", "migration", "module", "repository"],
+  },
+  {
+    sourceRoot: "packages/idempotency/src",
+    files: ["index.ts"],
+    directories: ["module", "runtime", "store"],
+  },
+  {
+    sourceRoot: "packages/metrics/src",
+    files: ["index.ts"],
+    directories: ["module", "registry", "runtime"],
+  },
+  {
+    sourceRoot: "packages/microservices/src",
+    files: ["index.ts"],
+    directories: ["transport"],
+  },
+  {
+    sourceRoot: "packages/serverless/src",
+    files: ["index.ts"],
+    directories: ["fetch", "lambda"],
+  },
+  {
+    sourceRoot: "packages/queue/src",
+    files: ["index.ts"],
+    directories: ["module", "outbox", "queue"],
+  },
+  {
+    sourceRoot: "packages/tenancy/src",
+    files: ["index.ts"],
+    directories: ["guard", "module", "service"],
   },
 ];
 

@@ -118,6 +118,16 @@ The current package boundaries are:
 | --------------------------- | ----------------------------------------------------------------------------- |
 | `@aponiajs/common`          | controllers, decorators, errors, logging, modules, providers, routing, tokens |
 | `@aponiajs/core`            | container, graph                                                              |
+| `@aponiajs/cache`           | module, service, store                                                        |
+| `@aponiajs/compression`     | module, policy                                                                |
+| `@aponiajs/events`          | emitter, listener, module                                                     |
+| `@aponiajs/http`            | client, module, security                                                      |
+| `@aponiajs/rate-limit`      | guard, module, service, store                                                 |
+| `@aponiajs/security`        | module, policy                                                                |
+| `@aponiajs/session`         | module, policy, service, store                                                |
+| `@aponiajs/auth`            | authentication, authorization, jwt, module, password                          |
+| `@aponiajs/audit`           | module, service, store                                                        |
+| `@aponiajs/tenancy`         | guard, module, service                                                        |
 | `@aponiajs/platform-elysia` | application, controllers, modules, plugins, routing                           |
 | `@aponiajs/cli`             | commands, generation                                                          |
 | `@aponiajs/cors`            | module, policy                                                                |

@@ -58,6 +58,12 @@ export interface WebSocketGatewayPlan {
   readonly maxPayloadLength?: number | undefined;
   /** Handshake guards executed before upgrading the socket connection. */
   readonly guards?: readonly ClassToken<CanActivate>[] | undefined;
+  /** The browser origins the handshake must name, when one is configured. */
+  readonly origins?: readonly string[] | undefined;
+  /** The idle window in milliseconds, when one is declared. */
+  readonly idleTimeoutMs?: number | undefined;
+  /** Whether the server sends ping frames. */
+  readonly sendPings?: boolean | undefined;
   /** The gateway's message handlers, in declaration order. */
   readonly handlers?: readonly WebSocketHandlerPlan[];
   /**
@@ -79,6 +85,12 @@ export interface WebSocketGatewayOptions<
   readonly maxPayloadLength?: number;
   /** Handshake guards executed before upgrading the socket connection. */
   readonly guards?: readonly ClassToken<CanActivate>[];
+  /** The browser origins the handshake must name, when one is configured. */
+  readonly origins?: readonly string[];
+  /** The idle window in milliseconds, when one is declared. */
+  readonly idleTimeoutMs?: number;
+  /** Whether the server sends ping frames. */
+  readonly sendPings?: boolean;
   /** The gateway's message handlers, in declaration order. */
   readonly handlers?: readonly WebSocketHandlerPlan[];
   /** The instance properties that receive the root application. */

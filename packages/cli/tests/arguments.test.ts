@@ -32,11 +32,14 @@ test("accepts the same options when they carry an explicit value", () => {
     schematic: "controller",
     name: "user",
     dryRun: false,
+    flat: undefined,
     skipImport: false,
     path: "src/users",
     module: "app",
     project: "api",
+    spec: undefined,
     crud: true,
     type: "rest",
+    publish: false,
   });
 });

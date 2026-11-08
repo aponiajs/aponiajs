@@ -203,6 +203,8 @@ export interface AnalyzedRoute {
    * one route decorator and each declares its own.
    */
   readonly schema: AnalyzedRouteSchema | undefined;
+  /** Why this route cannot be lowered into a generated descriptor, if it cannot. */
+  readonly unreadable?: string;
 }
 
 /** One `@Controller()` class and the routes it declares. */

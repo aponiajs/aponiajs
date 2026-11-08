@@ -167,6 +167,11 @@ export class EventsGateway {
           { event: "events.silent", propertyKey: "silent", parameters: [] },
         ],
         serverProperties: ["server"],
+        maxPayloadLength: undefined,
+        guards: [],
+        origins: [],
+        idleTimeoutMs: undefined,
+        sendPings: undefined,
         unreadable: [],
       },
     ]);
@@ -949,6 +954,52 @@ export class CreateUser {}
   ])("throws a plain Error for $label", ({ source, message }) => {
     expect(() => analyzeModuleDescriptors(source, "broken.ts")).toThrow(Error);
     expect(() => analyzeModuleDescriptors(source, "broken.ts")).toThrow(message);
+  });
+});
+
+describe("gateway policies", () => {
+  test("reads the payload limit and handshake guards a gateway declares", () => {
+    const source = `import { SubscribeMessage, WebSocketGateway } from "@aponiajs/common";
+import { HandshakeGuard } from "./handshake.guard.ts";
+
+@WebSocketGateway({ path: "events", maxPayloadLength: 2048, guards: [HandshakeGuard], origins: ["https://app.example"], idleTimeoutMs: 1500, sendPings: true })
+export class EventsGateway {
+  @SubscribeMessage("events.echo")
+  echo(): string {
+    return "echo";
+  }
+}
+`;
+    const [gateway] = analyzeModuleDescriptors(source, "events.gateway.ts").gateways;
+
+    expect(gateway).toMatchObject({
+      className: "EventsGateway",
+      path: "events",
+      maxPayloadLength: 2048,
+      guards: ["HandshakeGuard"],
+      origins: ["https://app.example"],
+      idleTimeoutMs: 1500,
+      sendPings: true,
+      unreadable: [],
+    });
+  });
+
+  test("reports a payload limit or guard list it cannot read statically", () => {
+    const source = `import { WebSocketGateway } from "@aponiajs/common";
+
+@WebSocketGateway({ path: "events", maxPayloadLength: 0, guards: [makeGuard()], origins: [dynamicOrigin] })
+export class BrokenGateway {}
+`;
+    const [gateway] = analyzeModuleDescriptors(source, "broken.gateway.ts").gateways;
+
+    expect(gateway?.maxPayloadLength).toBeUndefined();
+    expect(gateway?.guards).toEqual([]);
+    expect(gateway?.origins).toEqual([]);
+    expect(gateway?.unreadable).toEqual([
+      "@WebSocketGateway in broken.gateway.ts must declare maxPayloadLength as a positive integer.",
+      "@WebSocketGateway in broken.gateway.ts declares guards this analysis cannot read statically.",
+      "@WebSocketGateway in broken.gateway.ts declares origins this analysis cannot read statically.",
+    ]);
   });
 });
 

@@ -1,0 +1,50 @@
+{
+  "name": "@aponiajs/serverless",
+  "version": "1.0.0-beta.24",
+  "description": "AWS Lambda and Web Fetch handlers for an Aponia application.",
+  "keywords": [
+    "aponia",
+    "aponiajs",
+    "aws-lambda",
+    "bun",
+    "elysia",
+    "serverless",
+    "typescript"
+  ],
+  "homepage": "https://github.com/aponiajs/aponiajs#readme",
+  "bugs": {
+    "url": "https://github.com/aponiajs/aponiajs/issues"
+  },
+  "license": "MIT",
+  "author": "AponiaJS contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aponiajs/aponiajs.git",
+    "directory": "packages/serverless"
+  },
+  "files": [
+    "dist",
+    "llms.txt"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "bunx --bun vp pack",
+    "dev": "bunx --bun vp pack --watch",
+    "test": "bun test",
+    "test:vite-plus": "vp test",
+    "check": "bunx --bun vp check",
+    "prepublishOnly": "bun run build"
+  },
+  "devDependencies": {
+    "@aponiajs/common": "workspace:*",
+    "@aponiajs/platform-elysia": "workspace:*",
+    "elysia": "2.0.0-beta.24"
+  }
+}

@@ -45,8 +45,14 @@ export interface CompiledWebSocketGateway {
   readonly path: string;
   /** Maximum incoming message payload length in bytes. */
   readonly maxPayloadLength?: number | undefined;
+  /** The idle window in milliseconds, when one is declared. */
+  readonly idleTimeoutMs?: number | undefined;
+  /** Whether the native server sends ping frames. */
+  readonly sendPings?: boolean | undefined;
   /** Handshake guards executed before upgrading the socket connection. */
   readonly guards?: readonly ClassToken<CanActivate>[] | undefined;
+  /** The browser origins the handshake must name, when one is configured. */
+  readonly origins?: readonly string[] | undefined;
   /** The compiled message handlers, in declaration order. */
   readonly handlers: readonly CompiledWebSocketHandler[];
   /** The properties receiving the root application. */
@@ -62,6 +68,10 @@ export interface BoundWebSocketGateway {
   readonly path: string;
   /** Maximum incoming message payload length in bytes. */
   readonly maxPayloadLength?: number | undefined;
+  /** The idle window in milliseconds, when one is declared. */
+  readonly idleTimeoutMs?: number | undefined;
+  /** Whether the native server sends ping frames. */
+  readonly sendPings?: boolean | undefined;
   /** Handshake guard hook executed before upgrading the socket connection. */
   readonly beforeHandle?: ((context: any) => Promise<unknown>) | undefined;
   /** Registers the native route and injects server properties. */

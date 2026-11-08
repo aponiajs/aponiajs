@@ -6,6 +6,11 @@ Usage:
   aponia generate <schematic> <name> [options]
   aponia g <schematic> <name> [options]
   aponia build [options]
+  aponia library check [path] [options]
+  aponia library search [query] [options]
+  aponia manifest
+  aponia mcp [options]
+  aponia agent init [options]
 
 Options:
   -d, --dry-run       Report files without writing them
@@ -17,6 +22,12 @@ Options:
       --skip-import   Skip declaring module registration
       --module <name> Select the declaring module
       --path <path>   Override the configured source root
+      --publish       Generate a publishable library package
+      --json          Print a library check result as JSON
+      --cwd <path>    Project root for the MCP server
+      --allow-write   Enable MCP plan/apply generation
+      --allow-exec    Enable bounded MCP verification
+      --clients <list> Agent clients: codex,claude,cursor
   -p, --project       Select a configured project
       --type <type>   Select a resource transport
       --crud          Generate CRUD entry points (default)

@@ -1,0 +1,27 @@
+# @aponiajs/security
+
+> Conservative security headers and signed double-submit CSRF protection for an AponiaJS application.
+
+## What this package exports
+
+- `SecurityModule.register({ headers?, csrf?, key? })`: the plugin registration an application imports.
+- `SecurityHeadersOptions`: per-header overrides; a field set to `false` is omitted.
+- `CsrfOptions`: secret, cookie name, header name, cookie attributes, excluded paths, and protected methods.
+- `SecurityModuleOptions`: the registration contract.
+
+## Behavior a consumer can rely on
+
+- Headers are enabled by default with CSP, frame denial, `nosniff`, no-referrer, HSTS, permissions policy, and cross-origin policies.
+- A `{nonce}` placeholder in the CSP becomes a per-request nonce, readable through `getCspNonce(request)`; without it no nonce is issued.
+- A partial header override merges with the defaults; `headers: false` disables the plugin.
+- CSRF is opt-in and uses a signed nonce in a readable cookie plus a matching request header.
+- The secret must be at least 32 characters; `secure` defaults to true and `sameSite` to `lax`.
+- A missing, mismatched, or tampered token answers `403` Problem Details.
+- Excluded paths are skipped entirely.
+- An invalid option fails the boot with `INVALID_SECURITY_OPTIONS` and a frozen issue list.
+
+## Documentation
+
+- [Package README](README.md)
+- [Published packages](../../docs/packages.md)
+- [npm](https://www.npmjs.com/package/@aponiajs/security)

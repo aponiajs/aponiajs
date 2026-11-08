@@ -278,6 +278,64 @@ test("generates application and library workspaces with synchronized dependencie
   expect(libraryManifest.dependencies["@aponiajs/common"]).toBe(aponiaVersion);
 });
 
+test("generates a publishable library with exports, tests, and a library manifest", async () => {
+  const projectRoot = await createProjectRoot("aponia-publishable-library-");
+
+  await generateSchematic({
+    command: "generate",
+    schematic: "library",
+    name: "widgets",
+    dryRun: false,
+    skipImport: false,
+    crud: false,
+    type: "rest",
+    publish: true,
+    cwd: projectRoot,
+  });
+
+  const directory = join(projectRoot, "packages/widgets");
+  const manifest = (await Bun.file(join(directory, "package.json")).json()) as {
+    readonly private?: boolean;
+    readonly exports: Readonly<Record<string, unknown>>;
+    readonly files: readonly string[];
+    readonly publishConfig: Readonly<{ readonly access: string }>;
+    readonly scripts: Readonly<Record<string, string>>;
+  };
+  const libraryManifest = (await Bun.file(join(directory, "aponia.library.json")).json()) as {
+    readonly contractVersion: number;
+    readonly name: string;
+    readonly provides: readonly { readonly token: string }[];
+  };
+
+  expect(manifest.private).toBeUndefined();
+  expect(manifest.exports["."]).toEqual({
+    types: "./dist/index.d.mts",
+    import: "./dist/index.mjs",
+  });
+  expect(manifest.files).toContain("aponia.library.json");
+  expect(manifest.publishConfig).toEqual({ access: "public" });
+  expect(manifest.scripts["test:vite-plus"]).toBe("vp test");
+  expect(libraryManifest.contractVersion).toBe(1);
+  expect(libraryManifest.name).toBe("widgets");
+  expect(libraryManifest.provides.map((entry) => entry.token)).toEqual([
+    "WidgetsModule",
+    "WidgetsService",
+  ]);
+
+  for (const file of [
+    "README.md",
+    "AGENTS.md",
+    "llms.txt",
+    "tsconfig.json",
+    "tsconfig.build.json",
+    "vite.config.ts",
+    "tests/widgets.test.ts",
+    "tests-vp/widgets.conformance.ts",
+  ]) {
+    expect(await Bun.file(join(directory, file)).exists(), file).toBe(true);
+  }
+});
+
 test("registers controllers, providers, and feature modules in the nearest module", async () => {
   const projectRoot = await createProjectRoot("aponia-registration-");
 

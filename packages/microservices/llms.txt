@@ -1,0 +1,32 @@
+# @aponiajs/microservices
+
+> Message-pattern microservices for an AponiaJS application: decorated request and event handlers, a transport contract, and an in-memory reference transport.
+
+## What this package exports
+
+- `InMemoryTransport({ name? })`: a process-local transport and client with `send(pattern, data)` and `emit(pattern, data)`.
+- `MicroserviceCallError`: the client error with a stable `code`, thrown by `send` and `emit`.
+- Type: `InMemoryTransportOptions`.
+
+The handler decorators and transport contract live in `@aponiajs/common`:
+
+- `@MessagePattern(pattern)`, `@EventPattern(pattern)`, `@Payload(property?)`.
+- `MicroserviceTransport`, `MicroserviceMessage`, `MicroserviceReply`, `MicroserviceHandler`, `MicroserviceFailure`.
+- `MESSAGE_HANDLER_ERROR_CODE`, `UNKNOWN_MESSAGE_PATTERN_CODE`.
+
+## Behavior a consumer can rely on
+
+- `AponiaFactory.create(module, { microservices: [transport] })` subscribes every transport after `onApplicationBootstrap` and before the application is returned.
+- A request handler's return value is the reply; an event handler's value is discarded.
+- A handler receives one payload argument: the whole `data`, or the property `@Payload("key")` names.
+- A thrown handler error becomes `MESSAGE_HANDLER_ERROR` with a fixed safe message; the stack and cause are logged and never serialized.
+- A pattern no controller declared becomes `UNKNOWN_MESSAGE_PATTERN`.
+- Two controllers declaring one pattern fail the boot with `DUPLICATE_MESSAGE_PATTERN`.
+- An invalid or duplicated transport fails the boot with `INVALID_MICROSERVICE_TRANSPORT`.
+- `application.close()` closes transports before module-destroy hooks; a transport failure is reported and does not stop the remaining teardown.
+- `InMemoryTransport` is process-local; it adds no retry, persistence, or broker semantics.
+
+## Documentation
+
+- [Package README](README.md)
+- [Microservices guide](../../docs/microservices.md)

@@ -6,7 +6,8 @@ Decorated modules, controllers, gateways, and `@Validation()` models are the nor
 
 ## What this package exports
 
-- [AponiaFactory](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/application/aponia-factory.ts): `create()` bootstraps an application, `createNative()` returns the exact composed Elysia instance for native tooling and Eden Treaty.
+- [AponiaFactory](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/application/aponia-factory.ts): `create()` bootstraps an application, `createNative()` returns the exact composed Elysia instance for native tooling and Eden Treaty, and `createApplicationContext()` boots the provider graph without an HTTP listener.
+- [LazyModuleLoader, LazyModuleRef](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/application/lazy-module-loader.ts): load a module graph after boot, resolve its providers, and run its hooks and explicit close.
 - [AponiaApplication](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/application/aponia-elysia-application.ts): the application wrapper with `handle`, `listen`, `get`, and `close`.
 - [compileRootModule](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/modules/module-compiler.ts): lowers decorator metadata into the frozen descriptors `@aponiajs/core` consumes.
 - [defineController, controller, CONTROLLER_KIND](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/controllers/controller-definition.ts): descriptor-first controller definitions and the concise native-registration facade.
@@ -16,6 +17,7 @@ Decorated modules, controllers, gateways, and `@Validation()` models are the nor
 - [createServicePlugin, createEnhancerPlugin, wrapElysiaPlugin](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/plugins/service-plugin.ts): standardized builders for authoring service, enhancer, and Elysia bridge plugin packages with `.forRoot()` and `.forRootAsync()`.
 - [defineWebSocketGateway](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/websockets/gateway-definition.ts): declares a gateway's path, message handlers, and server properties as data instead of through `@WebSocketGateway()` and `@SubscribeMessage()`.
 - [downloadFile](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/routing/download-file.ts): writes the `content-disposition` value that names a download and returns the file the platform streams.
+- [sse](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/index.ts): marks an event payload for the `text/event-stream` writer; `SseEvent` is its payload type.
 - [provideConfiguration](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/configuration/provider.ts): turns a declared configuration into the singleton provider that validates it once at boot.
 - [RequestContextService, RequestContextModule](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/platform-elysia/src/request-context/request-context-module.ts): per-request AsyncLocalStorage store and service exposing request ID, standard Request, and typed token storage.
 

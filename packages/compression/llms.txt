@@ -1,0 +1,24 @@
+# @aponiajs/compression
+
+> Brotli and gzip response compression for an AponiaJS application, with a size threshold, encoding negotiation, and safe skips.
+
+## What this package exports
+
+- `CompressionModule.register({ thresholdBytes?, encodings?, key? })`: the plugin registration an application imports.
+- `CompressionModuleOptions`: the public contract.
+
+## Behavior a consumer can rely on
+
+- `Accept-Encoding` is negotiated; Brotli is preferred when both are accepted.
+- Only `text/*`, JSON, JavaScript, XML, and SVG responses are compressed.
+- Responses below `thresholdBytes` and bodyless statuses are skipped.
+- Already-encoded responses are skipped.
+- `Vary: Accept-Encoding` is appended, preserving existing values.
+- Brotli and gzip run asynchronously.
+- An invalid option fails the boot with `INVALID_COMPRESSION_OPTIONS` and a frozen issue list.
+
+## Documentation
+
+- [Package README](README.md)
+- [Published packages](../../docs/packages.md)
+- [npm](https://www.npmjs.com/package/@aponiajs/compression)

@@ -65,8 +65,22 @@ interface AponiaApplicationInspection {
   readonly modules: readonly AponiaModuleInspection[];
   readonly routes: readonly AponiaRouteInspection[];
   readonly gateways: readonly AponiaGatewayInspection[];
+  readonly invokers: {
+    readonly accepted: boolean;
+    readonly reason: string | undefined;
+  };
+  readonly artifacts: {
+    readonly invokers: string | null;
+    readonly descriptors: string | null;
+  };
 }
 ```
+
+`invokers` reports the same verdict a boot reaches on the generated invoker
+artifact, and `artifacts` names the release that supplied each adopted artifact
+(`null` when it did not adopt one). Pass `invokers` in the options to inspect
+the generated application's real boot; omitting it reports an artifact that was
+not supplied.
 
 Each module carries its `id`, the configured `instanceId` of a dynamic module,
 the ids of its imports, the names of its controllers, its providers with the

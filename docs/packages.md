@@ -1,6 +1,6 @@
 # Published Packages
 
-AponiaJS publishes twelve public packages to the npm registry. Use the live npm
+AponiaJS publishes twenty-three public packages to the npm registry. Use the live npm
 badges and linked registry pages below as the source of truth for the latest
 published version.
 
@@ -8,6 +8,23 @@ published version.
 | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | [`@aponiajs/common`](https://www.npmjs.com/package/@aponiajs/common)                   | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcommon)](https://www.npmjs.com/package/@aponiajs/common)                   | `bun add @aponiajs/common@beta`                               |
 | [`@aponiajs/core`](https://www.npmjs.com/package/@aponiajs/core)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcore)](https://www.npmjs.com/package/@aponiajs/core)                       | `bun add @aponiajs/core@beta`                                 |
+| [`@aponiajs/cache`](https://www.npmjs.com/package/@aponiajs/cache)                     | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcache)](https://www.npmjs.com/package/@aponiajs/cache)                     | `bun add @aponiajs/cache@beta`                                |
+| [`@aponiajs/compression`](https://www.npmjs.com/package/@aponiajs/compression)         | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcompression)](https://www.npmjs.com/package/@aponiajs/compression)         | `bun add @aponiajs/compression@beta`                          |
+| [`@aponiajs/events`](https://www.npmjs.com/package/@aponiajs/events)                   | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fevents)](https://www.npmjs.com/package/@aponiajs/events)                   | `bun add @aponiajs/events@beta`                               |
+| [`@aponiajs/http`](https://www.npmjs.com/package/@aponiajs/http)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fhttp)](https://www.npmjs.com/package/@aponiajs/http)                       | `bun add @aponiajs/http@beta`                                 |
+| [`@aponiajs/mcp`](https://www.npmjs.com/package/@aponiajs/mcp)                         | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fmcp)](https://www.npmjs.com/package/@aponiajs/mcp)                         | `bun add @aponiajs/mcp@beta`                                  |
+| [`@aponiajs/rate-limit`](https://www.npmjs.com/package/@aponiajs/rate-limit)           | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Frate-limit)](https://www.npmjs.com/package/@aponiajs/rate-limit)           | `bun add @aponiajs/rate-limit@beta`                           |
+| [`@aponiajs/security`](https://www.npmjs.com/package/@aponiajs/security)               | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fsecurity)](https://www.npmjs.com/package/@aponiajs/security)               | `bun add @aponiajs/security@beta`                             |
+| [`@aponiajs/session`](https://www.npmjs.com/package/@aponiajs/session)                 | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fsession)](https://www.npmjs.com/package/@aponiajs/session)                 | `bun add @aponiajs/session@beta`                              |
+| [`@aponiajs/auth`](https://www.npmjs.com/package/@aponiajs/auth)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fauth)](https://www.npmjs.com/package/@aponiajs/auth)                       | `bun add @aponiajs/auth@beta`                                 |
+| [`@aponiajs/audit`](https://www.npmjs.com/package/@aponiajs/audit)                     | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Faudit)](https://www.npmjs.com/package/@aponiajs/audit)                     | `bun add @aponiajs/audit@beta`                                |
+| [`@aponiajs/tenancy`](https://www.npmjs.com/package/@aponiajs/tenancy)                 | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Ftenancy)](https://www.npmjs.com/package/@aponiajs/tenancy)                 | `bun add @aponiajs/tenancy@beta`                              |
+| [`@aponiajs/queue`](https://www.npmjs.com/package/@aponiajs/queue)                     | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fqueue)](https://www.npmjs.com/package/@aponiajs/queue)                     | `bun add @aponiajs/queue@beta`                                |
+| [`@aponiajs/database`](https://www.npmjs.com/package/@aponiajs/database)               | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fdatabase)](https://www.npmjs.com/package/@aponiajs/database)               | `bun add @aponiajs/database@beta`                             |
+| [`@aponiajs/metrics`](https://www.npmjs.com/package/@aponiajs/metrics)                 | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fmetrics)](https://www.npmjs.com/package/@aponiajs/metrics)                 | `bun add @aponiajs/metrics@beta`                              |
+| [`@aponiajs/idempotency`](https://www.npmjs.com/package/@aponiajs/idempotency)         | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fidempotency)](https://www.npmjs.com/package/@aponiajs/idempotency)         | `bun add @aponiajs/idempotency@beta`                          |
+| [`@aponiajs/microservices`](https://www.npmjs.com/package/@aponiajs/microservices)     | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fmicroservices)](https://www.npmjs.com/package/@aponiajs/microservices)     | `bun add @aponiajs/microservices@beta`                        |
+| [`@aponiajs/serverless`](https://www.npmjs.com/package/@aponiajs/serverless)           | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fserverless)](https://www.npmjs.com/package/@aponiajs/serverless)           | `bun add @aponiajs/serverless@beta`                           |
 | [`@aponiajs/platform-elysia`](https://www.npmjs.com/package/@aponiajs/platform-elysia) | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fplatform-elysia)](https://www.npmjs.com/package/@aponiajs/platform-elysia) | `bun add @aponiajs/platform-elysia@beta elysia@2.0.0-beta.24` |
 | [`@aponiajs/cli`](https://www.npmjs.com/package/@aponiajs/cli)                         | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcli)](https://www.npmjs.com/package/@aponiajs/cli)                         | `bun add --global @aponiajs/cli@beta`                         |
 | [`create-aponia`](https://www.npmjs.com/package/create-aponia)                         | [![npm](https://img.shields.io/npm/v/create-aponia)](https://www.npmjs.com/package/create-aponia)                             | `bun create aponia@beta <name>`                               |
@@ -74,6 +91,52 @@ and standalone container integrations may install it directly.
 
 [Package README](../packages/core/README.md) ·
 [npm](https://www.npmjs.com/package/@aponiajs/core)
+
+### `@aponiajs/cache`
+
+Bounded application caching with TTL, a prefixed key space, and a small
+pluggable store contract. The default memory store is process-local and capped;
+it evicts the oldest insertion. It is not a distributed cache, a session store,
+or a durable queue.
+
+[Package README](../packages/cache/README.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/cache)
+
+### `@aponiajs/compression`
+
+Brotli and gzip response compression with a size threshold, `Accept-Encoding`
+negotiation, safe skips, and `Vary: Accept-Encoding`.
+
+[Package README](../packages/compression/README.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/compression)
+
+### `@aponiajs/events`
+
+Typed in-process events with ordered awaitable handlers and `@OnEvent()`
+listeners. Delivery is local to the process; durable delivery belongs to a queue
+or outbox.
+
+[Package README](../packages/events/README.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/events)
+
+### `@aponiajs/rate-limit`
+
+Fixed-window request limiting with a route guard, per-route overrides, standard
+`RateLimit-*` headers, and a bounded pluggable store. The default key is the
+route identity, not a client-supplied header; a trusted proxy supplies its own
+key function.
+
+[Package README](../packages/rate-limit/README.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/rate-limit)
+
+### `@aponiajs/http`
+
+SSRF-safe outbound HTTP with timeouts, bounded responses, redirect
+re-validation, idempotent retries, and Standard Schema response validation.
+Private, loopback, link-local, and metadata addresses are blocked by default.
+
+[Package README](../packages/http/README.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/http)
 
 ### `@aponiajs/platform-elysia`
 
@@ -204,12 +267,128 @@ it and every later one is inert, and `application.close()` does not stop it.
 
 ### `@aponiajs/mcp`
 
-Standardized Model Context Protocol (MCP 2024-11-05) server, tool registry, and
-stateless HTTP transports for AI agent integrations and developer toolchains.
+Model Context Protocol server with handshake version negotiation and
+`server/discover`, a tool registry, structured tool output, and stateless HTTP
+transports for AI agent integrations and developer toolchains.
 
 [Package README](../packages/mcp/README.md) ·
 [MCP guide](./mcp.md) ·
 [npm](https://www.npmjs.com/package/@aponiajs/mcp)
+
+### `@aponiajs/security`
+
+Conservative response headers by default and opt-in signed double-submit CSRF
+protection for cookie-based routes. The CSRF cookie is readable by the
+application's own client; every unsafe request must echo the signed token in the
+configured header.
+
+[Package README](../packages/security/README.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/security)
+
+### `@aponiajs/session`
+
+Signed session cookies, a request-scoped `SessionService`, and a bounded
+pluggable store. The cookie carries a signed id, never session data, and is
+`HttpOnly`.
+
+[Package README](../packages/session/README.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/session)
+
+### `@aponiajs/auth`
+
+Bearer JWT authentication, OpenID Connect discovery, role and permission
+guards, request-scoped current user, refresh-token rotation, access-token
+revocation, and Bun-native password hashing. A registration states a local JWT
+secret or an OIDC issuer; the package mounts no route, and its built-in refresh
+and revocation stores are bounded and process-local.
+
+[Package README](../packages/auth/README.md) ·
+[Authentication guide](./auth.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/auth)
+
+### `@aponiajs/audit`
+
+Bounded, redacting audit events with an injectable service and a pluggable
+store. The default memory store is process-local and capped.
+
+[Package README](../packages/audit/README.md) ·
+[Audit guide](./audit.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/audit)
+
+### `@aponiajs/tenancy`
+
+Request-scoped tenant resolution with a guard, a request tenant service, safe
+identifier validation, and an explicit required/optional policy.
+
+[Package README](../packages/tenancy/README.md) ·
+[Tenancy guide](./tenancy.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/tenancy)
+
+### `@aponiajs/queue`
+
+An in-process job queue with bounded retries, exponential backoff, a dead
+letter queue, and idempotent enqueue, plus a transactional outbox that records
+messages and delivers them after the transaction. Both stores are
+process-local; a broker and a durable outbox table are needed beyond one
+instance.
+
+[Package README](../packages/queue/README.md) ·
+[Jobs and outbox guide](./queues.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/queue)
+
+### `@aponiajs/database`
+
+A Drizzle-first database boundary. The application constructs its Drizzle
+database; the module owns the transaction boundary, a typed repository over one
+table, and ordered SQL migrations the service applies during initialization.
+The package builds no pool and picks no dialect.
+
+[Package README](../packages/database/README.md) ·
+[Database guide](./database.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/database)
+
+### `@aponiajs/metrics`
+
+A bounded Prometheus registry with a scrape endpoint on the application's own route table and request instrumentation for every route it mounts.
+The package chooses no exporter; a scrape reads the rendered text.
+
+[Package README](../packages/metrics/README.md) ·
+[Metrics guide](./metrics.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/metrics)
+
+### `@aponiajs/idempotency`
+
+Idempotent replay for mutating requests. A request with an `Idempotency-Key`
+records its `2xx` answer, a repeat with the same key and body answers the
+recorded status and body without reaching the handler, and a key reused with a
+different body is refused with `409`. The store is pluggable; the default is
+bounded and process-local.
+
+[Package README](../packages/idempotency/README.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/idempotency)
+
+### `@aponiajs/microservices`
+
+Message-pattern handlers and transports. `@MessagePattern()` answers a
+request/response call, `@EventPattern()` observes fire-and-forget events, and
+`AponiaFactory.create` starts every configured transport after the graph is
+initialized. The package ships an in-memory reference transport with `send` and
+`emit`; a broker transport implements the same three-member contract.
+
+[Package README](../packages/microservices/README.md) ·
+[Microservices guide](./microservices.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/microservices)
+
+### `@aponiajs/serverless`
+
+Adapters for function and edge runtimes. `toFetchHandler` binds the application
+as a Web Fetch handler for a worker runtime, and `createLambdaHandler` answers
+AWS Lambda API Gateway proxy events in both payload versions, translating
+headers, cookies, query strings, and base64 bodies.
+
+[Package README](../packages/serverless/README.md) ·
+[Deployment guide](./deployment.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/serverless)
 
 ## Project creation and CLI
 
@@ -230,7 +409,7 @@ same project generator. See the
 
 ## Synchronized versions
 
-All thirteen public packages are released with the same
+All twenty-three public packages are released with the same
 [Semantic Version](https://semver.org). Avoid mixing AponiaJS package versions
 within one application. See [Releasing npm Packages](./releasing.md) for the
 version gate and publication flow.

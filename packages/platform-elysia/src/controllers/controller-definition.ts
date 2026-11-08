@@ -1,6 +1,7 @@
 import {
   AponiaError,
   getTokenName,
+  versionPathSegment,
   type ClassToken,
   type Constructor,
   type ControllerDefinition,
@@ -265,11 +266,16 @@ function compileRoutePlan(plan: RoutePlan, controllerPath: string): CompiledElys
 
   return Object.freeze({
     method: plan.method,
-    path: joinPaths(controllerPath, plan.path),
+    path: plan.version
+      ? joinPaths(versionPathSegment(plan.version), joinPaths(controllerPath, plan.path))
+      : joinPaths(controllerPath, plan.path),
     propertyKey: plan.propertyKey,
     parameters: Object.freeze([...parameters]),
     capabilities: Object.freeze([...new Set(capabilities)]),
     schema: plan.schema,
+    serializer: plan.serializer,
+    ...(plan.version === undefined ? {} : { version: plan.version }),
+    ...(plan.sse === undefined ? {} : { sse: plan.sse }),
     declaredParameterCount: takesContext ? 1 : parameters.length,
     declaredReturnKind: plan.promiseCapable === false ? "synchronous" : "promise",
     enhancers: Object.freeze({

@@ -88,11 +88,12 @@ unless `--skip-import` is used: controllers under `controllers`, enhancers, pipe
 gateways under `providers`, and modules under `imports`.
 Resource transports include REST, GraphQL code-first, GraphQL schema-first,
 microservices, and WebSockets. REST generates a mounted controller and WebSockets
-generate a mounted gateway; GraphQL and microservice transports generate
-unconnected scaffolds — the class is emitted beside the service, but the module
-registers only the service, and each file's own comment names the seam to
-connect — because no GraphQL decorator layer and no microservice transport
-exists yet. Gateway schematics emit
+generate a mounted gateway; a microservice resource generates a registered
+`@Controller()` whose methods carry `@MessagePattern()` handlers, and its file
+names the one factory option that connects a transport. GraphQL generates an
+unconnected resolver scaffold — the class is emitted beside the service, but the
+module registers only the service, and the file's own comment names the seam to
+connect — because no GraphQL decorator layer exists yet. Gateway schematics emit
 `@WebSocketGateway("/<resource>")`; CRUD WebSocket resources also emit
 `@SubscribeMessage()` handlers for create, read, update, and remove events with
 `@MessageBody()` input binding.

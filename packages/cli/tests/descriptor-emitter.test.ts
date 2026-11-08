@@ -1560,6 +1560,59 @@ export class EventsModule {}
     }),`);
   });
 
+  test("declares a gateway's payload limit and handshake guards", () => {
+    const emitted = emit({
+      "events.gateway.ts": `import { SubscribeMessage, WebSocketGateway } from "@aponiajs/common";
+
+export class HandshakeGuard {
+  canActivate(): boolean {
+    return true;
+  }
+}
+
+@WebSocketGateway({ path: "/events", maxPayloadLength: 2048, guards: [HandshakeGuard], origins: ["https://app.example"], idleTimeoutMs: 1500, sendPings: true })
+export class EventsGateway {
+  @SubscribeMessage("events.echo")
+  echo(): string {
+    return "echo";
+  }
+}
+`,
+      "events.module.ts": `import { Module } from "@aponiajs/common";
+import { EventsGateway } from "./events.gateway.ts";
+
+@Module({ providers: [EventsGateway] })
+export class EventsModule {}
+`,
+    });
+
+    expect(emitted.declined).toEqual([]);
+    expect(emitted.source).toContain("maxPayloadLength: 2048,");
+    expect(emitted.source).toContain("guards: [HandshakeGuard],");
+    expect(emitted.source).toContain('origins: ["https://app.example"],');
+    expect(emitted.source).toContain("idleTimeoutMs: 1500,");
+    expect(emitted.source).toContain("sendPings: true,");
+    expect(emitted.source).toContain("HandshakeGuard");
+  });
+
+  test("declines a gateway whose guard the file cannot name", () => {
+    const emitted = emit({
+      "events.gateway.ts": `import { WebSocketGateway } from "@aponiajs/common";
+
+@WebSocketGateway({ path: "/events", guards: [MissingGuard] })
+export class EventsGateway {}
+`,
+      "events.module.ts": `import { Module } from "@aponiajs/common";
+import { EventsGateway } from "./events.gateway.ts";
+
+@Module({ providers: [EventsGateway] })
+export class EventsModule {}
+`,
+    });
+
+    expect(JSON.stringify(emitted.declined)).toContain("MissingGuard");
+  });
+
   test("declares a gateway that is also @Injectable() once, with its dependencies", () => {
     const emitted = emit({
       "events.gateway.ts": `import { Injectable, SubscribeMessage, WebSocketGateway } from "@aponiajs/common";

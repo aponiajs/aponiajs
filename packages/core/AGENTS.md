@@ -48,6 +48,11 @@ container.
   are detected during resolution, with cyclic dependencies declared via
   `forwardRef` resolved transparently via lazy proxies. Singleton providers and
   controllers cannot depend on request-scoped providers (`INVALID_SCOPE_HIERARCHY`).
+- An optional dependency resolves to `undefined` only when the graph answers
+  `MISSING_PROVIDER`; an ambiguous optional dependency still fails. The
+  container treats `ModuleRef` as a predefined token and returns a reference
+  bound to the module that received it, never to the root unless that module is
+  the root.
 - `get()` enforces root-module visibility on purpose. `resolveModuleProvider()`
   is the platform SPI for resolving inside an arbitrary module and is not
   application API; keep it marked `@internal`.

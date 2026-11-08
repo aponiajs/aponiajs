@@ -40,6 +40,8 @@ interface NativeWebSocketCallbacks {
   readonly open: (socket: WebSocketClient) => unknown;
   readonly message: (socket: WebSocketClient, message: unknown) => unknown;
   readonly close: (socket: WebSocketClient) => unknown;
+  readonly idleTimeout?: number;
+  readonly sendPings?: boolean;
 }
 
 @WebSocketGateway(" events/ ")
@@ -197,6 +199,87 @@ test("forwards native Elysia WebSocket callbacks into the bound gateway", async 
     "open",
     "close",
   ]);
+});
+
+test("maps an idle timeout and ping policy to the native server", async () => {
+  class TunedGateway {}
+  const module = defineModule({
+    id: "TunedModule",
+    providers: [
+      defineWebSocketGateway(TunedGateway, {
+        path: "/tuned",
+        idleTimeoutMs: 1_500,
+        sendPings: true,
+      }),
+    ],
+  });
+  let options: NativeWebSocketCallbacks | undefined;
+  const nativeApplication = {
+    routes: [],
+    ws(_path: string, captured: NativeWebSocketCallbacks) {
+      options = captured;
+      return this;
+    },
+  } as unknown as Elysia;
+
+  await registerWebSocketGateways(
+    nativeApplication,
+    createContainer(module),
+    compileWebSocketGateways([module]),
+  );
+
+  expect(options?.idleTimeout).toBe(2);
+  expect(options?.sendPings).toBe(true);
+});
+
+test("filters the handshake by a gateway's origin allowlist", async () => {
+  class OriginGateway {
+    ping(): string {
+      return "pong";
+    }
+  }
+  class GuardedOriginGateway {}
+  const module = defineModule({
+    id: "OriginModule",
+    providers: [
+      defineWebSocketGateway(OriginGateway, {
+        path: "/origin",
+        origins: ["https://app.example"],
+      }),
+      defineWebSocketGateway(GuardedOriginGateway, {
+        path: "/broken-origin",
+        origins: [] as never,
+      }),
+    ],
+  });
+
+  expect(() => compileWebSocketGateways([module])).toThrow(
+    'must declare "origins" as a non-empty array.',
+  );
+
+  const gateway = compileWebSocketGateways([
+    defineModule({
+      id: "OriginOnlyModule",
+      providers: [
+        defineWebSocketGateway(OriginGateway, {
+          path: "/origin",
+          origins: ["https://app.example"],
+        }),
+      ],
+    }),
+  ])[0]!;
+  const bound = bindWebSocketGateway(gateway, {});
+  const allowed = new Request("http://localhost/origin", {
+    headers: { origin: "https://app.example" },
+  });
+  const other = new Request("http://localhost/origin", {
+    headers: { origin: "https://evil.example" },
+  });
+  const missing = new Request("http://localhost/origin");
+
+  expect(await bound.beforeHandle?.({ request: allowed })).toBeUndefined();
+  expect(bound.beforeHandle?.({ request: other })).rejects.toThrow("origin is not allowed");
+  expect(bound.beforeHandle?.({ request: missing })).rejects.toThrow("origin is not allowed");
 });
 
 test("binds lifecycle and every supported message return shape without reflection", async () => {

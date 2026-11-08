@@ -1,0 +1,27 @@
+# @aponiajs/rate-limit
+
+> Bounded fixed-window request rate limiting for an AponiaJS application, with a `RateLimitGuard`, route overrides, standard headers, and a pluggable store.
+
+## What this package exports
+
+- `RateLimitModule.register({ limit?, windowMs?, maxKeys?, store?, key? })`: the dynamic module an application imports.
+- `RateLimitGuard`: a guard that consumes one token per request and throws a `429` Problem Details answer when exhausted.
+- `RateLimit(options)`: per-route `limit`, `windowMs`, and `key` overrides.
+- `RateLimitService`: direct access to the decision for tests and custom guards.
+- `MemoryRateLimitStore`: a bounded process-local fixed-window store.
+- `RateLimitStore`: the synchronous or asynchronous store contract.
+
+## Behavior a consumer can rely on
+
+- The default key is the route identity, never a spoofable client header.
+- Allowed answers carry `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset`.
+- An exhausted bucket answers `429` with a Problem Details body and a `Retry-After` header in whole seconds.
+- The memory store is bounded by `maxKeys` and evicts the oldest insertion.
+- An invalid option fails the boot with `INVALID_RATE_LIMIT` and a frozen issue list.
+- The default store is process-local, not a distributed limiter.
+
+## Documentation
+
+- [Package README](README.md)
+- [Published packages](../../docs/packages.md)
+- [npm](https://www.npmjs.com/package/@aponiajs/rate-limit)

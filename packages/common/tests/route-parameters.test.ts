@@ -7,6 +7,8 @@ import {
   Query,
   ResponseSettings,
   State,
+  UploadedFile,
+  UploadedFiles,
   getRouteParameterMetadata,
 } from "../src/index.ts";
 
@@ -101,4 +103,18 @@ test("sorts parameters that were decorated out of order and isolates each method
   class ChildOutOfOrderController extends OutOfOrderController {}
 
   expect(getRouteParameterMetadata(ChildOutOfOrderController, "read")).toEqual([]);
+});
+
+test("binds an uploaded file and a file list through the body kind", () => {
+  class UploadsController {
+    upload(): void {}
+  }
+
+  UploadedFiles("photos")(UploadsController.prototype, "upload", 1);
+  UploadedFile()(UploadsController.prototype, "upload", 0);
+
+  expect(getRouteParameterMetadata(UploadsController, "upload")).toEqual([
+    { index: 0, kind: "body", property: "file" },
+    { index: 1, kind: "body", property: "photos" },
+  ]);
 });

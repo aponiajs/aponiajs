@@ -394,6 +394,8 @@ const decoratorAnalyses: ReadonlyMap<string, string> = new Map([
   ["Req", "controller-routes.ts's parameterDecorators"],
   ["ResponseSettings", "controller-routes.ts's parameterDecorators"],
   ["State", "controller-routes.ts's parameterDecorators"],
+  ["UploadedFile", "controller-routes.ts's parameterDecorators"],
+  ["UploadedFiles", "controller-routes.ts's parameterDecorators"],
   ["UseFilters", "controller-routes.ts's enhancerDecorators"],
   ["UseGuards", "controller-routes.ts's enhancerDecorators"],
   ["UseInterceptors", "controller-routes.ts's enhancerDecorators"],
@@ -421,6 +423,38 @@ const decoratorAnalyses: ReadonlyMap<string, string> = new Map([
  */
 const unreadDecorators: ReadonlyMap<string, string> = new Map([
   ["Catch", "a filter class is imported by reference, so its own decorator runs when it loads"],
+  [
+    "MessagePattern",
+    "message handlers stay on the decorated controller class, so the runtime bootstrap reads them after a descriptor mount",
+  ],
+  [
+    "EventPattern",
+    "message handlers stay on the decorated controller class, so the runtime bootstrap reads them after a descriptor mount",
+  ],
+  [
+    "Payload",
+    "payload binding stays on the decorated controller class, so the runtime bootstrap reads it after a descriptor mount",
+  ],
+  [
+    "Optional",
+    "a class with an optional dependency is declined to the decorated graph rather than emitted",
+  ],
+  [
+    "Serialize",
+    "a controller or route with @Serialize() is declined to the decorated graph rather than emitted",
+  ],
+  [
+    "Version",
+    "a controller or route with @Version() is declined to the decorated graph rather than emitted",
+  ],
+  [
+    "Deprecated",
+    "a controller or route with @Deprecated() is declined to the decorated graph rather than emitted",
+  ],
+  [
+    "Sse",
+    "a controller or route with @Sse() is declined to the decorated graph rather than emitted",
+  ],
   ["UsePipes", "pipes are applied during route parameter binding and runtime execution"],
 ]);
 
@@ -444,6 +478,14 @@ const metadataKeyAnalyses: ReadonlyMap<string, string> = new Map([
 /** The keys `packages/common` writes that no CLI analysis reads, and why. */
 const unreadMetadataKeys: ReadonlyMap<string, string> = new Map([
   [
+    "aponia.message-pattern.metadata",
+    "message handlers stay on the decorated controller class, so the runtime bootstrap reads them after a descriptor mount",
+  ],
+  [
+    "aponia.message-payload.metadata",
+    "payload binding stays on the decorated controller class, so the runtime bootstrap reads it after a descriptor mount",
+  ],
+  [
     "aponia.enhancer-catch.metadata",
     "a filter class is imported by reference, so its own decorator runs when it loads",
   ],
@@ -454,6 +496,26 @@ const unreadMetadataKeys: ReadonlyMap<string, string> = new Map([
   [
     "aponia.injectable.metadata",
     "injectable scope metadata is read during runtime module compilation",
+  ],
+  [
+    "aponia.optional-parameters.metadata",
+    "a class with optional parameters is declined to the decorated graph rather than emitted",
+  ],
+  [
+    "aponia.response-serializer.metadata",
+    "a controller or route with @Serialize() is declined to the decorated graph rather than emitted",
+  ],
+  [
+    "aponia.version.metadata",
+    "a controller or route with @Version() is declined to the decorated graph rather than emitted",
+  ],
+  [
+    "aponia.deprecation.metadata",
+    "a controller or route with @Deprecated() is declined to the decorated graph rather than emitted",
+  ],
+  [
+    "aponia.sse.metadata",
+    "a controller or route with @Sse() is declined to the decorated graph rather than emitted",
   ],
   ["aponia.pipes.metadata", "pipe metadata is resolved during runtime route compilation"],
 ]);

@@ -66,6 +66,9 @@ function freezeGatewayPlan(
       ? {}
       : { maxPayloadLength: options.maxPayloadLength }),
     ...(options.guards === undefined ? {} : { guards: Object.freeze([...options.guards]) }),
+    ...(options.origins === undefined ? {} : { origins: Object.freeze([...options.origins]) }),
+    ...(options.idleTimeoutMs === undefined ? {} : { idleTimeoutMs: options.idleTimeoutMs }),
+    ...(options.sendPings === undefined ? {} : { sendPings: options.sendPings }),
     handlers: Object.freeze((options.handlers ?? []).map(freezeHandler)),
     serverProperties: Object.freeze([...(options.serverProperties ?? [])]),
   });
