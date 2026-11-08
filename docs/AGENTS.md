@@ -75,7 +75,11 @@ genuinely wrong.
 - A public behavior change ships with its documentation in the same pull
   request, in `docs/` and in the affected package README.
 - Documentation is guarded by tests. `scripts/documentation.spec.ts` requires
-  `bun add --global @aponiajs/cli` and forbids `bunx aponia`. A wording edit can
+  `bun add --global @aponiajs/cli`, forbids `bunx aponia`, requires every module
+  package README to show module registration and a factory boot, and rejects a
+  snippet that calls `application.get(...)` without showing where the
+  application was created. Adapter READMEs must lead with `## Use it` and keep
+  raw-plugin guidance in a final `## Native escape hatch`. A wording edit can
   fail `bun test`.
 - Every example in a document must compile against the current API. Prefer
   copying from a passing test over writing fresh snippets.

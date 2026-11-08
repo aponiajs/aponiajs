@@ -15,6 +15,45 @@ and execution capabilities to LLM clients using JSON-RPC 2.0. In AponiaJS:
 - `@aponiajs/devtools` embeds this MCP server directly into running
   applications at `/__devtools/mcp`, exposing real-time introspection tools.
 
+## Using MCP in an Aponia application
+
+`DevtoolsModule` is the shortest path for a development surface:
+
+```ts
+import { Module } from "@aponiajs/common";
+import { DevtoolsModule } from "@aponiajs/devtools";
+
+@Module({ imports: [DevtoolsModule.register({ enabled: true })] })
+export class AppModule {}
+```
+
+A production endpoint declares the server in source and mounts it through the
+module graph:
+
+```ts
+import { Module } from "@aponiajs/common";
+import { PluginModule, AponiaFactory } from "@aponiajs/platform-elysia";
+import { createStatelessHttpHandler } from "@aponiajs/mcp";
+import { Elysia } from "elysia";
+import { server } from "./mcp-server.ts";
+
+const handler = createStatelessHttpHandler(server);
+const endpoint = PluginModule.register(
+  new Elysia({ name: "mcp-endpoint" }).all("/mcp", ({ request }) => handler(request)),
+  { key: "mcp" },
+);
+
+@Module({ imports: [endpoint] })
+export class AppModule {}
+
+const application = await AponiaFactory.create(AppModule);
+await application.listen(Number(Bun.env.PORT ?? 3000));
+```
+
+The server is built with `new McpServer(...)` and its tools are registered in
+`mcp-server.ts`. The package's own server API is described below; the plugin
+above is the framework integration.
+
 ## Protocol versions
 
 The server answers the handshake versions `2024-11-05`, `2025-03-26`,

@@ -7,58 +7,34 @@ bun add @aponiajs/cors
 Answer cross-origin requests for an Aponia application, with the policy read
 from a validated configuration.
 
-## What this package is, and what it is not
+## Use it
 
-**This package implements no CORS.** Every header, every preflight answer, and
-every matching rule is
-[`@elysia/cors`](https://www.npmjs.com/package/@elysia/cors)'s. This package is a
-small adapter over that plugin, and it contributes exactly two things:
-
-- a module the plugin is declared in, so the policy is mounted through the
-  framework's own seam, is a node in the compiled graph, and is initialized in
-  the boot's instance-loading pass — the `InstanceLoader` line reads
-  `PluginModule[cors] dependencies initialized`;
-- a validated configuration the policy comes from, so a missing origin, a
-  malformed list, or a wildcard paired with credentialed requests is a refused
-  boot with a code and an issue list, rather than a response nobody inspected.
-
-**That is a thin contribution, and for a literal policy it may be no
-contribution at all.** If your origins are a constant in source, this works and
-needs no package:
+Register the policy once in the root module:
 
 ```ts
 import { Module } from "@aponiajs/common";
-import { PluginModule } from "@aponiajs/platform-elysia";
-import { cors } from "@elysia/cors";
+import { CorsModule } from "@aponiajs/cors";
+import { CorsConfig } from "./config.ts";
 
-const policy = PluginModule.register(cors({ origin: ["https://app.example"] }), { key: "cors" });
+const cors = CorsModule.register({ configuration: CorsConfig });
 
-@Module({ imports: [policy], controllers: [WidgetsController] })
+@Module({ imports: [cors], controllers: [WidgetsController] })
 export class AppModule {}
 ```
 
-What the module buys over that line is a graph node the policy is declared in
-and a configuration the policy is validated from. **If neither matters to you,
-use [`@elysia/cors`](https://www.npmjs.com/package/@elysia/cors) directly** —
-nothing here is unavailable there, and the raw plugin is the only way to reach
-the one thing a configuration cannot carry:
+The policy is applied by the mounted plugin; no service needs to be injected
+for the default behavior. An application that needs a pattern or predicate
+origin uses the native plugin described in `## Native escape hatch`.
 
-### What a configuration cannot express
-
-The wrapped plugin's `origin` also accepts a **`RegExp`** or a
-**`(request) => boolean` function**. Both are code, not data: no environment
-variable holds them, and this package's configuration has no field for them. An
-origin rule that is a pattern or a predicate is written as the raw plugin, and
-`CorsModule` refuses a value a transform produced in its place with
-`INVALID_CONFIGURATION_VALUE`:
+## Bootstrap
 
 ```ts
-// Not expressible through this package. Mount the raw plugin instead:
-PluginModule.register(cors({ origin: /^https:\/\/.*\.example$/ }), { key: "cors" });
-```
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
 
-`CorsConfiguration.origins` is therefore a list of exact origin strings — a
-value a deployment can supply, and nothing more.
+const application = await AponiaFactory.create(AppModule);
+await application.listen(Number(Bun.env.PORT ?? 3000));
+```
 
 ## Declaring a policy
 
@@ -127,6 +103,8 @@ rejects that pair, so it is not a policy the server can serve.
 exports it, so the application reads the same validated value back:
 
 ```ts
+const application = await AponiaFactory.create(AppModule);
+
 application.get(CorsConfig); // the value the policy was built from
 ```
 
@@ -209,6 +187,61 @@ The issue list is total — every field that fails is reported, so one boot name
 every field to fix. `INVALID_CONFIGURATION` covers a declaration that is not a
 Standard Schema, or whose validation answers asynchronously, both of which
 `provideConfiguration` already refuses for any configuration.
+
+## Native escape hatch
+
+The module above is the supported path. The native plugin remains available when the module's validation, graph node, or configuration contract is not wanted.
+
+**This package implements no CORS.** Every header, every preflight answer, and
+every matching rule is
+[`@elysia/cors`](https://www.npmjs.com/package/@elysia/cors)'s. This package is a
+small adapter over that plugin, and it contributes exactly two things:
+
+- a module the plugin is declared in, so the policy is mounted through the
+  framework's own seam, is a node in the compiled graph, and is initialized in
+  the boot's instance-loading pass — the `InstanceLoader` line reads
+  `PluginModule[cors] dependencies initialized`;
+- a validated configuration the policy comes from, so a missing origin, a
+  malformed list, or a wildcard paired with credentialed requests is a refused
+  boot with a code and an issue list, rather than a response nobody inspected.
+
+**That is a thin contribution, and for a literal policy it may be no
+contribution at all.** If your origins are a constant in source, this works and
+needs no package:
+
+```ts
+import { Module } from "@aponiajs/common";
+import { PluginModule } from "@aponiajs/platform-elysia";
+import { cors } from "@elysia/cors";
+
+const policy = PluginModule.register(cors({ origin: ["https://app.example"] }), { key: "cors" });
+
+@Module({ imports: [policy], controllers: [WidgetsController] })
+export class AppModule {}
+```
+
+What the module buys over that line is a graph node the policy is declared in
+and a configuration the policy is validated from. **If neither matters to you,
+use [`@elysia/cors`](https://www.npmjs.com/package/@elysia/cors) directly** —
+nothing here is unavailable there, and the raw plugin is the only way to reach
+the one thing a configuration cannot carry:
+
+### What a configuration cannot express
+
+The wrapped plugin's `origin` also accepts a **`RegExp`** or a
+**`(request) => boolean` function**. Both are code, not data: no environment
+variable holds them, and this package's configuration has no field for them. An
+origin rule that is a pattern or a predicate is written as the raw plugin, and
+`CorsModule` refuses a value a transform produced in its place with
+`INVALID_CONFIGURATION_VALUE`:
+
+```ts
+// Not expressible through this package. Mount the raw plugin instead:
+PluginModule.register(cors({ origin: /^https:\/\/.*\.example$/ }), { key: "cors" });
+```
+
+`CorsConfiguration.origins` is therefore a list of exact origin strings — a
+value a deployment can supply, and nothing more.
 
 ## Requirements
 

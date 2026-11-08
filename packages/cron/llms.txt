@@ -4,7 +4,7 @@
 
 **This is not a job queue.** There is no persistence, no retries, no cross-process coordination, and no distributed lock. A cron expression in one process runs in that process: two instances of an application running the same registration both run the same jobs, at the same moment, once each. A job that did not run because the process was down did not run, and nothing replays it. An application that needs work to happen exactly once across a fleet needs a different package.
 
-**A reader who wants the raw plugin should use [`@elysia/cron`](https://www.npmjs.com/package/@elysia/cron) directly.** Nothing here is unavailable there, and mounting it through an Aponia `PluginModule` costs a few lines. What this package adds is declaration through a module and validation of the options, and nothing else.
+**The raw plugin remains available for applications that do not want the module or its validation.** Mount [`@elysia/cron`](https://www.npmjs.com/package/@elysia/cron) through an Aponia `PluginModule` when the registration should stay outside the module graph; the scheduling behavior is identical.
 
 ## What this package exports
 

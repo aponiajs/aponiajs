@@ -167,6 +167,7 @@ compiles the graph, initializes its providers, runs `onModuleInit` and
 `onApplicationBootstrap`, and returns a `LazyModuleRef` with `get` and `close`:
 
 ```ts
+const application = await AponiaFactory.create(AppModule);
 const loader = application.get(LazyModuleLoader);
 const ref = await loader.load(() =>
   import("./reports/reports.module.ts").then((m) => m.ReportsModule),

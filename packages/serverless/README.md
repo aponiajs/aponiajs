@@ -8,6 +8,23 @@ an AWS Lambda handler for API Gateway HTTP API (payload 2.0) and REST API
 bun add @aponiajs/serverless@beta
 ```
 
+## In an Aponia application
+
+Build the application once at module scope, then hand it to the handler the
+runtime expects:
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+
+const application = await AponiaFactory.create(AppModule, {
+  logger: ["error", "warn"],
+});
+```
+
+`application.handle` is the same entrypoint `listen` uses, so a serverless
+handler exercises the real container, routes, guards, and filters.
+
 ## Web Fetch
 
 An Aponia application already answers `Request` with `Response`, so a worker
@@ -15,6 +32,7 @@ runtime mounts it directly:
 
 ```ts
 import { toFetchHandler } from "@aponiajs/serverless";
+import { application } from "./application.ts";
 
 const handle = toFetchHandler(application);
 export default { fetch: handle };
@@ -24,10 +42,7 @@ export default { fetch: handle };
 
 ```ts
 import { createLambdaHandler } from "@aponiajs/serverless";
-
-const application = await AponiaFactory.create(AppModule, {
-  logger: ["error", "warn"],
-});
+import { application } from "./application.ts";
 
 export const handler = createLambdaHandler(application);
 ```

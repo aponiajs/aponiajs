@@ -28,10 +28,11 @@ runtime boundary it describes.
   that would make this package more than an adapter — a schema registry, a
   decorator of its own for tags or summaries, a served interface of its own — is
   a different package, and the answer to "should this package generate that?" is
-  no even when the answer would be convenient. The README says so in the
-  reader's words and links to the raw plugin; keep that paragraph, because a
-  reader who assumes the document is enforced loses an integration, and no
-  option here makes that assumption true.
+  no even when the answer would be convenient. The README leads with module
+  registration and keeps that boundary and the raw-plugin alternative in its
+  final Native escape hatch section; keep it there, because a reader who
+  assumes the document is enforced loses an integration, and no option here
+  makes that assumption true.
 - **`OpenApiInfo` is derived from the plugin's own `documentation.info`, never
   restated.** The metadata is handed to `@elysia/openapi` unchanged, so a
   package that restated the shape would keep compiling after a release that

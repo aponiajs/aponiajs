@@ -41,13 +41,34 @@ export class Mailer {
 }
 ```
 
-Bind a decorated listener once, where the application owns it:
+Bind decorated listeners once, in a provider that the module owns:
 
 ```ts
-const events = application.get(EventEmitter);
-const unbind = events.bind(mailer);
-// later: unbind()
+import { Injectable, Module, type OnModuleInit } from "@aponiajs/common";
+import { EventEmitter, EventEmitterModule } from "@aponiajs/events";
+
+@Injectable()
+class UserEvents implements OnModuleInit {
+  constructor(
+    private readonly events: EventEmitter,
+    private readonly mailer: Mailer,
+  ) {}
+
+  onModuleInit(): void {
+    this.events.bind(this.mailer);
+  }
+}
+
+@Module({
+  imports: [EventEmitterModule.register()],
+  providers: [Mailer, UserEvents],
+})
+export class AppModule {}
 ```
+
+The listener is a provider, so it shares the application's dependencies and its
+lifecycle. `bind` returns an unsubscribe function for code that needs one; the
+emitter is closed with the application.
 
 ## What it guarantees
 
@@ -59,6 +80,16 @@ const unbind = events.bind(mailer);
 - Payloads are passed by reference and are not cloned or serialized.
 - Delivery is in-process only. It is not a durable queue, an outbox, or a
   cross-process bus.
+
+## Bootstrap
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+
+const application = await AponiaFactory.create(AppModule);
+await application.listen(Number(Bun.env.PORT ?? 3000));
+```
 
 ## Documentation
 

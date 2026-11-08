@@ -10,12 +10,36 @@ bun add @aponiajs/database@beta drizzle-orm
 ## Use it
 
 ```ts
-import { Module } from "@aponiajs/common";
+import { Injectable, Module } from "@aponiajs/common";
 import { DatabaseModule } from "@aponiajs/database";
+import { DatabaseService, createRepository } from "@aponiajs/database";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import { Database } from "bun:sqlite";
+import { sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 const database = drizzle(new Database("app.sqlite"));
+
+const users = sqliteTable("users", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+});
+
+@Injectable()
+class UsersRepository {
+  readonly #repository;
+
+  constructor(databaseService: DatabaseService) {
+    this.#repository = createRepository(databaseService.client, users);
+  }
+
+  insert(input: { readonly id: string; readonly name: string }) {
+    return this.#repository.insert(input);
+  }
+
+  findById(id: string) {
+    return this.#repository.findById(id);
+  }
+}
 
 @Module({
   imports: [
@@ -24,43 +48,60 @@ const database = drizzle(new Database("app.sqlite"));
       migrations: { files: await loadMigrations("./migrations") },
     }),
   ],
+  providers: [UsersRepository],
+  exports: [UsersRepository],
 })
 export class AppModule {}
+```
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+
+const application = await AponiaFactory.create(AppModule);
+await application.listen(Number(Bun.env.PORT ?? 3000));
 ```
 
 The package builds no pool and picks no dialect. The application constructs its
 Drizzle database, and the module owns the transaction seam and migrations.
 
 ```ts
-const users = sqliteTable("users", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-});
+@Injectable()
+class UsersRepository {
+  // constructor from the registration above
 
-const repository = createRepository(database, users);
-await repository.insert({ id: "1", name: "ada" });
-await repository.findById("1");
-await repository.update("1", { name: "Ada" });
-await repository.deleteById("1");
-await repository.findMany({
-  where: eq(users.name, "Ada"),
-  orderBy: [asc(users.id)],
-  limit: 10,
-  offset: 0,
-});
-await repository.count({ where: eq(users.name, "Ada") });
-await repository.exists(eq(users.name, "Ada"));
-await repository.updateMany({ where: eq(users.name, "Ada"), value: { name: "Ada L." } });
-await repository.deleteMany(eq(users.name, "Ada L."));
+  async listActive(): Promise<void> {
+    await this.#repository.insert({ id: "1", name: "ada" });
+    await this.#repository.findById("1");
+    await this.#repository.update("1", { name: "Ada" });
+    await this.#repository.deleteById("1");
+    await this.#repository.findMany({
+      where: eq(users.name, "Ada"),
+      orderBy: [asc(users.id)],
+      limit: 10,
+      offset: 0,
+    });
+    await this.#repository.count({ where: eq(users.name, "Ada") });
+    await this.#repository.exists(eq(users.name, "Ada"));
+    await this.#repository.updateMany({ where: eq(users.name, "Ada"), value: { name: "Ada L." } });
+    await this.#repository.deleteMany(eq(users.name, "Ada L."));
+  }
+}
 ```
 
 ## Transactions
 
 ```ts
-const service = application.get(DatabaseService);
-await service.transaction(async (tx) => {
-  await tx.execute(sql`insert into audit_log (id) values (${id})`);
-});
+@Injectable()
+class AuditWriter {
+  constructor(private readonly database: DatabaseService) {}
+
+  async record(id: string): Promise<void> {
+    await this.database.transaction(async (tx) => {
+      await tx.execute(sql`insert into audit_log (id) values (${id})`);
+    });
+  }
+}
 ```
 
 `transaction` awaits the callback, so the driver must be able to run an

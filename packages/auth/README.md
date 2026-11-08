@@ -100,10 +100,24 @@ AuthModule.register({
 ```
 
 ```ts
-const issued = await refresh.issue(userId);
-const rotated = await refresh.rotate(issued.token); // the old token is consumed
-await refresh.revokeFamily(rotated.familyId); // sign the family out
-await revocation.revoke(jti, expiresAt); // reject one access token now
+import { Injectable } from "@aponiajs/common";
+import { RefreshTokenService, RevocationService } from "@aponiajs/auth";
+
+@Injectable()
+class Sessions {
+  constructor(
+    private readonly refresh: RefreshTokenService,
+    private readonly revocation: RevocationService,
+  ) {}
+
+  async rotate(userId: string, jti: string, expiresAt: number): Promise<string> {
+    const issued = await this.refresh.issue(userId);
+    const rotated = await this.refresh.rotate(issued.token); // the old token is consumed
+    await this.refresh.revokeFamily(rotated.familyId); // sign the family out
+    await this.revocation.revoke(jti, expiresAt); // reject one access token
+    return rotated.token;
+  }
+}
 ```
 
 ## OpenID Connect
@@ -148,6 +162,16 @@ A store that does not implement its contract fails the registration with
 This foundation covers bearer JWTs, role/permission checks, refresh rotation,
 single-instance revocation, OIDC discovery, and password hashing. Distributed
 revocation and distributed refresh stores are later layers.
+
+## Bootstrap
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+
+const application = await AponiaFactory.create(AppModule);
+await application.listen(Number(Bun.env.PORT ?? 3000));
+```
 
 ## Documentation
 

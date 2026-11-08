@@ -10,19 +10,46 @@ bun add @aponiajs/queue@beta
 ## Use it
 
 ```ts
-import { Module } from "@aponiajs/common";
+import { Injectable, Module, type OnModuleInit } from "@aponiajs/common";
 import { QueueModule, QueueService } from "@aponiajs/queue";
+
+@Injectable()
+class EmailJobs implements OnModuleInit {
+  constructor(
+    private readonly queue: QueueService,
+    private readonly mailer: Mailer,
+  ) {}
+
+  onModuleInit(): void {
+    this.queue.registerHandler("email.send", async (payload, job) => {
+      await this.mailer.send(payload, { idempotencyKey: job.idempotencyKey });
+    });
+  }
+
+  enqueueWelcome(to: string): Promise<unknown> {
+    return this.queue.enqueue("email.send", { to }, { idempotencyKey: `welcome:${to}` });
+  }
+}
 
 @Module({
   imports: [QueueModule.register({ queue: { concurrency: 4, maxAttempts: 5 } })],
+  providers: [EmailJobs],
+  exports: [EmailJobs],
 })
 export class AppModule {}
+```
 
-const queue = application.get(QueueService);
-queue.registerHandler("email.send", async (payload, job) => {
-  await mailer.send(payload, { idempotencyKey: job.idempotencyKey });
-});
-queue.enqueue("email.send", { to: "ada@example.com" }, { idempotencyKey: "welcome:42" });
+A queue handler is registered once, where the application owns the work. A
+controller or service that injects `EmailJobs` enqueues through it; nothing
+registers a handler at module scope. `Mailer` is an application provider, so the
+handler closes over the same dependencies as the rest of the application.
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+
+const application = await AponiaFactory.create(AppModule);
+await application.listen(Number(Bun.env.PORT ?? 3000));
 ```
 
 `enqueue` schedules a drain by default. Call `await queue.drain()` to run every
@@ -43,8 +70,10 @@ it again. An explicit `drain()` still runs while paused.
 
 ```ts
 const store: QueueStore = createSharedBacklog();
+const jobs = QueueModule.register({ queue: { store } });
 
-QueueModule.register({ queue: { store } });
+@Module({ imports: [jobs] })
+export class AppModule {}
 ```
 
 A store receives each job state and rebuilds the backlog when the module
@@ -63,13 +92,31 @@ broker, and two processes sharing one store both read the same pending jobs.
 ## Outbox
 
 ```ts
-const outbox = application.get(OutboxService);
-await database.transaction(async () => {
-  const order = await orders.create(input);
-  outbox.record("order.created", { orderId: order.id });
-});
-await outbox.flush((message) => events.publish(message.name, message.payload));
+import { Injectable } from "@aponiajs/common";
+import { DatabaseService } from "@aponiajs/database";
+import { OutboxService } from "@aponiajs/queue";
+import { sql } from "drizzle-orm";
+
+@Injectable()
+class OrdersService {
+  constructor(
+    private readonly database: DatabaseService,
+    private readonly outbox: OutboxService,
+    private readonly publisher: OrderPublisher,
+  ) {}
+
+  async create(id: string): Promise<void> {
+    await this.database.transaction(async (tx) => {
+      await tx.execute(sql`insert into orders (id) values (${id})`);
+      this.outbox.record("order.created", { orderId: id });
+    });
+    await this.outbox.flush((message) => this.publisher.publish(message.name, message.payload));
+  }
+}
 ```
+
+`OrderPublisher` is an application provider that performs the actual delivery.
+The outbox records the message inside the transaction and flushes it afterwards.
 
 A message the sink rejects stays at the front of the outbox and the flush throws
 `OUTBOX_DELIVERY_FAILED`, so the next flush retries it in order.

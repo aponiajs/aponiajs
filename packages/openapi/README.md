@@ -7,42 +7,34 @@ bun add @aponiajs/openapi
 Serve an OpenAPI document for an Aponia application's routes, with the
 document's own metadata read from a validated configuration.
 
-## What this package is, and what it is not
+## Use it
 
-**This package generates no schema and no document.** The generator is
-[`@elysia/openapi`](https://www.npmjs.com/package/@elysia/openapi), which reads
-the route table Elysia compiled. This package is a thin adapter over that
-plugin, and it contributes exactly two things:
+Register the document in the application whose routes it describes:
 
-- a module the plugin is declared in, so the document is mounted through the
-  framework's own seam, is part of the compiled graph, and can be read back from
-  it;
-- a validated configuration the document's `info` comes from, so a missing or
-  malformed title and version is a refused boot with a code and an issue list,
-  rather than a document served with a placeholder nobody declared.
+```ts
+import { Module } from "@aponiajs/common";
+import { OpenApiModule } from "@aponiajs/openapi";
+import { WidgetsController } from "./widgets.controller.ts";
+import { OpenApiConfig } from "./openapi.config.ts";
 
-Everything else — which routes appear, what each schema looks like, how a
-parameter is lowered into a path item — is `@elysia/openapi`'s. **A reader who
-wants the raw plugin should use
-[`@elysia/openapi`](https://www.npmjs.com/package/@elysia/openapi) directly**:
-nothing here is unavailable there, and mounting it yourself through a
-`PluginModule` costs a few lines.
+const docs = OpenApiModule.register({ configuration: OpenApiConfig });
 
-Read the next paragraph before you rely on anything downstream of the document.
+@Module({ imports: [docs], controllers: [WidgetsController] })
+export class AppModule {}
+```
 
-**This package does not validate requests, does not generate clients, and serves
-no interface of its own.** The document it serves is a _description_ of the
-routes the platform compiled; it is not a validator, and nothing in this package
-makes a request conform to what the document says. A client generated from the
-document is a third-party generator's reading of it, with that generator's own
-gaps. The one interface this package offers is whatever the wrapped plugin serves
-at the mount path — Scalar's page by default — and that page is
-`@elysia/openapi`'s, with its own configuration and its own Scalar version. **A
-reader who assumes the document is a contract the server enforces will ship a
-client for endpoints that answer `422`, or an integration against a route that
-was never declared**, and no option here changes that: a package that promises
-enforcement is a different package, and this one deliberately does not pretend
-to be it.
+The document is served at `/openapi/json` and the interface at `/openapi`.
+Both move together when the configuration changes `path`.
+
+## Bootstrap
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+
+const application = await AponiaFactory.create(AppModule);
+await application.listen(Number(Bun.env.PORT ?? 3000));
+```
 
 ## Declaring a document
 
@@ -186,6 +178,43 @@ A configuration this package refuses raises `AponiaError` with:
 A `path` that is not absolute is a `TypeError` raised while the registration
 runs, not an `AponiaError`: it is a source-level mistake rather than a value an
 environment supplied.
+
+## Native escape hatch
+
+The module above is the supported path. The native plugin remains available when the module's validation, graph node, or configuration contract is not wanted.
+
+**This package generates no schema and no document.** The generator is
+[`@elysia/openapi`](https://www.npmjs.com/package/@elysia/openapi), which reads
+the route table Elysia compiled. This package is a thin adapter over that
+plugin, and it contributes exactly two things:
+
+- a module the plugin is declared in, so the document is mounted through the
+  framework's own seam, is part of the compiled graph, and can be read back from
+  it;
+- a validated configuration the document's `info` comes from, so a missing or
+  malformed title and version is a refused boot with a code and an issue list,
+  rather than a document served with a placeholder nobody declared.
+
+Everything else — which routes appear, what each schema looks like, how a
+parameter is lowered into a path item — is `@elysia/openapi`'s. **A reader who
+wants the raw plugin should use
+[`@elysia/openapi`](https://www.npmjs.com/package/@elysia/openapi) directly**:
+nothing here is unavailable there, and mounting it yourself through a
+`PluginModule` costs a few lines.
+
+**This package does not validate requests, does not generate clients, and serves
+no interface of its own.** The document it serves is a _description_ of the
+routes the platform compiled; it is not a validator, and nothing in this package
+makes a request conform to what the document says. A client generated from the
+document is a third-party generator's reading of it, with that generator's own
+gaps. The one interface this package offers is whatever the wrapped plugin serves
+at the mount path — Scalar's page by default — and that page is
+`@elysia/openapi`'s, with its own configuration and its own Scalar version. **A
+reader who assumes the document is a contract the server enforces will ship a
+client for endpoints that answer `422`, or an integration against a route that
+was never declared**, and no option here changes that: a package that promises
+enforcement is a different package, and this one deliberately does not pretend
+to be it.
 
 ## Requirements
 

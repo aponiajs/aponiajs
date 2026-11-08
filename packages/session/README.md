@@ -76,6 +76,16 @@ The default store is process-local and not a distributed session store. A
 multi-process deployment supplies a shared `SessionStore` and keeps the same
 signed-cookie contract.
 
+## Bootstrap
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+
+const application = await AponiaFactory.create(AppModule);
+await application.listen(Number(Bun.env.PORT ?? 3000));
+```
+
 ## Documentation
 
 - [Published packages](../../docs/packages.md)

@@ -4,7 +4,7 @@
 
 **This package implements no CORS.** Every header, preflight answer, and matching rule is `@elysia/cors`'s. Its contribution is a module the policy is declared in — so it is a graph node, in the compiled graph and in devtools — and a validated configuration. For a literal policy that is close to no contribution at all: mounting `PluginModule.register(cors({ origin: ["https://app.example"] }), { key: "cors" })` in an `imports` needs no package.
 
-**A reader who wants the raw plugin should use [`@elysia/cors`](https://www.npmjs.com/package/@elysia/cors) directly.** The one thing a configuration cannot carry is an origin that is a `RegExp` or a `(request) => boolean` function: both are code, not data. `CorsConfiguration.origins` is a list of exact origin strings, and the raw plugin is the path for a pattern or a predicate.
+**The raw plugin remains available for a policy a configuration cannot express.** An origin that is a `RegExp` or a `(request) => boolean` function is code, not data; mount [`@elysia/cors`](https://www.npmjs.com/package/@elysia/cors) through `PluginModule` for that case. `CorsConfiguration.origins` stays a list of exact origin strings.
 
 ## What this package exports
 

@@ -7,44 +7,39 @@ bun add @aponiajs/opentelemetry
 Trace an Aponia application's routes with OpenTelemetry, with the policy read
 from a validated configuration.
 
-## What this package is, and what it is not
+## Use it
 
-**This package is not a tracing backend, and it ships no exporter.** No OTLP
-client, no Jaeger or Tempo or Honeycomb client, no collector configuration, no
-storage, and no query surface. It records spans and hands them to whatever you
-gave it.
-
-**It also supplies no span processors, no exporters, and no instrumentations.**
-Those are yours, and you pass them in:
+Register tracing once, with the SDK pieces the application supplies:
 
 ```ts
+import { Module } from "@aponiajs/common";
+import { OpentelemetryModule } from "@aponiajs/opentelemetry";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
+import { OpentelemetryConfig } from "./config.ts";
 
 const tracing = OpentelemetryModule.register({
   configuration: OpentelemetryConfig,
   spanProcessors: [new BatchSpanProcessor(new OTLPTraceExporter())],
 });
+
+@Module({ imports: [tracing] })
+export class AppModule {}
 ```
 
-What this package contributes is exactly two things:
+Handlers and services read the active span through the plugin's
+`getCurrentSpan()`. The application owns the exporter, the processors, and the
+instrumentations; this package owns the module and its validated configuration.
 
-- a module the plugin is declared in, so the plugin is mounted through the
-  framework's own seam, is a node in the compiled graph, and is initialized in
-  the boot's instance-loading pass — the `InstanceLoader` line reads
-  `PluginModule[opentelemetry] dependencies initialized`;
-- a validated configuration the policy comes from, so a missing service name, a
-  wrong-typed body setting, or a request body recorded beside a credential-bearing
-  header is a refused boot with a code and an issue list, rather than a span
-  nobody inspects.
+## Bootstrap
 
-Everything else is
-[`@elysia/opentelemetry`](https://www.npmjs.com/package/@elysia/opentelemetry)'s:
-the root span, the per-stage spans, the span attributes, the propagation, and the
-`NodeSDK` startup. **If the module and the validation do not matter to you, use
-[`@elysia/opentelemetry`](https://www.npmjs.com/package/@elysia/opentelemetry)
-directly** — mounting `PluginModule.register(opentelemetry({ serviceName: "api"
-}), { key: "opentelemetry" })` in an `imports` needs no package.
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+
+const application = await AponiaFactory.create(AppModule);
+await application.listen(Number(Bun.env.PORT ?? 3000));
+```
 
 ## What the wrapped plugin already does
 
@@ -243,3 +238,44 @@ spans themselves, and their export.
 - [`@elysia/opentelemetry` on npm](https://www.npmjs.com/package/@elysia/opentelemetry)
 - [Plugin package authoring](../../docs/plugin-packages.md)
 - [Published packages](../../docs/packages.md)
+
+## Native escape hatch
+
+The module above is the supported path. The native plugin remains available when the module's validation, graph node, or configuration contract is not wanted.
+
+**This package is not a tracing backend, and it ships no exporter.** No OTLP
+client, no Jaeger or Tempo or Honeycomb client, no collector configuration, no
+storage, and no query surface. It records spans and hands them to whatever you
+gave it.
+
+**It also supplies no span processors, no exporters, and no instrumentations.**
+Those are yours, and you pass them in:
+
+```ts
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
+import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
+
+const tracing = OpentelemetryModule.register({
+  configuration: OpentelemetryConfig,
+  spanProcessors: [new BatchSpanProcessor(new OTLPTraceExporter())],
+});
+```
+
+What this package contributes is exactly two things:
+
+- a module the plugin is declared in, so the plugin is mounted through the
+  framework's own seam, is a node in the compiled graph, and is initialized in
+  the boot's instance-loading pass — the `InstanceLoader` line reads
+  `PluginModule[opentelemetry] dependencies initialized`;
+- a validated configuration the policy comes from, so a missing service name, a
+  wrong-typed body setting, or a request body recorded beside a credential-bearing
+  header is a refused boot with a code and an issue list, rather than a span
+  nobody inspects.
+
+Everything else is
+[`@elysia/opentelemetry`](https://www.npmjs.com/package/@elysia/opentelemetry)'s:
+the root span, the per-stage spans, the span attributes, the propagation, and the
+`NodeSDK` startup. **If the module and the validation do not matter to you, use
+[`@elysia/opentelemetry`](https://www.npmjs.com/package/@elysia/opentelemetry)
+directly** — mounting `PluginModule.register(opentelemetry({ serviceName: "api"
+}), { key: "opentelemetry" })` in an `imports` needs no package.

@@ -28,9 +28,9 @@ runtime boundary it describes.
   package more than an adapter — an origin predicate of its own, a route-scoped
   policy, a header builder — is a different package, and the answer to "should
   the adapter do this?" is no even when the answer would be convenient. The
-  README says so in the reader's words, states plainly that a literal policy
-  needs no package at all, and links the raw plugin. Keep that paragraph: this
-  is the smallest candidate in the set, and a package that oversells a thin
+  README leads with module registration and keeps the literal-policy boundary
+  and raw-plugin alternative in its final Native escape hatch section: this is
+  the smallest candidate in the set, and a package that oversells a thin
   adapter is the defect this repository cares most about.
 - **The configuration carries data only, and the boundary is stated rather than
   widened.** The wrapped plugin's `origin` also accepts a `RegExp` and a

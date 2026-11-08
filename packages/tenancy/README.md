@@ -42,6 +42,16 @@ The package resolves a tenant identifier. It does not store tenants, scope a
 database connection, or enforce repository filters; those are application or
 database-package responsibilities.
 
+## Bootstrap
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+
+const application = await AponiaFactory.create(AppModule);
+await application.listen(Number(Bun.env.PORT ?? 3000));
+```
+
 ## Documentation
 
 - [Tenancy guide](../../docs/tenancy.md)

@@ -50,6 +50,16 @@ The default store is process-local. A deployment with several instances passes
 a shared `IdempotencyStore`; the contract is asynchronous, so a database or
 shared cache fits it.
 
+## Bootstrap
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+
+const application = await AponiaFactory.create(AppModule);
+await application.listen(Number(Bun.env.PORT ?? 3000));
+```
+
 ## Documentation
 
 - [Agent surface](../../docs/agent/README.md)

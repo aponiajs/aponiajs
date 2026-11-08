@@ -3,23 +3,47 @@
 `@aponiajs/queue` adds an in-process job queue and a transactional outbox.
 
 ```ts
+import { Injectable, Module, type OnModuleInit } from "@aponiajs/common";
+import { QueueModule, QueueService } from "@aponiajs/queue";
+
+@Injectable()
+class EmailJobs implements OnModuleInit {
+  constructor(
+    private readonly queue: QueueService,
+    private readonly mailer: Mailer,
+  ) {}
+
+  onModuleInit(): void {
+    this.queue.registerHandler("email.send", async (payload, job) => {
+      await this.mailer.send(payload, { idempotencyKey: job.idempotencyKey });
+    });
+  }
+
+  enqueueWelcome(to: string): Promise<unknown> {
+    return this.queue.enqueue("email.send", { to }, { idempotencyKey: `welcome:${to}` });
+  }
+}
+
 @Module({
   imports: [QueueModule.register({ queue: { concurrency: 4, maxAttempts: 5 } })],
+  providers: [EmailJobs],
+  exports: [EmailJobs],
 })
 export class AppModule {}
 ```
 
 ```ts
-const queue = application.get(QueueService);
-queue.registerHandler("email.send", async (payload, job) => {
-  await mailer.send(payload, { idempotencyKey: job.idempotencyKey });
-});
-queue.enqueue("email.send", { to: "ada@example.com" }, { idempotencyKey: "welcome:42" });
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+
+const application = await AponiaFactory.create(AppModule);
+await application.listen(Number(Bun.env.PORT ?? 3000));
 ```
 
 `enqueue` schedules a drain unless `autoStart` is `false`; `drain()` runs every
 job whose `availableAt` has passed, in batches of `concurrency`, and answers
-completed, retried, and dead-lettered counts. `pause()` cancels automatic
+completed, retried, and dead-lettered counts. `Mailer` is an application
+provider, so the handler closes over the application's own services. `pause()` cancels automatic
 draining and `resume()` schedules it again; an explicit `drain()` still runs
 while paused.
 
@@ -47,11 +71,27 @@ be used later for a new job. The queue never inspects or rewrites the payload.
 ## Outbox
 
 ```ts
-await database.transaction(async () => {
-  const order = await orders.create(input);
-  outbox.record("order.created", { orderId: order.id });
-});
-await outbox.flush((message) => events.publish(message.name, message.payload));
+import { Injectable } from "@aponiajs/common";
+import { DatabaseService } from "@aponiajs/database";
+import { OutboxService } from "@aponiajs/queue";
+import { sql } from "drizzle-orm";
+
+@Injectable()
+class OrdersService {
+  constructor(
+    private readonly database: DatabaseService,
+    private readonly outbox: OutboxService,
+    private readonly publisher: OrderPublisher,
+  ) {}
+
+  async create(id: string): Promise<void> {
+    await this.database.transaction(async (tx) => {
+      await tx.execute(sql`insert into orders (id) values (${id})`);
+      this.outbox.record("order.created", { orderId: id });
+    });
+    await this.outbox.flush((message) => this.publisher.publish(message.name, message.payload));
+  }
+}
 ```
 
 `flush` delivers oldest first and stops at the first rejection, which stays at

@@ -94,6 +94,16 @@ authentication package, an authorization package, a session store, or a
 rate limiter; pair it with `@aponiajs/rate-limit` and the upcoming auth/session
 packages.
 
+## Bootstrap
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+
+const application = await AponiaFactory.create(AppModule);
+await application.listen(Number(Bun.env.PORT ?? 3000));
+```
+
 ## Documentation
 
 - [Published packages](../../docs/packages.md)

@@ -7,49 +7,43 @@ bun add @aponiajs/graphql
 Serve a GraphQL endpoint for an Aponia application, with the mount path read
 from a validated configuration.
 
-## What this package is, and what it is not
+## Use it
 
-**This package serves no schema of its own.** Every field, every resolver
-result, and every error shape is
-[`@elysia/graphql-yoga`](https://www.npmjs.com/package/@elysia/graphql-yoga)'s,
-which wraps [GraphQL Yoga](https://the-guild.dev/graphql/yoga-server). The
-schema is the application's — `typeDefs` plus `resolvers`, or a prebuilt
-`GraphQLSchema` — built in the module's factory, where a resolver can close
-over any provider the factory injects. This package is a small adapter over
-that plugin, and it contributes exactly two things:
-
-- a module the endpoint is declared in, so the path is mounted through the
-  framework's own seam, is a node in the compiled graph, and is initialized in
-  the boot's instance-loading pass — the `InstanceLoader` line reads
-  `PluginModule[graphql] dependencies initialized`;
-- a validated configuration the mount path comes from, so a missing path or a
-  relative one is a refused boot with a code and an issue list, rather than a
-  route nobody answers.
-
-**This is not a schema-first Aponia integration.** There is no decorator that
-derives a schema from controllers, no code-first builder, and no mapping
-between Aponia routes and GraphQL fields. A query is answered by the resolvers
-the factory returned, and nothing else. An application that wants the raw
-plugin — a schema fixed in source and a path it sets itself — should install
-[`@elysia/graphql-yoga`](https://www.npmjs.com/package/@elysia/graphql-yoga)
-directly:
+Register the endpoint in the module that owns the schema, and inject the
+providers its resolvers need:
 
 ```ts
 import { Module } from "@aponiajs/common";
-import { PluginModule } from "@aponiajs/platform-elysia";
-import { yoga } from "@elysia/graphql-yoga";
+import { GraphQLModule } from "@aponiajs/graphql";
+import { GraphQLConfig } from "./config.ts";
+import { UserService } from "./users.service.ts";
 
-const endpoint = PluginModule.register(
-  yoga({ typeDefs, resolvers, path: "/gql", graphqlEndpoint: "/gql" }),
-  { key: "graphql" },
-);
+const graphql = GraphQLModule.register({
+  configuration: GraphQLConfig,
+  inject: [UserService],
+  useFactory: (users) => ({
+    typeDefs: `type Query { users: [String] }`,
+    resolvers: { Query: { users: () => users.all() } },
+  }),
+});
 
-@Module({ imports: [endpoint] })
+@Module({ imports: [graphql] })
 export class AppModule {}
 ```
 
-Note the pair: the raw plugin needs `path` **and** `graphqlEndpoint` set
-together, which is the footgun this package closes.
+A resolver reaches injected services through the factory closure. The endpoint
+mounts through the module graph, so the application sees it in the same boot as
+its controllers.
+
+## Bootstrap
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+
+const application = await AponiaFactory.create(AppModule);
+await application.listen(Number(Bun.env.PORT ?? 3000));
+```
 
 ## Declaring an endpoint
 
@@ -111,6 +105,8 @@ export const GraphQLConfig = defineConfiguration(
 exports it, so the application reads the same validated value back:
 
 ```ts
+const application = await AponiaFactory.create(AppModule);
+
 application.get(GraphQLConfig); // the value the endpoint was built from
 ```
 
@@ -213,6 +209,52 @@ A configuration this package refuses raises `AponiaError` with
 `INVALID_CONFIGURATION` covers a declaration that is not a Standard Schema, or
 whose validation answers asynchronously, both of which
 `provideConfiguration` already refuses for any configuration.
+
+## Native escape hatch
+
+The module above is the supported path. The native plugin remains available when the module's validation, graph node, or configuration contract is not wanted.
+
+**This package serves no schema of its own.** Every field, every resolver
+result, and every error shape is
+[`@elysia/graphql-yoga`](https://www.npmjs.com/package/@elysia/graphql-yoga)'s,
+which wraps [GraphQL Yoga](https://the-guild.dev/graphql/yoga-server). The
+schema is the application's — `typeDefs` plus `resolvers`, or a prebuilt
+`GraphQLSchema` — built in the module's factory, where a resolver can close
+over any provider the factory injects. This package is a small adapter over
+that plugin, and it contributes exactly two things:
+
+- a module the endpoint is declared in, so the path is mounted through the
+  framework's own seam, is a node in the compiled graph, and is initialized in
+  the boot's instance-loading pass — the `InstanceLoader` line reads
+  `PluginModule[graphql] dependencies initialized`;
+- a validated configuration the mount path comes from, so a missing path or a
+  relative one is a refused boot with a code and an issue list, rather than a
+  route nobody answers.
+
+**This is not a schema-first Aponia integration.** There is no decorator that
+derives a schema from controllers, no code-first builder, and no mapping
+between Aponia routes and GraphQL fields. A query is answered by the resolvers
+the factory returned, and nothing else. An application that wants the raw
+plugin — a schema fixed in source and a path it sets itself — should install
+[`@elysia/graphql-yoga`](https://www.npmjs.com/package/@elysia/graphql-yoga)
+directly:
+
+```ts
+import { Module } from "@aponiajs/common";
+import { PluginModule } from "@aponiajs/platform-elysia";
+import { yoga } from "@elysia/graphql-yoga";
+
+const endpoint = PluginModule.register(
+  yoga({ typeDefs, resolvers, path: "/gql", graphqlEndpoint: "/gql" }),
+  { key: "graphql" },
+);
+
+@Module({ imports: [endpoint] })
+export class AppModule {}
+```
+
+Note the pair: the raw plugin needs `path` **and** `graphqlEndpoint` set
+together, which is the footgun this package closes.
 
 ## Requirements
 

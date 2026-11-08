@@ -5,10 +5,19 @@ own database with its own dialect; the package owns three things: the
 transaction seam, a typed repository over one table, and ordered SQL migrations.
 
 ```ts
+import { Injectable, Module } from "@aponiajs/common";
+import { DatabaseModule, DatabaseService } from "@aponiajs/database";
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { drizzle } from "drizzle-orm/bun-sqlite";
+import { Database } from "bun:sqlite";
+
 const database = drizzle(new Database("app.sqlite"));
 
 @Module({ imports: [DatabaseModule.register({ database })] })
 export class AppModule {}
+
+const application = await AponiaFactory.create(AppModule);
+await application.listen(Number(Bun.env.PORT ?? 3000));
 ```
 
 `DatabaseService.client` is exactly the instance the application registered, so
@@ -18,9 +27,16 @@ Drizzle code.
 ## Transactions
 
 ```ts
-await service.transaction(async (tx) => {
-  await tx.execute(sql`insert into audit_log (id) values (${id})`);
-});
+@Injectable()
+class AuditWriter {
+  constructor(private readonly database: DatabaseService) {}
+
+  async record(id: string): Promise<void> {
+    await this.database.transaction(async (tx) => {
+      await tx.execute(sql`insert into audit_log (id) values (${id})`);
+    });
+  }
+}
 ```
 
 `transaction` awaits the callback, so it needs a driver whose transaction is
@@ -31,18 +47,31 @@ promise settles.
 ## Repositories
 
 ```ts
+import { Injectable } from "@aponiajs/common";
+import { DatabaseService, createRepository } from "@aponiajs/database";
 import { asc, eq } from "drizzle-orm";
+import { sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 const users = sqliteTable("users", { id: text("id").primaryKey(), name: text("name").notNull() });
-const repository = createRepository(database, users);
 
-await repository.insert({ id: "1", name: "ada" });
-await repository.findMany({
-  where: eq(users.name, "ada"),
-  orderBy: [asc(users.id)],
-  limit: 10,
-  offset: 0,
-});
+@Injectable()
+class UsersRepository {
+  readonly #repository;
+
+  constructor(database: DatabaseService) {
+    this.#repository = createRepository(database.client, users);
+  }
+
+  async list(): Promise<void> {
+    await this.#repository.insert({ id: "1", name: "ada" });
+    await this.#repository.findMany({
+      where: eq(users.name, "ada"),
+      orderBy: [asc(users.id)],
+      limit: 10,
+      offset: 0,
+    });
+  }
+}
 ```
 
 The repository covers one table with an `id` column: `findById`, `findMany`,

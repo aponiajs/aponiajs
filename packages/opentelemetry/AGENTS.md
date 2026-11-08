@@ -26,9 +26,10 @@ runtime boundary it describes.
   it may imply one.** No OTLP client, no vendor client, no collector
   configuration, no storage, and no query surface. The span processors, the
   exporters, and the instrumentations are the application's, passed to `register`
-  because they are live objects a configuration cannot carry. The README states
-  the boundary before any usage section, and `tests/opentelemetry-module.test.ts`
-  pins the barrel to a single value export so an exporter cannot arrive quietly.
+  because they are live objects a configuration cannot carry. The README leads
+  with module registration and states the boundary in its final Native escape
+  hatch section, and `tests/opentelemetry-module.test.ts` pins the barrel to a
+  single value export so an exporter cannot arrive quietly.
 - **The configuration carries data only, and the boundary is stated rather than
   widened.** `OpentelemetryConfiguration` has four fields, and the wrapped
   plugin's `ElysiaOpenTelemetryOptions` is deliberately not the configuration

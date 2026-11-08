@@ -90,6 +90,16 @@ the response body.
   `idempotencyKey`; it never replays a request body across a redirect, and it
   never exposes a response body on error.
 
+## Bootstrap
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+
+const application = await AponiaFactory.create(AppModule);
+await application.listen(Number(Bun.env.PORT ?? 3000));
+```
+
 ## Documentation
 
 - [Published packages](../../docs/packages.md)

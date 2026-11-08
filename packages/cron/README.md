@@ -7,38 +7,35 @@ bun add @aponiajs/cron
 Declare scheduled jobs in an Aponia module, with the jobs read from a validated
 configuration.
 
-## What this package is, and what it is not
+## Use it
 
-**AponiaJS adds no scheduling engine.** The engine is
-[`@elysia/cron`](https://www.npmjs.com/package/@elysia/cron), which wraps
-[croner](https://github.com/hexagon/croner). This package is a thin adapter over
-that plugin, and it contributes exactly two things:
+Register the module in the application that owns the schedule, and keep the
+jobs in the validated configuration:
 
-- a module a registration belongs in, so a scheduler is declared in an
-  application's `imports` the way every other module is, and so what it
-  scheduled is part of the compiled graph;
-- a validated configuration the jobs are read from, so a malformed value is a
-  refused boot with a code and an issue list rather than a throw from inside a
-  plugin.
+```ts
+import { Module } from "@aponiajs/common";
+import { CronModule } from "@aponiajs/cron";
+import { CronConfig } from "./config.ts";
 
-Everything else — the patterns, the options, the timing, the throw behaviour of
-a job — is `@elysia/cron`'s and croner's. **A reader who wants the raw plugin
-should use [`@elysia/cron`](https://www.npmjs.com/package/@elysia/cron)
-directly**: nothing here is unavailable there, and mounting it yourself through
-a `PluginModule` costs a few lines.
+const scheduler = CronModule.register({ configuration: CronConfig });
 
-Read the next paragraph before scheduling anything you care about.
+@Module({ imports: [scheduler] })
+export class AppModule {}
+```
 
-**This is not a job queue.** There is no persistence: a job that did not run
-because the process was down did not run, and nothing replays it. There are no
-retries: a `run` that throws is the engine's business, and the default is that
-the throw escapes the timer rather than being retried or recorded. There is no
-cross-process coordination and no distributed lock: two instances of an
-application running the same registration both run the same jobs, at the same
-moment, once each. **A cron expression in one process runs in that process.** A
-user who assumes otherwise will lose data, and no option here changes that — a
-scheduler for work that must happen exactly once across a fleet is a different
-package, and this one deliberately does not pretend to be it.
+The scheduler starts when the module mounts, before the application listens, and
+stops when the application closes. A job's `run` closes over the module's own
+providers, so scheduling stays inside the application rather than beside it.
+
+## Bootstrap
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+
+const application = await AponiaFactory.create(AppModule);
+await application.listen(Number(Bun.env.PORT ?? 3000));
+```
 
 ## Declaring a scheduler
 
@@ -210,8 +207,11 @@ schedulers, and stopping one leaves the other's jobs running. Reaching the
 scheduler is how an application reads back what a boot scheduled:
 
 ```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
 import { CronScheduler } from "@aponiajs/cron";
+import { AppModule } from "./app.module.ts";
 
+const application = await AponiaFactory.create(AppModule);
 const scheduler = application.get(CronScheduler);
 
 scheduler.jobs; // the jobs the configuration produced
@@ -232,6 +232,39 @@ A configuration this package refuses raises `AponiaError` with:
 
 A job's own throw is not one of these. It is the engine's, it is not retried,
 and `options.catch` is how a job asks croner to survive one.
+
+## Native escape hatch
+
+The module above is the supported path. The native plugin remains available when the module's validation, graph node, or configuration contract is not wanted.
+
+**AponiaJS adds no scheduling engine.** The engine is
+[`@elysia/cron`](https://www.npmjs.com/package/@elysia/cron), which wraps
+[croner](https://github.com/hexagon/croner). This package is a thin adapter over
+that plugin, and it contributes exactly two things:
+
+- a module a registration belongs in, so a scheduler is declared in an
+  application's `imports` the way every other module is, and so what it
+  scheduled is part of the compiled graph;
+- a validated configuration the jobs are read from, so a malformed value is a
+  refused boot with a code and an issue list rather than a throw from inside a
+  plugin.
+
+Everything else — the patterns, the options, the timing, the throw behaviour of
+a job — is `@elysia/cron`'s and croner's. **A reader who wants the raw plugin
+should use [`@elysia/cron`](https://www.npmjs.com/package/@elysia/cron)
+directly**: nothing here is unavailable there, and mounting it yourself through
+a `PluginModule` costs a few lines.
+
+**This is not a job queue.** There is no persistence: a job that did not run
+because the process was down did not run, and nothing replays it. There are no
+retries: a `run` that throws is the engine's business, and the default is that
+the throw escapes the timer rather than being retried or recorded. There is no
+cross-process coordination and no distributed lock: two instances of an
+application running the same registration both run the same jobs, at the same
+moment, once each. **A cron expression in one process runs in that process.** A
+user who assumes otherwise will lose data, and no option here changes that — a
+scheduler for work that must happen exactly once across a fleet is a different
+package, and this one deliberately does not pretend to be it.
 
 ## Requirements
 

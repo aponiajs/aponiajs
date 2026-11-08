@@ -325,10 +325,7 @@ export default defineConfig({
   },
   pack: {
     tsconfig: "tsconfig.build.json",
-    dts: {
-      tsgo: true,
-      tsconfig: "tsconfig.build.json",
-    },
+    dts: true,
     exports: true,
     deps: {
       neverBundle: ["@aponiajs/common", "@aponiajs/platform-elysia", "elysia"],
@@ -348,16 +345,17 @@ a `paths`-free build tsconfig for this reason.
 ## Stating the boundary
 
 **An adapter that does not state its boundary sets a false expectation, and the
-false expectation is the defect.** Cron's README opens with a section titled
-"What this package is, and what it is not" and says, in the reader's own words:
+false expectation is the defect.** Lead the README with the module, the service,
+and the boot; state the boundary in the final `## Native escape hatch` section
+so the supported path is never buried under a disclaimer. Cron says, in the
+reader's own words:
 
 > **This is not a job queue.** There is no persistence: a job that did not run
 > because the process was down did not run, and nothing replays it. There are no
 > retries: a `run` that throws is the engine's business... There is no
 > cross-process coordination and no distributed lock...
 
-Write that paragraph before the usage sections, not after them, and make it
-concrete:
+Keep that paragraph, but place it after the usage sections, and make it concrete:
 
 - Name the engine and link to it, and say plainly that a reader who wants the
   raw plugin should install it directly.

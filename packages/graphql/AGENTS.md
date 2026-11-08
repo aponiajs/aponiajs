@@ -29,10 +29,9 @@ runtime boundary it describes.
   a schema from controllers, a code-first builder, a mapping between Aponia
   routes and GraphQL fields — is a different package, and the answer to
   "should the adapter do this?" is no even when the answer would be convenient.
-  The README says so in the reader's words, states plainly that a schema fixed
-  in source needs no package at all, and links the raw plugin. Keep that
-  paragraph: a package that oversells a thin adapter is the defect this
-  repository cares most about.
+  The README leads with module registration and keeps the schema boundary and
+  raw-plugin alternative in its final Native escape hatch section: a package
+  that oversells a thin adapter is the defect this repository cares most about.
 - **The configuration carries the path only, and the module sets the pair the
   raw plugin needs.** The wrapped plugin needs `path` for the Elysia route and
   yoga's `graphqlEndpoint` for the handler, defaulting independently; setting

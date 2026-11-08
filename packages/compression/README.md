@@ -45,6 +45,16 @@ are accepted, and leaves responses under the threshold untouched.
 This package compresses responses; it does not decompress requests, cache
 compressed bodies, or negotiate content beyond `Accept-Encoding`.
 
+## Bootstrap
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+
+const application = await AponiaFactory.create(AppModule);
+await application.listen(Number(Bun.env.PORT ?? 3000));
+```
+
 ## Documentation
 
 - [Published packages](../../docs/packages.md)

@@ -27,9 +27,10 @@ runtime boundary it describes.
   feature that would make this package more than an adapter — a retry, a
   persisted run, a lock across processes, a queue — is a different package, and
   the answer to "should the scheduler do this?" is no even when the answer would
-  be convenient. The README says so in the reader's words and links to the raw
-  plugin; keep that paragraph, because a reader who assumes exactly-once loses
-  data, and no option here makes that assumption true.
+  be convenient. The README states that boundary and the raw-plugin alternative
+  in its final Native escape hatch section; keep it there, because a reader who
+  assumes exactly-once loses data, and no option here makes that assumption
+  true.
 - **The scheduler is a provider, not a module-level value.** A registration is
   one `DynamicModule` and a module class is declared once, so two applications
   built from one module class are two boots over one registration. Handles held

@@ -6,7 +6,7 @@
 
 **The span processors, the exporters, and the instrumentations are the application's.** They are live objects, so no configuration can carry them; they are passed to `OpentelemetryModule.register` beside `configuration`.
 
-**A reader who wants the raw plugin should use [`@elysia/opentelemetry`](https://www.npmjs.com/package/@elysia/opentelemetry) directly.**
+**The raw plugin remains available for applications that do not want the module or its configuration.** Mount [`@elysia/opentelemetry`](https://www.npmjs.com/package/@elysia/opentelemetry) through `PluginModule`; the span behavior is the plugin's either way.
 
 ## What this package exports
 

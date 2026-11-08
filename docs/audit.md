@@ -10,14 +10,24 @@ export class AppModule {}
 ```
 
 ```ts
-await audit.record({
-  action: "user.login",
-  outcome: "success",
-  actor: user.id,
-  tenant: user.tenant,
-  resource: "session",
-  metadata: { password: "not-recorded", plan: "pro" },
-});
+import { Injectable } from "@aponiajs/common";
+import { AuditService } from "@aponiajs/audit";
+
+@Injectable()
+class LoginService {
+  constructor(private readonly audit: AuditService) {}
+
+  async login(userId: string, tenant: string): Promise<void> {
+    await this.audit.record({
+      action: "user.login",
+      outcome: "success",
+      actor: userId,
+      tenant,
+      resource: "session",
+      metadata: { password: "not-recorded", plan: "pro" },
+    });
+  }
+}
 ```
 
 Events are frozen and timestamped. Sensitive metadata keys are replaced with

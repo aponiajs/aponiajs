@@ -17,7 +17,53 @@ Model Context Protocol server and tool registry for AponiaJS.
 bun add @aponiajs/mcp
 ```
 
-## Quick Start
+## Use it in an Aponia application
+
+For development introspection, `@aponiajs/devtools` mounts the MCP server on the
+application's own route table at `/__devtools/mcp`:
+
+```ts
+import { Module } from "@aponiajs/common";
+import { DevtoolsModule } from "@aponiajs/devtools";
+
+@Module({ imports: [DevtoolsModule.register({ enabled: true })] })
+export class AppModule {}
+```
+
+A production endpoint builds its own server and mounts the stateless handler
+through the module graph:
+
+```ts
+import { Module } from "@aponiajs/common";
+import { PluginModule } from "@aponiajs/platform-elysia";
+import { createStatelessHttpHandler } from "@aponiajs/mcp";
+import { Elysia } from "elysia";
+import { server } from "./mcp-server.ts";
+
+const handler = createStatelessHttpHandler(server);
+const endpoint = PluginModule.register(
+  new Elysia({ name: "mcp-endpoint" }).all("/mcp", ({ request }) => handler(request)),
+  { key: "mcp" },
+);
+
+@Module({ imports: [endpoint] })
+export class AppModule {}
+```
+
+## Bootstrap
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+
+const application = await AponiaFactory.create(AppModule);
+await application.listen(Number(Bun.env.PORT ?? 3000));
+```
+
+## Embedding the server
+
+The server API is what the endpoint above mounts. Build it with the tools,
+resources, and prompts the application publishes:
 
 ```ts
 import { McpServer, defineMcpTool } from "@aponiajs/mcp";

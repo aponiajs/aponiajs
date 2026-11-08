@@ -4,7 +4,7 @@
 
 **This package does not validate requests, does not generate clients, and serves no interface of its own.** The document is a *description* of the routes the platform compiled, not a contract the server enforces: nothing here makes a request conform to what the document says, and a client generated from the document is a third-party generator's reading of it, with that generator's own gaps. The only interface served is the wrapped plugin's, at the mount path — Scalar's page by default. A reader who assumes enforcement will ship a client for endpoints that answer `422`, or an integration against a route that was never declared.
 
-**A reader who wants the raw plugin should use [`@elysia/openapi`](https://www.npmjs.com/package/@elysia/openapi) directly.** Nothing here is unavailable there, and mounting it through an Aponia `PluginModule` costs a few lines. What this package adds is declaration through a module and validation of the document's metadata, and nothing else.
+**The raw plugin remains available for applications that do not want the module.** Mount [`@elysia/openapi`](https://www.npmjs.com/package/@elysia/openapi) through `PluginModule`; this package adds declaration through a module and validation of the document's metadata, and nothing else.
 
 ## What this package exports
 
