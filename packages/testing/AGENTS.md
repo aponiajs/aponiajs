@@ -68,7 +68,7 @@ the runtime boundary it describes.
   would not help either — the wrapper's `application` getter is the erased type
   by design, so the parameter would be decoration.
   `tests-vp/testing.conformance.ts` asserts `Extract<keyof TestApplicationOptions,
-"configureNative">` is `never`, so the paragraph that states the limitation
+  "configureNative">` is `never`, so the paragraph that states the limitation
   fails this lane rather than quietly becoming false if the platform ever moves
   that option onto the base contract. The claim was wrong in this package's first
   draft — in the README, in this guide, and in `docs/testing.md` — and every copy

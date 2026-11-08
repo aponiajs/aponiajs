@@ -16,6 +16,6 @@
     "@aponiajs/platform-elysia": "workspace:*",
     "@elysia/eden": "2.0.0-beta.6",
     "elysia": "2.0.0-beta.24",
-    "zod": "^4.4.3"
+    "zod": "^4.6.6"
   }
 }

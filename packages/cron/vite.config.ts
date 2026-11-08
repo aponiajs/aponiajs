@@ -16,10 +16,7 @@ export default defineConfig({
     // needs. With them, the declaration emitter follows those mappings into the
     // other packages' sources and writes a `.d.ts` beside every file it finds.
     tsconfig: "tsconfig.build.json",
-    dts: {
-      tsgo: true,
-      tsconfig: "tsconfig.build.json",
-    },
+    dts: true,
     exports: true,
     deps: {
       neverBundle: ["@aponiajs/common", "@aponiajs/platform-elysia", "@elysia/cron", "elysia"],

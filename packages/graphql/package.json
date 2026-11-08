@@ -52,7 +52,7 @@
     "@graphql-tools/schema": "^10.1.3",
     "elysia": "2.0.0-beta.24",
     "graphql": "^17.0.2",
-    "zod": "^4.4.3"
+    "zod": "^4.6.6"
   },
   "peerDependencies": {
     "elysia": "2.0.0-beta.24"

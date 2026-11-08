@@ -15,10 +15,7 @@ export default defineConfig({
       register: "src/compiler/register.ts",
     },
     tsconfig: "tsconfig.build.json",
-    dts: {
-      tsgo: true,
-      tsconfig: "tsconfig.build.json",
-    },
+    dts: true,
     exports: true,
     deps: {
       neverBundle: ["@aponiajs/common", "@aponiajs/core", "elysia"],

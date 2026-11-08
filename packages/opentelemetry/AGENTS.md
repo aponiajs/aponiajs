@@ -33,7 +33,7 @@ runtime boundary it describes.
   widened.** `OpentelemetryConfiguration` has four fields, and the wrapped
   plugin's `ElysiaOpenTelemetryOptions` is deliberately not the configuration
   type. `tests-vp/opentelemetry.conformance.ts` pins `keyof
-OpentelemetryConfiguration` field by field and pins that
+  OpentelemetryConfiguration` field by field and pins that
   `serviceName`, `recordBody`, `headersToSpanAttributes`, and `spanUrlRedaction`
   are absent from the runtime options; a widening fails `bun run check` instead.
 - **`serviceName` is required, and that is this adapter's own default and not the

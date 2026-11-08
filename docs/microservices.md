@@ -69,7 +69,8 @@ The application answers every delivery with a reply envelope:
 
 ```ts
 type MicroserviceReply =
-  { ok: true; value: unknown } | { ok: false; error: { code: string; message: string } };
+  | { ok: true; value: unknown }
+  | { ok: false; error: { code: string; message: string } };
 ```
 
 A handler that throws answers `MESSAGE_HANDLER_ERROR` with the fixed message
