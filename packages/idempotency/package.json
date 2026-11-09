@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/idempotency",
-  "version": "1.0.0-beta.25",
+  "version": "1.0.0-beta.26",
   "description": "Idempotent request replay for an Aponia application, with a bounded store and conflict detection.",
   "keywords": [
     "api",

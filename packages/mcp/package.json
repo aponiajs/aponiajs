@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/mcp",
-  "version": "1.0.0-beta.25",
+  "version": "1.0.0-beta.26",
   "description": "Model Context Protocol server and tool registry for AponiaJS, with handshake version negotiation and server/discover.",
   "keywords": [
     "agents",

@@ -45,7 +45,7 @@ the package:
   "contractVersion": 1,
   "name": "widgets",
   "kind": "module",
-  "framework": { "aponia": "1.0.0-beta.25", "bun": ">=1.4.4" },
+  "framework": { "aponia": "1.0.0-beta.26", "bun": ">=1.4.4" },
   "entrypoints": [{ "subpath": ".", "module": "./dist/index.mjs" }],
   "provides": [
     { "kind": "module", "token": "WidgetsModule" },

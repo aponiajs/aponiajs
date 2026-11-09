@@ -13,6 +13,38 @@ second one:
 - **`@aponiajs/platform-elysia` directly**, which is what the kit is built on and
   what a reader who wants no extra dependency keeps using.
 
+## Evidence a change must carry
+
+A test that only executes a path does not prove the contract. Cover the
+categories that apply to the change:
+
+| Category        | What the test must show                                                               |
+| --------------- | ------------------------------------------------------------------------------------- |
+| Success         | The returned value or response body, not only that the call did not throw             |
+| Rejection       | The status, media type, `AponiaError.code`, and structured details                    |
+| Boundaries      | Empty, missing, duplicate, ambiguous, and oversized inputs                            |
+| Lifecycle       | Reuse, isolation, cleanup, and what survives a second boot or a close                 |
+| Execution shape | Synchronous, asynchronous, and Promise-returning behavior where both are public       |
+| Compatibility   | Both authoring paths, or both supported toolchain lanes, when the change crosses them |
+| Regression      | The exact failing case from the report, before the fix is accepted                    |
+
+Assert observable behavior. Do not assert private field names, incidental log
+wording, or a snapshot whose only purpose is to repeat the implementation.
+
+## CI lanes
+
+| Lane                 | Command                      | Proves                                                                  |
+| -------------------- | ---------------------------- | ----------------------------------------------------------------------- |
+| Bun tests            | `bun run test:coverage`      | Behavior plus 98% lines, 95% functions, and the per-package floor       |
+| Vite+ conformance    | `bun run test:vite-plus`     | Public types and runtime behavior under the alternate toolchain         |
+| Examples             | `bun run test:examples`      | The documented application patterns run end to end                      |
+| Generated app        | `bun run test:generated-app` | The packed CLI produces an application that installs, builds, and boots |
+| Documentation guards | `bun test scripts`           | Links, wording, versions, and agent guides match the enforced shape     |
+| Docs site            | `bun run docs:build`         | Every page renders, links resolve, and the search index is written      |
+
+Narrow commands are for iteration. Delivery evidence is the complete lane named
+in the change's ownership table.
+
 ## The test kit
 
 ```bash

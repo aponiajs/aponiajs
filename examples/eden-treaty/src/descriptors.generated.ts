@@ -53,7 +53,7 @@ export const AppModuleDescriptor = defineModule({
 });
 
 export const moduleDescriptorArtifact = Object.freeze({
-  framework: "1.0.0-beta.25",
+  framework: "1.0.0-beta.26",
   elysia: "2.0.0-rc.4",
   modules: Object.freeze({
     AppModule: AppModuleDescriptor,

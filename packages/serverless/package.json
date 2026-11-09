@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/serverless",
-  "version": "1.0.0-beta.25",
+  "version": "1.0.0-beta.26",
   "description": "AWS Lambda and Web Fetch handlers for an Aponia application.",
   "keywords": [
     "aponia",

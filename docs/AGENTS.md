@@ -20,13 +20,17 @@ The published documentation set:
 | `tenancy.md`                | Request-scoped tenant resolution, guard, and identifier policy                                                                            |
 | `queues.md`                 | In-process jobs, retries, dead letters, idempotency, and the transactional outbox                                                         |
 | `database.md`               | The Drizzle boundary, transaction variants, repositories, and ordered SQL migrations                                                      |
-| `deployment.md`             | The process shape, readiness and liveness, shutdown, configuration, and which state needs a shared store                                  |
+| `deployment.md`             | Topology, state ownership, readiness and liveness, shutdown, configuration, observability, and failure modes                              |
 | `adapters.md`               | Hono, H3, and Nitro delivery adapters and their boundaries                                                                                |
-| `stability.md`              | The frozen public API snapshot, how a change is recorded, and the deprecation policy                                                      |
+| `stability.md`              | The frozen public API snapshot, compatibility, change classes, and the deprecation policy                                                 |
 | `feature-status.md`         | Per-package completeness and the known gaps outside the current release                                                                   |
 | `threat-model.md`           | Trust boundaries, the control behind each threat, residual risks, and the review checklist                                                |
+| `README.md`                 | The documentation index, reading order, authority order, and the page standard                                                            |
+| `ai-agents.md`              | The operating contract for an AI agent: context order, change protocol, safety boundaries, and evidence                                   |
 | `metrics.md`                | The Prometheus registry, recorded request metrics, scrape endpoint, and series bounds                                                     |
 | `migrating-from-nest.md`    | The package, authoring, validation, error, and CLI mapping from NestJS to AponiaJS                                                        |
+| `microservices.md`          | Message-pattern transports and the in-memory reference transport                                                                          |
+| `mcp.md`                    | The standard Model Context Protocol server, protocol negotiation, tools, resources, and prompts                                           |
 | `openapi.md`                | Serving an OpenAPI document for an application's routes, what the document reflects, and what it does not claim                           |
 | `configuration.md`          | Declaring, validating once at boot, injecting, and reading back a configuration                                                           |
 | `lifecycle.md`              | The five moments a provider can hook, what the framework does when one fails, stopping on a signal, and the readiness and liveness probes |
@@ -71,6 +75,36 @@ Adding a chapter means keeping the numbering contiguous, listing it in
 `scripts/learning-path.spec.ts` enforces all three. Renumbering an existing
 chapter breaks inbound links, so append rather than insert unless the order is
 genuinely wrong.
+
+## Page standard
+
+Every page is written for a reader who will act on it, including an agent that
+has no prior context. Keep the structure stable:
+
+- Open with one `H1` and one short paragraph that states what the page covers,
+  who it serves, and what it deliberately leaves out.
+- Put the contract before the example: what is enforced, what is guidance, and
+  what the framework does not do.
+- Show the smallest runnable example. If it calls `application.get`, the same
+  snippet shows where the application came from.
+- State the failure behavior a reader is likely to hit, with the exact code or
+  status rather than a paraphrase.
+- End with the verification command and links to the owning package and related
+  pages. Do not duplicate a package README; link to it.
+
+Use one idea per `H2`. Use tables for enumerations, option fields, state
+ownership, and failure modes. Name the exact identifier, path, command, or
+error code; do not introduce a synonym for a framework term. `MUST`,
+`MUST NOT`, `SHOULD`, and `MAY` state requirements and recommendations.
+
+For AI readability, front-load the decision, keep one canonical place for each
+fact, avoid pronouns that point across sections, and spell out an acronym on
+first use. A page that needs another page's contract to be understood is
+missing a link, not a paragraph.
+
+Adding a page means adding it to the table above, to the task map in
+[`README.md`](./README.md), and to the learning path only when it is
+sequential teaching material rather than reference.
 
 ## Invariants
 

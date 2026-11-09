@@ -5,9 +5,13 @@
 ## Start here
 
 - [README](README.md): the quick start, CLI commands, and framework capabilities.
+- [Documentation index](docs/README.md): the task map, authority order, and page standard.
 - [Learning path](docs/learn/README.md): the ordered introduction.
 - [Architecture and style](docs/architecture-and-style.md): the application and framework layout.
+- [Deployment](docs/deployment.md): the operational contract, state ownership, probes, shutdown, and failure modes.
+- [Stability](docs/stability.md): supported versions, the frozen public surface, and deprecation.
 - [Agent surface](docs/agent/README.md): `aponia manifest`, `aponia mcp`, the read-only tools, and the gated write/verify tools.
+- [Working with AI agents](docs/ai-agents.md): context order, change protocol, safety boundaries, and evidence.
 - [Libraries](docs/libraries.md): authoring, checking, and publishing a library.
 - [Published packages](docs/packages.md): the npm catalog.
 

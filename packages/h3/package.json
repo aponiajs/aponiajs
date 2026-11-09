@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/h3",
-  "version": "1.0.0-beta.25",
+  "version": "1.0.0-beta.26",
   "description": "H3 delivery adapter for an Aponia application.",
   "keywords": [
     "aponia",

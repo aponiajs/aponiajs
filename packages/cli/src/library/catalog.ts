@@ -18,7 +18,7 @@ export interface LibraryCatalogEntry {
 }
 
 const compatibility = Object.freeze({
-  aponia: "1.0.0-beta.25",
+  aponia: "1.0.0-beta.26",
   elysia: "2.0.0-rc.4",
   bun: ">=1.4.4",
 });

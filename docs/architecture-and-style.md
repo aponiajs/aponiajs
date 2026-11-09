@@ -19,6 +19,34 @@ portability and type safety:
 - immutable descriptors remain available as a low-level interoperability API;
 - platform packages depend on core contracts instead of changing them.
 
+## Invariants for reviewers and agents
+
+These rules are enforced by the code layout, the tests, or the framework
+contract. A change that weakens one is a redesign, not a refactor.
+
+| Invariant                           | What it means                                                                                            | Evidence                                         |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| Two authoring layers stay supported | Decorators write metadata; hand-written descriptors are an equal authoring path                          | Focused tests for both paths                     |
+| Dependencies point inward           | `common` ← `core` ← `platform-elysia`; no Elysia, HTTP, or Bun API in `common`                           | Package manifests, type checks, review           |
+| Descriptors are immutable           | Public definitions, metadata, and inspection results are frozen                                          | Tests assert `Object.isFrozen` where contractual |
+| Failures are structured             | Framework failures use `AponiaError` codes; HTTP failures use Problem Details                            | Tests assert codes and details, not messages     |
+| Routes compile once                 | Invokers and gateway plans are built during bootstrap; no per-request reflection                         | Route and gateway tests                          |
+| The platform stays replaceable      | Application code depends on Aponia contracts, not on Elysia internals beyond the documented escape hatch | Import boundaries and package tests              |
+| Documentation ships with behavior   | Every public change updates its page, package README, and `llms.txt`                                     | Documentation guards and review                  |
+
+## Where to change what
+
+| Change                                       | Owned by                                                           |
+| -------------------------------------------- | ------------------------------------------------------------------ |
+| A decorator or metadata key                  | `packages/common/src/` and the descriptor compiler                 |
+| Graph, visibility, scopes, or provider cache | `packages/core/src/graph` and `packages/core/src/container`        |
+| Route lowering, parameter binding, or hooks  | `packages/platform-elysia/src/routing`                             |
+| Native plugin typing or module registration  | `packages/platform-elysia/src/plugins`                             |
+| WebSocket gateway compilation or dispatch    | `packages/platform-elysia/src/websockets`                          |
+| Generator output, templates, or CLI parsing  | `packages/cli/src` and `packages/cli/templates`                    |
+| A publishable package surface                | The package's `src/index.ts`, README, `llms.txt`, and docs page    |
+| Release or documentation policy              | `RULES.md`, `docs/AGENTS.md`, and the matching guard specification |
+
 ## Application structure
 
 Nest uses different layouts for a new standard application, a generated

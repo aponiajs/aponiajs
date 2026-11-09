@@ -92,6 +92,10 @@ await application.listen(3000);
 
 ## Documentation
 
+- [Documentation index](./docs/README.md): the task map, reading order, and
+  contracts behind the published pages.
+- [Working with AI agents](./docs/ai-agents.md): context order, change protocol,
+  safety boundaries, and the evidence a change must carry.
 - [Learning path](./docs/learn/README.md): the ordered introduction to the
   framework.
 - [CLI reference](./docs/cli.md): every command, schematic, and generated file.
@@ -99,7 +103,8 @@ await application.listen(3000);
   [validation](./docs/learn/06-validation.md).
 - [Package catalog](./docs/packages.md): all published packages, their purpose,
   and their runtime dependencies.
-- [Deployment](./docs/deployment.md), [queues](./docs/queues.md),
+- [Deployment](./docs/deployment.md), [stability](./docs/stability.md),
+  [queues](./docs/queues.md),
   [database](./docs/database.md), and [metrics](./docs/metrics.md).
 - [Migrating from NestJS](./docs/migrating-from-nest.md).
 - [Security policy](./SECURITY.md) and the
