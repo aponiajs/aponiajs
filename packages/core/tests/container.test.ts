@@ -393,4 +393,54 @@ describe("@aponiajs/core container edges", () => {
     );
     expect(container.resolveModuleProvider(feature, ModuleRef).get(privateToken)).toBe("private");
   });
+
+  test("forwards membership, assignment, and prototype reads to a circular dependency", () => {
+    class ServiceA {
+      label = "service-a";
+
+      constructor(readonly b: ServiceB) {}
+
+      describe(): string {
+        return this.label;
+      }
+    }
+
+    class ServiceB {
+      constructor(readonly a: ServiceA) {}
+    }
+
+    const serviceAToken = createToken<ServiceA>("trap-service-a");
+    const serviceBToken = createToken<ServiceB>("trap-service-b");
+    const module = defineModule({
+      id: "circular-trap-providers",
+      providers: [
+        provideClass(serviceAToken, ServiceA, [forwardRef(() => serviceBToken)]),
+        provideClass(serviceBToken, ServiceB, [forwardRef(() => serviceAToken)]),
+      ],
+    });
+
+    const container = createContainer(module);
+    const proxy = container.get(serviceAToken).b.a;
+
+    expect("describe" in proxy).toBe(true);
+    proxy.label = "changed";
+    expect(proxy.label).toBe("changed");
+    expect(proxy.describe()).toBe("changed");
+    expect(Object.getPrototypeOf(proxy)).toBe(ServiceA.prototype);
+  });
+
+  test("lets ModuleRef resolve a provider through the module that received it", () => {
+    const local = createToken<string>("module-ref-resolve-local");
+    const observed = createToken<string>("module-ref-resolve-observed");
+    const feature = defineModule({
+      id: "module-ref-resolve-feature",
+      providers: [
+        provideValue(local, "resolved-value"),
+        provideFactory(observed, [ModuleRef] as const, (ref) => ref.resolve(local)),
+      ],
+    });
+    const root = defineModule({ id: "module-ref-resolve-root", imports: [feature] });
+
+    expect(createContainer(root).resolveModuleProvider(feature, observed)).toBe("resolved-value");
+  });
 });

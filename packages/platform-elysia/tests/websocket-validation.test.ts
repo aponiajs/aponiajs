@@ -6,6 +6,7 @@ import {
   SubscribeMessage,
   Validation,
   WebSocketGateway,
+  type RouteValidatorInput,
   type WsResponse,
 } from "@aponiajs/common";
 import { t } from "elysia";
@@ -292,5 +293,120 @@ describe("WebSocket gateway per-message schema validation", () => {
         message: "Invalid WebSocket message data.",
       },
     });
+  });
+
+  test("awaits async and function validators and falls back without one", async () => {
+    const asyncSchema = {
+      "~standard": {
+        version: 1,
+        vendor: "test",
+        validate: async (value: unknown) =>
+          value === "ok" ? { value: "async-ok" } : { issues: [{ message: "bad" }] },
+      },
+    };
+    const functionValidator = (value: unknown) => {
+      if (value === "throw") {
+        throw new Error("validator failure");
+      }
+      if (value === "false") {
+        return false;
+      }
+      if (value === "true") {
+        return true;
+      }
+      return `parsed:${String(value)}`;
+    };
+    const asyncFunctionValidator = (value: unknown) => {
+      if (value === "reject") {
+        return Promise.reject(new Error("async validator failure"));
+      }
+      return Promise.resolve(value === "no" ? false : "async-value");
+    };
+    (functionValidator as unknown as { schema: unknown }).schema = functionValidator;
+    (asyncFunctionValidator as unknown as { schema: unknown }).schema = asyncFunctionValidator;
+
+    class BranchingValidationGateway {
+      handle(data: unknown): WsResponse<unknown> {
+        return { event: "branch.reply", data };
+      }
+    }
+
+    const branchingProvider = defineWebSocketGateway(BranchingValidationGateway, {
+      path: "/branching-ws",
+      handlers: [
+        {
+          event: "async-schema",
+          propertyKey: "handle",
+          schema: { data: asyncSchema as unknown as RouteValidatorInput },
+          parameters: [{ index: 0, kind: "message-body", property: undefined }],
+        },
+        {
+          event: "function",
+          propertyKey: "handle",
+          schema: { data: functionValidator as unknown as RouteValidatorInput },
+          parameters: [{ index: 0, kind: "message-body", property: undefined }],
+        },
+        {
+          event: "async-function",
+          propertyKey: "handle",
+          schema: { data: asyncFunctionValidator as unknown as RouteValidatorInput },
+          parameters: [{ index: 0, kind: "message-body", property: undefined }],
+        },
+        {
+          event: "fallback",
+          propertyKey: "handle",
+          schema: { data: 42 as unknown as RouteValidatorInput },
+          parameters: [{ index: 0, kind: "message-body", property: undefined }],
+        },
+      ],
+    });
+
+    @Module({ providers: [branchingProvider] })
+    class BranchingModule {}
+
+    const app = await AponiaFactory.create(BranchingModule, { logger: false });
+    const sent: unknown[] = [];
+    const client: MockClient = {
+      id: "client-6",
+      sent,
+      send(message: unknown) {
+        sent.push(message);
+      },
+    } as unknown as MockClient;
+    const wsRoute = (app as any)
+      .getNativeApplication()
+      .routes.find((r: any) => r.path === "/branching-ws" && r.method === "WS");
+    const send = (event: string, data: unknown): Promise<unknown> =>
+      wsRoute.hooks.message(client, { event, data });
+
+    await send("async-schema", "ok");
+    expect(sent.at(-1)).toEqual({ event: "branch.reply", data: "async-ok" });
+    await send("async-schema", "bad");
+    expect(sent.at(-1)).toMatchObject({ event: "exception" });
+
+    for (const [value, expected] of [
+      ["true", "true"],
+      ["false", "exception"],
+      ["plain", "parsed:plain"],
+      ["throw", "exception"],
+    ] as const) {
+      await send("function", value);
+      const frame = sent.at(-1) as { readonly event: string; readonly data?: unknown };
+      if (expected === "exception") {
+        expect(frame.event).toBe("exception");
+      } else {
+        expect(frame).toEqual({ event: "branch.reply", data: expected });
+      }
+    }
+
+    await send("async-function", "yes");
+    expect(sent.at(-1)).toEqual({ event: "branch.reply", data: "async-value" });
+    await send("async-function", "no");
+    expect(sent.at(-1)).toMatchObject({ event: "exception" });
+    await send("async-function", "reject");
+    expect(sent.at(-1)).toMatchObject({ event: "exception" });
+
+    await send("fallback", { untouched: true });
+    expect(sent.at(-1)).toEqual({ event: "branch.reply", data: { untouched: true } });
   });
 });

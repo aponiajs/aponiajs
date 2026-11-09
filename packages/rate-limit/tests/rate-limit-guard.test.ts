@@ -182,6 +182,38 @@ describe("RateLimitGuard", () => {
       expect.objectContaining({ code: "INVALID_RATE_LIMIT" }),
     );
   });
+
+  test("uses a module-level key function when the route declares none", async () => {
+    @Controller("module-keyed")
+    @UseGuards(RateLimitGuard)
+    class ModuleKeyedController {
+      @Get()
+      read(): string {
+        return "ok";
+      }
+    }
+
+    @Module({
+      imports: [
+        RateLimitModule.register({
+          limit: 1,
+          windowMs: 60_000,
+          key: (context) => context.switchToHttp().getRequest().headers["x-bucket"] ?? "none",
+        }),
+      ],
+      controllers: [ModuleKeyedController],
+    })
+    class AppModule {}
+
+    const app = await AponiaFactory.create(AppModule, { logger: false });
+    application = app;
+    const request = async (bucket: string): Promise<Response> =>
+      app.handle(new Request("http://localhost/module-keyed", { headers: { "x-bucket": bucket } }));
+
+    expect((await request("first")).status).toBe(200);
+    expect((await request("first")).status).toBe(429);
+    expect((await request("second")).status).toBe(200);
+  });
 });
 
 function captureAponiaError(run: () => unknown): AponiaError {

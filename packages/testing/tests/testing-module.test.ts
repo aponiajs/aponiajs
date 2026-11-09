@@ -242,4 +242,36 @@ describe("Test.createTestingModule", () => {
       details: { token: "missing.token" },
     });
   });
+
+  test("resolves an unexported provider through resolve() as well", async () => {
+    const internalToken = createToken<string>("resolve.internal");
+
+    @Module({
+      providers: [provideValue(internalToken, "internal-value")],
+    })
+    class InternalModule {}
+
+    const moduleRef = await Test.createTestingModule({
+      imports: [InternalModule],
+    }).compile();
+
+    expect(await moduleRef.resolve(internalToken)).toBe("internal-value");
+  });
+
+  test("overrides a provider with an alias through useExisting", async () => {
+    const primary = createToken<string>("alias.primary");
+    const secondary = createToken<string>("alias.secondary");
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        provideValue(primary, "primary-value"),
+        provideValue(secondary, "secondary-value"),
+      ],
+    })
+      .overrideProvider(primary)
+      .useExisting(secondary)
+      .compile();
+
+    expect(moduleRef.get(primary)).toBe("secondary-value");
+    expect(moduleRef.get(secondary)).toBe("secondary-value");
+  });
 });

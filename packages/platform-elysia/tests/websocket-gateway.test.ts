@@ -856,6 +856,16 @@ test("rejects declared gateways with the same codes and at the same point as dec
     { handlers: [{ event: "   ", propertyKey: "echo" }] },
     { handlers: [{ event: "declared" }] },
     { handlers: [{ event: "declared", propertyKey: "echo", parameters: "not-an-array" }] },
+    { handlers: [{ event: "declared", propertyKey: "echo", schema: [] }] },
+    { maxPayloadLength: 0 },
+    { maxPayloadLength: 1.5 },
+    { idleTimeoutMs: -1 },
+    { idleTimeoutMs: "soon" },
+    { sendPings: "yes" },
+    { guards: "not-an-array" },
+    { guards: [1] },
+    { origins: 5 },
+    { origins: [""] },
   ]) {
     expectAponiaCode(
       () => compileWebSocketGateways([declared("InvalidDeclaredModule", gateway)]),

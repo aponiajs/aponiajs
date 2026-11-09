@@ -215,9 +215,9 @@ export class AponiaContainer {
         const instance = resolveInstance();
         return Reflect.has(instance as object, prop);
       },
-      set(_target, prop, value, receiver) {
+      set(_target, prop, value) {
         const instance = resolveInstance();
-        return Reflect.set(instance as object, prop, value, receiver);
+        return Reflect.set(instance as object, prop, value);
       },
       apply(_target, thisArg, argArray) {
         const instance = resolveInstance();

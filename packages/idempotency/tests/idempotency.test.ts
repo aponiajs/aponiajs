@@ -308,6 +308,69 @@ describe("IdempotencyModule", () => {
       "INVALID_IDEMPOTENCY_OPTIONS",
     );
   });
+
+  test("deletes, clears, and prunes expired store entries", () => {
+    let now = 0;
+    const store = new MemoryIdempotencyStore({ now: () => now });
+    store.set("one", { status: 200, value: 1, fingerprint: "a" }, 10);
+
+    expect(store.delete("one")).toBe(true);
+    expect(store.delete("one")).toBe(false);
+
+    store.set("two", { status: 200, value: 2, fingerprint: "b" }, 10);
+    store.clear();
+    expect(store.get("two")).toBeUndefined();
+
+    store.set("expired", { status: 200, value: 3, fingerprint: "c" }, 5);
+    now = 100;
+    store.set("fresh", { status: 200, value: 4, fingerprint: "d" }, 5);
+    expect(store.get("expired")).toBeUndefined();
+    expect(store.get("fresh")?.value).toBe(4);
+  });
+
+  test("fingerprints binary and absent bodies and skips a request without a key", async () => {
+    @Controller("fingerprints")
+    class FingerprintsController {
+      @Post()
+      create(@Body() body: unknown): string {
+        return typeof body === "string" ? body : "binary";
+      }
+
+      @Get()
+      read(): string {
+        return "read";
+      }
+    }
+
+    @Module({
+      imports: [IdempotencyModule.register({ methods: ["POST", "GET"] })],
+      controllers: [FingerprintsController],
+    })
+    class AppModule {}
+
+    application = await AponiaFactory.create(AppModule, { logger: false });
+
+    expect((await application.handle(send("/fingerprints", { id: 1 }))).status).toBe(200);
+
+    const binary = await application.handle(
+      new Request("http://localhost/fingerprints", {
+        method: "POST",
+        headers: {
+          "content-type": "application/octet-stream",
+          "idempotency-key": "binary",
+        },
+        body: new Uint8Array([1, 2, 3]),
+      }),
+    );
+    expect(await binary.text()).toBe("binary");
+
+    const read = await application.handle(
+      new Request("http://localhost/fingerprints", {
+        headers: { "idempotency-key": "read" },
+      }),
+    );
+    expect(await read.text()).toBe("read");
+  });
 });
 
 function capture(run: () => unknown): AponiaError {

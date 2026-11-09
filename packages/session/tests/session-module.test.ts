@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, test } from "bun:test";
+import { AsyncLocalStorage } from "node:async_hooks";
 import { AponiaError, Controller, Get, Module } from "@aponiajs/common";
 import { AponiaFactory, type AponiaApplication } from "@aponiajs/platform-elysia";
 import { SessionModule, SessionService } from "../src/index.ts";
+import type { ResolvedSessionOptions } from "../src/module/session.types.ts";
+import { MemorySessionStore } from "../src/store/memory-session-store.ts";
 
 let application: AponiaApplication | undefined;
 
@@ -137,6 +140,14 @@ describe("SessionModule", () => {
 
     expect(await response.text()).toBe("anonymous");
     expect(response.headers.get("set-cookie")).toContain("aponia.sid=;");
+
+    const badSignature = await application.handle(
+      new Request("http://localhost/tampered", {
+        headers: { cookie: "aponia.sid=abc.deadbeef" },
+      }),
+    );
+    expect(await badSignature.text()).toBe("anonymous");
+    expect(badSignature.headers.get("set-cookie")).toContain("aponia.sid=;");
   });
 
   test("extends a rolling session when it is read", async () => {
@@ -196,6 +207,77 @@ describe("SessionModule", () => {
       ],
     });
     expect(Object.isFrozen(error.details)).toBe(true);
+  });
+
+  test("reports operations that have no session in the current request", async () => {
+    @Controller("empty-session")
+    class EmptySessionController {
+      constructor(private readonly sessions: SessionService) {}
+
+      @Get("update")
+      async update(): Promise<string> {
+        return String((await this.sessions.update({ user: "grace" }))?.data.user ?? "none");
+      }
+
+      @Get("destroy")
+      async destroy(): Promise<string> {
+        return String(await this.sessions.destroy());
+      }
+
+      @Get("get")
+      async get(): Promise<string> {
+        const session = await this.sessions.get("missing");
+        return session === undefined ? "missing" : session.id;
+      }
+
+      @Get("clear")
+      async clear(): Promise<string> {
+        await this.sessions.clear();
+        return "cleared";
+      }
+    }
+
+    @Module({
+      imports: [SessionModule.register({ secret: secret() })],
+      controllers: [EmptySessionController],
+    })
+    class AppModule {}
+
+    application = await AponiaFactory.create(AppModule, { logger: false });
+
+    for (const [path, expected] of [
+      ["update", "none"],
+      ["destroy", "false"],
+      ["get", "missing"],
+      ["clear", "cleared"],
+    ] as const) {
+      const response = await application.handle(
+        new Request(`http://localhost/empty-session/${path}`),
+      );
+      expect(await response.text()).toBe(expected);
+    }
+  });
+
+  test("refuses a service call outside a session request", async () => {
+    const options: ResolvedSessionOptions = {
+      secret: secret(),
+      cookieName: "aponia.sid",
+      ttlMs: 60_000,
+      maxSessions: 100,
+      cookie: { secure: true, sameSite: "lax", path: "/", domain: undefined },
+      rolling: false,
+    };
+    const service = new SessionService(new AsyncLocalStorage(), new MemorySessionStore(), options);
+
+    for (const operation of [
+      () => service.start(),
+      () => service.update({}),
+      () => service.destroy(),
+      () => service.regenerate(),
+    ]) {
+      const outcome = await operation().catch((error: unknown) => error);
+      expect(outcome).toMatchObject({ code: "MISSING_REQUEST_CONTEXT" });
+    }
   });
 });
 

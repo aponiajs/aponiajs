@@ -99,4 +99,28 @@ describe("TenantModule", () => {
       expect.objectContaining({ code: "INVALID_TENANCY_OPTIONS" }),
     );
   });
+
+  test("refuses require() when no tenant is selected for the request", async () => {
+    @Controller("unguarded")
+    class UnguardedController {
+      constructor(private readonly tenant: TenantService) {}
+
+      @Get()
+      read(): string {
+        return this.tenant.require();
+      }
+    }
+
+    @Module({
+      imports: [TenantModule.register({ required: false })],
+      controllers: [UnguardedController],
+    })
+    class AppModule {}
+
+    application = await AponiaFactory.create(AppModule, { logger: false });
+    const response = await application.handle(new Request("http://localhost/unguarded"));
+
+    expect(response.status).toBe(500);
+    expect(response.headers.get("content-type")).toContain("application/problem+json");
+  });
 });
