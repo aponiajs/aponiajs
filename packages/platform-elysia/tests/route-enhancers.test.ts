@@ -143,7 +143,7 @@ describe("compiled route enhancers", () => {
     // synchronous, which is what leaves the route compiling the way it compiled
     // before the mapping existed. Elysia 2 keeps a route's hooks as bare
     // handlers, so the array entry is the mapping itself.
-    expect(Object.keys(open?.hooks ?? {})).toEqual(["error"]);
+    expect(Object.keys(open?.hooks ?? {}).filter((key) => !key.startsWith("~"))).toEqual(["error"]);
     expect(errorHooks).toHaveLength(1);
     expect(typeof errorHooks?.[0]).toBe("function");
     expect(errorHooks?.[0]?.constructor.name).not.toBe("AsyncFunction");

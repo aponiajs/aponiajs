@@ -47,7 +47,7 @@ type never reaches the handler.
 
 Treat it as input rather than as a fact about the bytes. A client chooses its own
 filename, so a content check belongs on the content — `t.File({ type })` inspects it —
-or in the handler, never on `file.type`. Measured on Bun 1.4.2 with Elysia 2.0.0-beta.24,
+or in the handler, never on `file.type`. Measured on Bun 1.4.2 with Elysia 2.0.0-rc.4,
 identically through raw Elysia and through this framework.
 
 ### The shape that refuses

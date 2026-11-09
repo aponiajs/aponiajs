@@ -1,4 +1,4 @@
-import { mkdir } from "node:fs/promises";
+import { mkdir, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { aponiaVersion } from "../version.ts";
 import type { ComponentNames } from "./component-names.types.ts";
@@ -40,13 +40,18 @@ export async function generateLibrary(
   names: ComponentNames,
   options: GenerateSchematicOptions,
 ): Promise<GenerateSchematicResult> {
-  const directory = join(projectRoot, "packages", names.fileName);
+  const standalone = options.standalone === true;
+  const directory = standalone
+    ? join(projectRoot, names.fileName)
+    : join(projectRoot, "libs", names.fileName);
   const publish = options.publish === true;
+  const scope = options.scope?.trim().replace(/^@/, "");
+  const packageName = scope ? `@${scope}/${names.fileName}` : names.fileName;
   const manifest = {
     contractVersion: 1,
-    name: names.fileName,
+    name: packageName,
     kind: "module",
-    framework: { aponia: aponiaVersion, bun: ">=1.4.2" },
+    framework: { aponia: aponiaVersion, bun: ">=1.4.4" },
     entrypoints: [
       {
         subpath: ".",
@@ -67,9 +72,12 @@ export async function generateLibrary(
       "package.json",
       `${JSON.stringify(
         {
-          name: names.fileName,
-          version: "0.0.0",
+          name: packageName,
+          version: publish ? "0.1.0" : "0.0.0",
           description: `${names.className} library for AponiaJS.`,
+          license: "MIT",
+          keywords: ["aponia", "aponiajs", "aponia-library"],
+          packageManager: "bun@1.4.4",
           type: "module",
           sideEffects: false,
           ...(publish
@@ -93,14 +101,14 @@ export async function generateLibrary(
             check: "bunx --bun vp check",
             prepublishOnly: "bun run build",
           },
-          dependencies: {
-            "@aponiajs/common": aponiaVersion,
-          },
+          ...(publish ? {} : { dependencies: { "@aponiajs/common": aponiaVersion } }),
+          ...(publish ? { peerDependencies: { "@aponiajs/common": `^${aponiaVersion}` } } : {}),
           devDependencies: {
+            "@aponiajs/common": aponiaVersion,
             "@aponiajs/platform-elysia": aponiaVersion,
-            elysia: "2.0.0-beta.24",
+            elysia: "2.0.0-rc.4",
             typescript: "^7.0.2",
-            "vite-plus": "^0.2.9",
+            "vite-plus": "^1.5.0",
           },
         },
         undefined,
@@ -110,7 +118,7 @@ export async function generateLibrary(
     createFile(directory, "tsconfig.json", libraryTsconfig()),
     createFile(directory, "tsconfig.build.json", libraryBuildTsconfig()),
     createFile(directory, "vite.config.ts", libraryViteConfig()),
-    createFile(directory, "README.md", libraryReadme(names, publish)),
+    createFile(directory, "README.md", libraryReadme(names, publish, packageName)),
     createFile(directory, "AGENTS.md", libraryAgents(names)),
     createFile(directory, "llms.txt", libraryLlms(names)),
     createFile(directory, "aponia.library.json", `${JSON.stringify(manifest, undefined, 2)}\n`),
@@ -127,12 +135,12 @@ export async function generateLibrary(
     createFile(
       join(directory, "tests"),
       `${names.fileName}.test.ts`,
-      `import { describe, expect, test } from "bun:test";\nimport { ${names.className}Service } from "../src/index.ts";\n\ndescribe("${names.className}Service", () => {\n  test("greets", () => {\n    expect(new ${names.className}Service().greet()).toBe("Hello from ${names.className}");\n  });\n});\n`,
+      `import { describe, expect, test } from "bun:test";\nimport { defineModule } from "@aponiajs/common";\nimport { AponiaFactory } from "@aponiajs/platform-elysia";\nimport { ${names.className}Module, ${names.className}Service } from "../src/index.ts";\n\ndescribe("${names.className}Service", () => {\n  test("resolves through the Aponia container", async () => {\n    const AppModule = defineModule({ id: "${names.className}TestModule", imports: [${names.className}Module] });\n    const application = await AponiaFactory.create(AppModule, { logger: false });\n    try {\n      expect(application.get(${names.className}Service).greet()).toBe("Hello from ${names.className}");\n    } finally {\n      await application.close();\n    }\n  });\n});\n`,
     ),
     createFile(
       join(directory, "tests-vp"),
       `${names.fileName}.conformance.ts`,
-      `import { ${names.className}Service } from "../src/index.ts";\n\ntype VitePlusTest = typeof import("vite-plus/test");\n\ndeclare const test: VitePlusTest["test"];\ndeclare const expect: VitePlusTest["expect"];\n\ntest("exports the service", () => {\n  expect(new ${names.className}Service().greet()).toBe("Hello from ${names.className}");\n});\n`,
+      `import { defineModule } from "@aponiajs/common";\nimport { AponiaFactory } from "@aponiajs/platform-elysia";\nimport { ${names.className}Module, ${names.className}Service } from "../src/index.ts";\n\ntype VitePlusTest = typeof import("vite-plus/test");\n\ndeclare const test: VitePlusTest["test"];\ndeclare const expect: VitePlusTest["expect"];\n\ntest("resolves the service through an application", async () => {\n  const AppModule = defineModule({ id: "${names.className}ConformanceModule", imports: [${names.className}Module] });\n  const application = await AponiaFactory.create(AppModule, { logger: false });\n  try {\n    expect(application.get(${names.className}Service).greet()).toBe("Hello from ${names.className}");\n  } finally {\n    await application.close();\n  }\n});\n`,
     ),
     createFile(
       join(directory, "src"),
@@ -141,7 +149,82 @@ export async function generateLibrary(
     ),
   ];
 
-  return writePendingFiles(projectRoot, files, options.dryRun);
+  const result = await writePendingFiles(projectRoot, files, options.dryRun);
+  if (!options.dryRun && !standalone) {
+    await wireWorkspaceLibrary(projectRoot, packageName, options);
+  }
+  if (!options.dryRun && standalone && options.skipInstall !== true) {
+    const install = Bun.spawn(["bun", "install"], {
+      cwd: directory,
+      stdin: "inherit",
+      stdout: "inherit",
+      stderr: "inherit",
+    });
+    if ((await install.exited) !== 0) {
+      throw new Error("bun install failed after generating the standalone library.");
+    }
+  }
+  return result;
+}
+
+async function wireWorkspaceLibrary(
+  projectRoot: string,
+  packageName: string,
+  options: GenerateSchematicOptions,
+): Promise<void> {
+  const rootManifestPath = join(projectRoot, "package.json");
+  const rootFile = Bun.file(rootManifestPath);
+  const rootManifest = (await rootFile.exists())
+    ? ((await rootFile.json()) as {
+        readonly workspaces?: readonly string[];
+        readonly [key: string]: unknown;
+      })
+    : {
+        name: "workspace",
+        private: true,
+        type: "module",
+      };
+  const workspaces = [...new Set([...(rootManifest.workspaces ?? []), "libs/*"])].filter(
+    (entry) => entry !== "packages/*",
+  );
+  await Bun.write(
+    rootManifestPath,
+    `${JSON.stringify({ ...rootManifest, workspaces }, undefined, 2)}\n`,
+  );
+
+  const appsDirectory = join(projectRoot, "apps");
+  const apps = await readdir(appsDirectory, { withFileTypes: true }).catch(() => []);
+  const projectName = options.project ?? apps.find((entry) => entry.isDirectory())?.name;
+  const targetPath =
+    projectName === undefined ? rootManifestPath : join(appsDirectory, projectName, "package.json");
+  const targetFile = Bun.file(targetPath);
+  if (!(await targetFile.exists())) {
+    throw new Error(`Cannot find the application manifest for "${projectName ?? "the root app"}".`);
+  }
+  const target = (await targetFile.json()) as {
+    readonly dependencies?: Readonly<Record<string, string>>;
+    readonly [key: string]: unknown;
+  };
+  await Bun.write(
+    targetPath,
+    `${JSON.stringify(
+      { ...target, dependencies: { ...target.dependencies, [packageName]: "workspace:*" } },
+      undefined,
+      2,
+    )}\n`,
+  );
+
+  if (options.skipInstall !== true) {
+    const install = Bun.spawn(["bun", "install"], {
+      cwd: projectRoot,
+      stdin: "inherit",
+      stdout: "inherit",
+      stderr: "inherit",
+    });
+    if ((await install.exited) !== 0) {
+      throw new Error("bun install failed after generating the workspace library.");
+    }
+  }
 }
 
 function libraryTsconfig(): string {
@@ -201,11 +284,11 @@ function libraryBuildTsconfig(): string {
 }
 
 function libraryViteConfig(): string {
-  return `import { defineConfig } from "vite-plus";\n\nexport default defineConfig({\n  test: {\n    globals: true,\n    include: ["tests-vp/**/*.conformance.ts"],\n  },\n  pack: {\n    tsconfig: "tsconfig.build.json",\n    dts: {\n      tsgo: true,\n      tsconfig: "tsconfig.build.json",\n    },\n    exports: true,\n    deps: {\n      neverBundle: ["@aponiajs/common", "@aponiajs/platform-elysia", "elysia"],\n    },\n  },\n  lint: {\n    options: {\n      typeAware: true,\n      typeCheck: true,\n    },\n  },\n  fmt: {},\n});\n`;
+  return `import { defineConfig } from "vite-plus";\n\nexport default defineConfig({\n  test: {\n    globals: true,\n    include: ["tests-vp/**/*.conformance.ts"],\n  },\n  pack: {\n    tsconfig: "tsconfig.build.json",\n    dts: true,\n    exports: true,\n    deps: {\n      neverBundle: ["@aponiajs/common", "@aponiajs/platform-elysia", "elysia"],\n    },\n  },\n  lint: {\n    options: {\n      typeAware: true,\n      typeCheck: true,\n    },\n  },\n  fmt: {},\n});\n`;
 }
 
-function libraryReadme(names: ComponentNames, publish: boolean): string {
-  return `# ${names.fileName}\n\n${publish ? "A publishable" : "A private workspace"} AponiaJS library generated by \`aponia g library\`.\n\n\`\`\`ts\nimport { ${names.className}Module } from "${names.fileName}";\n\`\`\`\n\n## Scripts\n\n- \`bun run build\` builds the package with Vite+.\n- \`bun test\` runs the Bun tests.\n- \`bun run test:vite-plus\` runs the conformance lane.\n- \`bun run check\` formats, lints, and type-checks.\n\n## Library contract\n\n\`aponia.library.json\` states the package name, kind, entrypoint, provided tokens, framework compatibility, and security posture. Keep it in step with \`src/index.ts\`.\n\n## Documentation\n\n- [AponiaJS](https://github.com/aponiajs/aponiajs)\n`;
+function libraryReadme(names: ComponentNames, publish: boolean, packageName: string): string {
+  return `# ${packageName}\n\n${publish ? "A publishable" : "A private workspace"} AponiaJS library generated by \`aponia g library\`.\n\n\`\`\`ts\nimport { ${names.className}Module } from "${packageName}";\n\`\`\`\n\n## Scripts\n\n- \`bun run build\` builds the package with Vite+.\n- \`bun test\` runs the Bun tests.\n- \`bun run test:vite-plus\` runs the conformance lane.\n- \`bun run check\` formats, lints, and type-checks.\n\n## Library contract\n\n\`aponia.library.json\` states the package name, kind, entrypoint, provided tokens, framework compatibility, and security posture. Keep it in step with \`src/index.ts\`.\n\n## Documentation\n\n- [AponiaJS](https://github.com/aponiajs/aponiajs)\n`;
 }
 
 function libraryAgents(names: ComponentNames): string {

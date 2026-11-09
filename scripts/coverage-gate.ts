@@ -1,6 +1,8 @@
 import { resolve } from "node:path";
 
-const defaultCoverageThreshold = 0.95;
+const defaultCoverageThreshold = 0.98;
+const defaultFunctionThreshold = 0.95;
+const defaultPackageThreshold = 0.95;
 
 export interface CoverageSummary {
   readonly functions: {
@@ -20,6 +22,7 @@ export function assertCoverageReport(
   report: string,
   expectedSources: readonly string[],
   threshold = defaultCoverageThreshold,
+  functionThreshold = defaultFunctionThreshold,
 ): CoverageSummary {
   const summary = summarizeCoverage(report);
   const missingSources = expectedSources.filter((source) => !summary.sources.has(source));
@@ -29,22 +32,58 @@ export function assertCoverageReport(
     );
   }
 
-  const measurements: readonly { readonly label: string; readonly ratio: number }[] = [
-    { label: "line", ratio: summary.lines.ratio },
-    { label: "function", ratio: summary.functions.ratio },
+  const measurements: readonly {
+    readonly label: string;
+    readonly ratio: number;
+    readonly limit: number;
+  }[] = [
+    { label: "line", ratio: summary.lines.ratio, limit: threshold },
+    { label: "function", ratio: summary.functions.ratio, limit: functionThreshold },
   ];
-  const failures = measurements.filter(({ ratio }) => ratio < threshold);
+  const failures = measurements.filter(({ ratio, limit }) => ratio < limit);
   if (failures.length > 0) {
     const details = failures
       .map(
-        ({ label, ratio }) =>
-          `${label}: ${formatPercentage(ratio)} < ${formatPercentage(threshold)}`,
+        ({ label, ratio, limit }) =>
+          `${label}: ${formatPercentage(ratio)} < ${formatPercentage(limit)}`,
       )
       .join(", ");
     throw new Error(`Coverage threshold failed: ${details}.`);
   }
 
+  for (const [packageName, ratio] of packageLineRatios(report)) {
+    if (ratio < defaultPackageThreshold) {
+      throw new Error(
+        `Package coverage threshold failed: ${packageName} line: ${formatPercentage(ratio)} < ${formatPercentage(defaultPackageThreshold)}.`,
+      );
+    }
+  }
+
   return summary;
+}
+
+function packageLineRatios(report: string): ReadonlyMap<string, number> {
+  const totals = new Map<string, { covered: number; found: number }>();
+  for (const record of report.split("end_of_record")) {
+    const source = /^SF:(.+)$/m.exec(record)?.[1];
+    const found = /^LF:(\d+)$/m.exec(record)?.[1];
+    const covered = /^LH:(\d+)$/m.exec(record)?.[1];
+    if (source === undefined || found === undefined || covered === undefined) {
+      continue;
+    }
+    if (source.startsWith("packages/")) {
+      const packageName = source.split("/").slice(0, 2).join("/");
+      const total = totals.get(packageName) ?? { covered: 0, found: 0 };
+      total.covered += Number(covered);
+      total.found += Number(found);
+      totals.set(packageName, total);
+    }
+  }
+  return new Map(
+    [...totals]
+      .filter(([, total]) => total.found > 0)
+      .map(([name, total]) => [name, total.covered / total.found]),
+  );
 }
 
 export function summarizeCoverage(report: string): CoverageSummary {

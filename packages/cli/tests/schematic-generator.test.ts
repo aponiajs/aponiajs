@@ -249,6 +249,7 @@ test("generates application and library workspaces with synchronized dependencie
     skipImport: false,
     crud: true,
     type: "rest",
+    skipInstall: true,
     cwd: projectRoot,
   });
   await generateSchematic({
@@ -259,6 +260,7 @@ test("generates application and library workspaces with synchronized dependencie
     skipImport: false,
     crud: true,
     type: "rest",
+    skipInstall: true,
     cwd: projectRoot,
   });
 
@@ -268,7 +270,7 @@ test("generates application and library workspaces with synchronized dependencie
     readonly dependencies: Readonly<Record<string, string>>;
   };
   const libraryManifest = (await Bun.file(
-    join(projectRoot, "packages/shared-utils/package.json"),
+    join(projectRoot, "libs/shared-utils/package.json"),
   ).json()) as {
     readonly dependencies: Readonly<Record<string, string>>;
   };
@@ -290,10 +292,11 @@ test("generates a publishable library with exports, tests, and a library manifes
     crud: false,
     type: "rest",
     publish: true,
+    skipInstall: true,
     cwd: projectRoot,
   });
 
-  const directory = join(projectRoot, "packages/widgets");
+  const directory = join(projectRoot, "libs/widgets");
   const manifest = (await Bun.file(join(directory, "package.json")).json()) as {
     readonly private?: boolean;
     readonly exports: Readonly<Record<string, unknown>>;

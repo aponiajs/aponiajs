@@ -7,6 +7,8 @@ Usage:
   aponia g <schematic> <name> [options]
   aponia build [options]
   aponia library check [path] [options]
+  aponia library new <name> [options]
+  aponia library publish [path] [options]
   aponia library search [query] [options]
   aponia manifest
   aponia mcp [options]
@@ -15,6 +17,7 @@ Usage:
 Options:
   -d, --dry-run       Report files without writing them
   -s, --skip-install  Generate without running bun install
+      --workspace     Generate apps/* and libs/* workspace
       --flat          Generate without a schematic directory
       --no-flat       Generate inside a schematic directory
       --spec          Generate spec files
@@ -23,6 +26,10 @@ Options:
       --module <name> Select the declaring module
       --path <path>   Override the configured source root
       --publish       Generate a publishable library package
+      --scope <name>  Npm scope for a publishable library
+      --yes           Publish without stopping for confirmation
+      --tag <tag>     Npm dist-tag for library publish
+      --remote        Include npm community results in library search
       --json          Print a library check result as JSON
       --cwd <path>    Project root for the MCP server
       --allow-write   Enable MCP plan/apply generation

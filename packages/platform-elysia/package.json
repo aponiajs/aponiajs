@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/platform-elysia",
-  "version": "1.0.0-beta.24",
+  "version": "1.0.0-beta.25",
   "description": "Elysia application platform for Aponia HTTP controllers and WebSocket gateways.",
   "keywords": [
     "aponia",
@@ -50,14 +50,14 @@
     "@aponiajs/core": "workspace:*"
   },
   "devDependencies": {
-    "@elysia/eden": "2.0.0-beta.6",
+    "@elysia/eden": "2.0.0-rc.1",
     "arktype": "^2.2.3",
-    "elysia": "2.0.0-beta.24",
-    "typebox": "^1.3.34",
+    "elysia": "2.0.0-rc.4",
+    "typebox": "^1.4.6",
     "zod": "^4.6.6"
   },
   "peerDependencies": {
-    "elysia": "2.0.0-beta.24",
-    "typebox": "^1.3.0"
+    "elysia": "2.0.0-rc.4",
+    "typebox": "^1.4.6"
   }
 }

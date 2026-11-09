@@ -64,7 +64,8 @@ Two mirrored lanes: Bun owns `packages/*/tests/*.test.ts`, Vite+ owns
 `packages/*/tests-vp/*.conformance.ts`, and new framework behavior normally
 needs a case in both. `bun test`, `bun run test:coverage`,
 `bun run test:vite-plus`, and `bun run check` run before submitting. The
-coverage lane enforces a 95% floor for both lines and functions.
+coverage lane enforces 98% line coverage, 95% function coverage, and a 95%
+per-package line floor.
 `packages/cli/e2e/` packs the CLI and boots a generated application, so it is
 slow and excluded from the default lanes.
 

@@ -144,7 +144,7 @@ test("compiles a declared handler that is not promise-capable synchronously", as
   const application = await AponiaFactory.create(declaredModule, {
     logger: false,
     configureNative: (nativeApplication) =>
-      nativeApplication.afterHandle(({ responseValue }) => {
+      nativeApplication.onAfterHandle(({ responseValue }) => {
         observedResponse = responseValue;
       }),
   });

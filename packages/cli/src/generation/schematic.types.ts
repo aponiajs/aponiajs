@@ -5,6 +5,8 @@ import type { ModuleRegistrationKind } from "./module-registration.types.ts";
 export interface GenerateSchematicOptions extends GenerateCommandOptions {
   /** The project root; defaults to the process working directory. */
   readonly cwd?: string;
+  /** Write a standalone library at the project root instead of `libs/`. */
+  readonly standalone?: boolean;
 }
 
 /** One reported file change: its kind and its project-relative path. */

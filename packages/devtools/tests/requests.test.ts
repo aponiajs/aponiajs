@@ -338,7 +338,7 @@ class BulkModule {}
  * A plugin that refuses two different ways, because the record's boundary
  * between them is a fact about the installed Elysia rather than a preference.
  */
-const gatePlugin = new Elysia({ name: "gate" }).request((context) => {
+const gatePlugin = new Elysia({ name: "gate" }).onRequest((context) => {
   const { pathname } = new URL(context.request.url);
 
   if (pathname === "/gated") {

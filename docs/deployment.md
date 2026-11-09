@@ -82,3 +82,8 @@ one request and holds no listening server; graceful shutdown then belongs to
 the platform, not the process. `@aponiajs/microservices` connects message
 transports after the graph is initialized for a worker that also consumes
 messages.
+
+Hono, H3, and Nitro are supported as delivery adapters through
+[`@aponiajs/hono`, `@aponiajs/h3`, and `@aponiajs/nitro`](./adapters.md). They
+mount the same `application.handle` inside the runtime rather than reimplementing
+the Aponia route table. Nitro support is experimental while its release is an RC.

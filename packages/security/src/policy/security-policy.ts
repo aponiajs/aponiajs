@@ -88,7 +88,7 @@ export function resolveSecurityPolicy(options: SecurityModuleOptions): ResolvedS
 
 /** Builds the native Elysia plugin one registration mounts. */
 export function buildSecurityPlugin(policy: ResolvedSecurityPolicy): ElysiaPlugin {
-  const plugin = new Elysia({ name: "aponia:security", seed: policy }).request((context) => {
+  const plugin = new Elysia({ name: "aponia:security", seed: policy }).onRequest((context) => {
     if (policy.headers !== false) {
       applyHeaders(context.set.headers, policy.headers, context.request);
     }
@@ -98,7 +98,7 @@ export function buildSecurityPlugin(policy: ResolvedSecurityPolicy): ElysiaPlugi
     return plugin;
   }
 
-  return plugin.beforeHandle("global", (context) => {
+  return plugin.onBeforeHandle("global", (context) => {
     const csrf = policy.csrf!;
     const url = new URL(context.request.url);
     if (isExcluded(url.pathname, csrf.exclude)) {

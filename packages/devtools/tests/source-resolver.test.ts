@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { resolveSourceCode } from "../src/source/source-resolver.ts";
 import { resolve } from "node:path";
+import { mkdtemp, mkdir, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 describe("source-resolver", () => {
   test("resolves class source code and line numbers", async () => {
@@ -37,5 +40,32 @@ describe("source-resolver", () => {
     });
 
     expect(result).toBeUndefined();
+  });
+
+  test("includes decorators and survives unreadable files", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "aponia-source-resolver-"));
+    try {
+      await mkdir(join(directory, "src"), { recursive: true });
+      const fixture = join(directory, "src", "decorated.ts");
+      await Bun.write(
+        fixture,
+        `@Controller("x")\nclass DecoratedService {\n  @Get()\n  read(): string {\n    return "x";\n  }\n\n  missing(): string {\n    return "x";\n  }\n}\n`,
+      );
+
+      const method = await resolveSourceCode("DecoratedService.read", {
+        sourceFiles: [join(directory, "missing.ts"), fixture],
+      });
+      expect(method?.code).toContain("@Get()");
+
+      const unknownMethod = await resolveSourceCode("DecoratedService.none", {
+        sourceFiles: [fixture],
+      });
+      expect(unknownMethod).toBeUndefined();
+
+      const discovered = await resolveSourceCode("DecoratedService", { cwd: directory });
+      expect(discovered?.filePath).toBe(fixture);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
   });
 });

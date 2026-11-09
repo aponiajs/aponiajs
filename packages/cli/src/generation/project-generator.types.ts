@@ -8,6 +8,8 @@ export interface GenerateProjectOptions {
   readonly dryRun?: boolean;
   /** Skip dependency installation after generation. */
   readonly skipInstall?: boolean;
+  /** Generate a workspace with `apps/api` and `libs/`. */
+  readonly workspace?: boolean;
 }
 
 /** What a project run reports: its directory, files, and install state. */

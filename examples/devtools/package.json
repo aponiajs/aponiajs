@@ -15,6 +15,6 @@
     "@aponiajs/core": "workspace:*",
     "@aponiajs/devtools": "workspace:*",
     "@aponiajs/platform-elysia": "workspace:*",
-    "elysia": "2.0.0-beta.24"
+    "elysia": "2.0.0-rc.4"
   }
 }

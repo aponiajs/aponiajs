@@ -166,7 +166,7 @@ function createInertModule(): DynamicModule {
  * this instance rather than anything the root application holds — this package
  * registers nothing on the root — so the arrival hook rides the request phase,
  * which Elysia merges from a used plugin unfiltered, and the completion hook is
- * declared `.afterResponse("global", ...)`, which is how the installed Elysia is
+ * declared `.onAfterResponse("global", ...)`, which is how the installed Elysia is
  * told to reach routes this plugin does not own: Elysia 1 spelled the same
  * decision `{ as: "global" }` on `onAfterResponse`. The two are
  * separate answers and neither is a tidiness a maintainer may drop: with the
@@ -215,7 +215,7 @@ function createDevtoolsPlugin(options: DevtoolsOptions): ElysiaPlugin {
       // `Elysia` a test built by hand, and it adds no key an application can see:
       // the store's own shape stays whatever the application declared.
       .state({})
-      .request((context) => {
+      .onRequest((context) => {
         // The surface's own traffic is the one thing this record leaves out, and
         // `isDevtoolsSurfaceRequest` states why. Skipping the arrival is the whole
         // of it: the completion half writes nothing without a stamp to spend, and
@@ -233,7 +233,7 @@ function createDevtoolsPlugin(options: DevtoolsOptions): ElysiaPlugin {
         recordFor(records, context.store, capture);
         capture.arrive(context.request, context.store);
       })
-      .afterResponse("global", async (context) => {
+      .onAfterResponse("global", async (context) => {
         // The closing reading is the first statement of this hook, before the five
         // reads below, because every one of them and everything `toRequestRecord`
         // does with them is this package's own work: a duration that included them
@@ -270,7 +270,7 @@ function createDevtoolsPlugin(options: DevtoolsOptions): ElysiaPlugin {
           body,
         ),
       )
-      .setup(() => {
+      .onStart(() => {
         // Said once, at the moment a listener exists and the address is real. It is
         // a report rather than a mount: the route above answers with or without
         // this line, which is what an application that only handles requests shows.

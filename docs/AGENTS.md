@@ -21,7 +21,9 @@ The published documentation set:
 | `queues.md`                 | In-process jobs, retries, dead letters, idempotency, and the transactional outbox                                                         |
 | `database.md`               | The Drizzle boundary, transaction variants, repositories, and ordered SQL migrations                                                      |
 | `deployment.md`             | The process shape, readiness and liveness, shutdown, configuration, and which state needs a shared store                                  |
+| `adapters.md`               | Hono, H3, and Nitro delivery adapters and their boundaries                                                                                |
 | `stability.md`              | The frozen public API snapshot, how a change is recorded, and the deprecation policy                                                      |
+| `feature-status.md`         | Per-package completeness and the known gaps outside the current release                                                                   |
 | `threat-model.md`           | Trust boundaries, the control behind each threat, residual risks, and the review checklist                                                |
 | `metrics.md`                | The Prometheus registry, recorded request metrics, scrape endpoint, and series bounds                                                     |
 | `migrating-from-nest.md`    | The package, authoring, validation, error, and CLI mapping from NestJS to AponiaJS                                                        |

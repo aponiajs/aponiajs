@@ -55,7 +55,7 @@ test("rejects a configureNative hook that returns another instance", () => {
 test("applies the error handler installed through configureNative", async () => {
   const application = await AponiaFactory.create(AppModule, {
     logger: false,
-    configureNative: (native) => native.error(({ error }) => ({ handled: errorCode(error) })),
+    configureNative: (native) => native.onError(({ error }) => ({ handled: errorCode(error) })),
   });
 
   const response = await application.handle(new Request("http://localhost/nowhere"));

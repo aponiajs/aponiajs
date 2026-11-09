@@ -695,7 +695,7 @@ describe("aggregate coverage gate entry point", () => {
     const { log } = collectLog();
 
     expect(runCoverageGateEntry({ log, workspaceRoot: directory })).rejects.toThrow(
-      "Coverage threshold failed: line: 90.00% < 95.00%.",
+      "Coverage threshold failed: line: 90.00% < 98.00%.",
     );
   });
 

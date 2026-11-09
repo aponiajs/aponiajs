@@ -31,6 +31,12 @@ export async function checkLibrary(options: LibraryCheckOptions = {}): Promise<L
   if (manifest !== undefined) {
     checkManifest(manifest, packageJson, issues);
   }
+  const barrel = Bun.file(join(directory, "src/index.ts"));
+  if (await barrel.exists()) {
+    if (manifest !== undefined) {
+      checkProvides(manifest, await barrel.text(), issues);
+    }
+  }
 
   for (const file of ["README.md", "AGENTS.md", "llms.txt", "src/index.ts"]) {
     if (!(await Bun.file(join(directory, file)).exists())) {
@@ -133,6 +139,58 @@ function checkPackageJson(
     (typeof peers === "object" && peers !== null && "@aponiajs/common" in peers);
   if (!hasCommon) {
     issues.push("package.json must depend on or peer-depend on @aponiajs/common");
+  }
+  if (publish) {
+    if (
+      packageJson.version !== undefined &&
+      (typeof packageJson.version !== "string" ||
+        !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(packageJson.version))
+    ) {
+      issues.push("a publishable library needs a semver version");
+    }
+    const keywords = packageJson.keywords;
+    for (const keyword of ["aponiajs", "aponia-library"]) {
+      if (!Array.isArray(keywords) || !keywords.includes(keyword)) {
+        issues.push(`a publishable library needs the keyword ${keyword}`);
+      }
+    }
+    if (typeof packageJson.license !== "string" || packageJson.license.trim() === "") {
+      issues.push("a publishable library needs a license");
+    }
+  }
+}
+
+function checkProvides(
+  manifest: Readonly<Record<string, unknown>>,
+  barrel: string,
+  issues: string[],
+): void {
+  const provides = manifest.provides;
+  if (!Array.isArray(provides)) {
+    return;
+  }
+  for (const entry of provides) {
+    if (typeof entry !== "object" || entry === null) {
+      continue;
+    }
+    const token = (entry as Record<string, unknown>).token;
+    if (typeof token !== "string" || !new RegExp(`\\b${token}\\b`).test(barrel)) {
+      issues.push(
+        `aponia.library.json provides ${String(token)} but src/index.ts does not export it`,
+      );
+    }
+  }
+  const requires = manifest.requires;
+  if (Array.isArray(requires)) {
+    for (const entry of requires) {
+      if (typeof entry !== "object" || entry === null) {
+        continue;
+      }
+      const token = (entry as Record<string, unknown>).token;
+      if (typeof token === "string" && !barrel.includes(token)) {
+        issues.push(`aponia.library.json requires ${token} but src/index.ts does not import it`);
+      }
+    }
   }
 }
 

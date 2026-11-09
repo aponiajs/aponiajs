@@ -31,7 +31,34 @@ test("parses Nest-style new aliases and safety options", () => {
     name: "sample-api",
     dryRun: true,
     skipInstall: true,
+    workspace: false,
   });
+});
+
+test("parses the workspace flag and generates apps plus libs", async () => {
+  expect(parseArguments(["new", "sample-api", "--workspace", "--dry-run"])).toMatchObject({
+    command: "new",
+    workspace: true,
+  });
+
+  const temporaryDirectory = await createTemporaryDirectory();
+  await generateProject({
+    name: "sample-api",
+    cwd: temporaryDirectory,
+    skipInstall: true,
+    workspace: true,
+  });
+  const projectDirectory = join(temporaryDirectory, "sample-api");
+  const rootManifest = (await Bun.file(join(projectDirectory, "package.json")).json()) as {
+    readonly workspaces: readonly string[];
+  };
+  const projectConfiguration = (await Bun.file(join(projectDirectory, "aponia.json")).json()) as {
+    readonly projects?: Readonly<Record<string, unknown>>;
+  };
+
+  expect(rootManifest.workspaces).toEqual(["apps/*", "libs/*"]);
+  expect(await Bun.file(join(projectDirectory, "apps/api/src/main.ts")).exists()).toBe(true);
+  expect(projectConfiguration.projects).toHaveProperty("api");
 });
 
 test("generates a module-controller-service application", async () => {

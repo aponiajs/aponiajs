@@ -46,7 +46,7 @@ export function resolveCompressionOptions(
 
 /** Builds the native Elysia plugin one registration mounts. */
 export function buildCompressionPlugin(options: ResolvedCompressionOptions): ElysiaPlugin {
-  return new Elysia({ name: "aponia:compression", seed: options }).afterHandle(
+  return new Elysia({ name: "aponia:compression", seed: options }).onAfterHandle(
     "global",
     async (context) => {
       if (context.request.method === "HEAD") {

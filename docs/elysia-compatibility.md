@@ -12,8 +12,8 @@ dependency, and it is an exact pin rather than a range:
 
 ```json
 "peerDependencies": {
-  "elysia": "2.0.0-beta.24",
-  "typebox": "^1.3.0"
+  "elysia": "2.0.0-rc.4",
+  "typebox": "^1.4.6"
 }
 ```
 
@@ -21,7 +21,7 @@ Every workspace manifest, every example, and the generator template declares
 that same pin.
 
 The Elysia pin is exact on purpose, because a caret over a prerelease does not
-mean what it looks like. `^2.0.0-beta.24` also matches `2.0.0-exp.64`: semver
+mean what it looks like. `^2.0.0-rc.4` also matches `2.0.0-exp.64`: semver
 compares prerelease identifiers as strings, `exp` sorts above `beta`, and an
 identifier is compared only when the version core matches, so the caret would
 accept an Elysia experiment release. The exact pin is what keeps an installed
@@ -40,10 +40,9 @@ listens. The failure is an `AponiaError` with the code
 the route that could not be registered.
 
 ```text
-AponiaError: The installed Elysia does not expose method(), so "GET /health" cannot be mounted.
+AponiaError: The installed Elysia does not expose route(), so "GET /health" cannot be mounted.
 AponiaJS supports Elysia 2.0.x, where routes are registered with
-method(method, path, hook, handler). Elysia 1.4 registers them with
-route(method, path, handler, hook) and is no longer supported.
+route(method, path, hook, handler).
 ```
 
 Nothing is registered on a partially mounted application: the error aborts
@@ -60,7 +59,7 @@ Declare one range across the whole workspace, including example and fixture
 packages:
 
 ```json
-"elysia": "2.0.0-beta.24"
+"elysia": "2.0.0-rc.4"
 ```
 
 ## Migrating from Elysia 1.4
@@ -72,7 +71,7 @@ what to know when you reach for Elysia directly — through `configureNative`, a
 
 | Area               | Elysia 1.4                                                            | Elysia 2                                       |
 | ------------------ | --------------------------------------------------------------------- | ---------------------------------------------- |
-| Route registration | `route(method, path, handler, hook)`                                  | `method(method, path, hook, handler)`          |
+| Route registration | `route(method, path, handler, hook)`                                  | `route(method, path, hook, handler)`           |
 | Type re-exports    | `TSchema` from the root                                               | `TSchema` from `typebox`                       |
 | Type re-exports    | `SingletonBase`, `ElysiaConfig`, `MergeElysiaInstances`, `EventScope` | from `elysia/types`                            |
 | WebSocket type     | `ElysiaWS<Context, Route>`                                            | `ElysiaWS<Route>` in `elysia/ws`               |

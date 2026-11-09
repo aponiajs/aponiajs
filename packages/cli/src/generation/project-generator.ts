@@ -25,9 +25,16 @@ export async function generateProject(
     new URL("./templates/application/", import.meta.resolve("@aponiajs/cli/package.json")),
   );
   const templateFiles = await listFiles(templateDirectory);
-  const relativeFiles = templateFiles
-    .map((file) => outputPath(relative(templateDirectory, file)))
-    .toSorted();
+  const workspace = options.workspace === true;
+  const appPrefix = workspace ? "apps/api" : "";
+  const relativeFiles = [
+    ...templateFiles.map((file) =>
+      workspace
+        ? join(appPrefix, outputPath(relative(templateDirectory, file)))
+        : outputPath(relative(templateDirectory, file)),
+    ),
+    ...(workspace ? Object.keys(workspaceRootFiles(options.name)) : []),
+  ].toSorted();
 
   if (options.dryRun) {
     return {
@@ -45,13 +52,23 @@ export async function generateProject(
   await mkdir(projectDirectory, { recursive: false });
   try {
     for (const templateFile of templateFiles) {
-      const relativeFile = outputPath(relative(templateDirectory, templateFile));
+      const relativeFile = workspace
+        ? join(appPrefix, outputPath(relative(templateDirectory, templateFile)))
+        : outputPath(relative(templateDirectory, templateFile));
       const outputFile = join(projectDirectory, relativeFile);
       const template = await Bun.file(templateFile).text();
-      const output = renderTemplate(template, options.name);
+      const output = renderTemplate(template, workspace ? "api" : options.name);
 
       await mkdir(dirname(outputFile), { recursive: true });
       await Bun.write(outputFile, output);
+    }
+
+    if (workspace) {
+      for (const [relativeFile, content] of Object.entries(workspaceRootFiles(options.name))) {
+        const outputFile = join(projectDirectory, relativeFile);
+        await mkdir(dirname(outputFile), { recursive: true });
+        await Bun.write(outputFile, content);
+      }
     }
 
     if (!options.skipInstall) {
@@ -77,6 +94,43 @@ export async function generateProject(
     files: relativeFiles,
     installed,
     dryRun: false,
+  };
+}
+
+function workspaceRootFiles(projectName: string): Readonly<Record<string, string>> {
+  return {
+    "package.json": `${JSON.stringify(
+      {
+        name: projectName,
+        version: "0.0.1",
+        private: true,
+        type: "module",
+        workspaces: ["apps/*", "libs/*"],
+        scripts: {
+          dev: "bun run --filter api dev",
+          build: "bun run --workspaces build",
+          test: "bun test",
+          check: "vp check",
+        },
+        devDependencies: { "vite-plus": "^1.5.0" },
+      },
+      undefined,
+      2,
+    )}\n`,
+    "aponia.json": `${JSON.stringify(
+      {
+        projects: {
+          api: { root: "apps/api", sourceRoot: "src" },
+        },
+        generateOptions: { spec: true },
+      },
+      undefined,
+      2,
+    )}\n`,
+    "README.md": `# ${projectName}\n\nAn AponiaJS workspace. Applications live under \`apps/\` and shared libraries under \`libs/\`.\n`,
+    "AGENTS.md": `# ${projectName}\n\nRead the [AponiaJS repository guide](https://github.com/aponiajs/aponiajs/blob/release/alpha/AGENTS.md). Product code lives in \`apps/\`; reusable modules live in \`libs/\`.\n`,
+    ".gitignore": "node_modules\ndist\n.env\n*.log\n",
+    "libs/.gitkeep": "",
   };
 }
 

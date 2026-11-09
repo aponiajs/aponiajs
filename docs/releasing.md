@@ -36,6 +36,9 @@ order:
 27. `@aponiajs/idempotency`
 28. `@aponiajs/microservices`
 29. `@aponiajs/serverless`
+30. `@aponiajs/h3`
+31. `@aponiajs/hono`
+32. `@aponiajs/nitro`
 
 The `aponiajs` facade remains private until it exports the public framework API.
 

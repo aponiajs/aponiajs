@@ -46,7 +46,7 @@ export class RequestContextModule {
     const generate = options.generate ?? randomUUID;
     const echo = options.echo !== false;
 
-    const plugin = new Elysia({ name: "aponia:request-context", seed: headerName }).request(
+    const plugin = new Elysia({ name: "aponia:request-context", seed: headerName }).onRequest(
       ({ request, set }) => {
         const incomingId = request.headers.get(headerName);
         const requestId = resolveRequestId(incomingId, generate);

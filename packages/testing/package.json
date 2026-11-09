@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/testing",
-  "version": "1.0.0-beta.24",
+  "version": "1.0.0-beta.25",
   "description": "Boot an Aponia application for a test, with provider overrides and a teardown a case can rely on.",
   "keywords": [
     "aponia",
@@ -49,9 +49,9 @@
     "@aponiajs/platform-elysia": "workspace:*"
   },
   "devDependencies": {
-    "elysia": "2.0.0-beta.24"
+    "elysia": "2.0.0-rc.4"
   },
   "peerDependencies": {
-    "elysia": "2.0.0-beta.24"
+    "elysia": "2.0.0-rc.4"
   }
 }

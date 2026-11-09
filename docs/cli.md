@@ -119,10 +119,18 @@ writes nothing. Negate one with `--no-flat`, `--no-spec`, or `--no-crud`. A flag
 does not consume the argument after it, so `aponia new --dry-run my-api` reads
 `my-api` as the project name.
 
-`aponia g library <name>` creates a private workspace package by default. Add
-`--publish` to generate a publishable package with `exports`, `files`,
-`publishConfig`, both test lanes, `llms.txt`, `AGENTS.md`, and
-`aponia.library.json`.
+`aponia new <name> --workspace` creates a workspace with `apps/api` and `libs/`;
+the default single-app layout is unchanged. `aponia g library <name>` writes to
+`libs/<name>`, adds the package to the target app as `workspace:*`, and installs
+the link. Add `--publish` and `--scope @name` for a publishable package with
+`exports`, `files`, `publishConfig`, both test lanes, `llms.txt`, `AGENTS.md`,
+and `aponia.library.json`.
+
+`aponia library new <name> --scope @name` creates the publishable package
+standalone. `aponia library check` validates it, `aponia library publish` runs
+the check, build, and pack verification before an explicit publish, and
+`aponia library search --remote` includes npm packages tagged
+`aponia-library`.
 
 Resources additionally support `--crud` / `--no-crud` and these transports:
 `rest`, `graphql-code-first`, `graphql-schema-first`, `microservice`, and `ws`.
@@ -347,8 +355,8 @@ lanes, `llms.txt`, `AGENTS.md`, and `aponia.library.json`.
 
 ```bash
 aponia g library widgets --publish
-aponia library check packages/widgets --publish
-aponia library check packages/widgets --json
+aponia library check libs/widgets --publish
+aponia library check libs/widgets --json
 aponia library search security
 ```
 

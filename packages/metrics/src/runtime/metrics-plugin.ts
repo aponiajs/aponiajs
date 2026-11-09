@@ -70,13 +70,13 @@ export function metricsPlugin(options: MetricsPluginOptions = {}): Elysia {
   };
 
   return new Elysia({ name: "aponia.metrics" })
-    .beforeHandle("global", (context) => {
+    .onBeforeHandle("global", (context) => {
       starts.set(context.request, performance.now());
     })
-    .afterHandle("global", (context) => {
+    .onAfterHandle("global", (context) => {
       record(context, successStatus(context.responseValue, context.set?.status));
     })
-    .error((context) => {
+    .onError((context) => {
       record(context, errorStatus(context.error, context.set?.status));
     })
     .get(
@@ -86,7 +86,7 @@ export function metricsPlugin(options: MetricsPluginOptions = {}): Elysia {
           status: 200,
           headers: { "content-type": metricsContentType, "cache-control": "no-store" },
         }),
-    );
+    ) as unknown as Elysia;
 }
 
 function routeOf(context: MetricContext): string {

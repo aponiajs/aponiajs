@@ -49,7 +49,7 @@ function buildSessionPlugin(
   options: ResolvedSessionOptions,
 ): ElysiaPlugin {
   return new Elysia({ name: "aponia:session", seed: options })
-    .beforeHandle("global", async (context) => {
+    .onBeforeHandle("global", async (context) => {
       const state: SessionRequestState = {
         session: undefined,
         started: false,
@@ -87,7 +87,7 @@ function buildSessionPlugin(
         state.touched = true;
       }
     })
-    .afterHandle("global", (context) => {
+    .onAfterHandle("global", (context) => {
       const state = storage.getStore();
       if (state === undefined) {
         return;

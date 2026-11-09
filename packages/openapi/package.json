@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/openapi",
-  "version": "1.0.0-beta.24",
+  "version": "1.0.0-beta.25",
   "description": "Serve an OpenAPI document for an Aponia application's routes, with the document's own metadata from a validated configuration.",
   "keywords": [
     "api",
@@ -48,14 +48,14 @@
   "dependencies": {
     "@aponiajs/common": "workspace:*",
     "@aponiajs/platform-elysia": "workspace:*",
-    "@elysia/openapi": "2.0.0-beta.4"
+    "@elysia/openapi": "2.0.0-rc.1"
   },
   "devDependencies": {
     "@aponiajs/cli": "workspace:*",
-    "elysia": "2.0.0-beta.24",
+    "elysia": "2.0.0-rc.4",
     "zod": "^4.6.6"
   },
   "peerDependencies": {
-    "elysia": "2.0.0-beta.24"
+    "elysia": "2.0.0-rc.4"
   }
 }

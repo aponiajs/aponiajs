@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/mcp",
-  "version": "1.0.0-beta.24",
+  "version": "1.0.0-beta.25",
   "description": "Model Context Protocol server and tool registry for AponiaJS, with handshake version negotiation and server/discover.",
   "keywords": [
     "agents",
@@ -51,10 +51,10 @@
   "devDependencies": {
     "@aponiajs/cli": "workspace:*",
     "@aponiajs/platform-elysia": "workspace:*",
-    "elysia": "2.0.0-beta.24"
+    "elysia": "2.0.0-rc.4"
   },
   "peerDependencies": {
-    "elysia": "2.0.0-beta.24"
+    "elysia": "2.0.0-rc.4"
   },
   "peerDependenciesMeta": {
     "elysia": {

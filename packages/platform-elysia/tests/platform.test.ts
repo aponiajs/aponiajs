@@ -182,12 +182,12 @@ class RightPluginFeatureModule {}
       }),
     ),
     PluginModule.register((nativeApplication: Elysia) =>
-      nativeApplication.request(() => {
+      nativeApplication.onRequest(() => {
         modulePluginEvents.push("first");
       }),
     ),
     PluginModule.register((nativeApplication: Elysia) =>
-      nativeApplication.request(() => {
+      nativeApplication.onRequest(() => {
         modulePluginEvents.push("second");
       }),
     ),
@@ -252,12 +252,12 @@ test("composes existing Elysia plugins before Aponia controllers", async () => {
   const promisedInstance = Promise.resolve(new Elysia().get("/native-promise", () => "promise"));
   const functionalPlugin = (application: Elysia) =>
     application
-      .request(() => {
+      .onRequest(() => {
         events.push("first");
       })
       .get("/native-function", () => "function");
   const secondPlugin = (application: Elysia) =>
-    application.request(() => {
+    application.onRequest(() => {
       events.push("second");
     });
   const lazyPlugin = Promise.resolve({

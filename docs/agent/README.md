@@ -10,7 +10,7 @@ aponia manifest
 aponia mcp --cwd /path/to/app
 aponia mcp --cwd /path/to/app --allow-write --allow-exec
 aponia agent init --clients codex,claude,cursor
-aponia library check packages/widgets --json
+aponia library check libs/widgets --json
 ```
 
 `aponia manifest` prints the guarded framework contract. `aponia mcp` serves

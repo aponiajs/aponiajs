@@ -41,5 +41,7 @@ test("accepts the same options when they carry an explicit value", () => {
     crud: true,
     type: "rest",
     publish: false,
+    scope: undefined,
+    skipInstall: false,
   });
 });

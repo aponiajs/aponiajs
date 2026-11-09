@@ -107,40 +107,42 @@ export function mountMiddleware(
     }),
   );
 
-  application.request(async (elysiaContext: { request: Request; set: unknown; path?: string }) => {
-    const url = new URL(elysiaContext.request.url);
-    const pathname = elysiaContext.path ?? url.pathname;
-    const method = elysiaContext.request.method;
+  application.onRequest(
+    async (elysiaContext: { request: Request; set: unknown; path?: string }) => {
+      const url = new URL(elysiaContext.request.url);
+      const pathname = elysiaContext.path ?? url.pathname;
+      const method = elysiaContext.request.method;
 
-    const matchingMiddleware: AponiaMiddleware[] = [];
-    for (const entry of pipeline) {
-      if (isRouteExcluded(entry.excluded, pathname, method)) {
-        continue;
+      const matchingMiddleware: AponiaMiddleware[] = [];
+      for (const entry of pipeline) {
+        if (isRouteExcluded(entry.excluded, pathname, method)) {
+          continue;
+        }
+        const matches = entry.targets.some((target) => matchRouteTarget(target, pathname, method));
+        if (matches) {
+          matchingMiddleware.push(...entry.middleware);
+        }
       }
-      const matches = entry.targets.some((target) => matchRouteTarget(target, pathname, method));
-      if (matches) {
-        matchingMiddleware.push(...entry.middleware);
-      }
-    }
 
-    if (matchingMiddleware.length === 0) {
+      if (matchingMiddleware.length === 0) {
+        return undefined;
+      }
+
+      const routeContext = elysiaContext as unknown as RouteContext;
+      let index = 0;
+      const next = async (): Promise<unknown> => {
+        if (index < matchingMiddleware.length) {
+          const current = matchingMiddleware[index++];
+          return await current.use(routeContext, next);
+        }
+        return undefined;
+      };
+
+      const result = await next();
+      if (result instanceof Response) {
+        return result;
+      }
       return undefined;
-    }
-
-    const routeContext = elysiaContext as unknown as RouteContext;
-    let index = 0;
-    const next = async (): Promise<unknown> => {
-      if (index < matchingMiddleware.length) {
-        const current = matchingMiddleware[index++];
-        return await current.use(routeContext, next);
-      }
-      return undefined;
-    };
-
-    const result = await next();
-    if (result instanceof Response) {
-      return result;
-    }
-    return undefined;
-  });
+    },
+  );
 }

@@ -194,6 +194,9 @@ const packageLayouts: readonly PackageLayout[] = [
     files: ["index.ts"],
     directories: ["fetch", "lambda"],
   },
+  { sourceRoot: "packages/h3/src", files: ["index.ts"], directories: [] },
+  { sourceRoot: "packages/hono/src", files: ["index.ts"], directories: [] },
+  { sourceRoot: "packages/nitro/src", files: ["index.ts"], directories: [] },
   {
     sourceRoot: "packages/queue/src",
     files: ["index.ts"],

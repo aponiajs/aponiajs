@@ -1855,6 +1855,32 @@
       ]
     },
     {
+      "name": "@aponiajs/h3",
+      "exports": [
+        {
+          "name": "toH3Handler",
+          "kind": "value"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/hono",
+      "exports": [
+        {
+          "name": "createHonoApp",
+          "kind": "value"
+        },
+        {
+          "name": "HonoHandler",
+          "kind": "type"
+        },
+        {
+          "name": "toHonoHandler",
+          "kind": "value"
+        }
+      ]
+    },
+    {
       "name": "@aponiajs/http",
       "exports": [
         {
@@ -2183,6 +2209,19 @@
         },
         {
           "name": "MicroserviceCallError",
+          "kind": "value"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/nitro",
+      "exports": [
+        {
+          "name": "defineAponiaHandler",
+          "kind": "value"
+        },
+        {
+          "name": "toNitroHandler",
           "kind": "value"
         }
       ]

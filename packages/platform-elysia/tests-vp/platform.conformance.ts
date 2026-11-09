@@ -261,7 +261,7 @@ test("the Vite+ lane awaits ambiguous Promise results before after-handle hooks"
   const application = await AponiaFactory.create(AmbiguousPromiseModule, {
     logger: false,
     configureNative: (nativeApplication) =>
-      nativeApplication.afterHandle(({ responseValue }) => {
+      nativeApplication.onAfterHandle(({ responseValue }) => {
         observedResponse = responseValue;
       }),
   });
@@ -280,7 +280,7 @@ test("the Vite+ lane awaits a Promise returned without a call expression before 
   const application = await AponiaFactory.create(ConformanceDeferredModule, {
     logger: false,
     configureNative: (nativeApplication) =>
-      nativeApplication.afterHandle(({ responseValue }) => {
+      nativeApplication.onAfterHandle(({ responseValue }) => {
         observedResponse = responseValue;
       }),
   });

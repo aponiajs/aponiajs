@@ -40,7 +40,7 @@ describe("update-elysia-version", () => {
   test("resolveCurrentElysiaVersion reads elysia from platform-elysia manifest", async () => {
     const root = resolve(import.meta.dir, "..");
     const version = await resolveCurrentElysiaVersion(root);
-    expect(version).toBe("2.0.0-beta.24");
+    expect(version).toBe("2.0.0-rc.4");
   });
 
   test("resolveCurrentElysiaVersion throws when platform manifest is missing", async () => {
@@ -62,7 +62,7 @@ describe("update-elysia-version", () => {
   test("resolveCurrentEdenVersion reads @elysia/eden version or returns undefined", async () => {
     const root = resolve(import.meta.dir, "..");
     const edenVersion = await resolveCurrentEdenVersion(root);
-    expect(edenVersion).toBe("2.0.0-beta.6");
+    expect(edenVersion).toBe("2.0.0-rc.1");
 
     const dir = await createTempWorkspace();
     expect(await resolveCurrentEdenVersion(dir)).toBeUndefined();

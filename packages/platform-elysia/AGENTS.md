@@ -535,22 +535,22 @@ runtime boundary it describes.
 
 ## Elysia version compatibility
 
-The peer dependency is an exact pin, `elysia: "2.0.0-beta.24"`, beside
+The peer dependency is an exact pin, `elysia: "2.0.0-rc.4"`, beside
 `typebox: "^1.3.0"`. Every workspace manifest must declare the same pin. A pin
 that disagrees makes Bun install two copies, and a controller typed against one
 is not assignable to the other. The Elysia pin is exact rather than a caret
-because `^2.0.0-beta.24` also accepts `2.0.0-exp.64`: semver compares
+because `^2.0.0-rc.4` also accepts `2.0.0-exp.64`: semver compares
 prerelease identifiers as strings, and `exp` sorts above `beta`, so a caret
 would install an experiment release. `typebox` is a peer because Elysia 2
 declares it as one and no longer re-exports `TSchema` from its root.
 
 Elysia 2 is the supported release. Its changes were verified by running
-`2.0.0-beta.24`, not by reading the release notes, because the published docs
+`2.0.0-rc.4`, not by reading the release notes, because the published docs
 were still 1.x:
 
 | Call site                                                                                | Elysia 2                                                                                       |
 | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `routing/native-route.ts`                                                                | `route(...)` removed; `method(method, path, hook, handler)` swaps the last two arguments       |
+| `routing/native-route.ts`                                                                | `route(method, path, hook, handler)`; the hook is the third argument                           |
 | `routing/route-compiler.ts` (`TSchema`)                                                  | no longer root-exported; import from `typebox`                                                 |
 | `routing/route-compiler.ts` (`AnySchema`)                                                | now `TypeBoxSchema \| StandardSchemaV1Like`                                                    |
 | `routing/route-context.types.ts` (`SingletonBase`, `MergeElysiaInstances`, `EventScope`) | no longer root-exported; import from `elysia/types`                                            |

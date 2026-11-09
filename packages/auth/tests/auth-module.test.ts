@@ -13,6 +13,7 @@ import {
   Roles,
   RolesGuard,
 } from "../src/index.ts";
+import { mapVerifiedClaims } from "../src/authentication/claims.ts";
 
 let application: AponiaApplication | undefined;
 
@@ -22,6 +23,18 @@ afterEach(async () => {
 });
 
 describe("AuthModule", () => {
+  test("lowers id fallback claims and rejects an empty password", async () => {
+    expect(mapVerifiedClaims({ id: 7, roles: ["admin"], permissions: ["x"] })).toMatchObject({
+      id: 7,
+      roles: ["admin"],
+      permissions: ["x"],
+    });
+    expect(mapVerifiedClaims({ roles: ["admin", 1] }).roles).toEqual(["admin", 1] as never);
+    expect(new PasswordService().verify("", "hash")).rejects.toMatchObject({
+      code: "INVALID_AUTH_OPTIONS",
+    });
+  });
+
   test("serves public routes and protects the rest", async () => {
     @Controller("auth")
     @UseGuards(AuthGuard, RolesGuard, PermissionsGuard)

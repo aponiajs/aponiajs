@@ -7,12 +7,12 @@
       "devDependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "@types/bun": "^1.4.2",
+        "@types/bun": "^1.4.4",
         "bumpp": "^12.3.0",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
         "jsonc-parser": "^3.3.1",
         "marked": "^18.1.3",
-        "typebox": "^1.3.34",
+        "typebox": "^1.4.6",
         "typescript": "^7.0.2",
         "vite": "npm:@voidzero-dev/vite-plus-core@1.5.0",
         "vite-plus": "^1.5.0",
@@ -25,7 +25,7 @@
         "@aponiajs/common": "workspace:*",
         "@aponiajs/core": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "examples/configuration": {
@@ -35,7 +35,7 @@
         "@aponiajs/common": "workspace:*",
         "@aponiajs/core": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
         "zod": "^4.6.6",
       },
     },
@@ -46,7 +46,7 @@
         "@aponiajs/common": "workspace:*",
         "@aponiajs/core": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "examples/descriptors": {
@@ -56,7 +56,7 @@
         "@aponiajs/common": "workspace:*",
         "@aponiajs/core": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "examples/devtools": {
@@ -67,7 +67,7 @@
         "@aponiajs/core": "workspace:*",
         "@aponiajs/devtools": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "examples/eden-treaty": {
@@ -77,8 +77,8 @@
         "@aponiajs/common": "workspace:*",
         "@aponiajs/core": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "@elysia/eden": "2.0.0-beta.6",
-        "elysia": "2.0.0-beta.24",
+        "@elysia/eden": "2.0.0-rc.1",
+        "elysia": "2.0.0-rc.4",
         "zod": "^4.6.6",
       },
     },
@@ -88,7 +88,7 @@
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "examples/lifecycle": {
@@ -97,7 +97,7 @@
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "examples/multiple-routers": {
@@ -107,7 +107,7 @@
         "@aponiajs/common": "workspace:*",
         "@aponiajs/core": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "examples/native-plugins": {
@@ -117,7 +117,7 @@
         "@aponiajs/common": "workspace:*",
         "@aponiajs/core": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "examples/reference": {
@@ -132,7 +132,7 @@
         "@aponiajs/platform-elysia": "workspace:*",
         "@aponiajs/queue": "workspace:*",
         "drizzle-orm": "^0.45.4",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
         "zod": "^4.6.6",
       },
     },
@@ -143,7 +143,7 @@
         "@aponiajs/common": "workspace:*",
         "@aponiajs/core": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
         "zod": "^4.6.6",
       },
     },
@@ -154,7 +154,7 @@
         "@aponiajs/common": "workspace:*",
         "@aponiajs/core": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
         "zod": "^4.6.6",
       },
     },
@@ -165,28 +165,28 @@
         "@aponiajs/common": "workspace:*",
         "@aponiajs/core": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "packages/aponiajs": {
       "name": "aponiajs",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
     },
     "packages/audit": {
       "name": "@aponiajs/audit",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
       },
       "devDependencies": {
         "@aponiajs/core": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "packages/auth": {
       "name": "@aponiajs/auth",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -194,27 +194,27 @@
       },
       "devDependencies": {
         "@aponiajs/core": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
       "peerDependencies": {
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "packages/cache": {
       "name": "@aponiajs/cache",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
       },
       "devDependencies": {
         "@aponiajs/core": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "packages/cli": {
       "name": "@aponiajs/cli",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "bin": {
         "aponia": "./bin/aponia.ts",
       },
@@ -231,11 +231,11 @@
     },
     "packages/common": {
       "name": "@aponiajs/common",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "dependencies": {
         "@standard-schema/spec": "^1.1.0",
         "reflect-metadata": "^0.2.2",
-        "typebox": "^1.3.34",
+        "typebox": "^1.4.6",
       },
       "devDependencies": {
         "zod": "^4.6.6",
@@ -243,46 +243,46 @@
     },
     "packages/compression": {
       "name": "@aponiajs/compression",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
       },
       "devDependencies": {
         "@aponiajs/core": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
       "peerDependencies": {
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "packages/core": {
       "name": "@aponiajs/core",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
       },
     },
     "packages/cors": {
       "name": "@aponiajs/cors",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "@elysia/cors": "2.0.0-beta.1",
+        "@elysia/cors": "2.0.0-rc.1",
       },
       "devDependencies": {
         "@aponiajs/cli": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
         "zod": "^4.6.6",
       },
       "peerDependencies": {
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "packages/create-aponia": {
       "name": "create-aponia",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "bin": {
         "create-aponia": "./dist/create-aponia.mjs",
       },
@@ -292,23 +292,23 @@
     },
     "packages/cron": {
       "name": "@aponiajs/cron",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "@elysia/cron": "2.0.0-beta.1",
+        "@elysia/cron": "2.0.0-rc.0",
       },
       "devDependencies": {
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
         "zod": "^4.6.6",
       },
       "peerDependencies": {
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "packages/database": {
       "name": "@aponiajs/database",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "drizzle-orm": "^0.45.4",
@@ -316,12 +316,12 @@
       "devDependencies": {
         "@aponiajs/core": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "packages/devtools": {
       "name": "@aponiajs/devtools",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "dependencies": {
         "@aponiajs/cli": "workspace:*",
         "@aponiajs/common": "workspace:*",
@@ -330,15 +330,15 @@
         "zod": "^4.6.6",
       },
       "devDependencies": {
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
       "peerDependencies": {
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "packages/events": {
       "name": "@aponiajs/events",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "reflect-metadata": "^0.2.2",
@@ -346,31 +346,63 @@
       "devDependencies": {
         "@aponiajs/core": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "packages/graphql": {
       "name": "@aponiajs/graphql",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "@elysia/graphql-yoga": "2.0.0-beta.1",
+        "@elysia/graphql-yoga": "2.0.0-rc.0",
       },
       "devDependencies": {
         "@aponiajs/cli": "workspace:*",
         "@graphql-tools/schema": "^10.1.3",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
         "graphql": "^17.0.2",
         "zod": "^4.6.6",
       },
       "peerDependencies": {
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
+      },
+    },
+    "packages/h3": {
+      "name": "@aponiajs/h3",
+      "version": "1.0.0-beta.25",
+      "dependencies": {
+        "@aponiajs/serverless": "workspace:*",
+      },
+      "devDependencies": {
+        "@aponiajs/common": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
+        "elysia": "2.0.0-rc.4",
+        "h3": "^2.0.8",
+      },
+      "peerDependencies": {
+        "h3": "^2.0.8",
+      },
+    },
+    "packages/hono": {
+      "name": "@aponiajs/hono",
+      "version": "1.0.0-beta.25",
+      "dependencies": {
+        "@aponiajs/serverless": "workspace:*",
+      },
+      "devDependencies": {
+        "@aponiajs/common": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
+        "elysia": "2.0.0-rc.4",
+        "hono": "^4.13.17",
+      },
+      "peerDependencies": {
+        "hono": "^4.13.17",
       },
     },
     "packages/http": {
       "name": "@aponiajs/http",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@standard-schema/spec": "^1.1.0",
@@ -379,38 +411,38 @@
       "devDependencies": {
         "@aponiajs/core": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
         "zod": "^4.6.6",
       },
     },
     "packages/idempotency": {
       "name": "@aponiajs/idempotency",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
       },
       "devDependencies": {
         "@aponiajs/core": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
       "peerDependencies": {
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "packages/mcp": {
       "name": "@aponiajs/mcp",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
       },
       "devDependencies": {
         "@aponiajs/cli": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
       "peerDependencies": {
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
       "optionalPeers": [
         "elysia",
@@ -418,177 +450,193 @@
     },
     "packages/metrics": {
       "name": "@aponiajs/metrics",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
       },
       "devDependencies": {
         "@aponiajs/core": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
       "peerDependencies": {
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "packages/microservices": {
       "name": "@aponiajs/microservices",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
       },
       "devDependencies": {
         "@aponiajs/platform-elysia": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
+      },
+    },
+    "packages/nitro": {
+      "name": "@aponiajs/nitro",
+      "version": "1.0.0-beta.25",
+      "dependencies": {
+        "@aponiajs/serverless": "workspace:*",
+      },
+      "devDependencies": {
+        "@aponiajs/common": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
+        "elysia": "2.0.0-rc.4",
+        "nitro": "3.0.261103-rc",
+      },
+      "peerDependencies": {
+        "nitro": "3.0.261103-rc",
       },
     },
     "packages/openapi": {
       "name": "@aponiajs/openapi",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "@elysia/openapi": "2.0.0-beta.4",
+        "@elysia/openapi": "2.0.0-rc.1",
       },
       "devDependencies": {
         "@aponiajs/cli": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
         "zod": "^4.6.6",
       },
       "peerDependencies": {
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "packages/opentelemetry": {
       "name": "@aponiajs/opentelemetry",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "@elysia/opentelemetry": "2.0.0-beta.1",
+        "@elysia/opentelemetry": "2.0.0-rc.0",
       },
       "devDependencies": {
         "@aponiajs/cli": "workspace:*",
         "@opentelemetry/sdk-trace-base": "^2.0.0",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
         "zod": "^4.6.6",
       },
       "peerDependencies": {
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "packages/platform-elysia": {
       "name": "@aponiajs/platform-elysia",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/core": "workspace:*",
       },
       "devDependencies": {
-        "@elysia/eden": "2.0.0-beta.6",
+        "@elysia/eden": "2.0.0-rc.1",
         "arktype": "^2.2.3",
-        "elysia": "2.0.0-beta.24",
-        "typebox": "^1.3.34",
+        "elysia": "2.0.0-rc.4",
+        "typebox": "^1.4.6",
         "zod": "^4.6.6",
       },
       "peerDependencies": {
-        "elysia": "2.0.0-beta.24",
-        "typebox": "^1.3.0",
+        "elysia": "2.0.0-rc.4",
+        "typebox": "^1.4.6",
       },
     },
     "packages/queue": {
       "name": "@aponiajs/queue",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
       },
       "devDependencies": {
         "@aponiajs/core": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "packages/rate-limit": {
       "name": "@aponiajs/rate-limit",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
       },
       "devDependencies": {
         "@aponiajs/core": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
       "peerDependencies": {
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "packages/security": {
       "name": "@aponiajs/security",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
       },
       "devDependencies": {
         "@aponiajs/core": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
       "peerDependencies": {
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "packages/serverless": {
       "name": "@aponiajs/serverless",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "devDependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "packages/session": {
       "name": "@aponiajs/session",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
       },
       "devDependencies": {
         "@aponiajs/core": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
       "peerDependencies": {
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "packages/tenancy": {
       "name": "@aponiajs/tenancy",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
       },
       "devDependencies": {
         "@aponiajs/core": "workspace:*",
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
       "peerDependencies": {
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "packages/testing": {
       "name": "@aponiajs/testing",
-      "version": "1.0.0-beta.24",
+      "version": "1.0.0-beta.25",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
       },
       "devDependencies": {
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
       "peerDependencies": {
-        "elysia": "2.0.0-beta.24",
+        "elysia": "2.0.0-rc.4",
       },
     },
   },
@@ -596,7 +644,7 @@
     "@graphql-tools/utils": "^12.0.3",
     "@opentelemetry/propagator-jaeger": "2.9.0",
     "@opentelemetry/sdk-node": "0.217.0",
-    "exact-mirror": "^1.2.6",
+    "exact-mirror": "^1.2.7",
     "protobufjs": "8.8.0",
     "source-map-js": "^1.2.2",
     "tinypool": "^2.1.2",
@@ -658,6 +706,10 @@
 
     "@aponiajs/graphql": ["@aponiajs/graphql@workspace:packages/graphql"],
 
+    "@aponiajs/h3": ["@aponiajs/h3@workspace:packages/h3"],
+
+    "@aponiajs/hono": ["@aponiajs/hono@workspace:packages/hono"],
+
     "@aponiajs/http": ["@aponiajs/http@workspace:packages/http"],
 
     "@aponiajs/idempotency": ["@aponiajs/idempotency@workspace:packages/idempotency"],
@@ -667,6 +719,8 @@
     "@aponiajs/metrics": ["@aponiajs/metrics@workspace:packages/metrics"],
 
     "@aponiajs/microservices": ["@aponiajs/microservices@workspace:packages/microservices"],
+
+    "@aponiajs/nitro": ["@aponiajs/nitro@workspace:packages/nitro"],
 
     "@aponiajs/openapi": ["@aponiajs/openapi@workspace:packages/openapi"],
 
@@ -700,17 +754,17 @@
 
     "@blazediff/core": ["@blazediff/core@1.10.0", "", {}, "sha512-AOQff0zgR7cGsZL+4E7hVkmujoPUpm0J9xzWGWZj5wCjd3gmxESXAPfKyuzs93VdpQNFhHlBhfOjrcZ+XTERtQ=="],
 
-    "@elysia/cors": ["@elysia/cors@2.0.0-beta.1", "", { "peerDependencies": { "elysia": ">= 2.0.0-beta.1" } }, "sha512-dHb21xI4Dm7wcf5+rWLiLSwJARLAewnOzRjRk0wRMfBiLGA1t/CXsblzKUtwYRFhQCteUEGdhEace+6PF0UUKw=="],
+    "@elysia/cors": ["@elysia/cors@2.0.0-rc.1", "", { "peerDependencies": { "elysia": ">= 2.0.0-rc.0" } }, "sha512-VCYPE0lcmsbqTJW2n5TVepDMvZbi8onsUU9d3iEm4Am56aAazobUtiSlZYCkHuQHvckRZEhQ6FepsvtA1DM4FQ=="],
 
-    "@elysia/cron": ["@elysia/cron@2.0.0-beta.1", "", { "dependencies": { "croner": "^6.0.3" }, "peerDependencies": { "elysia": ">= 2.0.0-beta.1" } }, "sha512-7n/EJeXuwZ+e45qoJgENCephqNureuM/TLksCxqKnubmixbJR8RT68TsPjczFv7MA1wLNMkeVdTx24xr/FMsjg=="],
+    "@elysia/cron": ["@elysia/cron@2.0.0-rc.0", "", { "dependencies": { "croner": "^6.0.3" }, "peerDependencies": { "elysia": ">= 2.0.0-rc.0" } }, "sha512-bfFD7tOkubBVj/hd9s6V7B3usTO9IyECO+g0dAkZ4rPOeF1nYzOAMM11mSNDgoxDuaBaDbzmXZ2nym4cQPh8Ig=="],
 
-    "@elysia/eden": ["@elysia/eden@2.0.0-beta.6", "", { "peerDependencies": { "elysia": ">= 2.0.0-beta.2" } }, "sha512-UYtYUiJ/OPwlkFZCe8QJ4Xc4VwXz7BykYruBDc4VQRMItWWGypsjMqwJUhQPG3D7A82GAU7q1goVwMcLyC6pYg=="],
+    "@elysia/eden": ["@elysia/eden@2.0.0-rc.1", "", { "peerDependencies": { "elysia": ">= 2.0.0-rc.0" } }, "sha512-5W2/OaTOYlF3XU/nQDQ4HeL8SfWHD8YV+YE7YlbZdvK3hDjCcwqc2C7/CvjmE8QZ8XbYDLzk5rj0rY+xBVH6dw=="],
 
-    "@elysia/graphql-yoga": ["@elysia/graphql-yoga@2.0.0-beta.1", "", { "dependencies": { "@graphql-tools/schema": "^10.0.34", "@graphql-tools/utils": "^11.1.1", "graphql": "^17.0.1", "graphql-mobius": "^0.1.11", "graphql-yoga": "^5.21.2" }, "peerDependencies": { "elysia": ">= 2.0.0-beta.1" } }, "sha512-DQW84sOsQKc+ckemH6AQ8JjjlEe9+jzX82Hi+9QIbuQ8rbNEMGty3PUCZayUgruQ8VnQKGkl3UqWCkxwQJJqzw=="],
+    "@elysia/graphql-yoga": ["@elysia/graphql-yoga@2.0.0-rc.0", "", { "dependencies": { "@graphql-tools/schema": "^10.0.34", "@graphql-tools/utils": "^11.1.1", "graphql": "^17.0.1", "graphql-mobius": "^0.1.11", "graphql-yoga": "^5.21.2" }, "peerDependencies": { "elysia": ">= 2.0.0-rc.0" } }, "sha512-DVu5dFSmbTeX+DtY8DR/SWrPp5jPwN590bNAmDnZhMf0HHPIcgcEa6sd9lNkqN5XSA7uGn/YE+4kQjqiUN+Vsw=="],
 
-    "@elysia/openapi": ["@elysia/openapi@2.0.0-beta.4", "", { "peerDependencies": { "@scalar/types": ">= 0.18.0", "elysia": ">= 2.0.0-beta.11", "typebox": ">= 1.3.0" } }, "sha512-tbS8c8pgPUdf8OZHvfqDX+ztvDXGlrajfVsGDgQcnFA8Ln9/EyrMSxfbF3aNs5UHz75hJ6wrGfbDtr7K1clTOg=="],
+    "@elysia/openapi": ["@elysia/openapi@2.0.0-rc.1", "", { "peerDependencies": { "elysia": ">= 2.0.0-rc.0" } }, "sha512-XzNbSVkgxrsTxK3tq+IUXV84FvmM7dO2uDJ9xS55JJQalKbXOM4TgNAg3Um/pBML5UApIXKh8IZmWXK5WdHitQ=="],
 
-    "@elysia/opentelemetry": ["@elysia/opentelemetry@2.0.0-beta.1", "", { "dependencies": { "@opentelemetry/api": "^1.9.0", "@opentelemetry/instrumentation": "^0.200.0", "@opentelemetry/sdk-node": "^0.200.0" }, "peerDependencies": { "elysia": ">= 2.0.0-beta.1", "graphql": "*", "graphql-yoga": "*" }, "optionalPeers": ["graphql", "graphql-yoga"] }, "sha512-6/gHwJJioGIy6ZZQERX19MFXp8rg8l/QIbT5CdEPAiUB8ca2CZl63beFgneWC0HCHM4Aq9qYuGJehSFPeMtdCQ=="],
+    "@elysia/opentelemetry": ["@elysia/opentelemetry@2.0.0-rc.0", "", { "dependencies": { "@opentelemetry/api": "^1.9.0", "@opentelemetry/instrumentation": "^0.200.0", "@opentelemetry/sdk-node": "^0.200.0" }, "peerDependencies": { "elysia": ">= 2.0.0-rc.0", "graphql": "*", "graphql-yoga": "*" }, "optionalPeers": ["graphql", "graphql-yoga"] }, "sha512-ncfF+qwi7ENf/eEYAsbyZQxH75YOunVbJQYnHGHAXzpijNVR+AGFC2Vcps3rYnRrX0EkAjPfr0Wv4G2w+p/xFQ=="],
 
     "@envelop/core": ["@envelop/core@5.6.1", "", { "dependencies": { "@envelop/instrumentation": "^1.0.1", "@envelop/types": "^5.2.2", "@whatwg-node/promise-helpers": "^1.2.4", "tslib": "^2.5.0" } }, "sha512-KEbJ7yrAA+W7IY9MZzpZJ77w/72ndaV/16+hhPapd+0Ohjqffl0mmF3QWy62/m3nRP4qidD+1eiEjJhS/O38Tg=="],
 
@@ -906,10 +960,6 @@
 
     "@repeaterjs/repeater": ["@repeaterjs/repeater@3.1.0", "", {}, "sha512-TaoVksZRSx2KWYYpyLQtMQXXeS98VsgZImzW65xmiVgbYhXLk+aEsmzPLirqVuE4/XuUapH2iMtxUzaBNDzdSQ=="],
 
-    "@scalar/helpers": ["@scalar/helpers@0.16.0", "", {}, "sha512-lCBNB3hN8sGfUghz5AK5r63G+1/x4PHSgjH9asJVWne5e1tnKkti5eaejPLgy8didpAZsyXEp744xIosoWu9AA=="],
-
-    "@scalar/types": ["@scalar/types@0.22.3", "", { "dependencies": { "@scalar/helpers": "0.16.0", "nanoid": "^5.1.6", "type-fest": "^5.8.0", "zod": "^4.4.3" } }, "sha512-Ai+NPBJPhuvqkR5EXsJPK7RAnP7SBhSOyxEhuGqShgUutHoMQ7Vl7tvzVvhuqbXvtAxdBUEhUe57B6kI8Xg+dg=="],
-
     "@standard-schema/spec": ["@standard-schema/spec@1.1.0", "", {}, "sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w=="],
 
     "@testing-library/dom": ["@testing-library/dom@10.4.2", "", { "dependencies": { "@babel/code-frame": "^7.10.4", "@babel/runtime": "^7.12.5", "@types/aria-query": "^5.0.1", "aria-query": "5.3.0", "dom-accessibility-api": "^0.5.9", "lz-string": "^1.5.0", "picocolors": "1.1.1", "pretty-format": "^27.0.2" } }, "sha512-yzr2S9HyAIdhz2/6qHgbs665Q7PKVcDF05vsOlHPxG1mo36gKVesdYVeDLnXgfjJ03CrKRk08knc6+E/9m8v2Q=="],
@@ -920,7 +970,7 @@
 
     "@types/aria-query": ["@types/aria-query@5.0.4", "", {}, "sha512-rfT93uj5s0PRL7EzccGMs3brplhcrghnDoV26NqKhCAS1hVo+WdNsPvE/yb6ilfr5hi2MEk6d5EWJTKdxg8jVw=="],
 
-    "@types/bun": ["@types/bun@1.4.2", "", { "dependencies": { "bun-types": "1.4.2" } }, "sha512-GimotNn7+ZV0uVArItBbriZsR1oNf0+WTzPkdcFrzShI7k2norL0uzEaJT8T33dWr7O/c9ZDuAFQrctKCi72oQ=="],
+    "@types/bun": ["@types/bun@1.4.4", "", { "dependencies": { "bun-types": "1.4.4" } }, "sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ=="],
 
     "@types/chai": ["@types/chai@5.2.3", "", { "dependencies": { "@types/deep-eql": "*", "assertion-error": "^2.0.1" } }, "sha512-Mw558oeA9fFbv65/y4mHtXDs9bPnFMZAL/jxdPFUpOHHIXX91mcgEHbS5Lahr+pwZFR8A7GQleRWeI6cGFC2UA=="],
 
@@ -1070,7 +1120,7 @@
 
     "bumpp": ["bumpp@12.3.0", "", { "dependencies": { "args-tokenizer": "^0.3.0", "cac": "^7.0.0", "jsonc-parser": "^3.3.1", "package-manager-detector": "^1.8.0", "tinyexec": "^1.3.0", "tinyglobby": "^0.2.17", "unconfig": "^7.5.0", "verkit": "^0.4.0", "yaml": "^2.9.0" }, "bin": { "bumpp": "bin/bumpp.mjs" } }, "sha512-YgW09sgbIGQmAD/Jk7FEGP0tm0PeDz+Zgk+IAk+MOHhb/98pj/l3CgkxSjd7C1O99JPxTNwS+bPOTNaHuNh6lQ=="],
 
-    "bun-types": ["bun-types@1.4.2", "", { "dependencies": { "@types/node": "*" } }, "sha512-bxV1FgK7yBIzjRe5zBozIM4Bem11ZJcCXSrjWRG3YWLt8yFDePu4cLjpebO8OvPeIE9trbyPF4fuj3Cia4Fj3w=="],
+    "bun-types": ["bun-types@1.4.4", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ=="],
 
     "cac": ["cac@7.0.0", "", {}, "sha512-tixWYgm5ZoOD+3g6UTea91eow5z6AAHaho3g0V9CNSNb45gM8SmflpAc+GRd1InC4AqN/07Unrgp56Y94N9hJQ=="],
 
@@ -1096,6 +1146,8 @@
 
     "cross-inspect": ["cross-inspect@1.0.1", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-Pcw1JTvZLSJH83iiGWt6fRcT+BjZlCDRVwYLbUcHzv/CRpB7r0MlSrGbIyQvVSNyGnbt7G4AXuyCiDR3POvZ1A=="],
 
+    "crossws": ["crossws@0.4.17", "", { "peerDependencies": { "srvx": ">=0.11.5" }, "optionalPeers": ["srvx"] }, "sha512-YG2kyfafNXKmu7e6k64yrj6whrw7m5sBIsOSXOlJ/72X3TQWRQuw8DhvXFDcBk8HF77PnTSygnm7xpYCTnFpow=="],
+
     "debug": ["debug@4.4.3", "", { "dependencies": { "ms": "^2.1.3" }, "peerDependencies": { "supports-color": "*" }, "optionalPeers": ["supports-color"] }, "sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA=="],
 
     "defu": ["defu@6.1.7", "", {}, "sha512-7z22QmUWiQ/2d0KkdYmANbRUVABpZ9SNYyH5vx6PZ+nE5bcC0l7uFvEfHlyld/HcGBFTL536ClDt3DEcSlEJAQ=="],
@@ -1110,9 +1162,11 @@
 
     "drizzle-orm": ["drizzle-orm@0.45.4", "", { "peerDependencies": { "@aws-sdk/client-rds-data": ">=3", "@cloudflare/workers-types": ">=4", "@electric-sql/pglite": ">=0.2.0", "@libsql/client": ">=0.10.0", "@libsql/client-wasm": ">=0.10.0", "@neondatabase/serverless": ">=0.10.0", "@netlify/db": ">=0.4.0", "@op-engineering/op-sqlite": ">=2", "@opentelemetry/api": "^1.4.1", "@planetscale/database": ">=1.13", "@prisma/client": "*", "@tidbcloud/serverless": "*", "@types/better-sqlite3": "*", "@types/pg": "*", "@types/sql.js": "*", "@upstash/redis": ">=1.34.7", "@vercel/postgres": ">=0.8.0", "@xata.io/client": "*", "better-sqlite3": ">=7", "bun-types": "*", "expo-sqlite": ">=14.0.0", "gel": ">=2", "knex": "*", "kysely": "*", "mysql2": ">=2", "pg": ">=8", "postgres": ">=3", "prisma": "*", "sql.js": ">=1", "sqlite3": ">=5" }, "optionalPeers": ["@aws-sdk/client-rds-data", "@cloudflare/workers-types", "@electric-sql/pglite", "@libsql/client", "@libsql/client-wasm", "@neondatabase/serverless", "@netlify/db", "@op-engineering/op-sqlite", "@opentelemetry/api", "@planetscale/database", "@prisma/client", "@tidbcloud/serverless", "@types/better-sqlite3", "@types/pg", "@types/sql.js", "@upstash/redis", "@vercel/postgres", "@xata.io/client", "better-sqlite3", "bun-types", "expo-sqlite", "gel", "knex", "kysely", "mysql2", "pg", "postgres", "prisma", "sql.js", "sqlite3"] }, "sha512-NiM1YZpJ2UxyeE67DpDDZ+Tsw4YLX3trSlkNT7Tm9eKoUNb1LvaAaQzXgYQsWs+AQ9TUmmwMmBOCXuqqxUWKKQ=="],
 
-    "elysia": ["elysia@2.0.0-beta.24", "", { "dependencies": { "deuri": "^3.0.0", "memoirist": "1.2.3" }, "peerDependencies": { "@types/bun": ">= 1.3.0", "exact-mirror": ">= 1.2.6", "openapi-types": ">= 12.0.0", "typebox": ">= 1.3.0", "typescript": ">= 5.7.0" }, "optionalPeers": ["@types/bun", "typescript"] }, "sha512-YeQ67zHu+eNob3f+kidsfUJDf3oYyhnw8N2MIt+cb9SLmSz4Q4FCjylEJjFVA24Uk8g6NjrKnUBEzwjw2J5uBA=="],
+    "elysia": ["elysia@2.0.0-rc.4", "", { "dependencies": { "deuri": "^3.0.0", "memoirist": "1.2.4" }, "peerDependencies": { "@types/bun": ">= 1.3.0", "exact-mirror": ">= 1.2.7", "openapi-types": ">= 12.0.0", "typebox": ">= 1.3.35", "typescript": ">= 5.7.0" }, "optionalPeers": ["@types/bun", "typescript"] }, "sha512-0+II5vGTo/HLEkKF7glCefIXcVWnQV1ytDfIEqU2UC75ygt6Vqd3FWDkiMQYtIr2CzF6gew8yiuDqWKSA77LtQ=="],
 
     "emoji-regex": ["emoji-regex@8.0.0", "", {}, "sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A=="],
+
+    "env-runner": ["env-runner@0.3.11", "", { "dependencies": { "crossws": "^0.4.16", "srvx": "^1.0.7" }, "bin": { "env-runner": "./dist/cli.mjs" } }, "sha512-jKG29hxqGrL9ktunIwmt9aHbP3n995DGUY1KyXS7iGYFoD/yDdpc2CjJt6remFI3x2H1JOmBBMo0KXxjEQ2G6g=="],
 
     "es-errors": ["es-errors@1.3.0", "", {}, "sha512-Zf5H2Kxt2xjTvbJvP2ZWLEICxA6j+hAmMzIlypy4xcBg1vKVnx89Wy0GbS+kf5cwCVFFzdCFh2XSCFNULS6csw=="],
 
@@ -1122,7 +1176,7 @@
 
     "estree-walker": ["estree-walker@3.0.3", "", { "dependencies": { "@types/estree": "^1.0.0" } }, "sha512-7RUKfXgSMMkzt6ZuXmqapOurLGPPfgj6l9uRZ7lRGolvk0y2yocc35LdcxKC5PQZdn2DMqioAQ2NoWcrTKmm6g=="],
 
-    "exact-mirror": ["exact-mirror@1.2.6", "", { "peerDependencies": { "typebox": ">= 1.1.0" }, "optionalPeers": ["typebox"] }, "sha512-EGx81nhFP1GE94coJsz94FLzdxWrnkNCJdfdX44rbd7pVcAotWzDlBJUC7yy1Ae7d7dYKpoTtZ1jCAIz2IVtfA=="],
+    "exact-mirror": ["exact-mirror@1.2.7", "", { "peerDependencies": { "typebox": ">= 1.1.0" }, "optionalPeers": ["typebox"] }, "sha512-HhEYVm/y8qbEFnErtr0K7Jsuy0GzRlblZVyeaMoZBSKBDpNuELwzsWtzXQjezFVPka6ZqFaD6+EW3TW+x59vrw=="],
 
     "expect-type": ["expect-type@1.4.0", "", {}, "sha512-KfYbmpRm0VbLjEvVa9yGwCi9GI34xvi7A/HXYWQO65CSD2u3MczUJSuwXKFIxlGsgBQizV9q5J9NHj4VG0n+pA=="],
 
@@ -1144,7 +1198,11 @@
 
     "graphql-yoga": ["graphql-yoga@5.24.1", "", { "dependencies": { "@envelop/core": "^5.6.1", "@envelop/instrumentation": "^1.0.1", "@graphql-tools/executor": "^2.0.0", "@graphql-tools/schema": "^10.0.11", "@graphql-tools/utils": "^11.2.0", "@graphql-yoga/logger": "^2.0.2", "@graphql-yoga/subscription": "^5.1.1", "@whatwg-node/fetch": "^0.10.6", "@whatwg-node/promise-helpers": "^1.3.2", "@whatwg-node/server": "^0.11.0", "lru-cache": "^10.0.0", "tslib": "^2.8.1" }, "peerDependencies": { "graphql": "^15.2.0 || ^16.0.0 || ^17.0.0" } }, "sha512-NA2aQ4sZvR/bniCCLOlMG6OSZf5hPg3mUf3Phm33ObqRMZEq6WtZrj2hTcHfT2ZEFVV5FRCbcMb4NB1w7BIKaA=="],
 
+    "h3": ["h3@2.0.8", "", { "dependencies": { "rou3": "^1.0.0", "srvx": "^1.0.6" }, "peerDependencies": { "crossws": "^0.4.12", "ocache": ">=0.3.0" }, "optionalPeers": ["crossws", "ocache"], "bin": { "h3": "./bin/h3.mjs" } }, "sha512-ENuKlF9kC6E6PrvY1PUyE0qkrnnPTIt2/v48uyEEfTVfgoiqBCE0uwwf++2XrWwT1gxjQBDLQ8PAsmZVniKvTw=="],
+
     "hasown": ["hasown@2.0.4", "", { "dependencies": { "function-bind": "^1.1.2" } }, "sha512-T2UbfbBEF32wiepXIsMlTW9+dDYC6wMh/t/vYA4tuOMKqWz/n3vr1NFSxQiyP+zk2mXsoMA/i/7qV6LKut1t1A=="],
+
+    "hono": ["hono@4.13.17", "", {}, "sha512-vZIcbkvjOR5hHRWERbGkr8fGfF0GGM1ooYkuH448iO3b2AdVEr3AXZSw4Z3Kn+1L5z0CVoVeyV29VGYmFh05kQ=="],
 
     "import-in-the-middle": ["import-in-the-middle@1.15.0", "", { "dependencies": { "acorn": "^8.14.0", "acorn-import-attributes": "^1.9.5", "cjs-module-lexer": "^1.2.2", "module-details-from-path": "^1.0.3" } }, "sha512-bpQy+CrsRmYmoPMAE/0G33iwRqwW4ouqdRg8jgbH3aKuCtOc8lxgmYXg2dMM92CRiGP660EtBcymH/eVUpCSaA=="],
 
@@ -1200,7 +1258,7 @@
 
     "marked": ["marked@18.1.3", "", { "bin": { "marked": "bin/marked.js" } }, "sha512-9ChMH8EVVgjgID49nsL6IWxWk5c6GtAsq/xw7U1ggkjkU5AGuv68oLTVlFRtvcUYZtpbNyjyvGo3YDu0fGapiw=="],
 
-    "memoirist": ["memoirist@1.2.3", "", {}, "sha512-6wkntadi3vDUBX6y5UDuLsLr+hsojMkaapsZyGGzP6rZoYD6K/pAbrp1cZki24jMewoca3KofRYO0T6EEeHNVg=="],
+    "memoirist": ["memoirist@1.2.4", "", {}, "sha512-4ZQz65pzZQl1fQEy0EPplIo+rzn0c1vzrqhrdnswr2IKYoPje58p2hZCCeiDD3iB0Bh6OVIaScirDIw8S5qHaQ=="],
 
     "minimatch": ["minimatch@10.2.5", "", { "dependencies": { "brace-expansion": "^5.0.5" } }, "sha512-MULkVLfKGYDFYejP07QOurDLLQpcjk7Fw+7jXS2R2czRQzR56yHRveU5NDJEOviH+hETZKSkIk5c+T23GjFUMg=="],
 
@@ -1212,7 +1270,11 @@
 
     "nanoid": ["nanoid@3.3.20", "", { "bin": { "nanoid": "bin/nanoid.cjs" } }, "sha512-uKdg2G3GNCKQn9byYOpxbGqrT2fGO5KRt5J/8b3pok8rT6qxGWF6hxMyJiEYtAf+FVyYuD9hRaDqX5uPFYJ4ZQ=="],
 
+    "nitro": ["nitro@3.0.261103-rc", "", { "dependencies": { "crossws": "^0.4.17", "env-runner": "^0.3.11", "h3": "^2.0.8", "ocache": "^0.3.1", "rou3": "^1.0.0", "srvx": "^1.0.8" }, "bin": { "nitro": "dist/cli/index.mjs" } }, "sha512-tLD7r5fWCtwnQEE4ZkckLUnx1wkWDaLY48dD+BCJtcQ+srSWAUpxJEK3YfTsgN3v+e4UgBYRzuR7zV7Sqns/zA=="],
+
     "obug": ["obug@3.0.0", "", {}, "sha512-5vvB5+W7ePv+p3uqxi+RcW1XAzLW0/hxt3/4X4Lc4qHudzOhmBiBwOY6DRob4WnanAEGvNcLjF+KNOufrUoEQw=="],
+
+    "ocache": ["ocache@0.3.1", "", {}, "sha512-qeBrhQ0ly6tgXsakgNwLx6diRUppJZIcV5OjVGa5yp9HzztutkaGDDXJqVMo1fKWz5fNDtTp3iPU2fuhHf0+Lg=="],
 
     "openapi-types": ["openapi-types@12.1.3", "", {}, "sha512-N4YtSYJqghVu4iek2ZUvcN/0aqH1kRDuNqzcycDxhOUpg7GdvLa2F3DgS6yBNhInhv2r/6I0Flkn7CqL8+nIcw=="],
 
@@ -1254,11 +1316,15 @@
 
     "resolve": ["resolve@1.22.12", "", { "dependencies": { "es-errors": "^1.3.0", "is-core-module": "^2.16.1", "path-parse": "^1.0.7", "supports-preserve-symlinks-flag": "^1.0.0" }, "bin": { "resolve": "bin/resolve" } }, "sha512-TyeJ1zif53BPfHootBGwPRYT1RUt6oGWsaQr8UyZW/eAm9bKoijtvruSDEmZHm92CwS9nj7/fWttqPCgzep8CA=="],
 
+    "rou3": ["rou3@1.0.0", "", {}, "sha512-ySeaQkSrua+ut9g+65I7FHqOFBaY8tV0FmccXItoq0q21se32Q3u4YiW7/RqXSosWgYJaaKwRHXy3BST9PeCNQ=="],
+
     "shimmer": ["shimmer@1.2.1", "", {}, "sha512-sQTKC1Re/rM6XyFM6fIAGHRPVGvyXfgzIDvzoq608vM+jeyVD0Tu1E6Np0Kc2zAIFWIj963V2800iF/9LPieQw=="],
 
     "sirv": ["sirv@3.0.2", "", { "dependencies": { "@polka/url": "^1.0.0-next.24", "mrmime": "^2.0.0", "totalist": "^3.0.0" } }, "sha512-2wcC/oGxHis/BoHkkPwldgiPSYcpZK3JU28WoMVv55yHJgcZ8rlXvuG9iZggz+sU1d4bRgIGASwyWqjxu3FM0g=="],
 
     "source-map-js": ["source-map-js@1.2.2", "", {}, "sha512-KGj/8Y43x35aZVDtt+J4mK1hoLGHULMYfSkODJNQjNDC3oW1PqPoxMwo0pLUsWM/UEGzON/NxeHywEfNXNP3Vw=="],
+
+    "srvx": ["srvx@1.0.8", "", { "bin": { "srvx": "./bin/srvx.mjs" } }, "sha512-ngFS/J6St4PJfHRHGjr78xkPPtbyXtdMOLNE4x/XZunEK3OhV7aGUWMHf9WTUEy6wm1U0W4okkd82ZFFWRVQTw=="],
 
     "std-env": ["std-env@4.3.0", "", {}, "sha512-OtU/EgQ1kIm5KwqQpBC6ZEMXrZRui11w8zgfTWp8cdO9B8OaPsbA8bTHO2P+HNo1VlUTGMVBwPhydu6poeXiag=="],
 
@@ -1267,8 +1333,6 @@
     "strip-ansi": ["strip-ansi@6.0.1", "", { "dependencies": { "ansi-regex": "^5.0.1" } }, "sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A=="],
 
     "supports-preserve-symlinks-flag": ["supports-preserve-symlinks-flag@1.0.0", "", {}, "sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w=="],
-
-    "tagged-tag": ["tagged-tag@1.0.0", "", {}, "sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng=="],
 
     "tinybench": ["tinybench@6.2.3", "", {}, "sha512-Al01C2JIBnO2CXCAPbpAl6sUiOZHeThGtHYNTa51JRw9PyWOCdr+9Ong05R4qg/Sk3+H645E8ov1h2c58ityNw=="],
 
@@ -1286,9 +1350,7 @@
 
     "tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 
-    "type-fest": ["type-fest@5.10.0", "", { "dependencies": { "tagged-tag": "^1.0.0" } }, "sha512-NoSdpq/WEiAg5sjmBkmV/hfxv6HJH4NqPNrqjtSO5CwRmpsDfaf4begxW34KdJykH/l1yHtwBWQkCRdoXO8mPA=="],
-
-    "typebox": ["typebox@1.3.34", "", {}, "sha512-wbnzrXXDW8xEFHDZZs2jo1MkhaYlKAY4FRhpBc1+2LF1fZVBGCXGdLEhA/Z/NBbgzJMFfeM8m7elKPa/+KxaUQ=="],
+    "typebox": ["typebox@1.4.6", "", {}, "sha512-Yh8Mi4hzD7gqcuv9ZIk6HK1KVJKubTlfxaNxkrYK35HCvxoCjCuWVr8cBjQ/ChfA7yliPteJEBWHGFVGWDuF5Q=="],
 
     "typescript": ["typescript@7.0.2", "", { "optionalDependencies": { "@typescript/typescript-aix-ppc64": "7.0.2", "@typescript/typescript-darwin-arm64": "7.0.2", "@typescript/typescript-darwin-x64": "7.0.2", "@typescript/typescript-freebsd-arm64": "7.0.2", "@typescript/typescript-freebsd-x64": "7.0.2", "@typescript/typescript-linux-arm": "7.0.2", "@typescript/typescript-linux-arm64": "7.0.2", "@typescript/typescript-linux-loong64": "7.0.2", "@typescript/typescript-linux-mips64el": "7.0.2", "@typescript/typescript-linux-ppc64": "7.0.2", "@typescript/typescript-linux-riscv64": "7.0.2", "@typescript/typescript-linux-s390x": "7.0.2", "@typescript/typescript-linux-x64": "7.0.2", "@typescript/typescript-netbsd-arm64": "7.0.2", "@typescript/typescript-netbsd-x64": "7.0.2", "@typescript/typescript-openbsd-arm64": "7.0.2", "@typescript/typescript-openbsd-x64": "7.0.2", "@typescript/typescript-sunos-x64": "7.0.2", "@typescript/typescript-win32-arm64": "7.0.2", "@typescript/typescript-win32-x64": "7.0.2" }, "bin": { "tsc": "bin/tsc" } }, "sha512-8FYau96o3NKOhbjKi/qNvG/W5jhzxkbdm5sj9AbZ/5T5sWqn3hJgLfGx27sRKZWTvyzCP8dLRBTf5tBTSRVUNA=="],
 
@@ -1347,8 +1409,6 @@
     "@opentelemetry/sdk-node/@opentelemetry/api-logs": ["@opentelemetry/api-logs@0.217.0", "", { "dependencies": { "@opentelemetry/api": "^1.3.0" } }, "sha512-Cdq0jW2lknrNfrAm92MyEAvpe2cRsKjdnQLHUL6xRA4IVUnsWx6P65E7NcUO0Y+L4w1Aee5iV8FvjSwd+lrs9A=="],
 
     "@opentelemetry/sdk-node/@opentelemetry/instrumentation": ["@opentelemetry/instrumentation@0.217.0", "", { "dependencies": { "@opentelemetry/api-logs": "0.217.0", "import-in-the-middle": "^3.0.0", "require-in-the-middle": "^8.0.0" }, "peerDependencies": { "@opentelemetry/api": "^1.3.0" } }, "sha512-24ucQMjz7Y34Kw3trbxL2ZrssbtgWnR+Clpaa+YdeWuuyH3Cvk23Q03PcQvqiZrDvt8AmQmjgg9v6Y9PHoxG7w=="],
-
-    "@scalar/types/nanoid": ["nanoid@5.1.16", "", { "bin": { "nanoid": "bin/nanoid.js" } }, "sha512-kVrnsrJqMR8+oLJnGEmSWw9BivK5mt7H3FZatVRjrc5wGqFYuBxX1yG7+A7Gi5AefkX6t/oCkizcQgpu0cY1dQ=="],
 
     "@whatwg-node/node-fetch/@whatwg-node/disposablestack": ["@whatwg-node/disposablestack@0.0.6", "", { "dependencies": { "@whatwg-node/promise-helpers": "^1.0.0", "tslib": "^2.6.3" } }, "sha512-LOtTn+JgJvX8WfBVJtF08TGrdjuFzGJc4mkP8EdDI8ADbvO7kiexYep1o8dwnt0okb0jYclCDXF13xU7Ge4zSw=="],
 

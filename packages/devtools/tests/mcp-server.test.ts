@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { Controller, Get, Module } from "@aponiajs/common";
 import { AponiaFactory } from "@aponiajs/platform-elysia";
 import { DevtoolsModule } from "../src/module/devtools-module.ts";
+import { createDevtoolsMcpServer } from "../src/mcp/mcp-server.ts";
 
 @Controller("mcp-test")
 class McpTestController {
@@ -113,6 +114,98 @@ describe("embedded-mcp-server", () => {
     } finally {
       await app.close();
     }
+  });
+
+  test("exercises the filtered tool branches", async () => {
+    const app = await AponiaFactory.create(McpTestModule, { logger: false });
+    try {
+      Object.assign(app.getNativeApplication() as unknown as { store: Record<string, unknown> }, {
+        store: { safe: "value" },
+      });
+      const source = await askMcp(app, {
+        jsonrpc: "2.0",
+        id: 20,
+        method: "tools/call",
+        params: { name: "get_source_code", arguments: { target: "MissingTarget" } },
+      });
+      expect(source.result.isError).toBe(true);
+
+      const flow = await askMcp(app, {
+        jsonrpc: "2.0",
+        id: 21,
+        method: "tools/call",
+        params: {
+          name: "inspect_application_graph",
+          arguments: { method: "GET", path: "/mcp-test/hello" },
+        },
+      });
+      expect(flow.result.content[0].text).toContain("/mcp-test/hello");
+
+      const unmatched = await askMcp(app, {
+        jsonrpc: "2.0",
+        id: 25,
+        method: "tools/call",
+        params: {
+          name: "inspect_application_graph",
+          arguments: { method: "POST", path: "/missing" },
+        },
+      });
+      expect(unmatched.result.content[0].text).toContain("nodes");
+
+      const store = await askMcp(app, {
+        jsonrpc: "2.0",
+        id: 22,
+        method: "tools/call",
+        params: { name: "inspect_store_state", arguments: { key: "safe" } },
+      });
+      expect(store.result.content[0].text).toContain("value");
+
+      const requests = await askMcp(app, {
+        jsonrpc: "2.0",
+        id: 23,
+        method: "tools/call",
+        params: {
+          name: "query_recent_requests",
+          arguments: { status: 200, onlyErrors: true, limit: 5 },
+        },
+      });
+      expect(Array.isArray(JSON.parse(requests.result.content[0].text))).toBe(true);
+
+      const logs = await askMcp(app, {
+        jsonrpc: "2.0",
+        id: 24,
+        method: "tools/call",
+        params: { name: "read_application_logs", arguments: { level: "info", since: 0 } },
+      });
+      expect(Array.isArray(JSON.parse(logs.result.content[0].text))).toBe(true);
+    } finally {
+      await app.close();
+    }
+  });
+
+  test("answers every unavailable-context tool with a safe empty result", async () => {
+    const server = createDevtoolsMcpServer({
+      diagnostics: undefined,
+      application: undefined,
+      logs: undefined,
+      requests: undefined,
+      logger: { log() {}, fatal() {}, error() {}, warn() {} },
+    });
+    const call = async (name: string, args: Record<string, unknown> = {}) =>
+      (await server.handleMessage({
+        jsonrpc: "2.0",
+        id: name,
+        method: "tools/call",
+        params: { name, arguments: args },
+      })) as { result: { content: { text: string }[] } };
+
+    expect((await call("inspect_application_graph")).result.content[0]?.text).toContain("nodes");
+    expect((await call("inspect_store_state")).result.content[0]?.text).toContain("not available");
+    expect((await call("query_recent_requests")).result.content[0]?.text).toBe("[]");
+    expect((await call("read_application_logs")).result.content[0]?.text).toBe("[]");
+    expect(
+      (await call("inspect_route_pipeline", { method: "GET", path: "/x" })).result.content[0]?.text,
+    ).toContain("not available");
   });
 
   test("executes inspect_route_pipeline tool call", async () => {

@@ -35,13 +35,23 @@ export async function generateSchematic(
   options: GenerateSchematicOptions,
 ): Promise<GenerateSchematicResult> {
   const projectRoot = resolve(options.cwd ?? process.cwd());
-  const names = createComponentNames(options.name);
+  let schematicOptions = options;
+  let componentName = options.name;
+  if (options.schematic === "library" && componentName.includes("/")) {
+    const [scopePart, packagePart] = componentName.split("/", 2);
+    if (!scopePart || !packagePart) {
+      throw new Error("A scoped library name must use the @scope/package shape.");
+    }
+    schematicOptions = { ...options, scope: scopePart.replace(/^@/, "") };
+    componentName = packagePart;
+  }
+  const names = createComponentNames(componentName);
 
   if (options.schematic === "app") {
-    return generateApplication(projectRoot, names.fileName, options);
+    return generateApplication(projectRoot, names.fileName, schematicOptions);
   }
   if (options.schematic === "library") {
-    return generateLibrary(projectRoot, names, options);
+    return generateLibrary(projectRoot, names, schematicOptions);
   }
 
   const configuration = await readConfiguration(projectRoot);

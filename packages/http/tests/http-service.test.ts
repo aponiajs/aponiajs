@@ -72,6 +72,35 @@ describe("HttpService", () => {
     expect(await seen?.text()).toBe('{"name":"Ada"}');
   });
 
+  test("exposes every HTTP method through one request path", async () => {
+    const methods: string[] = [];
+    const fetch = fakeFetch((request) => {
+      methods.push(request.method);
+      return Response.json({ ok: true });
+    });
+
+    @Module({
+      imports: [
+        HttpModule.register({
+          baseUrl: "https://api.example.com",
+          fetch,
+          resolveAddresses: publicResolver,
+        }),
+      ],
+    })
+    class AppModule {}
+
+    application = await AponiaFactory.create(AppModule, { logger: false });
+    const service = application.get(HttpService);
+    await service.request("/request");
+    await service.post("/post", { json: { a: 1 } });
+    await service.put("/put", { body: "x" });
+    await service.patch("/patch", { body: "x" });
+    await service.delete("/delete");
+
+    expect(methods).toEqual(["GET", "POST", "PUT", "PATCH", "DELETE"]);
+  });
+
   test("blocks loopback, private, metadata, protocol, and credential targets", async () => {
     const fetch = fakeFetch(() => Response.json({}));
 

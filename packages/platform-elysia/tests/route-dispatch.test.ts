@@ -355,7 +355,7 @@ test("awaits an ambiguous Promise result before running native after-handle hook
   const application = await AponiaFactory.create(AmbiguousPromiseModule, {
     logger: false,
     configureNative: (nativeApplication) =>
-      nativeApplication.afterHandle(({ responseValue }) => {
+      nativeApplication.onAfterHandle(({ responseValue }) => {
         observedResponse = responseValue;
       }),
   });
@@ -512,7 +512,7 @@ test("awaits a Promise returned without a call expression before after-handle ho
   const application = await AponiaFactory.create(CachedModule, {
     logger: false,
     configureNative: (nativeApplication) =>
-      nativeApplication.afterHandle(({ responseValue }) => {
+      nativeApplication.onAfterHandle(({ responseValue }) => {
         observedResponse = responseValue;
       }),
   });
@@ -550,7 +550,7 @@ test("treats an async handler as Promise-capable when its design metadata names 
   const application = await AponiaFactory.create(AsyncHandlerModule, {
     logger: false,
     configureNative: (nativeApplication) =>
-      nativeApplication.afterHandle(({ responseValue }) => {
+      nativeApplication.onAfterHandle(({ responseValue }) => {
         observedResponse = responseValue;
       }),
   });

@@ -1,9 +1,9 @@
 import { formatBuildReport } from "../generation/build-report.ts";
 import { generateInvokers } from "../generation/invoker-generator.ts";
 import { generateProject } from "../generation/project-generator.ts";
-import { generateSchematic } from "../generation/schematic-generator.ts";
 import { checkLibrary } from "../library/check-library.ts";
-import { searchLibraries } from "../library/catalog.ts";
+import { searchLibraries, searchRemoteLibraries } from "../library/catalog.ts";
+import { generateSchematic } from "../generation/schematic-generator.ts";
 import { frameworkContract } from "../contracts/framework-contract.ts";
 import { createAgentMcpServer } from "../agent/mcp-server.ts";
 import { serveMcpStdio } from "../agent/mcp-stdio.ts";
@@ -62,8 +62,79 @@ export async function runCli(arguments_: readonly string[]): Promise<number> {
     }
 
     if (command.command === "library") {
+      if (command.action === "new") {
+        const result = await generateSchematic({
+          command: "generate",
+          schematic: "library",
+          name: command.name ?? "",
+          dryRun: false,
+          skipImport: false,
+          crud: false,
+          type: "rest",
+          publish: true,
+          scope: command.scope,
+          skipInstall: command.skipInstall ?? false,
+          standalone: true,
+        });
+        for (const change of result.changes) {
+          console.log(`${change.kind} ${change.path}`);
+        }
+        return 0;
+      }
+      if (command.action === "publish") {
+        const checked = await checkLibrary({ path: command.path, publish: true });
+        if (!checked.ok) {
+          for (const issue of checked.issues) {
+            console.error(issue);
+          }
+          return 1;
+        }
+        const build = Bun.spawnSync(["bun", "run", "build"], {
+          cwd: checked.directory,
+          stdin: "inherit",
+          stdout: "inherit",
+          stderr: "inherit",
+        });
+        if (build.exitCode !== 0) {
+          return build.exitCode;
+        }
+        const pack = Bun.spawnSync(["npm", "pack", "--dry-run"], {
+          cwd: checked.directory,
+          stdin: "inherit",
+          stdout: "inherit",
+          stderr: "inherit",
+        });
+        if (pack.exitCode !== 0) {
+          return pack.exitCode;
+        }
+        if (command.yes !== true) {
+          const tag = command.tag ? ` --tag ${command.tag}` : "";
+          console.log(
+            `Library is ready to publish. Run: (cd ${checked.directory} && npm publish --access public${tag})`,
+          );
+          return 0;
+        }
+        const publish = Bun.spawnSync(
+          ["npm", "publish", "--access", "public", ...(command.tag ? ["--tag", command.tag] : [])],
+          {
+            cwd: checked.directory,
+            stdin: "inherit",
+            stdout: "inherit",
+            stderr: "inherit",
+          },
+        );
+        return publish.exitCode;
+      }
       if (command.action === "search") {
-        const entries = searchLibraries(command.query);
+        const local = searchLibraries(command.query);
+        const entries = command.remote
+          ? [
+              ...local,
+              ...(await searchRemoteLibraries(command.query)).filter(
+                (remote) => !local.some((entry) => entry.name === remote.name),
+              ),
+            ]
+          : local;
         if (command.json) {
           console.log(JSON.stringify(entries));
         } else if (entries.length === 0) {

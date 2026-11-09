@@ -42,6 +42,9 @@ Bun workspace. Framework packages live in `packages/`:
 | `@aponiajs/idempotency`     | Idempotent request replay, conflict detection, store             | `common`, `platform-elysia`, peer `elysia`                               |
 | `@aponiajs/microservices`   | Message-pattern transports and the in-memory reference transport | `common`                                                                 |
 | `@aponiajs/serverless`      | AWS Lambda and Web Fetch adapters for an application             | —                                                                        |
+| `@aponiajs/h3`              | H3 delivery adapter for an application                           | `serverless`, peer `h3`                                                  |
+| `@aponiajs/hono`            | Hono delivery adapter for an application                         | `serverless`, peer `hono`                                                |
+| `@aponiajs/nitro`           | Nitro delivery adapter for an application                        | `serverless`, peer `nitro`                                               |
 | `@aponiajs/platform-elysia` | Elysia adapter, HTTP routes, WebSocket gateways, plugins         | `common`, `core`, peer `elysia`                                          |
 | `@aponiajs/cli`             | `aponia new` and `aponia generate` schematics                    | `change-case`, `ts-morph`, `yargs-parser`, `inflection`, `oxfmt` (exact) |
 | `create-aponia`             | `bun create aponia` entrypoint into the same generator           | `@aponiajs/cli`                                                          |
@@ -112,6 +115,9 @@ being changed:
 | [`packages/opentelemetry`](packages/opentelemetry/AGENTS.md)     | The OpenTelemetry tracing package, and its process-global limit  |
 | [`packages/microservices`](packages/microservices/AGENTS.md)     | Message-pattern transports and the in-memory reference transport |
 | [`packages/serverless`](packages/serverless/AGENTS.md)           | AWS Lambda and Web Fetch adapters for an application             |
+| [`packages/h3`](packages/h3/AGENTS.md)                           | H3 delivery adapter for an application                           |
+| [`packages/hono`](packages/hono/AGENTS.md)                       | Hono delivery adapter for an application                         |
+| [`packages/nitro`](packages/nitro/AGENTS.md)                     | Nitro delivery adapter for an application                        |
 | [`packages/aponiajs`](packages/aponiajs/AGENTS.md)               | The reserved, still-private facade                               |
 | [`scripts`](scripts/AGENTS.md)                                   | Release channel derivation and documentation guards              |
 | [`docs`](docs/AGENTS.md)                                         | The published documentation set and what guards it               |
@@ -131,7 +137,7 @@ contiguous, indexed, and chained.
 - `bun run build`: build every workspace package (`vp pack` per package).
 - `bun test`: run the Bun suite across workspaces.
 - `bun run test:coverage`: run the complete Bun lane and enforce the repository's
-  95% line and function coverage floor.
+  98% line floor, a 95% function floor, and a 95% per-package line floor.
 - `bun run test:vite-plus`: run the Vite+ conformance lane.
 - `bun run test:examples`: run both example applications end to end. Bun's
   default glob skips `*.e2e-spec.ts`, so this script is how they reach CI.
@@ -528,7 +534,7 @@ for a boundary, adopt it instead of inventing an Aponia-only shape.
 
 Add tests for every behavioral change. Bun owns the primary suite; Vite+ tests
 protect toolchain compatibility. The aggregate coverage gate requires at least
-95% line and function coverage and fails when an executable runtime source is
+98% aggregate line coverage, 95% functions, and a 95% per-package line floor, and fails when an executable runtime source is
 missing from LCOV. Prioritize module boundaries, dependency resolution, route
 mapping, CLI output, and failure cases. Run `bun run check`,
 `bun run test:coverage`, and `bun run test:vite-plus` before submitting. Follow

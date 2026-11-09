@@ -10,6 +10,8 @@ export interface NewCommandOptions {
   readonly dryRun: boolean;
   /** Skip dependency installation after generation. */
   readonly skipInstall: boolean;
+  /** Generate a Nest-style workspace with `apps/*` and `libs/*`. */
+  readonly workspace: boolean;
 }
 
 /** A schematic `aponia generate` accepts, including its short aliases. */
@@ -51,6 +53,10 @@ export interface GenerateCommandOptions {
   readonly type: ResourceTransport;
   /** Generate a publishable library package instead of a private workspace package. */
   readonly publish?: boolean;
+  /** The npm scope for a publishable library, with or without `@`. */
+  readonly scope?: string;
+  /** Skip dependency installation after a library is written. */
+  readonly skipInstall?: boolean;
 }
 
 /** The `aponia build` command: regeneration flags. */
@@ -68,7 +74,7 @@ export interface LibraryCommandOptions {
   /** Always `"library"`. */
   readonly command: "library";
   /** Always `"check"`. */
-  readonly action: "check" | "search";
+  readonly action: "check" | "new" | "publish" | "search";
   /** The library directory, relative to the working directory. */
   readonly path?: string;
   /** Print the result as JSON. */
@@ -77,6 +83,18 @@ export interface LibraryCommandOptions {
   readonly publish: boolean;
   /** The search query for the `search` action. */
   readonly query?: string;
+  /** The library name for the `new` action. */
+  readonly name?: string;
+  /** The npm scope for the `new` action. */
+  readonly scope?: string;
+  /** Skip install for the `new` action. */
+  readonly skipInstall?: boolean;
+  /** Publish without stopping for confirmation. */
+  readonly yes?: boolean;
+  /** The npm dist-tag for the publish action. */
+  readonly tag?: string;
+  /** Include npm community results in a library search. */
+  readonly remote?: boolean;
 }
 
 /** The `aponia manifest` command. */

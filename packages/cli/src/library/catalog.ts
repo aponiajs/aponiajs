@@ -18,9 +18,9 @@ export interface LibraryCatalogEntry {
 }
 
 const compatibility = Object.freeze({
-  aponia: "1.0.0-beta.24",
-  elysia: "2.0.0-beta.24",
-  bun: ">=1.4.2",
+  aponia: "1.0.0-beta.25",
+  elysia: "2.0.0-rc.4",
+  bun: ">=1.4.4",
 });
 
 const docs = "https://github.com/aponiajs/aponiajs/blob/release/alpha/docs/packages.md";
@@ -103,6 +103,58 @@ export function searchLibraries(query = ""): readonly LibraryCatalogEntry[] {
         .toLowerCase()
         .includes(normalized),
     ),
+  );
+}
+
+/** Searches npm for community packages tagged `aponia-library`. */
+export async function searchRemoteLibraries(
+  query = "",
+  fetcher: (url: string, init?: RequestInit) => Promise<Response> = fetch,
+): Promise<readonly LibraryCatalogEntry[]> {
+  const text = ["keywords:aponia-library", query.trim()].filter(Boolean).join(" ");
+  const response = await fetcher(
+    `https://registry.npmjs.org/-/v1/search?text=${encodeURIComponent(text)}&size=50`,
+    { headers: { Accept: "application/json" } },
+  );
+  if (!response.ok) {
+    throw new Error(`npm registry search failed with status ${response.status}.`);
+  }
+  const body = (await response.json()) as {
+    readonly objects?: readonly {
+      readonly package?: {
+        readonly name?: string;
+        readonly description?: string;
+        readonly links?: { readonly repository?: string; readonly npm?: string };
+        readonly keywords?: readonly string[];
+      };
+    }[];
+  };
+  return Object.freeze(
+    (body.objects ?? []).flatMap((object) => {
+      const pkg = object.package;
+      if (!pkg?.name) {
+        return [];
+      }
+      const kind = pkg.keywords?.includes("adapter")
+        ? "adapter"
+        : pkg.keywords?.includes("plugin")
+          ? "plugin"
+          : pkg.keywords?.includes("utility")
+            ? "utility"
+            : "module";
+      return [
+        Object.freeze({
+          name: pkg.name,
+          kind,
+          description: pkg.description ?? "",
+          repository: pkg.links?.repository ?? pkg.links?.npm ?? "",
+          docs: pkg.links?.npm ?? "",
+          compatibility: Object.freeze({ aponia: "unknown", elysia: "unknown", bun: "unknown" }),
+          trust: "unverified" as const,
+          tags: Object.freeze(["community", "npm", ...(pkg.keywords ?? [])]),
+        }),
+      ];
+    }),
   );
 }
 

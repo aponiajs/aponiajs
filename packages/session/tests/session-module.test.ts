@@ -139,6 +139,41 @@ describe("SessionModule", () => {
     expect(response.headers.get("set-cookie")).toContain("aponia.sid=;");
   });
 
+  test("extends a rolling session when it is read", async () => {
+    @Controller("rolling")
+    class RollingController {
+      constructor(private readonly sessions: SessionService) {}
+
+      @Get("start")
+      async start(): Promise<string> {
+        return (await this.sessions.start({ user: "ada" })).id;
+      }
+
+      @Get("read")
+      read(): string {
+        const user = this.sessions.current()?.data.user;
+        return typeof user === "string" ? user : "none";
+      }
+    }
+
+    @Module({
+      imports: [SessionModule.register({ secret: secret(), rolling: true })],
+      controllers: [RollingController],
+    })
+    class AppModule {}
+
+    application = await AponiaFactory.create(AppModule, { logger: false });
+    const started = await application.handle(new Request("http://localhost/rolling/start"));
+    const id = readCookie(started.headers.get("set-cookie") ?? "", "aponia.sid");
+    expect(id).toBeDefined();
+
+    const read = await application.handle(
+      new Request("http://localhost/rolling/read", { headers: { cookie: `aponia.sid=${id}` } }),
+    );
+    expect(await read.text()).toBe("ada");
+    expect(read.headers.get("set-cookie")).toContain("aponia.sid=");
+  });
+
   test("reports every invalid session option in one refusal", () => {
     const error = captureAponiaError(() =>
       SessionModule.register({

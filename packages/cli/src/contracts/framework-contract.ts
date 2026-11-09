@@ -56,6 +56,9 @@ export const frameworkContract: FrameworkContract = Object.freeze({
     "@aponiajs/idempotency",
     "@aponiajs/microservices",
     "@aponiajs/serverless",
+    "@aponiajs/h3",
+    "@aponiajs/hono",
+    "@aponiajs/nitro",
   ]),
   decorators: Object.freeze([
     "Module",

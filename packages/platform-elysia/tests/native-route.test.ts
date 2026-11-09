@@ -24,7 +24,7 @@ function captureRegistrationFailure(application: Elysia): unknown {
 test("registers a route with the argument order Elysia 2 expects", () => {
   const calls: unknown[][] = [];
   const application = {
-    method: (...arguments_: unknown[]) => {
+    route: (...arguments_: unknown[]) => {
       calls.push(arguments_);
     },
   } as unknown as Elysia;
@@ -60,7 +60,7 @@ test("registers a route that declares no schema", async () => {
   expect(await response.text()).toBe("plain");
 });
 
-test("reports an Elysia build that no longer exposes method()", () => {
+test("reports an Elysia build that no longer exposes route()", () => {
   const error = captureRegistrationFailure({} as Elysia);
 
   expect(error).toBeInstanceOf(AponiaError);

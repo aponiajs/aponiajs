@@ -10,9 +10,12 @@ export default defineConfig({
       "@aponiajs/core": new URL("./packages/core/src/index.ts", import.meta.url).pathname,
       "@aponiajs/events": new URL("./packages/events/src/index.ts", import.meta.url).pathname,
       "@aponiajs/http": new URL("./packages/http/src/index.ts", import.meta.url).pathname,
+      "@aponiajs/h3": new URL("./packages/h3/src/index.ts", import.meta.url).pathname,
+      "@aponiajs/hono": new URL("./packages/hono/src/index.ts", import.meta.url).pathname,
       "@aponiajs/mcp": new URL("./packages/mcp/src/index.ts", import.meta.url).pathname,
       "@aponiajs/microservices": new URL("./packages/microservices/src/index.ts", import.meta.url)
         .pathname,
+      "@aponiajs/nitro": new URL("./packages/nitro/src/index.ts", import.meta.url).pathname,
       "@aponiajs/serverless": new URL("./packages/serverless/src/index.ts", import.meta.url)
         .pathname,
       "@aponiajs/rate-limit": new URL("./packages/rate-limit/src/index.ts", import.meta.url)

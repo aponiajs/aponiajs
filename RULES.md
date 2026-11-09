@@ -20,7 +20,8 @@ test run never justifies bypassing an architectural contract.
   behavior, and public example behavior must be covered by an appropriate test
   lane.
 - `bun run test:coverage` is the primary coverage gate. Aggregate line coverage
-  and function coverage must each remain at or above 95%.
+  must remain at or above 98%, function coverage at or above 95%, and every
+  package's line coverage at or above 95%.
 - The 95% threshold is a minimum safety floor, not a target. Do not lower it,
   round around it, remove the gate, or exclude code merely to make CI pass.
 - Every runtime TypeScript source under `packages/*/src/**/*.ts` and every

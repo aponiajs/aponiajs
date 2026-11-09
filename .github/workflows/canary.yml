@@ -28,7 +28,7 @@ jobs:
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.4.2
+          bun-version: 1.4.4
 
       - name: Set up Node for npm trusted publishing
         uses: actions/setup-node@v7
@@ -63,7 +63,7 @@ jobs:
 
       - name: Pack publishable workspaces
         run: |
-          mkdir -p canary-artifacts/{01-common,02-core,03-platform-elysia,04-cli,05-create-aponia,06-devtools,07-cron,08-graphql,09-testing,10-openapi,11-cors,12-opentelemetry,13-mcp,14-cache,15-events,16-http,17-rate-limit,18-security,19-session,20-compression,21-auth,22-audit,23-tenancy,24-queue,25-database,26-metrics,27-idempotency,28-microservices,29-serverless}
+          mkdir -p canary-artifacts/{01-common,02-core,03-platform-elysia,04-cli,05-create-aponia,06-devtools,07-cron,08-graphql,09-testing,10-openapi,11-cors,12-opentelemetry,13-mcp,14-cache,15-events,16-http,17-rate-limit,18-security,19-session,20-compression,21-auth,22-audit,23-tenancy,24-queue,25-database,26-metrics,27-idempotency,28-microservices,29-serverless,30-h3,31-hono,32-nitro}
           bun pm pack --cwd packages/common --destination "$GITHUB_WORKSPACE/canary-artifacts/01-common"
           bun pm pack --cwd packages/core --destination "$GITHUB_WORKSPACE/canary-artifacts/02-core"
           bun pm pack --cwd packages/platform-elysia --destination "$GITHUB_WORKSPACE/canary-artifacts/03-platform-elysia"
@@ -93,6 +93,9 @@ jobs:
           bun pm pack --cwd packages/idempotency --destination "$GITHUB_WORKSPACE/canary-artifacts/27-idempotency"
           bun pm pack --cwd packages/microservices --destination "$GITHUB_WORKSPACE/canary-artifacts/28-microservices"
           bun pm pack --cwd packages/serverless --destination "$GITHUB_WORKSPACE/canary-artifacts/29-serverless"
+          bun pm pack --cwd packages/h3 --destination "$GITHUB_WORKSPACE/canary-artifacts/30-h3"
+          bun pm pack --cwd packages/hono --destination "$GITHUB_WORKSPACE/canary-artifacts/31-hono"
+          bun pm pack --cwd packages/nitro --destination "$GITHUB_WORKSPACE/canary-artifacts/32-nitro"
 
       - name: Publish packages in dependency order
         working-directory: ${{ runner.temp }}

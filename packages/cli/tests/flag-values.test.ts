@@ -53,18 +53,21 @@ test("parses the same flags bare, negated, and through their short aliases", () 
     name: "app",
     dryRun: true,
     skipInstall: true,
+    workspace: false,
   });
   expect(parseArguments(["new", "app", "-d", "-s"])).toEqual({
     command: "new",
     name: "app",
     dryRun: true,
     skipInstall: true,
+    workspace: false,
   });
   expect(parseArguments(["new", "app", "--no-dry-run", "--no-skip-install"])).toEqual({
     command: "new",
     name: "app",
     dryRun: false,
     skipInstall: false,
+    workspace: false,
   });
   expect(
     parseArguments([
@@ -115,24 +118,28 @@ test("never consumes the token after a flag, wherever the flag stands", () => {
     name: "app",
     dryRun: true,
     skipInstall: false,
+    workspace: false,
   });
   expect(parseArguments(["new", "-d", "app"])).toEqual({
     command: "new",
     name: "app",
     dryRun: true,
     skipInstall: false,
+    workspace: false,
   });
   expect(parseArguments(["new", "--skip-install", "app"])).toEqual({
     command: "new",
     name: "app",
     dryRun: false,
     skipInstall: true,
+    workspace: false,
   });
   expect(parseArguments(["new", "--no-dry-run", "app"])).toEqual({
     command: "new",
     name: "app",
     dryRun: false,
     skipInstall: false,
+    workspace: false,
   });
   expect(parseArguments(["generate", "--flat", "controller", "user"])).toMatchObject({
     schematic: "controller",
@@ -169,6 +176,8 @@ test("leaves an unspecified flag undefined so configuration defaults still apply
     path: undefined,
     project: undefined,
     publish: false,
+    scope: undefined,
+    skipInstall: false,
     skipImport: false,
     crud: true,
     type: "rest",

@@ -230,8 +230,8 @@ class GuardedAppModule {}
 const flowPlugin = new Elysia({ name: "devtools-flow-fixture" })
   .derive("global", () => ({ requestId: "fixture" }))
   .derive("global", () => ({ traceId: "fixture" }))
-  .beforeHandle("global", () => {})
-  .afterHandle("global", () => {});
+  .onBeforeHandle("global", () => {})
+  .onAfterHandle("global", () => {});
 
 class ContributedInterceptor {
   interceptBefore(): void {}
@@ -754,7 +754,7 @@ test("a hook that declares no scope is published as no stage", async () => {
   // that tells such a hook from the platform's compiled one, and this endpoint
   // publishes a hook stage only for an entry it can identify.
   const bare = new Elysia();
-  bare.beforeHandle(() => {});
+  bare.onBeforeHandle(() => {});
   bare.get("/", () => "bare");
 
   // An application no boot produced: the mounted table is the whole source, and
@@ -768,7 +768,7 @@ test("a hook that declares no scope is published as no stage", async () => {
   // halves of the rule are in one table: what a source can name is published,
   // and what it cannot is not.
   const application = await AponiaFactory.createNative(GuardedAppModule, { logger: false });
-  application.beforeHandle(() => {});
+  application.onBeforeHandle(() => {});
   application.get("/undeclared", () => "undeclared");
   const payload = await readFlow(application);
 
@@ -800,7 +800,7 @@ test("a hook Elysia scopes globally is published as no stage", async () => {
   // rather than defaulted. Elysia 2 stamps neither, so the payload cannot tell
   // this hook from an unscoped one and publishes it the same way — as no stage.
   const application = new Elysia();
-  application.beforeHandle("global", () => {});
+  application.onBeforeHandle("global", () => {});
   application.get("/", () => "native");
 
   expect(await readFlow(application)).toEqual({

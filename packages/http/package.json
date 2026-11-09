@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/http",
-  "version": "1.0.0-beta.24",
+  "version": "1.0.0-beta.25",
   "description": "SSRF-safe outbound HTTP for an Aponia application, with timeouts, bounded responses, and validation.",
   "keywords": [
     "aponia",
@@ -51,7 +51,7 @@
   "devDependencies": {
     "@aponiajs/core": "workspace:*",
     "@aponiajs/platform-elysia": "workspace:*",
-    "elysia": "2.0.0-beta.24",
+    "elysia": "2.0.0-rc.4",
     "zod": "^4.6.6"
   }
 }

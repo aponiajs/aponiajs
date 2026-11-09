@@ -37,6 +37,24 @@ describe("CacheModule", () => {
     expect(await cache.get("key")).toBeUndefined();
   });
 
+  test("deletes, clears, and removes an entry for a non-positive TTL", async () => {
+    @Module({ imports: [CacheModule.register()] })
+    class AppModule {}
+
+    application = await AponiaFactory.create(AppModule, { logger: false });
+    const cache = application.get(CacheService);
+    await cache.set("key", "value");
+
+    expect(await cache.delete("key")).toBe(true);
+    await cache.set("key", "value");
+    await cache.set("key", "value", { ttlMs: 0 });
+    expect(await cache.get("key")).toBeUndefined();
+
+    await cache.set("key", "value");
+    await cache.clear();
+    expect(await cache.get("key")).toBeUndefined();
+  });
+
   test("wrap computes once and reuses the stored value", async () => {
     @Module({ imports: [CacheModule.register()] })
     class AppModule {}

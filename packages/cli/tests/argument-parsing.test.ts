@@ -13,9 +13,7 @@ test("recognizes every help and version spelling as a complete command", () => {
 
 test("maps the project alias and rejects aliases the command does not declare", () => {
   expect(parseArguments(["g", "service", "users", "-p", "api"])).toMatchObject({ project: "api" });
-  expect(() => parseArguments(["g", "service", "users", "-s"])).toThrow(
-    'Unknown option "--skip-install".',
-  );
+  expect(parseArguments(["g", "service", "users", "-s"])).toMatchObject({ skipInstall: true });
   expect(() => parseArguments(["n", "sample-api", "-p", "api"])).toThrow(
     'Unknown option "--project".',
   );

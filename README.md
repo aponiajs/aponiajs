@@ -5,7 +5,7 @@
 
 [![CI](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml/badge.svg)](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml)
 [![CLI npm version](https://img.shields.io/npm/v/%40aponiajs%2Fcli/beta?label=CLI)](https://www.npmjs.com/package/@aponiajs/cli)
-[![Bun](https://img.shields.io/badge/Bun-1.4.2-black)](https://bun.sh)
+[![Bun](https://img.shields.io/badge/Bun-1.4.4-black)](https://bun.sh)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 
 ## Description
@@ -15,7 +15,7 @@ provides a module system, dependency injection, declarative HTTP routing,
 runtime validation, and a coherent set of production services for
 authentication, security, persistence, messaging, observability, and delivery.
 
-Requirements: Bun 1.4.2 or later, and Elysia `2.0.0-beta.24` for the HTTP
+Requirements: Bun 1.4.4 or later, and Elysia `2.0.0-rc.4` for the HTTP
 platform package. Decorator-based applications need `experimentalDecorators`
 and `emitDecoratorMetadata`; the CLI starter configures both.
 
@@ -122,6 +122,7 @@ The framework ships as focused packages with explicit dependencies:
   `@aponiajs/metrics`, `@aponiajs/queue`, `@aponiajs/rate-limit`,
   `@aponiajs/security`, `@aponiajs/session`, `@aponiajs/tenancy`.
 - **Delivery**: `@aponiajs/microservices`, `@aponiajs/serverless`.
+- **Runtime adapters**: `@aponiajs/h3`, `@aponiajs/hono`, `@aponiajs/nitro`.
 
 All packages share one synchronized release version.
 

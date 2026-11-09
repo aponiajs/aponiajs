@@ -125,21 +125,49 @@ export function parseArguments(arguments_: readonly string[]): CliCommand {
 function parseLibraryCommand(arguments_: readonly string[]): LibraryCommandOptions {
   const parsed = parseOptions(arguments_);
   const [action, ...positionals] = parsed._;
-  if (action !== "check" && action !== "search") {
-    throw new Error('The library command requires the "check" or "search" action.');
+  if (action !== "check" && action !== "new" && action !== "publish" && action !== "search") {
+    throw new Error(
+      'The library command requires the "new", "check", "publish", or "search" action.',
+    );
   }
   if (positionals.length > 1) {
     throw new Error(`Unexpected argument "${positionals[1]}".`);
   }
-  assertKnownOptions(parsed, ["json", "path", "publish"]);
+  if (action === "new" && !positionals[0]) {
+    throw new Error("Library name is required.");
+  }
+  assertKnownOptions(parsed, [
+    "json",
+    "path",
+    "publish",
+    "scope",
+    "skip-install",
+    "tag",
+    "yes",
+    "remote",
+  ]);
 
   return {
     command: "library",
     action,
-    path: action === "check" ? (positionals[0] ?? readStringOption(parsed, "path")) : undefined,
+    path:
+      action === "check" || action === "publish"
+        ? (positionals[0] ?? readStringOption(parsed, "path"))
+        : undefined,
     json: readBooleanOption(parsed, "json", false),
     publish: action === "check" ? readBooleanOption(parsed, "publish", false) : false,
     ...(action === "search" ? { query: positionals[0] ?? "" } : {}),
+    ...(action === "new"
+      ? {
+          name: positionals[0],
+          scope: readStringOption(parsed, "scope"),
+          skipInstall: readBooleanOption(parsed, "skip-install", false),
+        }
+      : {}),
+    ...(action === "publish"
+      ? { yes: readBooleanOption(parsed, "yes", false), tag: readStringOption(parsed, "tag") }
+      : {}),
+    ...(action === "search" ? { remote: readBooleanOption(parsed, "remote", false) } : {}),
   };
 }
 
@@ -169,13 +197,14 @@ function parseNewCommand(arguments_: readonly string[]): NewCommandOptions {
     throw new Error(`Unexpected argument "${extraPositionals[0]}".`);
   }
 
-  assertKnownOptions(parsed, ["dry-run", "skip-install"]);
+  assertKnownOptions(parsed, ["dry-run", "skip-install", "workspace"]);
 
   return {
     command: "new",
     name,
     dryRun: readBooleanOption(parsed, "dry-run", false),
     skipInstall: readBooleanOption(parsed, "skip-install", false),
+    workspace: readBooleanOption(parsed, "workspace", false),
   };
 }
 
@@ -207,7 +236,9 @@ function parseGenerateCommand(arguments_: readonly string[]): GenerateCommandOpt
     "path",
     "publish",
     "project",
+    "scope",
     "skip-import",
+    "skip-install",
     "spec",
     "type",
   ]);
@@ -231,6 +262,8 @@ function parseGenerateCommand(arguments_: readonly string[]): GenerateCommandOpt
     crud: readBooleanOption(parsed, "crud", true),
     type: type as ResourceTransport,
     publish: readBooleanOption(parsed, "publish", false),
+    scope: readStringOption(parsed, "scope"),
+    skipInstall: readBooleanOption(parsed, "skip-install", false),
   };
 }
 

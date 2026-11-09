@@ -56,6 +56,19 @@ function storedPending(overrides: Partial<QueueJob> = {}): QueueJob {
 }
 
 describe("queue store", () => {
+  test("bounds the memory backlog and removes or clears jobs", () => {
+    const store = new MemoryQueueStore({ maxJobs: 1 });
+    store.save(storedPending({ id: "first" }));
+    store.save(storedPending({ id: "second" }));
+    expect(store.load().map((job) => job.id)).toEqual(["second"]);
+
+    store.remove("second");
+    expect(store.load()).toEqual([]);
+    store.save(storedPending({ id: "third" }));
+    store.clear();
+    expect(store.load()).toEqual([]);
+  });
+
   test("records each state and forgets a completed job", async () => {
     const store = new TestStore();
     const queue = new QueueService({ autoStart: false, store });

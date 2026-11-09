@@ -68,7 +68,7 @@ export function idempotencyPlugin(options: ResolvedIdempotencyOptions): Elysia {
   };
 
   const plugin = new Elysia({ name: "aponia.idempotency" })
-    .beforeHandle("global", async (context) => {
+    .onBeforeHandle("global", async (context) => {
       const request = context.request;
       if (!methods.has(request.method.toUpperCase())) {
         return undefined;
@@ -113,7 +113,7 @@ export function idempotencyPlugin(options: ResolvedIdempotencyOptions): Elysia {
       });
       return undefined;
     })
-    .afterHandle("global", async (context) => {
+    .onAfterHandle("global", async (context) => {
       const state = states.get(context.request);
       if (state === undefined) {
         return undefined;
@@ -134,11 +134,11 @@ export function idempotencyPlugin(options: ResolvedIdempotencyOptions): Elysia {
       release(context.request);
       return undefined;
     })
-    .afterResponse("global", (context) => {
+    .onAfterResponse("global", (context) => {
       release(context.request);
       return undefined;
     })
-    .error((context) => {
+    .onError((context) => {
       release(context.request);
       return undefined;
     });

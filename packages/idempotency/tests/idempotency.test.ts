@@ -22,6 +22,49 @@ function send(path: string, body: unknown, key?: string): Request {
 }
 
 describe("IdempotencyModule", () => {
+  test("reports store failures, rejects a long key, and still runs the handler", async () => {
+    const errors: string[] = [];
+    const failingStore: IdempotencyStore = {
+      get() {
+        throw new Error("read failed");
+      },
+      set() {
+        throw new Error("write failed");
+      },
+      delete() {
+        return false;
+      },
+      clear() {},
+    };
+
+    @Controller("orders")
+    class OrdersController {
+      @Post()
+      create(@Body() body: { readonly id: number }): string {
+        return `created:${body.id}`;
+      }
+    }
+
+    @Module({
+      imports: [
+        IdempotencyModule.register({
+          store: failingStore,
+          onError: (_error, key) => errors.push(key),
+        }),
+      ],
+      controllers: [OrdersController],
+    })
+    class AppModule {}
+
+    application = await AponiaFactory.create(AppModule, { logger: false });
+    const tooLong = await application.handle(send("/orders", { id: 1 }, "x".repeat(300)));
+    expect(tooLong.status).toBe(400);
+
+    const response = await application.handle(send("/orders", { id: 2 }, "order-2"));
+    expect(await response.text()).toBe("created:2");
+    expect(errors).toContain("order-2");
+  });
+
   test("replays the recorded answer without running the handler again", async () => {
     let calls = 0;
 

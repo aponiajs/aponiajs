@@ -1,13 +1,19 @@
 # Authoring a Library
 
-`aponia g library <name>` creates a workspace package under `packages/`. Add
-`--publish` to generate a publishable npm package instead of a private workspace
-package.
+`aponia new my-api --workspace` creates `apps/api` plus `libs/`; the default
+single-app layout is unchanged. `aponia g library <name>` writes a workspace
+library under `libs/`, adds it to the target app as `workspace:*`, and installs
+the workspace link. Add `--publish` for a publishable npm package.
 
 ```bash
-aponia g library widgets --publish
-aponia library check packages/widgets --publish
+aponia g library widgets --publish --scope acme
+aponia library check libs/widgets --publish
+aponia library publish libs/widgets
 ```
+
+`aponia library new widgets --scope acme` creates the same publishable package
+standalone, outside any Aponia workspace. It depends only on published
+AponiaJS packages and can be pushed to npm independently.
 
 ## What the generator creates
 
@@ -23,9 +29,11 @@ aponia library check packages/widgets --publish
 | `README.md`, `AGENTS.md`, `llms.txt` | Human and agent documentation                       |
 | `tsconfig*.json`, `vite.config.ts`   | Package build and test configuration                |
 
-A publishable package declares `exports`, `files`, `publishConfig.access`, and
-`sideEffects: false`. It has no `postinstall` script. A private workspace
-package keeps `private: true` and can still carry the same manifest.
+A publishable package declares `exports`, `files`, `publishConfig.access`,
+`sideEffects: false`, the `aponiajs` and `aponia-library` npm keywords, and
+`@aponiajs/common` as a peer dependency. It has no `postinstall` script. A
+private workspace package keeps `private: true` and exports its source so the
+application can import it without a build step.
 
 ## The library contract
 
@@ -37,7 +45,7 @@ the package:
   "contractVersion": 1,
   "name": "widgets",
   "kind": "module",
-  "framework": { "aponia": "1.0.0-beta.24", "bun": ">=1.4.2" },
+  "framework": { "aponia": "1.0.0-beta.25", "bun": ">=1.4.4" },
   "entrypoints": [{ "subpath": ".", "module": "./dist/index.mjs" }],
   "provides": [
     { "kind": "module", "token": "WidgetsModule" },
@@ -57,15 +65,23 @@ surface it can see.
 `aponia library check [path]` validates the package manifest, the library
 manifest, the public barrel, both test lanes, and the documentation files.
 `--publish` additionally requires a non-private package with
-`publishConfig.access` set to `public`. `--json` prints the frozen result.
+`publishConfig.access` set to `public`, npm keywords, a license, a semver
+version, and a peer dependency on `@aponiajs/common`. `--json` prints the frozen
+result.
+
+`aponia library publish [path]` runs the publish check, build, and `npm pack
+--dry-run`. It stops with the exact publish command unless `--yes` is passed;
+then it runs `npm publish --access public` with the optional `--tag`.
 
 ## Catalog
 
 `aponia library search <query>` searches the bundled catalog by name, kind,
-description, or tag; `--json` prints the entries. The catalog is curated data in
-this repository, not a hosted registry. Every `official` entry names a published
-workspace package, and `scripts/library-catalog.spec.ts` holds that invariant.
-The same catalog is exposed through the `aponia_search_libraries` MCP tool.
+description, or tag. `--remote` adds npm packages tagged `aponia-library`, marked
+`unverified`; `--json` prints the entries. The bundled catalog remains curated
+data in this repository, not a hosted registry. Every `official` entry names a
+published workspace package, and `scripts/library-catalog.spec.ts` holds that
+invariant. The same catalog is exposed through the `aponia_search_libraries` MCP
+tool.
 
 ## Publishing
 

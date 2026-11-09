@@ -37,6 +37,17 @@ describe("AuditModule", () => {
 
   test("supports a custom redaction key and clears the store", async () => {
     const store = new MemoryAuditStore({ maxEntries: 2 });
+    expect(store.size).toBe(0);
+    store.record({
+      action: "a",
+      outcome: "success",
+      actor: "a",
+      metadata: {},
+      timestamp: Date.now(),
+    });
+    expect(store.size).toBe(1);
+    store.clear();
+    expect(store.size).toBe(0);
 
     @Module({ imports: [AuditModule.register({ store, redact: ["ssn"] })] })
     class AppModule {}
