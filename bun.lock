@@ -131,6 +131,19 @@
         "elysia": "2.0.0-rc.4",
       },
     },
+    "examples/nitro": {
+      "name": "@aponiajs/example-nitro",
+      "version": "0.0.0",
+      "dependencies": {
+        "@aponiajs/common": "workspace:*",
+        "@aponiajs/core": "workspace:*",
+        "@aponiajs/nitro": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
+        "@aponiajs/serverless": "workspace:*",
+        "elysia": "2.0.0-rc.4",
+        "nitro": "3.0.261103-rc",
+      },
+    },
     "examples/reference": {
       "name": "@aponiajs/example-reference",
       "version": "0.0.0",
@@ -156,6 +169,17 @@
         "@aponiajs/platform-elysia": "workspace:*",
         "elysia": "2.0.0-rc.4",
         "zod": "^4.6.6",
+      },
+    },
+    "examples/serverless": {
+      "name": "@aponiajs/example-serverless",
+      "version": "0.0.0",
+      "dependencies": {
+        "@aponiajs/common": "workspace:*",
+        "@aponiajs/core": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
+        "@aponiajs/serverless": "workspace:*",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "examples/validation": {
@@ -738,9 +762,13 @@
 
     "@aponiajs/example-native-plugins": ["@aponiajs/example-native-plugins@workspace:examples/native-plugins"],
 
+    "@aponiajs/example-nitro": ["@aponiajs/example-nitro@workspace:examples/nitro"],
+
     "@aponiajs/example-reference": ["@aponiajs/example-reference@workspace:examples/reference"],
 
     "@aponiajs/example-request-parameters": ["@aponiajs/example-request-parameters@workspace:examples/request-parameters"],
+
+    "@aponiajs/example-serverless": ["@aponiajs/example-serverless@workspace:examples/serverless"],
 
     "@aponiajs/example-validation": ["@aponiajs/example-validation@workspace:examples/validation"],
 

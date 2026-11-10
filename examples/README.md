@@ -21,6 +21,8 @@ behavior the framework promises.
 | `eden-treaty`          | End-to-end type safety with Eden Treaty, path-agnostic DTOs, and inline schemas                        | 3120 | `bun run example:eden-treaty`          |
 | `reference`            | The full stack in one app: config, Drizzle, auth, queue, metrics, and health probes                    | 3130 | `bun run example:reference`            |
 | `microservices`        | Message patterns, CBOR envelopes, and request/event handlers across services                           | 3140 | `bun run example:microservices`        |
+| `serverless`           | Web Fetch and AWS Lambda deployment adapters                                                           | 3150 | `bun run example:serverless`           |
+| `nitro`                | Nitro 3 RC server route delivery adapter                                                               | 3160 | `bun run example:nitro`                |
 
 Run every suite the way CI does:
 

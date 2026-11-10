@@ -34,6 +34,8 @@
     "example:validation": "bun run --cwd examples/validation start",
     "example:websockets": "bun run --cwd examples/websockets start",
     "example:microservices": "bun run --cwd examples/microservices start",
+    "example:serverless": "bun run --cwd examples/serverless start",
+    "example:nitro": "bun run --cwd examples/nitro start",
     "test": "bun run --workspaces test",
     "test:coverage": "bun test --coverage --coverage-reporter=text --coverage-reporter=lcov && bun scripts/coverage-gate.ts",
     "test:examples": "bun test ./examples/*/test/*.e2e-spec.ts",

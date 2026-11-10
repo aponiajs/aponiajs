@@ -30,6 +30,8 @@ export const elysiaTargetFiles = [
   "examples/validation/package.json",
   "examples/websockets/package.json",
   "examples/microservices/package.json",
+  "examples/serverless/package.json",
+  "examples/nitro/package.json",
   "packages/cli/templates/application/src/descriptors.generated.ts.tmpl",
   "packages/cli/templates/application/src/invokers.generated.ts.tmpl",
   "docs/elysia-compatibility.md",
