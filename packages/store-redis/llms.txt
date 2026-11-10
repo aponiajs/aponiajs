@@ -12,3 +12,9 @@
 - `RedisRefreshTokenStore`: implements `RefreshTokenStore`
 - Types: `RedisClientInterface`, `RedisStoreOptions`
 
+## Documentation
+
+- [Package README](README.md)
+- [Published packages](../../docs/packages.md)
+- [npm](https://www.npmjs.com/package/@aponiajs/store-redis)
+
