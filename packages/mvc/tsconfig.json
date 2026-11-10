@@ -22,7 +22,10 @@
       "@aponiajs/core": ["../core/src/index.ts"],
       "@aponiajs/serverless": ["../serverless/src/index.ts"],
       "@aponiajs/platform-elysia": ["../platform-elysia/src/index.ts"],
-      "@aponiajs/view": ["../view/src/index.ts"]
+      "@aponiajs/view": ["../view/src/index.ts"],
+      "@aponiajs/h3": ["../h3/src/index.ts"],
+      "@aponiajs/hono": ["../hono/src/index.ts"],
+      "@aponiajs/nitro": ["../nitro/src/index.ts"]
     }
   }
 }
