@@ -3159,6 +3159,43 @@
       ]
     },
     {
+      "name": "@aponiajs/store-redis",
+      "exports": [
+        {
+          "name": "RedisCacheStore",
+          "kind": "value"
+        },
+        {
+          "name": "RedisClientInterface",
+          "kind": "type"
+        },
+        {
+          "name": "RedisIdempotencyStore",
+          "kind": "value"
+        },
+        {
+          "name": "RedisRateLimitStore",
+          "kind": "value"
+        },
+        {
+          "name": "RedisRefreshTokenStore",
+          "kind": "value"
+        },
+        {
+          "name": "RedisRevocationStore",
+          "kind": "value"
+        },
+        {
+          "name": "RedisSessionStore",
+          "kind": "value"
+        },
+        {
+          "name": "RedisStoreOptions",
+          "kind": "type"
+        }
+      ]
+    },
+    {
       "name": "@aponiajs/tenancy",
       "exports": [
         {

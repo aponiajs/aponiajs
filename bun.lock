@@ -674,6 +674,30 @@
         "elysia": "2.0.0-rc.4",
       },
     },
+    "packages/store-redis": {
+      "name": "@aponiajs/store-redis",
+      "version": "1.0.0-beta.27",
+      "dependencies": {
+        "@aponiajs/common": "workspace:*",
+      },
+      "devDependencies": {
+        "@aponiajs/auth": "workspace:*",
+        "@aponiajs/cache": "workspace:*",
+        "@aponiajs/core": "workspace:*",
+        "@aponiajs/idempotency": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
+        "@aponiajs/rate-limit": "workspace:*",
+        "@aponiajs/session": "workspace:*",
+        "elysia": "2.0.0-rc.4",
+        "redis": "6.3.1",
+      },
+      "peerDependencies": {
+        "redis": "6.3.1",
+      },
+      "optionalPeers": [
+        "redis",
+      ],
+    },
     "packages/tenancy": {
       "name": "@aponiajs/tenancy",
       "version": "1.0.0-beta.27",
@@ -807,6 +831,8 @@
     "@aponiajs/serverless": ["@aponiajs/serverless@workspace:packages/serverless"],
 
     "@aponiajs/session": ["@aponiajs/session@workspace:packages/session"],
+
+    "@aponiajs/store-redis": ["@aponiajs/store-redis@workspace:packages/store-redis"],
 
     "@aponiajs/tenancy": ["@aponiajs/tenancy@workspace:packages/tenancy"],
 

@@ -24,6 +24,7 @@ const packageBarrels = [
   "packages/openapi/src/index.ts",
   "packages/opentelemetry/src/index.ts",
   "packages/microservices/src/index.ts",
+  "packages/store-redis/src/index.ts",
 ] as const;
 
 const repositoryRoot = resolve(import.meta.dir, "..");

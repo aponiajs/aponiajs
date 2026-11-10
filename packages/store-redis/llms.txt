@@ -1,0 +1,14 @@
+# @aponiajs/store-redis
+
+> Redis storage adapters for AponiaJS distributed cache, rate limit, session, idempotency, and auth token stores.
+
+## Exports
+
+- `RedisCacheStore`: implements `CacheStore`
+- `RedisRateLimitStore`: implements `RateLimitStore`
+- `RedisSessionStore`: implements `SessionStore`
+- `RedisIdempotencyStore`: implements `IdempotencyStore`
+- `RedisRevocationStore`: implements `RevocationStore`
+- `RedisRefreshTokenStore`: implements `RefreshTokenStore`
+- Types: `RedisClientInterface`, `RedisStoreOptions`
+

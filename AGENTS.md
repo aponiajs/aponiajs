@@ -41,6 +41,7 @@ Bun workspace. Framework packages live in `packages/`:
 | `@aponiajs/metrics`         | Prometheus registry, request instrumentation, scrape endpoint   | `common`, `platform-elysia`, peer `elysia`                               |
 | `@aponiajs/idempotency`     | Idempotent request replay, conflict detection, store            | `common`, `platform-elysia`, peer `elysia`                               |
 | `@aponiajs/microservices`   | Message patterns, CBOR client/server, optional broker adapters  | `common`, `cborg`; optional broker SDK peers                             |
+| `@aponiajs/store-redis`     | Redis stores for cache, rate-limit, session, idempotency, auth  | `common`; optional peer `redis`                                          |
 | `@aponiajs/serverless`      | AWS Lambda and Web Fetch adapters for an application            | —                                                                        |
 | `@aponiajs/h3`              | H3 delivery adapter for an application                          | `serverless`, peer `h3`                                                  |
 | `@aponiajs/hono`            | Hono delivery adapter for an application                        | `serverless`, peer `hono`                                                |
@@ -114,6 +115,7 @@ being changed:
 | [`packages/openapi`](packages/openapi/AGENTS.md)                 | The OpenAPI document package, served by its own registration     |
 | [`packages/opentelemetry`](packages/opentelemetry/AGENTS.md)     | The OpenTelemetry tracing package, and its process-global limit  |
 | [`packages/microservices`](packages/microservices/AGENTS.md)     | Message patterns, CBOR client/server, optional broker adapters   |
+| [`packages/store-redis`](packages/store-redis/AGENTS.md)         | Redis stores for cache, rate-limit, session, idempotency, auth   |
 | [`packages/serverless`](packages/serverless/AGENTS.md)           | AWS Lambda and Web Fetch adapters for an application             |
 | [`packages/h3`](packages/h3/AGENTS.md)                           | H3 delivery adapter for an application                           |
 | [`packages/hono`](packages/hono/AGENTS.md)                       | Hono delivery adapter for an application                         |

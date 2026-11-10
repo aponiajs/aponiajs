@@ -24,6 +24,7 @@ published version.
 | [`@aponiajs/metrics`](https://www.npmjs.com/package/@aponiajs/metrics)                 | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fmetrics)](https://www.npmjs.com/package/@aponiajs/metrics)                 | `bun add @aponiajs/metrics@beta`                           |
 | [`@aponiajs/idempotency`](https://www.npmjs.com/package/@aponiajs/idempotency)         | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fidempotency)](https://www.npmjs.com/package/@aponiajs/idempotency)         | `bun add @aponiajs/idempotency@beta`                       |
 | [`@aponiajs/microservices`](https://www.npmjs.com/package/@aponiajs/microservices)     | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fmicroservices)](https://www.npmjs.com/package/@aponiajs/microservices)     | `bun add @aponiajs/microservices@beta`                     |
+| [`@aponiajs/store-redis`](https://www.npmjs.com/package/@aponiajs/store-redis)         | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fstore-redis)](https://www.npmjs.com/package/@aponiajs/store-redis)         | `bun add @aponiajs/store-redis@beta`                       |
 | [`@aponiajs/serverless`](https://www.npmjs.com/package/@aponiajs/serverless)           | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fserverless)](https://www.npmjs.com/package/@aponiajs/serverless)           | `bun add @aponiajs/serverless@beta`                        |
 | [`@aponiajs/h3`](https://www.npmjs.com/package/@aponiajs/h3)                           | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fh3)](https://www.npmjs.com/package/@aponiajs/h3)                           | `bun add @aponiajs/h3@beta`                                |
 | [`@aponiajs/hono`](https://www.npmjs.com/package/@aponiajs/hono)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fhono)](https://www.npmjs.com/package/@aponiajs/hono)                       | `bun add @aponiajs/hono@beta`                              |
@@ -383,6 +384,16 @@ optional peer installed only by the services that use it.
 [Package README](../packages/microservices/README.md) ·
 [Microservices guide](./microservices.md) ·
 [npm](https://www.npmjs.com/package/@aponiajs/microservices)
+
+### `@aponiajs/store-redis`
+
+Redis-backed distributed storage adapters. Implements official store contracts
+for `@aponiajs/cache` (`CacheStore`), `@aponiajs/rate-limit` (`RateLimitStore`),
+`@aponiajs/session` (`SessionStore`), `@aponiajs/idempotency` (`IdempotencyStore`),
+and `@aponiajs/auth` (`RevocationStore`, `RefreshTokenStore`).
+
+[Package README](../packages/store-redis/README.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/store-redis)
 
 ### `@aponiajs/serverless`
 

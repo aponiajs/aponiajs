@@ -190,6 +190,11 @@ const packageLayouts: readonly PackageLayout[] = [
     directories: ["brokers", "client", "envelope", "module", "server", "transport"],
   },
   {
+    sourceRoot: "packages/store-redis/src",
+    files: ["index.ts"],
+    directories: ["common", "stores"],
+  },
+  {
     sourceRoot: "packages/serverless/src",
     files: ["index.ts"],
     directories: ["fetch", "lambda"],
