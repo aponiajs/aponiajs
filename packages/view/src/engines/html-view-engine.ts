@@ -31,7 +31,7 @@ export class HtmlViewEngine implements ViewEngine {
       }
     }
 
-    const pattern = new RegExp("(?:\\{\\{|<%=\\s*)([a-zA-Z0-9_$.]+)(?:\\}\\}|\\s*%>)", "g");
+    const pattern = new RegExp("(?:\\{\\{\\s*|<%=\\s*)([a-zA-Z0-9_$.]+)(?:\\s*\\}\\}|\\s*%>)", "g");
     return content.replace(pattern, (_match, key) => {
       const val = data[key];
       if (val === undefined || val === null) {
