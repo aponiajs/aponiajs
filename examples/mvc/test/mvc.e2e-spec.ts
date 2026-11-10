@@ -2,66 +2,59 @@ import { expect, test } from "bun:test";
 import { AponiaFactory } from "@aponiajs/platform-elysia";
 import { AppModule } from "../src/app.module.ts";
 
-test("renders Blade layouts, partials, components, loops, and escaped data", async () => {
+test("serves full page with layouts on normal browser request", async () => {
   const application = await AponiaFactory.create(AppModule, { logger: false });
   try {
-    const home = await application.handle(new Request("http://localhost/"));
-    expect(home.status).toBe(200);
-    expect(home.headers.get("content-type")).toContain("text/html");
-    const homeHtml = await home.text();
-    expect(homeHtml).toContain("<title>AponiaJS MVC</title>");
-    expect(homeHtml).toContain('<a href="/users">Users</a>');
-    expect(homeHtml).toContain(
-      '<div class="alert alert-info">Welcome to the Laravel-style MVC example.</div>',
-    );
+    const response = await application.handle(new Request("http://localhost/articles"));
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("text/html");
 
-    const users = await application.handle(new Request("http://localhost/users"));
-    const usersHtml = await users.text();
-    expect(usersHtml).toContain("Total users: 2");
-    expect(usersHtml).toContain("Ada (admin)");
-    expect(usersHtml).toContain("Linus (member)");
-
-    // Test direct view() helper without decorator
-    const direct = await application.handle(new Request("http://localhost/direct-view"));
-    expect(direct.status).toBe(200);
-    expect(direct.headers.get("content-type")).toContain("text/html");
-    expect(await direct.text()).toContain("Direct View");
+    const html = await response.text();
+    expect(html).toContain("<!doctype html>");
+    expect(html).toContain("<title>Articles</title>");
+    expect(html).toContain('<script src="https://unpkg.com/htmx.org@2.0.4"></script>');
+    expect(html).toContain("What is MVC?");
+    expect(html).toContain("Modern HTMX Flow");
   } finally {
     await application.close();
   }
 });
 
-test("answers the Inertia protocol for React and Vue", async () => {
+test("automatically strips layout for HTMX requests without if-conditions in controller", async () => {
   const application = await AponiaFactory.create(AppModule, { logger: false });
   try {
-    const full = await application.handle(new Request("http://localhost/inertia/users"));
-    const html = await full.text();
-    expect(html).toContain('id="app"');
-    expect(html).toContain("Users/Index");
-
-    const spa = await application.handle(
-      new Request("http://localhost/inertia/users", {
-        headers: { "x-inertia": "true" },
+    const response = await application.handle(
+      new Request("http://localhost/articles/decorated", {
+        headers: { "hx-request": "true" },
       }),
     );
-    expect(spa.headers.get("x-inertia")).toBe("true");
-    const page = (await spa.json()) as {
-      component: string;
-      props: { users: unknown[] };
-      url: string;
-    };
-    expect(page.component).toBe("Users/Index");
-    expect(page.props.users).toHaveLength(2);
-    expect(page.url).toBe("/inertia/users");
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("text/html");
 
-    // Test direct inertia() helper
-    const directInertia = await application.handle(
-      new Request("http://localhost/direct-inertia", {
-        headers: { "x-inertia": "true" },
-      }),
+    const html = await response.text();
+    // Layout is automatically stripped for HTMX!
+    expect(html).not.toContain("<!doctype html>");
+    expect(html).not.toContain("<head>");
+    expect(html).toContain('<div id="articles-container">');
+    expect(html).toContain("What is MVC?");
+  } finally {
+    await application.close();
+  }
+});
+
+test("serves single article detail and returns HTML fragment on delete", async () => {
+  const application = await AponiaFactory.create(AppModule, { logger: false });
+  try {
+    const detail = await application.handle(new Request("http://localhost/articles/1"));
+    expect(detail.status).toBe(200);
+    const detailHtml = await detail.text();
+    expect(detailHtml).toContain("Model-View-Controller in AponiaJS.");
+
+    const deleted = await application.handle(
+      new Request("http://localhost/articles/1", { method: "DELETE" }),
     );
-    expect(directInertia.headers.get("x-inertia")).toBe("true");
-    expect(((await directInertia.json()) as any).component).toBe("Users/Index");
+    expect(deleted.status).toBe(200);
+    expect(await deleted.text()).toBe("<p>Article deleted successfully</p>");
   } finally {
     await application.close();
   }

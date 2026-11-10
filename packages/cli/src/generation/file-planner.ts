@@ -8,6 +8,8 @@ import {
   renderEntity,
   renderGraphqlResolverScaffold,
   renderMicroserviceController,
+  renderMvcResourceController,
+  renderMvcResourceView,
   renderResourceController,
   renderResourceModel,
   renderResourceModule,
@@ -65,7 +67,7 @@ export function createResourceFiles(
   // rather than from `resourceTransportStem`, whose `"controller" | "gateway"
   // | "resolver"` union cannot tell a mounted controller from a scaffold.
   const fileStem =
-    options.type === "rest" || options.type === "microservice"
+    options.type === "rest" || options.type === "microservice" || options.type === "mvc"
       ? "controller"
       : options.type === "ws"
         ? "gateway"
@@ -80,7 +82,7 @@ export function createResourceFiles(
   ];
 
   const restCrud = options.crud && options.type === "rest";
-  if (restCrud) {
+  if (restCrud || options.type === "mvc") {
     files.push(createFile(directory, `${names.fileName}.model.ts`, renderResourceModel(names)));
   }
 
@@ -116,6 +118,11 @@ export function createResourceFiles(
         `${names.fileName}.controller.ts`,
         renderResourceController(names, options.crud),
       ),
+    );
+  } else if (options.type === "mvc") {
+    files.push(
+      createFile(directory, `${names.fileName}.controller.ts`, renderMvcResourceController(names)),
+      createFile(join(directory, "views"), `index.blade.html`, renderMvcResourceView(names)),
     );
   } else if (options.type === "ws") {
     files.push(

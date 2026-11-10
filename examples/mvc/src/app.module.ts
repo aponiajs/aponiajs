@@ -1,14 +1,14 @@
 import { Module } from "@aponiajs/common";
 import { ViewModule } from "@aponiajs/view";
-import { AppController } from "./app.controller.ts";
+import { ArticlesModule } from "./articles/articles.module.ts";
 
 @Module({
   imports: [
     ViewModule.register({
       defaultEngine: "blade",
-      rootDir: new URL("../views", import.meta.url).pathname,
+      rootDir: new URL("./", import.meta.url).pathname,
     }),
+    ArticlesModule,
   ],
-  controllers: [AppController],
 })
 export class AppModule {}

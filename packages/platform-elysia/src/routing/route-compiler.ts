@@ -1103,7 +1103,12 @@ function createLifecycleHook(
                   { template: route.view.template },
                 );
               }
-              response = await viewRenderer(route.view.template, response, route.view.options);
+              const isHtmx = context.request.headers.get("hx-request") === "true";
+              const viewOptions =
+                isHtmx && !route.view.options?.fragment
+                  ? { ...route.view.options, fragment: true }
+                  : route.view.options;
+              response = await viewRenderer(route.view.template, response, viewOptions);
               context.set.headers["content-type"] = "text/html; charset=utf-8";
             }
 

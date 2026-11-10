@@ -1,9 +1,0 @@
-@extends('layouts.app') @section('content')
-<h1>{{ title }}</h1>
-<x-alert type="info">Total users: {{ users.length }}</x-alert>
-<ul>
-  @foreach(users as user)
-  <li>{{ user.name }} ({{ user.role }})</li>
-  @endforeach
-</ul>
-@endsection

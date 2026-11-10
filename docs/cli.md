@@ -133,7 +133,7 @@ the check, build, and pack verification before an explicit publish, and
 `aponia-library`.
 
 Resources additionally support `--crud` / `--no-crud` and these transports:
-`rest`, `graphql-code-first`, `graphql-schema-first`, `microservice`, and `ws`.
+`rest`, `mvc`, `graphql-code-first`, `graphql-schema-first`, `microservice`, and `ws`.
 REST resources generate a mounted controller; GraphQL resources generate an
 unconnected resolver scaffold — the class is emitted beside the service, but the
 module registers only the service, and the file's own comment names the seam to

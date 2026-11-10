@@ -314,7 +314,9 @@ function buildPlanOptions(root: string, input: PlanInput): GenerateSchematicOpti
   }
   const type = input.type ?? "rest";
   if (
-    !["rest", "graphql-code-first", "graphql-schema-first", "microservice", "ws"].includes(type)
+    !["rest", "mvc", "graphql-code-first", "graphql-schema-first", "microservice", "ws"].includes(
+      type,
+    )
   ) {
     throw new Error(`Unknown resource transport "${type}".`);
   }

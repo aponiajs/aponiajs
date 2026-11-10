@@ -4,4 +4,4 @@ export type { ViewEngine, ViewModuleOptions } from "./module/view.types.ts";
 export { HtmlViewEngine } from "./engines/html-view-engine.ts";
 export { BladeViewEngine } from "./engines/blade-view-engine.ts";
 export type { BladeViewEngineOptions } from "./engines/blade-view-engine.ts";
-export { setDefaultViewEngine, view } from "./helper/view-response.ts";
+export { fragment, isHtmxRequest, setDefaultViewEngine, view } from "./helper/view-response.ts";

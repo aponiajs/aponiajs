@@ -15,6 +15,9 @@ export function renderResourceModule(names: ComponentNames, type: ResourceTransp
   if (type === "microservice") {
     return `import { Module } from "@aponiajs/common";\nimport { ${transportClass} } from "./${names.fileName}.${stem}.ts";\nimport { ${names.className}Service } from "./${names.fileName}.service.ts";\n\n@Module({\n  controllers: [${transportClass}],\n  providers: [${names.className}Service],\n})\nexport class ${names.className}Module {}\n`;
   }
+  if (type === "mvc") {
+    return `import { Module } from "@aponiajs/common";\nimport { ${names.className}Controller } from "./${names.fileName}.controller.ts";\nimport { ${names.className}Service } from "./${names.fileName}.service.ts";\n\n@Module({\n  controllers: [${names.className}Controller],\n  providers: [${names.className}Service],\n})\nexport class ${names.className}Module {}\n`;
+  }
   // A scaffold for a transport the platform does not answer: the class is
   // emitted beside the service, but the module registers only the service. The
   // unregistered class is intentional — a provider the container built for a
@@ -175,4 +178,12 @@ export function renderWebSocketGateway(
     : "";
 
   return `${commonImport}\n${dtoImports}import { ${names.className}Service } from "./${names.fileName}.service.ts";\n\n@WebSocketGateway("/${names.routePath}")\nexport class ${className} {\n  constructor(private readonly ${names.propertyName}Service: ${names.className}Service) {}\n${handlers}}\n`;
+}
+
+export function renderMvcResourceController(names: ComponentNames): string {
+  return `import { Controller, Get, Param } from "@aponiajs/common";\nimport { view } from "@aponiajs/view";\nimport { ${names.className}Service } from "./${names.fileName}.service.ts";\n\n@Controller("${names.routePath}")\nexport class ${names.className}Controller {\n  constructor(private readonly ${names.propertyName}Service: ${names.className}Service) {}\n\n  @Get()\n  index() {\n    return view("./views/index.blade.html", { ${names.propertyName}: this.${names.propertyName}Service.findAll() });\n  }\n\n  @Get(":id")\n  show(@Param("id") id: string) {\n    return view("./views/index.blade.html", { item: this.${names.propertyName}Service.findOne(id) });\n  }\n}\n`;
+}
+
+export function renderMvcResourceView(names: ComponentNames): string {
+  return `<div id="${names.fileName}-container">\n  <h1>${names.className}</h1>\n  <ul>\n    @foreach(${names.propertyName} as item)\n      <li>{{ item.name }}</li>\n    @endforeach\n  </ul>\n</div>\n`;
 }

@@ -1,4 +1,4 @@
-import { Module, provideFactory, provideValue, type DynamicModule } from "@aponiajs/common";
+import { Global, Module, provideFactory, provideValue, type DynamicModule } from "@aponiajs/common";
 import { VIEW_ENGINE } from "@aponiajs/common";
 import type { ViewEngine, ViewModuleOptions } from "./view.types.ts";
 import { HtmlViewEngine } from "../engines/html-view-engine.ts";
@@ -8,6 +8,7 @@ import { setDefaultViewEngine } from "../helper/view-response.ts";
 /**
  * ViewModule provides template rendering services for MVC applications.
  */
+@Global()
 @Module({})
 export class ViewModule {
   static register(options: ViewModuleOptions = {}): DynamicModule {

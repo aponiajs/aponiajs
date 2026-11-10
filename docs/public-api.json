@@ -3334,7 +3334,15 @@
           "kind": "type"
         },
         {
+          "name": "fragment",
+          "kind": "value"
+        },
+        {
           "name": "HtmlViewEngine",
+          "kind": "value"
+        },
+        {
+          "name": "isHtmxRequest",
           "kind": "value"
         },
         {

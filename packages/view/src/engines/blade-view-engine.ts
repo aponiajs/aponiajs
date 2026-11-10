@@ -44,7 +44,7 @@ export class BladeViewEngine implements ViewEngine {
   async render(
     template: string,
     data: Data,
-    options?: { readonly layout?: string },
+    options?: { readonly layout?: string; readonly fragment?: boolean },
   ): Promise<string> {
     return await this.#renderTemplate(template, { ...this.#shared, ...data }, options, 0);
   }
@@ -52,7 +52,7 @@ export class BladeViewEngine implements ViewEngine {
   async #renderTemplate(
     template: string,
     data: Data,
-    options: { readonly layout?: string } | undefined,
+    options: { readonly layout?: string; readonly fragment?: boolean } | undefined,
     depth: number,
     inheritedSections?: Map<string, string>,
   ): Promise<string> {
@@ -70,7 +70,7 @@ export class BladeViewEngine implements ViewEngine {
   async #renderTemplateInner(
     template: string,
     data: Data,
-    options: { readonly layout?: string } | undefined,
+    options: { readonly layout?: string; readonly fragment?: boolean } | undefined,
     depth: number,
     inheritedSections?: Map<string, string>,
   ): Promise<string> {
@@ -88,6 +88,10 @@ export class BladeViewEngine implements ViewEngine {
 
     body = await this.#extractSections(body, data, sections);
     let rendered = await this.#renderSource(body, data, sections);
+
+    if (options?.fragment) {
+      return sections.get("content") ?? rendered;
+    }
 
     if (layout !== undefined) {
       if (sections.size === 0) {
@@ -363,14 +367,26 @@ export class BladeViewEngine implements ViewEngine {
   #candidatePaths(template: string): string[] {
     const hasExtension = /\.(?:blade\.html|html|php|ejs|vue|tsx)$/.test(template);
     const normalized = hasExtension ? template : template.replace(/\./g, "/");
+    const cwd = process.cwd();
+    const callerRoot = this.#rootDir.endsWith("/views")
+      ? this.#rootDir.slice(0, -"/views".length)
+      : this.#rootDir;
     const baseDir =
       template.startsWith("/") || template.startsWith("./") || template.startsWith("../")
-        ? process.cwd()
+        ? cwd
         : this.#rootDir;
     const target = resolve(baseDir, normalized);
-    const srcTarget = resolve(process.cwd(), "src", normalized);
+    const srcTarget = resolve(callerRoot, "src", normalized);
+
+    // Feature folder views subfolder: src/<feature>/views/<name>
+    const segments = normalized.split("/");
+    const viewsNested =
+      segments.length > 1
+        ? resolve(callerRoot, "src", segments[0]!, "views", segments.slice(1).join("/"))
+        : resolve(callerRoot, "src", "views", normalized);
+
     if (hasExtension) {
-      return [target, srcTarget];
+      return [target, srcTarget, viewsNested];
     }
     return [
       `${target}.blade.html`,
@@ -385,6 +401,12 @@ export class BladeViewEngine implements ViewEngine {
       `${srcTarget}.ejs`,
       `${srcTarget}.vue`,
       `${srcTarget}.tsx`,
+      `${viewsNested}.blade.html`,
+      `${viewsNested}.html`,
+      `${viewsNested}.php`,
+      `${viewsNested}.ejs`,
+      `${viewsNested}.vue`,
+      `${viewsNested}.tsx`,
     ];
   }
 }

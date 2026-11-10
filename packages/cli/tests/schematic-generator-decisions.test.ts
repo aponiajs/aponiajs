@@ -202,6 +202,34 @@ test("generates a registered message controller for a microservice resource", as
   );
 });
 
+test("generates a nested MVC feature resource with controller, model, and view template", async () => {
+  const projectRoot = await createProjectRoot("aponia-mvc-resource-");
+
+  const result = await generateSchematic(
+    baseOptions({ schematic: "resource", name: "articles", type: "mvc", cwd: projectRoot }),
+  );
+
+  expect(result.changes).toEqual([
+    { kind: "CREATE", path: "src/articles/articles.module.ts" },
+    { kind: "CREATE", path: "src/articles/articles.service.ts" },
+    { kind: "CREATE", path: "src/articles/articles.model.ts" },
+    { kind: "CREATE", path: "src/articles/dto/create-article.dto.ts" },
+    { kind: "CREATE", path: "src/articles/dto/update-article.dto.ts" },
+    { kind: "CREATE", path: "src/articles/entities/article.entity.ts" },
+    { kind: "CREATE", path: "src/articles/articles.controller.ts" },
+    { kind: "CREATE", path: "src/articles/views/index.blade.html" },
+    { kind: "CREATE", path: "src/articles/articles.service.spec.ts" },
+    { kind: "CREATE", path: "src/articles/articles.controller.spec.ts" },
+    { kind: "UPDATE", path: "src/app.module.ts" },
+  ]);
+  expect(await Bun.file(join(projectRoot, "src/articles/articles.controller.ts")).text()).toContain(
+    'return view("./views/index.blade.html"',
+  );
+  expect(await Bun.file(join(projectRoot, "src/articles/views/index.blade.html")).text()).toContain(
+    "@foreach(articles as item)",
+  );
+});
+
 test("nests a class in its own directory when flat is explicitly disabled", async () => {
   const projectRoot = await createProjectRoot("aponia-no-flat-class-");
 

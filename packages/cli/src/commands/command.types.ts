@@ -20,6 +20,7 @@ export type GenerateSchematic = (typeof schematicNames)[number];
 /** A resource transport: the mounted `rest`/`ws`, or an unconnected scaffold. */
 export type ResourceTransport =
   | "rest"
+  | "mvc"
   | "graphql-code-first"
   | "graphql-schema-first"
   | "microservice"

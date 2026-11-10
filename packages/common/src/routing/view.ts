@@ -6,6 +6,11 @@ import type { InjectionToken } from "../tokens/token.types.ts";
 export interface ViewRenderOptions {
   readonly layout?: string;
   readonly engine?: string;
+  /**
+   * When true, strips the master layout and renders only the inner section/content.
+   * Ideal for HTMX, Turbo, or modal partial HTML updates.
+   */
+  readonly fragment?: boolean;
 }
 
 /** The rendering contract every view engine implements. */

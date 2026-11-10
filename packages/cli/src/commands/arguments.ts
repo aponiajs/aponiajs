@@ -56,6 +56,7 @@ const schematicAliases: Readonly<Record<string, GenerateSchematic>> = {
 
 const resourceTransports = new Set<ResourceTransport>([
   "rest",
+  "mvc",
   "graphql-code-first",
   "graphql-schema-first",
   "microservice",
