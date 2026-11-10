@@ -5,6 +5,7 @@ import {
   MessagePattern,
   Module,
   Payload,
+  type MicroserviceHandler,
   type MicroserviceTransport,
 } from "@aponiajs/common";
 import { AponiaFactory, type AponiaApplication } from "@aponiajs/platform-elysia";
@@ -39,6 +40,11 @@ class UsersController {
 
   @MessagePattern("users.fail")
   fail(): never {
+    throw new Error("internal database password");
+  }
+
+  @EventPattern("users.failed")
+  failed(): never {
     throw new Error("internal database password");
   }
 
@@ -78,7 +84,53 @@ describe("microservice transports", () => {
 
     await transport.emit("users.created", { id: "u1" });
     expect(seen).toEqual(["u1"]);
-    expect(await transport.send("users.created", { id: "u2" })).toBeUndefined();
+
+    const requestToEvent = await transport
+      .send("users.created", { id: "u2" })
+      .catch((error: unknown) => error);
+    expect(requestToEvent).toMatchObject({
+      code: "UNKNOWN_MESSAGE_PATTERN",
+      message: 'No request handler is registered for pattern "users.created".',
+    });
+
+    const eventToRequest = await transport
+      .emit("users.findOne", { id: "u3" })
+      .catch((error: unknown) => error);
+    expect(eventToRequest).toMatchObject({
+      code: "UNKNOWN_MESSAGE_PATTERN",
+      message: 'No event handler is registered for pattern "users.findOne".',
+    });
+  });
+
+  test("routes one pattern to a request handler and an event handler independently", async () => {
+    const observed: string[] = [];
+
+    @Controller("dual")
+    class DualController {
+      @MessagePattern("dual.ping")
+      ping(): string {
+        return "request";
+      }
+
+      @EventPattern("dual.ping")
+      pinged(@Payload("id") id: string): void {
+        observed.push(id);
+      }
+    }
+
+    @Module({ controllers: [DualController] })
+    class DualModule {}
+
+    const transport = new InMemoryTransport({ target: "billing" });
+    application = await AponiaFactory.create(DualModule, {
+      logger: false,
+      microservices: [transport],
+    });
+
+    expect(transport.target).toBe("billing");
+    expect(await transport.send("dual.ping")).toBe("request");
+    await transport.emit("dual.ping", { id: "event-1" });
+    expect(observed).toEqual(["event-1"]);
   });
 
   test("reports an unknown pattern and a failed handler without internals", async () => {
@@ -92,7 +144,7 @@ describe("microservice transports", () => {
     expect(unknown).toBeInstanceOf(MicroserviceCallError);
     expect(unknown).toMatchObject({
       code: "UNKNOWN_MESSAGE_PATTERN",
-      message: 'No handler is registered for pattern "users.missing".',
+      message: 'No request handler is registered for pattern "users.missing".',
     });
 
     const failed = await transport.send("users.fail").catch((error: unknown) => error);
@@ -119,6 +171,35 @@ describe("microservice transports", () => {
     const closed = await transport.send("users.findOne").catch((error: unknown) => error);
     expect(closed).toMatchObject({ code: "TRANSPORT_NOT_CONNECTED" });
     expect(await transport.send("").catch((error: unknown) => error)).toBeInstanceOf(TypeError);
+  });
+
+  test("refuses an invalid message shape with a stable code", async () => {
+    let dispatch: MicroserviceHandler | undefined;
+    const probe: MicroserviceTransport = {
+      name: "probe",
+      subscribe: (handler) => {
+        dispatch = handler;
+      },
+      close: () => undefined,
+    };
+
+    application = await AponiaFactory.create(UsersModule, {
+      logger: false,
+      microservices: [probe],
+    });
+
+    const invalid = await dispatch?.({
+      id: "",
+      kind: "request",
+      pattern: "users.findOne",
+      data: { id: "42" },
+      target: "default",
+      transport: "probe",
+    });
+    expect(invalid).toMatchObject({
+      ok: false,
+      error: { code: "INVALID_MICROSERVICE_MESSAGE" },
+    });
   });
 
   test("refuses a duplicate pattern before any transport connects", async () => {
@@ -229,7 +310,7 @@ describe("microservice transports", () => {
       microservices: [transport, failingClose],
     });
 
-    const failure = await transport.emit("users.fail").catch((error: unknown) => error);
+    const failure = await transport.emit("users.failed").catch((error: unknown) => error);
     expect(failure).toMatchObject({ code: "MESSAGE_HANDLER_ERROR" });
 
     await application.close();

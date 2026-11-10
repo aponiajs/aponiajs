@@ -1,30 +1,38 @@
 # @aponiajs/microservices
 
-> Message-pattern microservices for an AponiaJS application: decorated request and event handlers, a transport contract, and an in-memory reference transport.
+> Message-pattern microservices for an AponiaJS application: decorated request and event handlers, a CBOR v1 wire contract, a client and server runtime, an in-memory reference transport, and optionally installed broker adapters.
 
 ## What this package exports
 
-- `InMemoryTransport({ name? })`: a process-local transport and client with `send(pattern, data)` and `emit(pattern, data)`.
-- `MicroserviceCallError`: the client error with a stable `code`, thrown by `send` and `emit`.
-- Type: `InMemoryTransportOptions`.
+- `InMemoryTransport({ name? })`: process-local transport and client with `send(pattern, data)` and `emit(pattern, data)`.
+- `createMicroserviceServer({ transport, subscriptions, target?, name?, replyDestinations?, maxInFlight?, connectTimeoutMs?, closeTimeoutMs?, logger? })`: a boot transport over one broker adapter.
+- `createMicroserviceClient({ transport, destination, replyTo, replySubscription?, target?, name?, requestTimeoutMs?, connectTimeoutMs?, maxPendingCalls? })`: correlated requests and events.
+- `MicroserviceClientsModule.register({ client, autoConnect? })`: provides one client under `microserviceClientToken`.
+- `encodeMicroserviceEnvelope`, `decodeMicroserviceEnvelope`, and the envelope types.
+- `MicroserviceCallError`: the client failure carrying a stable `code`.
+- Broker factories: `natsTransport`, `mqttTransport`, `rabbitmqTransport`, `kafkaTransport`, `redisTransport`, `sqsTransport`, `pubSubTransport`, `azureServiceBusTransport`.
+- The SDK-neutral `Transport` seam and its config types.
 
-The handler decorators and transport contract live in `@aponiajs/common`:
+The handler decorators and boot contract live in `@aponiajs/common`:
 
 - `@MessagePattern(pattern)`, `@EventPattern(pattern)`, `@Payload(property?)`.
 - `MicroserviceTransport`, `MicroserviceMessage`, `MicroserviceReply`, `MicroserviceHandler`, `MicroserviceFailure`.
-- `MESSAGE_HANDLER_ERROR_CODE`, `UNKNOWN_MESSAGE_PATTERN_CODE`.
+- `MESSAGE_HANDLER_ERROR_CODE`, `UNKNOWN_MESSAGE_PATTERN_CODE`, `normalizeMessagePattern`, `isMessagePattern`.
 
 ## Behavior a consumer can rely on
 
-- `AponiaFactory.create(module, { microservices: [transport] })` subscribes every transport after `onApplicationBootstrap` and before the application is returned.
+- `AponiaFactory.create(module, { microservices: [server] })` subscribes every transport after `onApplicationBootstrap` and before the application is returned.
 - A request handler's return value is the reply; an event handler's value is discarded.
-- A handler receives one payload argument: the whole `data`, or the property `@Payload("key")` names.
-- A thrown handler error becomes `MESSAGE_HANDLER_ERROR` with a fixed safe message; the stack and cause are logged and never serialized.
+- A handler receives the whole `data` payload by default, or the property `@Payload("key")` names.
+- A thrown handler error becomes `MESSAGE_HANDLER_ERROR` with a fixed safe message; the stack and cause never cross the wire.
 - A pattern no controller declared becomes `UNKNOWN_MESSAGE_PATTERN`.
 - Two controllers declaring one pattern fail the boot with `DUPLICATE_MESSAGE_PATTERN`.
-- An invalid or duplicated transport fails the boot with `INVALID_MICROSERVICE_TRANSPORT`.
-- `application.close()` closes transports before module-destroy hooks; a transport failure is reported and does not stop the remaining teardown.
-- `InMemoryTransport` is process-local; it adds no retry, persistence, or broker semantics.
+- A server checks `target` and `replyDestinations` before dispatch and reply.
+- Malformed envelopes are acknowledged; a readable request with an allowed reply destination receives `INVALID_MICROSERVICE_ENVELOPE`.
+- Client requests time out, bound pending calls, and reject pending calls on close.
+- Broker SDKs are optional peers. Only the installed SDK loads, inside `connect`.
+- A broker transport is terminal after `close`; `InMemoryTransport` is reusable.
+- No adapter claims exactly-once delivery, transactions, managed dead-letter routing, or global ordering.
 
 ## Documentation
 

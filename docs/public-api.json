@@ -861,6 +861,10 @@
           "kind": "value"
         },
         {
+          "name": "isMessagePattern",
+          "kind": "value"
+        },
+        {
           "name": "isOptionalInjection",
           "kind": "value"
         },
@@ -895,6 +899,10 @@
         {
           "name": "LogLevel",
           "kind": "type"
+        },
+        {
+          "name": "maximumMessagePatternLength",
+          "kind": "value"
         },
         {
           "name": "MESSAGE_HANDLER_ERROR_CODE",
@@ -998,6 +1006,10 @@
         },
         {
           "name": "NOOP_LOGGER",
+          "kind": "value"
+        },
+        {
+          "name": "normalizeMessagePattern",
           "kind": "value"
         },
         {
@@ -2200,6 +2212,30 @@
       "name": "@aponiajs/microservices",
       "exports": [
         {
+          "name": "azureServiceBusTransport",
+          "kind": "value"
+        },
+        {
+          "name": "AzureServiceBusTransportOptions",
+          "kind": "type"
+        },
+        {
+          "name": "createMicroserviceClient",
+          "kind": "value"
+        },
+        {
+          "name": "createMicroserviceServer",
+          "kind": "value"
+        },
+        {
+          "name": "decodeMicroserviceEnvelope",
+          "kind": "value"
+        },
+        {
+          "name": "encodeMicroserviceEnvelope",
+          "kind": "value"
+        },
+        {
           "name": "InMemoryTransport",
           "kind": "value"
         },
@@ -2208,8 +2244,148 @@
           "kind": "type"
         },
         {
+          "name": "kafkaTransport",
+          "kind": "value"
+        },
+        {
+          "name": "KafkaTransportOptions",
+          "kind": "type"
+        },
+        {
           "name": "MicroserviceCallError",
           "kind": "value"
+        },
+        {
+          "name": "MicroserviceClient",
+          "kind": "type"
+        },
+        {
+          "name": "MicroserviceClientConfig",
+          "kind": "type"
+        },
+        {
+          "name": "MicroserviceClientsModule",
+          "kind": "value"
+        },
+        {
+          "name": "MicroserviceClientsModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "microserviceClientToken",
+          "kind": "value"
+        },
+        {
+          "name": "MicroserviceEnvelope",
+          "kind": "type"
+        },
+        {
+          "name": "MicroserviceEnvelopeKind",
+          "kind": "type"
+        },
+        {
+          "name": "MicroserviceEventEnvelope",
+          "kind": "type"
+        },
+        {
+          "name": "MicroserviceOutboundEnvelope",
+          "kind": "type"
+        },
+        {
+          "name": "MicroserviceReplyEnvelope",
+          "kind": "type"
+        },
+        {
+          "name": "MicroserviceReplyFailureEnvelope",
+          "kind": "type"
+        },
+        {
+          "name": "MicroserviceReplySuccessEnvelope",
+          "kind": "type"
+        },
+        {
+          "name": "MicroserviceRequestEnvelope",
+          "kind": "type"
+        },
+        {
+          "name": "MicroserviceServer",
+          "kind": "type"
+        },
+        {
+          "name": "MicroserviceServerConfig",
+          "kind": "type"
+        },
+        {
+          "name": "mqttTransport",
+          "kind": "value"
+        },
+        {
+          "name": "MqttTransportOptions",
+          "kind": "type"
+        },
+        {
+          "name": "natsTransport",
+          "kind": "value"
+        },
+        {
+          "name": "NatsTransportOptions",
+          "kind": "type"
+        },
+        {
+          "name": "pubSubTransport",
+          "kind": "value"
+        },
+        {
+          "name": "PubSubTransportOptions",
+          "kind": "type"
+        },
+        {
+          "name": "rabbitmqTransport",
+          "kind": "value"
+        },
+        {
+          "name": "RabbitMqTransportOptions",
+          "kind": "type"
+        },
+        {
+          "name": "redisTransport",
+          "kind": "value"
+        },
+        {
+          "name": "RedisTransportOptions",
+          "kind": "type"
+        },
+        {
+          "name": "sqsTransport",
+          "kind": "value"
+        },
+        {
+          "name": "SqsTransportOptions",
+          "kind": "type"
+        },
+        {
+          "name": "Transport",
+          "kind": "type"
+        },
+        {
+          "name": "TransportDecision",
+          "kind": "type"
+        },
+        {
+          "name": "TransportHandler",
+          "kind": "type"
+        },
+        {
+          "name": "TransportMessage",
+          "kind": "type"
+        },
+        {
+          "name": "TransportSubscription",
+          "kind": "type"
+        },
+        {
+          "name": "TransportSubscriptionHandle",
+          "kind": "type"
         }
       ]
     },

@@ -25,12 +25,12 @@ export class AponiaFactory {
    * mounted. Use it for workers, command-line tasks, and container tests.
    *
    * @param rootModule - The root class, descriptor, or descriptor artifact.
-   * @param options - Logger and descriptor options.
+   * @param options - Logger, descriptor, and microservice options.
    * @returns The context, with `get`, `resolve`, and `close`.
    */
   static createApplicationContext(
     rootModule: AponiaRootModule,
-    options: Pick<AponiaApplicationOptions, "logger" | "descriptors"> = {},
+    options: Pick<AponiaApplicationOptions, "logger" | "descriptors" | "microservices"> = {},
   ): Promise<AponiaApplicationContext> {
     return AponiaApplicationContext.create(rootModule, options);
   }

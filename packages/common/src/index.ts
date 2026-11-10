@@ -194,9 +194,12 @@ export {
   UNKNOWN_MESSAGE_PATTERN_CODE,
   getMessagePatternMetadata,
   getMessagePayloadProperty,
+  isMessagePattern,
+  maximumMessagePatternLength,
   messageFailure,
   messagePatternMetadataKey,
   messagePayloadMetadataKey,
+  normalizeMessagePattern,
 } from "./microservices/message-pattern.ts";
 export type {
   MessagePatternKind,

@@ -29,7 +29,7 @@ The published documentation set:
 | `ai-agents.md`              | The operating contract for an AI agent: context order, change protocol, safety boundaries, and evidence                                   |
 | `metrics.md`                | The Prometheus registry, recorded request metrics, scrape endpoint, and series bounds                                                     |
 | `migrating-from-nest.md`    | The package, authoring, validation, error, and CLI mapping from NestJS to AponiaJS                                                        |
-| `microservices.md`          | Message-pattern transports and the in-memory reference transport                                                                          |
+| `microservices.md`          | Message patterns, CBOR client/server, and optional broker adapters                                                                        |
 | `mcp.md`                    | The standard Model Context Protocol server, protocol negotiation, tools, resources, and prompts                                           |
 | `openapi.md`                | Serving an OpenAPI document for an application's routes, what the document reflects, and what it does not claim                           |
 | `configuration.md`          | Declaring, validating once at boot, injecting, and reading back a configuration                                                           |

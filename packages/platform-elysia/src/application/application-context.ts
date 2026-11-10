@@ -15,6 +15,12 @@ import { createSystemLogger, runShutdownHooks } from "./application-bootstrap.ts
 import type { AponiaApplicationOptions } from "./application.types.ts";
 import { collectLifecycleCalls } from "./lifecycle-hooks.ts";
 import { LazyModuleLoader } from "./lazy-module-loader.ts";
+import {
+  collectMessageHandlers,
+  createMicroserviceHandlerTable,
+  startMicroserviceTransports,
+  type MicroserviceRuntime,
+} from "../microservices/microservice-runtime.ts";
 
 /**
  * A booted module graph with no HTTP listener.
@@ -27,23 +33,29 @@ import { LazyModuleLoader } from "./lazy-module-loader.ts";
 export class AponiaApplicationContext {
   readonly #container: AponiaContainer;
   readonly #logger: LoggerService | undefined;
+  #microserviceRuntime: MicroserviceRuntime | undefined;
   #closed = false;
 
-  private constructor(container: AponiaContainer, logger: LoggerService | undefined) {
+  private constructor(
+    container: AponiaContainer,
+    logger: LoggerService | undefined,
+    microserviceRuntime: MicroserviceRuntime | undefined,
+  ) {
     this.#container = container;
     this.#logger = logger;
+    this.#microserviceRuntime = microserviceRuntime;
   }
 
   /**
    * Boots a module graph without a listener.
    *
    * @param rootModule - The root class, descriptor, or descriptor artifact.
-   * @param options - Logger and descriptor options; route options are ignored.
+   * @param options - Logger, descriptor, and microservice options; route options are ignored.
    * @returns A context that resolves providers and owns their shutdown plan.
    */
   static async create(
     rootModule: AponiaRootModule,
-    options: Pick<AponiaApplicationOptions, "logger" | "descriptors"> = {},
+    options: Pick<AponiaApplicationOptions, "logger" | "descriptors" | "microservices"> = {},
   ): Promise<AponiaApplicationContext> {
     const logger = createSystemLogger(options.logger);
     if (logger !== undefined) {
@@ -76,7 +88,28 @@ export class AponiaApplicationContext {
       await call();
     }
 
-    return new AponiaApplicationContext(container, logger);
+    // A worker answers messages without mounting HTTP routes. Controllers are
+    // instantiated here only when a transport is configured, because that is
+    // the only case in which their message metadata is consumed.
+    const messageHandlers = createMicroserviceHandlerTable();
+    if (options.microservices !== undefined && options.microservices.length > 0) {
+      for (const module of container.graph.modules) {
+        for (const controller of module.controllers) {
+          collectMessageHandlers(
+            messageHandlers,
+            controller,
+            container.instantiateController(module, controller),
+          );
+        }
+      }
+    }
+    const microserviceRuntime = await startMicroserviceTransports(
+      options.microservices,
+      messageHandlers,
+      logger,
+    );
+
+    return new AponiaApplicationContext(container, logger, microserviceRuntime);
   }
 
   /** Resolves a token visible from the root module. */
@@ -100,6 +133,8 @@ export class AponiaApplicationContext {
     }
     this.#closed = true;
 
+    await this.#microserviceRuntime?.close();
+    this.#microserviceRuntime = undefined;
     await runShutdownHooks(
       collectLifecycleCalls(this.#container, "beforeApplicationShutdown", false),
       this.#logger,

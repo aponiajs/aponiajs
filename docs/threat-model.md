@@ -57,10 +57,11 @@ the external security review: a reviewer can trace every claim to code and tests
   verifies; it does not enforce length, breach checks, or rotation.
 - **No WAF or proxy hardening is bundled.** Headers, CORS, and limits are
   application-level controls; a deployment still owns its edge.
-- **Message transports own their own authentication.** `@aponiajs/microservices`
-  dispatches what a transport delivers; it validates no envelope, caller, or
-  payload. A transport exposed beyond a trusted network must authenticate and
-  validate before calling the dispatcher.
+- **A message transport authenticates nobody.** `@aponiajs/microservices`
+  validates the envelope, target, and reply allowlist, and can bound in-flight
+  work, but it does not identify a caller or validate a handler's payload. A
+  service exposed beyond a trusted network must authenticate the producer and
+  authorize the pattern before dispatch.
 - **A gateway, not the adapter, authenticates a serverless call.**
   `@aponiajs/serverless` translates the API Gateway or Web Fetch envelope into
   the application's own request; authorizer policy, CORS, and timeouts stay at

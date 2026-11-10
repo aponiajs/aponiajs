@@ -187,7 +187,7 @@ const packageLayouts: readonly PackageLayout[] = [
   {
     sourceRoot: "packages/microservices/src",
     files: ["index.ts"],
-    directories: ["transport"],
+    directories: ["brokers", "client", "envelope", "module", "server", "transport"],
   },
   {
     sourceRoot: "packages/serverless/src",

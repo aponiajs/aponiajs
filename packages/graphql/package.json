@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/graphql",
-  "version": "1.0.0-beta.26",
+  "version": "1.0.0-beta.27",
   "description": "Serve a GraphQL endpoint for an Aponia application, with the mount path read from a validated configuration.",
   "keywords": [
     "aponia",

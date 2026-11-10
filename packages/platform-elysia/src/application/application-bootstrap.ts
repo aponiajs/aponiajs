@@ -73,8 +73,8 @@ import { LazyModuleLoader } from "./lazy-module-loader.ts";
 import { installVersionRouting } from "./versioning.ts";
 import {
   collectMessageHandlers,
+  createMicroserviceHandlerTable,
   startMicroserviceTransports,
-  type MicroserviceHandlerTable,
   type MicroserviceRuntime,
 } from "../microservices/microservice-runtime.ts";
 
@@ -287,7 +287,7 @@ export async function bootstrapAponiaApplication(
   const generatedInvokers = new Map<Token<unknown>, ReadonlySet<string | symbol>>();
   const callbackRoutes: AponiaCallbackRouteDiagnostics[] = [];
   const interceptorHalves = new Map<ClassToken<unknown>, InterceptorPhases>();
-  const messageHandlers: MicroserviceHandlerTable = new Map();
+  const messageHandlers = createMicroserviceHandlerTable();
   let microserviceRuntime: MicroserviceRuntime | undefined;
   // The application's own declaration resolves first, so it is collected first.
   // Both scopes merge into one map because a class declares one set of halves

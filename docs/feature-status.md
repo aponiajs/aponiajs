@@ -34,7 +34,7 @@ exist.
 | `@aponiajs/metrics`         | Complete     | Prometheus registry, instrumentation, scrape endpoint       |
 | `@aponiajs/idempotency`     | Complete     | replay, conflict detection, store contract                  |
 | `@aponiajs/compression`     | Complete     | Brotli and gzip negotiation                                 |
-| `@aponiajs/microservices`   | Complete     | message patterns and in-memory transport                    |
+| `@aponiajs/microservices`   | Complete     | message patterns, CBOR client/server, eight broker adapters |
 | `@aponiajs/serverless`      | Complete     | Web Fetch and AWS Lambda adapters                           |
 | `@aponiajs/h3`              | Complete     | H3 delivery adapter                                         |
 | `@aponiajs/hono`            | Complete     | Hono delivery adapter                                       |
@@ -42,8 +42,11 @@ exist.
 
 ## Known gaps
 
-- Distributed queue brokers and a durable outbox table are not bundled; the
-  queue exposes a durable backlog contract instead.
+- Distributed queue brokers are optional peer adapters: `@aponiajs/microservices`
+  ships NATS, MQTT, RabbitMQ, Kafka, Redis Streams, SQS, Pub/Sub, and Service
+  Bus transports, and the framework never provisions their topics, queues, or
+  subscriptions. A durable outbox table is not bundled; the queue exposes a
+  durable backlog contract instead.
 - Distributed revocation, refresh, session, rate-limit, cache, and idempotency
   stores are application-supplied; the built-in stores are process-local.
 - MVC adapters for Express or Fastify are not provided; Elysia is the HTTP

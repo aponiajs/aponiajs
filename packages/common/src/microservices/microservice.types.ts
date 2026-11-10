@@ -1,13 +1,31 @@
+import type { MessagePatternKind } from "./message-pattern.ts";
+
 /**
  * One message a transport delivers to the application.
  *
- * `pattern` is the canonical handler key, `data` is the payload the client
- * sent, and `transport` names the transport that delivered it so a handler can
+ * `kind` states whether the message expects a reply, `pattern` is the
+ * canonical handler key, and `data` is the payload the client sent. `id` is
+ * the client's correlation identifier, `target` names the service the message
+ * was addressed to, and `replyTo` is the transport-private destination a reply
+ * is published to when the transport cannot answer in place.
+ *
+ * `transport` names the transport that delivered the message so a handler can
  * tell two transports apart.
  */
 export interface MicroserviceMessage {
+  /** The client-generated correlation identifier, unique per request. */
+  readonly id: string;
+  /** Whether the handler answers the caller or only observes the message. */
+  readonly kind: MessagePatternKind;
+  /** The canonical handler key the client addressed. */
   readonly pattern: string;
+  /** The payload the client sent, unchanged. */
   readonly data: unknown;
+  /** The service the message was addressed to; defaults to `default`. */
+  readonly target: string;
+  /** The transport-private reply destination, when one was supplied. */
+  readonly replyTo?: string;
+  /** The transport that delivered this message. */
   readonly transport: string;
 }
 

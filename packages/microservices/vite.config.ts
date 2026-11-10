@@ -16,7 +16,19 @@ export default defineConfig({
     dts: true,
     exports: true,
     deps: {
-      neverBundle: ["@aponiajs/common", "@aponiajs/platform-elysia", "elysia"],
+      neverBundle: [
+        "@aponiajs/common",
+        "@aponiajs/platform-elysia",
+        "@aws-sdk/client-sqs",
+        "@azure/service-bus",
+        "@google-cloud/pubsub",
+        "elysia",
+        "kafkajs",
+        "mqtt",
+        "nats",
+        "rabbitmq-client",
+        "redis",
+      ],
     },
   },
   lint: {

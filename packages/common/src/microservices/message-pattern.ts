@@ -97,15 +97,7 @@ export function getMessagePayloadProperty(
 }
 
 function recordPattern(pattern: string | number, kind: MessagePatternKind): MethodDecorator {
-  const normalized =
-    typeof pattern === "number"
-      ? String(pattern)
-      : typeof pattern === "string"
-        ? pattern.trim()
-        : "";
-  if (normalized === "") {
-    throw new TypeError("A message pattern requires a non-empty string or a number.");
-  }
+  const normalized = normalizeMessagePattern(pattern);
   return (target: object, propertyKey: string | symbol): void => {
     const existing =
       (Reflect.getOwnMetadata(messagePatternMetadataKey, target) as
@@ -122,6 +114,61 @@ export const MESSAGE_HANDLER_ERROR_CODE = "MESSAGE_HANDLER_ERROR";
 
 /** The stable failure code an unsubscribed pattern is answered with. */
 export const UNKNOWN_MESSAGE_PATTERN_CODE = "UNKNOWN_MESSAGE_PATTERN";
+
+/** The maximum length a message pattern may have. */
+export const maximumMessagePatternLength = 256;
+
+/*
+ * Patterns are handler keys, not broker addresses, but they travel through
+ * brokers that treat `#`, `+`, `*`, `>`, and whitespace as control characters.
+ * Restricting them to a conservative canonical grammar keeps one message from
+ * escaping a declared broker prefix on any supported transport.
+ */
+const messagePatternGrammar = /^[A-Za-z0-9](?:[A-Za-z0-9._:/-]*[A-Za-z0-9])?$/;
+
+/**
+ * Reports whether a value is a canonical message pattern.
+ *
+ * A canonical pattern starts and ends with an alphanumeric character, contains
+ * only letters, digits, `.`, `_`, `:`, `/`, and `-`, is at most 256 characters,
+ * and never repeats a path separator (`..` or `//`). Broker wildcards and
+ * whitespace are never valid.
+ *
+ * @param value - The value to inspect.
+ * @returns Whether the value may be used as a message pattern.
+ */
+export function isMessagePattern(value: unknown): value is string {
+  if (
+    typeof value !== "string" ||
+    value.length === 0 ||
+    value.length > maximumMessagePatternLength
+  ) {
+    return false;
+  }
+  return messagePatternGrammar.test(value) && !value.includes("..") && !value.includes("//");
+}
+
+/**
+ * Normalizes one message pattern.
+ *
+ * A number becomes its decimal string and surrounding whitespace is trimmed,
+ * matching the metadata written by `@MessagePattern`. Every authoring path and
+ * every transport shares this function, so a pattern accepted by a decorator is
+ * exactly the pattern a transport accepts.
+ *
+ * @param pattern - The string or number a handler declared or a client sends.
+ * @returns The canonical pattern.
+ * @throws `TypeError` when the value is empty or not canonical.
+ */
+export function normalizeMessagePattern(pattern: string | number): string {
+  const normalized = typeof pattern === "number" ? String(pattern) : pattern.trim();
+  if (!isMessagePattern(normalized)) {
+    throw new TypeError(
+      "A message pattern must be a canonical alphanumeric key of at most 256 characters without broker wildcards.",
+    );
+  }
+  return normalized;
+}
 
 /** Builds one failed reply without leaking a stack or cause. */
 export function messageFailure(code: string, message: string): MicroserviceFailure {

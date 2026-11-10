@@ -1,13 +1,21 @@
 {
   "name": "@aponiajs/microservices",
-  "version": "1.0.0-beta.26",
-  "description": "Message-pattern transports for an Aponia application, with an in-memory transport and client.",
+  "version": "1.0.0-beta.27",
+  "description": "Message-pattern microservices for an Aponia application: an in-memory reference transport, a CBOR wire contract, clients, and independently installable broker transports.",
   "keywords": [
     "aponia",
     "aponiajs",
+    "azure-service-bus",
     "bun",
     "elysia",
+    "kafka",
     "microservices",
+    "mqtt",
+    "nats",
+    "pubsub",
+    "rabbitmq",
+    "redis",
+    "sqs",
     "typescript"
   ],
   "homepage": "https://github.com/aponiajs/aponiajs#readme",
@@ -42,10 +50,55 @@
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
-    "@aponiajs/common": "workspace:*"
+    "@aponiajs/common": "workspace:*",
+    "cborg": "6.2.1"
   },
   "devDependencies": {
     "@aponiajs/platform-elysia": "workspace:*",
-    "elysia": "2.0.0-rc.4"
+    "@aws-sdk/client-sqs": "3.1165.0",
+    "@azure/service-bus": "7.10.0",
+    "@google-cloud/pubsub": "6.4.1",
+    "elysia": "2.0.0-rc.4",
+    "kafkajs": "2.2.4",
+    "mqtt": "5.16.1",
+    "nats": "2.29.3",
+    "rabbitmq-client": "5.1.0",
+    "redis": "6.3.1"
+  },
+  "peerDependencies": {
+    "@aws-sdk/client-sqs": "3.1165.0",
+    "@azure/service-bus": "7.10.0",
+    "@google-cloud/pubsub": "6.4.1",
+    "kafkajs": "2.2.4",
+    "mqtt": "5.16.1",
+    "nats": "2.29.3",
+    "rabbitmq-client": "5.1.0",
+    "redis": "6.3.1"
+  },
+  "peerDependenciesMeta": {
+    "mqtt": {
+      "optional": true
+    },
+    "nats": {
+      "optional": true
+    },
+    "kafkajs": {
+      "optional": true
+    },
+    "rabbitmq-client": {
+      "optional": true
+    },
+    "redis": {
+      "optional": true
+    },
+    "@aws-sdk/client-sqs": {
+      "optional": true
+    },
+    "@google-cloud/pubsub": {
+      "optional": true
+    },
+    "@azure/service-bus": {
+      "optional": true
+    }
   }
 }

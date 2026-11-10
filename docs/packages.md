@@ -375,8 +375,10 @@ bounded and process-local.
 Message-pattern handlers and transports. `@MessagePattern()` answers a
 request/response call, `@EventPattern()` observes fire-and-forget events, and
 `AponiaFactory.create` starts every configured transport after the graph is
-initialized. The package ships an in-memory reference transport with `send` and
-`emit`; a broker transport implements the same three-member contract.
+initialized. The package ships a CBOR v1 client and server runtime, an in-memory
+reference transport, and optional broker adapters for NATS, MQTT, RabbitMQ,
+Kafka, Redis Streams, SQS, Pub/Sub, and Service Bus. Each broker SDK is an
+optional peer installed only by the services that use it.
 
 [Package README](../packages/microservices/README.md) ·
 [Microservices guide](./microservices.md) ·

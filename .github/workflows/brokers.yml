@@ -1,0 +1,50 @@
+name: Broker transports
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  live:
+    name: Live broker round trip
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      nats:
+        image: nats:2.11-alpine
+        ports:
+          - 4222:4222
+      mqtt:
+        image: eclipse-mosquitto:2
+        ports:
+          - 1883:1883
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+
+      - name: Install frozen dependencies
+        run: bun ci
+
+      - name: Wait for the brokers
+        run: |
+          timeout 90 bash -c 'until nc -z 127.0.0.1 4222; do sleep 1; done'
+          timeout 90 bash -c 'until nc -z 127.0.0.1 1883; do sleep 1; done'
+          timeout 90 bash -c 'until nc -z 127.0.0.1 6379; do sleep 1; done'
+
+      - name: Run the live broker lane
+        run: bun run test:brokers

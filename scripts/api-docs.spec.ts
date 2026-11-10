@@ -23,6 +23,7 @@ const packageBarrels = [
   "packages/testing/src/index.ts",
   "packages/openapi/src/index.ts",
   "packages/opentelemetry/src/index.ts",
+  "packages/microservices/src/index.ts",
 ] as const;
 
 const repositoryRoot = resolve(import.meta.dir, "..");
