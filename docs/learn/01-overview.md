@@ -45,7 +45,9 @@ Elysia lifecycle hooks, with the default Problem Details mapping an unhandled
 failure answers through last in each route's error path, standalone application
 contexts (`AponiaFactory.createApplicationContext`), and opt-in packages (`@aponiajs/openapi`, `@aponiajs/cors`, `@aponiajs/cron`, `@aponiajs/graphql`, `@aponiajs/opentelemetry`, `@aponiajs/testing`, `@aponiajs/devtools`, `@aponiajs/cache`, `@aponiajs/compression`, `@aponiajs/events`, `@aponiajs/http`, `@aponiajs/rate-limit`, `@aponiajs/security`, `@aponiajs/session`, `@aponiajs/auth` (JWT and OIDC discovery, refresh rotation, revocation), `@aponiajs/audit`, `@aponiajs/tenancy`, `@aponiajs/database` (Drizzle transactions, repositories, and SQL migrations), `@aponiajs/queue` (in-process jobs and outbox), `@aponiajs/metrics` (a Prometheus registry and scrape endpoint), and `@aponiajs/idempotency` (idempotent request replay)).
 
-Not implemented yet: distributed queue brokers and durable outboxes, distributed auth stores, and MVC adapters. Treat the lists above as the scope of record before assuming a feature exists.
+Not implemented yet: durable outboxes across process boundaries. MVC views and
+Inertia pages are available through `@aponiajs/view` and `@aponiajs/mvc`.
+Treat the lists above as the scope of record before assuming a feature exists.
 
 Most chapters that follow have a runnable counterpart in
 [`examples/`](../../examples/README.md): one application per topic, each with

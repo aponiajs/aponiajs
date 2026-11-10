@@ -7,6 +7,7 @@ import type {
   RouteParameterMetadata,
   ResponseSerializer,
   RouteSchema,
+  ViewRenderOptions,
 } from "@aponiajs/common";
 import type { InputSchema } from "elysia";
 
@@ -27,6 +28,13 @@ import type { InputSchema } from "elysia";
  * passes the real route context.
  */
 export type RouteHandler = (context: never) => unknown;
+
+/** Renders one route's view from the engine the application registered. */
+export type RouteViewRenderer = (
+  template: string,
+  data: unknown,
+  options?: ViewRenderOptions,
+) => Promise<string> | string;
 
 /**
  * Builds the invokers of one controller once its instance exists, keyed by the
@@ -147,4 +155,9 @@ export interface CompiledElysiaRoute {
   readonly version?: string;
   /** Whether this route is a Server-Sent Events route. */
   readonly sse?: boolean;
+  /** The view this route renders, when it declares `@Render()`. */
+  readonly view?: {
+    readonly template: string;
+    readonly options?: ViewRenderOptions;
+  };
 }

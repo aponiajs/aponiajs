@@ -3,6 +3,7 @@ import {
   Logger,
   LOGGER,
   NOOP_LOGGER,
+  VIEW_ENGINE,
   getTokenName,
   notifySystemLogger,
   provideValue,
@@ -11,6 +12,7 @@ import {
   type LoggerService,
   type MiddlewareConsumer,
   type Token,
+  type ViewEngine,
 } from "@aponiajs/common";
 import { createContainer } from "@aponiajs/core";
 import { Elysia, type AnyElysia } from "elysia";
@@ -41,7 +43,10 @@ import { selectRootModuleDescriptor } from "../modules/module-descriptor-artifac
 import { getElysiaPlugin, isPluginModule } from "../plugins/plugin-module.ts";
 import { RequestContextService } from "../request-context/request-context.service.ts";
 import { selectInvokerArtifact } from "../routing/invoker-artifact.ts";
-import type { ControllerHandlerFactory } from "../routing/route-compiler.types.ts";
+import type {
+  ControllerHandlerFactory,
+  RouteViewRenderer,
+} from "../routing/route-compiler.types.ts";
 import { registerCompiledElysiaRoutes } from "../routing/route-compiler.ts";
 import {
   compileWebSocketGateways,
@@ -297,6 +302,13 @@ export async function bootstrapAponiaApplication(
   collectInterceptorPhases(interceptorHalves, globalEnhancers.halves);
 
   for (const module of container.graph.modules) {
+    const moduleUsesViews = module.controllers.some((controller) => {
+      const compiled = (controller as RuntimeElysiaController).compiledRoutes;
+      return compiled?.some((route) => route.view !== undefined) === true;
+    });
+    const viewRenderer: RouteViewRenderer | undefined = moduleUsesViews
+      ? createViewRenderer(container.resolveModuleProvider(module, VIEW_ENGINE) as ViewEngine)
+      : undefined;
     for (const controller of module.controllers) {
       if (!isElysiaController(controller)) {
         const controllerName = getTokenName(controller.token);
@@ -336,6 +348,7 @@ export async function bootstrapAponiaApplication(
           invokerSelection.invokers,
           mountedEnhancers,
           options.strictCodegen === true,
+          viewRenderer,
         );
         // The table grew by exactly the routes this controller mounted, which is
         // the slice the boot reports on `RoutesResolver` and the only observation
@@ -565,6 +578,7 @@ function registerControllerRoutes(
   invokers: ReadonlyMap<ClassToken<unknown>, ControllerHandlerFactory> | undefined,
   mountedEnhancers: MountedRouteEnhancers,
   strictCodegen: boolean,
+  viewRenderer?: RouteViewRenderer,
 ): ReadonlySet<string | symbol> | undefined {
   const compiledRoutes = controller.compiledRoutes;
   if (!compiledRoutes) {
@@ -584,7 +598,20 @@ function registerControllerRoutes(
     mountedEnhancers,
     createInvokers?.(instance as never),
     strictCodegen,
+    viewRenderer,
   );
+}
+
+function createViewRenderer(engine: ViewEngine): RouteViewRenderer {
+  return (template, data, options) =>
+    engine.render(
+      template,
+      (typeof data === "object" && data !== null ? data : { value: data }) as Record<
+        string,
+        unknown
+      >,
+      options,
+    );
 }
 
 /**

@@ -1,18 +1,19 @@
 # @aponiajs/mvc
 
-> Multi-engine bridges for Next.js, Nuxt, Angular, Express, and Fastify.
+> Inertia component and prop protocol for React/Vue/Svelte, plus multi-framework delivery bridges.
 
 ## Exports
 
-- `createNextHandler(nextApp)`: Next.js request bridge
-- `createNuxtHandler(nuxtApp)`: Nuxt 3 / Nitro request bridge
-- `createAngularHandler(commonEngine, options?)`: Angular SSR bridge
-- `toExpressHandler(application)`: Express middleware adapter
-- `toFastifyHandler(application)`: Fastify plugin adapter
+- `Inertia(component, options?)`: route decorator that answers the Inertia protocol
+- `createInertiaResponse(component, props, request, options?)`
+- `inertia(component, props, context, options?)`
+- `createNextHandler`, `createNuxtHandler`, `createAngularHandler`
+- `toExpressHandler`, `toFastifyHandler`
+- Types: `InertiaPage`, `InertiaOptions`, `NextServerApp`, `NuxtRendererApp`, `AngularCommonEngine`
 
 ## Documentation
 
 - [Package README](README.md)
-- [Published packages](../../docs/packages.md)
+- [Views guide](../../docs/views.md)
 - [npm](https://www.npmjs.com/package/@aponiajs/mvc)
 

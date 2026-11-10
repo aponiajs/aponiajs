@@ -7,6 +7,8 @@ import {
   getRouteMetadata,
   getRouteParameterMetadata,
   getResponseSerializer,
+  getViewOptions,
+  getViewTemplate,
   getVersionMetadata,
   isSseRoute,
   versionPathSegment,
@@ -28,6 +30,7 @@ import {
   type RouteResponseSchema,
   type RouteSchema,
   type RouteValidatorInput,
+  type ViewRenderOptions,
 } from "@aponiajs/common";
 import { type AnySchema, type Elysia } from "elysia";
 import type { MountedRouteEnhancers, ResolvedFilter } from "../controllers/enhancer-resolver.ts";
@@ -45,6 +48,7 @@ import type {
   ElysiaRouteAfterHandleContext,
   ElysiaRouteHook,
   ParameterBinding,
+  RouteViewRenderer,
 } from "./route-compiler.types.ts";
 
 export type { ParameterBinding } from "./route-compiler.types.ts";
@@ -125,6 +129,7 @@ export function compileElysiaRoutes(
       ...(isSseRoute(controller.prototype, route.propertyKey) || isSseRoute(controller)
         ? { sse: true }
         : {}),
+      ...viewMetadata(controller, route.propertyKey),
     });
   });
 
@@ -216,6 +221,7 @@ export function registerCompiledElysiaRoutes(
   mountedEnhancers: MountedRouteEnhancers,
   invokers?: ReadonlyMap<string | symbol, RouteHandler>,
   strictCodegen = false,
+  viewRenderer?: RouteViewRenderer,
 ): ReadonlySet<string | symbol> {
   const generatedKeys = new Set<string | symbol>();
 
@@ -276,6 +282,7 @@ export function registerCompiledElysiaRoutes(
       routeInterceptors(mountedEnhancers, route),
       routeExceptionHooks(mountedEnhancers, route),
       hasCustomFilters,
+      viewRenderer,
     );
     registerNativeRoute(
       application,
@@ -936,6 +943,7 @@ function toRouteHook(
   interceptors: readonly Interceptor[],
   exceptionHooks: ElysiaErrorHook[] | undefined,
   hasCustomFilters = false,
+  viewRenderer?: RouteViewRenderer,
 ): ElysiaRouteHook | undefined {
   const schemaHook = toSchemaHook(route.schema);
   const lifecycleHook = createLifecycleHook(
@@ -945,6 +953,7 @@ function toRouteHook(
     guards,
     interceptors,
     hasCustomFilters,
+    viewRenderer,
   );
   if (lifecycleHook === undefined && exceptionHooks === undefined) {
     return schemaHook;
@@ -986,6 +995,7 @@ function createLifecycleHook(
   guards: readonly CanActivate[],
   interceptors: readonly Interceptor[],
   hasCustomFilters = false,
+  viewRenderer?: RouteViewRenderer,
 ): RouteLifecycleHook | undefined {
   const hasInterceptBefore = interceptors.some(
     (interceptor) => interceptor.interceptBefore !== undefined,
@@ -993,7 +1003,8 @@ function createLifecycleHook(
   const runsBefore = guards.length > 0 || hasInterceptBefore || route.sse === true;
   const runsAfter =
     interceptors.some((interceptor) => interceptor.interceptAfter !== undefined) ||
-    route.serializer !== undefined;
+    route.serializer !== undefined ||
+    route.view !== undefined;
   if (!runsBefore && !runsAfter) {
     return undefined;
   }
@@ -1084,6 +1095,18 @@ function createLifecycleHook(
               response = await route.serializer(response, context);
             }
 
+            if (route.view !== undefined) {
+              if (viewRenderer === undefined) {
+                throw new AponiaError(
+                  "INVALID_CONFIGURATION",
+                  "A route declares @Render() but no view engine is registered.",
+                  { template: route.view.template },
+                );
+              }
+              response = await viewRenderer(route.view.template, response, route.view.options);
+              context.set.headers["content-type"] = "text/html; charset=utf-8";
+            }
+
             return response;
           },
         }
@@ -1106,6 +1129,23 @@ function toSchemaHook(schema: RouteSchema | undefined): ElysiaRouteHook | undefi
   };
 
   return Object.keys(hook).length === 0 ? undefined : hook;
+}
+
+function viewMetadata(
+  controller: ClassToken<unknown>,
+  propertyKey: string | symbol,
+): { readonly view?: { readonly template: string; readonly options?: ViewRenderOptions } } {
+  const template = getViewTemplate(controller.prototype, propertyKey);
+  if (template === undefined) {
+    return {};
+  }
+  const options = getViewOptions(controller.prototype, propertyKey);
+  return {
+    view: {
+      template,
+      ...(options === undefined ? {} : { options }),
+    },
+  };
 }
 
 /**

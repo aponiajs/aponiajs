@@ -397,14 +397,16 @@ and `@aponiajs/auth` (`RevocationStore`, `RefreshTokenStore`).
 
 ### `@aponiajs/view`
 
-Template rendering engine and view pipeline for MVC applications.
+Laravel-style Blade template rendering with layouts, sections, includes,
+components, slots, prop binding, shared view data, and dot-notation lookup.
 
 [Package README](../packages/view/README.md) ·
 [npm](https://www.npmjs.com/package/@aponiajs/view)
 
 ### `@aponiajs/mvc`
 
-Multi-engine bridges connecting Next.js, Nuxt.js, Angular, Express, and Fastify.
+The Inertia protocol for React, Vue, and Svelte components and props, plus
+bridges for Next.js, Nuxt.js, Angular, Express, and Fastify.
 
 [Package README](../packages/mvc/README.md) ·
 [npm](https://www.npmjs.com/package/@aponiajs/mvc)

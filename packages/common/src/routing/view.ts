@@ -1,10 +1,32 @@
 import "reflect-metadata";
+import { createToken } from "../tokens/token.ts";
+import type { InjectionToken } from "../tokens/token.types.ts";
 
 /** Options for rendering a view template. */
 export interface ViewRenderOptions {
   readonly layout?: string;
   readonly engine?: string;
 }
+
+/** The rendering contract every view engine implements. */
+export interface ViewEngine {
+  /**
+   * Renders a template with its view model.
+   *
+   * @param template - The template name or path.
+   * @param data - The view model handed to the template.
+   * @param options - Layout or engine options the route declared.
+   * @returns The rendered markup, or a promise of it.
+   */
+  render(
+    template: string,
+    data: Record<string, unknown>,
+    options?: { readonly layout?: string },
+  ): Promise<string> | string;
+}
+
+/** The injection token under which the active view engine is provided. */
+export const VIEW_ENGINE: InjectionToken<ViewEngine> = createToken<ViewEngine>("AponiaViewEngine");
 
 const viewTemplateMetadataKey = Symbol.for("aponia.view-template.metadata");
 const viewOptionsMetadataKey = Symbol.for("aponia.view-options.metadata");

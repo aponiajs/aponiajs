@@ -1,22 +1,53 @@
 import { expect, test } from "bun:test";
 import { AponiaFactory } from "@aponiajs/platform-elysia";
-import { ViewService } from "@aponiajs/view";
 import { AppModule } from "../src/app.module.ts";
 
-test("renders HTML views through ViewModule and templates", async () => {
+test("renders Blade layouts, partials, components, loops, and escaped data", async () => {
   const application = await AponiaFactory.create(AppModule, { logger: false });
-  const viewService = application.get(ViewService);
+  try {
+    const home = await application.handle(new Request("http://localhost/"));
+    expect(home.status).toBe(200);
+    expect(home.headers.get("content-type")).toContain("text/html");
+    const homeHtml = await home.text();
+    expect(homeHtml).toContain("<title>AponiaJS MVC</title>");
+    expect(homeHtml).toContain('<a href="/users">Users</a>');
+    expect(homeHtml).toContain(
+      '<div class="alert alert-info">Welcome to the Laravel-style MVC example.</div>',
+    );
 
-  const homeHtml = await viewService.render("<h1>Welcome to {{framework}} MVC!</h1>", {
-    framework: "AponiaJS",
-  });
-  expect(homeHtml).toBe("<h1>Welcome to AponiaJS MVC!</h1>");
+    const users = await application.handle(new Request("http://localhost/users"));
+    const usersHtml = await users.text();
+    expect(usersHtml).toContain("Total users: 2");
+    expect(usersHtml).toContain("Ada (admin)");
+    expect(usersHtml).toContain("Linus (member)");
+  } finally {
+    await application.close();
+  }
+});
 
-  const profileHtml = await viewService.render("<div>User: {{username}}, Role: {{role}}</div>", {
-    username: "alice",
-    role: "admin",
-  });
-  expect(profileHtml).toBe("<div>User: alice, Role: admin</div>");
+test("answers the Inertia protocol for React and Vue", async () => {
+  const application = await AponiaFactory.create(AppModule, { logger: false });
+  try {
+    const full = await application.handle(new Request("http://localhost/inertia/users"));
+    const html = await full.text();
+    expect(html).toContain('id="app"');
+    expect(html).toContain("Users/Index");
 
-  await application.close();
+    const spa = await application.handle(
+      new Request("http://localhost/inertia/users", {
+        headers: { "x-inertia": "true" },
+      }),
+    );
+    expect(spa.headers.get("x-inertia")).toBe("true");
+    const page = (await spa.json()) as {
+      component: string;
+      props: { users: unknown[] };
+      url: string;
+    };
+    expect(page.component).toBe("Users/Index");
+    expect(page.props.users).toHaveLength(2);
+    expect(page.url).toBe("/inertia/users");
+  } finally {
+    await application.close();
+  }
 });

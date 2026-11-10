@@ -96,10 +96,11 @@ writing anything.
 
 ## Not available
 
-MVC adapters and Express- or
-Fastify-specific middleware are out of scope for this release; message
-transports are available through `@aponiajs/microservices`, and Web Fetch and
-AWS Lambda adapters through `@aponiajs/serverless`. WebSocket
+Express- or Fastify-specific middleware is out of scope for this release;
+message transports are available through `@aponiajs/microservices`, and Web
+Fetch and AWS Lambda adapters through `@aponiajs/serverless`. MVC views are
+available through `@aponiajs/view` and Inertia pages through
+`@aponiajs/mvc`. WebSocket
 gateways speak the documented JSON envelope over Elysia's native socket rather
 than Socket.IO namespaces, rooms, or acknowledgement callbacks.
 

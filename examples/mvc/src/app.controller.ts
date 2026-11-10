@@ -1,16 +1,28 @@
 import { Controller, Get, Render } from "@aponiajs/common";
+import { Inertia } from "@aponiajs/mvc";
+
+const users = [
+  { id: "1", name: "Ada", role: "admin" },
+  { id: "2", name: "Linus", role: "member" },
+];
 
 @Controller()
 export class AppController {
   @Get()
-  @Render("<h1>Welcome to {{framework}} MVC!</h1>")
+  @Render("home")
   home() {
-    return { framework: "AponiaJS" };
+    return { title: "AponiaJS MVC" };
   }
 
-  @Get("profile")
-  @Render("<div>User: {{username}}, Role: {{role}}</div>")
-  profile() {
-    return { username: "alice", role: "admin" };
+  @Get("users")
+  @Render("users.index")
+  index() {
+    return { title: "Users", users };
+  }
+
+  @Get("inertia/users")
+  @Inertia("Users/Index")
+  inertiaUsers() {
+    return { users };
   }
 }

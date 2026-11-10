@@ -22,44 +22,44 @@ it satisfies both this guide and `RULES.md`.
 
 Bun workspace. Framework packages live in `packages/`:
 
-| Package                     | Owns                                                              | Runtime dependencies                                                     |
-| --------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `@aponiajs/common`          | Decorators, contracts, tokens, providers, errors, WebSockets      | `reflect-metadata` only                                                  |
-| `@aponiajs/core`            | Module graph, visibility rules, dependency injection              | `@aponiajs/common`                                                       |
-| `@aponiajs/cache`           | Bounded application cache, TTL, pluggable store                   | `common`                                                                 |
-| `@aponiajs/compression`     | Brotli/gzip response compression, threshold negotiation           | `common`, `platform-elysia`, peer `elysia`                               |
-| `@aponiajs/events`          | Typed in-process events, ordered handlers, listeners              | `common`, `reflect-metadata`                                             |
-| `@aponiajs/http`            | SSRF-safe outbound HTTP, timeouts, bounded responses              | `common`, `ipaddr.js`                                                    |
-| `@aponiajs/rate-limit`      | Fixed-window request limiting, guard, store                       | `common`, `platform-elysia`, peer `elysia`                               |
-| `@aponiajs/security`        | Security headers and signed double-submit CSRF                    | `common`, `platform-elysia`, peer `elysia`                               |
-| `@aponiajs/session`         | Signed session cookies, session service, bounded store            | `common`, `platform-elysia`, peer `elysia`                               |
-| `@aponiajs/auth`            | JWT authentication, guards, refresh rotation, revocation          | `common`, `platform-elysia`, `jose`, peer `elysia`                       |
-| `@aponiajs/audit`           | Bounded, redacting audit events and store                         | `common`                                                                 |
-| `@aponiajs/tenancy`         | Request-scoped tenant service and guard                           | `common`, `platform-elysia`, peer `elysia`                               |
-| `@aponiajs/queue`           | In-process job queue, retries, dead letters, outbox               | `common`                                                                 |
-| `@aponiajs/database`        | Drizzle boundary, repositories, SQL migrations                    | `common`, `drizzle-orm`                                                  |
-| `@aponiajs/metrics`         | Prometheus registry, request instrumentation, scrape endpoint     | `common`, `platform-elysia`, peer `elysia`                               |
-| `@aponiajs/idempotency`     | Idempotent request replay, conflict detection, store              | `common`, `platform-elysia`, peer `elysia`                               |
-| `@aponiajs/microservices`   | Message patterns, CBOR client/server, optional broker adapters    | `common`, `cborg`; optional broker SDK peers                             |
-| `@aponiajs/store-redis`     | Redis stores for cache, rate-limit, session, idempotency, auth    | `common`; optional peer `redis`                                          |
-| `@aponiajs/view`            | Template rendering engine and HTML substitution                   | `common`                                                                 |
-| `@aponiajs/mvc`             | Multi-engine bridges for Next.js, Nuxt, Angular, Express, Fastify | `common`, `serverless`                                                   |
-| `@aponiajs/serverless`      | AWS Lambda and Web Fetch adapters for an application              | —                                                                        |
-| `@aponiajs/h3`              | H3 delivery adapter for an application                            | `serverless`, peer `h3`                                                  |
-| `@aponiajs/hono`            | Hono delivery adapter for an application                          | `serverless`, peer `hono`                                                |
-| `@aponiajs/nitro`           | Nitro delivery adapter for an application                         | `serverless`, peer `nitro`                                               |
-| `@aponiajs/platform-elysia` | Elysia adapter, HTTP routes, WebSocket gateways, plugins          | `common`, `core`, peer `elysia`                                          |
-| `@aponiajs/cli`             | `aponia new` and `aponia generate` schematics                     | `change-case`, `ts-morph`, `yargs-parser`, `inflection`, `oxfmt` (exact) |
-| `create-aponia`             | `bun create aponia` entrypoint into the same generator            | `@aponiajs/cli`                                                          |
-| `@aponiajs/cron`            | Scheduled jobs declared in a module, from validated config        | `common`, `platform-elysia`, `@elysia/cron`, peer `elysia`               |
-| `@aponiajs/cors`            | Cross-origin policy declared in a module, from validated config   | `common`, `platform-elysia`, `@elysia/cors`, peer `elysia`               |
-| `@aponiajs/devtools`        | Opt-in devtools served by the running application itself          | `cli`, `common`, `platform-elysia`, peer `elysia`                        |
-| `@aponiajs/graphql`         | GraphQL endpoint served in a module, from validated config        | `common`, `platform-elysia`, `@elysia/graphql-yoga`, peer `elysia`       |
-| `@aponiajs/mcp`             | Model Context Protocol server, version negotiation, discovery     | `common`, peer `elysia`                                                  |
-| `@aponiajs/testing`         | Test application builder, provider overrides, teardown            | `common`, `platform-elysia`, peer `elysia`                               |
-| `@aponiajs/openapi`         | OpenAPI document served for an application's routes               | `common`, `platform-elysia`, `@elysia/openapi`, peer `elysia`            |
-| `@aponiajs/opentelemetry`   | Tracing through a validated config, no backend or exporter        | `common`, `platform-elysia`, `@elysia/opentelemetry`, peer `elysia`      |
-| `aponiajs`                  | Reserved public facade, private and unpublished                   | —                                                                        |
+| Package                     | Owns                                                            | Runtime dependencies                                                     |
+| --------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `@aponiajs/common`          | Decorators, contracts, tokens, providers, errors, WebSockets    | `reflect-metadata` only                                                  |
+| `@aponiajs/core`            | Module graph, visibility rules, dependency injection            | `@aponiajs/common`                                                       |
+| `@aponiajs/cache`           | Bounded application cache, TTL, pluggable store                 | `common`                                                                 |
+| `@aponiajs/compression`     | Brotli/gzip response compression, threshold negotiation         | `common`, `platform-elysia`, peer `elysia`                               |
+| `@aponiajs/events`          | Typed in-process events, ordered handlers, listeners            | `common`, `reflect-metadata`                                             |
+| `@aponiajs/http`            | SSRF-safe outbound HTTP, timeouts, bounded responses            | `common`, `ipaddr.js`                                                    |
+| `@aponiajs/rate-limit`      | Fixed-window request limiting, guard, store                     | `common`, `platform-elysia`, peer `elysia`                               |
+| `@aponiajs/security`        | Security headers and signed double-submit CSRF                  | `common`, `platform-elysia`, peer `elysia`                               |
+| `@aponiajs/session`         | Signed session cookies, session service, bounded store          | `common`, `platform-elysia`, peer `elysia`                               |
+| `@aponiajs/auth`            | JWT authentication, guards, refresh rotation, revocation        | `common`, `platform-elysia`, `jose`, peer `elysia`                       |
+| `@aponiajs/audit`           | Bounded, redacting audit events and store                       | `common`                                                                 |
+| `@aponiajs/tenancy`         | Request-scoped tenant service and guard                         | `common`, `platform-elysia`, peer `elysia`                               |
+| `@aponiajs/queue`           | In-process job queue, retries, dead letters, outbox             | `common`                                                                 |
+| `@aponiajs/database`        | Drizzle boundary, repositories, SQL migrations                  | `common`, `drizzle-orm`                                                  |
+| `@aponiajs/metrics`         | Prometheus registry, request instrumentation, scrape endpoint   | `common`, `platform-elysia`, peer `elysia`                               |
+| `@aponiajs/idempotency`     | Idempotent request replay, conflict detection, store            | `common`, `platform-elysia`, peer `elysia`                               |
+| `@aponiajs/microservices`   | Message patterns, CBOR client/server, optional broker adapters  | `common`, `cborg`; optional broker SDK peers                             |
+| `@aponiajs/store-redis`     | Redis stores for cache, rate-limit, session, idempotency, auth  | `common`; optional peer `redis`                                          |
+| `@aponiajs/view`            | Blade views, components, props, slots, and shared data          | `common`                                                                 |
+| `@aponiajs/mvc`             | Inertia for React/Vue; Next, Nuxt, Angular, Express, Fastify    | `common`, `serverless`                                                   |
+| `@aponiajs/serverless`      | AWS Lambda and Web Fetch adapters for an application            | —                                                                        |
+| `@aponiajs/h3`              | H3 delivery adapter for an application                          | `serverless`, peer `h3`                                                  |
+| `@aponiajs/hono`            | Hono delivery adapter for an application                        | `serverless`, peer `hono`                                                |
+| `@aponiajs/nitro`           | Nitro delivery adapter for an application                       | `serverless`, peer `nitro`                                               |
+| `@aponiajs/platform-elysia` | Elysia adapter, HTTP routes, WebSocket gateways, plugins        | `common`, `core`, peer `elysia`                                          |
+| `@aponiajs/cli`             | `aponia new` and `aponia generate` schematics                   | `change-case`, `ts-morph`, `yargs-parser`, `inflection`, `oxfmt` (exact) |
+| `create-aponia`             | `bun create aponia` entrypoint into the same generator          | `@aponiajs/cli`                                                          |
+| `@aponiajs/cron`            | Scheduled jobs declared in a module, from validated config      | `common`, `platform-elysia`, `@elysia/cron`, peer `elysia`               |
+| `@aponiajs/cors`            | Cross-origin policy declared in a module, from validated config | `common`, `platform-elysia`, `@elysia/cors`, peer `elysia`               |
+| `@aponiajs/devtools`        | Opt-in devtools served by the running application itself        | `cli`, `common`, `platform-elysia`, peer `elysia`                        |
+| `@aponiajs/graphql`         | GraphQL endpoint served in a module, from validated config      | `common`, `platform-elysia`, `@elysia/graphql-yoga`, peer `elysia`       |
+| `@aponiajs/mcp`             | Model Context Protocol server, version negotiation, discovery   | `common`, peer `elysia`                                                  |
+| `@aponiajs/testing`         | Test application builder, provider overrides, teardown          | `common`, `platform-elysia`, peer `elysia`                               |
+| `@aponiajs/openapi`         | OpenAPI document served for an application's routes             | `common`, `platform-elysia`, `@elysia/openapi`, peer `elysia`            |
+| `@aponiajs/opentelemetry`   | Tracing through a validated config, no backend or exporter      | `common`, `platform-elysia`, `@elysia/opentelemetry`, peer `elysia`      |
+| `aponiajs`                  | Reserved public facade, private and unpublished                 | —                                                                        |
 
 Supporting directories: `examples/` for executable examples, `docs/` for
 published documentation, `scripts/`
@@ -87,48 +87,48 @@ Every package and supporting directory carries its own `AGENTS.md` with the
 invariants that apply there. Read this file first, then the one next to the code
 being changed:
 
-| Guide                                                            | Covers                                                            |
-| ---------------------------------------------------------------- | ----------------------------------------------------------------- |
-| [`packages/common`](packages/common/AGENTS.md)                   | Decorators, descriptors, tokens, errors, logging                  |
-| [`packages/core`](packages/core/AGENTS.md)                       | Module graph, visibility, container                               |
-| [`packages/cache`](packages/cache/AGENTS.md)                     | The bounded application-cache package                             |
-| [`packages/compression`](packages/compression/AGENTS.md)         | The Brotli/gzip response-compression package                      |
-| [`packages/events`](packages/events/AGENTS.md)                   | The typed in-process event package                                |
-| [`packages/http`](packages/http/AGENTS.md)                       | The SSRF-safe outbound HTTP package                               |
-| [`packages/rate-limit`](packages/rate-limit/AGENTS.md)           | The fixed-window rate-limit package                               |
-| [`packages/security`](packages/security/AGENTS.md)               | The security headers and CSRF package                             |
-| [`packages/session`](packages/session/AGENTS.md)                 | The signed session cookie package                                 |
-| [`packages/auth`](packages/auth/AGENTS.md)                       | The JWT authentication and authorization package                  |
-| [`packages/audit`](packages/audit/AGENTS.md)                     | The bounded audit-event package                                   |
-| [`packages/tenancy`](packages/tenancy/AGENTS.md)                 | The request-scoped multi-tenancy package                          |
-| [`packages/queue`](packages/queue/AGENTS.md)                     | The job queue and transactional outbox package                    |
-| [`packages/database`](packages/database/AGENTS.md)               | The Drizzle database boundary, repositories, and migrations       |
-| [`packages/metrics`](packages/metrics/AGENTS.md)                 | The Prometheus metrics registry, plugin, and scrape endpoint      |
-| [`packages/idempotency`](packages/idempotency/AGENTS.md)         | The idempotent request replay package                             |
-| [`packages/platform-elysia`](packages/platform-elysia/AGENTS.md) | Bootstrap, route mapping, native plugins, context types           |
-| [`packages/cli`](packages/cli/AGENTS.md)                         | Schematics, templates, generated layout                           |
-| [`packages/create-aponia`](packages/create-aponia/AGENTS.md)     | The `bun create aponia` entrypoint                                |
-| [`packages/cron`](packages/cron/AGENTS.md)                       | The scheduled-jobs plugin package                                 |
-| [`packages/cors`](packages/cors/AGENTS.md)                       | The cross-origin plugin package                                   |
-| [`packages/devtools`](packages/devtools/AGENTS.md)               | The opt-in devtools package, served by the application itself     |
-| [`packages/graphql`](packages/graphql/AGENTS.md)                 | The GraphQL endpoint package, served by its own registration      |
-| [`packages/mcp`](packages/mcp/AGENTS.md)                         | The standard Model Context Protocol (MCP) server & tools package  |
-| [`packages/testing`](packages/testing/AGENTS.md)                 | The test kit: test applications, provider overrides, teardown     |
-| [`packages/openapi`](packages/openapi/AGENTS.md)                 | The OpenAPI document package, served by its own registration      |
-| [`packages/opentelemetry`](packages/opentelemetry/AGENTS.md)     | The OpenTelemetry tracing package, and its process-global limit   |
-| [`packages/microservices`](packages/microservices/AGENTS.md)     | Message patterns, CBOR client/server, optional broker adapters    |
-| [`packages/store-redis`](packages/store-redis/AGENTS.md)         | Redis stores for cache, rate-limit, session, idempotency, auth    |
-| [`packages/view`](packages/view/AGENTS.md)                       | High-performance template rendering engine                        |
-| [`packages/mvc`](packages/mvc/AGENTS.md)                         | Multi-engine bridges for Next.js, Nuxt, Angular, Express, Fastify |
-| [`packages/serverless`](packages/serverless/AGENTS.md)           | AWS Lambda and Web Fetch adapters for an application              |
-| [`packages/h3`](packages/h3/AGENTS.md)                           | H3 delivery adapter for an application                            |
-| [`packages/hono`](packages/hono/AGENTS.md)                       | Hono delivery adapter for an application                          |
-| [`packages/nitro`](packages/nitro/AGENTS.md)                     | Nitro delivery adapter for an application                         |
-| [`packages/aponiajs`](packages/aponiajs/AGENTS.md)               | The reserved, still-private facade                                |
-| [`scripts`](scripts/AGENTS.md)                                   | Release channel derivation and documentation guards               |
-| [`docs`](docs/AGENTS.md)                                         | The published documentation set and what guards it                |
-| [`docs/learn`](docs/learn/README.md)                             | The ordered chapters that teach the framework                     |
-| [`examples`](examples/AGENTS.md)                                 | Executable applications built with the framework                  |
+| Guide                                                            | Covers                                                           |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------- |
+| [`packages/common`](packages/common/AGENTS.md)                   | Decorators, descriptors, tokens, errors, logging                 |
+| [`packages/core`](packages/core/AGENTS.md)                       | Module graph, visibility, container                              |
+| [`packages/cache`](packages/cache/AGENTS.md)                     | The bounded application-cache package                            |
+| [`packages/compression`](packages/compression/AGENTS.md)         | The Brotli/gzip response-compression package                     |
+| [`packages/events`](packages/events/AGENTS.md)                   | The typed in-process event package                               |
+| [`packages/http`](packages/http/AGENTS.md)                       | The SSRF-safe outbound HTTP package                              |
+| [`packages/rate-limit`](packages/rate-limit/AGENTS.md)           | The fixed-window rate-limit package                              |
+| [`packages/security`](packages/security/AGENTS.md)               | The security headers and CSRF package                            |
+| [`packages/session`](packages/session/AGENTS.md)                 | The signed session cookie package                                |
+| [`packages/auth`](packages/auth/AGENTS.md)                       | The JWT authentication and authorization package                 |
+| [`packages/audit`](packages/audit/AGENTS.md)                     | The bounded audit-event package                                  |
+| [`packages/tenancy`](packages/tenancy/AGENTS.md)                 | The request-scoped multi-tenancy package                         |
+| [`packages/queue`](packages/queue/AGENTS.md)                     | The job queue and transactional outbox package                   |
+| [`packages/database`](packages/database/AGENTS.md)               | The Drizzle database boundary, repositories, and migrations      |
+| [`packages/metrics`](packages/metrics/AGENTS.md)                 | The Prometheus metrics registry, plugin, and scrape endpoint     |
+| [`packages/idempotency`](packages/idempotency/AGENTS.md)         | The idempotent request replay package                            |
+| [`packages/platform-elysia`](packages/platform-elysia/AGENTS.md) | Bootstrap, route mapping, native plugins, context types          |
+| [`packages/cli`](packages/cli/AGENTS.md)                         | Schematics, templates, generated layout                          |
+| [`packages/create-aponia`](packages/create-aponia/AGENTS.md)     | The `bun create aponia` entrypoint                               |
+| [`packages/cron`](packages/cron/AGENTS.md)                       | The scheduled-jobs plugin package                                |
+| [`packages/cors`](packages/cors/AGENTS.md)                       | The cross-origin plugin package                                  |
+| [`packages/devtools`](packages/devtools/AGENTS.md)               | The opt-in devtools package, served by the application itself    |
+| [`packages/graphql`](packages/graphql/AGENTS.md)                 | The GraphQL endpoint package, served by its own registration     |
+| [`packages/mcp`](packages/mcp/AGENTS.md)                         | The standard Model Context Protocol (MCP) server & tools package |
+| [`packages/testing`](packages/testing/AGENTS.md)                 | The test kit: test applications, provider overrides, teardown    |
+| [`packages/openapi`](packages/openapi/AGENTS.md)                 | The OpenAPI document package, served by its own registration     |
+| [`packages/opentelemetry`](packages/opentelemetry/AGENTS.md)     | The OpenTelemetry tracing package, and its process-global limit  |
+| [`packages/microservices`](packages/microservices/AGENTS.md)     | Message patterns, CBOR client/server, optional broker adapters   |
+| [`packages/store-redis`](packages/store-redis/AGENTS.md)         | Redis stores for cache, rate-limit, session, idempotency, auth   |
+| [`packages/view`](packages/view/AGENTS.md)                       | Blade views, components, props, slots, and shared data           |
+| [`packages/mvc`](packages/mvc/AGENTS.md)                         | Inertia for React/Vue; Next, Nuxt, Angular, Express, Fastify     |
+| [`packages/serverless`](packages/serverless/AGENTS.md)           | AWS Lambda and Web Fetch adapters for an application             |
+| [`packages/h3`](packages/h3/AGENTS.md)                           | H3 delivery adapter for an application                           |
+| [`packages/hono`](packages/hono/AGENTS.md)                       | Hono delivery adapter for an application                         |
+| [`packages/nitro`](packages/nitro/AGENTS.md)                     | Nitro delivery adapter for an application                        |
+| [`packages/aponiajs`](packages/aponiajs/AGENTS.md)               | The reserved, still-private facade                               |
+| [`scripts`](scripts/AGENTS.md)                                   | Release channel derivation and documentation guards              |
+| [`docs`](docs/AGENTS.md)                                         | The published documentation set and what guards it               |
+| [`docs/learn`](docs/learn/README.md)                             | The ordered chapters that teach the framework                    |
+| [`examples`](examples/AGENTS.md)                                 | Executable applications built with the framework                 |
 
 `scripts/agent-guides.spec.ts` keeps that list and the symlinks honest, and
 `scripts/learning-path.spec.ts` keeps the numbered chapters in `docs/learn/`
@@ -485,7 +485,10 @@ contract, CBOR request/reply envelopes, a client and server runtime, an
 in-memory reference transport, adapter factories for NATS, MQTT, RabbitMQ,
 Kafka, Redis Streams, SQS, Pub/Sub, and Service Bus, and `@MessagePattern()` /
 `@EventPattern()` handlers dispatched by the boot), and serverless adapters
-(`@aponiajs/serverless`: Web Fetch and AWS Lambda).
+(`@aponiajs/serverless`: Web Fetch and AWS Lambda), Blade views
+(`@aponiajs/view`: layouts, sections, components, slots, and props), and
+Inertia pages (`@aponiajs/mvc`: React/Vue component props plus Next, Nuxt,
+Angular, Express, and Fastify bridges).
 Not implemented: managed broker provisioning, durable outboxes, bundled
 distributed revocation and refresh stores (the contracts accept an application
 store), MVC adapters, and production WebSocket transport extraction. Treat this

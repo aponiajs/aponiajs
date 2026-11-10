@@ -1361,6 +1361,14 @@
           "kind": "type"
         },
         {
+          "name": "VIEW_ENGINE",
+          "kind": "value"
+        },
+        {
+          "name": "ViewEngine",
+          "kind": "type"
+        },
+        {
           "name": "ViewRenderOptions",
           "kind": "type"
         },
@@ -2417,12 +2425,36 @@
           "kind": "value"
         },
         {
+          "name": "createInertiaResponse",
+          "kind": "value"
+        },
+        {
           "name": "createNextHandler",
           "kind": "value"
         },
         {
           "name": "createNuxtHandler",
           "kind": "value"
+        },
+        {
+          "name": "defaultInertiaRootView",
+          "kind": "value"
+        },
+        {
+          "name": "inertia",
+          "kind": "value"
+        },
+        {
+          "name": "Inertia",
+          "kind": "value"
+        },
+        {
+          "name": "InertiaOptions",
+          "kind": "type"
+        },
+        {
+          "name": "InertiaPage",
+          "kind": "type"
         },
         {
           "name": "NextServerApp",
@@ -3325,6 +3357,14 @@
     {
       "name": "@aponiajs/view",
       "exports": [
+        {
+          "name": "BladeViewEngine",
+          "kind": "value"
+        },
+        {
+          "name": "BladeViewEngineOptions",
+          "kind": "type"
+        },
         {
           "name": "HtmlViewEngine",
           "kind": "value"

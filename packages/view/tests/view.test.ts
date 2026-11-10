@@ -37,4 +37,12 @@ describe("ViewModule & ViewService", () => {
     const output = await service.render("Hello {{name}}", { name: "World" });
     expect(output).toBe("Hello World");
   });
+
+  test("selects the Blade engine and shares values through the service", async () => {
+    const mod = ViewModule.register({ defaultEngine: "blade" });
+    expect(mod.global).toBe(true);
+    const service = new ViewService(new HtmlViewEngine());
+    service.share("sharedKey", "sharedValue");
+    expect(await service.render("Hello", { name: "Aponia" })).toBe("Hello");
+  });
 });

@@ -1,18 +1,19 @@
 # @aponiajs/view
 
-> Template view rendering pipeline for AponiaJS.
+> Laravel-style Blade view rendering for AponiaJS, with layouts, sections, components, slots, props, and dot-notation lookup.
 
 ## Exports
 
-- `ViewModule`: dynamic module configuring the view engine
-- `ViewService`: service for programmatic template rendering
-- `VIEW_ENGINE`: injection token for custom view engines
-- `HtmlViewEngine`: zero-dependency fast template substitution engine
-- Types: `ViewEngine`, `ViewModuleOptions`
+- `ViewModule.register({ defaultEngine: "blade" | "html", rootDir?, shared?, engine?, cache? })`
+- `ViewService`: `render(template, data, options?)` and `share(key, value)`
+- `BladeViewEngine`: `@extends`, `@section`, `@yield`, `@include`, `<x-component>`, `{{ }}`, `{!! !!}`, `@if`, `@foreach`
+- `HtmlViewEngine`: zero-dependency token substitution
+- `VIEW_ENGINE`: the injection token from `@aponiajs/common`
+- Types: `ViewEngine`, `ViewModuleOptions`, `BladeViewEngineOptions`
 
 ## Documentation
 
 - [Package README](README.md)
-- [Published packages](../../docs/packages.md)
+- [Views guide](../../docs/views.md)
 - [npm](https://www.npmjs.com/package/@aponiajs/view)
 

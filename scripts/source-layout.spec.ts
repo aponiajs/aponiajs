@@ -202,7 +202,7 @@ const packageLayouts: readonly PackageLayout[] = [
   {
     sourceRoot: "packages/mvc/src",
     files: ["index.ts"],
-    directories: ["adapters", "frameworks"],
+    directories: ["adapters", "frameworks", "inertia"],
   },
   {
     sourceRoot: "packages/serverless/src",
