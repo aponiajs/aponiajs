@@ -165,4 +165,10 @@ describe("BladeViewEngine", () => {
     expect(await engine.render("yield-fallback", {})).toBe("fallback");
     expect(await engine.render("include-non-object", { active: "users" })).toBe("<nav>users</nav>");
   });
+
+  test("renders an empty string for a value JSON cannot serialize", async () => {
+    const circular: Record<string, unknown> = {};
+    circular.self = circular;
+    expect(await engine.render("stringify", { user: circular })).toBe("");
+  });
 });

@@ -28,7 +28,6 @@ export class BladeViewEngine implements ViewEngine {
   readonly #shared: Data;
   readonly #templates = new Map<string, string>();
   readonly #expressions = new Map<string, Expression>();
-  readonly #resolving = new Set<string>();
   readonly #active = new Set<string>();
 
   constructor(options: BladeViewEngineOptions = {}) {
@@ -104,12 +103,6 @@ export class BladeViewEngine implements ViewEngine {
       layoutData.content = sections.get("content") ?? rendered;
       rendered = await this.#renderTemplate(layout, layoutData, undefined, depth + 1, sections);
     }
-
-    rendered = rendered.replace(
-      /@yield\s*\(\s*['"]([^'"]+)['"](?:\s*,\s*(['"])([\s\S]*?)\2)?\s*\)/g,
-      (_match, name: string, _quote: string | undefined, fallback: string | undefined) =>
-        sections.get(name) ?? fallback ?? "",
-    );
 
     return rendered;
   }
@@ -222,12 +215,7 @@ export class BladeViewEngine implements ViewEngine {
         const extra = expression === undefined ? {} : this.#evaluateObject(expression, data);
         return await this.#renderTemplate(name, { ...data, ...extra }, undefined, 0);
       },
-    ).catch((error: unknown) => {
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error("A Blade include could not be rendered.", { cause: error });
-    });
+    );
   }
 
   async #renderComponents(
@@ -351,20 +339,12 @@ export class BladeViewEngine implements ViewEngine {
     if (cached !== undefined && this.#useCache) {
       return cached;
     }
-    if (this.#resolving.has(key)) {
-      throw new Error(`Blade template "${template}" includes itself.`);
+    const path = await this.#resolveTemplate(template);
+    const source = await Bun.file(path).text();
+    if (this.#useCache) {
+      this.#templates.set(key, source);
     }
-    this.#resolving.add(key);
-    try {
-      const path = await this.#resolveTemplate(template);
-      const source = await Bun.file(path).text();
-      if (this.#useCache) {
-        this.#templates.set(key, source);
-      }
-      return source;
-    } finally {
-      this.#resolving.delete(key);
-    }
+    return source;
   }
 
   async #resolveTemplate(template: string): Promise<string> {
