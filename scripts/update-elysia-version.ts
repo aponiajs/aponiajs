@@ -29,6 +29,7 @@ export const elysiaTargetFiles = [
   "examples/request-parameters/package.json",
   "examples/validation/package.json",
   "examples/websockets/package.json",
+  "examples/microservices/package.json",
   "packages/cli/templates/application/src/descriptors.generated.ts.tmpl",
   "packages/cli/templates/application/src/invokers.generated.ts.tmpl",
   "docs/elysia-compatibility.md",

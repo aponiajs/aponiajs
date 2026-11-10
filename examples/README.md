@@ -20,6 +20,7 @@ behavior the framework promises.
 | `devtools`             | What a boot compiled and what each request answered, served by the app itself                          | 3110 | `bun run example:devtools`             |
 | `eden-treaty`          | End-to-end type safety with Eden Treaty, path-agnostic DTOs, and inline schemas                        | 3120 | `bun run example:eden-treaty`          |
 | `reference`            | The full stack in one app: config, Drizzle, auth, queue, metrics, and health probes                    | 3130 | `bun run example:reference`            |
+| `microservices`        | Message patterns, CBOR envelopes, and request/event handlers across services                           | 3140 | `bun run example:microservices`        |
 
 Run every suite the way CI does:
 
