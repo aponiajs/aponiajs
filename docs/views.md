@@ -1,6 +1,6 @@
 # Views and Inertia
 
-AponiaJS serves views two ways. `@aponiajs/view` renders server-side Blade templates with layouts, sections, components, and automatic HTMX integration. `@aponiajs/mvc` provides the Inertia protocol so React or Vue components receive props returned by controllers without extra routing setup.
+AponiaJS serves views two ways: `@aponiajs/view` renders server-side Blade templates with layouts, sections, components, and automatic HTMX integration, while `@aponiajs/mvc` provides the Inertia protocol so React or Vue components receive props returned by controllers without extra routing setup.
 
 Both produce a standard Web `Response`, so the same controller answers through native Elysia, Hono, H3, Nitro, Web Fetch, or AWS Lambda.
 
