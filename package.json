@@ -37,6 +37,8 @@
     "example:serverless": "bun run --cwd examples/serverless start",
     "example:nitro": "bun run --cwd examples/nitro start",
     "example:mvc": "bun run --cwd examples/mvc start",
+    "example:inertia-react": "bun run --cwd examples/inertia-react start",
+    "example:inertia-vue": "bun run --cwd examples/inertia-vue start",
     "test": "bun run --workspaces test",
     "test:coverage": "bun test --coverage --coverage-reporter=text --coverage-reporter=lcov && bun scripts/coverage-gate.ts",
     "test:examples": "bun test ./examples/*/test/*.e2e-spec.ts",

@@ -24,6 +24,8 @@ behavior the framework promises.
 | `serverless`           | Web Fetch and AWS Lambda deployment adapters                                                           | 3150 | `bun run example:serverless`           |
 | `nitro`                | Nitro 3 RC server route delivery adapter                                                               | 3160 | `bun run example:nitro`                |
 | `mvc`                  | Blade views and Inertia pages for React and Vue                                                        | 3170 | `bun run example:mvc`                  |
+| `inertia-react`        | React Inertia page, props, first-load HTML, and SPA navigation                                         | 3180 | `bun run example:inertia-react`        |
+| `inertia-vue`          | Vue 3 Inertia page, props, first-load HTML, and SPA navigation                                         | 3190 | `bun run example:inertia-vue`          |
 
 Run every suite the way CI does:
 

@@ -111,3 +111,9 @@ The framework packages that ride the request pipeline — auth, cache, idempoten
 ## Security
 
 `{{ value }}` escapes HTML. `{!! value !!}` is the explicit raw escape hatch; use it only for markup the application produced. Blade expressions are developer-authored, not user input, and are cached functions. Never build a template from a request value.
+
+## Runnable examples
+
+- [Blade MVC](../examples/mvc): layouts, partials, components, slots, loops, and Inertia in one application.
+- [React Inertia](../examples/inertia-react): a React page with first-load HTML, SPA navigation, and a client bundle test.
+- [Vue Inertia](../examples/inertia-vue): a Vue 3 page with the same protocol and client bundle test.
