@@ -3,6 +3,7 @@ import { VIEW_ENGINE } from "@aponiajs/common";
 import type { ViewEngine, ViewModuleOptions } from "./view.types.ts";
 import { HtmlViewEngine } from "../engines/html-view-engine.ts";
 import { BladeViewEngine } from "../engines/blade-view-engine.ts";
+import { setDefaultViewEngine } from "../helper/view-response.ts";
 
 /**
  * ViewModule provides template rendering services for MVC applications.
@@ -19,6 +20,8 @@ export class ViewModule {
             cache: options.cache ?? true,
           })
         : new HtmlViewEngine({ cache: options.cache ?? true }));
+
+    setDefaultViewEngine(engine);
 
     return Object.freeze({
       module: ViewModule,

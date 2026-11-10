@@ -20,6 +20,12 @@ test("renders Blade layouts, partials, components, loops, and escaped data", asy
     expect(usersHtml).toContain("Total users: 2");
     expect(usersHtml).toContain("Ada (admin)");
     expect(usersHtml).toContain("Linus (member)");
+
+    // Test direct view() helper without decorator
+    const direct = await application.handle(new Request("http://localhost/direct-view"));
+    expect(direct.status).toBe(200);
+    expect(direct.headers.get("content-type")).toContain("text/html");
+    expect(await direct.text()).toContain("Direct View");
   } finally {
     await application.close();
   }
@@ -47,6 +53,15 @@ test("answers the Inertia protocol for React and Vue", async () => {
     expect(page.component).toBe("Users/Index");
     expect(page.props.users).toHaveLength(2);
     expect(page.url).toBe("/inertia/users");
+
+    // Test direct inertia() helper
+    const directInertia = await application.handle(
+      new Request("http://localhost/direct-inertia", {
+        headers: { "x-inertia": "true" },
+      }),
+    );
+    expect(directInertia.headers.get("x-inertia")).toBe("true");
+    expect(((await directInertia.json()) as any).component).toBe("Users/Index");
   } finally {
     await application.close();
   }

@@ -3,19 +3,28 @@ import { createInertiaResponse } from "./inertia.ts";
 import type { InertiaOptions } from "./inertia.types.ts";
 
 /**
- * Creates an Inertia response from a handler that holds the route context.
+ * Creates an Inertia response with type-safe props.
  *
- * @param component - The front-end component name.
+ * Can be returned directly from route handlers:
+ * ```ts
+ * @Get()
+ * index(@Context() ctx: RouteContext) {
+ *   return inertia("Users/Index", { users }, ctx);
+ * }
+ * ```
+ *
+ * @param component - The front-end component name or co-located page component.
  * @param props - The data the component receives.
- * @param context - The route context that carries the request.
+ * @param context - Optional route context carrying the incoming request.
  * @param options - Root document and asset version.
  * @returns The JSON or HTML response.
  */
-export function inertia(
+export function inertia<TProps extends Record<string, unknown> = Record<string, unknown>>(
   component: string,
-  props: Record<string, unknown>,
-  context: Pick<RouteContext, "request">,
+  props?: TProps,
+  context?: Pick<RouteContext, "request">,
   options?: InertiaOptions,
 ): Response {
-  return createInertiaResponse(component, props, context.request, options);
+  const request = context?.request ?? new Request("http://localhost/");
+  return createInertiaResponse(component, props ?? {}, request, options);
 }

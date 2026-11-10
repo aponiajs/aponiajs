@@ -334,6 +334,9 @@ export class BladeViewEngine implements ViewEngine {
   }
 
   async #loadTemplate(template: string): Promise<string> {
+    if (template.includes("<") && template.includes(">")) {
+      return template;
+    }
     const key = template;
     const cached = this.#templates.get(key);
     if (cached !== undefined && this.#useCache) {
@@ -358,15 +361,31 @@ export class BladeViewEngine implements ViewEngine {
   }
 
   #candidatePaths(template: string): string[] {
-    const path = template.replace(/^\.\//, "");
-    const hasExtension = /\.(?:blade\.html|html|php)$/.test(path);
-    const normalized = hasExtension ? path : path.replace(/\./g, "/");
-    const base = template.startsWith(".") || template.startsWith("/") ? template : normalized;
-    const target = template.startsWith("/") ? template : resolve(this.#rootDir, base);
+    const hasExtension = /\.(?:blade\.html|html|php|ejs|vue|tsx)$/.test(template);
+    const normalized = hasExtension ? template : template.replace(/\./g, "/");
+    const baseDir =
+      template.startsWith("/") || template.startsWith("./") || template.startsWith("../")
+        ? process.cwd()
+        : this.#rootDir;
+    const target = resolve(baseDir, normalized);
+    const srcTarget = resolve(process.cwd(), "src", normalized);
     if (hasExtension) {
-      return [target];
+      return [target, srcTarget];
     }
-    return [`${target}.blade.html`, `${target}.html`, `${target}.php`];
+    return [
+      `${target}.blade.html`,
+      `${target}.html`,
+      `${target}.php`,
+      `${target}.ejs`,
+      `${target}.vue`,
+      `${target}.tsx`,
+      `${srcTarget}.blade.html`,
+      `${srcTarget}.html`,
+      `${srcTarget}.php`,
+      `${srcTarget}.ejs`,
+      `${srcTarget}.vue`,
+      `${srcTarget}.tsx`,
+    ];
   }
 }
 

@@ -3338,6 +3338,14 @@
           "kind": "value"
         },
         {
+          "name": "setDefaultViewEngine",
+          "kind": "value"
+        },
+        {
+          "name": "view",
+          "kind": "value"
+        },
+        {
           "name": "VIEW_ENGINE",
           "kind": "value"
         },

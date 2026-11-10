@@ -1,5 +1,6 @@
-import { Controller, Get, Render } from "@aponiajs/common";
-import { Inertia } from "@aponiajs/mvc";
+import { Context, Controller, Get, Render, type RouteContext } from "@aponiajs/common";
+import { Inertia, inertia } from "@aponiajs/mvc";
+import { view } from "@aponiajs/view";
 
 const users = [
   { id: "1", name: "Ada", role: "admin" },
@@ -20,9 +21,19 @@ export class AppController {
     return { title: "Users", users };
   }
 
+  @Get("direct-view")
+  directView() {
+    return view("users.index", { title: "Direct View", users });
+  }
+
   @Get("inertia/users")
   @Inertia("Users/Index")
   inertiaUsers() {
     return { users };
+  }
+
+  @Get("direct-inertia")
+  directInertia(@Context() ctx: RouteContext) {
+    return inertia("Users/Index", { users }, ctx);
   }
 }

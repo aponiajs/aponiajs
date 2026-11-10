@@ -197,7 +197,7 @@ const packageLayouts: readonly PackageLayout[] = [
   {
     sourceRoot: "packages/view/src",
     files: ["index.ts"],
-    directories: ["engines", "module"],
+    directories: ["engines", "helper", "module"],
   },
   {
     sourceRoot: "packages/mvc/src",
