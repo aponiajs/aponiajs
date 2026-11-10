@@ -37,7 +37,6 @@ exist.
 | `@aponiajs/microservices`   | Complete | message patterns, CBOR client/server, eight broker adapters    |
 | `@aponiajs/store-redis`     | Complete | Redis stores for cache, rate-limit, session, idempotency, auth |
 | `@aponiajs/view`            | Complete | Blade layouts, components, props, slots, and shared data       |
-| `@aponiajs/mvc`             | Complete | Inertia component and prop protocol for React and Vue          |
 | `@aponiajs/serverless`      | Complete | Web Fetch and AWS Lambda adapters                              |
 | `@aponiajs/h3`              | Complete | H3 delivery adapter                                            |
 | `@aponiajs/hono`            | Complete | Hono delivery adapter                                          |

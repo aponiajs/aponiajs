@@ -376,8 +376,6 @@ export class BladeViewEngine implements ViewEngine {
         ? cwd
         : this.#rootDir;
     const target = resolve(baseDir, normalized);
-    const srcTarget = resolve(callerRoot, "src", normalized);
-
     // Feature folder views subfolder: src/<feature>/views/<name>
     const segments = normalized.split("/");
     const viewsNested =
@@ -386,27 +384,13 @@ export class BladeViewEngine implements ViewEngine {
         : resolve(callerRoot, "src", "views", normalized);
 
     if (hasExtension) {
-      return [target, srcTarget, viewsNested];
+      return [viewsNested, target];
     }
     return [
-      `${target}.blade.html`,
-      `${target}.html`,
-      `${target}.php`,
-      `${target}.ejs`,
-      `${target}.vue`,
-      `${target}.tsx`,
-      `${srcTarget}.blade.html`,
-      `${srcTarget}.html`,
-      `${srcTarget}.php`,
-      `${srcTarget}.ejs`,
-      `${srcTarget}.vue`,
-      `${srcTarget}.tsx`,
       `${viewsNested}.blade.html`,
       `${viewsNested}.html`,
-      `${viewsNested}.php`,
-      `${viewsNested}.ejs`,
-      `${viewsNested}.vue`,
-      `${viewsNested}.tsx`,
+      `${target}.blade.html`,
+      `${target}.html`,
     ];
   }
 }

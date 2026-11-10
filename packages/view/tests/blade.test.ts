@@ -128,6 +128,7 @@ describe("BladeViewEngine", () => {
     expect(await engine.render("inline-section", {})).toBe("Hello");
     expect(await engine.render("unless", {})).toBe("shown");
     expect(await engine.render("no-sections", {})).toBe("|none");
+    expect(await engine.render("no-sections", {}, { fragment: true })).toBe("");
   });
 
   test("iterates objects with keys and skips a missing collection", async () => {

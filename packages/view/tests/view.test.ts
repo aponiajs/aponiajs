@@ -19,8 +19,11 @@ describe("HtmlViewEngine", () => {
   });
 
   test("reads from filesystem if file exists or caches", async () => {
-    const engine = new HtmlViewEngine({ cache: false });
-    const rendered = await engine.render("<div>Fallback string</div>", {});
+    const engine = new HtmlViewEngine({ cache: true });
+    await engine.render("<h1>Cached</h1>", {});
+    await engine.render("<h1>Cached</h1>", {});
+    const noCache = new HtmlViewEngine({ cache: false });
+    const rendered = await noCache.render("<div>Fallback string</div>", {});
     expect(rendered).toBe("<div>Fallback string</div>");
   });
 });

@@ -30,7 +30,7 @@ The published documentation set:
 | `metrics.md`                | The Prometheus registry, recorded request metrics, scrape endpoint, and series bounds                                                     |
 | `migrating-from-nest.md`    | The package, authoring, validation, error, and CLI mapping from NestJS to AponiaJS                                                        |
 | `microservices.md`          | Message patterns, CBOR client/server, and optional broker adapters                                                                        |
-| `views.md`                  | Blade layouts, sections, components, props, and the Inertia protocol for React and Vue                                                    |
+| `views.md`                  | Blade layouts, sections, components, props, and automatic HTMX adaptation                                                                 |
 | `mcp.md`                    | The standard Model Context Protocol server, protocol negotiation, tools, resources, and prompts                                           |
 | `openapi.md`                | Serving an OpenAPI document for an application's routes, what the document reflects, and what it does not claim                           |
 | `configuration.md`          | Declaring, validating once at boot, injecting, and reading back a configuration                                                           |

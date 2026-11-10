@@ -1,8 +1,8 @@
-# Views and Inertia
+# Views and HTML Templates
 
-AponiaJS serves views two ways: `@aponiajs/view` renders server-side Blade templates with layouts, sections, components, and automatic HTMX integration, while `@aponiajs/mvc` provides the Inertia protocol so React or Vue components receive props returned by controllers without extra routing setup.
+AponiaJS provides server-side Blade template rendering through `@aponiajs/view` with master layouts, sections, components, slots, shared data, and automatic HTMX integration.
 
-Both produce a standard Web `Response`, so the same controller answers through native Elysia, Hono, H3, Nitro, Web Fetch, or AWS Lambda.
+Views produce a standard Web `Response` with `content-type: text/html; charset=utf-8`, so the same controller answers through native Elysia, Hono, H3, Nitro, Web Fetch, or AWS Lambda.
 
 ## Laravel-style MVC
 
@@ -105,35 +105,9 @@ remove(@Param("id") id: string) {
 
 Templates and compiled expressions are cached in memory.
 
-## Inertia pages for React and Vue
-
-```ts
-import { Controller, Get } from "@aponiajs/common";
-import { Inertia, inertia } from "@aponiajs/mvc";
-
-@Controller("users")
-export class UsersController {
-  @Get()
-  @Inertia("Users/Index")
-  index() {
-    return { users: [{ id: "1", name: "Ada" }] };
-  }
-
-  @Get("direct")
-  direct() {
-    return inertia("Users/Index", { users: [] });
-  }
-}
-```
-
-- **First load**: receives the full HTML document with the initial page payload inside `<div id="app" data-page="..."></div>` for hydration.
-- **SPA navigation**: a request with `X-Inertia: true` receives the page object as JSON with `Vary: X-Inertia`.
-
-Client code hydrates with `@inertiajs/react` or `@inertiajs/vue3`.
-
 ## Adapters
 
-The view stack is adapter-neutral. Controllers rendering Blade views or Inertia pages answer identically through:
+The view stack is adapter-neutral. Controllers rendering Blade views answer identically through:
 
 - native Elysia
 - Web Fetch
@@ -149,5 +123,3 @@ The view stack is adapter-neutral. Controllers rendering Blade views or Inertia 
 ## Runnable examples
 
 - [Blade MVC](../examples/mvc): nested feature architecture with models, controllers, Blade views, auto-HTMX, and fragment helpers.
-- [React Inertia](../examples/inertia-react): a React page with first-load HTML, SPA navigation, and client bundle test.
-- [Vue Inertia](../examples/inertia-vue): a Vue 3 page with the same protocol and client bundle test.

@@ -32,7 +32,7 @@ change that changes the behavior.
 | Add security headers and CSRF protection       | [Package catalog](./packages.md), [Threat model](./threat-model.md)                                                       |
 | Call another service safely                    | [Package catalog](./packages.md), [Threat model](./threat-model.md)                                                       |
 | Work with files and downloads                  | [Files](./files.md)                                                                                                       |
-| Render Blade views or Inertia pages            | [Views and Inertia](./views.md)                                                                                           |
+| Render Blade views or HTML templates           | [Views and HTML Templates](./views.md)                                                                                    |
 | Persist data and run migrations                | [Database](./database.md)                                                                                                 |
 | Run background work                            | [Queues](./queues.md), [Microservices](./microservices.md)                                                                |
 | Observe a running service                      | [Logging](./logging.md), [Metrics](./metrics.md), [Devtools](./devtools.md)                                               |

@@ -43,7 +43,6 @@ Bun workspace. Framework packages live in `packages/`:
 | `@aponiajs/microservices`   | Message patterns, CBOR client/server, optional broker adapters  | `common`, `cborg`; optional broker SDK peers                             |
 | `@aponiajs/store-redis`     | Redis stores for cache, rate-limit, session, idempotency, auth  | `common`; optional peer `redis`                                          |
 | `@aponiajs/view`            | Blade views, components, props, slots, and shared data          | `common`                                                                 |
-| `@aponiajs/mvc`             | Inertia component and prop protocol for React and Vue           | `common`                                                                 |
 | `@aponiajs/serverless`      | AWS Lambda and Web Fetch adapters for an application            | —                                                                        |
 | `@aponiajs/h3`              | H3 delivery adapter for an application                          | `serverless`, peer `h3`                                                  |
 | `@aponiajs/hono`            | Hono delivery adapter for an application                        | `serverless`, peer `hono`                                                |
@@ -119,7 +118,6 @@ being changed:
 | [`packages/microservices`](packages/microservices/AGENTS.md)     | Message patterns, CBOR client/server, optional broker adapters   |
 | [`packages/store-redis`](packages/store-redis/AGENTS.md)         | Redis stores for cache, rate-limit, session, idempotency, auth   |
 | [`packages/view`](packages/view/AGENTS.md)                       | Blade views, components, props, slots, and shared data           |
-| [`packages/mvc`](packages/mvc/AGENTS.md)                         | Inertia component and prop protocol for React and Vue            |
 | [`packages/serverless`](packages/serverless/AGENTS.md)           | AWS Lambda and Web Fetch adapters for an application             |
 | [`packages/h3`](packages/h3/AGENTS.md)                           | H3 delivery adapter for an application                           |
 | [`packages/hono`](packages/hono/AGENTS.md)                       | Hono delivery adapter for an application                         |
@@ -485,10 +483,8 @@ contract, CBOR request/reply envelopes, a client and server runtime, an
 in-memory reference transport, adapter factories for NATS, MQTT, RabbitMQ,
 Kafka, Redis Streams, SQS, Pub/Sub, and Service Bus, and `@MessagePattern()` /
 `@EventPattern()` handlers dispatched by the boot), and serverless adapters
-(`@aponiajs/serverless`: Web Fetch and AWS Lambda), Blade views
-(`@aponiajs/view`: layouts, sections, components, slots, and props), and
-Inertia pages (`@aponiajs/mvc`: React and Vue component props through the
-Inertia protocol).
+(`@aponiajs/serverless`: Web Fetch and AWS Lambda), and Blade views
+(`@aponiajs/view`: layouts, sections, components, slots, and props).
 Not implemented: managed broker provisioning, durable outboxes, bundled
 distributed revocation and refresh stores (the contracts accept an application
 store), MVC adapters, and production WebSocket transport extraction. Treat this

@@ -57,7 +57,6 @@ export const frameworkContract: FrameworkContract = Object.freeze({
     "@aponiajs/microservices",
     "@aponiajs/store-redis",
     "@aponiajs/view",
-    "@aponiajs/mvc",
     "@aponiajs/serverless",
     "@aponiajs/h3",
     "@aponiajs/hono",

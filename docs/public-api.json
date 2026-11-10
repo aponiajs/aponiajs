@@ -2414,35 +2414,6 @@
       ]
     },
     {
-      "name": "@aponiajs/mvc",
-      "exports": [
-        {
-          "name": "createInertiaResponse",
-          "kind": "value"
-        },
-        {
-          "name": "defaultInertiaRootView",
-          "kind": "value"
-        },
-        {
-          "name": "inertia",
-          "kind": "value"
-        },
-        {
-          "name": "Inertia",
-          "kind": "value"
-        },
-        {
-          "name": "InertiaOptions",
-          "kind": "type"
-        },
-        {
-          "name": "InertiaPage",
-          "kind": "type"
-        }
-      ]
-    },
-    {
       "name": "@aponiajs/nitro",
       "exports": [
         {

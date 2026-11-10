@@ -403,13 +403,6 @@ components, slots, prop binding, shared view data, and dot-notation lookup.
 [Package README](../packages/view/README.md) ·
 [npm](https://www.npmjs.com/package/@aponiajs/view)
 
-### `@aponiajs/mvc`
-
-The Inertia protocol for React and Vue components and props.
-
-[Package README](../packages/mvc/README.md) ·
-[npm](https://www.npmjs.com/package/@aponiajs/mvc)
-
 ### `@aponiajs/serverless`
 
 Adapters for function and edge runtimes. `toFetchHandler` binds the application
