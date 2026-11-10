@@ -144,7 +144,10 @@ resources generate a registered `@Controller()` whose methods carry
 generate a provider-registered gateway. A CRUD WebSocket
 resource maps `<resource>.create`, `.findAll`, `.findOne`, `.update`, and
 `.remove` through `@SubscribeMessage()` and injects event data with
-`@MessageBody()`. A standalone gateway is immediately mountable:
+`@MessageBody()`. MVC resources (`--type mvc`) generate a feature folder with
+a controller calling `view("./views/index.blade.html", ...)`, a model entity, and
+a co-located view template under `src/<name>/views/`. A standalone gateway is
+immediately mountable:
 
 ```ts
 import { WebSocketGateway } from "@aponiajs/common";
