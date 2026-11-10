@@ -1,0 +1,22 @@
+{
+  "name": "@aponiajs/example-mvc",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/main.ts",
+    "start": "bun run src/main.ts",
+    "build": "bun build ./src/main.ts --outdir ./dist --target bun",
+    "test": "bun test",
+    "test:e2e": "bun test ./test/mvc.e2e-spec.ts",
+    "check": "vp check"
+  },
+  "dependencies": {
+    "@aponiajs/common": "workspace:*",
+    "@aponiajs/core": "workspace:*",
+    "@aponiajs/mvc": "workspace:*",
+    "@aponiajs/platform-elysia": "workspace:*",
+    "@aponiajs/view": "workspace:*",
+    "elysia": "2.0.0-rc.4"
+  }
+}

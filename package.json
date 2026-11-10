@@ -36,6 +36,7 @@
     "example:microservices": "bun run --cwd examples/microservices start",
     "example:serverless": "bun run --cwd examples/serverless start",
     "example:nitro": "bun run --cwd examples/nitro start",
+    "example:mvc": "bun run --cwd examples/mvc start",
     "test": "bun run --workspaces test",
     "test:coverage": "bun test --coverage --coverage-reporter=text --coverage-reporter=lcov && bun scripts/coverage-gate.ts",
     "test:examples": "bun test ./examples/*/test/*.e2e-spec.ts",
@@ -44,7 +45,7 @@
     "test:brokers": "APONIA_BROKER_E2E=1 bun test ./packages/microservices/tests/brokers.e2e-spec.ts",
     "check": "vp check",
     "doctor": "vp env doctor",
-    "version:bump": "bumpp package.json packages/aponiajs/package.json packages/audit/package.json packages/auth/package.json packages/cache/package.json packages/cli/package.json packages/common/package.json packages/compression/package.json packages/core/package.json packages/cors/package.json packages/create-aponia/package.json packages/cron/package.json packages/database/package.json packages/devtools/package.json packages/events/package.json packages/graphql/package.json packages/http/package.json packages/idempotency/package.json packages/mcp/package.json packages/metrics/package.json packages/microservices/package.json packages/h3/package.json packages/hono/package.json packages/nitro/package.json packages/serverless/package.json packages/openapi/package.json packages/opentelemetry/package.json packages/platform-elysia/package.json packages/queue/package.json packages/rate-limit/package.json packages/security/package.json packages/session/package.json packages/store-redis/package.json packages/tenancy/package.json packages/testing/package.json --all --no-commit --no-tag --no-push --execute \"bun run version:sync\"",
+    "version:bump": "bumpp package.json packages/aponiajs/package.json packages/audit/package.json packages/auth/package.json packages/cache/package.json packages/cli/package.json packages/common/package.json packages/compression/package.json packages/core/package.json packages/cors/package.json packages/create-aponia/package.json packages/cron/package.json packages/database/package.json packages/devtools/package.json packages/events/package.json packages/graphql/package.json packages/http/package.json packages/idempotency/package.json packages/mcp/package.json packages/metrics/package.json packages/microservices/package.json packages/h3/package.json packages/hono/package.json packages/nitro/package.json packages/serverless/package.json packages/openapi/package.json packages/opentelemetry/package.json packages/platform-elysia/package.json packages/queue/package.json packages/rate-limit/package.json packages/security/package.json packages/session/package.json packages/store-redis/package.json packages/view/package.json packages/mvc/package.json packages/tenancy/package.json packages/testing/package.json --all --no-commit --no-tag --no-push --execute \"bun run version:sync\"",
     "version:patch": "bun run version:bump -- --release patch --yes",
     "version:minor": "bun run version:bump -- --release minor --yes",
     "version:major": "bun run version:bump -- --release major --yes",
@@ -58,7 +59,7 @@
     "release:tag": "bun scripts/distribution-tag.ts",
     "release:branch": "bun scripts/release-branch.ts",
     "release:canary": "bun scripts/canary-version.ts",
-    "release:dry-run": "for package in audit auth cache compression events http idempotency common core platform-elysia queue cli create-aponia devtools cron database cors graphql mcp metrics microservices serverless h3 hono nitro testing openapi opentelemetry rate-limit security session tenancy store-redis; do bun pm pack --cwd packages/$package --dry-run; done",
+    "release:dry-run": "for package in audit auth cache compression events http idempotency common core platform-elysia queue cli create-aponia devtools cron database cors graphql mcp metrics microservices serverless h3 hono nitro testing openapi opentelemetry rate-limit security session tenancy store-redis view mvc; do bun pm pack --cwd packages/$package --dry-run; done",
     "prepare": "bunx --bun vp config"
   },
   "devDependencies": {

@@ -395,6 +395,20 @@ and `@aponiajs/auth` (`RevocationStore`, `RefreshTokenStore`).
 [Package README](../packages/store-redis/README.md) ·
 [npm](https://www.npmjs.com/package/@aponiajs/store-redis)
 
+### `@aponiajs/view`
+
+Template rendering engine and view pipeline for MVC applications.
+
+[Package README](../packages/view/README.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/view)
+
+### `@aponiajs/mvc`
+
+Multi-engine bridges connecting Next.js, Nuxt.js, Angular, Express, and Fastify.
+
+[Package README](../packages/mvc/README.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/mvc)
+
 ### `@aponiajs/serverless`
 
 Adapters for function and edge runtimes. `toFetchHandler` binds the application

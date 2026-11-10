@@ -39,6 +39,8 @@ const guideDirectories = [
   "packages/tenancy",
   "packages/testing",
   "packages/store-redis",
+  "packages/view",
+  "packages/mvc",
 ] as const;
 
 const rootGuide = await Bun.file("AGENTS.md").text();

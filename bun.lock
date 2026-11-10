@@ -121,6 +121,18 @@
         "elysia": "2.0.0-rc.4",
       },
     },
+    "examples/mvc": {
+      "name": "@aponiajs/example-mvc",
+      "version": "0.0.0",
+      "dependencies": {
+        "@aponiajs/common": "workspace:*",
+        "@aponiajs/core": "workspace:*",
+        "@aponiajs/mvc": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
+        "@aponiajs/view": "workspace:*",
+        "elysia": "2.0.0-rc.4",
+      },
+    },
     "examples/native-plugins": {
       "name": "@aponiajs/example-native-plugins",
       "version": "0.0.0",
@@ -538,6 +550,19 @@
         "redis",
       ],
     },
+    "packages/mvc": {
+      "name": "@aponiajs/mvc",
+      "version": "1.0.0-beta.27",
+      "dependencies": {
+        "@aponiajs/common": "workspace:*",
+        "@aponiajs/serverless": "workspace:*",
+      },
+      "devDependencies": {
+        "@aponiajs/core": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
+        "elysia": "2.0.0-rc.4",
+      },
+    },
     "packages/nitro": {
       "name": "@aponiajs/nitro",
       "version": "1.0.0-beta.27",
@@ -727,6 +752,18 @@
         "elysia": "2.0.0-rc.4",
       },
     },
+    "packages/view": {
+      "name": "@aponiajs/view",
+      "version": "1.0.0-beta.27",
+      "dependencies": {
+        "@aponiajs/common": "workspace:*",
+      },
+      "devDependencies": {
+        "@aponiajs/core": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
+        "elysia": "2.0.0-rc.4",
+      },
+    },
   },
   "overrides": {
     "@graphql-tools/utils": "^12.0.3",
@@ -784,6 +821,8 @@
 
     "@aponiajs/example-multiple-routers": ["@aponiajs/example-multiple-routers@workspace:examples/multiple-routers"],
 
+    "@aponiajs/example-mvc": ["@aponiajs/example-mvc@workspace:examples/mvc"],
+
     "@aponiajs/example-native-plugins": ["@aponiajs/example-native-plugins@workspace:examples/native-plugins"],
 
     "@aponiajs/example-nitro": ["@aponiajs/example-nitro@workspace:examples/nitro"],
@@ -814,6 +853,8 @@
 
     "@aponiajs/microservices": ["@aponiajs/microservices@workspace:packages/microservices"],
 
+    "@aponiajs/mvc": ["@aponiajs/mvc@workspace:packages/mvc"],
+
     "@aponiajs/nitro": ["@aponiajs/nitro@workspace:packages/nitro"],
 
     "@aponiajs/openapi": ["@aponiajs/openapi@workspace:packages/openapi"],
@@ -837,6 +878,8 @@
     "@aponiajs/tenancy": ["@aponiajs/tenancy@workspace:packages/tenancy"],
 
     "@aponiajs/testing": ["@aponiajs/testing@workspace:packages/testing"],
+
+    "@aponiajs/view": ["@aponiajs/view@workspace:packages/view"],
 
     "@ark/schema": ["@ark/schema@0.56.2", "", { "dependencies": { "@ark/util": "0.56.2" } }, "sha512-Qx4D2JFbBWpntiHZaTv7bGG4H/M2rigiknezKg/WVyDSaLdE4YCcWAOoFB7pjjDqHbbV2OqRfntm1nnXvwMexg=="],
 

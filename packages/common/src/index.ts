@@ -142,6 +142,8 @@ export type { CustomParamFactory } from "./routing/custom-parameter.types.ts";
 export { createDto } from "./routing/dto.ts";
 export type { DtoConstructor, Infer } from "./routing/dto.ts";
 export { Serialize, getResponseSerializer } from "./routing/response-serializer.ts";
+export { Render, getViewTemplate, getViewOptions } from "./routing/view.ts";
+export type { ViewRenderOptions } from "./routing/view.ts";
 export {
   Deprecated,
   applyDeprecationHeaders,

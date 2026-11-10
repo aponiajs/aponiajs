@@ -36,6 +36,8 @@ exist.
 | `@aponiajs/compression`     | Complete | Brotli and gzip negotiation                                    |
 | `@aponiajs/microservices`   | Complete | message patterns, CBOR client/server, eight broker adapters    |
 | `@aponiajs/store-redis`     | Complete | Redis stores for cache, rate-limit, session, idempotency, auth |
+| `@aponiajs/view`            | Complete | template rendering engine, @Render decorator, HTML pipeline    |
+| `@aponiajs/mvc`             | Complete | Next.js, Nuxt.js, Angular SSR, Express, and Fastify adapters   |
 | `@aponiajs/serverless`      | Complete | Web Fetch and AWS Lambda adapters                              |
 | `@aponiajs/h3`              | Complete | H3 delivery adapter                                            |
 | `@aponiajs/hono`            | Complete | Hono delivery adapter                                          |

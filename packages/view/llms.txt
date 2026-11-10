@@ -1,0 +1,18 @@
+# @aponiajs/view
+
+> Template view rendering pipeline for AponiaJS.
+
+## Exports
+
+- `ViewModule`: dynamic module configuring the view engine
+- `ViewService`: service for programmatic template rendering
+- `VIEW_ENGINE`: injection token for custom view engines
+- `HtmlViewEngine`: zero-dependency fast template substitution engine
+- Types: `ViewEngine`, `ViewModuleOptions`
+
+## Documentation
+
+- [Package README](README.md)
+- [Published packages](../../docs/packages.md)
+- [npm](https://www.npmjs.com/package/@aponiajs/view)
+

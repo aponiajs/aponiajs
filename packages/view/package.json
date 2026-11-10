@@ -1,0 +1,60 @@
+{
+  "name": "@aponiajs/view",
+  "version": "1.0.0-beta.27",
+  "description": "High-performance template view engine and rendering pipeline for AponiaJS MVC applications.",
+  "keywords": [
+    "aponia",
+    "aponiajs",
+    "bun",
+    "ejs",
+    "elysia",
+    "eta",
+    "handlebars",
+    "html",
+    "mvc",
+    "pug",
+    "ssr",
+    "template",
+    "typescript",
+    "view"
+  ],
+  "homepage": "https://github.com/aponiajs/aponiajs#readme",
+  "bugs": {
+    "url": "https://github.com/aponiajs/aponiajs/issues"
+  },
+  "license": "MIT",
+  "author": "AponiaJS contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aponiajs/aponiajs.git",
+    "directory": "packages/view"
+  },
+  "files": [
+    "dist",
+    "llms.txt"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "bunx --bun vp pack",
+    "dev": "bunx --bun vp pack --watch",
+    "test": "bun test",
+    "test:vite-plus": "vp test",
+    "check": "bunx --bun vp check",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "@aponiajs/common": "workspace:*"
+  },
+  "devDependencies": {
+    "@aponiajs/core": "workspace:*",
+    "@aponiajs/platform-elysia": "workspace:*",
+    "elysia": "2.0.0-rc.4"
+  }
+}

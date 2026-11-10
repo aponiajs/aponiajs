@@ -32,6 +32,7 @@ export const elysiaTargetFiles = [
   "examples/microservices/package.json",
   "examples/serverless/package.json",
   "examples/nitro/package.json",
+  "examples/mvc/package.json",
   "packages/cli/templates/application/src/descriptors.generated.ts.tmpl",
   "packages/cli/templates/application/src/invokers.generated.ts.tmpl",
   "docs/elysia-compatibility.md",

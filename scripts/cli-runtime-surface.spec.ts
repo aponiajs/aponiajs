@@ -452,6 +452,10 @@ const unreadDecorators: ReadonlyMap<string, string> = new Map([
     "a controller or route with @Deprecated() is declined to the decorated graph rather than emitted",
   ],
   [
+    "Render",
+    "a controller or route with @Render() is declined to the decorated graph rather than emitted",
+  ],
+  [
     "Sse",
     "a controller or route with @Sse() is declined to the decorated graph rather than emitted",
   ],
@@ -512,6 +516,14 @@ const unreadMetadataKeys: ReadonlyMap<string, string> = new Map([
   [
     "aponia.deprecation.metadata",
     "a controller or route with @Deprecated() is declined to the decorated graph rather than emitted",
+  ],
+  [
+    "aponia.view-template.metadata",
+    "a controller or route with @Render() is declined to the decorated graph rather than emitted",
+  ],
+  [
+    "aponia.view-options.metadata",
+    "a controller or route with @Render() is declined to the decorated graph rather than emitted",
   ],
   [
     "aponia.sse.metadata",

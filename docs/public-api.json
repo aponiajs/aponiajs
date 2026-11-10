@@ -785,6 +785,14 @@
           "kind": "value"
         },
         {
+          "name": "getViewOptions",
+          "kind": "value"
+        },
+        {
+          "name": "getViewTemplate",
+          "kind": "value"
+        },
+        {
           "name": "getWebSocketGatewayMetadata",
           "kind": "value"
         },
@@ -1149,6 +1157,10 @@
           "kind": "value"
         },
         {
+          "name": "Render",
+          "kind": "value"
+        },
+        {
           "name": "Req",
           "kind": "value"
         },
@@ -1346,6 +1358,10 @@
         },
         {
           "name": "VersionValue",
+          "kind": "type"
+        },
+        {
+          "name": "ViewRenderOptions",
           "kind": "type"
         },
         {
@@ -2390,6 +2406,43 @@
       ]
     },
     {
+      "name": "@aponiajs/mvc",
+      "exports": [
+        {
+          "name": "AngularCommonEngine",
+          "kind": "type"
+        },
+        {
+          "name": "createAngularHandler",
+          "kind": "value"
+        },
+        {
+          "name": "createNextHandler",
+          "kind": "value"
+        },
+        {
+          "name": "createNuxtHandler",
+          "kind": "value"
+        },
+        {
+          "name": "NextServerApp",
+          "kind": "type"
+        },
+        {
+          "name": "NuxtRendererApp",
+          "kind": "type"
+        },
+        {
+          "name": "toExpressHandler",
+          "kind": "value"
+        },
+        {
+          "name": "toFastifyHandler",
+          "kind": "value"
+        }
+      ]
+    },
+    {
       "name": "@aponiajs/nitro",
       "exports": [
         {
@@ -3266,6 +3319,35 @@
         {
           "name": "TestServer",
           "kind": "type"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/view",
+      "exports": [
+        {
+          "name": "HtmlViewEngine",
+          "kind": "value"
+        },
+        {
+          "name": "VIEW_ENGINE",
+          "kind": "value"
+        },
+        {
+          "name": "ViewEngine",
+          "kind": "type"
+        },
+        {
+          "name": "ViewModule",
+          "kind": "value"
+        },
+        {
+          "name": "ViewModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "ViewService",
+          "kind": "value"
         }
       ]
     }

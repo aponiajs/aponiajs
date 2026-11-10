@@ -195,6 +195,16 @@ const packageLayouts: readonly PackageLayout[] = [
     directories: ["common", "stores"],
   },
   {
+    sourceRoot: "packages/view/src",
+    files: ["index.ts"],
+    directories: ["engines", "module"],
+  },
+  {
+    sourceRoot: "packages/mvc/src",
+    files: ["index.ts"],
+    directories: ["adapters", "frameworks"],
+  },
+  {
     sourceRoot: "packages/serverless/src",
     files: ["index.ts"],
     directories: ["fetch", "lambda"],

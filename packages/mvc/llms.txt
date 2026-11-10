@@ -1,0 +1,18 @@
+# @aponiajs/mvc
+
+> Multi-engine bridges for Next.js, Nuxt, Angular, Express, and Fastify.
+
+## Exports
+
+- `createNextHandler(nextApp)`: Next.js request bridge
+- `createNuxtHandler(nuxtApp)`: Nuxt 3 / Nitro request bridge
+- `createAngularHandler(commonEngine, options?)`: Angular SSR bridge
+- `toExpressHandler(application)`: Express middleware adapter
+- `toFastifyHandler(application)`: Fastify plugin adapter
+
+## Documentation
+
+- [Package README](README.md)
+- [Published packages](../../docs/packages.md)
+- [npm](https://www.npmjs.com/package/@aponiajs/mvc)
+
