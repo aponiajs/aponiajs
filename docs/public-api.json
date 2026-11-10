@@ -2417,23 +2417,7 @@
       "name": "@aponiajs/mvc",
       "exports": [
         {
-          "name": "AngularCommonEngine",
-          "kind": "type"
-        },
-        {
-          "name": "createAngularHandler",
-          "kind": "value"
-        },
-        {
           "name": "createInertiaResponse",
-          "kind": "value"
-        },
-        {
-          "name": "createNextHandler",
-          "kind": "value"
-        },
-        {
-          "name": "createNuxtHandler",
           "kind": "value"
         },
         {
@@ -2455,22 +2439,6 @@
         {
           "name": "InertiaPage",
           "kind": "type"
-        },
-        {
-          "name": "NextServerApp",
-          "kind": "type"
-        },
-        {
-          "name": "NuxtRendererApp",
-          "kind": "type"
-        },
-        {
-          "name": "toExpressHandler",
-          "kind": "value"
-        },
-        {
-          "name": "toFastifyHandler",
-          "kind": "value"
         }
       ]
     },

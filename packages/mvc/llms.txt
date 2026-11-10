@@ -1,15 +1,14 @@
 # @aponiajs/mvc
 
-> Inertia component and prop protocol for React/Vue/Svelte, plus multi-framework delivery bridges.
+> Inertia component and prop protocol for React and Vue.
 
 ## Exports
 
 - `Inertia(component, options?)`: route decorator that answers the Inertia protocol
 - `createInertiaResponse(component, props, request, options?)`
 - `inertia(component, props, context, options?)`
-- `createNextHandler`, `createNuxtHandler`, `createAngularHandler`
-- `toExpressHandler`, `toFastifyHandler`
-- Types: `InertiaPage`, `InertiaOptions`, `NextServerApp`, `NuxtRendererApp`, `AngularCommonEngine`
+- `defaultInertiaRootView`
+- Types: `InertiaPage`, `InertiaOptions`
 
 ## Documentation
 

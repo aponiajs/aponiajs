@@ -5,7 +5,7 @@ import type { InertiaOptions, InertiaPage } from "./inertia.types.ts";
 const defaultVersion = "1";
 
 /**
- * Renders one Inertia page for React, Vue, or Svelte.
+ * Renders one Inertia page for React or Vue.
  *
  * An `X-Inertia` request receives the page object as JSON, which is the
  * client-side navigation path. A plain browser request receives the root

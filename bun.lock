@@ -555,7 +555,6 @@
       "version": "1.0.0-beta.27",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
-        "@aponiajs/serverless": "workspace:*",
       },
       "devDependencies": {
         "@aponiajs/core": "workspace:*",
@@ -563,6 +562,7 @@
         "@aponiajs/hono": "workspace:*",
         "@aponiajs/nitro": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
+        "@aponiajs/serverless": "workspace:*",
         "@aponiajs/view": "workspace:*",
         "elysia": "2.0.0-rc.4",
         "h3": "^2.0.8",

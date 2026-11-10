@@ -23,7 +23,7 @@ behavior the framework promises.
 | `microservices`        | Message patterns, CBOR envelopes, and request/event handlers across services                           | 3140 | `bun run example:microservices`        |
 | `serverless`           | Web Fetch and AWS Lambda deployment adapters                                                           | 3150 | `bun run example:serverless`           |
 | `nitro`                | Nitro 3 RC server route delivery adapter                                                               | 3160 | `bun run example:nitro`                |
-| `mvc`                  | Model-View-Controller, template view rendering, and multi-engine SSR                                   | 3170 | `bun run example:mvc`                  |
+| `mvc`                  | Blade views and Inertia pages for React and Vue                                                        | 3170 | `bun run example:mvc`                  |
 
 Run every suite the way CI does:
 

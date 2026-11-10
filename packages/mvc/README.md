@@ -1,6 +1,6 @@
 # @aponiajs/mvc
 
-Laravel-style full-stack MVC for AponiaJS: Inertia component and prop protocol for React, Vue, or Svelte, plus delivery bridges for Next.js, Nuxt, Angular, Express, and Fastify.
+Inertia component and prop protocol for React and Vue in AponiaJS.
 
 ## Installation
 
@@ -8,7 +8,7 @@ Laravel-style full-stack MVC for AponiaJS: Inertia component and prop protocol f
 bun add @aponiajs/mvc@beta
 ```
 
-## Inertia pages
+## Pages
 
 ```ts
 import { Controller, Get } from "@aponiajs/common";
@@ -38,10 +38,4 @@ users(@Context() context: { request: Request }) {
 }
 ```
 
-## Delivery bridges
-
-- `createNextHandler(nextApp)`: Next.js custom server bridge
-- `createNuxtHandler(nuxtApp)`: Nuxt 3 Nitro renderer bridge
-- `createAngularHandler(engine, options)`: Angular CommonEngine SSR bridge
-- `toExpressHandler(application)`: Express middleware
-- `toFastifyHandler(application)`: Fastify route handler
+The package answers with a standard Web `Response`, so the same handler works through any Aponia delivery adapter.

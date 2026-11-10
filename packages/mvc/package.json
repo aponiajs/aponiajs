@@ -1,20 +1,17 @@
 {
   "name": "@aponiajs/mvc",
   "version": "1.0.0-beta.27",
-  "description": "Universal multi-engine and SSR framework bridges for Next.js, Nuxt.js, Angular, Express, and Fastify in AponiaJS.",
+  "description": "Inertia component and prop protocol for React and Vue applications in AponiaJS.",
   "keywords": [
-    "angular",
     "aponia",
     "aponiajs",
     "bun",
     "elysia",
-    "express",
-    "fastify",
+    "inertia",
     "mvc",
-    "nextjs",
-    "nuxtjs",
-    "ssr",
-    "typescript"
+    "react",
+    "typescript",
+    "vue"
   ],
   "homepage": "https://github.com/aponiajs/aponiajs#readme",
   "bugs": {
@@ -48,8 +45,7 @@
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
-    "@aponiajs/common": "workspace:*",
-    "@aponiajs/serverless": "workspace:*"
+    "@aponiajs/common": "workspace:*"
   },
   "devDependencies": {
     "@aponiajs/core": "workspace:*",
@@ -57,6 +53,7 @@
     "@aponiajs/hono": "workspace:*",
     "@aponiajs/nitro": "workspace:*",
     "@aponiajs/platform-elysia": "workspace:*",
+    "@aponiajs/serverless": "workspace:*",
     "@aponiajs/view": "workspace:*",
     "elysia": "2.0.0-rc.4",
     "h3": "^2.0.8",
