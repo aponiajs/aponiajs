@@ -130,8 +130,13 @@ is preserved. A token minted elsewhere without a `jti` is accepted but cannot be
 revocation-checked; if the application requires revocation for every token, mint
 tokens through `JwtService` or reject tokens without a `jti` in its own verifier.
 
-Both defaults are process-local and bounded. A multi-instance deployment passes
-its own store instead:
+Both defaults are process-local and bounded, including the consumed-token
+tombstones reuse detection keeps: they share the store's `maxTokens` cap, so a
+client that rotates a token in a loop cannot grow the process without bound. A
+tombstone evicted at the cap means reuse of that very old token is answered as
+unknown rather than as family reuse; the token itself was already removed, so it
+cannot be rotated either way. A multi-instance deployment passes its own store
+instead:
 
 ```ts
 AuthModule.register({

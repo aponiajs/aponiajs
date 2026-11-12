@@ -14,7 +14,7 @@
 - `RefreshTokenService`: `issue`, `rotate`, `revoke`, `revokeFamily`, `clear`; stores only a token digest and consumes rotation atomically.
 - Rotation reuse is `INVALID_REFRESH_TOKEN` and revokes the whole family; a custom store without `consume` gets the single-winner fallback only.
 - `RevocationService`: `revoke(jti, expiresAt)`, `isRevoked(jti)`, `clear`.
-- `MemoryRefreshTokenStore`, `MemoryRevocationStore`: bounded process-local stores.
+- `MemoryRefreshTokenStore`, `MemoryRevocationStore`: bounded process-local stores, tombstones included.
 - `AUTH_USER`: the request-context token the user is stored under.
 
 ## Behavior a consumer can rely on

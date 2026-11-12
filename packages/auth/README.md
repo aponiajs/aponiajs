@@ -133,8 +133,9 @@ set are cached; `clear()` re-reads them. A registration states exactly one of
 
 Rotation keeps the family id, so a replayed token is refused with
 `INVALID_REFRESH_TOKEN`. `MemoryRefreshTokenStore` and `MemoryRevocationStore`
-are bounded and process-local; an application that runs more than one instance
-supplies a store that shares state:
+are bounded and process-local, including the tombstones reuse detection keeps;
+an application that runs more than one instance supplies a store that shares
+state:
 
 ```ts
 AuthModule.register({

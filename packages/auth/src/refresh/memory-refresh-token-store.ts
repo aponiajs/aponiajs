@@ -61,7 +61,7 @@ export class MemoryRefreshTokenStore implements RefreshTokenStore {
     const record = this.#records.get(idHash);
     if (record !== undefined) {
       this.#records.delete(idHash);
-      this.#used.set(idHash, { familyId: record.familyId, expiresAt: record.expiresAt });
+      this.#rememberUsed(idHash, record);
       return { record };
     }
     const used = this.#used.get(idHash);
@@ -69,6 +69,26 @@ export class MemoryRefreshTokenStore implements RefreshTokenStore {
       return { familyId: used.familyId };
     }
     return undefined;
+  }
+
+  /**
+   * Records a consumed token without letting the tombstones outgrow the store.
+   *
+   * They share the record cap: a tombstone retained forever would make every
+   * `create` and `consume` scan an unbounded map, which one client rotating a
+   * token in a loop could turn into a memory and CPU denial of service. When
+   * the cap is reached the oldest tombstone is dropped, so reuse of a very old
+   * consumed token is answered as unknown rather than as family reuse; the
+   * token itself is already gone and cannot be rotated either way.
+   */
+  #rememberUsed(idHash: string, record: RefreshTokenRecord): void {
+    if (!this.#used.has(idHash) && this.#used.size >= this.#maxTokens) {
+      const oldest = this.#used.keys().next().value;
+      if (oldest !== undefined) {
+        this.#used.delete(oldest);
+      }
+    }
+    this.#used.set(idHash, { familyId: record.familyId, expiresAt: record.expiresAt });
   }
 
   deleteFamily(familyId: string): number {

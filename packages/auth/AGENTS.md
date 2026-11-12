@@ -58,7 +58,11 @@ It is a leaf: nothing in the framework depends on it.
 - **The built-in stores are process-local and bounded.** Distributed state needs
   a store supplied through `refresh.store` or `revocation.store`; validate its
   shape at registration so a missing method fails the boot, and keep the cap
-  options documented as belonging to the built-in stores only.
+  options documented as belonging to the built-in stores only. The refresh
+  store's consumed-token tombstones share its record cap: without it, one client
+  rotating a token in a loop grows the process without bound and makes every
+  store operation scan an ever-larger map. An evicted tombstone weakens reuse
+  detection for that old token only, and the token is already gone.
 
 ## Tests
 

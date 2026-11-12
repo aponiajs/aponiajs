@@ -83,6 +83,26 @@ describe("AuditModule", () => {
     expect(event.metadata).toEqual({ name: "loop", self: "[circular]" });
   });
 
+  test("keeps a caller key named __proto__ as an own entry instead of a prototype", async () => {
+    @Module({ imports: [AuditModule.register()] })
+    class AppModule {}
+
+    application = await AponiaFactory.create(AppModule, { logger: false });
+    const audit = application.get(AuditService);
+    const input = JSON.parse('{"__proto__":{"polluted":true},"tenant":"acme"}') as Record<
+      string,
+      unknown
+    >;
+
+    const event = await audit.record({ action: "proto", outcome: "success", metadata: input });
+    const stored = event.metadata as Record<string, unknown>;
+
+    expect(Object.getPrototypeOf(stored)).toBe(Object.prototype);
+    expect(Object.hasOwn(stored, "__proto__")).toBe(true);
+    expect(stored.polluted).toBeUndefined();
+    expect(Object.isFrozen(stored)).toBe(true);
+  });
+
   test("supports a custom redaction key and clears the store", async () => {
     const store = new MemoryAuditStore({ maxEntries: 2 });
     expect(store.size).toBe(0);

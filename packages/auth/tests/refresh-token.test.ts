@@ -159,6 +159,32 @@ describe("RefreshTokenService", () => {
     expect(store.delete("b")).toBe(true);
     expect(store.find("b")).toBeUndefined();
   });
+
+  test("bounds the consumed-token tombstones with the same cap", () => {
+    const store = new MemoryRefreshTokenStore({ maxTokens: 3 });
+    const record = (idHash: string) => ({
+      idHash,
+      userId: "ada",
+      familyId: `family-${idHash}`,
+      createdAt: 1,
+      expiresAt: Number.MAX_SAFE_INTEGER,
+    });
+    for (const idHash of ["first", "second", "third"]) {
+      store.create(record(idHash));
+    }
+
+    expect(store.consume("first")).toMatchObject({ record: { idHash: "first" } });
+    expect(store.consume("first")).toMatchObject({ familyId: "family-first" });
+    expect(store.consume("second")).toMatchObject({ record: { idHash: "second" } });
+    expect(store.consume("third")).toMatchObject({ record: { idHash: "third" } });
+
+    // A fourth tombstone reaches the cap and drops the oldest, so reuse of that
+    // token is unknown rather than family reuse.
+    store.create(record("fourth"));
+    expect(store.consume("fourth")).toMatchObject({ record: { idHash: "fourth" } });
+    expect(store.consume("first")).toBeUndefined();
+    expect(store.consume("second")).toMatchObject({ familyId: "family-second" });
+  });
 });
 
 describe("RevocationService", () => {

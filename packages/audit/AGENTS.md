@@ -20,7 +20,10 @@ leaf: nothing in the framework depends on it.
 
 - **Events are immutable.** Copy, recursively redact, and freeze the metadata
   tree before returning; a nested object the caller still holds must not be able
-  to change a stored event. Break cycles with `[circular]` and cap depth.
+  to change a stored event. Break cycles with `[circular]` and cap depth. Build
+  the copy with own data properties (`Object.fromEntries`), never by assigning a
+  caller key onto a plain object: a key named `__proto__` would otherwise replace
+  the copy's prototype with caller-controlled values.
 - **Redact by key, never by guessing at values.** The default pattern covers
   secret/token/password/authorization/api-key/cookie; extra keys are explicit.
 - **The memory store is bounded.** A new event evicts the oldest insertion.

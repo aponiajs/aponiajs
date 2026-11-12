@@ -83,15 +83,20 @@ function deepFreezeRedact(
       return "[circular]";
     }
     ancestors.add(value);
-    const copy: Record<string, unknown> = {};
+    // `Object.fromEntries` defines own data properties, so a caller key named
+    // `__proto__` stays an ordinary frozen entry instead of replacing the
+    // copy's prototype with caller-controlled values.
+    const entries: [string, unknown][] = [];
     for (const [key, entry] of Object.entries(value)) {
-      copy[key] =
+      entries.push([
+        key,
         sensitiveKeyPattern.test(key) || extra.has(key.toLowerCase())
           ? "[redacted]"
-          : deepFreezeRedact(entry, extra, ancestors, depth + 1);
+          : deepFreezeRedact(entry, extra, ancestors, depth + 1),
+      ]);
     }
     ancestors.delete(value);
-    return Object.freeze(copy);
+    return Object.freeze(Object.fromEntries(entries));
   }
   return value;
 }
