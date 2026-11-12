@@ -42,7 +42,11 @@ import {
 import { createMiddlewareConsumer } from "../middleware/middleware-consumer.ts";
 import { mountMiddleware } from "../middleware/middleware-pipeline.ts";
 import { compileModuleInMemory } from "../compiler/in-memory-compiler.ts";
-import { resolveApplicationPipes, resolvePipe, type ResolvedPipe } from "../pipes/pipe-resolver.ts";
+import {
+  resolveApplicationPipe,
+  resolveApplicationPipes,
+  type ResolvedPipe,
+} from "../pipes/pipe-resolver.ts";
 import { isModuleDefinition } from "../modules/module-compiler.ts";
 import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
 import { selectRootModuleDescriptor } from "../modules/module-descriptor-artifact.ts";
@@ -277,7 +281,7 @@ export async function bootstrapAponiaApplication(
     ...applicationEnhancers.halves,
   ]);
   const globalPipes = Object.freeze([
-    ...(options.pipes ?? []).map((pipe) => resolvePipe(pipe, container)),
+    ...(options.pipes ?? []).map((pipe) => resolveApplicationPipe(pipe, container)),
     ...resolveApplicationPipes(container),
   ]);
 

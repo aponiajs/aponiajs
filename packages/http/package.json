@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/http",
-  "version": "1.0.0-beta.34",
+  "version": "1.0.0-beta.35",
   "description": "SSRF-safe outbound HTTP for an Aponia application, with timeouts, bounded responses, and validation.",
   "keywords": [
     "aponia",

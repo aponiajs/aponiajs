@@ -160,6 +160,10 @@ runtime boundary it describes.
   through the root module and run before controller, method, and parameter
   pipes, for the same parameter kinds a route-level pipe covers. An
   application-level enhancer or pipe the root cannot reach fails the boot.
+  `resolveApplicationPipe` is the strict resolution those two scopes use: a
+  class goes through the container and propagates `MISSING_PROVIDER`, while
+  `resolvePipe`'s empty-constructor fallback stays the route-level behavior and
+  is never reached by a global pipe.
 - A request-scoped controller — declared with `@Injectable({ scope: Scope.REQUEST })`
   or bubbled there by a request-scoped dependency — is constructed once per
   request. Bootstrap does not construct it, mounts its compiled plan with the

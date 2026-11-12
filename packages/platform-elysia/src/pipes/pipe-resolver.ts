@@ -13,6 +13,43 @@ import type { ResolvedPipe } from "./pipe-resolver.types.ts";
 export type { ResolvedPipe } from "./pipe-resolver.types.ts";
 
 /**
+ * Resolves one application-level pipe.
+ *
+ * The `pipes` option and `APP_PIPE` declare a transform for the whole
+ * application, so a class must be a provider the root module can reach: a
+ * missing provider is raised rather than falling back to constructing the class
+ * with no dependencies, which `resolvePipe` does for a route-level pipe. An
+ * instance is used as given.
+ *
+ * @param pipe - The pipe class or instance.
+ * @param container - The booted container.
+ * @returns The resolved pipe.
+ * @throws An `AponiaError` with `MISSING_PROVIDER` or `INVALID_PIPE`.
+ *
+ * @internal
+ */
+export function resolveApplicationPipe(pipe: PipeType, container: AponiaContainer): ResolvedPipe {
+  if (typeof pipe !== "function") {
+    return resolvePipe(pipe, container);
+  }
+
+  const instance = container.get(pipe);
+  if (
+    typeof instance === "object" &&
+    instance !== null &&
+    typeof (instance as { transform?: unknown }).transform === "function"
+  ) {
+    return Object.freeze({ instance: instance as PipeTransform });
+  }
+
+  throw new AponiaError(
+    "INVALID_PIPE",
+    `Application-level pipe "${pipe.name}" did not resolve to an implementation of PipeTransform.`,
+    { pipe: pipe.name },
+  );
+}
+
+/**
  * Resolves the pipes an application declares through the `APP_PIPE` token.
  *
  * Each entry is a pipe instance or a class, resolved the way a pipe named by a
@@ -44,7 +81,7 @@ export function resolveApplicationPipes(container: AponiaContainer): readonly Re
   const entries = Array.isArray(value) ? value : [value];
   return Object.freeze(
     (entries as readonly ApplicationEnhancer<PipeTransform>[]).map((entry) =>
-      resolvePipe(entry as PipeType, container),
+      resolveApplicationPipe(entry as PipeType, container),
     ),
   );
 }

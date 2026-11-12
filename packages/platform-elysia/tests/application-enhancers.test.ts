@@ -10,6 +10,7 @@ import {
   Injectable,
   Module,
   Post,
+  provideValue,
   UseGuards,
   Body,
   type ArgumentsHost,
@@ -249,4 +250,45 @@ test("an instance under an application token is used as given", async () => {
   expect(response.status).toBe(418);
   expect(await response.text()).toBe("filtered");
   await application.close();
+});
+
+test("refuses an application-level pipe class the root cannot reach", async () => {
+  class UnregisteredPipe implements PipeTransform {
+    transform(value: unknown): unknown {
+      return value;
+    }
+  }
+
+  @Module({})
+  class EmptyModule {}
+
+  const optionFailure = await AponiaFactory.create(EmptyModule, {
+    logger: false,
+    pipes: [UnregisteredPipe],
+  }).then(
+    () => undefined,
+    (error: unknown) => error,
+  );
+  expect(optionFailure).toMatchObject({ code: "MISSING_PROVIDER" });
+
+  @Module({ providers: [{ provide: APP_PIPE, useValue: UnregisteredPipe }] })
+  class TokenModule {}
+
+  const tokenFailure = await AponiaFactory.create(TokenModule, { logger: false }).then(
+    () => undefined,
+    (error: unknown) => error,
+  );
+  expect(tokenFailure).toMatchObject({ code: "MISSING_PROVIDER" });
+
+  class NotAPipe {}
+  @Module({
+    providers: [provideValue(NotAPipe, "not a pipe"), { provide: APP_PIPE, useValue: NotAPipe }],
+  })
+  class WrongValueModule {}
+
+  const wrongValueFailure = await AponiaFactory.create(WrongValueModule, { logger: false }).then(
+    () => undefined,
+    (error: unknown) => error,
+  );
+  expect(wrongValueFailure).toMatchObject({ code: "INVALID_PIPE" });
 });

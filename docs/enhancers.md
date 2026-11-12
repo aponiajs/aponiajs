@@ -399,7 +399,10 @@ A pipe can also be declared for the whole application:
 `AponiaFactory.create(AppModule, { pipes: [UpperCasePipe] })` resolves it once
 through the root module and runs it before controller, method, and parameter
 pipes. It applies to body, query, params, headers, and cookie parameters, the
-same kinds a route-level pipe covers.
+same kinds a route-level pipe covers. The class must be a provider the root can
+reach, exactly like an enhancer class; an unreachable application-level pipe
+fails the boot with `MISSING_PROVIDER` rather than being constructed with no
+dependencies. An instance passes through as given.
 
 ## Resolution
 
