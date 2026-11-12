@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/platform-elysia",
-  "version": "0.6.0-alpha.39",
+  "version": "0.6.0-alpha.41",
   "description": "Elysia application platform for Aponia HTTP controllers and WebSocket gateways.",
   "homepage": "https://github.com/aponiajs/aponiajs#readme",
   "bugs": {
@@ -41,7 +41,7 @@
     "@elysia/eden": "^1.4.10",
     "arktype": "^2.2.3",
     "elysia": "^1.4.30",
-    "zod": "^4.4.3"
+    "zod": "^4.6.6"
   },
   "peerDependencies": {
     "elysia": "^1.4.29"

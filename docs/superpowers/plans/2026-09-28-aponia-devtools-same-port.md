@@ -245,7 +245,8 @@ export function publishApplicationOnStore(application: object): void {
  */
 export function readApplicationFromStore(store: unknown): object | undefined {
   return (store as Record<PropertyKey, unknown> | null | undefined)?.[nativeApplicationKey] as
-    object | undefined;
+    | object
+    | undefined;
 }
 ```
 

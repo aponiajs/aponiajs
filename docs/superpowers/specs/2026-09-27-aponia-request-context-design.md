@@ -36,7 +36,7 @@ These are the facts the design has to fit, each with where it is stated.
   `readonly request: Request` (`packages/common/src/routing/route-schema.types.ts:94`)
   and is what a handler is given. `ExecutionContext`
   (`packages/common/src/enhancers/enhancer.types.ts:29`) answers `getRequest():
-RouteContext` (`:14`) and `getContext(): RouteContext` (`:24`). `@Ctx()`
+  RouteContext` (`:14`) and `getContext(): RouteContext` (`:24`). `@Ctx()`
   (`packages/common/src/routing/route-parameters.ts:33`) binds one to a
   parameter. Each travels as a value the caller passes; none survives the call.
 - **`common` already imports a Node builtin.** Its only runtime _dependency_ is
