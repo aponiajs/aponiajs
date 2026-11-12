@@ -23,7 +23,7 @@
     "@aponiajs/cli": "{{APONIA_VERSION}}",
     "@types/bun": "^1.4.4",
     "typescript": "^7.0.2",
-    "vite-plus": "^0.2.9"
+    "vite-plus": "^1.6.0"
   },
   "packageManager": "bun@1.4.4"
 }
