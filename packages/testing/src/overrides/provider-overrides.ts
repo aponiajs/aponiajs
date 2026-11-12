@@ -3,7 +3,9 @@ import {
   forwardRef,
   getTokenName,
   isForwardRef,
+  type ControllerDefinition,
   type ModuleDefinition,
+  type Provider,
   type Token,
 } from "@aponiajs/common";
 import type { ProviderOverrides } from "./provider-overrides.types.ts";
@@ -62,6 +64,9 @@ export function applyProviderOverrides(
       ...module,
       imports: Object.freeze(imports),
       providers: Object.freeze(providers),
+      controllers: Object.freeze(
+        module.controllers.map((controller) => rewriteControllerPipes(controller, overrides)),
+      ),
     });
     rewrittenModules.set(module, rewritten);
     return rewritten;
@@ -79,4 +84,106 @@ export function applyProviderOverrides(
   }
 
   return rewrittenRoot;
+}
+
+/** The part of a compiled route plan a pipe override rewrites. */
+interface CompiledRouteLike {
+  readonly pipes?: readonly unknown[];
+  readonly parameters?: readonly { readonly pipes?: readonly unknown[] }[];
+  readonly [key: string]: unknown;
+}
+
+interface ControllerWithPlan extends ControllerDefinition {
+  readonly compiledRoutes?: readonly CompiledRouteLike[];
+}
+
+/**
+ * Rewrites the pipe classes a controller's compiled route plan names.
+ *
+ * A guard, interceptor, or filter is resolved from the container while its
+ * controller mounts, so the provider rewrite above is the whole substitution.
+ * A route-level pipe class is constructed directly by `resolvePipe` at mount
+ * instead — the platform's own fast path — so the plan has to state the
+ * substitute before it mounts. A substitute class is constructed with no
+ * arguments, the same rule `resolvePipe` states for a pipe class.
+ */
+function rewriteControllerPipes(
+  controller: ControllerDefinition,
+  overrides: ProviderOverrides,
+): ControllerDefinition {
+  const compiledRoutes = (controller as ControllerWithPlan).compiledRoutes;
+  if (compiledRoutes === undefined) {
+    return controller;
+  }
+
+  let changed = false;
+  const routes = compiledRoutes.map((route) => {
+    const pipes =
+      route.pipes === undefined
+        ? undefined
+        : substitutePipes(route.pipes, overrides, () => {
+            changed = true;
+          });
+    const parameters = route.parameters?.map((parameter) => {
+      if (parameter.pipes === undefined) {
+        return parameter;
+      }
+      const parameterPipes = substitutePipes(parameter.pipes, overrides, () => {
+        changed = true;
+      });
+      return parameterPipes === parameter.pipes
+        ? parameter
+        : Object.freeze({ ...parameter, pipes: Object.freeze(parameterPipes) });
+    });
+
+    if (pipes === route.pipes && parameters === route.parameters) {
+      return route;
+    }
+    return Object.freeze({
+      ...route,
+      ...(pipes === undefined ? {} : { pipes: Object.freeze(pipes) }),
+      ...(parameters === undefined ? {} : { parameters: Object.freeze(parameters) }),
+    });
+  });
+
+  return changed
+    ? Object.freeze({ ...controller, compiledRoutes: Object.freeze(routes) })
+    : controller;
+}
+
+function substitutePipes(
+  pipes: readonly unknown[],
+  overrides: ProviderOverrides,
+  onChanged: () => void,
+): readonly unknown[] {
+  let substituted = false;
+  const entries = pipes.map((entry) => {
+    if (typeof entry !== "function") {
+      return entry;
+    }
+    const replacement = overrides.get(entry as Token<unknown>);
+    if (replacement === undefined) {
+      return entry;
+    }
+    substituted = true;
+    onChanged();
+    return inlinePipe(replacement, entry as Token<unknown>);
+  });
+
+  return substituted ? entries : pipes;
+}
+
+function inlinePipe(provider: Provider, token: Token<unknown>): unknown {
+  switch (provider.kind) {
+    case "value":
+      return provider.useValue;
+    case "class":
+      return provider.useClass;
+    default:
+      throw new AponiaError(
+        "INVALID_PIPE",
+        `A route-level pipe override for "${getTokenName(token)}" must supply a class or an instance; a ${provider.kind} provider is resolved by the container, and a route-level pipe class is not.`,
+        { token: getTokenName(token), providerKind: provider.kind },
+      );
+  }
 }

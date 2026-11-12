@@ -191,6 +191,8 @@ other lanes.
 7. The npm publish workflow verifies, builds, packs, and publishes the thirty-four
    usable packages in dependency order under the resolved tag, then moves the
    `next` alias when the channel is `alpha`, `beta`, or `rc`.
+8. A separate job, on a `release` event, generates the CycloneDX SBOM and
+   attaches it to the GitHub release.
 
 The release workflow runs only for `release/alpha`, `release/beta`,
 `release/rc`, and `main`, and rejects a version whose derived tag does not match
@@ -204,6 +206,23 @@ dispatch, and only from `main`. It stamps `X.Y.Z-canary.<stamp>.<sha>` into the
 manifests, runs the quality gate, and publishes under the `canary` tag. The
 stamped version is never committed, never tagged in Git, and never promoted to
 another distribution tag.
+
+## Software Bill of Materials
+
+`bun run release:sbom [path]` reads `bun.lock` and writes a CycloneDX 1.5
+document to `sbom.cdx.json` by default. The document lists every package the
+lockfile resolved — name, version, purl, and the lockfile integrity as a
+SHA-512 or weaker hash, hex-encoded as CycloneDX requires — plus every workspace
+member with its manifest version. The serial number is derived from the sorted
+component list, so one lockfile produces one document identifier on any machine.
+
+The input is the lockfile rather than the manifests, so the document describes
+what was installed. The publish workflow's `sbom` job runs only for a GitHub
+release, with `contents: write` for that job alone, and runs
+`gh release upload`; a `workflow_dispatch` publish therefore ships packages
+without an attached SBOM. The document is assembled with the CycloneDX
+project's own library, so the shape is the specification's rather than one this
+repository invented.
 
 ## npm Authentication
 

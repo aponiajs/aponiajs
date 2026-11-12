@@ -18,7 +18,7 @@ import type { TestApplicationOptions, TestServer } from "@aponiajs/testing";
 
 - `createTestApplication(rootModule, options?)` — returns the builder. The root is anything the factory accepts: a decorated class, a `DynamicModule`, or a `ModuleDefinition`. `options` is `AponiaApplicationOptions`, with one difference: `logger` defaults to `false`.
 - `TestApplication` — the boot. `application`, `get(token)`, `handle(request)`, `listen()`, `close()`, and `Symbol.asyncDispose`.
-- `TestApplicationBuilder` — `overrideProvider(token)` and `compile()`.
+- `TestApplicationBuilder` — `overrideProvider(token)`, `overrideGuard`, `overrideInterceptor`, `overrideFilter`, `overridePipe`, and `compile()`.
 - `TestProviderOverride` — `useValue`, `useFactory`, `useClass`, `useExisting`.
 - `TestServer` — `url` and `webSocketUrl`, the `http://` and `ws://` forms of the one bound socket.
 

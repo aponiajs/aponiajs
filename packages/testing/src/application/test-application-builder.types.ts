@@ -52,6 +52,20 @@ export interface TestApplicationBuilder {
    * graph provides fails `compile()` with `MISSING_PROVIDER`.
    */
   overrideProvider<T>(token: Token<T>): TestProviderOverride<T>;
+  /**
+   * Replaces one guard class for the application this builder will boot.
+   *
+   * A guard named by a decorator, a declared plan, or the application options is
+   * a provider, so this is the provider override under the name a test looks for.
+   * The declaration keeps naming the original class and runs the substitute.
+   */
+  overrideGuard<T>(guard: Token<T>): TestProviderOverride<T>;
+  /** Replaces one interceptor class; the same provider rewrite as {@link overrideGuard}. */
+  overrideInterceptor<T>(interceptor: Token<T>): TestProviderOverride<T>;
+  /** Replaces one exception filter class; the declared `@Catch()` types stay the original class's. */
+  overrideFilter<T>(filter: Token<T>): TestProviderOverride<T>;
+  /** Replaces one pipe class; a route-level pipe class resolves through the container. */
+  overridePipe<T>(pipe: Token<T>): TestProviderOverride<T>;
   /** Compiles the graph, applies the overrides, and boots the application. */
   compile(): Promise<TestApplication>;
 }

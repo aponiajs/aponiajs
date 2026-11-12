@@ -1,6 +1,6 @@
 {
   "name": "aponiajs-workspace",
-  "version": "1.0.0-beta.31",
+  "version": "1.0.0-beta.32",
   "private": true,
   "description": "Bun-first application architecture powered by Elysia.",
   "license": "MIT",
@@ -61,11 +61,13 @@
     "release:branch": "bun scripts/release-branch.ts",
     "release:canary": "bun scripts/canary-version.ts",
     "release:dry-run": "for package in audit auth cache compression events http idempotency common core platform-elysia queue cli create-aponia devtools cron database cors graphql mcp metrics microservices serverless h3 hono nitro testing openapi opentelemetry rate-limit security session tenancy store-redis view; do bun pm pack --cwd packages/$package --dry-run; done",
+    "release:sbom": "bun run scripts/sbom.ts",
     "prepare": "bunx --bun vp config"
   },
   "devDependencies": {
     "@aponiajs/common": "workspace:*",
     "@aponiajs/platform-elysia": "workspace:*",
+    "@cyclonedx/cyclonedx-library": "^10.5.1",
     "@types/bun": "^1.4.4",
     "bumpp": "^12.3.0",
     "elysia": "2.0.0-rc.4",

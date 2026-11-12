@@ -16,6 +16,7 @@ and documentation guards that CI enforces.
 | `public-api.ts`                  | The frozen public surface snapshot and its verify/freeze entries            |
 | `build-docs-site.ts`             | The static documentation site generated from `docs/`                        |
 | `benchmark.ts`                   | The in-process request-path benchmark run by `bun run bench`                |
+| `sbom.ts`                        | The CycloneDX SBOM generated from `bun.lock` for a release                  |
 | `agent-guides.spec.ts`           | Guide inventory, aliases, and mandatory per-turn `RULES.md` loading         |
 | `ci-workflows.spec.ts`           | Complete CI, publish, packaging, and dependency-security command matrix     |
 | `cli-runtime-surface.spec.ts`    | The runtime surface `@aponiajs/cli` repeats by hand                         |

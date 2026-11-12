@@ -135,6 +135,13 @@ rather than read from decorator metadata, because a hand-written stub carries
 none. Declaring the same token twice is one decision, and the later declaration
 wins.
 
+A guard, interceptor, or exception filter is a provider, so `overrideGuard`,
+`overrideInterceptor`, and `overrideFilter` are `overrideProvider` under the name
+a case looks for. A route-level pipe class is constructed directly by the
+platform while the route mounts instead of being resolved from the container, so
+`overridePipe` rewrites the compiled route plan; its substitute must be a class
+or an instance, and `useFactory`/`useExisting` are refused with `INVALID_PIPE`.
+
 A token no module in the graph provides fails `compile()` with `AponiaError` and
 the code `MISSING_PROVIDER`, carrying `{ token }`. That refusal is the point of
 the feature: a stub registered for a token nothing provides would leave every

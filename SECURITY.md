@@ -76,10 +76,10 @@ upstream, TypeScript declarations, a compatible license, and a reason the
 framework cannot own the behavior itself.
 
 Every third-party workflow action is pinned to a commit SHA, and the publish
-lane already requests an OIDC token (`id-token: write`) and publishes with
-`--provenance`. A CycloneDX SBOM per release is not produced yet: no maintained
-tool reads `bun.lock`, and the release lane does not emit a hand-written
-substitute. The release jobs attach one as soon as a maintained reader exists.
+lane requests an OIDC token (`id-token: write`) and publishes with
+`--provenance`. A CycloneDX 1.5 SBOM is generated from `bun.lock` by
+`bun run release:sbom` and attached to the GitHub release by the publish
+workflow; [`docs/releasing.md`](docs/releasing.md) states what it contains.
 
 ## Hardening checklist for a deployment
 

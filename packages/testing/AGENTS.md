@@ -29,9 +29,14 @@ the runtime boundary it describes.
   substitutes the provider record for each overridden token, and the rewritten
   root travels to `AponiaFactory.create`, which compiles it as it would compile a
   descriptor an application wrote. Nothing in `packages/platform-elysia` knows
-  this package exists, and nothing in it needed a seam added. A future feature
-  that would need one — an override applied to a running application, an override
-  of a controller, an override that changes a module's `imports` — is a platform
+  this package exists, and nothing in it needed a seam added. A guard,
+  interceptor, or filter override is that same provider rewrite under another
+  name. A route-level pipe class is the one enhancer the platform constructs
+  directly rather than resolving, so `overridePipe` rewrites the compiled route
+  plans' pipe entries to the substitute class or instance and refuses a
+  container-only shape with `INVALID_PIPE`. A future feature that would need a
+  platform seam — an override applied to a running application, an override of a
+  controller, an override that changes a module's `imports` — is a platform
   design rather than a line here, and the honest answer is to leave it out.
 - **A token no reachable module provides raises `MISSING_PROVIDER` from
   `compile()`.** It is the one failure that must never be soft: a stub registered

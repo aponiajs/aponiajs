@@ -135,6 +135,33 @@ constructed with `undefined` arguments.
 
 Declaring the same token twice is one decision, and the later declaration wins.
 
+### Guards, interceptors, filters, and pipes
+
+`overrideGuard`, `overrideInterceptor`, `overrideFilter`, and `overridePipe` are
+the provider override under the name a test looks for, with one difference in
+how the substitute reaches a route:
+
+| Method                             | How the substitute reaches the route                                                                                                 |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `overrideGuard(Guard)`             | The provider rewrite: a guard is resolved from the container at mount.                                                               |
+| `overrideInterceptor(Interceptor)` | The provider rewrite.                                                                                                                |
+| `overrideFilter(Filter)`           | The provider rewrite; the declared `@Catch()` types stay the original's.                                                             |
+| `overridePipe(Pipe)`               | The compiled route plan is rewritten, because a route-level pipe class is constructed directly by the platform rather than resolved. |
+
+```ts
+const application = await createTestApplication(AppModule)
+  .overrideGuard(AuthGuard)
+  .useValue({ canActivate: () => true })
+  .compile();
+```
+
+A route-level pipe override must supply a class or an instance — `useValue` or
+`useClass`. `useFactory` and `useExisting` name a provider only the container
+can resolve, and a route-level pipe never reaches it, so `compile()` refuses them
+with `INVALID_PIPE` rather than mounting the original pipe. A substitute class is
+constructed with no arguments, the same rule the platform states for a pipe
+class.
+
 ## Errors
 
 An override naming a token no module in the compiled graph provides fails

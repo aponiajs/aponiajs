@@ -87,6 +87,27 @@ class TestApplicationBuilderImpl implements TestApplicationBuilder {
     return Object.freeze({ useValue, useFactory, useClass, useExisting });
   }
 
+  // The enhancer and pipe names are the provider override under the name a test
+  // looks for: a guard, interceptor, filter, or pipe class named by a decorator,
+  // a declared plan, or the options is resolved from this container by token, so
+  // replacing the provider is what reaching the route requires — and it is the
+  // only substitution that reaches a route the platform already mounted.
+  overrideGuard<T>(guard: Token<T>): TestProviderOverride<T> {
+    return this.overrideProvider(guard);
+  }
+
+  overrideInterceptor<T>(interceptor: Token<T>): TestProviderOverride<T> {
+    return this.overrideProvider(interceptor);
+  }
+
+  overrideFilter<T>(filter: Token<T>): TestProviderOverride<T> {
+    return this.overrideProvider(filter);
+  }
+
+  overridePipe<T>(pipe: Token<T>): TestProviderOverride<T> {
+    return this.overrideProvider(pipe);
+  }
+
   async compile(): Promise<TestApplication> {
     const { logger = false, ...rest } = this.#options;
     const options: TestApplicationOptions = { ...rest, logger };
