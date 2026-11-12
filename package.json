@@ -1,6 +1,6 @@
 {
   "name": "aponiajs-workspace",
-  "version": "0.6.0-alpha.39",
+  "version": "0.6.0-alpha.40",
   "private": true,
   "description": "Bun-first application architecture powered by Elysia.",
   "license": "MIT",
@@ -59,12 +59,12 @@
     "elysia": "^1.4.30",
     "jsonc-parser": "^3.3.1",
     "typescript": "^7.0.2",
-    "vite": "npm:@voidzero-dev/vite-plus-core@0.2.9",
-    "vite-plus": "^0.2.9"
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.6.0",
+    "vite-plus": "^1.6.0"
   },
   "overrides": {
-    "vite": "npm:@voidzero-dev/vite-plus-core@0.2.9",
-    "vitest": "4.1.10"
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.6.0",
+    "vitest": "5.1.0"
   },
   "devEngines": {
     "packageManager": {

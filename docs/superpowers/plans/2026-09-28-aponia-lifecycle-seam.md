@@ -16,7 +16,7 @@
    shutdown signal; here there is none to carry, because an application stops when `close()` is
    called rather than when a signal arrives, and inventing a signal the platform never produces
    would be a parameter that is always `undefined`. All five signatures are `(): void |
-Promise<void>`. A class written for Nest with a signal parameter stays assignable, because a
+   Promise<void>`. A class written for Nest with a signal parameter stays assignable, because a
    function with fewer parameters satisfies one with more.
 2. **The spec's "Once" for the two application-level shutdown hooks means one moment, not one
    call.** Every hooked instance's method runs at that moment, in graph order with a module's

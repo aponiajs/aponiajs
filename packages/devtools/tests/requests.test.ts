@@ -1102,13 +1102,13 @@ test.serial("the duration does not include this package's own read of the answer
   let read = false;
   const clock = spyOn(performance, "now").mockImplementation(() => (read ? 1000 : 5));
   const originalJson = Response.prototype.json;
-  const json = spyOn(Response.prototype, "json").mockImplementation(
-    async function (this: Response) {
-      read = true;
+  const json = spyOn(Response.prototype, "json").mockImplementation(async function (
+    this: Response,
+  ) {
+    read = true;
 
-      return await originalJson.call(this);
-    },
-  );
+    return await originalJson.call(this);
+  });
 
   try {
     await ask(application, `/explodes`);

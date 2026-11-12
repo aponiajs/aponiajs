@@ -504,13 +504,15 @@ export function getEnhancerMetadata(
   propertyKey?: string | symbol,
 ): EnhancerMetadata {
   const onClass = Reflect.getOwnMetadata(enhancerMetadataKey, target) as
-    Partial<EnhancerMetadata> | undefined;
+    | Partial<EnhancerMetadata>
+    | undefined;
   if (propertyKey === undefined) {
     return mergeMetadata(onClass);
   }
 
   const onPrototype = Reflect.getOwnMetadata(enhancerMetadataKey, target.prototype) as
-    ReadonlyMap<string | symbol, Partial<EnhancerMetadata>> | undefined;
+    | ReadonlyMap<string | symbol, Partial<EnhancerMetadata>>
+    | undefined;
 
   return mergeMetadata(onClass, onPrototype?.get(propertyKey));
 }
@@ -658,7 +660,8 @@ describe("compiled route enhancers", () => {
     const open = application
       .getNativeApplication()
       .routes.find((route) => route.path === "/open") as
-      { hooks?: Record<string, unknown> } | undefined;
+      | { hooks?: Record<string, unknown> }
+      | undefined;
 
     expect(open?.hooks?.beforeHandle).toBeUndefined();
     expect(open?.hooks?.afterHandle).toBeUndefined();

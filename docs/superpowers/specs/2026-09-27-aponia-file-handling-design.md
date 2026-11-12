@@ -402,7 +402,7 @@ grown in place.
   the substrate already returns.
 - **Upload size and type limits are Elysia's `FileOptions`.** The framework does
   not add a limit of its own, and the documentation points at `t.File({ maxSize:
-"3m" })` rather than inventing one.
+  "3m" })` rather than inventing one.
 - **The plugin half of the static recipe is untested here.** `@elysia/static` is
   not installed and this change does not install it, so its behavior is described
   from the registry listing and Elysia's lifecycle, not from a probe in this
