@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/cache",
-  "version": "1.0.0-beta.30",
+  "version": "1.0.0-beta.31",
   "description": "Bounded in-memory caching for an Aponia application, with TTL and a pluggable store.",
   "keywords": [
     "aponia",

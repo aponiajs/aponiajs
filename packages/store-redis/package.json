@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/store-redis",
-  "version": "1.0.0-beta.30",
+  "version": "1.0.0-beta.31",
   "description": "Redis storage adapters for AponiaJS cache, rate-limit, session, idempotency, and auth token stores.",
   "keywords": [
     "aponia",

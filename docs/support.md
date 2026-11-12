@@ -75,3 +75,22 @@ bun test scripts
 bun run release:verify
 bun run release:dry-run
 ```
+
+## Design partners
+
+The next scope decision — Wave 4 of the hardening plan, the full Nest-like
+surface — is gated on evidence from real applications. A design partner is one
+team using AponiaJS for a real project and reporting what breaks:
+
+- what the project gets: the migration review, a direct channel to the
+  maintainer, and fixes prioritized ahead of the general backlog;
+- what the project gives: permission to describe the use case (anonymized when
+  needed), a reproduction for each defect it reports, and a review of the
+  documentation it had to work around;
+- what it does not get: a support contract, an SLA beyond
+  [`SECURITY.md`](../SECURITY.md), or a promise that the pre-1.0 API will not
+  change.
+
+No external application runs AponiaJS in production yet. The repository states
+that rather than implying adoption: the design-partner gate is open, and the
+compatibility work in the roadmap is funded by evidence, not by a plan.
