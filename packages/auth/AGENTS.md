@@ -27,8 +27,10 @@ It is a leaf: nothing in the framework depends on it.
 - **The request user lives in the platform request context.** The guard runs in
   a different async context than the handler; private AsyncLocalStorage is not
   enough. `AuthService` reads `RequestContextService`.
-- **`AuthModule` imports `RequestContextModule.forRoot()`.** An application must
-  not import a second request-context registration beside it.
+- **`AuthModule` imports `RequestContextModule.forRoot()`.** The registration is
+  shared per normalized header, so `TenantModule` may import it too. Do not add a
+  second request-context header: one `RequestContextService` token cannot
+  disambiguate two storages.
 - **Tokens are verified with issuer/audience/algorithm checks.** A token that
   names a `kid` is verified only with that key; a token with no `kid` is tried
   against the default secret and then every rotation key. Never accept a
@@ -43,10 +45,16 @@ It is a leaf: nothing in the framework depends on it.
 - **Password hashing uses Bun.** Never implement a password KDF by hand.
 - **Refresh tokens are opaque and digest-stored.** Never persist the raw token;
   rotation consumes the old token before issuing the replacement, and a reused
-  token is `INVALID_REFRESH_TOKEN`.
+  token is `INVALID_REFRESH_TOKEN` and revokes its whole family. The built-in
+  stores implement `consume` atomically; a custom store without it falls back to
+  `find` + `delete`, which lets one rotation win but cannot detect reuse after
+  the record is gone.
 - **Revocation is checked before the user enters the request context.**
   `AuthGuard` verifies the signature, then the `jti` set, then calls
-  `AuthService.enter`.
+  `AuthService.enter`. `JwtService.sign()` mints a `jti` when the caller did not
+  supply a non-empty string and preserves one that is supplied, so a
+  framework-issued token is revocable; a foreign token without a `jti` is
+  accepted but not revocation-checked.
 - **The built-in stores are process-local and bounded.** Distributed state needs
   a store supplied through `refresh.store` or `revocation.store`; validate its
   shape at registration so a missing method fails the boot, and keep the cap

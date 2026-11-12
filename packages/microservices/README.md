@@ -6,7 +6,7 @@ application boot compiles them once, and a transport carries CBOR v1 envelopes
 between services.
 
 ```bash
-bun add @aponiajs/microservices@beta
+bun add @aponiajs/microservices@alpha
 ```
 
 Install one broker SDK beside the framework package. Every SDK is an optional

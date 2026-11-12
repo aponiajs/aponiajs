@@ -3,7 +3,7 @@
 Delivery adapter for H3.
 
 ```bash
-bun add @aponiajs/h3@beta
+bun add @aponiajs/h3@alpha
 ```
 
 ## Use it

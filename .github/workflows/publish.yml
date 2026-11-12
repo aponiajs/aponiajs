@@ -111,7 +111,7 @@ jobs:
 
       - name: Pack publishable workspaces
         run: |
-          mkdir -p release-artifacts/{01-common,02-core,03-platform-elysia,04-cli,05-create-aponia,06-devtools,07-cron,08-graphql,09-testing,10-openapi,11-cors,12-opentelemetry,13-mcp,14-cache,15-events,16-http,17-rate-limit,18-security,19-session,20-compression,21-auth,22-audit,23-tenancy,24-queue,25-database,26-metrics,27-idempotency,28-microservices,29-serverless,30-h3,31-hono,32-nitro}
+          mkdir -p release-artifacts/{01-common,02-core,03-platform-elysia,04-cli,05-create-aponia,06-devtools,07-cron,08-graphql,09-testing,10-openapi,11-cors,12-opentelemetry,13-mcp,14-cache,15-events,16-http,17-rate-limit,18-security,19-session,20-compression,21-auth,22-audit,23-tenancy,24-queue,25-database,26-metrics,27-idempotency,28-microservices,29-serverless,30-h3,31-hono,32-nitro,33-store-redis,34-view}
           bun pm pack --cwd packages/common --destination "$GITHUB_WORKSPACE/release-artifacts/01-common"
           bun pm pack --cwd packages/core --destination "$GITHUB_WORKSPACE/release-artifacts/02-core"
           bun pm pack --cwd packages/platform-elysia --destination "$GITHUB_WORKSPACE/release-artifacts/03-platform-elysia"
@@ -144,6 +144,8 @@ jobs:
           bun pm pack --cwd packages/h3 --destination "$GITHUB_WORKSPACE/release-artifacts/30-h3"
           bun pm pack --cwd packages/hono --destination "$GITHUB_WORKSPACE/release-artifacts/31-hono"
           bun pm pack --cwd packages/nitro --destination "$GITHUB_WORKSPACE/release-artifacts/32-nitro"
+          bun pm pack --cwd packages/store-redis --destination "$GITHUB_WORKSPACE/release-artifacts/33-store-redis"
+          bun pm pack --cwd packages/view --destination "$GITHUB_WORKSPACE/release-artifacts/34-view"
 
       - name: Publish packages in dependency order
         working-directory: ${{ runner.temp }}
@@ -163,7 +165,7 @@ jobs:
           ALIAS_TAGS: ${{ steps.distribution.outputs.aliases }}
           VERSION: ${{ steps.distribution.outputs.version }}
         run: |
-          for package in @aponiajs/common @aponiajs/core @aponiajs/platform-elysia @aponiajs/cli create-aponia @aponiajs/devtools @aponiajs/cron @aponiajs/graphql @aponiajs/cors @aponiajs/testing @aponiajs/openapi @aponiajs/opentelemetry @aponiajs/mcp @aponiajs/cache @aponiajs/events @aponiajs/http @aponiajs/rate-limit @aponiajs/security @aponiajs/session @aponiajs/compression @aponiajs/auth @aponiajs/audit @aponiajs/tenancy @aponiajs/queue @aponiajs/database @aponiajs/metrics @aponiajs/idempotency @aponiajs/microservices @aponiajs/serverless @aponiajs/h3 @aponiajs/hono @aponiajs/nitro; do
+          for package in @aponiajs/common @aponiajs/core @aponiajs/platform-elysia @aponiajs/cli create-aponia @aponiajs/devtools @aponiajs/cron @aponiajs/graphql @aponiajs/cors @aponiajs/testing @aponiajs/openapi @aponiajs/opentelemetry @aponiajs/mcp @aponiajs/cache @aponiajs/events @aponiajs/http @aponiajs/rate-limit @aponiajs/security @aponiajs/session @aponiajs/compression @aponiajs/auth @aponiajs/audit @aponiajs/tenancy @aponiajs/queue @aponiajs/database @aponiajs/metrics @aponiajs/idempotency @aponiajs/microservices @aponiajs/serverless @aponiajs/h3 @aponiajs/hono @aponiajs/nitro @aponiajs/store-redis @aponiajs/view; do
             for alias in $ALIAS_TAGS; do
               npm dist-tag add "$package@$VERSION" "$alias"
             done

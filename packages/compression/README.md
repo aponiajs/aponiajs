@@ -4,7 +4,7 @@ Brotli and gzip response compression for AponiaJS, with a size threshold and
 safe skips.
 
 ```bash
-bun add @aponiajs/compression@beta
+bun add @aponiajs/compression@alpha
 ```
 
 ## Use it

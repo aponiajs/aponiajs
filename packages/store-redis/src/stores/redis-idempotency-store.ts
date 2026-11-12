@@ -1,5 +1,5 @@
 import type { IdempotencyStore, StoredIdempotentResponse } from "@aponiajs/idempotency";
-import { resolveRedisStoreOptions } from "../common/redis-common.ts";
+import { deleteByPattern, resolveRedisStoreOptions } from "../common/redis-common.ts";
 import type { RedisClientInterface, RedisStoreOptions } from "../common/redis.types.ts";
 
 /**
@@ -47,19 +47,32 @@ export class RedisIdempotencyStore implements IdempotencyStore {
   }
 
   async delete(key: string): Promise<boolean> {
+    await this.release(key);
     const count = await this.#client.del(this.#key(key));
     return count > 0;
   }
 
+  async claim(key: string, ttlMs: number): Promise<boolean> {
+    const result = await this.#client.set(this.#claimKey(key), "1", {
+      NX: true,
+      PX: ttlMs,
+    });
+    return result !== null;
+  }
+
+  async release(key: string): Promise<void> {
+    await this.#client.del(this.#claimKey(key));
+  }
+
   async clear(): Promise<void> {
-    const pattern = `${this.#prefix}*`;
-    const keys = await this.#client.keys(pattern);
-    if (keys.length > 0) {
-      await this.#client.del(keys);
-    }
+    await deleteByPattern(this.#client, `${this.#prefix}*`);
   }
 
   #key(key: string): string {
     return `${this.#prefix}${key}`;
+  }
+
+  #claimKey(key: string): string {
+    return `${this.#prefix}claim:${key}`;
   }
 }

@@ -12,8 +12,12 @@ const defaultRoute = Object.freeze({
 });
 
 /**
- * A reusable execution context that eliminates per-request heap allocations
- * by swapping its internal context pointer before invoking route enhancers.
+ * A route's immutable identity plus one request's context.
+ *
+ * A route compiles one prototype at mount time and forks it per request, so
+ * concurrent requests never share the mutable raw-context pointer. The
+ * prototype itself carries no request; `fork` is how production hooks obtain
+ * the instance a guard or interceptor reads.
  */
 export class StaticRouteExecutionContext implements ExecutionContext, HttpArgumentsHost {
   #rawContext: RouteContext | null = null;
@@ -34,9 +38,30 @@ export class StaticRouteExecutionContext implements ExecutionContext, HttpArgume
     this.#route = route ?? defaultRoute;
   }
 
-  /** Swaps the active request context pointer for the current request turn. */
+  /**
+   * Sets the context on this instance.
+   *
+   * Production hooks call {@link fork} instead; `swap` remains the direct
+   * initializer a fork uses and the seam the context unit test exercises.
+   */
   swap(context: RouteContext): void {
     this.#rawContext = context;
+  }
+
+  /**
+   * Creates a per-request instance carrying the given context.
+   *
+   * The route identity (`getClass`, `getHandler`, `getRoute`) is immutable and
+   * shared by construction; only the raw request context is per request.
+   */
+  fork(context: RouteContext): StaticRouteExecutionContext {
+    const forked = new StaticRouteExecutionContext(
+      this.#targetClass,
+      this.#handlerRef,
+      this.#route,
+    );
+    forked.swap(context);
+    return forked;
   }
 
   getClass<T = unknown>(): ClassToken<T> {

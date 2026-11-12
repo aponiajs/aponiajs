@@ -30,3 +30,26 @@ test("builds a registry from plugin options and records successes and failures",
   expect(text).toContain("app_http_request_duration_seconds");
   expect(text).not.toContain("process_uptime_seconds");
 });
+
+test("an authorize hook protects the scrape endpoint before rendering", async () => {
+  const app = new Elysia()
+    .use(
+      metricsPlugin({
+        path: "/metrics",
+        processMetrics: false,
+        authorize: (request) => request.headers.get("x-scrape") === "yes",
+      }),
+    )
+    .get("/ok", () => "ok");
+
+  const denied = await app.handle(new Request("http://localhost/metrics"));
+  expect(denied.status).toBe(401);
+  expect(await denied.text()).toBe("");
+  expect(denied.headers.get("cache-control")).toBe("no-store");
+
+  const allowed = await app.handle(
+    new Request("http://localhost/metrics", { headers: { "x-scrape": "yes" } }),
+  );
+  expect(allowed.status).toBe(200);
+  expect(await allowed.text()).toContain("http_requests_total");
+});

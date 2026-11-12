@@ -30,6 +30,17 @@ The module exports `RequestContextService`, making it injectable anywhere in the
 application's module graph. Applications that do not import `RequestContextModule`
 pay no overhead: no hooks run, no headers are added, and no storage is entered.
 
+`forRoot()` returns one shared registration per normalized header. `AuthModule`
+and `TenantModule` both import it; repeated calls with the same header return the
+same module, provider, and `AsyncLocalStorage`. The first call's `generate` and
+`echo` options win. Use one request-context registration per application: two
+different headers would create two storages that a single
+`RequestContextService` token cannot disambiguate.
+
+The platform finds the owning module even when an intermediate module does not
+re-export `RequestContextService`, so a request-scoped provider still resolves in
+an `AuthModule` + `TenantModule` composition.
+
 ## Reading the context in services
 
 Inject `RequestContextService` into any provider and call `current()`:

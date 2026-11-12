@@ -19,6 +19,12 @@ export interface OutboxOptions {
   readonly now?: () => number;
 }
 
+/** Options one `flush` run accepts. */
+export interface OutboxFlushOptions {
+  /** Stops between messages; the undelivered tail stays in the outbox. */
+  readonly signal?: AbortSignal;
+}
+
 /** What one `flush` run delivered. */
 export interface OutboxFlushResult {
   readonly delivered: number;

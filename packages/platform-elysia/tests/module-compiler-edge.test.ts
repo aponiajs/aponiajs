@@ -334,3 +334,98 @@ test("boots decorated circular modules and providers with forwardRef", async () 
   expect(await response.text()).toBe("Auth asks UsersService");
   await application.close();
 });
+
+test("keeps two module classes with the same name distinct", () => {
+  const First = class AppModule {};
+  Module({})(First);
+  const Second = class AppModule {};
+  Module({})(Second);
+  class RootModule {}
+  Module({ imports: [First, Second] })(RootModule);
+
+  const definition = compileRootModule(RootModule);
+  const imported = definition.imports as readonly {
+    readonly id: string;
+    readonly moduleIdentity?: symbol;
+  }[];
+
+  expect(imported.map((module) => module.id)).toEqual(["AppModule", "AppModule"]);
+  expect(new Set(imported.map((module) => module.moduleIdentity)).size).toBe(2);
+});
+
+test("lowers a Nest-shaped provider literal in a decorated module", async () => {
+  const NEST_SERVICE = createToken<{ read(): string }>("nest.service");
+
+  @Injectable()
+  class NestService {
+    read(): string {
+      return "from-class";
+    }
+  }
+
+  @Controller("nest-literal")
+  class NestLiteralController {
+    constructor(@Inject(NEST_SERVICE) private readonly service: { read(): string }) {}
+
+    @Get()
+    read(): string {
+      return this.service.read();
+    }
+  }
+
+  @Module({
+    controllers: [NestLiteralController],
+    providers: [
+      { provide: NEST_SERVICE, useClass: NestService },
+      { provide: createToken<{ read(): string }>("nest.alias"), useExisting: NEST_SERVICE },
+    ],
+  })
+  class NestLiteralModule {}
+
+  const application = await AponiaFactory.create(NestLiteralModule, { logger: false });
+  const response = await application.handle(new Request("http://localhost/nest-literal"));
+
+  expect(await response.text()).toBe("from-class");
+  await application.close();
+});
+
+test("re-exports an imported module's exports", async () => {
+  const VALUE = createToken<string>("reexport.value");
+
+  @Module({ providers: [provideValue(VALUE, "v")], exports: [VALUE] })
+  class InnerModule {}
+
+  @Module({ imports: [InnerModule], exports: [InnerModule] })
+  class MiddleModule {}
+
+  @Controller("reexport")
+  class ReexportController {
+    constructor(@Inject(VALUE) private readonly value: string) {}
+
+    @Get()
+    read(): string {
+      return this.value;
+    }
+  }
+
+  @Module({ imports: [MiddleModule], controllers: [ReexportController] })
+  class OuterModule {}
+
+  const application = await AponiaFactory.create(OuterModule, { logger: false });
+  const response = await application.handle(new Request("http://localhost/reexport"));
+
+  expect(await response.text()).toBe("v");
+  await application.close();
+});
+
+test("refuses re-exporting a module it does not import", () => {
+  @Module({})
+  class NotImportedModule {}
+
+  @Module({ exports: [NotImportedModule] })
+  class BadModule {}
+
+  expect(() => compileRootModule(BadModule)).toThrow(
+    expect.objectContaining({ code: "INVALID_EXPORT" }),
+  );
+});

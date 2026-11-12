@@ -4,6 +4,7 @@ import {
   LOGGER,
   NOOP_LOGGER,
   VIEW_ENGINE,
+  getMessagePatternMetadata,
   getTokenName,
   notifySystemLogger,
   provideValue,
@@ -11,6 +12,7 @@ import {
   type EnhancerMetadata,
   type LoggerService,
   type MiddlewareConsumer,
+  type ModuleDefinition,
   type Token,
   type ViewEngine,
 } from "@aponiajs/common";
@@ -37,6 +39,7 @@ import {
 import { createMiddlewareConsumer } from "../middleware/middleware-consumer.ts";
 import { mountMiddleware } from "../middleware/middleware-pipeline.ts";
 import { compileModuleInMemory } from "../compiler/in-memory-compiler.ts";
+import { resolvePipe, type ResolvedPipe } from "../pipes/pipe-resolver.ts";
 import { isModuleDefinition } from "../modules/module-compiler.ts";
 import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
 import { selectRootModuleDescriptor } from "../modules/module-descriptor-artifact.ts";
@@ -129,24 +132,21 @@ export async function bootstrapAponiaApplication(
     provideValue(LOGGER, logger ?? NOOP_LOGGER),
     provideValue(LazyModuleLoader, lazyModuleLoader),
   ]);
-  try {
-    const requestContextLocation = container.graph.locate(
-      container.graph.root,
-      RequestContextService,
-    );
+  // The root may import a module that imports `RequestContextModule` without
+  // re-exporting the service — `AuthModule` and `TenantModule` do. Root
+  // visibility alone would leave the ambient accessor unset, so a request-scoped
+  // provider could not resolve even though the service exists in the graph.
+  const requestContextModule = locateRequestContextModule(container);
+  if (requestContextModule !== undefined) {
     container.setRequestContextAccessor(() => {
       try {
-        const service = container.resolveModuleProvider(
-          requestContextLocation.module,
-          RequestContextService,
-        );
-        return service.current();
+        return container
+          .resolveModuleProvider(requestContextModule, RequestContextService)
+          .current();
       } catch {
         return undefined;
       }
     });
-  } catch {
-    // RequestContextService not in graph
   }
   const webSocketGateways = compileWebSocketGateways(container.graph.modules);
   const baseApplication = new Elysia({
@@ -260,6 +260,9 @@ export async function bootstrapAponiaApplication(
     container.graph.root,
     globalEnhancerDeclarations,
   );
+  const globalPipes = Object.freeze(
+    (options.pipes ?? []).map((pipe) => resolvePipe(pipe, container)),
+  );
 
   // The Problem Details mapping every route carries last is built once, from
   // the logger this boot reports on, and travels with each mount beside the
@@ -319,8 +322,45 @@ export async function bootstrapAponiaApplication(
         );
       }
 
-      const instance = container.instantiateController(module, controller);
-      collectMessageHandlers(messageHandlers, controller, instance);
+      const requestScoped = container.controllerScope(module, controller) === "request";
+      if (requestScoped && options.strictCodegen === true) {
+        throw new AponiaError(
+          "UNSAFE_CODE_GENERATION",
+          `Request-scoped controller "${getTokenName(controller.token)}" cannot use a generated invoker and strict code generation is enabled.`,
+          { module: module.id, controller: getTokenName(controller.token) },
+        );
+      }
+      // A request-scoped controller is constructed per request, so the mount
+      // reads its handlers from the class and resolves the instance later. A
+      // callback-registered controller carries no compiled plan for that
+      // resolution to bind, and a message handler closes over one instance no
+      // request owns.
+      if (requestScoped) {
+        if (
+          typeof controller.registerRoutes !== "function" ||
+          controller.compiledRoutes === undefined
+        ) {
+          throw new AponiaError(
+            "INVALID_CONTROLLER",
+            `Request-scoped controller "${getTokenName(controller.token)}" must declare its routes as a compiled plan; a registration callback needs one instance.`,
+            { module: module.id, controller: getTokenName(controller.token) },
+          );
+        }
+        if (getMessagePatternMetadata(controller.useClass.prototype).size > 0) {
+          throw new AponiaError(
+            "INVALID_CONTROLLER",
+            `Request-scoped controller "${getTokenName(controller.token)}" declares message patterns, which run outside any request context.`,
+            { module: module.id, controller: getTokenName(controller.token) },
+          );
+        }
+      }
+
+      const instance = requestScoped
+        ? controller.useClass.prototype
+        : container.instantiateController(module, controller);
+      if (!requestScoped) {
+        collectMessageHandlers(messageHandlers, controller, instance);
+      }
       // Every enhancer this controller's routes declare is resolved here, while
       // the controller mounts: an undeclared or unreachable class fails the
       // mount with the same MISSING_PROVIDER a missing dependency raises, and
@@ -345,10 +385,12 @@ export async function bootstrapAponiaApplication(
           controller,
           nativeApplication,
           instance,
-          invokerSelection.invokers,
+          requestScoped ? undefined : invokerSelection.invokers,
           mountedEnhancers,
-          options.strictCodegen === true,
+          !requestScoped && options.strictCodegen === true,
           viewRenderer,
+          globalPipes,
+          requestScoped ? () => container.instantiateController(module, controller) : undefined,
         );
         // The table grew by exactly the routes this controller mounted, which is
         // the slice the boot reports on `RoutesResolver` and the only observation
@@ -578,7 +620,9 @@ function registerControllerRoutes(
   invokers: ReadonlyMap<ClassToken<unknown>, ControllerHandlerFactory> | undefined,
   mountedEnhancers: MountedRouteEnhancers,
   strictCodegen: boolean,
-  viewRenderer?: RouteViewRenderer,
+  viewRenderer: RouteViewRenderer | undefined,
+  globalPipes: readonly ResolvedPipe[],
+  instanceResolver?: () => unknown,
 ): ReadonlySet<string | symbol> | undefined {
   const compiledRoutes = controller.compiledRoutes;
   if (!compiledRoutes) {
@@ -589,7 +633,10 @@ function registerControllerRoutes(
   // Elysia controllers are always class-backed, which is what makes the token
   // safe as a minification-proof key.
   const controllerToken = controller.token as ClassToken<unknown>;
-  const createInvokers = invokers?.get(controllerToken);
+  // A generated invoker closes over one controller instance, so a request-scoped
+  // controller mounts from the platform's own compilation instead.
+  const createInvokers =
+    instanceResolver === undefined ? invokers?.get(controllerToken) : undefined;
   return registerCompiledElysiaRoutes(
     application,
     controllerToken,
@@ -599,6 +646,8 @@ function registerControllerRoutes(
     createInvokers?.(instance as never),
     strictCodegen,
     viewRenderer,
+    globalPipes,
+    instanceResolver,
   );
 }
 
@@ -689,4 +738,30 @@ function logControllerRoutes(
 function inferControllerPath(routes: readonly { readonly path: string }[]): string {
   const firstRoute = routes[0]?.path;
   return firstRoute ?? "/";
+}
+
+/**
+ * Finds the module that owns `RequestContextService`.
+ *
+ * Root visibility is the normal path. When a root imports a package module that
+ * imports the request-context module without re-exporting the service, the
+ * graph still holds it; walking the compiled modules keeps the ambient accessor
+ * available for request-scoped providers. The first reachable owner wins, which
+ * matches the one-registration contract `RequestContextModule.forRoot` states.
+ */
+function locateRequestContextModule(
+  container: ReturnType<typeof createContainer>,
+): ModuleDefinition | undefined {
+  try {
+    return container.graph.locate(container.graph.root, RequestContextService).module;
+  } catch {
+    for (const module of container.graph.modules) {
+      try {
+        return container.graph.locate(module, RequestContextService).module;
+      } catch {
+        // This module cannot reach the service; keep looking.
+      }
+    }
+    return undefined;
+  }
 }

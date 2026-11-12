@@ -9,6 +9,7 @@ interface Entry {
 /** A bounded, process-local idempotency store. */
 export class MemoryIdempotencyStore implements IdempotencyStore {
   readonly #entries = new Map<string, Entry>();
+  readonly #claims = new Map<string, number>();
   readonly #maxEntries: number;
   readonly #now: () => number;
 
@@ -47,11 +48,26 @@ export class MemoryIdempotencyStore implements IdempotencyStore {
   }
 
   delete(key: string): boolean {
+    this.#claims.delete(key);
     return this.#entries.delete(key);
   }
 
   clear(): void {
+    this.#claims.clear();
     this.#entries.clear();
+  }
+
+  claim(key: string, ttlMs: number): boolean {
+    this.#prune();
+    if (this.#claims.has(key)) {
+      return false;
+    }
+    this.#claims.set(key, this.#now() + ttlMs);
+    return true;
+  }
+
+  release(key: string): void {
+    this.#claims.delete(key);
   }
 
   #prune(): void {
@@ -59,6 +75,11 @@ export class MemoryIdempotencyStore implements IdempotencyStore {
     for (const [key, entry] of this.#entries) {
       if (entry.expiresAt <= now) {
         this.#entries.delete(key);
+      }
+    }
+    for (const [key, expiresAt] of this.#claims) {
+      if (expiresAt <= now) {
+        this.#claims.delete(key);
       }
     }
   }

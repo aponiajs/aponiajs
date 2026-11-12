@@ -1,6 +1,6 @@
 import { AponiaError, Inject, Injectable } from "@aponiajs/common";
 import { HTTP_OPTIONS } from "../module/http-module.constants.ts";
-import { assertPublicHttpUrl, safeUrl } from "../security/ssrf.ts";
+import { resolvePublicHttpUrl, safeUrl } from "../security/ssrf.ts";
 import type {
   HttpRequestOptions,
   HttpResponse,
@@ -11,6 +11,12 @@ const redirectStatuses = new Set([301, 302, 303, 307, 308]);
 const retryableStatuses = new Set([408, 429, 500, 502, 503, 504]);
 const idempotentMethods = new Set(["GET", "HEAD", "OPTIONS", "PUT", "DELETE"]);
 const retryAfterCapMs = 30_000;
+
+/** Bun's fetch extensions used to pin the validated address for one connection. */
+interface PinnedRequestInit extends RequestInit {
+  tls?: { serverName?: string };
+  proxy?: boolean;
+}
 
 /** The SSRF-safe HTTP client an application injects. */
 @Injectable()
@@ -109,14 +115,30 @@ export class HttpService {
 
     let redirects = 0;
     for (;;) {
-      await assertPublicHttpUrl(current, {
+      const addresses = await resolvePublicHttpUrl(current, {
         allowPrivateNetworks: this.#options.allowPrivateNetworks,
         resolveAddresses: this.#options.resolveAddresses,
       });
+      const requestUrl = this.#pinAddress(current, addresses);
+      const requestHeaders = new Headers(headers);
+      const init: PinnedRequestInit = {
+        method,
+        headers: requestHeaders,
+        body,
+        signal: options.signal,
+      };
+      if (requestUrl !== current) {
+        requestHeaders.set("host", current.host);
+        if (current.protocol === "https:") {
+          init.tls = { serverName: current.hostname };
+        }
+        init.proxy = false;
+      }
 
       const response = await this.#fetchWithRetry(
+        requestUrl,
         current,
-        { method, headers, body, signal: options.signal },
+        init,
         method,
         retries,
         timeoutMs,
@@ -164,9 +186,28 @@ export class HttpService {
     }
   }
 
+  #pinAddress(url: URL, addresses: readonly string[]): URL {
+    if (
+      !this.#options.pinResolvedAddress ||
+      this.#options.allowPrivateNetworks ||
+      addresses.length === 0
+    ) {
+      return url;
+    }
+    const address = addresses[0]!;
+    const hostname = url.hostname.replace(/^\[|\]$/g, "").toLowerCase();
+    if (address === hostname) {
+      return url;
+    }
+    const pinned = new URL(url);
+    pinned.hostname = address.includes(":") ? `[${address}]` : address;
+    return pinned;
+  }
+
   async #fetchWithRetry(
     url: URL,
-    init: RequestInit,
+    logicalUrl: URL,
+    init: PinnedRequestInit,
     method: string,
     retries: number,
     timeoutMs: number,
@@ -200,12 +241,12 @@ export class HttpService {
         if (aborted) {
           if (timedOut) {
             throw new AponiaError("HTTP_CLIENT_TIMEOUT", "The outbound request timed out.", {
-              url: safeUrl(url),
+              url: safeUrl(logicalUrl),
               timeoutMs,
             });
           }
           throw new AponiaError("HTTP_CLIENT_FAILED", "The outbound request was aborted.", {
-            url: safeUrl(url),
+            url: safeUrl(logicalUrl),
           });
         }
         if (canRetry && attempt < retries) {
@@ -213,7 +254,7 @@ export class HttpService {
           continue;
         }
         throw new AponiaError("HTTP_CLIENT_FAILED", "The outbound request failed.", {
-          url: safeUrl(url),
+          url: safeUrl(logicalUrl),
           reason: error instanceof Error ? error.message : String(error),
         });
       } finally {

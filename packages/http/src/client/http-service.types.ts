@@ -25,6 +25,12 @@ export interface HttpModuleOptions {
   readonly fetch?: typeof fetch;
   /** A hostname resolver; defaults to the runtime's DNS lookup. */
   readonly resolveAddresses?: (hostname: string) => Promise<readonly string[]>;
+  /**
+   * Connects to the validated address instead of letting the runtime resolve the
+   * hostname again; defaults to true. Disable only for a custom fetch that pins
+   * the address itself.
+   */
+  readonly pinResolvedAddress?: boolean;
 }
 
 /** The validated options the service reads. */
@@ -39,6 +45,7 @@ export interface ResolvedHttpOptions {
   readonly allowPrivateNetworks: boolean;
   readonly fetch: typeof fetch;
   readonly resolveAddresses: (hostname: string) => Promise<readonly string[]>;
+  readonly pinResolvedAddress: boolean;
 }
 
 /** Options one request accepts. */

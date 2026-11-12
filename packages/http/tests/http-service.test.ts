@@ -14,8 +14,10 @@ afterEach(async () => {
 describe("HttpService", () => {
   test("resolves a relative URL, appends query values, and parses JSON", async () => {
     let seen: Request | undefined;
-    const fetch = fakeFetch((request) => {
+    let seenInit: RequestInit | undefined;
+    const fetch = fakeFetch((request, init) => {
       seen = request;
+      seenInit = init;
       return Response.json({ ok: true });
     });
 
@@ -37,12 +39,46 @@ describe("HttpService", () => {
       query: { page: 2, active: true, missing: undefined },
     });
 
-    expect(seen?.url).toBe("https://api.example.com/users?page=2&active=true");
+    // The validated address is pinned for the connection; Host and SNI keep the
+    // logical hostname.
+    expect(new URL(seen!.url).hostname).toBe("93.184.216.34");
+    expect(new URL(seen!.url).pathname).toBe("/users");
+    expect(new URL(seen!.url).search).toBe("?page=2&active=true");
+    expect(seen?.headers.get("host")).toBe("api.example.com");
     expect(seen?.method).toBe("GET");
     expect(seen?.headers.get("x-app")).toBe("test");
+    expect((seenInit as { tls?: { serverName?: string } }).tls?.serverName).toBe("api.example.com");
+    expect((seenInit as { proxy?: boolean }).proxy).toBe(false);
     expect(response.status).toBe(200);
     expect(response.data).toEqual({ ok: true });
     expect(response.redirected).toBe(false);
+  });
+
+  test("keeps the logical hostname when address pinning is disabled", async () => {
+    let seen: Request | undefined;
+    const fetch = fakeFetch((request) => {
+      seen = request;
+      return Response.json({ ok: true });
+    });
+
+    @Module({
+      imports: [
+        HttpModule.register({
+          baseUrl: "https://api.example.com",
+          fetch,
+          resolveAddresses: publicResolver,
+          pinResolvedAddress: false,
+        }),
+      ],
+    })
+    class AppModule {}
+
+    application = await AponiaFactory.create(AppModule, { logger: false });
+    const service = application.get(HttpService);
+    await service.get("/users");
+
+    expect(seen?.url).toBe("https://api.example.com/users");
+    expect(seen?.headers.get("host")).toBeNull();
   });
 
   test("sends a JSON body with its content type", async () => {
@@ -455,6 +491,7 @@ describe("HttpService", () => {
         retryDelayMs: -1,
         maxResponseBytes: 0,
         maxRedirects: 11,
+        pinResolvedAddress: "no" as unknown as boolean,
       }),
     );
 
@@ -467,6 +504,7 @@ describe("HttpService", () => {
         "retryDelayMs must be a non-negative integer",
         "maxResponseBytes must be a positive integer",
         "maxRedirects must be an integer between 0 and 10",
+        "pinResolvedAddress must be a boolean",
       ],
     });
   });

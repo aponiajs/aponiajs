@@ -193,4 +193,49 @@ describe("Pipes Integration in Platform Elysia", () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ msg: "trimmed text" });
   });
+
+  test("runs an application-level pipe before the route's own pipes", async () => {
+    class UpperPipe implements PipeTransform<string, string> {
+      transform(value: string): string {
+        return typeof value === "string" ? value.toUpperCase() : value;
+      }
+    }
+
+    class ExclaimPipe implements PipeTransform<string, string> {
+      transform(value: string): string {
+        return `${value}!`;
+      }
+    }
+
+    @Controller("global-pipe")
+    class GlobalPipeController {
+      @Post()
+      @UsePipes(new ExclaimPipe())
+      create(@Body("name") name: string): string {
+        return name;
+      }
+    }
+
+    @Module({ controllers: [GlobalPipeController], providers: [UpperPipe] })
+    class GlobalPipeModule {}
+
+    const app = await AponiaFactory.create(GlobalPipeModule, {
+      logger: false,
+      pipes: [UpperPipe],
+    });
+    try {
+      const response = await app.handle(
+        new Request("http://localhost/global-pipe", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ name: "ada" }),
+        }),
+      );
+
+      expect(response.status).toBe(200);
+      expect(await response.text()).toBe("ADA!");
+    } finally {
+      await app.close();
+    }
+  });
 });

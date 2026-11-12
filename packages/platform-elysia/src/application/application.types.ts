@@ -1,4 +1,10 @@
-import type { ClassToken, LoggerService, LogLevel, MicroserviceTransport } from "@aponiajs/common";
+import type {
+  ClassToken,
+  LoggerService,
+  LogLevel,
+  MicroserviceTransport,
+  PipeType,
+} from "@aponiajs/common";
 import type { AnyElysia, Elysia } from "elysia";
 import type { ElysiaConfig, EventScope } from "elysia/types";
 import type { AponiaModuleDescriptorArtifact } from "../modules/module-descriptor-artifact.types.ts";
@@ -183,6 +189,16 @@ export interface AponiaApplicationOptions {
    * way `guards` are, the same mounts excluded.
    */
   readonly filters?: readonly ClassToken<unknown>[];
+  /**
+   * Pipes every route the platform mounts runs before its controller, method,
+   * and parameter pipes.
+   *
+   * Declared and resolved the way `guards` are: the class must be a provider
+   * the root module can reach, and a class it cannot reach fails the boot.
+   * A pipe applies to body, query, params, headers, and cookie parameters, the
+   * same kinds a route-level pipe covers.
+   */
+  readonly pipes?: readonly PipeType[];
 }
 
 /** The version-negotiation options `AponiaFactory.create` accepts. */

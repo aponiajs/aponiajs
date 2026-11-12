@@ -1,9 +1,19 @@
 import { AponiaError } from "@aponiajs/common";
-import type { RefreshTokenRecord, RefreshTokenStore } from "./refresh-token.types.ts";
+import type {
+  RefreshTokenConsumeResult,
+  RefreshTokenRecord,
+  RefreshTokenStore,
+} from "./refresh-token.types.ts";
+
+interface UsedToken {
+  readonly familyId: string;
+  readonly expiresAt: number;
+}
 
 /** A bounded, process-local refresh-token store. */
 export class MemoryRefreshTokenStore implements RefreshTokenStore {
   readonly #records = new Map<string, RefreshTokenRecord>();
+  readonly #used = new Map<string, UsedToken>();
   readonly #maxTokens: number;
   readonly #now: () => number;
 
@@ -46,6 +56,21 @@ export class MemoryRefreshTokenStore implements RefreshTokenStore {
     return this.#records.delete(idHash);
   }
 
+  consume(idHash: string): RefreshTokenConsumeResult | undefined {
+    this.#prune();
+    const record = this.#records.get(idHash);
+    if (record !== undefined) {
+      this.#records.delete(idHash);
+      this.#used.set(idHash, { familyId: record.familyId, expiresAt: record.expiresAt });
+      return { record };
+    }
+    const used = this.#used.get(idHash);
+    if (used !== undefined) {
+      return { familyId: used.familyId };
+    }
+    return undefined;
+  }
+
   deleteFamily(familyId: string): number {
     let deleted = 0;
     for (const [key, record] of this.#records) {
@@ -59,6 +84,7 @@ export class MemoryRefreshTokenStore implements RefreshTokenStore {
 
   clear(): void {
     this.#records.clear();
+    this.#used.clear();
   }
 
   #prune(): void {
@@ -66,6 +92,11 @@ export class MemoryRefreshTokenStore implements RefreshTokenStore {
     for (const [key, record] of this.#records) {
       if (record.expiresAt <= now) {
         this.#records.delete(key);
+      }
+    }
+    for (const [key, used] of this.#used) {
+      if (used.expiresAt <= now) {
+        this.#used.delete(key);
       }
     }
   }

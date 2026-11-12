@@ -346,16 +346,13 @@ test("rejects classes with missing module or controller metadata", async () => {
   );
 
   class UndecoratedDynamicModule {}
-  const dynamicModuleError = await AponiaFactory.create(
+  const dynamicApplication = await AponiaFactory.create(
     {
       module: UndecoratedDynamicModule,
       id: "UndecoratedDynamicModule",
       instanceId: Symbol("undecorated-dynamic-module"),
     },
     { logger: false },
-  ).then(
-    () => undefined,
-    (reason: unknown) => reason,
   );
 
   class UndecoratedController {}
@@ -374,12 +371,8 @@ test("rejects classes with missing module or controller metadata", async () => {
       details: { module: "UndecoratedModule" },
     }),
   );
-  expect(dynamicModuleError).toEqual(
-    expect.objectContaining({
-      code: "INVALID_MODULE",
-      details: { module: "UndecoratedDynamicModule" },
-    }),
-  );
+  // A registration carries its own collections, so its class may be undecorated.
+  await dynamicApplication.close();
   expect(controllerError).toEqual(
     expect.objectContaining({
       code: "INVALID_CONTROLLER",

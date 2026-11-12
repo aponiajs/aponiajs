@@ -71,8 +71,8 @@ export function compileUnrolledGuards(
   if (guards.length === 1) {
     const g0 = guards[0]!;
     return function singleGuardHook(context: any) {
-      execContext.swap(context);
-      const result = g0.canActivate(execContext);
+      const requestContext = execContext.fork(context);
+      const result = g0.canActivate(requestContext);
       if (result === false) {
         return extractForbiddenResponse(context, forbiddenResponse);
       }
@@ -92,8 +92,8 @@ export function compileUnrolledGuards(
     const g0 = guards[0]!;
     const g1 = guards[1]!;
     return function twoGuardsHook(context: any) {
-      execContext.swap(context);
-      const res0 = g0.canActivate(execContext);
+      const requestContext = execContext.fork(context);
+      const res0 = g0.canActivate(requestContext);
       if (res0 === false) {
         return extractForbiddenResponse(context, forbiddenResponse);
       }
@@ -102,7 +102,7 @@ export function compileUnrolledGuards(
           if (!allowed0) {
             return extractForbiddenResponse(context, forbiddenResponse);
           }
-          const res1 = g1.canActivate(execContext);
+          const res1 = g1.canActivate(requestContext);
           if (res1 === false) {
             return extractForbiddenResponse(context, forbiddenResponse);
           }
@@ -118,7 +118,7 @@ export function compileUnrolledGuards(
         });
       }
 
-      const res1 = g1.canActivate(execContext);
+      const res1 = g1.canActivate(requestContext);
       if (res1 === false) {
         return extractForbiddenResponse(context, forbiddenResponse);
       }
@@ -135,14 +135,21 @@ export function compileUnrolledGuards(
   }
 
   return function multiGuardHook(context: any) {
-    execContext.swap(context);
+    const requestContext = execContext.fork(context);
     for (let i = 0; i < guards.length; i++) {
-      const result = guards[i]!.canActivate(execContext);
+      const result = guards[i]!.canActivate(requestContext);
       if (result === false) {
         return extractForbiddenResponse(context, forbiddenResponse);
       }
       if (result instanceof Promise) {
-        return runRemainingGuards(guards, i + 1, execContext, context, forbiddenResponse, result);
+        return runRemainingGuards(
+          guards,
+          i + 1,
+          requestContext,
+          context,
+          forbiddenResponse,
+          result,
+        );
       }
     }
     return undefined;

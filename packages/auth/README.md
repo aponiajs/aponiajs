@@ -4,7 +4,7 @@ JWT authentication, role and permission guards, refresh-token rotation,
 access-token revocation, and Bun-native password hashing for AponiaJS.
 
 ```bash
-bun add @aponiajs/auth@beta
+bun add @aponiajs/auth@alpha
 ```
 
 ## Use it
@@ -154,8 +154,8 @@ A store that does not implement its contract fails the registration with
 - A missing role or permission answers `403` Problem Details.
 - The package mounts no route, reads no environment variable, and stores no secret outside the registration.
 - `RolesGuard` and `PermissionsGuard` run after `AuthGuard`; declare them in that order.
-- A rotated refresh token cannot be used twice; revoking a family invalidates every descendant.
-- Access tokens without a `jti` claim are not revocation-checked.
+- A rotated refresh token cannot be used twice; a reused token revokes its whole family, and revoking a family invalidates every descendant.
+- `JwtService.sign()` mints a `jti` when none is supplied; a token minted elsewhere without one is accepted but not revocation-checked.
 
 ## Limits
 

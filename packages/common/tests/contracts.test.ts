@@ -7,12 +7,14 @@ import {
   Module,
   createToken,
   defineModule,
+  dynamicModule,
   getConstructorDependencies,
   getControllerMetadata,
   getModuleMetadata,
   provideFactory,
   provideValue,
   getTokenName,
+  normalizeProvider,
   type ClassToken,
 } from "../src/index.ts";
 import type { ResponseSettingsState } from "../src/index.ts";
@@ -61,6 +63,45 @@ describe("@aponiajs/common", () => {
   });
 
   test("normalizes omitted module collections without widening declared tuples", () => {
+    class UndecoratedDynamicModule {}
+    const registration = dynamicModule({
+      module: UndecoratedDynamicModule,
+      providers: [provideValue(createToken<string>("dynamic.name"), "api")],
+    });
+    const sibling = dynamicModule({ module: UndecoratedDynamicModule });
+
+    expect(registration.id).toBe("UndecoratedDynamicModule");
+    expect(typeof registration.instanceId).toBe("symbol");
+    expect(sibling.id).toBe("UndecoratedDynamicModule");
+    expect(sibling.instanceId).not.toBe(registration.instanceId);
+    expect(Object.isFrozen(registration)).toBe(true);
+
+    const nestToken = createToken<string>("nest.provider");
+    const factoryToken = createToken<string>("nest.factory");
+    const aliasToken = createToken<string>("nest.alias");
+    const classToken = createToken<{ read(): string }>("nest.class");
+    class NestClass {
+      read(): string {
+        return "class";
+      }
+    }
+    const nestModule = defineModule({
+      id: "nest",
+      providers: [
+        { provide: nestToken, useValue: "value" },
+        { provide: factoryToken, useFactory: () => "factory" },
+        { provide: aliasToken, useExisting: nestToken },
+        { provide: classToken, useClass: NestClass, inject: [] },
+      ],
+    });
+    expect(nestModule.providers[0]).toEqual(provideValue(nestToken, "value"));
+    expect(nestModule.providers[1]?.kind).toBe("factory");
+    expect(nestModule.providers[2]?.kind).toBe("alias");
+    expect(nestModule.providers[3]?.kind).toBe("class");
+    expect(() => normalizeProvider({ provide: nestToken } as never)).toThrow(
+      expect.objectContaining({ code: "INVALID_PROVIDER" }),
+    );
+
     const emptyModule = defineModule({ id: "empty" });
     const first = defineModule({ id: "first" });
     const second = defineModule({ id: "second" });

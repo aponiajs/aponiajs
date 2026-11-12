@@ -10,7 +10,7 @@ the `bun create` entrypoint.
 Install the CLI globally with Bun, then invoke `aponia` directly:
 
 ```bash
-bun add --global @aponiajs/cli@beta
+bun add --global @aponiajs/cli@alpha
 aponia --version
 ```
 

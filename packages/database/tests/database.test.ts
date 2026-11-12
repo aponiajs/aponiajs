@@ -17,6 +17,7 @@ import {
   loadMigrations,
   type DatabaseClient,
   type DatabaseTransaction,
+  type MigrationExecutor,
 } from "../src/index.ts";
 
 const users = sqliteTable("users", {
@@ -266,6 +267,111 @@ describe("MigrationRunner", () => {
     expect(store.applied()).toEqual([]);
   });
 
+  test("runs each migration and its record inside the executor's transaction", async () => {
+    const store = new MemoryMigrationStore();
+    const events: string[] = [];
+    const executor: MigrationExecutor = {
+      execute: () => {
+        events.push(`execute:${store.applied().length}`);
+      },
+      transaction: async <T>(run: (inner: MigrationExecutor) => T | PromiseLike<T>): Promise<T> => {
+        events.push("begin");
+        const result = await run(executor);
+        events.push(`commit:${store.applied().length}`);
+        return result;
+      },
+    };
+    const runner = new MigrationRunner(store);
+
+    const result = await runner.run(executor, [{ name: "001.sql", sql: "select 1" }]);
+
+    expect(result.applied).toEqual(["001.sql"]);
+    expect(events).toEqual(["begin", "execute:0", "commit:1"]);
+  });
+
+  test("does not record a migration when its transaction throws", async () => {
+    const store = new MemoryMigrationStore();
+    const runner = new MigrationRunner(store);
+
+    const failure = await rejectionValue(
+      runner.run(
+        {
+          execute: () => {},
+          transaction: async () => {
+            throw new Error("rolled back");
+          },
+        },
+        [{ name: "001.sql", sql: "select 1" }],
+      ),
+    );
+
+    expect((failure as Error).message).toBe("rolled back");
+    expect(store.applied()).toEqual([]);
+  });
+
+  test("refuses an applied migration whose SQL changed", async () => {
+    const store = new MemoryMigrationStore();
+    const runner = new MigrationRunner(store);
+    await runner.run({ execute: () => {} }, [{ name: "001.sql", sql: "select 1" }]);
+
+    const error = await rejection(
+      runner.run({ execute: () => {} }, [{ name: "001.sql", sql: "select 2" }]),
+    );
+
+    expect(error.code).toBe("INVALID_MIGRATION");
+    expect(error.details).toMatchObject({ migration: "001.sql" });
+  });
+
+  test("acquires and releases the application lock around the run", async () => {
+    const events: string[] = [];
+    const lock = async (): Promise<() => Promise<void>> => {
+      events.push("acquire");
+      return async () => {
+        events.push("release");
+      };
+    };
+    const runner = new MigrationRunner(new MemoryMigrationStore());
+
+    const result = await runner.run(
+      {
+        execute: () => {
+          events.push("execute");
+        },
+      },
+      [{ name: "001.sql", sql: "select 1" }],
+      lock,
+    );
+
+    expect(result.applied).toEqual(["001.sql"]);
+    expect(events).toEqual(["acquire", "execute", "release"]);
+  });
+
+  test("releases the lock when a migration fails", async () => {
+    const events: string[] = [];
+    const lock = async (): Promise<() => Promise<void>> => {
+      events.push("acquire");
+      return async () => {
+        events.push("release");
+      };
+    };
+    const runner = new MigrationRunner(new MemoryMigrationStore());
+
+    const failure = await rejectionValue(
+      runner.run(
+        {
+          execute: () => {
+            throw new Error("boom");
+          },
+        },
+        [{ name: "001.sql", sql: "nope" }],
+        lock,
+      ),
+    );
+
+    expect((failure as Error).message).toBe("boom");
+    expect(events).toEqual(["acquire", "release"]);
+  });
+
   test("applies migrations through a registered database during module init", async () => {
     const native = new Database(":memory:");
     const database = drizzle(native);
@@ -335,6 +441,15 @@ function capture(run: () => unknown): AponiaError {
     throw error;
   }
   throw new Error("Expected an AponiaError.");
+}
+
+async function rejectionValue(promise: Promise<unknown>): Promise<unknown> {
+  try {
+    await promise;
+  } catch (error) {
+    return error;
+  }
+  throw new Error("Expected the promise to reject.");
 }
 
 async function rejection(promise: Promise<unknown>): Promise<AponiaError> {

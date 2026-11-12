@@ -62,6 +62,9 @@ function resolveOptions(options: IdempotencyModuleOptions): ResolvedIdempotencyO
   if (options.onError !== undefined && typeof options.onError !== "function") {
     issues.push("onError must be a function");
   }
+  if (options.scope !== undefined && typeof options.scope !== "function") {
+    issues.push("scope must be a function");
+  }
   const store = options.store ?? new MemoryIdempotencyStore({ maxEntries, now: options.now });
   if (typeof store !== "object" || store === null) {
     issues.push("store must implement IdempotencyStore");
@@ -90,5 +93,6 @@ function resolveOptions(options: IdempotencyModuleOptions): ResolvedIdempotencyO
     methods: Object.freeze(methods.map((method) => method.toUpperCase())),
     store,
     onError: options.onError ?? (() => {}),
+    scope: options.scope,
   });
 }

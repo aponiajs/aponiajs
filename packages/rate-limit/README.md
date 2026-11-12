@@ -4,7 +4,7 @@ Bounded request rate limiting for AponiaJS, with a route guard, a fixed-window
 store, standard headers, and a `429` Problem Details refusal.
 
 ```bash
-bun add @aponiajs/rate-limit@beta
+bun add @aponiajs/rate-limit@alpha
 ```
 
 ## Use it

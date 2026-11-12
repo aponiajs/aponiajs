@@ -1,11 +1,14 @@
 import {
   AponiaError,
   getTokenName,
+  isOptionalInjection,
+  ModuleRef,
   resolveForwardRef,
   type ModuleDefinition,
   type Provider,
   type Token,
 } from "@aponiajs/common";
+import { getProviderDependencies } from "./dependencies.ts";
 import { formatMissingProviderDiagnostic } from "./diagnostic-formatter.ts";
 import type { GraphInspection, ProviderLocation } from "./graph.types.ts";
 
@@ -29,6 +32,7 @@ export class ModuleGraph {
   readonly #exportsByModule: ReadonlyMap<ModuleDefinition, ReadonlySet<Token<unknown>>>;
   readonly #predefinedProviders: ReadonlyMap<Token<unknown>, Provider>;
   readonly #locationsByModule = new Map<ModuleDefinition, Map<Token<unknown>, ProviderLocation>>();
+  readonly #requestRequired = new WeakMap<ModuleDefinition, Map<Provider, boolean>>();
 
   constructor(
     root: ModuleDefinition,
@@ -70,6 +74,102 @@ export class ModuleGraph {
         ),
       ),
     });
+  }
+
+  /**
+   * Whether a provider needs an active request context to be constructed.
+   *
+   * True for a provider that declares `"request"` scope and for one whose
+   * dependencies reach such a provider: the scope bubbles outward along the
+   * injection chain, as Nest does, so a provider declared as a singleton that
+   * depends on request state is instantiated per request instead of being
+   * refused.
+   *
+   * @param module - The module the provider is declared in.
+   * @param provider - The provider to inspect.
+   * @returns Whether construction requires a request context.
+   *
+   * @internal
+   */
+  requiresRequestContext(module: ModuleDefinition, provider: Provider): boolean {
+    const cached = this.#requestRequired.get(module)?.get(provider);
+    if (cached !== undefined) {
+      return cached;
+    }
+
+    // Two passes: the first caches only the true answers, so a node reached
+    // while its own dependency cycle is being walked cannot memoize a false
+    // that a later branch would have corrected. The second pass caches the
+    // rest, now that every true answer it could reach is known.
+    this.#walkRequestScopes(false);
+    this.#walkRequestScopes(true);
+    return this.#requestRequired.get(module)?.get(provider) ?? false;
+  }
+
+  #walkRequestScopes(cacheFalses: boolean): void {
+    for (const module of this.modules) {
+      for (const provider of module.providers) {
+        this.#requiresRequest(module, provider, new Set(), cacheFalses);
+      }
+    }
+  }
+
+  #requiresRequest(
+    module: ModuleDefinition,
+    provider: Provider,
+    visiting: Set<Provider>,
+    cacheFalses: boolean,
+  ): boolean {
+    const cached = this.#requestRequired.get(module)?.get(provider);
+    if (cached !== undefined) {
+      return cached;
+    }
+
+    const remember = (value: boolean): boolean => {
+      if (value || cacheFalses) {
+        let moduleScopes = this.#requestRequired.get(module);
+        if (!moduleScopes) {
+          moduleScopes = new Map();
+          this.#requestRequired.set(module, moduleScopes);
+        }
+        moduleScopes.set(provider, value);
+      }
+      return value;
+    };
+
+    if (provider.scope === "request") {
+      return remember(true);
+    }
+    if (visiting.has(provider)) {
+      return false;
+    }
+
+    visiting.add(provider);
+    try {
+      for (const dependency of getProviderDependencies(provider)) {
+        const optional = isOptionalInjection(dependency);
+        const token = resolveForwardRef(optional ? dependency.token : dependency);
+        if (token === ModuleRef) {
+          continue;
+        }
+        let location: ProviderLocation;
+        try {
+          location = this.locate(module, token);
+        } catch (error) {
+          if (optional && error instanceof AponiaError && error.code === "MISSING_PROVIDER") {
+            continue;
+          }
+          throw error;
+        }
+        if (this.#requiresRequest(location.module, location.provider, visiting, cacheFalses)) {
+          return remember(true);
+        }
+      }
+    } finally {
+      visiting.delete(provider);
+    }
+
+    return remember(false);
   }
 
   /**

@@ -78,12 +78,13 @@ runtime boundary it describes.
   process.
 - **Stopping is a provider hook, and what it can stop is bounded.** The module
   provides one `OpentelemetryShutdown` that owns the declared `spanProcessors` and
-  shuts them down in `onApplicationShutdown`. It does not reach a processor the
-  application built but did not pass to `register`, and it does not reach an
-  exporter `NodeSDK` constructed from its own options; the README states both
-  limits rather than implying a full teardown. The stop drops its handles, so a
-  second `close()` stops nothing a second time — pinned, because a processor shut
-  down twice would break another registration's SDK.
+  flushes then shuts them down in `onApplicationShutdown`; an application-owned
+  SDK handle passed as `sdk` is flushed and shut down after them. It does not
+  reach a processor the application built but did not pass to `register`, and it
+  does not reach an exporter `NodeSDK` the application neither owns nor passes;
+  the README states both limits rather than implying a full teardown. The stop
+  drops its handles, so a second `close()` stops nothing a second time — pinned,
+  because a processor shut down twice would break another registration's SDK.
 - **No plugin value can be exported beside the module.** `@aponiajs/devtools`
   exports `devtoolsPlugin`, because its plugin is built from options fixed in
   source. This one's plugin is built from a value the container resolves, so it

@@ -20,23 +20,23 @@ the external security review: a reviewer can trace every claim to code and tests
 
 ## Threats and controls
 
-| Threat                                       | Control                                                                               | Where                                                  |
-| -------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| Forged or expired access token               | Signature, issuer, audience, and algorithm checks; unknown `kid` refused              | [`auth`](../packages/auth/AGENTS.md)                   |
-| Refresh-token replay                         | Rotation consumes the old token; a replayed token is refused; families can be revoked | [`auth`](../packages/auth/AGENTS.md)                   |
-| Session fixation                             | `SessionService.regenerate` deletes the old id before issuing a new one               | [`session`](../packages/session/AGENTS.md)             |
-| Cross-site request forgery                   | Signed double-submit cookie token, unsafe methods only, explicit exclusions           | [`security`](../packages/security/AGENTS.md)           |
-| Cross-site WebSocket hijacking               | `origins` allowlist on the handshake, refused before upgrade                          | [`websockets.md`](./websockets.md)                     |
-| Credential or tenant leakage across tenants  | Request-scoped tenant guard and service with a validated identifier                   | [`tenancy`](../packages/tenancy/AGENTS.md)             |
-| Duplicate side effects from retried requests | `Idempotency-Key` replay, body fingerprint, and conflict detection                    | [`idempotency`](../packages/idempotency/AGENTS.md)     |
-| Request floods and brute force               | Fixed-window rate limiting with standard headers and `Retry-After`                    | [`rate-limit`](../packages/rate-limit/AGENTS.md)       |
-| SSRF through user-supplied URLs              | Scheme, credential, hostname, and address checks; every redirect re-validated         | [`http`](../packages/http/AGENTS.md)                   |
-| Oversized responses                          | Bounded response body read with a hard limit                                          | [`http`](../packages/http/AGENTS.md)                   |
-| Leaked internals in errors                   | Problem Details without stack or cause; unexpected failures become `500`              | [`errors`](./learn/10-errors.md)                       |
-| Ambiguous dependency resolution              | Graph compile rejects duplicates, cycles, unexported tokens, and ambiguity            | [`dependency-injection.md`](./dependency-injection.md) |
-| Unauthorized devtools access                 | Opt-in registration, disabled in production by configuration                          | [`devtools.md`](./devtools.md)                         |
-| Agent tools that mutate a project            | MCP is read-only by default; write and exec need explicit flags                       | [`mcp.md`](./mcp.md)                                   |
-| Cache stampede                               | `wrap` shares one factory run per key                                                 | [`cache`](../packages/cache/AGENTS.md)                 |
+| Threat                                       | Control                                                                                                 | Where                                                  |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Forged or expired access token               | Signature, issuer, audience, and algorithm checks; unknown `kid` refused                                | [`auth`](../packages/auth/AGENTS.md)                   |
+| Refresh-token replay                         | Rotation consumes the old token; a replayed token is refused; families can be revoked                   | [`auth`](../packages/auth/AGENTS.md)                   |
+| Session fixation                             | `SessionService.regenerate` deletes the old id before issuing a new one                                 | [`session`](../packages/session/AGENTS.md)             |
+| Cross-site request forgery                   | Signed double-submit cookie token, unsafe methods only, explicit exclusions                             | [`security`](../packages/security/AGENTS.md)           |
+| Cross-site WebSocket hijacking               | `origins` allowlist on the handshake, refused before upgrade                                            | [`websockets.md`](./websockets.md)                     |
+| Credential or tenant leakage across tenants  | Tenant bound to a verified principal or resolver; header is opt-in selection, never authorization       | [`tenancy`](../packages/tenancy/AGENTS.md)             |
+| Duplicate side effects from retried requests | `Idempotency-Key` replay, body fingerprint, atomic store claim, and caller/tenant scope                 | [`idempotency`](../packages/idempotency/AGENTS.md)     |
+| Request floods and brute force               | Fixed-window rate limiting with standard headers and `Retry-After`                                      | [`rate-limit`](../packages/rate-limit/AGENTS.md)       |
+| SSRF through user-supplied URLs              | Scheme, credential, hostname, and address checks; validated address pinned; every redirect re-validated | [`http`](../packages/http/AGENTS.md)                   |
+| Oversized responses                          | Bounded response body read with a hard limit                                                            | [`http`](../packages/http/AGENTS.md)                   |
+| Leaked internals in errors                   | Problem Details without stack or cause; unexpected failures become `500`                                | [`errors`](./learn/10-errors.md)                       |
+| Ambiguous dependency resolution              | Graph compile rejects duplicates, cycles, unexported tokens, and ambiguity                              | [`dependency-injection.md`](./dependency-injection.md) |
+| Unauthorized devtools access                 | Opt-in registration, disabled in production by configuration                                            | [`devtools.md`](./devtools.md)                         |
+| Agent tools that mutate a project            | MCP is read-only by default; write and exec need explicit flags                                         | [`mcp.md`](./mcp.md)                                   |
+| Cache stampede                               | `wrap` shares one factory run per key                                                                   | [`cache`](../packages/cache/AGENTS.md)                 |
 
 ## Residual risks
 

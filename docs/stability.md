@@ -1,9 +1,16 @@
 # Stability and the Public API
 
-The framework is on the `1.0.0-beta.N` line. Every published package shares
-that version, and one release publishes the whole set. Before `1.0.0` the
-public API may still change; the release notes and the frozen snapshot make each
-change reviewable. From `1.0.0`, a breaking change requires a major version.
+The **published** framework is on the `0.6.0-alpha.N` line. The source in this
+repository targets the `1.0.0-beta.N` development line, which is not published
+under `@beta` yet; one release publishes the whole package set together. Before
+`1.0.0` the public API may still change; the release notes and the frozen
+snapshot make each change reviewable. From `1.0.0`, a breaking change requires a
+major version.
+
+The alpha line is the installable channel today. The beta line becomes the
+supported channel only when it is published; a document that names a `@beta`
+install command is describing that future release, not the current registry
+state.
 
 This page states what is considered public, how a change is classified, and the
 evidence a change must carry.

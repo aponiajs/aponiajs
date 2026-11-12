@@ -63,7 +63,7 @@ jobs:
 
       - name: Pack publishable workspaces
         run: |
-          mkdir -p canary-artifacts/{01-common,02-core,03-platform-elysia,04-cli,05-create-aponia,06-devtools,07-cron,08-graphql,09-testing,10-openapi,11-cors,12-opentelemetry,13-mcp,14-cache,15-events,16-http,17-rate-limit,18-security,19-session,20-compression,21-auth,22-audit,23-tenancy,24-queue,25-database,26-metrics,27-idempotency,28-microservices,29-serverless,30-h3,31-hono,32-nitro}
+          mkdir -p canary-artifacts/{01-common,02-core,03-platform-elysia,04-cli,05-create-aponia,06-devtools,07-cron,08-graphql,09-testing,10-openapi,11-cors,12-opentelemetry,13-mcp,14-cache,15-events,16-http,17-rate-limit,18-security,19-session,20-compression,21-auth,22-audit,23-tenancy,24-queue,25-database,26-metrics,27-idempotency,28-microservices,29-serverless,30-h3,31-hono,32-nitro,33-store-redis,34-view}
           bun pm pack --cwd packages/common --destination "$GITHUB_WORKSPACE/canary-artifacts/01-common"
           bun pm pack --cwd packages/core --destination "$GITHUB_WORKSPACE/canary-artifacts/02-core"
           bun pm pack --cwd packages/platform-elysia --destination "$GITHUB_WORKSPACE/canary-artifacts/03-platform-elysia"
@@ -96,6 +96,8 @@ jobs:
           bun pm pack --cwd packages/h3 --destination "$GITHUB_WORKSPACE/canary-artifacts/30-h3"
           bun pm pack --cwd packages/hono --destination "$GITHUB_WORKSPACE/canary-artifacts/31-hono"
           bun pm pack --cwd packages/nitro --destination "$GITHUB_WORKSPACE/canary-artifacts/32-nitro"
+          bun pm pack --cwd packages/store-redis --destination "$GITHUB_WORKSPACE/canary-artifacts/33-store-redis"
+          bun pm pack --cwd packages/view --destination "$GITHUB_WORKSPACE/canary-artifacts/34-view"
 
       - name: Publish packages in dependency order
         working-directory: ${{ runner.temp }}

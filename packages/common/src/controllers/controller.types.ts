@@ -1,3 +1,4 @@
+import type { ProviderScope } from "../providers/provider.types.ts";
 import type { Constructor, InjectionDependency, Token } from "../tokens/token.types.ts";
 
 /** A lowered controller: the descriptor the platform mounts. */
@@ -10,4 +11,10 @@ export interface ControllerDefinition {
   readonly inject: readonly InjectionDependency[];
   /** The controller class to construct. */
   readonly useClass: Constructor<unknown, never[]>;
+  /**
+   * The declared lifetime. `"request"` constructs one controller per request,
+   * and a controller whose dependencies reach a request-scoped provider is
+   * request-scoped whatever it declares.
+   */
+  readonly scope?: ProviderScope;
 }

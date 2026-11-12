@@ -37,7 +37,12 @@ that reads it.
   descending, then enqueue time, then id; a delayed retry does not gain priority.
 - **A timeout is a failed attempt.** The timer is injected, the winning handler
   clears it, and an overrun reports `QUEUE_JOB_TIMEOUT` through the normal retry
-  path. Never leave the timer armed after the handler settles.
+  path. Never leave the timer armed after the handler settles. The per-job
+  `AbortController` is aborted before the timeout rejects and on `close()`;
+  cancellation stays cooperative and the docs must say so.
+- **Shutdown drains, then closes, then flushes.** `onModuleDestroy` awaits
+  `drain()` before `close()` so due jobs run, then aborts in-flight work and
+  flushes tracked writes.
 - **Pause stops the worker, not the queue.** `pause()` cancels the scheduled
   drain and later enqueues stay pending; an explicit `drain()` still runs. Do not
   make `pause()` refuse enqueue or drop jobs.
@@ -48,6 +53,8 @@ that reads it.
   `waitForIdle` means "nothing runnable", not "queue empty".
 - **The outbox delivers in order and stops at the first rejection.** The
   rejected message stays at the front and is reattempted by the next flush.
+  `flush(sink, { signal })` stops between messages and leaves the undelivered
+  tail.
 - **Configuration failures are `AponiaError` with `INVALID_QUEUE_OPTIONS` and a
   frozen issue list.** Job misuse is `INVALID_QUEUE_JOB`.
 

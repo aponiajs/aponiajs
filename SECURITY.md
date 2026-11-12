@@ -2,9 +2,15 @@
 
 ## Supported versions
 
-The `1.0.0-beta.N` line is supported with security fixes on the newest beta.
-Older betas receive no fixes; upgrade to the newest release before reporting a
-problem in an older one.
+The **published alpha line** is supported with security fixes on its newest
+release (`0.6.0-alpha.39` at the time of writing). Older alpha releases receive
+no fixes; upgrade to the newest published release before reporting a problem in
+an older one.
+
+The `1.0.0-beta.N` development line in this repository is **not published yet**
+and is therefore not a supported distribution channel. It becomes supported when
+the beta line is published; until then, a report against it is handled as a
+development-branch issue, not as a shipped release.
 
 ## Reporting a vulnerability
 

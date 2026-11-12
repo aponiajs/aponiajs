@@ -1,6 +1,6 @@
 import type { RefreshTokenRecord, RefreshTokenStore } from "@aponiajs/auth";
 import type { RevocationStore } from "@aponiajs/auth";
-import { resolveRedisStoreOptions } from "../common/redis-common.ts";
+import { deleteByPattern, deleteKeys, resolveRedisStoreOptions } from "../common/redis-common.ts";
 import type { RedisClientInterface, RedisStoreOptions } from "../common/redis.types.ts";
 
 /**
@@ -35,10 +35,7 @@ export class RedisRevocationStore implements RevocationStore {
   }
 
   async clear(): Promise<void> {
-    const keys = await this.#client.keys(`${this.#prefix}*`);
-    if (keys.length > 0) {
-      await this.#client.del(keys);
-    }
+    await deleteByPattern(this.#client, `${this.#prefix}*`);
   }
 
   #key(jti: string): string {
@@ -103,26 +100,89 @@ export class RedisRefreshTokenStore implements RefreshTokenStore {
     return count > 0;
   }
 
+  async consume(
+    idHash: string,
+  ): Promise<{ readonly record: RefreshTokenRecord } | { readonly familyId: string } | undefined> {
+    // One round trip: read the live record, delete it, and keep a tombstone of
+    // its family so a replay can revoke the family instead of only failing.
+    const result = await this.#client.eval(
+      `local value = redis.call('GET', KEYS[1])
+if not value then
+  local used = redis.call('GET', KEYS[2])
+  if used then return 'used:' .. used end
+  return nil
+end
+local ttl = redis.call('PTTL', KEYS[1])
+redis.call('DEL', KEYS[1])
+if ttl < 0 then ttl = tonumber(ARGV[1]) end
+redis.call('SET', KEYS[2], value, 'PX', ttl)
+return 'live:' .. value`,
+      {
+        keys: [this.#tokenKey(idHash), this.#usedKey(idHash)],
+        arguments: ["1"],
+      },
+    );
+    if (typeof result !== "string") {
+      return undefined;
+    }
+    const separator = result.indexOf(":");
+    const kind = result.slice(0, separator);
+    const serialized = result.slice(separator + 1);
+    let parsed: {
+      readonly idHash?: unknown;
+      readonly userId?: unknown;
+      readonly familyId?: unknown;
+      readonly createdAt?: unknown;
+      readonly expiresAt?: unknown;
+    };
+    try {
+      parsed = JSON.parse(serialized);
+    } catch {
+      return undefined;
+    }
+    if (typeof parsed.familyId !== "string") {
+      return undefined;
+    }
+    if (kind === "used") {
+      return { familyId: parsed.familyId };
+    }
+    const record: RefreshTokenRecord = Object.freeze({
+      idHash: parsed.idHash as string,
+      userId: parsed.userId as string | number,
+      familyId: parsed.familyId,
+      createdAt: parsed.createdAt as number,
+      expiresAt: parsed.expiresAt as number,
+    });
+    await this.#client.del(`${this.#familyKey(record.familyId)}:${idHash}`);
+    return { record };
+  }
+
   async deleteFamily(familyId: string): Promise<number> {
     const familyKey = this.#familyKey(familyId);
-    const keys = await this.#client.keys(`${familyKey}:*`);
+    const pattern = `${familyKey}:*`;
     let deletedCount = 0;
-    for (const memberKey of keys) {
-      const idHash = memberKey.slice(familyKey.length + 1);
-      const deleted = await this.#client.del(this.#tokenKey(idHash));
-      await this.#client.del(memberKey);
-      if (deleted > 0) {
-        deletedCount += deleted;
-      }
-    }
+    let cursor = "0";
+    do {
+      const page =
+        this.#client.scan === undefined
+          ? { cursor: "0", keys: await this.#client.keys(pattern) }
+          : await this.#client.scan(cursor, { MATCH: pattern, COUNT: 100 });
+      cursor = page.cursor;
+      const tokenKeys = page.keys.map((memberKey) =>
+        this.#tokenKey(memberKey.slice(familyKey.length + 1)),
+      );
+      deletedCount += await deleteKeys(this.#client, tokenKeys);
+      await deleteKeys(this.#client, page.keys);
+    } while (cursor !== "0");
     return deletedCount;
   }
 
   async clear(): Promise<void> {
-    const keys = await this.#client.keys(`${this.#prefix}*`);
-    if (keys.length > 0) {
-      await this.#client.del(keys);
-    }
+    await deleteByPattern(this.#client, `${this.#prefix}*`);
+  }
+
+  #usedKey(idHash: string): string {
+    return `${this.#prefix}used:${idHash}`;
   }
 
   #tokenKey(idHash: string): string {

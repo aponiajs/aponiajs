@@ -38,6 +38,25 @@ export async function assertPublicHttpUrl(
     readonly resolveAddresses: (hostname: string) => Promise<readonly string[]>;
   },
 ): Promise<void> {
+  await resolvePublicHttpUrl(url, options);
+}
+
+/**
+ * Validates a URL and answers the addresses the client may connect to.
+ *
+ * A literal hostname answers itself. A hostname answers every resolved address
+ * after each one passed the blocked-range policy; the caller pins one of them
+ * for the actual connection, which closes the DNS-rebinding window between this
+ * check and the runtime's own resolution. `allowPrivateNetworks` answers an
+ * empty list because no check or pinning applies.
+ */
+export async function resolvePublicHttpUrl(
+  url: URL,
+  options: {
+    readonly allowPrivateNetworks: boolean;
+    readonly resolveAddresses: (hostname: string) => Promise<readonly string[]>;
+  },
+): Promise<readonly string[]> {
   if (url.protocol !== "http:" && url.protocol !== "https:") {
     throw blocked(url, "only http and https are allowed");
   }
@@ -45,7 +64,7 @@ export async function assertPublicHttpUrl(
     throw blocked(url, "credentials in a URL are not allowed");
   }
   if (options.allowPrivateNetworks) {
-    return;
+    return [];
   }
 
   const hostname = url.hostname.replace(/^\[|\]$/g, "").toLowerCase();
@@ -57,7 +76,7 @@ export async function assertPublicHttpUrl(
     if (isBlockedAddress(hostname)) {
       throw blocked(url, "the address is private, loopback, link-local, or reserved");
     }
-    return;
+    return [hostname];
   }
 
   let addresses: readonly string[];
@@ -77,6 +96,7 @@ export async function assertPublicHttpUrl(
       );
     }
   }
+  return addresses;
 }
 
 /** The default resolver, using the runtime's DNS lookup. */

@@ -25,6 +25,8 @@ export interface QueueJob<TPayload = unknown> {
 export type QueueHandler<TPayload = unknown> = (
   payload: TPayload,
   job: QueueJob<TPayload>,
+  /** Aborted on timeout or shutdown; a handler that ignores it keeps running. */
+  signal?: AbortSignal,
 ) => unknown;
 
 /** The per-job options `enqueue` accepts. */

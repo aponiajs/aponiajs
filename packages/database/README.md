@@ -4,7 +4,7 @@ A Drizzle-first database boundary for AponiaJS: one transaction seam, typed
 repositories over a table, and ordered SQL migrations.
 
 ```bash
-bun add @aponiajs/database@beta drizzle-orm
+bun add @aponiajs/database@alpha drizzle-orm
 ```
 
 ## Use it
@@ -112,11 +112,14 @@ synchronous: use `transactionSync`, and use a synchronous callback.
 
 `loadMigrations(directory)` reads `.sql` files in name order. `MigrationRunner`
 applies each file the store has not recorded and skips the rest; a failing
-statement stops the run and is not recorded. The default store is
-`MemoryMigrationStore`, which is process-local, so a real application passes a
-store backed by its own migration table. When `migrations` is declared on the
-registration, the service applies them during `onModuleInit`, before handlers
-run.
+statement stops the run and is not recorded. Each file records a SHA-256
+checksum, so an applied file whose SQL changed fails with `INVALID_MIGRATION`.
+When the driver exposes a transaction, the statement and its record run inside
+it. A concurrent-boot deployment passes an application-supplied advisory `lock`;
+the package owns no dialect SQL. The default store is `MemoryMigrationStore`,
+which is process-local, so a real application passes a store backed by its own
+migration table. When `migrations` is declared on the registration, the service
+applies them during `onModuleInit`, before handlers run.
 
 ## Limits
 

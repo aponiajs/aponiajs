@@ -51,6 +51,26 @@ describe("OutboxService", () => {
     expect(await outbox.flush(() => {})).toEqual({ delivered: 2, remaining: 0 });
   });
 
+  test("stops between messages when the signal aborts", async () => {
+    const outbox = new OutboxService();
+    outbox.record("first", 1);
+    outbox.record("second", 2);
+    const controller = new AbortController();
+    const delivered: string[] = [];
+
+    const result = await outbox.flush(
+      (message) => {
+        delivered.push(message.name);
+        controller.abort();
+      },
+      { signal: controller.signal },
+    );
+
+    expect(result).toEqual({ delivered: 1, remaining: 1 });
+    expect(delivered).toEqual(["first"]);
+    expect(outbox.pending().map((message) => message.name)).toEqual(["second"]);
+  });
+
   test("is bounded and evicts the oldest message", () => {
     const outbox = new OutboxService({ maxEntries: 1 });
     outbox.record("old", 1);

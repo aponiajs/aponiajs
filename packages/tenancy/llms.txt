@@ -4,17 +4,19 @@
 
 ## What this package exports
 
-- `TenantModule.register({ header?, required?, pattern?, resolver? })`: the module an application imports.
-- `TenantGuard`: resolves the tenant from a header or resolver.
+- `TenantModule.register({ header?, required?, pattern?, resolver?, principal?, claim? })`: the module an application imports.
+- `TenantGuard`: resolves the tenant from a resolver, a verified principal claim, or an explicitly configured header.
 - `TenantService`: `current()` and `require()`.
 - `TENANT`: the request-context token the tenant id is stored under.
 
 ## Behavior a consumer can rely on
 
-- The default header is `x-tenant-id`; missing tenants answer `400` unless `required` is false.
+- A registration must provide `resolver`, `principal`, or `header`; otherwise it fails with `INVALID_TENANCY_OPTIONS`.
+- Resolution order is resolver, then the principal claim, then the explicitly configured header.
+- The header is opt-in and is selection, not authorization.
+- Missing tenants answer `400` unless `required` is false.
 - The default identifier pattern accepts 1-128 characters from `A-Za-z0-9._:-`.
-- A resolver runs before the header and can read an authenticated JWT claim.
-- `TenantService.require()` fails with `MISSING_TENANT` when no tenant is selected.
+- `TenantService.require()` fails with `MISSING_TENANT` when no tenant is selected; the default boundary answers `400`.
 - The package does not store tenants or scope a database connection.
 
 ## Documentation

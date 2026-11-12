@@ -7,6 +7,8 @@ import {
   getModuleMetadata,
   isForwardRef,
   isGlobalModule,
+  normalizeProvider,
+  provideClass,
   resolveForwardRef,
   type ClassToken,
   type Constructor,
@@ -14,11 +16,13 @@ import {
   type DynamicModule,
   type ModuleClass,
   type ModuleDefinition,
+  type ModuleExport,
   type ModuleImport,
   type ModuleImportDescriptor,
   type ModuleMetadata,
   type ModuleProvider,
   type Provider,
+  type Token,
 } from "@aponiajs/common";
 import { Elysia } from "elysia";
 import { CONTROLLER_KIND } from "../controllers/controller.constants.ts";
@@ -31,6 +35,10 @@ import {
 } from "../routing/route-compiler.ts";
 import type { AponiaRootModule } from "./module-compiler.types.ts";
 import { assertUniqueElysiaRoutes } from "./route-uniqueness.ts";
+
+// One identity per class object, so two classes that happen to share a name do
+// not collide in the graph and minification cannot change what the graph keys.
+const moduleIdentities = new WeakMap<ModuleClass, symbol>();
 
 /**
  * Lowers a root module into the frozen descriptor the graph compiles.
@@ -104,14 +112,19 @@ function compileModuleImports(rootModule: ModuleImport): ModuleDefinition {
     visiting.push(moduleClass);
     try {
       const isGlobal = isGlobalModule(moduleClass) || (metadata.global ?? false);
+      const imports = Object.freeze((metadata.imports ?? []).map(compile));
+      const directImports = imports.filter(
+        (entry): entry is ModuleDefinition => !isForwardRef(entry),
+      );
       const definition: ModuleDefinition = Object.freeze({
         id: moduleClass.name,
+        moduleIdentity: moduleIdentity(moduleClass),
         moduleClass,
         ...(isGlobal ? { global: true } : {}),
-        imports: Object.freeze((metadata.imports ?? []).map(compile)),
+        imports,
         controllers: Object.freeze((metadata.controllers ?? []).map(compileDecoratedController)),
         providers: Object.freeze((metadata.providers ?? []).map(compileProvider)),
-        exports: Object.freeze([...(metadata.exports ?? [])]),
+        exports: Object.freeze(expandExports(metadata.exports ?? [], directImports)),
       });
       compiledClasses.set(moduleClass, definition);
       return definition;
@@ -127,26 +140,29 @@ function compileModuleImports(rootModule: ModuleImport): ModuleDefinition {
     }
 
     assertNoModuleCycle(dynamicModule, visiting);
-    const metadata = getModuleMetadata(dynamicModule.module);
-    if (!metadata) {
-      throw missingModuleDecorator(dynamicModule.module);
-    }
+    // A registration may carry an undecorated class: its collections are the
+    // definition, so empty metadata is the ordinary shape for that path.
+    const metadata = getModuleMetadata(dynamicModule.module) ?? Object.freeze({});
 
     const mergedMetadata = mergeModuleMetadata(metadata, dynamicModule);
     visiting.push(dynamicModule);
     try {
       const isGlobal = isGlobalModule(dynamicModule.module) || (mergedMetadata.global ?? false);
+      const imports = Object.freeze((mergedMetadata.imports ?? []).map(compile));
+      const directImports = imports.filter(
+        (entry): entry is ModuleDefinition => !isForwardRef(entry),
+      );
       const definition: ModuleDefinition = Object.freeze({
         id: dynamicModule.id,
         instanceId: dynamicModule.instanceId,
         moduleClass: dynamicModule.module,
         ...(isGlobal ? { global: true } : {}),
-        imports: Object.freeze((mergedMetadata.imports ?? []).map(compile)),
+        imports,
         controllers: Object.freeze(
           (mergedMetadata.controllers ?? []).map(compileDecoratedController),
         ),
         providers: Object.freeze((mergedMetadata.providers ?? []).map(compileProvider)),
-        exports: Object.freeze([...(mergedMetadata.exports ?? [])]),
+        exports: Object.freeze(expandExports(mergedMetadata.exports ?? [], directImports)),
       });
       compiledDynamicModules.set(dynamicModule, definition);
       return definition;
@@ -176,6 +192,16 @@ export function isModuleDefinition(moduleImport: unknown): moduleImport is Modul
     "controllers" in moduleImport &&
     !("module" in moduleImport)
   );
+}
+
+function moduleIdentity(moduleClass: ModuleClass): symbol {
+  const existing = moduleIdentities.get(moduleClass);
+  if (existing !== undefined) {
+    return existing;
+  }
+  const identity = Symbol(moduleClass.name);
+  moduleIdentities.set(moduleClass, identity);
+  return identity;
 }
 
 function moduleImportName(moduleImport: ModuleImport): string {
@@ -212,7 +238,9 @@ function mergeModuleMetadata(
   metadata: Readonly<ModuleMetadata>,
   dynamicModule: DynamicModule,
 ): ModuleMetadata {
+  const global = dynamicModule.global ?? metadata.global;
   return Object.freeze({
+    ...(global === undefined ? {} : { global }),
     imports: Object.freeze([...(metadata.imports ?? []), ...(dynamicModule.imports ?? [])]),
     controllers: Object.freeze([
       ...(metadata.controllers ?? []),
@@ -223,9 +251,95 @@ function mergeModuleMetadata(
   });
 }
 
+/**
+ * Expands an `exports` list: a token stays, an imported module contributes its
+ * own resolved exports.
+ *
+ * A class is a token unless it is one of this module's compiled imports, where
+ * it names a module to re-export. An object that names a module but was not
+ * imported is refused rather than silently skipped, because an importer would
+ * otherwise resolve nothing.
+ */
+function expandExports(
+  entries: readonly ModuleExport[],
+  imports: readonly ModuleDefinition[],
+): Token<unknown>[] {
+  const expanded: Token<unknown>[] = [];
+  for (const entry of entries) {
+    const imported = importedModuleOf(entry, imports);
+    if (imported !== undefined) {
+      expanded.push(...imported.exports);
+      continue;
+    }
+    if (looksLikeModule(entry)) {
+      throw new AponiaError("INVALID_EXPORT", "A module can only re-export a module it imports.", {
+        module: moduleExportName(entry),
+      });
+    }
+    expanded.push(entry as Token<unknown>);
+  }
+  return expanded;
+}
+
+function importedModuleOf(
+  entry: ModuleExport,
+  imports: readonly ModuleDefinition[],
+): ModuleDefinition | undefined {
+  for (const imported of imports) {
+    if (imported.moduleClass === entry) {
+      return imported;
+    }
+    if (typeof entry === "object" && entry !== null) {
+      const candidate = entry as { readonly id?: unknown; readonly instanceId?: unknown };
+      if (candidate.instanceId === imported.instanceId && candidate.id === imported.id) {
+        return imported;
+      }
+    }
+  }
+  return undefined;
+}
+
+function looksLikeModule(entry: ModuleExport): boolean {
+  if (typeof entry === "function") {
+    return getModuleMetadata(entry) !== undefined;
+  }
+  return (
+    typeof entry === "object" &&
+    entry !== null &&
+    ("module" in entry || ("providers" in entry && "imports" in entry))
+  );
+}
+
+function moduleExportName(entry: ModuleExport): string {
+  if (typeof entry === "function") {
+    return entry.name;
+  }
+  const candidate = entry as {
+    readonly id?: unknown;
+    readonly module?: { readonly name?: unknown };
+  };
+  if (typeof candidate.id === "string") {
+    return candidate.id;
+  }
+  return typeof candidate.module?.name === "string" ? candidate.module.name : "module";
+}
+
 function compileProvider(provider: ModuleProvider): Provider {
   if (typeof provider !== "function") {
-    return provider;
+    if ("kind" in provider) {
+      return provider;
+    }
+    if ("useClass" in provider && provider.inject === undefined) {
+      const useClass = provider.useClass as ClassToken<unknown>;
+      const inject = getConstructorDependencies(useClass);
+      return provideClass(
+        provider.provide,
+        useClass as unknown as Constructor<unknown, readonly unknown[]>,
+        inject,
+        provider.scope === undefined ? undefined : { scope: provider.scope },
+      ) as Provider;
+    }
+    return normalizeProvider(provider);
   }
 
   const inject = getConstructorDependencies(provider);
@@ -272,6 +386,7 @@ function compileDecoratedController(controller: ClassToken<unknown>): Controller
   }
 
   const routes = compileElysiaRoutes(controller, metadata.path);
+  const scope = getInjectableMetadata(controller)?.scope;
   const registerRoutes = (plugin: Elysia, instance: unknown): void => {
     // Bootstrap mounts this controller's plan itself, where the enhancer
     // resolution exists; this callback is what the definition's own
@@ -285,6 +400,7 @@ function compileDecoratedController(controller: ClassToken<unknown>): Controller
     path: joinPaths(metadata.path, ""),
     inject: getConstructorDependencies(controller),
     useClass: controller as Constructor<unknown, never[]>,
+    ...(scope === undefined ? {} : { scope }),
     compiledRoutes: routes,
     buildPlugin: (instance: unknown) => {
       const plugin = new Elysia();

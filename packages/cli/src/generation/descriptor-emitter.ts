@@ -1152,10 +1152,13 @@ function renderGatewayHandler(handler: AnalyzedGatewayHandler): string {
  *
  * `@Inject()` names a token outright, and the declared type is what the runtime
  * falls back to through `design:paramtypes` — so both are stated, and both have
- * to name something the generated module can import as a value. A token built at
- * run time, such as `createToken(...)` inside a decorator, has no second copy to
- * make: calling the factory again would produce a token that is not the one the
- * application provides, so that class is declined rather than wired to nothing.
+ * to name something the generated module can import as a value. A string or a
+ * `Symbol.for(...)` token is written as the expression it is, because that
+ * expression resolves to the same token in the generated module. A token built
+ * at run time, such as `createToken(...)` inside a decorator, has no second copy
+ * to make: calling the factory again would produce a token that is not the one
+ * the application provides, so that class is declined rather than wired to
+ * nothing.
  *
  * The declaration's own reasons are read first, because a class that declares no
  * constructor but extends one has no dependency entries at all: its dependencies
@@ -1187,6 +1190,11 @@ function renderDependencyTokens(
         return declinedResult(
           `${description} injects ${dependency.token.expression}, whose identity a generated module cannot reproduce; bind the token to a named constant and inject that.`,
         );
+      }
+
+      if (dependency.token.kind === "string" || dependency.token.kind === "symbol") {
+        tokens.push(dependency.token.expression);
+        continue;
       }
 
       const injected = owner.imports.get(dependency.token.expression);

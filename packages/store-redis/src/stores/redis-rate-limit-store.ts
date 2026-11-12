@@ -17,26 +17,28 @@ export class RedisRateLimitStore implements RateLimitStore {
 
   async increment(key: string, windowMs: number): Promise<{ count: number; resetAt: number }> {
     const fullKey = `${this.#prefix}${key}`;
-    const windowSeconds = Math.max(1, Math.ceil(windowMs / 1000));
 
-    // Atomic INCR + EXPIRE on first increment via Redis Lua script
+    // One round trip: increment, set the window on the first hit, and read the
+    // live TTL. The reported reset must not slide forward on every increment.
     const script = `
       local current = redis.call('INCR', KEYS[1])
-      if current == 1 then
-        redis.call('EXPIRE', KEYS[1], ARGV[1])
+      local ttl = redis.call('PTTL', KEYS[1])
+      if ttl < 0 then
+        redis.call('PEXPIRE', KEYS[1], ARGV[1])
+        ttl = tonumber(ARGV[1])
       end
-      return current
+      return {current, ttl}
     `;
 
-    const countResult = await this.#client.eval(script, {
+    const result = await this.#client.eval(script, {
       keys: [fullKey],
-      arguments: [String(windowSeconds)],
+      arguments: [String(windowMs)],
     });
-
-    const count = Number(countResult);
+    const tuple = Array.isArray(result) ? result : [result, windowMs];
+    const count = Number(tuple[0]);
+    const ttlMs = Number(tuple[1]);
     const now = Date.now();
-    const resetAt = now + windowMs;
 
-    return { count, resetAt };
+    return { count, resetAt: now + (Number.isFinite(ttlMs) ? ttlMs : windowMs) };
   }
 }

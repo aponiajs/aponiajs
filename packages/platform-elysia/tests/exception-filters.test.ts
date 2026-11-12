@@ -1,5 +1,6 @@
 import { describe, expect, spyOn, test } from "bun:test";
 import {
+  AponiaError,
   Body,
   Catch,
   Controller,
@@ -23,6 +24,27 @@ import { t, status } from "elysia";
 import { AponiaFactory, httpErrors } from "../src/index.ts";
 
 class NotFoundError extends Error {}
+
+@Controller("documented-failures")
+class DocumentedFailureController {
+  @Get("tenant")
+  tenant(): string {
+    throw new AponiaError("MISSING_TENANT", "No tenant is selected for this request.");
+  }
+
+  @Get("refresh")
+  refresh(): string {
+    throw new AponiaError("INVALID_REFRESH_TOKEN", "The refresh token is invalid or expired.");
+  }
+
+  @Get("other")
+  other(): string {
+    throw new AponiaError("INVALID_AUTH_TOKEN", "A framework failure without a client status.");
+  }
+}
+
+@Module({ controllers: [DocumentedFailureController] })
+class DocumentedFailureModule {}
 
 @Catch(NotFoundError)
 @Injectable()
@@ -396,6 +418,29 @@ describe("exception filters", () => {
     // The probe filter declined, so the mapping behind it still answered.
     expect(response.status).toBe(500);
     expect(body).not.toContain("the prober's own failure");
+    await application.close();
+  });
+
+  test("documented client failures answer 400 and 401 instead of 500", async () => {
+    const application = await AponiaFactory.create(DocumentedFailureModule, { logger: false });
+
+    const tenant = await application.handle(
+      new Request("http://localhost/documented-failures/tenant"),
+    );
+    expect(tenant.status).toBe(400);
+    expect(tenant.headers.get("content-type")).toContain("application/problem+json");
+
+    const refresh = await application.handle(
+      new Request("http://localhost/documented-failures/refresh"),
+    );
+    expect(refresh.status).toBe(401);
+    expect(refresh.headers.get("content-type")).toContain("application/problem+json");
+
+    const other = await application.handle(
+      new Request("http://localhost/documented-failures/other"),
+    );
+    expect(other.status).toBe(500);
+
     await application.close();
   });
 

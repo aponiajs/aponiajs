@@ -69,18 +69,18 @@ This table is the operational consequence of each package's default store. A
 row that names a process-local default needs a shared implementation, a broker,
 or single-replica routing before it is correct under horizontal scale.
 
-| Capability                  | Built-in default                      | Multi-instance requirement                                                           |
-| --------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------ |
-| Session                     | `MemorySessionStore` (process)        | A shared session store, or sticky routing while the session lives                    |
-| Rate limit                  | `MemoryRateLimitStore` (process)      | A shared counter store; otherwise each replica allows the full limit                 |
-| Cache                       | In-memory bounded store (process)     | A shared cache when a cached value must be visible to every replica                  |
-| Idempotency                 | `MemoryIdempotencyStore` (process)    | A shared store; otherwise a replay can execute again on another replica              |
-| Auth refresh and revocation | In-memory stores (process)            | Shared stores; otherwise a rotated token or revoked token is accepted elsewhere      |
-| Queue and outbox            | In-process queue and outbox (process) | A durable broker or database-backed backlog; in-flight jobs do not survive a restart |
-| Audit events                | Bounded in-memory store (process)     | A shared or durable store when retention is a compliance requirement                 |
-| Metrics                     | Prometheus registry per process       | Scrape every replica, or aggregate at the collector; a series is not cluster-wide    |
-| Request context             | `AsyncLocalStorage` per process       | No sharing needed; correlation is per request and per process                        |
-| Devtools                    | In-process capture                    | Development only; do not expose it as a production dependency                        |
+| Capability                  | Built-in default                      | Multi-instance requirement                                                                              |
+| --------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Session                     | `MemorySessionStore` (process)        | A shared session store, or sticky routing while the session lives                                       |
+| Rate limit                  | `MemoryRateLimitStore` (process)      | A shared counter store; otherwise each replica allows the full limit                                    |
+| Cache                       | In-memory bounded store (process)     | A shared cache when a cached value must be visible to every replica                                     |
+| Idempotency                 | `MemoryIdempotencyStore` (process)    | A shared store implementing atomic `claim`/`release`; otherwise a replay can execute on another replica |
+| Auth refresh and revocation | In-memory stores (process)            | Shared stores; otherwise a rotated token or revoked token is accepted elsewhere                         |
+| Queue and outbox            | In-process queue and outbox (process) | A durable broker or database-backed backlog; in-flight jobs do not survive a restart                    |
+| Audit events                | Bounded in-memory store (process)     | A shared or durable store when retention is a compliance requirement                                    |
+| Metrics                     | Prometheus registry per process       | Scrape every replica, or aggregate at the collector; a series is not cluster-wide                       |
+| Request context             | `AsyncLocalStorage` per process       | No sharing needed; correlation is per request and per process                                           |
+| Devtools                    | In-process capture                    | Development only; do not expose it as a production dependency                                           |
 
 ## Configuration and secrets
 
@@ -160,17 +160,17 @@ tenant identifier in a log line unless the application's data policy allows it.
 
 ## Failure modes
 
-| Symptom                                      | Likely cause                                                       | First action                                                                                     |
-| -------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| Process exits during boot                    | Configuration, provider, or route validation failed                | Read the `AponiaError` code and details; the port never opened, so this is not a traffic failure |
-| Readiness stays `503` after a deploy         | Shutdown began, or the application never completed bootstrap       | Check the boot log and whether a stop signal arrived                                             |
-| Sessions or logins disappear across replicas | The default session store is process-local                         | Register a shared session store or make routing sticky                                           |
-| Rate limits reset on every request           | Each replica owns its counter                                      | Use a shared rate-limit store                                                                    |
-| An idempotent request executes twice         | The replay record lives on another replica                         | Use a shared idempotency store                                                                   |
-| Queue jobs vanish after a restart            | The in-process queue is not durable                                | Use a durable backlog or broker, or accept the loss explicitly                                   |
-| Metrics look incomplete                      | Only one replica is scraped                                        | Scrape every instance or aggregate in the collector                                              |
-| WebSocket clients reconnect repeatedly       | A replica restarted or does not own the socket                     | Use sticky routing or an external publish/subscribe layer                                        |
-| Every request returns `500` with no detail   | An unhandled exception reached the default Problem Details mapping | Correlate the request ID with the logger; the response deliberately omits the stack and cause    |
+| Symptom                                      | Likely cause                                                                 | First action                                                                                     |
+| -------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Process exits during boot                    | Configuration, provider, or route validation failed                          | Read the `AponiaError` code and details; the port never opened, so this is not a traffic failure |
+| Readiness stays `503` after a deploy         | Shutdown began, or the application never completed bootstrap                 | Check the boot log and whether a stop signal arrived                                             |
+| Sessions or logins disappear across replicas | The default session store is process-local                                   | Register a shared session store or make routing sticky                                           |
+| Rate limits reset on every request           | Each replica owns its counter                                                | Use a shared rate-limit store                                                                    |
+| An idempotent request executes twice         | The replay record lives on another replica, or the store has no atomic claim | Use a shared idempotency store with atomic `claim`/`release`, and a caller/tenant `scope`        |
+| Queue jobs vanish after a restart            | The in-process queue is not durable                                          | Use a durable backlog or broker, or accept the loss explicitly                                   |
+| Metrics look incomplete                      | Only one replica is scraped                                                  | Scrape every instance or aggregate in the collector                                              |
+| WebSocket clients reconnect repeatedly       | A replica restarted or does not own the socket                               | Use sticky routing or an external publish/subscribe layer                                        |
+| Every request returns `500` with no detail   | An unhandled exception reached the default Problem Details mapping           | Correlate the request ID with the logger; the response deliberately omits the stack and cause    |
 
 ## Rollout checklist
 

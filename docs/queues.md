@@ -53,7 +53,10 @@ A failed attempt is retried with `backoffMs * 2^(attempts - 1)`, capped by
 `maxBackoffMs`. Due jobs run by `priority` descending, then enqueue time.
 `jobTimeoutMs`, or a per-enqueue `timeoutMs`, fails an attempt that runs too
 long; the failure follows the retry policy and ends in the dead letter queue
-when the budget is exhausted. The attempt budget is the job's `maxAttempts`, which defaults to
+when the budget is exhausted. The handler receives
+`(payload, job, signal)`; the signal aborts on timeout and when the queue
+closes. Cancellation is cooperative: a handler that ignores the signal keeps
+running, so the queue cannot promise that a timed-out side effect stopped. The attempt budget is the job's `maxAttempts`, which defaults to
 the registration's and can be set per enqueue. A job that exhausts the budget
 moves to the dead letter queue; `deadLetters()` lists them and
 `retryDeadLetter(id)` revives one with a fresh budget.
@@ -97,7 +100,9 @@ class OrdersService {
 `flush` delivers oldest first and stops at the first rejection, which stays at
 the front with its attempt count raised; the call throws
 `OUTBOX_DELIVERY_FAILED`. A later flush retries it first, so delivery keeps its
-order. `maxEntries` bounds the outbox and drops the oldest message when full.
+order. `flush(sink, { signal })` also stops between messages when the signal is
+aborted, leaving the undelivered tail. `maxEntries` bounds the outbox and drops
+the oldest message when full.
 
 ## Durable backlog
 

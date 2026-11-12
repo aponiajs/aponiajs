@@ -33,8 +33,10 @@ export const versionedPackageFiles = [
   "packages/rate-limit/package.json",
   "packages/security/package.json",
   "packages/session/package.json",
+  "packages/store-redis/package.json",
   "packages/tenancy/package.json",
   "packages/testing/package.json",
+  "packages/view/package.json",
 ] as const;
 
 export const versionedWorkspacePaths = [
@@ -69,8 +71,10 @@ export const versionedWorkspacePaths = [
   "packages/rate-limit",
   "packages/security",
   "packages/session",
+  "packages/store-redis",
   "packages/tenancy",
   "packages/testing",
+  "packages/view",
 ] as const;
 
 interface BunLockfile {

@@ -4,7 +4,7 @@ Typed, in-process application events for AponiaJS, with ordered awaitable
 handlers and decorated listeners.
 
 ```bash
-bun add @aponiajs/events@beta
+bun add @aponiajs/events@alpha
 ```
 
 ## Use it

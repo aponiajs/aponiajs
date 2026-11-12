@@ -1,23 +1,25 @@
 /**
  * How a token appears in the source the analysis read.
  *
- * Mirrors the two forms `Token` takes in `@aponiajs/common`
+ * Mirrors the forms `Token` takes in `@aponiajs/common`
  * (`packages/common/src/tokens/token.types.ts`): a class, which is referenced by
- * name, and an `InjectionToken`, which `createToken` builds. The CLI is
- * independent of the runtime packages, so the union is declared locally and
- * must be kept in step with that source by hand.
+ * name; a string or a `symbol`, which are written literally; and an
+ * `InjectionToken`, which `createToken` builds. The CLI is independent of the
+ * runtime packages, so the union is declared locally and must be kept in step
+ * with that source by hand.
  */
-export type AnalyzedTokenKind = "reference" | "injection-token";
+export type AnalyzedTokenKind = "reference" | "injection-token" | "string" | "symbol";
 
 /**
  * A token the analysis can name without running the file.
  *
- * Only two forms have a static identity: a bare identifier, which names the
- * class or the `createToken` binding the token is, and a direct
- * `createToken(...)` call from `@aponiajs/common`. A token built any other way —
- * from `Symbol(...)`, from a namespace member, from a factory — has nothing to
- * reproduce in the generated source, so the analysis reports it as unreadable
- * instead of guessing at it.
+ * Only forms with a static identity qualify: a bare identifier, which names the
+ * class or the `createToken` binding the token is; a string literal; a
+ * `Symbol.for(...)` call, whose symbol is the same one the application reads;
+ * and a direct `createToken(...)` call from `@aponiajs/common`. A token built any
+ * other way — from `Symbol(...)`, from a namespace member, from a factory — has
+ * nothing to reproduce in the generated source, so the analysis reports it as
+ * unreadable instead of guessing at it.
  */
 export interface AnalyzedToken {
   /** The token expression exactly as written, ready to be emitted into source. */

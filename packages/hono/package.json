@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/hono",
-  "version": "1.0.0-beta.27",
+  "version": "1.0.0-beta.28",
   "description": "Hono delivery adapter for an Aponia application.",
   "keywords": [
     "aponia",

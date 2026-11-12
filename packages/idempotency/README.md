@@ -3,7 +3,7 @@
 Idempotent replay for mutating HTTP requests in an Aponia application.
 
 ```bash
-bun add @aponiajs/idempotency@beta
+bun add @aponiajs/idempotency@alpha
 ```
 
 ## Use it
@@ -29,15 +29,16 @@ refused with `409` Problem Details.
 
 ## Options
 
-| Option       | Default                      | Meaning                                     |
-| ------------ | ---------------------------- | ------------------------------------------- |
-| `ttlMs`      | 24 hours                     | How long a recorded answer may be replayed. |
-| `maxEntries` | 1000                         | The default store's bound.                  |
-| `header`     | `idempotency-key`            | The request header carrying the key.        |
-| `requireKey` | `false`                      | Refuse a covered request without a key.     |
-| `methods`    | `POST`, `PATCH`, `PUT`       | The methods the plugin covers.              |
-| `store`      | bounded process-local memory | A shared or durable implementation.         |
-| `onError`    | silence                      | Called when the store cannot read or write. |
+| Option       | Default                      | Meaning                                          |
+| ------------ | ---------------------------- | ------------------------------------------------ |
+| `ttlMs`      | 24 hours                     | How long a recorded answer may be replayed.      |
+| `maxEntries` | 1000                         | The default store's bound.                       |
+| `header`     | `idempotency-key`            | The request header carrying the key.             |
+| `requireKey` | `false`                      | Refuse a covered request without a key.          |
+| `methods`    | `POST`, `PATCH`, `PUT`       | The methods the plugin covers.                   |
+| `store`      | bounded process-local memory | A shared or durable implementation.              |
+| `onError`    | silence                      | Called when the store cannot read or write.      |
+| `scope`      | none                         | Namespaces a key by caller, e.g. subject/tenant. |
 
 ## Limits
 
@@ -48,7 +49,10 @@ handler set itself are not replayed. Concurrent repeats share the first run.
 
 The default store is process-local. A deployment with several instances passes
 a shared `IdempotencyStore`; the contract is asynchronous, so a database or
-shared cache fits it.
+shared cache fits it. Cross-replica atomicity requires the store to implement the
+optional `claim(key, ttlMs)` and `release(key)` operations atomically — the Redis
+store uses `SET NX PX`. A store without them keeps the single-process guarantee
+only.
 
 ## Bootstrap
 

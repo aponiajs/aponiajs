@@ -47,6 +47,7 @@ export class QueueService implements OnModuleDestroy, OnModuleInit {
   readonly #handlers = new Map<string, QueueHandler<unknown>>();
   readonly #idempotency = new Map<string, string>();
   readonly #running = new Set<string>();
+  readonly #controllers = new Set<AbortController>();
   readonly #idleWaiters: (() => void)[] = [];
   readonly #store: QueueStore | undefined;
   readonly #writes: Promise<void>[] = [];
@@ -230,6 +231,9 @@ export class QueueService implements OnModuleDestroy, OnModuleInit {
   close(): void {
     this.#closed = true;
     this.#cancelSchedule();
+    for (const controller of this.#controllers) {
+      controller.abort();
+    }
     this.#notifyIdle();
   }
 
@@ -300,6 +304,7 @@ export class QueueService implements OnModuleDestroy, OnModuleInit {
 
   /** @internal The module destroy hook stops background work. */
   async onModuleDestroy(): Promise<void> {
+    await this.drain();
     this.close();
     await this.flush();
   }
@@ -308,6 +313,8 @@ export class QueueService implements OnModuleDestroy, OnModuleInit {
     this.#running.add(job.id);
     job.state = "running";
     job.attempts += 1;
+    const controller = new AbortController();
+    this.#controllers.add(controller);
     try {
       const handler = this.#handlers.get(job.name);
       if (handler === undefined) {
@@ -317,8 +324,10 @@ export class QueueService implements OnModuleDestroy, OnModuleInit {
           Object.freeze({ name: job.name }),
         );
       }
-      const result = handler(job.payload, freezeJob(job));
-      await (job.timeoutMs > 0 ? withTimeout(result, job.timeoutMs, this.#options.timer) : result);
+      const result = handler(job.payload, freezeJob(job), controller.signal);
+      await (job.timeoutMs > 0
+        ? withTimeout(result, job.timeoutMs, this.#options.timer, controller)
+        : result);
       this.#jobs.delete(job.id);
       this.#forgetIdempotency(job);
       this.#forget(job.id);
@@ -338,6 +347,7 @@ export class QueueService implements OnModuleDestroy, OnModuleInit {
       this.#persist(job);
       return "retried";
     } finally {
+      this.#controllers.delete(controller);
       this.#running.delete(job.id);
     }
   }
@@ -493,9 +503,15 @@ function assertStore(store: QueueStore): void {
   }
 }
 
-function withTimeout<T>(value: T | Promise<T>, timeoutMs: number, timer: QueueTimer): Promise<T> {
+function withTimeout<T>(
+  value: T | Promise<T>,
+  timeoutMs: number,
+  timer: QueueTimer,
+  controller?: AbortController,
+): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const handle = timer.setTimeout(() => {
+      controller?.abort();
       reject(
         new AponiaError("QUEUE_JOB_TIMEOUT", "The job exceeded its timeout.", {
           timeoutMs,

@@ -3,6 +3,8 @@ import {
   AponiaError,
   createToken,
   defineModule,
+  ModuleRef,
+  optionalDependency,
   provideClass,
   provideFactory,
   provideValue,
@@ -256,56 +258,151 @@ describe("provider scopes", () => {
     });
   });
 
-  describe("scope hierarchy validation", () => {
-    test("rejects singleton provider depending on request-scoped provider with INVALID_SCOPE_HIERARCHY", () => {
-      const requestToken = createToken<string>("req.dep");
-      const singletonToken = createToken<string>("singleton.target");
+  describe("scope bubbling", () => {
+    test("bubbles a request-scoped dependency to a provider declared as a singleton", () => {
+      let count = 0;
+      class RequestState {
+        readonly id = ++count;
+      }
+      class TargetService {
+        constructor(readonly state: RequestState) {}
+      }
+      const requestToken = createToken<RequestState>("req.bubbled");
+      const targetToken = createToken<TargetService>("singleton.bubbled");
 
       const module = defineModule({
-        id: "bad-hierarchy",
+        id: "bubbled-provider",
         providers: [
-          provideValue(requestToken, "req", { scope: Scope.REQUEST }),
-          provideFactory(singletonToken, [requestToken], (val) => `val: ${val}`, {
-            scope: Scope.DEFAULT,
-          }),
+          provideClass(requestToken, RequestState, [], { scope: Scope.REQUEST }),
+          provideClass(targetToken, TargetService, [requestToken]),
         ],
       });
+      const container = createContainer(module);
 
-      const error = captureAponiaError(() => compileModuleGraph(module));
-      expect(error.code).toBe("INVALID_SCOPE_HIERARCHY");
-      expect(error.details).toMatchObject({
-        module: "bad-hierarchy",
-        provider: "singleton.target",
-        providerScope: "singleton",
-        dependency: "req.dep",
-        dependencyScope: "request",
-      });
+      // The eager pass skips the bubbled provider: constructing it needs a request.
+      expect(() => container.initializeModule(module)).not.toThrow();
+      expect(() => container.get(targetToken)).toThrow(
+        expect.objectContaining({ code: "MISSING_REQUEST_CONTEXT" }),
+      );
+
+      const firstRequest = {};
+      const secondRequest = {};
+      const first = container.get(targetToken, firstRequest);
+      expect(container.get(targetToken, firstRequest)).toBe(first);
+      const second = container.get(targetToken, secondRequest);
+      expect(second).not.toBe(first);
+      expect(second.state).not.toBe(first.state);
+      expect(first.state.id).toBe(1);
+      expect(second.state.id).toBe(2);
     });
 
-    test("rejects controller depending on request-scoped provider with INVALID_SCOPE_HIERARCHY", () => {
-      const requestToken = createToken<string>("req.service");
-      class ControllerTarget {}
+    test("bubbles a request-scoped dependency to a controller", () => {
+      let count = 0;
+      class RequestState {
+        readonly id = ++count;
+      }
+      class ControllerTarget {
+        constructor(readonly state: RequestState) {}
+      }
+      const requestToken = createToken<RequestState>("req.controller-bubbled");
 
+      const controller = {
+        kind: "test",
+        token: ControllerTarget,
+        inject: [requestToken],
+        useClass: ControllerTarget,
+      } as const;
       const module = defineModule({
-        id: "bad-controller-hierarchy",
-        providers: [provideValue(requestToken, "req", { scope: Scope.REQUEST })],
+        id: "bubbled-controller",
+        providers: [provideClass(requestToken, RequestState, [], { scope: Scope.REQUEST })],
+        controllers: [controller],
+      });
+      const container = createContainer(module);
+
+      expect(container.controllerScope(module, controller)).toBe("request");
+      expect(() => container.instantiateController(module, controller)).toThrow(
+        expect.objectContaining({ code: "MISSING_REQUEST_CONTEXT" }),
+      );
+
+      const firstRequest = {};
+      const secondRequest = {};
+      const first = container.instantiateController<ControllerTarget>(
+        module,
+        controller,
+        firstRequest,
+      );
+      expect(container.instantiateController(module, controller, firstRequest)).toBe(first);
+      const second = container.instantiateController<ControllerTarget>(
+        module,
+        controller,
+        secondRequest,
+      );
+      expect(second).not.toBe(first);
+      expect(second.state).not.toBe(first.state);
+    });
+
+    test("ignores an absent optional dependency while computing scope", () => {
+      const missing = createToken<string>("optional.missing");
+      const target = createToken<string>("optional.target");
+      const module = defineModule({
+        id: "optional-scope",
+        providers: [
+          provideFactory(target, [optionalDependency(missing)], (value) => value ?? "absent"),
+        ],
+      });
+      const container = createContainer(module);
+
+      expect(container.get(target)).toBe("absent");
+    });
+
+    test("treats a controller's absent optional dependency and ModuleRef as singleton", () => {
+      class ControllerTarget {
+        constructor(
+          readonly reference: ModuleRef,
+          readonly missing?: string,
+        ) {}
+      }
+      const missing = createToken<string>("req.controller-optional");
+
+      const controller = {
+        kind: "test",
+        token: ControllerTarget,
+        inject: [ModuleRef, optionalDependency(missing)] as const,
+        useClass: ControllerTarget,
+      } as const;
+      const module = defineModule({
+        id: "controller-reference-scope",
+        controllers: [controller],
+      });
+      const container = createContainer(module);
+
+      expect(container.controllerScope(module, controller)).toBe("singleton");
+      const instance = container.instantiateController<ControllerTarget>(module, controller);
+      expect(instance.reference).toBeInstanceOf(ModuleRef);
+      expect(instance.missing).toBeUndefined();
+    });
+
+    test("refuses a controller declaring a lifetime it cannot honor", () => {
+      class ControllerTarget {}
+      const module = defineModule({
+        id: "transient-controller",
         controllers: [
           {
             kind: "test",
             token: ControllerTarget,
-            inject: [requestToken],
+            inject: [],
             useClass: ControllerTarget,
+            scope: Scope.TRANSIENT,
           },
         ],
       });
 
       const error = captureAponiaError(() => compileModuleGraph(module));
-      expect(error.code).toBe("INVALID_SCOPE_HIERARCHY");
+      expect(error.code).toBe("INVALID_CONTROLLER");
       expect(error.details).toMatchObject({
-        module: "bad-controller-hierarchy",
+        module: "transient-controller",
         controller: "ControllerTarget",
-        dependency: "req.service",
-        dependencyScope: "request",
+        scope: "transient",
       });
     });
   });

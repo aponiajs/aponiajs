@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { AponiaError } from "@aponiajs/common";
 import type {
+  OutboxFlushOptions,
   OutboxFlushResult,
   OutboxMessage,
   OutboxOptions,
@@ -69,7 +70,7 @@ export class OutboxService {
    * Delivers recorded messages in order and removes the ones the sink accepted.
    * A rejected message stays at the front of the outbox for the next flush.
    */
-  async flush(sink: OutboxSink): Promise<OutboxFlushResult> {
+  async flush(sink: OutboxSink, options: OutboxFlushOptions = {}): Promise<OutboxFlushResult> {
     if (typeof sink !== "function") {
       throw new AponiaError("INVALID_QUEUE_JOB", "An outbox sink must be a function.");
     }
@@ -80,6 +81,9 @@ export class OutboxService {
     let delivered = 0;
     try {
       while (this.#messages.length > 0) {
+        if (options.signal?.aborted === true) {
+          break;
+        }
         const message = this.#messages[0] as MutableMessage;
         message.attempts += 1;
         try {

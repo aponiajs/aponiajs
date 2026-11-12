@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { AponiaError, Controller, Get, Module, UseGuards } from "@aponiajs/common";
+import { decodeJwt } from "jose";
 import { AponiaFactory, type AponiaApplication } from "@aponiajs/platform-elysia";
 import {
   AuthGuard,
@@ -10,6 +11,7 @@ import {
   Public,
   RefreshTokenService,
   RevocationService,
+  type RefreshTokenStore,
 } from "../src/index.ts";
 
 describe("RefreshTokenService", () => {
@@ -39,6 +41,51 @@ describe("RefreshTokenService", () => {
     const error = await reject(service.rotate(issued.token));
 
     expect(error.code).toBe("INVALID_REFRESH_TOKEN");
+  });
+
+  test("reuse of a consumed token revokes the whole family", async () => {
+    const service = new RefreshTokenService(new MemoryRefreshTokenStore(), { ttlMs: 60_000 });
+    const issued = await service.issue("ada");
+    const rotated = await service.rotate(issued.token);
+
+    expect((await reject(service.rotate(issued.token))).code).toBe("INVALID_REFRESH_TOKEN");
+    // Reuse detection revokes the family, so the replacement no longer rotates.
+    expect((await reject(service.rotate(rotated.token))).code).toBe("INVALID_REFRESH_TOKEN");
+  });
+
+  test("a store without consume falls back to find and delete", async () => {
+    const base = new MemoryRefreshTokenStore();
+    const store: RefreshTokenStore = {
+      create: (record) => base.create(record),
+      find: (idHash) => base.find(idHash),
+      delete: (idHash) => base.delete(idHash),
+      deleteFamily: (familyId) => base.deleteFamily(familyId),
+      clear: () => base.clear(),
+    };
+    const service = new RefreshTokenService(store, { ttlMs: 60_000 });
+    const issued = await service.issue("ada");
+    const rotated = await service.rotate(issued.token);
+
+    expect((await reject(service.rotate(issued.token))).code).toBe("INVALID_REFRESH_TOKEN");
+    // No tombstone without consume, so the replacement still rotates.
+    expect((await service.rotate(rotated.token)).familyId).toBe(issued.familyId);
+  });
+
+  test("concurrent rotations produce exactly one winner", async () => {
+    const service = new RefreshTokenService(new MemoryRefreshTokenStore(), { ttlMs: 60_000 });
+    const issued = await service.issue("ada");
+
+    const results = await Promise.allSettled([
+      service.rotate(issued.token),
+      service.rotate(issued.token),
+    ]);
+
+    expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+    const rejected = results.filter(
+      (result): result is PromiseRejectedResult => result.status === "rejected",
+    );
+    expect(rejected).toHaveLength(1);
+    expect((rejected[0]!.reason as AponiaError).code).toBe("INVALID_REFRESH_TOKEN");
   });
 
   test("refuses an unknown token and an expired token", async () => {
@@ -195,6 +242,47 @@ describe("revocation during authentication", () => {
       expect(response.status).toBe(401);
       const body: unknown = await response.json();
       expect(body).toMatchObject({ detail: "Authentication token has been revoked." });
+    } finally {
+      await application.close();
+      application = undefined;
+    }
+  });
+
+  test("mints a jti for a framework-signed token so revocation reaches it", async () => {
+    @Controller("secured-auto")
+    @UseGuards(AuthGuard)
+    class SecuredAutoController {
+      @Get("me")
+      me(): string {
+        return "me";
+      }
+    }
+
+    @Module({
+      imports: [AuthModule.register({ jwt: { secret: "x".repeat(32) } })],
+      controllers: [SecuredAutoController],
+    })
+    class AppModule {}
+
+    application = await AponiaFactory.create(AppModule, { logger: false });
+    try {
+      const jwt = application.get(JwtService);
+      const token = await jwt.sign({ sub: "ada" });
+      const payload = decodeJwt(token);
+      expect(typeof payload.jti).toBe("string");
+
+      const headers = { authorization: `Bearer ${token}` };
+      expect(
+        await (
+          await application.handle(new Request("http://localhost/secured-auto/me", { headers }))
+        ).text(),
+      ).toBe("me");
+
+      await application.get(RevocationService).revoke(payload.jti as string, Date.now() + 60_000);
+      const response = await application.handle(
+        new Request("http://localhost/secured-auto/me", { headers }),
+      );
+      expect(response.status).toBe(401);
     } finally {
       await application.close();
       application = undefined;

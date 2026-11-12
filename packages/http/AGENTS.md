@@ -23,7 +23,10 @@ is a leaf: nothing in the framework depends on it.
   metadata, carrier-grade NAT, multicast, and reserved addresses are blocked.
 - **Every hostname is resolved and every address checked.** Do not replace the
   resolver check with a hostname string check alone. The default resolver uses
-  the runtime's DNS lookup; a test supplies its own.
+  the runtime's DNS lookup; a test supplies its own. The validated address is
+  pinned for the connection with the original `Host` and TLS SNI
+  (`pinResolvedAddress`, default on), so the runtime cannot resolve the hostname
+  a second time to a private address.
 - **Every redirect is re-validated.** A redirect with a request body is refused
   rather than replayed. The `error` and `manual` policies are explicit.
 - **Responses are bounded and errors are redacted.** Never include a response

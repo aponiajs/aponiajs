@@ -1,6 +1,6 @@
 import type { ForwardReference } from "../modules/forward-ref.types.ts";
 import type { ModuleDefinition } from "../modules/module.types.ts";
-import type { Provider, ProviderScope } from "../providers/provider.types.ts";
+import type { NestProvider, Provider, ProviderScope } from "../providers/provider.types.ts";
 import type { RouteSchema } from "../routing/route-schema.types.ts";
 import type { ClassToken, Token } from "../tokens/token.types.ts";
 
@@ -12,14 +12,17 @@ export interface InjectableOptions {
 
 /** A class carrying `@Module()` metadata. */
 export type ModuleClass = ClassToken<unknown>;
+
+/** A token a module exports, or a module whose own exports are re-exported. */
+export type ModuleExport = Token<unknown> | ModuleClass | DynamicModule;
 /** Anything a module's `imports` accepts: a class, a lowered descriptor, a registration, or a forward reference. */
 export type ModuleImport =
   | ModuleClass
   | ModuleDefinition
   | DynamicModule
   | ForwardReference<ModuleClass | ModuleDefinition | DynamicModule>;
-/** Anything a module's `providers` accepts: a class, or a provider descriptor. */
-export type ModuleProvider = ClassToken<unknown> | Provider;
+/** Anything a module's `providers` accepts: a class, a canonical provider, or a Nest literal. */
+export type ModuleProvider = ClassToken<unknown> | Provider | NestProvider;
 
 /** The `@Module()` declaration as written, before lowering. */
 export interface ModuleMetadata {
@@ -31,8 +34,8 @@ export interface ModuleMetadata {
   readonly controllers?: readonly ClassToken<unknown>[];
   /** The providers and provider descriptors this module declares. */
   readonly providers?: readonly ModuleProvider[];
-  /** The tokens importers may resolve. */
-  readonly exports?: readonly Token<unknown>[];
+  /** The tokens importers may resolve, or modules whose exports are re-exported. */
+  readonly exports?: readonly ModuleExport[];
 }
 
 /**
@@ -46,6 +49,22 @@ export interface DynamicModule extends ModuleMetadata {
   readonly id: string;
   /** The configured-instance identity keeping two registrations distinct. */
   readonly instanceId: symbol;
+}
+
+/**
+ * What `dynamicModule` accepts: a registration before its identity is derived.
+ *
+ * `id` defaults to the class name and `instanceId` to a fresh symbol, which is
+ * what lets a Nest-style `forRoot()` return `{ module, providers }` without the
+ * two Aponia-only identity fields.
+ */
+export interface DynamicModuleOptions extends ModuleMetadata {
+  /** The class the registration hangs off. */
+  readonly module: ModuleClass;
+  /** The module identity; defaults to the class name. */
+  readonly id?: string;
+  /** The configured-instance identity; a fresh symbol is derived when absent. */
+  readonly instanceId?: symbol;
 }
 
 /** The `@Controller()` declaration as written: the path prefix routes mount under. */

@@ -1,9 +1,14 @@
 # Feature Status
 
-This page records the completeness of each published package and the gaps that
-remain outside the current release. A feature is complete only when its package,
-public API, Bun tests, Vite+ conformance, documentation, and release manifest all
-exist.
+This page records the completeness of each package in the **development line**
+(the source in this repository), not the currently published alpha release. A
+feature is complete only when its package, public API, Bun tests, Vite+
+conformance, documentation, and release manifest all exist.
+
+The npm registry currently serves the `0.6.0-alpha.N` line. The
+`1.0.0-beta.N` development line described here is not published under `@beta`
+yet; a row marked Complete is evidence about this source, not a promise that the
+same package is installable from npm today.
 
 | Package                     | Status   | Evidence                                                       |
 | --------------------------- | -------- | -------------------------------------------------------------- |

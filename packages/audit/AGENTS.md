@@ -18,7 +18,9 @@ leaf: nothing in the framework depends on it.
 
 ## Invariants
 
-- **Events are immutable.** Freeze the event and metadata before returning.
+- **Events are immutable.** Copy, recursively redact, and freeze the metadata
+  tree before returning; a nested object the caller still holds must not be able
+  to change a stored event. Break cycles with `[circular]` and cap depth.
 - **Redact by key, never by guessing at values.** The default pattern covers
   secret/token/password/authorization/api-key/cookie; extra keys are explicit.
 - **The memory store is bounded.** A new event evicts the oldest insertion.

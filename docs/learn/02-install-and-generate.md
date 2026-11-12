@@ -6,25 +6,27 @@ project.
 ## A new application
 
 ```bash
-bun add --global @aponiajs/cli@beta
+bun add --global @aponiajs/cli@alpha
 aponia new my-api
 cd my-api
 bun run dev
 ```
 
-`bun create aponia@beta my-api` reaches the same generator without a global
+`bun create aponia@alpha my-api` reaches the same generator without a global
 install.
 
 ## An existing project
 
 ```bash
-bun add @aponiajs/common@beta @aponiajs/platform-elysia@beta elysia@2.0.0-rc.4
+bun add @aponiajs/common@alpha @aponiajs/platform-elysia@alpha elysia@2.0.0-rc.4
 ```
 
 Every public package shares one version, and the channel a release goes to is
 derived from that version: a prerelease publishes under the tag its identifier
 names — `alpha`, `beta`, `rc`, or `canary` — and never under `latest`. The
-current line is on the beta channel, so the `@beta` tag is what to install today.
+published line is on the alpha channel, so the `@alpha` tag is what to install
+today; the workspace targets `1.0.0-beta.N`, which publishes under `beta` once
+that line ships.
 `elysia` is an exact peer of `@aponiajs/platform-elysia`, so it is pinned rather
 than left to resolve the latest release.
 

@@ -35,7 +35,13 @@ that reads it.
   method only. Do not merge them.
 - **Rows leave frozen.** Copy before freezing so the driver's row is untouched.
 - **Migrations run in file-name order and stop at the first failure.** Never
-  record a migration whose statement threw.
+  record a migration whose statement threw. Each file records a SHA-256
+  checksum; an applied file whose SQL changed fails with `INVALID_MIGRATION`.
+- **A migration and its record share the driver's transaction when it exposes
+  one.** The record is written inside the callback, after the statement.
+- **The advisory lock is application-supplied.** `MigrationLock` acquires before
+  the applied set is read and releases in `finally`; the package picks no
+  dialect and owns no lock SQL.
 - **The default migration store is process-local.** Do not describe it as
   durable.
 - **Configuration failures are `AponiaError` with `INVALID_DATABASE_OPTIONS`.**

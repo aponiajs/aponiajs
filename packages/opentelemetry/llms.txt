@@ -48,7 +48,7 @@ export class AppModule {}
 
 The wrapped plugin's `NodeSDK` is process-global. The first registration in a process starts it; every later one mounts its Elysia plugin but its `serviceName`, its span processors, and every other `NodeSDK` option never take effect, and spans are exported through the first registration's configuration. A distinct `key` does not buy a second tracer, because the plugin names itself and declares no seed, so Elysia deduplicates it by name. `application.close()` does not stop the SDK either: the plugin keeps it in a closure that no lifecycle hook reaches.
 
-The module provides one provider that shuts down the span processors you declared in `onApplicationShutdown`. A processor you built but did not pass to `register`, and an exporter `NodeSDK` constructed from its own options, are outside its reach.
+The module provides one provider that flushes and shuts down the span processors you declared in `onApplicationShutdown`; an application-owned SDK handle passed as `sdk` is flushed and shut down after them. A processor you built but did not pass to `register`, and an exporter `NodeSDK` the application neither owns nor passes, are outside its reach.
 
 ## The default this package changed
 

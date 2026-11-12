@@ -11,8 +11,8 @@
 
 ## Behavior a consumer can rely on
 
-- Events and their metadata are frozen and timestamped.
-- Sensitive keys and configured extra keys are redacted.
+- Events and their metadata are deeply frozen and timestamped; metadata is copied so later caller mutation cannot rewrite history.
+- Sensitive keys and configured extra keys are redacted recursively; cycles become `[circular]` and deep nesting `[truncated]`.
 - The memory store is bounded; `list` returns newest-last entries.
 - An empty action or invalid bound fails with `INVALID_AUDIT_OPTIONS`.
 - The package mounts no route and does not persist beyond the supplied store.

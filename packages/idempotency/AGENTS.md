@@ -25,12 +25,18 @@ leaf: nothing in the framework depends on it.
 - **Only a recorded `2xx` is replayed.** A failure is not recorded, so a retry
   runs the handler again. A `Response`, stream, generator, or `undefined` result
   is never stored.
-- **Concurrent repeats share one run.** The in-flight map is what stops a burst
-  from executing the handler twice; release it on success and on failure.
+- **Concurrent repeats share one run.** The in-flight map stops a burst inside
+  one process; `store.claim`/`release` stops one across replicas. Release both on
+  success and on failure. A store without `claim` keeps only the single-process
+  guarantee; never describe it as cross-replica atomic.
+- **A claim is a lease, not the response TTL.** It expires after 30 seconds or
+  `ttlMs`, whichever is shorter, so a crashed claimant cannot block a key for the
+  full replay window.
 - **Replay restores status and body only.** Do not claim response headers a
   handler set itself are restored.
 - **The default store is process-local and bounded.** Never describe it as
-  shared; a multi-instance deployment supplies an `IdempotencyStore`.
+  shared; a multi-instance deployment supplies an `IdempotencyStore` with an
+  atomic `claim`/`release`.
 - **Store failures never replace the answer.** Report through `onError` and let
   the response stand.
 - **Configuration failures are `AponiaError` with

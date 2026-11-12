@@ -15,6 +15,16 @@ export interface IssuedRefreshToken {
   readonly expiresAt: number;
 }
 
+/**
+ * What an atomic consume answers.
+ *
+ * A live token answers its record; a token that was already consumed answers the
+ * family it belonged to, which is what lets `rotate` revoke the family on reuse.
+ */
+export type RefreshTokenConsumeResult =
+  | { readonly record: RefreshTokenRecord }
+  | { readonly familyId: string };
+
 /** The storage contract a refresh-token service accepts. */
 export interface RefreshTokenStore {
   create(record: RefreshTokenRecord): void | Promise<void>;
@@ -22,4 +32,14 @@ export interface RefreshTokenStore {
   delete(idHash: string): boolean | Promise<boolean>;
   deleteFamily(familyId: string): number | Promise<number>;
   clear(): void | Promise<void>;
+  /**
+   * Atomically consumes a token.
+   *
+   * Optional: a custom store without it falls back to `find` + `delete`, which
+   * still lets exactly one concurrent rotation win but cannot detect reuse after
+   * the record is gone. The built-in memory and Redis stores implement it.
+   */
+  consume?(
+    idHash: string,
+  ): RefreshTokenConsumeResult | undefined | Promise<RefreshTokenConsumeResult | undefined>;
 }

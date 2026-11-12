@@ -922,8 +922,10 @@ function isCopyableExpression(element: Expression): boolean {
 /**
  * Reads a token expression.
  *
- * Only two forms have a static identity: a bare identifier, which names the
- * class or the binding the token is, and a direct `createToken(...)` call from
+ * A token has a static identity when the generated source can write the same
+ * one: a bare identifier, which names the class or the binding the token is; a
+ * string literal; a `Symbol.for(...)` call, which every copy of the application
+ * resolves to the same symbol; and a direct `createToken(...)` call from
  * `@aponiajs/common`. A token built any other way has nothing to reproduce in
  * generated source, so it is reported instead of guessed at.
  */
@@ -932,13 +934,26 @@ function readToken(expression: Node, bindings: AponiaDecoratorBindings): Analyze
     return Object.freeze({ expression: expression.getText(), kind: "reference" });
   }
 
-  const isInjectionToken =
-    Node.isCallExpression(expression) &&
-    readAponiaName(expression.getExpression(), bindings) === injectionTokenFactoryName;
+  if (Node.isStringLiteral(expression) || Node.isNoSubstitutionTemplateLiteral(expression)) {
+    return Object.freeze({ expression: expression.getText(), kind: "string" });
+  }
 
-  return isInjectionToken
-    ? Object.freeze({ expression: expression.getText(), kind: "injection-token" })
-    : undefined;
+  if (Node.isCallExpression(expression)) {
+    const callee = expression.getExpression();
+    if (
+      Node.isPropertyAccessExpression(callee) &&
+      callee.getText() === "Symbol.for" &&
+      Node.isStringLiteral(expression.getArguments()[0])
+    ) {
+      return Object.freeze({ expression: expression.getText(), kind: "symbol" });
+    }
+
+    if (readAponiaName(callee, bindings) === injectionTokenFactoryName) {
+      return Object.freeze({ expression: expression.getText(), kind: "injection-token" });
+    }
+  }
+
+  return undefined;
 }
 
 /**
@@ -1258,7 +1273,7 @@ function unreadableEntry(expression: string, unreadable: string): AnalyzedModule
 }
 
 function unreadableTokenReason(description: string): string {
-  return `${description} names a token this analysis cannot read statically; use a class reference or createToken(...).`;
+  return `${description} names a token this analysis cannot read statically; use a class reference, a string or Symbol.for(...) token, or createToken(...).`;
 }
 
 function readClassName(declaration: ClassDeclaration): string {

@@ -5,7 +5,7 @@ an AWS Lambda handler for API Gateway HTTP API (payload 2.0) and REST API
 (payload 1.0).
 
 ```bash
-bun add @aponiajs/serverless@beta
+bun add @aponiajs/serverless@alpha
 ```
 
 ## In an Aponia application

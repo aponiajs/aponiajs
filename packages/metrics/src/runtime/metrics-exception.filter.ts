@@ -1,4 +1,10 @@
-import { Inject, Injectable, type ExceptionFilter, type ExecutionContext } from "@aponiajs/common";
+import {
+  Inject,
+  Injectable,
+  type ExceptionFilter,
+  type ExecutionContext,
+  type RouteContext,
+} from "@aponiajs/common";
 import { MetricsRegistry } from "../registry/metrics-registry.ts";
 
 /**
@@ -28,14 +34,27 @@ export class MetricsExceptionFilter implements ExceptionFilter {
   }
 
   catch(exception: unknown, host: ExecutionContext): undefined {
-    const context = host.switchToHttp().getRequest();
+    const context = host.switchToHttp().getRequest() as RouteContext & {
+      readonly route?: unknown;
+      readonly path?: unknown;
+    };
     this.#requests.inc({
       method: context.request.method,
-      route: context.path,
+      route: routeTemplate(context),
       status: String(statusOf(exception)),
     });
     return undefined;
   }
+}
+
+function routeTemplate(context: { readonly route?: unknown; readonly path?: unknown }): string {
+  if (typeof context.route === "string" && context.route !== "") {
+    return context.route;
+  }
+  if (typeof context.path === "string" && context.path !== "") {
+    return context.path;
+  }
+  return "unmatched";
 }
 
 function statusOf(exception: unknown): number {

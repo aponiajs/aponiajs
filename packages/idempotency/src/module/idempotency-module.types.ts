@@ -18,6 +18,11 @@ export interface IdempotencyModuleOptions {
   readonly now?: () => number;
   /** Called when the store cannot read or write; defaults to silence. */
   readonly onError?: (error: unknown, key: string) => void;
+  /**
+   * Namespaces a key for the caller, for example the verified subject and
+   * tenant. Two scopes reusing one key never replay each other's response.
+   */
+  readonly scope?: (request: Request) => string | undefined;
 }
 
 /** The options the plugin reads after validation. */
@@ -28,4 +33,5 @@ export interface ResolvedIdempotencyOptions {
   readonly methods: readonly string[];
   readonly store: IdempotencyStore;
   readonly onError: (error: unknown, key: string) => void;
+  readonly scope: ((request: Request) => string | undefined) | undefined;
 }

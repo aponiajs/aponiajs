@@ -4,7 +4,7 @@ An in-process job queue and transactional outbox for AponiaJS, with bounded
 retries, exponential backoff, dead letters, and idempotent enqueue.
 
 ```bash
-bun add @aponiajs/queue@beta
+bun add @aponiajs/queue@alpha
 ```
 
 ## Use it
@@ -65,6 +65,8 @@ it again. An explicit `drain()` still runs while paused.
 - `queue.stats()` reports pending, running, and dead-lettered counts.
 - `priority` orders due jobs: a higher value runs first, then earlier enqueue time.
 - `jobTimeoutMs` (or a per-job `timeoutMs`) fails an attempt that runs too long; a failed attempt follows the retry policy, and an exhausted job is dead-lettered with the timeout as its last error.
+- The handler receives `(payload, job, signal)`; the signal aborts on timeout and on `close()`. Cancellation is cooperative.
+- `onModuleDestroy` drains due jobs, aborts in-flight work, and flushes tracked writes.
 
 ## Durable backlog
 

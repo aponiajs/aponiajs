@@ -12,6 +12,8 @@ import {
 
 class MockRedisClient implements RedisClientInterface {
   readonly data = new Map<string, { value: string; expiresAt?: number }>();
+  scanCalls = 0;
+  unlinkCalls = 0;
 
   async get(key: string): Promise<string | null> {
     const entry = this.data.get(key);
@@ -28,6 +30,12 @@ class MockRedisClient implements RedisClientInterface {
     value: string,
     options?: { EX?: number; PX?: number; NX?: boolean; XX?: boolean },
   ): Promise<string | null> {
+    if (options?.NX === true && this.data.has(key)) {
+      return null;
+    }
+    if (options?.XX === true && !this.data.has(key)) {
+      return null;
+    }
     const ttlMs = options?.EX ? options.EX * 1000 : options?.PX;
     const expiresAt = ttlMs ? Date.now() + ttlMs : undefined;
     this.data.set(key, { value, expiresAt });
@@ -62,16 +70,51 @@ class MockRedisClient implements RedisClientInterface {
     return [...this.data.keys()].filter((k) => k.startsWith(prefix));
   }
 
+  async scan(
+    _cursor: string,
+    options?: { MATCH?: string; COUNT?: number },
+  ): Promise<{ cursor: string; keys: string[] }> {
+    this.scanCalls += 1;
+    const prefix = (options?.MATCH ?? "*").replace("*", "");
+    return {
+      cursor: "0",
+      keys: [...this.data.keys()].filter((k) => k.startsWith(prefix)),
+    };
+  }
+
+  async unlink(key: string | readonly string[]): Promise<number> {
+    this.unlinkCalls += 1;
+    return await this.del(key);
+  }
+
   async eval(
-    _script: string,
+    script: string,
     options?: { keys?: string[]; arguments?: string[] },
   ): Promise<unknown> {
+    if (script.includes("live:")) {
+      const tokenKey = options?.keys?.[0] ?? "";
+      const usedKey = options?.keys?.[1] ?? "";
+      const value = await this.get(tokenKey);
+      if (value === null) {
+        const used = await this.get(usedKey);
+        return used === null ? null : `used:${used}`;
+      }
+      const expiresAt = this.data.get(tokenKey)?.expiresAt;
+      await this.del(tokenKey);
+      const ttlMs =
+        expiresAt === undefined
+          ? Number(options?.arguments?.[0] ?? 1)
+          : Math.max(1, expiresAt - Date.now());
+      this.data.set(usedKey, { value, expiresAt: Date.now() + ttlMs });
+      return `live:${value}`;
+    }
+
     const key = options?.keys?.[0] ?? "default";
-    const windowSeconds = Number(options?.arguments?.[0] ?? 60);
+    const windowMs = Number(options?.arguments?.[0] ?? 60_000);
     const current = Number((await this.get(key)) ?? 0);
     const next = current + 1;
-    await this.set(key, String(next), { EX: windowSeconds });
-    return next;
+    await this.set(key, String(next), { PX: windowMs });
+    return [next, windowMs];
   }
 }
 
@@ -111,6 +154,8 @@ describe("RedisCacheStore", () => {
     await store.clear();
     expect(await store.get("key1")).toBeUndefined();
     expect(await store.get("key2")).toBeUndefined();
+    expect(client.scanCalls).toBeGreaterThan(0);
+    expect(client.unlinkCalls).toBeGreaterThan(0);
   });
 });
 
@@ -124,6 +169,8 @@ describe("RedisRateLimitStore", () => {
 
     const second = await store.increment("ip:127.0.0.1", 60_000);
     expect(second.count).toBe(2);
+    // The second increment must not slide the reported reset forward.
+    expect(second.resetAt).toBeLessThanOrEqual(first.resetAt + 1_000);
   });
 });
 
@@ -185,6 +232,25 @@ describe("RedisIdempotencyStore", () => {
     await store.clear();
     expect(await store.get("k1")).toBeUndefined();
   });
+
+  test("claims one key atomically and releases it", async () => {
+    const client = new MockRedisClient();
+    const store = new RedisIdempotencyStore({ client });
+
+    expect(await store.claim("key", 60_000)).toBe(true);
+    expect(await store.claim("key", 60_000)).toBe(false);
+    expect(client.data.has("aponia:idempotency:claim:key")).toBe(true);
+
+    await store.release("key");
+    expect(await store.claim("key", 60_000)).toBe(true);
+
+    await store.delete("key");
+    expect(client.data.has("aponia:idempotency:claim:key")).toBe(false);
+
+    await store.claim("clear-key", 60_000);
+    await store.clear();
+    expect(client.data.has("aponia:idempotency:claim:clear-key")).toBe(false);
+  });
 });
 
 describe("RedisRevocationStore & RedisRefreshTokenStore", () => {
@@ -232,6 +298,26 @@ describe("RedisRevocationStore & RedisRefreshTokenStore", () => {
     const deleted = await refreshStore.deleteFamily("fam-1");
     expect(deleted).toBeGreaterThanOrEqual(1);
     expect(await refreshStore.find("hash-1")).toBeUndefined();
+
+    await refreshStore.clear();
+  });
+
+  test("consumes a refresh token once and answers its family on reuse", async () => {
+    const client = new MockRedisClient();
+    const refreshStore = new RedisRefreshTokenStore({ client });
+    const record = {
+      idHash: "hash-consume",
+      userId: "u1",
+      familyId: "fam-consume",
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 60_000,
+    };
+    await refreshStore.create(record);
+
+    expect(await refreshStore.consume("hash-consume")).toEqual({ record });
+    expect(await refreshStore.consume("hash-consume")).toEqual({ familyId: "fam-consume" });
+    expect(await refreshStore.find("hash-consume")).toBeUndefined();
+    expect(await refreshStore.consume("missing")).toBeUndefined();
 
     await refreshStore.clear();
   });

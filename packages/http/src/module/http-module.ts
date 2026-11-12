@@ -79,6 +79,9 @@ function resolveOptions(options: HttpModuleOptions): ResolvedHttpOptions {
   if (!Number.isInteger(maxRedirects) || maxRedirects < 0 || maxRedirects > 10) {
     issues.push("maxRedirects must be an integer between 0 and 10");
   }
+  if (options.pinResolvedAddress !== undefined && typeof options.pinResolvedAddress !== "boolean") {
+    issues.push("pinResolvedAddress must be a boolean");
+  }
   if (issues.length > 0) {
     throw new AponiaError(
       "INVALID_HTTP_OPTIONS",
@@ -98,5 +101,6 @@ function resolveOptions(options: HttpModuleOptions): ResolvedHttpOptions {
     allowPrivateNetworks: options.allowPrivateNetworks ?? false,
     fetch: options.fetch ?? fetch,
     resolveAddresses: options.resolveAddresses ?? resolveHostname,
+    pinResolvedAddress: options.pinResolvedAddress ?? true,
   });
 }

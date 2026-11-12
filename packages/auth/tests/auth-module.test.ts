@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { AponiaError, Controller, Get, Module, UseGuards } from "@aponiajs/common";
-import { AponiaFactory, type AponiaApplication } from "@aponiajs/platform-elysia";
+import {
+  AponiaFactory,
+  RequestContextModule,
+  type AponiaApplication,
+} from "@aponiajs/platform-elysia";
 import {
   AuthGuard,
   AuthModule,
@@ -159,6 +163,12 @@ describe("AuthModule", () => {
     expect(error.details).toEqual({
       issues: ["jwt.secret must be a string of at least 32 characters"],
     });
+  });
+
+  test("shares the request-context registration another module also imports", () => {
+    const authModule = AuthModule.register({ jwt: { secret: secret() } });
+
+    expect(authModule.imports?.[0]).toBe(RequestContextModule.forRoot());
   });
 });
 

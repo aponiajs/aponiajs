@@ -364,6 +364,12 @@ guard or the handler threw: those are Elysia's semantics, not this platform's
 choice. Route middleware runs before the guards, allowing request inspection,
 tracing, and early short-circuiting.
 
+A pipe can also be declared for the whole application:
+`AponiaFactory.create(AppModule, { pipes: [UpperCasePipe] })` resolves it once
+through the root module and runs it before controller, method, and parameter
+pipes. It applies to body, query, params, headers, and cookie parameters, the
+same kinds a route-level pipe covers.
+
 ## Resolution
 
 An enhancer class named in a decorator, a plan, or an option **must be a declared

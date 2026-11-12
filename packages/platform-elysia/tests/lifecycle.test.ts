@@ -662,4 +662,28 @@ describe("the stopping hooks", () => {
       shutdown: "SIGTERM",
     });
   });
+
+  test("runs lifecycle hooks declared on a module class", async () => {
+    calls.length = 0;
+
+    @Module({})
+    class HookedModule implements OnModuleInit, OnModuleDestroy {
+      onModuleInit(): void {
+        calls.push("module:init");
+      }
+
+      onModuleDestroy(): void {
+        calls.push("module:destroy");
+      }
+    }
+
+    @Module({ imports: [HookedModule] })
+    class AppModule {}
+
+    application = await AponiaFactory.create(AppModule, { logger: false });
+    expect(calls).toEqual(["module:init"]);
+
+    await application.close();
+    expect(calls).toEqual(["module:init", "module:destroy"]);
+  });
 });

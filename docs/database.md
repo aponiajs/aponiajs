@@ -97,6 +97,28 @@ each name the store has not recorded and skips the rest; the first failing
 statement stops the run and is not recorded. Declared migrations run during
 `onModuleInit`, before any handler.
 
+Each migration records a SHA-256 checksum. An applied file whose SQL changed
+fails with `INVALID_MIGRATION` instead of being silently skipped, so a review can
+see schema drift. When the driver exposes a transaction, the statement and its
+record run inside it; a record that fails rolls the statement back where the
+dialect supports transactional DDL.
+
+For concurrent boots, pass an application-supplied advisory lock. The package
+owns no dialect SQL, so the lock acquires and releases through the application's
+own driver:
+
+```ts
+migrations: {
+  files,
+  lock: async () => {
+    // Acquire a dialect-specific advisory lock here.
+    return async () => {
+      // Release it here.
+    };
+  },
+}
+```
+
 `MemoryMigrationStore` is the default and is process-local. A real deployment
 passes a store backed by its own migration table so a second process does not
 re-run the same files.

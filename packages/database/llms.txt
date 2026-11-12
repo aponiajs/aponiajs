@@ -21,6 +21,8 @@
 - `updateMany` and `deleteMany` apply to every matching row (or all rows with no condition) and answer the affected count.
 - Migrations run in file-name order, skip recorded names, and stop at the first failing statement without recording it.
 - Declared migrations run during module initialization, before any handler runs.
+- Each applied file records a SHA-256 checksum; an edited applied migration fails with `INVALID_MIGRATION`.
+- A migration and its record share the driver's transaction when one exists, and an application-supplied `lock` serializes concurrent boots.
 
 ## Documentation
 

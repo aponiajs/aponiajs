@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { AponiaError } from "@aponiajs/common";
 import { SignJWT, decodeProtectedHeader, jwtVerify } from "jose";
 import { mapVerifiedClaims } from "../authentication/claims.ts";
@@ -26,12 +27,21 @@ export class JwtService implements AuthVerifier {
     this.#options = options;
   }
 
-  /** Signs one claims object. */
+  /**
+   * Signs one claims object.
+   *
+   * An access token needs a `jti` for revocation to reach it, so one is minted
+   * when the caller did not supply a non-empty string. A caller-supplied `jti`
+   * is preserved, which keeps deterministic test tokens and application-owned
+   * identifiers working.
+   */
   async sign(claims: Record<string, unknown>, expiresIn?: string | number): Promise<string> {
-    const token = new SignJWT(claims)
+    const jti = typeof claims.jti === "string" && claims.jti !== "" ? claims.jti : randomUUID();
+    const token = new SignJWT({ ...claims, jti })
       .setProtectedHeader(
         this.#active === undefined ? { alg: "HS256" } : { alg: "HS256", kid: this.#active.kid },
       )
+      .setJti(jti)
       .setIssuedAt()
       .setExpirationTime(expiresIn ?? this.#options.expiresIn);
     if (this.#options.issuer !== undefined) {

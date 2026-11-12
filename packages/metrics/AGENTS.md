@@ -22,9 +22,13 @@ that reads it.
 
 - **The registry is bounded.** A new label set past `maxSeriesPerMetric` is
   dropped; never let a scrape or a label grow memory without a cap.
-- **Labels use the route template.** The plugin reads `context.route` before
-  `context.path`, so a dynamic route reports `/users/:id` and not one series per
-  id. Do not switch to the raw request path.
+- **Labels use the route template.** The plugin and the exception filter read
+  `context.route` before `context.path`, so a dynamic route reports `/users/:id`
+  and not one series per id. `path` is the fallback for a literal matched route;
+  when neither is present the label is `unmatched`, never the raw request URL.
+- **The scrape can be authorized.** `authorize` runs before `registry.render()`
+  and a false answer is `401` with `no-store`; never render collectors for an
+  unauthorized scrape.
 - **The scrape path is excluded from instrumentation.** Recording the scrape
   itself would make every scrape change the numbers it reports.
 - **Statuses come from the response, then the filter.** The plugin reads the

@@ -49,10 +49,49 @@ function redactMetadata(
   metadata: Readonly<Record<string, unknown>>,
   extra: ReadonlySet<string>,
 ): Readonly<Record<string, unknown>> {
-  const copy: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(metadata)) {
-    copy[key] =
-      sensitiveKeyPattern.test(key) || extra.has(key.toLowerCase()) ? "[redacted]" : value;
+  return deepFreezeRedact(metadata, extra, new WeakSet(), 0) as Readonly<Record<string, unknown>>;
+}
+
+/**
+ * Copies, redacts, and freezes a metadata tree.
+ *
+ * Nested objects are the common leak: a top-level-only scan leaves
+ * `{ user: { password } }` untouched and shares the caller's object, so a later
+ * mutation rewrites history. The copy is bounded in depth and breaks cycles
+ * with a marker rather than throwing.
+ */
+function deepFreezeRedact(
+  value: unknown,
+  extra: ReadonlySet<string>,
+  ancestors: WeakSet<object>,
+  depth: number,
+): unknown {
+  if (depth > 8) {
+    return "[truncated]";
   }
-  return Object.freeze(copy);
+  if (Array.isArray(value)) {
+    if (ancestors.has(value)) {
+      return "[circular]";
+    }
+    ancestors.add(value);
+    const copy = value.map((entry) => deepFreezeRedact(entry, extra, ancestors, depth + 1));
+    ancestors.delete(value);
+    return Object.freeze(copy);
+  }
+  if (typeof value === "object" && value !== null) {
+    if (ancestors.has(value)) {
+      return "[circular]";
+    }
+    ancestors.add(value);
+    const copy: Record<string, unknown> = {};
+    for (const [key, entry] of Object.entries(value)) {
+      copy[key] =
+        sensitiveKeyPattern.test(key) || extra.has(key.toLowerCase())
+          ? "[redacted]"
+          : deepFreezeRedact(entry, extra, ancestors, depth + 1);
+    }
+    ancestors.delete(value);
+    return Object.freeze(copy);
+  }
+  return value;
 }

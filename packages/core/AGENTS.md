@@ -32,7 +32,8 @@ container.
   kind it does not know with `INVALID_PROVIDER` rather than `undefined`, since it
   is exported for adapters that read a graph without building one.
 - Modules are identified by `instanceId ?? id`. Two configured instances of one
-  module class stay distinct through `instanceId`.
+  module class stay distinct through `instanceId`; the platform mints one stable
+  symbol per decorated class, so two classes that share a name are also distinct.
 - `ModuleGraph.modules` holds every module reachable from the root through
   `imports`, once each, in post-order. It is the set a platform mounts, so a
   validation that must agree with mounting reads it instead of a compiler's
@@ -46,8 +47,10 @@ container.
   singleton caches per module, request caches per active request context, and
   transient instantiates fresh on each resolution. Provider and controller cycles
   are detected during resolution, with cyclic dependencies declared via
-  `forwardRef` resolved transparently via lazy proxies. Singleton providers and
-  controllers cannot depend on request-scoped providers (`INVALID_SCOPE_HIERARCHY`).
+  `forwardRef` resolved transparently via lazy proxies. Request scope bubbles
+  outward along the injection chain: a provider or controller that reaches a
+  request-scoped dependency is instantiated per request whatever it declares,
+  and a request-scoped controller is constructed once per request context.
 - An optional dependency resolves to `undefined` only when the graph answers
   `MISSING_PROVIDER`; an ambiguous optional dependency still fails. The
   container treats `ModuleRef` as a predefined token and returns a reference

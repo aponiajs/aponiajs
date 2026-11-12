@@ -1,4 +1,41 @@
+import { readdir } from "node:fs/promises";
+import { join, resolve } from "node:path";
 import { expect, test } from "bun:test";
+import { versionedPackageFiles, versionedWorkspacePaths } from "./workspace-versions.ts";
+
+const repositoryRoot = resolve(import.meta.dir, "..");
+const packagesDirectory = join(repositoryRoot, "packages");
+
+interface PublishablePackage {
+  readonly directory: string;
+  readonly name: string;
+}
+
+async function listPublishablePackages(): Promise<readonly PublishablePackage[]> {
+  const entries = await readdir(packagesDirectory, { withFileTypes: true });
+  const packages: PublishablePackage[] = [];
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) {
+      continue;
+    }
+    const manifest = (await Bun.file(
+      join(packagesDirectory, entry.name, "package.json"),
+    ).json()) as {
+      readonly name?: unknown;
+      readonly private?: unknown;
+    };
+    if (manifest.private === true) {
+      continue;
+    }
+    if (typeof manifest.name !== "string") {
+      throw new Error(`packages/${entry.name}/package.json must declare a package name.`);
+    }
+    packages.push({ directory: entry.name, name: manifest.name });
+  }
+
+  return packages.sort((left, right) => left.directory.localeCompare(right.directory));
+}
 
 const releaseGateCommands = [
   "bun run check",
@@ -24,6 +61,55 @@ test("every publish path runs the complete validation matrix", async () => {
       expect(workflow, `${path} must run ${command}`).toContain(command);
     }
   }
+});
+
+test("every publishable workspace is covered by release, canary, version, and docs", async () => {
+  const packages = await listPublishablePackages();
+  const directories = packages.map((workspacePackage) => workspacePackage.directory);
+  const names = packages.map((workspacePackage) => workspacePackage.name).sort();
+
+  for (const workflowPath of [".github/workflows/publish.yml", ".github/workflows/canary.yml"]) {
+    const workflow = await Bun.file(workflowPath).text();
+    const packed = [...workflow.matchAll(/bun pm pack --cwd packages\/([a-z0-9-]+)/g)]
+      .map((match) => match[1] as string)
+      .sort();
+    expect(packed, `${workflowPath} must pack every publishable workspace`).toEqual(directories);
+  }
+
+  const versionedDirectories = versionedPackageFiles
+    .filter((file) => file.startsWith("packages/"))
+    .map((file) => file.split("/")[1] as string)
+    .sort();
+  expect(
+    versionedDirectories,
+    "versionedPackageFiles must cover every publishable workspace",
+  ).toEqual([...directories, "aponiajs"].sort());
+
+  const lockDirectories = [...versionedWorkspacePaths]
+    .map((workspacePath) => workspacePath.split("/")[1] as string)
+    .sort();
+  expect(lockDirectories, "versionedWorkspacePaths must cover every publishable workspace").toEqual(
+    [...directories, "aponiajs"].sort(),
+  );
+
+  const publishWorkflow = await Bun.file(".github/workflows/publish.yml").text();
+  const aliasLine = publishWorkflow.split("\n").find((line) => line.includes("for package in "));
+  if (aliasLine === undefined) {
+    throw new Error("publish.yml must point alias tags at every package.");
+  }
+  const aliasNames = aliasLine
+    .replace(/^.*for package in /, "")
+    .replace(/; do\s*$/, "")
+    .trim()
+    .split(/\s+/)
+    .sort();
+  expect(aliasNames, "publish.yml alias tags must cover every publishable package").toEqual(names);
+
+  const packageDocs = await Bun.file("docs/packages.md").text();
+  const documented = [...packageDocs.matchAll(/^\| \[`(@aponiajs\/[^`]+|create-aponia)`\]/gm)]
+    .map((match) => match[1] as string)
+    .sort();
+  expect(documented, "docs/packages.md must list every publishable package").toEqual(names);
 });
 
 test("CI isolates failures while preserving one required verify gate", async () => {

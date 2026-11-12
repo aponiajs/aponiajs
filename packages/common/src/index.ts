@@ -29,8 +29,10 @@ export {
 export type {
   ControllerMetadata,
   DynamicModule,
+  DynamicModuleOptions,
   InjectableOptions,
   ModuleClass,
+  ModuleExport,
   ModuleImport,
   ModuleMetadata,
   ModuleProvider,
@@ -79,7 +81,7 @@ export type {
   MiddlewareConsumer,
   RouteTarget,
 } from "./middleware/middleware.types.ts";
-export { defineModule } from "./modules/module.ts";
+export { defineModule, dynamicModule } from "./modules/module.ts";
 export { ModuleRef } from "./modules/module-ref.ts";
 export type {
   ModuleDefinition,
@@ -110,12 +112,19 @@ export type {
   PipeTransform,
   PipeType,
 } from "./pipes/pipe.types.ts";
-export { provideAlias, provideClass, provideFactory, provideValue } from "./providers/provider.ts";
+export {
+  normalizeProvider,
+  provideAlias,
+  provideClass,
+  provideFactory,
+  provideValue,
+} from "./providers/provider.ts";
 export { Scope } from "./providers/provider.constants.ts";
 export type {
   AliasProvider,
   ClassProvider,
   FactoryProvider,
+  NestProvider,
   Provider,
   ProviderScope,
   ValueProvider,

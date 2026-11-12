@@ -1,8 +1,10 @@
+import { createHash } from "node:crypto";
 import { AponiaError } from "@aponiajs/common";
 import { sql } from "drizzle-orm";
 import type {
   MigrationExecutor,
   MigrationFile,
+  MigrationLock,
   MigrationResult,
   MigrationStore,
 } from "./migration.types.ts";
@@ -15,28 +17,69 @@ export class MigrationRunner {
     this.#store = store;
   }
 
-  /** Runs every migration the store has not recorded yet. */
+  /**
+   * Runs every migration the store has not recorded yet.
+   *
+   * `lock` is the application's dialect-specific advisory lock. It is acquired
+   * before the applied set is read and released in `finally`, so two replicas
+   * cannot apply the same migration. Each migration and its record run inside
+   * `executor.transaction` when the driver exposes one.
+   */
   async run(
     executor: MigrationExecutor,
     files: readonly MigrationFile[],
+    lock?: MigrationLock,
   ): Promise<MigrationResult> {
     const ordered = orderMigrations(files);
-    const applied = new Set(await this.#store.applied());
-    const ran: string[] = [];
-    const skipped: string[] = [];
+    const release = lock === undefined ? undefined : await lock();
+    try {
+      const applied = new Set(await this.#store.applied());
+      const ran: string[] = [];
+      const skipped: string[] = [];
 
-    for (const file of ordered) {
-      if (applied.has(file.name)) {
-        skipped.push(file.name);
-        continue;
+      for (const file of ordered) {
+        const checksum = checksumOf(file.sql);
+        if (applied.has(file.name)) {
+          const recorded = await this.#store.checksum?.(file.name);
+          if (recorded !== undefined && recorded !== checksum) {
+            throw new AponiaError(
+              "INVALID_MIGRATION",
+              `Migration ${file.name} changed after it was applied.`,
+              {
+                issues: Object.freeze(["an applied migration must not change"]),
+                migration: file.name,
+                recorded,
+                expected: checksum,
+              },
+            );
+          }
+          skipped.push(file.name);
+          continue;
+        }
+
+        const apply = async (target: MigrationExecutor): Promise<void> => {
+          await target.execute(sql.raw(file.sql));
+          await this.#store.record(file.name, checksum);
+        };
+        if (executor.transaction !== undefined) {
+          await executor.transaction(apply);
+        } else {
+          await apply(executor);
+        }
+        ran.push(file.name);
       }
-      await executor.execute(sql.raw(file.sql));
-      await this.#store.record(file.name);
-      ran.push(file.name);
-    }
 
-    return Object.freeze({ applied: Object.freeze(ran), skipped: Object.freeze(skipped) });
+      return Object.freeze({ applied: Object.freeze(ran), skipped: Object.freeze(skipped) });
+    } finally {
+      if (release !== undefined) {
+        await release();
+      }
+    }
   }
+}
+
+function checksumOf(sqlText: string): string {
+  return createHash("sha256").update(sqlText).digest("hex");
 }
 
 function orderMigrations(files: readonly MigrationFile[]): readonly MigrationFile[] {

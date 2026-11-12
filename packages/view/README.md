@@ -5,7 +5,7 @@ Laravel-style view rendering for AponiaJS: Blade layouts, sections, components, 
 ## Installation
 
 ```bash
-bun add @aponiajs/view@beta
+bun add @aponiajs/view@alpha
 ```
 
 ## Usage

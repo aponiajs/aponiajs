@@ -26,7 +26,7 @@ export class TenantModule {
       providers: Object.freeze([
         provideValue(TENANT_OPTIONS, resolved),
         provideClass(TenantService, [RequestContextService]),
-        provideClass(TenantGuard, [TenantService, TENANT_OPTIONS]),
+        provideClass(TenantGuard, [TenantService, TENANT_OPTIONS, RequestContextService]),
       ]),
       exports: Object.freeze([TenantService, TenantGuard]),
     });
@@ -34,30 +34,57 @@ export class TenantModule {
 }
 
 function resolveOptions(options: TenantModuleOptions): ResolvedTenantOptions {
-  const header = (options.header ?? "x-tenant-id").toLowerCase();
+  const header = options.header?.toLowerCase();
   const required = options.required ?? true;
   const pattern = options.pattern ?? /^[A-Za-z0-9._:-]{1,128}$/;
+  const principal = options.principal;
+  const claim = options.claim ?? "tenantId";
+  const issues: string[] = [];
 
-  if (header.trim() === "") {
-    throw invalid("header must be a non-empty string");
+  if (header === undefined && options.resolver === undefined && principal === undefined) {
+    issues.push("one of header, resolver, or principal must be provided");
+  }
+  if (header !== undefined && header.trim() === "") {
+    issues.push("header must be a non-empty string");
   }
   if (typeof required !== "boolean") {
-    throw invalid("required must be a boolean");
+    issues.push("required must be a boolean");
   }
   if (!(pattern instanceof RegExp)) {
-    throw invalid("pattern must be a RegExp");
+    issues.push("pattern must be a RegExp");
   }
   if (options.resolver !== undefined && typeof options.resolver !== "function") {
-    throw invalid("resolver must be a function");
+    issues.push("resolver must be a function");
+  }
+  if (
+    principal !== undefined &&
+    (typeof principal !== "object" ||
+      principal === null ||
+      typeof (principal as { readonly id?: unknown }).id !== "symbol")
+  ) {
+    issues.push("principal must be an injection token");
+  }
+  if (typeof claim !== "string" || claim.trim() === "") {
+    issues.push("claim must be a non-empty string");
+  }
+  if (issues.length > 0) {
+    throw invalid(issues);
   }
 
-  return Object.freeze({ header, required, pattern, resolver: options.resolver });
+  return Object.freeze({
+    header,
+    required,
+    pattern,
+    resolver: options.resolver,
+    principal,
+    claim,
+  });
 }
 
-function invalid(issue: string): AponiaError {
+function invalid(issues: readonly string[]): AponiaError {
   return new AponiaError(
     "INVALID_TENANCY_OPTIONS",
-    `The tenancy registration is invalid: ${issue}.`,
-    { issues: Object.freeze([issue]) },
+    `The tenancy registration is invalid: ${issues.join("; ")}.`,
+    { issues: Object.freeze([...issues]) },
   );
 }

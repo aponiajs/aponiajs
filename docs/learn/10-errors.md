@@ -145,7 +145,6 @@ try {
 | `PROVIDER_CYCLE`                      | Providers depend on each other in a cycle                    |
 | `UNSUPPORTED_PROVIDER_SCOPE`          | An unrecognised scope string is provided                     |
 | `MISSING_REQUEST_CONTEXT`             | Resolving a request-scoped provider outside request context  |
-| `INVALID_SCOPE_HIERARCHY`             | A singleton depends directly on a request-scoped provider    |
 | `INVALID_PROVIDER`                    | A provider entry is not a descriptor this release can read   |
 | `UNRESOLVED_CONSTRUCTOR_DEPENDENCIES` | A class provider's constructor dependencies cannot be read   |
 | `INVALID_MODULE`                      | A class is used as a module without `@Module()`              |

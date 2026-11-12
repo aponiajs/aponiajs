@@ -41,6 +41,11 @@ class WidgetsController {
   boom(): string {
     throw new Error("boom");
   }
+
+  @Get(":id/fail")
+  failOne(): string {
+    throw new Error("fail one");
+  }
 }
 
 describe("metrics plugin", () => {
@@ -70,6 +75,9 @@ describe("metrics plugin", () => {
     expect((await application.handle(new Request("http://localhost/widgets/boom"))).status).toBe(
       500,
     );
+    expect((await application.handle(new Request("http://localhost/widgets/42/fail"))).status).toBe(
+      500,
+    );
 
     const response = await application.handle(new Request("http://localhost/metrics"));
     const body = await response.text();
@@ -87,6 +95,10 @@ describe("metrics plugin", () => {
     expect(body).toContain(
       'http_requests_total{method="GET",route="/widgets/boom",status="500"} 1',
     );
+    expect(body).toContain(
+      'http_requests_total{method="GET",route="/widgets/:id/fail",status="500"} 1',
+    );
+    expect(body).not.toContain('route="/widgets/42/fail"');
     expect(body).toContain("# TYPE http_request_duration_seconds histogram");
     expect(body).toContain("# TYPE process_uptime_seconds gauge");
     expect(body).toContain("# TYPE process_resident_memory_bytes gauge");

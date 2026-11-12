@@ -669,7 +669,15 @@
           "kind": "type"
         },
         {
+          "name": "dynamicModule",
+          "kind": "value"
+        },
+        {
           "name": "DynamicModule",
+          "kind": "type"
+        },
+        {
+          "name": "DynamicModuleOptions",
           "kind": "type"
         },
         {
@@ -989,6 +997,10 @@
           "kind": "type"
         },
         {
+          "name": "ModuleExport",
+          "kind": "type"
+        },
+        {
           "name": "ModuleImport",
           "kind": "type"
         },
@@ -1013,11 +1025,19 @@
           "kind": "value"
         },
         {
+          "name": "NestProvider",
+          "kind": "type"
+        },
+        {
           "name": "NOOP_LOGGER",
           "kind": "value"
         },
         {
           "name": "normalizeMessagePattern",
+          "kind": "value"
+        },
+        {
+          "name": "normalizeProvider",
           "kind": "value"
         },
         {

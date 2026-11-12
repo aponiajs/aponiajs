@@ -20,13 +20,18 @@ leaf: nothing in the framework depends on it.
 
 - **The tenant lives in the request context.** Use `RequestContextService`; do
   not hold a module-global tenant.
+- **`TenantModule` imports `RequestContextModule.forRoot()`.** The registration
+  is shared per normalized header with `AuthModule`; do not add a second header.
 - **The default policy is required.** A missing tenant answers `400`; an
   application opts into optional tenancy explicitly.
 - **Identifiers are validated before storage.** The default pattern rejects
   whitespace and control characters; a custom pattern is the application's
   declared policy.
-- **The resolver runs before the header.** It may read an authenticated user
-  claim, but must still return a value matching the pattern.
+- **A tenant source is explicit.** A registration must provide a `resolver`, a
+  `principal` token, or an explicit `header`; otherwise it fails with
+  `INVALID_TENANCY_OPTIONS`. Resolution order is resolver → principal claim →
+  header. The header is selection, not authorization, and is never read unless
+  the registration opts in. A resolved value must still match the pattern.
 - **This package resolves an id, not a database scope.** Repository filters and
   connection selection belong to the data layer.
 

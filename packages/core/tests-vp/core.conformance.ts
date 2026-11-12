@@ -145,6 +145,36 @@ test("the Vite+ lane keeps one instance per exported provider and root visibilit
   );
 });
 
+test("the Vite+ lane bubbles a request-scoped dependency to its consumers", () => {
+  let count = 0;
+  class RequestState {
+    readonly id = ++count;
+  }
+  class BubbledService {
+    constructor(readonly state: RequestState) {}
+  }
+  const state = createToken<RequestState>("conformance-request-state");
+  const bubbled = createToken<BubbledService>("conformance-bubbled");
+
+  const module = defineModule({
+    id: "conformance-scope-bubbling",
+    providers: [
+      provideClass(state, RequestState, [], { scope: Scope.REQUEST }),
+      provideClass(bubbled, BubbledService, [state]),
+    ],
+  });
+  const container = createContainer(module);
+
+  expect(() => container.get(bubbled)).toThrow(
+    expect.objectContaining({ code: "MISSING_REQUEST_CONTEXT" }),
+  );
+
+  const firstRequest = {};
+  const first = container.get(bubbled, firstRequest);
+  expect(container.get(bubbled, firstRequest)).toBe(first);
+  expect(container.get(bubbled, {}).state.id).toBe(2);
+});
+
 test("the Vite+ lane instantiates transient providers on each resolution and refuses invalid scopes", () => {
   const transientToken = createToken<{ id: number }>("conformance-transient");
   let count = 0;

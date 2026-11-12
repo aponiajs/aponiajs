@@ -23,7 +23,7 @@ It depends on `common` and `core`, with `elysia` as a peer.
 | `websockets/`    | Provider discovery, gateway plans, message dispatch, and native socket types                                                            |
 | `pipes/`         | Runtime pipe resolution and parameter pipeline execution                                                                                |
 | `middleware/`    | Route middleware consumer, path matching/exclusion, and pipeline mounting                                                               |
-| `enhancers/`     | Reusable static execution context, enhancer pipeline, and fast-abort guard compilation                                                  |
+| `enhancers/`     | Per-request execution-context forks, enhancer pipeline, and fast-abort guard compilation                                                |
 | `version.ts`     | The package's own version, read from its manifest, which generated artifacts are checked against                                        |
 
 `src/index.ts` is the only public barrel. Keep `*.types.ts` colocated with the
@@ -150,6 +150,28 @@ runtime boundary it describes.
   default mapping. `routing/route-compiler.types.ts` declares the route hook the
   platform mounts, so a lifecycle member is added there rather than by widening
   the native signature.
+- A route's `ExecutionContext` is a per-request fork, never a shared mutable
+  instance. The mount compiles one prototype per route for the immutable
+  class/handler/route identity; each hook invocation calls `fork(context)` so a
+  concurrent request cannot replace the context an async guard or interceptor is
+  about to read. `tests/enhancer-concurrency.test.ts` pins the overlapping-request
+  case; a route with no enhancer still allocates no context.
+- Application-level pipes (`AponiaApplicationOptions.pipes`) resolve once
+  through the root module and run before controller, method, and parameter
+  pipes, for the same parameter kinds a route-level pipe covers. An
+  application-level enhancer or pipe the root cannot reach fails the boot.
+- A request-scoped controller — declared with `@Injectable({ scope: Scope.REQUEST })`
+  or bubbled there by a request-scoped dependency — is constructed once per
+  request. Bootstrap does not construct it, mounts its compiled plan with the
+  class prototype as the handler source, and passes an instance resolver the
+  compiled handler calls with that request's instance, so a request cannot see
+  another request's controller. Only a compiled plan can be mounted that way: a
+  registration callback, a message pattern, and a generated invoker each close
+  over one instance, so those are refused with `INVALID_CONTROLLER` and
+  `UNSAFE_CODE_GENERATION` rather than silently bound to a prototype or a first
+  request. Lifecycle collection skips request-scoped controllers and providers,
+  which have no instance at boot. A gateway whose lifetime bubbles to request
+  scope fails with `INVALID_WEBSOCKET_GATEWAY`.
 - An enhancer named by a decorator, a declared plan, or an option is resolved as
   a provider while its controller mounts — once per distinct class, never per
   route or per request — and enhancers are singletons like every other provider.
@@ -373,6 +395,15 @@ runtime boundary it describes.
   `isModuleDefinition` guards the selected entry rather than trusting the option's type:
   a JavaScript caller has no type checker, and a truncated descriptor reaching
   the graph compiler is the one outcome this option must never cause.
+- `RequestContextModule.forRoot()` returns one frozen registration per
+  normalized header and caches it; repeated calls are the same module, provider,
+  and `AsyncLocalStorage`, and the first call's `generate`/`echo` options win.
+  `AuthModule` and `TenantModule` both import it. `bootstrapAponiaApplication`
+  locates the owning module by walking the compiled graph when root visibility
+  does not reach it, so the ambient accessor for request-scoped providers is set
+  even when an intermediate module does not re-export `RequestContextService`.
+  One registration per application: a second header creates a second storage no
+  single service token can disambiguate.
 - `bootstrapAponiaApplication` attaches one boot record to the native application
   it returns, under `Symbol.for("aponia.application.diagnostics")`, and
   `getApplicationDiagnostics` is its only reader. The property is non-enumerable,
@@ -536,7 +567,7 @@ runtime boundary it describes.
 ## Elysia version compatibility
 
 The peer dependency is an exact pin, `elysia: "2.0.0-rc.4"`, beside
-`typebox: "^1.3.0"`. Every workspace manifest must declare the same pin. A pin
+`typebox: "^1.4.6"`. Every workspace manifest must declare the same pin. A pin
 that disagrees makes Bun install two copies, and a controller typed against one
 is not assignable to the other. The Elysia pin is exact rather than a caret
 because `^2.0.0-rc.4` also accepts `2.0.0-exp.64`: semver compares

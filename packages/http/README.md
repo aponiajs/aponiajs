@@ -4,7 +4,7 @@ SSRF-safe outbound HTTP for AponiaJS, with timeouts, bounded responses, redirect
 re-validation, and Standard Schema response validation.
 
 ```bash
-bun add @aponiajs/http@beta
+bun add @aponiajs/http@alpha
 ```
 
 ## Use it
@@ -41,6 +41,9 @@ export class UsersClient {
   link-local, carrier-grade NAT, multicast, and reserved addresses are blocked.
 - Every hostname is resolved before the request, and every resolved address is
   checked. A hostname that resolves to a blocked address is refused.
+- The validated address is pinned for the connection, with the original
+  hostname in `Host` and TLS SNI, so a second DNS answer cannot rebind the
+  connection to a private address.
 - Every redirect is re-validated. A redirect with a request body is not followed.
 - `Host` is never supplied by the caller.
 - Responses are bounded; the default is 1 MiB.
@@ -64,6 +67,7 @@ deployment. Do not enable it for a client that accepts user-supplied URLs.
 | `allowPrivateNetworks` | `false`  | Explicit SSRF opt-out.                       |
 | `fetch`                | global   | Fetch implementation, for tests or adapters. |
 | `resolveAddresses`     | DNS      | Hostname resolver, for tests or adapters.    |
+| `pinResolvedAddress`   | `true`   | Connect to the validated address.            |
 
 ## Request options
 
@@ -83,9 +87,11 @@ the response body.
 ## Limits
 
 - This is an outbound client, not a server or a proxy.
-- DNS rebinding is reduced by resolving and checking every address before the
-  request; a deployment that needs a pinned transport should supply its own
-  `fetch` implementation.
+- DNS rebinding is closed by pinning the validated address for the connection.
+  The pinning uses Bun's `tls.serverName` and `proxy: false` fetch extensions;
+  a custom `fetch` must honor the `Host` header and those options, or the
+  application must supply a `fetch` that pins the address itself and set
+  `pinResolvedAddress: false`.
 - The package retries a non-idempotent method only when the request states an
   `idempotencyKey`; it never replays a request body across a redirect, and it
   never exposes a response body on error.

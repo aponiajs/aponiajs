@@ -60,7 +60,7 @@ export class OpentelemetryModule {
    * @returns A frozen registration the application's `imports` accepts.
    */
   static register(options: OpentelemetryModuleOptions): DynamicModule {
-    const { configuration, source, key, ...runtime } = options;
+    const { configuration, source, key, sdk, ...runtime } = options;
     const runtimeOptions: Readonly<OpentelemetryRuntimeOptions> = Object.freeze({ ...runtime });
 
     // The framework's own seam for a plugin built from an injected value. The
@@ -91,7 +91,7 @@ export class OpentelemetryModule {
         // nothing here because they own no state; this package does.
         provideValue(
           OpentelemetryShutdown,
-          new OpentelemetryShutdown(runtimeOptions.spanProcessors ?? []),
+          new OpentelemetryShutdown(runtimeOptions.spanProcessors ?? [], sdk),
         ),
         // Never empty in practice — the seam's own factory and the value above
         // are always there — but the type says a `DynamicModule` may declare no

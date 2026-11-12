@@ -1,4 +1,10 @@
-import type { Constructor, InjectionDependency, Token, TokenMap } from "../tokens/token.types.ts";
+import type {
+  ClassToken,
+  Constructor,
+  InjectionDependency,
+  Token,
+  TokenMap,
+} from "../tokens/token.types.ts";
 import type { Scope } from "./provider.constants.ts";
 
 /**
@@ -71,6 +77,37 @@ export type Provider =
     }
   | {
       readonly kind: "alias";
+      readonly provide: Token<unknown>;
+      readonly useExisting: Token<unknown>;
+      readonly scope?: ProviderScope;
+    };
+
+/**
+ * A Nest-shaped provider literal.
+ *
+ * `normalizeProvider` lowers it to the canonical `Provider` union. `inject`
+ * defaults to an empty list; the platform infers a decorated class's
+ * constructor dependencies when the literal omits it.
+ */
+export type NestProvider =
+  | {
+      readonly provide: Token<unknown>;
+      readonly useValue: unknown;
+      readonly scope?: ProviderScope;
+    }
+  | {
+      readonly provide: Token<unknown>;
+      readonly useFactory: (...dependencies: never[]) => unknown;
+      readonly inject?: readonly InjectionDependency[];
+      readonly scope?: ProviderScope;
+    }
+  | {
+      readonly provide: Token<unknown>;
+      readonly useClass: ClassToken<unknown> | Constructor<unknown, never[]>;
+      readonly inject?: readonly InjectionDependency[];
+      readonly scope?: ProviderScope;
+    }
+  | {
       readonly provide: Token<unknown>;
       readonly useExisting: Token<unknown>;
       readonly scope?: ProviderScope;

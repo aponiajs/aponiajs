@@ -11,6 +11,13 @@ export interface RedisClientInterface {
   expire(key: string, seconds: number): Promise<boolean | number>;
   pExpire?(key: string, milliseconds: number): Promise<boolean | number>;
   keys(pattern: string): Promise<string[]>;
+  /** Cursor-based key scan; preferred over `KEYS` when the client supports it. */
+  scan?(
+    cursor: string,
+    options?: { readonly MATCH?: string; readonly COUNT?: number },
+  ): Promise<{ readonly cursor: string; readonly keys: readonly string[] }>;
+  /** Non-blocking delete; preferred over `DEL` when the client supports it. */
+  unlink?(key: string | readonly string[]): Promise<number>;
   eval(script: string, options?: { keys?: string[]; arguments?: string[] }): Promise<unknown>;
   quit?(): Promise<string>;
   disconnect?(): Promise<void>;

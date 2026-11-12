@@ -15,6 +15,12 @@ interface SpanProcessorHandle {
   shutdown(): void | Promise<void>;
 }
 
+/** The handle an application-owned SDK exposes for teardown. */
+export interface OpenTelemetrySdkHandle {
+  forceFlush?(): void | Promise<void>;
+  shutdown?(): void | Promise<void>;
+}
+
 /**
  * Owns the span processors an application declared, and stops them when the
  * application closes.
@@ -37,17 +43,24 @@ interface SpanProcessorHandle {
  */
 export class OpentelemetryShutdown implements OnApplicationShutdown {
   #processors: readonly SpanProcessorHandle[];
+  #sdk: OpenTelemetrySdkHandle | undefined;
 
-  constructor(spanProcessors: readonly SpanProcessorHandle[]) {
+  constructor(spanProcessors: readonly SpanProcessorHandle[], sdk?: OpenTelemetrySdkHandle) {
     this.#processors = Object.freeze([...spanProcessors]);
+    this.#sdk = sdk;
   }
 
   async onApplicationShutdown(): Promise<void> {
     const processors = this.#processors;
+    const sdk = this.#sdk;
     this.#processors = Object.freeze([]);
+    this.#sdk = undefined;
 
     for (const processor of processors) {
+      await processor.forceFlush?.();
       await processor.shutdown();
     }
+    await sdk?.forceFlush?.();
+    await sdk?.shutdown?.();
   }
 }

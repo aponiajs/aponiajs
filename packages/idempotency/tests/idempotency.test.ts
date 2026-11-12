@@ -10,6 +10,29 @@ afterEach(async () => {
   application = undefined;
 });
 
+interface Deferred {
+  readonly promise: Promise<void>;
+  readonly resolve: () => void;
+}
+
+function deferred(): Deferred {
+  let resolve!: () => void;
+  const promise = new Promise<void>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
+
+function storeWith(overrides: Partial<IdempotencyStore> = {}): IdempotencyStore {
+  return {
+    get: () => undefined,
+    set: () => {},
+    delete: () => false,
+    clear: () => {},
+    ...overrides,
+  };
+}
+
 function send(path: string, body: unknown, key?: string): Request {
   return new Request(`http://localhost${path}`, {
     method: "POST",
@@ -278,6 +301,7 @@ describe("IdempotencyModule", () => {
         methods: [],
         now: "no" as unknown as () => number,
         onError: "no" as unknown as () => void,
+        scope: "no" as unknown as (request: Request) => string | undefined,
         store: {} as unknown as IdempotencyStore,
       }),
     );
@@ -292,9 +316,19 @@ describe("IdempotencyModule", () => {
         "methods must be a non-empty array of strings",
         "now must be a function",
         "onError must be a function",
+        "scope must be a function",
         "store is missing get, set, delete, clear",
       ],
     });
+  });
+
+  test("rejects a store that is not an object", () => {
+    const error = capture(() =>
+      IdempotencyModule.register({ store: 42 as unknown as IdempotencyStore }),
+    );
+
+    expect(error.code).toBe("INVALID_IDEMPOTENCY_OPTIONS");
+    expect(error.details).toEqual({ issues: ["store must implement IdempotencyStore"] });
   });
 
   test("bounds the default store", () => {
@@ -307,6 +341,24 @@ describe("IdempotencyModule", () => {
     expect(captureSync(() => new MemoryIdempotencyStore({ maxEntries: 0 })).code).toBe(
       "INVALID_IDEMPOTENCY_OPTIONS",
     );
+  });
+
+  test("claims and releases keys atomically and expires a stale claim", () => {
+    let now = 0;
+    const store = new MemoryIdempotencyStore({ now: () => now });
+
+    expect(store.claim("key", 10)).toBe(true);
+    expect(store.claim("key", 10)).toBe(false);
+    store.release("key");
+    expect(store.claim("key", 10)).toBe(true);
+
+    now = 20;
+    expect(store.claim("key", 10)).toBe(true);
+
+    store.delete("key");
+    expect(store.claim("key", 10)).toBe(true);
+    store.clear();
+    expect(store.claim("key", 10)).toBe(true);
   });
 
   test("deletes, clears, and prunes expired store entries", () => {
@@ -370,6 +422,324 @@ describe("IdempotencyModule", () => {
       }),
     );
     expect(await read.text()).toBe("read");
+  });
+
+  test("two applications sharing a store execute one handler for one key", async () => {
+    const base = new MemoryIdempotencyStore({ maxEntries: 10 });
+    const secondClaim = deferred();
+    const store: IdempotencyStore = {
+      get: (key) => base.get(key),
+      set: (key, response, ttlMs) => base.set(key, response, ttlMs),
+      delete: (key) => base.delete(key),
+      clear: () => base.clear(),
+      claim: (key, ttlMs) => {
+        const claimed = base.claim(key, ttlMs);
+        if (!claimed) {
+          secondClaim.resolve();
+        }
+        return claimed;
+      },
+      release: (key) => base.release(key),
+    };
+
+    let calls = 0;
+    const firstStarted = deferred();
+    let releaseFirst: (() => void) | undefined;
+
+    @Controller("shared")
+    class SharedController {
+      @Post()
+      async create(@Body() body: { readonly id: number }): Promise<string> {
+        calls += 1;
+        if (calls === 1) {
+          firstStarted.resolve();
+          await new Promise<void>((resolve) => {
+            releaseFirst = resolve;
+          });
+        }
+        return `created:${body.id}`;
+      }
+    }
+
+    // Two registrations make two plugin instances, which is what two replicas
+    // have. One shared store is the only state they agree on.
+    @Module({
+      imports: [IdempotencyModule.register({ store, requireKey: true })],
+      controllers: [SharedController],
+    })
+    class FirstAppModule {}
+
+    @Module({
+      imports: [IdempotencyModule.register({ store, requireKey: true })],
+      controllers: [SharedController],
+    })
+    class SecondAppModule {}
+
+    const firstApp = await AponiaFactory.create(FirstAppModule, { logger: false });
+    const secondApp = await AponiaFactory.create(SecondAppModule, { logger: false });
+    try {
+      const first = firstApp.handle(send("/shared", { id: 1 }, "same-key"));
+      await firstStarted.promise;
+      const second = secondApp.handle(send("/shared", { id: 1 }, "same-key"));
+      await secondClaim.promise;
+      releaseFirst?.();
+
+      const [firstResponse, secondResponse] = await Promise.all([first, second]);
+      expect(await firstResponse.text()).toBe("created:1");
+      expect(await secondResponse.text()).toBe("created:1");
+      expect(calls).toBe(1);
+    } finally {
+      await firstApp.close();
+      await secondApp.close();
+    }
+  });
+
+  test("namespaces keys by caller scope", async () => {
+    let calls = 0;
+
+    @Controller("scoped")
+    class ScopedController {
+      @Post()
+      create(@Body() body: { readonly id: number }): string {
+        calls += 1;
+        return `created:${body.id}`;
+      }
+    }
+
+    @Module({
+      imports: [
+        IdempotencyModule.register({
+          requireKey: true,
+          scope: (request) => request.headers.get("x-user") ?? undefined,
+        }),
+      ],
+      controllers: [ScopedController],
+    })
+    class AppModule {}
+
+    application = await AponiaFactory.create(AppModule, { logger: false });
+
+    const first = await application.handle(
+      new Request("http://localhost/scoped", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "idempotency-key": "shared-key",
+          "x-user": "ada",
+        },
+        body: JSON.stringify({ id: 1 }),
+      }),
+    );
+    const second = await application.handle(
+      new Request("http://localhost/scoped", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "idempotency-key": "shared-key",
+          "x-user": "grace",
+        },
+        body: JSON.stringify({ id: 1 }),
+      }),
+    );
+
+    expect([await first.text(), await second.text()]).toEqual(["created:1", "created:1"]);
+    expect(calls).toBe(2);
+  });
+
+  test("a claim failure is reported and the handler still runs", async () => {
+    const errors: string[] = [];
+    let calls = 0;
+
+    @Controller("claim-failure")
+    class ClaimFailureController {
+      @Post()
+      create(): string {
+        calls += 1;
+        return "ok";
+      }
+    }
+
+    @Module({
+      imports: [
+        IdempotencyModule.register({
+          store: storeWith({
+            claim: () => {
+              throw new Error("claim failed");
+            },
+          }),
+          requireKey: true,
+          onError: (_error, key) => errors.push(key),
+        }),
+      ],
+      controllers: [ClaimFailureController],
+    })
+    class AppModule {}
+
+    application = await AponiaFactory.create(AppModule, { logger: false });
+    const response = await application.handle(send("/claim-failure", {}, "claim-key"));
+
+    expect(await response.text()).toBe("ok");
+    expect(calls).toBe(1);
+    expect(errors).toEqual(["claim-key"]);
+  });
+
+  test("answers 409 when another replica keeps the key claimed", async () => {
+    let calls = 0;
+
+    @Controller("busy")
+    class BusyController {
+      @Post()
+      create(): string {
+        calls += 1;
+        return "ok";
+      }
+    }
+
+    @Module({
+      imports: [
+        IdempotencyModule.register({
+          store: storeWith({ claim: () => false }),
+          requireKey: true,
+        }),
+      ],
+      controllers: [BusyController],
+    })
+    class AppModule {}
+
+    application = await AponiaFactory.create(AppModule, { logger: false });
+    const response = await application.handle(send("/busy", {}, "busy-key"));
+
+    expect(response.status).toBe(409);
+    expect(response.headers.get("content-type")).toContain("application/problem+json");
+    expect(calls).toBe(0);
+  });
+
+  test("releases a claim when the handler throws", async () => {
+    let calls = 0;
+    let releases = 0;
+
+    @Controller("throwing")
+    class ThrowingController {
+      @Post()
+      create(): string {
+        calls += 1;
+        throw new Error("boom");
+      }
+    }
+
+    @Module({
+      imports: [
+        IdempotencyModule.register({
+          store: storeWith({
+            claim: () => true,
+            release: () => {
+              releases += 1;
+            },
+          }),
+          requireKey: true,
+        }),
+      ],
+      controllers: [ThrowingController],
+    })
+    class AppModule {}
+
+    application = await AponiaFactory.create(AppModule, { logger: false });
+    const first = await application.handle(send("/throwing", {}, "throw-key"));
+    const second = await application.handle(send("/throwing", {}, "throw-key"));
+
+    expect([first.status, second.status]).toEqual([500, 500]);
+    expect(calls).toBe(2);
+    expect(releases).toBe(2);
+  });
+
+  test("a store with claim but no release still runs the handler", async () => {
+    let calls = 0;
+
+    @Controller("claim-only")
+    class ClaimOnlyController {
+      @Post()
+      create(): string {
+        calls += 1;
+        return "ok";
+      }
+    }
+
+    @Module({
+      imports: [
+        IdempotencyModule.register({
+          store: storeWith({ claim: () => true }),
+          requireKey: true,
+        }),
+      ],
+      controllers: [ClaimOnlyController],
+    })
+    class AppModule {}
+
+    application = await AponiaFactory.create(AppModule, { logger: false });
+    const response = await application.handle(send("/claim-only", {}, "claim-only-key"));
+
+    expect(await response.text()).toBe("ok");
+    expect(calls).toBe(1);
+  });
+
+  test("a synchronous release failure is reported", async () => {
+    const errors: string[] = [];
+
+    @Controller("release-failure")
+    class ReleaseFailureController {
+      @Post()
+      create(): string {
+        return "ok";
+      }
+    }
+
+    @Module({
+      imports: [
+        IdempotencyModule.register({
+          store: storeWith({
+            claim: () => true,
+            release: () => {
+              throw new Error("release failed");
+            },
+          }),
+          requireKey: true,
+          onError: (_error, key) => errors.push(key),
+        }),
+      ],
+      controllers: [ReleaseFailureController],
+    })
+    class AppModule {}
+
+    application = await AponiaFactory.create(AppModule, { logger: false });
+    const response = await application.handle(send("/release-failure", {}, "release-key"));
+
+    expect(await response.text()).toBe("ok");
+    expect(errors).toEqual(["release-key"]);
+  });
+
+  test("an iterable result is answered but not recorded", async () => {
+    let calls = 0;
+
+    @Controller("iterable")
+    class IterableController {
+      @Post()
+      create(): readonly string[] {
+        calls += 1;
+        return [];
+      }
+    }
+
+    @Module({
+      imports: [IdempotencyModule.register({ requireKey: true })],
+      controllers: [IterableController],
+    })
+    class AppModule {}
+
+    application = await AponiaFactory.create(AppModule, { logger: false });
+    await application.handle(send("/iterable", {}, "iterable-key"));
+    await application.handle(send("/iterable", {}, "iterable-key"));
+
+    expect(calls).toBe(2);
   });
 });
 

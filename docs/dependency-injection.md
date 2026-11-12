@@ -55,6 +55,12 @@ provideAlias(LEGACY_GREETING, GREETING);
   declares it.
 - `provideAlias` points one token at another.
 
+A Nest-shaped object literal is accepted wherever a module declares providers:
+`{ provide, useClass, useValue, useFactory, useExisting, inject? }` lowers to
+one of the forms above. A decorated `useClass` without `inject` infers its
+constructor dependencies; a descriptor written by hand should state `inject`
+explicitly, because `defineModule` does not read decorator metadata.
+
 ## Scopes
 
 Aponia supports three provider lifetime scopes via the `Scope` object:
@@ -70,11 +76,44 @@ export class UniqueIdGenerator {}
 ```
 
 - **`Scope.DEFAULT` (`"singleton"`)**: The default scope. Instantiated once per owning module, cached and shared across the application.
-- **`Scope.REQUEST` (`"request"`)**: Instantiated once per incoming request context. Cached for the duration of the request in connection with `RequestContextModule`. Outside of a request context, resolving a request-scoped provider raises `MISSING_REQUEST_CONTEXT`. Singleton providers and controllers cannot depend directly on request-scoped providers (`INVALID_SCOPE_HIERARCHY`).
+- **`Scope.REQUEST` (`"request"`)**: Instantiated once per incoming request context. Cached for the duration of the request in connection with `RequestContextModule`. Outside of a request context, resolving a request-scoped provider raises `MISSING_REQUEST_CONTEXT`. The scope bubbles outward: a provider or controller that depends on request-scoped state is itself request-scoped, whatever its own declaration says, so it is constructed with the request that asks for it rather than refused.
 - **`Scope.TRANSIENT` (`"transient"`)**: A fresh instance is created on every injection or resolution.
 
 Descriptor providers also accept a trailing `scope` option:
 `provideClass(UniqueIdGenerator, [], { scope: Scope.TRANSIENT })`.
+
+### Request-scoped controllers
+
+A controller is request-scoped when it declares `@Injectable({ scope: Scope.REQUEST })`
+beside `@Controller()`, or when one of its constructor dependencies reaches a
+request-scoped provider. The platform constructs it once per request, so the
+controller instance can hold request state directly instead of reading it
+through `RequestContextService`.
+
+```ts
+@Injectable({ scope: Scope.REQUEST })
+@Controller("cart")
+export class CartController {
+  constructor(private readonly requestContext: RequestContextService) {}
+
+  @Get()
+  read() {
+    return this.requestContext.current()?.requestId;
+  }
+}
+```
+
+A request-scoped controller MUST declare its routes through decorators or
+route plans: a registration callback and a message pattern both close over one
+instance, so the boot refuses either with `INVALID_CONTROLLER`. Generated
+invokers close over one instance too, so `strictCodegen` refuses a
+request-scoped controller with `UNSAFE_CODE_GENERATION`. A WebSocket gateway
+must be singleton, and a gateway whose lifetime bubbles to request scope fails
+the boot with `INVALID_WEBSOCKET_GATEWAY`.
+
+The request context itself comes from `RequestContextModule`; without that
+registration a request-scoped provider or controller fails its first resolution
+with `MISSING_REQUEST_CONTEXT`.
 
 ## Global Modules
 
@@ -194,7 +233,6 @@ they do not throw through the application HTTP error path.
 | `AMBIGUOUS_PROVIDER`                  | Two imports resolve the token to different modules                          |
 | `MISSING_PROVIDER`                    | A dependency cannot be resolved (includes contextual hints in details)      |
 | `PROVIDER_CYCLE`                      | Providers depend on each other in a cycle                                   |
-| `INVALID_SCOPE_HIERARCHY`             | A singleton provider or controller depends on a request-scoped provider     |
 | `MISSING_REQUEST_CONTEXT`             | A request-scoped provider is resolved outside an active request context     |
 | `UNSUPPORTED_PROVIDER_SCOPE`          | A provider declares an unsupported or unrecognized lifetime scope           |
 | `INVALID_PROVIDER`                    | A provider entry is not a provider descriptor this release can read         |

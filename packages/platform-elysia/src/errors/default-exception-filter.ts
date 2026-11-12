@@ -1,4 +1,4 @@
-import { formatLogValue, type LoggerService } from "@aponiajs/common";
+import { AponiaError, formatLogValue, type LoggerService } from "@aponiajs/common";
 import { ElysiaStatus } from "elysia";
 import type { ResolvedFilter } from "../controllers/enhancer-resolver.ts";
 import type { ElysiaErrorHook } from "../routing/route-compiler.types.ts";
@@ -82,6 +82,15 @@ export function createDefaultExceptionFilter(
       return undefined;
     }
 
+    // A small set of framework failures describe a client mistake the package
+    // documented, not a server failure. They answer their own status instead of
+    // the generic 500; a filter the route declares still runs first.
+    const mapped = mappedAponiaErrorResponse(error);
+    if (mapped !== undefined) {
+      recordMappedException(mappedExceptions, request, error);
+      return mapped;
+    }
+
     // The record is the only place `/requests` can read this failure's message
     // from, because the `Response` below is not on the after-response context. The
     // logger call is guarded, which is what keeps a throw out of a hook whose
@@ -90,6 +99,29 @@ export function createDefaultExceptionFilter(
     reportThroughLogger(logger, error, "ExceptionsHandler");
     return httpErrors.internalServerError(unhandledFailureDetail).toResponse();
   };
+}
+
+/**
+ * The documented framework failures that carry a client status.
+ *
+ * A tenant is missing because the request did not select one (`400`), and a
+ * refresh token is invalid or already consumed (`401`). Both are expected
+ * outcomes of their packages, so the default boundary answers them directly
+ * rather than reporting a server failure. Any other `AponiaError` keeps the
+ * generic `500` path.
+ */
+function mappedAponiaErrorResponse(error: unknown): Response | undefined {
+  if (!(error instanceof AponiaError)) {
+    return undefined;
+  }
+  switch (error.code) {
+    case "MISSING_TENANT":
+      return httpErrors.badRequest("A tenant is required for this request.").toResponse();
+    case "INVALID_REFRESH_TOKEN":
+      return httpErrors.unauthorized("The refresh token is invalid or expired.").toResponse();
+    default:
+      return undefined;
+  }
 }
 
 /**

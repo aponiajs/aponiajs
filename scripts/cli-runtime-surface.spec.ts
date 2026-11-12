@@ -679,10 +679,11 @@ const platformArtifactPairs: readonly PlatformArtifactFieldPair[] = [
  * the `AnalyzedTokenKind` member each corresponds to.
  *
  * `AnalyzedTokenKind` restates a distinction the runtime draws structurally: a
- * class token is referenced by name and an `InjectionToken` is built by
- * `createToken(...)`. Neither side states the other's member names, so the
- * correspondence is this guard's own claim; it is what turns "the same number of
- * members" into "every member on each side is accounted for".
+ * class token is referenced by name, a string or a symbol is written literally,
+ * and an `InjectionToken` is built by `createToken(...)`. Neither side states the
+ * other's member names, so the correspondence is this guard's own claim; it is
+ * what turns "the same number of members" into "every member on each side is
+ * accounted for".
  */
 interface TokenFormCorrespondence {
   readonly runtimeMember: string;
@@ -692,6 +693,8 @@ interface TokenFormCorrespondence {
 const tokenFormCorrespondence: readonly TokenFormCorrespondence[] = [
   { runtimeMember: "ClassToken", cliMember: "reference" },
   { runtimeMember: "InjectionToken", cliMember: "injection-token" },
+  { runtimeMember: "string", cliMember: "string" },
+  { runtimeMember: "symbol", cliMember: "symbol" },
 ];
 
 /**
@@ -723,10 +726,15 @@ const requiredPlatformArtifactFields: readonly string[] = [
  * A floor under the runtime token-form union, so a reader that stopped matching
  * cannot pass by finding none.
  */
-const minimumRuntimeTokenForms = 2;
+const minimumRuntimeTokenForms = 4;
 
 /** The token forms the runtime's `Token<T>` union must still declare. */
-const requiredRuntimeTokenForms: readonly string[] = ["ClassToken", "InjectionToken"];
+const requiredRuntimeTokenForms: readonly string[] = [
+  "ClassToken",
+  "InjectionToken",
+  "string",
+  "symbol",
+];
 
 /**
  * A floor under the runtime scan, so a glob that stopped matching cannot pass by

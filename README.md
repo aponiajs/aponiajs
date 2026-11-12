@@ -4,7 +4,7 @@
 </div>
 
 [![CI](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml/badge.svg)](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml)
-[![CLI npm version](https://img.shields.io/npm/v/%40aponiajs%2Fcli/beta?label=CLI)](https://www.npmjs.com/package/@aponiajs/cli)
+[![CLI npm version](https://img.shields.io/npm/v/%40aponiajs%2Fcli/alpha?label=CLI)](https://www.npmjs.com/package/@aponiajs/cli)
 [![Bun](https://img.shields.io/badge/Bun-1.4.4-black)](https://bun.sh)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 
@@ -19,8 +19,19 @@ Requirements: Bun 1.4.4 or later, and Elysia `2.0.0-rc.4` for the HTTP
 platform package. Decorator-based applications need `experimentalDecorators`
 and `emitDecoratorMetadata`; the CLI starter configures both.
 
-The framework is in beta. Pin an exact version and review the
-[stability policy](./docs/stability.md) before deploying to production.
+## Published channel
+
+The npm registry currently serves the **alpha** line (`0.6.0-alpha.39` on the
+`alpha` and `next` tags). The source in this repository targets the
+`1.0.0-beta.N` development line, which is **not published under `@beta` yet**.
+Install commands in this repository name `@alpha` until that beta line ships;
+`@beta` resolves only after the line is published. See
+[Stability and the Public API](./docs/stability.md) for the compatibility
+policy.
+
+The framework is pre-1.0 and not production ready. Pin an exact version and
+review the [stability policy](./docs/stability.md) before deploying to
+production.
 
 ## Philosophy
 
@@ -46,7 +57,7 @@ supported escape hatch, so the underlying platform is never out of reach.
 Install the CLI, create an application, and generate a REST resource:
 
 ```bash
-bun add --global @aponiajs/cli@beta
+bun add --global @aponiajs/cli@alpha
 aponia new my-api
 cd my-api
 aponia generate resource users --type rest

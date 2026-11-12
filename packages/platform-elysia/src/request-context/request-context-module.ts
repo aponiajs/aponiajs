@@ -9,6 +9,16 @@ import type { RequestContext, RequestContextModuleOptions } from "./request-cont
 
 const REQUEST_CONTEXT_MODULE_ID = "AponiaRequestContextModule";
 
+/**
+ * One registration per normalized header.
+ *
+ * `AuthModule` and `TenantModule` both import `forRoot()`; without this cache,
+ * each call allocated its own `AsyncLocalStorage` and a fresh `instanceId`, so
+ * the graph kept two modules while Elysia mounted only the first plugin. The
+ * second module's service then read a storage nobody entered.
+ */
+const requestContextModules = new Map<string, DynamicModule>();
+
 class InMemoryRequestContext implements RequestContext {
   readonly #values = new Map<symbol, unknown>();
 
@@ -35,14 +45,24 @@ export class RequestContextModule {
    * Configures and returns the dynamic module providing `RequestContextService`
    * and mounting the request-phase lifecycle hook.
    *
+   * Repeated calls for the same normalized header return the first registration;
+   * its generator and echo policy win. Use one request-context registration per
+   * application: a second header would create a second storage that no single
+   * `RequestContextService` token could disambiguate.
+   *
    * @param options - Configuration for request ID header name, generator, and echo policy.
    * @returns The dynamic module to import into the application's root module.
    */
   static forRoot(options: RequestContextModuleOptions = {}): DynamicModule {
+    const headerName = (options.header ?? "x-request-id").toLowerCase();
+    const existing = requestContextModules.get(headerName);
+    if (existing !== undefined) {
+      return existing;
+    }
+
     const storage = new AsyncLocalStorage<RequestContext>();
     const service = new RequestContextService(storage);
 
-    const headerName = (options.header ?? "x-request-id").toLowerCase();
     const generate = options.generate ?? randomUUID;
     const echo = options.echo !== false;
 
@@ -60,10 +80,10 @@ export class RequestContextModule {
       },
     );
 
-    return Object.freeze({
+    const dynamicModule = Object.freeze({
       module: RequestContextModule,
       id: REQUEST_CONTEXT_MODULE_ID,
-      instanceId: Symbol(REQUEST_CONTEXT_MODULE_ID),
+      instanceId: Symbol.for(`${REQUEST_CONTEXT_MODULE_ID}:${headerName}`),
       imports: Object.freeze([]),
       controllers: Object.freeze([]),
       providers: Object.freeze([
@@ -72,5 +92,7 @@ export class RequestContextModule {
       ]),
       exports: Object.freeze([RequestContextService]),
     });
+    requestContextModules.set(headerName, dynamicModule);
+    return dynamicModule;
   }
 }

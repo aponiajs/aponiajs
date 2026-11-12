@@ -79,14 +79,18 @@ export function metricsPlugin(options: MetricsPluginOptions = {}): Elysia {
     .onError((context) => {
       record(context, errorStatus(context.error, context.set?.status));
     })
-    .get(
-      path,
-      () =>
-        new Response(registry.render(), {
-          status: 200,
-          headers: { "content-type": metricsContentType, "cache-control": "no-store" },
-        }),
-    ) as unknown as Elysia;
+    .get(path, async (context) => {
+      if (options.authorize !== undefined && !(await options.authorize(context.request))) {
+        return new Response(null, {
+          status: 401,
+          headers: { "cache-control": "no-store" },
+        });
+      }
+      return new Response(registry.render(), {
+        status: 200,
+        headers: { "content-type": metricsContentType, "cache-control": "no-store" },
+      });
+    }) as unknown as Elysia;
 }
 
 function routeOf(context: MetricContext): string {
@@ -96,11 +100,7 @@ function routeOf(context: MetricContext): string {
   if (typeof context.path === "string" && context.path !== "") {
     return context.path;
   }
-  try {
-    return new URL(context.request.url).pathname;
-  } catch {
-    return "/";
-  }
+  return "unmatched";
 }
 
 function successStatus(responseValue: unknown, status: number | string | undefined): number {

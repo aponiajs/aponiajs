@@ -10,6 +10,7 @@ import {
   type InjectionDependency,
   type ModuleDefinition,
   type Provider,
+  type ProviderScope,
   type Token,
 } from "@aponiajs/common";
 import { getProviderDependencies } from "../graph/dependencies.ts";
@@ -38,6 +39,10 @@ export class AponiaContainer {
   readonly #controllers = new Map<ModuleDefinition, Map<ControllerDefinition, unknown>>();
   readonly #resolving: ProviderLocation[] = [];
   readonly #requestInstances = new WeakMap<object, Map<ModuleDefinition, Map<Provider, unknown>>>();
+  readonly #requestControllers = new WeakMap<
+    object,
+    Map<ModuleDefinition, Map<ControllerDefinition, unknown>>
+  >();
   #contextAccessor?: RequestContextAccessor;
 
   constructor(graph: ModuleGraph) {
@@ -51,6 +56,70 @@ export class AponiaContainer {
    */
   setRequestContextAccessor(accessor: RequestContextAccessor | undefined): void {
     this.#contextAccessor = accessor;
+  }
+
+  /**
+   * The lifetime a provider is instantiated with.
+   *
+   * A declared scope wins, except that a provider declaring `"singleton"` (or
+   * nothing) whose dependencies reach request-scoped state is instantiated per
+   * request instead: the scope bubbles outward along the injection chain, so a
+   * controller or service that depends on request state is built with the
+   * request that asks for it rather than being refused.
+   *
+   * @param module - The module the provider is declared in.
+   * @param provider - The provider to inspect.
+   * @returns The lifetime the container uses.
+   *
+   * @internal
+   */
+  providerScope(module: ModuleDefinition, provider: Provider): ProviderScope {
+    const declared = provider.scope ?? "singleton";
+    if (declared !== "singleton") {
+      return declared;
+    }
+    return this.graph.requiresRequestContext(module, provider) ? "request" : "singleton";
+  }
+
+  /**
+   * The lifetime a controller is instantiated with.
+   *
+   * A controller is request-scoped when it declares `"request"` or depends on
+   * anything that needs a request context.
+   *
+   * @param module - The module the controller is declared in.
+   * @param controller - The controller to inspect.
+   * @returns `"request"` or `"singleton"`.
+   *
+   * @internal
+   */
+  controllerScope(
+    module: ModuleDefinition,
+    controller: ControllerDefinition,
+  ): Exclude<ProviderScope, "transient"> {
+    if (controller.scope === "request") {
+      return "request";
+    }
+    for (const dependency of controller.inject) {
+      const optional = isOptionalInjection(dependency);
+      const token = resolveForwardRef(optional ? dependency.token : dependency);
+      if (token === ModuleRef) {
+        continue;
+      }
+      let location: ProviderLocation;
+      try {
+        location = this.graph.locate(module, token);
+      } catch (error) {
+        if (optional && error instanceof AponiaError && error.code === "MISSING_PROVIDER") {
+          continue;
+        }
+        throw error;
+      }
+      if (this.providerScope(location.module, location.provider) === "request") {
+        return "request";
+      }
+    }
+    return "singleton";
   }
 
   /**
@@ -96,21 +165,66 @@ export class AponiaContainer {
   /**
    * Eagerly instantiates every singleton provider a module declares.
    *
-   * Providers declaring `"request"` or `"transient"` scope are deferred.
+   * Providers whose lifetime is `"request"` or `"transient"` are deferred, and
+   * so is a provider whose dependencies bubble its lifetime to `"request"`.
    *
    * @param module - The module whose providers to instantiate.
    */
   initializeModule(module: ModuleDefinition): void {
     for (const provider of module.providers) {
       assertSupportedScope(provider);
-      if (provider.scope === "request" || provider.scope === "transient") {
+      if (this.providerScope(module, provider) !== "singleton") {
         continue;
       }
       this.#resolve({ module, provider });
     }
   }
 
-  instantiateController<T>(module: ModuleDefinition, controller: ControllerDefinition): T {
+  /**
+   * Constructs a controller, reusing its cached instance.
+   *
+   * A request-scoped controller has one instance per request context: the
+   * caller passes the context, or the ambient accessor supplies it, and a
+   * construction outside any request fails with `MISSING_REQUEST_CONTEXT`.
+   *
+   * @param module - The module the controller is declared in.
+   * @param controller - The controller descriptor to construct.
+   * @param context - Optional request context object for a request-scoped controller.
+   * @returns The controller instance for this lifetime.
+   */
+  instantiateController<T>(
+    module: ModuleDefinition,
+    controller: ControllerDefinition,
+    context?: object,
+  ): T {
+    if (this.controllerScope(module, controller) === "request") {
+      const activeContext = context ?? this.#contextAccessor?.();
+      if (!activeContext) {
+        throw new AponiaError(
+          "MISSING_REQUEST_CONTEXT",
+          `Cannot construct request-scoped controller "${getTokenName(controller.token)}" outside of an active request context.`,
+          { module: module.id, token: getTokenName(controller.token) },
+        );
+      }
+
+      let contextModules = this.#requestControllers.get(activeContext);
+      const cachedInstance = contextModules?.get(module)?.get(controller);
+      if (cachedInstance !== undefined) {
+        return cachedInstance as T;
+      }
+
+      const dependencies = controller.inject.map((dependency) =>
+        this.#resolveDependency(module, dependency, activeContext),
+      );
+      const instance = Reflect.construct(controller.useClass, dependencies) as T;
+      if (!contextModules) {
+        contextModules = new Map();
+        this.#requestControllers.set(activeContext, contextModules);
+      }
+      this.#moduleCache(contextModules, module).set(controller, instance);
+      return instance;
+    }
+
     const moduleControllers = this.#controllers.get(module);
     if (moduleControllers?.has(controller)) {
       return moduleControllers.get(controller) as T;
@@ -127,9 +241,10 @@ export class AponiaContainer {
   #resolve(location: ProviderLocation, context?: object): unknown {
     assertSupportedScope(location.provider);
 
+    const scope = this.providerScope(location.module, location.provider);
     const activeContext = context ?? this.#contextAccessor?.();
 
-    if (location.provider.scope === "request") {
+    if (scope === "request") {
       if (!activeContext) {
         throw new AponiaError(
           "MISSING_REQUEST_CONTEXT",
@@ -148,7 +263,7 @@ export class AponiaContainer {
           return moduleInstances.get(location.provider);
         }
       }
-    } else if (location.provider.scope !== "transient") {
+    } else if (scope !== "transient") {
       const moduleInstances = this.#instances.get(location.module);
       if (moduleInstances?.has(location.provider)) {
         return moduleInstances.get(location.provider);
@@ -176,7 +291,7 @@ export class AponiaContainer {
       );
       const instance = instantiate(location.provider, dependencies);
 
-      if (location.provider.scope === "request") {
+      if (scope === "request") {
         let contextModules = this.#requestInstances.get(activeContext!);
         if (!contextModules) {
           contextModules = new Map();
@@ -188,7 +303,7 @@ export class AponiaContainer {
           contextModules.set(location.module, moduleInstances);
         }
         moduleInstances.set(location.provider, instance);
-      } else if (location.provider.scope !== "transient") {
+      } else if (scope !== "transient") {
         this.#moduleCache(this.#instances, location.module).set(location.provider, instance);
       }
 

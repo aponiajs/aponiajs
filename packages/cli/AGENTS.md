@@ -410,8 +410,9 @@ separate focused modules. `src/index.ts` is the only public barrel.
   it; keep the two in step by hand.
 - A declaration the analysis cannot read statically is reported, never dropped: a
   module whose options are not an object literal, a collection that is not an
-  array literal, a spread or computed key, a token that is neither a reference
-  nor a `createToken(...)` call, a gateway path built at run time, a gateway
+  array literal, a spread or computed key, a token that is not a reference, a
+  string literal, a `Symbol.for(...)` call, or a `createToken(...)` call, a
+  gateway path built at run time, a gateway
   event or message property that is not a string literal, a member whose name is
   not a plain property key, a class whose constructor dependencies come from a
   base class in another file. A class declaration's `unreadable` list repeats the

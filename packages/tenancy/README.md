@@ -3,7 +3,7 @@
 Request-scoped multi-tenancy for AponiaJS.
 
 ```bash
-bun add @aponiajs/tenancy@beta
+bun add @aponiajs/tenancy@alpha
 ```
 
 ```ts
@@ -29,14 +29,17 @@ export class UsersController {
 
 ## Behavior
 
-- `TenantGuard` reads the configured header or a custom `resolver`.
+- `TenantGuard` resolves from a `resolver`, a verified `principal` claim, then an
+  explicitly configured `header`, in that order.
+- A registration must provide at least one source; otherwise it fails with
+  `INVALID_TENANCY_OPTIONS`.
+- The header is opt-in and is selection, not authorization; bind the tenant to a
+  verified principal when the application authenticates requests.
 - A missing tenant answers `400` when `required` is true (the default).
 - A tenant id must match the configured safe pattern; the default accepts 1-128
   characters from `A-Za-z0-9._:-`.
 - `TenantService.current()` reads the request tenant; `require()` fails with
-  `MISSING_TENANT` when none is selected.
-- The resolver runs before the header, so an application can derive a tenant
-  from an authenticated JWT claim.
+  `MISSING_TENANT` when none is selected, and the default boundary answers `400`.
 
 The package resolves a tenant identifier. It does not store tenants, scope a
 database connection, or enforce repository filters; those are application or

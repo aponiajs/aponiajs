@@ -64,4 +64,14 @@ export type OpentelemetryModuleOptions = Readonly<OpentelemetryRuntimeOptions> &
    * applied. One registration per process is the supported shape.
    */
   readonly key?: string;
+  /**
+   * The application-owned SDK handle, flushed and shut down when the
+   * application closes. The wrapped plugin constructs its `NodeSDK` itself and
+   * keeps it to itself; an application that constructs and starts its own SDK
+   * passes the handle here so `close()` can flush buffered spans.
+   */
+  readonly sdk?: {
+    forceFlush?(): void | Promise<void>;
+    shutdown?(): void | Promise<void>;
+  };
 };

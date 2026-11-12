@@ -1,5 +1,5 @@
 import type { CacheStore } from "@aponiajs/cache";
-import { resolveRedisStoreOptions } from "../common/redis-common.ts";
+import { deleteByPattern, resolveRedisStoreOptions } from "../common/redis-common.ts";
 import type { RedisClientInterface, RedisStoreOptions } from "../common/redis.types.ts";
 
 /**
@@ -43,11 +43,7 @@ export class RedisCacheStore implements CacheStore {
   }
 
   async clear(): Promise<void> {
-    const pattern = `${this.#prefix}*`;
-    const keys = await this.#client.keys(pattern);
-    if (keys.length > 0) {
-      await this.#client.del(keys);
-    }
+    await deleteByPattern(this.#client, `${this.#prefix}*`);
   }
 
   #key(key: string): string {

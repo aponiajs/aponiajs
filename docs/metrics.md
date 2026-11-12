@@ -16,6 +16,11 @@ const application = await AponiaFactory.create(AppModule, {
 `GET /metrics` answers the Prometheus text format and is excluded from the
 instrumentation, so a scrape never changes the numbers it reports.
 
+Pass `authorize` to protect the scrape: it runs before rendering, and a `false`
+answer is a `401` with `cache-control: no-store`. Use it when the application's
+port is reachable from a network that should not read its route inventory,
+traffic volume, or memory use.
+
 ## Recorded metrics
 
 | Metric                          | Type      | Labels                      |

@@ -1,5 +1,5 @@
 import type { Session, SessionStore } from "@aponiajs/session";
-import { resolveRedisStoreOptions } from "../common/redis-common.ts";
+import { deleteByPattern, resolveRedisStoreOptions } from "../common/redis-common.ts";
 import type { RedisClientInterface, RedisStoreOptions } from "../common/redis.types.ts";
 
 /**
@@ -48,10 +48,7 @@ export class RedisSessionStore implements SessionStore {
   }
 
   async clear(): Promise<void> {
-    const keys = await this.#client.keys(`${this.#prefix}*`);
-    if (keys.length > 0) {
-      await this.#client.del(keys);
-    }
+    await deleteByPattern(this.#client, `${this.#prefix}*`);
   }
 
   #key(id: string): string {

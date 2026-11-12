@@ -12,6 +12,7 @@ import {
   type ExecutionContext,
 } from "@aponiajs/common";
 import { AponiaFactory } from "../src/application/aponia-factory.ts";
+import type { AponiaApplication } from "../src/application/aponia-elysia-application.ts";
 import { RequestContextModule } from "../src/request-context/request-context-module.ts";
 import { RequestContextService } from "../src/request-context/request-context.service.ts";
 import type { RequestContext } from "../src/request-context/request-context.types.ts";
@@ -168,6 +169,51 @@ describe("RequestContextModule integration", () => {
     expect(dynamicModule.providers).toHaveLength(2);
   });
 
+  test("repeated forRoot() calls for one header return the same registration", () => {
+    const first = RequestContextModule.forRoot();
+    const second = RequestContextModule.forRoot();
+
+    expect(second).toBe(first);
+    expect(first.instanceId).toBe(Symbol.for("AponiaRequestContextModule:x-request-id"));
+  });
+
+  test("the ambient accessor finds a request-context service hidden behind an inner module", async () => {
+    @Module({
+      imports: [RequestContextModule.forRoot()],
+      providers: [RequestScopedIdService],
+      exports: [RequestScopedIdService],
+    })
+    class InnerModule {}
+
+    let applicationRef: AponiaApplication | undefined;
+    let requestId: string | undefined;
+
+    @Controller("hidden-context")
+    class HiddenContextController {
+      @Get()
+      read(): string {
+        requestId = applicationRef!.get(RequestScopedIdService).getRequestId();
+        return "ok";
+      }
+    }
+
+    @Module({ imports: [InnerModule], controllers: [HiddenContextController] })
+    class HiddenContextRootModule {}
+
+    const app = await AponiaFactory.create(HiddenContextRootModule, { logger: false });
+    applicationRef = app;
+
+    const response = await app.handle(
+      new Request("http://localhost/hidden-context", {
+        headers: { "x-request-id": "hidden-context-id" },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(requestId).toBe("hidden-context-id");
+    await app.close();
+  });
+
   test("reach: context is accessible deep in the call stack across guards, services, and repositories", async () => {
     const requestContext = RequestContextModule.forRoot();
 
@@ -313,7 +359,12 @@ describe("RequestContextModule integration", () => {
   });
 
   test("options.echo: false suppresses the response header while keeping context active", async () => {
-    const requestContext = RequestContextModule.forRoot({ echo: false });
+    // A distinct header keeps this registration independent of the default one
+    // other cases in this file already cached.
+    const requestContext = RequestContextModule.forRoot({
+      header: "x-no-echo-id",
+      echo: false,
+    });
 
     @Module({
       imports: [requestContext],
@@ -325,12 +376,12 @@ describe("RequestContextModule integration", () => {
     const app = await AponiaFactory.create(AppModule, { logger: false });
     const response = await app.handle(
       new Request("http://localhost/orders/reach", {
-        headers: { "x-request-id": "no-echo-id" },
+        headers: { "x-no-echo-id": "no-echo-id" },
       }),
     );
 
     expect(response.status).toBe(200);
-    expect(response.headers.get("x-request-id")).toBeNull();
+    expect(response.headers.get("x-no-echo-id")).toBeNull();
 
     const body = (await response.json()) as { requestId: string };
     expect(body.requestId).toBe("no-echo-id");
@@ -421,7 +472,7 @@ describe("RequestContextModule integration", () => {
     expect(captured1A).toBeDefined();
     expect(captured1A).toBe(captured1B);
     expect(captured1A).not.toBe(captured2);
-    expect(captured1A!.idService.instanceId).toBe(1);
-    expect(captured2!.idService.instanceId).toBe(2);
+    expect(captured1A!.idService.instanceId).toBe(captured1B!.idService.instanceId);
+    expect(captured1A!.idService.instanceId).not.toBe(captured2!.idService.instanceId);
   });
 });

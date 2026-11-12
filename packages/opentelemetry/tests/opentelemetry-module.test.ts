@@ -603,6 +603,7 @@ test("a second registration is inert: the first one owns the process", async () 
 
 test("shuts the declared span processors down when the application closes", async () => {
   const stops: string[] = [];
+  const sdkStops: string[] = [];
   // A real `SpanProcessor`, so the shape handed to `register` is the shape the
   // wrapped plugin declares: `shutdown` and `forceFlush` answer promises.
   const stub = {
@@ -611,7 +612,17 @@ test("shuts the declared span processors down when the application closes", asyn
     async shutdown(): Promise<void> {
       stops.push("shutdown");
     },
-    async forceFlush(): Promise<void> {},
+    async forceFlush(): Promise<void> {
+      stops.push("flush");
+    },
+  };
+  const sdk = {
+    async forceFlush(): Promise<void> {
+      sdkStops.push("sdk-flush");
+    },
+    async shutdown(): Promise<void> {
+      sdkStops.push("sdk-shutdown");
+    },
   };
 
   const Stub = defineConfiguration(
@@ -627,6 +638,7 @@ test("shuts the declared span processors down when the application closes", asyn
         configuration: Stub,
         source: {},
         spanProcessors: [stub],
+        sdk,
       }),
     ],
   })
@@ -638,12 +650,15 @@ test("shuts the declared span processors down when the application closes", asyn
   // runs reaches it. What the module graph can still stop is the processors the
   // application declared, and this is the hook that stops them.
   expect(stops).toEqual([]);
+  expect(sdkStops).toEqual([]);
   await third.close();
-  expect(stops).toEqual(["shutdown"]);
+  expect(stops).toEqual(["flush", "shutdown"]);
+  expect(sdkStops).toEqual(["sdk-flush", "sdk-shutdown"]);
 
   // Idempotent: a second close stops nothing a second time.
   await third.close();
-  expect(stops).toEqual(["shutdown"]);
+  expect(stops).toEqual(["flush", "shutdown"]);
+  expect(sdkStops).toEqual(["sdk-flush", "sdk-shutdown"]);
 });
 
 test("refuses two registrations that share a key", async () => {

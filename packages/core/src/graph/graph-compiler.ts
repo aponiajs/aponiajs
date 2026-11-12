@@ -15,7 +15,7 @@ import { ModuleGraph } from "./module-graph.ts";
  * Compiles the module graph from a root definition, validating eagerly before
  * any instance exists.
  *
- * Identity is `instanceId ?? id`; cycles, duplicate tokens, unexported
+ * Identity is `instanceId ?? moduleIdentity ?? id`; cycles, duplicate tokens, unexported
  * exports, and unresolvable dependencies all fail here with their codes.
  *
  * @param root - The root module definition the walk starts from.
@@ -39,7 +39,7 @@ export function compileModuleGraph(
   const visited = new Set<ModuleDefinition>();
 
   const visit = (module: ModuleDefinition): void => {
-    const identity = module.instanceId ?? module.id;
+    const identity = module.instanceId ?? module.moduleIdentity ?? module.id;
     const registered = modulesByIdentity.get(identity);
     if (registered && registered !== module) {
       throw new AponiaError(
@@ -136,36 +136,29 @@ function validateExports(graph: ModuleGraph): void {
   }
 }
 
+/**
+ * Checks every provider dependency resolves, and that a controller declares no
+ * lifetime the container cannot honor.
+ *
+ * A request-scoped dependency is not a failure: the scope bubbles outward, so a
+ * provider or controller that reaches one is itself constructed per request.
+ * That decision is made while resolving, by
+ * {@link ModuleGraph.requiresRequestContext}, rather than by rewriting the
+ * frozen descriptors here.
+ */
 function validateDependencies(graph: ModuleGraph): void {
   for (const module of graph.modules) {
     for (const provider of module.providers) {
-      const providerScope = provider.scope ?? "singleton";
       for (const dependency of getProviderDependencies(provider)) {
         const optional = isOptionalInjection(dependency);
         const token = optional ? dependency.token : dependency;
-        let location: ReturnType<typeof graph.locate>;
         try {
-          location = graph.locate(module, resolveForwardRef(token));
+          graph.locate(module, resolveForwardRef(token));
         } catch (error) {
           if (optional && error instanceof AponiaError && error.code === "MISSING_PROVIDER") {
             continue;
           }
           throw error;
-        }
-        const dependencyScope = location.provider.scope ?? "singleton";
-
-        if (providerScope === "singleton" && dependencyScope === "request") {
-          throw new AponiaError(
-            "INVALID_SCOPE_HIERARCHY",
-            `Singleton provider "${getTokenName(provider.provide)}" in module "${module.id}" cannot depend on request-scoped provider "${getTokenName(location.provider.provide)}" in module "${location.module.id}".`,
-            {
-              module: module.id,
-              provider: getTokenName(provider.provide),
-              providerScope,
-              dependency: getTokenName(location.provider.provide),
-              dependencyScope,
-            },
-          );
         }
       }
     }
@@ -185,30 +178,32 @@ function validateControllers(graph: ModuleGraph): void {
       }
       controllerTokens.add(controller.token);
 
+      if (
+        controller.scope !== undefined &&
+        controller.scope !== "singleton" &&
+        controller.scope !== "request"
+      ) {
+        throw new AponiaError(
+          "INVALID_CONTROLLER",
+          `Controller "${getTokenName(controller.token)}" in module "${module.id}" declares scope "${controller.scope}"; a controller is either singleton or request-scoped.`,
+          {
+            module: module.id,
+            controller: getTokenName(controller.token),
+            scope: controller.scope,
+          },
+        );
+      }
+
       for (const dependency of controller.inject) {
         const optional = isOptionalInjection(dependency);
         const token = optional ? dependency.token : dependency;
-        let location: ReturnType<typeof graph.locate>;
         try {
-          location = graph.locate(module, resolveForwardRef(token));
+          graph.locate(module, resolveForwardRef(token));
         } catch (error) {
           if (optional && error instanceof AponiaError && error.code === "MISSING_PROVIDER") {
             continue;
           }
           throw error;
-        }
-        const dependencyScope = location.provider.scope ?? "singleton";
-        if (dependencyScope === "request") {
-          throw new AponiaError(
-            "INVALID_SCOPE_HIERARCHY",
-            `Singleton controller "${getTokenName(controller.token)}" in module "${module.id}" cannot depend on request-scoped provider "${getTokenName(location.provider.provide)}" in module "${location.module.id}".`,
-            {
-              module: module.id,
-              controller: getTokenName(controller.token),
-              dependency: getTokenName(location.provider.provide),
-              dependencyScope,
-            },
-          );
         }
       }
     }

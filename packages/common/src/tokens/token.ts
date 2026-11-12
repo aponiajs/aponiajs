@@ -64,6 +64,12 @@ export function isOptionalInjection(dependency: unknown): dependency is Optional
 export function getTokenName(token: InjectionDependency): string {
   const dependency = isOptionalInjection(token) ? token.token : token;
   const unwrapped = resolveForwardRef(dependency);
+  if (typeof unwrapped === "string") {
+    return unwrapped;
+  }
+  if (typeof unwrapped === "symbol") {
+    return unwrapped.description ?? String(unwrapped);
+  }
   if (typeof unwrapped === "function") {
     return unwrapped.name || "<anonymous class>";
   }

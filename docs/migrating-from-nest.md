@@ -37,6 +37,11 @@ cycle fails the boot instead of the first request. The same descriptors can be
 written by hand with `defineModule` and `defineController`, which is what makes
 generated code and decorator code equal at runtime.
 
+A `forRoot()`-style registration returns `dynamicModule({ module, providers })`.
+The helper derives `id` from the class name and a fresh `instanceId`, so a
+Nest-shaped registration does not have to state the two Aponia-only identity
+fields; passing either one still overrides the derivation.
+
 ## What maps directly
 
 `@Module`, `@Controller`, `@Injectable`, `@Inject`, `@UseGuards`,
@@ -50,6 +55,11 @@ their names and meaning. The lifecycle interfaces keep theirs too:
 `emitDecoratorMetadata` records constructor types. Providers are resolved by
 token, and a provider that is not exported from its module is invisible to an
 importer — the same visibility rule Nest enforces.
+
+Provider object literals keep their Nest shape: `{ provide, useClass, useValue,
+useFactory, useExisting, inject? }` is accepted and lowered to the canonical
+provider. A decorated `useClass` without `inject` infers its constructor
+dependencies; a descriptor written by hand states `inject`.
 
 ## What changes
 

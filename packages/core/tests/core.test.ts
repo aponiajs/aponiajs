@@ -3,6 +3,7 @@ import {
   AponiaError,
   createToken,
   defineModule,
+  getTokenName,
   provideAlias,
   provideClass,
   provideFactory,
@@ -13,6 +14,25 @@ import {
 import { compileModuleGraph, createContainer } from "../src/index.ts";
 
 describe("@aponiajs/core module graph", () => {
+  test("resolves Nest-style string and symbol tokens", () => {
+    const symbolToken = Symbol("config.symbol");
+    const module = defineModule({
+      id: "tokens",
+      providers: [
+        provideValue("CONFIG_VALUE", "from-string"),
+        provideValue(symbolToken, "from-symbol"),
+      ],
+      exports: ["CONFIG_VALUE", symbolToken],
+    });
+
+    const container = createContainer(module);
+
+    expect(container.get("CONFIG_VALUE")).toBe("from-string");
+    expect(container.get(symbolToken)).toBe("from-symbol");
+    expect(getTokenName("CONFIG_VALUE")).toBe("CONFIG_VALUE");
+    expect(getTokenName(symbolToken)).toBe("config.symbol");
+  });
+
   test("compiles imports in deterministic dependency order", () => {
     const value = createToken<number>("value");
     const leaf = defineModule({

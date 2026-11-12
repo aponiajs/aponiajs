@@ -3,7 +3,7 @@
 Signed session cookies and a bounded session store for AponiaJS.
 
 ```bash
-bun add @aponiajs/session@beta
+bun add @aponiajs/session@alpha
 ```
 
 ## Use it

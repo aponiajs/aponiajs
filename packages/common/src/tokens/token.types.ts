@@ -22,8 +22,14 @@ export interface InjectionToken<T> {
   readonly [tokenType]?: T;
 }
 
-/** Anything the container resolves by: a class, or an explicit token. */
-export type Token<T> = ClassToken<T> | InjectionToken<T>;
+/**
+ * Anything the container resolves by: a class, an explicit token, or a
+ * Nest-style string/symbol token.
+ *
+ * A bare string resolves to `unknown` because it carries no value type; prefer
+ * `createToken` or a class when the type matters.
+ */
+export type Token<T> = string | symbol | ClassToken<T> | InjectionToken<T>;
 
 /** A dependency whose absence resolves to `undefined` instead of failing the boot. */
 export interface OptionalInjection<T = unknown> {

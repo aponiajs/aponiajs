@@ -66,6 +66,30 @@ test("rejects empty and whitespace-only stable keys", () => {
   );
 });
 
+test("carries global: true from a dynamic registration", () => {
+  const definition = compileRootModule({
+    module: DynamicTestModule,
+    id: "DynamicTestModule",
+    instanceId: Symbol("DynamicTestModule"),
+    global: true,
+  });
+
+  expect(definition.global).toBe(true);
+});
+
+test("accepts an undecorated class in a dynamic registration", () => {
+  class UndecoratedModule {}
+
+  const definition = compileRootModule({
+    module: UndecoratedModule,
+    id: "UndecoratedModule",
+    instanceId: Symbol("UndecoratedModule"),
+  });
+
+  expect(definition.id).toBe("UndecoratedModule");
+  expect(definition.providers).toEqual([]);
+});
+
 function createDynamicModule(id: string, imports: readonly ModuleImport[]): DynamicModule {
   return {
     module: DynamicTestModule,

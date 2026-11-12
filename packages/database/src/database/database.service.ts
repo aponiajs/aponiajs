@@ -2,7 +2,9 @@ import { AponiaError, type OnModuleInit } from "@aponiajs/common";
 import { MemoryMigrationStore } from "../migration/memory-migration-store.ts";
 import { MigrationRunner } from "../migration/migration-runner.ts";
 import type {
+  MigrationExecutor,
   MigrationFile,
+  MigrationLock,
   MigrationResult,
   MigrationStore,
 } from "../migration/migration.types.ts";
@@ -18,7 +20,11 @@ import type { DatabaseClient, DatabaseTransaction } from "./database.types.ts";
 export class DatabaseService<TDatabase extends object = object> implements OnModuleInit {
   readonly #client: TDatabase;
   readonly #migrations:
-    | { readonly files: readonly MigrationFile[]; readonly store: MigrationStore }
+    | {
+        readonly files: readonly MigrationFile[];
+        readonly store: MigrationStore;
+        readonly lock: MigrationLock | undefined;
+      }
     | undefined;
 
   /** @internal Construct through `DatabaseModule.register`. */
@@ -27,6 +33,7 @@ export class DatabaseService<TDatabase extends object = object> implements OnMod
     readonly migrations?: {
       readonly files: readonly MigrationFile[];
       readonly store?: MigrationStore;
+      readonly lock?: MigrationLock;
     };
   }) {
     if (typeof options.database !== "object" || options.database === null) {
@@ -41,6 +48,7 @@ export class DatabaseService<TDatabase extends object = object> implements OnMod
         : Object.freeze({
             files: Object.freeze([...options.migrations.files]),
             store: options.migrations.store ?? new MemoryMigrationStore(),
+            lock: options.migrations.lock,
           });
   }
 
@@ -109,7 +117,17 @@ export class DatabaseService<TDatabase extends object = object> implements OnMod
       return Object.freeze({ applied: Object.freeze([]), skipped: Object.freeze([]) });
     }
     const runner = new MigrationRunner(this.#migrations.store);
-    return await runner.run(this, this.#migrations.files);
+    const executor: MigrationExecutor = {
+      execute: (query) => this.execute(query),
+      transaction: <T>(run: (inner: MigrationExecutor) => T | PromiseLike<T>) =>
+        this.transaction(
+          async (transaction) =>
+            await run({
+              execute: (query) => transaction.execute(query),
+            }),
+        ),
+    };
+    return await runner.run(executor, this.#migrations.files, this.#migrations.lock);
   }
 
   /** @internal The module init hook applies declared migrations before handlers run. */

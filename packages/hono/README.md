@@ -3,7 +3,7 @@
 Delivery adapter for Hono.
 
 ```bash
-bun add @aponiajs/hono@beta
+bun add @aponiajs/hono@alpha
 ```
 
 ## Use it

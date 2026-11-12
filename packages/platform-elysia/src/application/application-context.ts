@@ -1,6 +1,9 @@
 import {
+  AponiaError,
   LOGGER,
   NOOP_LOGGER,
+  getMessagePatternMetadata,
+  getTokenName,
   notifySystemLogger,
   provideValue,
   type LoggerService,
@@ -95,6 +98,18 @@ export class AponiaApplicationContext {
     if (options.microservices !== undefined && options.microservices.length > 0) {
       for (const module of container.graph.modules) {
         for (const controller of module.controllers) {
+          // A message handler closes over one controller instance, and a worker
+          // context has no request to construct a request-scoped one from.
+          if (container.controllerScope(module, controller) === "request") {
+            if (getMessagePatternMetadata(controller.useClass.prototype).size > 0) {
+              throw new AponiaError(
+                "INVALID_CONTROLLER",
+                `Request-scoped controller "${getTokenName(controller.token)}" declares message patterns, which run outside any request context.`,
+                { module: module.id, controller: getTokenName(controller.token) },
+              );
+            }
+            continue;
+          }
           collectMessageHandlers(
             messageHandlers,
             controller,

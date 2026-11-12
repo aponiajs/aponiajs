@@ -109,14 +109,26 @@ AuthModule.register({
 
 `RefreshTokenService` issues opaque refresh tokens and stores only their
 SHA-256 digest. Rotating a token consumes it and issues a replacement in the
-same rotation family, so replaying a used token answers `INVALID_REFRESH_TOKEN`.
-`revoke(token)` removes one token and `revokeFamily(familyId)` removes every
-token descended from one login.
+same rotation family, so replaying a used token answers `INVALID_REFRESH_TOKEN`
+and revokes the whole family (OAuth reuse detection). `revoke(token)` removes
+one token and `revokeFamily(familyId)` removes every token descended from one
+login.
+
+Consumption is atomic when the store implements the optional
+`consume(idHash)` operation; the built-in memory and Redis stores do. A custom
+store without it falls back to `find` + `delete`, which still lets exactly one
+concurrent rotation win but cannot detect reuse after the record is gone.
 
 `RevocationService.isRevoked(jti)` is checked by `AuthGuard` for any verified
 access token that carries a `jti` claim. Revoke one with
 `revocation.revoke(jti, expiresAt)`: the entry is dropped once that expiry
 passes.
+
+`JwtService.sign()` mints a `jti` when the caller did not supply a non-empty
+string, so a token the framework issued can be revoked. A caller-supplied `jti`
+is preserved. A token minted elsewhere without a `jti` is accepted but cannot be
+revocation-checked; if the application requires revocation for every token, mint
+tokens through `JwtService` or reject tokens without a `jti` in its own verifier.
 
 Both defaults are process-local and bounded. A multi-instance deployment passes
 its own store instead:

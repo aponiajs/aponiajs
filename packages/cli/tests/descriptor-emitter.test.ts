@@ -303,6 +303,32 @@ export class UsersModule {}
     expect(emitted.source).toContain('import { API_KEY } from "./tokens.ts";');
   });
 
+  test("writes a string or Symbol.for() token as the expression a generated module reproduces", () => {
+    const emitted = emit({
+      "config.service.ts": `import { Inject, Injectable } from "@aponiajs/common";
+
+@Injectable()
+export class ConfigService {
+  constructor(
+    @Inject("CONFIG_VALUE") private readonly value: string,
+    @Inject(Symbol.for("app.clock")) private readonly clock: Clock,
+  ) {}
+}
+`,
+      "config.module.ts": `import { Module } from "@aponiajs/common";
+import { ConfigService } from "./config.service.ts";
+
+@Module({ providers: [ConfigService] })
+export class ConfigModule {}
+`,
+    });
+
+    expect(emitted.declined).toEqual([]);
+    expect(emitted.source).toContain(
+      'provideClass(ConfigService, ["CONFIG_VALUE", Symbol.for("app.clock")]),',
+    );
+  });
+
   test("imports a validator from the bare specifier the application imported it from", () => {
     const emitted = emit({
       "items.controller.ts": `import { Body, Controller, Post } from "@aponiajs/common";

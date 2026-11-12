@@ -4,7 +4,7 @@ AponiaJS uses a synchronized version for every workspace package. Releases
 follow [Semantic Versioning 2.0.0](https://semver.org), with
 [bumpp](https://github.com/antfu/bumpp) managing version changes.
 
-The release workflow publishes the twenty-three usable workspace packages in dependency
+The release workflow publishes the thirty-four usable workspace packages in dependency
 order:
 
 1. `@aponiajs/common`
@@ -39,6 +39,8 @@ order:
 30. `@aponiajs/h3`
 31. `@aponiajs/hono`
 32. `@aponiajs/nitro`
+33. `@aponiajs/store-redis`
+34. `@aponiajs/view`
 
 The `aponiajs` facade remains private until it exports the public framework API.
 
@@ -91,7 +93,7 @@ Rules enforced by `bun run release:verify` and the publish workflow:
 - `canary` never receives the `next` alias and is never promoted to another tag.
   Promote by cutting a real `alpha`, `beta`, or `rc`.
 - A GitHub release for any non-`latest` tag is marked as a prerelease.
-- All twenty-three packages share one version, so all twenty-three move to the same tag together.
+- All thirty-four packages share one version, so all thirty-four move to the same tag together.
 
 ## Release Branches
 
@@ -186,7 +188,7 @@ other lanes.
 5. Merge the pull request into the matching release branch.
 6. The release workflow creates the matching `vX.Y.Z` tag and GitHub release,
    marking it as a prerelease for every non-`latest` channel.
-7. The npm publish workflow verifies, builds, packs, and publishes the twenty-three
+7. The npm publish workflow verifies, builds, packs, and publishes the thirty-four
    usable packages in dependency order under the resolved tag, then moves the
    `next` alias when the channel is `alpha`, `beta`, or `rc`.
 

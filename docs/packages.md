@@ -1,44 +1,49 @@
 # Published Packages
 
-AponiaJS publishes twenty-three public packages to the npm registry. Use the live npm
+AponiaJS publishes thirty-four public packages to the npm registry. Use the live npm
 badges and linked registry pages below as the source of truth for the latest
 published version.
 
-| Package                                                                                | Latest                                                                                                                        | Install                                                    |
-| -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| [`@aponiajs/common`](https://www.npmjs.com/package/@aponiajs/common)                   | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcommon)](https://www.npmjs.com/package/@aponiajs/common)                   | `bun add @aponiajs/common@beta`                            |
-| [`@aponiajs/core`](https://www.npmjs.com/package/@aponiajs/core)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcore)](https://www.npmjs.com/package/@aponiajs/core)                       | `bun add @aponiajs/core@beta`                              |
-| [`@aponiajs/cache`](https://www.npmjs.com/package/@aponiajs/cache)                     | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcache)](https://www.npmjs.com/package/@aponiajs/cache)                     | `bun add @aponiajs/cache@beta`                             |
-| [`@aponiajs/compression`](https://www.npmjs.com/package/@aponiajs/compression)         | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcompression)](https://www.npmjs.com/package/@aponiajs/compression)         | `bun add @aponiajs/compression@beta`                       |
-| [`@aponiajs/events`](https://www.npmjs.com/package/@aponiajs/events)                   | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fevents)](https://www.npmjs.com/package/@aponiajs/events)                   | `bun add @aponiajs/events@beta`                            |
-| [`@aponiajs/http`](https://www.npmjs.com/package/@aponiajs/http)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fhttp)](https://www.npmjs.com/package/@aponiajs/http)                       | `bun add @aponiajs/http@beta`                              |
-| [`@aponiajs/mcp`](https://www.npmjs.com/package/@aponiajs/mcp)                         | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fmcp)](https://www.npmjs.com/package/@aponiajs/mcp)                         | `bun add @aponiajs/mcp@beta`                               |
-| [`@aponiajs/rate-limit`](https://www.npmjs.com/package/@aponiajs/rate-limit)           | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Frate-limit)](https://www.npmjs.com/package/@aponiajs/rate-limit)           | `bun add @aponiajs/rate-limit@beta`                        |
-| [`@aponiajs/security`](https://www.npmjs.com/package/@aponiajs/security)               | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fsecurity)](https://www.npmjs.com/package/@aponiajs/security)               | `bun add @aponiajs/security@beta`                          |
-| [`@aponiajs/session`](https://www.npmjs.com/package/@aponiajs/session)                 | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fsession)](https://www.npmjs.com/package/@aponiajs/session)                 | `bun add @aponiajs/session@beta`                           |
-| [`@aponiajs/auth`](https://www.npmjs.com/package/@aponiajs/auth)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fauth)](https://www.npmjs.com/package/@aponiajs/auth)                       | `bun add @aponiajs/auth@beta`                              |
-| [`@aponiajs/audit`](https://www.npmjs.com/package/@aponiajs/audit)                     | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Faudit)](https://www.npmjs.com/package/@aponiajs/audit)                     | `bun add @aponiajs/audit@beta`                             |
-| [`@aponiajs/tenancy`](https://www.npmjs.com/package/@aponiajs/tenancy)                 | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Ftenancy)](https://www.npmjs.com/package/@aponiajs/tenancy)                 | `bun add @aponiajs/tenancy@beta`                           |
-| [`@aponiajs/queue`](https://www.npmjs.com/package/@aponiajs/queue)                     | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fqueue)](https://www.npmjs.com/package/@aponiajs/queue)                     | `bun add @aponiajs/queue@beta`                             |
-| [`@aponiajs/database`](https://www.npmjs.com/package/@aponiajs/database)               | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fdatabase)](https://www.npmjs.com/package/@aponiajs/database)               | `bun add @aponiajs/database@beta`                          |
-| [`@aponiajs/metrics`](https://www.npmjs.com/package/@aponiajs/metrics)                 | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fmetrics)](https://www.npmjs.com/package/@aponiajs/metrics)                 | `bun add @aponiajs/metrics@beta`                           |
-| [`@aponiajs/idempotency`](https://www.npmjs.com/package/@aponiajs/idempotency)         | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fidempotency)](https://www.npmjs.com/package/@aponiajs/idempotency)         | `bun add @aponiajs/idempotency@beta`                       |
-| [`@aponiajs/microservices`](https://www.npmjs.com/package/@aponiajs/microservices)     | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fmicroservices)](https://www.npmjs.com/package/@aponiajs/microservices)     | `bun add @aponiajs/microservices@beta`                     |
-| [`@aponiajs/store-redis`](https://www.npmjs.com/package/@aponiajs/store-redis)         | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fstore-redis)](https://www.npmjs.com/package/@aponiajs/store-redis)         | `bun add @aponiajs/store-redis@beta`                       |
-| [`@aponiajs/serverless`](https://www.npmjs.com/package/@aponiajs/serverless)           | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fserverless)](https://www.npmjs.com/package/@aponiajs/serverless)           | `bun add @aponiajs/serverless@beta`                        |
-| [`@aponiajs/h3`](https://www.npmjs.com/package/@aponiajs/h3)                           | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fh3)](https://www.npmjs.com/package/@aponiajs/h3)                           | `bun add @aponiajs/h3@beta`                                |
-| [`@aponiajs/hono`](https://www.npmjs.com/package/@aponiajs/hono)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fhono)](https://www.npmjs.com/package/@aponiajs/hono)                       | `bun add @aponiajs/hono@beta`                              |
-| [`@aponiajs/nitro`](https://www.npmjs.com/package/@aponiajs/nitro)                     | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fnitro)](https://www.npmjs.com/package/@aponiajs/nitro)                     | `bun add @aponiajs/nitro@beta`                             |
-| [`@aponiajs/platform-elysia`](https://www.npmjs.com/package/@aponiajs/platform-elysia) | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fplatform-elysia)](https://www.npmjs.com/package/@aponiajs/platform-elysia) | `bun add @aponiajs/platform-elysia@beta elysia@2.0.0-rc.4` |
-| [`@aponiajs/cli`](https://www.npmjs.com/package/@aponiajs/cli)                         | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcli)](https://www.npmjs.com/package/@aponiajs/cli)                         | `bun add --global @aponiajs/cli@beta`                      |
-| [`create-aponia`](https://www.npmjs.com/package/create-aponia)                         | [![npm](https://img.shields.io/npm/v/create-aponia)](https://www.npmjs.com/package/create-aponia)                             | `bun create aponia@beta <name>`                            |
-| [`@aponiajs/devtools`](https://www.npmjs.com/package/@aponiajs/devtools)               | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fdevtools)](https://www.npmjs.com/package/@aponiajs/devtools)               | `bun add @aponiajs/devtools@beta`                          |
-| [`@aponiajs/graphql`](https://www.npmjs.com/package/@aponiajs/graphql)                 | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fgraphql)](https://www.npmjs.com/package/@aponiajs/graphql)                 | `bun add @aponiajs/graphql@beta`                           |
-| [`@aponiajs/cron`](https://www.npmjs.com/package/@aponiajs/cron)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcron)](https://www.npmjs.com/package/@aponiajs/cron)                       | `bun add @aponiajs/cron@beta`                              |
-| [`@aponiajs/cors`](https://www.npmjs.com/package/@aponiajs/cors)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcors)](https://www.npmjs.com/package/@aponiajs/cors)                       | `bun add @aponiajs/cors@beta`                              |
-| [`@aponiajs/testing`](https://www.npmjs.com/package/@aponiajs/testing)                 | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Ftesting)](https://www.npmjs.com/package/@aponiajs/testing)                 | `bun add --dev @aponiajs/testing@beta`                     |
-| [`@aponiajs/openapi`](https://www.npmjs.com/package/@aponiajs/openapi)                 | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fopenapi)](https://www.npmjs.com/package/@aponiajs/openapi)                 | `bun add @aponiajs/openapi@beta`                           |
-| [`@aponiajs/opentelemetry`](https://www.npmjs.com/package/@aponiajs/opentelemetry)     | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fopentelemetry)](https://www.npmjs.com/package/@aponiajs/opentelemetry)     | `bun add @aponiajs/opentelemetry@beta`                     |
+`@aponiajs/view` and `@aponiajs/store-redis` are part of the unreleased
+`1.0.0-beta.N` line. They are not on npm yet, so their install commands become
+valid only after that line is published.
+
+| Package                                                                                | Latest                                                                                                                        | Install                                                     |
+| -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| [`@aponiajs/common`](https://www.npmjs.com/package/@aponiajs/common)                   | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcommon)](https://www.npmjs.com/package/@aponiajs/common)                   | `bun add @aponiajs/common@alpha`                            |
+| [`@aponiajs/core`](https://www.npmjs.com/package/@aponiajs/core)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcore)](https://www.npmjs.com/package/@aponiajs/core)                       | `bun add @aponiajs/core@alpha`                              |
+| [`@aponiajs/cache`](https://www.npmjs.com/package/@aponiajs/cache)                     | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcache)](https://www.npmjs.com/package/@aponiajs/cache)                     | `bun add @aponiajs/cache@alpha`                             |
+| [`@aponiajs/compression`](https://www.npmjs.com/package/@aponiajs/compression)         | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcompression)](https://www.npmjs.com/package/@aponiajs/compression)         | `bun add @aponiajs/compression@alpha`                       |
+| [`@aponiajs/events`](https://www.npmjs.com/package/@aponiajs/events)                   | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fevents)](https://www.npmjs.com/package/@aponiajs/events)                   | `bun add @aponiajs/events@alpha`                            |
+| [`@aponiajs/http`](https://www.npmjs.com/package/@aponiajs/http)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fhttp)](https://www.npmjs.com/package/@aponiajs/http)                       | `bun add @aponiajs/http@alpha`                              |
+| [`@aponiajs/mcp`](https://www.npmjs.com/package/@aponiajs/mcp)                         | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fmcp)](https://www.npmjs.com/package/@aponiajs/mcp)                         | `bun add @aponiajs/mcp@alpha`                               |
+| [`@aponiajs/rate-limit`](https://www.npmjs.com/package/@aponiajs/rate-limit)           | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Frate-limit)](https://www.npmjs.com/package/@aponiajs/rate-limit)           | `bun add @aponiajs/rate-limit@alpha`                        |
+| [`@aponiajs/security`](https://www.npmjs.com/package/@aponiajs/security)               | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fsecurity)](https://www.npmjs.com/package/@aponiajs/security)               | `bun add @aponiajs/security@alpha`                          |
+| [`@aponiajs/session`](https://www.npmjs.com/package/@aponiajs/session)                 | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fsession)](https://www.npmjs.com/package/@aponiajs/session)                 | `bun add @aponiajs/session@alpha`                           |
+| [`@aponiajs/auth`](https://www.npmjs.com/package/@aponiajs/auth)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fauth)](https://www.npmjs.com/package/@aponiajs/auth)                       | `bun add @aponiajs/auth@alpha`                              |
+| [`@aponiajs/audit`](https://www.npmjs.com/package/@aponiajs/audit)                     | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Faudit)](https://www.npmjs.com/package/@aponiajs/audit)                     | `bun add @aponiajs/audit@alpha`                             |
+| [`@aponiajs/tenancy`](https://www.npmjs.com/package/@aponiajs/tenancy)                 | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Ftenancy)](https://www.npmjs.com/package/@aponiajs/tenancy)                 | `bun add @aponiajs/tenancy@alpha`                           |
+| [`@aponiajs/queue`](https://www.npmjs.com/package/@aponiajs/queue)                     | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fqueue)](https://www.npmjs.com/package/@aponiajs/queue)                     | `bun add @aponiajs/queue@alpha`                             |
+| [`@aponiajs/database`](https://www.npmjs.com/package/@aponiajs/database)               | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fdatabase)](https://www.npmjs.com/package/@aponiajs/database)               | `bun add @aponiajs/database@alpha`                          |
+| [`@aponiajs/metrics`](https://www.npmjs.com/package/@aponiajs/metrics)                 | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fmetrics)](https://www.npmjs.com/package/@aponiajs/metrics)                 | `bun add @aponiajs/metrics@alpha`                           |
+| [`@aponiajs/idempotency`](https://www.npmjs.com/package/@aponiajs/idempotency)         | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fidempotency)](https://www.npmjs.com/package/@aponiajs/idempotency)         | `bun add @aponiajs/idempotency@alpha`                       |
+| [`@aponiajs/microservices`](https://www.npmjs.com/package/@aponiajs/microservices)     | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fmicroservices)](https://www.npmjs.com/package/@aponiajs/microservices)     | `bun add @aponiajs/microservices@alpha`                     |
+| [`@aponiajs/store-redis`](https://www.npmjs.com/package/@aponiajs/store-redis)         | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fstore-redis)](https://www.npmjs.com/package/@aponiajs/store-redis)         | `bun add @aponiajs/store-redis@alpha`                       |
+| [`@aponiajs/view`](https://www.npmjs.com/package/@aponiajs/view)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fview)](https://www.npmjs.com/package/@aponiajs/view)                       | `bun add @aponiajs/view@alpha`                              |
+| [`@aponiajs/serverless`](https://www.npmjs.com/package/@aponiajs/serverless)           | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fserverless)](https://www.npmjs.com/package/@aponiajs/serverless)           | `bun add @aponiajs/serverless@alpha`                        |
+| [`@aponiajs/h3`](https://www.npmjs.com/package/@aponiajs/h3)                           | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fh3)](https://www.npmjs.com/package/@aponiajs/h3)                           | `bun add @aponiajs/h3@alpha`                                |
+| [`@aponiajs/hono`](https://www.npmjs.com/package/@aponiajs/hono)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fhono)](https://www.npmjs.com/package/@aponiajs/hono)                       | `bun add @aponiajs/hono@alpha`                              |
+| [`@aponiajs/nitro`](https://www.npmjs.com/package/@aponiajs/nitro)                     | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fnitro)](https://www.npmjs.com/package/@aponiajs/nitro)                     | `bun add @aponiajs/nitro@alpha`                             |
+| [`@aponiajs/platform-elysia`](https://www.npmjs.com/package/@aponiajs/platform-elysia) | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fplatform-elysia)](https://www.npmjs.com/package/@aponiajs/platform-elysia) | `bun add @aponiajs/platform-elysia@alpha elysia@2.0.0-rc.4` |
+| [`@aponiajs/cli`](https://www.npmjs.com/package/@aponiajs/cli)                         | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcli)](https://www.npmjs.com/package/@aponiajs/cli)                         | `bun add --global @aponiajs/cli@alpha`                      |
+| [`create-aponia`](https://www.npmjs.com/package/create-aponia)                         | [![npm](https://img.shields.io/npm/v/create-aponia)](https://www.npmjs.com/package/create-aponia)                             | `bun create aponia@alpha <name>`                            |
+| [`@aponiajs/devtools`](https://www.npmjs.com/package/@aponiajs/devtools)               | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fdevtools)](https://www.npmjs.com/package/@aponiajs/devtools)               | `bun add @aponiajs/devtools@alpha`                          |
+| [`@aponiajs/graphql`](https://www.npmjs.com/package/@aponiajs/graphql)                 | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fgraphql)](https://www.npmjs.com/package/@aponiajs/graphql)                 | `bun add @aponiajs/graphql@alpha`                           |
+| [`@aponiajs/cron`](https://www.npmjs.com/package/@aponiajs/cron)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcron)](https://www.npmjs.com/package/@aponiajs/cron)                       | `bun add @aponiajs/cron@alpha`                              |
+| [`@aponiajs/cors`](https://www.npmjs.com/package/@aponiajs/cors)                       | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fcors)](https://www.npmjs.com/package/@aponiajs/cors)                       | `bun add @aponiajs/cors@alpha`                              |
+| [`@aponiajs/testing`](https://www.npmjs.com/package/@aponiajs/testing)                 | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Ftesting)](https://www.npmjs.com/package/@aponiajs/testing)                 | `bun add --dev @aponiajs/testing@alpha`                     |
+| [`@aponiajs/openapi`](https://www.npmjs.com/package/@aponiajs/openapi)                 | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fopenapi)](https://www.npmjs.com/package/@aponiajs/openapi)                 | `bun add @aponiajs/openapi@alpha`                           |
+| [`@aponiajs/opentelemetry`](https://www.npmjs.com/package/@aponiajs/opentelemetry)     | [![npm](https://img.shields.io/npm/v/%40aponiajs%2Fopentelemetry)](https://www.npmjs.com/package/@aponiajs/opentelemetry)     | `bun add @aponiajs/opentelemetry@alpha`                     |
 
 The reserved `aponiajs` facade is private in this workspace and is not
 published. Do not install it yet.
@@ -49,7 +54,7 @@ A decorated HTTP application normally imports `@aponiajs/common` and
 `@aponiajs/platform-elysia`, with Elysia installed as the platform peer:
 
 ```bash
-bun add @aponiajs/common@beta @aponiajs/platform-elysia@beta elysia@2.0.0-rc.4
+bun add @aponiajs/common@alpha @aponiajs/platform-elysia@alpha elysia@2.0.0-rc.4
 ```
 
 ```ts
@@ -429,7 +434,7 @@ Install the published CLI globally with Bun and invoke its `aponia` binary
 directly:
 
 ```bash
-bun add --global @aponiajs/cli@beta
+bun add --global @aponiajs/cli@alpha
 aponia new my-api
 aponia --version
 ```
@@ -442,7 +447,7 @@ same project generator. See the
 
 ## Synchronized versions
 
-All twenty-three public packages are released with the same
+All thirty-four public packages are released with the same
 [Semantic Version](https://semver.org). Avoid mixing AponiaJS package versions
 within one application. See [Releasing npm Packages](./releasing.md) for the
 version gate and publication flow.

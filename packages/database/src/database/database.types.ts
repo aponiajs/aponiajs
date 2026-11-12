@@ -26,7 +26,11 @@ export interface DatabaseServiceOptions {
   readonly database: DatabaseClient;
   /** Migrations the service applies when the module initializes. */
   readonly migrations?:
-    | { readonly files: readonly MigrationFile[]; readonly store?: MigrationStore }
+    | {
+        readonly files: readonly MigrationFile[];
+        readonly store?: MigrationStore;
+        readonly lock?: MigrationLock;
+      }
     | undefined;
 }
-import type { MigrationFile, MigrationStore } from "../migration/migration.types.ts";
+import type { MigrationFile, MigrationLock, MigrationStore } from "../migration/migration.types.ts";

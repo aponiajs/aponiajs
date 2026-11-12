@@ -145,6 +145,20 @@ export async function registerWebSocketGateways(
   gateways: readonly CompiledWebSocketGateway[],
 ): Promise<void> {
   const boundGateways = gateways.map((gateway) => {
+    // A gateway is bound once for the life of the application, so a provider
+    // whose lifetime bubbles to request scope has no instance to bind.
+    const location = container.graph.locate(gateway.module, gateway.token);
+    if (container.providerScope(location.module, location.provider) === "request") {
+      throw new AponiaError(
+        "INVALID_WEBSOCKET_GATEWAY",
+        `WebSocket gateway "${gateway.gatewayName}" is request-scoped, which no socket instance can be bound to; a gateway must be a singleton.`,
+        {
+          module: gateway.module.id,
+          gateway: gateway.gatewayName,
+          path: gateway.path,
+        },
+      );
+    }
     const instance = container.resolveModuleProvider(gateway.module, gateway.token);
     const resolvedGuards = (gateway.guards ?? []).map(
       (guardToken) => container.resolveModuleProvider(gateway.module, guardToken) as CanActivate,

@@ -4,7 +4,7 @@ Prometheus metrics for AponiaJS: a bounded registry, a scrape endpoint mounted
 on the application's route table, and request instrumentation for every route.
 
 ```bash
-bun add @aponiajs/metrics@beta
+bun add @aponiajs/metrics@alpha
 ```
 
 ## Use it

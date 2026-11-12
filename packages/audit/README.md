@@ -3,7 +3,7 @@
 Bounded, redacting audit events for AponiaJS.
 
 ```bash
-bun add @aponiajs/audit@beta
+bun add @aponiajs/audit@alpha
 ```
 
 ```ts
@@ -30,7 +30,10 @@ export class LoginService {
 
 ## Behavior
 
-- `record` returns a frozen event with a timestamp and frozen metadata.
+- `record` returns a frozen event with a timestamp and deeply frozen metadata.
+- Metadata is copied, recursively redacted, and frozen before it is stored; a
+  caller mutating its own object afterward cannot rewrite history. A cycle
+  becomes `[circular]` and nesting beyond eight levels `[truncated]`.
 - Sensitive keys (`secret`, `token`, `password`, `authorization`, `api-key`,
   `cookie`) are replaced with `[redacted]`; `redact` adds application-specific keys.
 - The default `MemoryAuditStore` is bounded and evicts the oldest event.

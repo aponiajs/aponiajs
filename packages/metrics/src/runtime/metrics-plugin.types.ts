@@ -16,6 +16,8 @@ export interface MetricsPluginOptions {
   readonly exclude?: readonly string[];
   /** Publishes the process uptime and memory gauges; defaults to true. */
   readonly processMetrics?: boolean;
+  /** Protects the scrape route; `false` answers `401` before rendering. */
+  readonly authorize?: (request: Request) => boolean | Promise<boolean>;
 }
 
 /** Options the module forwards to the plugin. */

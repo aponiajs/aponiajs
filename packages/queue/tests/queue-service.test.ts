@@ -364,8 +364,10 @@ describe("QueueService", () => {
       timer: clock.timer,
     });
     let started = false;
-    queue.registerHandler("slow", () => {
+    let signal: AbortSignal | undefined;
+    queue.registerHandler("slow", (_payload, _job, received) => {
       started = true;
+      signal = received;
       return new Promise<string>(() => {});
     });
     queue.registerHandler("fast", () => "ok");
@@ -380,6 +382,7 @@ describe("QueueService", () => {
     expect(await drained).toMatchObject({ deadLettered: 1 });
     expect(queue.deadLetters()[0]?.lastError).toContain("exceeded its timeout");
     expect(slow.id).toBeDefined();
+    expect(signal?.aborted).toBe(true);
 
     const completed = queue.enqueue("fast", null, { timeoutMs: 100 });
     expect(await queue.drain()).toMatchObject({ completed: 1 });
@@ -389,6 +392,30 @@ describe("QueueService", () => {
     expect(capture(() => queue.enqueue("fast", null, { timeoutMs: -1 })).code).toBe(
       "INVALID_QUEUE_JOB",
     );
+  });
+
+  test("close aborts an in-flight handler and settles the drain", async () => {
+    const queue = new QueueService({ autoStart: false, maxAttempts: 1 });
+    let signal: AbortSignal | undefined;
+    let started = false;
+    queue.registerHandler("slow", (_payload, _job, received) => {
+      signal = received;
+      started = true;
+      return new Promise((_resolve, reject) => {
+        received?.addEventListener("abort", () => reject(new Error("aborted")));
+      });
+    });
+
+    const job = queue.enqueue("slow", null);
+    const drained = queue.drain();
+    while (!started) {
+      await Promise.resolve();
+    }
+    queue.close();
+
+    expect(signal?.aborted).toBe(true);
+    expect(await drained).toMatchObject({ deadLettered: 1 });
+    expect(job.id).toBeDefined();
   });
 
   test("clear drops pending jobs and dead letters", async () => {

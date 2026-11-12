@@ -4,7 +4,7 @@ Conservative response headers and signed double-submit CSRF protection for
 AponiaJS.
 
 ```bash
-bun add @aponiajs/security@beta
+bun add @aponiajs/security@alpha
 ```
 
 ## Use it

@@ -333,6 +333,37 @@ export class AuditService {
     ]);
   });
 
+  test("reads string and Symbol.for() tokens, which a generated module can reproduce", () => {
+    const source = `import { Inject, Injectable } from "@aponiajs/common";
+
+@Injectable()
+export class ConfigService {
+  constructor(
+    @Inject("CONFIG_VALUE") readonly value: string,
+    @Inject(Symbol.for("app.clock")) readonly clock: Clock,
+    @Inject(Symbol("fresh")) readonly fresh: string,
+  ) {}
+}
+`;
+
+    expect(
+      analyzeModuleDescriptors(source, "config.service.ts").injectables[0]?.dependencies,
+    ).toStrictEqual([
+      { index: 0, source: "inject", token: { expression: '"CONFIG_VALUE"', kind: "string" } },
+      {
+        index: 1,
+        source: "inject",
+        token: { expression: 'Symbol.for("app.clock")', kind: "symbol" },
+      },
+      {
+        index: 2,
+        source: "unreadable",
+        reason:
+          "@Inject in config.service.ts names a token this analysis cannot read statically; use a class reference, a string or Symbol.for(...) token, or createToken(...).",
+      },
+    ]);
+  });
+
   test("reads two decorated classes in one file in declaration order", () => {
     const source = `import { Injectable, Module } from "@aponiajs/common";
 
@@ -540,19 +571,19 @@ export class MixedModule {}
         {
           expression: 'Symbol("LEGACY")',
           unreadable:
-            "@Module in mixed.module.ts names a token this analysis cannot read statically; use a class reference or createToken(...).",
+            "@Module in mixed.module.ts names a token this analysis cannot read statically; use a class reference, a string or Symbol.for(...) token, or createToken(...).",
         },
       ],
       dependencies: [],
       collectionUnreadable: [
         "@Module in mixed.module.ts spreads a collection element, which this analysis cannot read.",
         "@Module in mixed.module.ts declares an expression this analysis cannot read statically.",
-        "@Module in mixed.module.ts names a token this analysis cannot read statically; use a class reference or createToken(...).",
+        "@Module in mixed.module.ts names a token this analysis cannot read statically; use a class reference, a string or Symbol.for(...) token, or createToken(...).",
       ],
       unreadable: [
         "@Module in mixed.module.ts spreads a collection element, which this analysis cannot read.",
         "@Module in mixed.module.ts declares an expression this analysis cannot read statically.",
-        "@Module in mixed.module.ts names a token this analysis cannot read statically; use a class reference or createToken(...).",
+        "@Module in mixed.module.ts names a token this analysis cannot read statically; use a class reference, a string or Symbol.for(...) token, or createToken(...).",
       ],
     });
   });
@@ -635,17 +666,17 @@ export class SecondService {
     const analyzed = analyzeModuleDescriptors(source, "tokens.ts");
 
     expect(analyzed.modules[0]?.unreadable).toStrictEqual([
-      "@Module in tokens.ts names a token this analysis cannot read statically; use a class reference or createToken(...).",
+      "@Module in tokens.ts names a token this analysis cannot read statically; use a class reference, a string or Symbol.for(...) token, or createToken(...).",
     ]);
     expect(analyzed.modules[0]?.exports).toStrictEqual([
       {
         expression: "shared.UsersService",
         unreadable:
-          "@Module in tokens.ts names a token this analysis cannot read statically; use a class reference or createToken(...).",
+          "@Module in tokens.ts names a token this analysis cannot read statically; use a class reference, a string or Symbol.for(...) token, or createToken(...).",
       },
     ]);
     const unreadableReason =
-      "@Inject in tokens.ts names a token this analysis cannot read statically; use a class reference or createToken(...).";
+      "@Inject in tokens.ts names a token this analysis cannot read statically; use a class reference, a string or Symbol.for(...) token, or createToken(...).";
     expect(analyzed.injectables[0]?.dependencies).toStrictEqual([
       { index: 0, source: "unreadable", reason: unreadableReason },
     ]);

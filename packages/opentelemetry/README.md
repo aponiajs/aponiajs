@@ -89,11 +89,14 @@ Two further facts follow, and both are measured rather than inferred:
 
 What this package does about it: it states the limit here, and it stops what it
 can. The module provides one provider that owns the span processors you declared
-and shuts them down in `onApplicationShutdown` — so a processor you handed over is
-flushed and stopped when the application closes, whether or not the application
-ever called `listen()`. Two things are outside that reach and are not implied to
-be inside it: a processor you built but did not pass to `register`, and an
-exporter `NodeSDK` constructed from its own options.
+and flushes then shuts them down in `onApplicationShutdown` — so a processor you
+handed over is flushed and stopped when the application closes, whether or not
+the application ever called `listen()`. An application that constructs and
+starts its own SDK passes the handle as `sdk`; the provider calls its
+`forceFlush()` and `shutdown()` after the processors. Two things remain outside
+that reach and are not implied to be inside it: a processor you built but did
+not pass to `register`, and an exporter `NodeSDK` the application neither owns
+nor passes.
 
 `AponiaApplicationOptions.plugins` is not a way around this. It mounts a plugin
 value outside the graph, and it is the raw plugin's own `opentelemetry()` call —

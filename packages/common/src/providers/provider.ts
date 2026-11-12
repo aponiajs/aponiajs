@@ -9,9 +9,55 @@ import type {
   AliasProvider,
   ClassProvider,
   FactoryProvider,
+  NestProvider,
+  Provider,
   ProviderScope,
   ValueProvider,
 } from "./provider.types.ts";
+import { AponiaError } from "../errors/aponia-error.ts";
+
+/**
+ * Lowers a Nest-shaped provider literal to the canonical `Provider` union.
+ *
+ * A value already carrying `kind` passes through. `useClass` without `inject`
+ * states no dependencies here; the platform lowering infers a decorated
+ * class's constructor list before calling this, so a descriptor written by hand
+ * should state `inject` explicitly.
+ *
+ * @internal
+ */
+export function normalizeProvider(provider: Provider | NestProvider): Provider {
+  if ("kind" in provider) {
+    return provider;
+  }
+  const options = provider.scope === undefined ? {} : { scope: provider.scope };
+  if ("useValue" in provider) {
+    return provideValue(provider.provide, provider.useValue, options);
+  }
+  if ("useExisting" in provider) {
+    return provideAlias(provider.provide, provider.useExisting, options);
+  }
+  if ("useFactory" in provider) {
+    return provideFactory(
+      provider.provide,
+      provider.inject ?? [],
+      provider.useFactory as unknown as (...dependencies: readonly unknown[]) => unknown,
+      options,
+    ) as Provider;
+  }
+  if ("useClass" in provider) {
+    return provideClass(
+      provider.provide,
+      provider.useClass as unknown as Constructor<unknown, readonly unknown[]>,
+      provider.inject ?? [],
+      options,
+    ) as Provider;
+  }
+  throw new AponiaError(
+    "INVALID_PROVIDER",
+    "A provider must state kind, useValue, useClass, useFactory, or useExisting.",
+  );
+}
 
 /** The trailing options every `provide*` factory accepts. */
 export interface ProviderScopeOption {

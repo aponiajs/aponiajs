@@ -5,10 +5,12 @@ AponiaJS applications. It is written for two readers at once: an engineer who
 needs the exact contract, and a coding agent that needs the same contract in a
 form it can apply without guessing.
 
-The repository is on the `1.0.0-beta.N` line. Every page describes the current
-release, not a roadmap. When a page and the published code disagree, the code,
-its tests, and `docs/public-api.json` are the record; fix the page in the same
-change that changes the behavior.
+The npm registry currently serves the `0.6.0-alpha.N` line. The source in this
+repository targets the `1.0.0-beta.N` development line, which is not published
+under `@beta` yet. Every page describes the source in this repository; install
+commands name `@alpha` until the beta line ships. When a page and the published
+code disagree, the code, its tests, and `docs/public-api.json` are the record;
+fix the page in the same change that changes the behavior.
 
 ## Reading order
 

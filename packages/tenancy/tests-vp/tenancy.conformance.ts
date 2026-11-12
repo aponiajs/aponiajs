@@ -29,7 +29,10 @@ test("boots and resolves a tenant through the guard", async () => {
     }
   }
 
-  @Module({ imports: [TenantModule.register()], controllers: [TenantController] })
+  @Module({
+    imports: [TenantModule.register({ header: "x-tenant-id" })],
+    controllers: [TenantController],
+  })
   class AppModule {}
 
   const application = await AponiaFactory.create(AppModule, { logger: false });

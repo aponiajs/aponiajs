@@ -1,0 +1,6 @@
+# Every path is owned by the maintainer. Review is required before merge.
+* @krataia
+
+# Release automation, publishing, and the guards that protect them.
+/.github/ @krataia
+/scripts/ @krataia

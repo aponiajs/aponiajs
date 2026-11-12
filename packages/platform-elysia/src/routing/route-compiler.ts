@@ -222,6 +222,8 @@ export function registerCompiledElysiaRoutes(
   invokers?: ReadonlyMap<string | symbol, RouteHandler>,
   strictCodegen = false,
   viewRenderer?: RouteViewRenderer,
+  globalPipes: readonly ResolvedPipe[] = [],
+  instanceResolver?: () => unknown,
 ): ReadonlySet<string | symbol> {
   const generatedKeys = new Set<string | symbol>();
 
@@ -289,7 +291,7 @@ export function registerCompiledElysiaRoutes(
       route.method,
       route.path,
       suppliedInvoker === undefined
-        ? createRouteHandler(callableHandler, instance, route)
+        ? createRouteHandler(callableHandler, instance, route, globalPipes, instanceResolver)
         : (suppliedInvoker as (context: RouteContext) => unknown),
       deprecation === undefined ? hook : mergeDeprecationHook(hook, deprecation),
     );
@@ -522,24 +524,37 @@ function extractParameterValue(
  * Compiles parameter metadata once during bootstrap so request dispatch neither
  * allocates an argument array nor hides precise context usage from Elysia's
  * static handler analysis.
+ *
+ * `resolveInstance` is supplied for a request-scoped controller, whose instance
+ * is constructed per request: the compiled handler still calls the method it
+ * was compiled from, bound to the instance that request resolved.
  */
 function createRouteHandler(
   handler: (...arguments_: unknown[]) => unknown,
   instance: unknown,
   route: CompiledElysiaRoute,
+  globalPipes: readonly ResolvedPipe[] = [],
+  resolveInstance?: () => unknown,
 ): (context: RouteContext) => unknown {
+  // `invoke.call(instance, ...)` below is the compiled call shape; the lambda
+  // ignores that `this` and binds the method to the request's own instance.
+  const invoke =
+    resolveInstance === undefined
+      ? handler
+      : (...arguments_: unknown[]) => handler.call(resolveInstance(), ...arguments_);
   if (
-    (hasRouteOrParameterPipes(route) || hasCustomParameters(route)) &&
+    (hasRouteOrParameterPipes(route) || hasCustomParameters(route) || globalPipes.length > 0) &&
     route.parameters.length > 0
   ) {
     const argumentCount = (route.parameters.at(-1)?.index ?? -1) + 1;
+    const resolvedRoutePipes = Object.freeze((route.pipes ?? []).map((p) => resolvePipe(p)));
     const parameterPlans = Object.freeze(
       route.parameters.map((param): ParameterExecutionPlan => {
         const pipesToApply = [
-          ...(isPipedParameterKind(param.kind) ? (route.pipes ?? []) : []),
-          ...(param.pipes ?? []),
+          ...(isPipedParameterKind(param.kind) ? [...globalPipes, ...resolvedRoutePipes] : []),
+          ...(param.pipes ?? []).map((p) => resolvePipe(p)),
         ];
-        const resolved = Object.freeze(pipesToApply.map((p) => resolvePipe(p)));
+        const resolved = Object.freeze([...pipesToApply]);
         const argType: ArgumentType =
           param.kind === "params"
             ? "param"
@@ -589,7 +604,7 @@ function createRouteHandler(
           );
           const arg0 =
             plan0.pipes.length > 0 ? await executePipes(plan0.pipes, raw0, plan0.metadata) : raw0;
-          return await handler.call(instance, arg0);
+          return await invoke.call(instance, arg0);
         }
         case 2: {
           const plan0 = parameterPlans[0]!;
@@ -613,7 +628,7 @@ function createRouteHandler(
           );
           const arg1 =
             plan1.pipes.length > 0 ? await executePipes(plan1.pipes, raw1, plan1.metadata) : raw1;
-          return await handler.call(instance, arg0, arg1);
+          return await invoke.call(instance, arg0, arg1);
         }
         case 3: {
           const plan0 = parameterPlans[0]!;
@@ -648,7 +663,7 @@ function createRouteHandler(
           );
           const arg2 =
             plan2.pipes.length > 0 ? await executePipes(plan2.pipes, raw2, plan2.metadata) : raw2;
-          return await handler.call(instance, arg0, arg1, arg2);
+          return await invoke.call(instance, arg0, arg1, arg2);
         }
         default: {
           const arguments_: unknown[] = Array.from({ length: argumentCount });
@@ -666,7 +681,7 @@ function createRouteHandler(
                 ? await executePipes(plan.pipes, rawValue, plan.metadata)
                 : rawValue;
           }
-          return await handler.call(instance, ...arguments_);
+          return await invoke.call(instance, ...arguments_);
         }
       }
     };
@@ -677,7 +692,7 @@ function createRouteHandler(
       ? "context"
       : "";
     return compileRouteHandler(argumentsSource, isPossiblyAsync(handler, route.declaredReturnKind))(
-      handler,
+      invoke,
       instance,
     );
   }
@@ -690,7 +705,7 @@ function createRouteHandler(
   return compileRouteHandler(
     arguments_.join(","),
     isPossiblyAsync(handler, route.declaredReturnKind),
-  )(handler, instance);
+  )(invoke, instance);
 }
 
 function expectsContextArgument(
@@ -1046,9 +1061,9 @@ function createLifecycleHook(
             }
           }
         } else if (guards.length > 0) {
-          execContext.swap(context);
+          const requestContext = execContext.fork(context);
           for (let i = 0; i < guards.length; i++) {
-            const result = guards[i]!.canActivate(execContext);
+            const result = guards[i]!.canActivate(requestContext);
             const allowed =
               typeof (result as Promise<boolean>)?.then === "function" ? await result : result;
             if (allowed === false) {
@@ -1057,11 +1072,11 @@ function createLifecycleHook(
           }
         }
 
+        const interceptorContext = execContext.fork(context);
         for (let i = 0; i < interceptors.length; i++) {
           const interceptor = interceptors[i]!;
           if (interceptor.interceptBefore !== undefined) {
-            execContext.swap(context);
-            const res = interceptor.interceptBefore(execContext);
+            const res = interceptor.interceptBefore(interceptorContext);
             if (typeof (res as Promise<unknown>)?.then === "function") {
               await res;
             }
@@ -1078,14 +1093,14 @@ function createLifecycleHook(
     ...(runsAfter
       ? {
           async afterHandle(context: ElysiaRouteAfterHandleContext): Promise<unknown> {
-            execContext.swap(context);
+            const requestContext = execContext.fork(context);
             // `undefined` is the one answer that leaves the response as it is,
             // so the value a half answers with is what the next one receives and
             // a half that answers nothing keeps what the response carries.
             // `null`, `false`, and `0` are responses, not absences.
             let response = context.responseValue;
             for (const interceptor of afterInterceptors) {
-              const answered = await interceptor.interceptAfter?.(execContext, response);
+              const answered = await interceptor.interceptAfter?.(requestContext, response);
               if (answered !== undefined) {
                 response = answered;
               }

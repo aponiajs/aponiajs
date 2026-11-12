@@ -3,7 +3,7 @@
 Delivery adapter for Nitro.
 
 ```bash
-bun add @aponiajs/nitro@beta
+bun add @aponiajs/nitro@alpha
 ```
 
 ## Use it

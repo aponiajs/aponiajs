@@ -4,7 +4,7 @@ Bounded application caching for AponiaJS, with TTL, a small store contract, and
 one injectable service.
 
 ```bash
-bun add @aponiajs/cache@beta
+bun add @aponiajs/cache@alpha
 ```
 
 ## Use it

@@ -14,6 +14,7 @@
 ## Behavior a consumer can rely on
 
 - The scrape endpoint defaults to `GET /metrics` and answers `text/plain; version=0.0.4`.
+- `authorize(request)` runs before rendering; a false answer is `401` with `cache-control: no-store`.
 - The plugin records `http_requests_total` and `http_request_duration_seconds` using the registered route template, not the request path, as the `route` label.
 - `process_uptime_seconds`, `process_resident_memory_bytes`, and `process_heap_used_bytes` are published by default; `processMetrics: false` omits them.
 - `registerCollector` refreshes gauges before every render.

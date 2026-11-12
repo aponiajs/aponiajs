@@ -6,6 +6,7 @@ import type {
   OnModuleInit,
 } from "@aponiajs/common";
 import type { AponiaContainer } from "@aponiajs/core";
+import type { ModuleDefinition } from "@aponiajs/common";
 import { isElysiaController } from "../controllers/controller-definition.ts";
 import type { ElysiaApplication } from "./native-application.types.ts";
 
@@ -111,22 +112,50 @@ export function collectLifecycleCalls(
   };
 
   for (const module of container.graph.modules) {
+    // A module class can declare the same lifecycle hooks as a provider; Nest
+    // runs them as part of the module, before its providers.
+    const moduleInstance = moduleInstanceOf(module);
+    if (moduleInstance !== undefined) {
+      collect(moduleInstance);
+    }
     for (const provider of module.providers) {
-      if (provider.scope !== undefined && provider.scope !== "singleton") {
+      // A provider whose dependencies bubble its lifetime to "request" has no
+      // instance at this moment either, so it is skipped with the declared
+      // request-scoped and transient ones.
+      if (container.providerScope(module, provider) !== "singleton") {
         continue;
       }
       collect(container.resolveModuleProvider(module, provider.provide));
     }
     if (includeControllers) {
       for (const controller of module.controllers) {
-        if (isElysiaController(controller)) {
-          collect(container.instantiateController(module, controller));
+        if (!isElysiaController(controller)) {
+          continue;
         }
+        if (container.controllerScope(module, controller) === "request") {
+          continue;
+        }
+        collect(container.instantiateController(module, controller));
       }
     }
   }
 
   return calls;
+}
+
+const moduleInstances = new WeakMap<ModuleDefinition, unknown>();
+
+/** One module-class instance per module, shared by every lifecycle pass. */
+function moduleInstanceOf(module: ModuleDefinition): unknown {
+  if (module.moduleClass === undefined) {
+    return undefined;
+  }
+  if (moduleInstances.has(module)) {
+    return moduleInstances.get(module);
+  }
+  const instance = Reflect.construct(module.moduleClass, []);
+  moduleInstances.set(module, instance);
+  return instance;
 }
 
 /**
