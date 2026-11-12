@@ -121,6 +121,12 @@ test("renders route view via registered VIEW_ENGINE and sets content-type", asyn
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toContain("text/html");
     expect(await res.text()).toBe('Rendered test-view: {"ok":true}');
+
+    const fragment = await app.handle(
+      new Request("http://localhost/rendered", { headers: { "hx-request": "true" } }),
+    );
+    expect(fragment.status).toBe(200);
+    expect(await fragment.text()).toBe('Rendered test-view: {"ok":true}');
   } finally {
     await app.close();
   }

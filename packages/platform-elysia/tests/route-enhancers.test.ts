@@ -109,6 +109,31 @@ class DeclaredController {
   }
 }
 
+class RefusingGuard {
+  canActivate(): boolean {
+    return false;
+  }
+}
+
+class BeforeInterceptor {
+  interceptBefore(): void {
+    return;
+  }
+}
+
+@Controller("refused")
+class RefusingController {
+  @UseGuards(RefusingGuard)
+  @UseInterceptors(BeforeInterceptor)
+  @Get()
+  read(): string {
+    return "never";
+  }
+}
+
+@Module({ controllers: [RefusingController], providers: [RefusingGuard, BeforeInterceptor] })
+class RefusingModule {}
+
 @Module({ controllers: [PlainController, OpenController], providers: [AuthGuard] })
 class AppModule {}
 
@@ -192,6 +217,17 @@ describe("compiled route enhancers", () => {
     expect(Object.isFrozen(open?.enhancers.guards)).toBe(true);
     expect(Object.isFrozen(open?.enhancers.interceptors)).toBe(true);
     expect(Object.isFrozen(open?.enhancers.filters)).toBe(true);
+  });
+
+  test("answers a refusal from an unrolled guard that runs before an interceptor half", async () => {
+    const application = await AponiaFactory.create(RefusingModule, { logger: false });
+    try {
+      const response = await application.handle(new Request("http://localhost/refused"));
+
+      expect(response.status).toBe(403);
+    } finally {
+      await application.close();
+    }
   });
 });
 

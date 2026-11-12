@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/metrics",
-  "version": "1.0.0-beta.35",
+  "version": "1.0.0-beta.36",
   "description": "Prometheus metrics for an Aponia application: a bounded registry, request instrumentation, and a scrape endpoint.",
   "keywords": [
     "aponia",

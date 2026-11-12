@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { Controller, Deprecated, Get, Module } from "@aponiajs/common";
+import { Controller, Deprecated, Get, Module, UseGuards } from "@aponiajs/common";
 import { AponiaFactory, type AponiaApplication } from "../src/index.ts";
 
 let application: AponiaApplication | undefined;
@@ -74,5 +74,36 @@ describe("@Deprecated routes", () => {
     expect(response.status).toBe(500);
     expect(response.headers.get("deprecation")).toBe("true");
     expect(response.headers.get("link")).toBe('<https://api.example.com/v2>; rel="deprecation"');
+  });
+
+  test("keep the headers on a route that also runs a guard", async () => {
+    class AllowGuard {
+      canActivate(): boolean {
+        return true;
+      }
+    }
+
+    @Controller("guarded-legacy")
+    @Deprecated({ link: "https://api.example.com/v2/guarded" })
+    class GuardedController {
+      @Get()
+      @UseGuards(AllowGuard)
+      read(): string {
+        return "guarded";
+      }
+    }
+
+    @Module({ controllers: [GuardedController], providers: [AllowGuard] })
+    class AppModule {}
+
+    application = await AponiaFactory.create(AppModule, { logger: false });
+    const response = await application.handle(new Request("http://localhost/guarded-legacy"));
+
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe("guarded");
+    expect(response.headers.get("deprecation")).toBe("true");
+    expect(response.headers.get("link")).toBe(
+      '<https://api.example.com/v2/guarded>; rel="deprecation"',
+    );
   });
 });

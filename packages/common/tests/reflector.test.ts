@@ -90,6 +90,25 @@ describe("SetMetadata and Reflector in @aponiajs/common", () => {
     expect(mergedRoles).toEqual(["admin", "superadmin", "user"]);
   });
 
+  test("Reflector skips absent targets and merges scalar metadata", () => {
+    const scalarKey = "scalarFlag";
+
+    class ScalarTarget {}
+    SetMetadata(scalarKey, true)(ScalarTarget);
+
+    expect(reflector.getAllAndOverride<boolean>(scalarKey, [undefined, ScalarTarget])).toBe(true);
+    expect(reflector.getAllAndMerge(scalarKey, [undefined, ScalarTarget])).toEqual([true]);
+  });
+
+  test("records and reads metadata under a symbol key", () => {
+    const symbolKey = Symbol("symbolFlag");
+
+    class SymbolTarget {}
+    SetMetadata(symbolKey, "symbol-value")(SymbolTarget);
+
+    expect(getCustomMetadata<string>(symbolKey, SymbolTarget)).toBe("symbol-value");
+  });
+
   test("createParamDecorator records parameter metadata with factory", () => {
     const parameters = getRouteParameterMetadata(SampleController, "adminOnly");
     expect(parameters.length).toBe(2);

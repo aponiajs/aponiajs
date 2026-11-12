@@ -69,6 +69,17 @@ describe("Pipes in @aponiajs/common", () => {
         }),
       );
     });
+
+    test("passes through a number and respects custom exceptionFactory", () => {
+      expect(pipe.transform(42.5, metadata)).toBe(42.5);
+
+      const customPipe = new ParseFloatPipe({
+        exceptionFactory: (msg) => new Error(`Custom: ${msg}`),
+      });
+      expect(() => customPipe.transform("invalid", metadata)).toThrow(
+        "Custom: Validation failed (numeric string is expected)",
+      );
+    });
   });
 
   describe("ParseBoolPipe", () => {
@@ -93,6 +104,15 @@ describe("Pipes in @aponiajs/common", () => {
         }),
       );
     });
+
+    test("respects custom exceptionFactory", () => {
+      const customPipe = new ParseBoolPipe({
+        exceptionFactory: (msg) => new Error(`Custom: ${msg}`),
+      });
+      expect(() => customPipe.transform("yes", metadata)).toThrow(
+        "Custom: Validation failed (boolean string is expected)",
+      );
+    });
   });
 
   describe("ParseUUIDPipe", () => {
@@ -110,6 +130,15 @@ describe("Pipes in @aponiajs/common", () => {
           code: "INVALID_PIPE_VALUE",
           status: 400,
         }),
+      );
+    });
+
+    test("respects custom exceptionFactory", () => {
+      const customPipe = new ParseUUIDPipe({
+        exceptionFactory: (msg) => new Error(`Custom: ${msg}`),
+      });
+      expect(() => customPipe.transform("123-abc", metadata)).toThrow(
+        "Custom: Validation failed (uuid is expected)",
       );
     });
   });

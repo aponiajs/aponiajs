@@ -46,6 +46,22 @@ test("skips HEAD, bodyless, pre-encoded, non-compressible, and small responses",
       set.headers["content-type"] = ["text/plain", "charset=utf-8"] as never;
       return "array header body";
     })
+    .get(
+      "/response-plain",
+      () => new Response("plain body", { headers: { "content-type": "text/plain" } }),
+    )
+    .get(
+      "/response-small",
+      () => new Response("abc", { headers: { "content-type": "text/plain" } }),
+    )
+    .get("/uint8-plain", ({ set }) => {
+      set.headers["content-type"] = "text/plain";
+      return new Uint8Array([1, 2, 3, 4, 5]);
+    })
+    .get("/number-plain", ({ set }) => {
+      set.headers["content-type"] = "text/plain";
+      return 42;
+    })
     .get("/null", () => null);
 
   const request = (path: string, init?: RequestInit) =>
@@ -121,4 +137,30 @@ test("skips HEAD, bodyless, pre-encoded, non-compressible, and small responses",
       "content-encoding",
     ),
   ).toBeNull();
+  expect(
+    (await request("/response-plain", { headers: { "accept-encoding": "deflate" } })).headers.get(
+      "content-encoding",
+    ),
+  ).toBeNull();
+  expect(
+    (await request("/response-small", { headers: { "accept-encoding": "gzip" } })).headers.get(
+      "content-encoding",
+    ),
+  ).toBeNull();
+  expect(
+    (await request("/uint8-plain", { headers: { "accept-encoding": "gzip" } })).headers.get(
+      "content-encoding",
+    ),
+  ).toBe("gzip");
+  expect(
+    (await request("/number-plain", { headers: { "accept-encoding": "gzip" } })).headers.get(
+      "content-encoding",
+    ),
+  ).toBeNull();
+  expect(
+    (await request("/text", { headers: { "accept-encoding": ", gzip" } })).headers.get(
+      "content-encoding",
+    ),
+  ).toBe("gzip");
+  expect((await request("/text")).headers.get("content-encoding")).toBeNull();
 });

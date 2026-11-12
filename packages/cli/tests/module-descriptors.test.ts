@@ -1032,6 +1032,52 @@ export class BrokenGateway {}
       "@WebSocketGateway in broken.gateway.ts declares origins this analysis cannot read statically.",
     ]);
   });
+
+  test("reports every gateway policy, member, and dependency it cannot read statically", () => {
+    const source = `import { Injectable, Optional, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@aponiajs/common";
+
+@Injectable()
+export class OptionalDependency {
+  constructor(@Optional() dependency?: Dependency) {}
+}
+
+@WebSocketGateway({ guards: guardList, origins: originList, idleTimeoutMs: 0, sendPings: reflectiveFlag })
+export class OddGateway {
+  @SubscribeMessage("events.static")
+  static staticHandler(): void {}
+
+  @SubscribeMessage("events.quoted")
+  "quoted"(): void {}
+
+  @WebSocketServer()
+  "server"!: unknown;
+}
+`;
+
+    const analyzed = analyzeModuleDescriptors(source, "odd.gateway.ts");
+    const [gateway] = analyzed.gateways;
+
+    expect(gateway?.handlers).toEqual([]);
+    expect(gateway?.unreadable).toContain(
+      "@WebSocketGateway in odd.gateway.ts declares guards this analysis cannot read statically.",
+    );
+    expect(gateway?.unreadable).toContain(
+      "@WebSocketGateway in odd.gateway.ts declares origins this analysis cannot read statically.",
+    );
+    expect(gateway?.unreadable).toContain(
+      "@WebSocketGateway in odd.gateway.ts must declare idleTimeoutMs as a positive integer.",
+    );
+    expect(gateway?.unreadable).toContain(
+      "@WebSocketGateway in odd.gateway.ts declares sendPings this analysis cannot read statically.",
+    );
+    expect(
+      gateway?.unreadable.filter((reason) => reason.includes("not a plain property key")),
+    ).toHaveLength(2);
+
+    expect(analyzed.injectables[0]?.unreadable).toEqual([
+      "The constructor parameter at index 0 in odd.gateway.ts is marked @Optional(); generated descriptors cannot carry optional dependencies yet, so this class boots from decorators.",
+    ]);
+  });
 });
 
 function isDeeplyFrozen(value: unknown): boolean {

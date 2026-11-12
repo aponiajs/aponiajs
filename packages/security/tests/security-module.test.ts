@@ -268,6 +268,35 @@ describe("SecurityModule CSRF", () => {
     });
     expect(Object.isFrozen(error.details)).toBe(true);
   });
+
+  test("reports a blank header and every invalid csrf policy field", () => {
+    const error = captureAponiaError(() =>
+      SecurityModule.register({
+        headers: { frameOptions: "" },
+        csrf: {
+          secret: secret(),
+          path: " ",
+          domain: "",
+          sameSite: "sometimes" as never,
+          exclude: "not-a-list" as never,
+          methods: "not-a-list" as never,
+        },
+      }),
+    );
+
+    expect(error.code).toBe("INVALID_SECURITY_OPTIONS");
+    expect(error.details).toEqual({
+      issues: [
+        "frameOptions must be a non-empty string or false",
+        "csrf.path must be a non-empty string",
+        "csrf.domain must be a non-empty string",
+        'csrf.sameSite must be "lax", "strict", or "none"',
+        "csrf.exclude must be an array of non-empty strings",
+        "csrf.methods must be an array of non-empty strings",
+      ],
+    });
+    expect(Object.isFrozen(error.details)).toBe(true);
+  });
 });
 
 function secret(): string {

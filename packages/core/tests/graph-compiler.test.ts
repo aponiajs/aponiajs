@@ -248,6 +248,23 @@ describe("@aponiajs/core provider shapes", () => {
     expect(error.details).toMatchObject({ module: "app", index: 0 });
   });
 
+  test("refuses a value, alias, or factory missing the field that carries it", () => {
+    const token = createToken<number>("incomplete");
+
+    for (const provider of [
+      { kind: "value", provide: token },
+      { kind: "alias", provide: token },
+      { kind: "factory", provide: token, inject: [] },
+    ]) {
+      const error = captureAponiaError(() =>
+        compileModuleGraph(rawModule("app", [], [provider as unknown as Provider])),
+      );
+
+      expect(error.code).toBe("INVALID_PROVIDER");
+      expect(error.details).toMatchObject({ module: "app", index: 0 });
+    }
+  });
+
   test("accepts every kind the factories build", () => {
     const value = createToken<string>("value");
     const alias = createToken<string>("alias");

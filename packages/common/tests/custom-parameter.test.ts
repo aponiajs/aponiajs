@@ -18,8 +18,9 @@ test("records data, a leading pipe, and trailing pipes", () => {
 
   User(UpperPipe)(Controller.prototype, "read", 0);
   User("email")(Controller.prototype, "read", 1);
+  User(new UpperPipe())(Controller.prototype, "read", 2);
 
-  expect(getRouteParameterMetadata(Controller, "read")).toHaveLength(2);
+  expect(getRouteParameterMetadata(Controller, "read")).toHaveLength(3);
 });
 
 test("refuses a custom parameter decorator outside a method parameter", () => {

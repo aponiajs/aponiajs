@@ -209,6 +209,31 @@ describe("SessionModule", () => {
     expect(Object.isFrozen(error.details)).toBe(true);
   });
 
+  test("reports every invalid cookie policy option in one refusal", () => {
+    const error = captureAponiaError(() =>
+      SessionModule.register({
+        secret: "x".repeat(32),
+        cookie: {
+          secure: "yes" as never,
+          sameSite: "sometimes" as never,
+          domain: "",
+        },
+        rolling: "yes" as never,
+      }),
+    );
+
+    expect(error.code).toBe("INVALID_SESSION_OPTIONS");
+    expect(error.details).toEqual({
+      issues: [
+        "cookie.secure must be a boolean",
+        'cookie.sameSite must be "lax", "strict", or "none"',
+        "cookie.domain must be a non-empty string",
+        "rolling must be a boolean",
+      ],
+    });
+    expect(Object.isFrozen(error.details)).toBe(true);
+  });
+
   test("reports operations that have no session in the current request", async () => {
     @Controller("empty-session")
     class EmptySessionController {

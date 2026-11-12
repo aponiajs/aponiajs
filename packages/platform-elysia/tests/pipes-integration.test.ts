@@ -12,8 +12,11 @@ import {
   ParseUUIDPipe,
   Post,
   Query,
+  Req,
+  ResponseSettings,
   UsePipes,
   type PipeTransform,
+  type ResponseSettingsState,
 } from "@aponiajs/common";
 import { AponiaFactory } from "../src/index.ts";
 
@@ -234,6 +237,43 @@ describe("Pipes Integration in Platform Elysia", () => {
 
       expect(response.status).toBe(200);
       expect(await response.text()).toBe("ADA!");
+    } finally {
+      await app.close();
+    }
+  });
+
+  test("binds the native request and response settings through an application pipe", async () => {
+    class IdentityPipe implements PipeTransform<unknown, unknown> {
+      transform(value: unknown): unknown {
+        return value;
+      }
+    }
+
+    @Controller("native-pipe")
+    class NativePipeController {
+      @Get()
+      read(
+        @Req() request: Request,
+        @ResponseSettings() set: ResponseSettingsState,
+      ): { method: string } {
+        set.headers["x-source"] = "parameters";
+        return { method: request.method };
+      }
+    }
+
+    @Module({ controllers: [NativePipeController], providers: [IdentityPipe] })
+    class NativePipeModule {}
+
+    const app = await AponiaFactory.create(NativePipeModule, {
+      logger: false,
+      pipes: [IdentityPipe],
+    });
+    try {
+      const response = await app.handle(new Request("http://localhost/native-pipe"));
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("x-source")).toBe("parameters");
+      expect(await response.json()).toEqual({ method: "GET" });
     } finally {
       await app.close();
     }
