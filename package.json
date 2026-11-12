@@ -63,6 +63,7 @@
     "vite-plus": "^1.6.0"
   },
   "overrides": {
+    "tinypool": "^2.1.2",
     "vite": "npm:@voidzero-dev/vite-plus-core@1.6.0",
     "vitest": "5.1.0"
   },
