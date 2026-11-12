@@ -17,9 +17,11 @@ development-branch issue, not as a shipped release.
 Report a suspected vulnerability privately through GitHub's private
 vulnerability reporting on the repository's Security tab. Do not open a public
 issue for an exploitable problem. Include the affected package and version, a
-reproduction, and the impact you observed. You will get an acknowledgement and a
-status update; a fix ships with a release note that names the package and the
-behavior that changed.
+reproduction, and the impact you observed. A report is acknowledged within three
+business days and triaged within seven; the fix targets per severity, the
+supported channels, and the exact support window are stated in
+[`docs/support.md`](docs/support.md). A fix ships with a release note that names
+the package and the behavior that changed.
 
 ## Scope
 
@@ -72,6 +74,12 @@ at high severity for every push and pull request, and the release lane packages
 the workspaces from frozen installs. A new runtime dependency needs a maintained
 upstream, TypeScript declarations, a compatible license, and a reason the
 framework cannot own the behavior itself.
+
+Every third-party workflow action is pinned to a commit SHA, and the publish
+lane already requests an OIDC token (`id-token: write`) and publishes with
+`--provenance`. A CycloneDX SBOM per release is not produced yet: no maintained
+tool reads `bun.lock`, and the release lane does not emit a hand-written
+substitute. The release jobs attach one as soon as a maintained reader exists.
 
 ## Hardening checklist for a deployment
 

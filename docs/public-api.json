@@ -533,6 +533,30 @@
           "kind": "type"
         },
         {
+          "name": "APP_FILTER",
+          "kind": "value"
+        },
+        {
+          "name": "APP_GUARD",
+          "kind": "value"
+        },
+        {
+          "name": "APP_INTERCEPTOR",
+          "kind": "value"
+        },
+        {
+          "name": "APP_PIPE",
+          "kind": "value"
+        },
+        {
+          "name": "ApplicationEnhancer",
+          "kind": "type"
+        },
+        {
+          "name": "ApplicationEnhancerBinding",
+          "kind": "type"
+        },
+        {
           "name": "applyDeprecationHeaders",
           "kind": "value"
         },

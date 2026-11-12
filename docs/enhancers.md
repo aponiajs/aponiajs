@@ -318,12 +318,43 @@ table when the application starts listening; Aponia mounts every route during
 arrays are already built. A method that appeared to register a global enhancer
 and silently affected nothing would be worse than its absence.
 
+### Application-level tokens
+
+`APP_GUARD`, `APP_INTERCEPTOR`, `APP_FILTER`, and `APP_PIPE` from
+`@aponiajs/common` declare the same application-wide enhancers from a module's
+providers instead of the factory options. Each token carries one enhancer — a
+class the root module can reach, or an instance — or a list of them in run order:
+
+```ts
+import { APP_FILTER, APP_GUARD, Module } from "@aponiajs/common";
+
+@Module({
+  providers: [
+    AuditFilter,
+    AuthGuard,
+    { provide: APP_GUARD, useValue: AuthGuard },
+    { provide: APP_FILTER, useValue: [AuditFilter] },
+  ],
+})
+export class AppModule {}
+```
+
+A token no module provides declares nothing. A class entry resolves through the
+root module exactly as an enhancer named by a decorator does, so an unreachable
+class fails the boot with `MISSING_PROVIDER`. The container registers one
+provider per token in a module, so several `{ provide: APP_GUARD, ... }` entries
+in one module are refused as a duplicate provider — provide an array instead.
+
+These tokens merge after the factory options and before every controller's own
+declarations, which is the global position in the order below. A class both the
+options and a token name resolves to one instance and runs once.
+
 ## Order and precedence
 
 Three scopes combine outward-in for guards and for `interceptBefore`, so a method
 can only add to what its controller already requires:
 
-1. global, from the factory options;
+1. global, from the factory options or the `APP_*` tokens;
 2. controller, from the class decorators or the controller's declared plan;
 3. method, from the handler's decorators or the route's declared plan.
 

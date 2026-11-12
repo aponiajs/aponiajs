@@ -1,5 +1,8 @@
 import {
+  APP_PIPE,
   AponiaError,
+  type ApplicationEnhancer,
+  type ApplicationEnhancerBinding,
   type ArgumentMetadata,
   type PipeTransform,
   type PipeType,
@@ -8,6 +11,43 @@ import type { AponiaContainer } from "@aponiajs/core";
 import type { ResolvedPipe } from "./pipe-resolver.types.ts";
 
 export type { ResolvedPipe } from "./pipe-resolver.types.ts";
+
+/**
+ * Resolves the pipes an application declares through the `APP_PIPE` token.
+ *
+ * Each entry is a pipe instance or a class, resolved the way a pipe named by a
+ * decorator is. A token no module provides resolves to nothing.
+ *
+ * @param container - The booted container whose root module declares the token.
+ * @returns The resolved pipes, in declaration order.
+ *
+ * @internal
+ */
+export function resolveApplicationPipes(container: AponiaContainer): readonly ResolvedPipe[] {
+  const module = container.graph.root;
+  try {
+    container.graph.locate(module, APP_PIPE);
+  } catch (error) {
+    if (error instanceof AponiaError && error.code === "MISSING_PROVIDER") {
+      return Object.freeze([]);
+    }
+    throw error;
+  }
+
+  const value = container.resolveModuleProvider(module, APP_PIPE) as
+    | ApplicationEnhancerBinding<PipeTransform>
+    | undefined;
+  if (value === undefined) {
+    return Object.freeze([]);
+  }
+
+  const entries = Array.isArray(value) ? value : [value];
+  return Object.freeze(
+    (entries as readonly ApplicationEnhancer<PipeTransform>[]).map((entry) =>
+      resolvePipe(entry as PipeType, container),
+    ),
+  );
+}
 
 /**
  * Resolves a pipe instance from a class constructor or existing instance.

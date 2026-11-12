@@ -23,6 +23,7 @@ The published documentation set:
 | `deployment.md`             | Topology, state ownership, readiness and liveness, shutdown, configuration, observability, and failure modes                              |
 | `adapters.md`               | Hono, H3, and Nitro delivery adapters and their boundaries                                                                                |
 | `stability.md`              | The frozen public API snapshot, compatibility, change classes, and the deprecation policy                                                 |
+| `support.md`                | Supported channels, fix windows, response targets, and what support covers                                                                |
 | `feature-status.md`         | Per-package completeness and the known gaps outside the current release                                                                   |
 | `threat-model.md`           | Trust boundaries, the control behind each threat, residual risks, and the review checklist                                                |
 | `README.md`                 | The documentation index, reading order, authority order, and the page standard                                                            |

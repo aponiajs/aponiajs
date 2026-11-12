@@ -10,6 +10,7 @@
         "@types/bun": "^1.4.4",
         "bumpp": "^12.3.0",
         "elysia": "2.0.0-rc.4",
+        "fast-check": "^4.10.2",
         "jsonc-parser": "^3.3.1",
         "marked": "^18.1.3",
         "typebox": "^1.4.6",
@@ -216,11 +217,11 @@
     },
     "packages/aponiajs": {
       "name": "aponiajs",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
     },
     "packages/audit": {
       "name": "@aponiajs/audit",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
       },
@@ -232,7 +233,7 @@
     },
     "packages/auth": {
       "name": "@aponiajs/auth",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -248,7 +249,7 @@
     },
     "packages/cache": {
       "name": "@aponiajs/cache",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
       },
@@ -260,7 +261,7 @@
     },
     "packages/cli": {
       "name": "@aponiajs/cli",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "bin": {
         "aponia": "./bin/aponia.ts",
       },
@@ -277,7 +278,7 @@
     },
     "packages/common": {
       "name": "@aponiajs/common",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@standard-schema/spec": "^1.1.0",
         "reflect-metadata": "^0.2.2",
@@ -289,7 +290,7 @@
     },
     "packages/compression": {
       "name": "@aponiajs/compression",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -304,14 +305,14 @@
     },
     "packages/core": {
       "name": "@aponiajs/core",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
       },
     },
     "packages/cors": {
       "name": "@aponiajs/cors",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -328,7 +329,7 @@
     },
     "packages/create-aponia": {
       "name": "create-aponia",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "bin": {
         "create-aponia": "./dist/create-aponia.mjs",
       },
@@ -338,7 +339,7 @@
     },
     "packages/cron": {
       "name": "@aponiajs/cron",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -354,7 +355,7 @@
     },
     "packages/database": {
       "name": "@aponiajs/database",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "drizzle-orm": "^0.45.4",
@@ -367,7 +368,7 @@
     },
     "packages/devtools": {
       "name": "@aponiajs/devtools",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/cli": "workspace:*",
         "@aponiajs/common": "workspace:*",
@@ -384,7 +385,7 @@
     },
     "packages/events": {
       "name": "@aponiajs/events",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "reflect-metadata": "^0.2.2",
@@ -397,7 +398,7 @@
     },
     "packages/graphql": {
       "name": "@aponiajs/graphql",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -416,7 +417,7 @@
     },
     "packages/h3": {
       "name": "@aponiajs/h3",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/serverless": "workspace:*",
       },
@@ -432,7 +433,7 @@
     },
     "packages/hono": {
       "name": "@aponiajs/hono",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/serverless": "workspace:*",
       },
@@ -448,7 +449,7 @@
     },
     "packages/http": {
       "name": "@aponiajs/http",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@standard-schema/spec": "^1.1.0",
@@ -463,7 +464,7 @@
     },
     "packages/idempotency": {
       "name": "@aponiajs/idempotency",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -478,7 +479,7 @@
     },
     "packages/mcp": {
       "name": "@aponiajs/mcp",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
       },
@@ -496,7 +497,7 @@
     },
     "packages/metrics": {
       "name": "@aponiajs/metrics",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -511,7 +512,7 @@
     },
     "packages/microservices": {
       "name": "@aponiajs/microservices",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "cborg": "6.2.1",
@@ -551,7 +552,7 @@
     },
     "packages/nitro": {
       "name": "@aponiajs/nitro",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/serverless": "workspace:*",
       },
@@ -567,7 +568,7 @@
     },
     "packages/openapi": {
       "name": "@aponiajs/openapi",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -584,7 +585,7 @@
     },
     "packages/opentelemetry": {
       "name": "@aponiajs/opentelemetry",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -602,7 +603,7 @@
     },
     "packages/platform-elysia": {
       "name": "@aponiajs/platform-elysia",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/core": "workspace:*",
@@ -621,7 +622,7 @@
     },
     "packages/queue": {
       "name": "@aponiajs/queue",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
       },
@@ -633,7 +634,7 @@
     },
     "packages/rate-limit": {
       "name": "@aponiajs/rate-limit",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -648,7 +649,7 @@
     },
     "packages/security": {
       "name": "@aponiajs/security",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -663,7 +664,7 @@
     },
     "packages/serverless": {
       "name": "@aponiajs/serverless",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "devDependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -672,7 +673,7 @@
     },
     "packages/session": {
       "name": "@aponiajs/session",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -687,7 +688,7 @@
     },
     "packages/store-redis": {
       "name": "@aponiajs/store-redis",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
       },
@@ -711,7 +712,7 @@
     },
     "packages/tenancy": {
       "name": "@aponiajs/tenancy",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -726,7 +727,7 @@
     },
     "packages/testing": {
       "name": "@aponiajs/testing",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -740,7 +741,7 @@
     },
     "packages/view": {
       "name": "@aponiajs/view",
-      "version": "1.0.0-beta.28",
+      "version": "1.0.0-beta.29",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
       },
@@ -1461,6 +1462,8 @@
 
     "extend": ["extend@3.0.2", "", {}, "sha512-fjquC59cD7CyW6urNXK0FBufkZcoiGG80wTuPujX590cB5Ttln20E2UB4S/WARVqhXffZl2LNgS+gQdPIIim/g=="],
 
+    "fast-check": ["fast-check@4.10.2", "", { "dependencies": { "pure-rand": "^8.0.0" } }, "sha512-iK2f+YrcmoeGqk6fA0ea2bptcu/itMIm4NfEozq6N25+aG6h7s5HZbB/k1aV7b5w5sFLMCbbtRUsTVR+BgC3xw=="],
+
     "fast-unique-numbers": ["fast-unique-numbers@9.0.27", "", { "dependencies": { "@babel/runtime": "^7.29.2", "tslib": "^2.8.1" } }, "sha512-nDA9ADeINN8SA2u2wCtU+siWFTTDqQR37XvgPIDDmboWQeExz7X0mImxuaN+kJddliIqy2FpVRmnvRZ+j8i1/A=="],
 
     "fast-xml-builder": ["fast-xml-builder@1.3.1", "", { "dependencies": { "path-expression-matcher": "^1.6.2", "xml-naming": "^0.3.0" } }, "sha512-pIM/1n3ntFXKYrUZwW7QCK0gAW7XY+wzj1YMIV3tLDvPj/V+zTGJK5e3/4WJfwj0qWw2ElNXiTixda/R+3YSug=="],
@@ -1696,6 +1699,8 @@
     "protobufjs": ["protobufjs@8.8.0", "", { "dependencies": { "long": "^5.3.2" } }, "sha512-N3xhQ5yyBx3vQq4gubBfASzYhJGNzeDbjqBpu61g7UVylsN/qyffU96TKWD3GbbLOKF82VGNRNvv1+BFgE31Eg=="],
 
     "proxy-agent-negotiate": ["proxy-agent-negotiate@1.1.0", "", { "peerDependencies": { "kerberos": "^2.0.0" }, "optionalPeers": ["kerberos"] }, "sha512-N8IBcM3UgCVzz2L2Lqv8DVntDnnC8/hiV4nEDUPkqq72TPUgYWjQc+bdZlBPZK9LzPAvOY//gAt0S0DApoOXWQ=="],
+
+    "pure-rand": ["pure-rand@8.4.2", "", {}, "sha512-vvuOGgcuPJAirlHvuQw1TrOiw7ptaIXXmIbNuiNOY6lNGJJH49PQ1Kj4nd783nPdQhQdicgOjVI2yI/9BD6/Ng=="],
 
     "quansync": ["quansync@1.0.0", "", {}, "sha512-5xZacEEufv3HSTPQuchrvV6soaiACMFnq1H8wkVioctoH3TRha9Sz66lOxRwPK/qZj7HPiSveih9yAyh98gvqA=="],
 

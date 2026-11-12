@@ -61,6 +61,14 @@ useFactory, useExisting, inject? }` is accepted and lowered to the canonical
 provider. A decorated `useClass` without `inject` infers its constructor
 dependencies; a descriptor written by hand states `inject`.
 
+`APP_GUARD`, `APP_INTERCEPTOR`, `APP_FILTER`, and `APP_PIPE` keep their names and
+their meaning: provide one under its token in a module's `providers` and it runs
+on every route. `useClass` binds an instance to the token, the way Nest does;
+`useValue` may carry a class the container resolves (sharing the instance routes
+already name) or a configured instance. Several enhancers of one kind are a list
+under that one token, because the container registers one provider per token in
+a module.
+
 ## What changes
 
 **Validation is not class-validator.** A route declares a Standard Schema

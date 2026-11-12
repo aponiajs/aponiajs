@@ -1,4 +1,5 @@
 import {
+  APP_GUARD,
   Body,
   Controller,
   Context,
@@ -822,5 +823,38 @@ test("the Vite+ lane answers Problem Details when the configured logger throws",
 
   expect(response.status).toBe(500);
   expect(response.headers.get("content-type")).toContain("application/problem+json");
+  await application.close();
+});
+
+test("the Vite+ lane runs an application-level guard registered through APP_GUARD", async () => {
+  const calls: string[] = [];
+
+  @Injectable()
+  class ConformanceGuard {
+    canActivate(): boolean {
+      calls.push("guard");
+      return true;
+    }
+  }
+
+  @Controller("conformance-app-guard")
+  class ConformanceGuardController {
+    @Get()
+    read(): string {
+      return "read";
+    }
+  }
+
+  @Module({
+    controllers: [ConformanceGuardController],
+    providers: [ConformanceGuard, { provide: APP_GUARD, useValue: ConformanceGuard }],
+  })
+  class ConformanceGuardModule {}
+
+  const application = await AponiaFactory.create(ConformanceGuardModule, { logger: false });
+  const response = await application.handle(new Request("http://localhost/conformance-app-guard"));
+
+  expect(await response.text()).toBe("read");
+  expect(calls).toEqual(["guard"]);
   await application.close();
 });

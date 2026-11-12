@@ -25,11 +25,14 @@ import {
 } from "../controllers/controller-definition.ts";
 import {
   collectEnhancerDeclarations,
+  mergeResolvedEnhancers,
+  resolveApplicationEnhancers,
   resolveEnhancers,
   type InterceptorPhases,
   type MountedExceptionHandling,
   type MountedRouteEnhancers,
   type ResolvedControllerEnhancers,
+  type ResolvedEnhancers,
 } from "../controllers/enhancer-resolver.ts";
 import type { RuntimeElysiaController } from "../controllers/controller.types.ts";
 import {
@@ -39,7 +42,7 @@ import {
 import { createMiddlewareConsumer } from "../middleware/middleware-consumer.ts";
 import { mountMiddleware } from "../middleware/middleware-pipeline.ts";
 import { compileModuleInMemory } from "../compiler/in-memory-compiler.ts";
-import { resolvePipe, type ResolvedPipe } from "../pipes/pipe-resolver.ts";
+import { resolveApplicationPipes, resolvePipe, type ResolvedPipe } from "../pipes/pipe-resolver.ts";
 import { isModuleDefinition } from "../modules/module-compiler.ts";
 import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
 import { selectRootModuleDescriptor } from "../modules/module-descriptor-artifact.ts";
@@ -255,14 +258,28 @@ export async function bootstrapAponiaApplication(
     interceptors: Object.freeze([...(options.interceptors ?? [])]),
     filters: Object.freeze([...(options.filters ?? [])]),
   });
-  const globalEnhancers: ResolvedControllerEnhancers = resolveEnhancers(
+  const declaredGlobalEnhancers: ResolvedControllerEnhancers = resolveEnhancers(
     container,
     container.graph.root,
     globalEnhancerDeclarations,
   );
-  const globalPipes = Object.freeze(
-    (options.pipes ?? []).map((pipe) => resolvePipe(pipe, container)),
+  // The application-level tokens are a second way to state the same thing, so
+  // they resolve from the root and merge after the options, before any
+  // controller's own declarations. A class both scopes name resolves to one
+  // instance, which the merge deduplicates by identity.
+  const applicationEnhancers = resolveApplicationEnhancers(container);
+  const globalEnhancers: ResolvedEnhancers = mergeResolvedEnhancers(
+    declaredGlobalEnhancers,
+    applicationEnhancers,
   );
+  const globalHalves = new Map<ClassToken<unknown>, InterceptorPhases>([
+    ...declaredGlobalEnhancers.halves,
+    ...applicationEnhancers.halves,
+  ]);
+  const globalPipes = Object.freeze([
+    ...(options.pipes ?? []).map((pipe) => resolvePipe(pipe, container)),
+    ...resolveApplicationPipes(container),
+  ]);
 
   // The Problem Details mapping every route carries last is built once, from
   // the logger this boot reports on, and travels with each mount beside the
@@ -302,7 +319,7 @@ export async function bootstrapAponiaApplication(
   // wherever it is named: a class resolved at both scopes contributes the same
   // two booleans twice, so the later merge overwrites an identical value rather
   // than correcting an earlier one, and no guard is needed to say so.
-  collectInterceptorPhases(interceptorHalves, globalEnhancers.halves);
+  collectInterceptorPhases(interceptorHalves, globalHalves);
 
   for (const module of container.graph.modules) {
     const moduleUsesViews = module.controllers.some((controller) => {

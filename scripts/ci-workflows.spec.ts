@@ -133,7 +133,7 @@ test("CI isolates failures while preserving one required verify gate", async () 
   expect(workflow).toContain("  verify:");
   expect(workflow).toContain("if: always()");
   expect(workflow).toContain("needs:\n      - version");
-  expect(workflow).toContain("uses: actions/dependency-review-action@v5");
+  expect(workflow).toMatch(/uses: actions\/dependency-review-action@[0-9a-f]{40}/);
   expect(workflow).toContain("if: github.event_name == 'pull_request'");
   expect(workflow).toContain("fail-on-severity: high");
 });
@@ -152,9 +152,9 @@ test("the documentation site is built and published from the same sources", asyn
   const workflow = await Bun.file(".github/workflows/docs.yml").text();
 
   expect(workflow).toContain("bun run docs:build");
-  expect(workflow).toContain("actions/upload-pages-artifact@v5");
+  expect(workflow).toMatch(/actions\/upload-pages-artifact@[0-9a-f]{40}/);
   expect(workflow).toContain("path: docs-site");
-  expect(workflow).toContain("actions/deploy-pages@v5");
+  expect(workflow).toMatch(/actions\/deploy-pages@[0-9a-f]{40}/);
   expect(workflow).toContain("pages: write");
   expect(workflow).toContain("branches: [main]");
 });

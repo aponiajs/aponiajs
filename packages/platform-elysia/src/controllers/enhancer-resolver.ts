@@ -1,7 +1,12 @@
 import {
+  APP_FILTER,
+  APP_GUARD,
+  APP_INTERCEPTOR,
   AponiaError,
   getCatchMetadata,
   getTokenName,
+  type ApplicationEnhancer,
+  type ApplicationEnhancerBinding,
   type Interceptor,
   type CanActivate,
   type ClassToken,
@@ -9,6 +14,7 @@ import {
   type ExceptionFilter,
   type LoggerService,
   type ModuleDefinition,
+  type Token,
 } from "@aponiajs/common";
 import type { AponiaContainer } from "@aponiajs/core";
 import type { ElysiaErrorHook } from "../routing/route-compiler.types.ts";
@@ -173,6 +179,140 @@ function halvesOf(instance: Interceptor): InterceptorPhases {
   return Object.freeze({
     before: typeof instance.interceptBefore === "function",
     after: typeof instance.interceptAfter === "function",
+  });
+}
+
+/**
+ * The enhancers an application declares through the `APP_*` tokens.
+ *
+ * Each token carries one enhancer or a list of them, in run order. A class is
+ * resolved through the root module, so an unreachable class fails the boot with
+ * the same `MISSING_PROVIDER` an options-level enhancer raises; an instance is
+ * used as given. The result merges after the options-level declaration and
+ * before every controller's own, which is the order the platform runs.
+ *
+ * `halves` keys each resolved interceptor by the class it came from: the token
+ * for a class entry, and the instance's own constructor for an instance entry.
+ *
+ * @internal
+ */
+export interface ResolvedApplicationEnhancers extends ResolvedEnhancers {
+  readonly halves: ReadonlyMap<ClassToken<unknown>, InterceptorPhases>;
+}
+
+/**
+ * Resolves `APP_GUARD`, `APP_INTERCEPTOR`, and `APP_FILTER` from the root
+ * module.
+ *
+ * A token no module provides resolves to nothing, which is the ordinary shape
+ * of an application that declares no application-wide enhancer. A token that is
+ * provided carries the enhancer or the list; a value that is neither fails with
+ * `INVALID_PROVIDER` naming the token.
+ *
+ * @param container - The booted container whose root module declares the tokens.
+ * @returns The resolved enhancers, in declaration order.
+ *
+ * @internal
+ */
+export function resolveApplicationEnhancers(
+  container: AponiaContainer,
+): ResolvedApplicationEnhancers {
+  const guards = readEnhancerBinding<CanActivate>(container, APP_GUARD).map(
+    (entry) => resolveEnhancerEntry(container, entry).instance,
+  );
+
+  const halves = new Map<ClassToken<unknown>, InterceptorPhases>();
+  const interceptors = readEnhancerBinding<Interceptor>(container, APP_INTERCEPTOR).map((entry) => {
+    const resolved = resolveEnhancerEntry(container, entry);
+    if (resolved.classToken !== undefined) {
+      halves.set(resolved.classToken, halvesOf(resolved.instance));
+    }
+    return resolved.instance;
+  });
+
+  const filters = readEnhancerBinding<ExceptionFilter>(container, APP_FILTER).map((entry) => {
+    const resolved = resolveEnhancerEntry(container, entry);
+    const caught =
+      resolved.classToken === undefined
+        ? getCatchMetadata((resolved.instance as object).constructor as ClassToken<unknown>)
+        : getCatchMetadata(resolved.classToken);
+    return Object.freeze({ instance: resolved.instance, catch: caught });
+  });
+
+  return Object.freeze({
+    guards: Object.freeze(guards),
+    interceptors: Object.freeze(interceptors),
+    filters: Object.freeze(filters),
+    halves,
+  });
+}
+
+/**
+ * Merges two resolved enhancer lists, the first running first.
+ *
+ * A class declared at both scopes resolves to one instance, so deduplicating by
+ * identity is what keeps it from running twice.
+ *
+ * @internal
+ */
+export function mergeResolvedEnhancers(
+  primary: ResolvedEnhancers,
+  extra: ResolvedEnhancers,
+): ResolvedEnhancers {
+  return Object.freeze({
+    guards: Object.freeze([...new Set([...primary.guards, ...extra.guards])]),
+    interceptors: Object.freeze([...new Set([...primary.interceptors, ...extra.interceptors])]),
+    filters: Object.freeze([
+      ...new Map(
+        [...primary.filters, ...extra.filters].map((filter) => [filter.instance, filter]),
+      ).values(),
+    ]),
+  });
+}
+
+function readEnhancerBinding<T>(
+  container: AponiaContainer,
+  token: Token<ApplicationEnhancerBinding<T>>,
+): readonly ApplicationEnhancer<T>[] {
+  const module = container.graph.root;
+  try {
+    container.graph.locate(module, token);
+  } catch (error) {
+    if (error instanceof AponiaError && error.code === "MISSING_PROVIDER") {
+      return [];
+    }
+    throw error;
+  }
+
+  const value = container.resolveModuleProvider(module, token) as
+    | ApplicationEnhancerBinding<T>
+    | undefined;
+  if (value === undefined) {
+    return [];
+  }
+  return Array.isArray(value)
+    ? Object.freeze([...value] as readonly ApplicationEnhancer<T>[])
+    : [value as ApplicationEnhancer<T>];
+}
+
+function resolveEnhancerEntry<T>(
+  container: AponiaContainer,
+  entry: ApplicationEnhancer<T>,
+): { readonly instance: T; readonly classToken: ClassToken<unknown> | undefined } {
+  if (typeof entry === "function") {
+    const classToken = entry as ClassToken<T>;
+    return Object.freeze({
+      instance: container.resolveModuleProvider(container.graph.root, classToken) as T,
+      classToken: classToken as ClassToken<unknown>,
+    });
+  }
+
+  const instance = entry as T;
+  const constructor =
+    typeof instance === "object" && instance !== null ? instance.constructor : undefined;
+  return Object.freeze({
+    instance,
+    classToken: constructor as ClassToken<unknown> | undefined,
   });
 }
 

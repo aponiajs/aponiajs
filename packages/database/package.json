@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/database",
-  "version": "1.0.0-beta.28",
+  "version": "1.0.0-beta.29",
   "description": "A Drizzle-first database boundary for an Aponia application: transactions, typed repositories, and ordered SQL migrations.",
   "keywords": [
     "aponia",

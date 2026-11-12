@@ -15,6 +15,7 @@ and documentation guards that CI enforces.
 | `coverage-gate.ts`               | Aggregate LCOV floor and runtime-source completeness                        |
 | `public-api.ts`                  | The frozen public surface snapshot and its verify/freeze entries            |
 | `build-docs-site.ts`             | The static documentation site generated from `docs/`                        |
+| `benchmark.ts`                   | The in-process request-path benchmark run by `bun run bench`                |
 | `agent-guides.spec.ts`           | Guide inventory, aliases, and mandatory per-turn `RULES.md` loading         |
 | `ci-workflows.spec.ts`           | Complete CI, publish, packaging, and dependency-security command matrix     |
 | `cli-runtime-surface.spec.ts`    | The runtime surface `@aponiajs/cli` repeats by hand                         |
@@ -27,6 +28,7 @@ and documentation guards that CI enforces.
 | `*.spec.ts`                      | Guard tests over the above and over documentation wording                   |
 | `docs-site.spec.ts`              | Page coverage, navigation, and link rewriting of the generated site         |
 | `public-api.spec.ts`             | Barrel parsing, difference reporting, and the committed snapshot            |
+| `workflow-actions.spec.ts`       | Third-party workflow actions pinned to commit SHAs                          |
 
 ## Invariants
 

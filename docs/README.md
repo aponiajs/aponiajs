@@ -42,6 +42,7 @@ fix the page in the same change that changes the behavior.
 | Expose OpenAPI, GraphQL, or MCP                | [OpenAPI](./openapi.md), [Agent surface](./agent/README.md)                                                               |
 | Test an application                            | [Testing](./testing.md)                                                                                                   |
 | Author or publish a library                    | [Libraries](./libraries.md), [Plugin packages](./plugin-packages.md), [Releasing](./releasing.md)                         |
+| Check support and fix timelines                | [Support and release lifetime](./support.md)                                                                              |
 | Change the framework itself                    | [Architecture and style](./architecture-and-style.md), [Stability](./stability.md), [Feature status](./feature-status.md) |
 | Move an application from NestJS                | [Migrating from NestJS](./migrating-from-nest.md)                                                                         |
 

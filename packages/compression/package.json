@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/compression",
-  "version": "1.0.0-beta.28",
+  "version": "1.0.0-beta.29",
   "description": "Brotli and gzip response compression for an Aponia application, with a size threshold.",
   "keywords": [
     "aponia",

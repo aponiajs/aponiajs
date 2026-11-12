@@ -50,6 +50,11 @@ export {
   getEnhancerMetadata,
 } from "./enhancers/enhancer-decorators.ts";
 export type { EnhancerMetadata } from "./enhancers/enhancer-decorators.types.ts";
+export { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from "./enhancers/enhancer-tokens.ts";
+export type {
+  ApplicationEnhancer,
+  ApplicationEnhancerBinding,
+} from "./enhancers/enhancer-tokens.ts";
 export { SetMetadata, customMetadataPrefix, getCustomMetadata } from "./enhancers/metadata.ts";
 export { Reflector } from "./enhancers/reflector.ts";
 export type {

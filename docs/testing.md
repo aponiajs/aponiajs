@@ -391,3 +391,24 @@ const api = treaty(app);
 
 This keeps statically composed route types and performs no network I/O. See the
 [Eden Treaty guide](./eden-treaty.md) for the complete fixture.
+
+## Performance and property evidence
+
+Two lanes exist for evidence a case-by-case test cannot state, and neither is
+part of the default suite:
+
+- `bun run bench` measures container resolution, routing with a guard, body
+  validation, and an application pipe in one process. It reports operations per
+  second against a booted application; compare two releases on the same machine
+  rather than reading one number as an absolute. The script keeps its own
+  application and closes it.
+- The property-based cases under `packages/*/tests/*.property.test.ts` are part
+  of the Bun lane and use `fast-check`. They state invariants over an input
+  space — every outbound microservice envelope the encoder accepts round-trips
+  through the wire, arbitrary bytes are refused with a typed error rather than a
+  crash, a token names itself, joining two route segments yields one canonical
+  path — and shrink a failing input to the smallest counterexample.
+
+Neither replaces a focused test: a benchmark reports a number, not a contract,
+and a property proves an invariant, not a specific response. The failure paths
+that need an exact status or error code stay ordinary tests.
