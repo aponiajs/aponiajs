@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { formatBenchmarkResult, runBenchmark } from "./benchmark.ts";
+import { formatBenchmarkResult, runBenchmark, runSoak } from "./benchmark.ts";
 
 describe("benchmark suite", () => {
   test("reports one finite measurement per case", async () => {
@@ -26,5 +26,24 @@ describe("benchmark suite", () => {
     expect(line).toContain("container.get (singleton)");
     expect(line).toContain("1234567 ops/s");
     expect(line).toContain("(2000 iterations)");
+  });
+
+  test("reports requests, failures, throughput, and tail latency", async () => {
+    const soak = await runSoak({ seconds: 0.05, concurrency: 2 });
+
+    expect(soak.requests).toBeGreaterThan(0);
+    expect(soak.failures).toBe(0);
+    expect(soak.requestsPerSecond).toBeGreaterThan(0);
+    expect(soak.p50Ms).toBeGreaterThanOrEqual(0);
+    expect(soak.p99Ms).toBeGreaterThanOrEqual(soak.p50Ms);
+    expect(Object.isFrozen(soak)).toBe(true);
+  });
+
+  test("reports an empty run when the deadline has already passed", async () => {
+    const soak = await runSoak({ seconds: 0, concurrency: 1 });
+
+    expect(soak.requests).toBe(0);
+    expect(soak.p50Ms).toBe(0);
+    expect(soak.p99Ms).toBe(0);
   });
 });

@@ -400,8 +400,10 @@ part of the default suite:
 - `bun run bench` measures container resolution, routing with a guard, body
   validation, and an application pipe in one process. It reports operations per
   second against a booted application; compare two releases on the same machine
-  rather than reading one number as an absolute. The script keeps its own
-  application and closes it.
+  rather than reading one number as an absolute. `bun run bench -- --soak` adds
+  a fixed-duration run with several requests in flight and reports the failure
+  count, throughput, and p50/p99 latency. The script keeps its own application
+  and closes it.
 - The property-based cases under `packages/*/tests/*.property.test.ts` are part
   of the Bun lane and use `fast-check`. They state invariants over an input
   space — every outbound microservice envelope the encoder accepts round-trips

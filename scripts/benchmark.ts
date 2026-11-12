@@ -177,8 +177,87 @@ export function formatBenchmarkResult(result: BenchmarkResult): string {
     .padStart(9)} ops/s  (${result.iterations} iterations)`;
 }
 
+/** What one concurrent run held under a fixed deadline. */
+export interface SoakResult {
+  readonly requests: number;
+  readonly failures: number;
+  readonly requestsPerSecond: number;
+  readonly p50Ms: number;
+  readonly p99Ms: number;
+}
+
+export interface SoakOptions {
+  /** How long the load runs, in seconds. */
+  readonly seconds?: number;
+  /** Requests kept in flight at once. */
+  readonly concurrency?: number;
+}
+
+/**
+ * Keeps concurrent requests flowing for a fixed time and reports what the
+ * application answered.
+ *
+ * A soak is the one measurement a single-request benchmark cannot make: whether
+ * the request path stays healthy while several requests share it. It asserts
+ * nothing — the guard spec only checks the report's shape — and the caller
+ * reads the failure count and the tail latency.
+ *
+ * @param options - Duration and concurrency.
+ * @returns The request count, failures, throughput, and p50/p99 latency.
+ */
+export async function runSoak(options: SoakOptions = {}): Promise<SoakResult> {
+  const seconds = options.seconds ?? 10;
+  const concurrency = options.concurrency ?? 16;
+  const app = await application();
+  const deadline = performance.now() + seconds * 1_000;
+  const latencies: number[] = [];
+  let failures = 0;
+
+  try {
+    const worker = async (): Promise<void> => {
+      while (performance.now() < deadline) {
+        const started = performance.now();
+        const response = await app.handle(request("/bench/plain"));
+        await response.text();
+        latencies.push(performance.now() - started);
+        if (response.status !== 200) {
+          failures++;
+        }
+      }
+    };
+
+    await Promise.all(Array.from({ length: concurrency }, () => worker()));
+  } finally {
+    await app.close();
+  }
+
+  const sorted = [...latencies].sort((left, right) => left - right);
+  return Object.freeze({
+    requests: sorted.length,
+    failures,
+    requestsPerSecond: sorted.length / seconds,
+    p50Ms: percentile(sorted, 0.5),
+    p99Ms: percentile(sorted, 0.99),
+  });
+}
+
+function percentile(sorted: readonly number[], quantile: number): number {
+  if (sorted.length === 0) {
+    return 0;
+  }
+  const index = Math.min(sorted.length - 1, Math.floor(quantile * sorted.length));
+  return sorted[index] ?? 0;
+}
+
 if (import.meta.main) {
   for (const result of await runBenchmark()) {
     console.log(formatBenchmarkResult(result));
+  }
+
+  if (process.argv.includes("--soak")) {
+    const soak = await runSoak();
+    console.log(
+      `soak ${soak.requests} requests, ${soak.failures} failures, ${Math.round(soak.requestsPerSecond)} req/s, p50 ${soak.p50Ms.toFixed(1)}ms, p99 ${soak.p99Ms.toFixed(1)}ms`,
+    );
   }
 }
