@@ -1,7 +1,8 @@
 import type { ViewRenderOptions } from "@aponiajs/common";
+import { BladeViewEngine } from "../engines/blade-view-engine.ts";
 import type { ViewEngine } from "../module/view.types.ts";
 
-let defaultEngine: ViewEngine | undefined;
+let defaultEngine: ViewEngine = new BladeViewEngine();
 
 /**
  * Sets the default view engine used by the standalone `view()` helper.
@@ -43,11 +44,6 @@ export async function view<TData extends Record<string, unknown> = Record<string
   data?: TData,
   options?: ViewRenderOptions,
 ): Promise<Response> {
-  if (defaultEngine === undefined) {
-    const { BladeViewEngine } = await import("../engines/blade-view-engine.ts");
-    defaultEngine = new BladeViewEngine();
-  }
-
   const html = await defaultEngine.render(
     template,
     (data ?? {}) as Record<string, unknown>,
