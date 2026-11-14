@@ -1,4 +1,4 @@
-import { afterEach, expect, test } from "bun:test";
+import { afterEach, expect, setDefaultTimeout, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import {
@@ -19,6 +19,8 @@ import { aponiaVersion } from "../src/version.ts";
  * meet. It is why this package carries the platform as a development
  * dependency; the CLI's own source still imports nothing from it.
  */
+setDefaultTimeout(30_000);
+
 const temporaryDirectories: string[] = [];
 
 afterEach(async () => {

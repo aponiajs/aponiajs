@@ -1,4 +1,4 @@
-import { afterEach, expect, test } from "bun:test";
+import { afterEach, expect, setDefaultTimeout, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { AponiaFactory, inspectAponiaApplication } from "@aponiajs/platform-elysia";
@@ -30,6 +30,13 @@ import type { DescriptorSourceFile } from "../src/index.ts";
  * booting the generated module proves the emitted `imports`, `exports`, and
  * `inject` lists all wire the same container the decorators do.
  */
+
+/**
+ * Every case here writes a project, generates it, and boots the result, which
+ * takes several seconds on a loaded runner; the default five would fail a case
+ * that is merely slow rather than wrong.
+ */
+setDefaultTimeout(30_000);
 
 /**
  * The version the running platform reports, read from the manifest it ships

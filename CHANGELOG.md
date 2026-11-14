@@ -6,7 +6,7 @@ All notable changes to this project are recorded here. The format follows
 notes for every published tag; this file records the changes a reader needs when
 moving between releases.
 
-## 1.0.0-beta.39 — unreleased
+## 1.0.0-beta.40 — unreleased
 
 The development line. Nothing in this line is published on npm yet; the registry
 serves the `0.6.0-alpha.N` line for the six packages listed in

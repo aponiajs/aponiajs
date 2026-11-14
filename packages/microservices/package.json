@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/microservices",
-  "version": "1.0.0-beta.39",
+  "version": "1.0.0-beta.40",
   "description": "Message-pattern microservices for an Aponia application: an in-memory reference transport, a CBOR wire contract, clients, and independently installable broker transports.",
   "keywords": [
     "aponia",
