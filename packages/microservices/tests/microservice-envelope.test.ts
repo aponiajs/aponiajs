@@ -503,6 +503,12 @@ describe("microservice envelope decoding", () => {
     expect(decodeFailure(hex("9f1cff")).details.reason).toContain("reserved");
   });
 
+  test("rejects bytes the structural preflight accepts but the decoder cannot read", () => {
+    // `81 1f` is one array whose element is a bare break marker: the preflight
+    // counts it as an item, and cborg is the layer that refuses it.
+    expect(decodeFailure(hex("811f")).details.reason).toContain("not valid CBOR");
+  });
+
   test("rejects malformed indefinite strings", () => {
     expect(decodeFailure(hex("7f01ff")).details.reason).toContain("chunk");
     expect(decodeFailure(hex("7f6161")).details.reason).toContain("terminated");
