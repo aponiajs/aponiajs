@@ -1,0 +1,297 @@
+import {
+  AponiaError,
+  MESSAGE_HANDLER_ERROR_CODE,
+  UNKNOWN_MESSAGE_PATTERN_CODE,
+  getMessagePatternMetadata,
+  getMessagePayloadProperty,
+  getTokenName,
+  isMessagePattern,
+  messageFailure,
+  type ControllerDefinition,
+  type LoggerService,
+  type MessagePatternKind,
+  type MicroserviceHandler,
+  type MicroserviceMessage,
+  type MicroserviceReply,
+  type MicroserviceTransport,
+} from "@aponiajs/common";
+import { reportThroughLogger } from "../errors/default-exception-filter.ts";
+
+interface MicroserviceBinding {
+  readonly pattern: string;
+  readonly kind: MessagePatternKind;
+  readonly controller: string;
+  readonly propertyKey: string | symbol;
+  readonly invoke: (data: unknown) => unknown;
+}
+
+/**
+ * The compiled message handlers one boot dispatches to.
+ *
+ * Requests and events are separate registries because a pattern names one
+ * handler per kind: `send()` must never reach an event handler and `emit()`
+ * must never run a request handler. The same pattern may exist once in each.
+ *
+ * @internal
+ */
+export interface MicroserviceHandlerTable {
+  readonly requests: Map<string, MicroserviceBinding>;
+  readonly events: Map<string, MicroserviceBinding>;
+}
+
+/** Creates the two handler registries one boot fills while controllers mount. */
+export function createMicroserviceHandlerTable(): MicroserviceHandlerTable {
+  return Object.freeze({ requests: new Map(), events: new Map() });
+}
+
+/** The running transports one boot owns. */
+export interface MicroserviceRuntime {
+  readonly transports: readonly string[];
+  /** Stops every transport; failures are reported, never thrown. */
+  close(): Promise<void>;
+}
+
+/**
+ * Collects one controller's message handlers into the boot's table.
+ *
+ * Handlers are read from the controller class the same way routes are: the
+ * decorators wrote metadata on the prototype, and this compiles the payload
+ * binding once instead of per message. A pattern two controllers claim for the
+ * same kind is refused here, before any transport exists, because which
+ * handler answers is a boot decision and must not depend on delivery order.
+ *
+ * @internal
+ */
+export function collectMessageHandlers(
+  handlers: MicroserviceHandlerTable,
+  controller: ControllerDefinition,
+  instance: unknown,
+): void {
+  const prototype = controller.useClass.prototype;
+  const declared = getMessagePatternMetadata(prototype);
+  if (declared.size === 0) {
+    return;
+  }
+  const controllerName = getTokenName(controller.token);
+  for (const [propertyKey, metadata] of declared) {
+    const method = (instance as Record<string | symbol, unknown>)[propertyKey];
+    if (typeof method !== "function") {
+      throw new AponiaError(
+        "INVALID_CONTROLLER",
+        `Message handler "${String(propertyKey)}" is not a method of "${controllerName}".`,
+        { controller: controllerName, propertyKey: String(propertyKey) },
+      );
+    }
+    const registry = metadata.kind === "request" ? handlers.requests : handlers.events;
+    const previous = registry.get(metadata.pattern);
+    if (previous !== undefined) {
+      throw new AponiaError(
+        "DUPLICATE_MESSAGE_PATTERN",
+        `Message pattern "${metadata.pattern}" is declared by "${previous.controller}" and "${controllerName}".`,
+        Object.freeze({
+          pattern: metadata.pattern,
+          kind: metadata.kind,
+          controllers: Object.freeze([previous.controller, controllerName]),
+        }),
+      );
+    }
+    const payloadProperty = getMessagePayloadProperty(prototype, propertyKey);
+    registry.set(
+      metadata.pattern,
+      Object.freeze({
+        pattern: metadata.pattern,
+        kind: metadata.kind,
+        controller: controllerName,
+        propertyKey,
+        invoke: (data: unknown) =>
+          Reflect.apply(method, instance, [readPayload(data, payloadProperty)]),
+      }),
+    );
+  }
+}
+
+/**
+ * Validates the transports and starts delivering messages.
+ *
+ * A transport connects after every provider and controller is initialized, so
+ * the first message a broker holds cannot reach a half-built graph. When one
+ * transport refuses to start, the transports already subscribed are closed and
+ * the original failure propagates, because a boot that answers some of its
+ * configured transports is not a boot this framework can call successful.
+ *
+ * @internal
+ */
+export async function startMicroserviceTransports(
+  transports: readonly MicroserviceTransport[] | undefined,
+  handlers: MicroserviceHandlerTable,
+  logger: LoggerService | undefined,
+): Promise<MicroserviceRuntime | undefined> {
+  const resolved = resolveTransports(transports);
+  if (resolved.length === 0) {
+    return undefined;
+  }
+
+  const dispatch: MicroserviceHandler = async (message) =>
+    dispatchMessage(handlers, message, logger);
+  const started: MicroserviceTransport[] = [];
+  for (const transport of resolved) {
+    try {
+      await transport.subscribe(dispatch);
+    } catch (error) {
+      // A transport may have opened resources before its subscribe refused.
+      // Close it as well as the transports that already started, so a failed
+      // boot cannot leave a broker connection or polling loop behind.
+      await closeTransports([...started, transport], logger);
+      throw error;
+    }
+    started.push(transport);
+  }
+
+  const names = Object.freeze(resolved.map((transport) => transport.name));
+  for (const name of names) {
+    logger?.log(`${name}: subscribed to application messages`, "MicroservicesController");
+  }
+
+  return Object.freeze({
+    transports: names,
+    close: () => closeTransports(started, logger),
+  });
+}
+
+function resolveTransports(
+  transports: readonly MicroserviceTransport[] | undefined,
+): readonly MicroserviceTransport[] {
+  if (transports === undefined || transports.length === 0) {
+    return [];
+  }
+  const issues: string[] = [];
+  const names = new Set<string>();
+  transports.forEach((transport, index) => {
+    if (typeof transport?.name !== "string" || transport.name.trim() === "") {
+      issues.push(`microservices[${index}].name must be a non-empty string`);
+    } else if (names.has(transport.name)) {
+      issues.push(`microservices[${index}] repeats the transport name "${transport.name}"`);
+    } else {
+      names.add(transport.name);
+    }
+    if (typeof transport?.subscribe !== "function") {
+      issues.push(`microservices[${index}].subscribe must be a function`);
+    }
+    if (typeof transport?.close !== "function") {
+      issues.push(`microservices[${index}].close must be a function`);
+    }
+  });
+  if (issues.length > 0) {
+    throw new AponiaError(
+      "INVALID_MICROSERVICE_TRANSPORT",
+      "The microservice transports are invalid.",
+      { issues: Object.freeze([...issues]) },
+    );
+  }
+  return Object.freeze([...transports]);
+}
+
+const maximumIdentifierLength = 128;
+const maximumReplyDestinationLength = 2048;
+
+async function dispatchMessage(
+  handlers: MicroserviceHandlerTable,
+  message: MicroserviceMessage,
+  logger: LoggerService | undefined,
+): Promise<MicroserviceReply> {
+  const invalid = validateMessage(message);
+  if (invalid !== undefined) {
+    return Object.freeze({
+      ok: false,
+      error: messageFailure("INVALID_MICROSERVICE_MESSAGE", invalid),
+    });
+  }
+
+  const registry = message.kind === "request" ? handlers.requests : handlers.events;
+  const binding = registry.get(message.pattern);
+  if (binding === undefined) {
+    return Object.freeze({
+      ok: false,
+      error: messageFailure(
+        UNKNOWN_MESSAGE_PATTERN_CODE,
+        `No ${message.kind} handler is registered for pattern "${message.pattern}".`,
+      ),
+    });
+  }
+  try {
+    const value = await binding.invoke(message.data);
+    return Object.freeze({
+      ok: true as const,
+      value: binding.kind === "event" ? undefined : value,
+    });
+  } catch (error) {
+    reportThroughLogger(logger, error, "MicroservicesController");
+    return Object.freeze({
+      ok: false,
+      error: messageFailure(MESSAGE_HANDLER_ERROR_CODE, "The message handler failed."),
+    });
+  }
+}
+
+/**
+ * Rejects a message that cannot be dispatched safely.
+ *
+ * A transport is a trust boundary: a broker consumer may receive bytes from
+ * any producer. These checks are structural only. They never inspect the
+ * payload and never echo a value back to the caller, so a malformed message
+ * cannot turn its own contents into a response.
+ */
+function validateMessage(message: MicroserviceMessage): string | undefined {
+  if (typeof message !== "object" || message === null) {
+    return "A microservice message must be an object.";
+  }
+  if (message.kind !== "request" && message.kind !== "event") {
+    return 'A microservice message kind must be "request" or "event".';
+  }
+  if (!isBoundedNonEmptyString(message.id, maximumIdentifierLength)) {
+    return "A microservice message id must be a non-empty string of at most 128 characters.";
+  }
+  if (!isMessagePattern(message.pattern)) {
+    return "A microservice message pattern must be a canonical alphanumeric key of at most 256 characters without broker wildcards.";
+  }
+  if (!isBoundedNonEmptyString(message.target, maximumIdentifierLength)) {
+    return "A microservice message target must be a non-empty string of at most 128 characters.";
+  }
+  if (!isBoundedNonEmptyString(message.transport, maximumIdentifierLength)) {
+    return "A microservice message transport must be a non-empty string of at most 128 characters.";
+  }
+  if (
+    message.replyTo !== undefined &&
+    !isBoundedNonEmptyString(message.replyTo, maximumReplyDestinationLength)
+  ) {
+    return "A microservice message reply destination must be a non-empty string of at most 2048 characters.";
+  }
+  return undefined;
+}
+
+function isBoundedNonEmptyString(value: unknown, maximumLength: number): value is string {
+  return typeof value === "string" && value.trim() !== "" && value.length <= maximumLength;
+}
+
+async function closeTransports(
+  transports: readonly MicroserviceTransport[],
+  logger: LoggerService | undefined,
+): Promise<void> {
+  for (const transport of [...transports].reverse()) {
+    try {
+      await transport.close();
+    } catch (error) {
+      reportThroughLogger(logger, error, "MicroservicesController");
+    }
+  }
+}
+
+function readPayload(data: unknown, property: string | undefined): unknown {
+  if (property === undefined) {
+    return data;
+  }
+  if (typeof data !== "object" || data === null) {
+    return undefined;
+  }
+  return (data as Record<string, unknown>)[property];
+}

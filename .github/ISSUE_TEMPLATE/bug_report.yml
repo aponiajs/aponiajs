@@ -1,0 +1,38 @@
+name: Bug report
+description: Report behavior that does not match the documented contract
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Report security vulnerabilities privately through the repository's
+        Security tab, never in a public issue.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: The observed behavior, including the exact error code or status.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+      description: The documented contract and the page that states it.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: The smallest application or test that shows the failure.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The package version and the Bun version (`bun --version`).
+    validations:
+      required: true

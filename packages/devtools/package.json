@@ -1,0 +1,65 @@
+{
+  "name": "@aponiajs/devtools",
+  "version": "1.0.0-beta.40",
+  "description": "Opt-in devtools for a running Aponia application, served by the application itself.",
+  "keywords": [
+    "aponia",
+    "aponiajs",
+    "bun",
+    "debugging",
+    "devtools",
+    "elysia",
+    "introspection",
+    "typescript"
+  ],
+  "homepage": "https://github.com/aponiajs/aponiajs#readme",
+  "bugs": {
+    "url": "https://github.com/aponiajs/aponiajs/issues"
+  },
+  "license": "MIT",
+  "author": "AponiaJS contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aponiajs/aponiajs.git",
+    "directory": "packages/devtools"
+  },
+  "files": [
+    "dist",
+    "llms.txt"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "bunx --bun vp pack",
+    "dev": "bunx --bun vp pack --watch",
+    "test": "bun test",
+    "test:vite-plus": "vp test",
+    "check": "bunx --bun vp check",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "@aponiajs/cli": "workspace:*",
+    "@aponiajs/common": "workspace:*",
+    "@aponiajs/mcp": "workspace:*",
+    "@aponiajs/platform-elysia": "workspace:*",
+    "zod": "^4.6.6"
+  },
+  "devDependencies": {
+    "elysia": "2.0.0-rc.4"
+  },
+  "peerDependencies": {
+    "elysia": "2.0.0-rc.4"
+  },
+  "engines": {
+    "bun": ">=1.4.4"
+  }
+}

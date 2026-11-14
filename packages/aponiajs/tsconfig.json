@@ -8,6 +8,8 @@
     "resolveJsonModule": true,
     "types": ["bun"],
     "strict": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "noUnusedLocals": true,
     "declaration": true,
     "noEmit": true,

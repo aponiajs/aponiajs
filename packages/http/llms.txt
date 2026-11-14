@@ -1,0 +1,26 @@
+# @aponiajs/http
+
+> SSRF-safe outbound HTTP for an AponiaJS application, with timeouts, bounded responses, redirect re-validation, idempotent retries, and Standard Schema validation.
+
+## What this package exports
+
+- `HttpModule.register({ baseUrl?, headers?, timeoutMs?, retries?, retryDelayMs?, maxResponseBytes?, maxRedirects?, allowPrivateNetworks?, fetch?, resolveAddresses?, pinResolvedAddress? })`: the dynamic module an application imports.
+- `HttpService`: `request`, `get`, `post`, `put`, `patch`, and `delete`.
+- `HttpModuleOptions`, `HttpRequestOptions`, `HttpResponse`, `HttpRedirectPolicy`, `ResolvedHttpOptions`: the public contracts.
+
+## Security defaults
+
+- Only `http:` and `https:` are allowed; credentials in a URL are refused.
+- `localhost`, metadata hostnames, loopback, private, link-local, carrier-grade NAT, multicast, and reserved addresses are blocked.
+- Every hostname is resolved and every resolved address is checked before the request; the validated address is pinned for the connection with the original Host and TLS SNI.
+- Every redirect is re-validated; a redirect with a request body is not followed.
+- `Host` cannot be supplied by the caller.
+- Responses are bounded to 1 MiB by default; requests time out at 10 seconds.
+- Retries apply to idempotent methods; a request that states `idempotencyKey` sends an `Idempotency-Key` header and may retry any method, and `Retry-After` overrides the exponential delay (capped at 30 seconds).
+- `allowPrivateNetworks: true` is the explicit opt-out.
+
+## Documentation
+
+- [Package README](README.md)
+- [Published packages](../../docs/packages.md)
+- [npm](https://www.npmjs.com/package/@aponiajs/http)

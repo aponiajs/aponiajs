@@ -52,13 +52,28 @@ export class GreetingService {
 | ---------------------------------------- | ----------------------------------------- |
 | `provideValue(token, value)`             | A ready value                             |
 | `provideFactory(token, inject, factory)` | The factory's result, built once          |
-| `provideClass(Class, inject)`            | An instance constructed from the tokens   |
+| `provideClass(Class, inject)`            | An instance under the class's own token   |
+| `provideClass(token, Class, inject)`     | The same instance under a token you name  |
 | `provideAlias(token, target)`            | Another token's instance under a new name |
 
-## Scope
+## Scopes
 
-Singleton is the only scope. The container caches one instance per provider per
-module and detects dependency cycles while resolving, raising `PROVIDER_CYCLE`.
+Aponia supports three lifetime scopes via the `Scope` object:
+
+- **`Scope.DEFAULT` (`"singleton"`)**: Cached per owning module.
+- **`Scope.REQUEST` (`"request"`)**: Instantiated once per HTTP request and cached within the request context.
+- **`Scope.TRANSIENT` (`"transient"`)**: A fresh instance is instantiated on every resolution.
+
+```ts
+import { Injectable, Scope } from "@aponiajs/common";
+
+@Injectable({ scope: Scope.REQUEST })
+export class RequestScopedLogger {}
+```
+
+## Global modules and circular references
+
+Mark a utility module with `@Global()` to make its exported providers visible across the whole module graph without needing explicit imports. For mutual dependencies, use `forwardRef()` to defer resolution.
 
 `container.get()` enforces root-module visibility on purpose. Resolving inside
 an arbitrary module is a platform-internal operation, not application API.

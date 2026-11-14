@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import { Module, createToken, provideValue } from "@aponiajs/common";
-import { AponiaFactory, type AponiaElysiaApplication } from "@aponiajs/platform-elysia";
+import { AponiaFactory, type AponiaApplication } from "@aponiajs/platform-elysia";
 import { createApplication, get } from "./application.ts";
 
-let application: AponiaElysiaApplication;
+let application: AponiaApplication;
 
 beforeAll(async () => {
   application = await createApplication();

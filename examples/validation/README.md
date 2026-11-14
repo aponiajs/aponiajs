@@ -1,6 +1,9 @@
 # Validation
 
-Route schemas rejecting bad input before the handler runs. The body uses Zod through Standard Schema, the query and headers use Elysia's native `t`, and the handler's own annotations provide the types.
+Separate `@Validation()` classes reject bad input before the handler runs. The
+body model uses Zod through Standard Schema, while the query and header models
+use Elysia's native `t`. Controllers name the model classes directly without
+repeating schema-derived types.
 
 ## Run
 

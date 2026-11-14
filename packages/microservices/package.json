@@ -1,0 +1,115 @@
+{
+  "name": "@aponiajs/microservices",
+  "version": "1.0.0-beta.40",
+  "description": "Message-pattern microservices for an Aponia application: an in-memory reference transport, a CBOR wire contract, clients, and independently installable broker transports.",
+  "keywords": [
+    "aponia",
+    "aponiajs",
+    "azure-service-bus",
+    "bun",
+    "elysia",
+    "kafka",
+    "microservices",
+    "mqtt",
+    "nats",
+    "pubsub",
+    "rabbitmq",
+    "redis",
+    "sqs",
+    "typescript"
+  ],
+  "homepage": "https://github.com/aponiajs/aponiajs#readme",
+  "bugs": {
+    "url": "https://github.com/aponiajs/aponiajs/issues"
+  },
+  "license": "MIT",
+  "author": "AponiaJS contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aponiajs/aponiajs.git",
+    "directory": "packages/microservices"
+  },
+  "files": [
+    "dist",
+    "llms.txt"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "bunx --bun vp pack",
+    "dev": "bunx --bun vp pack --watch",
+    "test": "bun test",
+    "test:vite-plus": "vp test",
+    "check": "bunx --bun vp check",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "@aponiajs/common": "workspace:*",
+    "cborg": "6.2.1"
+  },
+  "devDependencies": {
+    "@aponiajs/platform-elysia": "workspace:*",
+    "@aws-sdk/client-sqs": "3.1165.0",
+    "@azure/service-bus": "7.10.0",
+    "@google-cloud/pubsub": "6.4.1",
+    "@grpc/grpc-js": "1.14.7",
+    "elysia": "2.0.0-rc.4",
+    "kafkajs": "2.2.4",
+    "mqtt": "5.16.1",
+    "nats": "2.29.3",
+    "rabbitmq-client": "5.1.0",
+    "redis": "6.3.1"
+  },
+  "peerDependencies": {
+    "@aws-sdk/client-sqs": "3.1165.0",
+    "@azure/service-bus": "7.10.0",
+    "@google-cloud/pubsub": "6.4.1",
+    "@grpc/grpc-js": "1.14.7",
+    "kafkajs": "2.2.4",
+    "mqtt": "5.16.1",
+    "nats": "2.29.3",
+    "rabbitmq-client": "5.1.0",
+    "redis": "6.3.1"
+  },
+  "peerDependenciesMeta": {
+    "mqtt": {
+      "optional": true
+    },
+    "nats": {
+      "optional": true
+    },
+    "kafkajs": {
+      "optional": true
+    },
+    "rabbitmq-client": {
+      "optional": true
+    },
+    "redis": {
+      "optional": true
+    },
+    "@aws-sdk/client-sqs": {
+      "optional": true
+    },
+    "@google-cloud/pubsub": {
+      "optional": true
+    },
+    "@azure/service-bus": {
+      "optional": true
+    },
+    "@grpc/grpc-js": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "bun": ">=1.4.4"
+  }
+}

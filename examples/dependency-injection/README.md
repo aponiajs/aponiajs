@@ -1,6 +1,6 @@
 # Dependency injection
 
-Every provider kind in one module: `provideValue`, `provideFactory`, `provideClass`, and `provideAlias`, with tokens naming what is not a class. One provider is deliberately left out of `exports` to show that a private provider stays invisible to importers.
+Every provider kind in one module: `provideValue`, `provideFactory`, `provideClass`, and `provideAlias`, with tokens naming what is not a class. `INTERNAL_BUDGET` is deliberately left out of `exports` to show that a private provider stays invisible to importers.
 
 ## Run
 

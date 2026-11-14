@@ -1,0 +1,21 @@
+# @aponiajs/nitro
+
+> Delivery adapter that mounts an Aponia application inside Nitro.
+
+## What this package exports
+
+- `toNitroHandler(application)`.
+- `defineAponiaHandler(application)`.
+
+## Behavior
+
+- `toNitroHandler` returns a Nitro server-route handler built with `defineHandler`.
+- The runtime forwards its request to `application.handle`.
+- Aponia guards, validation, filters, and error mapping still run inside the application.
+- WebSockets remain Elysia-only.
+
+## Documentation
+
+- [Package README](README.md)
+- [Deployment guide](../../docs/deployment.md)
+

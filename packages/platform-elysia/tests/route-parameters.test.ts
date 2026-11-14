@@ -3,7 +3,7 @@ import {
   Body,
   Controller,
   Cookie,
-  Ctx,
+  Context,
   Get,
   Headers,
   Injectable,
@@ -12,12 +12,12 @@ import {
   Post,
   Query,
   Req,
-  Res,
-  type RouteResponseSettings,
+  ResponseSettings,
+  type ResponseSettingsState,
 } from "@aponiajs/common";
 import { t } from "elysia";
 import { z } from "zod";
-import { AponiaFactory, type ElysiaRouteContext } from "../src/index.ts";
+import { AponiaFactory, type HandlerContext } from "../src/index.ts";
 
 const createUserSchema = { body: z.object({ name: z.string().min(2) }) };
 const searchSchema = { query: t.Object({ term: t.String(), take: t.Numeric() }) };
@@ -77,13 +77,16 @@ class UserController {
   }
 
   @Get("native/request")
-  readRequest(@Req() request: Request, @Res() set: RouteResponseSettings): { method: string } {
+  readRequest(
+    @Req() request: Request,
+    @ResponseSettings() set: ResponseSettingsState,
+  ): { method: string } {
     set.headers["x-source"] = "parameters";
     return { method: request.method };
   }
 
   @Post("native/context", createUserSchema)
-  readContext(@Ctx() context: ElysiaRouteContext<typeof createUserSchema>) {
+  readContext(@Context() context: HandlerContext<typeof createUserSchema>) {
     context.set.headers["x-source"] = "context";
     return context.body.name === "root"
       ? context.status(403, "forbidden")

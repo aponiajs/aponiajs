@@ -1,23 +1,26 @@
 import {
   Body,
+  Context,
   Controller,
   Cookie,
-  Ctx,
   Get,
   Headers,
+  HttpStatus,
   Param,
   Post,
   Query,
   Req,
-  Res,
-  type RouteResponseSettings,
+  ResponseSettings,
+  type ResponseSettingsState,
 } from "@aponiajs/common";
-import { type ElysiaRouteContext } from "@aponiajs/platform-elysia";
-import { createItemSchema, type CreateItem } from "./item.schema.ts";
+import { type HandlerContext, type ResponseStatus } from "@aponiajs/platform-elysia";
+import { createItemSchema, type CreateItem } from "./item.model.ts";
 
 /**
- * Every parameter decorator, both whole and named. A decorator with a name
- * selects one property; without one it injects the whole part.
+ * The parameter decorators this example covers — input, headers, cookies, the
+ * request, the response settings, the typed status, and the context. `@Body`,
+ * `@Query`, and `@Param` are used both whole and named, and the rest one way
+ * each.
  */
 @Controller("parameters")
 export class RequestController {
@@ -54,8 +57,8 @@ export class RequestController {
   }
 
   @Get("cookies")
-  readCookies(@Cookie("session") session: unknown): { session: string | null } {
-    return { session: session === undefined ? null : String(session) };
+  readCookies(@Cookie("session") session: string | undefined): { session: string | null } {
+    return { session: session ?? null };
   }
 
   @Get("request")
@@ -64,18 +67,27 @@ export class RequestController {
   }
 
   @Get("response")
-  writeResponse(@Res() response: RouteResponseSettings): { written: boolean } {
+  writeResponse(@ResponseSettings() response: ResponseSettingsState): { written: boolean } {
     response.headers["x-source"] = "parameters";
     return { written: true };
   }
 
+  @Get("native-response")
+  writeNativeResponse(
+    @ResponseSettings() set: HandlerContext["set"],
+    @HttpStatus() status: ResponseStatus,
+  ): unknown {
+    set.headers["x-source"] = "native-parts";
+    return status(202, { written: true });
+  }
+
   @Get("context")
-  readContext(@Ctx() context: ElysiaRouteContext): { path: string } {
+  readContext(@Context() context: HandlerContext): { path: string } {
     return { path: context.path };
   }
 
   @Get("whole-context")
-  readWholeContext(context: ElysiaRouteContext): { path: string } {
+  readWholeContext(context: HandlerContext): { path: string } {
     return { path: context.path };
   }
 }

@@ -1,0 +1,62 @@
+# @aponiajs/graphql
+
+> Serve a GraphQL endpoint for an Aponia application, with the mount path read from a validated configuration. A thin adapter over `@elysia/graphql-yoga` (which wraps Yoga): AponiaJS contributes a module the plugin is declared in and a validated configuration the path comes from — stated once and set as both the plugin's `path` and yoga's `graphqlEndpoint` — and no schema of its own.
+
+**This package serves no schema.** Every field, resolver result, and error shape is `@elysia/graphql-yoga`'s. Its contribution is a module the endpoint is declared in — so it is a graph node, in the compiled graph and in devtools — and a validated configuration holding one field, `path`. The schema is the application's: `typeDefs` plus `resolvers`, or a prebuilt `GraphQLSchema`, returned from `useFactory` where resolvers can close over injected providers. For a schema fixed in source with a path set by hand, mounting `PluginModule.register(yoga({ typeDefs, resolvers, path: "/gql", graphqlEndpoint: "/gql" }), { key: "graphql" })` in an `imports` needs no package — but the pair must be set together: with only `path` set, the declared route answers `404`.
+
+## What this package exports
+
+```ts
+import { GraphQLModule } from "@aponiajs/graphql";
+import type {
+  GraphQLConfiguration,
+  GraphQLModuleOptions,
+  GraphQLSchemaOptions,
+} from "@aponiajs/graphql";
+```
+
+- `GraphQLModule` — `GraphQLModule.register(options)` returns the `DynamicModule` an application's `imports` accepts.
+- `GraphQLConfiguration` — the value the module validates and exports: `path` (required, a non-empty string beginning with `/`).
+- `GraphQLModuleOptions` — `configuration`, `imports`, `inject`, `useFactory`, `source`, and `key`.
+- `GraphQLSchemaOptions` — the wrapped plugin's config minus `path` and `graphqlEndpoint`, which the module sets.
+
+## Declaring an endpoint
+
+```ts
+import { Module } from "@aponiajs/common";
+import { GraphQLModule } from "@aponiajs/graphql";
+import { GraphQLConfig } from "./config.ts";
+
+const graphql = GraphQLModule.register({
+  configuration: GraphQLConfig,
+  inject: [UserService],
+  useFactory: (users) => ({
+    typeDefs: `type Query { users: [String] }`,
+    resolvers: { Query: { users: () => users.all() } },
+  }),
+});
+
+@Module({ imports: [graphql] })
+export class AppModule {}
+```
+
+`key` defaults to `"graphql"`, and two registrations sharing one are refused as `DUPLICATE_MODULE`.
+
+## What never reaches the endpoint
+
+The endpoint mounts through `use()`, outside the compiled route table: no guard, interceptor, or exception filter reaches it, and a controller declaring the same method and path shadows it silently with no `DUPLICATE_ROUTE`. One registration per application is the supported shape — the plugin's factory is unnamed, so two registrations under distinct keys mount twice (four routes), unlike the cors and openapi plugins, which collapse.
+
+## `aponia build`
+
+A registration is a `DynamicModule`, not a `@Module()` class the build can read from source, so a module whose `imports` name one is declined and the descriptor artifact holds nothing for it. The application still boots: the platform lowers such a root from its decorators, and the endpoint answers. Unlike `@aponiajs/devtools`, no plugin value can be exported beside the module, because the plugin is built from a container-resolved configuration. Mounting the raw plugin through `AponiaApplicationOptions.plugins` keeps the artifact and gives up the module and its validation.
+
+## Errors
+
+`AponiaError` with `INVALID_CONFIGURATION_VALUE`, carrying `{ configuration, issues }`, when the schema rejects the value or when the value it produced has no usable `path`. `INVALID_CONFIGURATION` covers a declaration that is not a Standard Schema or whose validation answers asynchronously.
+
+## Links
+
+- [Package README](./README.md)
+- [`@elysia/graphql-yoga` on npm](https://www.npmjs.com/package/@elysia/graphql-yoga)
+- [Plugin package authoring](../../docs/plugin-packages.md)
+- [Published packages](../../docs/packages.md)

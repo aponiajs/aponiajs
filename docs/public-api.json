@@ -1,0 +1,3502 @@
+{
+  "contractVersion": 1,
+  "packages": [
+    {
+      "name": "@aponiajs/audit",
+      "exports": [
+        {
+          "name": "AuditEvent",
+          "kind": "type"
+        },
+        {
+          "name": "AuditEventInput",
+          "kind": "type"
+        },
+        {
+          "name": "AuditModule",
+          "kind": "value"
+        },
+        {
+          "name": "AuditModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "AuditOutcome",
+          "kind": "type"
+        },
+        {
+          "name": "AuditService",
+          "kind": "value"
+        },
+        {
+          "name": "AuditStore",
+          "kind": "type"
+        },
+        {
+          "name": "MemoryAuditStore",
+          "kind": "value"
+        },
+        {
+          "name": "MemoryAuditStoreOptions",
+          "kind": "type"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/auth",
+      "exports": [
+        {
+          "name": "AUTH_TOKEN_OPTIONS",
+          "kind": "value"
+        },
+        {
+          "name": "AUTH_USER",
+          "kind": "value"
+        },
+        {
+          "name": "AUTH_VERIFIER",
+          "kind": "value"
+        },
+        {
+          "name": "AuthGuard",
+          "kind": "value"
+        },
+        {
+          "name": "AuthModule",
+          "kind": "value"
+        },
+        {
+          "name": "AuthModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "AuthService",
+          "kind": "value"
+        },
+        {
+          "name": "AuthTokenOptions",
+          "kind": "type"
+        },
+        {
+          "name": "AuthUser",
+          "kind": "type"
+        },
+        {
+          "name": "AuthVerificationOptions",
+          "kind": "type"
+        },
+        {
+          "name": "AuthVerifier",
+          "kind": "type"
+        },
+        {
+          "name": "IssuedRefreshToken",
+          "kind": "type"
+        },
+        {
+          "name": "JwtKey",
+          "kind": "type"
+        },
+        {
+          "name": "JwtOptions",
+          "kind": "type"
+        },
+        {
+          "name": "JwtService",
+          "kind": "value"
+        },
+        {
+          "name": "MemoryRefreshTokenStore",
+          "kind": "value"
+        },
+        {
+          "name": "MemoryRevocationStore",
+          "kind": "value"
+        },
+        {
+          "name": "OidcOptions",
+          "kind": "type"
+        },
+        {
+          "name": "OidcProviderMetadata",
+          "kind": "type"
+        },
+        {
+          "name": "OidcService",
+          "kind": "value"
+        },
+        {
+          "name": "PasswordService",
+          "kind": "value"
+        },
+        {
+          "name": "Permissions",
+          "kind": "value"
+        },
+        {
+          "name": "PermissionsGuard",
+          "kind": "value"
+        },
+        {
+          "name": "Public",
+          "kind": "value"
+        },
+        {
+          "name": "RefreshOptions",
+          "kind": "type"
+        },
+        {
+          "name": "RefreshTokenRecord",
+          "kind": "type"
+        },
+        {
+          "name": "RefreshTokenService",
+          "kind": "value"
+        },
+        {
+          "name": "RefreshTokenStore",
+          "kind": "type"
+        },
+        {
+          "name": "RevocationOptions",
+          "kind": "type"
+        },
+        {
+          "name": "RevocationService",
+          "kind": "value"
+        },
+        {
+          "name": "RevocationStore",
+          "kind": "type"
+        },
+        {
+          "name": "Roles",
+          "kind": "value"
+        },
+        {
+          "name": "RolesGuard",
+          "kind": "value"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/cache",
+      "exports": [
+        {
+          "name": "CACHE_STORE",
+          "kind": "value"
+        },
+        {
+          "name": "CacheEntryOptions",
+          "kind": "type"
+        },
+        {
+          "name": "CacheModule",
+          "kind": "value"
+        },
+        {
+          "name": "CacheModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "CacheService",
+          "kind": "value"
+        },
+        {
+          "name": "CacheStore",
+          "kind": "type"
+        },
+        {
+          "name": "MemoryCacheStore",
+          "kind": "value"
+        },
+        {
+          "name": "MemoryCacheStoreOptions",
+          "kind": "type"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/cli",
+      "exports": [
+        {
+          "name": "analyzeBuildProject",
+          "kind": "value"
+        },
+        {
+          "name": "AnalyzeBuildProjectOptions",
+          "kind": "type"
+        },
+        {
+          "name": "analyzeControllerRoutes",
+          "kind": "value"
+        },
+        {
+          "name": "AnalyzedConstructorDependency",
+          "kind": "type"
+        },
+        {
+          "name": "AnalyzedController",
+          "kind": "type"
+        },
+        {
+          "name": "AnalyzedControllerDeclaration",
+          "kind": "type"
+        },
+        {
+          "name": "AnalyzedGateway",
+          "kind": "type"
+        },
+        {
+          "name": "AnalyzedInjectable",
+          "kind": "type"
+        },
+        {
+          "name": "AnalyzedInjectedDependency",
+          "kind": "type"
+        },
+        {
+          "name": "AnalyzedModule",
+          "kind": "type"
+        },
+        {
+          "name": "AnalyzedModuleDescriptors",
+          "kind": "type"
+        },
+        {
+          "name": "AnalyzedModuleEntry",
+          "kind": "type"
+        },
+        {
+          "name": "AnalyzedRequestMethod",
+          "kind": "type"
+        },
+        {
+          "name": "AnalyzedRoute",
+          "kind": "type"
+        },
+        {
+          "name": "AnalyzedRouteParameter",
+          "kind": "type"
+        },
+        {
+          "name": "AnalyzedRouteParameterKind",
+          "kind": "type"
+        },
+        {
+          "name": "AnalyzedRouteSchema",
+          "kind": "type"
+        },
+        {
+          "name": "AnalyzedRouteSchemaSlot",
+          "kind": "type"
+        },
+        {
+          "name": "AnalyzedRouteSchemaSlotName",
+          "kind": "type"
+        },
+        {
+          "name": "AnalyzedToken",
+          "kind": "type"
+        },
+        {
+          "name": "AnalyzedTokenKind",
+          "kind": "type"
+        },
+        {
+          "name": "AnalyzedTypedDependency",
+          "kind": "type"
+        },
+        {
+          "name": "AnalyzedUnreadableDependency",
+          "kind": "type"
+        },
+        {
+          "name": "analyzeModuleDescriptors",
+          "kind": "value"
+        },
+        {
+          "name": "buildPlugin",
+          "kind": "value"
+        },
+        {
+          "name": "buildPluginName",
+          "kind": "value"
+        },
+        {
+          "name": "BuildPluginOptions",
+          "kind": "type"
+        },
+        {
+          "name": "BuildProjectAnalysis",
+          "kind": "type"
+        },
+        {
+          "name": "checkLibrary",
+          "kind": "value"
+        },
+        {
+          "name": "CliCommand",
+          "kind": "type"
+        },
+        {
+          "name": "collectSourceImports",
+          "kind": "value"
+        },
+        {
+          "name": "ControllerImportSpecifiers",
+          "kind": "type"
+        },
+        {
+          "name": "ControllerInvokerProvenance",
+          "kind": "type"
+        },
+        {
+          "name": "DeclinedControllerHandler",
+          "kind": "type"
+        },
+        {
+          "name": "DeclinedDescriptor",
+          "kind": "type"
+        },
+        {
+          "name": "DeclinedModuleDescriptor",
+          "kind": "type"
+        },
+        {
+          "name": "DeclinedRouteDescriptor",
+          "kind": "type"
+        },
+        {
+          "name": "descriptorModuleFileName",
+          "kind": "value"
+        },
+        {
+          "name": "DescriptorSourceFile",
+          "kind": "type"
+        },
+        {
+          "name": "emitControllerInvokers",
+          "kind": "value"
+        },
+        {
+          "name": "emitModuleDescriptors",
+          "kind": "value"
+        },
+        {
+          "name": "EmittableControllerHandler",
+          "kind": "type"
+        },
+        {
+          "name": "EmittableRouteParameter",
+          "kind": "type"
+        },
+        {
+          "name": "EmittableRouteParameterKind",
+          "kind": "type"
+        },
+        {
+          "name": "EmittedControllerInvokers",
+          "kind": "type"
+        },
+        {
+          "name": "EmittedModuleDescriptors",
+          "kind": "type"
+        },
+        {
+          "name": "GenerateCommandOptions",
+          "kind": "type"
+        },
+        {
+          "name": "generateInvokers",
+          "kind": "value"
+        },
+        {
+          "name": "GenerateInvokersOptions",
+          "kind": "type"
+        },
+        {
+          "name": "GenerateInvokersResult",
+          "kind": "type"
+        },
+        {
+          "name": "generateProject",
+          "kind": "value"
+        },
+        {
+          "name": "GenerateProjectOptions",
+          "kind": "type"
+        },
+        {
+          "name": "GenerateProjectResult",
+          "kind": "type"
+        },
+        {
+          "name": "generateSchematic",
+          "kind": "value"
+        },
+        {
+          "name": "GenerateSchematic",
+          "kind": "type"
+        },
+        {
+          "name": "GenerateSchematicOptions",
+          "kind": "type"
+        },
+        {
+          "name": "GenerateSchematicResult",
+          "kind": "type"
+        },
+        {
+          "name": "invokerModuleFileName",
+          "kind": "value"
+        },
+        {
+          "name": "LibraryCheckOptions",
+          "kind": "type"
+        },
+        {
+          "name": "LibraryCheckResult",
+          "kind": "type"
+        },
+        {
+          "name": "ModuleDescriptorProvenance",
+          "kind": "type"
+        },
+        {
+          "name": "parseArguments",
+          "kind": "value"
+        },
+        {
+          "name": "parseSourceExpression",
+          "kind": "value"
+        },
+        {
+          "name": "ResourceTransport",
+          "kind": "type"
+        },
+        {
+          "name": "runCli",
+          "kind": "value"
+        },
+        {
+          "name": "SchematicChange",
+          "kind": "type"
+        },
+        {
+          "name": "schematicNames",
+          "kind": "value"
+        },
+        {
+          "name": "SourceImport",
+          "kind": "type"
+        },
+        {
+          "name": "SourceImportForm",
+          "kind": "type"
+        },
+        {
+          "name": "SourceImportKind",
+          "kind": "type"
+        },
+        {
+          "name": "SourceImports",
+          "kind": "type"
+        },
+        {
+          "name": "SourceImportsReading",
+          "kind": "type"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/common",
+      "exports": [
+        {
+          "name": "AliasProvider",
+          "kind": "type"
+        },
+        {
+          "name": "All",
+          "kind": "value"
+        },
+        {
+          "name": "AponiaError",
+          "kind": "value"
+        },
+        {
+          "name": "AponiaErrorCode",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaMiddleware",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaModule",
+          "kind": "type"
+        },
+        {
+          "name": "APP_FILTER",
+          "kind": "value"
+        },
+        {
+          "name": "APP_GUARD",
+          "kind": "value"
+        },
+        {
+          "name": "APP_INTERCEPTOR",
+          "kind": "value"
+        },
+        {
+          "name": "APP_PIPE",
+          "kind": "value"
+        },
+        {
+          "name": "ApplicationEnhancer",
+          "kind": "type"
+        },
+        {
+          "name": "ApplicationEnhancerBinding",
+          "kind": "type"
+        },
+        {
+          "name": "applyDeprecationHeaders",
+          "kind": "value"
+        },
+        {
+          "name": "ArgumentMetadata",
+          "kind": "type"
+        },
+        {
+          "name": "ArgumentsHost",
+          "kind": "type"
+        },
+        {
+          "name": "ArgumentType",
+          "kind": "type"
+        },
+        {
+          "name": "BeforeApplicationShutdown",
+          "kind": "type"
+        },
+        {
+          "name": "Body",
+          "kind": "value"
+        },
+        {
+          "name": "CanActivate",
+          "kind": "type"
+        },
+        {
+          "name": "Catch",
+          "kind": "value"
+        },
+        {
+          "name": "ClassProvider",
+          "kind": "type"
+        },
+        {
+          "name": "ClassToken",
+          "kind": "type"
+        },
+        {
+          "name": "ConfigurationOptions",
+          "kind": "type"
+        },
+        {
+          "name": "ConfigurationToken",
+          "kind": "type"
+        },
+        {
+          "name": "ConnectedSocket",
+          "kind": "value"
+        },
+        {
+          "name": "ConsoleLogger",
+          "kind": "value"
+        },
+        {
+          "name": "ConsoleLoggerOptions",
+          "kind": "type"
+        },
+        {
+          "name": "Constructor",
+          "kind": "type"
+        },
+        {
+          "name": "Context",
+          "kind": "value"
+        },
+        {
+          "name": "Controller",
+          "kind": "value"
+        },
+        {
+          "name": "ControllerDefinition",
+          "kind": "type"
+        },
+        {
+          "name": "ControllerMetadata",
+          "kind": "type"
+        },
+        {
+          "name": "Cookie",
+          "kind": "value"
+        },
+        {
+          "name": "createDto",
+          "kind": "value"
+        },
+        {
+          "name": "createParamDecorator",
+          "kind": "value"
+        },
+        {
+          "name": "createToken",
+          "kind": "value"
+        },
+        {
+          "name": "customMetadataPrefix",
+          "kind": "value"
+        },
+        {
+          "name": "CustomParamFactory",
+          "kind": "type"
+        },
+        {
+          "name": "DefaultValuePipe",
+          "kind": "value"
+        },
+        {
+          "name": "defineConfiguration",
+          "kind": "value"
+        },
+        {
+          "name": "defineModule",
+          "kind": "value"
+        },
+        {
+          "name": "Delete",
+          "kind": "value"
+        },
+        {
+          "name": "Deprecated",
+          "kind": "value"
+        },
+        {
+          "name": "DeprecationMetadata",
+          "kind": "type"
+        },
+        {
+          "name": "DeprecationOptions",
+          "kind": "type"
+        },
+        {
+          "name": "DtoConstructor",
+          "kind": "type"
+        },
+        {
+          "name": "dynamicModule",
+          "kind": "value"
+        },
+        {
+          "name": "DynamicModule",
+          "kind": "type"
+        },
+        {
+          "name": "DynamicModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "EnhancerMetadata",
+          "kind": "type"
+        },
+        {
+          "name": "EventPattern",
+          "kind": "value"
+        },
+        {
+          "name": "ExceptionFilter",
+          "kind": "type"
+        },
+        {
+          "name": "ExecutionContext",
+          "kind": "type"
+        },
+        {
+          "name": "FactoryProvider",
+          "kind": "type"
+        },
+        {
+          "name": "formatLogValue",
+          "kind": "value"
+        },
+        {
+          "name": "FORWARD_REF_SYMBOL",
+          "kind": "value"
+        },
+        {
+          "name": "forwardRef",
+          "kind": "value"
+        },
+        {
+          "name": "ForwardReference",
+          "kind": "type"
+        },
+        {
+          "name": "Get",
+          "kind": "value"
+        },
+        {
+          "name": "getCatchMetadata",
+          "kind": "value"
+        },
+        {
+          "name": "getConstructorDependencies",
+          "kind": "value"
+        },
+        {
+          "name": "getControllerMetadata",
+          "kind": "value"
+        },
+        {
+          "name": "getCustomMetadata",
+          "kind": "value"
+        },
+        {
+          "name": "getDeprecationMetadata",
+          "kind": "value"
+        },
+        {
+          "name": "getEnhancerMetadata",
+          "kind": "value"
+        },
+        {
+          "name": "getHttpCode",
+          "kind": "value"
+        },
+        {
+          "name": "getInjectableMetadata",
+          "kind": "value"
+        },
+        {
+          "name": "getMessagePatternMetadata",
+          "kind": "value"
+        },
+        {
+          "name": "getMessagePayloadProperty",
+          "kind": "value"
+        },
+        {
+          "name": "getModuleMetadata",
+          "kind": "value"
+        },
+        {
+          "name": "getOptionalParameters",
+          "kind": "value"
+        },
+        {
+          "name": "getPipesMetadata",
+          "kind": "value"
+        },
+        {
+          "name": "getResponseHeaders",
+          "kind": "value"
+        },
+        {
+          "name": "getResponseSerializer",
+          "kind": "value"
+        },
+        {
+          "name": "getRouteMetadata",
+          "kind": "value"
+        },
+        {
+          "name": "getRouteParameterMetadata",
+          "kind": "value"
+        },
+        {
+          "name": "getTokenName",
+          "kind": "value"
+        },
+        {
+          "name": "getValidationMetadata",
+          "kind": "value"
+        },
+        {
+          "name": "getVersionMetadata",
+          "kind": "value"
+        },
+        {
+          "name": "getViewOptions",
+          "kind": "value"
+        },
+        {
+          "name": "getViewTemplate",
+          "kind": "value"
+        },
+        {
+          "name": "getWebSocketGatewayMetadata",
+          "kind": "value"
+        },
+        {
+          "name": "getWebSocketMessageMetadata",
+          "kind": "value"
+        },
+        {
+          "name": "getWebSocketParameterMetadata",
+          "kind": "value"
+        },
+        {
+          "name": "getWebSocketServerProperties",
+          "kind": "value"
+        },
+        {
+          "name": "Global",
+          "kind": "value"
+        },
+        {
+          "name": "Head",
+          "kind": "value"
+        },
+        {
+          "name": "Header",
+          "kind": "value"
+        },
+        {
+          "name": "Headers",
+          "kind": "value"
+        },
+        {
+          "name": "HostParam",
+          "kind": "value"
+        },
+        {
+          "name": "HttpArgumentsHost",
+          "kind": "type"
+        },
+        {
+          "name": "HttpCode",
+          "kind": "value"
+        },
+        {
+          "name": "HttpStatus",
+          "kind": "value"
+        },
+        {
+          "name": "Infer",
+          "kind": "type"
+        },
+        {
+          "name": "InferValidatorOutput",
+          "kind": "type"
+        },
+        {
+          "name": "Inject",
+          "kind": "value"
+        },
+        {
+          "name": "Injectable",
+          "kind": "value"
+        },
+        {
+          "name": "InjectableOptions",
+          "kind": "type"
+        },
+        {
+          "name": "InjectionDependency",
+          "kind": "type"
+        },
+        {
+          "name": "InjectionToken",
+          "kind": "type"
+        },
+        {
+          "name": "Interceptor",
+          "kind": "type"
+        },
+        {
+          "name": "intersectSchema",
+          "kind": "value"
+        },
+        {
+          "name": "Ip",
+          "kind": "value"
+        },
+        {
+          "name": "isForwardRef",
+          "kind": "value"
+        },
+        {
+          "name": "isGlobalModule",
+          "kind": "value"
+        },
+        {
+          "name": "isMessagePattern",
+          "kind": "value"
+        },
+        {
+          "name": "isOptionalInjection",
+          "kind": "value"
+        },
+        {
+          "name": "isRouteResponseSchemaMap",
+          "kind": "value"
+        },
+        {
+          "name": "isSseRoute",
+          "kind": "value"
+        },
+        {
+          "name": "isStandardSchema",
+          "kind": "value"
+        },
+        {
+          "name": "isValidatorSchema",
+          "kind": "value"
+        },
+        {
+          "name": "Logger",
+          "kind": "value"
+        },
+        {
+          "name": "LOGGER",
+          "kind": "value"
+        },
+        {
+          "name": "LoggerService",
+          "kind": "type"
+        },
+        {
+          "name": "LogLevel",
+          "kind": "type"
+        },
+        {
+          "name": "maximumMessagePatternLength",
+          "kind": "value"
+        },
+        {
+          "name": "MESSAGE_HANDLER_ERROR_CODE",
+          "kind": "value"
+        },
+        {
+          "name": "MessageBody",
+          "kind": "value"
+        },
+        {
+          "name": "messageFailure",
+          "kind": "value"
+        },
+        {
+          "name": "MessagePattern",
+          "kind": "value"
+        },
+        {
+          "name": "MessagePatternKind",
+          "kind": "type"
+        },
+        {
+          "name": "MessagePatternMetadata",
+          "kind": "type"
+        },
+        {
+          "name": "messagePatternMetadataKey",
+          "kind": "value"
+        },
+        {
+          "name": "messagePayloadMetadataKey",
+          "kind": "value"
+        },
+        {
+          "name": "MicroserviceFailure",
+          "kind": "type"
+        },
+        {
+          "name": "MicroserviceHandler",
+          "kind": "type"
+        },
+        {
+          "name": "MicroserviceMessage",
+          "kind": "type"
+        },
+        {
+          "name": "MicroserviceReply",
+          "kind": "type"
+        },
+        {
+          "name": "MicroserviceTransport",
+          "kind": "type"
+        },
+        {
+          "name": "MiddlewareConfigProxy",
+          "kind": "type"
+        },
+        {
+          "name": "MiddlewareConsumer",
+          "kind": "type"
+        },
+        {
+          "name": "Module",
+          "kind": "value"
+        },
+        {
+          "name": "ModuleClass",
+          "kind": "type"
+        },
+        {
+          "name": "ModuleDefinition",
+          "kind": "type"
+        },
+        {
+          "name": "ModuleDescriptor",
+          "kind": "type"
+        },
+        {
+          "name": "ModuleExport",
+          "kind": "type"
+        },
+        {
+          "name": "ModuleImport",
+          "kind": "type"
+        },
+        {
+          "name": "ModuleImportDescriptor",
+          "kind": "type"
+        },
+        {
+          "name": "ModuleMetadata",
+          "kind": "type"
+        },
+        {
+          "name": "ModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "ModuleProvider",
+          "kind": "type"
+        },
+        {
+          "name": "ModuleRef",
+          "kind": "value"
+        },
+        {
+          "name": "NestProvider",
+          "kind": "type"
+        },
+        {
+          "name": "NOOP_LOGGER",
+          "kind": "value"
+        },
+        {
+          "name": "normalizeMessagePattern",
+          "kind": "value"
+        },
+        {
+          "name": "normalizeProvider",
+          "kind": "value"
+        },
+        {
+          "name": "notifySystemLogger",
+          "kind": "value"
+        },
+        {
+          "name": "observeSystemLogger",
+          "kind": "value"
+        },
+        {
+          "name": "omitSchema",
+          "kind": "value"
+        },
+        {
+          "name": "OnApplicationBootstrap",
+          "kind": "type"
+        },
+        {
+          "name": "OnApplicationShutdown",
+          "kind": "type"
+        },
+        {
+          "name": "OnGatewayConnection",
+          "kind": "type"
+        },
+        {
+          "name": "OnGatewayDisconnect",
+          "kind": "type"
+        },
+        {
+          "name": "OnGatewayInit",
+          "kind": "type"
+        },
+        {
+          "name": "OnModuleDestroy",
+          "kind": "type"
+        },
+        {
+          "name": "OnModuleInit",
+          "kind": "type"
+        },
+        {
+          "name": "Optional",
+          "kind": "value"
+        },
+        {
+          "name": "optionalDependency",
+          "kind": "value"
+        },
+        {
+          "name": "OptionalInjection",
+          "kind": "type"
+        },
+        {
+          "name": "Options",
+          "kind": "value"
+        },
+        {
+          "name": "Param",
+          "kind": "value"
+        },
+        {
+          "name": "ParseArrayPipe",
+          "kind": "value"
+        },
+        {
+          "name": "ParseArrayPipeOptions",
+          "kind": "type"
+        },
+        {
+          "name": "ParseBoolPipe",
+          "kind": "value"
+        },
+        {
+          "name": "ParseEnumPipe",
+          "kind": "value"
+        },
+        {
+          "name": "ParseEnumValues",
+          "kind": "type"
+        },
+        {
+          "name": "ParseFilePipe",
+          "kind": "value"
+        },
+        {
+          "name": "ParseFilePipeOptions",
+          "kind": "type"
+        },
+        {
+          "name": "ParseFloatPipe",
+          "kind": "value"
+        },
+        {
+          "name": "ParseIntPipe",
+          "kind": "value"
+        },
+        {
+          "name": "ParsePipeOptions",
+          "kind": "type"
+        },
+        {
+          "name": "ParseUUIDPipe",
+          "kind": "value"
+        },
+        {
+          "name": "partialSchema",
+          "kind": "value"
+        },
+        {
+          "name": "Patch",
+          "kind": "value"
+        },
+        {
+          "name": "Payload",
+          "kind": "value"
+        },
+        {
+          "name": "pickSchema",
+          "kind": "value"
+        },
+        {
+          "name": "pipeMetadataKey",
+          "kind": "value"
+        },
+        {
+          "name": "PipeTransform",
+          "kind": "type"
+        },
+        {
+          "name": "PipeType",
+          "kind": "type"
+        },
+        {
+          "name": "Post",
+          "kind": "value"
+        },
+        {
+          "name": "provideAlias",
+          "kind": "value"
+        },
+        {
+          "name": "provideClass",
+          "kind": "value"
+        },
+        {
+          "name": "provideFactory",
+          "kind": "value"
+        },
+        {
+          "name": "Provider",
+          "kind": "type"
+        },
+        {
+          "name": "ProviderScope",
+          "kind": "type"
+        },
+        {
+          "name": "provideValue",
+          "kind": "value"
+        },
+        {
+          "name": "Put",
+          "kind": "value"
+        },
+        {
+          "name": "Query",
+          "kind": "value"
+        },
+        {
+          "name": "Reflector",
+          "kind": "value"
+        },
+        {
+          "name": "Render",
+          "kind": "value"
+        },
+        {
+          "name": "Req",
+          "kind": "value"
+        },
+        {
+          "name": "RequestMethod",
+          "kind": "type"
+        },
+        {
+          "name": "resolveForwardRef",
+          "kind": "value"
+        },
+        {
+          "name": "resolveRouteValidator",
+          "kind": "value"
+        },
+        {
+          "name": "ResponseHeaderValue",
+          "kind": "type"
+        },
+        {
+          "name": "ResponseSerializer",
+          "kind": "type"
+        },
+        {
+          "name": "ResponseSettings",
+          "kind": "value"
+        },
+        {
+          "name": "ResponseSettingsState",
+          "kind": "type"
+        },
+        {
+          "name": "RouteContext",
+          "kind": "type"
+        },
+        {
+          "name": "RouteCookie",
+          "kind": "type"
+        },
+        {
+          "name": "RouteDecoratorFactory",
+          "kind": "type"
+        },
+        {
+          "name": "RouteMetadata",
+          "kind": "type"
+        },
+        {
+          "name": "RouteMethodDecorator",
+          "kind": "type"
+        },
+        {
+          "name": "RouteParameterKind",
+          "kind": "type"
+        },
+        {
+          "name": "routeParameterKinds",
+          "kind": "value"
+        },
+        {
+          "name": "RouteParameterMetadata",
+          "kind": "type"
+        },
+        {
+          "name": "routeParametersMetadataKey",
+          "kind": "value"
+        },
+        {
+          "name": "RouteResponseSchema",
+          "kind": "type"
+        },
+        {
+          "name": "RouteResponseSchemaMap",
+          "kind": "type"
+        },
+        {
+          "name": "RouteSchema",
+          "kind": "type"
+        },
+        {
+          "name": "RouteSchemaSlot",
+          "kind": "type"
+        },
+        {
+          "name": "routeSchemaSlots",
+          "kind": "value"
+        },
+        {
+          "name": "RouteTarget",
+          "kind": "type"
+        },
+        {
+          "name": "RouteValidator",
+          "kind": "type"
+        },
+        {
+          "name": "RouteValidatorInput",
+          "kind": "type"
+        },
+        {
+          "name": "RpcArgumentsHost",
+          "kind": "type"
+        },
+        {
+          "name": "Scope",
+          "kind": "value"
+        },
+        {
+          "name": "Serialize",
+          "kind": "value"
+        },
+        {
+          "name": "SetMetadata",
+          "kind": "value"
+        },
+        {
+          "name": "Sse",
+          "kind": "value"
+        },
+        {
+          "name": "State",
+          "kind": "value"
+        },
+        {
+          "name": "SubscribeMessage",
+          "kind": "value"
+        },
+        {
+          "name": "Token",
+          "kind": "type"
+        },
+        {
+          "name": "TokenMap",
+          "kind": "type"
+        },
+        {
+          "name": "TokenValue",
+          "kind": "type"
+        },
+        {
+          "name": "UNKNOWN_MESSAGE_PATTERN_CODE",
+          "kind": "value"
+        },
+        {
+          "name": "UploadedFile",
+          "kind": "value"
+        },
+        {
+          "name": "UploadedFileLike",
+          "kind": "type"
+        },
+        {
+          "name": "UploadedFiles",
+          "kind": "value"
+        },
+        {
+          "name": "UseFilters",
+          "kind": "value"
+        },
+        {
+          "name": "UseGuards",
+          "kind": "value"
+        },
+        {
+          "name": "UseInterceptors",
+          "kind": "value"
+        },
+        {
+          "name": "UsePipes",
+          "kind": "value"
+        },
+        {
+          "name": "Validation",
+          "kind": "value"
+        },
+        {
+          "name": "ValidationMetadata",
+          "kind": "type"
+        },
+        {
+          "name": "ValidationModelClass",
+          "kind": "type"
+        },
+        {
+          "name": "ValidatorSchema",
+          "kind": "type"
+        },
+        {
+          "name": "ValueProvider",
+          "kind": "type"
+        },
+        {
+          "name": "Version",
+          "kind": "value"
+        },
+        {
+          "name": "VERSION_NEUTRAL",
+          "kind": "value"
+        },
+        {
+          "name": "VersioningType",
+          "kind": "value"
+        },
+        {
+          "name": "versionPathSegment",
+          "kind": "value"
+        },
+        {
+          "name": "VersionValue",
+          "kind": "type"
+        },
+        {
+          "name": "VIEW_ENGINE",
+          "kind": "value"
+        },
+        {
+          "name": "ViewEngine",
+          "kind": "type"
+        },
+        {
+          "name": "ViewRenderOptions",
+          "kind": "type"
+        },
+        {
+          "name": "WebSocketGateway",
+          "kind": "value"
+        },
+        {
+          "name": "WebSocketGatewayMetadata",
+          "kind": "type"
+        },
+        {
+          "name": "WebSocketGatewayOptions",
+          "kind": "type"
+        },
+        {
+          "name": "WebSocketMessageMetadata",
+          "kind": "type"
+        },
+        {
+          "name": "WebSocketMessageSchema",
+          "kind": "type"
+        },
+        {
+          "name": "WebSocketParameterKind",
+          "kind": "type"
+        },
+        {
+          "name": "WebSocketParameterMetadata",
+          "kind": "type"
+        },
+        {
+          "name": "WebSocketServer",
+          "kind": "value"
+        },
+        {
+          "name": "WsArgumentsHost",
+          "kind": "type"
+        },
+        {
+          "name": "WsResponse",
+          "kind": "type"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/compression",
+      "exports": [
+        {
+          "name": "CompressionModule",
+          "kind": "value"
+        },
+        {
+          "name": "CompressionModuleOptions",
+          "kind": "type"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/core",
+      "exports": [
+        {
+          "name": "AponiaContainer",
+          "kind": "value"
+        },
+        {
+          "name": "compileModuleGraph",
+          "kind": "value"
+        },
+        {
+          "name": "createContainer",
+          "kind": "value"
+        },
+        {
+          "name": "formatMissingProviderDiagnostic",
+          "kind": "value"
+        },
+        {
+          "name": "getProviderDependencies",
+          "kind": "value"
+        },
+        {
+          "name": "GraphInspection",
+          "kind": "type"
+        },
+        {
+          "name": "ModuleGraph",
+          "kind": "value"
+        },
+        {
+          "name": "ModuleInspection",
+          "kind": "type"
+        },
+        {
+          "name": "ProviderLocation",
+          "kind": "type"
+        },
+        {
+          "name": "type DiagnosticContext",
+          "kind": "value"
+        },
+        {
+          "name": "type RequestContextAccessor",
+          "kind": "value"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/cors",
+      "exports": [
+        {
+          "name": "CorsConfiguration",
+          "kind": "type"
+        },
+        {
+          "name": "CorsModule",
+          "kind": "value"
+        },
+        {
+          "name": "CorsModuleOptions",
+          "kind": "type"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/cron",
+      "exports": [
+        {
+          "name": "CronConfiguration",
+          "kind": "type"
+        },
+        {
+          "name": "CronJob",
+          "kind": "type"
+        },
+        {
+          "name": "CronJobContext",
+          "kind": "type"
+        },
+        {
+          "name": "CronJobOptions",
+          "kind": "type"
+        },
+        {
+          "name": "CronModule",
+          "kind": "value"
+        },
+        {
+          "name": "CronModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "CronScheduler",
+          "kind": "value"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/database",
+      "exports": [
+        {
+          "name": "Awaitable",
+          "kind": "type"
+        },
+        {
+          "name": "createRepository",
+          "kind": "value"
+        },
+        {
+          "name": "DatabaseClient",
+          "kind": "type"
+        },
+        {
+          "name": "DatabaseModule",
+          "kind": "value"
+        },
+        {
+          "name": "DatabaseModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "DatabaseService",
+          "kind": "value"
+        },
+        {
+          "name": "DatabaseServiceOptions",
+          "kind": "type"
+        },
+        {
+          "name": "DatabaseTransaction",
+          "kind": "type"
+        },
+        {
+          "name": "InsertOf",
+          "kind": "type"
+        },
+        {
+          "name": "loadMigrations",
+          "kind": "value"
+        },
+        {
+          "name": "MemoryMigrationStore",
+          "kind": "value"
+        },
+        {
+          "name": "MigrationExecutor",
+          "kind": "type"
+        },
+        {
+          "name": "MigrationFile",
+          "kind": "type"
+        },
+        {
+          "name": "MigrationResult",
+          "kind": "type"
+        },
+        {
+          "name": "MigrationRunner",
+          "kind": "value"
+        },
+        {
+          "name": "MigrationStore",
+          "kind": "type"
+        },
+        {
+          "name": "Repository",
+          "kind": "type"
+        },
+        {
+          "name": "RepositoryCondition",
+          "kind": "type"
+        },
+        {
+          "name": "RepositoryDatabase",
+          "kind": "type"
+        },
+        {
+          "name": "RepositoryQuery",
+          "kind": "type"
+        },
+        {
+          "name": "RepositorySelect",
+          "kind": "type"
+        },
+        {
+          "name": "RowOf",
+          "kind": "type"
+        },
+        {
+          "name": "TableWithId",
+          "kind": "type"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/devtools",
+      "exports": [
+        {
+          "name": "AponiaArtifactStamps",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaBuildController",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaBuildGraph",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaBuildHandler",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaBuildInvoker",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaBuildInvokers",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaBuildPayload",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaGraphPayload",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaLogsPayload",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaMetaPayload",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaMountedRoute",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaRequestsPayload",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaRouteBinding",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaRoutesPayload",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaRouteStage",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaRouteStageKind",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaRouteStageScope",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaRouteTrace",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaRouteTraceFilter",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaRouteTracePayload",
+          "kind": "type"
+        },
+        {
+          "name": "aponiaVersion",
+          "kind": "value"
+        },
+        {
+          "name": "buildLinkableGraph",
+          "kind": "value"
+        },
+        {
+          "name": "createDevtoolsMcpServer",
+          "kind": "value"
+        },
+        {
+          "name": "createLogBuffer",
+          "kind": "value"
+        },
+        {
+          "name": "createRequestBuffer",
+          "kind": "value"
+        },
+        {
+          "name": "defaultLogBufferCapacity",
+          "kind": "value"
+        },
+        {
+          "name": "defaultRequestBufferCapacity",
+          "kind": "value"
+        },
+        {
+          "name": "DevtoolsCaptureOptions",
+          "kind": "type"
+        },
+        {
+          "name": "devtoolsContractVersion",
+          "kind": "value"
+        },
+        {
+          "name": "DevtoolsGraphDiagnostics",
+          "kind": "type"
+        },
+        {
+          "name": "DevtoolsGraphEdge",
+          "kind": "type"
+        },
+        {
+          "name": "DevtoolsGraphEdgeType",
+          "kind": "type"
+        },
+        {
+          "name": "DevtoolsGraphNode",
+          "kind": "type"
+        },
+        {
+          "name": "DevtoolsGraphNodeType",
+          "kind": "type"
+        },
+        {
+          "name": "DevtoolsHandlers",
+          "kind": "type"
+        },
+        {
+          "name": "devtoolsMcpPath",
+          "kind": "value"
+        },
+        {
+          "name": "DevtoolsModule",
+          "kind": "value"
+        },
+        {
+          "name": "DevtoolsOptions",
+          "kind": "type"
+        },
+        {
+          "name": "devtoolsPathPrefix",
+          "kind": "value"
+        },
+        {
+          "name": "devtoolsPlugin",
+          "kind": "value"
+        },
+        {
+          "name": "DevtoolsRequestHandler",
+          "kind": "type"
+        },
+        {
+          "name": "handleDevtoolsRequest",
+          "kind": "value"
+        },
+        {
+          "name": "LinkableGraphPayload",
+          "kind": "type"
+        },
+        {
+          "name": "LogBuffer",
+          "kind": "type"
+        },
+        {
+          "name": "LogEntry",
+          "kind": "type"
+        },
+        {
+          "name": "LogStream",
+          "kind": "type"
+        },
+        {
+          "name": "recordLogger",
+          "kind": "value"
+        },
+        {
+          "name": "RequestBuffer",
+          "kind": "type"
+        },
+        {
+          "name": "RequestRecord",
+          "kind": "type"
+        },
+        {
+          "name": "resolvePeerVersion",
+          "kind": "value"
+        },
+        {
+          "name": "resolveSourceCode",
+          "kind": "value"
+        },
+        {
+          "name": "SourceCodeResult",
+          "kind": "type"
+        },
+        {
+          "name": "SourceResolverOptions",
+          "kind": "type"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/events",
+      "exports": [
+        {
+          "name": "EventEmitter",
+          "kind": "value"
+        },
+        {
+          "name": "EventEmitterModule",
+          "kind": "value"
+        },
+        {
+          "name": "EventHandler",
+          "kind": "type"
+        },
+        {
+          "name": "EventHandlerMetadata",
+          "kind": "type"
+        },
+        {
+          "name": "EventName",
+          "kind": "type"
+        },
+        {
+          "name": "getEventHandlers",
+          "kind": "value"
+        },
+        {
+          "name": "OnEvent",
+          "kind": "value"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/graphql",
+      "exports": [
+        {
+          "name": "GraphQLConfiguration",
+          "kind": "type"
+        },
+        {
+          "name": "GraphQLModule",
+          "kind": "value"
+        },
+        {
+          "name": "GraphQLModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "GraphQLSchemaOptions",
+          "kind": "type"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/h3",
+      "exports": [
+        {
+          "name": "toH3Handler",
+          "kind": "value"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/hono",
+      "exports": [
+        {
+          "name": "createHonoApp",
+          "kind": "value"
+        },
+        {
+          "name": "HonoHandler",
+          "kind": "type"
+        },
+        {
+          "name": "toHonoHandler",
+          "kind": "value"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/http",
+      "exports": [
+        {
+          "name": "HTTP_OPTIONS",
+          "kind": "value"
+        },
+        {
+          "name": "HttpModule",
+          "kind": "value"
+        },
+        {
+          "name": "HttpModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "HttpRedirectPolicy",
+          "kind": "type"
+        },
+        {
+          "name": "HttpRequestOptions",
+          "kind": "type"
+        },
+        {
+          "name": "HttpResponse",
+          "kind": "type"
+        },
+        {
+          "name": "HttpService",
+          "kind": "value"
+        },
+        {
+          "name": "ResolvedHttpOptions",
+          "kind": "type"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/idempotency",
+      "exports": [
+        {
+          "name": "IdempotencyModule",
+          "kind": "value"
+        },
+        {
+          "name": "IdempotencyModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "IdempotencyStore",
+          "kind": "type"
+        },
+        {
+          "name": "MemoryIdempotencyStore",
+          "kind": "value"
+        },
+        {
+          "name": "StoredIdempotentResponse",
+          "kind": "type"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/mcp",
+      "exports": [
+        {
+          "name": "createStatelessHttpHandler",
+          "kind": "value"
+        },
+        {
+          "name": "defineMcpPrompt",
+          "kind": "value"
+        },
+        {
+          "name": "defineMcpResource",
+          "kind": "value"
+        },
+        {
+          "name": "defineMcpTool",
+          "kind": "value"
+        },
+        {
+          "name": "JSONRPC_ERROR_CODES",
+          "kind": "value"
+        },
+        {
+          "name": "JsonRpcError",
+          "kind": "type"
+        },
+        {
+          "name": "JsonRpcErrorResponse",
+          "kind": "type"
+        },
+        {
+          "name": "JsonRpcId",
+          "kind": "type"
+        },
+        {
+          "name": "JsonRpcNotification",
+          "kind": "type"
+        },
+        {
+          "name": "JsonRpcRequest",
+          "kind": "type"
+        },
+        {
+          "name": "JsonRpcResponse",
+          "kind": "type"
+        },
+        {
+          "name": "JsonRpcSuccessResponse",
+          "kind": "type"
+        },
+        {
+          "name": "MCP_CLIENT_CAPABILITIES_META_KEY",
+          "kind": "value"
+        },
+        {
+          "name": "MCP_CLIENT_INFO_META_KEY",
+          "kind": "value"
+        },
+        {
+          "name": "MCP_DISCOVER_METHOD",
+          "kind": "value"
+        },
+        {
+          "name": "MCP_LATEST_PROTOCOL_VERSION",
+          "kind": "value"
+        },
+        {
+          "name": "MCP_PROTOCOL_META_KEY",
+          "kind": "value"
+        },
+        {
+          "name": "MCP_PROTOCOL_VERSION",
+          "kind": "value"
+        },
+        {
+          "name": "MCP_PROTOCOL_VERSION_HEADER",
+          "kind": "value"
+        },
+        {
+          "name": "MCP_PROTOCOL_VERSIONS",
+          "kind": "value"
+        },
+        {
+          "name": "McpClientInfo",
+          "kind": "type"
+        },
+        {
+          "name": "McpDiscoverParams",
+          "kind": "type"
+        },
+        {
+          "name": "McpDiscoverResult",
+          "kind": "type"
+        },
+        {
+          "name": "McpGetPromptResult",
+          "kind": "type"
+        },
+        {
+          "name": "McpInitializeParams",
+          "kind": "type"
+        },
+        {
+          "name": "McpInitializeResult",
+          "kind": "type"
+        },
+        {
+          "name": "McpPromptArgument",
+          "kind": "type"
+        },
+        {
+          "name": "McpPromptDefinition",
+          "kind": "type"
+        },
+        {
+          "name": "McpPromptDescriptor",
+          "kind": "type"
+        },
+        {
+          "name": "McpPromptMessage",
+          "kind": "type"
+        },
+        {
+          "name": "McpPromptRegistry",
+          "kind": "value"
+        },
+        {
+          "name": "McpReadResourceResult",
+          "kind": "type"
+        },
+        {
+          "name": "McpResourceContent",
+          "kind": "type"
+        },
+        {
+          "name": "McpResourceDefinition",
+          "kind": "type"
+        },
+        {
+          "name": "McpResourceDescriptor",
+          "kind": "type"
+        },
+        {
+          "name": "McpResourceRegistry",
+          "kind": "value"
+        },
+        {
+          "name": "McpServer",
+          "kind": "value"
+        },
+        {
+          "name": "McpServerInfo",
+          "kind": "type"
+        },
+        {
+          "name": "McpServerOptions",
+          "kind": "type"
+        },
+        {
+          "name": "McpToolCallResult",
+          "kind": "type"
+        },
+        {
+          "name": "McpToolContentItem",
+          "kind": "type"
+        },
+        {
+          "name": "McpToolDefinition",
+          "kind": "type"
+        },
+        {
+          "name": "McpToolDescriptor",
+          "kind": "type"
+        },
+        {
+          "name": "McpToolInputSchema",
+          "kind": "type"
+        },
+        {
+          "name": "McpToolRegistry",
+          "kind": "value"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/metrics",
+      "exports": [
+        {
+          "name": "Counter",
+          "kind": "type"
+        },
+        {
+          "name": "defaultHistogramBuckets",
+          "kind": "value"
+        },
+        {
+          "name": "Gauge",
+          "kind": "type"
+        },
+        {
+          "name": "Histogram",
+          "kind": "type"
+        },
+        {
+          "name": "HistogramOptions",
+          "kind": "type"
+        },
+        {
+          "name": "MetricCollector",
+          "kind": "type"
+        },
+        {
+          "name": "MetricLabels",
+          "kind": "type"
+        },
+        {
+          "name": "MetricOptions",
+          "kind": "type"
+        },
+        {
+          "name": "metricsContentType",
+          "kind": "value"
+        },
+        {
+          "name": "MetricsExceptionFilter",
+          "kind": "value"
+        },
+        {
+          "name": "MetricsModule",
+          "kind": "value"
+        },
+        {
+          "name": "MetricsModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "metricsPlugin",
+          "kind": "value"
+        },
+        {
+          "name": "MetricsPluginOptions",
+          "kind": "type"
+        },
+        {
+          "name": "MetricsRegistry",
+          "kind": "value"
+        },
+        {
+          "name": "MetricsRegistryOptions",
+          "kind": "type"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/microservices",
+      "exports": [
+        {
+          "name": "azureServiceBusTransport",
+          "kind": "value"
+        },
+        {
+          "name": "AzureServiceBusTransportOptions",
+          "kind": "type"
+        },
+        {
+          "name": "createMicroserviceClient",
+          "kind": "value"
+        },
+        {
+          "name": "createMicroserviceServer",
+          "kind": "value"
+        },
+        {
+          "name": "decodeMicroserviceEnvelope",
+          "kind": "value"
+        },
+        {
+          "name": "encodeMicroserviceEnvelope",
+          "kind": "value"
+        },
+        {
+          "name": "grpcTransport",
+          "kind": "value"
+        },
+        {
+          "name": "GrpcTransport",
+          "kind": "value"
+        },
+        {
+          "name": "GrpcTransportOptions",
+          "kind": "type"
+        },
+        {
+          "name": "InMemoryTransport",
+          "kind": "value"
+        },
+        {
+          "name": "InMemoryTransportOptions",
+          "kind": "type"
+        },
+        {
+          "name": "kafkaTransport",
+          "kind": "value"
+        },
+        {
+          "name": "KafkaTransportOptions",
+          "kind": "type"
+        },
+        {
+          "name": "MicroserviceCallError",
+          "kind": "value"
+        },
+        {
+          "name": "MicroserviceClient",
+          "kind": "type"
+        },
+        {
+          "name": "MicroserviceClientConfig",
+          "kind": "type"
+        },
+        {
+          "name": "MicroserviceClientsModule",
+          "kind": "value"
+        },
+        {
+          "name": "MicroserviceClientsModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "microserviceClientToken",
+          "kind": "value"
+        },
+        {
+          "name": "MicroserviceEnvelope",
+          "kind": "type"
+        },
+        {
+          "name": "MicroserviceEnvelopeKind",
+          "kind": "type"
+        },
+        {
+          "name": "MicroserviceEventEnvelope",
+          "kind": "type"
+        },
+        {
+          "name": "MicroserviceOutboundEnvelope",
+          "kind": "type"
+        },
+        {
+          "name": "MicroserviceReplyEnvelope",
+          "kind": "type"
+        },
+        {
+          "name": "MicroserviceReplyFailureEnvelope",
+          "kind": "type"
+        },
+        {
+          "name": "MicroserviceReplySuccessEnvelope",
+          "kind": "type"
+        },
+        {
+          "name": "MicroserviceRequestEnvelope",
+          "kind": "type"
+        },
+        {
+          "name": "MicroserviceServer",
+          "kind": "type"
+        },
+        {
+          "name": "MicroserviceServerConfig",
+          "kind": "type"
+        },
+        {
+          "name": "mqttTransport",
+          "kind": "value"
+        },
+        {
+          "name": "MqttTransportOptions",
+          "kind": "type"
+        },
+        {
+          "name": "natsTransport",
+          "kind": "value"
+        },
+        {
+          "name": "NatsTransportOptions",
+          "kind": "type"
+        },
+        {
+          "name": "pubSubTransport",
+          "kind": "value"
+        },
+        {
+          "name": "PubSubTransportOptions",
+          "kind": "type"
+        },
+        {
+          "name": "rabbitmqTransport",
+          "kind": "value"
+        },
+        {
+          "name": "RabbitMqTransportOptions",
+          "kind": "type"
+        },
+        {
+          "name": "redisTransport",
+          "kind": "value"
+        },
+        {
+          "name": "RedisTransportOptions",
+          "kind": "type"
+        },
+        {
+          "name": "sqsTransport",
+          "kind": "value"
+        },
+        {
+          "name": "SqsTransportOptions",
+          "kind": "type"
+        },
+        {
+          "name": "Transport",
+          "kind": "type"
+        },
+        {
+          "name": "TransportDecision",
+          "kind": "type"
+        },
+        {
+          "name": "TransportHandler",
+          "kind": "type"
+        },
+        {
+          "name": "TransportMessage",
+          "kind": "type"
+        },
+        {
+          "name": "TransportSubscription",
+          "kind": "type"
+        },
+        {
+          "name": "TransportSubscriptionHandle",
+          "kind": "type"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/nitro",
+      "exports": [
+        {
+          "name": "defineAponiaHandler",
+          "kind": "value"
+        },
+        {
+          "name": "toNitroHandler",
+          "kind": "value"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/openapi",
+      "exports": [
+        {
+          "name": "OpenApiConfiguration",
+          "kind": "type"
+        },
+        {
+          "name": "OpenApiInfo",
+          "kind": "type"
+        },
+        {
+          "name": "OpenApiModule",
+          "kind": "value"
+        },
+        {
+          "name": "OpenApiModuleOptions",
+          "kind": "type"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/opentelemetry",
+      "exports": [
+        {
+          "name": "OpentelemetryConfiguration",
+          "kind": "type"
+        },
+        {
+          "name": "OpentelemetryModule",
+          "kind": "value"
+        },
+        {
+          "name": "OpentelemetryModuleOptions",
+          "kind": "type"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/platform-elysia",
+      "exports": [
+        {
+          "name": "AponiaApplication",
+          "kind": "value"
+        },
+        {
+          "name": "AponiaApplicationContext",
+          "kind": "value"
+        },
+        {
+          "name": "AponiaApplicationDiagnostics",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaApplicationInspection",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaApplicationOptions",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaArtifactProvenance",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaCallbackRouteDiagnostics",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaCompiledRouteDiagnostics",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaFactory",
+          "kind": "value"
+        },
+        {
+          "name": "AponiaGatewayInspection",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaHealthOptions",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaHealthResponse",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaHealthStatus",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaInspectedProviderKind",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaInspectionOptions",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaInvokerArtifact",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaInvokerDiagnostics",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaListenOptions",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaModuleDescriptorArtifact",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaModuleInspection",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaProviderInspection",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaRootModule",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaRouteInspection",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaRouteParameterInspection",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaVersioningOptions",
+          "kind": "type"
+        },
+        {
+          "name": "AppState",
+          "kind": "type"
+        },
+        {
+          "name": "AsyncConfigurationOptions",
+          "kind": "type"
+        },
+        {
+          "name": "AsyncPluginModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "AsyncPluginOptions",
+          "kind": "type"
+        },
+        {
+          "name": "AuthenticatedUser",
+          "kind": "type"
+        },
+        {
+          "name": "AuthGuard",
+          "kind": "value"
+        },
+        {
+          "name": "AuthGuardOptions",
+          "kind": "type"
+        },
+        {
+          "name": "COMPILED_DESCRIPTOR_SYMBOL",
+          "kind": "value"
+        },
+        {
+          "name": "compileModuleInMemory",
+          "kind": "value"
+        },
+        {
+          "name": "compileRootModule",
+          "kind": "value"
+        },
+        {
+          "name": "ConfiguredAponiaApplicationOptions",
+          "kind": "type"
+        },
+        {
+          "name": "controller",
+          "kind": "value"
+        },
+        {
+          "name": "CONTROLLER_KIND",
+          "kind": "value"
+        },
+        {
+          "name": "ControllerDescriptor",
+          "kind": "type"
+        },
+        {
+          "name": "ControllerHandlerFactory",
+          "kind": "type"
+        },
+        {
+          "name": "ControllerPluginOptions",
+          "kind": "type"
+        },
+        {
+          "name": "ControllerRegistrationOptions",
+          "kind": "type"
+        },
+        {
+          "name": "ControllerRegistrationResult",
+          "kind": "type"
+        },
+        {
+          "name": "ControllerRoutesOptions",
+          "kind": "type"
+        },
+        {
+          "name": "createEnhancerPlugin",
+          "kind": "value"
+        },
+        {
+          "name": "createMiddlewareConsumer",
+          "kind": "value"
+        },
+        {
+          "name": "createServicePlugin",
+          "kind": "value"
+        },
+        {
+          "name": "DeclaredControllerDefinition",
+          "kind": "type"
+        },
+        {
+          "name": "DeclaredWebSocketGateway",
+          "kind": "type"
+        },
+        {
+          "name": "defineController",
+          "kind": "value"
+        },
+        {
+          "name": "defineControllerRoutes",
+          "kind": "value"
+        },
+        {
+          "name": "definePlugin",
+          "kind": "value"
+        },
+        {
+          "name": "defineWebSocketGateway",
+          "kind": "value"
+        },
+        {
+          "name": "downloadFile",
+          "kind": "value"
+        },
+        {
+          "name": "DownloadFileOptions",
+          "kind": "type"
+        },
+        {
+          "name": "ElysiaApplication",
+          "kind": "type"
+        },
+        {
+          "name": "ElysiaBridgePluginDefinition",
+          "kind": "type"
+        },
+        {
+          "name": "ElysiaBridgePluginModule",
+          "kind": "type"
+        },
+        {
+          "name": "ElysiaConfigurator",
+          "kind": "type"
+        },
+        {
+          "name": "ElysiaPlugin",
+          "kind": "type"
+        },
+        {
+          "name": "ElysiaResponseSettings",
+          "kind": "type"
+        },
+        {
+          "name": "EnhancerPluginDefinition",
+          "kind": "type"
+        },
+        {
+          "name": "EnhancerPluginModule",
+          "kind": "type"
+        },
+        {
+          "name": "getApplicationDiagnostics",
+          "kind": "value"
+        },
+        {
+          "name": "getApplicationFromStore",
+          "kind": "value"
+        },
+        {
+          "name": "HandlerContext",
+          "kind": "type"
+        },
+        {
+          "name": "httpError",
+          "kind": "value"
+        },
+        {
+          "name": "HttpError",
+          "kind": "value"
+        },
+        {
+          "name": "HttpErrorFactories",
+          "kind": "type"
+        },
+        {
+          "name": "HttpErrorFactory",
+          "kind": "type"
+        },
+        {
+          "name": "HttpErrorOptions",
+          "kind": "type"
+        },
+        {
+          "name": "httpErrors",
+          "kind": "value"
+        },
+        {
+          "name": "HttpErrorStatus",
+          "kind": "type"
+        },
+        {
+          "name": "HttpErrorStatusCode",
+          "kind": "type"
+        },
+        {
+          "name": "HttpErrorStatusName",
+          "kind": "type"
+        },
+        {
+          "name": "InferredEdenRoutes",
+          "kind": "type"
+        },
+        {
+          "name": "inspectAponiaApplication",
+          "kind": "value"
+        },
+        {
+          "name": "InterceptorPhases",
+          "kind": "type"
+        },
+        {
+          "name": "LazyModuleLoader",
+          "kind": "value"
+        },
+        {
+          "name": "LazyModuleRef",
+          "kind": "value"
+        },
+        {
+          "name": "PluginImport",
+          "kind": "type"
+        },
+        {
+          "name": "PluginModule",
+          "kind": "value"
+        },
+        {
+          "name": "PluginModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "PluginSource",
+          "kind": "type"
+        },
+        {
+          "name": "PluginTypes",
+          "kind": "type"
+        },
+        {
+          "name": "ProblemDetails",
+          "kind": "type"
+        },
+        {
+          "name": "provideConfiguration",
+          "kind": "value"
+        },
+        {
+          "name": "provideConfigurationAsync",
+          "kind": "value"
+        },
+        {
+          "name": "RegisteredApplication",
+          "kind": "type"
+        },
+        {
+          "name": "RegisteredControllerDefinition",
+          "kind": "type"
+        },
+        {
+          "name": "RequestContext",
+          "kind": "type"
+        },
+        {
+          "name": "RequestContextModule",
+          "kind": "value"
+        },
+        {
+          "name": "RequestContextModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "RequestContextService",
+          "kind": "value"
+        },
+        {
+          "name": "ResolvedMiddlewareConfig",
+          "kind": "type"
+        },
+        {
+          "name": "ResolveHttpErrorStatus",
+          "kind": "type"
+        },
+        {
+          "name": "ResponseStatus",
+          "kind": "type"
+        },
+        {
+          "name": "RolesGuard",
+          "kind": "value"
+        },
+        {
+          "name": "RouteCompilationOptions",
+          "kind": "type"
+        },
+        {
+          "name": "RouteHandler",
+          "kind": "type"
+        },
+        {
+          "name": "RouteInputSchema",
+          "kind": "type"
+        },
+        {
+          "name": "RoutePlan",
+          "kind": "type"
+        },
+        {
+          "name": "ServicePluginDefinition",
+          "kind": "type"
+        },
+        {
+          "name": "ServicePluginModule",
+          "kind": "type"
+        },
+        {
+          "name": "sse",
+          "kind": "value"
+        },
+        {
+          "name": "SseEvent",
+          "kind": "type"
+        },
+        {
+          "name": "TreatyApp",
+          "kind": "type"
+        },
+        {
+          "name": "TypedRoutePlan",
+          "kind": "type"
+        },
+        {
+          "name": "WebSocketClient",
+          "kind": "type"
+        },
+        {
+          "name": "WebSocketGatewayOptions",
+          "kind": "type"
+        },
+        {
+          "name": "WebSocketGatewayPlan",
+          "kind": "type"
+        },
+        {
+          "name": "WebSocketHandlerPlan",
+          "kind": "type"
+        },
+        {
+          "name": "WebSocketServerRef",
+          "kind": "type"
+        },
+        {
+          "name": "wrapElysiaPlugin",
+          "kind": "value"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/queue",
+      "exports": [
+        {
+          "name": "MemoryQueueStore",
+          "kind": "value"
+        },
+        {
+          "name": "OutboxFlushResult",
+          "kind": "type"
+        },
+        {
+          "name": "OutboxMessage",
+          "kind": "type"
+        },
+        {
+          "name": "OutboxOptions",
+          "kind": "type"
+        },
+        {
+          "name": "OutboxService",
+          "kind": "value"
+        },
+        {
+          "name": "OutboxSink",
+          "kind": "type"
+        },
+        {
+          "name": "OutboxStore",
+          "kind": "type"
+        },
+        {
+          "name": "QueueDrainSummary",
+          "kind": "type"
+        },
+        {
+          "name": "QueueEnqueueOptions",
+          "kind": "type"
+        },
+        {
+          "name": "QueueHandler",
+          "kind": "type"
+        },
+        {
+          "name": "QueueJob",
+          "kind": "type"
+        },
+        {
+          "name": "QueueJobState",
+          "kind": "type"
+        },
+        {
+          "name": "QueueModule",
+          "kind": "value"
+        },
+        {
+          "name": "QueueModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "QueueService",
+          "kind": "value"
+        },
+        {
+          "name": "QueueServiceOptions",
+          "kind": "type"
+        },
+        {
+          "name": "QueueStats",
+          "kind": "type"
+        },
+        {
+          "name": "QueueStore",
+          "kind": "type"
+        },
+        {
+          "name": "QueueTimer",
+          "kind": "type"
+        },
+        {
+          "name": "SqliteOutboxStore",
+          "kind": "value"
+        },
+        {
+          "name": "SqliteOutboxStoreOptions",
+          "kind": "type"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/rate-limit",
+      "exports": [
+        {
+          "name": "MemoryRateLimitStore",
+          "kind": "value"
+        },
+        {
+          "name": "MemoryRateLimitStoreOptions",
+          "kind": "type"
+        },
+        {
+          "name": "RATE_LIMIT_OPTIONS",
+          "kind": "value"
+        },
+        {
+          "name": "RATE_LIMIT_STORE",
+          "kind": "value"
+        },
+        {
+          "name": "RateLimit",
+          "kind": "value"
+        },
+        {
+          "name": "RateLimitCounter",
+          "kind": "type"
+        },
+        {
+          "name": "RateLimitDecision",
+          "kind": "type"
+        },
+        {
+          "name": "RateLimitGuard",
+          "kind": "value"
+        },
+        {
+          "name": "RateLimitKey",
+          "kind": "type"
+        },
+        {
+          "name": "RateLimitModule",
+          "kind": "value"
+        },
+        {
+          "name": "RateLimitOptions",
+          "kind": "type"
+        },
+        {
+          "name": "RateLimitOverride",
+          "kind": "type"
+        },
+        {
+          "name": "RateLimitService",
+          "kind": "value"
+        },
+        {
+          "name": "RateLimitStore",
+          "kind": "type"
+        },
+        {
+          "name": "ResolvedRateLimitOptions",
+          "kind": "type"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/security",
+      "exports": [
+        {
+          "name": "CsrfOptions",
+          "kind": "type"
+        },
+        {
+          "name": "getCspNonce",
+          "kind": "value"
+        },
+        {
+          "name": "SecurityHeadersOptions",
+          "kind": "type"
+        },
+        {
+          "name": "SecurityModule",
+          "kind": "value"
+        },
+        {
+          "name": "SecurityModuleOptions",
+          "kind": "type"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/serverless",
+      "exports": [
+        {
+          "name": "createLambdaHandler",
+          "kind": "value"
+        },
+        {
+          "name": "FetchHandler",
+          "kind": "type"
+        },
+        {
+          "name": "LambdaHandler",
+          "kind": "type"
+        },
+        {
+          "name": "LambdaHeaders",
+          "kind": "type"
+        },
+        {
+          "name": "LambdaHttpEvent",
+          "kind": "type"
+        },
+        {
+          "name": "LambdaHttpEventV1",
+          "kind": "type"
+        },
+        {
+          "name": "LambdaHttpEventV2",
+          "kind": "type"
+        },
+        {
+          "name": "LambdaHttpResult",
+          "kind": "type"
+        },
+        {
+          "name": "LambdaHttpResultV1",
+          "kind": "type"
+        },
+        {
+          "name": "LambdaHttpResultV2",
+          "kind": "type"
+        },
+        {
+          "name": "ServerlessApplication",
+          "kind": "type"
+        },
+        {
+          "name": "toFetchHandler",
+          "kind": "value"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/session",
+      "exports": [
+        {
+          "name": "MemorySessionStore",
+          "kind": "value"
+        },
+        {
+          "name": "MemorySessionStoreOptions",
+          "kind": "type"
+        },
+        {
+          "name": "Session",
+          "kind": "value"
+        },
+        {
+          "name": "SessionCookieOptions",
+          "kind": "type"
+        },
+        {
+          "name": "SessionModule",
+          "kind": "value"
+        },
+        {
+          "name": "SessionModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "SessionService",
+          "kind": "value"
+        },
+        {
+          "name": "SessionStore",
+          "kind": "type"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/store-redis",
+      "exports": [
+        {
+          "name": "RedisCacheStore",
+          "kind": "value"
+        },
+        {
+          "name": "RedisClientInterface",
+          "kind": "type"
+        },
+        {
+          "name": "RedisIdempotencyStore",
+          "kind": "value"
+        },
+        {
+          "name": "RedisRateLimitStore",
+          "kind": "value"
+        },
+        {
+          "name": "RedisRefreshTokenStore",
+          "kind": "value"
+        },
+        {
+          "name": "RedisRevocationStore",
+          "kind": "value"
+        },
+        {
+          "name": "RedisSessionStore",
+          "kind": "value"
+        },
+        {
+          "name": "RedisStoreOptions",
+          "kind": "type"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/tenancy",
+      "exports": [
+        {
+          "name": "TENANT",
+          "kind": "value"
+        },
+        {
+          "name": "TenantGuard",
+          "kind": "value"
+        },
+        {
+          "name": "TenantModule",
+          "kind": "value"
+        },
+        {
+          "name": "TenantModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "TenantService",
+          "kind": "value"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/testing",
+      "exports": [
+        {
+          "name": "createTestApplication",
+          "kind": "value"
+        },
+        {
+          "name": "OverrideFactoryOptions",
+          "kind": "type"
+        },
+        {
+          "name": "OverrideProviderBuilder",
+          "kind": "type"
+        },
+        {
+          "name": "Test",
+          "kind": "value"
+        },
+        {
+          "name": "TestApplication",
+          "kind": "value"
+        },
+        {
+          "name": "TestApplicationBuilder",
+          "kind": "type"
+        },
+        {
+          "name": "TestApplicationOptions",
+          "kind": "type"
+        },
+        {
+          "name": "TestingModule",
+          "kind": "type"
+        },
+        {
+          "name": "TestingModuleBuilder",
+          "kind": "type"
+        },
+        {
+          "name": "TestProviderOverride",
+          "kind": "type"
+        },
+        {
+          "name": "TestServer",
+          "kind": "type"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/view",
+      "exports": [
+        {
+          "name": "BladeViewEngine",
+          "kind": "value"
+        },
+        {
+          "name": "BladeViewEngineOptions",
+          "kind": "type"
+        },
+        {
+          "name": "fragment",
+          "kind": "value"
+        },
+        {
+          "name": "HtmlViewEngine",
+          "kind": "value"
+        },
+        {
+          "name": "isHtmxRequest",
+          "kind": "value"
+        },
+        {
+          "name": "setDefaultViewEngine",
+          "kind": "value"
+        },
+        {
+          "name": "view",
+          "kind": "value"
+        },
+        {
+          "name": "VIEW_ENGINE",
+          "kind": "value"
+        },
+        {
+          "name": "ViewEngine",
+          "kind": "type"
+        },
+        {
+          "name": "ViewModule",
+          "kind": "value"
+        },
+        {
+          "name": "ViewModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "ViewService",
+          "kind": "value"
+        }
+      ]
+    }
+  ]
+}

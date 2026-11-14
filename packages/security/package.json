@@ -1,0 +1,63 @@
+{
+  "name": "@aponiajs/security",
+  "version": "1.0.0-beta.40",
+  "description": "Secure response headers and signed double-submit CSRF protection for an Aponia application.",
+  "keywords": [
+    "aponia",
+    "aponiajs",
+    "bun",
+    "csrf",
+    "elysia",
+    "headers",
+    "security",
+    "typescript"
+  ],
+  "homepage": "https://github.com/aponiajs/aponiajs#readme",
+  "bugs": {
+    "url": "https://github.com/aponiajs/aponiajs/issues"
+  },
+  "license": "MIT",
+  "author": "AponiaJS contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aponiajs/aponiajs.git",
+    "directory": "packages/security"
+  },
+  "files": [
+    "dist",
+    "llms.txt"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "bunx --bun vp pack",
+    "dev": "bunx --bun vp pack --watch",
+    "test": "bun test",
+    "test:vite-plus": "vp test",
+    "check": "bunx --bun vp check",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "@aponiajs/common": "workspace:*",
+    "@aponiajs/platform-elysia": "workspace:*"
+  },
+  "devDependencies": {
+    "@aponiajs/core": "workspace:*",
+    "elysia": "2.0.0-rc.4"
+  },
+  "peerDependencies": {
+    "elysia": "2.0.0-rc.4"
+  },
+  "engines": {
+    "bun": ">=1.4.4"
+  }
+}

@@ -1,0 +1,26 @@
+# @aponiajs/tenancy
+
+> Request-scoped multi-tenancy for an AponiaJS application, with a tenant guard, a request tenant service, and a safe identifier policy.
+
+## What this package exports
+
+- `TenantModule.register({ header?, required?, pattern?, resolver?, principal?, claim? })`: the module an application imports.
+- `TenantGuard`: resolves the tenant from a resolver, a verified principal claim, or an explicitly configured header.
+- `TenantService`: `current()` and `require()`.
+- `TENANT`: the request-context token the tenant id is stored under.
+
+## Behavior a consumer can rely on
+
+- A registration must provide `resolver`, `principal`, or `header`; otherwise it fails with `INVALID_TENANCY_OPTIONS`.
+- Resolution order is resolver, then the principal claim, then the explicitly configured header.
+- The header is opt-in and is selection, not authorization.
+- Missing tenants answer `400` unless `required` is false.
+- The default identifier pattern accepts 1-128 characters from `A-Za-z0-9._:-`.
+- `TenantService.require()` fails with `MISSING_TENANT` when no tenant is selected; the default boundary answers `400`.
+- The package does not store tenants or scope a database connection.
+
+## Documentation
+
+- [Package README](README.md)
+- [Tenancy guide](../../docs/tenancy.md)
+- [npm](https://www.npmjs.com/package/@aponiajs/tenancy)

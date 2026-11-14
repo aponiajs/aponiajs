@@ -43,4 +43,20 @@ describe("Bun workspace version synchronization", () => {
   test("accepts synchronized workspace versions", () => {
     expect(() => assertWorkspaceLockVersions(lockfileFixture("0.3.20"), "0.3.20")).not.toThrow();
   });
+
+  test("rejects lockfiles without the complete workspace graph", () => {
+    expect(() => updateWorkspaceLockVersions("{}", "0.3.20")).toThrow(
+      "bun.lock does not declare workspaces.",
+    );
+    expect(() =>
+      updateWorkspaceLockVersions(
+        JSON.stringify({
+          workspaces: {
+            [versionedWorkspacePaths[0]]: { version: "0.3.19" },
+          },
+        }),
+        "0.3.20",
+      ),
+    ).toThrow("bun.lock is missing workspaces:");
+  });
 });

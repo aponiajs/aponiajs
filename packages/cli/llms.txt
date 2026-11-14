@@ -1,0 +1,37 @@
+# @aponiajs/cli
+
+> The Bun-native command-line interface for AponiaJS: it scaffolds a new project and generates Nest-style schematics inside an existing one.
+
+The published surface is the globally installed `aponia` binary (`bun add --global @aponiajs/cli`). It is independent of the runtime packages and holds the templates the generated applications are rendered from.
+
+## Commands
+
+- [aponia new <name>](../../docs/cli.md): creates a project from the application template, and also installs its dependencies unless `--skip-install` is passed; `--dry-run` reports the planned files without writing.
+- [aponia generate <schematic> <name>](../../docs/cli.md): generates one schematic, registering it in the nearest Aponia module unless `--skip-import` is passed.
+- [Schematic catalog](../../docs/cli.md): application, library, class, controller, decorator, filter, gateway, guard, interface, interceptor, middleware, module, pipe, provider, resolver, resource, and service, with Nest aliases.
+- [aponia g resource <name> --type rest](../../docs/cli.md): REST, GraphQL code-first, GraphQL schema-first, microservice, and WebSocket resource transports; a REST resource also emits validated create, update, and path-parameter models.
+- [aponia g gateway <name>](../../docs/cli.md): emits a `@WebSocketGateway()` provider, and a WebSocket CRUD resource emits the create, find-all, find-one, update, and remove message handlers.
+- [aponia --version, aponia --help](../../docs/cli.md): print the CLI version or the usage summary.
+
+## What this package exports
+
+The `aponia` binary is the normal entry point. The same behavior is available programmatically:
+
+- [runCli](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/cli/src/commands/run-cli.ts): runs one command and returns an exit code; it prints `CREATE` and `UPDATE` change lines and never throws.
+- [parseArguments](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/cli/src/commands/arguments.ts): turns an argument vector into a `CliCommand`, rejecting unknown commands, schematics, options, and transports.
+- [generateProject](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/cli/src/generation/project-generator.ts): renders the application template into a new directory.
+- [generateSchematic](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/cli/src/generation/schematic-generator.ts): plans, renders, and registers one schematic.
+- [schematicNames](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/cli/src/commands/command.constants.ts): the list of supported schematic names.
+
+## Public types
+
+- [CliCommand, GenerateCommandOptions, GenerateSchematic, ResourceTransport](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/cli/src/commands/command.types.ts): the parsed command contract.
+- [GenerateProjectOptions, GenerateProjectResult](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/cli/src/generation/project-generator.types.ts): project scaffolding inputs and result.
+- [GenerateSchematicOptions, GenerateSchematicResult, SchematicChange](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/cli/src/generation/schematic.types.ts): schematic inputs, result, and the per-file change record.
+
+## Documentation
+
+- [Package README](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/cli/README.md): the command examples and the schematic catalog.
+- [Aponia CLI](../../docs/cli.md): the complete generator catalog, aliases, and options.
+- [Install and generate](../../docs/learn/02-install-and-generate.md): how to start a project and what the generator produces.
+- [Published packages](../../docs/packages.md): the npm catalog and install commands.

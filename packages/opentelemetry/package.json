@@ -1,0 +1,66 @@
+{
+  "name": "@aponiajs/opentelemetry",
+  "version": "1.0.0-beta.40",
+  "description": "Trace an Aponia application's routes with OpenTelemetry, with the policy read from a validated configuration.",
+  "keywords": [
+    "aponia",
+    "aponiajs",
+    "bun",
+    "elysia",
+    "opentelemetry",
+    "otel",
+    "tracing",
+    "typescript"
+  ],
+  "homepage": "https://github.com/aponiajs/aponiajs#readme",
+  "bugs": {
+    "url": "https://github.com/aponiajs/aponiajs/issues"
+  },
+  "license": "MIT",
+  "author": "AponiaJS contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aponiajs/aponiajs.git",
+    "directory": "packages/opentelemetry"
+  },
+  "files": [
+    "dist",
+    "llms.txt"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "bunx --bun vp pack",
+    "dev": "bunx --bun vp pack --watch",
+    "test": "bun test",
+    "test:vite-plus": "vp test",
+    "check": "bunx --bun vp check",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "@aponiajs/common": "workspace:*",
+    "@aponiajs/platform-elysia": "workspace:*",
+    "@elysia/opentelemetry": "2.0.0-rc.0"
+  },
+  "devDependencies": {
+    "@aponiajs/cli": "workspace:*",
+    "@opentelemetry/sdk-trace-base": "^2.0.0",
+    "elysia": "2.0.0-rc.4",
+    "zod": "^4.6.6"
+  },
+  "peerDependencies": {
+    "elysia": "2.0.0-rc.4"
+  },
+  "engines": {
+    "bun": ">=1.4.4"
+  }
+}

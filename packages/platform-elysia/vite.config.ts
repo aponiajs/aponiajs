@@ -10,11 +10,12 @@ export default defineConfig({
     include: ["tests-vp/**/*.conformance.ts"],
   },
   pack: {
-    tsconfig: "tsconfig.build.json",
-    dts: {
-      tsgo: true,
-      tsconfig: "tsconfig.build.json",
+    entry: {
+      index: "src/index.ts",
+      register: "src/compiler/register.ts",
     },
+    tsconfig: "tsconfig.build.json",
+    dts: true,
     exports: true,
     deps: {
       neverBundle: ["@aponiajs/common", "@aponiajs/core", "elysia"],

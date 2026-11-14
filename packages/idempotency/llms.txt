@@ -1,0 +1,24 @@
+# @aponiajs/idempotency
+
+> Idempotent replay for mutating HTTP requests in an AponiaJS application, with conflict detection, concurrent-run sharing, and a pluggable store.
+
+## What this package exports
+
+- `IdempotencyModule.register({ ttlMs?, maxEntries?, header?, requireKey?, methods?, store?, now?, onError?, scope? })`: the module an application imports.
+- `MemoryIdempotencyStore`: a bounded process-local store with atomic `claim`/`release`.
+- Types: `IdempotencyModuleOptions`, `IdempotencyStore`, `StoredIdempotentResponse`.
+
+## Behavior a consumer can rely on
+
+- A `2xx` answer is recorded per key and replayed for a repeat with the same method, path, and body; the handler does not run again.
+- A key reused with a different body is refused with `409` Problem Details.
+- Concurrent repeats wait for the first run and replay its answer.
+- `requireKey` refuses a covered request with no key; otherwise the request passes through unrecorded.
+- A `Response`, stream, generator, or `undefined` result is not recorded.
+- `scope` namespaces a key by caller, for example the verified subject and tenant.
+- The default store is process-local and bounded; a shared store with atomic `claim`/`release` extends the guarantee across replicas. A store without them is single-process only.
+
+## Documentation
+
+- [Package README](README.md)
+- [Agent surface](../../docs/agent/README.md)

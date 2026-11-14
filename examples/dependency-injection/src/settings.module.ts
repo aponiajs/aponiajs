@@ -1,4 +1,11 @@
-import { Module, createToken, provideAlias, provideFactory, provideValue } from "@aponiajs/common";
+import {
+  Module,
+  createToken,
+  provideAlias,
+  provideClass,
+  provideFactory,
+  provideValue,
+} from "@aponiajs/common";
 import { APPLICATION_NAME, GREETING_PREFIX, REQUEST_BUDGET } from "./settings.tokens.ts";
 import { SettingsService } from "./settings.service.ts";
 
@@ -16,7 +23,7 @@ const INTERNAL_BUDGET = createToken<number>("INTERNAL_BUDGET");
     provideFactory(GREETING_PREFIX, [APPLICATION_NAME], (name) => `Hello from ${name}`),
     provideValue(INTERNAL_BUDGET, 100),
     provideAlias(REQUEST_BUDGET, INTERNAL_BUDGET),
-    SettingsService,
+    provideClass(SettingsService, [APPLICATION_NAME, GREETING_PREFIX]),
   ],
   exports: [SettingsService, GREETING_PREFIX, REQUEST_BUDGET],
 })

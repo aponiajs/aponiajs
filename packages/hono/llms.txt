@@ -1,0 +1,20 @@
+# @aponiajs/hono
+
+> Delivery adapter that mounts an Aponia application inside Hono.
+
+## What this package exports
+
+- `createHonoApp(application)`.
+- `createHonoApp(application)`.
+
+## Behavior
+
+- The runtime forwards its request to `application.handle`.
+- Aponia guards, validation, filters, and error mapping still run inside the application.
+- WebSockets remain Elysia-only.
+
+## Documentation
+
+- [Package README](README.md)
+- [Deployment guide](../../docs/deployment.md)
+

@@ -52,15 +52,15 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
-          bun-version: 1.3.14
+          bun-version: 1.4.4
 
       - name: Set up Node for npm trusted publishing
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: "24"
           registry-url: https://registry.npmjs.org
@@ -95,10 +95,13 @@ jobs:
       - name: Verify workspace
         run: |
           bun run check
-          bun test
+          bun run test:coverage
+          bun run test:examples
           bun run test:vite-plus
           bun run build
           bun run test:generated-app
+          bun run release:dry-run
+          bun audit --audit-level=high
 
       - name: Verify release version
         env:
@@ -108,12 +111,41 @@ jobs:
 
       - name: Pack publishable workspaces
         run: |
-          mkdir -p release-artifacts/{01-common,02-core,03-platform-elysia,04-cli,05-create-aponia}
+          mkdir -p release-artifacts/{01-common,02-core,03-platform-elysia,04-cli,05-create-aponia,06-devtools,07-cron,08-graphql,09-testing,10-openapi,11-cors,12-opentelemetry,13-mcp,14-cache,15-events,16-http,17-rate-limit,18-security,19-session,20-compression,21-auth,22-audit,23-tenancy,24-queue,25-database,26-metrics,27-idempotency,28-microservices,29-serverless,30-h3,31-hono,32-nitro,33-store-redis,34-view}
           bun pm pack --cwd packages/common --destination "$GITHUB_WORKSPACE/release-artifacts/01-common"
           bun pm pack --cwd packages/core --destination "$GITHUB_WORKSPACE/release-artifacts/02-core"
           bun pm pack --cwd packages/platform-elysia --destination "$GITHUB_WORKSPACE/release-artifacts/03-platform-elysia"
           bun pm pack --cwd packages/cli --destination "$GITHUB_WORKSPACE/release-artifacts/04-cli"
           bun pm pack --cwd packages/create-aponia --destination "$GITHUB_WORKSPACE/release-artifacts/05-create-aponia"
+          bun pm pack --cwd packages/devtools --destination "$GITHUB_WORKSPACE/release-artifacts/06-devtools"
+          bun pm pack --cwd packages/cron --destination "$GITHUB_WORKSPACE/release-artifacts/07-cron"
+          bun pm pack --cwd packages/graphql --destination "$GITHUB_WORKSPACE/release-artifacts/08-graphql"
+          bun pm pack --cwd packages/testing --destination "$GITHUB_WORKSPACE/release-artifacts/09-testing"
+          bun pm pack --cwd packages/openapi --destination "$GITHUB_WORKSPACE/release-artifacts/10-openapi"
+          bun pm pack --cwd packages/cors --destination "$GITHUB_WORKSPACE/release-artifacts/11-cors"
+          bun pm pack --cwd packages/opentelemetry --destination "$GITHUB_WORKSPACE/release-artifacts/12-opentelemetry"
+          bun pm pack --cwd packages/mcp --destination "$GITHUB_WORKSPACE/release-artifacts/13-mcp"
+          bun pm pack --cwd packages/cache --destination "$GITHUB_WORKSPACE/release-artifacts/14-cache"
+          bun pm pack --cwd packages/events --destination "$GITHUB_WORKSPACE/release-artifacts/15-events"
+          bun pm pack --cwd packages/http --destination "$GITHUB_WORKSPACE/release-artifacts/16-http"
+          bun pm pack --cwd packages/rate-limit --destination "$GITHUB_WORKSPACE/release-artifacts/17-rate-limit"
+          bun pm pack --cwd packages/security --destination "$GITHUB_WORKSPACE/release-artifacts/18-security"
+          bun pm pack --cwd packages/session --destination "$GITHUB_WORKSPACE/release-artifacts/19-session"
+          bun pm pack --cwd packages/compression --destination "$GITHUB_WORKSPACE/release-artifacts/20-compression"
+          bun pm pack --cwd packages/auth --destination "$GITHUB_WORKSPACE/release-artifacts/21-auth"
+          bun pm pack --cwd packages/audit --destination "$GITHUB_WORKSPACE/release-artifacts/22-audit"
+          bun pm pack --cwd packages/tenancy --destination "$GITHUB_WORKSPACE/release-artifacts/23-tenancy"
+          bun pm pack --cwd packages/queue --destination "$GITHUB_WORKSPACE/release-artifacts/24-queue"
+          bun pm pack --cwd packages/database --destination "$GITHUB_WORKSPACE/release-artifacts/25-database"
+          bun pm pack --cwd packages/metrics --destination "$GITHUB_WORKSPACE/release-artifacts/26-metrics"
+          bun pm pack --cwd packages/idempotency --destination "$GITHUB_WORKSPACE/release-artifacts/27-idempotency"
+          bun pm pack --cwd packages/microservices --destination "$GITHUB_WORKSPACE/release-artifacts/28-microservices"
+          bun pm pack --cwd packages/serverless --destination "$GITHUB_WORKSPACE/release-artifacts/29-serverless"
+          bun pm pack --cwd packages/h3 --destination "$GITHUB_WORKSPACE/release-artifacts/30-h3"
+          bun pm pack --cwd packages/hono --destination "$GITHUB_WORKSPACE/release-artifacts/31-hono"
+          bun pm pack --cwd packages/nitro --destination "$GITHUB_WORKSPACE/release-artifacts/32-nitro"
+          bun pm pack --cwd packages/store-redis --destination "$GITHUB_WORKSPACE/release-artifacts/33-store-redis"
+          bun pm pack --cwd packages/view --destination "$GITHUB_WORKSPACE/release-artifacts/34-view"
 
       - name: Publish packages in dependency order
         working-directory: ${{ runner.temp }}
@@ -133,8 +165,37 @@ jobs:
           ALIAS_TAGS: ${{ steps.distribution.outputs.aliases }}
           VERSION: ${{ steps.distribution.outputs.version }}
         run: |
-          for package in @aponiajs/common @aponiajs/core @aponiajs/platform-elysia @aponiajs/cli create-aponia; do
+          for package in @aponiajs/common @aponiajs/core @aponiajs/platform-elysia @aponiajs/cli create-aponia @aponiajs/devtools @aponiajs/cron @aponiajs/graphql @aponiajs/cors @aponiajs/testing @aponiajs/openapi @aponiajs/opentelemetry @aponiajs/mcp @aponiajs/cache @aponiajs/events @aponiajs/http @aponiajs/rate-limit @aponiajs/security @aponiajs/session @aponiajs/compression @aponiajs/auth @aponiajs/audit @aponiajs/tenancy @aponiajs/queue @aponiajs/database @aponiajs/metrics @aponiajs/idempotency @aponiajs/microservices @aponiajs/serverless @aponiajs/h3 @aponiajs/hono @aponiajs/nitro @aponiajs/store-redis @aponiajs/view; do
             for alias in $ALIAS_TAGS; do
               npm dist-tag add "$package@$VERSION" "$alias"
             done
           done
+
+  sbom:
+    name: Software bill of materials
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.4.4
+
+      - name: Install frozen dependencies
+        run: bun ci
+
+      - name: Generate the CycloneDX document
+        run: bun run release:sbom sbom.cdx.json
+
+      - name: Attach it to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$RELEASE_TAG" sbom.cdx.json --clobber

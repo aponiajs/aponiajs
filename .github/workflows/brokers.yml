@@ -1,0 +1,98 @@
+name: Broker transports
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  live:
+    name: Live broker round trip
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      nats:
+        image: nats:2.11-alpine
+        ports:
+          - 4222:4222
+      mqtt:
+        image: eclipse-mosquitto:2
+        ports:
+          - 1883:1883
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+      kafka:
+        image: apache/kafka:3.9.0
+        ports:
+          - 9092:9092
+        env:
+          KAFKA_NODE_ID: 1
+          KAFKA_PROCESS_ROLES: broker,controller
+          KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://127.0.0.1:9092
+          KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+          KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+          KAFKA_CONTROLLER_QUORUM_VOTERS: 1@127.0.0.1:9093
+          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+          KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+          KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+          KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      rabbitmq:
+        image: rabbitmq:3-alpine
+        ports:
+          - 5672:5672
+      localstack:
+        image: localstack/localstack:3
+        env:
+          SERVICES: sqs
+        ports:
+          - 4566:4566
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: aponia
+          POSTGRES_PASSWORD: aponia
+          POSTGRES_DB: aponia
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.4.4
+
+      - name: Install frozen dependencies
+        run: bun ci
+
+      - name: Wait for the brokers
+        run: |
+          timeout 90 bash -c 'until nc -z 127.0.0.1 4222; do sleep 1; done'
+          timeout 90 bash -c 'until nc -z 127.0.0.1 1883; do sleep 1; done'
+          timeout 90 bash -c 'until nc -z 127.0.0.1 6379; do sleep 1; done'
+          timeout 120 bash -c 'until nc -z 127.0.0.1 9092; do sleep 1; done'
+          timeout 120 bash -c 'until nc -z 127.0.0.1 5672; do sleep 1; done'
+          timeout 120 bash -c 'until nc -z 127.0.0.1 4566; do sleep 1; done'
+          timeout 120 bash -c 'until nc -z 127.0.0.1 5432; do sleep 1; done'
+
+      - name: Run the live broker lane
+        env:
+          APONIA_SQS_ENDPOINT: http://127.0.0.1:4566
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+        run: bun run test:brokers
+
+      - name: Run the live Redis store lane
+        run: bun run test:redis
+
+      - name: Run the live PostgreSQL lane
+        run: bun run test:postgres

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "AponiaJS API",
+  "entryPoints": ["../../packages/*/src/index.ts"],
+  "out": "../../docs-site/api",
+  "tsconfig": "../../tsconfig.json",
+  "readme": "none",
+  "excludeInternal": true,
+  "excludePrivate": true,
+  "githubPages": false,
+  "skipErrorChecking": true
+}

@@ -1,13 +1,15 @@
-import { AponiaFactory, type AponiaElysiaApplication } from "@aponiajs/platform-elysia";
+import { AponiaFactory } from "@aponiajs/platform-elysia";
 import { AppModule } from "../src/app.module.ts";
 
 /** Each suite builds the real application and drives it through `handle`. */
-export function createApplication(): Promise<AponiaElysiaApplication> {
+export function createApplication() {
   return AponiaFactory.create(AppModule, { logger: false });
 }
 
+export type DescriptorApplication = Awaited<ReturnType<typeof createApplication>>;
+
 export function get(
-  application: AponiaElysiaApplication,
+  application: DescriptorApplication,
   path: string,
   init?: RequestInit,
 ): Promise<Response> {
@@ -15,7 +17,7 @@ export function get(
 }
 
 export function send(
-  application: AponiaElysiaApplication,
+  application: DescriptorApplication,
   path: string,
   method: string,
   body: unknown,

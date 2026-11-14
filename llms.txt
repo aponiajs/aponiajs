@@ -1,0 +1,28 @@
+# AponiaJS
+
+> A structured TypeScript framework for Bun and Elysia: modules, dependency injection, decorated HTTP routes, validation, enhancers, WebSockets, agent tooling, and a publishable library contract.
+
+## Start here
+
+- [README](README.md): the quick start, CLI commands, and framework capabilities.
+- [Documentation index](docs/README.md): the task map, authority order, and page standard.
+- [Learning path](docs/learn/README.md): the ordered introduction.
+- [Architecture and style](docs/architecture-and-style.md): the application and framework layout.
+- [Deployment](docs/deployment.md): the operational contract, state ownership, probes, shutdown, and failure modes.
+- [Stability](docs/stability.md): supported versions, the frozen public surface, and deprecation.
+- [Agent surface](docs/agent/README.md): `aponia manifest`, `aponia mcp`, the read-only tools, and the gated write/verify tools.
+- [Working with AI agents](docs/ai-agents.md): context order, change protocol, safety boundaries, and evidence.
+- [Libraries](docs/libraries.md): authoring, checking, and publishing a library.
+- [Published packages](docs/packages.md): the npm catalog.
+
+## Contracts
+
+- `aponia manifest` prints the guarded framework contract.
+- `aponia.library.json` states a library's entrypoint, provided tokens, framework compatibility, and security posture.
+- Every published package ships its own `llms.txt`.
+
+## Security
+
+- The agent surface is read-only by default; `--allow-write` and `--allow-exec` gate mutation, and library paths stay confined to the workspace.
+- CSRF, security headers, sessions, rate limiting, and SSRF-safe HTTP ship as opt-in packages.
+- The HTTP client blocks private, loopback, link-local, and metadata addresses unless explicitly opted out.

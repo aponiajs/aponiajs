@@ -1,0 +1,30 @@
+# @aponiajs/database
+
+> A Drizzle-first database boundary for an AponiaJS application: a transaction seam, typed repositories, and ordered SQL migrations.
+
+## What this package exports
+
+- `DatabaseModule.register({ database, migrations? })`: the module an application imports with its own Drizzle database.
+- `DatabaseService`: `client`, `transaction`, `transactionSync`, `execute`, `migrate`.
+- `createRepository(database, table)`: `findById`, `findMany`, `count`, `exists`, `insert`, `insertMany`, `update`, `updateMany`, `deleteById`, `deleteMany`, and `table`.
+- `MigrationRunner`, `MemoryMigrationStore`, `loadMigrations`.
+- Types: `DatabaseClient`, `DatabaseTransaction`, `DatabaseServiceOptions`, `DatabaseModuleOptions`, `Repository`, `RepositoryQuery`, `RepositorySelect`, `RowOf`, `InsertOf`, `IdOf`, `TableWithId`, `MigrationFile`, `MigrationStore`, `MigrationResult`, `MigrationExecutor`.
+
+## Behavior a consumer can rely on
+
+- The package builds no pool and chooses no dialect; the application hands it a Drizzle database.
+- `client` answers the exact database instance the application registered.
+- `transaction` awaits an asynchronous driver's callback; `transactionSync` is the synchronous-driver variant.
+- Repository reads and writes return frozen rows; `insert` throws `DATABASE_WRITE_FAILED` when the driver returns no row.
+- `findMany` takes `where`, `orderBy`, `limit`, and `offset`; an invalid limit or offset is `INVALID_DATABASE_OPTIONS`.
+- `count` answers a row count and `exists` a presence check, each with an optional condition.
+- `updateMany` and `deleteMany` apply to every matching row (or all rows with no condition) and answer the affected count.
+- Migrations run in file-name order, skip recorded names, and stop at the first failing statement without recording it.
+- Declared migrations run during module initialization, before any handler runs.
+- Each applied file records a SHA-256 checksum; an edited applied migration fails with `INVALID_MIGRATION`.
+- A migration and its record share the driver's transaction when one exists, and an application-supplied `lock` serializes concurrent boots.
+
+## Documentation
+
+- [Package README](README.md)
+- [Agent surface](../../docs/agent/README.md)
