@@ -42,7 +42,23 @@ export class LoginService {
 
 The global plugin reads the signed cookie before the handler and writes or
 removes it after the handler. `SessionService.current()` reads the session the
-request loaded.
+request loaded, and `@Session()` injects it as a handler parameter:
+
+```ts
+import { Controller, Get } from "@aponiajs/common";
+import { Session } from "@aponiajs/session";
+
+@Controller("account")
+export class AccountController {
+  @Get()
+  read(@Session("userId") userId: string | undefined) {
+    return { userId };
+  }
+}
+```
+
+`@Session()` answers the whole session; `@Session("userId")` answers one field
+of its data. A request with no valid session answers `undefined`.
 
 ## Options
 

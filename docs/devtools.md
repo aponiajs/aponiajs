@@ -8,8 +8,10 @@ logger wrote, the requests that reached its record and what answered them, and
 what a build decides about its invokers.
 
 It is a leaf package: nothing in the framework depends on it, and an application
-installs it deliberately. It ships no UI, no assets, and no browser bundle —
-the payloads are the product, and a consumer renders them. Nothing it serves
+installs it deliberately. It ships one page and no framework or build step:
+`GET /__devtools/` answers a read-only view that polls the endpoints beside it,
+and every value reaches the page as text. The payloads are still the product,
+and a consumer that renders them its own way replaces nothing. Nothing it serves
 mutates application state: every endpoint is a read.
 
 The surface is a mount rather than a server. It registers one wildcard route,
@@ -158,11 +160,11 @@ A consumer reads `meta` first and decides whether to proceed:
 ```ts
 {
   contract: 3,                 // the version of this wire shape
-  framework: "1.0.0-beta.36", // the release that booted the application
+  framework: "1.0.0-beta.37", // the release that booted the application
   elysia: "2.0.0-rc.4",            // the release installed in the application's own tree, or null
   artifacts: {                 // which release supplied each adopted artifact
     invokers: null,            // null: the boot adopted none
-    descriptors: "1.0.0-beta.36",
+    descriptors: "1.0.0-beta.37",
   },
   startedAt: "2026-09-26T12:00:00.000Z", // the first request the surface answered here
 }

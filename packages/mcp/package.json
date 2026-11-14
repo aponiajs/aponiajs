@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/mcp",
-  "version": "1.0.0-beta.36",
+  "version": "1.0.0-beta.37",
   "description": "Model Context Protocol server and tool registry for AponiaJS, with handshake version negotiation and server/discover.",
   "keywords": [
     "agents",
@@ -31,7 +31,10 @@
   ],
   "type": "module",
   "exports": {
-    ".": "./dist/index.mjs",
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -60,5 +63,8 @@
     "elysia": {
       "optional": true
     }
+  },
+  "engines": {
+    "bun": ">=1.4.4"
   }
 }

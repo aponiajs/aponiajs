@@ -144,6 +144,7 @@ SDK the service uses; a missing peer fails at `connect` with
 | `sqsTransport`             | `aws-sqs`           | `@aws-sdk/client-sqs`  |
 | `pubSubTransport`          | `gcp-pubsub`        | `@google-cloud/pubsub` |
 | `azureServiceBusTransport` | `azure-service-bus` | `@azure/service-bus`   |
+| `grpcTransport`            | `grpc`              | `@grpc/grpc-js`        |
 
 Every adapter validates its own options before a connection opens, loads its SDK
 only inside `connect`, tracks its subscriptions, and is terminal after
@@ -167,6 +168,10 @@ Broker behavior differs where the protocol does:
   successful reply and nack returns the delivery.
 - Service Bus completes or abandons a peek-lock message and renews the lock
   while the handler runs.
+- gRPC is a direct connection rather than a broker: one transport hosts the
+  generic Aponia service with `listen` and the other dials it with `address`.
+  A client publishes with the unary `Publish` and receives with a
+  server-streaming `Subscribe`; replies travel back over that stream.
 
 The framework never provisions topics, queues, exchanges, subscriptions, or
 dead-letter queues. Cloud reply destinations are operator-provisioned, and each

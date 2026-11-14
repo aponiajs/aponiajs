@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/microservices",
-  "version": "1.0.0-beta.36",
+  "version": "1.0.0-beta.37",
   "description": "Message-pattern microservices for an Aponia application: an in-memory reference transport, a CBOR wire contract, clients, and independently installable broker transports.",
   "keywords": [
     "aponia",
@@ -35,7 +35,10 @@
   ],
   "type": "module",
   "exports": {
-    ".": "./dist/index.mjs",
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -58,6 +61,7 @@
     "@aws-sdk/client-sqs": "3.1165.0",
     "@azure/service-bus": "7.10.0",
     "@google-cloud/pubsub": "6.4.1",
+    "@grpc/grpc-js": "1.14.0",
     "elysia": "2.0.0-rc.4",
     "kafkajs": "2.2.4",
     "mqtt": "5.16.1",
@@ -69,6 +73,7 @@
     "@aws-sdk/client-sqs": "3.1165.0",
     "@azure/service-bus": "7.10.0",
     "@google-cloud/pubsub": "6.4.1",
+    "@grpc/grpc-js": "1.14.0",
     "kafkajs": "2.2.4",
     "mqtt": "5.16.1",
     "nats": "2.29.3",
@@ -99,6 +104,12 @@
     },
     "@azure/service-bus": {
       "optional": true
+    },
+    "@grpc/grpc-js": {
+      "optional": true
     }
+  },
+  "engines": {
+    "bun": ">=1.4.4"
   }
 }

@@ -8,6 +8,7 @@ import {
 } from "@aponiajs/common";
 import type { AponiaContainer } from "@aponiajs/core";
 import type { Elysia } from "elysia";
+import { stripRoutePrefix } from "../routing/route-prefix.ts";
 import type { ResolvedMiddlewareConfig } from "./middleware-consumer.types.ts";
 import { isRouteExcluded, matchRouteTarget } from "./middleware-matcher.ts";
 
@@ -50,6 +51,14 @@ export function resolveMiddleware(
       }
     }
 
+    if (entry.length > 0) {
+      throw new AponiaError(
+        "INVALID_MIDDLEWARE",
+        `Middleware class "${entry.name}" declares ${entry.length} constructor parameter(s). Register it as a provider the root can reach, or pass an instance.`,
+        { middleware: entry.name },
+      );
+    }
+
     try {
       const instance = Reflect.construct(entry, []) as AponiaMiddleware;
       if (typeof instance.use === "function") {
@@ -58,7 +67,7 @@ export function resolveMiddleware(
     } catch {
       throw new AponiaError(
         "INVALID_MIDDLEWARE",
-        `Could not instantiate middleware class "${entry.name}". Ensure its constructor is registered in a module or has no dependencies.`,
+        `Could not instantiate middleware class "${entry.name}". Register it as a provider or give its constructor no arguments.`,
         { middleware: entry.name },
       );
     }
@@ -89,6 +98,7 @@ export function mountMiddleware(
   application: Elysia,
   configs: readonly ResolvedMiddlewareConfig[],
   container?: AponiaContainer,
+  prefix = "",
 ): void {
   if (configs.length === 0) {
     return;
@@ -112,13 +122,17 @@ export function mountMiddleware(
       const url = new URL(elysiaContext.request.url);
       const pathname = elysiaContext.path ?? url.pathname;
       const method = elysiaContext.request.method;
+      const matchPath = stripRoutePrefix(pathname, prefix);
+      if (matchPath === undefined) {
+        return undefined;
+      }
 
       const matchingMiddleware: AponiaMiddleware[] = [];
       for (const entry of pipeline) {
-        if (isRouteExcluded(entry.excluded, pathname, method)) {
+        if (isRouteExcluded(entry.excluded, matchPath, method)) {
           continue;
         }
-        const matches = entry.targets.some((target) => matchRouteTarget(target, pathname, method));
+        const matches = entry.targets.some((target) => matchRouteTarget(target, matchPath, method));
         if (matches) {
           matchingMiddleware.push(...entry.middleware);
         }

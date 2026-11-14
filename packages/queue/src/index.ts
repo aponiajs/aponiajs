@@ -10,6 +10,8 @@
 export { QueueModule } from "./module/queue-module.ts";
 export { QueueService } from "./queue/queue-service.ts";
 export { OutboxService } from "./outbox/outbox-service.ts";
+export { SqliteOutboxStore } from "./outbox/sqlite-outbox-store.ts";
+export type { SqliteOutboxStoreOptions } from "./outbox/sqlite-outbox-store.ts";
 export { MemoryQueueStore } from "./queue/memory-queue-store.ts";
 export type { QueueStore } from "./queue/queue-store.types.ts";
 export type { QueueModuleOptions } from "./module/queue-module.types.ts";
@@ -28,4 +30,5 @@ export type {
   OutboxMessage,
   OutboxOptions,
   OutboxSink,
+  OutboxStore,
 } from "./outbox/outbox.types.ts";

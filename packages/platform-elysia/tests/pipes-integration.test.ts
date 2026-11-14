@@ -279,3 +279,36 @@ describe("Pipes Integration in Platform Elysia", () => {
     }
   });
 });
+
+describe("pipe construction", () => {
+  test("refuses a route pipe class whose constructor requires dependencies", async () => {
+    class NeedsDependency implements PipeTransform {
+      constructor(readonly dependency: string) {}
+
+      transform(value: unknown): unknown {
+        return value;
+      }
+    }
+
+    @Controller("needs-dependency")
+    class NeedsDependencyController {
+      @Get()
+      @UsePipes(NeedsDependency)
+      get(@Query("value") value: string): string {
+        return value;
+      }
+    }
+
+    @Module({ controllers: [NeedsDependencyController] })
+    class NeedsDependencyModule {}
+
+    let failure: unknown;
+    try {
+      await AponiaFactory.create(NeedsDependencyModule, { logger: false });
+    } catch (error) {
+      failure = error;
+    }
+
+    expect(failure).toMatchObject({ code: "INVALID_PIPE" });
+  });
+});

@@ -14,6 +14,10 @@ substituted exactly as it is on a route that declares none.
 | Interceptor      | `Interceptor`     | `beforeHandle`/`afterHandle`  | Around the handler                         |
 | Exception filter | `ExceptionFilter` | the route-local `error` array | When the handler or a guard threw          |
 
+`Reflector` is provided by the application boot, so a guard or interceptor can
+inject it without a module declaring it. A module that does declare it keeps its
+own instance.
+
 Their contracts live in `@aponiajs/common` and are platform-neutral:
 
 ```ts
@@ -407,9 +411,13 @@ dependencies. An instance passes through as given.
 ## Resolution
 
 An enhancer class named in a decorator, a plan, or an option **must be a declared
-provider** in a module the controller's module can reach. It is resolved once
-while that controller mounts, never per request, and enhancers are singletons
-like every other provider.
+provider** in a module the controller's module can reach. A singleton enhancer
+is resolved once while that controller mounts, never per route. An enhancer that
+is declared request-scoped — or that depends on request-scoped state and so
+bubbles to it — is resolved inside the request it runs for instead; its class is
+still one provider, and its halves are the ones the class declares as methods,
+because a half declared as a class field exists only on an instance that the
+mount cannot build.
 
 Nest instantiates a guard passed to `@UseGuards()` without it being declared.
 That is not carried: an undeclared class has no place in the module graph, so
@@ -422,9 +430,13 @@ dependency — before the application can listen.
 Global enhancers resolve through the root module, so a class the root cannot
 reach fails the boot the same way.
 
-Enhancers apply to HTTP routes. A WebSocket gateway is a class provider, not a
-controller, so an enhancer decorator on a gateway class records metadata nothing
-reads.
+Guards and interceptors apply to HTTP routes. A WebSocket gateway is a class
+provider, not a controller; its handshake guards come from the gateway options,
+and an interceptor decorator on a gateway records metadata nothing reads. A
+filter is the exception: `@UseFilters()` on a gateway class runs when a message
+handler throws, receives a context whose `getType()` is `"ws"`, and a returned
+value answers under the subscribed event. A filter that declines leaves the
+standard exception frame.
 
 ## Deviations from Nest
 

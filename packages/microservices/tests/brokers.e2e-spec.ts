@@ -2,9 +2,12 @@ import { expect, test } from "bun:test";
 import {
   createMicroserviceClient,
   createMicroserviceServer,
+  kafkaTransport,
   mqttTransport,
   natsTransport,
+  rabbitmqTransport,
   redisTransport,
+  sqsTransport,
 } from "../src/index.ts";
 import type { Transport } from "../src/transport/transport.types.ts";
 
@@ -90,5 +93,58 @@ liveTest("answers a request and accepts an event through Redis Streams", async (
     `aponia:e2e:${suffix}:requests`,
     `aponia:e2e:${suffix}:replies`,
     `e2e-workers-${suffix}`,
+  );
+});
+
+liveTest("answers a request and accepts an event through Kafka", async () => {
+  const brokers = (process.env.APONIA_KAFKA_BROKERS ?? "127.0.0.1:9092").split(",");
+  await roundTrip(
+    kafkaTransport({
+      brokers,
+      clientId: `aponia-e2e-server-${suffix}`,
+      groupId: `aponia-e2e-server-${suffix}`,
+    }),
+    kafkaTransport({
+      brokers,
+      clientId: `aponia-e2e-client-${suffix}`,
+      groupId: `aponia-e2e-client-${suffix}`,
+    }),
+    `aponia.e2e.${suffix}.requests`,
+    `aponia.e2e.${suffix}.replies`,
+  );
+});
+
+liveTest("answers a request and accepts an event through RabbitMQ", async () => {
+  const url = process.env.APONIA_RABBITMQ_URL ?? "amqp://guest:guest@127.0.0.1:5672";
+  await roundTrip(
+    rabbitmqTransport({ url }),
+    rabbitmqTransport({ url }),
+    `aponia.e2e.${suffix}.requests`,
+    `aponia.e2e.${suffix}.replies`,
+  );
+});
+
+const sqsEndpoint = process.env.APONIA_SQS_ENDPOINT;
+const liveSqsTest = sqsEndpoint === undefined ? test.skip : liveTest;
+
+liveSqsTest("answers a request and accepts an event through SQS", async () => {
+  process.env.AWS_ACCESS_KEY_ID ??= "test";
+  process.env.AWS_SECRET_ACCESS_KEY ??= "test";
+  const region = process.env.APONIA_SQS_REGION ?? "us-east-1";
+
+  const { CreateQueueCommand, SQSClient } = await import("@aws-sdk/client-sqs");
+  const client = new SQSClient({ region, endpoint: sqsEndpoint });
+  const requests = await client.send(
+    new CreateQueueCommand({ QueueName: `aponia-e2e-${suffix}-requests` }),
+  );
+  const replies = await client.send(
+    new CreateQueueCommand({ QueueName: `aponia-e2e-${suffix}-replies` }),
+  );
+
+  await roundTrip(
+    sqsTransport({ region, endpoint: sqsEndpoint, waitTimeSeconds: 1 }),
+    sqsTransport({ region, endpoint: sqsEndpoint, waitTimeSeconds: 1 }),
+    requests.QueueUrl!,
+    replies.QueueUrl!,
   );
 });

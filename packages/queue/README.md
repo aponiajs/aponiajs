@@ -128,8 +128,10 @@ A message the sink rejects stays at the front of the outbox and the flush throws
 Without a store, the queue is process-local and loses its backlog on restart.
 A supplied store makes the backlog survive a restart, but it is still not a
 broker: nothing claims a job, so run one consumer per backlog. The outbox is
-process-local either way. `waitForIdle()` waits for the work that is runnable
-now, not for a job whose backoff has not elapsed.
+process-local unless an `OutboxStore` is supplied; `SqliteOutboxStore` is the
+bundled durable one, and the application owns its database. `waitForIdle()`
+waits for the work that is runnable now, not for a job whose backoff has not
+elapsed.
 
 ## Documentation
 

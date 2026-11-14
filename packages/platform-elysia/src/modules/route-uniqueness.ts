@@ -65,18 +65,40 @@ export interface ClaimedElysiaRoute {
  */
 export function assertUniqueElysiaRoutes(root: ModuleDefinition): void {
   const claims = new Map<string, RouteClaim>();
+  // `@All()` answers every method on its path, so it collides with a
+  // single-method route even though `(method, path)` differs. Both directions
+  // are tracked because the declaration the walk reaches first decides which
+  // map holds the earlier claim.
+  const allRoutes = new Map<string, RouteClaim>();
+  const specificRoutes = new Map<string, RouteClaim>();
 
   for (const registration of routeRegistrations(root)) {
     const existing = claims.get(registration.key);
     if (!existing) {
       claims.set(registration.key, registration.claim);
-      continue;
+    } else if (!isSameDeclaration(existing, registration.claim)) {
+      throw duplicateRoute(existing, registration.claim, registration.route);
     }
-    if (isSameDeclaration(existing, registration.claim)) {
+
+    const { claim, route } = registration;
+    const all = allRoutes.get(route.path);
+    if (route.method === "ALL") {
+      const specific = specificRoutes.get(route.path);
+      if (specific !== undefined && !isSameDeclaration(specific, claim)) {
+        throw duplicateRoute(specific, claim, route);
+      }
+      if (all === undefined || isSameDeclaration(all, claim)) {
+        allRoutes.set(route.path, claim);
+      }
       continue;
     }
 
-    throw duplicateRoute(existing, registration.claim, registration.route);
+    if (all !== undefined && !isSameDeclaration(all, claim)) {
+      throw duplicateRoute(all, claim, route);
+    }
+    if (!specificRoutes.has(route.path)) {
+      specificRoutes.set(route.path, claim);
+    }
   }
 }
 

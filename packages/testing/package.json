@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/testing",
-  "version": "1.0.0-beta.36",
+  "version": "1.0.0-beta.37",
   "description": "Boot an Aponia application for a test, with provider overrides and a teardown a case can rely on.",
   "keywords": [
     "aponia",
@@ -30,7 +30,10 @@
   ],
   "type": "module",
   "exports": {
-    ".": "./dist/index.mjs",
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -53,5 +56,8 @@
   },
   "peerDependencies": {
     "elysia": "2.0.0-rc.4"
+  },
+  "engines": {
+    "bun": ">=1.4.4"
   }
 }

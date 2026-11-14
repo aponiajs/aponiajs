@@ -6,6 +6,7 @@ import type {
   RouteParameterKind,
   RouteParameterMetadata,
   ResponseSerializer,
+  ResponseHeaderValue,
   RouteSchema,
   ViewRenderOptions,
 } from "@aponiajs/common";
@@ -155,6 +156,10 @@ export interface CompiledElysiaRoute {
   readonly version?: string;
   /** Whether this route is a Server-Sent Events route. */
   readonly sse?: boolean;
+  /** Headers the handler declared with `@Header()`. */
+  readonly responseHeaders?: Readonly<Record<string, ResponseHeaderValue>>;
+  /** The status the handler declared with `@HttpCode()`. */
+  readonly httpCode?: number;
   /** The view this route renders, when it declares `@Render()`. */
   readonly view?: {
     readonly template: string;

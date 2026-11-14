@@ -7,10 +7,10 @@
  * writes or removes it after the handler.
  */
 export { SessionModule } from "./module/session-module.ts";
+export { Session } from "./service/session-parameter.ts";
 export { SessionService } from "./service/session-service.ts";
 export { MemorySessionStore } from "./store/memory-session-store.ts";
 export type {
-  Session,
   SessionCookieOptions,
   SessionModuleOptions,
   SessionStore,

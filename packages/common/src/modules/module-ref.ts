@@ -24,4 +24,18 @@ export abstract class ModuleRef {
    * @returns The resolved value.
    */
   abstract resolve<T>(token: Token<T>, context?: object): T;
+
+  /**
+   * Instantiates a provider without reusing a cached instance.
+   *
+   * The receiving module's graph resolves the token; a request-scoped provider
+   * needs the context, and every other lifetime produces a fresh instance even
+   * when the container already holds one. Use it when the caller must own the
+   * instance rather than share the application's.
+   *
+   * @param token - The provider token to instantiate.
+   * @param context - The request context a request-scoped provider needs.
+   * @returns A new instance.
+   */
+  abstract create<T>(token: Token<T>, context?: object): T;
 }

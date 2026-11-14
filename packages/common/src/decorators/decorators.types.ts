@@ -73,7 +73,15 @@ export interface ControllerMetadata {
 }
 
 /** The HTTP methods a route decorator declares. */
-export type RequestMethod = "DELETE" | "GET" | "HEAD" | "OPTIONS" | "PATCH" | "POST" | "PUT";
+export type RequestMethod =
+  | "ALL"
+  | "DELETE"
+  | "GET"
+  | "HEAD"
+  | "OPTIONS"
+  | "PATCH"
+  | "POST"
+  | "PUT";
 
 /** One route a controller method declares, in declaration order. */
 export interface RouteMetadata {

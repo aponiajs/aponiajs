@@ -274,6 +274,11 @@ Message failures use a safe response envelope:
 }
 ```
 
+A `@UseFilters()` filter declared on the gateway class runs first: it receives
+an `ArgumentsHost` whose `getType()` is `"ws"`, and a value it returns is emitted
+under the subscribed event instead of the frame. A filter that returns
+`undefined`, `null`, or throws leaves the standard frame.
+
 Malformed envelopes, unknown events, and handler failures never serialize an
 error stack or cause to the client.
 

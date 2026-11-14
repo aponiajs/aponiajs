@@ -122,8 +122,11 @@ in-memory implementation for tests.
 
 ## Limits
 
-Without a store, a restart loses the queue, and the outbox is always
-process-local. Use a broker plus a durable outbox table when the application
-needs several consumers and delivery beyond one process.
+Without a store, a restart loses the queue, and the outbox is process-local
+unless an `OutboxStore` is supplied. `SqliteOutboxStore` is the bundled durable
+one: the application opens the database and passes it to
+`QueueModule.register({ outbox: { store: new SqliteOutboxStore({ database }) } })`,
+and the outbox hydrates from it and writes every change back. It is still one
+consumer's outbox; several consumers need a broker.
 
 See the [package README](../packages/queue/README.md) for the full contract.

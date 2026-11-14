@@ -517,6 +517,10 @@
           "kind": "type"
         },
         {
+          "name": "All",
+          "kind": "value"
+        },
+        {
           "name": "AponiaError",
           "kind": "value"
         },
@@ -769,6 +773,10 @@
           "kind": "value"
         },
         {
+          "name": "getHttpCode",
+          "kind": "value"
+        },
+        {
           "name": "getInjectableMetadata",
           "kind": "value"
         },
@@ -790,6 +798,10 @@
         },
         {
           "name": "getPipesMetadata",
+          "kind": "value"
+        },
+        {
+          "name": "getResponseHeaders",
           "kind": "value"
         },
         {
@@ -849,12 +861,24 @@
           "kind": "value"
         },
         {
+          "name": "Header",
+          "kind": "value"
+        },
+        {
           "name": "Headers",
+          "kind": "value"
+        },
+        {
+          "name": "HostParam",
           "kind": "value"
         },
         {
           "name": "HttpArgumentsHost",
           "kind": "type"
+        },
+        {
+          "name": "HttpCode",
+          "kind": "value"
         },
         {
           "name": "HttpStatus",
@@ -891,6 +915,14 @@
         {
           "name": "Interceptor",
           "kind": "type"
+        },
+        {
+          "name": "intersectSchema",
+          "kind": "value"
+        },
+        {
+          "name": "Ip",
+          "kind": "value"
         },
         {
           "name": "isForwardRef",
@@ -1073,6 +1105,10 @@
           "kind": "value"
         },
         {
+          "name": "omitSchema",
+          "kind": "value"
+        },
+        {
           "name": "OnApplicationBootstrap",
           "kind": "type"
         },
@@ -1121,8 +1157,32 @@
           "kind": "value"
         },
         {
+          "name": "ParseArrayPipe",
+          "kind": "value"
+        },
+        {
+          "name": "ParseArrayPipeOptions",
+          "kind": "type"
+        },
+        {
           "name": "ParseBoolPipe",
           "kind": "value"
+        },
+        {
+          "name": "ParseEnumPipe",
+          "kind": "value"
+        },
+        {
+          "name": "ParseEnumValues",
+          "kind": "type"
+        },
+        {
+          "name": "ParseFilePipe",
+          "kind": "value"
+        },
+        {
+          "name": "ParseFilePipeOptions",
+          "kind": "type"
         },
         {
           "name": "ParseFloatPipe",
@@ -1141,11 +1201,19 @@
           "kind": "value"
         },
         {
+          "name": "partialSchema",
+          "kind": "value"
+        },
+        {
           "name": "Patch",
           "kind": "value"
         },
         {
           "name": "Payload",
+          "kind": "value"
+        },
+        {
+          "name": "pickSchema",
           "kind": "value"
         },
         {
@@ -1219,6 +1287,10 @@
         {
           "name": "resolveRouteValidator",
           "kind": "value"
+        },
+        {
+          "name": "ResponseHeaderValue",
+          "kind": "type"
         },
         {
           "name": "ResponseSerializer",
@@ -1301,6 +1373,10 @@
           "kind": "type"
         },
         {
+          "name": "RpcArgumentsHost",
+          "kind": "type"
+        },
+        {
           "name": "Scope",
           "kind": "value"
         },
@@ -1343,6 +1419,10 @@
         {
           "name": "UploadedFile",
           "kind": "value"
+        },
+        {
+          "name": "UploadedFileLike",
+          "kind": "type"
         },
         {
           "name": "UploadedFiles",
@@ -1447,6 +1527,10 @@
         {
           "name": "WebSocketServer",
           "kind": "value"
+        },
+        {
+          "name": "WsArgumentsHost",
+          "kind": "type"
         },
         {
           "name": "WsResponse",
@@ -2304,6 +2388,18 @@
           "kind": "value"
         },
         {
+          "name": "grpcTransport",
+          "kind": "value"
+        },
+        {
+          "name": "GrpcTransport",
+          "kind": "value"
+        },
+        {
+          "name": "GrpcTransportOptions",
+          "kind": "type"
+        },
+        {
           "name": "InMemoryTransport",
           "kind": "value"
         },
@@ -2997,6 +3093,10 @@
           "kind": "type"
         },
         {
+          "name": "OutboxStore",
+          "kind": "type"
+        },
+        {
           "name": "QueueDrainSummary",
           "kind": "type"
         },
@@ -3042,6 +3142,14 @@
         },
         {
           "name": "QueueTimer",
+          "kind": "type"
+        },
+        {
+          "name": "SqliteOutboxStore",
+          "kind": "value"
+        },
+        {
+          "name": "SqliteOutboxStoreOptions",
           "kind": "type"
         }
       ]
@@ -3202,7 +3310,7 @@
         },
         {
           "name": "Session",
-          "kind": "type"
+          "kind": "value"
         },
         {
           "name": "SessionCookieOptions",

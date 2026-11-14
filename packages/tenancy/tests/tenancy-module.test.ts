@@ -68,6 +68,45 @@ describe("TenantModule", () => {
     ).toBe(400);
   });
 
+  test("keeps overlapping requests on their own tenant", async () => {
+    @Controller("tenant")
+    @UseGuards(TenantGuard)
+    class OverlapController {
+      constructor(private readonly tenant: TenantService) {}
+
+      @Get()
+      async read(): Promise<string> {
+        // Hold the request open so the three handlers genuinely overlap.
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        return this.tenant.require();
+      }
+    }
+
+    @Module({
+      imports: [TenantModule.register({ header: "x-tenant-id" })],
+      controllers: [OverlapController],
+    })
+    class OverlapModule {}
+
+    application = await AponiaFactory.create(OverlapModule, { logger: false });
+
+    const [acme, globex, initech] = await Promise.all([
+      application.handle(
+        new Request("http://localhost/tenant", { headers: { "x-tenant-id": "acme" } }),
+      ),
+      application.handle(
+        new Request("http://localhost/tenant", { headers: { "x-tenant-id": "globex" } }),
+      ),
+      application.handle(
+        new Request("http://localhost/tenant", { headers: { "x-tenant-id": "initech" } }),
+      ),
+    ]);
+
+    expect(await acme.text()).toBe("acme");
+    expect(await globex.text()).toBe("globex");
+    expect(await initech.text()).toBe("initech");
+  });
+
   test("does not read a tenant header unless the registration opts in", async () => {
     @Controller("no-header")
     @UseGuards(TenantGuard)

@@ -22,10 +22,15 @@ and `emitDecoratorMetadata`; the CLI starter configures both.
 ## Published channel
 
 The npm registry currently serves the **alpha** line (`0.6.0-alpha.39` on the
-`alpha` and `next` tags). The source in this repository targets the
-`1.0.0-beta.N` development line, which is **not published under `@beta` yet**.
-Install commands in this repository name `@alpha` until that beta line ships;
-`@beta` resolves only after the line is published. See
+`alpha` and `next` tags) for **six packages**: `@aponiajs/common`,
+`@aponiajs/core`, `@aponiajs/platform-elysia`, `@aponiajs/cli`,
+`create-aponia`, and `@aponiajs/devtools`. The other twenty-eight packages in
+this repository have **never been published** and answer `404` on npm. The
+source here targets the `1.0.0-beta.N` development line, which is not published
+under `@beta` yet. Install commands in this repository name `@alpha` until that
+beta line ships; `@beta` resolves only after the line is published. The
+[package catalog](./docs/packages.md#on-npm-today) is the list of what is
+installable today. See
 [Stability and the Public API](./docs/stability.md) for the compatibility
 policy.
 
@@ -112,8 +117,9 @@ await application.listen(3000);
 - [CLI reference](./docs/cli.md): every command, schematic, and generated file.
 - [Dependency injection](./docs/dependency-injection.md) and
   [validation](./docs/learn/06-validation.md).
-- [Package catalog](./docs/packages.md): all published packages, their purpose,
-  and their runtime dependencies.
+- [Package catalog](./docs/packages.md): the packages npm serves today, the
+  packages that ship from this repository, their purpose, and their runtime
+  dependencies.
 - [Deployment](./docs/deployment.md), [stability](./docs/stability.md),
   [queues](./docs/queues.md),
   [database](./docs/database.md), and [metrics](./docs/metrics.md).
@@ -124,6 +130,10 @@ await application.listen(3000);
 ## Packages
 
 The framework ships as focused packages with explicit dependencies:
+
+Only the six packages in [On npm today](./docs/packages.md#on-npm-today) are
+installable today. Every other package below exists in this repository and
+ships with the unreleased `1.0.0-beta.N` line.
 
 - **Runtime**: `@aponiajs/common`, `@aponiajs/core`,
   `@aponiajs/platform-elysia`.
@@ -144,10 +154,12 @@ All packages share one synchronized release version.
 
 ## Project status
 
-AponiaJS is in beta. The public API may change before the first stable release.
-The current release covers HTTP, WebSockets, message-pattern microservices,
-serverless adapters, authentication, tenancy, queues, databases, and
-observability.
+The source targets the `1.0.0-beta.N` line, which is not published yet; npm
+serves the `0.6.0-alpha.N` line for the six packages named above. The public API
+may change before the first stable release. This repository covers HTTP,
+WebSockets, message-pattern microservices, serverless adapters, authentication,
+tenancy, queues, databases, and observability; only the HTTP runtime, the CLI,
+and devtools are installable today.
 
 Stores for sessions, rate limits, cache, refresh tokens, revocations, queue
 backlogs, and idempotency are process-local by default; multi-instance

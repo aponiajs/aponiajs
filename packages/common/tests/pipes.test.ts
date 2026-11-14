@@ -3,7 +3,10 @@ import {
   Body,
   DefaultValuePipe,
   Param,
+  ParseArrayPipe,
   ParseBoolPipe,
+  ParseEnumPipe,
+  ParseFilePipe,
   ParseFloatPipe,
   ParseIntPipe,
   ParseUUIDPipe,
@@ -156,6 +159,133 @@ describe("Pipes in @aponiajs/common", () => {
       expect(pipe.transform(5)).toBe(5);
       expect(pipe.transform("hello")).toBe("hello");
       expect(pipe.transform(false)).toBe(false);
+    });
+  });
+
+  describe("ParseEnumPipe", () => {
+    enum Status {
+      Active = "active",
+      Paused = "paused",
+    }
+
+    const metadata: ArgumentMetadata = { type: "query", data: "status" };
+
+    test("accepts a member of an enum object, an array, and a numeric enum", () => {
+      expect(new ParseEnumPipe(Status).transform("active", metadata)).toBe("active");
+      expect(new ParseEnumPipe(["a", "b"] as const).transform("b", metadata)).toBe("b");
+
+      enum Level {
+        Low = 1,
+        High = 2,
+      }
+      const numeric = new ParseEnumPipe(Level);
+      expect(numeric.transform("2", metadata)).toBe("2");
+      expect(numeric.transform(2, metadata)).toBe(2);
+    });
+
+    test("rejects a value outside the declared set", () => {
+      const pipe = new ParseEnumPipe(Status);
+      expect(() => pipe.transform("unknown", metadata)).toThrow(
+        expect.objectContaining({ code: "INVALID_PIPE_VALUE", status: 400 }),
+      );
+      expect(() => pipe.transform(1, metadata)).toThrow(
+        expect.objectContaining({ code: "INVALID_PIPE_VALUE" }),
+      );
+      expect(() => pipe.transform(undefined, metadata)).toThrow(
+        expect.objectContaining({ code: "INVALID_PIPE_VALUE" }),
+      );
+    });
+
+    test("respects a custom status and exceptionFactory", () => {
+      const pipe = new ParseEnumPipe(Status, { errorHttpStatusCode: 422 });
+      expect(() => pipe.transform("unknown", metadata)).toThrow(
+        expect.objectContaining({ code: "INVALID_PIPE_VALUE", status: 422 }),
+      );
+
+      const custom = new ParseEnumPipe(Status, {
+        exceptionFactory: (message) => new Error(`Custom: ${message}`),
+      });
+      expect(() => custom.transform("unknown", metadata)).toThrow(
+        "Custom: Validation failed (enum value is expected)",
+      );
+    });
+  });
+
+  describe("ParseArrayPipe", () => {
+    const metadata: ArgumentMetadata = { type: "query", data: "tags" };
+
+    test("splits a delimited string and drops empty segments", () => {
+      const pipe = new ParseArrayPipe();
+      expect(pipe.transform("a, b ,c", metadata)).toEqual(["a", "b", "c"]);
+      expect(pipe.transform("a,,b", metadata)).toEqual(["a", "b"]);
+      expect(pipe.transform("", metadata)).toEqual([]);
+      expect(pipe.transform("   ", metadata)).toEqual([]);
+    });
+
+    test("honours a custom separator", () => {
+      expect(new ParseArrayPipe({ separator: "|" }).transform("a|b", metadata)).toEqual(["a", "b"]);
+    });
+
+    test("copies an array, trims string items, and freezes the result", () => {
+      const result = new ParseArrayPipe().transform([" a ", 2], metadata);
+
+      expect(result).toEqual(["a", 2]);
+      expect(Object.isFrozen(result)).toBe(true);
+    });
+
+    test("rejects a value that is neither a string nor an array", () => {
+      expect(() => new ParseArrayPipe().transform(42, metadata)).toThrow(
+        expect.objectContaining({ code: "INVALID_PIPE_VALUE", status: 400 }),
+      );
+    });
+  });
+
+  describe("ParseFilePipe", () => {
+    const metadata: ArgumentMetadata = { type: "body", data: "file" };
+    const file = { name: "notes.txt", size: 10, type: "text/plain" };
+
+    test("accepts a file within the declared limits", () => {
+      expect(new ParseFilePipe().transform(file, metadata)).toBe(file);
+      expect(
+        new ParseFilePipe({ maxSize: 10, mimetype: "text/plain" }).transform(file, metadata),
+      ).toBe(file);
+      expect(new ParseFilePipe({ mimetype: /^text\// }).transform(file, metadata)).toBe(file);
+      expect(
+        new ParseFilePipe({ mimetype: ["image/png", "text/plain"] }).transform(file, metadata),
+      ).toBe(file);
+    });
+
+    test("requires a file unless the option says otherwise", () => {
+      expect(() => new ParseFilePipe().transform(undefined, metadata)).toThrow(
+        expect.objectContaining({ code: "INVALID_PIPE_VALUE", status: 400 }),
+      );
+
+      const optional = new ParseFilePipe({ fileIsRequired: false });
+      expect(optional.transform(undefined, metadata)).toBeUndefined();
+      expect(optional.transform(null, metadata)).toBeUndefined();
+    });
+
+    test("rejects a value that is not a file", () => {
+      expect(() => new ParseFilePipe().transform({ name: "x" }, metadata)).toThrow(
+        expect.objectContaining({ code: "INVALID_PIPE_VALUE" }),
+      );
+      expect(() => new ParseFilePipe().transform("file", metadata)).toThrow(
+        expect.objectContaining({ code: "INVALID_PIPE_VALUE" }),
+      );
+    });
+
+    test("rejects an oversized file", () => {
+      expect(() => new ParseFilePipe({ maxSize: 5 }).transform(file, metadata)).toThrow(
+        expect.objectContaining({ code: "INVALID_PIPE_VALUE", status: 400 }),
+      );
+    });
+
+    test("rejects a disallowed media type", () => {
+      for (const mimetype of ["image/png", /^image\//, ["image/png", "image/jpeg"]]) {
+        expect(() => new ParseFilePipe({ mimetype }).transform(file, metadata)).toThrow(
+          expect.objectContaining({ code: "INVALID_PIPE_VALUE" }),
+        );
+      }
     });
   });
 

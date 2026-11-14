@@ -1,4 +1,5 @@
 import {
+  ModuleRef,
   createToken,
   defineModule,
   forwardRef,
@@ -201,6 +202,24 @@ test("the Vite+ lane instantiates transient providers on each resolution and ref
       details: { token: "conformance-unsupported", scope: "invalid-scope" },
     }),
   );
+});
+
+test("the Vite+ lane creates a fresh instance through ModuleRef.create", () => {
+  let count = 0;
+  const factory = createToken<{ readonly id: number }>("conformance-create-factory");
+  const feature = defineModule({
+    id: "conformance-create-feature",
+    providers: [provideFactory(factory, [], () => ({ id: ++count }), { scope: Scope.TRANSIENT })],
+  });
+  const root = defineModule({ id: "conformance-create-root", imports: [feature] });
+  const reference = createContainer(root).resolveModuleProvider(feature, ModuleRef);
+
+  const first = reference.create(factory);
+  const second = reference.create(factory);
+
+  expect(first).not.toBe(second);
+  expect(first.id).toBe(1);
+  expect(second.id).toBe(2);
 });
 
 test("the Vite+ lane resolves a predefined provider as fallback", () => {

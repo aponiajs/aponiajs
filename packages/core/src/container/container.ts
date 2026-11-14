@@ -163,6 +163,48 @@ export class AponiaContainer {
   }
 
   /**
+   * Instantiates a provider in an arbitrary module without caching it.
+   *
+   * The platform SPI behind `ModuleRef.create`. A request-scoped provider needs
+   * an active context; every other lifetime produces a fresh instance even when
+   * the container already holds one.
+   *
+   * @internal
+   */
+  createInModule<T>(module: ModuleDefinition, token: Token<T>, context?: object): T {
+    if (token === ModuleRef) {
+      return new ContainerModuleRef(this, module) as T;
+    }
+
+    const location = this.graph.locate(module, token);
+    assertSupportedScope(location.provider);
+
+    const scope = this.providerScope(location.module, location.provider);
+    const activeContext = context ?? this.#contextAccessor?.();
+    if (scope === "request" && !activeContext) {
+      throw new AponiaError(
+        "MISSING_REQUEST_CONTEXT",
+        `Cannot create request-scoped provider "${getTokenName(location.provider.provide)}" outside of an active request context.`,
+        {
+          module: location.module.id,
+          token: getTokenName(location.provider.provide),
+        },
+      );
+    }
+
+    this.#assertNoProviderCycle(location);
+    this.#resolving.push(location);
+    try {
+      const dependencies = getProviderDependencies(location.provider).map((dependency) =>
+        this.#resolveDependency(location.module, dependency, activeContext),
+      );
+      return instantiate(location.provider, dependencies) as T;
+    } finally {
+      this.#resolving.pop();
+    }
+  }
+
+  /**
    * Eagerly instantiates every singleton provider a module declares.
    *
    * Providers whose lifetime is `"request"` or `"transient"` are deferred, and
@@ -238,6 +280,25 @@ export class AponiaContainer {
     return instance;
   }
 
+  /** Refuses a resolution that re-enters a provider already being resolved. */
+  #assertNoProviderCycle(location: ProviderLocation): void {
+    const cycleIndex = this.#resolving.findIndex(
+      (item) => item.module === location.module && item.provider === location.provider,
+    );
+    if (cycleIndex < 0) {
+      return;
+    }
+
+    const cycle = [...this.#resolving.slice(cycleIndex), location].map(
+      (item) => `${item.module.id}:${getTokenName(item.provider.provide)}`,
+    );
+    throw new AponiaError(
+      "PROVIDER_CYCLE",
+      `Provider dependency cycle detected: ${cycle.join(" -> ")}.`,
+      { cycle },
+    );
+  }
+
   #resolve(location: ProviderLocation, context?: object): unknown {
     assertSupportedScope(location.provider);
 
@@ -270,19 +331,7 @@ export class AponiaContainer {
       }
     }
 
-    const cycleIndex = this.#resolving.findIndex(
-      (item) => item.module === location.module && item.provider === location.provider,
-    );
-    if (cycleIndex >= 0) {
-      const cycle = [...this.#resolving.slice(cycleIndex), location].map(
-        (item) => `${item.module.id}:${getTokenName(item.provider.provide)}`,
-      );
-      throw new AponiaError(
-        "PROVIDER_CYCLE",
-        `Provider dependency cycle detected: ${cycle.join(" -> ")}.`,
-        { cycle },
-      );
-    }
+    this.#assertNoProviderCycle(location);
 
     this.#resolving.push(location);
     try {
@@ -433,6 +482,10 @@ class ContainerModuleRef extends ModuleRef {
 
   resolve<T>(token: Token<T>, context?: object): T {
     return this.#container.resolveModuleProvider(this.#module, token, context);
+  }
+
+  create<T>(token: Token<T>, context?: object): T {
+    return this.#container.createInModule(this.#module, token, context);
   }
 }
 

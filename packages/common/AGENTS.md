@@ -50,6 +50,13 @@ their owning domain. `src/index.ts` is the package's only public barrel.
   because a subclass without its own constructor runs the parent's constructor
   and must resolve the parent's declared tokens. Own metadata still wins, so a
   subclass that declares its own constructor keeps its own tokens.
+- `@All()` records the `ALL` method, which the platform mounts as an
+  all-methods route. `@Header()` and `@HttpCode()` record own-only metadata
+  under `Symbol.for("aponia.response-headers.metadata")` and
+  `Symbol.for("aponia.http-code.metadata")`; a malformed declaration throws a
+  `TypeError` at the decoration site. `@Ip()` records the `ip` parameter kind,
+  and the platform answers the peer address or `undefined` when its runtime
+  cannot state one.
 - `@Validation()` records one raw `RouteValidator` under
   `Symbol.for("aponia.validation.metadata")`. Validation-model metadata is
   own-only and immutable, and resolving it preserves the original validator
@@ -58,7 +65,9 @@ their owning domain. `src/index.ts` is the package's only public barrel.
   `Symbol.for("aponia.optional-parameters.metadata")`, and
   `getConstructorDependencies` wraps those entries with `optionalDependency`.
   `ModuleRef` is the abstract token a module-bound reference implements; both
-  surfaces stay platform-neutral.
+  surfaces stay platform-neutral. The reference resolves a cached instance
+  (`get`), a per-request instance (`resolve`), and a fresh uncached instance
+  (`create`).
 - `@Serialize()` records a serializer under
   `Symbol.for("aponia.response-serializer.metadata")`. A method serializer
   overrides a controller serializer; both are read by the platform after the

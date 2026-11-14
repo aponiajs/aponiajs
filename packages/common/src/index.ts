@@ -5,6 +5,7 @@ export type {
 } from "./configuration/configuration.types.ts";
 export type { ControllerDefinition } from "./controllers/controller.types.ts";
 export {
+  All,
   Controller,
   Delete,
   Get,
@@ -64,6 +65,8 @@ export type {
   ExecutionContext,
   HttpArgumentsHost,
   Interceptor,
+  RpcArgumentsHost,
+  WsArgumentsHost,
 } from "./enhancers/enhancer.types.ts";
 export { AponiaError } from "./errors/aponia-error.ts";
 export type { AponiaErrorCode } from "./errors/aponia-error.types.ts";
@@ -103,12 +106,21 @@ export {
 export type { ForwardReference } from "./modules/forward-ref.types.ts";
 export {
   DefaultValuePipe,
+  ParseArrayPipe,
   ParseBoolPipe,
+  ParseEnumPipe,
+  ParseFilePipe,
   ParseFloatPipe,
   ParseIntPipe,
   ParseUUIDPipe,
 } from "./pipes/built-in-pipes.ts";
-export type { ParsePipeOptions } from "./pipes/built-in-pipes.ts";
+export type {
+  ParseArrayPipeOptions,
+  ParseEnumValues,
+  ParseFilePipeOptions,
+  ParsePipeOptions,
+  UploadedFileLike,
+} from "./pipes/built-in-pipes.ts";
 export { UsePipes, getPipesMetadata } from "./pipes/pipe-decorators.ts";
 export { pipeMetadataKey } from "./pipes/pipe.constants.ts";
 export type {
@@ -139,7 +151,9 @@ export {
   Context,
   Cookie,
   Headers,
+  HostParam,
   HttpStatus,
+  Ip,
   Param,
   Query,
   Req,
@@ -156,6 +170,8 @@ export type { CustomParamFactory } from "./routing/custom-parameter.types.ts";
 export { createDto } from "./routing/dto.ts";
 export type { DtoConstructor, Infer } from "./routing/dto.ts";
 export { Serialize, getResponseSerializer } from "./routing/response-serializer.ts";
+export { Header, HttpCode, getHttpCode, getResponseHeaders } from "./routing/response-metadata.ts";
+export type { ResponseHeaderValue } from "./routing/response-metadata.types.ts";
 export { Render, getViewTemplate, getViewOptions } from "./routing/view.ts";
 export { VIEW_ENGINE } from "./routing/view.ts";
 export type { ViewEngine, ViewRenderOptions } from "./routing/view.ts";
@@ -185,6 +201,12 @@ export {
   isValidatorSchema,
   routeSchemaSlots,
 } from "./routing/route-schema.ts";
+export {
+  intersectSchema,
+  omitSchema,
+  partialSchema,
+  pickSchema,
+} from "./routing/schema-combinators.ts";
 export type {
   InferValidatorOutput,
   ResponseSettingsState,

@@ -4,6 +4,8 @@ import type {
   HttpArgumentsHost,
   RequestMethod,
   RouteContext,
+  RpcArgumentsHost,
+  WsArgumentsHost,
 } from "@aponiajs/common";
 
 const defaultRoute = Object.freeze({
@@ -82,6 +84,23 @@ export class StaticRouteExecutionContext implements ExecutionContext, HttpArgume
 
   switchToHttp(): this {
     return this;
+  }
+
+  switchToRpc(): RpcArgumentsHost {
+    const context = this.#rawContext;
+    return Object.freeze({
+      getData: <T = unknown>(): T => (context as unknown as { readonly body?: T }).body as T,
+      getContext: <T = unknown>(): T => context as unknown as T,
+    });
+  }
+
+  switchToWs(): WsArgumentsHost {
+    const context = this.#rawContext;
+    return Object.freeze({
+      getClient: <T = unknown>(): T => undefined as unknown as T,
+      getData: <T = unknown>(): T => (context as unknown as { readonly body?: T }).body as T,
+      getPattern: (): string => "",
+    });
   }
 
   getType(): "http" {

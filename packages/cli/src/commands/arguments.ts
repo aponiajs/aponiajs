@@ -4,6 +4,7 @@ import { schematicNames } from "./command.constants.ts";
 import type {
   BuildCommandOptions,
   CliCommand,
+  DevCommandOptions,
   GenerateCommandOptions,
   GenerateSchematic,
   LibraryCommandOptions,
@@ -101,6 +102,10 @@ export function parseArguments(arguments_: readonly string[]): CliCommand {
     return parseBuildCommand(rest);
   }
 
+  if (command === "dev") {
+    return parseDevCommand(rest);
+  }
+
   if (command === "library") {
     return parseLibraryCommand(rest);
   }
@@ -185,6 +190,21 @@ function parseBuildCommand(arguments_: readonly string[]): BuildCommandOptions {
     command: "build",
     dryRun: readBooleanOption(parsed, "dry-run", false),
     project: readStringOption(parsed, "project"),
+  };
+}
+
+function parseDevCommand(arguments_: readonly string[]): DevCommandOptions {
+  const parsed = parseOptions(arguments_);
+  const [positional, ...extra] = parsed._;
+  if (extra.length > 0) {
+    throw new Error(`Unexpected argument "${extra[0]}".`);
+  }
+
+  assertKnownOptions(parsed, ["entry"]);
+
+  return {
+    command: "dev",
+    entry: positional ?? readStringOption(parsed, "entry") ?? "src/main.ts",
   };
 }
 
@@ -379,7 +399,7 @@ function parseOptions(arguments_: readonly string[]): ParsedOptions {
   return parseCliArguments([...arguments_], {
     alias: optionAliases,
     boolean: [...valueLessOptions],
-    string: ["clients", "cwd", "module", "path", "project", "type"],
+    string: ["clients", "cwd", "entry", "module", "path", "project", "type"],
     configuration: {
       "camel-case-expansion": false,
       "dot-notation": false,

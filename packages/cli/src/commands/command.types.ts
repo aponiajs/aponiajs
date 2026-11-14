@@ -98,6 +98,14 @@ export interface LibraryCommandOptions {
   readonly remote?: boolean;
 }
 
+/** The `aponia dev` command: run one entrypoint under Bun's watcher. */
+export interface DevCommandOptions {
+  /** Always `"dev"`. */
+  readonly command: "dev";
+  /** The entrypoint to run; defaults to `src/main.ts`. */
+  readonly entry: string;
+}
+
 /** The `aponia manifest` command. */
 export interface ManifestCommandOptions {
   /** Always `"manifest"`. */
@@ -140,6 +148,7 @@ export type CliCommand =
   | NewCommandOptions
   | GenerateCommandOptions
   | BuildCommandOptions
+  | DevCommandOptions
   | LibraryCommandOptions
   | ManifestCommandOptions
   | McpCommandOptions

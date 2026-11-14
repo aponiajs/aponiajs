@@ -32,6 +32,32 @@ export function registerNativeRoute(
     );
   }
 
+  // Elysia's `HTTPMethod` type accepts "ALL" but its router answers 404 for it:
+  // the runtime spelling of an all-methods route is `all()`. This module is the
+  // one place the platform calls that API, so the mapping stays here.
+  if (method === "ALL") {
+    const nativeAll = (application as unknown as { readonly all?: unknown }).all;
+    if (typeof nativeAll !== "function") {
+      throw new AponiaError(
+        "UNSUPPORTED_ELYSIA_VERSION",
+        `The installed Elysia does not expose all(), so "ALL ${path}" cannot be mounted.`,
+        Object.freeze({ method, path, supported: "2.0.x" }),
+      );
+    }
+
+    const registerAll = nativeAll as (
+      path: string,
+      hookOrHandler: ElysiaRouteHook | ((context: RouteContext) => unknown),
+      handler?: (context: RouteContext) => unknown,
+    ) => unknown;
+    if (hook === undefined) {
+      registerAll.call(application, path, handler);
+      return;
+    }
+    registerAll.call(application, path, hook, handler);
+    return;
+  }
+
   // `method` is among Elysia's most heavily overloaded signatures: each overload
   // infers a route's whole schema from the hook it is handed. The hook this
   // platform compiles states those fields under its own contract instead, so the

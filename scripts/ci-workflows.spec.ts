@@ -106,7 +106,7 @@ test("every publishable workspace is covered by release, canary, version, and do
   expect(aliasNames, "publish.yml alias tags must cover every publishable package").toEqual(names);
 
   const packageDocs = await Bun.file("docs/packages.md").text();
-  const documented = [...packageDocs.matchAll(/^\| \[`(@aponiajs\/[^`]+|create-aponia)`\]/gm)]
+  const documented = [...packageDocs.matchAll(/^\|\s*\[?`(@aponiajs\/[^`]+|create-aponia)`/gm)]
     .map((match) => match[1] as string)
     .sort();
   expect(documented, "docs/packages.md must list every publishable package").toEqual(names);
@@ -118,6 +118,7 @@ test("CI isolates failures while preserving one required verify gate", async () 
     "version",
     "quality",
     "bun_tests",
+    "macos",
     "conformance",
     "integration",
     "packaging",

@@ -15,17 +15,38 @@ export interface HttpArgumentsHost {
 }
 
 /**
- * What a filter is given. One transport exists, so the per-transport dispatch
- * Nest's `ArgumentsHost` performs is not carried: `switchToHttp()` is the only
- * switch, and it is a thin alias over `getContext()` kept because migrated Nest
- * code calls it on nearly every guard. `getType()` answers the constant
- * `"http"` for the same reason — a second transport must force an explicit
- * decision here rather than arriving as another string nobody matched on.
+ * What an enhancer is given for a message handler.
+ *
+ * A message carries its data and the transport context it arrived in; a
+ * gateway or message handler runs no HTTP route.
+ */
+export interface RpcArgumentsHost {
+  getData<T = unknown>(): T;
+  getContext<T = unknown>(): T;
+}
+
+/** What an enhancer is given for a gateway message. */
+export interface WsArgumentsHost {
+  getClient<T = unknown>(): T;
+  getData<T = unknown>(): T;
+  getPattern(): string;
+}
+
+/**
+ * What a filter is given.
+ *
+ * `switchToHttp()` is the host a route's enhancers read. The other two switches
+ * state the transport a future dispatch would carry, so one filter can branch on
+ * `getType()` rather than assume HTTP. On today's HTTP context they answer the
+ * request's body and an absent client, and no gateway or message handler runs a
+ * filter yet.
  */
 export interface ArgumentsHost {
   getContext(): RouteContext;
   switchToHttp(): HttpArgumentsHost;
-  getType(): "http";
+  switchToRpc(): RpcArgumentsHost;
+  switchToWs(): WsArgumentsHost;
+  getType(): "http" | "rpc" | "ws";
 }
 
 /** What a guard and an interceptor are given: the host plus the route's class, handler, and mounted path. */

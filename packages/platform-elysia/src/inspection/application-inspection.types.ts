@@ -16,7 +16,7 @@ import type { AponiaApplicationOptions } from "../application/application.types.
  * logger. Whichever way the artifact is decided, one line reports it.
  */
 export type AponiaInspectionOptions = Readonly<
-  Pick<AponiaApplicationOptions, "descriptors" | "invokers">
+  Pick<AponiaApplicationOptions, "descriptors" | "invokers" | "prefix">
 > & {
   readonly logger?: AponiaApplicationOptions["logger"];
 };

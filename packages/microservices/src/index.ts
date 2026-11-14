@@ -60,6 +60,8 @@ export { rabbitmqTransport } from "./brokers/rabbitmq/rabbitmq-transport.ts";
 export type { RabbitMqTransportOptions } from "./brokers/rabbitmq/rabbitmq-transport.types.ts";
 /** Creates a Kafka transport. */
 export { kafkaTransport } from "./brokers/kafka/kafka-transport.ts";
+export { GrpcTransport, grpcTransport } from "./brokers/grpc/grpc-transport.ts";
+export type { GrpcTransportOptions } from "./brokers/grpc/grpc-transport.ts";
 /** The options the Kafka transport validates and freezes. */
 export type { KafkaTransportOptions } from "./brokers/kafka/kafka-transport.types.ts";
 /** Creates a Redis Streams transport. */

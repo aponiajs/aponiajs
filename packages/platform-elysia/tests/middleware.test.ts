@@ -148,4 +148,38 @@ describe("Middleware System in Platform Elysia", () => {
     const response = await app.handle(new Request("http://localhost/users/profile"));
     expect(response.status).toBe(401);
   });
+
+  test("refuses an unregistered middleware class whose constructor requires dependencies", async () => {
+    class NeedsDependency implements AponiaMiddleware {
+      constructor(readonly dependency: string) {}
+
+      async use(_context: RouteContext, next: () => Promise<unknown>): Promise<unknown> {
+        return await next();
+      }
+    }
+
+    @Controller("dependency-middleware")
+    class DependencyMiddlewareController {
+      @Get()
+      get(): string {
+        return "never";
+      }
+    }
+
+    @Module({ controllers: [DependencyMiddlewareController] })
+    class DependencyMiddlewareModule implements AponiaModule {
+      configure(consumer: MiddlewareConsumer): void {
+        consumer.apply(NeedsDependency).forRoutes("*");
+      }
+    }
+
+    let failure: unknown;
+    try {
+      await AponiaFactory.create(DependencyMiddlewareModule, { logger: false });
+    } catch (error) {
+      failure = error;
+    }
+
+    expect(failure).toMatchObject({ code: "INVALID_MIDDLEWARE" });
+  });
 });

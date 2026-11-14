@@ -46,8 +46,9 @@ fields; passing either one still overrides the derivation.
 
 `@Module`, `@Controller`, `@Injectable`, `@Inject`, `@UseGuards`,
 `@UseInterceptors`, `@UseFilters`, `@UsePipes`, `@SetMetadata`, `@Catch`,
-`@Body`, `@Query`, `@Param`, `@Headers`, and the HTTP method decorators keep
-their names and meaning. The lifecycle interfaces keep theirs too:
+`@Body`, `@Query`, `@Param`, `@Headers`, `@Ip`, `@All`, `@Header`,
+`@HttpCode`, and the HTTP method decorators keep their names and meaning. The
+lifecycle interfaces keep theirs too:
 `onModuleInit`, `onApplicationBootstrap`, `beforeApplicationShutdown`,
 `onModuleDestroy`, `onApplicationShutdown`.
 
@@ -88,6 +89,18 @@ would stream an Observable.
 **Errors are RFC 9457 Problem Details.** `HttpError` and `httpErrors` answer
 `application/problem+json` with no stack or cause. Any other thrown value becomes
 a `500` through the system logger unless a filter answers it first.
+
+`@Session()` is available from `@aponiajs/session`: it injects the session the
+plugin loaded, or one field of its data. `@HostParam()` injects the request
+host, and `@HostParam("tenant")` injects its first label; the framework does not
+route by subdomain.
+
+**Mapped DTO types call your validator's own combinators.**
+`partialSchema`, `pickSchema`, `omitSchema`, and `intersectSchema` call the
+validator's own `partial`/`pick`/`omit`/`extend`; a validator that exposes no
+such operation is refused with `INVALID_VALIDATION_MODEL` rather than
+approximated. The one-schema-per-class rule still holds: the derived schema is
+its own `@Validation()` class.
 
 **Configuration is validated once.** A module declares its schema; the value is
 parsed at boot and fails with `INVALID_CONFIGURATION_VALUE`. No package reads

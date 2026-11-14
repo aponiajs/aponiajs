@@ -15,6 +15,8 @@ export const routeParameterKinds = [
   "params",
   "headers",
   "cookie",
+  "ip",
+  "host",
   "store",
   "context",
   "request",
@@ -101,6 +103,25 @@ export const Headers = createParameterDecorator("headers");
  * @returns A parameter decorator recording the binding.
  */
 export const Cookie = createParameterDecorator("cookie");
+/**
+ * Injects the peer address the runtime reports, or `undefined` when the
+ * platform cannot state one.
+ *
+ * @returns A parameter decorator recording the binding.
+ */
+export const Ip = createParameterDecorator("ip");
+/**
+ * Injects the request host, or its first label when a name is given.
+ *
+ * `@HostParam()` answers the `Host` header; `@HostParam("tenant")` answers the
+ * first label of that host — the subdomain in `tenant.example.com`. The
+ * framework does not route by subdomain, so the name selects a label rather
+ * than a route.
+ *
+ * @param label - The label selector when one is declared.
+ * @returns A parameter decorator recording the binding.
+ */
+export const HostParam = createParameterDecorator("host");
 /**
  * Injects application state, or one named state value.
  *

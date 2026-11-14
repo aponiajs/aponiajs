@@ -182,7 +182,7 @@ test("refuses message patterns on a request-scoped controller", async () => {
   expect(error).toMatchObject({ code: "INVALID_CONTROLLER" });
 });
 
-test("refuses a WebSocket gateway whose lifetime bubbles to request scope", async () => {
+test("binds a WebSocket gateway whose lifetime bubbles to request scope", async () => {
   @Injectable()
   @WebSocketGateway("/scoped-socket")
   class ScopedGateway {
@@ -195,9 +195,13 @@ test("refuses a WebSocket gateway whose lifetime bubbles to request scope", asyn
   })
   class GatewayModule {}
 
-  const error = await bootFailure(() => AponiaFactory.create(GatewayModule, { logger: false }));
+  const application = await AponiaFactory.create(GatewayModule, { logger: false });
 
-  expect(error).toMatchObject({ code: "INVALID_WEBSOCKET_GATEWAY" });
+  try {
+    expect(application).toBeDefined();
+  } finally {
+    await application.close();
+  }
 });
 
 @Injectable({ scope: Scope.REQUEST })

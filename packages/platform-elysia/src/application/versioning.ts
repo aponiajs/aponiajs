@@ -1,5 +1,6 @@
 import { AponiaError, versionPathSegment, type ModuleDefinition } from "@aponiajs/common";
 import type { AnyElysia } from "elysia";
+import { stripRoutePrefix } from "../routing/route-prefix.ts";
 import type { AponiaVersioningOptions } from "./application.types.ts";
 
 interface ResolvedVersioning {
@@ -42,6 +43,7 @@ export function installVersionRouting(
   application: AnyElysia,
   modules: readonly ModuleDefinition[],
   options: AponiaVersioningOptions | undefined,
+  routePrefix = "",
 ): void {
   const resolved = resolveVersioning(options);
   if (resolved === null) {
@@ -56,7 +58,11 @@ export function installVersionRouting(
     (fetch: (request: Request, ...rest: unknown[]) => Response | Promise<Response>) =>
     async (request: Request, ...rest: unknown[]): Promise<Response> => {
       const url = new URL(request.url);
-      const routes = findVersionedRoutes(table, request.method, url.pathname);
+      const publicPath = stripRoutePrefix(url.pathname, routePrefix);
+      if (publicPath === undefined) {
+        return await fetch(request, ...rest);
+      }
+      const routes = findVersionedRoutes(table, request.method, publicPath);
       if (routes === undefined) {
         return await fetch(request, ...rest);
       }
@@ -65,8 +71,8 @@ export function installVersionRouting(
       if (version === undefined) {
         return await fetch(request, ...rest);
       }
-      const prefix = routes.get(version);
-      if (prefix === undefined) {
+      const versionPrefix = routes.get(version);
+      if (versionPrefix === undefined) {
         return versionProblem(
           `API version ${version} is not available for ${request.method.toUpperCase()} ${url.pathname}.`,
         );
@@ -74,7 +80,10 @@ export function installVersionRouting(
       const rewritten = new URL(request.url);
       // The table holds the version's mount prefix, not the declared path: a
       // parameterized route must keep the values the client actually sent.
-      rewritten.pathname = url.pathname === "/" ? prefix : `${prefix}${url.pathname}`;
+      rewritten.pathname =
+        publicPath === "/"
+          ? `${routePrefix}${versionPrefix}`
+          : `${routePrefix}${versionPrefix}${publicPath}`;
       return await fetch(new Request(rewritten.toString(), copyRequestInit(request)), ...rest);
     };
 

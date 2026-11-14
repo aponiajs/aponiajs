@@ -122,18 +122,20 @@ also be a validation-model class.
 Parameter decorators inject one piece of the request, and an optional name
 selects a single property:
 
-| Decorator                | Injects                                |
-| ------------------------ | -------------------------------------- |
-| `@Body()` / `@Body("k")` | The validated request body             |
-| `@Query()`               | The parsed query string                |
-| `@Param("id")`           | Path parameters                        |
-| `@Headers("x-agent")`    | Request headers                        |
-| `@Cookie("session")`     | Request cookies, or one cookie's value |
-| `@State()`               | Application state                      |
-| `@Req()`                 | The native `Request`                   |
-| `@ResponseSettings()`    | The mutable response settings          |
-| `@HttpStatus()`          | The response status helper             |
-| `@Context()`             | The whole platform context             |
+| Decorator                | Injects                                         |
+| ------------------------ | ----------------------------------------------- |
+| `@Body()` / `@Body("k")` | The validated request body                      |
+| `@Query()`               | The parsed query string                         |
+| `@Param("id")`           | Path parameters                                 |
+| `@Headers("x-agent")`    | Request headers                                 |
+| `@Cookie("session")`     | Request cookies, or one cookie's value          |
+| `@Ip()`                  | The peer address, when the platform knows it    |
+| `@HostParam()`           | The request host, or its first label when named |
+| `@State()`               | Application state                               |
+| `@Req()`                 | The native `Request`                            |
+| `@ResponseSettings()`    | The mutable response settings                   |
+| `@HttpStatus()`          | The response status helper                      |
+| `@Context()`             | The whole platform context                      |
 
 A handler with no parameter decorators may declare one unannotated parameter to
 receive the context, typed platform-neutrally by
@@ -253,7 +255,10 @@ Built-in transformation pipes:
 - `ParseIntPipe`: parses string into integer or throws 400 Bad Request.
 - `ParseFloatPipe`: parses string into floating-point number.
 - `ParseBoolPipe`: parses boolean strings (`"true"`, `"false"`).
-- `ParseUUIDPipe`: validates UUID v4 string format.
+- `ParseUUIDPipe`: validates standard UUID string format.
+- `ParseEnumPipe`: validates that a value is a member of a declared enum.
+- `ParseArrayPipe`: splits a delimited string (default `,`) into an array.
+- `ParseFilePipe`: validates an uploaded file's presence, size, and media type.
 - `DefaultValuePipe`: supplies a fallback default when input is `undefined` or `null`.
 
 Method-level and controller-level pipes can be attached via `@UsePipes()`.

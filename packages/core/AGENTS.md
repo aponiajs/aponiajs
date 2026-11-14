@@ -55,7 +55,9 @@ container.
   `MISSING_PROVIDER`; an ambiguous optional dependency still fails. The
   container treats `ModuleRef` as a predefined token and returns a reference
   bound to the module that received it, never to the root unless that module is
-  the root.
+  the root. `ModuleRef.create` instantiates through the same dependency and
+  cycle rules without caching the result; a request-scoped provider still needs
+  a context. The platform SPI behind it is `createInModule`, marked `@internal`.
 - `get()` enforces root-module visibility on purpose. `resolveModuleProvider()`
   is the platform SPI for resolving inside an arbitrary module and is not
   application API; keep it marked `@internal`.

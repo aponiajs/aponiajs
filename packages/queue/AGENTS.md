@@ -21,8 +21,9 @@ that reads it.
 
 - **A store is a backlog, not a broker.** A supplied store survives a restart
   and can be shared, but nothing claims a job: describe it as durable backlog
-  storage for one consumer, never as a distributed queue. The outbox stays
-  process-local.
+  storage for one consumer, never as a distributed queue. The outbox is
+  process-local unless an `OutboxStore` is supplied; `SqliteOutboxStore` is the
+  bundled durable implementation and the application owns the database.
 - **Writes are tracked and flushable.** `enqueue` does not await the store;
   `flush()` waits for every tracked write and rethrows the first failure, and
   `onModuleDestroy` flushes before the queue stops. Hydration treats a stored

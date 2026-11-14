@@ -238,6 +238,16 @@ test("serves its endpoints on the application's own address", async () => {
   expect(await meta.json()).toMatchObject({ contract: devtoolsContractVersion });
 });
 
+test("serves the devtools page at the surface root", async () => {
+  const application = await bootWithDevtools();
+
+  const page = await application.handle(new Request(`http://localhost${devtoolsPathPrefix}/`));
+
+  expect(page.status).toBe(200);
+  expect(page.headers.get("content-type")).toContain("text/html");
+  expect(await page.text()).toContain("Aponia Devtools");
+});
+
 test("answers 404 for a path it does not own and 405 for a method it does not serve", async () => {
   const application = await bootWithDevtools();
 

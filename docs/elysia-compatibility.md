@@ -32,6 +32,23 @@ re-exports `TSchema` from its root. A caret range has no prerelease hazard here,
 so it carries one. An application that types a schema writes `TSchema` from
 `typebox` directly.
 
+## Release-candidate posture
+
+Elysia `2.0.0-rc.4` is a release candidate, and the framework treats it as the
+verified platform rather than as a moving target:
+
+- the peer pin is exact, so an install cannot drift to another candidate;
+- the Bun lanes, both example suites, the generated-application lane, and the
+  Vite+ conformance lane run against that pin;
+- `bun run version:elysia` moves the pin across manifests, templates, and docs
+  in one change, and `scripts/update-elysia-version.spec.ts` fails when one of
+  them disagrees;
+- a newer Elysia release is adopted only after those lanes pass against it.
+
+The framework does not claim that a different Elysia release works, and the
+support policy does not promise one. An application that must stay on a stable
+Elysia should treat this pin as the boundary and watch the release notes.
+
 ## When the installed version is wrong
 
 A pair that does not match fails during bootstrap, before the application

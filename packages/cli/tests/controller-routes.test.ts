@@ -1089,3 +1089,44 @@ export class EventsController {
   expect(routes).toHaveLength(1);
   expect(routes[0]?.unreadable).toContain("@Sse");
 });
+
+test("reads an @All route and an @Ip binding", () => {
+  const source = `import { All, Controller, Ip } from "@aponiajs/common";
+
+@Controller("webhooks")
+export class WebhooksController {
+  @All()
+  receive(@Ip() ip: string) {
+    return ip;
+  }
+}
+`;
+
+  const routes = analyzeControllerRoutes(source, "webhooks.controller.ts")[0]?.routes ?? [];
+
+  expect(routes).toHaveLength(1);
+  const route = routes[0]!;
+  expect(route.method).toBe("ALL");
+  expect(route.parameters).toEqual([{ index: 0, kind: "ip", property: undefined }]);
+  expect(route.unreadable).toBeUndefined();
+});
+
+test("reports a route carrying @Header or @HttpCode as unreadable", () => {
+  const source = `import { Controller, Get, Header, HttpCode } from "@aponiajs/common";
+
+@Controller("declared")
+export class DeclaredController {
+  @Get()
+  @Header("cache-control", "no-store")
+  @HttpCode(202)
+  read() {
+    return "ok";
+  }
+}
+`;
+
+  const routes = analyzeControllerRoutes(source, "declared.controller.ts")[0]?.routes ?? [];
+
+  expect(routes).toHaveLength(1);
+  expect(routes[0]?.unreadable).toContain("@Header()");
+});

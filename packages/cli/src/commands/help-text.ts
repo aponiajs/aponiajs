@@ -6,6 +6,7 @@ Usage:
   aponia generate <schematic> <name> [options]
   aponia g <schematic> <name> [options]
   aponia build [options]
+  aponia dev [entry] [options]
   aponia library check [path] [options]
   aponia library new <name> [options]
   aponia library publish [path] [options]
@@ -25,6 +26,7 @@ Options:
       --skip-import   Skip declaring module registration
       --module <name> Select the declaring module
       --path <path>   Override the configured source root
+      --entry <path>  Entrypoint for aponia dev (default src/main.ts)
       --publish       Generate a publishable library package
       --scope <name>  Npm scope for a publishable library
       --yes           Publish without stopping for confirmation

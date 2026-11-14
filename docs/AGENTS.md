@@ -45,7 +45,8 @@ The published documentation set:
 | `request-context.md`        | The per-request async local storage context, request ID correlation, and injectable service                                               |
 | `cli.md`                    | The generator catalog, aliases, and options                                                                                               |
 | `devtools.md`               | The opt-in devtools API, mounted on the application's own route table, and what each endpoint does and does not report                    |
-| `packages.md`               | The published package catalog                                                                                                             |
+| `packages.md`               | The package catalog, split by what npm serves today and what ships from this repository                                                   |
+| `api.md`                    | The generated index of every public export; refresh with `bun run docs:api` after the snapshot changes                                    |
 | `releasing.md`              | Channels, the version gate, and the publish flow                                                                                          |
 | `agent/`                    | The read-only MCP surface, tools, recipes, and security defaults                                                                          |
 | `learn/`                    | The ordered chapters that teach the same material in sequence                                                                             |

@@ -1,6 +1,9 @@
 import {
   DefaultValuePipe,
+  ParseArrayPipe,
   ParseBoolPipe,
+  ParseEnumPipe,
+  ParseFilePipe,
   ParseFloatPipe,
   ParseIntPipe,
   ParseUUIDPipe,
@@ -36,6 +39,19 @@ test("the Vite+ lane validates UUID parameters using ParseUUIDPipe", () => {
 
   expect(uuidPipe.transform(validUuid, metadata)).toBe(validUuid);
   expect(() => uuidPipe.transform("invalid-uuid", metadata)).toThrow();
+});
+
+test("the Vite+ lane parses enums, arrays, and files", () => {
+  const metadata: ArgumentMetadata = { type: "query", data: "value" };
+
+  expect(new ParseEnumPipe(["a", "b"]).transform("b", metadata)).toBe("b");
+  expect(new ParseArrayPipe().transform("a,b", metadata)).toEqual(["a", "b"]);
+  expect(
+    new ParseFilePipe({ maxSize: 4 }).transform(
+      { name: "a.txt", size: 4, type: "text/plain" },
+      { type: "body", data: "file" },
+    ),
+  ).toEqual({ name: "a.txt", size: 4, type: "text/plain" });
 });
 
 test("the Vite+ lane applies fallback defaults using DefaultValuePipe", () => {

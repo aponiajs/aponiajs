@@ -18,10 +18,16 @@ export class UserController {
 ```
 
 `@Get`, `@Post`, `@Put`, `@Patch`, `@Delete`, `@Head`, and `@Options` map to the
-matching HTTP method. The route path joins the controller prefix, so this answers
-`GET /users/:id`. Each accepts either a path, as `@Get(":id")` does, or a schema
-alone — `@Post({ body })` mounts at the controller prefix itself, and
-`@Post("/", { body })` names the path beside the schema.
+matching HTTP method, and `@All` answers every method on its path. The route path
+joins the controller prefix, so this answers `GET /users/:id`. Each accepts
+either a path, as `@Get(":id")` does, or a schema alone — `@Post({ body })`
+mounts at the controller prefix itself, and `@Post("/", { body })` names the
+path beside the schema.
+
+`@Header(name, value)` declares a response header the route answers with, and
+`@HttpCode(status)` declares the status a returned value carries. Both apply
+before the guards run; a handler that returns a `Response`, throws `HttpError`,
+or sets a status itself still decides its own.
 
 ## Native inference with less syntax
 
@@ -83,6 +89,24 @@ await bootstrap();
 
 `main.ts` owns the process and nothing else. Retrieving a service there and
 calling business behavior is not the pattern.
+
+## Prefixing every route
+
+`AponiaFactory.create` accepts a `prefix` that every compiled controller route
+mounts under:
+
+```ts
+const application = await AponiaFactory.create(AppModule, { prefix: "/api" });
+```
+
+`@Controller("users")` now answers at `/api/users`, and a versioned route keeps
+its segment after the prefix: `@Version("2")` answers at `/api/v2/users`.
+Header and media-type negotiation reads the prefixed path and rewrites it
+inside the prefix, and middleware targets match the unprefixed route path.
+
+A prefix that is not a string, or does not begin with `/`, fails the boot with
+`INVALID_CONFIGURATION_VALUE`. Health probes, native plugins, and a controller
+mounted through its own registration callback mount outside the prefix.
 
 ## Versioning a route
 

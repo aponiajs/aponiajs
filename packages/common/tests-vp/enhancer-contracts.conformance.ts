@@ -8,6 +8,8 @@ import {
   type Interceptor,
   type RequestMethod,
   type RouteContext,
+  type RpcArgumentsHost,
+  type WsArgumentsHost,
 } from "../src/index.ts";
 
 type VitePlusTest = typeof import("vite-plus/test");
@@ -26,17 +28,31 @@ type Expect<TAssertion extends true> = TAssertion;
  */
 type EnhancerContractAssertions = [
   Expect<Equals<ExecutionContext extends ArgumentsHost ? true : false, true>>,
-  Expect<Equals<keyof ArgumentsHost, "getContext" | "switchToHttp" | "getType">>,
+  Expect<
+    Equals<
+      keyof ArgumentsHost,
+      "getContext" | "switchToHttp" | "switchToRpc" | "switchToWs" | "getType"
+    >
+  >,
   Expect<
     Equals<
       keyof ExecutionContext,
-      "getClass" | "getHandler" | "getRoute" | "getContext" | "switchToHttp" | "getType"
+      | "getClass"
+      | "getHandler"
+      | "getRoute"
+      | "getContext"
+      | "switchToHttp"
+      | "switchToRpc"
+      | "switchToWs"
+      | "getType"
     >
   >,
   Expect<Equals<keyof HttpArgumentsHost, "getRequest">>,
+  Expect<Equals<keyof RpcArgumentsHost, "getData" | "getContext">>,
+  Expect<Equals<keyof WsArgumentsHost, "getClient" | "getData" | "getPattern">>,
   Expect<Equals<ReturnType<ArgumentsHost["getContext"]>, RouteContext>>,
   Expect<Equals<ReturnType<ArgumentsHost["switchToHttp"]>, HttpArgumentsHost>>,
-  Expect<Equals<ReturnType<ArgumentsHost["getType"]>, "http">>,
+  Expect<Equals<ReturnType<ArgumentsHost["getType"]>, "http" | "rpc" | "ws">>,
   Expect<Equals<ReturnType<HttpArgumentsHost["getRequest"]>, RouteContext>>,
   Expect<Equals<ReturnType<ExecutionContext["getClass"]>, ClassToken<unknown>>>,
   Expect<Equals<ReturnType<ExecutionContext["getHandler"]>, (...arguments_: never[]) => unknown>>,
@@ -83,9 +99,22 @@ const conformanceHttpHost: HttpArgumentsHost = {
   getRequest: () => conformanceRequest,
 };
 
+const conformanceRpcHost: RpcArgumentsHost = {
+  getData: <T = unknown>(): T => undefined as unknown as T,
+  getContext: <T = unknown>(): T => conformanceRequest as unknown as T,
+};
+
+const conformanceWsHost: WsArgumentsHost = {
+  getClient: <T = unknown>(): T => undefined as unknown as T,
+  getData: <T = unknown>(): T => undefined as unknown as T,
+  getPattern: () => "",
+};
+
 const conformanceArgumentsHost: ArgumentsHost = {
   getContext: () => conformanceRequest,
   switchToHttp: () => conformanceHttpHost,
+  switchToRpc: () => conformanceRpcHost,
+  switchToWs: () => conformanceWsHost,
   getType: () => "http",
 };
 
@@ -180,9 +209,9 @@ test("the Vite+ lane accepts a filter taking an arguments host", async () => {
 });
 
 test("the Vite+ lane keeps the enhancer contract assertions referenced", () => {
-  const assertions = Array.from({ length: 19 }, () => true) as EnhancerContractAssertions;
+  const assertions = Array.from({ length: 21 }, () => true) as EnhancerContractAssertions;
 
-  expect(assertions).toHaveLength(19);
+  expect(assertions).toHaveLength(21);
   expect(conformanceExecutionContext.getHandler()).toBeTypeOf("function");
   expect(conformanceExecutionContext.getRoute()).toEqual({
     method: "GET",

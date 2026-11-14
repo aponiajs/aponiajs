@@ -94,6 +94,34 @@ jobs:
       - name: Run Bun tests with coverage
         run: bun run test:coverage
 
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: lcov
+          path: coverage/lcov.info
+          if-no-files-found: warn
+
+  macos:
+    name: macOS tests
+    runs-on: macos-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.4.4
+
+      - name: Install frozen dependencies
+        run: bun ci
+
+      - name: Run Bun tests with coverage
+        run: bun run test:coverage
+
   conformance:
     name: Vite+ conformance
     runs-on: ubuntu-latest
@@ -193,6 +221,7 @@ jobs:
       - version
       - quality
       - bun_tests
+      - macos
       - conformance
       - integration
       - packaging
@@ -206,6 +235,7 @@ jobs:
           VERSION_RESULT: ${{ needs.version.result }}
           QUALITY_RESULT: ${{ needs.quality.result }}
           BUN_TESTS_RESULT: ${{ needs.bun_tests.result }}
+          MACOS_RESULT: ${{ needs.macos.result }}
           CONFORMANCE_RESULT: ${{ needs.conformance.result }}
           INTEGRATION_RESULT: ${{ needs.integration.result }}
           PACKAGING_RESULT: ${{ needs.packaging.result }}
@@ -214,6 +244,7 @@ jobs:
           test "$VERSION_RESULT" = "success"
           test "$QUALITY_RESULT" = "success"
           test "$BUN_TESTS_RESULT" = "success"
+          test "$MACOS_RESULT" = "success"
           test "$CONFORMANCE_RESULT" = "success"
           test "$INTEGRATION_RESULT" = "success"
           test "$PACKAGING_RESULT" = "success"

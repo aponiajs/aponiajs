@@ -24,3 +24,10 @@ The Redis storage implementations for cache, rate-limit, session, idempotency, a
 - `RedisIdempotencyStore` claims with `SET NX PX` and releases with `DEL`.
 - `RedisRefreshTokenStore.consume` is one Lua round trip: read, delete, and keep
   a family tombstone so a replay revokes the family.
+
+## Tests
+
+`tests/*.test.ts` runs the stores against a mock client and is part of the
+default Bun lane. `tests/live-redis.e2e-spec.ts` is the live-server counterpart:
+Bun's default glob skips it, and it runs only through `bun run test:redis`
+(`APONIA_REDIS_E2E=1`) against the Redis service the broker workflow starts.

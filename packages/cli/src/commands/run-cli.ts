@@ -10,6 +10,7 @@ import { serveMcpStdio } from "../agent/mcp-stdio.ts";
 import { initAgent } from "../agent/init-agent.ts";
 import { aponiaVersion } from "../version.ts";
 import { parseArguments } from "./arguments.ts";
+import { runDevServer } from "./dev-server.ts";
 import { helpText } from "./help-text.ts";
 
 /**
@@ -59,6 +60,10 @@ export async function runCli(arguments_: readonly string[]): Promise<number> {
         );
       }
       return 0;
+    }
+
+    if (command.command === "dev") {
+      return await runDevServer(command.entry);
     }
 
     if (command.command === "library") {

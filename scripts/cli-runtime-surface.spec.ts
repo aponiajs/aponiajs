@@ -377,6 +377,7 @@ const cliAnalyses: ReadonlyMap<string, readonly CliReading[]> = new Map([
 /** The analysis that must recognise each decorator `packages/common` exports. */
 const decoratorAnalyses: ReadonlyMap<string, string> = new Map([
   ["Controller", "controller-routes.ts's @Controller"],
+  ["All", "controller-routes.ts's requestMethodDecorators"],
   ["Delete", "controller-routes.ts's requestMethodDecorators"],
   ["Get", "controller-routes.ts's requestMethodDecorators"],
   ["Head", "controller-routes.ts's requestMethodDecorators"],
@@ -388,7 +389,9 @@ const decoratorAnalyses: ReadonlyMap<string, string> = new Map([
   ["Cookie", "controller-routes.ts's parameterDecorators"],
   ["Context", "controller-routes.ts's parameterDecorators"],
   ["Headers", "controller-routes.ts's parameterDecorators"],
+  ["HostParam", "controller-routes.ts's parameterDecorators"],
   ["HttpStatus", "controller-routes.ts's parameterDecorators"],
+  ["Ip", "controller-routes.ts's parameterDecorators"],
   ["Param", "controller-routes.ts's parameterDecorators"],
   ["Query", "controller-routes.ts's parameterDecorators"],
   ["Req", "controller-routes.ts's parameterDecorators"],
@@ -459,6 +462,8 @@ const unreadDecorators: ReadonlyMap<string, string> = new Map([
     "Sse",
     "a controller or route with @Sse() is declined to the decorated graph rather than emitted",
   ],
+  ["Header", "a route with @Header() is declined to the decorated graph rather than emitted"],
+  ["HttpCode", "a route with @HttpCode() is declined to the decorated graph rather than emitted"],
   ["UsePipes", "pipes are applied during route parameter binding and runtime execution"],
 ]);
 
@@ -469,6 +474,8 @@ const metadataKeyAnalyses: ReadonlyMap<string, string> = new Map([
   ["aponia.global.metadata", "module-descriptors.ts's @Global"],
   ["aponia.route.metadata", "controller-routes.ts's requestMethodDecorators"],
   ["aponia.route-parameters.metadata", "controller-routes.ts's parameterDecorators"],
+  ["aponia.response-headers.metadata", "controller-routes.ts's requestMethodDecorators"],
+  ["aponia.http-code.metadata", "controller-routes.ts's requestMethodDecorators"],
   ["aponia.injected-tokens.metadata", "module-descriptors.ts's @Inject"],
   ["aponia.validation.metadata", "module-descriptors.ts's @Validation"],
   ["aponia.enhancer-class.metadata", "controller-routes.ts's enhancerDecorators"],

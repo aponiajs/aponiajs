@@ -3,7 +3,9 @@ import {
   Logger,
   LOGGER,
   NOOP_LOGGER,
+  Reflector,
   getTokenName,
+  provideClass,
   provideValue,
   resolveForwardRef,
   type LoggerService,
@@ -15,6 +17,8 @@ import { createContainer, getProviderDependencies } from "@aponiajs/core";
 import { isElysiaController } from "../controllers/controller-definition.ts";
 import type { RuntimeElysiaController } from "../controllers/controller.types.ts";
 import { compileRootModule } from "../modules/module-compiler.ts";
+import { normalizeRoutePrefix } from "../routing/route-prefix.ts";
+import { joinPaths } from "../routing/route-compiler.ts";
 import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
 import { selectRootModuleDescriptor } from "../modules/module-descriptor-artifact.ts";
 import { selectInvokerArtifact } from "../routing/invoker-artifact.ts";
@@ -80,8 +84,10 @@ export function inspectAponiaApplication(
   );
   const container = createContainer(compileRootModule(rootSelection.rootModule), [
     provideValue(LOGGER, NOOP_LOGGER),
+    provideClass(Reflector, []),
   ]);
   const modules = container.graph.modules;
+  const prefix = normalizeRoutePrefix(options.prefix);
   const gateways = compileWebSocketGateways(modules);
   const invokers = selectInvokerArtifact(
     options.invokers,
@@ -92,7 +98,9 @@ export function inspectAponiaApplication(
   return Object.freeze({
     rootModule: container.graph.root.id,
     modules: Object.freeze(modules.map(inspectModule)),
-    routes: Object.freeze(modules.flatMap(inspectModuleRoutes).toSorted(compareRoutes)),
+    routes: Object.freeze(
+      modules.flatMap((module) => inspectModuleRoutes(module, prefix)).toSorted(compareRoutes),
+    ),
     gateways: Object.freeze(inspectGateways(gateways)),
     invokers: Object.freeze({
       accepted: invokers.invokers !== undefined,
@@ -129,7 +137,7 @@ function inspectProvider(provider: Provider): AponiaProviderInspection {
   });
 }
 
-function inspectModuleRoutes(module: ModuleDefinition): AponiaRouteInspection[] {
+function inspectModuleRoutes(module: ModuleDefinition, prefix: string): AponiaRouteInspection[] {
   return controllers(module).flatMap((controller) => {
     const controllerName = getTokenName(controller.token);
     const routes = controller.compiledRoutes ?? [];
@@ -137,7 +145,7 @@ function inspectModuleRoutes(module: ModuleDefinition): AponiaRouteInspection[] 
     return routes.map((route) =>
       Object.freeze({
         method: route.method,
-        path: route.path,
+        path: prefix === "" ? route.path : joinPaths(prefix, route.path),
         module: module.id,
         controller: controllerName,
         handler: propertyKeyName(route.propertyKey),

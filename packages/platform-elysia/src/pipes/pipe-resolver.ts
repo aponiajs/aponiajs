@@ -110,13 +110,21 @@ export function resolvePipe(pipe: PipeType, container?: AponiaContainer): Resolv
       }
     }
 
+    if (pipe.length > 0) {
+      throw new AponiaError(
+        "INVALID_PIPE",
+        `Pipe class "${pipe.name}" declares ${pipe.length} constructor parameter(s). A route-level pipe is constructed without dependency injection; pass an instance for a pipe with dependencies.`,
+        { pipe: pipe.name },
+      );
+    }
+
     try {
       const instance = Reflect.construct(pipe, []) as PipeTransform;
       return Object.freeze({ instance });
     } catch {
       throw new AponiaError(
         "INVALID_PIPE",
-        `Could not instantiate pipe class "${pipe.name}". Ensure its constructor takes no arguments or is registered in a module.`,
+        `Could not instantiate pipe class "${pipe.name}". A route-level pipe must have a constructor that takes no arguments.`,
         { pipe: pipe.name },
       );
     }

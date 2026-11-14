@@ -47,6 +47,7 @@ const routeSchemaSlotNames: readonly AnalyzedRouteSchemaSlotName[] = [
  * package exports (`packages/common/src/decorators/decorators.ts`).
  */
 const requestMethodDecorators: ReadonlyMap<string, AnalyzedRequestMethod> = new Map([
+  ["All", "ALL"],
   ["Delete", "DELETE"],
   ["Get", "GET"],
   ["Head", "HEAD"],
@@ -65,7 +66,9 @@ const parameterDecorators: ReadonlyMap<string, AnalyzedRouteParameterKind> = new
   ["Cookie", "cookie"],
   ["Context", "context"],
   ["Headers", "headers"],
+  ["HostParam", "host"],
   ["HttpStatus", "status"],
+  ["Ip", "ip"],
   ["Param", "params"],
   ["Query", "query"],
   ["Req", "request"],
@@ -325,7 +328,15 @@ function analyzeRouteMethod(
     controllerSse || methodSse
       ? "a controller or route with @Sse() is lowered from its decorators; generated descriptors cannot carry an SSE route yet"
       : undefined;
-  const unreadable = serializerReason ?? versionReason ?? deprecationReason ?? sseReason;
+  const methodResponseMetadata = method
+    .getDecorators()
+    .map((decorator) => readDecoratorUse(decorator, bindings))
+    .some((use) => use?.name === "Header" || use?.name === "HttpCode");
+  const responseMetadataReason = methodResponseMetadata
+    ? "a route with @Header() or @HttpCode() is lowered from its decorators; generated descriptors cannot carry declared response metadata yet"
+    : undefined;
+  const unreadable =
+    serializerReason ?? versionReason ?? deprecationReason ?? sseReason ?? responseMetadataReason;
 
   return Object.freeze(
     routes.map(({ use, method: requestMethod }) =>

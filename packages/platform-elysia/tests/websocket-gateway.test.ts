@@ -1,16 +1,23 @@
 import { expect, test } from "bun:test";
 import {
   AponiaError,
+  Catch,
   ConnectedSocket,
+  Injectable,
   MessageBody,
   Module,
+  Scope,
   SubscribeMessage,
+  UseFilters,
   WebSocketGateway,
   WebSocketServer,
   createToken,
   defineModule,
+  provideClass,
   provideValue,
+  type ArgumentsHost,
   type Constructor,
+  type ExceptionFilter,
   type LoggerService,
   type Provider,
   type Token,
@@ -199,6 +206,195 @@ test("forwards native Elysia WebSocket callbacks into the bound gateway", async 
     "open",
     "close",
   ]);
+});
+
+test("binds a request-scoped gateway once per socket", async () => {
+  let created = 0;
+
+  @Injectable({ scope: Scope.REQUEST })
+  class ScopedId {
+    readonly id = ++created;
+  }
+
+  class ScopedGateway {
+    constructor(readonly scoped: ScopedId) {}
+
+    identify(): { readonly id: number } {
+      return { id: this.scoped.id };
+    }
+  }
+
+  const module = defineModule({
+    id: "ScopedGatewayModule",
+    providers: [
+      provideClass(ScopedId, ScopedId, [], { scope: Scope.REQUEST }),
+      defineWebSocketGateway(ScopedGateway, {
+        path: "/scoped",
+        inject: [ScopedId],
+        handlers: [{ event: "identify", propertyKey: "identify" }],
+      }),
+    ],
+  });
+
+  let callbacks: NativeWebSocketCallbacks | undefined;
+  const nativeApplication = {
+    routes: [],
+    ws(_path: string, captured: NativeWebSocketCallbacks) {
+      callbacks = captured;
+      return this;
+    },
+  } as unknown as Elysia;
+
+  await registerWebSocketGateways(
+    nativeApplication,
+    createContainer(module),
+    compileWebSocketGateways([module]),
+  );
+
+  const first = new RecordingSocket();
+  const second = new RecordingSocket();
+  await callbacks!.open(first as unknown as WebSocketClient);
+  await callbacks!.open(second as unknown as WebSocketClient);
+  await callbacks!.message(first as unknown as WebSocketClient, {
+    event: "identify",
+    data: undefined,
+  });
+  await callbacks!.message(second as unknown as WebSocketClient, {
+    event: "identify",
+    data: undefined,
+  });
+
+  const firstId = (first.sent[0] as { data: { id: number } }).data.id;
+  const secondId = (second.sent[0] as { data: { id: number } }).data.id;
+
+  expect(firstId).not.toBe(secondId);
+
+  await callbacks!.close(first as unknown as WebSocketClient);
+  await callbacks!.close(second as unknown as WebSocketClient);
+});
+
+test("runs a gateway filter when a message handler throws", async () => {
+  class GatewayErrorFilter implements ExceptionFilter {
+    catch(_exception: unknown, host: ArgumentsHost): unknown {
+      return { handled: true, via: host.getType() };
+    }
+  }
+
+  @WebSocketGateway("/filtered")
+  @UseFilters(GatewayErrorFilter)
+  class FilteredGateway {
+    @SubscribeMessage("boom")
+    boom(): string {
+      throw new Error("handler failed");
+    }
+  }
+
+  const filteredModule = defineModule({
+    id: "FilteredModule",
+    providers: [
+      provideClass(GatewayErrorFilter, GatewayErrorFilter, []),
+      provideClass(FilteredGateway, FilteredGateway, []),
+    ],
+  });
+
+  let callbacks: NativeWebSocketCallbacks | undefined;
+  const nativeApplication = {
+    routes: [],
+    ws(_path: string, captured: NativeWebSocketCallbacks) {
+      callbacks = captured;
+      return this;
+    },
+  } as unknown as Elysia;
+
+  const container = createContainer(filteredModule);
+  await registerWebSocketGateways(
+    nativeApplication,
+    container,
+    compileWebSocketGateways([filteredModule]),
+  );
+
+  const socket = new RecordingSocket();
+  await callbacks!.message(socket as unknown as WebSocketClient, {
+    event: "boom",
+    data: undefined,
+  });
+
+  expect(socket.sent).toEqual([{ event: "boom", data: { handled: true, via: "ws" } }]);
+});
+
+test("leaves the exception frame when a gateway filter declines or throws", async () => {
+  class DecliningFilter implements ExceptionFilter {
+    catch(): unknown {
+      return undefined;
+    }
+  }
+
+  class NarrowFilter implements ExceptionFilter {
+    catch(): unknown {
+      throw new Error("filter failed");
+    }
+  }
+
+  @Catch(TypeError)
+  class TypeNarrowFilter implements ExceptionFilter {
+    catch(): unknown {
+      return "never";
+    }
+  }
+
+  for (const [path, Filter] of [
+    ["/declining", DecliningFilter],
+    ["/narrow", NarrowFilter],
+    ["/type-narrow", TypeNarrowFilter],
+  ] as const) {
+    @WebSocketGateway(path)
+    @UseFilters(Filter)
+    class DecliningGateway {
+      @SubscribeMessage("boom")
+      boom(): string {
+        throw new Error("handler failed");
+      }
+    }
+
+    const module = defineModule({
+      id: `DecliningModule${path}`,
+      providers: [
+        provideClass(Filter, Filter, []),
+        provideClass(DecliningGateway, DecliningGateway, []),
+      ],
+    });
+
+    let callbacks: NativeWebSocketCallbacks | undefined;
+    const nativeApplication = {
+      routes: [],
+      ws(_path: string, captured: NativeWebSocketCallbacks) {
+        callbacks = captured;
+        return this;
+      },
+    } as unknown as Elysia;
+
+    await registerWebSocketGateways(
+      nativeApplication,
+      createContainer(module),
+      compileWebSocketGateways([module]),
+    );
+
+    const socket = new RecordingSocket();
+    await callbacks!.message(socket as unknown as WebSocketClient, {
+      event: "boom",
+      data: undefined,
+    });
+
+    expect(socket.sent).toEqual([
+      {
+        event: "exception",
+        data: {
+          code: "WEBSOCKET_HANDLER_ERROR",
+          message: "The WebSocket handler failed.",
+        },
+      },
+    ]);
+  }
 });
 
 test("maps an idle timeout and ping policy to the native server", async () => {

@@ -2,9 +2,11 @@ import {
   AponiaError,
   LOGGER,
   NOOP_LOGGER,
+  Reflector,
   getMessagePatternMetadata,
   getTokenName,
   notifySystemLogger,
+  provideClass,
   provideValue,
   type LoggerService,
   type Token,
@@ -77,6 +79,7 @@ export class AponiaApplicationContext {
     const container = createContainer(compiledRoot, [
       provideValue(LOGGER, logger ?? NOOP_LOGGER),
       provideValue(LazyModuleLoader, lazyModuleLoader),
+      provideClass(Reflector, []),
     ]);
 
     for (const module of container.graph.modules) {

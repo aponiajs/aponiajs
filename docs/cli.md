@@ -46,9 +46,16 @@ aponia n <name> [options]
 aponia generate <schematic> <name> [options]
 aponia g <schematic> <name> [options]
 aponia build [options]
+aponia dev [entry] [options]
 aponia help
 aponia version
 ```
+
+`aponia dev` runs one entrypoint under Bun's watcher, defaulting to
+`src/main.ts`. It spawns `bun --watch <entry>` with the terminal inherited, so
+the watcher's reload output and the stop signal reach the process that started
+the CLI, and it returns the watcher's exit code. It starts no server of its own
+and reads no configuration: the entrypoint is the application's own `main.ts`.
 
 Project names must use lowercase kebab-case:
 

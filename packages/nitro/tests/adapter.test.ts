@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
-import { Controller, Get, Module } from "@aponiajs/common";
-import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { Body, Controller, Get, Module, Post } from "@aponiajs/common";
+import { AponiaFactory, httpErrors } from "@aponiajs/platform-elysia";
 import { defineAponiaHandler, toNitroHandler } from "../src/index.ts";
 
 @Controller("users")
@@ -8,6 +8,16 @@ class UsersController {
   @Get()
   read(): string {
     return "nitro";
+  }
+
+  @Post()
+  create(@Body() body: { readonly name: string }): string {
+    return body.name;
+  }
+
+  @Get("missing")
+  refuse(): string {
+    throw httpErrors.notFound("No such user.");
   }
 }
 
@@ -27,6 +37,21 @@ try {
     expect(defineAponiaHandler).toBe(toNitroHandler);
     expect(typeof handler).toBe("function");
     expect(typeof handler.fetch).toBe("function");
+  });
+
+  test("preserves a request body and the application's Problem Details", async () => {
+    const created = await handler.fetch(
+      new Request("http://localhost/users", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: "ada" }),
+      }),
+    );
+    expect(await created.text()).toBe("ada");
+
+    const refused = await handler.fetch(new Request("http://localhost/users/missing"));
+    expect(refused.status).toBe(404);
+    expect(refused.headers.get("content-type")).toContain("application/problem+json");
   });
 } finally {
   await application.close();

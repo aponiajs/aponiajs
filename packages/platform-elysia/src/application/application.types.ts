@@ -34,6 +34,20 @@ export interface AponiaApplicationOptions {
   /** Refuses to boot when a compiled route has no generated invoker. */
   readonly strictCodegen?: boolean;
   /**
+   * A path prefix every compiled controller route mounts under.
+   *
+   * `"/api"` mounts `@Controller("users")` at `/api/users`; a versioned route
+   * keeps its `/vN` segment after the prefix, so `@Version("2")` on the same
+   * controller answers at `/api/v2/users`. Header and media-type negotiation
+   * reads the prefixed path and rewrites it inside the prefix.
+   *
+   * Health probes, native plugins, and a controller mounted through its own
+   * registration callback are not prefixed: they mount outside the compiled
+   * route table. A prefix that is not a string, or does not begin with `/`, is
+   * refused with `INVALID_CONFIGURATION_VALUE`.
+   */
+  readonly prefix?: string;
+  /**
    * How a versioned route is negotiated.
    *
    * `uri` is the default and mounts `@Version("2")` at `/v2/...`. `header`

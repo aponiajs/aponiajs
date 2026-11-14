@@ -93,6 +93,23 @@ runtime boundary it describes.
   would miss it for the same reason. Nothing about an entry reaches
   `compileRootModule`, inspection, or a generated artifact, so it is never a
   substitute for a module registration a module could have made.
+- The `ALL` method mounts through Elysia's `all()`, not `route("ALL", ...)`:
+  Elysia's type accepts the string but its router answers `404` for it.
+  `routing/native-route.ts` owns that mapping, and `route-uniqueness.ts`
+  refuses an `@All()` path that a single-method route also claims.
+- `@Header()` and `@HttpCode()` compile into the route's `beforeHandle`, ahead
+  of the guards, so a permission refusal carries the declared headers and the
+  declared status applies to a value the handler returns. A handler that
+  returns a `Response`, throws `HttpError`, or sets its own status still wins.
+- `@Ip()` reads the peer address from the platform context's server handle; the
+  source-static invoker path names that expression directly, and a context with
+  no server answers `undefined`.
+- `AponiaApplicationOptions.prefix` is applied when a compiled plan mounts:
+  `registerCompiledElysiaRoutes` joins it into the native path, header and
+  media-type negotiation strips it before the version-table lookup and rewrites
+  inside it, middleware matches the stripped path, and inspection projects the
+  prefixed path. Health probes, native plugins, and a controller mounted through
+  its own registration callback stay outside the prefix.
 - Decorated controllers register their compiled route plans directly on the
   root Elysia instance. Low-level controller descriptors retain `buildPlugin`
   as their compatibility and escape-hatch path.
@@ -175,12 +192,17 @@ runtime boundary it describes.
   `UNSAFE_CODE_GENERATION` rather than silently bound to a prototype or a first
   request. Lifecycle collection skips request-scoped controllers and providers,
   which have no instance at boot. A gateway whose lifetime bubbles to request
-  scope fails with `INVALID_WEBSOCKET_GATEWAY`.
+  scope is bound once per socket: the first message or lifecycle call resolves
+  its instance in a context carrying that socket, and `afterInit` is skipped
+  because no socket exists at boot.
 - An enhancer named by a decorator, a declared plan, or an option is resolved as
   a provider while its controller mounts — once per distinct class, never per
-  route or per request — and enhancers are singletons like every other provider.
-  A class the graph cannot reach fails the mount with `MISSING_PROVIDER` rather
-  than leaving a route quietly unguarded, unwrapped, or unfiltered.
+  route or per request — and a request-scoped enhancer is resolved inside the
+  request it runs for, behind a forwarder the mount builds when the resolution
+  reports `MISSING_REQUEST_CONTEXT`. A request-scoped interceptor states its
+  halves as methods; a field-declared half exists only on an instance. A class
+  the graph cannot reach fails the mount with `MISSING_PROVIDER` rather than
+  leaving a route quietly unguarded, unwrapped, or unfiltered.
 - Every route the platform mounts from a compiled plan carries the default
   Problem Details mapping last in its own `error` array, behind the filters it
   declares, so the array reads `[...method, ...controller, ...global, default]`;

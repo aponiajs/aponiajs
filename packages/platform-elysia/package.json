@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/platform-elysia",
-  "version": "1.0.0-beta.36",
+  "version": "1.0.0-beta.37",
   "description": "Elysia application platform for Aponia HTTP controllers and WebSocket gateways.",
   "keywords": [
     "aponia",
@@ -30,8 +30,14 @@
   ],
   "type": "module",
   "exports": {
-    ".": "./dist/index.mjs",
-    "./register": "./dist/register.mjs",
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./register": {
+      "types": "./dist/register.d.mts",
+      "import": "./dist/register.mjs"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -59,5 +65,8 @@
   "peerDependencies": {
     "elysia": "2.0.0-rc.4",
     "typebox": "^1.4.6"
+  },
+  "engines": {
+    "bun": ">=1.4.4"
   }
 }

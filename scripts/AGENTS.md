@@ -23,6 +23,10 @@ and documentation guards that CI enforces.
 | `source-layout.spec.ts`          | Package owner directories, barrels, type-only modules, local imports        |
 | `toolchain-config.spec.ts`       | The decorator transpiler options and the single Bun version pin             |
 | `package-llms.spec.ts`           | The `llms.txt` every published package ships and lists in `files`           |
+| `published-packages.spec.ts`     | The npm publication record behind `docs/packages.md`                        |
+| `build-api-reference.ts`         | The generated `docs/api.md` index of every public export                    |
+| `api-reference.spec.ts`          | The generated page stays current with `docs/public-api.json`                |
+| `governance.spec.ts`             | Changelog, code of conduct, roadmap, and issue/pull-request templates       |
 | `retired-literals.spec.ts`       | Literals a published surface may no longer state                            |
 | `documentation-versions.spec.ts` | Release stamps in the published documents                                   |
 | `api-docs.spec.ts`               | JSDoc completeness over every package barrel the API reference builds from  |

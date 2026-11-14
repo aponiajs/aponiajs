@@ -2,13 +2,15 @@ import { describe, expect, test } from "bun:test";
 import { resolve } from "node:path";
 
 /**
- * The API reference TypeDoc builds, and the barrels it builds from.
+ * The JSDoc source every published barrel carries, and the barrels it reads.
  *
- * The site is generated output, not a published surface: `docs/api/` is
- * gitignored, and no guard reads it. What the guards read is the source the
- * site is built from — every public export carrying the JSDoc the reference
- * renders — so a reference that stopped documenting is a source change, and
- * this file fails on the source rather than on the site.
+ * The name index a reader browses is `docs/api.md`, generated from
+ * `docs/public-api.json` by `scripts/build-api-reference.ts`. The JSDoc
+ * reference is built by the isolated `tools/api-docs` project, which pins a
+ * TypeScript release TypeDoc supports. What this guard reads is the source the
+ * barrels document — every public export carrying the JSDoc the rendered
+ * reference shows — so a barrel that stopped documenting is a source change and
+ * this file fails on the source.
  */
 const packageBarrels = [
   "packages/common/src/index.ts",

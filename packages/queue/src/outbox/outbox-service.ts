@@ -6,6 +6,7 @@ import type {
   OutboxMessage,
   OutboxOptions,
   OutboxSink,
+  OutboxStore,
 } from "./outbox.types.ts";
 
 interface MutableMessage {
@@ -26,6 +27,7 @@ export class OutboxService {
   readonly #messages: MutableMessage[] = [];
   readonly #maxEntries: number;
   readonly #now: () => number;
+  readonly #store: OutboxStore | undefined;
   #flushing = false;
 
   constructor(options: OutboxOptions = {}) {
@@ -37,6 +39,13 @@ export class OutboxService {
     }
     this.#maxEntries = maxEntries;
     this.#now = options.now ?? Date.now;
+    this.#store = options.store;
+
+    if (this.#store !== undefined) {
+      const stored = this.#store.list();
+      const retained = stored.slice(Math.max(0, stored.length - this.#maxEntries));
+      this.#messages.push(...retained.map(toMutable));
+    }
   }
 
   /** Records one message and returns its frozen form. */
@@ -58,6 +67,7 @@ export class OutboxService {
       recordedAt: this.#now(),
     };
     this.#messages.push(message);
+    this.#store?.append(freezeMessage(message));
     return freezeMessage(message) as OutboxMessage<TPayload>;
   }
 
@@ -86,6 +96,7 @@ export class OutboxService {
         }
         const message = this.#messages[0] as MutableMessage;
         message.attempts += 1;
+        this.#store?.update(freezeMessage(message));
         try {
           await sink(freezeMessage(message));
         } catch (error) {
@@ -96,6 +107,7 @@ export class OutboxService {
           });
         }
         this.#messages.shift();
+        this.#store?.remove(message.id);
         delivered += 1;
       }
     } finally {
@@ -107,7 +119,18 @@ export class OutboxService {
   /** Drops every recorded message. */
   clear(): void {
     this.#messages.length = 0;
+    this.#store?.clear();
   }
+}
+
+function toMutable(message: OutboxMessage): MutableMessage {
+  return {
+    id: message.id,
+    name: message.name,
+    payload: message.payload,
+    attempts: message.attempts,
+    recordedAt: message.recordedAt,
+  };
 }
 
 function freezeMessage(message: MutableMessage): OutboxMessage {

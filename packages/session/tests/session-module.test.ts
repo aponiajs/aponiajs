@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { AponiaError, Controller, Get, Module } from "@aponiajs/common";
 import { AponiaFactory, type AponiaApplication } from "@aponiajs/platform-elysia";
-import { SessionModule, SessionService } from "../src/index.ts";
+import { SessionModule, Session, SessionService } from "../src/index.ts";
 import type { ResolvedSessionOptions } from "../src/module/session.types.ts";
 import { MemorySessionStore } from "../src/store/memory-session-store.ts";
 
@@ -112,6 +112,52 @@ describe("SessionModule", () => {
     );
     expect(await destroyed.text()).toBe("destroyed");
     expect(destroyed.headers.get("set-cookie")).toContain("aponia.sid=;");
+  });
+
+  test("injects the current session through @Session()", async () => {
+    @Controller("session-param")
+    class SessionParamController {
+      constructor(private readonly sessions: SessionService) {}
+
+      @Get("start")
+      async start(): Promise<string> {
+        await this.sessions.start({ user: "ada" });
+        return "started";
+      }
+
+      @Get("me")
+      me(
+        @Session("user") user: string | undefined,
+        @Session() session: { readonly id: string } | undefined,
+      ): { readonly user: string | undefined; readonly id: string | undefined } {
+        return { user, id: session?.id };
+      }
+    }
+
+    @Module({
+      imports: [SessionModule.register({ secret: secret(), ttlMs: 60_000 })],
+      controllers: [SessionParamController],
+    })
+    class ParamModule {}
+
+    application = await AponiaFactory.create(ParamModule, { logger: false });
+
+    const anonymous = await application.handle(new Request("http://localhost/session-param/me"));
+    expect(await anonymous.json()).toEqual({});
+
+    const started = await application.handle(new Request("http://localhost/session-param/start"));
+    const token = readCookie(started.headers.get("set-cookie") ?? "", "aponia.sid");
+    expect(token).toBeDefined();
+
+    const me = await application.handle(
+      new Request("http://localhost/session-param/me", {
+        headers: { cookie: `aponia.sid=${token}` },
+      }),
+    );
+    const body = (await me.json()) as { readonly user?: string; readonly id?: string };
+
+    expect(body.user).toBe("ada");
+    expect(typeof body.id).toBe("string");
   });
 
   test("ignores and clears a tampered cookie", async () => {

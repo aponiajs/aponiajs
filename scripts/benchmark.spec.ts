@@ -46,4 +46,17 @@ describe("benchmark suite", () => {
     expect(soak.p50Ms).toBe(0);
     expect(soak.p99Ms).toBe(0);
   });
+
+  test("keeps the request path above the release floor", async () => {
+    // Deliberately generous: this fails a hang, a failure storm, or a collapse
+    // in throughput, not a noisy CI runner. Compare two releases on one machine
+    // for a regression reading; this floor is the contract the default lane can
+    // keep.
+    const soak = await runSoak({ seconds: 0.2, concurrency: 4 });
+
+    expect(soak.failures).toBe(0);
+    expect(soak.requests).toBeGreaterThan(0);
+    expect(soak.requestsPerSecond).toBeGreaterThan(200);
+    expect(soak.p99Ms).toBeLessThan(250);
+  });
 });

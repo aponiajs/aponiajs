@@ -64,6 +64,24 @@ Use `CreateUser` as the POST body, `UpdateUser` as the PATCH body, and
 delete route normally validates its identifier in `params`; it does not need a
 request-body model.
 
+## Deriving a schema
+
+`partialSchema`, `pickSchema`, `omitSchema`, and `intersectSchema` call the
+validator's own combinators, so an update model is a derived validator rather
+than a hand-copied one:
+
+```ts
+import { partialSchema } from "@aponiajs/common";
+import { z } from "zod";
+
+const CreateUser = z.object({ email: z.email(), name: z.string() });
+const UpdateUser = partialSchema(CreateUser);
+```
+
+A validator that exposes no `partial`, `pick`, `omit`, or `extend` — a TypeBox
+object schema, for example — is refused with `INVALID_VALIDATION_MODEL`; the
+framework never reimplements an operation the validator does not state.
+
 ## Slots
 
 `body`, `query`, `params`, `headers`, `cookie`, and `response`. Each slot accepts

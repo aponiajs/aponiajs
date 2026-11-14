@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/cli",
-  "version": "1.0.0-beta.36",
+  "version": "1.0.0-beta.37",
   "description": "Bun-native project generator and command-line interface for Aponia.",
   "keywords": [
     "aponia",
@@ -36,7 +36,10 @@
   ],
   "type": "module",
   "exports": {
-    ".": "./dist/index.mjs",
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -57,5 +60,8 @@
   },
   "devDependencies": {
     "@types/yargs-parser": "^21.0.3"
+  },
+  "engines": {
+    "bun": ">=1.4.4"
   }
 }

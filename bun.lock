@@ -218,11 +218,11 @@
     },
     "packages/aponiajs": {
       "name": "aponiajs",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
     },
     "packages/audit": {
       "name": "@aponiajs/audit",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
       },
@@ -234,7 +234,7 @@
     },
     "packages/auth": {
       "name": "@aponiajs/auth",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -250,7 +250,7 @@
     },
     "packages/cache": {
       "name": "@aponiajs/cache",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
       },
@@ -262,7 +262,7 @@
     },
     "packages/cli": {
       "name": "@aponiajs/cli",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "bin": {
         "aponia": "./bin/aponia.ts",
       },
@@ -279,7 +279,7 @@
     },
     "packages/common": {
       "name": "@aponiajs/common",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@standard-schema/spec": "^1.1.0",
         "reflect-metadata": "^0.2.2",
@@ -291,7 +291,7 @@
     },
     "packages/compression": {
       "name": "@aponiajs/compression",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -306,14 +306,14 @@
     },
     "packages/core": {
       "name": "@aponiajs/core",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
       },
     },
     "packages/cors": {
       "name": "@aponiajs/cors",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -330,7 +330,7 @@
     },
     "packages/create-aponia": {
       "name": "create-aponia",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "bin": {
         "create-aponia": "./dist/create-aponia.mjs",
       },
@@ -340,7 +340,7 @@
     },
     "packages/cron": {
       "name": "@aponiajs/cron",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -356,7 +356,7 @@
     },
     "packages/database": {
       "name": "@aponiajs/database",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "drizzle-orm": "^0.45.4",
@@ -364,12 +364,14 @@
       "devDependencies": {
         "@aponiajs/core": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
+        "@types/pg": "^8.23.1",
         "elysia": "2.0.0-rc.4",
+        "pg": "^8.23.1",
       },
     },
     "packages/devtools": {
       "name": "@aponiajs/devtools",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/cli": "workspace:*",
         "@aponiajs/common": "workspace:*",
@@ -386,7 +388,7 @@
     },
     "packages/events": {
       "name": "@aponiajs/events",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "reflect-metadata": "^0.2.2",
@@ -399,7 +401,7 @@
     },
     "packages/graphql": {
       "name": "@aponiajs/graphql",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -418,7 +420,7 @@
     },
     "packages/h3": {
       "name": "@aponiajs/h3",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/serverless": "workspace:*",
       },
@@ -434,7 +436,7 @@
     },
     "packages/hono": {
       "name": "@aponiajs/hono",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/serverless": "workspace:*",
       },
@@ -450,7 +452,7 @@
     },
     "packages/http": {
       "name": "@aponiajs/http",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@standard-schema/spec": "^1.1.0",
@@ -465,7 +467,7 @@
     },
     "packages/idempotency": {
       "name": "@aponiajs/idempotency",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -480,7 +482,7 @@
     },
     "packages/mcp": {
       "name": "@aponiajs/mcp",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
       },
@@ -498,7 +500,7 @@
     },
     "packages/metrics": {
       "name": "@aponiajs/metrics",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -513,7 +515,7 @@
     },
     "packages/microservices": {
       "name": "@aponiajs/microservices",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "cborg": "6.2.1",
@@ -523,6 +525,7 @@
         "@aws-sdk/client-sqs": "3.1165.0",
         "@azure/service-bus": "7.10.0",
         "@google-cloud/pubsub": "6.4.1",
+        "@grpc/grpc-js": "1.14.0",
         "elysia": "2.0.0-rc.4",
         "kafkajs": "2.2.4",
         "mqtt": "5.16.1",
@@ -534,6 +537,7 @@
         "@aws-sdk/client-sqs": "3.1165.0",
         "@azure/service-bus": "7.10.0",
         "@google-cloud/pubsub": "6.4.1",
+        "@grpc/grpc-js": "1.14.0",
         "kafkajs": "2.2.4",
         "mqtt": "5.16.1",
         "nats": "2.29.3",
@@ -544,6 +548,7 @@
         "@aws-sdk/client-sqs",
         "@azure/service-bus",
         "@google-cloud/pubsub",
+        "@grpc/grpc-js",
         "kafkajs",
         "mqtt",
         "nats",
@@ -553,7 +558,7 @@
     },
     "packages/nitro": {
       "name": "@aponiajs/nitro",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/serverless": "workspace:*",
       },
@@ -569,7 +574,7 @@
     },
     "packages/openapi": {
       "name": "@aponiajs/openapi",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -586,7 +591,7 @@
     },
     "packages/opentelemetry": {
       "name": "@aponiajs/opentelemetry",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -604,7 +609,7 @@
     },
     "packages/platform-elysia": {
       "name": "@aponiajs/platform-elysia",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/core": "workspace:*",
@@ -623,7 +628,7 @@
     },
     "packages/queue": {
       "name": "@aponiajs/queue",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
       },
@@ -635,7 +640,7 @@
     },
     "packages/rate-limit": {
       "name": "@aponiajs/rate-limit",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -650,7 +655,7 @@
     },
     "packages/security": {
       "name": "@aponiajs/security",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -665,7 +670,7 @@
     },
     "packages/serverless": {
       "name": "@aponiajs/serverless",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "devDependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -674,7 +679,7 @@
     },
     "packages/session": {
       "name": "@aponiajs/session",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -689,7 +694,7 @@
     },
     "packages/store-redis": {
       "name": "@aponiajs/store-redis",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
       },
@@ -713,7 +718,7 @@
     },
     "packages/tenancy": {
       "name": "@aponiajs/tenancy",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -728,7 +733,7 @@
     },
     "packages/testing": {
       "name": "@aponiajs/testing",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
@@ -742,7 +747,7 @@
     },
     "packages/view": {
       "name": "@aponiajs/view",
-      "version": "1.0.0-beta.36",
+      "version": "1.0.0-beta.37",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
       },
@@ -985,7 +990,7 @@
 
     "@graphql-yoga/typed-event-target": ["@graphql-yoga/typed-event-target@3.0.3", "", { "dependencies": { "@repeaterjs/repeater": "^3.0.4", "tslib": "^2.8.1" } }, "sha512-j/EgVfZSzKA2lVeiZ0un8E2eVIqWa9Woyqta4A40ht1M93ui9CDVHU6pmphoQTpFa92BNbMVexXdOtMQk8LCjA=="],
 
-    "@grpc/grpc-js": ["@grpc/grpc-js@1.14.5", "", { "dependencies": { "@grpc/proto-loader": "^0.8.0", "@js-sdsl/ordered-map": "^4.4.2" } }, "sha512-7VZM+SVdEcUUqSQeNI3zM8Qs/BhQKZndPo2h5VkYkAM8Iz0wJIa8mKV5ekQGqG8UUsnkQ0NMxIxwkIHYvj0qOw=="],
+    "@grpc/grpc-js": ["@grpc/grpc-js@1.14.0", "", { "dependencies": { "@grpc/proto-loader": "^0.8.0", "@js-sdsl/ordered-map": "^4.4.2" } }, "sha512-N8Jx6PaYzcTRNzirReJCtADVoq4z7+1KQ4E70jTg/koQiMoUSN1kbNjPOqpPbhMFhfU1/l7ixspPl8dNY+FoUg=="],
 
     "@grpc/proto-loader": ["@grpc/proto-loader@0.8.1", "", { "dependencies": { "lodash.camelcase": "^4.3.0", "long": "^5.0.0", "protobufjs": "^7.5.5", "yargs": "^17.7.2" }, "bin": { "proto-loader-gen-types": "build/bin/proto-loader-gen-types.js" } }, "sha512-wtF6h+DY6M3YaDBPAmvuuA6jV8Sif9MjtOI5euKFWRgCDl5PeDpPsHR9u2l6St5ceY8AZgoNDww5+HvEsXFsGg=="],
 
@@ -1198,6 +1203,8 @@
     "@types/estree": ["@types/estree@1.0.9", "", {}, "sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg=="],
 
     "@types/node": ["@types/node@26.1.1", "", { "dependencies": { "undici-types": "~8.3.0" } }, "sha512-nxAkRSVkN1Y0JC1W8ky/fTfkGsMmcrRsbx+3XoZE+rMOX71kLYTV7fLXpqud1GpbpP5TuffXFqfX7fH2GgZREw=="],
+
+    "@types/pg": ["@types/pg@8.23.1", "", { "dependencies": { "@types/node": "*", "pg-protocol": "*", "pg-types": "^2.2.0" } }, "sha512-fKVHpikPdg4GKks3JuLEhvwSyvwzF23hnabPy6DD8ljVbC7+6J5dQzdv4arV6jqq57djnMgs1HKBxX4P8aBI3A=="],
 
     "@types/readable-stream": ["@types/readable-stream@4.0.25", "", { "dependencies": { "@types/node": "*" } }, "sha512-7GsxL8Wd5X3jh73/qgW7WCnbBvGSdD8U3E4Jiuus3/8I+PN20DtlkJtwFhr/sImXfDDQ2Z03i/9wNiIF3TVSsw=="],
 
@@ -1681,6 +1688,22 @@
 
     "pathe": ["pathe@2.0.3", "", {}, "sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w=="],
 
+    "pg": ["pg@8.23.1", "", { "dependencies": { "pg-connection-string": "^2.14.1", "pg-pool": "^3.14.0", "pg-protocol": "^1.16.1", "pg-types": "2.2.0", "pgpass": "1.0.5" }, "optionalDependencies": { "pg-cloudflare": "^1.4.1" }, "peerDependencies": { "pg-native": ">=3.0.1" }, "optionalPeers": ["pg-native"] }, "sha512-aL96AHANtWjPLDOLqnhx+ngp9+UK7ETEU8VJrDCGvsSSi/mGLcWYsS6Herg7lmaBJe4uwrfqsa7gTEFaSizDoQ=="],
+
+    "pg-cloudflare": ["pg-cloudflare@1.4.1", "", {}, "sha512-6PQbsFWZcp9EmJEwy5cGQ2La+AMWpP46lgbb8X+U/XsHIUweYDNCpeuKck5RxL2MdVFi7krbbEi5nX4Zh7JhrQ=="],
+
+    "pg-connection-string": ["pg-connection-string@2.14.1", "", {}, "sha512-qR3kGNPBLpCNtz0evbKA0Y/MRFXwSSdT+pTJvYp/bXTcReZbvX1kzF0IyTc1QnxqF7AZbOeBhNL8R5mYQZV/MA=="],
+
+    "pg-int8": ["pg-int8@1.0.1", "", {}, "sha512-WCtabS6t3c8SkpDBUlb1kjOs7l66xsGdKpIPZsg4wR+B3+u9UAum2odSsF9tnvxg80h4ZxLWMy4pRjOsFIqQpw=="],
+
+    "pg-pool": ["pg-pool@3.14.0", "", { "peerDependencies": { "pg": ">=8.0" } }, "sha512-gKtPkFdQPU3DksooVLi9LsjZxrsBUZIpa+7aVx+LV5pNh0KzP4Zleud2po+ConrxbuXGBJ6Hfer6hdgpIBpBaw=="],
+
+    "pg-protocol": ["pg-protocol@1.16.1", "", {}, "sha512-p9VOFMiHB/ZbJATetbg+99PxssTVSQRnyuPSQ67mN1+1KBOjZaZ83ZQzltnxPhJwSsC3nwVjJ10DVJlerbFzLg=="],
+
+    "pg-types": ["pg-types@2.2.0", "", { "dependencies": { "pg-int8": "1.0.1", "postgres-array": "~2.0.0", "postgres-bytea": "~1.0.0", "postgres-date": "~1.0.4", "postgres-interval": "^1.1.0" } }, "sha512-qTAAlrEsl8s4OiEQY69wDvcMIdQN6wdz5ojQiOy6YRMuynxenON0O5oCpJI6lshc6scgAY8qvJ2On/p+CXY0GA=="],
+
+    "pgpass": ["pgpass@1.0.5", "", { "dependencies": { "split2": "^4.1.0" } }, "sha512-FdW9r/jQZhSeohs1Z3sI1yxFQNFvMcnmfuj4WBMUTxOrAyLMaTcE1aAMBiTlbMNaXvBCQuVi0R7hd8udDSP7ug=="],
+
     "picocolors": ["picocolors@1.1.1", "", {}, "sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA=="],
 
     "picomatch": ["picomatch@4.0.5", "", {}, "sha512-RvwwcruNjI1ncT5xRakeyS9Lf8lcItv34KD+aif+VH9kduAyfYBipGh12274xtenIPZ119/R9BdTBa8gAwSh0A=="],
@@ -1690,6 +1713,14 @@
     "possible-typed-array-names": ["possible-typed-array-names@1.1.0", "", {}, "sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg=="],
 
     "postcss": ["postcss@8.5.32", "", { "dependencies": { "nanoid": "^3.3.20", "picocolors": "^1.1.1", "source-map-js": "^1.2.2" } }, "sha512-LJlKCCAUFKOuZxipUdYw1NzIITEsPcgyOG9LkvRJvuKj/bRzbuRY0ARXvL0pWGpsZvn8jku+LMep2eU0seHp8g=="],
+
+    "postgres-array": ["postgres-array@2.0.0", "", {}, "sha512-VpZrUqU5A69eQyW2c5CA1jtLecCsN2U/bD6VilrFDWq5+5UIEVO7nazS3TEcHf1zuPYO/sqGvUvW62g86RXZuA=="],
+
+    "postgres-bytea": ["postgres-bytea@1.0.1", "", {}, "sha512-5+5HqXnsZPE65IJZSMkZtURARZelel2oXUEO8rH83VS/hxH5vv1uHquPg5wZs8yMAfdv971IU+kcPUczi7NVBQ=="],
+
+    "postgres-date": ["postgres-date@1.0.7", "", {}, "sha512-suDmjLVQg78nMK2UZ454hAG+OAW+HQPZ6n++TNDUX+L0+uUlLywnoxJKDou51Zm+zTCjrCl0Nq6J9C5hP9vK/Q=="],
+
+    "postgres-interval": ["postgres-interval@1.2.0", "", { "dependencies": { "xtend": "^4.0.0" } }, "sha512-9ZhXKM/rw350N1ovuWHbGxnGh/SNJ4cnxHiM0rxE4VN41wsg8P8zWn9hv/buK00RP4WvlOyr/RBDiptyxVbkZQ=="],
 
     "pretty-format": ["pretty-format@27.5.1", "", { "dependencies": { "ansi-regex": "^5.0.1", "ansi-styles": "^5.0.0", "react-is": "^17.0.1" } }, "sha512-Qb1gy5OrP5+zDf2Bvnzdl3jsTf1qXVMazbvCoKhtKqVs4/YK4ozX4gKQJJVyNe+cajNPn0KoC0MC3FUmaHWEmQ=="],
 
@@ -1833,6 +1864,8 @@
 
     "xml-naming": ["xml-naming@0.3.0", "", {}, "sha512-ghig2TBE/H11aOVgmahA3MhimvkBr6JIYknH/Dhdk10nXwdbIqBJsbfMxpvFPG8bAw77gN29aQWvKpmVoPlvPQ=="],
 
+    "xtend": ["xtend@4.0.2", "", {}, "sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ=="],
+
     "y18n": ["y18n@5.0.8", "", {}, "sha512-0pfFzegeDWJHJIAmTLRP2DwHjdF5s7jo9tuztdQxAhINCdvS+3nGINqPd00AphqJR/0LhANUS6/+7SCb98YOfA=="],
 
     "yaml": ["yaml@2.9.0", "", { "bin": { "yaml": "bin.mjs" } }, "sha512-2AvhNX3mb8zd6Zy7INTtSpl1F15HW6Wnqj0srWlkKLcpYl/gMIMJiyuGq2KeI2YFxUPjdlB+3Lc10seMLtL4cA=="],
@@ -1857,6 +1890,8 @@
 
     "@opentelemetry/core/@opentelemetry/semantic-conventions": ["@opentelemetry/semantic-conventions@1.43.0", "", {}, "sha512-eSYWTm620tTk45EKSedaUL8MFYI8hW164hIXsgIHyxu3VobUB3fFCu5t0hQby6OoWRPsG1KkKUG2M5UadiLiVg=="],
 
+    "@opentelemetry/exporter-logs-otlp-grpc/@grpc/grpc-js": ["@grpc/grpc-js@1.14.5", "", { "dependencies": { "@grpc/proto-loader": "^0.8.0", "@js-sdsl/ordered-map": "^4.4.2" } }, "sha512-7VZM+SVdEcUUqSQeNI3zM8Qs/BhQKZndPo2h5VkYkAM8Iz0wJIa8mKV5ekQGqG8UUsnkQ0NMxIxwkIHYvj0qOw=="],
+
     "@opentelemetry/exporter-logs-otlp-grpc/@opentelemetry/core": ["@opentelemetry/core@2.7.1", "", { "dependencies": { "@opentelemetry/semantic-conventions": "^1.29.0" }, "peerDependencies": { "@opentelemetry/api": ">=1.0.0 <1.10.0" } }, "sha512-QAqIj32AtK6+pEVNG7EOVxHdE06RP+FM5qpiEJ4RtDcFIqKUZHYhl7/7UY5efhwmwNAg7j8QbJVBLxMerc0+gw=="],
 
     "@opentelemetry/exporter-logs-otlp-http/@opentelemetry/api-logs": ["@opentelemetry/api-logs@0.217.0", "", { "dependencies": { "@opentelemetry/api": "^1.3.0" } }, "sha512-Cdq0jW2lknrNfrAm92MyEAvpe2cRsKjdnQLHUL6xRA4IVUnsWx6P65E7NcUO0Y+L4w1Aee5iV8FvjSwd+lrs9A=="],
@@ -1867,6 +1902,8 @@
 
     "@opentelemetry/exporter-logs-otlp-proto/@opentelemetry/core": ["@opentelemetry/core@2.7.1", "", { "dependencies": { "@opentelemetry/semantic-conventions": "^1.29.0" }, "peerDependencies": { "@opentelemetry/api": ">=1.0.0 <1.10.0" } }, "sha512-QAqIj32AtK6+pEVNG7EOVxHdE06RP+FM5qpiEJ4RtDcFIqKUZHYhl7/7UY5efhwmwNAg7j8QbJVBLxMerc0+gw=="],
 
+    "@opentelemetry/exporter-metrics-otlp-grpc/@grpc/grpc-js": ["@grpc/grpc-js@1.14.5", "", { "dependencies": { "@grpc/proto-loader": "^0.8.0", "@js-sdsl/ordered-map": "^4.4.2" } }, "sha512-7VZM+SVdEcUUqSQeNI3zM8Qs/BhQKZndPo2h5VkYkAM8Iz0wJIa8mKV5ekQGqG8UUsnkQ0NMxIxwkIHYvj0qOw=="],
+
     "@opentelemetry/exporter-metrics-otlp-grpc/@opentelemetry/core": ["@opentelemetry/core@2.7.1", "", { "dependencies": { "@opentelemetry/semantic-conventions": "^1.29.0" }, "peerDependencies": { "@opentelemetry/api": ">=1.0.0 <1.10.0" } }, "sha512-QAqIj32AtK6+pEVNG7EOVxHdE06RP+FM5qpiEJ4RtDcFIqKUZHYhl7/7UY5efhwmwNAg7j8QbJVBLxMerc0+gw=="],
 
     "@opentelemetry/exporter-metrics-otlp-http/@opentelemetry/core": ["@opentelemetry/core@2.7.1", "", { "dependencies": { "@opentelemetry/semantic-conventions": "^1.29.0" }, "peerDependencies": { "@opentelemetry/api": ">=1.0.0 <1.10.0" } }, "sha512-QAqIj32AtK6+pEVNG7EOVxHdE06RP+FM5qpiEJ4RtDcFIqKUZHYhl7/7UY5efhwmwNAg7j8QbJVBLxMerc0+gw=="],
@@ -1876,6 +1913,8 @@
     "@opentelemetry/exporter-prometheus/@opentelemetry/core": ["@opentelemetry/core@2.7.1", "", { "dependencies": { "@opentelemetry/semantic-conventions": "^1.29.0" }, "peerDependencies": { "@opentelemetry/api": ">=1.0.0 <1.10.0" } }, "sha512-QAqIj32AtK6+pEVNG7EOVxHdE06RP+FM5qpiEJ4RtDcFIqKUZHYhl7/7UY5efhwmwNAg7j8QbJVBLxMerc0+gw=="],
 
     "@opentelemetry/exporter-prometheus/@opentelemetry/semantic-conventions": ["@opentelemetry/semantic-conventions@1.43.0", "", {}, "sha512-eSYWTm620tTk45EKSedaUL8MFYI8hW164hIXsgIHyxu3VobUB3fFCu5t0hQby6OoWRPsG1KkKUG2M5UadiLiVg=="],
+
+    "@opentelemetry/exporter-trace-otlp-grpc/@grpc/grpc-js": ["@grpc/grpc-js@1.14.5", "", { "dependencies": { "@grpc/proto-loader": "^0.8.0", "@js-sdsl/ordered-map": "^4.4.2" } }, "sha512-7VZM+SVdEcUUqSQeNI3zM8Qs/BhQKZndPo2h5VkYkAM8Iz0wJIa8mKV5ekQGqG8UUsnkQ0NMxIxwkIHYvj0qOw=="],
 
     "@opentelemetry/exporter-trace-otlp-grpc/@opentelemetry/core": ["@opentelemetry/core@2.7.1", "", { "dependencies": { "@opentelemetry/semantic-conventions": "^1.29.0" }, "peerDependencies": { "@opentelemetry/api": ">=1.0.0 <1.10.0" } }, "sha512-QAqIj32AtK6+pEVNG7EOVxHdE06RP+FM5qpiEJ4RtDcFIqKUZHYhl7/7UY5efhwmwNAg7j8QbJVBLxMerc0+gw=="],
 
@@ -1888,6 +1927,8 @@
     "@opentelemetry/exporter-zipkin/@opentelemetry/semantic-conventions": ["@opentelemetry/semantic-conventions@1.43.0", "", {}, "sha512-eSYWTm620tTk45EKSedaUL8MFYI8hW164hIXsgIHyxu3VobUB3fFCu5t0hQby6OoWRPsG1KkKUG2M5UadiLiVg=="],
 
     "@opentelemetry/otlp-exporter-base/@opentelemetry/core": ["@opentelemetry/core@2.7.1", "", { "dependencies": { "@opentelemetry/semantic-conventions": "^1.29.0" }, "peerDependencies": { "@opentelemetry/api": ">=1.0.0 <1.10.0" } }, "sha512-QAqIj32AtK6+pEVNG7EOVxHdE06RP+FM5qpiEJ4RtDcFIqKUZHYhl7/7UY5efhwmwNAg7j8QbJVBLxMerc0+gw=="],
+
+    "@opentelemetry/otlp-grpc-exporter-base/@grpc/grpc-js": ["@grpc/grpc-js@1.14.5", "", { "dependencies": { "@grpc/proto-loader": "^0.8.0", "@js-sdsl/ordered-map": "^4.4.2" } }, "sha512-7VZM+SVdEcUUqSQeNI3zM8Qs/BhQKZndPo2h5VkYkAM8Iz0wJIa8mKV5ekQGqG8UUsnkQ0NMxIxwkIHYvj0qOw=="],
 
     "@opentelemetry/otlp-grpc-exporter-base/@opentelemetry/core": ["@opentelemetry/core@2.7.1", "", { "dependencies": { "@opentelemetry/semantic-conventions": "^1.29.0" }, "peerDependencies": { "@opentelemetry/api": ">=1.0.0 <1.10.0" } }, "sha512-QAqIj32AtK6+pEVNG7EOVxHdE06RP+FM5qpiEJ4RtDcFIqKUZHYhl7/7UY5efhwmwNAg7j8QbJVBLxMerc0+gw=="],
 
@@ -1936,6 +1977,8 @@
     "duplexify/readable-stream": ["readable-stream@3.6.2", "", { "dependencies": { "inherits": "^2.0.3", "string_decoder": "^1.1.1", "util-deprecate": "^1.0.1" } }, "sha512-9u/sniCrY3D5WdsERHzHE4G2YCXqoG5FTHUiCC4SIbr6XcLZBY05ya9EKjYek9O5xOAwjGq+1JdGBAS7Q9ScoA=="],
 
     "gaxios/https-proxy-agent": ["https-proxy-agent@7.0.6", "", { "dependencies": { "agent-base": "^7.1.2", "debug": "4" } }, "sha512-vK9P5/iUfdl95AI+JVyUuIcVtd4ofvtrOr3HNtM2yxC9bnMbEdp3x01OhQNnjb8IJYi38VlTE3mBXwcfvywuSw=="],
+
+    "google-gax/@grpc/grpc-js": ["@grpc/grpc-js@1.14.5", "", { "dependencies": { "@grpc/proto-loader": "^0.8.0", "@js-sdsl/ordered-map": "^4.4.2" } }, "sha512-7VZM+SVdEcUUqSQeNI3zM8Qs/BhQKZndPo2h5VkYkAM8Iz0wJIa8mKV5ekQGqG8UUsnkQ0NMxIxwkIHYvj0qOw=="],
 
     "graphql-yoga/@whatwg-node/promise-helpers": ["@whatwg-node/promise-helpers@1.3.2", "", { "dependencies": { "tslib": "^2.6.3" } }, "sha512-Nst5JdK47VIl9UcGwtv2Rcgyn5lWtZ0/mhRQ4G8NN2isxpq2TO30iqHzmwoJycjWuyUfg3GFXqP/gFHXeV57IA=="],
 

@@ -7,6 +7,7 @@
  * step with that source by hand.
  */
 export type AnalyzedRequestMethod =
+  | "ALL"
   | "DELETE"
   | "GET"
   | "HEAD"
@@ -81,6 +82,8 @@ export type AnalyzedRouteParameterKind =
   | "context"
   | "custom"
   | "headers"
+  | "host"
+  | "ip"
   | "params"
   | "query"
   | "request"

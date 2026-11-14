@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/core",
-  "version": "1.0.0-beta.36",
+  "version": "1.0.0-beta.37",
   "description": "Module graph and dependency injection runtime for Aponia.",
   "keywords": [
     "aponia",
@@ -30,7 +30,10 @@
   ],
   "type": "module",
   "exports": {
-    ".": "./dist/index.mjs",
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -46,5 +49,8 @@
   },
   "dependencies": {
     "@aponiajs/common": "workspace:*"
+  },
+  "engines": {
+    "bun": ">=1.4.4"
   }
 }

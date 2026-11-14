@@ -21,6 +21,7 @@ aponia g s users
 aponia g resource users --type rest
 aponia g router health --no-spec
 aponia build
+aponia dev
 aponia --version
 ```
 

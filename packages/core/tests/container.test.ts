@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   AponiaError,
   ModuleRef,
+  Scope,
   createToken,
   defineModule,
   forwardRef,
@@ -392,6 +393,61 @@ describe("@aponiajs/core container edges", () => {
       expect.objectContaining({ code: "MISSING_PROVIDER" }),
     );
     expect(container.resolveModuleProvider(feature, ModuleRef).get(privateToken)).toBe("private");
+  });
+
+  test("ModuleRef.create instantiates a fresh singleton without replacing the cached one", () => {
+    class Probe {
+      readonly marker = Symbol("probe");
+    }
+    const probe = createToken<Probe>("module-ref-create-singleton");
+    const feature = defineModule({
+      id: "module-ref-create-singleton-feature",
+      providers: [provideClass(probe, Probe, [])],
+    });
+    const root = defineModule({ id: "module-ref-create-singleton-root", imports: [feature] });
+    const container = createContainer(root);
+    const reference = container.resolveModuleProvider(feature, ModuleRef);
+
+    const cached = reference.get(probe);
+    const created = reference.create(probe);
+
+    expect(created).not.toBe(cached);
+    expect(reference.get(probe)).toBe(cached);
+  });
+
+  test("ModuleRef.create produces a new transient instance on every call", () => {
+    class Probe {
+      readonly marker = Symbol("probe");
+    }
+    const probe = createToken<Probe>("module-ref-create-transient");
+    const feature = defineModule({
+      id: "module-ref-create-transient-feature",
+      providers: [provideClass(probe, Probe, [], { scope: Scope.TRANSIENT })],
+    });
+    const root = defineModule({ id: "module-ref-create-transient-root", imports: [feature] });
+    const reference = createContainer(root).resolveModuleProvider(feature, ModuleRef);
+
+    expect(reference.create(probe)).not.toBe(reference.create(probe));
+  });
+
+  test("ModuleRef.create requires a context for a request-scoped provider", () => {
+    class Probe {
+      readonly marker = Symbol("probe");
+    }
+    const probe = createToken<Probe>("module-ref-create-request");
+    const feature = defineModule({
+      id: "module-ref-create-request-feature",
+      providers: [provideClass(probe, Probe, [], { scope: Scope.REQUEST })],
+    });
+    const root = defineModule({ id: "module-ref-create-request-root", imports: [feature] });
+    const reference = createContainer(root).resolveModuleProvider(feature, ModuleRef);
+
+    expect(() => reference.create(probe)).toThrow(
+      expect.objectContaining({ code: "MISSING_REQUEST_CONTEXT" }),
+    );
+
+    const context = {};
+    expect(reference.create(probe, context)).not.toBe(reference.create(probe, context));
   });
 
   test("forwards membership, assignment, and prototype reads to a circular dependency", () => {

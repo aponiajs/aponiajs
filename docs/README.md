@@ -40,6 +40,7 @@ fix the page in the same change that changes the behavior.
 | Observe a running service                      | [Logging](./logging.md), [Metrics](./metrics.md), [Devtools](./devtools.md)                                               |
 | Deploy, scale, and drain                       | [Deployment](./deployment.md), [Lifecycle](./lifecycle.md), [Configuration](./configuration.md)                           |
 | Expose OpenAPI, GraphQL, or MCP                | [OpenAPI](./openapi.md), [Agent surface](./agent/README.md)                                                               |
+| Look up an exported name                       | [API reference](./api.md)                                                                                                 |
 | Test an application                            | [Testing](./testing.md)                                                                                                   |
 | Author or publish a library                    | [Libraries](./libraries.md), [Plugin packages](./plugin-packages.md), [Releasing](./releasing.md)                         |
 | Check support and fix timelines                | [Support and release lifetime](./support.md)                                                                              |

@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/idempotency",
-  "version": "1.0.0-beta.36",
+  "version": "1.0.0-beta.37",
   "description": "Idempotent request replay for an Aponia application, with a bounded store and conflict detection.",
   "keywords": [
     "api",
@@ -28,7 +28,10 @@
   ],
   "type": "module",
   "exports": {
-    ".": "./dist/index.mjs",
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -52,5 +55,8 @@
   },
   "peerDependencies": {
     "elysia": "2.0.0-rc.4"
+  },
+  "engines": {
+    "bun": ">=1.4.4"
   }
 }

@@ -3,7 +3,9 @@ import {
   applyDeprecationHeaders,
   getDeprecationMetadata,
   getEnhancerMetadata,
+  getHttpCode,
   getPipesMetadata,
+  getResponseHeaders,
   getRouteMetadata,
   getRouteParameterMetadata,
   getResponseSerializer,
@@ -102,6 +104,8 @@ export function compileElysiaRoutes(
 
     const version =
       getVersionMetadata(controller.prototype, route.propertyKey) ?? getVersionMetadata(controller);
+    const responseHeaders = getResponseHeaders(controller, route.propertyKey);
+    const httpCode = getHttpCode(controller, route.propertyKey);
     const path =
       typeof version === "string"
         ? joinPaths(versionPathSegment(version), joinPaths(controllerPath, route.path))
@@ -130,6 +134,8 @@ export function compileElysiaRoutes(
         ? { sse: true }
         : {}),
       ...viewMetadata(controller, route.propertyKey),
+      ...(responseHeaders === undefined ? {} : { responseHeaders }),
+      ...(httpCode === undefined ? {} : { httpCode }),
     });
   });
 
@@ -224,6 +230,7 @@ export function registerCompiledElysiaRoutes(
   viewRenderer?: RouteViewRenderer,
   globalPipes: readonly ResolvedPipe[] = [],
   instanceResolver?: () => unknown,
+  prefix = "",
 ): ReadonlySet<string | symbol> {
   const generatedKeys = new Set<string | symbol>();
 
@@ -270,6 +277,7 @@ export function registerCompiledElysiaRoutes(
         },
       );
     }
+    const mountPath = prefix === "" ? route.path : joinPaths(prefix, route.path);
     const hasCustomFilters =
       mountedEnhancers.controller.forRoute(route.enhancers).filters.length > 0 ||
       mountedEnhancers.global.filters.length > 0;
@@ -289,7 +297,7 @@ export function registerCompiledElysiaRoutes(
     registerNativeRoute(
       application,
       route.method,
-      route.path,
+      mountPath,
       suppliedInvoker === undefined
         ? createRouteHandler(callableHandler, instance, route, globalPipes, instanceResolver)
         : (suppliedInvoker as (context: RouteContext) => unknown),
@@ -425,6 +433,17 @@ function createArgumentsHost(context: RouteContext): ArgumentsHost {
   return Object.freeze({
     getContext: () => context,
     switchToHttp: () => httpHost,
+    switchToRpc: () =>
+      Object.freeze({
+        getData: <T = unknown>(): T => (context as unknown as { readonly body?: T }).body as T,
+        getContext: <T = unknown>(): T => context as unknown as T,
+      }),
+    switchToWs: () =>
+      Object.freeze({
+        getClient: <T = unknown>(): T => undefined as unknown as T,
+        getData: <T = unknown>(): T => (context as unknown as { readonly body?: T }).body as T,
+        getPattern: () => "",
+      }),
     getType: () => "http" as const,
   });
 }
@@ -458,7 +477,9 @@ function isPipedParameterKind(kind: RouteParameterKind): boolean {
     kind === "query" ||
     kind === "params" ||
     kind === "headers" ||
-    kind === "cookie"
+    kind === "cookie" ||
+    kind === "ip" ||
+    kind === "host"
   );
 }
 
@@ -490,6 +511,18 @@ function extractContextSourceValue(context: RouteContext, kind: RouteParameterKi
       return context.headers;
     case "cookie":
       return context.cookie;
+    case "ip": {
+      const server = (
+        context as unknown as {
+          readonly server?: {
+            readonly requestIP?: (request: Request) => { readonly address?: string } | null;
+          } | null;
+        }
+      ).server;
+      return server?.requestIP?.(context.request)?.address;
+    }
+    case "host":
+      return new URL(context.request.url).host;
     default:
       return (context as unknown as Record<string, unknown>)[kind];
   }
@@ -507,6 +540,9 @@ function extractParameterValue(
   }
 
   const source = extractContextSourceValue(context, kind);
+  if (kind === "host" && property !== undefined) {
+    return typeof source === "string" ? (source.split(".")[0] ?? "") : undefined;
+  }
   if (property === undefined) {
     return source;
   }
@@ -888,6 +924,9 @@ function isPossiblyAsync(
 
 function parameterExpression(parameter: RouteParameterMetadata): string {
   const source = contextSource(parameter);
+  if (parameter.kind === "host" && parameter.property !== undefined) {
+    return `((${source}).split(".")[0]??"")`;
+  }
   if (parameter.property === undefined) {
     return source;
   }
@@ -906,6 +945,10 @@ function contextSource(parameter: RouteParameterMetadata): string {
       return "context.set";
     case "request":
       return "context.request";
+    case "ip":
+      return "context.server?.requestIP?.(context.request)?.address";
+    case "host":
+      return "new URL(context.request.url).host";
     default:
       return `context.${parameter.kind}`;
   }
@@ -1015,7 +1058,9 @@ function createLifecycleHook(
   const hasInterceptBefore = interceptors.some(
     (interceptor) => interceptor.interceptBefore !== undefined,
   );
-  const runsBefore = guards.length > 0 || hasInterceptBefore || route.sse === true;
+  const hasResponseMetadata = route.responseHeaders !== undefined || route.httpCode !== undefined;
+  const runsBefore =
+    guards.length > 0 || hasInterceptBefore || route.sse === true || hasResponseMetadata;
   const runsAfter =
     interceptors.some((interceptor) => interceptor.interceptAfter !== undefined) ||
     route.serializer !== undefined ||
@@ -1043,10 +1088,24 @@ function createLifecycleHook(
 
   let beforeHandle: ((context: RouteContext) => unknown) | undefined;
   if (runsBefore) {
-    if (guardHook !== undefined && !hasInterceptBefore && route.sse !== true) {
+    if (
+      guardHook !== undefined &&
+      !hasInterceptBefore &&
+      route.sse !== true &&
+      !hasResponseMetadata
+    ) {
       beforeHandle = guardHook as (context: RouteContext) => unknown;
     } else {
       beforeHandle = async function (context: RouteContext): Promise<unknown> {
+        if (route.responseHeaders !== undefined) {
+          for (const [name, value] of Object.entries(route.responseHeaders)) {
+            context.set.headers[name] =
+              typeof value === "string" || typeof value === "number" ? value : [...value];
+          }
+        }
+        if (route.httpCode !== undefined) {
+          context.set.status = route.httpCode;
+        }
         if (route.sse === true) {
           context.set.headers["content-type"] = "text/event-stream";
           context.set.headers["cache-control"] = "no-cache";

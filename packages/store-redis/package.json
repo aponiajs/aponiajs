@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/store-redis",
-  "version": "1.0.0-beta.36",
+  "version": "1.0.0-beta.37",
   "description": "Redis storage adapters for AponiaJS cache, rate-limit, session, idempotency, and auth token stores.",
   "keywords": [
     "aponia",
@@ -32,7 +32,10 @@
   ],
   "type": "module",
   "exports": {
-    ".": "./dist/index.mjs",
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -67,5 +70,8 @@
     "redis": {
       "optional": true
     }
+  },
+  "engines": {
+    "bun": ">=1.4.4"
   }
 }

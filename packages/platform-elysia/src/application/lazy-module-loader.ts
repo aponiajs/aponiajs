@@ -1,6 +1,8 @@
 import {
   LOGGER,
   NOOP_LOGGER,
+  Reflector,
+  provideClass,
   provideValue,
   type LoggerService,
   type Token,
@@ -71,6 +73,7 @@ export class LazyModuleLoader {
     const container = createContainer(compiledRoot, [
       provideValue(LOGGER, this.#logger ?? NOOP_LOGGER),
       provideValue(LazyModuleLoader, this),
+      provideClass(Reflector, []),
     ]);
 
     for (const module of container.graph.modules) {

@@ -163,6 +163,34 @@ export class UserService {
 
 The container resolves cyclic provider dependencies transparently using lazy Proxies once both instances are constructed.
 
+## Module references
+
+A provider that injects `ModuleRef` resolves tokens from the module that
+received it, not from the root. `get` reads the cached instance, `resolve`
+accepts a request context, and `create` instantiates a fresh provider without
+replacing the cached one:
+
+```ts
+import { Injectable, ModuleRef, type Token } from "@aponiajs/common";
+
+@Injectable()
+class PluginHost {
+  constructor(private readonly moduleRef: ModuleRef) {}
+
+  read<T>(token: Token<T>): T {
+    return this.moduleRef.get(token);
+  }
+
+  own<T>(token: Token<T>): T {
+    return this.moduleRef.create(token);
+  }
+}
+```
+
+A request-scoped provider needs the context for both `resolve` and `create`;
+every other lifetime produces a new instance from `create`. Use it when the
+caller must own the instance, such as a plugin that registers a worker.
+
 ## Tokens
 
 A class is its own token. Anything else — a string, a configuration object, a

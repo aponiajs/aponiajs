@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/events",
-  "version": "1.0.0-beta.36",
+  "version": "1.0.0-beta.37",
   "description": "Typed application events for an Aponia application, with ordered handlers and decorated listeners.",
   "keywords": [
     "aponia",
@@ -28,7 +28,10 @@
   ],
   "type": "module",
   "exports": {
-    ".": "./dist/index.mjs",
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -50,5 +53,8 @@
     "@aponiajs/core": "workspace:*",
     "@aponiajs/platform-elysia": "workspace:*",
     "elysia": "2.0.0-rc.4"
+  },
+  "engines": {
+    "bun": ">=1.4.4"
   }
 }

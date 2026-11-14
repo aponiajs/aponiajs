@@ -7,6 +7,8 @@ import {
   getTokenName,
   type ApplicationEnhancer,
   type ApplicationEnhancerBinding,
+  type ArgumentsHost,
+  type ExecutionContext,
   type Interceptor,
   type CanActivate,
   type ClassToken,
@@ -217,26 +219,37 @@ export interface ResolvedApplicationEnhancers extends ResolvedEnhancers {
 export function resolveApplicationEnhancers(
   container: AponiaContainer,
 ): ResolvedApplicationEnhancers {
-  const guards = readEnhancerBinding<CanActivate>(container, APP_GUARD).map(
-    (entry) => resolveEnhancerEntry(container, entry).instance,
+  const guards = readEnhancerBinding<CanActivate>(container, APP_GUARD).map((entry) =>
+    typeof entry === "function"
+      ? resolveGuard(container, container.graph.root, entry as ClassToken<unknown>)
+      : (entry as CanActivate),
   );
 
   const halves = new Map<ClassToken<unknown>, InterceptorPhases>();
   const interceptors = readEnhancerBinding<Interceptor>(container, APP_INTERCEPTOR).map((entry) => {
-    const resolved = resolveEnhancerEntry(container, entry);
-    if (resolved.classToken !== undefined) {
-      halves.set(resolved.classToken, halvesOf(resolved.instance));
-    }
-    return resolved.instance;
+    const instance =
+      typeof entry === "function"
+        ? resolveInterceptor(container, container.graph.root, entry as ClassToken<unknown>)
+        : (entry as Interceptor);
+    const classToken =
+      typeof entry === "function"
+        ? (entry as ClassToken<unknown>)
+        : ((entry as object).constructor as ClassToken<unknown>);
+    halves.set(classToken, halvesOf(instance));
+    return instance;
   });
 
   const filters = readEnhancerBinding<ExceptionFilter>(container, APP_FILTER).map((entry) => {
-    const resolved = resolveEnhancerEntry(container, entry);
-    const caught =
-      resolved.classToken === undefined
-        ? getCatchMetadata((resolved.instance as object).constructor as ClassToken<unknown>)
-        : getCatchMetadata(resolved.classToken);
-    return Object.freeze({ instance: resolved.instance, catch: caught });
+    const instance =
+      typeof entry === "function"
+        ? resolveFilter(container, container.graph.root, entry as ClassToken<unknown>).instance
+        : (entry as ExceptionFilter);
+    const caught = getCatchMetadata(
+      typeof entry === "function"
+        ? (entry as ClassToken<unknown>)
+        : ((entry as object).constructor as ClassToken<unknown>),
+    );
+    return Object.freeze({ instance, catch: caught });
   });
 
   return Object.freeze({
@@ -295,25 +308,104 @@ function readEnhancerBinding<T>(
     : [value as ApplicationEnhancer<T>];
 }
 
-function resolveEnhancerEntry<T>(
+/** Whether a resolution failed only because no request was active. */
+function isMissingRequestContext(error: unknown): boolean {
+  return error instanceof AponiaError && error.code === "MISSING_REQUEST_CONTEXT";
+}
+
+/**
+ * Resolves one guard, deferring a request-scoped one to the request it runs for.
+ *
+ * A guard that depends on request state cannot exist while the route mounts, so
+ * the mount keeps a forwarder that resolves the instance inside the hook the
+ * request runs. The forwarder is still a `CanActivate`, so every consumer —
+ * including the compiled fast path's reader — sees the same shape.
+ */
+function resolveGuard(
   container: AponiaContainer,
-  entry: ApplicationEnhancer<T>,
-): { readonly instance: T; readonly classToken: ClassToken<unknown> | undefined } {
-  if (typeof entry === "function") {
-    const classToken = entry as ClassToken<T>;
+  module: ModuleDefinition,
+  token: ClassToken<unknown>,
+): CanActivate {
+  try {
+    return container.resolveModuleProvider(module, token) as CanActivate;
+  } catch (error) {
+    if (!isMissingRequestContext(error)) {
+      throw error;
+    }
     return Object.freeze({
-      instance: container.resolveModuleProvider(container.graph.root, classToken) as T,
-      classToken: classToken as ClassToken<unknown>,
+      canActivate: (context: ExecutionContext) =>
+        (container.resolveModuleProvider(module, token) as CanActivate).canActivate(context),
     });
   }
+}
 
-  const instance = entry as T;
-  const constructor =
-    typeof instance === "object" && instance !== null ? instance.constructor : undefined;
-  return Object.freeze({
-    instance,
-    classToken: constructor as ClassToken<unknown> | undefined,
-  });
+/**
+ * Resolves one interceptor, deferring a request-scoped one to its request.
+ *
+ * The forwarded halves are the ones the class declares as methods. A half
+ * declared as a class field exists only on an instance, and no instance exists
+ * while the route mounts; a request-scoped interceptor therefore states its
+ * halves as methods.
+ */
+function resolveInterceptor(
+  container: AponiaContainer,
+  module: ModuleDefinition,
+  token: ClassToken<unknown>,
+): Interceptor {
+  try {
+    return container.resolveModuleProvider(module, token) as Interceptor;
+  } catch (error) {
+    if (!isMissingRequestContext(error)) {
+      throw error;
+    }
+
+    const prototype = (token as unknown as { readonly prototype?: Record<string, unknown> })
+      .prototype;
+    const resolve = (): Interceptor =>
+      container.resolveModuleProvider(module, token) as Interceptor;
+
+    return Object.freeze({
+      ...(typeof prototype?.interceptBefore === "function"
+        ? {
+            interceptBefore: (context: ExecutionContext) => resolve().interceptBefore?.(context),
+          }
+        : {}),
+      ...(typeof prototype?.interceptAfter === "function"
+        ? {
+            interceptAfter: (context: ExecutionContext, response: unknown) =>
+              resolve().interceptAfter?.(context, response),
+          }
+        : {}),
+    }) as Interceptor;
+  }
+}
+
+/** Resolves one filter, deferring a request-scoped one to its request. */
+function resolveFilter(
+  container: AponiaContainer,
+  module: ModuleDefinition,
+  token: ClassToken<unknown>,
+): ResolvedFilter {
+  try {
+    return Object.freeze({
+      instance: container.resolveModuleProvider(module, token) as ExceptionFilter,
+      catch: getCatchMetadata(token),
+    });
+  } catch (error) {
+    if (!isMissingRequestContext(error)) {
+      throw error;
+    }
+
+    const resolve = (): ExceptionFilter =>
+      container.resolveModuleProvider(module, token) as ExceptionFilter;
+
+    return Object.freeze({
+      instance: Object.freeze({
+        catch: (exception: unknown, host: ArgumentsHost) => resolve().catch(exception, host),
+      }) as ExceptionFilter,
+      catch: getCatchMetadata(token),
+    });
+  }
 }
 
 /**
@@ -336,19 +428,12 @@ export function resolveEnhancers(
   module: ModuleDefinition,
   metadata: EnhancerMetadata,
 ): ResolvedControllerEnhancers {
-  const guards = resolveOnce(
-    metadata.guards,
-    (guard) => container.resolveModuleProvider(module, guard) as CanActivate,
-  );
-  const interceptors = resolveOnce(
-    metadata.interceptors,
-    (interceptor) => container.resolveModuleProvider(module, interceptor) as Interceptor,
+  const guards = resolveOnce(metadata.guards, (guard) => resolveGuard(container, module, guard));
+  const interceptors = resolveOnce(metadata.interceptors, (interceptor) =>
+    resolveInterceptor(container, module, interceptor),
   );
   const filters = resolveOnce(metadata.filters, (filter) =>
-    Object.freeze({
-      instance: container.resolveModuleProvider(module, filter) as ExceptionFilter,
-      catch: getCatchMetadata(filter),
-    }),
+    resolveFilter(container, module, filter),
   );
 
   const halves = new Map<ClassToken<unknown>, InterceptorPhases>();

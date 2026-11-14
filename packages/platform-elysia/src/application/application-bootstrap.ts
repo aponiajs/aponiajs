@@ -3,10 +3,12 @@ import {
   Logger,
   LOGGER,
   NOOP_LOGGER,
+  Reflector,
   VIEW_ENGINE,
   getMessagePatternMetadata,
   getTokenName,
   notifySystemLogger,
+  provideClass,
   provideValue,
   type ClassToken,
   type EnhancerMetadata,
@@ -42,6 +44,7 @@ import {
 import { createMiddlewareConsumer } from "../middleware/middleware-consumer.ts";
 import { mountMiddleware } from "../middleware/middleware-pipeline.ts";
 import { compileModuleInMemory } from "../compiler/in-memory-compiler.ts";
+import { normalizeRoutePrefix } from "../routing/route-prefix.ts";
 import {
   resolveApplicationPipe,
   resolveApplicationPipes,
@@ -108,6 +111,10 @@ export async function bootstrapAponiaApplication(
   }
   logger?.log("Starting Aponia application...", "AponiaFactory");
 
+  // Resolved before anything mounts, so an invalid prefix fails the boot
+  // rather than the first request.
+  const prefix = normalizeRoutePrefix(options.prefix);
+
   // Resolved once, before any controller mounts, so a refused artifact costs a
   // single log line rather than one lookup per controller. The decision is kept
   // whole, because a boot has to be able to say not only that it compiled its
@@ -138,6 +145,7 @@ export async function bootstrapAponiaApplication(
   const container = createContainer(compiledRootModule, [
     provideValue(LOGGER, logger ?? NOOP_LOGGER),
     provideValue(LazyModuleLoader, lazyModuleLoader),
+    provideClass(Reflector, []),
   ]);
   // The root may import a module that imports `RequestContextModule` without
   // re-exporting the service — `AuthModule` and `TenantModule` do. Root
@@ -244,7 +252,7 @@ export async function bootstrapAponiaApplication(
     logger?.log(`${module.id} dependencies initialized`, "InstanceLoader");
   }
 
-  mountMiddleware(nativeApplication, getMiddlewareConfigs(), container);
+  mountMiddleware(nativeApplication, getMiddlewareConfigs(), container, prefix);
 
   // The global enhancers are the application's own declaration, so they resolve
   // once, through the root module, rather than per controller: one instance
@@ -412,6 +420,7 @@ export async function bootstrapAponiaApplication(
           viewRenderer,
           globalPipes,
           requestScoped ? () => container.instantiateController(module, controller) : undefined,
+          prefix,
         );
         // The table grew by exactly the routes this controller mounted, which is
         // the slice the boot reports on `RoutesResolver` and the only observation
@@ -557,7 +566,7 @@ export async function bootstrapAponiaApplication(
   // Header and media-type negotiation is a fetch wrapper over the versioned
   // mounts; it is installed after every route exists and before anything can
   // listen, so the table is complete and handle() behaves the same way.
-  installVersionRouting(nativeApplication, container.graph.modules, options.versioning);
+  installVersionRouting(nativeApplication, container.graph.modules, options.versioning, prefix);
 
   // Once, after every route and gateway is mounted and no further plugin work is
   // pending: a hook that needs the whole graph — a scheduler, a migration check,
@@ -644,6 +653,7 @@ function registerControllerRoutes(
   viewRenderer: RouteViewRenderer | undefined,
   globalPipes: readonly ResolvedPipe[],
   instanceResolver?: () => unknown,
+  prefix = "",
 ): ReadonlySet<string | symbol> | undefined {
   const compiledRoutes = controller.compiledRoutes;
   if (!compiledRoutes) {
@@ -669,6 +679,7 @@ function registerControllerRoutes(
     viewRenderer,
     globalPipes,
     instanceResolver,
+    prefix,
   );
 }
 

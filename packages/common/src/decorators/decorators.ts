@@ -233,6 +233,27 @@ export function getOptionalParameters(
  */
 export const Delete = createRouteDecorator("DELETE");
 /**
+ * Declares a route that answers every HTTP method on its path.
+ *
+ * Elysia registers it as the `ALL` method. A path an `@All()` route claims may
+ * not also be claimed by a single-method route: the framework refuses that pair
+ * with `DUPLICATE_ROUTE` rather than leaving the answer to mount order.
+ *
+ * Accepts a path, a route schema, or both; the schema's slots each take a raw
+ * validator or a `@Validation()` model class.
+ *
+ * @param pathOrSchema - The route path, or the schema when the path is `""`.
+ * @param maybeSchema - The schema when a path is given.
+ * @returns A method decorator recording the frozen route metadata.
+ *
+ * @example
+ * ```ts
+ * @All("webhook")
+ * receive() {}
+ * ```
+ */
+export const All = createRouteDecorator("ALL");
+/**
  * Declares a `GET` route on a controller method.
  *
  * Accepts a path, a route schema, or both; the schema's slots each take a raw

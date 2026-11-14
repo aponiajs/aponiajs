@@ -35,6 +35,12 @@ jobs:
       - name: Build the documentation site
         run: bun run docs:build
 
+      - name: Build the JSDoc API reference
+        run: |
+          cd tools/api-docs
+          bun install --frozen-lockfile
+          bun run build
+
       - name: Upload the site
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:

@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/database",
-  "version": "1.0.0-beta.36",
+  "version": "1.0.0-beta.37",
   "description": "A Drizzle-first database boundary for an Aponia application: transactions, typed repositories, and ordered SQL migrations.",
   "keywords": [
     "aponia",
@@ -29,7 +29,10 @@
   ],
   "type": "module",
   "exports": {
-    ".": "./dist/index.mjs",
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -50,6 +53,11 @@
   "devDependencies": {
     "@aponiajs/core": "workspace:*",
     "@aponiajs/platform-elysia": "workspace:*",
-    "elysia": "2.0.0-rc.4"
+    "@types/pg": "^8.23.1",
+    "elysia": "2.0.0-rc.4",
+    "pg": "^8.23.1"
+  },
+  "engines": {
+    "bun": ">=1.4.4"
   }
 }

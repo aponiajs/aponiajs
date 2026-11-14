@@ -1,5 +1,6 @@
 import {
   AponiaError,
+  getEnhancerMetadata,
   getWebSocketGatewayMetadata,
   getWebSocketMessageMetadata,
   getWebSocketParameterMetadata,
@@ -10,6 +11,7 @@ import {
   type AponiaErrorCode,
   type CanActivate,
   type ClassToken,
+  type EnhancerMetadata,
   type ExecutionContext,
   type HttpArgumentsHost,
   type ModuleDefinition,
@@ -21,6 +23,8 @@ import {
 } from "@aponiajs/common";
 import type { AponiaContainer } from "@aponiajs/core";
 import { type AnyElysia, TypeBoxValidator } from "elysia";
+import type { ResolvedFilter } from "../controllers/enhancer-resolver.ts";
+import { resolveEnhancers } from "../controllers/enhancer-resolver.ts";
 import { httpErrors } from "../errors/http-error.ts";
 import type { WebSocketGatewayPlan } from "./gateway-plan.types.ts";
 import type {
@@ -145,25 +149,16 @@ export async function registerWebSocketGateways(
   gateways: readonly CompiledWebSocketGateway[],
 ): Promise<void> {
   const boundGateways = gateways.map((gateway) => {
-    // A gateway is bound once for the life of the application, so a provider
-    // whose lifetime bubbles to request scope has no instance to bind.
     const location = container.graph.locate(gateway.module, gateway.token);
-    if (container.providerScope(location.module, location.provider) === "request") {
-      throw new AponiaError(
-        "INVALID_WEBSOCKET_GATEWAY",
-        `WebSocket gateway "${gateway.gatewayName}" is request-scoped, which no socket instance can be bound to; a gateway must be a singleton.`,
-        {
-          module: gateway.module.id,
-          gateway: gateway.gatewayName,
-          path: gateway.path,
-        },
-      );
-    }
-    const instance = container.resolveModuleProvider(gateway.module, gateway.token);
     const resolvedGuards = (gateway.guards ?? []).map(
       (guardToken) => container.resolveModuleProvider(gateway.module, guardToken) as CanActivate,
     );
-    return bindWebSocketGateway(gateway, instance, resolvedGuards);
+    const filters = resolveGatewayFilters(container, gateway);
+    if (container.providerScope(location.module, location.provider) === "request") {
+      return bindRequestScopedWebSocketGateway(gateway, container, resolvedGuards, filters);
+    }
+    const instance = container.resolveModuleProvider(gateway.module, gateway.token);
+    return bindWebSocketGateway(gateway, instance, resolvedGuards, filters);
   });
   assertNoNativeWebSocketRouteCollisions(application, gateways);
 
@@ -217,6 +212,7 @@ export function bindWebSocketGateway(
   gateway: CompiledWebSocketGateway,
   instance: unknown,
   guards: readonly CanActivate[] = [],
+  filters: readonly ResolvedFilter[] = [],
 ): BoundWebSocketGateway {
   if (!isObject(instance)) {
     throw invalidGateway(gateway, "The gateway provider did not resolve to an object.");
@@ -262,8 +258,90 @@ export function bindWebSocketGateway(
     },
     open: (socket: WebSocketClient) => invokeSocketLifecycle(handleConnection, instance, socket),
     message: (socket: WebSocketClient, message: unknown) =>
-      dispatchWebSocketMessage(socket, message, handlers, gateway.maxPayloadLength),
+      dispatchWebSocketMessage(
+        socket,
+        message,
+        handlers,
+        gateway.maxPayloadLength,
+        filters,
+        gateway,
+        instance,
+      ),
     close: (socket: WebSocketClient) => invokeSocketLifecycle(handleDisconnect, instance, socket),
+  });
+}
+
+/**
+ * Binds a request-scoped gateway once per socket.
+ *
+ * A request-scoped instance needs a context to be built in, and a socket
+ * connection is the closest thing to a request a WebSocket has. The first
+ * message or lifecycle call for a socket resolves its instance and caches the
+ * bound methods; `afterInit` is skipped because no socket exists at boot, and
+ * the handshake's guards run against a throwaway instance built with an empty
+ * context.
+ */
+function resolveGatewayFilters(
+  container: AponiaContainer,
+  gateway: CompiledWebSocketGateway,
+): readonly ResolvedFilter[] {
+  const metadata = getEnhancerMetadata(gateway.provider.useClass as ClassToken<unknown>);
+  if (metadata === undefined || metadata.filters.length === 0) {
+    return Object.freeze([]);
+  }
+
+  const declared: EnhancerMetadata = Object.freeze({
+    guards: Object.freeze([]),
+    interceptors: Object.freeze([]),
+    filters: metadata.filters,
+  });
+  return resolveEnhancers(container, gateway.module, declared).filters;
+}
+
+function bindRequestScopedWebSocketGateway(
+  gateway: CompiledWebSocketGateway,
+  container: AponiaContainer,
+  guards: readonly CanActivate[],
+  filters: readonly ResolvedFilter[],
+): BoundWebSocketGateway {
+  const boundBySocket = new WeakMap<object, BoundWebSocketGateway>();
+  let application: AnyElysia | undefined;
+
+  const resolveBound = (socket: WebSocketClient): BoundWebSocketGateway => {
+    const existing = boundBySocket.get(socket as object);
+    if (existing !== undefined) {
+      return existing;
+    }
+
+    const instance = container.resolveModuleProvider(gateway.module, gateway.token, { socket });
+    if (application !== undefined && isObject(instance)) {
+      injectWebSocketServer(gateway, instance, application);
+    }
+    const bound = bindWebSocketGateway(gateway, instance, guards, filters);
+    boundBySocket.set(socket as object, bound);
+    return bound;
+  };
+
+  const handshake = bindWebSocketGateway(
+    gateway,
+    container.resolveModuleProvider(gateway.module, gateway.token, {}),
+    guards,
+    filters,
+  );
+
+  return Object.freeze({
+    path: gateway.path,
+    maxPayloadLength: gateway.maxPayloadLength,
+    idleTimeoutMs: gateway.idleTimeoutMs,
+    sendPings: gateway.sendPings,
+    beforeHandle: handshake.beforeHandle,
+    initialize: (nativeApplication: AnyElysia) => {
+      application = nativeApplication;
+    },
+    open: (socket: WebSocketClient) => resolveBound(socket).open(socket),
+    message: (socket: WebSocketClient, message: unknown) =>
+      resolveBound(socket).message(socket, message),
+    close: (socket: WebSocketClient) => resolveBound(socket).close(socket),
   });
 }
 
@@ -288,7 +366,18 @@ function createGatewayExecutionContext(
     getRoute: () => Object.freeze({ method: "GET" as const, path: gateway.path }),
     getContext: () => routeContext,
     switchToHttp: () => httpHost,
-    getType: () => "http" as const,
+    switchToRpc: () =>
+      Object.freeze({
+        getData: <T = unknown>(): T => undefined as unknown as T,
+        getContext: <T = unknown>(): T => routeContext as unknown as T,
+      }),
+    switchToWs: () =>
+      Object.freeze({
+        getClient: <T = unknown>(): T => undefined as unknown as T,
+        getData: <T = unknown>(): T => undefined as unknown as T,
+        getPattern: () => "",
+      }),
+    getType: () => "ws" as const,
   });
 }
 
@@ -788,6 +877,9 @@ async function dispatchWebSocketMessage(
   message: unknown,
   handlers: ReadonlyMap<string, WebSocketMessageInvoker>,
   maxPayloadLength?: number,
+  filters: readonly ResolvedFilter[] = [],
+  gateway?: CompiledWebSocketGateway,
+  instance?: unknown,
 ): Promise<void> {
   if (maxPayloadLength !== undefined && payloadByteLength(message) > maxPayloadLength) {
     sendException(
@@ -821,9 +913,96 @@ async function dispatchWebSocketMessage(
   try {
     const result = await handler(socket, incoming.data);
     await emitHandlerResult(socket, incoming.event, result);
-  } catch {
+  } catch (error) {
+    if (
+      gateway !== undefined &&
+      (await runGatewayFilters(error, incoming, socket, filters, gateway, instance))
+    ) {
+      return;
+    }
     sendException(socket, "WEBSOCKET_HANDLER_ERROR", "The WebSocket handler failed.");
   }
+}
+
+/** A filter that answers replaces the exception frame; a decline leaves it. */
+async function runGatewayFilters(
+  error: unknown,
+  incoming: IncomingWebSocketMessage,
+  socket: WebSocketClient,
+  filters: readonly ResolvedFilter[],
+  gateway: CompiledWebSocketGateway,
+  instance: unknown,
+): Promise<boolean> {
+  if (filters.length === 0) {
+    return false;
+  }
+
+  const context = createMessageExecutionContext(gateway, instance, socket, incoming);
+  for (const filter of filters) {
+    if (!matchesCaught(error, filter.catch)) {
+      continue;
+    }
+    try {
+      const answer = await filter.instance.catch(error, context);
+      if (answer !== undefined && answer !== null) {
+        await emitHandlerResult(socket, incoming.event, answer);
+        return true;
+      }
+    } catch {
+      // A filter that throws declines; the exception frame answers.
+    }
+  }
+
+  return false;
+}
+
+function matchesCaught(error: unknown, caught: readonly ClassToken<unknown>[]): boolean {
+  return caught.length === 0 || caught.some((type) => error instanceof type);
+}
+
+function createMessageExecutionContext(
+  gateway: CompiledWebSocketGateway,
+  instance: unknown,
+  socket: WebSocketClient,
+  incoming: IncomingWebSocketMessage,
+): ExecutionContext {
+  const routeContext = Object.freeze({
+    body: incoming.data,
+    cookie: {},
+    headers: {},
+    params: {},
+    path: gateway.path,
+    query: {},
+    request: new Request(`http://localhost${gateway.path}`),
+    set: { headers: {} },
+  }) as unknown as RouteContext;
+  const httpHost: HttpArgumentsHost = Object.freeze({ getRequest: () => routeContext });
+  const handler = gateway.handlers.find((entry) => entry.event === incoming.event);
+
+  return Object.freeze({
+    getClass: <T>() => gateway.provider.useClass as ClassToken<T>,
+    getHandler: () =>
+      (handler === undefined
+        ? () => undefined
+        : () => (instance as Record<PropertyKey, unknown>)[handler.propertyKey]) as (
+        ...arguments_: never[]
+      ) => unknown,
+    getRoute: () => Object.freeze({ method: "ALL" as const, path: gateway.path }),
+    getContext: () => routeContext,
+    switchToHttp: () => httpHost,
+    switchToRpc: () =>
+      Object.freeze({
+        getData: <T = unknown>(): T => incoming.data as T,
+        getContext: <T = unknown>(): T => socket as unknown as T,
+      }),
+    switchToWs: () =>
+      Object.freeze({
+        getClient: <T = unknown>(): T => socket as unknown as T,
+        getData: <T = unknown>(): T => incoming.data as T,
+        getPattern: () => incoming.event,
+      }),
+    getType: () => "ws" as const,
+  });
 }
 
 async function emitHandlerResult(

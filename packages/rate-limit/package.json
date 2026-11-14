@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/rate-limit",
-  "version": "1.0.0-beta.36",
+  "version": "1.0.0-beta.37",
   "description": "Bounded request rate limiting for an Aponia application, with a route guard and a pluggable store.",
   "keywords": [
     "aponia",
@@ -29,7 +29,10 @@
   ],
   "type": "module",
   "exports": {
-    ".": "./dist/index.mjs",
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -53,5 +56,8 @@
   },
   "peerDependencies": {
     "elysia": "2.0.0-rc.4"
+  },
+  "engines": {
+    "bun": ">=1.4.4"
   }
 }

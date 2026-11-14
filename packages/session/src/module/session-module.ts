@@ -4,6 +4,7 @@ import { PluginModule, type ElysiaPlugin } from "@aponiajs/platform-elysia";
 import { Elysia } from "elysia";
 import { issueSessionToken, readSessionId } from "../policy/session-token.ts";
 import { SessionService, type SessionRequestState } from "../service/session-service.ts";
+import { sessionStateKey } from "../service/session-parameter.ts";
 import { MemorySessionStore } from "../store/memory-session-store.ts";
 import type {
   ResolvedSessionOptions,
@@ -57,6 +58,7 @@ function buildSessionPlugin(
         destroyed: false,
       };
       storage.enterWith(state);
+      (context.store as Record<PropertyKey, unknown>)[sessionStateKey] = state;
 
       const cookie = context.cookie[options.cookieName];
       const token = cookie.value;

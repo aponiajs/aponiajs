@@ -1,6 +1,6 @@
 {
   "name": "create-aponia",
-  "version": "1.0.0-beta.36",
+  "version": "1.0.0-beta.37",
   "description": "Create a Bun-first Aponia application.",
   "keywords": [
     "aponia",
@@ -42,5 +42,8 @@
   },
   "dependencies": {
     "@aponiajs/cli": "workspace:*"
+  },
+  "engines": {
+    "bun": ">=1.4.4"
   }
 }

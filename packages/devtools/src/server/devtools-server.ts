@@ -20,6 +20,7 @@ import { devtoolsMcpPath, handleMcpRequest } from "../mcp/mcp-server.ts";
 import type { LogStream } from "../logging/log-tap.ts";
 import type { RequestBuffer } from "../requests/request-buffer.types.ts";
 import type { DevtoolsHandlers } from "./devtools-server.types.ts";
+import { devtoolsUiHtml } from "./ui-page.ts";
 
 /**
  * The endpoints one application's surface serves.
@@ -157,8 +158,14 @@ export function createHandlers(
   });
   const graph = buildGraphPayload(diagnostics);
   const aot = readAotFacts(diagnostics);
+  const ui = (): Response => htmlResponse(devtoolsUiHtml());
 
   return Object.freeze({
+    // The page the developer opens. `/__devtools/` reaches it through the
+    // plugin's wildcard; the bare prefix is stated for a dispatcher that is
+    // handed the request directly.
+    "": ui,
+    "/": ui,
     [devtoolsMetaPath]: () => jsonResponse(meta),
     // A boot the record holds no compiled root for serves no `/graph` at all:
     // the handler record states the paths this surface serves, and a path it
@@ -235,4 +242,15 @@ export function createHandlers(
  */
 function jsonResponse(payload: unknown): Response {
   return Response.json(payload, { status: 200, headers: { "cache-control": "no-store" } });
+}
+
+/** The one page endpoint's answer. */
+function htmlResponse(body: string): Response {
+  return new Response(body, {
+    status: 200,
+    headers: {
+      "cache-control": "no-store",
+      "content-type": "text/html; charset=utf-8",
+    },
+  });
 }

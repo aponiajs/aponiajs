@@ -1,6 +1,7 @@
 import {
   AponiaError,
   Module,
+  Reflector,
   provideAlias,
   provideClass,
   provideFactory,
@@ -108,7 +109,7 @@ class TestingModuleBuilderImpl implements TestingModuleBuilder {
         ? applyProviderOverrides(compiledRoot, this.#overrides)
         : compiledRoot;
 
-    const container = createContainer(finalRoot);
+    const container = createContainer(finalRoot, [provideClass(Reflector, [])]);
     for (const module of container.graph.modules) {
       container.initializeModule(module);
     }

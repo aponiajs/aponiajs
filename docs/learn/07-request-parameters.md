@@ -3,18 +3,21 @@
 **Use when:** a handler needs one piece of the request rather than the whole
 context.
 
-| Decorator             | Injects                        |
-| --------------------- | ------------------------------ |
-| `@Body()`             | The validated request body     |
-| `@Query("term")`      | The parsed query string        |
-| `@Param("id")`        | Path parameters                |
-| `@Headers("x-agent")` | Request headers                |
-| `@Cookie("session")`  | Cookies, or one cookie's value |
-| `@State()`            | Typed application state        |
-| `@Req()`              | The native `Request`           |
-| `@ResponseSettings()` | Mutable response settings      |
-| `@HttpStatus()`       | The typed status helper        |
-| `@Context()`          | The whole Elysia context       |
+| Decorator              | Injects                        |
+| ---------------------- | ------------------------------ |
+| `@Body()`              | The validated request body     |
+| `@Query("term")`       | The parsed query string        |
+| `@Param("id")`         | Path parameters                |
+| `@Headers("x-agent")`  | Request headers                |
+| `@Cookie("session")`   | Cookies, or one cookie's value |
+| `@Ip()`                | The peer address, when known   |
+| `@HostParam()`         | The request host               |
+| `@HostParam("tenant")` | The first label of the host    |
+| `@State()`             | Typed application state        |
+| `@Req()`               | The native `Request`           |
+| `@ResponseSettings()`  | Mutable response settings      |
+| `@HttpStatus()`        | The typed status helper        |
+| `@Context()`           | The whole Elysia context       |
 
 Each accepts an optional name that selects a single property:
 
