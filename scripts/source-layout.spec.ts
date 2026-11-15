@@ -92,7 +92,16 @@ const packageLayouts: readonly PackageLayout[] = [
   {
     sourceRoot: "packages/platform-core/src",
     files: ["index.ts"],
-    directories: ["artifacts", "enhancers", "errors", "middleware", "modules", "pipes", "routing"],
+    directories: [
+      "artifacts",
+      "enhancers",
+      "errors",
+      "kernel",
+      "middleware",
+      "modules",
+      "pipes",
+      "routing",
+    ],
   },
   {
     sourceRoot: "packages/cron/src",

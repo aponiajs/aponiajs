@@ -1,11 +1,21 @@
-import type { httpStatusCodes, HttpStatusCode, HttpStatusName } from "./http-status.ts";
+import type { httpStatusCodes, HttpStatusName } from "./http-status.ts";
 import type { HttpError } from "./http-error.ts";
 
 /** A 4xx or 5xx status code this framework answers with. */
-export type HttpErrorStatusCode = HttpStatusCode;
+export type HttpErrorStatusCode = {
+  [TName in HttpStatusName]: `${(typeof httpStatusCodes)[TName]}` extends
+    | `4${string}`
+    | `5${string}`
+    ? (typeof httpStatusCodes)[TName]
+    : never;
+}[HttpStatusName];
 
 /** A 4xx or 5xx status name this framework answers with. */
-export type HttpErrorStatusName = HttpStatusName;
+export type HttpErrorStatusName = {
+  [TName in HttpStatusName]: (typeof httpStatusCodes)[TName] extends HttpErrorStatusCode
+    ? TName
+    : never;
+}[HttpStatusName];
 
 /** A status an `HttpError` answers with: a code or a name. */
 export type HttpErrorStatus = HttpErrorStatusCode | HttpErrorStatusName;

@@ -26,6 +26,29 @@ export {
   type HttpStatusCode,
   type HttpStatusName,
 } from "./errors/http-status.ts";
+export { createHttpKernel } from "./kernel/http-kernel.ts";
+export type {
+  HostRequestInfo,
+  HttpKernel,
+  HttpKernelOptions,
+  MountedRoute,
+  PlatformRouteContext,
+  ResolvedFilter,
+  RouteMatch,
+} from "./kernel/kernel.types.ts";
+export { buildArguments, readParameterValue } from "./kernel/parameter-binding.ts";
+export {
+  defaultMaxBodyBytes,
+  readBody,
+  readCookies,
+  readHeaders,
+  readQuery,
+} from "./kernel/request-decoding.ts";
+export { buildResponse } from "./kernel/response-building.ts";
+export { createRouteMatcher } from "./kernel/route-matcher.ts";
+export type { RouteMatcher } from "./kernel/route-matcher.ts";
+export { validateSlot } from "./kernel/validation.ts";
+export type { ValidationIssue } from "./kernel/validation.ts";
 export { compileGuardsHook, compileUnrolledGuards } from "./enhancers/enhancer-pipeline.ts";
 export { StaticRouteExecutionContext } from "./enhancers/static-execution-context.ts";
 export { createMiddlewareConsumer } from "./middleware/middleware-consumer.ts";

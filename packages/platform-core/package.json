@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/platform-core",
-  "version": "1.0.0-beta.45",
+  "version": "1.0.0-beta.46",
   "description": "Runtime-neutral HTTP platform primitives: enhancers, pipes, and middleware that every Aponia platform shares.",
   "keywords": [
     "aponia",
@@ -43,7 +43,14 @@
   },
   "dependencies": {
     "@aponiajs/common": "workspace:*",
-    "@aponiajs/core": "workspace:*"
+    "@aponiajs/core": "workspace:*",
+    "rou3": "1.0.0"
+  },
+  "devDependencies": {
+    "typebox": "^1.4.6"
+  },
+  "peerDependencies": {
+    "typebox": "^1.4.6"
   },
   "engines": {
     "bun": ">=1.4.4"

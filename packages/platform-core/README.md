@@ -29,6 +29,9 @@ import {
   `executePipes` — pipe resolution against the container and execution.
 - `HttpError`, `httpErrors`, and the neutral status-name map — the same
   RFC 9457 failure contract every platform answers with.
+- `createHttpKernel` — the request pipeline a host dispatches into: it matches
+  the route, decodes and validates the request, runs guards, interceptors, and
+  filters, and answers. A host supplies the `Request` and the route mounts.
 - `createMiddlewareConsumer` — the consumer a module uses to declare
   middleware targets and exclusions.
 - `selectRootModuleDescriptor` and `selectInvokerArtifact` — the build artifacts

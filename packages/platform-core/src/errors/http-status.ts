@@ -1,10 +1,33 @@
 /**
- * The 4xx and 5xx status names an `HttpError` answers with, and their codes.
+ * The standard status names a route can answer with, and their codes.
  *
  * A platform-neutral map on purpose: a runtime that spells a status its own way
- * still answers the same problem document, and the runtime is never consulted.
+ * still answers the same status, and the runtime is never consulted. An
+ * `HttpError` itself accepts only 4xx and 5xx codes and refuses anything else.
  */
 export const httpStatusCodes = Object.freeze({
+  Continue: 100,
+  "Switching Protocols": 101,
+  Processing: 102,
+  "Early Hints": 103,
+  OK: 200,
+  Created: 201,
+  Accepted: 202,
+  "Non-Authoritative Information": 203,
+  "No Content": 204,
+  "Reset Content": 205,
+  "Partial Content": 206,
+  "Multi-Status": 207,
+  "Already Reported": 208,
+  "IM Used": 226,
+  "Multiple Choices": 300,
+  "Moved Permanently": 301,
+  Found: 302,
+  "See Other": 303,
+  "Not Modified": 304,
+  "Use Proxy": 305,
+  "Temporary Redirect": 307,
+  "Permanent Redirect": 308,
   "Bad Request": 400,
   Unauthorized: 401,
   "Payment Required": 402,

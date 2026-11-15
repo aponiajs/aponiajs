@@ -2628,6 +2628,14 @@
           "kind": "type"
         },
         {
+          "name": "buildArguments",
+          "kind": "value"
+        },
+        {
+          "name": "buildResponse",
+          "kind": "value"
+        },
+        {
           "name": "CompiledRoute",
           "kind": "type"
         },
@@ -2652,12 +2660,28 @@
           "kind": "type"
         },
         {
+          "name": "createHttpKernel",
+          "kind": "value"
+        },
+        {
           "name": "createMiddlewareConsumer",
+          "kind": "value"
+        },
+        {
+          "name": "createRouteMatcher",
+          "kind": "value"
+        },
+        {
+          "name": "defaultMaxBodyBytes",
           "kind": "value"
         },
         {
           "name": "executePipes",
           "kind": "value"
+        },
+        {
+          "name": "HostRequestInfo",
+          "kind": "type"
         },
         {
           "name": "HttpControllerKind",
@@ -2700,6 +2724,14 @@
           "kind": "type"
         },
         {
+          "name": "HttpKernel",
+          "kind": "type"
+        },
+        {
+          "name": "HttpKernelOptions",
+          "kind": "type"
+        },
+        {
           "name": "httpStatusCodes",
           "kind": "value"
         },
@@ -2712,6 +2744,10 @@
           "kind": "value"
         },
         {
+          "name": "MountedRoute",
+          "kind": "type"
+        },
+        {
           "name": "normalizeRoutePrefix",
           "kind": "value"
         },
@@ -2720,8 +2756,32 @@
           "kind": "type"
         },
         {
+          "name": "PlatformRouteContext",
+          "kind": "type"
+        },
+        {
           "name": "ProblemDetails",
           "kind": "type"
+        },
+        {
+          "name": "readBody",
+          "kind": "value"
+        },
+        {
+          "name": "readCookies",
+          "kind": "value"
+        },
+        {
+          "name": "readHeaders",
+          "kind": "value"
+        },
+        {
+          "name": "readParameterValue",
+          "kind": "value"
+        },
+        {
+          "name": "readQuery",
+          "kind": "value"
         },
         {
           "name": "resolveApplicationPipe",
@@ -2730,6 +2790,10 @@
         {
           "name": "resolveApplicationPipes",
           "kind": "value"
+        },
+        {
+          "name": "ResolvedFilter",
+          "kind": "type"
         },
         {
           "name": "ResolvedMiddlewareConfig",
@@ -2753,6 +2817,14 @@
         },
         {
           "name": "RouteHandler",
+          "kind": "type"
+        },
+        {
+          "name": "RouteMatch",
+          "kind": "type"
+        },
+        {
+          "name": "RouteMatcher",
           "kind": "type"
         },
         {
@@ -2790,6 +2862,14 @@
         {
           "name": "type HttpStatusName",
           "kind": "value"
+        },
+        {
+          "name": "validateSlot",
+          "kind": "value"
+        },
+        {
+          "name": "ValidationIssue",
+          "kind": "type"
         }
       ]
     },
