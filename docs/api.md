@@ -900,6 +900,14 @@ Snapshot contract version 1.
 - `sse` (value)
 - `wrapElysiaPlugin` (value)
 
+## `@aponiajs/platform-h3`
+
+- `AponiaFactory` (value)
+- `H3AponiaApplication` (type)
+- `H3Application` (type)
+- `createH3Host` (value)
+- `toH3PlatformHandler` (value)
+
 ## `@aponiajs/platform-hono`
 
 - `AponiaFactory` (value)

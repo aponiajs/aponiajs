@@ -24,6 +24,8 @@ export default defineConfig({
       "@aponiajs/session": new URL("./packages/session/src/index.ts", import.meta.url).pathname,
       "@aponiajs/platform-core": new URL("./packages/platform-core/src/index.ts", import.meta.url)
         .pathname,
+      "@aponiajs/platform-h3": new URL("./packages/platform-h3/src/index.ts", import.meta.url)
+        .pathname,
       "@aponiajs/platform-hono": new URL("./packages/platform-hono/src/index.ts", import.meta.url)
         .pathname,
       "@aponiajs/platform-elysia": new URL(

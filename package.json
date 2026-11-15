@@ -1,6 +1,6 @@
 {
   "name": "aponiajs-workspace",
-  "version": "1.0.0-beta.49",
+  "version": "1.0.0-beta.50",
   "private": true,
   "description": "Bun-first application architecture powered by Elysia.",
   "license": "MIT",
@@ -49,7 +49,7 @@
     "test:postgres": "APONIA_POSTGRES_E2E=1 bun test ./packages/database/tests/live-postgres.e2e-spec.ts",
     "check": "vp check",
     "doctor": "vp env doctor",
-    "version:bump": "bumpp package.json packages/aponiajs/package.json packages/audit/package.json packages/auth/package.json packages/cache/package.json packages/cli/package.json packages/common/package.json packages/compression/package.json packages/core/package.json packages/cors/package.json packages/create-aponia/package.json packages/cron/package.json packages/database/package.json packages/devtools/package.json packages/events/package.json packages/graphql/package.json packages/http/package.json packages/idempotency/package.json packages/mcp/package.json packages/metrics/package.json packages/microservices/package.json packages/h3/package.json packages/hono/package.json packages/nitro/package.json packages/serverless/package.json packages/openapi/package.json packages/opentelemetry/package.json packages/platform-core/package.json packages/platform-elysia/package.json packages/platform-hono/package.json packages/queue/package.json packages/rate-limit/package.json packages/security/package.json packages/session/package.json packages/store-redis/package.json packages/view/package.json packages/tenancy/package.json packages/testing/package.json --all --no-commit --no-tag --no-push --execute \"bun run version:sync\"",
+    "version:bump": "bumpp package.json packages/aponiajs/package.json packages/audit/package.json packages/auth/package.json packages/cache/package.json packages/cli/package.json packages/common/package.json packages/compression/package.json packages/core/package.json packages/cors/package.json packages/create-aponia/package.json packages/cron/package.json packages/database/package.json packages/devtools/package.json packages/events/package.json packages/graphql/package.json packages/http/package.json packages/idempotency/package.json packages/mcp/package.json packages/metrics/package.json packages/microservices/package.json packages/h3/package.json packages/hono/package.json packages/nitro/package.json packages/serverless/package.json packages/openapi/package.json packages/opentelemetry/package.json packages/platform-core/package.json packages/platform-elysia/package.json packages/platform-h3/package.json packages/platform-hono/package.json packages/queue/package.json packages/rate-limit/package.json packages/security/package.json packages/session/package.json packages/store-redis/package.json packages/view/package.json packages/tenancy/package.json packages/testing/package.json --all --no-commit --no-tag --no-push --execute \"bun run version:sync\"",
     "version:patch": "bun run version:bump -- --release patch --yes",
     "version:minor": "bun run version:bump -- --release minor --yes",
     "version:major": "bun run version:bump -- --release major --yes",
@@ -63,7 +63,7 @@
     "release:tag": "bun scripts/distribution-tag.ts",
     "release:branch": "bun scripts/release-branch.ts",
     "release:canary": "bun scripts/canary-version.ts",
-    "release:dry-run": "for package in audit auth cache compression events http idempotency common core platform-core platform-elysia platform-hono queue cli create-aponia devtools cron database cors graphql mcp metrics microservices serverless h3 hono nitro testing openapi opentelemetry rate-limit security session tenancy store-redis view; do bun pm pack --cwd packages/$package --dry-run; done",
+    "release:dry-run": "for package in audit auth cache compression events http idempotency common core platform-core platform-elysia platform-h3 platform-hono queue cli create-aponia devtools cron database cors graphql mcp metrics microservices serverless h3 hono nitro testing openapi opentelemetry rate-limit security session tenancy store-redis view; do bun pm pack --cwd packages/$package --dry-run; done",
     "release:sbom": "bun run scripts/sbom.ts",
     "prepare": "bunx --bun vp config"
   },

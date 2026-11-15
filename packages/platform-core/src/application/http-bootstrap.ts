@@ -259,14 +259,9 @@ export function createPlatformFactory<TNative>(host: PlatformHost<TNative, unkno
           continue;
         }
         const token = definition.token as ClassToken<unknown>;
-        const metadata = getControllerMetadata(token);
-        if (!metadata) {
-          throw new AponiaError(
-            "INVALID_CONTROLLER",
-            `Class "${token.name}" is missing the @Controller() decorator.`,
-            { controller: token.name },
-          );
-        }
+        // The lowering refuses an undecorated controller, so one reaching this
+        // point carries the metadata the route compiler reads.
+        const metadata = getControllerMetadata(token)!;
         const compiled = compileRoutes(token, metadata.path);
         const requestScoped = container.controllerScope(module, definition) === "request";
         const instance = requestScoped

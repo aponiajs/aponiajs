@@ -33,6 +33,7 @@ const guideDirectories = [
   "packages/opentelemetry",
   "packages/platform-elysia",
   "packages/platform-core",
+  "packages/platform-h3",
   "packages/platform-hono",
   "packages/queue",
   "packages/rate-limit",

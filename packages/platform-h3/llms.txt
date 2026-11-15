@@ -1,0 +1,21 @@
+# @aponiajs/platform-h3
+
+> AponiaJS on H3: routes, validation, enhancers, and lifecycle on the H3 runtime.
+
+## What this package exports
+
+- `AponiaFactory`: `create` boots the graph and returns the managed application; `createNative` returns the H3 instance.
+- `toH3PlatformHandler(application)`: a H3 middleware that answers the routes Aponia owns and lets the rest continue.
+- `createH3Host()`: the runtime binding the platform factory runs on.
+
+## Behavior a consumer can rely on
+
+- The dispatcher is middleware, so it never answers `404` on the application's behalf.
+- Middleware registered before the dispatcher runs before Aponia's guards and handlers.
+- Routes, validation, enhancers, pipes, middleware, versioning, the prefix, SSE, and lifecycle are the same contract as the Elysia platform.
+- `listen` is Bun's server; the runtime is Bun, not Node.
+
+## Links
+
+- [Repository guide](https://github.com/aponiajs/aponiajs/blob/release/beta/AGENTS.md)
+- [Adapters](https://github.com/aponiajs/aponiajs/blob/release/beta/docs/adapters.md)

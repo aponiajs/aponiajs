@@ -71,6 +71,11 @@ const packageLayouts: readonly PackageLayout[] = [
     directories: ["module", "policy", "service", "store"],
   },
   {
+    sourceRoot: "packages/platform-h3/src",
+    files: ["index.ts"],
+    directories: ["application", "host"],
+  },
+  {
     sourceRoot: "packages/platform-hono/src",
     files: ["index.ts"],
     directories: ["application", "host"],

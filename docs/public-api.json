@@ -3391,6 +3391,31 @@
       ]
     },
     {
+      "name": "@aponiajs/platform-h3",
+      "exports": [
+        {
+          "name": "AponiaFactory",
+          "kind": "value"
+        },
+        {
+          "name": "createH3Host",
+          "kind": "value"
+        },
+        {
+          "name": "H3AponiaApplication",
+          "kind": "type"
+        },
+        {
+          "name": "H3Application",
+          "kind": "type"
+        },
+        {
+          "name": "toH3PlatformHandler",
+          "kind": "value"
+        }
+      ]
+    },
+    {
       "name": "@aponiajs/platform-hono",
       "exports": [
         {

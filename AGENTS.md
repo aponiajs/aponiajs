@@ -49,6 +49,8 @@ Bun workspace. Framework packages live in `packages/`:
 | `@aponiajs/nitro`           | Nitro delivery adapter for an application                       | `serverless`, peer `nitro`                                               |
 | `@aponiajs/platform-elysia` | Elysia adapter, HTTP routes, WebSocket gateways, plugins        | `common`, `core`, peer `elysia`                                          |
 | `@aponiajs/platform-core`   | Runtime-neutral primitives every HTTP platform shares           | `common`, `core`                                                         |
+| `@aponiajs/platform-h3`     | AponiaJS on the H3 runtime                                      | `platform-core`, peer `h3`, optional `crossws`                           |
+| `@aponiajs/platform-hono`   | AponiaJS on the Hono runtime                                    | `platform-core`, peer `hono`                                             |
 | `@aponiajs/cli`             | `aponia new` and `aponia generate` schematics                   | `change-case`, `ts-morph`, `yargs-parser`, `inflection`, `oxfmt` (exact) |
 | `create-aponia`             | `bun create aponia` entrypoint into the same generator          | `@aponiajs/cli`                                                          |
 | `@aponiajs/cron`            | Scheduled jobs declared in a module, from validated config      | `common`, `platform-elysia`, `@elysia/cron`, peer `elysia`               |
@@ -107,6 +109,7 @@ being changed:
 | [`packages/idempotency`](packages/idempotency/AGENTS.md)         | The idempotent request replay package                            |
 | [`packages/platform-elysia`](packages/platform-elysia/AGENTS.md) | Bootstrap, route mapping, native plugins, context types          |
 | [`packages/platform-core`](packages/platform-core/AGENTS.md)     | Shared execution context, guard pipeline, pipes, middleware      |
+| [`packages/platform-h3`](packages/platform-h3/AGENTS.md)         | The H3 platform: host binding, factory, middleware               |
 | [`packages/platform-hono`](packages/platform-hono/AGENTS.md)     | The Hono platform: host binding, factory, middleware             |
 | [`packages/cli`](packages/cli/AGENTS.md)                         | Schematics, templates, generated layout                          |
 | [`packages/create-aponia`](packages/create-aponia/AGENTS.md)     | The `bun create aponia` entrypoint                               |
