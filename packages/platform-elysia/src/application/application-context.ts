@@ -18,7 +18,7 @@ import type { AponiaRootModule } from "@aponiajs/platform-core";
 import { aponiaVersion } from "../version.ts";
 import { createSystemLogger, runShutdownHooks } from "./application-bootstrap.ts";
 import type { AponiaApplicationOptions } from "./application.types.ts";
-import { collectLifecycleCalls } from "./lifecycle-hooks.ts";
+import { collectLifecycleCalls } from "@aponiajs/platform-core";
 import { LazyModuleLoader } from "./lazy-module-loader.ts";
 import {
   collectMessageHandlers,

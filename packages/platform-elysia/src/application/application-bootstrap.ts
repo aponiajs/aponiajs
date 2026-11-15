@@ -86,7 +86,7 @@ import {
   attachApplicationShutdown,
   collectLifecycleCalls,
   type LifecycleCall,
-} from "./lifecycle-hooks.ts";
+} from "@aponiajs/platform-core";
 import { LazyModuleLoader } from "./lazy-module-loader.ts";
 import { installVersionRouting } from "./versioning.ts";
 import {
@@ -462,7 +462,9 @@ export async function bootstrapAponiaApplication(
   // it. The hooks do not interleave with instantiation: every module's providers
   // and controllers exist before the first hook runs, so what this orders is
   // modules rather than isolating one.
-  for (const call of collectLifecycleCalls(container, "onModuleInit")) {
+  for (const call of collectLifecycleCalls(container, "onModuleInit", {
+    includeController: isElysiaController,
+  })) {
     await call();
   }
 
@@ -471,9 +473,17 @@ export async function bootstrapAponiaApplication(
   // it here rather than from the container later means `close()` needs no
   // container: an application the boot did not produce reads as `undefined` and
   // keeps the behaviour it has today.
-  const beforeShutdown = collectLifecycleCalls(container, "beforeApplicationShutdown");
-  const moduleDestroy = [...collectLifecycleCalls(container, "onModuleDestroy")].reverse();
-  const applicationShutdown = collectLifecycleCalls(container, "onApplicationShutdown");
+  const beforeShutdown = collectLifecycleCalls(container, "beforeApplicationShutdown", {
+    includeController: isElysiaController,
+  });
+  const moduleDestroy = [
+    ...collectLifecycleCalls(container, "onModuleDestroy", {
+      includeController: isElysiaController,
+    }),
+  ].reverse();
+  const applicationShutdown = collectLifecycleCalls(container, "onApplicationShutdown", {
+    includeController: isElysiaController,
+  });
 
   // Each group of stopping hooks runs once per boot, and a second caller joins the
   // group already running rather than starting another — teardown hooks are not
@@ -571,7 +581,9 @@ export async function bootstrapAponiaApplication(
   // Once, after every route and gateway is mounted and no further plugin work is
   // pending: a hook that needs the whole graph — a scheduler, a migration check,
   // a cache warm — has one place to stand, and it is before anything can listen.
-  for (const call of collectLifecycleCalls(container, "onApplicationBootstrap")) {
+  for (const call of collectLifecycleCalls(container, "onApplicationBootstrap", {
+    includeController: isElysiaController,
+  })) {
     await call();
   }
 

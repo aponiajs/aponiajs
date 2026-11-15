@@ -2628,11 +2628,23 @@
           "kind": "type"
         },
         {
+          "name": "ApplicationShutdown",
+          "kind": "type"
+        },
+        {
+          "name": "attachApplicationShutdown",
+          "kind": "value"
+        },
+        {
           "name": "buildArguments",
           "kind": "value"
         },
         {
           "name": "buildResponse",
+          "kind": "value"
+        },
+        {
+          "name": "collectLifecycleCalls",
           "kind": "value"
         },
         {
@@ -2744,6 +2756,22 @@
           "kind": "value"
         },
         {
+          "name": "LifecycleCall",
+          "kind": "type"
+        },
+        {
+          "name": "lifecycleCallable",
+          "kind": "value"
+        },
+        {
+          "name": "LifecycleCollectionOptions",
+          "kind": "type"
+        },
+        {
+          "name": "LifecycleHookContract",
+          "kind": "type"
+        },
+        {
           "name": "MountedRoute",
           "kind": "type"
         },
@@ -2762,6 +2790,10 @@
         {
           "name": "ProblemDetails",
           "kind": "type"
+        },
+        {
+          "name": "readApplicationShutdown",
+          "kind": "value"
         },
         {
           "name": "readBody",

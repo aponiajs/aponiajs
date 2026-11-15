@@ -8,6 +8,18 @@ export type {
   AponiaModuleDescriptorArtifact,
   AponiaRootModuleSelection,
 } from "./artifacts/module-descriptor-artifact.types.ts";
+export {
+  attachApplicationShutdown,
+  collectLifecycleCalls,
+  lifecycleCallable,
+  readApplicationShutdown,
+} from "./application/lifecycle-hooks.ts";
+export type {
+  ApplicationShutdown,
+  LifecycleCall,
+  LifecycleCollectionOptions,
+  LifecycleHookContract,
+} from "./application/lifecycle-hooks.ts";
 export { HttpError, httpError, httpErrors } from "./errors/http-error.ts";
 export type { HttpErrorFactories } from "./errors/http-error.ts";
 export type {

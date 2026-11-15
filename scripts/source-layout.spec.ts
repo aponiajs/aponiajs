@@ -93,6 +93,7 @@ const packageLayouts: readonly PackageLayout[] = [
     sourceRoot: "packages/platform-core/src",
     files: ["index.ts"],
     directories: [
+      "application",
       "artifacts",
       "enhancers",
       "errors",

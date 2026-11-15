@@ -15,7 +15,11 @@ describe("framework contract", () => {
 
   test("accounts for every literal metadata key the runtime writes", async () => {
     const keys = new Set<string>();
-    for (const root of ["packages/common/src", "packages/platform-elysia/src"]) {
+    for (const root of [
+      "packages/common/src",
+      "packages/platform-core/src",
+      "packages/platform-elysia/src",
+    ]) {
       for (const file of await listTypeScriptFiles(root)) {
         const source = await Bun.file(file).text();
         for (const match of source.matchAll(/Symbol\.for\(\s*"([^"]+)"/g)) {

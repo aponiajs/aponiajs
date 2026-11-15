@@ -6,9 +6,7 @@ import type {
   OnModuleInit,
 } from "@aponiajs/common";
 import type { AponiaContainer } from "@aponiajs/core";
-import type { ModuleDefinition } from "@aponiajs/common";
-import { isElysiaController } from "../controllers/controller-definition.ts";
-import type { ElysiaApplication } from "./native-application.types.ts";
+import type { ControllerDefinition, ModuleDefinition } from "@aponiajs/common";
 
 /**
  * The contract a hook name belongs to, for the type of the collected callables.
@@ -91,11 +89,21 @@ export function lifecycleCallable(
  *
  * @internal
  */
+export interface LifecycleCollectionOptions {
+  /** Whether controllers take part; a provider-only pass states `false`. */
+  readonly includeControllers?: boolean;
+  /** Whether one controller takes part; a platform states its own descriptor kind. */
+  readonly includeController?: (controller: ControllerDefinition) => boolean;
+}
+
 export function collectLifecycleCalls(
   container: AponiaContainer,
   name: LifecycleHookName<LifecycleHookContract>,
-  includeControllers = true,
+  options: boolean | LifecycleCollectionOptions = true,
 ): LifecycleCall[] {
+  const settings = typeof options === "boolean" ? { includeControllers: options } : options;
+  const includeControllers = settings.includeControllers ?? true;
+  const includeController = settings.includeController ?? (() => true);
   const calls: LifecycleCall[] = [];
   const collected = new Set<unknown>();
 
@@ -129,7 +137,7 @@ export function collectLifecycleCalls(
     }
     if (includeControllers) {
       for (const controller of module.controllers) {
-        if (!isElysiaController(controller)) {
+        if (!includeController(controller)) {
           continue;
         }
         if (container.controllerScope(module, controller) === "request") {
@@ -182,7 +190,7 @@ const lifecycleKey: unique symbol = Symbol.for("aponia.application.lifecycle");
  * @internal
  */
 export function attachApplicationShutdown(
-  application: ElysiaApplication<unknown>,
+  application: object,
   shutdown: ApplicationShutdown,
 ): void {
   Object.defineProperty(application, lifecycleKey, {

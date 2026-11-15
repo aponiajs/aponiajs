@@ -3,7 +3,7 @@ import { Elysia, type AnyElysia } from "elysia";
 import { reportThroughLogger } from "../errors/default-exception-filter.ts";
 import type { AponiaListenOptions } from "./application.types.ts";
 import { readApplicationToken } from "./application-container.ts";
-import { readApplicationShutdown } from "./lifecycle-hooks.ts";
+import { readApplicationShutdown } from "@aponiajs/platform-core";
 import { installShutdownSignalHandlers } from "./shutdown-signals.ts";
 
 /**
