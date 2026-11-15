@@ -702,6 +702,9 @@ Snapshot contract version 1.
 
 ## `@aponiajs/platform-core`
 
+- `AponiaAdapter` (type)
+- `AponiaApplicationContract` (type)
+- `AponiaFactory` (value)
 - `AponiaHttpApplication` (value)
 - `AponiaHttpApplicationOptions` (type)
 - `AponiaInvokerArtifact` (type)
@@ -709,6 +712,7 @@ Snapshot contract version 1.
 - `AponiaModuleDescriptorArtifact` (type)
 - `AponiaRootModule` (type)
 - `AponiaRootModuleSelection` (type)
+- `ApplicationAdapter` (type)
 - `ApplicationShutdown` (type)
 - `BootedHttpApplication` (type)
 - `CompiledRoute` (type)
@@ -730,6 +734,7 @@ Snapshot contract version 1.
 - `HttpErrorStatusName` (type)
 - `HttpKernel` (type)
 - `HttpKernelOptions` (type)
+- `KernelAdapter` (type)
 - `LifecycleCall` (type)
 - `LifecycleCollectionOptions` (type)
 - `LifecycleHookContract` (type)
@@ -898,6 +903,7 @@ Snapshot contract version 1.
 - `definePlugin` (value)
 - `defineWebSocketGateway` (value)
 - `downloadFile` (value)
+- `elysiaAdapter` (value)
 - `getApplicationDiagnostics` (value)
 - `getApplicationFromStore` (value)
 - `httpError` (value)
@@ -914,6 +920,7 @@ Snapshot contract version 1.
 - `H3AponiaApplication` (type)
 - `H3Application` (type)
 - `createH3Host` (value)
+- `h3Adapter` (value)
 - `toH3PlatformHandler` (value)
 
 ## `@aponiajs/platform-hono`
@@ -922,6 +929,7 @@ Snapshot contract version 1.
 - `HonoAponiaApplication` (type)
 - `HonoApplication` (type)
 - `createHonoHost` (value)
+- `honoAdapter` (value)
 - `toHonoPlatformHandler` (value)
 
 ## `@aponiajs/platform-nitro`
@@ -930,6 +938,7 @@ Snapshot contract version 1.
 - `NitroAponiaApplication` (type)
 - `createAponiaNitroHandler` (value)
 - `createNitroHost` (value)
+- `nitroAdapter` (value)
 
 ## `@aponiajs/queue`
 

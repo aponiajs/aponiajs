@@ -34,6 +34,11 @@ here is what `@aponiajs/platform-elysia` and the other platforms run on top of.
   `resolveApplicationPipe` propagates `MISSING_PROVIDER`; `resolvePipe` keeps
   its route-level empty-constructor fallback for an enhancer that declares no
   dependencies.
+- **One factory, many adapters.** `AponiaFactory.create(root, { adapter })`
+  accepts a kernel host (`honoAdapter()`, `h3Adapter()`, `nitroAdapter()`) or an
+  application adapter (`elysiaAdapter()`), and returns the same application
+  surface either way. `listen` resolves with the application, `getUrl` states
+  the bound address, and `getHttpAdapter` is the runtime's own object.
 - **Run order is the contract.** Middleware, guards and interceptor before
   halves, the handler, interceptor after halves reversed, filters
   most-specific-first. A platform must not reorder them.

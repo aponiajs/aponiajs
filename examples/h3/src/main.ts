@@ -3,6 +3,6 @@ import { AppModule } from "./app.module.ts";
 
 const port = Number(process.env.PORT ?? 3002);
 const application = await AponiaFactory.create(AppModule, { prefix: "/api" });
-const listener = await application.listen(port);
+await application.listen(port);
 
-console.log(`[@aponiajs/example-h3] listening on ${listener.url}/api`);
+console.log(`[@aponiajs/example-h3] listening on ${application.getUrl()}/api`);

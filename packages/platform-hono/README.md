@@ -3,6 +3,19 @@
 > AponiaJS on Hono: the module graph, routes, validation, enhancers, and
 > lifecycle run on the Hono runtime instead of Elysia.
 
+## Use it through the unified factory
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-core";
+import { honoAdapter } from "@aponiajs/platform-hono";
+
+const application = await AponiaFactory.create(AppModule, { adapter: honoAdapter() });
+await application.listen(3000);
+```
+
+The platform's own factory (`import { AponiaFactory } from "@aponiajs/platform-hono"`)
+pre-binds this adapter.
+
 ## Use it
 
 ```ts

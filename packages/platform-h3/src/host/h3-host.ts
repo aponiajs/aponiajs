@@ -1,10 +1,10 @@
 import { H3, defineWebSocketHandler, getRequestIP, type H3Event } from "h3";
 import type {
   GatewayHooks,
+  KernelAdapter,
   GatewayPlan,
   GatewaySocket,
   HostDispatcher,
-  PlatformHost,
 } from "@aponiajs/platform-core";
 
 /** The native application this platform creates. */
@@ -84,7 +84,7 @@ function toGatewaySocket(peer: CrosswsPeer): GatewaySocket {
  *
  * @returns The host.
  */
-export function createH3Host(): PlatformHost<H3Application, H3Event> {
+export function createH3Host(): KernelAdapter<H3Application, H3Event> {
   const gateways = new Map<string, CrosswsHooks>();
   let adapter: CrosswsBunAdapter | undefined;
 
@@ -99,6 +99,7 @@ export function createH3Host(): PlatformHost<H3Application, H3Event> {
   }
 
   return Object.freeze({
+    kind: "host" as const,
     name: "h3",
     createApplication(): H3Application {
       return new H3();
@@ -196,4 +197,13 @@ export function createH3Host(): PlatformHost<H3Application, H3Event> {
           },
         }),
   });
+}
+
+/**
+ * The H3 binding the unified factory accepts.
+ *
+ * @returns The adapter.
+ */
+export function h3Adapter(): KernelAdapter<H3Application, H3Event> {
+  return createH3Host();
 }

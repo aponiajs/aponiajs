@@ -10,50 +10,28 @@ import {
   type ClassToken,
   type ExceptionFilter,
   type Interceptor,
-  type LoggerService,
   type ModuleDefinition,
   type Token,
 } from "@aponiajs/common";
 import { createContainer, type AponiaContainer } from "@aponiajs/core";
 import type { PlatformHost } from "../host/platform-host.types.ts";
-import type {
-  HostRequestInfo,
-  HttpKernel,
-  HttpKernelOptions,
-  MountedRoute,
-} from "../kernel/kernel.types.ts";
+import type { HostRequestInfo, HttpKernel, MountedRoute } from "../kernel/kernel.types.ts";
 import { createHttpKernel } from "../kernel/http-kernel.ts";
 import { resolveApplicationPipes, resolvePipe } from "../pipes/pipe-resolver.ts";
 import { compileRootModule, HttpControllerKind } from "../modules/module-compiler.ts";
 import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
+import type { AponiaAdapter, AponiaApplicationContract } from "../host/platform-host.types.ts";
 import { compileRoutes } from "../routing/route-compilation.ts";
 import { createGatewayDispatcher, injectGatewayServer } from "../websockets/gateway-dispatch.ts";
 import { compileGatewayPlan } from "../websockets/gateway-plan.ts";
 import { joinPaths } from "../routing/route-path.ts";
 import { normalizeRoutePrefix } from "../routing/route-prefix.ts";
+import type { AponiaHttpApplicationOptions } from "./application.types.ts";
 import {
   attachApplicationShutdown,
   collectLifecycleCalls,
   type ApplicationShutdown,
 } from "./lifecycle-hooks.ts";
-
-/** What an application on a non-Elysia platform is built with. */
-export interface AponiaHttpApplicationOptions {
-  /** The logger failures are reported through; `false` silences reporting. */
-  readonly logger?: LoggerService | false;
-  /** A prefix every Aponia route mounts under. */
-  readonly prefix?: string;
-  /** Application state, handed to every request as `store`. */
-  readonly state?: Record<string, unknown>;
-  /** The largest request body the kernel reads, in bytes. */
-  readonly maxBodyBytes?: number;
-  /** The Aponia middleware chain, run before a route's guards. */
-  readonly middleware?: HttpKernelOptions["middleware"];
-  /** Renders a `@Render()` route's view. */
-  readonly renderView?: HttpKernelOptions["renderView"];
-  /** Adjusts the native application before anything is mounted on it. */
-  readonly configureNative?: (application: never) => unknown;
-}
 
 /** What one boot produced. */
 export interface BootedHttpApplication<TNative = unknown> {
@@ -143,6 +121,8 @@ export class AponiaHttpApplication<TNative = unknown> {
   readonly #shutdown: ApplicationShutdown;
   readonly #host: PlatformHost<TNative, unknown> | undefined;
   #closed = false;
+  #url: string | undefined;
+  #listener: { readonly url: string; close(force?: boolean): Promise<void> } | undefined;
 
   /** @internal */
   constructor(
@@ -166,7 +146,12 @@ export class AponiaHttpApplication<TNative = unknown> {
     return this.#kernel.tryHandle(request, info);
   }
 
-  /** The native application the host created. */
+  /** The runtime's own application object. */
+  getHttpAdapter(): TNative {
+    return this.#native;
+  }
+
+  /** The native application the host created; `getHttpAdapter()` by another name. */
   getNativeApplication(): TNative {
     return this.#native;
   }
@@ -177,17 +162,13 @@ export class AponiaHttpApplication<TNative = unknown> {
   }
 
   /**
-   * Starts the host's listener.
-   *
-   * A host that cannot listen states none, and this refuses rather than
-   * pretending a server exists.
+   * Binds a port and resolves with the application itself.
    *
    * @param port - The port to bind, or `0` for one the runtime picks.
-   * @returns The listener, with its URL and a `close`.
+   * @returns This application, so `listen` reads as the last step of a chain.
+   * @throws `UNSUPPORTED_PLATFORM_FEATURE` when the host has no listener.
    */
-  async listen(
-    port: number,
-  ): Promise<{ readonly url: string; close(force?: boolean): Promise<void> }> {
+  async listen(port: number): Promise<this> {
     if (this.#host?.listen === undefined) {
       throw new AponiaError(
         "UNSUPPORTED_PLATFORM_FEATURE",
@@ -195,7 +176,26 @@ export class AponiaHttpApplication<TNative = unknown> {
         { feature: "listen" },
       );
     }
-    return await this.#host.listen(this.#native, port);
+    this.#listener = await this.#host.listen(this.#native, port);
+    this.#url = this.#listener.url;
+    return this;
+  }
+
+  /**
+   * The address the application is listening on.
+   *
+   * @returns The URL the host bound.
+   * @throws `APPLICATION_NOT_LISTENING` before `listen`.
+   */
+  getUrl(): string {
+    if (this.#url === undefined) {
+      throw new AponiaError(
+        "APPLICATION_NOT_LISTENING",
+        "The application is not listening; call listen() first.",
+        {},
+      );
+    }
+    return this.#url;
   }
 
   /** The runtime's name, when a host created this application. */
@@ -209,12 +209,45 @@ export class AponiaHttpApplication<TNative = unknown> {
       return;
     }
     this.#closed = true;
+    if (this.#listener !== undefined) {
+      await this.#listener.close(force);
+    }
     await this.#shutdown(force);
     if (this.#host?.close !== undefined) {
       await this.#host.close(this.#native);
     }
   }
 }
+
+/**
+ * The one factory an application calls, whichever runtime serves it.
+ *
+ * An adapter states the runtime: a kernel host boots the graph into the shared
+ * kernel, while an application adapter (the Elysia platform) boots through its
+ * own executor so its native features stay reachable. Both return the same
+ * application surface.
+ */
+export const AponiaFactory = Object.freeze({
+  /**
+   * Boots an application on the adapter the options state.
+   *
+   * @param rootModule - The root module.
+   * @param options - The boot options, including the runtime adapter.
+   * @returns The application.
+   */
+  async create<TNative = unknown>(
+    rootModule: AponiaRootModule,
+    options: AponiaHttpApplicationOptions & { readonly adapter: AponiaAdapter<TNative> },
+  ): Promise<AponiaApplicationContract<TNative>> {
+    const adapter = options.adapter;
+    if (adapter.kind === "application") {
+      return await adapter.create(rootModule, options);
+    }
+    return (await createPlatformFactory(
+      adapter as unknown as Parameters<typeof createPlatformFactory<TNative>>[0],
+    ).create(rootModule, options)) as AponiaApplicationContract<TNative>;
+  },
+});
 
 /**
  * Builds the factory one platform exposes, over the host it implements.

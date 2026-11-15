@@ -10,7 +10,7 @@ import {
   SubscribeMessage,
   WebSocketGateway,
 } from "@aponiajs/common";
-import { AponiaFactory, createAponiaNitroHandler } from "../src/index.ts";
+import { AponiaFactory, createAponiaNitroHandler, nitroAdapter } from "../src/index.ts";
 
 @Controller("widgets")
 class WidgetController {
@@ -95,5 +95,12 @@ describe("Aponia on Nitro", () => {
 
     expect(response.status).toBe(426);
     await application.close();
+  });
+
+  test("states the nitro adapter for the unified factory", () => {
+    const adapter = nitroAdapter();
+
+    expect(adapter.kind).toBe("host");
+    expect(adapter.name).toBe("nitro");
   });
 });

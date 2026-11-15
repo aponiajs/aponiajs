@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   Injectable,
+  ConnectedSocket,
   MessageBody,
   Module,
   Post,
@@ -15,7 +16,7 @@ import {
 } from "@aponiajs/common";
 import { Type } from "typebox";
 import { H3 } from "h3";
-import { AponiaFactory, createH3Host, toH3PlatformHandler } from "../src/index.ts";
+import { AponiaFactory, createH3Host, h3Adapter, toH3PlatformHandler } from "../src/index.ts";
 
 @Injectable()
 class DenyGuard implements CanActivate {
@@ -57,6 +58,20 @@ class EchoGateway {
   @SubscribeMessage("echo")
   echo(@MessageBody() data: unknown): unknown {
     return data;
+  }
+
+  @SubscribeMessage("use-socket")
+  useSocket(
+    @ConnectedSocket() socket: {
+      subscribe(topic: string): void;
+      publish(topic: string, data: string): void;
+      close(code?: number, reason?: string): void;
+    },
+  ): undefined {
+    socket.subscribe("room");
+    socket.publish("room", "broadcast");
+    socket.close(1000, "done");
+    return undefined;
   }
 }
 
@@ -175,7 +190,6 @@ describe("Aponia on H3", () => {
     expect(listener).toBeDefined();
     const response = await fetch(`${listener?.url}/widgets`);
     expect(response.status).toBe(200);
-    await listener?.close();
     await application.close();
   });
 
@@ -214,8 +228,8 @@ describe("Aponia on H3", () => {
 
   test("upgrades a gateway over Bun's server and answers an event", async () => {
     const application = await AponiaFactory.create(GatewayModule, { logger: false });
-    const listener = await application.listen(0);
-    const socket = new WebSocket(`${listener.url.replace("http", "ws")}/ws`);
+    await application.listen(0);
+    const socket = new WebSocket(`${application.getUrl().replace("http", "ws")}/ws`);
 
     await new Promise<void>((resolve, reject) => {
       socket.onopen = () => resolve();
@@ -228,7 +242,6 @@ describe("Aponia on H3", () => {
 
     expect(JSON.parse(await frame)).toEqual({ event: "echo", data: { n: 1 } });
     socket.close();
-    await listener?.close();
     await application.close();
   });
 
@@ -265,5 +278,30 @@ describe("Aponia on H3", () => {
 
     expect(sent.map((frame) => JSON.parse(frame))).toEqual([{ event: "echo", data: { n: 1 } }]);
     await application.close();
+  });
+
+  test("hands a handler the socket, which can subscribe, publish, and close", async () => {
+    const application = await AponiaFactory.create(GatewayModule, { logger: false });
+    await application.listen(0);
+    const socket = new WebSocket(`${application.getUrl().replace("http", "ws")}/ws`);
+
+    await new Promise<void>((resolve, reject) => {
+      socket.onopen = () => resolve();
+      socket.onerror = () => reject(new Error("the socket did not open"));
+    });
+    const closed = new Promise<number>((resolve) => {
+      socket.onclose = (event) => resolve(event.code);
+    });
+    socket.send(JSON.stringify({ event: "use-socket", data: {} }));
+
+    expect(await closed).toBe(1000);
+    await application.close();
+  });
+
+  test("states the h3 adapter for the unified factory", () => {
+    const adapter = h3Adapter();
+
+    expect(adapter.kind).toBe("host");
+    expect(adapter.name).toBe("h3");
   });
 });

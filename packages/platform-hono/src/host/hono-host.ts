@@ -1,10 +1,10 @@
 import { Hono, type Context } from "hono";
 import type {
   GatewayHooks,
+  KernelAdapter,
   GatewayPlan,
   GatewaySocket,
   HostDispatcher,
-  PlatformHost,
 } from "@aponiajs/platform-core";
 
 /** The native application this platform creates. */
@@ -79,8 +79,9 @@ function toGatewaySocket(socket: HonoSocket): GatewaySocket {
  *
  * @returns The host.
  */
-export function createHonoHost(): PlatformHost<HonoApplication, Context> {
+export function createHonoHost(): KernelAdapter<HonoApplication, Context> {
   return Object.freeze({
+    kind: "host" as const,
     name: "hono",
     createApplication(): HonoApplication {
       return new Hono();
@@ -147,4 +148,17 @@ export function createHonoHost(): PlatformHost<HonoApplication, Context> {
           },
         }),
   });
+}
+
+/**
+ * The Hono binding the unified factory accepts.
+ *
+ * `AponiaFactory.create(AppModule, { adapter: honoAdapter() })` boots through
+ * the shared kernel and returns the same application surface every platform
+ * returns.
+ *
+ * @returns The adapter.
+ */
+export function honoAdapter(): KernelAdapter<HonoApplication, Context> {
+  return createHonoHost();
 }

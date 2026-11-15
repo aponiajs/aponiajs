@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/platform-nitro",
-  "version": "1.0.0-beta.57",
+  "version": "1.0.0-beta.58",
   "description": "AponiaJS on Nitro: the H3 platform's host as a Nitro server handler.",
   "keywords": [
     "aponia",

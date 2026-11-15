@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/nitro",
-  "version": "1.0.0-beta.57",
+  "version": "1.0.0-beta.58",
   "description": "Nitro delivery adapter for an Aponia application.",
   "keywords": [
     "aponia",

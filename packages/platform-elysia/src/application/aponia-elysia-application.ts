@@ -41,6 +41,11 @@ export class AponiaApplication<TNativeApplication extends AnyElysia = Elysia> {
     return this.#nativeApplication;
   }
 
+  /** The runtime's own application object; `getNativeApplication()` by another name. */
+  getHttpAdapter(): AnyElysia {
+    return this.#nativeApplication;
+  }
+
   /**
    * The value a token resolves to, read from the container the boot built.
    *
@@ -92,7 +97,7 @@ export class AponiaApplication<TNativeApplication extends AnyElysia = Elysia> {
    * await application.listen(3000);
    * ```
    */
-  async listen(port: number, options: AponiaListenOptions = {}): Promise<void> {
+  async listen(port: number, options: AponiaListenOptions = {}): Promise<this> {
     try {
       this.#nativeApplication.listen(port);
       await this.#nativeApplication.modules;
@@ -108,6 +113,7 @@ export class AponiaApplication<TNativeApplication extends AnyElysia = Elysia> {
         // in a process whose own death is what the case reads.
         installShutdownSignalHandlers((signal) => this.close(true, signal), this.#logger);
       }
+      return this;
     } catch (error) {
       // Reported rather than the reason the caller hears: `reportThroughLogger`
       // guards the logger, so the failure thrown below is still the engine's.

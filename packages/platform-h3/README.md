@@ -3,6 +3,19 @@
 > AponiaJS on H3: the module graph, routes, validation, enhancers, and
 > lifecycle run on the H3 runtime instead of Elysia.
 
+## Use it through the unified factory
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-core";
+import { h3Adapter } from "@aponiajs/platform-h3";
+
+const application = await AponiaFactory.create(AppModule, { adapter: h3Adapter() });
+await application.listen(3000);
+```
+
+The platform's own factory (`import { AponiaFactory } from "@aponiajs/platform-h3"`)
+pre-binds this adapter.
+
 ## Use it
 
 ```ts

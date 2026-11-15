@@ -2608,6 +2608,18 @@
       "name": "@aponiajs/platform-core",
       "exports": [
         {
+          "name": "AponiaAdapter",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaApplicationContract",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaFactory",
+          "kind": "value"
+        },
+        {
           "name": "AponiaHttpApplication",
           "kind": "value"
         },
@@ -2633,6 +2645,10 @@
         },
         {
           "name": "AponiaRootModuleSelection",
+          "kind": "type"
+        },
+        {
+          "name": "ApplicationAdapter",
           "kind": "type"
         },
         {
@@ -2806,6 +2822,10 @@
         {
           "name": "joinPaths",
           "kind": "value"
+        },
+        {
+          "name": "KernelAdapter",
+          "kind": "type"
         },
         {
           "name": "LifecycleCall",
@@ -3185,6 +3205,10 @@
           "kind": "type"
         },
         {
+          "name": "elysiaAdapter",
+          "kind": "value"
+        },
+        {
           "name": "ElysiaApplication",
           "kind": "type"
         },
@@ -3434,6 +3458,10 @@
           "kind": "value"
         },
         {
+          "name": "h3Adapter",
+          "kind": "value"
+        },
+        {
           "name": "H3AponiaApplication",
           "kind": "type"
         },
@@ -3456,6 +3484,10 @@
         },
         {
           "name": "createHonoHost",
+          "kind": "value"
+        },
+        {
+          "name": "honoAdapter",
           "kind": "value"
         },
         {
@@ -3485,6 +3517,10 @@
         },
         {
           "name": "createNitroHost",
+          "kind": "value"
+        },
+        {
+          "name": "nitroAdapter",
           "kind": "value"
         },
         {

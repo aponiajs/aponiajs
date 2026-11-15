@@ -3,6 +3,19 @@
 > AponiaJS on Nitro: the H3 platform's host, exposed as the server handler a
 > Nitro route exports.
 
+## Use it through the unified factory
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-core";
+import { nitroAdapter } from "@aponiajs/platform-nitro";
+
+const application = await AponiaFactory.create(AppModule, { adapter: nitroAdapter() });
+await application.listen(3000);
+```
+
+The platform's own factory (`import { AponiaFactory } from "@aponiajs/platform-nitro"`)
+pre-binds this adapter.
+
 ## Use it
 
 ```ts

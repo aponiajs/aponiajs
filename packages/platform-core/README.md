@@ -12,6 +12,14 @@ these primitives. Use it directly only when you are writing a platform.
 ## Use it
 
 ```ts
+import { AponiaFactory } from "@aponiajs/platform-core";
+import { honoAdapter } from "@aponiajs/platform-hono";
+
+const application = await AponiaFactory.create(AppModule, { adapter: honoAdapter() });
+await application.listen(3000);
+```
+
+```ts
 import {
   StaticRouteExecutionContext,
   compileUnrolledGuards,

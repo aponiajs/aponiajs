@@ -1,5 +1,5 @@
 import { createH3Host, type H3Application } from "@aponiajs/platform-h3";
-import type { PlatformHost } from "@aponiajs/platform-core";
+import type { KernelAdapter } from "@aponiajs/platform-core";
 import type { H3Event } from "h3";
 
 /**
@@ -10,9 +10,18 @@ import type { H3Event } from "h3";
  * a log line report. Nitro owns the server and the process lifecycle, so an
  * application started by Nitro never calls the listener.
  */
-export function createNitroHost(): PlatformHost<H3Application, H3Event> {
+export function createNitroHost(): KernelAdapter<H3Application, H3Event> {
   return Object.freeze({
     ...createH3Host(),
     name: "nitro",
   });
+}
+
+/**
+ * The Nitro binding the unified factory accepts.
+ *
+ * @returns The adapter.
+ */
+export function nitroAdapter(): KernelAdapter<H3Application, H3Event> {
+  return createNitroHost();
 }

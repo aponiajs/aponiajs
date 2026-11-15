@@ -1,5 +1,6 @@
 export { AponiaApplication } from "./application/aponia-elysia-application.ts";
 export { AponiaFactory } from "./application/aponia-factory.ts";
+export { elysiaAdapter } from "./application/elysia-adapter.ts";
 export { AponiaApplicationContext } from "./application/application-context.ts";
 export { LazyModuleLoader, LazyModuleRef } from "./application/lazy-module-loader.ts";
 export { getApplicationDiagnostics } from "./application/application-diagnostics.ts";

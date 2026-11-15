@@ -25,12 +25,25 @@ dispatcher is mounted, and how a request and a gateway are answered.
 
 ## Platforms
 
-```ts
-import { AponiaFactory } from "@aponiajs/platform-hono";
+One factory boots on any runtime; the adapter states which one:
 
-const application = await AponiaFactory.create(AppModule, { prefix: "/api" });
-application.listen?.(3000);
+```ts
+import { AponiaFactory } from "@aponiajs/platform-core";
+import { honoAdapter } from "@aponiajs/platform-hono";
+
+const application = await AponiaFactory.create(AppModule, {
+  adapter: honoAdapter(), // or elysiaAdapter(), h3Adapter(), nitroAdapter()
+  prefix: "/api",
+});
+await application.listen(3000);
+application.getUrl();
+application.getHttpAdapter(); // the runtime's own application object
 ```
+
+`application.listen(port)` resolves with the application itself, `getUrl()` states
+the bound address, and `getHttpAdapter()` is the runtime's instance — the same
+surface on every platform. Each platform package also exports a convenience
+factory that pre-binds its own adapter, for an application that never switches.
 
 The Hono and H3 factories also expose `createNative`, which returns the runtime's
 own application, and a middleware, which mounts a booted application inside an

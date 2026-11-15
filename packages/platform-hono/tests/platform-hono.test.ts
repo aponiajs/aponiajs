@@ -15,7 +15,8 @@ import {
 } from "@aponiajs/common";
 import { Type } from "typebox";
 import { Hono } from "hono";
-import { AponiaFactory, createHonoHost, toHonoPlatformHandler } from "../src/index.ts";
+import { AponiaFactory, createHonoHost, honoAdapter, toHonoPlatformHandler } from "../src/index.ts";
+import { AponiaFactory as UnifiedFactory } from "@aponiajs/platform-core";
 
 @Injectable()
 class DenyGuard implements CanActivate {
@@ -169,7 +170,6 @@ describe("Aponia on Hono", () => {
     expect(listener).toBeDefined();
     const response = await fetch(`${listener?.url}/widgets`);
     expect(response.status).toBe(200);
-    await listener?.close();
     await application.close();
   });
 
@@ -184,9 +184,8 @@ describe("Aponia on Hono", () => {
 
   test("upgrades a gateway over Bun's server and answers an event", async () => {
     const application = await AponiaFactory.create(GatewayModule, { logger: false });
-    const host = createHonoHost();
-    const listener = await host.listen?.(application.getNativeApplication(), 0);
-    const socket = new WebSocket(`${listener?.url.replace("http", "ws")}/ws`);
+    await application.listen(0);
+    const socket = new WebSocket(`${application.getUrl().replace("http", "ws")}/ws`);
 
     await new Promise<void>((resolve, reject) => {
       socket.onopen = () => resolve();
@@ -199,7 +198,6 @@ describe("Aponia on Hono", () => {
 
     expect(JSON.parse(await frame)).toEqual({ event: "echo", data: { n: 1 } });
     socket.close();
-    await listener?.close();
     await application.close();
   });
 
@@ -210,7 +208,29 @@ describe("Aponia on Hono", () => {
 
     const response = await fetch(`${listener?.url}/widgets/1?page=2`);
     expect(response.status).toBe(200);
-    await listener?.close();
+    await application.close();
+  });
+  test("boots through the unified factory with honoAdapter()", async () => {
+    const application = await UnifiedFactory.create(AppModule, {
+      adapter: honoAdapter(),
+      logger: false,
+    });
+    const response = await application.handle(new Request("http://localhost/widgets"));
+
+    expect(response.status).toBe(200);
+    expect(application.getHttpAdapter()).toBeInstanceOf(Hono);
+    await application.close();
+  });
+
+  test("listen resolves with the application and reads its own address", async () => {
+    const application = await UnifiedFactory.create(AppModule, {
+      adapter: honoAdapter(),
+      logger: false,
+    });
+    const listening = await application.listen(0);
+
+    expect(listening).toBe(application);
+    expect(application.getUrl()).toStartWith("http://localhost:");
     await application.close();
   });
 });
