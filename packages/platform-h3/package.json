@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/platform-h3",
-  "version": "1.0.0-beta.53",
+  "version": "1.0.0-beta.54",
   "description": "AponiaJS on H3: routes, validation, enhancers, and lifecycle on the H3 runtime.",
   "keywords": [
     "aponia",

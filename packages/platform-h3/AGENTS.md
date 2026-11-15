@@ -25,9 +25,11 @@ started — and imports the rest from `@aponiajs/platform-core`.
 - **Middleware registered earlier runs earlier.** The host mounts its dispatcher
   when the boot finishes, so `createNative` plus `toH3PlatformHandler` is the
   shape for an application that already has middleware of its own.
-- **A WebSocket gateway is refused, not mounted.** The host states no
-  `mountGateway`, so the boot fails with `UNSUPPORTED_PLATFORM_FEATURE` and
-  names the gateway. Only the Elysia platform and the Hono platform upgrade.
+- **Gateways upgrade through crossws.** A gateway mounts as an H3 route built
+  with `defineWebSocketHandler`, which Nitro's server upgrades; the Bun
+  listener upgrades it through crossws directly. A runtime that loads no
+  crossws adapter states no `mountGateway`, and the boot refuses a gateway with
+  `UNSUPPORTED_PLATFORM_FEATURE`.
 - **No second route table, container, or guard pipeline.** Routing, validation,
   enhancers, and lifecycle belong to `@aponiajs/platform-core`.
 - **`listen` is Bun's server.** The runtime this repository targets is Bun; a

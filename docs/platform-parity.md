@@ -29,16 +29,18 @@ they differ, and what a platform refuses.
 | Validation execution   | Elysia runs the validator and answers its own `422` body.                                          | The kernel runs Standard Schema through `~standard.validate` and TypeBox through `typebox/value`; a `422` carries `code: "VALIDATION_ERROR"` and an `errors` list.                                              |
 | Response serialization | Elysia's serializer applies its rules.                                                             | Strings are text, bytes and streams pass through, every other value is JSON.                                                                                                                                    |
 | `@Ip()`                | Read from the Elysia server handle.                                                                | Read from the host: Hono through its Bun adapter, H3 through `getRequestIP`, and `undefined` when the host states none.                                                                                         |
-| WebSockets             | `application.ws()` with the `elysia/websocket` capability.                                         | Hono upgrades through `hono/bun`; H3 and Nitro refuse with `UNSUPPORTED_PLATFORM_FEATURE`.                                                                                                                      |
+| WebSockets             | `application.ws()` with the `elysia/websocket` capability.                                         | Hono upgrades through `hono/bun`; H3 upgrades through `crossws` on the H3 route and the Bun listener; Nitro upgrades the H3 route through its own crossws server.                                               |
 | Listener               | Elysia's adapter.                                                                                  | Bun's server. No Node listener is provided.                                                                                                                                                                     |
 | Native route detail    | `@Deprecated()` sets Elysia route detail.                                                          | The headers are applied; there is no route table to annotate.                                                                                                                                                   |
 | First-party modules    | Every package in this repository.                                                                  | Modules that wrap Elysia plugins (`@aponiajs/cors`, `security`, `openapi`, `devtools`, `graphql`, `metrics`, `mcp`) stay Elysia-only. Modules that only need the container and the error contract run anywhere. |
 
 ## What a platform refuses
 
-- A graph that declares a WebSocket gateway on a host without gateway support
-  fails the boot with `UNSUPPORTED_PLATFORM_FEATURE` and names the platform,
-  the gateway, and its path. It never mounts a route that cannot upgrade.
+- A graph that declares a WebSocket gateway on a host whose runtime states no
+  gateway support fails the boot with `UNSUPPORTED_PLATFORM_FEATURE` and names
+  the platform, the gateway, and its path. It never mounts a route that cannot
+  upgrade. Every shipped platform states support; a custom host that does not is
+  refused.
 - Two gateways on one path fail with `DUPLICATE_WEBSOCKET_GATEWAY`; two
   gateways answering one event fail with `DUPLICATE_WEBSOCKET_HANDLER`.
 - An application-level enhancer the root module cannot reach fails the boot with

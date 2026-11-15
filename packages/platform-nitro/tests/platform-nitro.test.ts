@@ -1,5 +1,15 @@
 import { describe, expect, test } from "bun:test";
-import { Body, Controller, Get, Module, Post } from "@aponiajs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Injectable,
+  MessageBody,
+  Module,
+  Post,
+  SubscribeMessage,
+  WebSocketGateway,
+} from "@aponiajs/common";
 import { AponiaFactory, createAponiaNitroHandler } from "../src/index.ts";
 
 @Controller("widgets")
@@ -17,6 +27,18 @@ class WidgetController {
 
 @Module({ controllers: [WidgetController] })
 class AppModule {}
+
+@WebSocketGateway("/ws")
+@Injectable()
+class EchoGateway {
+  @SubscribeMessage("echo")
+  echo(@MessageBody() data: unknown): unknown {
+    return data;
+  }
+}
+
+@Module({ providers: [EchoGateway] })
+class GatewayModule {}
 
 function request(path: string, init?: RequestInit): Request {
   return new Request(`http://localhost${path}`, init);
@@ -63,6 +85,15 @@ describe("Aponia on Nitro", () => {
     const response = await handler.fetch?.(request("/none"));
 
     expect(response?.status).toBe(404);
+    await application.close();
+  });
+
+  test("mounts a gateway route for the server to upgrade", async () => {
+    const application = await AponiaFactory.create(GatewayModule, { logger: false });
+    const native = application.getNativeApplication();
+    const response = await native.fetch(request("/ws"));
+
+    expect(response.status).toBe(426);
     await application.close();
   });
 });

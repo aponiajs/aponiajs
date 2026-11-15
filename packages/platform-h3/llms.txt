@@ -17,7 +17,7 @@
 
 ## WebSocket gateways
 
-- A graph that declares a gateway fails the boot with `UNSUPPORTED_PLATFORM_FEATURE`; no route is mounted that cannot upgrade.
+- Gateways upgrade through crossws, mounted as an H3 route (for Nitro's server) and on the Bun listener. The envelope is `{ event, data }`; failures are `exception` frames.
 
 ## Links
 

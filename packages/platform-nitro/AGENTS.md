@@ -20,9 +20,11 @@ a Nitro route exports and names the host for the boot record.
 
 - **Nitro owns the server.** An application started by Nitro never listens;
   `createAponiaNitroHandler` gives Nitro the fetch handler it invokes.
-- **A WebSocket gateway is refused, not mounted.** The host states no
-  `mountGateway`, so the boot fails with `UNSUPPORTED_PLATFORM_FEATURE` and
-  names the gateway. Only the Elysia platform and the Hono platform upgrade.
+- **Gateways upgrade through crossws.** A gateway mounts as an H3 route built
+  with `defineWebSocketHandler`, which Nitro's server upgrades; the Bun
+  listener upgrades it through crossws directly. A runtime that loads no
+  crossws adapter states no `mountGateway`, and the boot refuses a gateway with
+  `UNSUPPORTED_PLATFORM_FEATURE`.
 - **The H3 platform is the implementation.** Routing, validation, enhancers, and
   lifecycle are `@aponiajs/platform-core`'s and the mount is
   `@aponiajs/platform-h3`'s; this package adds no second pipeline.

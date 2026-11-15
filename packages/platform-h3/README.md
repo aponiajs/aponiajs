@@ -44,9 +44,11 @@ application's own routes.
 
 ## WebSocket gateways
 
-This platform does not upgrade WebSocket connections, so a graph that declares
-a gateway fails the boot with `UNSUPPORTED_PLATFORM_FEATURE` instead of mounting
-a route that never upgrades. Use the Elysia or Hono platform for gateways.
+A gateway mounts as an H3 route built with `defineWebSocketHandler`, which a
+crossws-capable server upgrades; the Bun listener upgrades it through crossws
+directly. The envelope is the same as on the other platforms: `{ event, data }`
+in, an ordinary result under the subscribed event out, and an `exception` frame
+with no stack or cause for a failure.
 
 ## Links
 

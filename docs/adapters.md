@@ -91,14 +91,14 @@ Nitro is experimental while its current release is an RC.
 ## WebSockets
 
 A gateway is a provider, so a platform that can upgrade runs it like any other
-provider. Hono upgrades through its Bun adapter, which the host loads lazily; on
-a runtime where that adapter is unavailable, the host states no gateway support.
-H3 and Nitro answer a graph that declares a gateway with
-`UNSUPPORTED_PLATFORM_FEATURE` rather than mounting a route that never upgrades;
-the Elysia platform remains the WebSocket reference. The client protocol is the
-same JSON envelope on every platform: a client sends `{ event, data }`, an
-ordinary result is emitted under the subscribed event, and a failure is an
-`{ event: "exception", data: { code, message } }` frame with no stack or cause.
+provider. Hono upgrades through `hono/bun`; H3 upgrades through `crossws`, both
+on the H3 application (which Nitro's crossws server upgrades) and on the Bun
+listener; Elysia uses its own capability. A host whose runtime states no gateway
+support refuses the boot with `UNSUPPORTED_PLATFORM_FEATURE` rather than mounting
+a route that never upgrades. The client protocol is one JSON envelope on every
+platform: a client sends `{ event, data }`, an ordinary result is emitted under
+the subscribed event, and a failure is an `{ event: "exception", data: { code, message } }`
+frame with no stack or cause.
 
 ## Boundaries
 

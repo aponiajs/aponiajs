@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
 import {
-  AponiaError,
   Body,
   Controller,
   Get,
@@ -213,13 +212,58 @@ describe("Aponia on H3", () => {
     await application.close();
   });
 
-  test("refuses a gateway the h3 host cannot upgrade", async () => {
-    try {
-      await AponiaFactory.create(GatewayModule, { logger: false });
-      throw new Error("Expected the boot to refuse the gateway.");
-    } catch (error) {
-      expect(error).toBeInstanceOf(AponiaError);
-      expect((error as AponiaError).code).toBe("UNSUPPORTED_PLATFORM_FEATURE");
-    }
+  test("upgrades a gateway over Bun's server and answers an event", async () => {
+    const application = await AponiaFactory.create(GatewayModule, { logger: false });
+    const listener = await application.listen(0);
+    const socket = new WebSocket(`${listener.url.replace("http", "ws")}/ws`);
+
+    await new Promise<void>((resolve, reject) => {
+      socket.onopen = () => resolve();
+      socket.onerror = () => reject(new Error("the socket did not open"));
+    });
+    const frame = new Promise<string>((resolve) => {
+      socket.onmessage = (event) => resolve(String(event.data));
+    });
+    socket.send(JSON.stringify({ event: "echo", data: { n: 1 } }));
+
+    expect(JSON.parse(await frame)).toEqual({ event: "echo", data: { n: 1 } });
+    socket.close();
+    await listener?.close();
+    await application.close();
+  });
+
+  test("mounts the gateway route an upgrading server runs", async () => {
+    const application = await AponiaFactory.create(GatewayModule, { logger: false });
+    const response = await application
+      .getNativeApplication()
+      .fetch(new Request("http://localhost/ws", { headers: { upgrade: "websocket" } }));
+    const hooks = (
+      response as unknown as {
+        readonly crossws?: {
+          open?(peer: unknown): unknown;
+          message?(peer: unknown, message: unknown): unknown;
+          close?(peer: unknown): unknown;
+        };
+      }
+    ).crossws;
+    expect(hooks).toBeDefined();
+
+    const sent: string[] = [];
+    const peer = {
+      send(data: string) {
+        sent.push(data);
+      },
+      close() {},
+      subscribe() {},
+      publish() {},
+    };
+    await hooks?.open?.(peer);
+    await hooks?.message?.(peer, {
+      text: () => JSON.stringify({ event: "echo", data: { n: 1 } }),
+    });
+    await hooks?.close?.(peer);
+
+    expect(sent.map((frame) => JSON.parse(frame))).toEqual([{ event: "echo", data: { n: 1 } }]);
+    await application.close();
   });
 });

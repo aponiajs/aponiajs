@@ -176,6 +176,28 @@ export class AponiaHttpApplication<TNative = unknown> {
     return this.#container.get(token);
   }
 
+  /**
+   * Starts the host's listener.
+   *
+   * A host that cannot listen states none, and this refuses rather than
+   * pretending a server exists.
+   *
+   * @param port - The port to bind, or `0` for one the runtime picks.
+   * @returns The listener, with its URL and a `close`.
+   */
+  async listen(
+    port: number,
+  ): Promise<{ readonly url: string; close(force?: boolean): Promise<void> }> {
+    if (this.#host?.listen === undefined) {
+      throw new AponiaError(
+        "UNSUPPORTED_PLATFORM_FEATURE",
+        `The ${this.#host?.name ?? "mounted"} host does not provide a listener.`,
+        { feature: "listen" },
+      );
+    }
+    return await this.#host.listen(this.#native, port);
+  }
+
   /** The runtime's name, when a host created this application. */
   get platform(): string | undefined {
     return this.#host?.name;
