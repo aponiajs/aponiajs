@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
-import { parseArguments } from "../src/arguments.ts";
-import { createComponentNames } from "../src/component-names.ts";
-import { registerInModule } from "../src/module-registration.ts";
+import { parseArguments } from "../src/commands/arguments.ts";
+import { createComponentNames } from "../src/generation/component-names.ts";
+import { registerInModule } from "../src/generation/module-registration.ts";
 
 test("yargs-parser handles aliases, inline values, and boolean negation", () => {
   expect(
@@ -28,6 +28,15 @@ test("change-case and inflection normalize compound and irregular names", () => 
     singularClassName: "HttpPerson",
     routePath: "http-people",
   });
+  expect(() => createComponentNames("../users")).toThrow(
+    "Generated names must be relative and cannot contain parent traversal.",
+  );
+  expect(() => createComponentNames("/absolute/users")).toThrow(
+    "Generated names must be relative and cannot contain parent traversal.",
+  );
+  expect(() => createComponentNames("123")).toThrow(
+    "Generated names must contain letters and use kebab-case paths.",
+  );
 });
 
 test("ts-morph safely registers symbols in structured module metadata", () => {
@@ -51,4 +60,5 @@ export class AppModule {
   expect(updated).toContain("ExistingService");
   expect(updated).toContain("UsersService");
   expect(updated).toContain('text: "a } bracket in a string"');
+  expect(updated).toContain("UsersService,\n  ],");
 });

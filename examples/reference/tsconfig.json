@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["ESNext"],
+    "moduleDetection": "force",
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "types": ["bun"],
+    "strict": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "noUnusedLocals": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "paths": {
+      "@aponiajs/common": ["../../packages/common/src/index.ts"],
+      "@aponiajs/core": ["../../packages/core/src/index.ts"],
+      "@aponiajs/platform-elysia": ["../../packages/platform-elysia/src/index.ts"],
+      "@aponiajs/auth": ["../../packages/auth/src/index.ts"],
+      "@aponiajs/database": ["../../packages/database/src/index.ts"],
+      "@aponiajs/metrics": ["../../packages/metrics/src/index.ts"],
+      "@aponiajs/queue": ["../../packages/queue/src/index.ts"]
+    }
+  }
+}

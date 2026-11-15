@@ -1,0 +1,58 @@
+import { inspectAponiaApplication } from "@aponiajs/platform-elysia";
+import { moduleDescriptorArtifact } from "../src/descriptors.generated.ts";
+import { AppModule } from "../src/app.module.ts";
+
+/**
+ * Prints what `AponiaFactory.create` would mount, without starting the server
+ * or constructing a single provider.
+ *
+ * ```bash
+ * bun run inspect          # a readable summary
+ * bun run inspect --json   # the whole inspection, for tooling
+ * ```
+ *
+ * The descriptor artifact is resolved the way `src/main.ts` resolves it, so this
+ * reports the graph the application boots from rather than the decorated classes
+ * it names. `logger: false` keeps the line reporting that choice out of the
+ * summary, and out of the `--json` document a tool reads.
+ *
+ * Routes registered through `controller` callbacks do not appear here;
+ * their routes only exist once the callback runs against a real application.
+ */
+const inspection = inspectAponiaApplication(AppModule, {
+  descriptors: moduleDescriptorArtifact,
+  logger: false,
+});
+
+if (Bun.argv.includes("--json")) {
+  console.log(JSON.stringify(inspection, undefined, 2));
+} else {
+  console.log(`${inspection.rootModule} — ${inspection.modules.length} modules`);
+
+  for (const module of inspection.modules) {
+    console.log(`\n  ${module.id}`);
+    for (const provider of module.providers) {
+      const dependencies = provider.dependencies.length
+        ? ` <- ${provider.dependencies.join(", ")}`
+        : "";
+      console.log(`    ${provider.kind.padEnd(7)} ${provider.token}${dependencies}`);
+    }
+  }
+
+  console.log(`\nRoutes (${inspection.routes.length})`);
+  for (const route of inspection.routes) {
+    const parameters = route.parameters
+      .map((parameter) => `${parameter.kind}${parameter.property ? `:${parameter.property}` : ""}`)
+      .join(", ");
+    console.log(
+      `  ${route.method.padEnd(7)} ${route.path}  ${route.controller}.${route.handler}(${parameters})`,
+    );
+  }
+
+  for (const gateway of inspection.gateways) {
+    console.log(`\nGateway ${gateway.path}  ${gateway.token}`);
+    for (const event of gateway.events) {
+      console.log(`  ${event}`);
+    }
+  }
+}

@@ -6,9 +6,7 @@ export default defineConfig({
     include: ["tests-vp/**/*.conformance.ts"],
   },
   pack: {
-    dts: {
-      tsgo: true,
-    },
+    dts: true,
     exports: true,
   },
   lint: {

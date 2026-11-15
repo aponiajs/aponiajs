@@ -1,7 +1,18 @@
 {
   "name": "@aponiajs/platform-elysia",
-  "version": "0.6.0-alpha.12",
-  "description": "Minimal Elysia application platform for Aponia modules and controllers.",
+  "version": "1.0.0-beta.60",
+  "description": "Elysia application platform for Aponia HTTP controllers and WebSocket gateways.",
+  "keywords": [
+    "aponia",
+    "aponiajs",
+    "bun",
+    "dependency-injection",
+    "elysia",
+    "http",
+    "rest-api",
+    "routing",
+    "typescript"
+  ],
   "homepage": "https://github.com/aponiajs/aponiajs#readme",
   "bugs": {
     "url": "https://github.com/aponiajs/aponiajs/issues"
@@ -14,11 +25,13 @@
     "directory": "packages/platform-elysia"
   },
   "files": [
-    "dist"
+    "dist",
+    "llms.txt"
   ],
   "type": "module",
   "exports": {
     ".": "./dist/index.mjs",
+    "./register": "./dist/register.mjs",
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -34,14 +47,21 @@
   },
   "dependencies": {
     "@aponiajs/common": "workspace:*",
-    "@aponiajs/core": "workspace:*"
+    "@aponiajs/core": "workspace:*",
+    "@aponiajs/platform-core": "workspace:*"
   },
   "devDependencies": {
+    "@elysia/eden": "2.0.0-rc.1",
     "arktype": "^2.2.3",
-    "elysia": "^1.4.29",
-    "zod": "^4.4.3"
+    "elysia": "2.0.0-rc.4",
+    "typebox": "^1.4.6",
+    "zod": "^4.6.6"
   },
   "peerDependencies": {
-    "elysia": "^1.4.29"
+    "elysia": "2.0.0-rc.4",
+    "typebox": "^1.4.6"
+  },
+  "engines": {
+    "bun": ">=1.4.4"
   }
 }

@@ -1,0 +1,23 @@
+# @aponiajs/serverless
+
+> Serverless adapters for an AponiaJS application: a Web Fetch handler and an AWS Lambda handler for API Gateway payload 2.0 and 1.0.
+
+## What this package exports
+
+- `toFetchHandler(application)`: binds `application.handle` as `(request) => Promise<Response>` for a worker runtime.
+- `createLambdaHandler(application)`: builds the Lambda handler.
+- Types: `FetchHandler`, `LambdaHandler`, `LambdaHeaders`, `LambdaHttpEvent`, `LambdaHttpEventV1`, `LambdaHttpEventV2`, `LambdaHttpResult`, `LambdaHttpResultV1`, `LambdaHttpResultV2`, `ServerlessApplication`.
+
+## Behavior a consumer can rely on
+
+- A payload 2.0 event uses `rawPath`, `rawQueryString`, `cookies`, and `requestContext.http.method`.
+- A payload 1.0 event uses `path`, `multiValueQueryStringParameters` (falling back to `queryStringParameters`), `multiValueHeaders`, and `httpMethod`.
+- A base64-encoded request body is decoded before the application sees it; a body on `GET` or `HEAD` is ignored.
+- A response body is text when its content type is textual and its bytes are valid UTF-8; otherwise it is base64 and `isBase64Encoded` is `true`.
+- `set-cookie` becomes `cookies` (payload 2.0) or `multiValueHeaders["set-cookie"]` (payload 1.0).
+- The adapter translates envelopes only; authentication, CORS, and shutdown remain the application's or the gateway's.
+
+## Documentation
+
+- [Package README](README.md)
+- [Deployment guide](../../docs/deployment.md)

@@ -1,0 +1,24 @@
+# @aponiajs/platform-nitro
+
+> AponiaJS on Nitro: the H3 platform's host as the server handler a Nitro route exports.
+
+## What this package exports
+
+- `AponiaFactory`: `create` boots the graph and returns the managed application; `createNative` returns the H3 application.
+- `createAponiaNitroHandler(application)`: the handler a `server/routes/[...all].ts` exports.
+- `createNitroHost()`: the H3 host, named for the boot record.
+
+## Behavior a consumer can rely on
+
+- Nitro owns the server; an application it serves never listens.
+- Routes, validation, enhancers, pipes, middleware, versioning, the prefix, SSE, and lifecycle are the same contract as the H3 and Elysia platforms.
+- A request with no Aponia route is answered `404` by the catch-all handler.
+
+## WebSocket gateways
+
+- Gateways upgrade through crossws, mounted as an H3 route (for Nitro's server) and on the Bun listener. The envelope is `{ event, data }`; failures are `exception` frames.
+
+## Links
+
+- [Repository guide](https://github.com/aponiajs/aponiajs/blob/release/beta/AGENTS.md)
+- [Adapters](https://github.com/aponiajs/aponiajs/blob/release/beta/docs/adapters.md)

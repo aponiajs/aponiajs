@@ -1,0 +1,20 @@
+/** The schematics `aponia generate` accepts, aliases included elsewhere. */
+export const schematicNames = [
+  "app",
+  "library",
+  "class",
+  "controller",
+  "decorator",
+  "filter",
+  "gateway",
+  "guard",
+  "interface",
+  "interceptor",
+  "middleware",
+  "module",
+  "pipe",
+  "provider",
+  "resolver",
+  "resource",
+  "service",
+] as const;

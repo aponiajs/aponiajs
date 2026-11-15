@@ -1,0 +1,32 @@
+# @aponiajs/queue
+
+> An in-process job queue and transactional outbox for an AponiaJS application, with bounded retries, exponential backoff, dead letters, and idempotent enqueue.
+
+## What this package exports
+
+- `QueueModule.register({ queue?, outbox? })`: the module an application imports.
+- `QueueService`: `registerHandler`, `enqueue`, `drain`, `waitForIdle`, `pending`, `deadLetters`, `retryDeadLetter`, `stats`, `flush`, `close`, `clear`.
+- `MemoryQueueStore`: a bounded in-memory `QueueStore` for tests.
+- `OutboxService`: `record`, `pending`, `flush`, `clear`.
+- Types: `QueueJob`, `QueueHandler`, `QueueEnqueueOptions`, `QueueDrainSummary`, `QueueStats`, `QueueTimer`, `QueueStore`, `QueueServiceOptions`, `QueueModuleOptions`, `OutboxMessage`, `OutboxSink`, `OutboxOptions`, `OutboxFlushResult`.
+
+## Behavior a consumer can rely on
+
+- `enqueue` returns a frozen job snapshot with a generated id and the attempt budget it will use.
+- `pause`/`resume` stop and restart automatic draining; `paused` reports the state, and an explicit `drain` still runs while paused.
+- `priority` orders due jobs, highest first; equal priorities keep enqueue order.
+- `jobTimeoutMs`/`timeoutMs` bound one attempt; an overrun is a failure (`QUEUE_JOB_TIMEOUT`) that retries or dead-letters normally.
+- The handler receives `(payload, job, signal)`; the signal aborts on timeout and on close, cooperatively.
+- A failed attempt retries with exponential backoff; a job that exhausts its budget moves to the dead letter queue.
+- `onModuleDestroy` drains due jobs, aborts in-flight work, and flushes tracked writes.
+- `idempotencyKey` deduplicates an enqueue while that job is pending or running; a completed job forgets its key.
+- `drain` runs due jobs in batches of `concurrency` and answers completed, retried, and dead-lettered counts.
+- `waitForIdle` resolves when nothing is running and no pending job is due now.
+- `store` hydrates pending and dead-lettered jobs at module initialization; `flush` awaits the writes the store accepted and rethrows the first failure.
+- `flush` delivers outbox messages in order and keeps the rejected one for the next flush; `flush(sink, { signal })` stops between messages and leaves the tail.
+- Without a store the backlog is process-local; a supplied store survives a restart but is not a broker, so one consumer owns one backlog. The outbox remains process-local.
+
+## Documentation
+
+- [Package README](README.md)
+- [Agent surface](../../docs/agent/README.md)

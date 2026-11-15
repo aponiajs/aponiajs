@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
-import { type AponiaElysiaApplication } from "@aponiajs/platform-elysia";
+import { type AponiaApplication } from "@aponiajs/platform-elysia";
 import { createApplication, get, send } from "./application.ts";
 
-let application: AponiaElysiaApplication;
+let application: AponiaApplication;
 let itemId: string;
 
 beforeAll(async () => {

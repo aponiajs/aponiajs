@@ -1,0 +1,19 @@
+# @aponiajs/h3
+
+> Delivery adapter that mounts an Aponia application inside H3.
+
+## What this package exports
+
+- `toH3Handler(application)`.
+
+## Behavior
+
+- The runtime forwards its request to `application.handle`.
+- Aponia guards, validation, filters, and error mapping still run inside the application.
+- WebSockets remain Elysia-only.
+
+## Documentation
+
+- [Package README](README.md)
+- [Deployment guide](../../docs/deployment.md)
+

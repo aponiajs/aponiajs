@@ -1,0 +1,26 @@
+# @aponiajs/platform-hono
+
+> AponiaJS on Hono: routes, validation, enhancers, and lifecycle on the Hono runtime.
+
+## What this package exports
+
+- `AponiaFactory`: `create` boots the graph and returns the managed application; `createNative` returns the Hono instance.
+- `toHonoPlatformHandler(application)`: a Hono middleware that answers the routes Aponia owns and lets the rest continue.
+- `createHonoHost()`: the runtime binding the platform factory runs on.
+
+## Behavior a consumer can rely on
+
+- The dispatcher is middleware, so it never answers `404` on the application's behalf.
+- Middleware registered before the dispatcher runs before Aponia's guards and handlers.
+- Routes, validation, enhancers, pipes, middleware, versioning, the prefix, SSE, and lifecycle are the same contract as the Elysia platform.
+- `listen` is Bun's server; the runtime is Bun, not Node.
+
+## WebSocket gateways
+
+- Gateways upgrade through Hono's Bun adapter when it loads.
+- The envelope is `{ event, data }`; failures are `exception` frames with no stack or cause.
+
+## Links
+
+- [Repository guide](https://github.com/aponiajs/aponiajs/blob/release/beta/AGENTS.md)
+- [Adapters](https://github.com/aponiajs/aponiajs/blob/release/beta/docs/adapters.md)

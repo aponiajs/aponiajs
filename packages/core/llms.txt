@@ -1,0 +1,31 @@
+# @aponiajs/core
+
+> The module graph, visibility rules, and dependency injection container that an AponiaJS application is compiled and run on.
+
+This package consumes frozen descriptors only. It never imports `reflect-metadata` or decorator logic, so a decorated module and a hand-written `defineModule` module compile through the same code. Most HTTP applications receive it transitively through `@aponiajs/platform-elysia`; install it with `bun add @aponiajs/core @aponiajs/common` when building a platform adapter or using the container alone.
+
+## What this package exports
+
+- [compileModuleGraph](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/core/src/graph/graph-compiler.ts): walks imports depth-first and validates the whole graph before any instance exists.
+- [ModuleGraph](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/core/src/graph/module-graph.ts): resolves a token against a module's own providers first, then against imports that export it.
+- [createContainer, AponiaContainer](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/core/src/container/container.ts): creates the container and caches one instance per provider per module.
+
+## Public types
+
+- [GraphInspection, ModuleInspection, ProviderLocation](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/core/src/graph/graph.types.ts): the frozen shapes returned for inspecting a compiled graph.
+
+## Behavior a consumer can rely on
+
+- Compilation is eager and fails before an instance exists: duplicate module identity, import cycles, duplicate tokens inside a module, exports of tokens the module cannot resolve, and unresolvable provider or controller dependencies.
+- Modules are identified by `instanceId ?? id`, so two configured instances of one module class stay distinct.
+- A provider left out of a module's `exports` is invisible to importers, and two imports that resolve the token to different modules raise `AMBIGUOUS_PROVIDER` instead of picking a winner, while two that re-export one shared provider agree on it.
+- `AponiaContainer.get` enforces root-module visibility and detects provider dependency cycles while resolving.
+
+## Documentation
+
+- [Package README](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/core/README.md): what the package owns and when to install it directly.
+- [Dependency injection](../../docs/dependency-injection.md): tokens, module visibility, providers, and the failure codes.
+- [Modules](../../docs/learn/03-modules.md): how code is grouped and what a module exposes.
+- [Providers and injection](../../docs/learn/04-providers-and-injection.md): how dependencies are declared and resolved.
+- [Errors](../../docs/learn/10-errors.md): which failures are raised, when, and how to assert on them.
+- [Published packages](../../docs/packages.md): the npm catalog and install commands.

@@ -6,6 +6,10 @@
     "paths": {
       "@aponiajs/common": ["./packages/common/src/index.ts"],
       "@aponiajs/core": ["./packages/core/src/index.ts"],
+      "@aponiajs/platform-core": ["./packages/platform-core/src/index.ts"],
+      "@aponiajs/platform-h3": ["./packages/platform-h3/src/index.ts"],
+      "@aponiajs/platform-hono": ["./packages/platform-hono/src/index.ts"],
+      "@aponiajs/platform-nitro": ["./packages/platform-nitro/src/index.ts"],
       "@aponiajs/platform-elysia": ["./packages/platform-elysia/src/index.ts"]
     },
     "experimentalDecorators": true,

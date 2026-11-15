@@ -1,0 +1,20 @@
+# create-aponia
+
+> The `bun create aponia` entrypoint that scaffolds a new Bun-first AponiaJS application.
+
+This package is a thin wrapper with no schematic logic of its own: its binary forwards every argument to the `new` command of the published `@aponiajs/cli` generator. Run it with `bun create aponia my-api`.
+
+## What this package ships
+
+- [create-aponia bin](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/create-aponia/bin/create-aponia.ts): the published entry point, which calls the generator's `runCli(["new", ...])` and exits with its code.
+- [bun create aponia <name>](../../docs/cli.md): creates the project directory and installs its dependencies.
+- [bun create aponia <name> --skip-install](../../docs/cli.md): creates the files without installing dependencies.
+- [bun create aponia <name> --dry-run](../../docs/cli.md): reports the planned changes and writes nothing.
+- [@aponiajs/cli](https://www.npmjs.com/package/@aponiajs/cli): the generator this entrypoint delegates to, including `aponia generate` and the full schematic catalog.
+
+## Documentation
+
+- [Package README](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/create-aponia/README.md): the entrypoint commands and the delegation to `@aponiajs/cli`.
+- [Aponia CLI](../../docs/cli.md): the complete generator catalog, aliases, and options.
+- [Install and generate](../../docs/learn/02-install-and-generate.md): how to start a project and what the generator produces.
+- [Published packages](../../docs/packages.md): the npm catalog and install commands.
