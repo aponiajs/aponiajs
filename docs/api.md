@@ -700,6 +700,20 @@ Snapshot contract version 1.
 - `OpentelemetryModule` (value)
 - `OpentelemetryModuleOptions` (type)
 
+## `@aponiajs/platform-core`
+
+- `ParameterPipesMap` (type)
+- `ResolvedMiddlewareConfig` (type)
+- `ResolvedPipe` (type)
+- `StaticRouteExecutionContext` (value)
+- `compileGuardsHook` (value)
+- `compileUnrolledGuards` (value)
+- `createMiddlewareConsumer` (value)
+- `executePipes` (value)
+- `resolveApplicationPipe` (value)
+- `resolveApplicationPipes` (value)
+- `resolvePipe` (value)
+
 ## `@aponiajs/platform-elysia`
 
 - `AponiaApplication` (value)

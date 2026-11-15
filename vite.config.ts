@@ -22,6 +22,8 @@ export default defineConfig({
         .pathname,
       "@aponiajs/security": new URL("./packages/security/src/index.ts", import.meta.url).pathname,
       "@aponiajs/session": new URL("./packages/session/src/index.ts", import.meta.url).pathname,
+      "@aponiajs/platform-core": new URL("./packages/platform-core/src/index.ts", import.meta.url)
+        .pathname,
       "@aponiajs/platform-elysia": new URL(
         "./packages/platform-elysia/src/index.ts",
         import.meta.url,

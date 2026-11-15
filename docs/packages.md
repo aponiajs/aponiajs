@@ -48,6 +48,7 @@ command naming one of them answers `404` until that line is published.
 | `@aponiajs/nitro`         | Nitro delivery adapter                             |
 | `@aponiajs/openapi`       | OpenAPI document for an application's routes       |
 | `@aponiajs/opentelemetry` | OpenTelemetry tracing adapter                      |
+| `@aponiajs/platform-core` | Runtime-neutral primitives every platform shares   |
 | `@aponiajs/queue`         | In-process jobs, retries, dead letters, and outbox |
 | `@aponiajs/rate-limit`    | Fixed-window rate limiting guard and store         |
 | `@aponiajs/security`      | Security headers and signed CSRF                   |

@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/view",
-  "version": "1.0.0-beta.40",
+  "version": "1.0.0-beta.41",
   "description": "High-performance template view engine and rendering pipeline for AponiaJS MVC applications.",
   "keywords": [
     "aponia",
@@ -35,10 +35,7 @@
   ],
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.mts",
-      "import": "./dist/index.mjs"
-    },
+    ".": "./dist/index.mjs",
     "./package.json": "./package.json"
   },
   "publishConfig": {

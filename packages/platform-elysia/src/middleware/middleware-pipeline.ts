@@ -9,7 +9,7 @@ import {
 import type { AponiaContainer } from "@aponiajs/core";
 import type { Elysia } from "elysia";
 import { stripRoutePrefix } from "../routing/route-prefix.ts";
-import type { ResolvedMiddlewareConfig } from "./middleware-consumer.types.ts";
+import type { ResolvedMiddlewareConfig } from "@aponiajs/platform-core";
 import { isRouteExcluded, matchRouteTarget } from "./middleware-matcher.ts";
 
 /**

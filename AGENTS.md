@@ -48,6 +48,7 @@ Bun workspace. Framework packages live in `packages/`:
 | `@aponiajs/hono`            | Hono delivery adapter for an application                        | `serverless`, peer `hono`                                                |
 | `@aponiajs/nitro`           | Nitro delivery adapter for an application                       | `serverless`, peer `nitro`                                               |
 | `@aponiajs/platform-elysia` | Elysia adapter, HTTP routes, WebSocket gateways, plugins        | `common`, `core`, peer `elysia`                                          |
+| `@aponiajs/platform-core`   | Runtime-neutral primitives every HTTP platform shares           | `common`, `core`                                                         |
 | `@aponiajs/cli`             | `aponia new` and `aponia generate` schematics                   | `change-case`, `ts-morph`, `yargs-parser`, `inflection`, `oxfmt` (exact) |
 | `create-aponia`             | `bun create aponia` entrypoint into the same generator          | `@aponiajs/cli`                                                          |
 | `@aponiajs/cron`            | Scheduled jobs declared in a module, from validated config      | `common`, `platform-elysia`, `@elysia/cron`, peer `elysia`               |
@@ -105,6 +106,7 @@ being changed:
 | [`packages/metrics`](packages/metrics/AGENTS.md)                 | The Prometheus metrics registry, plugin, and scrape endpoint     |
 | [`packages/idempotency`](packages/idempotency/AGENTS.md)         | The idempotent request replay package                            |
 | [`packages/platform-elysia`](packages/platform-elysia/AGENTS.md) | Bootstrap, route mapping, native plugins, context types          |
+| [`packages/platform-core`](packages/platform-core/AGENTS.md)     | Shared execution context, guard pipeline, pipes, middleware      |
 | [`packages/cli`](packages/cli/AGENTS.md)                         | Schematics, templates, generated layout                          |
 | [`packages/create-aponia`](packages/create-aponia/AGENTS.md)     | The `bun create aponia` entrypoint                               |
 | [`packages/cron`](packages/cron/AGENTS.md)                       | The scheduled-jobs plugin package                                |
@@ -187,10 +189,12 @@ Applications can hand-write descriptors instead (`defineModule`,
 
 ### Dependency direction
 
-`common` ← `core` ← `platform-elysia`, one-way. Never add Elysia, HTTP, or Bun
-runtime APIs to `common`. Never import another package's private source path;
-cross-package imports use the package name, resolved through workspace links
-(Bun) and the aliases in the root `vite.config.ts` (Vite+).
+`common` ← `core` ← `platform-core` ← `platform-elysia`, one-way. Never add
+Elysia, HTTP, or Bun runtime APIs to `common`. Never import another package's
+private source path; cross-package imports use the package name, resolved
+through workspace links (Bun) and the aliases in the root `vite.config.ts`
+(Vite+). `platform-core` holds the primitives every HTTP platform shares and
+imports no HTTP runtime; a platform may import it, never the reverse.
 
 ### Module graph and visibility
 

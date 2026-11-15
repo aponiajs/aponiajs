@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/testing",
-  "version": "1.0.0-beta.40",
+  "version": "1.0.0-beta.41",
   "description": "Boot an Aponia application for a test, with provider overrides and a teardown a case can rely on.",
   "keywords": [
     "aponia",
@@ -30,10 +30,7 @@
   ],
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.mts",
-      "import": "./dist/index.mjs"
-    },
+    ".": "./dist/index.mjs",
     "./package.json": "./package.json"
   },
   "publishConfig": {

@@ -32,6 +32,7 @@ const guideDirectories = [
   "packages/openapi",
   "packages/opentelemetry",
   "packages/platform-elysia",
+  "packages/platform-core",
   "packages/queue",
   "packages/rate-limit",
   "packages/security",

@@ -141,7 +141,7 @@ scripts, and tests. New code should look native to this repository.
 
 - Treat public API edits as contract changes. Preserve decorator and descriptor
   authoring paths, native escape hatches, and the one-way dependency direction
-  `common` to `core` to `platform-elysia`.
+  `common` to `core` to `platform-core` to `platform-elysia`.
 - Return frozen public descriptors, metadata, arrays, and inspection results.
   Copy caller-owned collections before freezing them.
 - Prefer `readonly` contracts and pure functions. Local mutation is acceptable

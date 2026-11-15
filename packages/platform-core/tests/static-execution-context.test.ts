@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { StaticRouteExecutionContext } from "../src/enhancers/static-execution-context.ts";
+import { StaticRouteExecutionContext } from "../src/index.ts";
 
 describe("StaticRouteExecutionContext", () => {
   it("forks one instance per request instead of sharing a mutable pointer", () => {
@@ -46,5 +46,17 @@ describe("StaticRouteExecutionContext", () => {
     expect(forked.getHandler()).toBe(instance.testMethod);
     expect(forked.getRoute()).toBe(customRoute);
     expect(forked.getContext()).toBe(request);
+  });
+
+  it("answers the transport views a filter can switch to", () => {
+    const route = { method: "POST" as const, path: "/messages" };
+    const context = { body: { id: 7 }, request: new Request("http://localhost/messages") } as any;
+    const forked = new StaticRouteExecutionContext({}, () => {}, route).fork(context);
+
+    expect(forked.switchToRpc().getData()).toEqual({ id: 7 });
+    expect(forked.switchToRpc().getContext()).toBe(context);
+    expect(forked.switchToWs().getData()).toEqual({ id: 7 });
+    expect(forked.switchToWs().getClient()).toBeUndefined();
+    expect(forked.switchToWs().getPattern()).toBe("");
   });
 });

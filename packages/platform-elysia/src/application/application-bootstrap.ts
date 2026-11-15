@@ -41,7 +41,7 @@ import {
   createDefaultExceptionFilter,
   reportThroughLogger,
 } from "../errors/default-exception-filter.ts";
-import { createMiddlewareConsumer } from "../middleware/middleware-consumer.ts";
+import { createMiddlewareConsumer } from "@aponiajs/platform-core";
 import { mountMiddleware } from "../middleware/middleware-pipeline.ts";
 import { compileModuleInMemory } from "../compiler/in-memory-compiler.ts";
 import { normalizeRoutePrefix } from "../routing/route-prefix.ts";
@@ -49,7 +49,7 @@ import {
   resolveApplicationPipe,
   resolveApplicationPipes,
   type ResolvedPipe,
-} from "../pipes/pipe-resolver.ts";
+} from "@aponiajs/platform-core";
 import { isModuleDefinition } from "../modules/module-compiler.ts";
 import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
 import { selectRootModuleDescriptor } from "../modules/module-descriptor-artifact.ts";

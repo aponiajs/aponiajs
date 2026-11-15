@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/serverless",
-  "version": "1.0.0-beta.40",
+  "version": "1.0.0-beta.41",
   "description": "AWS Lambda and Web Fetch handlers for an Aponia application.",
   "keywords": [
     "aponia",
@@ -28,10 +28,7 @@
   ],
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.mts",
-      "import": "./dist/index.mjs"
-    },
+    ".": "./dist/index.mjs",
     "./package.json": "./package.json"
   },
   "publishConfig": {

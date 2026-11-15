@@ -2605,6 +2605,55 @@
       ]
     },
     {
+      "name": "@aponiajs/platform-core",
+      "exports": [
+        {
+          "name": "compileGuardsHook",
+          "kind": "value"
+        },
+        {
+          "name": "compileUnrolledGuards",
+          "kind": "value"
+        },
+        {
+          "name": "createMiddlewareConsumer",
+          "kind": "value"
+        },
+        {
+          "name": "executePipes",
+          "kind": "value"
+        },
+        {
+          "name": "ParameterPipesMap",
+          "kind": "type"
+        },
+        {
+          "name": "resolveApplicationPipe",
+          "kind": "value"
+        },
+        {
+          "name": "resolveApplicationPipes",
+          "kind": "value"
+        },
+        {
+          "name": "ResolvedMiddlewareConfig",
+          "kind": "type"
+        },
+        {
+          "name": "ResolvedPipe",
+          "kind": "type"
+        },
+        {
+          "name": "resolvePipe",
+          "kind": "value"
+        },
+        {
+          "name": "StaticRouteExecutionContext",
+          "kind": "value"
+        }
+      ]
+    },
+    {
       "name": "@aponiajs/platform-elysia",
       "exports": [
         {

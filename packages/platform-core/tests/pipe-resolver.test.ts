@@ -1,7 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { AponiaError, type ArgumentMetadata, type PipeTransform } from "@aponiajs/common";
 import { type AponiaContainer } from "@aponiajs/core";
-import { executePipes, resolvePipe } from "../src/pipes/pipe-resolver.ts";
+import {
+  executePipes,
+  resolveApplicationPipe,
+  resolveApplicationPipes,
+  resolvePipe,
+} from "../src/index.ts";
 
 class ValidPipe implements PipeTransform<string, string> {
   transform(value: string): string {
@@ -53,6 +58,41 @@ describe("pipe-resolver", () => {
   test("throws INVALID_PIPE when non-pipe object is passed", () => {
     expect(() => resolvePipe({} as never)).toThrow(AponiaError);
     expect(() => resolvePipe(null as never)).toThrow(AponiaError);
+  });
+
+  test("an application-level pipe given as an instance is used as given", () => {
+    const pipeInstance = new ValidPipe();
+    const resolved = resolveApplicationPipe(pipeInstance, {} as AponiaContainer);
+
+    expect(resolved.instance).toBe(pipeInstance);
+  });
+
+  test("an application-level pipe the root cannot reach fails instead of resolving empty", () => {
+    class UnreachablePipe implements PipeTransform {
+      transform(value: unknown): unknown {
+        return value;
+      }
+    }
+    const container = {
+      get: () => {
+        throw new Error("not provided");
+      },
+    } as unknown as AponiaContainer;
+
+    expect(() => resolveApplicationPipe(UnreachablePipe, container)).toThrow("not provided");
+  });
+
+  test("application pipes rethrow a lookup failure that is not a missing provider", () => {
+    const container = {
+      graph: {
+        root: {},
+        locate: () => {
+          throw new Error("the graph refused the lookup");
+        },
+      },
+    } as unknown as AponiaContainer;
+
+    expect(() => resolveApplicationPipes(container)).toThrow("the graph refused the lookup");
   });
 
   test("executes pipe sequence", async () => {

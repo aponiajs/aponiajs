@@ -29,6 +29,7 @@ export const frameworkContract: FrameworkContract = Object.freeze({
   packages: Object.freeze([
     "@aponiajs/common",
     "@aponiajs/core",
+    "@aponiajs/platform-core",
     "@aponiajs/platform-elysia",
     "@aponiajs/cli",
     "create-aponia",

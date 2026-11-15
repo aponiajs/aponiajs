@@ -33,8 +33,9 @@ npm serves today is in [Packages](docs/packages.md).
   application owns the database.
 - A `grpcTransport` for request/reply and events over a direct gRPC service. It
   hosts the service itself; no broker is provisioned.
-- Every manifest declares `engines` and an `exports` entry whose `types`
-  condition names the declaration the build emits.
+- Every manifest declares `engines`; `vp pack` writes each `exports` entry, and
+  the declaration it emits sits beside the module so TypeScript resolves it
+  without a `types` condition.
 - A gateway filter runs on a message failure with a `getType() === "ws"`
   context; the handshake guards see the same transport.
 - Governance: a changelog, code of conduct, roadmap, and issue and pull-request

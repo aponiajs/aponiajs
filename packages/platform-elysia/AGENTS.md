@@ -21,9 +21,7 @@ It depends on `common` and `core`, with `elysia` as a peer.
 | `plugins/`       | Native plugin module registration and plugin contracts                                                                                  |
 | `routing/`       | Route plans, compiled invokers, schemas, and native context types                                                                       |
 | `websockets/`    | Provider discovery, gateway plans, message dispatch, and native socket types                                                            |
-| `pipes/`         | Runtime pipe resolution and parameter pipeline execution                                                                                |
-| `middleware/`    | Route middleware consumer, path matching/exclusion, and pipeline mounting                                                               |
-| `enhancers/`     | Per-request execution-context forks, enhancer pipeline, and fast-abort guard compilation                                                |
+| `middleware/`    | Route middleware path matching/exclusion, and pipeline mounting                                                                         |
 | `version.ts`     | The package's own version, read from its manifest, which generated artifacts are checked against                                        |
 
 `src/index.ts` is the only public barrel. Keep `*.types.ts` colocated with the

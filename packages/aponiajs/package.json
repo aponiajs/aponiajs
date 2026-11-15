@@ -1,6 +1,6 @@
 {
   "name": "aponiajs",
-  "version": "1.0.0-beta.40",
+  "version": "1.0.0-beta.41",
   "private": true,
   "description": "Public convenience facade for the Aponia framework.",
   "homepage": "https://github.com/aponiajs/aponiajs#readme",
@@ -19,10 +19,7 @@
   ],
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.mts",
-      "import": "./dist/index.mjs"
-    },
+    ".": "./dist/index.mjs",
     "./package.json": "./package.json"
   },
   "publishConfig": {

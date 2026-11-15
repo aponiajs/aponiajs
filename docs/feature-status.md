@@ -20,6 +20,7 @@ See [Packages](./packages.md) for the live split.
 | `@aponiajs/common`          | Complete | decorators, descriptors, tokens, errors, WebSockets                                  |
 | `@aponiajs/core`            | Complete | graph, visibility, scopes, container                                                 |
 | `@aponiajs/platform-elysia` | Complete | routes, validation, enhancers, gateways, versioning                                  |
+| `@aponiajs/platform-core`   | Complete | shared execution context, guard pipeline, pipes, middleware consumer                 |
 | `@aponiajs/cli`             | Complete | project and resource generators, library check, MCP                                  |
 | `create-aponia`             | Complete | `bun create aponia` entrypoint                                                       |
 | `@aponiajs/testing`         | Complete | test applications, overrides, teardown                                               |
