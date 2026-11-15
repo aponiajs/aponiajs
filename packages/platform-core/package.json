@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/platform-core",
-  "version": "1.0.0-beta.55",
+  "version": "1.0.0-beta.56",
   "description": "Runtime-neutral HTTP platform primitives: enhancers, pipes, and middleware that every Aponia platform shares.",
   "keywords": [
     "aponia",

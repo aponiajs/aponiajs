@@ -70,6 +70,14 @@ test("packed workspaces generate an application that installs, validates, builds
         "07-create-aponia",
         bunTemporaryDirectory,
       ),
+      // `platform-elysia` depends on this package, so a generated application
+      // resolves it from the registry unless the lane packs it too.
+      platformCore: await packWorkspace(
+        "packages/platform-core",
+        archiveDirectory,
+        "08-platform-core",
+        bunTemporaryDirectory,
+      ),
     } as const;
     const workspaceManifest = (await Bun.file(join(workspaceDirectory, "package.json")).json()) as {
       readonly version: string;
@@ -174,7 +182,10 @@ test("packed workspaces generate an application that installs, validates, builds
       ["@aponiajs/devtools", "dependencies", archives.devtools],
       ["@aponiajs/cli", "devDependencies", archives.cli],
     ] as const;
-    const localOverrides = [["@aponiajs/mcp", archives.mcp]] as const;
+    const localOverrides = [
+      ["@aponiajs/mcp", archives.mcp],
+      ["@aponiajs/platform-core", archives.platformCore],
+    ] as const;
     let localManifest = await Bun.file(generatedManifestPath).text();
     for (const [packageName, section, archive] of localPackages) {
       for (const target of [section, "overrides"] as const) {
