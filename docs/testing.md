@@ -109,6 +109,24 @@ provider in the compiled graph, and a dependency a module imported directly is
 beyond its reach — the [package README](../packages/testing/README.md) states the
 boundary in full.
 
+## Testing another platform's boot
+
+`wrapPlatformApplication(application)` accepts the application
+`@aponiajs/platform-hono`, `@aponiajs/platform-h3`, or `@aponiajs/platform-nitro`
+returns and gives it the same teardown contract the Elysia kit has: `handle`,
+`get`, an idempotent `close()`, and `Symbol.asyncDispose`. Provider overrides
+remain the Elysia builder's.
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-hono";
+import { wrapPlatformApplication } from "@aponiajs/testing";
+
+await using application = wrapPlatformApplication(
+  await AponiaFactory.create(AppModule, { logger: false }),
+);
+const response = await application.handle(new Request("http://localhost/greetings"));
+```
+
 ## Replacing a provider
 
 ```ts

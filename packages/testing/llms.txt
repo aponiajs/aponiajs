@@ -62,6 +62,11 @@ const socket = new WebSocket(`${server.webSocketUrl}/chat`);
 
 Port `0` asks the operating system for a free port and `getUrl()` reports the one it granted, so nothing reserves a port and releases it first — the dance that leaves a window in which another process takes the port before the application binds it. Nothing else in this package opens a port.
 
+## Any platform's boot
+
+- `wrapPlatformApplication(application)` adds an idempotent `close()` and `Symbol.asyncDispose` to a Hono, H3, or Nitro boot; `handle` and `get` are forwarded.
+- Provider overrides remain the Elysia builder's.
+
 ## Links
 
 - [Package README](./README.md)

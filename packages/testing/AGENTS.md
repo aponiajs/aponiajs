@@ -11,10 +11,10 @@ path, and the port a WebSocket case genuinely needs. It depends on `common` and
 `platform-elysia`, with `elysia` as a peer, and it is a leaf — nothing in the
 framework depends on it.
 
-| Domain         | Owns                                                                                                      |
-| -------------- | --------------------------------------------------------------------------------------------------------- |
-| `application/` | `createTestApplication`, the builder, `TestApplication`, and the option and server contracts              |
-| `overrides/`   | `applyProviderOverrides`, the rewrite that substitutes one provider per overridden token in a module tree |
+| Domain         | Owns                                                                                                                    |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `application/` | `createTestApplication`, the builder, `TestApplication`, `PlatformTestApplication`, and the option and server contracts |
+| `overrides/`   | `applyProviderOverrides`, the rewrite that substitutes one provider per overridden token in a module tree               |
 
 `src/index.ts` is the only public barrel. `applyProviderOverrides` is internal and
 deliberately not exported: `overrideProvider` is the surface, and a second way to
@@ -86,6 +86,12 @@ the runtime boundary it describes.
   `process.stderr` — the two writes the system logger can reach, since it bypasses
   `console` — and asserts that a default boot wrote no line while a plain factory
   boot did, so the measurement cannot pass by capturing nothing.
+- **`wrapPlatformApplication` is the platform-neutral slice of the kit.**
+  `TestApplication` owns the Elysia boot, the override builder, and the listen
+  helper; a test on Hono, H3, or Nitro gets `handle`, `get`, an idempotent
+  `close()`, and `Symbol.asyncDispose` from this wrapper instead. Provider
+  overrides stay the Elysia builder's, because its rewrite compiles through
+  `@aponiajs/platform-elysia`'s lowering.
 - **`close()` is idempotent and `Symbol.asyncDispose` is the same call.** A test
   that opened a listener must not be able to leak it, whether it closed in a
   `finally` or fell out of an `await using` scope on a throw. The shutdown hooks

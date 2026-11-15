@@ -3840,8 +3840,16 @@
           "kind": "type"
         },
         {
+          "name": "PlatformTestApplication",
+          "kind": "value"
+        },
+        {
           "name": "Test",
           "kind": "value"
+        },
+        {
+          "name": "TestableApplication",
+          "kind": "type"
         },
         {
           "name": "TestApplication",
@@ -3870,6 +3878,10 @@
         {
           "name": "TestServer",
           "kind": "type"
+        },
+        {
+          "name": "wrapPlatformApplication",
+          "kind": "value"
         }
       ]
     },

@@ -23,6 +23,8 @@ behavior the framework promises.
 | `microservices`        | Message patterns, CBOR envelopes, and request/event handlers across services                           | 3140 | `bun run example:microservices`        |
 | `serverless`           | Web Fetch and AWS Lambda deployment adapters                                                           | 3150 | `bun run example:serverless`           |
 | `nitro`                | Nitro 3 RC server route delivery adapter                                                               | 3160 | `bun run example:nitro`                |
+| `hono`                 | A decorated application booted onto the Hono platform                                                  | 3180 | `bun run example:hono`                 |
+| `h3`                   | A decorated application booted onto the H3 platform                                                    | 3190 | `bun run example:h3`                   |
 | `mvc`                  | Laravel-style nested feature views, Blade templates, and automatic HTMX adaptation                     | 3170 | `bun run example:mvc`                  |
 
 Run every suite the way CI does:

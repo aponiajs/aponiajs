@@ -1030,15 +1030,18 @@ Snapshot contract version 1.
 
 - `OverrideFactoryOptions` (type)
 - `OverrideProviderBuilder` (type)
+- `PlatformTestApplication` (value)
 - `Test` (value)
 - `TestApplication` (value)
 - `TestApplicationBuilder` (type)
 - `TestApplicationOptions` (type)
 - `TestProviderOverride` (type)
 - `TestServer` (type)
+- `TestableApplication` (type)
 - `TestingModule` (type)
 - `TestingModuleBuilder` (type)
 - `createTestApplication` (value)
+- `wrapPlatformApplication` (value)
 
 ## `@aponiajs/view`
 

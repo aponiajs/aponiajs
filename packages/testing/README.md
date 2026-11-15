@@ -7,6 +7,21 @@ bun add --dev @aponiajs/testing
 Boot an Aponia application for a test, replace one provider for one boot, and
 tear it down without leaking a listener.
 
+## Any platform's boot
+
+`wrapPlatformApplication(application)` gives a Hono, H3, or Nitro boot the same
+teardown contract the Elysia kit has: `handle`, `get`, a `close()` that can run
+twice, and `Symbol.asyncDispose`. Provider overrides remain the Elysia builder's.
+
+```ts
+import { wrapPlatformApplication } from "@aponiajs/testing";
+import { AponiaFactory } from "@aponiajs/platform-hono";
+
+await using application = wrapPlatformApplication(
+  await AponiaFactory.create(AppModule, { logger: false }),
+);
+```
+
 ## What this package is, and what it is not
 
 **This package adds no test runner and no mocking framework.** It boots an

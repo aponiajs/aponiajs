@@ -1,6 +1,6 @@
 {
   "name": "aponiajs-workspace",
-  "version": "1.0.0-beta.54",
+  "version": "1.0.0-beta.55",
   "private": true,
   "description": "Bun-first application architecture powered by Elysia.",
   "license": "MIT",
@@ -38,6 +38,8 @@
     "example:microservices": "bun run --cwd examples/microservices start",
     "example:serverless": "bun run --cwd examples/serverless start",
     "example:nitro": "bun run --cwd examples/nitro start",
+    "example:hono": "bun run --cwd examples/hono start",
+    "example:h3": "bun run --cwd examples/h3 start",
     "example:mvc": "bun run --cwd examples/mvc start",
     "test": "bun run --workspaces test",
     "test:coverage": "bun test --coverage --coverage-reporter=text --coverage-reporter=lcov && bun scripts/coverage-gate.ts",

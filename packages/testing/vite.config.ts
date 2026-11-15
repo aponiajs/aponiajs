@@ -7,6 +7,8 @@ export default defineConfig({
       "@aponiajs/core": new URL("../core/src/index.ts", import.meta.url).pathname,
       "@aponiajs/platform-elysia": new URL("../platform-elysia/src/index.ts", import.meta.url)
         .pathname,
+      "@aponiajs/platform-hono": new URL("../platform-hono/src/index.ts", import.meta.url).pathname,
+      "@aponiajs/platform-core": new URL("../platform-core/src/index.ts", import.meta.url).pathname,
     },
     globals: true,
     include: ["tests-vp/**/*.conformance.ts"],

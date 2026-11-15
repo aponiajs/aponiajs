@@ -14,6 +14,11 @@
 export { createTestApplication } from "./application/test-application-builder.ts";
 export { Test } from "./application/testing-module.ts";
 export { TestApplication } from "./application/test-application.ts";
+export {
+  PlatformTestApplication,
+  wrapPlatformApplication,
+} from "./application/platform-test-application.ts";
+export type { TestableApplication } from "./application/platform-test-application.types.ts";
 export type {
   TestApplicationBuilder,
   TestProviderOverride,
