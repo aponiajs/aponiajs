@@ -900,6 +900,14 @@ Snapshot contract version 1.
 - `sse` (value)
 - `wrapElysiaPlugin` (value)
 
+## `@aponiajs/platform-hono`
+
+- `AponiaFactory` (value)
+- `HonoAponiaApplication` (type)
+- `HonoApplication` (type)
+- `createHonoHost` (value)
+- `toHonoPlatformHandler` (value)
+
 ## `@aponiajs/queue`
 
 - `MemoryQueueStore` (value)

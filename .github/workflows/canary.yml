@@ -63,7 +63,7 @@ jobs:
 
       - name: Pack publishable workspaces
         run: |
-          mkdir -p canary-artifacts/{01-common,02-core,03-platform-core,04-platform-elysia,05-cli,06-create-aponia,07-devtools,08-cron,09-graphql,10-testing,11-openapi,12-cors,13-opentelemetry,14-mcp,15-cache,16-events,17-http,18-rate-limit,19-security,20-session,21-compression,22-auth,23-audit,24-tenancy,25-queue,26-database,27-metrics,28-idempotency,29-microservices,30-serverless,31-h3,32-hono,33-nitro,34-store-redis,35-view}
+          mkdir -p canary-artifacts/{01-common,02-core,03-platform-core,04-platform-elysia,05-cli,06-create-aponia,07-devtools,08-cron,09-graphql,10-testing,11-openapi,12-cors,13-opentelemetry,14-mcp,15-cache,16-events,17-http,18-rate-limit,19-security,20-session,21-compression,22-auth,23-audit,24-tenancy,25-queue,26-database,27-metrics,28-idempotency,29-microservices,30-serverless,31-h3,32-hono,33-nitro,34-store-redis,35-view,36-platform-hono}
           bun pm pack --cwd packages/common --destination "$GITHUB_WORKSPACE/canary-artifacts/01-common"
           bun pm pack --cwd packages/core --destination "$GITHUB_WORKSPACE/canary-artifacts/02-core"
           bun pm pack --cwd packages/platform-core --destination "$GITHUB_WORKSPACE/canary-artifacts/03-platform-core"
@@ -99,6 +99,7 @@ jobs:
           bun pm pack --cwd packages/nitro --destination "$GITHUB_WORKSPACE/canary-artifacts/33-nitro"
           bun pm pack --cwd packages/store-redis --destination "$GITHUB_WORKSPACE/canary-artifacts/34-store-redis"
           bun pm pack --cwd packages/view --destination "$GITHUB_WORKSPACE/canary-artifacts/35-view"
+          bun pm pack --cwd packages/platform-hono --destination "$GITHUB_WORKSPACE/canary-artifacts/36-platform-hono"
 
       - name: Publish packages in dependency order
         working-directory: ${{ runner.temp }}

@@ -107,6 +107,7 @@ being changed:
 | [`packages/idempotency`](packages/idempotency/AGENTS.md)         | The idempotent request replay package                            |
 | [`packages/platform-elysia`](packages/platform-elysia/AGENTS.md) | Bootstrap, route mapping, native plugins, context types          |
 | [`packages/platform-core`](packages/platform-core/AGENTS.md)     | Shared execution context, guard pipeline, pipes, middleware      |
+| [`packages/platform-hono`](packages/platform-hono/AGENTS.md)     | The Hono platform: host binding, factory, middleware             |
 | [`packages/cli`](packages/cli/AGENTS.md)                         | Schematics, templates, generated layout                          |
 | [`packages/create-aponia`](packages/create-aponia/AGENTS.md)     | The `bun create aponia` entrypoint                               |
 | [`packages/cron`](packages/cron/AGENTS.md)                       | The scheduled-jobs plugin package                                |

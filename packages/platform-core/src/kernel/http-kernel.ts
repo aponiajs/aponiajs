@@ -222,14 +222,22 @@ async function decodeAndValidate(
   runtime: KernelRuntime,
 ): Promise<void> {
   const { schema } = mount.route;
-  if (schema === undefined) {
+  if (schema === undefined && !mount.route.parameters.some((entry) => entry.kind === "body")) {
     return;
   }
 
   const state = context as unknown as Record<string, unknown>;
-  if (schema.body !== undefined) {
+  if (schema !== undefined) {
+    // A body is decoded when the route declares a body slot or a `@Body()`
+    // parameter: without either, an unread body is left to `@Req()`.
+  }
+  if (schema?.body !== undefined || mount.route.parameters.some((entry) => entry.kind === "body")) {
     const body = await readBody(context.request, runtime.maxBodyBytes);
-    state.body = await validateSlot(schema.body, body, "body", false);
+    state.body =
+      schema?.body === undefined ? body : await validateSlot(schema.body, body, "body", false);
+  }
+  if (schema === undefined) {
+    return;
   }
   if (schema.query !== undefined) {
     state.query = await validateSlot(schema.query, context.query, "query", true);

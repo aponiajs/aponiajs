@@ -3391,6 +3391,31 @@
       ]
     },
     {
+      "name": "@aponiajs/platform-hono",
+      "exports": [
+        {
+          "name": "AponiaFactory",
+          "kind": "value"
+        },
+        {
+          "name": "createHonoHost",
+          "kind": "value"
+        },
+        {
+          "name": "HonoAponiaApplication",
+          "kind": "type"
+        },
+        {
+          "name": "HonoApplication",
+          "kind": "type"
+        },
+        {
+          "name": "toHonoPlatformHandler",
+          "kind": "value"
+        }
+      ]
+    },
+    {
       "name": "@aponiajs/queue",
       "exports": [
         {
