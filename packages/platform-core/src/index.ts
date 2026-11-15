@@ -8,6 +8,11 @@ export type {
   AponiaModuleDescriptorArtifact,
   AponiaRootModuleSelection,
 } from "./artifacts/module-descriptor-artifact.types.ts";
+export { AponiaHttpApplication, createPlatformFactory } from "./application/http-bootstrap.ts";
+export type {
+  AponiaHttpApplicationOptions,
+  BootedHttpApplication,
+} from "./application/http-bootstrap.ts";
 export {
   attachApplicationShutdown,
   collectLifecycleCalls,
@@ -38,6 +43,7 @@ export {
   type HttpStatusCode,
   type HttpStatusName,
 } from "./errors/http-status.ts";
+export type { HostDispatcher, PlatformHost } from "./host/platform-host.types.ts";
 export { createHttpKernel } from "./kernel/http-kernel.ts";
 export type {
   HostRequestInfo,

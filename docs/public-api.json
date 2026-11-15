@@ -2608,6 +2608,14 @@
       "name": "@aponiajs/platform-core",
       "exports": [
         {
+          "name": "AponiaHttpApplication",
+          "kind": "value"
+        },
+        {
+          "name": "AponiaHttpApplicationOptions",
+          "kind": "type"
+        },
+        {
           "name": "AponiaInvokerArtifact",
           "kind": "type"
         },
@@ -2634,6 +2642,10 @@
         {
           "name": "attachApplicationShutdown",
           "kind": "value"
+        },
+        {
+          "name": "BootedHttpApplication",
+          "kind": "type"
         },
         {
           "name": "buildArguments",
@@ -2680,6 +2692,10 @@
           "kind": "value"
         },
         {
+          "name": "createPlatformFactory",
+          "kind": "value"
+        },
+        {
           "name": "createRouteMatcher",
           "kind": "value"
         },
@@ -2690,6 +2706,10 @@
         {
           "name": "executePipes",
           "kind": "value"
+        },
+        {
+          "name": "HostDispatcher",
+          "kind": "type"
         },
         {
           "name": "HostRequestInfo",
@@ -2781,6 +2801,10 @@
         },
         {
           "name": "ParameterPipesMap",
+          "kind": "type"
+        },
+        {
+          "name": "PlatformHost",
           "kind": "type"
         },
         {

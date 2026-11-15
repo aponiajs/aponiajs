@@ -26,8 +26,8 @@ export interface MountedRoute {
   readonly controller: ClassToken<unknown>;
   /** The controller instance, or the request-scoped factory below. */
   readonly instance: unknown;
-  /** Resolves the instance for a request-scoped controller. */
-  readonly resolveInstance?: () => unknown;
+  /** Resolves the instance for a request-scoped controller, in this request's context. */
+  readonly resolveInstance?: (context: object) => unknown;
   /** Guard instances in run order. */
   readonly guards: readonly CanActivate[];
   /** Interceptor instances in run order. */

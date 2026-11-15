@@ -1,0 +1,348 @@
+import {
+  APP_FILTER,
+  APP_GUARD,
+  APP_INTERCEPTOR,
+  AponiaError,
+  getCatchMetadata,
+  getControllerMetadata,
+  type CanActivate,
+  type ClassToken,
+  type ExceptionFilter,
+  type Interceptor,
+  type LoggerService,
+  type ModuleDefinition,
+  type Token,
+} from "@aponiajs/common";
+import { createContainer, type AponiaContainer } from "@aponiajs/core";
+import type { PlatformHost } from "../host/platform-host.types.ts";
+import type {
+  HostRequestInfo,
+  HttpKernel,
+  HttpKernelOptions,
+  MountedRoute,
+} from "../kernel/kernel.types.ts";
+import { createHttpKernel } from "../kernel/http-kernel.ts";
+import { resolveApplicationPipes, resolvePipe } from "../pipes/pipe-resolver.ts";
+import { compileRootModule, HttpControllerKind } from "../modules/module-compiler.ts";
+import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
+import { compileRoutes } from "../routing/route-compilation.ts";
+import { joinPaths } from "../routing/route-path.ts";
+import { normalizeRoutePrefix } from "../routing/route-prefix.ts";
+import {
+  attachApplicationShutdown,
+  collectLifecycleCalls,
+  type ApplicationShutdown,
+} from "./lifecycle-hooks.ts";
+
+/** What an application on a non-Elysia platform is built with. */
+export interface AponiaHttpApplicationOptions {
+  /** The logger failures are reported through; `false` silences reporting. */
+  readonly logger?: LoggerService | false;
+  /** A prefix every Aponia route mounts under. */
+  readonly prefix?: string;
+  /** Application state, handed to every request as `store`. */
+  readonly state?: Record<string, unknown>;
+  /** The largest request body the kernel reads, in bytes. */
+  readonly maxBodyBytes?: number;
+  /** The Aponia middleware chain, run before a route's guards. */
+  readonly middleware?: HttpKernelOptions["middleware"];
+  /** Renders a `@Render()` route's view. */
+  readonly renderView?: HttpKernelOptions["renderView"];
+  /** Adjusts the native application before anything is mounted on it. */
+  readonly configureNative?: (application: never) => unknown;
+}
+
+/** What one boot produced. */
+export interface BootedHttpApplication<TNative = unknown> {
+  /** The native application the host created. */
+  readonly native: TNative;
+  /** The kernel that serves it. */
+  readonly kernel: HttpKernel;
+  /** The container the graph was built in. */
+  readonly container: AponiaContainer;
+  /** The frozen root descriptor. */
+  readonly root: ModuleDefinition;
+  /** The shutdown plan a `close()` runs. */
+  readonly shutdown: ApplicationShutdown;
+  /** The mounts the kernel serves, in mount order. */
+  readonly routes: readonly MountedRoute[];
+}
+
+function createShutdown(container: AponiaContainer): ApplicationShutdown {
+  return async (_closeActiveConnections?: boolean, signal?: string): Promise<void> => {
+    for (const call of collectLifecycleCalls(container, "beforeApplicationShutdown")) {
+      await call(signal);
+    }
+    for (const call of [...collectLifecycleCalls(container, "onModuleDestroy")].reverse()) {
+      await call();
+    }
+    for (const call of collectLifecycleCalls(container, "onApplicationShutdown")) {
+      await call(signal);
+    }
+  };
+}
+
+function resolveGlobal<T>(container: AponiaContainer, token: Token<unknown>): readonly T[] {
+  try {
+    container.graph.locate(container.graph.root, token);
+  } catch (error) {
+    if (error instanceof AponiaError && error.code === "MISSING_PROVIDER") {
+      return Object.freeze([]);
+    }
+    throw error;
+  }
+
+  const value = container.resolveModuleProvider(container.graph.root, token);
+  return Object.freeze(
+    entriesOf(value).map((entry) => resolveInstance<T>(container, container.graph.root, entry)),
+  );
+}
+
+function resolveClasses<T>(
+  container: AponiaContainer,
+  module: ModuleDefinition,
+  classes: readonly ClassToken<unknown>[],
+): readonly T[] {
+  return Object.freeze(classes.map((entry) => resolveInstance<T>(container, module, entry)));
+}
+
+function resolveInstance<T>(
+  container: AponiaContainer,
+  module: ModuleDefinition,
+  entry: unknown,
+): T {
+  if (typeof entry === "function") {
+    try {
+      return container.resolveModuleProvider(module, entry as Token<unknown>) as T;
+    } catch (error) {
+      // A global enhancer stated as a class rather than an instance is built
+      // here; a class the graph does provide is resolved above.
+      if (error instanceof AponiaError && error.code === "MISSING_PROVIDER") {
+        return Reflect.construct(entry, []) as T;
+      }
+      throw error;
+    }
+  }
+  return entry as T;
+}
+
+function entriesOf(value: unknown): readonly unknown[] {
+  return Array.isArray(value) ? value : [value];
+}
+
+/**
+ * One managed application served by a host.
+ */
+export class AponiaHttpApplication<TNative = unknown> {
+  readonly #kernel: HttpKernel;
+  readonly #native: TNative;
+  readonly #container: AponiaContainer;
+  readonly #shutdown: ApplicationShutdown;
+  readonly #host: PlatformHost<TNative, unknown> | undefined;
+  #closed = false;
+
+  /** @internal */
+  constructor(
+    host: PlatformHost<TNative, unknown> | undefined,
+    booted: BootedHttpApplication<TNative>,
+  ) {
+    this.#host = host;
+    this.#kernel = booted.kernel;
+    this.#native = booted.native;
+    this.#container = booted.container;
+    this.#shutdown = booted.shutdown;
+  }
+
+  /** Answers one request through the kernel. */
+  handle(request: Request, info?: HostRequestInfo): Promise<Response> {
+    return this.#kernel.handle(request, info);
+  }
+
+  /** Answers a request the kernel has a route for, or declines it. */
+  tryHandle(request: Request, info?: HostRequestInfo): Promise<Response | undefined> {
+    return this.#kernel.tryHandle(request, info);
+  }
+
+  /** The native application the host created. */
+  getNativeApplication(): TNative {
+    return this.#native;
+  }
+
+  /** Resolves a token the graph provides. */
+  get<T>(token: Token<T>): T {
+    return this.#container.get(token);
+  }
+
+  /** The runtime's name, when a host created this application. */
+  get platform(): string | undefined {
+    return this.#host?.name;
+  }
+
+  /** Runs the shutdown plan once. */
+  async close(force = false): Promise<void> {
+    if (this.#closed) {
+      return;
+    }
+    this.#closed = true;
+    await this.#shutdown(force);
+    if (this.#host?.close !== undefined) {
+      await this.#host.close(this.#native);
+    }
+  }
+}
+
+/**
+ * Builds the factory one platform exposes, over the host it implements.
+ *
+ * @param host - The runtime binding.
+ * @returns `create`, `createNative`, and `createApplicationContext`-shaped entry points.
+ */
+export function createPlatformFactory<TNative>(host: PlatformHost<TNative, unknown>) {
+  return Object.freeze({
+    /**
+     * Boots an application and returns the managed wrapper.
+     *
+     * @param rootModule - The root module.
+     * @param options - Boot options.
+     * @returns The application.
+     */
+    async create(
+      rootModule: AponiaRootModule,
+      options: AponiaHttpApplicationOptions = {},
+    ): Promise<AponiaHttpApplication<TNative>> {
+      return await boot(rootModule, options);
+    },
+    /**
+     * Boots an application and returns the native one, with the dispatcher mounted.
+     *
+     * @param rootModule - The root module.
+     * @param options - Boot options.
+     * @returns The native application.
+     */
+    async createNative(rootModule: AponiaRootModule, options: AponiaHttpApplicationOptions = {}) {
+      return (await boot(rootModule, options)).getNativeApplication();
+    },
+  });
+
+  async function boot(
+    rootModule: AponiaRootModule,
+    options: AponiaHttpApplicationOptions,
+  ): Promise<AponiaHttpApplication<TNative>> {
+    const compiledRoot = compileRootModule(rootModule);
+    const container = createContainer(compiledRoot);
+    const prefix = normalizeRoutePrefix(options.prefix);
+
+    for (const module of container.graph.modules) {
+      container.initializeModule(module);
+    }
+
+    const native = host.createApplication(compiledRoot.id);
+    const configured =
+      options.configureNative === undefined
+        ? native
+        : (options.configureNative(native as never) as TNative);
+
+    const globalGuards = resolveGlobal<CanActivate>(container, APP_GUARD);
+    const globalInterceptors = resolveGlobal<Interceptor>(container, APP_INTERCEPTOR);
+    const globalFilters = resolveGlobal<ExceptionFilter>(container, APP_FILTER).map((instance) =>
+      Object.freeze({
+        instance,
+        exceptions: getCatchMetadata(instance.constructor as ClassToken<unknown>),
+      }),
+    );
+    const globalPipes = resolveApplicationPipes(container);
+
+    const routes: MountedRoute[] = [];
+    for (const module of container.graph.modules) {
+      for (const definition of module.controllers) {
+        if (definition.kind !== HttpControllerKind) {
+          continue;
+        }
+        const token = definition.token as ClassToken<unknown>;
+        const metadata = getControllerMetadata(token);
+        if (!metadata) {
+          throw new AponiaError(
+            "INVALID_CONTROLLER",
+            `Class "${token.name}" is missing the @Controller() decorator.`,
+            { controller: token.name },
+          );
+        }
+        const compiled = compileRoutes(token, metadata.path);
+        const requestScoped = container.controllerScope(module, definition) === "request";
+        const instance = requestScoped
+          ? undefined
+          : container.instantiateController(module, definition);
+
+        for (const route of compiled) {
+          routes.push(
+            Object.freeze({
+              route: Object.freeze({
+                ...route,
+                path: prefix === "" ? route.path : joinPaths(prefix, route.path),
+              }),
+              controller: token,
+              instance,
+              ...(requestScoped
+                ? {
+                    resolveInstance: (context: object) =>
+                      container.instantiateController(module, definition, context),
+                  }
+                : {}),
+              guards: Object.freeze([
+                ...globalGuards,
+                ...resolveClasses<CanActivate>(container, module, route.enhancers.guards),
+              ]),
+              interceptors: Object.freeze([
+                ...globalInterceptors,
+                ...resolveClasses<Interceptor>(container, module, route.enhancers.interceptors),
+              ]),
+              filters: Object.freeze([
+                ...resolveClasses<ExceptionFilter>(container, module, route.enhancers.filters).map(
+                  (filter) =>
+                    Object.freeze({
+                      instance: filter,
+                      exceptions: getCatchMetadata(filter.constructor as ClassToken<unknown>),
+                    }),
+                ),
+                ...globalFilters,
+              ]),
+              pipes: Object.freeze(route.pipes.map((pipe) => resolvePipe(pipe, container))),
+            }),
+          );
+        }
+      }
+    }
+
+    const logger = options.logger === false ? undefined : options.logger;
+    const kernel = createHttpKernel({
+      routes,
+      ...(logger === undefined ? {} : { logger }),
+      ...(options.state === undefined ? {} : { store: options.state }),
+      ...(options.maxBodyBytes === undefined ? {} : { maxBodyBytes: options.maxBodyBytes }),
+      ...(options.middleware === undefined ? {} : { middleware: options.middleware }),
+      ...(options.renderView === undefined ? {} : { renderView: options.renderView }),
+      globalPipes,
+    });
+
+    host.mount(configured, async (request, info) => await kernel.tryHandle(request, info));
+
+    for (const call of collectLifecycleCalls(container, "onModuleInit")) {
+      await call();
+    }
+    const shutdown = createShutdown(container);
+    attachApplicationShutdown(configured as object, shutdown);
+    for (const call of collectLifecycleCalls(container, "onApplicationBootstrap")) {
+      await call();
+    }
+
+    const booted: BootedHttpApplication<TNative> = {
+      native: configured,
+      kernel,
+      container,
+      root: compiledRoot,
+      shutdown,
+      routes,
+    };
+    return new AponiaHttpApplication(host, booted);
+  }
+}

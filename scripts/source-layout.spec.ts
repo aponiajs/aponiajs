@@ -97,6 +97,7 @@ const packageLayouts: readonly PackageLayout[] = [
       "artifacts",
       "enhancers",
       "errors",
+      "host",
       "kernel",
       "middleware",
       "modules",

@@ -139,7 +139,7 @@ async function execute(
   await decodeAndValidate(mount, context, runtime);
   applyDeclaredSettings(route, context);
 
-  const instance = mount.resolveInstance?.() ?? mount.instance;
+  const instance = mount.resolveInstance?.(context) ?? mount.instance;
   const handler = (instance as Record<PropertyKey, unknown>)[route.propertyKey] as
     | ((...arguments_: unknown[]) => unknown)
     | undefined;
