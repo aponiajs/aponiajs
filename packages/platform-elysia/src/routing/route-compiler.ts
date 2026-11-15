@@ -38,6 +38,7 @@ import { type AnySchema, type Elysia } from "elysia";
 import type { MountedRouteEnhancers, ResolvedFilter } from "../controllers/enhancer-resolver.ts";
 import { isFilterMatch, reportThroughLogger } from "../errors/default-exception-filter.ts";
 import { httpErrors } from "../errors/http-error.ts";
+import { joinPaths } from "@aponiajs/platform-core";
 import {
   compileUnrolledGuards,
   executePipes,
@@ -1258,9 +1259,4 @@ function toElysiaResponseSchema(
 /**
  * @internal
  */
-export function joinPaths(controllerPath: string, routePath: string): string {
-  const segments = [controllerPath, routePath]
-    .map((path) => path.trim().replace(/^\/+|\/+$/g, ""))
-    .filter(Boolean);
-  return segments.length === 0 ? "/" : `/${segments.join("/")}`;
-}
+export { joinPaths };

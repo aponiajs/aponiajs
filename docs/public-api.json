@@ -2628,11 +2628,19 @@
           "kind": "type"
         },
         {
+          "name": "CompiledRoute",
+          "kind": "type"
+        },
+        {
           "name": "compileGuardsHook",
           "kind": "value"
         },
         {
           "name": "compileRootModule",
+          "kind": "value"
+        },
+        {
+          "name": "compileRoutes",
           "kind": "value"
         },
         {
@@ -2657,6 +2665,10 @@
         },
         {
           "name": "isModuleDefinition",
+          "kind": "value"
+        },
+        {
+          "name": "joinPaths",
           "kind": "value"
         },
         {

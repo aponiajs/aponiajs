@@ -26,6 +26,9 @@ export {
   resolvePipe,
 } from "./pipes/pipe-resolver.ts";
 export type { ParameterPipesMap, ResolvedPipe } from "./pipes/pipe-resolver.types.ts";
+export type { CompiledRoute } from "./routing/compiled-route.types.ts";
+export { compileRoutes } from "./routing/route-compilation.ts";
+export { joinPaths } from "./routing/route-path.ts";
 export type { RoutePlan } from "./routing/route-plan.types.ts";
 export { normalizeRoutePrefix, stripRoutePrefix } from "./routing/route-prefix.ts";
 export type { ControllerHandlerFactory, RouteHandler } from "./routing/route-handler.types.ts";
