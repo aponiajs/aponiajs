@@ -1,6 +1,6 @@
 import type { ModuleDefinition } from "@aponiajs/common";
 import { compileRootModule } from "../modules/module-compiler.ts";
-import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
+import type { AponiaRootModule } from "@aponiajs/platform-core";
 
 /**
  * Symbol used to attach compiled module descriptors directly onto class objects in RAM.

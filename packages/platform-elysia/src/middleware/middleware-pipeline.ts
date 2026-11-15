@@ -8,7 +8,7 @@ import {
 } from "@aponiajs/common";
 import type { AponiaContainer } from "@aponiajs/core";
 import type { Elysia } from "elysia";
-import { stripRoutePrefix } from "../routing/route-prefix.ts";
+import { stripRoutePrefix } from "@aponiajs/platform-core";
 import type { ResolvedMiddlewareConfig } from "@aponiajs/platform-core";
 import { isRouteExcluded, matchRouteTarget } from "./middleware-matcher.ts";
 

@@ -7,9 +7,9 @@ import type {
 } from "@aponiajs/common";
 import type { AnyElysia, Elysia } from "elysia";
 import type { ElysiaConfig, EventScope } from "elysia/types";
-import type { AponiaModuleDescriptorArtifact } from "../modules/module-descriptor-artifact.types.ts";
+import type { AponiaModuleDescriptorArtifact } from "@aponiajs/platform-core";
 import type { ElysiaPlugin } from "../plugins/plugin.types.ts";
-import type { AponiaInvokerArtifact } from "../routing/invoker-artifact.types.ts";
+import type { AponiaInvokerArtifact } from "@aponiajs/platform-core";
 import type { AponiaHealthOptions } from "./application-health.types.ts";
 
 /**

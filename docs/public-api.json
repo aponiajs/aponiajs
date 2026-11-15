@@ -2608,6 +2608,26 @@
       "name": "@aponiajs/platform-core",
       "exports": [
         {
+          "name": "AponiaInvokerArtifact",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaInvokerSelection",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaModuleDescriptorArtifact",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaRootModule",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaRootModuleSelection",
+          "kind": "type"
+        },
+        {
           "name": "compileGuardsHook",
           "kind": "value"
         },
@@ -2616,11 +2636,19 @@
           "kind": "value"
         },
         {
+          "name": "ControllerHandlerFactory",
+          "kind": "type"
+        },
+        {
           "name": "createMiddlewareConsumer",
           "kind": "value"
         },
         {
           "name": "executePipes",
+          "kind": "value"
+        },
+        {
+          "name": "normalizeRoutePrefix",
           "kind": "value"
         },
         {
@@ -2648,7 +2676,27 @@
           "kind": "value"
         },
         {
+          "name": "RouteHandler",
+          "kind": "type"
+        },
+        {
+          "name": "RoutePlan",
+          "kind": "type"
+        },
+        {
+          "name": "selectInvokerArtifact",
+          "kind": "value"
+        },
+        {
+          "name": "selectRootModuleDescriptor",
+          "kind": "value"
+        },
+        {
           "name": "StaticRouteExecutionContext",
+          "kind": "value"
+        },
+        {
+          "name": "stripRoutePrefix",
           "kind": "value"
         }
       ]

@@ -1,5 +1,5 @@
 import type { ClassToken } from "@aponiajs/common";
-import type { ControllerHandlerFactory } from "./route-compiler.types.ts";
+import type { ControllerHandlerFactory } from "../routing/route-handler.types.ts";
 
 /**
  * Build-time generated route invokers together with the provenance that decides

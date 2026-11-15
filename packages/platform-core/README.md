@@ -29,6 +29,10 @@ import {
   `executePipes` — pipe resolution against the container and execution.
 - `createMiddlewareConsumer` — the consumer a module uses to declare
   middleware targets and exclusions.
+- `selectRootModuleDescriptor` and `selectInvokerArtifact` — the build artifacts
+  an application boots from, and the release check each is held to.
+- `normalizeRoutePrefix`, `stripRoutePrefix`, and the `RoutePlan`,
+  `AponiaRootModule`, `RouteHandler`, and `ControllerHandlerFactory` types.
 
 ## What a platform can rely on
 

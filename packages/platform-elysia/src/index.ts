@@ -28,8 +28,7 @@ export type { ElysiaApplication } from "./application/native-application.types.t
 export { provideConfiguration, provideConfigurationAsync } from "./configuration/provider.ts";
 export type { AsyncConfigurationOptions } from "./configuration/provider.ts";
 export { compileRootModule } from "./modules/module-compiler.ts";
-export type { AponiaRootModule } from "./modules/module-compiler.types.ts";
-export type { AponiaModuleDescriptorArtifact } from "./modules/module-descriptor-artifact.types.ts";
+export type { AponiaModuleDescriptorArtifact, AponiaRootModule } from "@aponiajs/platform-core";
 export { inspectAponiaApplication } from "./inspection/application-inspection.ts";
 export type {
   AponiaApplicationInspection,
@@ -50,9 +49,12 @@ export type {
   ResponseStatus,
   AppState,
 } from "./routing/route-context.types.ts";
-export type { ControllerHandlerFactory, RouteHandler } from "./routing/route-compiler.types.ts";
-export type { AponiaInvokerArtifact } from "./routing/invoker-artifact.types.ts";
-export type { RoutePlan } from "./routing/route-plan.types.ts";
+export type {
+  AponiaInvokerArtifact,
+  ControllerHandlerFactory,
+  RouteHandler,
+  RoutePlan,
+} from "@aponiajs/platform-core";
 export { downloadFile } from "./routing/download-file.ts";
 export { sse } from "elysia";
 export type { SSEPayload as SseEvent } from "elysia";

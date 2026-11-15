@@ -1,5 +1,5 @@
 import type { ModuleDefinition } from "@aponiajs/common";
-import type { AponiaRootModule } from "./module-compiler.types.ts";
+import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
 
 /**
  * Build-time generated module descriptors together with the provenance that

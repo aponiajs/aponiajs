@@ -58,9 +58,9 @@ const repositoryRoot = resolve(import.meta.dir, "..");
 const runtimeSourceRoot = "packages/common/src";
 const controllerRoutesFile = "packages/cli/src/generation/controller-routes.ts";
 const controllerRoutesTypesFile = "packages/cli/src/generation/controller-routes.types.ts";
-const invokerArtifactTypesFile = "packages/platform-elysia/src/routing/invoker-artifact.types.ts";
+const invokerArtifactTypesFile = "packages/platform-core/src/artifacts/invoker-artifact.types.ts";
 const moduleDescriptorArtifactTypesFile =
-  "packages/platform-elysia/src/modules/module-descriptor-artifact.types.ts";
+  "packages/platform-core/src/artifacts/module-descriptor-artifact.types.ts";
 const controllerInvokersFile = "packages/cli/src/generation/controller-invokers.ts";
 const controllerInvokersTypesFile = "packages/cli/src/generation/controller-invokers.types.ts";
 const descriptorEmitterFile = "packages/cli/src/generation/descriptor-emitter.ts";

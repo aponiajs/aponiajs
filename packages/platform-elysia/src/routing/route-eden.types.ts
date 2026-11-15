@@ -1,6 +1,6 @@
 import type { InferValidatorOutput, RequestMethod, RouteSchema } from "@aponiajs/common";
 import type { CreateEden, RouteBase } from "elysia/types";
-import type { RoutePlan } from "./route-plan.types.ts";
+import type { RoutePlan } from "@aponiajs/platform-core";
 
 /** Extracts parameter name from a path segment starting with ':' */
 export type ExtractParamName<TSegment extends string> = TSegment extends `:${infer TParam}`

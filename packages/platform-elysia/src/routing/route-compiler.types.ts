@@ -12,23 +12,7 @@ import type {
 } from "@aponiajs/common";
 import type { InputSchema } from "elysia";
 
-/**
- * A route handler compiled outside the platform, already bound to its
- * controller instance.
- *
- * Elysia reads handler source statically, so an invoker must name every context
- * field it uses directly instead of forwarding the context to a generic helper.
- *
- * The context parameter is `never` for the same reason the factory's instance
- * parameter is: an invoker is written against the application's own
- * annotations — `@Body() body: CreateUser` — rather than against `RouteContext`,
- * and a parameter that accepts nothing is the one type every such function is
- * assignable to. A generated artifact therefore declares its invokers without a
- * cast, and a hand-written one may still annotate the parameter `RouteContext`
- * to read the context it is given. Only the platform calls an invoker, and it
- * passes the real route context.
- */
-export type RouteHandler = (context: never) => unknown;
+export type { ControllerHandlerFactory, RouteHandler } from "@aponiajs/platform-core";
 
 /** Renders one route's view from the engine the application registered. */
 export type RouteViewRenderer = (
@@ -36,17 +20,6 @@ export type RouteViewRenderer = (
   data: unknown,
   options?: ViewRenderOptions,
 ) => Promise<string> | string;
-
-/**
- * Builds the invokers of one controller once its instance exists, keyed by the
- * handler property key.
- *
- * The `instance` parameter is deliberately `never` so a factory declared for a
- * concrete controller type stays assignable without a cast.
- */
-export type ControllerHandlerFactory = (
-  instance: never,
-) => ReadonlyMap<string | symbol, RouteHandler>;
 
 /**
  * Direct property binding descriptor for monomorphic invokers.

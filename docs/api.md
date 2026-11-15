@@ -702,17 +702,29 @@ Snapshot contract version 1.
 
 ## `@aponiajs/platform-core`
 
+- `AponiaInvokerArtifact` (type)
+- `AponiaInvokerSelection` (type)
+- `AponiaModuleDescriptorArtifact` (type)
+- `AponiaRootModule` (type)
+- `AponiaRootModuleSelection` (type)
+- `ControllerHandlerFactory` (type)
 - `ParameterPipesMap` (type)
 - `ResolvedMiddlewareConfig` (type)
 - `ResolvedPipe` (type)
+- `RouteHandler` (type)
+- `RoutePlan` (type)
 - `StaticRouteExecutionContext` (value)
 - `compileGuardsHook` (value)
 - `compileUnrolledGuards` (value)
 - `createMiddlewareConsumer` (value)
 - `executePipes` (value)
+- `normalizeRoutePrefix` (value)
 - `resolveApplicationPipe` (value)
 - `resolveApplicationPipes` (value)
 - `resolvePipe` (value)
+- `selectInvokerArtifact` (value)
+- `selectRootModuleDescriptor` (value)
+- `stripRoutePrefix` (value)
 
 ## `@aponiajs/platform-elysia`
 

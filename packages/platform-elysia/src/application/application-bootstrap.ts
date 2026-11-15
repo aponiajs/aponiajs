@@ -44,18 +44,18 @@ import {
 import { createMiddlewareConsumer } from "@aponiajs/platform-core";
 import { mountMiddleware } from "../middleware/middleware-pipeline.ts";
 import { compileModuleInMemory } from "../compiler/in-memory-compiler.ts";
-import { normalizeRoutePrefix } from "../routing/route-prefix.ts";
+import { normalizeRoutePrefix } from "@aponiajs/platform-core";
 import {
   resolveApplicationPipe,
   resolveApplicationPipes,
   type ResolvedPipe,
 } from "@aponiajs/platform-core";
 import { isModuleDefinition } from "../modules/module-compiler.ts";
-import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
-import { selectRootModuleDescriptor } from "../modules/module-descriptor-artifact.ts";
+import type { AponiaRootModule } from "@aponiajs/platform-core";
+import { selectRootModuleDescriptor } from "@aponiajs/platform-core";
 import { getElysiaPlugin, isPluginModule } from "../plugins/plugin-module.ts";
 import { RequestContextService } from "../request-context/request-context.service.ts";
-import { selectInvokerArtifact } from "../routing/invoker-artifact.ts";
+import { selectInvokerArtifact } from "@aponiajs/platform-core";
 import type {
   ControllerHandlerFactory,
   RouteViewRenderer,

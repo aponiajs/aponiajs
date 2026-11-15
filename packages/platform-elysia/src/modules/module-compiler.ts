@@ -33,7 +33,7 @@ import {
   joinPaths,
   registerCompiledElysiaRoutes,
 } from "../routing/route-compiler.ts";
-import type { AponiaRootModule } from "./module-compiler.types.ts";
+import type { AponiaRootModule } from "@aponiajs/platform-core";
 import { assertUniqueElysiaRoutes } from "./route-uniqueness.ts";
 
 // One identity per class object, so two classes that happen to share a name do

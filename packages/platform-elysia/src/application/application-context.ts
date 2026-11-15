@@ -13,8 +13,8 @@ import {
 } from "@aponiajs/common";
 import { createContainer, type AponiaContainer } from "@aponiajs/core";
 import { compileModuleInMemory } from "../compiler/in-memory-compiler.ts";
-import { selectRootModuleDescriptor } from "../modules/module-descriptor-artifact.ts";
-import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
+import { selectRootModuleDescriptor } from "@aponiajs/platform-core";
+import type { AponiaRootModule } from "@aponiajs/platform-core";
 import { aponiaVersion } from "../version.ts";
 import { createSystemLogger, runShutdownHooks } from "./application-bootstrap.ts";
 import type { AponiaApplicationOptions } from "./application.types.ts";

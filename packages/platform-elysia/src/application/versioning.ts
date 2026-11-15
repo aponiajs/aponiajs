@@ -1,6 +1,6 @@
 import { AponiaError, versionPathSegment, type ModuleDefinition } from "@aponiajs/common";
 import type { AnyElysia } from "elysia";
-import { stripRoutePrefix } from "../routing/route-prefix.ts";
+import { stripRoutePrefix } from "@aponiajs/platform-core";
 import type { AponiaVersioningOptions } from "./application.types.ts";
 
 interface ResolvedVersioning {
