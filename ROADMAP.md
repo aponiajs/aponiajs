@@ -66,8 +66,10 @@ npm serves today is in [Packages](docs/packages.md).
 The Hono, H3, and Nitro entry points are first-class platforms, not only
 delivery adapters. `@aponiajs/platform-core` holds the runtime-neutral kernel
 the platforms share, and `docs/platform-parity.md` states the deltas. WebSocket
-gateways run on the Hono platform through its Bun adapter; the H3 and Nitro
-platforms refuse a gateway with `UNSUPPORTED_PLATFORM_FEATURE` rather than
+gateways run on every platform: Hono upgrades through `hono/bun`, H3 through
+`crossws` (mounted on the H3 application and on the Bun listener), and Nitro
+through the crossws server it runs. A custom host whose runtime states no
+gateway support refuses the boot with `UNSUPPORTED_PLATFORM_FEATURE` rather than
 mounting a route that never upgrades. The earlier note that these runtimes were
 delivery-only is superseded.
 

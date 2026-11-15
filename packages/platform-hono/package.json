@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/platform-hono",
-  "version": "1.0.0-beta.56",
+  "version": "1.0.0-beta.57",
   "description": "AponiaJS on Hono: routes, validation, enhancers, and lifecycle on the Hono runtime.",
   "keywords": [
     "aponia",
