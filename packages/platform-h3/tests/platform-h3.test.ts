@@ -12,6 +12,7 @@ import {
   SubscribeMessage,
   UseGuards,
   WebSocketGateway,
+  WebSocketServer,
   type CanActivate,
 } from "@aponiajs/common";
 import { Type } from "typebox";
@@ -55,9 +56,23 @@ class AppModule {}
 @WebSocketGateway("/ws")
 @Injectable()
 class EchoGateway {
+  @WebSocketServer() server!: { emit(event: string, data: unknown): void };
+
   @SubscribeMessage("echo")
   echo(@MessageBody() data: unknown): unknown {
     return data;
+  }
+
+  @SubscribeMessage("direct")
+  direct(@ConnectedSocket() socket: { emit(event: string, data: unknown): void }): undefined {
+    socket.emit("directed", { n: 1 });
+    return undefined;
+  }
+
+  @SubscribeMessage("broadcast")
+  broadcast(): undefined {
+    this.server.emit("news", { n: 2 });
+    return undefined;
   }
 
   @SubscribeMessage("use-socket")
@@ -303,5 +318,49 @@ describe("Aponia on H3", () => {
 
     expect(adapter.kind).toBe("host");
     expect(adapter.name).toBe("h3");
+  });
+
+  test("emits to one client and broadcasts to every client", async () => {
+    const application = await AponiaFactory.create(GatewayModule, { logger: false });
+    await application.listen(0);
+    const base = application.getUrl().replace("http", "ws");
+    const first = new WebSocket(`${base}/ws`);
+    const second = new WebSocket(`${base}/ws`);
+
+    await Promise.all(
+      [first, second].map(
+        (socket) =>
+          new Promise<void>((resolve, reject) => {
+            socket.onopen = () => resolve();
+            socket.onerror = () => reject(new Error("the socket did not open"));
+          }),
+      ),
+    );
+
+    const firstFrames: string[] = [];
+    const secondFrames: string[] = [];
+    first.onmessage = (event) => firstFrames.push(String(event.data));
+    second.onmessage = (event) => secondFrames.push(String(event.data));
+
+    first.send(JSON.stringify({ event: "direct", data: {} }));
+    await Bun.sleep(50);
+    expect(firstFrames.map((frame) => JSON.parse(frame))).toEqual([
+      { event: "directed", data: { n: 1 } },
+    ]);
+    expect(secondFrames).toEqual([]);
+
+    first.send(JSON.stringify({ event: "broadcast", data: {} }));
+    await Bun.sleep(50);
+    expect(firstFrames.map((frame) => JSON.parse(frame))).toContainEqual({
+      event: "news",
+      data: { n: 2 },
+    });
+    expect(secondFrames.map((frame) => JSON.parse(frame))).toEqual([
+      { event: "news", data: { n: 2 } },
+    ]);
+
+    first.close();
+    second.close();
+    await application.close();
   });
 });

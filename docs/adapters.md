@@ -108,10 +108,15 @@ provider. Hono upgrades through `hono/bun`; H3 upgrades through `crossws`, both
 on the H3 application (which Nitro's crossws server upgrades) and on the Bun
 listener; Elysia uses its own capability. A host whose runtime states no gateway
 support refuses the boot with `UNSUPPORTED_PLATFORM_FEATURE` rather than mounting
-a route that never upgrades. The client protocol is one JSON envelope on every
-platform: a client sends `{ event, data }`, an ordinary result is emitted under
-the subscribed event, and a failure is an `{ event: "exception", data: { code, message } }`
-frame with no stack or cause.
+a route that never upgrades.
+
+The handler surface is the one Nest applications already use: `@MessageBody()`
+and `@ConnectedSocket()` bind the message, `client.emit(event, data)` answers one
+client, `@WebSocketServer()` gives a server whose `emit(event, data)` broadcasts
+to every connected client, and an ordinary handler result is emitted under the
+subscribed event. `WsResponse` still selects another event, `undefined` sends
+nothing, and a failure is an `exception` frame with no stack or cause. The wire
+format is the adapter's: the kernel encodes a frame as `{ event, data }` JSON.
 
 ## Boundaries
 

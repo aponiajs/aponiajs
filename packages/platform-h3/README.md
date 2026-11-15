@@ -57,6 +57,10 @@ application's own routes.
 
 ## WebSocket gateways
 
+A handler receives `@MessageBody()` and `@ConnectedSocket()`; `client.emit(event, data)`
+answers one client, `@WebSocketServer()` gives a server whose `emit` broadcasts to
+every client, and an ordinary result is emitted under the subscribed event.
+
 A gateway mounts as an H3 route built with `defineWebSocketHandler`, which a
 crossws-capable server upgrades; the Bun listener upgrades it through crossws
 directly. The envelope is the same as on the other platforms: `{ event, data }`

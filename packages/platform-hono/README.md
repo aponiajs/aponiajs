@@ -48,6 +48,10 @@ application's own routes.
 
 ## WebSocket gateways
 
+A handler receives `@MessageBody()` and `@ConnectedSocket()`; `client.emit(event, data)`
+answers one client, `@WebSocketServer()` gives a server whose `emit` broadcasts to
+every client, and an ordinary result is emitted under the subscribed event.
+
 A gateway mounts on the Hono application and upgrades through Hono's Bun
 adapter. The JSON envelope is the same as on the Elysia platform: a client sends
 `{ event, data }`, an ordinary result is emitted under the subscribed event, and

@@ -5,13 +5,7 @@ import {
   type ExecutionContext,
   type WsResponse,
 } from "@aponiajs/common";
-import type { GatewayHooks, GatewayPlan, GatewaySocket } from "./gateway.types.ts";
-
-/** The error frame a client receives; never a stack or a cause. */
-interface ExceptionFrame {
-  readonly event: "exception";
-  readonly data: { readonly code: string; readonly message: string };
-}
+import type { GatewayHooks, GatewayPlan, GatewayServer, GatewaySocket } from "./gateway.types.ts";
 
 /**
  * Builds the hooks one mounted gateway runs.
@@ -27,42 +21,72 @@ interface ExceptionFrame {
  * @param server - The server reference injected into `@WebSocketServer()` properties.
  * @returns The hooks the host invokes.
  */
+export interface GatewayDispatcher extends GatewayHooks {
+  /** The server reference a `@WebSocketServer()` property receives. */
+  readonly server: GatewayServer;
+}
+
 export function createGatewayDispatcher(
   gatewayInstance: object,
   plan: GatewayPlan,
   guards: readonly CanActivate[],
-  server: unknown,
-): GatewayHooks {
+): GatewayDispatcher {
+  const peers = new Set<GatewaySocket>();
+  const broadcast = (event: string, data: unknown): void => {
+    const frame = encode(event, data);
+    for (const peer of peers) {
+      peer.send(frame);
+    }
+  };
+  const gatewayServer: GatewayServer = Object.freeze({ emit: broadcast });
   const instance = gatewayInstance as Record<PropertyKey, unknown>;
   const byEvent = new Map(plan.handlers.map((handler) => [handler.event, handler]));
 
   return Object.freeze({
+    server: gatewayServer,
+    broadcast,
     async afterInit(): Promise<void> {
-      await callLifecycle(instance, "afterInit", server);
+      await callLifecycle(instance, "afterInit", gatewayServer);
     },
     async open(socket: GatewaySocket): Promise<void> {
       if (!(await admits(guards, socket, plan.path))) {
         socket.close(1008, "Forbidden");
         return;
       }
+      peers.add(socket);
       await callLifecycle(instance, "handleConnection", socket);
     },
     async message(socket: GatewaySocket, raw: unknown): Promise<void> {
       const incoming = parseEnvelope(raw);
       if (incoming === undefined) {
-        socket.send(exception("INVALID_WEBSOCKET_MESSAGE", "The message is not a valid envelope."));
+        socket.emit(
+          "exception",
+          Object.freeze({
+            code: "INVALID_WEBSOCKET_MESSAGE",
+            message: "The message is not a valid envelope.",
+          }),
+        );
         return;
       }
 
       const handler = byEvent.get(incoming.event);
       if (handler === undefined) {
-        socket.send(exception("UNKNOWN_WEBSOCKET_EVENT", "No handler answers this event."));
+        socket.emit(
+          "exception",
+          Object.freeze({
+            code: "UNKNOWN_WEBSOCKET_EVENT",
+            message: "No handler answers this event.",
+          }),
+        );
         return;
       }
 
       const method = instance[handler.propertyKey];
       if (typeof method !== "function") {
-        socket.send(exception("WEBSOCKET_HANDLER_ERROR", "The handler is missing."));
+        socket.emit(
+          "exception",
+          Object.freeze({ code: "WEBSOCKET_HANDLER_ERROR", message: "The handler is missing." }),
+        );
         return;
       }
 
@@ -81,21 +105,23 @@ export function createGatewayDispatcher(
         );
         const frame = frameFor(result, incoming.event);
         if (frame !== undefined) {
-          socket.send(JSON.stringify(frame));
+          socket.emit(frame.event, frame.data);
         }
       } catch (error) {
-        socket.send(
-          exception(
-            error instanceof AponiaError ? error.code : "WEBSOCKET_HANDLER_ERROR",
-            "The handler failed.",
-          ),
+        socket.emit(
+          "exception",
+          Object.freeze({
+            code: error instanceof AponiaError ? error.code : "WEBSOCKET_HANDLER_ERROR",
+            message: "The handler failed.",
+          }),
         );
       }
     },
     async close(socket: GatewaySocket): Promise<void> {
+      peers.delete(socket);
       await callLifecycle(instance, "handleDisconnect", socket);
     },
-  } satisfies GatewayHooks);
+  } satisfies GatewayDispatcher);
 }
 
 function frameFor(
@@ -142,12 +168,8 @@ function parseEnvelope(
   };
 }
 
-function exception(code: string, message: string): string {
-  const frame: ExceptionFrame = Object.freeze({
-    event: "exception",
-    data: Object.freeze({ code, message }),
-  });
-  return JSON.stringify(frame);
+function encode(event: string, data: unknown): string {
+  return JSON.stringify({ event, data });
 }
 
 async function admits(

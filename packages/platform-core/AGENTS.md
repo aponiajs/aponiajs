@@ -39,6 +39,12 @@ here is what `@aponiajs/platform-elysia` and the other platforms run on top of.
   application adapter (`elysiaAdapter()`), and returns the same application
   surface either way. `listen` resolves with the application, `getUrl` states
   the bound address, and `getHttpAdapter` is the runtime's own object.
+- **Gateways speak Nest's surface, not a raw frame.** A handler receives
+  `@MessageBody()` and `@ConnectedSocket()`; `client.emit(event, data)` answers
+  one client, the `@WebSocketServer()` reference broadcasts, and a handler's
+  ordinary result is emitted under the subscribed event. The kernel encodes each
+  frame as `{ event, data }` JSON and the host sends it; a failure is an
+  `exception` frame with no stack or cause.
 - **Run order is the contract.** Middleware, guards and interceptor before
   halves, the handler, interceptor after halves reversed, filters
   most-specific-first. A platform must not reorder them.

@@ -66,6 +66,7 @@ function peerAddress(event: H3Event): string | undefined {
 
 function toGatewaySocket(peer: CrosswsPeer): GatewaySocket {
   return {
+    emit: (event, data) => peer.send(JSON.stringify({ event, data })),
     send: (data) => peer.send(data),
     close: (code, reason) => peer.close(code, reason),
     subscribe: (topic) => peer.subscribe(topic),

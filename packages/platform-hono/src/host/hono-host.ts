@@ -61,6 +61,7 @@ async function loadBunAdapter(): Promise<
 
 function toGatewaySocket(socket: HonoSocket): GatewaySocket {
   return {
+    emit: (event, data) => socket.send(JSON.stringify({ event, data })),
     send: (data) => socket.send(data),
     close: (code, reason) => socket.close(code, reason),
     subscribe: (topic) => socket.subscribe?.(topic),

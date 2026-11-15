@@ -50,6 +50,18 @@ class ChatGateway {
     return { event: "other", data: 1 };
   }
 
+  @SubscribeMessage("direct")
+  direct(@ConnectedSocket() socket: GatewaySocket): undefined {
+    socket.emit("directed", { n: 1 });
+    return undefined;
+  }
+
+  @SubscribeMessage("broadcast")
+  broadcast(): undefined {
+    (this.server as { emit(event: string, data: unknown): void }).emit("news", { n: 2 });
+    return undefined;
+  }
+
   @SubscribeMessage("fail")
   fail(): never {
     throw new Error("secret detail");
@@ -72,6 +84,9 @@ function socket(): GatewaySocket & { sent: string[]; closes: number[] } {
   const state = {
     sent: [] as string[],
     closes: [] as number[],
+    emit(event: string, data: unknown) {
+      state.sent.push(JSON.stringify({ event, data }));
+    },
     send(data: string) {
       state.sent.push(data);
     },
@@ -89,8 +104,9 @@ function socket(): GatewaySocket & { sent: string[]; closes: number[] } {
 function dispatcher(guards: readonly CanActivate[] = []) {
   const instance = new ChatGateway();
   const plan = compileGatewayPlan(ChatGateway)!;
-  injectGatewayServer(instance, ["server"], "server");
-  return { instance, plan, hooks: createGatewayDispatcher(instance, plan, guards, "server") };
+  const hooks = createGatewayDispatcher(instance, plan, guards);
+  injectGatewayServer(instance, ["server"], hooks.server);
+  return { instance, plan, hooks };
 }
 
 describe("the neutral gateway", () => {
@@ -106,6 +122,8 @@ describe("the neutral gateway", () => {
       "pick",
       "silent",
       "redirect",
+      "direct",
+      "broadcast",
       "fail",
     ]);
   });
@@ -191,7 +209,7 @@ describe("the neutral gateway", () => {
     await hooks.open(socket());
     await hooks.close(socket());
 
-    expect(events).toEqual(["init:true", "open", "close"]);
+    expect(events).toEqual(["init:false", "open", "close"]);
   });
 
   test("closes the socket a handshake guard refuses", async () => {
@@ -245,5 +263,30 @@ describe("the neutral gateway", () => {
       data: { code: "WEBSOCKET_HANDLER_ERROR" },
     });
     void plan;
+  });
+
+  test("lets a handler emit a named event to its own client", async () => {
+    const { hooks } = dispatcher();
+    const client = socket();
+    await hooks.open(client);
+    await hooks.message(client, JSON.stringify({ event: "direct" }));
+
+    expect(JSON.parse(client.sent[0]!)).toEqual({ event: "directed", data: { n: 1 } });
+  });
+
+  test("lets a handler broadcast to every connected client", async () => {
+    const { hooks } = dispatcher();
+    const first = socket();
+    const second = socket();
+    await hooks.open(first);
+    await hooks.open(second);
+
+    await hooks.message(first, JSON.stringify({ event: "broadcast" }));
+
+    expect(JSON.parse(first.sent[0]!)).toEqual({ event: "news", data: { n: 2 } });
+    expect(JSON.parse(second.sent[0]!)).toEqual({ event: "news", data: { n: 2 } });
+
+    await hooks.close(second);
+    await hooks.close(first);
   });
 });

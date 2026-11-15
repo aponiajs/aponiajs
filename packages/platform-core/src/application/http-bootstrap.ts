@@ -429,8 +429,12 @@ export function createPlatformFactory<TNative>(host: PlatformHost<TNative, unkno
         const guards = plan.guards.map(
           (guard) => container.resolveModuleProvider(module, guard) as CanActivate,
         );
-        injectGatewayServer(instance, getWebSocketServerProperties(provider.useClass), configured);
-        const dispatcher = createGatewayDispatcher(instance, plan, guards, configured);
+        const dispatcher = createGatewayDispatcher(instance, plan, guards);
+        injectGatewayServer(
+          instance,
+          getWebSocketServerProperties(provider.useClass),
+          dispatcher.server,
+        );
         host.mountGateway(configured, plan, dispatcher);
         gatewayInits.push(() => dispatcher.afterInit());
       }

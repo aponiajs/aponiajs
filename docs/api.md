@@ -721,6 +721,7 @@ Snapshot contract version 1.
 - `GatewayHooks` (type)
 - `GatewayHost` (type)
 - `GatewayPlan` (type)
+- `GatewayServer` (type)
 - `GatewaySocket` (type)
 - `HostDispatcher` (type)
 - `HostRequestInfo` (type)

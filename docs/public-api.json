@@ -2748,6 +2748,10 @@
           "kind": "type"
         },
         {
+          "name": "GatewayServer",
+          "kind": "type"
+        },
+        {
           "name": "GatewaySocket",
           "kind": "type"
         },

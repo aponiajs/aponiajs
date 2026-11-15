@@ -7,7 +7,11 @@ import type { CanActivate, ClassToken, WebSocketParameterMetadata } from "@aponi
  * wraps its native socket in it, so a gateway never sees the runtime's type.
  */
 export interface GatewaySocket {
-  /** Sends one text frame. */
+  /** The socket's identifier, when the runtime states one. */
+  readonly id?: string;
+  /** Emits one named event to this client, encoded the way the adapter states. */
+  emit(event: string, data: unknown): void;
+  /** Sends one raw text frame. */
   send(data: string): void;
   /** Closes the socket. */
   close(code?: number, reason?: string): void;
@@ -45,8 +49,16 @@ export interface GatewayPlan {
   readonly sendPings?: boolean | undefined;
 }
 
+/** The server reference a `@WebSocketServer()` property receives. */
+export interface GatewayServer {
+  /** Emits one event to every connected client. */
+  emit(event: string, data: unknown): void;
+}
+
 /** What a host runs for one mounted gateway. */
 export interface GatewayHooks {
+  /** Emits one event to every client this gateway serves. */
+  broadcast?(event: string, data: unknown): void;
   /** Runs once the server is ready. */
   afterInit(): void | Promise<void>;
   /** Runs when a socket connects. */

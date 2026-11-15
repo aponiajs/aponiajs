@@ -60,6 +60,7 @@ export type {
   GatewayHooks,
   GatewayHost,
   GatewayPlan,
+  GatewayServer,
   GatewaySocket,
 } from "./websockets/gateway.types.ts";
 export { createHttpKernel } from "./kernel/http-kernel.ts";
