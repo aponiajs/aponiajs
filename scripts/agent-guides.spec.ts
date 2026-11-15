@@ -35,6 +35,7 @@ const guideDirectories = [
   "packages/platform-core",
   "packages/platform-h3",
   "packages/platform-hono",
+  "packages/platform-nitro",
   "packages/queue",
   "packages/rate-limit",
   "packages/security",

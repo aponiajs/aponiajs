@@ -28,39 +28,40 @@ name `@alpha` explicitly. The other five serve a stable `0.5.0` under `latest`.
 These packages exist in this repository and ship with `1.0.0-beta.N`. An install
 command naming one of them answers `404` until that line is published.
 
-| Package                   | What it adds                                       |
-| ------------------------- | -------------------------------------------------- |
-| `@aponiajs/auth`          | JWT, OIDC, refresh rotation, revocation, and RBAC  |
-| `@aponiajs/audit`         | Bounded, redacting audit events                    |
-| `@aponiajs/cache`         | Bounded TTL cache with a pluggable store           |
-| `@aponiajs/compression`   | Brotli and gzip response compression               |
-| `@aponiajs/cors`          | Cross-origin policy from validated configuration   |
-| `@aponiajs/database`      | Drizzle boundary, repositories, and SQL migrations |
-| `@aponiajs/events`        | Typed in-process events with ordered handlers      |
-| `@aponiajs/graphql`       | GraphQL endpoint adapter                           |
-| `@aponiajs/h3`            | H3 delivery adapter                                |
-| `@aponiajs/hono`          | Hono delivery adapter                              |
-| `@aponiajs/http`          | SSRF-safe outbound HTTP client                     |
-| `@aponiajs/idempotency`   | Idempotent request replay and conflict detection   |
-| `@aponiajs/mcp`           | Model Context Protocol server                      |
-| `@aponiajs/metrics`       | Prometheus registry and scrape endpoint            |
-| `@aponiajs/microservices` | Message patterns and nine broker transports        |
-| `@aponiajs/nitro`         | Nitro delivery adapter                             |
-| `@aponiajs/openapi`       | OpenAPI document for an application's routes       |
-| `@aponiajs/opentelemetry` | OpenTelemetry tracing adapter                      |
-| `@aponiajs/platform-core` | Runtime-neutral primitives every platform shares   |
-| `@aponiajs/platform-h3`   | AponiaJS on the H3 runtime                         |
-| `@aponiajs/platform-hono` | AponiaJS on the Hono runtime                       |
-| `@aponiajs/queue`         | In-process jobs, retries, dead letters, and outbox |
-| `@aponiajs/rate-limit`    | Fixed-window rate limiting guard and store         |
-| `@aponiajs/security`      | Security headers and signed CSRF                   |
-| `@aponiajs/serverless`    | Web Fetch and AWS Lambda adapters                  |
-| `@aponiajs/session`       | Signed session cookies and store                   |
-| `@aponiajs/store-redis`   | Redis stores for the published store contracts     |
-| `@aponiajs/tenancy`       | Request-scoped tenancy and guard                   |
-| `@aponiajs/testing`       | Test application builder and provider overrides    |
-| `@aponiajs/view`          | Blade views, components, slots, and shared data    |
-| `@aponiajs/cron`          | Scheduled jobs from validated configuration        |
+| Package                    | What it adds                                       |
+| -------------------------- | -------------------------------------------------- |
+| `@aponiajs/auth`           | JWT, OIDC, refresh rotation, revocation, and RBAC  |
+| `@aponiajs/audit`          | Bounded, redacting audit events                    |
+| `@aponiajs/cache`          | Bounded TTL cache with a pluggable store           |
+| `@aponiajs/compression`    | Brotli and gzip response compression               |
+| `@aponiajs/cors`           | Cross-origin policy from validated configuration   |
+| `@aponiajs/database`       | Drizzle boundary, repositories, and SQL migrations |
+| `@aponiajs/events`         | Typed in-process events with ordered handlers      |
+| `@aponiajs/graphql`        | GraphQL endpoint adapter                           |
+| `@aponiajs/h3`             | H3 delivery adapter                                |
+| `@aponiajs/hono`           | Hono delivery adapter                              |
+| `@aponiajs/http`           | SSRF-safe outbound HTTP client                     |
+| `@aponiajs/idempotency`    | Idempotent request replay and conflict detection   |
+| `@aponiajs/mcp`            | Model Context Protocol server                      |
+| `@aponiajs/metrics`        | Prometheus registry and scrape endpoint            |
+| `@aponiajs/microservices`  | Message patterns and nine broker transports        |
+| `@aponiajs/nitro`          | Nitro delivery adapter                             |
+| `@aponiajs/openapi`        | OpenAPI document for an application's routes       |
+| `@aponiajs/opentelemetry`  | OpenTelemetry tracing adapter                      |
+| `@aponiajs/platform-core`  | Runtime-neutral primitives every platform shares   |
+| `@aponiajs/platform-h3`    | AponiaJS on the H3 runtime                         |
+| `@aponiajs/platform-hono`  | AponiaJS on the Hono runtime                       |
+| `@aponiajs/platform-nitro` | AponiaJS on the Nitro runtime                      |
+| `@aponiajs/queue`          | In-process jobs, retries, dead letters, and outbox |
+| `@aponiajs/rate-limit`     | Fixed-window rate limiting guard and store         |
+| `@aponiajs/security`       | Security headers and signed CSRF                   |
+| `@aponiajs/serverless`     | Web Fetch and AWS Lambda adapters                  |
+| `@aponiajs/session`        | Signed session cookies and store                   |
+| `@aponiajs/store-redis`    | Redis stores for the published store contracts     |
+| `@aponiajs/tenancy`        | Request-scoped tenancy and guard                   |
+| `@aponiajs/testing`        | Test application builder and provider overrides    |
+| `@aponiajs/view`           | Blade views, components, slots, and shared data    |
+| `@aponiajs/cron`           | Scheduled jobs from validated configuration        |
 
 The reserved `aponiajs` facade is private in this workspace and is not
 published. Do not install it yet.

@@ -51,6 +51,7 @@ Bun workspace. Framework packages live in `packages/`:
 | `@aponiajs/platform-core`   | Runtime-neutral primitives every HTTP platform shares           | `common`, `core`                                                         |
 | `@aponiajs/platform-h3`     | AponiaJS on the H3 runtime                                      | `platform-core`, peer `h3`, optional `crossws`                           |
 | `@aponiajs/platform-hono`   | AponiaJS on the Hono runtime                                    | `platform-core`, peer `hono`                                             |
+| `@aponiajs/platform-nitro`  | AponiaJS on the Nitro runtime                                   | `platform-core`, `platform-h3`, peers `h3` and `nitro`                   |
 | `@aponiajs/cli`             | `aponia new` and `aponia generate` schematics                   | `change-case`, `ts-morph`, `yargs-parser`, `inflection`, `oxfmt` (exact) |
 | `create-aponia`             | `bun create aponia` entrypoint into the same generator          | `@aponiajs/cli`                                                          |
 | `@aponiajs/cron`            | Scheduled jobs declared in a module, from validated config      | `common`, `platform-elysia`, `@elysia/cron`, peer `elysia`               |
@@ -111,6 +112,7 @@ being changed:
 | [`packages/platform-core`](packages/platform-core/AGENTS.md)     | Shared execution context, guard pipeline, pipes, middleware      |
 | [`packages/platform-h3`](packages/platform-h3/AGENTS.md)         | The H3 platform: host binding, factory, middleware               |
 | [`packages/platform-hono`](packages/platform-hono/AGENTS.md)     | The Hono platform: host binding, factory, middleware             |
+| [`packages/platform-nitro`](packages/platform-nitro/AGENTS.md)   | The Nitro platform: server handler over the H3 host              |
 | [`packages/cli`](packages/cli/AGENTS.md)                         | Schematics, templates, generated layout                          |
 | [`packages/create-aponia`](packages/create-aponia/AGENTS.md)     | The `bun create aponia` entrypoint                               |
 | [`packages/cron`](packages/cron/AGENTS.md)                       | The scheduled-jobs plugin package                                |

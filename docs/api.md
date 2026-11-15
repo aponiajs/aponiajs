@@ -916,6 +916,13 @@ Snapshot contract version 1.
 - `createHonoHost` (value)
 - `toHonoPlatformHandler` (value)
 
+## `@aponiajs/platform-nitro`
+
+- `AponiaFactory` (value)
+- `NitroAponiaApplication` (type)
+- `createAponiaNitroHandler` (value)
+- `createNitroHost` (value)
+
 ## `@aponiajs/queue`
 
 - `MemoryQueueStore` (value)

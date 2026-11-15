@@ -76,6 +76,11 @@ const packageLayouts: readonly PackageLayout[] = [
     directories: ["application", "host"],
   },
   {
+    sourceRoot: "packages/platform-nitro/src",
+    files: ["index.ts"],
+    directories: ["application", "host"],
+  },
+  {
     sourceRoot: "packages/platform-hono/src",
     files: ["index.ts"],
     directories: ["application", "host"],

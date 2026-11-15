@@ -28,6 +28,8 @@ export default defineConfig({
         .pathname,
       "@aponiajs/platform-hono": new URL("./packages/platform-hono/src/index.ts", import.meta.url)
         .pathname,
+      "@aponiajs/platform-nitro": new URL("./packages/platform-nitro/src/index.ts", import.meta.url)
+        .pathname,
       "@aponiajs/platform-elysia": new URL(
         "./packages/platform-elysia/src/index.ts",
         import.meta.url,

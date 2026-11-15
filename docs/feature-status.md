@@ -23,6 +23,7 @@ See [Packages](./packages.md) for the live split.
 | `@aponiajs/platform-core`   | Complete | shared execution context, guard pipeline, pipes, middleware consumer                 |
 | `@aponiajs/platform-h3`     | Complete | H3 host over the shared kernel                                                       |
 | `@aponiajs/platform-hono`   | Complete | Hono host over the shared kernel                                                     |
+| `@aponiajs/platform-nitro`  | Complete | Nitro server handler over the H3 host                                                |
 | `@aponiajs/cli`             | Complete | project and resource generators, library check, MCP                                  |
 | `create-aponia`             | Complete | `bun create aponia` entrypoint                                                       |
 | `@aponiajs/testing`         | Complete | test applications, overrides, teardown                                               |

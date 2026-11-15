@@ -3441,6 +3441,27 @@
       ]
     },
     {
+      "name": "@aponiajs/platform-nitro",
+      "exports": [
+        {
+          "name": "AponiaFactory",
+          "kind": "value"
+        },
+        {
+          "name": "createAponiaNitroHandler",
+          "kind": "value"
+        },
+        {
+          "name": "createNitroHost",
+          "kind": "value"
+        },
+        {
+          "name": "NitroAponiaApplication",
+          "kind": "type"
+        }
+      ]
+    },
+    {
       "name": "@aponiajs/queue",
       "exports": [
         {
