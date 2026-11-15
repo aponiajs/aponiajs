@@ -1,4 +1,5 @@
 import type { HostRequestInfo } from "../kernel/kernel.types.ts";
+import type { GatewayHooks, GatewayPlan } from "../websockets/gateway.types.ts";
 
 /** What a host must state for the kernel to serve requests through it. */
 export interface PlatformHost<TApplication, TNative = unknown> {
@@ -22,6 +23,13 @@ export interface PlatformHost<TApplication, TNative = unknown> {
   ): Promise<{ readonly url: string; close(force?: boolean): Promise<void> }>;
   /** Releases what the native application holds. */
   close?(application: TApplication): Promise<void>;
+  /**
+   * Mounts a WebSocket gateway.
+   *
+   * A host without WebSocket support states none, and the boot refuses a graph
+   * that declares a gateway rather than mounting a route that never upgrades.
+   */
+  mountGateway?(application: TApplication, plan: GatewayPlan, hooks: GatewayHooks): void;
 }
 
 /** A request handed to the kernel, with what the host knows about it. */

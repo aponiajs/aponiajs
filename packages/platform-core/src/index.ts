@@ -44,6 +44,15 @@ export {
   type HttpStatusName,
 } from "./errors/http-status.ts";
 export type { HostDispatcher, PlatformHost } from "./host/platform-host.types.ts";
+export { createGatewayDispatcher, injectGatewayServer } from "./websockets/gateway-dispatch.ts";
+export { compileGatewayPlan } from "./websockets/gateway-plan.ts";
+export type {
+  GatewayHandlerPlan,
+  GatewayHooks,
+  GatewayHost,
+  GatewayPlan,
+  GatewaySocket,
+} from "./websockets/gateway.types.ts";
 export { createHttpKernel } from "./kernel/http-kernel.ts";
 export type {
   HostRequestInfo,

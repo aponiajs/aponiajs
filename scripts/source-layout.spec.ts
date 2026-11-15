@@ -118,6 +118,7 @@ const packageLayouts: readonly PackageLayout[] = [
       "modules",
       "pipes",
       "routing",
+      "websockets",
     ],
   },
   {

@@ -21,7 +21,8 @@ The published documentation set:
 | `queues.md`                 | In-process jobs, retries, dead letters, idempotency, and the transactional outbox                                                         |
 | `database.md`               | The Drizzle boundary, transaction variants, repositories, and ordered SQL migrations                                                      |
 | `deployment.md`             | Topology, state ownership, readiness and liveness, shutdown, configuration, observability, and failure modes                              |
-| `adapters.md`               | Hono, H3, and Nitro delivery adapters and their boundaries                                                                                |
+| `adapters.md`               | Hono, H3, and Nitro platforms and delivery adapters, and their boundaries                                                                 |
+| `platform-parity.md`        | What every platform shares, the deliberate deltas, and what a platform refuses                                                            |
 | `stability.md`              | The frozen public API snapshot, compatibility, change classes, and the deprecation policy                                                 |
 | `support.md`                | Supported channels, fix windows, response targets, and what support covers                                                                |
 | `feature-status.md`         | Per-package completeness and the known gaps outside the current release                                                                   |

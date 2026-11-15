@@ -15,6 +15,11 @@
 - Routes, validation, enhancers, pipes, middleware, versioning, the prefix, SSE, and lifecycle are the same contract as the Elysia platform.
 - `listen` is Bun's server; the runtime is Bun, not Node.
 
+## WebSocket gateways
+
+- Gateways upgrade through Hono's Bun adapter when it loads.
+- The envelope is `{ event, data }`; failures are `exception` frames with no stack or cause.
+
 ## Links
 
 - [Repository guide](https://github.com/aponiajs/aponiajs/blob/release/beta/AGENTS.md)

@@ -15,6 +15,10 @@
 - Routes, validation, enhancers, pipes, middleware, versioning, the prefix, SSE, and lifecycle are the same contract as the Elysia platform.
 - `listen` is Bun's server; the runtime is Bun, not Node.
 
+## WebSocket gateways
+
+- A graph that declares a gateway fails the boot with `UNSUPPORTED_PLATFORM_FEATURE`; no route is mounted that cannot upgrade.
+
 ## Links
 
 - [Repository guide](https://github.com/aponiajs/aponiajs/blob/release/beta/AGENTS.md)

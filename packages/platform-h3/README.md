@@ -42,6 +42,12 @@ application's own routes.
   on the application's behalf.
 - `listen` is Bun's server. The runtime is Bun, not Node.
 
+## WebSocket gateways
+
+This platform does not upgrade WebSocket connections, so a graph that declares
+a gateway fails the boot with `UNSUPPORTED_PLATFORM_FEATURE` instead of mounting
+a route that never upgrades. Use the Elysia or Hono platform for gateways.
+
 ## Links
 
 - [Repository guide](https://github.com/aponiajs/aponiajs/blob/release/beta/AGENTS.md)

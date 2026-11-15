@@ -33,6 +33,13 @@ Middleware registered before the dispatcher runs before Aponia's guards and
 handlers, and a request the kernel has no route for continues to the
 application's own routes.
 
+## WebSocket gateways
+
+A gateway mounts on the Hono application and upgrades through Hono's Bun
+adapter. The JSON envelope is the same as on the Elysia platform: a client sends
+`{ event, data }`, an ordinary result is emitted under the subscribed event, and
+a failure is an `exception` frame with no stack or cause.
+
 ## What a consumer can rely on
 
 - Routes, validation, guards, interceptors, filters, pipes, middleware,

@@ -2664,6 +2664,10 @@
           "kind": "type"
         },
         {
+          "name": "compileGatewayPlan",
+          "kind": "value"
+        },
+        {
           "name": "compileGuardsHook",
           "kind": "value"
         },
@@ -2682,6 +2686,10 @@
         {
           "name": "ControllerHandlerFactory",
           "kind": "type"
+        },
+        {
+          "name": "createGatewayDispatcher",
+          "kind": "value"
         },
         {
           "name": "createHttpKernel",
@@ -2706,6 +2714,26 @@
         {
           "name": "executePipes",
           "kind": "value"
+        },
+        {
+          "name": "GatewayHandlerPlan",
+          "kind": "type"
+        },
+        {
+          "name": "GatewayHooks",
+          "kind": "type"
+        },
+        {
+          "name": "GatewayHost",
+          "kind": "type"
+        },
+        {
+          "name": "GatewayPlan",
+          "kind": "type"
+        },
+        {
+          "name": "GatewaySocket",
+          "kind": "type"
         },
         {
           "name": "HostDispatcher",
@@ -2765,6 +2793,10 @@
         },
         {
           "name": "httpStatusCodes",
+          "kind": "value"
+        },
+        {
+          "name": "injectGatewayServer",
           "kind": "value"
         },
         {

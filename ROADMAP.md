@@ -61,6 +61,16 @@ npm serves today is in [Packages](docs/packages.md).
 - Live Pub/Sub and Service Bus lanes; the other six adapters now have live
   lanes.
 
+## Shipped: HTTP platforms beyond Elysia
+
+The Hono, H3, and Nitro entry points are first-class platforms, not only
+delivery adapters. `@aponiajs/platform-core` holds the runtime-neutral kernel
+the platforms share, and `docs/platform-parity.md` states the deltas. WebSocket
+gateways run on the Hono platform through its Bun adapter; the H3 and Nitro
+platforms refuse a gateway with `UNSUPPORTED_PLATFORM_FEATURE` rather than
+mounting a route that never upgrades. The earlier note that these runtimes were
+delivery-only is superseded.
+
 ## Decisions recorded for 1.0
 
 These items are not in this line, and the reason is a contract decision rather

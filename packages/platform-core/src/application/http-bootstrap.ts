@@ -5,6 +5,7 @@ import {
   AponiaError,
   getCatchMetadata,
   getControllerMetadata,
+  getWebSocketServerProperties,
   type CanActivate,
   type ClassToken,
   type ExceptionFilter,
@@ -26,6 +27,8 @@ import { resolveApplicationPipes, resolvePipe } from "../pipes/pipe-resolver.ts"
 import { compileRootModule, HttpControllerKind } from "../modules/module-compiler.ts";
 import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
 import { compileRoutes } from "../routing/route-compilation.ts";
+import { createGatewayDispatcher, injectGatewayServer } from "../websockets/gateway-dispatch.ts";
+import { compileGatewayPlan } from "../websockets/gateway-plan.ts";
 import { joinPaths } from "../routing/route-path.ts";
 import { normalizeRoutePrefix } from "../routing/route-prefix.ts";
 import {
@@ -320,6 +323,66 @@ export function createPlatformFactory<TNative>(host: PlatformHost<TNative, unkno
     });
 
     host.mount(configured, async (request, info) => await kernel.tryHandle(request, info));
+
+    const gatewayInits: (() => void | Promise<void>)[] = [];
+    const gatewayPaths = new Set<string>();
+    const gatewayEvents = new Set<string>();
+    for (const module of container.graph.modules) {
+      for (const provider of module.providers) {
+        if (provider.kind !== "class") {
+          continue;
+        }
+        const plan = compileGatewayPlan(provider.useClass);
+        if (plan === undefined) {
+          continue;
+        }
+        if (host.mountGateway === undefined) {
+          throw new AponiaError(
+            "UNSUPPORTED_PLATFORM_FEATURE",
+            `The ${host.name} platform does not support WebSocket gateways.`,
+            {
+              platform: host.name,
+              feature: "websockets",
+              gateway: provider.useClass.name,
+              path: plan.path,
+            },
+          );
+        }
+        if (gatewayPaths.has(plan.path)) {
+          throw new AponiaError(
+            "DUPLICATE_WEBSOCKET_GATEWAY",
+            `Two gateways answer on "${plan.path}".`,
+            { path: plan.path },
+          );
+        }
+        gatewayPaths.add(plan.path);
+        for (const handler of plan.handlers) {
+          if (gatewayEvents.has(handler.event)) {
+            throw new AponiaError(
+              "DUPLICATE_WEBSOCKET_HANDLER",
+              `Two gateways answer the event "${handler.event}".`,
+              { event: handler.event },
+            );
+          }
+          gatewayEvents.add(handler.event);
+        }
+
+        const instance = container.resolveModuleProvider(module, provider.provide) as Record<
+          PropertyKey,
+          unknown
+        >;
+        const guards = plan.guards.map(
+          (guard) => container.resolveModuleProvider(module, guard) as CanActivate,
+        );
+        injectGatewayServer(instance, getWebSocketServerProperties(provider.useClass), configured);
+        const dispatcher = createGatewayDispatcher(instance, plan, guards, configured);
+        host.mountGateway(configured, plan, dispatcher);
+        gatewayInits.push(() => dispatcher.afterInit());
+      }
+    }
+    for (const afterInit of gatewayInits) {
+      await afterInit();
+    }
 
     for (const call of collectLifecycleCalls(container, "onModuleInit")) {
       await call();

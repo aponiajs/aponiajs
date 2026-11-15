@@ -25,6 +25,9 @@ started — and imports the rest from `@aponiajs/platform-core`.
 - **Middleware registered earlier runs earlier.** The host mounts its dispatcher
   when the boot finishes, so `createNative` plus `toHonoPlatformHandler` is the
   shape for an application that already has middleware of its own.
+- **Gateways upgrade through Hono's Bun adapter.** A host where that adapter
+  does not load states no `mountGateway`, and the boot refuses a graph that
+  declares a gateway with `UNSUPPORTED_PLATFORM_FEATURE`.
 - **No second route table, container, or guard pipeline.** Routing, validation,
   enhancers, and lifecycle belong to `@aponiajs/platform-core`.
 - **`listen` is Bun's server.** The runtime this repository targets is Bun; a

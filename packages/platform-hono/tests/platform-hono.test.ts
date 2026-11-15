@@ -4,10 +4,13 @@ import {
   Controller,
   Get,
   Injectable,
+  MessageBody,
   Module,
   Post,
   Query,
+  SubscribeMessage,
   UseGuards,
+  WebSocketGateway,
   type CanActivate,
 } from "@aponiajs/common";
 import { Type } from "typebox";
@@ -47,6 +50,18 @@ class WidgetController {
 
 @Module({ controllers: [WidgetController], providers: [DenyGuard] })
 class AppModule {}
+
+@WebSocketGateway("/ws")
+@Injectable()
+class EchoGateway {
+  @SubscribeMessage("echo")
+  echo(@MessageBody() data: unknown): unknown {
+    return data;
+  }
+}
+
+@Module({ providers: [EchoGateway] })
+class GatewayModule {}
 
 describe("Aponia on Hono", () => {
   test("answers through the native Hono application", async () => {
@@ -164,6 +179,38 @@ describe("Aponia on Hono", () => {
 
     expect(response.status).toBe(200);
     expect(application.platform).toBe("hono");
+    await application.close();
+  });
+
+  test("upgrades a gateway over Bun's server and answers an event", async () => {
+    const application = await AponiaFactory.create(GatewayModule, { logger: false });
+    const host = createHonoHost();
+    const listener = await host.listen?.(application.getNativeApplication(), 0);
+    const socket = new WebSocket(`${listener?.url.replace("http", "ws")}/ws`);
+
+    await new Promise<void>((resolve, reject) => {
+      socket.onopen = () => resolve();
+      socket.onerror = () => reject(new Error("the socket did not open"));
+    });
+    const frame = new Promise<string>((resolve) => {
+      socket.onmessage = (event) => resolve(String(event.data));
+    });
+    socket.send(JSON.stringify({ event: "echo", data: { n: 1 } }));
+
+    expect(JSON.parse(await frame)).toEqual({ event: "echo", data: { n: 1 } });
+    socket.close();
+    await listener?.close();
+    await application.close();
+  });
+
+  test("answers an HTTP request through the listener with the peer address", async () => {
+    const application = await AponiaFactory.create(AppModule, { logger: false });
+    const host = createHonoHost();
+    const listener = await host.listen?.(application.getNativeApplication(), 0);
+
+    const response = await fetch(`${listener?.url}/widgets/1?page=2`);
+    expect(response.status).toBe(200);
+    await listener?.close();
     await application.close();
   });
 });

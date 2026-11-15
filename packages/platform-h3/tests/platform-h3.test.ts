@@ -1,13 +1,17 @@
 import { describe, expect, test } from "bun:test";
 import {
+  AponiaError,
   Body,
   Controller,
   Get,
   Injectable,
+  MessageBody,
   Module,
   Post,
   Query,
+  SubscribeMessage,
   UseGuards,
+  WebSocketGateway,
   type CanActivate,
 } from "@aponiajs/common";
 import { Type } from "typebox";
@@ -47,6 +51,18 @@ class WidgetController {
 
 @Module({ controllers: [WidgetController], providers: [DenyGuard] })
 class AppModule {}
+
+@WebSocketGateway("/ws")
+@Injectable()
+class EchoGateway {
+  @SubscribeMessage("echo")
+  echo(@MessageBody() data: unknown): unknown {
+    return data;
+  }
+}
+
+@Module({ providers: [EchoGateway] })
+class GatewayModule {}
 
 function request(path: string, init?: RequestInit): Request {
   return new Request(`http://localhost${path}`, init);
@@ -195,5 +211,15 @@ describe("Aponia on H3", () => {
     expect(response.status).toBe(200);
     expect(application.platform).toBe("h3");
     await application.close();
+  });
+
+  test("refuses a gateway the h3 host cannot upgrade", async () => {
+    try {
+      await AponiaFactory.create(GatewayModule, { logger: false });
+      throw new Error("Expected the boot to refuse the gateway.");
+    } catch (error) {
+      expect(error).toBeInstanceOf(AponiaError);
+      expect((error as AponiaError).code).toBe("UNSUPPORTED_PLATFORM_FEATURE");
+    }
   });
 });
