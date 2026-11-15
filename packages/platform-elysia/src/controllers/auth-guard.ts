@@ -4,7 +4,7 @@ import {
   type ExecutionContext,
   type RouteContext,
 } from "@aponiajs/common";
-import { httpErrors } from "../errors/http-error.ts";
+import { httpErrors } from "@aponiajs/platform-core";
 
 /**
  * Base guard inspecting Authorization bearer tokens and request credentials.

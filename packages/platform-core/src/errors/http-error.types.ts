@@ -1,29 +1,19 @@
-import type { StatusMap, StatusMapBack } from "elysia";
+import type { httpStatusCodes, HttpStatusCode, HttpStatusName } from "./http-status.ts";
 import type { HttpError } from "./http-error.ts";
 
-type HttpErrorStatusCodeFrom<TStatus extends number> = `${TStatus}` extends
-  | `4${string}`
-  | `5${string}`
-  ? TStatus
-  : never;
+/** A 4xx or 5xx status code this framework answers with. */
+export type HttpErrorStatusCode = HttpStatusCode;
 
-/** A 4xx or 5xx status code from Elysia's supported status map. */
-export type HttpErrorStatusCode = {
-  [TStatus in keyof StatusMapBack]: TStatus extends number
-    ? HttpErrorStatusCodeFrom<TStatus>
-    : never;
-}[keyof StatusMapBack];
-
-/** A 4xx or 5xx status name from Elysia's supported status map. */
-export type HttpErrorStatusName = StatusMapBack[HttpErrorStatusCode];
+/** A 4xx or 5xx status name this framework answers with. */
+export type HttpErrorStatusName = HttpStatusName;
 
 /** A status an `HttpError` answers with: a code or a name. */
 export type HttpErrorStatus = HttpErrorStatusCode | HttpErrorStatusName;
 
 /** The numeric status a code or name resolves to. */
 export type ResolveHttpErrorStatus<TStatus extends HttpErrorStatus> =
-  TStatus extends keyof StatusMap
-    ? StatusMap[TStatus]
+  TStatus extends HttpErrorStatusName
+    ? (typeof httpStatusCodes)[TStatus]
     : TStatus extends HttpErrorStatusCode
       ? TStatus
       : never;

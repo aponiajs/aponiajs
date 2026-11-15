@@ -76,8 +76,8 @@ export type {
   RegisteredControllerDefinition,
   RegisteredApplication,
 } from "./controllers/controller.types.ts";
-export { HttpError, httpError, httpErrors } from "./errors/http-error.ts";
-export type { HttpErrorFactories } from "./errors/http-error.ts";
+export { HttpError, httpError, httpErrors } from "@aponiajs/platform-core";
+export type { HttpErrorFactories } from "@aponiajs/platform-core";
 export type {
   HttpErrorFactory,
   HttpErrorOptions,
@@ -86,7 +86,7 @@ export type {
   HttpErrorStatusName,
   ProblemDetails,
   ResolveHttpErrorStatus,
-} from "./errors/http-error.types.ts";
+} from "@aponiajs/platform-core";
 export { PluginModule, definePlugin } from "./plugins/plugin-module.ts";
 export { createServicePlugin } from "./plugins/service-plugin.ts";
 export { createEnhancerPlugin } from "./plugins/enhancer-plugin.ts";

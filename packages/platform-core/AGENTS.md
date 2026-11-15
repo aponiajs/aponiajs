@@ -13,6 +13,7 @@ here is what `@aponiajs/platform-elysia` and the other platforms run on top of.
 | ------------- | ----------------------------------------------------------------- |
 | `artifacts/`  | The invoker and module-descriptor artifacts and their selection   |
 | `enhancers/`  | The per-request execution context and the compiled guard pipeline |
+| `errors/`     | RFC 9457 problem failures and the neutral status-name map         |
 | `modules/`    | The root module type and the compiler a platform lowers it with   |
 | `pipes/`      | Route, application, and parameter pipe resolution and execution   |
 | `middleware/` | The middleware consumer contract a module configures              |

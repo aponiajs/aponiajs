@@ -2,7 +2,7 @@ import { AponiaError, formatLogValue, type LoggerService } from "@aponiajs/commo
 import { ElysiaStatus } from "elysia";
 import type { ResolvedFilter } from "../controllers/enhancer-resolver.ts";
 import type { ElysiaErrorHook } from "../routing/route-compiler.types.ts";
-import { httpErrors } from "./http-error.ts";
+import { httpErrors } from "@aponiajs/platform-core";
 
 /**
  * What an unhandled failure answers with.

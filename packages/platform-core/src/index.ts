@@ -8,6 +8,24 @@ export type {
   AponiaModuleDescriptorArtifact,
   AponiaRootModuleSelection,
 } from "./artifacts/module-descriptor-artifact.types.ts";
+export { HttpError, httpError, httpErrors } from "./errors/http-error.ts";
+export type { HttpErrorFactories } from "./errors/http-error.ts";
+export type {
+  HttpErrorFactory,
+  HttpErrorOptions,
+  HttpErrorStatus,
+  HttpErrorStatusCode,
+  HttpErrorStatusName,
+  ProblemDetails,
+  ResolveHttpErrorStatus,
+} from "./errors/http-error.types.ts";
+export {
+  httpStatusCodes,
+  statusCodeOf,
+  statusNameOf,
+  type HttpStatusCode,
+  type HttpStatusName,
+} from "./errors/http-status.ts";
 export { compileGuardsHook, compileUnrolledGuards } from "./enhancers/enhancer-pipeline.ts";
 export { StaticRouteExecutionContext } from "./enhancers/static-execution-context.ts";
 export { createMiddlewareConsumer } from "./middleware/middleware-consumer.ts";

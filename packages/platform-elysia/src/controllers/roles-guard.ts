@@ -1,5 +1,5 @@
 import { Injectable, Reflector, type CanActivate, type ExecutionContext } from "@aponiajs/common";
-import { httpErrors } from "../errors/http-error.ts";
+import { httpErrors } from "@aponiajs/platform-core";
 
 /**
  * Access control guard verifying role claims extracted via Reflector metadata.

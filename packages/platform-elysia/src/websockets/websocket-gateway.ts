@@ -25,7 +25,7 @@ import type { AponiaContainer } from "@aponiajs/core";
 import { type AnyElysia, TypeBoxValidator } from "elysia";
 import type { ResolvedFilter } from "../controllers/enhancer-resolver.ts";
 import { resolveEnhancers } from "../controllers/enhancer-resolver.ts";
-import { httpErrors } from "../errors/http-error.ts";
+import { httpErrors } from "@aponiajs/platform-core";
 import type { WebSocketGatewayPlan } from "./gateway-plan.types.ts";
 import type {
   BoundWebSocketGateway,

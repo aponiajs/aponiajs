@@ -37,7 +37,7 @@ import {
 import { type AnySchema, type Elysia } from "elysia";
 import type { MountedRouteEnhancers, ResolvedFilter } from "../controllers/enhancer-resolver.ts";
 import { isFilterMatch, reportThroughLogger } from "../errors/default-exception-filter.ts";
-import { httpErrors } from "../errors/http-error.ts";
+import { httpErrors } from "@aponiajs/platform-core";
 import { joinPaths } from "@aponiajs/platform-core";
 import {
   compileUnrolledGuards,

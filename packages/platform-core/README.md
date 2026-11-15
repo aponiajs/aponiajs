@@ -27,6 +27,8 @@ import {
   guard list as one ordered pipeline; `compileGuardsHook` is its alias.
 - `resolvePipe`, `resolveApplicationPipe`, `resolveApplicationPipes`,
   `executePipes` — pipe resolution against the container and execution.
+- `HttpError`, `httpErrors`, and the neutral status-name map — the same
+  RFC 9457 failure contract every platform answers with.
 - `createMiddlewareConsumer` — the consumer a module uses to declare
   middleware targets and exclusions.
 - `selectRootModuleDescriptor` and `selectInvokerArtifact` — the build artifacts
