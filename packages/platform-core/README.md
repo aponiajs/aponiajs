@@ -31,6 +31,10 @@ import {
   middleware targets and exclusions.
 - `selectRootModuleDescriptor` and `selectInvokerArtifact` — the build artifacts
   an application boots from, and the release check each is held to.
+- `compileRootModule` — lowers a decorated root into the descriptor the graph
+  compiles. A platform supplies `compileController` and `assertRoutes`, the two
+  halves only it can state; without them a controller lowers to a neutral
+  descriptor and no route check runs.
 - `normalizeRoutePrefix`, `stripRoutePrefix`, and the `RoutePlan`,
   `AponiaRootModule`, `RouteHandler`, and `ControllerHandlerFactory` types.
 

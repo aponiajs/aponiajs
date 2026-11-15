@@ -14,6 +14,12 @@ export { createMiddlewareConsumer } from "./middleware/middleware-consumer.ts";
 export type { ResolvedMiddlewareConfig } from "./middleware/middleware-consumer.types.ts";
 export type { AponiaRootModule } from "./modules/module-compiler.types.ts";
 export {
+  compileRootModule,
+  HttpControllerKind,
+  isModuleDefinition,
+} from "./modules/module-compiler.ts";
+export type { RootCompilationOptions } from "./modules/module-compiler.ts";
+export {
   executePipes,
   resolveApplicationPipe,
   resolveApplicationPipes,

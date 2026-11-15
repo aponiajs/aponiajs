@@ -2632,6 +2632,10 @@
           "kind": "value"
         },
         {
+          "name": "compileRootModule",
+          "kind": "value"
+        },
+        {
           "name": "compileUnrolledGuards",
           "kind": "value"
         },
@@ -2645,6 +2649,14 @@
         },
         {
           "name": "executePipes",
+          "kind": "value"
+        },
+        {
+          "name": "HttpControllerKind",
+          "kind": "value"
+        },
+        {
+          "name": "isModuleDefinition",
           "kind": "value"
         },
         {
@@ -2674,6 +2686,10 @@
         {
           "name": "resolvePipe",
           "kind": "value"
+        },
+        {
+          "name": "RootCompilationOptions",
+          "kind": "type"
         },
         {
           "name": "RouteHandler",
