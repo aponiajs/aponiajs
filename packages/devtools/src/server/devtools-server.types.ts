@@ -6,10 +6,7 @@
  * returned straight back, so the promise is the second half of this type rather
  * than something every handler has to await.
  */
-export type DevtoolsRequestHandler = (
-  request: Request,
-  body?: unknown,
-) => Response | Promise<Response>;
+export type DevtoolsRequestHandler = (request: Request) => Response | Promise<Response>;
 
 /**
  * The endpoints one surface serves, keyed by the path suffix after the devtools

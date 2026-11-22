@@ -114,20 +114,6 @@ export interface ManifestCommandOptions {
   readonly command: "manifest";
 }
 
-/** The secure, read-only `aponia mcp` command. */
-export interface McpCommandOptions {
-  /** Always `"mcp"`. */
-  readonly command: "mcp";
-  /** The project root the tools resolve against. */
-  readonly cwd?: string;
-  /** The named project in `aponia.json`. */
-  readonly project?: string;
-  /** Allow plan/apply generation over MCP. */
-  readonly allowWrite?: boolean;
-  /** Allow bounded command verification over MCP. */
-  readonly allowExec?: boolean;
-}
-
 /** The agent clients `aponia agent init` can install guidance for. */
 export type AgentClient = "codex" | "claude" | "cursor";
 
@@ -153,7 +139,6 @@ export type CliCommand =
   | DevCommandOptions
   | LibraryCommandOptions
   | ManifestCommandOptions
-  | McpCommandOptions
   | AgentCommandOptions
   | { readonly command: "help" }
   | { readonly command: "version" };

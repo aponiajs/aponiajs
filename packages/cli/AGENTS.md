@@ -464,20 +464,16 @@ separate focused modules. `src/index.ts` is the only public barrel.
   contract `aponia manifest` prints. `scripts/framework-contract.spec.ts`
   guards it against the error union, metadata keys, published packages, route
   slots, schematics, lifecycle hooks, decorators, and workspace version.
-- `src/agent/` owns the read-only stdio MCP surface. `mcp-stdio.ts` keeps
-  stdout protocol-only, and every tool is read-only: no write, shell, or network
-  capability is exposed yet. `aponia_library_check` confines its path to the
-  workspace root.
+- `src/agent/` owns `aponia agent init`: the guidance installer writes the
+  marker block, the client skill files, and the alias symlinks, and it exposes
+  no command execution surface.
 - `initAgent` writes an Aponia marker block to `AGENTS.md`, creates
   `CLAUDE.md` and `GEMINI.md` as relative symlinks to it when they are absent,
   and writes selected client skill files. It is idempotent, preserves user
   content outside the marker, and never replaces an existing alias file.
-  `--allow-write` exposes plan/apply; `--allow-exec` exposes only the allowlisted
-  verification scripts.
 - `src/library/catalog.ts` is the curated library catalog. Every `official`
   entry must name a published workspace package; the guard spec enforces that,
-  and the same data backs `aponia library search` and
-  `aponia_search_libraries`.
+  and the same data backs `aponia library search`.
 
 ## Tests
 

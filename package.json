@@ -30,6 +30,7 @@
     "example:eden-treaty": "bun run --cwd examples/eden-treaty start",
     "example:files": "bun run --cwd examples/files start",
     "example:lifecycle": "bun run --cwd examples/lifecycle start",
+    "example:mcp": "bun run --cwd examples/mcp start",
     "example:multiple-routers": "bun run --cwd examples/multiple-routers start",
     "example:native-plugins": "bun run --cwd examples/native-plugins start",
     "example:reference": "bun run --cwd examples/reference start",

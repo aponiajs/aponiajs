@@ -172,8 +172,7 @@ description, or tag. `--remote` adds npm packages tagged `aponia-library`, marke
 `unverified`; `--json` prints the entries. The bundled catalog remains curated
 data in this repository, not a hosted registry. Every `official` entry names a
 published workspace package, and `scripts/library-catalog.spec.ts` holds that
-invariant. The same catalog is exposed through the `aponia_search_libraries` MCP
-tool.
+invariant.
 
 ## Publishing
 

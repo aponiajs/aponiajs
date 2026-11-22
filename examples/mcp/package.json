@@ -1,0 +1,22 @@
+{
+  "name": "@aponiajs/example-mcp",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/main.ts",
+    "start": "bun run src/main.ts",
+    "build": "bun build ./src/main.ts --outdir ./dist --target bun",
+    "test": "bun test ../../examples/mcp/test/*.e2e-spec.ts",
+    "check": "vp check"
+  },
+  "dependencies": {
+    "@aponiajs/common": "workspace:*",
+    "@aponiajs/core": "workspace:*",
+    "@aponiajs/mcp": "workspace:*",
+    "@aponiajs/platform-elysia": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "elysia": "2.0.0-rc.4",
+    "zod": "^4.6.6"
+  }
+}

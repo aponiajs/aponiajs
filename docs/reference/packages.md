@@ -43,7 +43,7 @@ command naming one of them answers `404` until that line is published.
 | `@aponiajs/hono`          | Hono delivery adapter                              |
 | `@aponiajs/http`          | SSRF-safe outbound HTTP client                     |
 | `@aponiajs/idempotency`   | Idempotent request replay and conflict detection   |
-| `@aponiajs/mcp`           | Model Context Protocol server                      |
+| `@aponiajs/mcp`           | Model Context Protocol endpoint adapter            |
 | `@aponiajs/metrics`       | Prometheus registry and scrape endpoint            |
 | `@aponiajs/microservices` | Message patterns and nine broker transports        |
 | `@aponiajs/nitro`         | Nitro delivery adapter                             |
@@ -300,9 +300,11 @@ it and every later one is inert, and `application.close()` does not stop it.
 
 ### `@aponiajs/mcp`
 
-Model Context Protocol server with handshake version negotiation and
-`server/discover`, a tool registry, structured tool output, and stateless HTTP
-transports for AI agent integrations and developer toolchains.
+Model Context Protocol endpoint mounted from the official
+`@modelcontextprotocol/sdk` server. The package contributes a module
+registration, a validated endpoint policy with an Origin and `authorize` gate,
+and the lifecycle that closes stateful sessions. It implements no protocol
+engine of its own.
 
 [Package README](../../packages/mcp/README.md) ·
 [MCP guide](../services/mcp.md)

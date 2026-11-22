@@ -46,9 +46,7 @@
   "dependencies": {
     "@aponiajs/cli": "workspace:*",
     "@aponiajs/common": "workspace:*",
-    "@aponiajs/mcp": "workspace:*",
-    "@aponiajs/platform-elysia": "workspace:*",
-    "zod": "^4.6.6"
+    "@aponiajs/platform-elysia": "workspace:*"
   },
   "devDependencies": {
     "elysia": "2.0.0-rc.4"

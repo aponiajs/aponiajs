@@ -41,7 +41,7 @@ exact peer mismatch behavior.
 | HTTP contract                     | Route slots, Problem Details, status helpers                        | Platform tests and docs                        |
 | CLI commands and JSON output      | `@aponiajs/cli`                                                     | CLI tests and documentation guards             |
 | Library contract                  | `aponia.library.json`                                               | `aponia library check` and its tests           |
-| Agent surface                     | `aponia manifest`, `aponia mcp`, tool names and flags               | MCP tests and [agent docs](../agent/README.md) |
+| Agent surface                     | `aponia manifest`, `aponia agent init`, library checks              | CLI tests and [agent docs](../agent/README.md) |
 
 Only `src/index.ts` is a public barrel; `scripts/source-layout.spec.ts`
 enforces that. A bin-only package (`create-aponia`) publishes an executable

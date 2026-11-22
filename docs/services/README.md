@@ -16,7 +16,7 @@ enforces and the store or transport the application still owns.
 | [Database](./database.md)                     | The Drizzle boundary, repositories, and ordered SQL migrations            |
 | [Metrics](./metrics.md)                       | The Prometheus registry, request instrumentation, and the scrape endpoint |
 | [Microservices](./microservices.md)           | Message patterns, CBOR client and server, and optional broker adapters    |
-| [Model Context Protocol (MCP)](./mcp.md)      | Protocol negotiation, tools, resources, prompts, and transports           |
+| [Model Context Protocol (MCP)](./mcp.md)      | Endpoint policy, the official SDK server, and the session lifecycle       |
 | [OpenAPI](./openapi.md)                       | Serving a document for an application's routes and what it reflects       |
 | [Devtools](./devtools.md)                     | The opt-in API served on the application's own route table                |
 

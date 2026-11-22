@@ -5,8 +5,6 @@ import { checkLibrary } from "../library/check-library.ts";
 import { searchLibraries, searchRemoteLibraries } from "../library/catalog.ts";
 import { generateSchematic } from "../generation/schematic-generator.ts";
 import { frameworkContract } from "../contracts/framework-contract.ts";
-import { createAgentMcpServer } from "../agent/mcp-server.ts";
-import { serveMcpStdio } from "../agent/mcp-stdio.ts";
 import { initAgent } from "../agent/init-agent.ts";
 import { aponiaVersion } from "../version.ts";
 import { parseArguments } from "./arguments.ts";
@@ -170,18 +168,6 @@ export async function runCli(arguments_: readonly string[]): Promise<number> {
 
     if (command.command === "manifest") {
       console.log(JSON.stringify(frameworkContract, undefined, 2));
-      return 0;
-    }
-
-    if (command.command === "mcp") {
-      await serveMcpStdio(
-        createAgentMcpServer({
-          cwd: command.cwd,
-          project: command.project,
-          allowWrite: command.allowWrite === true,
-          allowExec: command.allowExec === true,
-        }),
-      );
       return 0;
     }
 

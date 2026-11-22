@@ -41,7 +41,7 @@ it.
 | `@aponiajs/cron`            | Complete | registered scheduler and validated jobs                                              |
 | `@aponiajs/graphql`         | Complete | registered endpoint and injected schema factory                                      |
 | `@aponiajs/opentelemetry`   | Complete | registered tracing and application SDK pieces                                        |
-| `@aponiajs/mcp`             | Complete | protocol versions, discovery, tools, resources, prompts                              |
+| `@aponiajs/mcp`             | Complete | official SDK endpoint, validated policy, request gate, session lifecycle             |
 | `@aponiajs/cache`           | Complete | bounded cache, TTL, store contract                                                   |
 | `@aponiajs/events`          | Complete | in-process events and listeners                                                      |
 | `@aponiajs/http`            | Complete | SSRF-safe client and response validation                                             |

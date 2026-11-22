@@ -5,52 +5,47 @@ specific to this package.
 
 ## What this package owns
 
-The Model Context Protocol server, its JSON-RPC 2.0 protocol engine, version
-negotiation, `server/discover`, the tool registry, and the stateless HTTP
-transport. It serves AponiaJS applications and development tools.
+The Model Context Protocol endpoint an Aponia application mounts. The protocol
+itself is the official `@modelcontextprotocol/sdk`; this package owns the module
+registration, the validated endpoint policy, the request gate, and the lifecycle
+of the transports it mounts.
 
-| Domain       | Owns                                                                                      |
-| ------------ | ----------------------------------------------------------------------------------------- |
-| `protocol/`  | Version constants, `_meta` keys, the header name, JSON-RPC 2.0 schemas, and wire types    |
-| `server/`    | `McpServer`, JSON-RPC dispatch, negotiation, discovery, HTTP handling, and server options |
-| `tools/`     | `McpToolRegistry`, `defineMcpTool`, and input/output schema contracts                     |
-| `resources/` | `McpResourceRegistry`, `defineMcpResource`, and the resource read contract                |
-| `prompts/`   | `McpPromptRegistry`, `defineMcpPrompt`, and the prompt argument/message contract          |
+| Domain     | Owns                                                                                           |
+| ---------- | ---------------------------------------------------------------------------------------------- |
+| `module/`  | `McpModule.register`, the options contract, and the server factory type                        |
+| `policy/`  | The configuration guard, the Origin and `authorize` gate, the preflight answer, and the plugin |
+| `session/` | The stateful session registry and its `onApplicationShutdown` cleanup                          |
 
 `src/index.ts` is the only public barrel. Keep `*.types.ts` colocated with the
 runtime boundary it describes.
 
 ## Invariants
 
-- **Negotiation never invents a version.** `initialize` echoes the requested
-  version only when `protocolVersions` contains it; everything else falls back
-  to `MCP_PROTOCOL_VERSION`. The fallback is the version a client that states
-  nothing receives, which is why it stays `2024-11-05`.
-- **Do not claim `2026-07-28` compliance.** Discovery is implemented; multi
-  round-trip requests, cache hints, and the rest of that revision are not.
-  Describe the package as negotiating the handshake versions plus discovery.
-- **`server/discover` validates before it answers.** It requires the request
-  `_meta`, client capabilities, and a supported version when one is stated.
-- **`structuredContent` is an object or absent.** The specification forbids an
-  array or scalar root, so a tool that answers one states it in text content.
-  `outputSchema` is published only when the tool declares it.
-- **Errors are JSON-RPC codes, not AponiaError.** Keep the closed numeric set:
-  `-32700`, `-32600`, `-32601`, `-32602`, `-32603`.
-- **Tool dispatch has an authorization boundary.** The HTTP transport requires
-  JSON, refuses an unlisted Origin, and exposes `authorize`; do not describe a
-  bare `createStatelessHttpHandler(server)` mount as production-ready.
-- **Capabilities follow the registries.** `resources` and `prompts` appear in
-  `initialize` and `server/discover` only when that registry holds an entry;
-  `tools` is always advertised. A failed resource read or prompt build answers
-  a generic internal error, never the handler's own message.
-- Return frozen public descriptors and tool definitions; contracts remain
-  immutable.
-- Keep the package pure Bun/TypeScript and dependency-free at runtime; do not
-  add a transport framework.
+- **The SDK is the only protocol implementation.** No JSON-RPC engine, version
+  negotiation, discovery, or tool registry lives here. A protocol behavior that
+  is missing is the SDK's to add.
+- **The factory returns a server factory.** An SDK server connects to exactly
+  one transport, so stateless mode builds a server per request and stateful mode
+  builds one per session. Never cache a server across requests.
+- **Authentication fails closed.** The registration refuses to mount when the
+  configuration does not set `allowUnauthenticated: true` and the options carry
+  no `authorize`. A `false` answer or a thrown error is a `401`.
+- **Origin is checked before authorization.** A request carrying an `Origin`
+  the policy does not name is a `403`, and `OPTIONS` is answered without
+  reaching the transport.
+- **Stateless requests are cleaned up.** The transport and server close when the
+  response body ends or the client cancels, including an SSE stream that outlives
+  `handleRequest`.
+- **Sessions belong to one boot.** `McpSessionRegistry` is a provider, not a
+  module-level map, so one application's shutdown cannot close another's
+  sessions. `onsessionclosed` deletes, and `onApplicationShutdown` closes every
+  transport still held.
+- The configuration guard reports every issue with code
+  `INVALID_CONFIGURATION_VALUE` and the declaration's name; tests assert the
+  code and the issue list, never the message.
 
 ## Tests
 
-Bun tests live in `packages/mcp/tests/*.test.ts`, and Vite+ conformance tests in
-`packages/mcp/tests-vp/*.conformance.ts`. The Bun lane covers negotiation,
-discovery, structured output, and header/meta disagreement; the conformance
-lane pins the version constants and the negotiation contract.
+Bun tests live in `packages/mcp/tests/*.test.ts` and drive the endpoint through
+`application.handle` with real `Request` objects. The Vite+ conformance lane
+pins the public types in `packages/mcp/tests-vp/*.conformance.ts`.

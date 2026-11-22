@@ -399,18 +399,7 @@ and the adapter-host token). The contract is guarded by
 `scripts/framework-contract.spec.ts` against the runtime sources, so an agent can
 treat it as the machine-readable surface of one release.
 
-## MCP
-
-`aponia mcp --cwd <path> [--project <name>]` starts a project-scoped Model
-Context Protocol server over newline-delimited JSON-RPC on stdio. The default
-surface is read-only and exposes `aponia_manifest`, `aponia_recipe`,
-`aponia_inspect_project`, `aponia_library_check`, and `aponia_explain_error`.
-`--allow-write` adds `aponia_plan_generate` / `aponia_apply_generate`;
-`--allow-exec` adds `aponia_verify` with the `fast`, `full`, and `contract`
-scopes. Apply requires `confirm: true` and a live plan id.
-stdout carries protocol frames only; diagnostics go to stderr. See the
-[agent surface](../agent/README.md) for client configuration and security
-defaults.
+## Agent
 
 `aponia agent init --clients codex,claude,cursor` installs the same canonical
 guidance into `AGENTS.md`, `.agents/skills/aponia/SKILL.md`,

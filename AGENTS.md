@@ -58,7 +58,7 @@ Bun workspace. Framework packages live in `packages/`:
 | `@aponiajs/cors`            | Cross-origin policy declared in a module, from validated config | `common`, `platform-elysia`, `@elysia/cors`, peer `elysia`               |
 | `@aponiajs/devtools`        | Opt-in devtools served by the running application itself        | `cli`, `common`, `platform-elysia`, peer `elysia`                        |
 | `@aponiajs/graphql`         | GraphQL endpoint served in a module, from validated config      | `common`, `platform-elysia`, `@elysia/graphql-yoga`, peer `elysia`       |
-| `@aponiajs/mcp`             | Model Context Protocol server, version negotiation, discovery   | `common`, peer `elysia`                                                  |
+| `@aponiajs/mcp`             | Model Context Protocol endpoint mounted from the official SDK   | `common`, `platform-elysia`, `@modelcontextprotocol/sdk`, peer `elysia`  |
 | `@aponiajs/testing`         | Test application builder, provider overrides, teardown          | `common`, `platform-elysia`, peer `elysia`                               |
 | `@aponiajs/openapi`         | OpenAPI document served for an application's routes             | `common`, `platform-elysia`, `@elysia/openapi`, peer `elysia`            |
 | `@aponiajs/opentelemetry`   | Tracing through a validated config, no backend or exporter      | `common`, `platform-elysia`, `@elysia/opentelemetry`, peer `elysia`      |
@@ -91,51 +91,51 @@ Every package and supporting directory carries its own `AGENTS.md` with the
 invariants that apply there. Read this file first, then the one next to the code
 being changed:
 
-| Guide                                                              | Covers                                                           |
-| ------------------------------------------------------------------ | ---------------------------------------------------------------- |
-| [`packages/common`](./packages/common/AGENTS.md)                   | Decorators, descriptors, tokens, errors, logging                 |
-| [`packages/compiler`](./packages/compiler/AGENTS.md)               | Scoped lifetimes, borrow views, typestate, linear consumption    |
-| [`packages/core`](./packages/core/AGENTS.md)                       | Module graph, visibility, container                              |
-| [`packages/cache`](./packages/cache/AGENTS.md)                     | The bounded application-cache package                            |
-| [`packages/compression`](./packages/compression/AGENTS.md)         | The Brotli/gzip response-compression package                     |
-| [`packages/events`](./packages/events/AGENTS.md)                   | The typed in-process event package                               |
-| [`packages/http`](./packages/http/AGENTS.md)                       | The SSRF-safe outbound HTTP package                              |
-| [`packages/rate-limit`](./packages/rate-limit/AGENTS.md)           | The fixed-window rate-limit package                              |
-| [`packages/security`](./packages/security/AGENTS.md)               | The security headers and CSRF package                            |
-| [`packages/session`](./packages/session/AGENTS.md)                 | The signed session cookie package                                |
-| [`packages/auth`](./packages/auth/AGENTS.md)                       | The JWT authentication and authorization package                 |
-| [`packages/audit`](./packages/audit/AGENTS.md)                     | The bounded audit-event package                                  |
-| [`packages/tenancy`](./packages/tenancy/AGENTS.md)                 | The request-scoped multi-tenancy package                         |
-| [`packages/queue`](./packages/queue/AGENTS.md)                     | The job queue and transactional outbox package                   |
-| [`packages/database`](./packages/database/AGENTS.md)               | The Drizzle database boundary, repositories, and migrations      |
-| [`packages/metrics`](./packages/metrics/AGENTS.md)                 | The Prometheus metrics registry, plugin, and scrape endpoint     |
-| [`packages/idempotency`](./packages/idempotency/AGENTS.md)         | The idempotent request replay package                            |
-| [`packages/platform-elysia`](./packages/platform-elysia/AGENTS.md) | Bootstrap, route mapping, native plugins, context types          |
-| [`packages/platform-core`](./packages/platform-core/AGENTS.md)     | Shared execution context, guard pipeline, pipes, middleware      |
-| [`packages/platform-h3`](./packages/platform-h3/AGENTS.md)         | The H3 platform: host binding, factory, middleware               |
-| [`packages/platform-hono`](./packages/platform-hono/AGENTS.md)     | The Hono platform: host binding, factory, middleware             |
-| [`packages/cli`](./packages/cli/AGENTS.md)                         | Schematics, templates, generated layout                          |
-| [`packages/create-aponia`](./packages/create-aponia/AGENTS.md)     | The `bun create aponia` entrypoint                               |
-| [`packages/cron`](./packages/cron/AGENTS.md)                       | The scheduled-jobs plugin package                                |
-| [`packages/cors`](./packages/cors/AGENTS.md)                       | The cross-origin plugin package                                  |
-| [`packages/devtools`](./packages/devtools/AGENTS.md)               | The opt-in devtools package, served by the application itself    |
-| [`packages/graphql`](./packages/graphql/AGENTS.md)                 | The GraphQL endpoint package, served by its own registration     |
-| [`packages/mcp`](./packages/mcp/AGENTS.md)                         | The standard Model Context Protocol (MCP) server & tools package |
-| [`packages/testing`](./packages/testing/AGENTS.md)                 | The test kit: test applications, provider overrides, teardown    |
-| [`packages/openapi`](./packages/openapi/AGENTS.md)                 | The OpenAPI document package, served by its own registration     |
-| [`packages/opentelemetry`](./packages/opentelemetry/AGENTS.md)     | The OpenTelemetry tracing package, and its process-global limit  |
-| [`packages/microservices`](./packages/microservices/AGENTS.md)     | Message patterns, CBOR client/server, optional broker adapters   |
-| [`packages/store-redis`](./packages/store-redis/AGENTS.md)         | Redis stores for cache, rate-limit, session, idempotency, auth   |
-| [`packages/view`](./packages/view/AGENTS.md)                       | Blade views, components, props, slots, and shared data           |
-| [`packages/serverless`](./packages/serverless/AGENTS.md)           | AWS Lambda and Web Fetch adapters for an application             |
-| [`packages/h3`](./packages/h3/AGENTS.md)                           | H3 delivery adapter for an application                           |
-| [`packages/hono`](./packages/hono/AGENTS.md)                       | Hono delivery adapter for an application                         |
-| [`packages/nitro`](./packages/nitro/AGENTS.md)                     | Nitro delivery adapter for an application                        |
-| [`packages/aponiajs`](./packages/aponiajs/AGENTS.md)               | The reserved, still-private facade                               |
-| [`scripts`](./scripts/AGENTS.md)                                   | Release channel derivation and documentation guards              |
-| [`docs`](./docs/AGENTS.md)                                         | The published documentation set and what guards it               |
-| [`docs/learn`](./docs/learn/README.md)                             | The ordered chapters that teach the framework                    |
-| [`examples`](./examples/AGENTS.md)                                 | Executable applications built with the framework                 |
+| Guide                                                              | Covers                                                          |
+| ------------------------------------------------------------------ | --------------------------------------------------------------- |
+| [`packages/common`](./packages/common/AGENTS.md)                   | Decorators, descriptors, tokens, errors, logging                |
+| [`packages/compiler`](./packages/compiler/AGENTS.md)               | Scoped lifetimes, borrow views, typestate, linear consumption   |
+| [`packages/core`](./packages/core/AGENTS.md)                       | Module graph, visibility, container                             |
+| [`packages/cache`](./packages/cache/AGENTS.md)                     | The bounded application-cache package                           |
+| [`packages/compression`](./packages/compression/AGENTS.md)         | The Brotli/gzip response-compression package                    |
+| [`packages/events`](./packages/events/AGENTS.md)                   | The typed in-process event package                              |
+| [`packages/http`](./packages/http/AGENTS.md)                       | The SSRF-safe outbound HTTP package                             |
+| [`packages/rate-limit`](./packages/rate-limit/AGENTS.md)           | The fixed-window rate-limit package                             |
+| [`packages/security`](./packages/security/AGENTS.md)               | The security headers and CSRF package                           |
+| [`packages/session`](./packages/session/AGENTS.md)                 | The signed session cookie package                               |
+| [`packages/auth`](./packages/auth/AGENTS.md)                       | The JWT authentication and authorization package                |
+| [`packages/audit`](./packages/audit/AGENTS.md)                     | The bounded audit-event package                                 |
+| [`packages/tenancy`](./packages/tenancy/AGENTS.md)                 | The request-scoped multi-tenancy package                        |
+| [`packages/queue`](./packages/queue/AGENTS.md)                     | The job queue and transactional outbox package                  |
+| [`packages/database`](./packages/database/AGENTS.md)               | The Drizzle database boundary, repositories, and migrations     |
+| [`packages/metrics`](./packages/metrics/AGENTS.md)                 | The Prometheus metrics registry, plugin, and scrape endpoint    |
+| [`packages/idempotency`](./packages/idempotency/AGENTS.md)         | The idempotent request replay package                           |
+| [`packages/platform-elysia`](./packages/platform-elysia/AGENTS.md) | Bootstrap, route mapping, native plugins, context types         |
+| [`packages/platform-core`](./packages/platform-core/AGENTS.md)     | Shared execution context, guard pipeline, pipes, middleware     |
+| [`packages/platform-h3`](./packages/platform-h3/AGENTS.md)         | The H3 platform: host binding, factory, middleware              |
+| [`packages/platform-hono`](./packages/platform-hono/AGENTS.md)     | The Hono platform: host binding, factory, middleware            |
+| [`packages/cli`](./packages/cli/AGENTS.md)                         | Schematics, templates, generated layout                         |
+| [`packages/create-aponia`](./packages/create-aponia/AGENTS.md)     | The `bun create aponia` entrypoint                              |
+| [`packages/cron`](./packages/cron/AGENTS.md)                       | The scheduled-jobs plugin package                               |
+| [`packages/cors`](./packages/cors/AGENTS.md)                       | The cross-origin plugin package                                 |
+| [`packages/devtools`](./packages/devtools/AGENTS.md)               | The opt-in devtools package, served by the application itself   |
+| [`packages/graphql`](./packages/graphql/AGENTS.md)                 | The GraphQL endpoint package, served by its own registration    |
+| [`packages/mcp`](./packages/mcp/AGENTS.md)                         | The MCP endpoint package, mounted from the official SDK         |
+| [`packages/testing`](./packages/testing/AGENTS.md)                 | The test kit: test applications, provider overrides, teardown   |
+| [`packages/openapi`](./packages/openapi/AGENTS.md)                 | The OpenAPI document package, served by its own registration    |
+| [`packages/opentelemetry`](./packages/opentelemetry/AGENTS.md)     | The OpenTelemetry tracing package, and its process-global limit |
+| [`packages/microservices`](./packages/microservices/AGENTS.md)     | Message patterns, CBOR client/server, optional broker adapters  |
+| [`packages/store-redis`](./packages/store-redis/AGENTS.md)         | Redis stores for cache, rate-limit, session, idempotency, auth  |
+| [`packages/view`](./packages/view/AGENTS.md)                       | Blade views, components, props, slots, and shared data          |
+| [`packages/serverless`](./packages/serverless/AGENTS.md)           | AWS Lambda and Web Fetch adapters for an application            |
+| [`packages/h3`](./packages/h3/AGENTS.md)                           | H3 delivery adapter for an application                          |
+| [`packages/hono`](./packages/hono/AGENTS.md)                       | Hono delivery adapter for an application                        |
+| [`packages/nitro`](./packages/nitro/AGENTS.md)                     | Nitro delivery adapter for an application                       |
+| [`packages/aponiajs`](./packages/aponiajs/AGENTS.md)               | The reserved, still-private facade                              |
+| [`scripts`](./scripts/AGENTS.md)                                   | Release channel derivation and documentation guards             |
+| [`docs`](./docs/AGENTS.md)                                         | The published documentation set and what guards it              |
+| [`docs/learn`](./docs/learn/README.md)                             | The ordered chapters that teach the framework                   |
+| [`examples`](./examples/AGENTS.md)                                 | Executable applications built with the framework                |
 
 `scripts/agent-guides.spec.ts` keeps that list and the symlinks honest, and
 `scripts/learning-path.spec.ts` keeps the numbered chapters in `docs/learn/`
@@ -454,9 +454,7 @@ both test lanes, `aponia.library.json`, `llms.txt`, `AGENTS.md`, and a Vite+
 build; `aponia library check` validates that surface read-only.
 `aponia manifest` prints the guarded framework contract (decorators, metadata
 keys, error codes, route slots, schematics, lifecycle, packages, and version).
-`aponia mcp` serves that contract and the read-only inspection tools over stdio;
-`--allow-write` adds guarded plan/apply and `--allow-exec` adds bounded
-verification. `aponia agent init` installs client guidance from one source.
+`aponia agent init` installs client guidance from one source.
 `aponia library search` reads the curated library catalog, which
 `scripts/library-catalog.spec.ts` keeps aligned with published packages.
 

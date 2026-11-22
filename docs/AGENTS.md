@@ -16,7 +16,7 @@ page lives in one category, and each category has its own `README.md`.
 | `operations/` | Deployment, release management, and AI-agent operation                               |
 | `reference/`  | The package catalog, API index, feature status, stability, support, and threat model |
 | `learn/`      | The ordered chapters that teach the same material in sequence                        |
-| `agent/`      | The read-only MCP surface, tools, recipes, and security defaults                     |
+| `agent/`      | The machine-readable manifest, guidance installer, and library checks                |
 
 `public-api.json` is the frozen export snapshot the API page and its guard read.
 `redirects.json` is the old-URL map the site serves as static redirects.

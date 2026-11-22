@@ -42,19 +42,12 @@ edit that hides a real mismatch is a regression.
 
 Prefer a command over prose whenever the answer is a structured fact:
 
-| Fact needed                              | Command                                        |
-| ---------------------------------------- | ---------------------------------------------- |
-| Framework contract, versions, packages   | `aponia manifest`                              |
-| The same contract and project inspection | `aponia mcp --cwd <project>`                   |
-| A known recipe for a task                | `aponia_recipe` through MCP                    |
-| Project modules, controllers, routes     | `aponia_inspect_project` through MCP           |
-| Why an error code was raised             | `aponia_explain_error` through MCP             |
-| Whether a library publishes correctly    | `aponia library check <path> --publish --json` |
+| Fact needed                            | Command                                        |
+| -------------------------------------- | ---------------------------------------------- |
+| Framework contract, versions, packages | `aponia manifest`                              |
+| Whether a library publishes correctly  | `aponia library check <path> --publish --json` |
 
-`aponia mcp` is read-only by default. Mutation needs `--allow-write`, and
-the verification runner needs `--allow-exec`. Do not enable either for a task
-that only needs inspection. Paths passed to library tools stay confined to the
-workspace.
+Paths passed to library checks stay confined to the workspace.
 
 ## Change protocol
 

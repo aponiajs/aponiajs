@@ -1,31 +1,30 @@
 # @aponiajs/mcp
 
-> Model Context Protocol server and tool registry for AponiaJS, with handshake version negotiation, `server/discover`, and structured tool output.
-
-`@aponiajs/mcp` provides a lightweight implementation of the Model Context Protocol powered by JSON-RPC 2.0. It answers the handshake versions `2024-11-05` through `2025-11-25`, echoes the version a supported client asks for, and answers `server/discover` for a client that follows the `2026-07-28` revision.
+> A Model Context Protocol endpoint for an Aponia application, mounted from the official `@modelcontextprotocol/sdk` server. The package contributes a module registration, a validated endpoint policy, a request gate, and stateful session cleanup; every protocol frame is the SDK's.
 
 ## What this package exports
 
-- [McpServer](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/server/mcp-server.ts): the server, its tool registry, version negotiation, and `server/discover`.
-- [McpToolRegistry](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/tools/tool-registry.ts): registration, descriptor listing, and tool dispatch.
-- [defineMcpTool](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/tools/define-tool.ts): a frozen tool declaration with input and optional output schemas.
-- `McpResourceRegistry` / `defineMcpResource`: publish readable resources and answer `resources/list` and `resources/read`.
-- `McpPromptRegistry` / `defineMcpPrompt`: publish prompt templates with typed arguments and answer `prompts/list` and `prompts/get`.
-- [MCP_PROTOCOL_VERSION](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/protocol/protocol.constants.ts): the fallback handshake version (`"2024-11-05"`).
-- [MCP_PROTOCOL_VERSIONS](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/protocol/protocol.constants.ts): every handshake version the package answers.
-- [createStatelessHttpHandler](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/server/http-handler.ts): the readiness document, JSON-RPC POST handling, protocol header checks, and the `authorize`/`allowedOrigins`/`requireJson` boundary.
+- `McpModule` — `McpModule.register(options)` returns the `DynamicModule` an application's `imports` accepts.
+- `McpConfiguration` — the value a `defineConfiguration` token validates: `path`, `allowedOrigins`, and `allowUnauthenticated`.
+- `McpModuleOptions` — `configuration`, `imports`, `inject`, `useFactory`, `authorize`, `sessions`, `jsonResponse`, `source`, and `key`.
+- `McpServerFactory` — `() => McpServer`, called once per request in stateless mode and once per session in stateful mode.
+- `McpAuthorize` — `(request) => boolean | Promise<boolean>`; `false` or a throw is a `401`.
 
-## Behavior a consumer can rely on
+## Where the behavior lives
 
-- `initialize` echoes a supported requested version and falls back to `2024-11-05` otherwise.
-- `server/discover` requires the request `_meta`, client capabilities, and a supported version when one is stated.
-- `tools/list` publishes each tool's `outputSchema` when it declares one; `tools/call` passes `structuredContent` through unchanged.
-- `resources` and `prompts` capabilities appear only when the server has an entry for them; a failed read or prompt build answers a generic error.
-- A stateless request that states one version in `Mcp-Protocol-Version` and another in `params._meta` is refused.
-- A POST requires `application/json`; a request with an unlisted `Origin` is refused, and `authorize` supplies the authentication decision.
-- Standard error codes follow JSON-RPC 2.0: parse (`-32700`), invalid request (`-32600`), unknown method (`-32601`), invalid params (`-32602`), internal (`-32603`).
+- [McpModule](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/module/mcp-module.ts): the registration, the configuration provider, and the session registry provider.
+- [readMcpPolicy](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/policy/mcp-policy.ts): the boot guard, the Origin gate, the `authorize` decision, and the preflight answer.
+- [McpSessionRegistry](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/session/mcp-session-registry.ts): the stateful sessions one boot owns and their shutdown.
 
-## Documentation
+## Use it
 
-- [MCP Specification Guide](../../docs/services/mcp.md): Complete Model Context Protocol integration and usage documentation.
-- [Published packages](../../docs/reference/packages.md): The npm catalog and install commands.
+```ts
+const mcp = McpModule.register({
+  configuration: McpConfig,
+  inject: [UsersService],
+  useFactory: (users) => () => buildServer(users),
+  authorize: (request) => verifyToken(request),
+});
+```
+
+[Package README](./README.md) · [MCP guide](../../docs/services/mcp.md)

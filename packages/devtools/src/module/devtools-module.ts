@@ -263,7 +263,7 @@ function createDevtoolsPlugin(options: DevtoolsOptions): ElysiaPlugin {
       // The mount path, stated once. The wildcard is what makes the route claim
       // the prefix rather than one path, and everything about which paths beneath
       // it answer — the `404`, the `405` — belongs to `handleDevtoolsRequest` below.
-      .all(`${devtoolsPathPrefix}/*`, async ({ request, store, body }) => {
+      .all(`${devtoolsPathPrefix}/*`, async ({ request, store }) => {
         if (options.authorize !== undefined) {
           let allowed = false;
           try {
@@ -281,7 +281,6 @@ function createDevtoolsPlugin(options: DevtoolsOptions): ElysiaPlugin {
         return handleDevtoolsRequest(
           request,
           surfaceFor(surfaces, store, recordFor(records, store, capture), options.logger, getLogs),
-          body,
         );
       })
       .onStart(() => {

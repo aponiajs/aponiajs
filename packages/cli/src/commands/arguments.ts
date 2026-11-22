@@ -8,7 +8,6 @@ import type {
   GenerateCommandOptions,
   GenerateSchematic,
   LibraryCommandOptions,
-  McpCommandOptions,
   AgentClient,
   AgentCommandOptions,
   NewCommandOptions,
@@ -117,10 +116,6 @@ export function parseArguments(arguments_: readonly string[]): CliCommand {
       throw new Error(`Unexpected argument "${rest[0]}".`);
     }
     return { command: "manifest" };
-  }
-
-  if (command === "mcp") {
-    return parseMcpCommand(rest);
   }
 
   if (command === "agent") {
@@ -304,8 +299,6 @@ interface ParsedOptions extends Readonly<Record<string, unknown>> {
 // mean, and it keeps `aponia new --dry-run app` reading `app` as the project
 // name: a declared boolean never consumes the token after it.
 const valueLessOptions = [
-  "allow-exec",
-  "allow-write",
   "crud",
   "dry-run",
   "flat",
@@ -321,21 +314,6 @@ const optionAliases: Readonly<Record<string, string[]>> = {
   project: ["p"],
   "skip-install": ["s"],
 };
-
-function parseMcpCommand(arguments_: readonly string[]): McpCommandOptions {
-  const parsed = parseOptions(arguments_);
-  if (parsed._.length > 0) {
-    throw new Error(`Unexpected argument "${parsed._[0]}".`);
-  }
-  assertKnownOptions(parsed, ["allow-exec", "allow-write", "cwd", "project"]);
-  return {
-    command: "mcp",
-    cwd: readStringOption(parsed, "cwd"),
-    project: readStringOption(parsed, "project"),
-    allowWrite: readBooleanOption(parsed, "allow-write", false),
-    allowExec: readBooleanOption(parsed, "allow-exec", false),
-  };
-}
 
 function parseAgentCommand(arguments_: readonly string[]): AgentCommandOptions {
   const parsed = parseOptions(arguments_);

@@ -28,7 +28,6 @@ const markerEnd = "<!-- aponia:end -->";
 const canonicalGuidance = `## AponiaJS agent guide
 
 - Run \`aponia manifest\` before assuming a framework capability; it is the guarded contract for this release.
-- Start \`aponia mcp --cwd <project>\` for read-only project inspection. Write and verification tools require explicit \`--allow-write\` and \`--allow-exec\`.
 - Generate code through the CLI (\`aponia g ...\`) instead of inventing module, controller, or provider shapes.
 - Keep the public barrel \`src/index.ts\` as the only package export. Library packages carry \`aponia.library.json\`.
 - Run \`bun run check\`, \`bun run test:coverage\`, and \`bun run test:vite-plus\` before claiming a change is complete.

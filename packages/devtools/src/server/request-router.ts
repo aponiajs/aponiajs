@@ -61,20 +61,11 @@ export function isDevtoolsSurfaceRequest(request: Request): boolean {
 export function handleDevtoolsRequest(
   request: Request,
   handlers: DevtoolsHandlers,
-  body?: unknown,
 ): Response | Promise<Response> {
   const { pathname } = new URL(request.url);
   const suffix = pathname.startsWith(devtoolsPathPrefix)
     ? pathname.slice(devtoolsPathPrefix.length)
     : undefined;
-
-  if (suffix === "/mcp" || suffix === "/mcp/") {
-    if (request.method !== "GET" && request.method !== "POST") {
-      return new Response(null, { status: 405, headers: { allow: "GET, POST" } });
-    }
-    const handler = Object.hasOwn(handlers, "/mcp") ? handlers["/mcp"] : undefined;
-    return handler ? handler(request, body) : new Response(null, { status: 404 });
-  }
 
   if (request.method !== "GET") {
     return new Response(null, { status: 405, headers: { allow: "GET" } });
@@ -87,5 +78,5 @@ export function handleDevtoolsRequest(
     return new Response(null, { status: 404 });
   }
 
-  return handler(request, body);
+  return handler(request);
 }

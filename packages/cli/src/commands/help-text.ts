@@ -12,7 +12,6 @@ Usage:
   aponia library publish [path] [options]
   aponia library search [query] [options]
   aponia manifest
-  aponia mcp [options]
   aponia agent init [options]
 
 Options:
@@ -34,9 +33,6 @@ Options:
       --tag <tag>     Npm dist-tag for library publish
       --remote        Include npm community results in library search
       --json          Print a library check result as JSON
-      --cwd <path>    Project root for the MCP server
-      --allow-write   Enable MCP plan/apply generation
-      --allow-exec    Enable bounded MCP verification
       --clients <list> Agent clients: codex,claude,cursor
   -p, --project       Select a configured project
       --type <type>   Select a resource transport

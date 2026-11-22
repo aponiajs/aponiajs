@@ -16,7 +16,6 @@ import { buildLogsPayload, devtoolsLogsPath } from "../endpoints/logs.ts";
 import { buildMetaPayload, devtoolsMetaPath } from "../endpoints/meta.ts";
 import { buildRequestsPayload, devtoolsRequestsPath } from "../endpoints/requests.ts";
 import { buildRoutesPayload, devtoolsRoutesPath } from "../endpoints/routes.ts";
-import { devtoolsMcpPath, handleMcpRequest } from "../mcp/mcp-server.ts";
 import type { LogStream } from "../logging/log-tap.ts";
 import type { RequestBuffer } from "../requests/request-buffer.types.ts";
 import type { DevtoolsHandlers } from "./devtools-server.types.ts";
@@ -221,18 +220,6 @@ export function createHandlers(
           [devtoolsRequestsPath]: (request: Request) =>
             jsonResponse(buildRequestsPayload(requests, readSinceCursor(request))),
         }),
-    [devtoolsMcpPath]: (request: Request, body?: unknown) =>
-      handleMcpRequest(
-        request,
-        {
-          diagnostics,
-          application,
-          logs,
-          requests,
-          logger,
-        },
-        body,
-      ),
   });
 }
 

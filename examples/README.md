@@ -16,6 +16,7 @@ behavior the framework promises.
 | `websockets`           | Nest-style gateways backed by native Elysia WebSockets                                                 | 3070 | `bun run example:websockets`           |
 | `files`                | Uploads through the body slot, named downloads, and static assets                                      | 3080 | `bun run example:files`                |
 | `lifecycle`            | A provider that announces its own start and stop                                                       | 3090 | `bun run example:lifecycle`            |
+| `mcp`                  | A Model Context Protocol endpoint mounted from the official SDK server                                 | 3200 | `bun run example:mcp`                  |
 | `configuration`        | A declared configuration, validated once at boot, injected, and read back                              | 3100 | `bun run example:configuration`        |
 | `devtools`             | What a boot compiled and what each request answered, served by the app itself                          | 3110 | `bun run example:devtools`             |
 | `eden-treaty`          | End-to-end type safety with Eden Treaty, path-agnostic DTOs, and inline schemas                        | 3120 | `bun run example:eden-treaty`          |

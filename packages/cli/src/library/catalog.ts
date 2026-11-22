@@ -80,10 +80,12 @@ export const libraryCatalog: readonly LibraryCatalogEntry[] = Object.freeze([
   entry("@aponiajs/testing", "utility", "Test application builder, overrides, and teardown.", [
     "testing",
   ]),
-  entry("@aponiajs/mcp", "utility", "Model Context Protocol engine and tool registry.", [
-    "agent",
-    "mcp",
-  ]),
+  entry(
+    "@aponiajs/mcp",
+    "plugin",
+    "Model Context Protocol endpoint mounted from the official SDK.",
+    ["agent", "mcp"],
+  ),
   entry("@aponiajs/devtools", "plugin", "Opt-in devtools and request introspection.", [
     "devtools",
     "agent",

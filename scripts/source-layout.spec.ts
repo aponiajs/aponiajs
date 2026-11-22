@@ -170,7 +170,7 @@ const packageLayouts: readonly PackageLayout[] = [
   {
     sourceRoot: "packages/mcp/src",
     files: ["index.ts"],
-    directories: ["prompts", "protocol", "resources", "server", "tools"],
+    directories: ["module", "policy", "session"],
   },
   {
     sourceRoot: "packages/openapi/src",

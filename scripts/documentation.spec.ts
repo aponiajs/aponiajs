@@ -24,6 +24,7 @@ const modulePackages = [
   "http",
   "idempotency",
   "metrics",
+  "mcp",
   "openapi",
   "opentelemetry",
   "queue",
@@ -34,7 +35,7 @@ const modulePackages = [
 ] as const;
 
 /** Adapter packages that keep the raw-plugin path in a final section. */
-const adapterPackages = ["cron", "cors", "graphql", "openapi", "opentelemetry"] as const;
+const adapterPackages = ["cron", "cors", "graphql", "mcp", "openapi", "opentelemetry"] as const;
 
 /**
  * Documents that mention `application.get` only in prose, not in a runnable

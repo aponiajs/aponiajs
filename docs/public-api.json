@@ -1976,10 +1976,6 @@
           "kind": "value"
         },
         {
-          "name": "createDevtoolsMcpServer",
-          "kind": "value"
-        },
-        {
           "name": "createLogBuffer",
           "kind": "value"
         },
@@ -2026,10 +2022,6 @@
         {
           "name": "DevtoolsHandlers",
           "kind": "type"
-        },
-        {
-          "name": "devtoolsMcpPath",
-          "kind": "value"
         },
         {
           "name": "DevtoolsModule",
@@ -2247,184 +2239,24 @@
       "name": "@aponiajs/mcp",
       "exports": [
         {
-          "name": "createStatelessHttpHandler",
+          "name": "McpAuthorize",
+          "kind": "type"
+        },
+        {
+          "name": "McpConfiguration",
+          "kind": "type"
+        },
+        {
+          "name": "McpModule",
           "kind": "value"
         },
         {
-          "name": "defineMcpPrompt",
-          "kind": "value"
-        },
-        {
-          "name": "defineMcpResource",
-          "kind": "value"
-        },
-        {
-          "name": "defineMcpTool",
-          "kind": "value"
-        },
-        {
-          "name": "JSONRPC_ERROR_CODES",
-          "kind": "value"
-        },
-        {
-          "name": "JsonRpcError",
+          "name": "McpModuleOptions",
           "kind": "type"
         },
         {
-          "name": "JsonRpcErrorResponse",
+          "name": "McpServerFactory",
           "kind": "type"
-        },
-        {
-          "name": "JsonRpcId",
-          "kind": "type"
-        },
-        {
-          "name": "JsonRpcNotification",
-          "kind": "type"
-        },
-        {
-          "name": "JsonRpcRequest",
-          "kind": "type"
-        },
-        {
-          "name": "JsonRpcResponse",
-          "kind": "type"
-        },
-        {
-          "name": "JsonRpcSuccessResponse",
-          "kind": "type"
-        },
-        {
-          "name": "MCP_CLIENT_CAPABILITIES_META_KEY",
-          "kind": "value"
-        },
-        {
-          "name": "MCP_CLIENT_INFO_META_KEY",
-          "kind": "value"
-        },
-        {
-          "name": "MCP_DISCOVER_METHOD",
-          "kind": "value"
-        },
-        {
-          "name": "MCP_LATEST_PROTOCOL_VERSION",
-          "kind": "value"
-        },
-        {
-          "name": "MCP_PROTOCOL_META_KEY",
-          "kind": "value"
-        },
-        {
-          "name": "MCP_PROTOCOL_VERSION",
-          "kind": "value"
-        },
-        {
-          "name": "MCP_PROTOCOL_VERSION_HEADER",
-          "kind": "value"
-        },
-        {
-          "name": "MCP_PROTOCOL_VERSIONS",
-          "kind": "value"
-        },
-        {
-          "name": "McpClientInfo",
-          "kind": "type"
-        },
-        {
-          "name": "McpDiscoverParams",
-          "kind": "type"
-        },
-        {
-          "name": "McpDiscoverResult",
-          "kind": "type"
-        },
-        {
-          "name": "McpGetPromptResult",
-          "kind": "type"
-        },
-        {
-          "name": "McpInitializeParams",
-          "kind": "type"
-        },
-        {
-          "name": "McpInitializeResult",
-          "kind": "type"
-        },
-        {
-          "name": "McpPromptArgument",
-          "kind": "type"
-        },
-        {
-          "name": "McpPromptDefinition",
-          "kind": "type"
-        },
-        {
-          "name": "McpPromptDescriptor",
-          "kind": "type"
-        },
-        {
-          "name": "McpPromptMessage",
-          "kind": "type"
-        },
-        {
-          "name": "McpPromptRegistry",
-          "kind": "value"
-        },
-        {
-          "name": "McpReadResourceResult",
-          "kind": "type"
-        },
-        {
-          "name": "McpResourceContent",
-          "kind": "type"
-        },
-        {
-          "name": "McpResourceDefinition",
-          "kind": "type"
-        },
-        {
-          "name": "McpResourceDescriptor",
-          "kind": "type"
-        },
-        {
-          "name": "McpResourceRegistry",
-          "kind": "value"
-        },
-        {
-          "name": "McpServer",
-          "kind": "value"
-        },
-        {
-          "name": "McpServerInfo",
-          "kind": "type"
-        },
-        {
-          "name": "McpServerOptions",
-          "kind": "type"
-        },
-        {
-          "name": "McpToolCallResult",
-          "kind": "type"
-        },
-        {
-          "name": "McpToolContentItem",
-          "kind": "type"
-        },
-        {
-          "name": "McpToolDefinition",
-          "kind": "type"
-        },
-        {
-          "name": "McpToolDescriptor",
-          "kind": "type"
-        },
-        {
-          "name": "McpToolInputSchema",
-          "kind": "type"
-        },
-        {
-          "name": "McpToolRegistry",
-          "kind": "value"
         }
       ]
     },

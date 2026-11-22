@@ -56,7 +56,6 @@ test("packed workspaces generate an application that installs, validates, builds
         "03-platform-elysia",
         bunTemporaryDirectory,
       ),
-      mcp: await packWorkspace("packages/mcp", archiveDirectory, "04-mcp", bunTemporaryDirectory),
       devtools: await packWorkspace(
         "packages/devtools",
         archiveDirectory,
@@ -189,7 +188,6 @@ test("packed workspaces generate an application that installs, validates, builds
       ["@aponiajs/cli", "devDependencies", archives.cli],
     ] as const;
     const localOverrides = [
-      ["@aponiajs/mcp", archives.mcp],
       ["@aponiajs/compiler", archives.compiler],
       ["@aponiajs/platform-core", archives.platformCore],
     ] as const;
@@ -330,16 +328,6 @@ async function assertInstalledPackageGraph(
   await assertPackageDependency(
     join(projectDirectory, "node_modules/@aponiajs/platform-elysia/package.json"),
     "@aponiajs/core",
-    version,
-  );
-  await assertPackageDependency(
-    join(projectDirectory, "node_modules/@aponiajs/devtools/package.json"),
-    "@aponiajs/mcp",
-    version,
-  );
-  await assertPackageDependency(
-    join(projectDirectory, "node_modules/@aponiajs/mcp/package.json"),
-    "@aponiajs/common",
     version,
   );
 }
