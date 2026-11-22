@@ -447,7 +447,6 @@ part of the default suite:
 Neither replaces a focused test: a benchmark reports a number, not a contract,
 and a property proves an invariant, not a specific response. The failure paths
 that need an exact status or error code stay ordinary tests. The default Bun lane
-does run one benchmark case as a floor: a 200ms soak with four requests in flight
-must finish with no failures, at least 200 requests per second, and a p99 under
-250ms. Those bounds fail a hang or a collapse and leave a noisy runner alone; a
-release-to-release comparison still belongs on one machine.
+does not assert a timing floor. `scripts/benchmark.spec.ts` exercises the
+benchmark harness shape without turning a shared runner's timing into a gate; a
+release-to-release comparison belongs on one machine.
