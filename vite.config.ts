@@ -38,7 +38,7 @@ export default defineConfig({
     include: ["packages/*/tests-vp/**/*.conformance.ts"],
   },
   staged: {
-    "*": "bun run check --fix",
+    "*": "vp check --fix",
   },
   lint: {
     options: {
