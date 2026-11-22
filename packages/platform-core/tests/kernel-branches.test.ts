@@ -39,10 +39,11 @@ function context(overrides: Partial<Record<string, unknown>> = {}): PlatformRout
     path: "/widgets/:id",
     set: { headers: {} },
     store: { answer: 42 },
+    host: "user.example",
     status: () => new Response(null, { status: 202 }),
     server: { requestIP: () => ({ address: "203.0.113.9" }) },
     ...overrides,
-  } as PlatformRouteContext;
+  } as unknown as PlatformRouteContext;
 }
 
 function parameter(partial: Partial<RouteParameterMetadata>): RouteParameterMetadata {
@@ -604,7 +605,7 @@ describe("the kernel's remaining branches", () => {
     expect(await response.json()).toEqual({ handled: true });
   });
 
-  test("answers a filter that threw an HttpError as that problem", async () => {
+  test("declines a filter that threw and answers the original failure", async () => {
     @Controller("faults")
     class FaultController {
       @Get()
@@ -636,7 +637,7 @@ describe("the kernel's remaining branches", () => {
       ],
     }).handle(new Request("http://localhost/faults"));
 
-    expect(response.status).toBe(502);
+    expect(response.status).toBe(500);
   });
 
   test("closes an event stream the reader cancels", async () => {

@@ -78,7 +78,7 @@ export async function writeApiReference(
 ): Promise<number> {
   const snapshot = (await Bun.file("docs/public-api.json").json()) as PublicApiSnapshot;
   const rendered = renderApiReference(snapshot);
-  const output = options.output ?? "docs/api.md";
+  const output = options.output ?? "docs/reference/api.md";
 
   if (options.check === true) {
     const existing = await Bun.file(output).text();

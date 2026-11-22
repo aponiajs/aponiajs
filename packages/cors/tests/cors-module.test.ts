@@ -13,6 +13,8 @@ import {
   inspectAponiaApplication,
   type AponiaApplication,
 } from "@aponiajs/platform-elysia";
+import { createPlatformFactory } from "@aponiajs/platform-core";
+import { honoAdapter } from "@aponiajs/platform-hono";
 import { cors } from "@elysia/cors";
 import { z } from "zod";
 import { CorsModule } from "../src/index.ts";
@@ -531,4 +533,28 @@ test("cannot carry an origin a configuration cannot express, where the raw plugi
   } finally {
     await application.close();
   }
+});
+
+test("refuses a platform it does not declare instead of mounting nothing", async () => {
+  const CorsConfig = policyOf("cors.platform");
+
+  @Module({ imports: [CorsModule.register({ configuration: CorsConfig, source: {} })] })
+  class AppModule {}
+
+  let thrown: unknown;
+  try {
+    await createPlatformFactory(honoAdapter()).create(AppModule, { logger: false });
+  } catch (error) {
+    thrown = error;
+  }
+
+  // The registration declares Elysia because the plugin is Elysia's own. The
+  // boot says so before anything mounts rather than serving an application whose
+  // cross-origin policy silently does not exist.
+  expect(codeOf(thrown)).toBe("UNSUPPORTED_PLATFORM_FEATURE");
+  expect((thrown as AponiaError).details).toMatchObject({
+    module: "cors",
+    platform: "hono",
+    platforms: ["elysia"],
+  });
 });

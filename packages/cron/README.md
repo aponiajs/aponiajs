@@ -61,7 +61,7 @@ value rather than such a declaration — so the module that names it is reported
 as `DECLINED` and left out of `descriptors.generated.ts` in every spelling,
 inline or held in a `const`. The scheduler still mounts and the application
 still boots; what is given up is the declared-graph boot, described in
-[the CLI reference](../../docs/cli.md#module-descriptors).
+[the CLI reference](../../docs/tooling/cli.md#module-descriptors).
 
 ## The validated configuration
 
@@ -166,8 +166,8 @@ interface CronJobContext<TOptions extends CronJobOptions = CronJobOptions> {
 - **`options`** is forwarded to croner untouched: `timezone`, `maxRuns`,
   `protect`, `paused`, `startAt`, `stopAt`, `utcOffset`, `interval`,
   `legacyMode`, `context`, `catch`, `kill`, and `unref`. The type is derived from
-  `@elysia/cron`'s own declaration rather than restated here, so it cannot drift
-  from the engine.
+  croner's own `CronOptions` rather than restated here, so it cannot drift from
+  the engine.
 - **`run`** is called once per tick, with a frozen context carrying the job's own
   name, pattern, and the options this package forwarded. It may be asynchronous;
   its return value is ignored.
@@ -176,15 +176,12 @@ interface CronJobContext<TOptions extends CronJobOptions = CronJobOptions> {
 the previous one is still running, which is what keeps a job slower than its own
 pattern from piling up.
 
-### `run` receives a context, not the Elysia store
+### `run` receives a context
 
-This is the one place the adapter's contract differs from the plugin it wraps.
-`@elysia/cron` calls `run` with the Elysia store — its own type claims `Cron`,
-which is not the value it passes — and a job declared here is called with
-`CronJobContext` instead, because a store is a transport detail of the plugin
-rather than something a scheduled job has a use for. A job lifted out of a raw
-`@elysia/cron` call therefore needs its parameter changed; nothing else about it
-does.
+A job is called with a frozen `CronJobContext` carrying its own name, its
+pattern, and the options it declared. The options are the declaration, not the
+object the engine was handed: croner fills its own defaults into the object it
+receives, and a job reading those would see options it never wrote.
 
 ## Lifecycle
 
@@ -235,25 +232,24 @@ and `options.catch` is how a job asks croner to survive one.
 
 ## Native escape hatch
 
-The module above is the supported path. The native plugin remains available when the module's validation, graph node, or configuration contract is not wanted.
+The module above is the supported path. The engine remains available when the module's validation or graph node is not wanted.
 
-**AponiaJS adds no scheduling engine.** The engine is
-[`@elysia/cron`](https://www.npmjs.com/package/@elysia/cron), which wraps
-[croner](https://github.com/hexagon/croner). This package is a thin adapter over
-that plugin, and it contributes exactly two things:
+**AponiaJS adds no scheduling features on top of the engine.** The engine is
+[croner](https://github.com/hexagon/croner), which this package owns as a
+dependency. What this package contributes is exactly two things:
 
 - a module a registration belongs in, so a scheduler is declared in an
   application's `imports` the way every other module is, and so what it
   scheduled is part of the compiled graph;
 - a validated configuration the jobs are read from, so a malformed value is a
-  refused boot with a code and an issue list rather than a throw from inside a
-  plugin.
+  refused boot with a code and an issue list rather than a throw while the
+  scheduler starts.
 
 Everything else — the patterns, the options, the timing, the throw behaviour of
-a job — is `@elysia/cron`'s and croner's. **A reader who wants the raw plugin
-should use [`@elysia/cron`](https://www.npmjs.com/package/@elysia/cron)
-directly**: nothing here is unavailable there, and mounting it yourself through
-a `PluginModule` costs a few lines.
+a job — is croner's. **A reader who wants the raw engine should use
+[croner](https://github.com/hexagon/croner) directly**: nothing here is
+unavailable there, and constructing a `Cron` yourself costs one line. The module
+is runtime-neutral, so the same registration runs on every Aponia platform.
 
 **This is not a job queue.** There is no persistence: a job that did not run
 because the process was down did not run, and nothing replays it. There are no
@@ -268,5 +264,5 @@ package, and this one deliberately does not pretend to be it.
 
 ## Requirements
 
-`elysia` is a peer dependency and must be installed by the application;
-`@elysia/cron` is a dependency of this package and is installed with it.
+[croner](https://github.com/hexagon/croner) is the one runtime dependency beyond
+AponiaJS itself and is installed with this package. No HTTP runtime is required.

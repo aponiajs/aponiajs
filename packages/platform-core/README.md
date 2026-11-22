@@ -4,10 +4,11 @@
 > platform on: the request execution context, the compiled guard pipeline,
 > pipe resolution, and the middleware consumer contract.
 
-This package is a building block, not an application entry point. An
-application imports a platform (`@aponiajs/platform-elysia`,
-`@aponiajs/platform-hono`, `@aponiajs/platform-h3`), and that platform imports
-these primitives. Use it directly only when you are writing a platform.
+This package holds the runtime-neutral contracts and execution primitives every HTTP platform uses, and
+it exports the unified `AponiaFactory`. An application imports a platform
+(`@aponiajs/platform-elysia`, `@aponiajs/platform-hono`, `@aponiajs/platform-h3`)
+and that package pre-binds its adapter, or imports this package's factory and
+states the adapter itself. The primitives below are for a platform author.
 
 ## Use it
 
@@ -15,9 +16,13 @@ these primitives. Use it directly only when you are writing a platform.
 import { AponiaFactory } from "@aponiajs/platform-core";
 import { honoAdapter } from "@aponiajs/platform-hono";
 
-const application = await AponiaFactory.create(AppModule, { adapter: honoAdapter() });
+const application = await AponiaFactory.create(AppModule, honoAdapter());
 await application.listen(3000);
 ```
+
+The adapter is the second argument, as `NestFactory.create` takes one; the
+options form, `{ adapter: honoAdapter() }`, is equivalent. The platform package
+also exports a factory that pre-binds its own adapter.
 
 ```ts
 import {

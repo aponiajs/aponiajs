@@ -4,7 +4,7 @@ AponiaJS is a framework repository, not an application. Every change here is
 published as a public npm package, so a contribution is public API work:
 contracts first, escape hatches preserved, versions synchronized.
 
-Read [`AGENTS.md`](AGENTS.md) and [`RULES.md`](RULES.md) before opening a pull
+Read [`AGENTS.md`](./AGENTS.md) and [`RULES.md`](./RULES.md) before opening a pull
 request. They are the normative guides; this page is the short version.
 
 ## Branches and release line
@@ -62,5 +62,5 @@ files.
 
 ## Security
 
-Report vulnerabilities privately as described in [`SECURITY.md`](SECURITY.md).
+Report vulnerabilities privately as described in [`SECURITY.md`](./SECURITY.md).
 Do not open a public issue for a suspected security defect.

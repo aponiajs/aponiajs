@@ -1,5 +1,5 @@
 import { AponiaError, Inject, Injectable } from "@aponiajs/common";
-import { RequestContextService } from "@aponiajs/platform-elysia";
+import { RequestContextService } from "@aponiajs/platform-core";
 import { TENANT } from "./tenant.constants.ts";
 
 /** The request-scoped tenant id. */

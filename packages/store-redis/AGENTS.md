@@ -22,6 +22,9 @@ The Redis storage implementations for cache, rate-limit, session, idempotency, a
 - `RedisRateLimitStore` derives `resetAt` from the live `PTTL`; it must not
   return `Date.now() + windowMs`, which slides the header forward on every hit.
 - `RedisIdempotencyStore` claims with `SET NX PX` and releases with `DEL`.
+  Response records and claims use disjoint `response:` and `claim:`
+  namespaces, and the caller's key is percent-encoded before it is placed in
+  either segment.
 - `RedisRefreshTokenStore.consume` is one Lua round trip: read, delete, and keep
   a family tombstone so a replay revokes the family.
 

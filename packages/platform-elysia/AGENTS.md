@@ -19,9 +19,9 @@ It depends on `common` and `core`, with `elysia` as a peer.
 | `errors/`        | Typed HTTP errors, RFC 9457 Problem Details responses, and the default mapping                                                          |
 | `inspection/`    | Read-only projection of a compiled application for build-time consumers                                                                 |
 | `plugins/`       | Native plugin module registration and plugin contracts                                                                                  |
-| `routing/`       | Route plans, compiled invokers, schemas, and native context types                                                                       |
+| `routing/`       | Route plans, compiled invokers, schemas, native context types, downloads, and the static-asset hook                                     |
 | `websockets/`    | Provider discovery, gateway plans, message dispatch, and native socket types                                                            |
-| `middleware/`    | Route middleware path matching/exclusion, and pipeline mounting                                                                         |
+| `middleware/`    | Middleware mounting over the shared `runMiddlewareChain`                                                                                |
 | `version.ts`     | The package's own version, read from its manifest, which generated artifacts are checked against                                        |
 
 `src/index.ts` is the only public barrel. Keep `*.types.ts` colocated with the
@@ -142,7 +142,7 @@ runtime boundary it describes.
   guards and an interceptor's `interceptBefore` join one `beforeHandle`, an
   interceptor's `interceptAfter` is an `afterHandle`, and a filter joins the
   route's `error` array the next bullet describes. The run order is the
-  contract (`docs/enhancers.md` `## Run order`): guards, before halves, the
+  contract (`docs/build/enhancers.md` `## Run order`): guards, before halves, the
   handler, after halves reversed, filters most-specific-first, the default
   mapping last. A middleware or pipe stage, if one ever lands, runs before
   the guards — that position is reserved, not implemented. Guards and before halves
@@ -615,7 +615,7 @@ were still 1.x:
 | `errors/http-error.ts` (`ElysiaCustomStatusResponse`)                                    | renamed by Elysia to its own custom-status class, read in `errors/default-exception-filter.ts` |
 | `application/application.types.ts` (`ElysiaConfig`)                                      | no longer carries `aot`; needs at least two type arguments                                     |
 
-`docs/elysia-compatibility.md` is the user-facing half of this. Update both
+`docs/platforms/elysia-compatibility.md` is the user-facing half of this. Update both
 together, and re-verify against a real install rather than the blog post.
 
 ## Tests
@@ -628,7 +628,7 @@ Prefer building an application with `AponiaFactory.create` and asserting through
 compile-time assertions beside their runtime cases; they fail `bun run check`
 when a plugin type is lost or widened. Keep both lanes in step when the context
 mapping changes, and document behavior in
-[`docs/native-plugins.md`](../../docs/native-plugins.md).
+[`docs/platforms/native-plugins.md`](../../docs/platforms/native-plugins.md).
 
 WebSocket behavior belongs in `tests/websocket-gateway.test.ts`, with the public
 contract mirrored in `tests-vp/websocket-gateway.conformance.ts` and a real

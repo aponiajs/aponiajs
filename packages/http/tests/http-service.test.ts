@@ -185,6 +185,49 @@ describe("HttpService", () => {
     );
   });
 
+  test("blocks NAT64, IPv4-translated, and IPv4-compatible addresses", async () => {
+    const fetch = fakeFetch(() => Response.json({}));
+
+    @Module({
+      imports: [HttpModule.register({ fetch, resolveAddresses: translationResolver })],
+    })
+    class AppModule {}
+
+    application = await AponiaFactory.create(AppModule, { logger: false });
+    const service = application.get(HttpService);
+
+    for (const url of [
+      "http://[64:ff9b::a9fe:a9fe]/",
+      "http://[64:ff9b::7f00:1]/",
+      "http://[::ffff:0:7f00:1]/",
+      "http://[::7f00:1]/",
+    ]) {
+      expect(await captureAponiaError(() => service.get(url))).toEqual(
+        expect.objectContaining({ code: "HTTP_CLIENT_BLOCKED" }),
+      );
+    }
+
+    @Module({
+      imports: [
+        HttpModule.register({
+          baseUrl: "https://translated.example.com",
+          fetch,
+          resolveAddresses: translationResolver,
+        }),
+      ],
+    })
+    class TranslatedModule {}
+
+    const translated = await AponiaFactory.create(TranslatedModule, { logger: false });
+    try {
+      expect(await captureAponiaError(() => translated.get(HttpService).get("/"))).toEqual(
+        expect.objectContaining({ code: "HTTP_CLIENT_BLOCKED" }),
+      );
+    } finally {
+      await translated.close();
+    }
+  });
+
   test("allows private networks only when the registration says so", async () => {
     const fetch = fakeFetch(() => Response.json({ ok: true }));
 
@@ -482,6 +525,38 @@ describe("HttpService", () => {
     );
   });
 
+  test("times out a response body that never completes", async () => {
+    const fetch = fakeFetch(
+      () =>
+        new Response(
+          new ReadableStream({
+            start() {
+              // Keep the body open: headers arrived, no chunk and no close.
+            },
+          }),
+        ),
+    );
+
+    @Module({
+      imports: [
+        HttpModule.register({
+          baseUrl: "https://api.example.com",
+          fetch,
+          resolveAddresses: publicResolver,
+          timeoutMs: 5,
+        }),
+      ],
+    })
+    class AppModule {}
+
+    application = await AponiaFactory.create(AppModule, { logger: false });
+    const service = application.get(HttpService);
+
+    expect(await captureAponiaError(() => service.get("/slow-body"))).toEqual(
+      expect.objectContaining({ code: "HTTP_CLIENT_TIMEOUT" }),
+    );
+  });
+
   test("reports every invalid registration option in one refusal", () => {
     const error = captureSyncAponiaError(() =>
       HttpModule.register({
@@ -525,6 +600,10 @@ async function publicResolver(): Promise<readonly string[]> {
 
 async function privateResolver(): Promise<readonly string[]> {
   return ["10.0.0.1"];
+}
+
+async function translationResolver(): Promise<readonly string[]> {
+  return ["64:ff9b::a9fe:a9fe"];
 }
 
 async function captureAponiaError(run: () => Promise<unknown>): Promise<AponiaError> {

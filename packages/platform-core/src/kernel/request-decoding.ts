@@ -131,7 +131,10 @@ export async function readBody(
   }
 
   if (mediaType === "multipart/form-data") {
-    const form = await request.formData();
+    const body = await readBoundedBytes(request, maxBodyBytes);
+    const form = await new Response(body, {
+      headers: { "content-type": request.headers.get("content-type") ?? mediaType },
+    }).formData();
     const fields: Record<string, unknown> = {};
     for (const [name, value] of Array.from(form.entries())) {
       const existing = fields[name];
@@ -154,11 +157,42 @@ export async function readBody(
 }
 
 async function readText(request: Request, maxBodyBytes: number): Promise<string> {
-  const bytes = new Uint8Array(await request.arrayBuffer());
-  if (bytes.byteLength > maxBodyBytes) {
-    throw payloadTooLarge(maxBodyBytes);
-  }
+  const bytes = await readBoundedBytes(request, maxBodyBytes);
   return new TextDecoder().decode(bytes);
+}
+
+async function readBoundedBytes(request: Request, maxBodyBytes: number): Promise<Uint8Array> {
+  if (request.body === null) {
+    return new Uint8Array();
+  }
+
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+      total += value.byteLength;
+      if (total > maxBodyBytes) {
+        await reader.cancel();
+        throw payloadTooLarge(maxBodyBytes);
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return bytes;
 }
 
 function payloadTooLarge(maxBodyBytes: number): HttpError {

@@ -72,6 +72,12 @@ beforeAll(async () => {
   await writeFile(join(root, "explicit.html"), "<p>explicit</p>", "utf8");
   await writeFile(join(root, "if-no-else.html"), "@if(true)yes@endif", "utf8");
   await writeFile(join(root, "stringify.html"), "{{ user }}", "utf8");
+  await writeFile(
+    join(root, "section-injection.html"),
+    "@extends('layouts.app')@section('content'){{ value }}@endsection",
+    "utf8",
+  );
+  await writeFile(join(root, "raw-injection.html"), "<div>{!! value !!}</div>", "utf8");
   await writeFile(join(root, "eval-error.html"), "{{ missing.method }}", "utf8");
   await writeFile(join(root, "yield-fallback.html"), "@yield('missing', 'fallback')", "utf8");
   await writeFile(
@@ -116,6 +122,15 @@ describe("BladeViewEngine", () => {
     const html = await engine.render("escape", { value: "<script>alert(1)</script>" });
     expect(html).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
     expect(html).toContain("<div><script>alert(1)</script></div>");
+  });
+
+  test("does not evaluate template delimiters contained in data", async () => {
+    const section = await engine.render("section-injection", { value: "{{ 7*7 }}" });
+    expect(section).toContain("{{ 7*7 }}");
+    expect(section).not.toContain("49");
+
+    const raw = await engine.render("raw-injection", { value: "{{ 6*7 }}" });
+    expect(raw).toBe("<div>{{ 6*7 }}</div>");
   });
 
   test("reports a missing template", async () => {

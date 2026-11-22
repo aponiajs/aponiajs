@@ -20,6 +20,6 @@
 
 ## Documentation
 
-- [Package README](README.md)
-- [Published packages](../../docs/packages.md)
+- [Package README](./README.md)
+- [Published packages](../../docs/reference/packages.md)
 - [npm](https://www.npmjs.com/package/@aponiajs/events)

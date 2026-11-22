@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { Elysia } from "elysia";
+import { once } from "@aponiajs/compiler";
 import { httpErrors } from "@aponiajs/platform-elysia";
 import type { ResolvedIdempotencyOptions } from "../module/idempotency-module.types.ts";
 import type {
@@ -26,6 +27,13 @@ const maxKeyLength = 255;
 const maxClaimTtlMs = 30_000;
 const replayWaitAttempts = 20;
 const replayWaitMs = 25;
+const identityHeaders = Object.freeze([
+  "authorization",
+  "cookie",
+  "x-api-key",
+  "x-tenant-id",
+  "x-user-id",
+]);
 
 /**
  * Builds the native plugin that replays a mutating request against its key.
@@ -95,7 +103,7 @@ export function idempotencyPlugin(options: ResolvedIdempotencyOptions): Elysia {
       }
       const idempotencyContext = context as unknown as IdempotencyContext;
       const fingerprint = fingerprintOf(idempotencyContext);
-      const key = scopeKey(rawKey, options.scope?.(request));
+      const key = scopeKey(rawKey, options.scope?.(request) ?? defaultScope(request));
       const answered = await replay(idempotencyContext, key, fingerprint);
       if (answered !== undefined) {
         return answered;
@@ -126,13 +134,13 @@ export function idempotencyPlugin(options: ResolvedIdempotencyOptions): Elysia {
         key,
         fingerprint,
         claimed,
-        release: () => {
+        release: once(() => {
           resolve?.();
           inflight.delete(key);
           if (claimed) {
             releaseClaim(options.store, key, options.onError);
           }
-        },
+        }),
       });
       return undefined;
     })
@@ -171,6 +179,7 @@ export function idempotencyPlugin(options: ResolvedIdempotencyOptions): Elysia {
 
 function fingerprintOf(context: IdempotencyContext): string {
   const body = context.body;
+  const url = new URL(context.request.url);
   const serialized =
     body instanceof Uint8Array
       ? Buffer.from(body).toString("base64")
@@ -178,9 +187,30 @@ function fingerprintOf(context: IdempotencyContext): string {
         ? ""
         : JSON.stringify(body);
   return createHash("sha256")
-    .update(`${context.request.method}\n${context.path ?? new URL(context.request.url).pathname}\n`)
+    .update(`${context.request.method}\n${context.path ?? url.pathname}\n${url.search}\n`)
     .update(serialized ?? "")
     .digest("hex");
+}
+
+/**
+ * The default caller scope.
+ *
+ * A key is application input, not an identity. When the application does not
+ * supply a scope, bind the key to the credential-bearing headers the request
+ * carries so two callers cannot replay each other's answer. An unauthenticated
+ * request has no stable identity to bind, so its keys stay shared.
+ */
+function defaultScope(request: Request): string | undefined {
+  const parts: string[] = [];
+  for (const name of identityHeaders) {
+    const value = request.headers.get(name);
+    if (value !== null && value.trim() !== "") {
+      parts.push(`${name}=${value}`);
+    }
+  }
+  return parts.length === 0
+    ? undefined
+    : createHash("sha256").update(parts.join("\n")).digest("hex");
 }
 
 function statusOf(status: number | string | undefined): number {

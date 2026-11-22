@@ -1,6 +1,6 @@
 # 05 · Controllers and routes
 
-**Use when:** exposing behavior over HTTP.
+**Use when:** exposing application behavior over HTTP.
 
 ```ts
 import { Controller, Get, Param } from "@aponiajs/common";
@@ -17,61 +17,11 @@ export class UserController {
 }
 ```
 
-`@Get`, `@Post`, `@Put`, `@Patch`, `@Delete`, `@Head`, and `@Options` map to the
-matching HTTP method, and `@All` answers every method on its path. The route path
-joins the controller prefix, so this answers `GET /users/:id`. Each accepts
-either a path, as `@Get(":id")` does, or a schema alone — `@Post({ body })`
-mounts at the controller prefix itself, and `@Post("/", { body })` names the
-path beside the schema.
+`@Controller("users")` sets the prefix. `@Get(":id")` answers `GET /users/:id`.
 
-`@Header(name, value)` declares a response header the route answers with, and
-`@HttpCode(status)` declares the status a returned value carries. Both apply
-before the guards run; a handler that returns a `Response`, throws `HttpError`,
-or sets a status itself still decides its own.
+`@Get`, `@Post`, `@Put`, `@Patch`, `@Delete`, `@Head`, and `@Options` map to HTTP methods. `@All` answers every method on its path. Each decorator accepts a path, a schema, or both. `@Post({ body })` mounts at the controller prefix, and `@Post("/", { body })` names the path beside the schema.
 
-## Native inference with less syntax
-
-Use `controller` when the shortest type-safe route is more useful than
-decorator metadata:
-
-```ts
-import { defineModule, provideClass } from "@aponiajs/common";
-import { controller } from "@aponiajs/platform-elysia";
-import { t } from "elysia";
-
-const usersController = controller(UserController, [UserService], (app, controller) =>
-  app.get("/users/:id", ({ params }) => controller.findUser(params.id), {
-    params: t.Object({ id: t.String() }),
-  }),
-);
-
-export const UsersModule = defineModule({
-  id: "UsersModule",
-  controllers: [usersController],
-  providers: [provideClass(UserService, [])],
-});
-```
-
-The Elysia callback infers its request fields directly. It needs no options
-object, tuple assertion, context annotation, or `typeof`, and its returned chain
-remains available to Eden Treaty.
-
-## How a request arrives
-
-The platform compiles each controller into a native Elysia plugin and mounts it
-into the root application:
-
-```text
-AponiaFactory.create(AppModule)
-  -> compileRootModule            reads decorator metadata
-  -> createContainer              validates the graph, builds singletons
-  -> mount plugin modules         native Elysia plugins first
-  -> mount controllers            plugin.route(method, path, handler, hook)
-  -> application.listen(port)
-```
-
-Controllers are constructed by the container, so their dependencies come from
-the module that declares them.
+`@Header(name, value)` sets a response header. `@HttpCode(status)` sets the status carried by a returned value. A handler that returns a `Response`, throws `HttpError`, or sets a status itself still decides its own.
 
 ## Bootstrap
 
@@ -87,30 +37,17 @@ async function bootstrap(): Promise<void> {
 await bootstrap();
 ```
 
-`main.ts` owns the process and nothing else. Retrieving a service there and
-calling business behavior is not the pattern.
+`main.ts` creates the application and starts it. Business behavior belongs in providers.
 
-## Prefixing every route
-
-`AponiaFactory.create` accepts a `prefix` that every compiled controller route
-mounts under:
+## Route prefix
 
 ```ts
 const application = await AponiaFactory.create(AppModule, { prefix: "/api" });
 ```
 
-`@Controller("users")` now answers at `/api/users`, and a versioned route keeps
-its segment after the prefix: `@Version("2")` answers at `/api/v2/users`.
-Header and media-type negotiation reads the prefixed path and rewrites it
-inside the prefix, and middleware targets match the unprefixed route path.
+`@Controller("users")` now answers at `/api/users`. A prefix that is not a string starting with `/` fails boot with `INVALID_CONFIGURATION_VALUE`. Health probes, native plugins, and controllers mounted by their own callback stay outside the prefix.
 
-A prefix that is not a string, or does not begin with `/`, fails the boot with
-`INVALID_CONFIGURATION_VALUE`. Health probes, native plugins, and a controller
-mounted through its own registration callback mount outside the prefix.
-
-## Versioning a route
-
-`@Version()` mounts a controller or one handler under a URI version segment:
+## Versioning
 
 ```ts
 import { Controller, Get, Version } from "@aponiajs/common";
@@ -125,49 +62,24 @@ export class UsersV1Controller {
 }
 ```
 
-That controller answers `GET /v1/users`. A handler-level `@Version("2")`
-overrides the controller and mounts that one route under `/v2`. A declared
-`RoutePlan` states the same fact with its `version` field.
+That controller answers `GET /v1/users`. A handler-level `@Version("2")` overrides the controller for that route. A declared `RoutePlan` uses its `version` field.
 
-The URI mount is always present, and `AponiaFactory.create` can also negotiate
-the same versions from a request header or from an `Accept` parameter, so a
-client can keep one path while the router keeps one mount per version:
+Version negotiation is optional:
 
 ```ts
 const app = await AponiaFactory.create(AppModule, {
   versioning: { type: "header", header: "x-api-version", defaultVersion: "1" },
 });
-
-// GET /users with x-api-version: 2 reaches the route mounted at /v2/users.
-// GET /users with Accept: application/json; version=2 does the same under
-// { type: "media-type" }.
 ```
 
-`type` is `"uri"` (the default), `"header"`, or `"media-type"`; `header`
-defaults to `x-api-version` and `parameter` to `version`. A leading `v` in the
-requested or declared version is optional. Negotiation happens before routing,
-so the selected route runs its own guards, pipes, validation, and filters.
-Parameterized and wildcard paths (`:id`, `:term?`, `*`) negotiate like literal
-ones, and a literal path is preferred over a parameter at the same depth.
-A request that names a version no handler declared answers `400` with an
-RFC 9457 Problem Details body and `code: "API_VERSION_NOT_FOUND"`. A route with
-no version, including a `VERSION_NEUTRAL` one, is never rewritten. Because the
-router still mounts one path per version, the OpenAPI document and inspection
-output name the `/vN` paths.
+`type` is `"uri"`, `"header"`, or `"media-type"`. Header defaults to `x-api-version`; media-type reads the `version` parameter. A requested version no route declares answers `400` with code `API_VERSION_NOT_FOUND`.
 
 `VERSION_NEUTRAL` keeps one route out of every version prefix:
 
 ```ts
-import { Controller, Get, VERSION_NEUTRAL, Version } from "@aponiajs/common";
+import { Get, VERSION_NEUTRAL, Version } from "@aponiajs/common";
 
-@Controller("users")
-@Version("1")
 export class UsersController {
-  @Get()
-  findAll() {
-    return [];
-  }
-
   @Get("health")
   @Version(VERSION_NEUTRAL)
   health() {
@@ -176,16 +88,9 @@ export class UsersController {
 }
 ```
 
-The list answers `GET /v1/users`, while the health check answers
-`GET /users/health` and is not mounted under any `/vN` path. It is the marker a
-health check, a webhook, or a compatibility route uses when a version bump must
-not move it.
+## Deprecation
 
-## Deprecating a route
-
-`@Deprecated()` marks a controller or one handler as going away. The route
-answers `Deprecation: true`; when the declaration states a sunset date or a
-replacement URL, the response carries `Sunset` and a `rel="deprecation"` link:
+`@Deprecated()` adds a `Deprecation: true` response header. A `sunset` date or `link` adds `Sunset` and a `rel="deprecation"` link.
 
 ```ts
 import { Controller, Deprecated, Get } from "@aponiajs/common";
@@ -200,15 +105,11 @@ export class UsersController {
 }
 ```
 
-A handler declaration overrides the controller's, so one endpoint can name a
-different replacement. The headers are set before the handler runs, so a route
-that fails still tells the client the endpoint is deprecated.
+A handler declaration overrides the controller declaration.
 
-## Streaming events
+## Server-Sent Events
 
-`@Sse()` marks a route as a Server-Sent Events stream. The platform sets
-`text/event-stream`, `cache-control: no-cache`, and `connection: keep-alive`
-before the handler runs. Wrap each yielded event with `sse()`:
+`@Sse()` sets `text/event-stream`, `cache-control: no-cache`, and `connection: keep-alive` before the handler runs. Wrap each event with `sse()`.
 
 ```ts
 import { Controller, Get, Sse } from "@aponiajs/common";
@@ -228,13 +129,9 @@ export class EventsController {
 }
 ```
 
-A string, an SSE payload, a generator, an async generator, and a byte stream are
-all accepted by `sse()`.
+## Response serialization
 
-## Serializing a response
-
-`@Serialize()` shapes a handler's result after the handler and after the route's
-interceptor `after` halves:
+`@Serialize()` shapes the result after the handler and after any interceptor `after` half. A method serializer overrides a controller serializer.
 
 ```ts
 import { Controller, Get, Serialize } from "@aponiajs/common";
@@ -249,9 +146,4 @@ export class UsersController {
 }
 ```
 
-A method serializer overrides a controller serializer. The serializer receives
-the platform-neutral `RouteContext`, and a thrown failure reaches the same
-exception filters and Problem Details mapping as a handler failure.
-
-Next: [06 · Validation](./06-validation.md) ·
-Deep dive: [architecture and style](../architecture-and-style.md)
+Next: [06 · Validation](./06-validation.md) · Deep dive: [architecture and style](../build/architecture-and-style.md)

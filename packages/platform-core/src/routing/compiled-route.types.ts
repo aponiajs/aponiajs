@@ -1,4 +1,5 @@
 import type {
+  DeprecationMetadata,
   EnhancerMetadata,
   PipeType,
   RequestMethod,
@@ -45,4 +46,6 @@ export interface CompiledRoute {
   readonly responseHeaders?: Readonly<Record<string, ResponseHeaderValue>>;
   /** The status the handler declares for its answer. */
   readonly httpCode?: number;
+  /** The deprecation policy the route answers with, when it declares one. */
+  readonly deprecation?: DeprecationMetadata;
 }

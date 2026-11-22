@@ -7,13 +7,15 @@
 - `ViewModule.register({ defaultEngine: "blade" | "html", rootDir?, shared?, engine?, cache? })`
 - `ViewService`: `render(template, data, options?)` and `share(key, value)`
 - `BladeViewEngine`: `@extends`, `@section`, `@yield`, `@include`, `<x-component>`, `{{ }}`, `{!! !!}`, `@if`, `@foreach`
-- `HtmlViewEngine`: zero-dependency token substitution
+- `HtmlViewEngine`: zero-dependency token substitution with HTML escaping
+- Blade and HTML interpolation treat rendered values as data; a value is never
+  scanned again as template source
 - `VIEW_ENGINE`: the injection token from `@aponiajs/common`
 - Types: `ViewEngine`, `ViewModuleOptions`, `BladeViewEngineOptions`
 
 ## Documentation
 
-- [Package README](README.md)
-- [Views guide](../../docs/views.md)
+- [Package README](./README.md)
+- [Views guide](../../docs/build/views.md)
 - [npm](https://www.npmjs.com/package/@aponiajs/view)
 

@@ -50,6 +50,11 @@ that reads it.
 - **A completed job forgets its idempotency key; a dead letter keeps it.** A
   duplicate `enqueue` with a key that names a dead letter returns that dead
   letter instead of enqueuing a second job.
+- **Dead letters are bounded.** `maxDeadLetters` defaults to `maxJobs` and
+  evicts the oldest entry; hydration applies the same bound.
+- **A handler runs outside request context.** Wrap the handler in
+  `runOutsideAsyncContexts` so a timer created during a request cannot leak its
+  identity, tenant, or session into the job.
 - **`drain` never waits for a backoff.** It runs what is due now and returns;
   `waitForIdle` means "nothing runnable", not "queue empty".
 - **The outbox delivers in order and stops at the first rejection.** The

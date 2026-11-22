@@ -9,7 +9,7 @@ async function bootstrap(): Promise<void> {
     logger: appLogger,
     plugins: [
       devtoolsPlugin({
-        enabled: Bun.env.NODE_ENV !== "production",
+        enabled: Bun.env.APONIA_DEVTOOLS === "true",
         logger: appLogger,
       }),
     ],

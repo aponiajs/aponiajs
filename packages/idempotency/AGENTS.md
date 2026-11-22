@@ -19,8 +19,9 @@ leaf: nothing in the framework depends on it.
 
 ## Invariants
 
-- **A key is bound to its request.** The fingerprint covers method, path, and
-  body; a key reused for a different request is `409`, never a replay of an
+- **A key is bound to its request and caller.** The fingerprint covers method,
+  path, query, and body; the default scope hashes credential-bearing headers.
+  A key reused for a different request is `409`, never a replay of an
   unrelated answer.
 - **Only a recorded `2xx` is replayed.** A failure is not recorded, so a retry
   runs the handler again. A `Response`, stream, generator, or `undefined` result

@@ -63,8 +63,11 @@ export class AponiaFactory {
     rootModule: AponiaRootModule,
     options: AponiaApplicationOptions | ConfiguredAponiaApplicationOptions<AnyElysia> = {},
   ): Promise<AponiaApplication<AnyElysia>> {
-    const { nativeApplication, logger } = await bootstrapAponiaApplication(rootModule, options);
-    return new AponiaApplication(nativeApplication, logger);
+    const { nativeApplication, logger, releaseRequest } = await bootstrapAponiaApplication(
+      rootModule,
+      options,
+    );
+    return new AponiaApplication(nativeApplication, logger, releaseRequest);
   }
 
   /**

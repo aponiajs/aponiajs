@@ -159,7 +159,7 @@ Mounting the plugin yourself through `AponiaApplicationOptions.plugins`, or
 through a bare `PluginModule.register`, mounts the _same_ plugin rather than a
 document built by this one: no configuration is validated, and the document's
 metadata is whatever you passed the raw plugin. That is a supported way to mount
-it — see [Native Elysia Plugins](../../docs/native-plugins.md) — and it is not a
+it — see [Native Elysia Plugins](../../docs/platforms/native-plugins.md) — and it is not a
 way to use this package.
 
 ## Errors
@@ -228,7 +228,7 @@ and are not needed at run time.
 - [Package README](./README.md)
 - [`@elysia/openapi` on npm](https://www.npmjs.com/package/@elysia/openapi)
 - [OpenAPI Specification](https://spec.openapis.org/oas/latest.html)
-- [Plugin package authoring](../../docs/plugin-packages.md)
-- [Native Elysia Plugins](../../docs/native-plugins.md)
-- [Configuration](../../docs/configuration.md)
-- [Published packages](../../docs/packages.md)
+- [Plugin package authoring](../../docs/tooling/plugin-packages.md)
+- [Native Elysia Plugins](../../docs/platforms/native-plugins.md)
+- [Configuration](../../docs/build/configuration.md)
+- [Published packages](../../docs/reference/packages.md)

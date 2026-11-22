@@ -13,7 +13,7 @@ import {
 } from "./project-configuration.ts";
 import { primaryFile, registrationFor, symbolFor } from "./schematic-definitions.ts";
 import type { GenerateSchematicOptions, GenerateSchematicResult } from "./schematic.types.ts";
-import { generateApplication, generateLibrary } from "./workspace-generators.ts";
+import { generateApplication, generateLibrary, generatePlugin } from "./workspace-generators.ts";
 
 /**
  * Plans, renders, registers, and writes one schematic: a component, a
@@ -37,10 +37,13 @@ export async function generateSchematic(
   const projectRoot = resolve(options.cwd ?? process.cwd());
   let schematicOptions = options;
   let componentName = options.name;
-  if (options.schematic === "library" && componentName.includes("/")) {
+  if (
+    (options.schematic === "library" || options.schematic === "plugin") &&
+    componentName.includes("/")
+  ) {
     const [scopePart, packagePart] = componentName.split("/", 2);
     if (!scopePart || !packagePart) {
-      throw new Error("A scoped library name must use the @scope/package shape.");
+      throw new Error("A scoped package name must use the @scope/package shape.");
     }
     schematicOptions = { ...options, scope: scopePart.replace(/^@/, "") };
     componentName = packagePart;
@@ -52,6 +55,9 @@ export async function generateSchematic(
   }
   if (options.schematic === "library") {
     return generateLibrary(projectRoot, names, schematicOptions);
+  }
+  if (options.schematic === "plugin") {
+    return generatePlugin(projectRoot, names, schematicOptions);
   }
 
   const configuration = await readConfiguration(projectRoot);
@@ -99,7 +105,7 @@ export async function generateSchematic(
     const importPath = toImportPath(moduleFile, primary.path);
     const updated = registerInModule(original, registration, symbol, importPath);
     if (updated !== original) {
-      files.push({ path: moduleFile, content: updated, kind: "UPDATE" });
+      files.push({ path: moduleFile, content: updated, kind: "UPDATE", type: "content" });
     }
   }
 

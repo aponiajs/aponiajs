@@ -39,9 +39,10 @@ for the starter's default: `meta`, `graph`, `routes`, `flow`, `logs`, `requests`
 and `aot`. The surface is part of the application's route table, so it is
 reachable wherever the application is, and `/requests` records headers and bodies
 with no warning: this is a development surface, and `enabled` is how an
-application keeps it out of production. It is served unless `NODE_ENV` is
-`production`, and `devtoolsPlugin({ enabled })` is the application's own decision
-rather than anything the framework reads to choose its own behaviour. The
+application keeps it out of production. It is off unless
+`APONIA_DEVTOOLS=true`, and `devtoolsPlugin({ enabled })` is the application's
+own decision rather than anything the framework reads to choose its own
+behaviour. The
 application reads the environment where it declares it to: `src/config.ts`
 declares the `PORT` schema, and the `provideConfiguration(AppConfig)` provider in
 `src/app.module.ts` validates it once at boot.
@@ -56,7 +57,7 @@ a fresh checkout boot from the declared graph. A plugin mounted through the
 option is not an `imports` entry, so the two do not compete. Move the
 registration into `imports` when the module graph should carry it, and give up
 the declared-graph boot for that root; the
-[devtools guide](https://github.com/aponiajs/aponiajs/blob/main/docs/devtools.md)
+[devtools guide](https://github.com/aponiajs/aponiajs/blob/main/docs/services/devtools.md)
 states the trade, the endpoints, and the limitations.
 
 The starter follows Nest standard mode:

@@ -2,6 +2,7 @@
 export const schematicNames = [
   "app",
   "library",
+  "plugin",
   "class",
   "controller",
   "decorator",

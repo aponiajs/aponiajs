@@ -1,5 +1,6 @@
 import {
   AponiaError,
+  applyDeprecationHeaders,
   type ClassToken,
   type LoggerService,
   type RouteParameterMetadata,
@@ -22,35 +23,50 @@ import type {
 } from "./kernel.types.ts";
 import { validateSlot } from "./validation.ts";
 
-/** What every request through one kernel runs with. */
-interface KernelRuntime {
+/**
+ * What one request through the shared pipeline runs with.
+ *
+ * A platform supplies its own native route, request, and response objects; this
+ * runtime states only what the pipeline itself needs, which is what lets every
+ * platform execute the same enhancer, pipe, and filter semantics.
+ */
+export interface RouteExecutionRuntime {
+  /** Application state handed to every request as `store`. */
   readonly store: Record<string, unknown>;
+  /** Application pipes, which run before a route's own. */
   readonly globalPipes: readonly ResolvedPipe[];
+  /** The largest request body to read, in bytes. */
   readonly maxBodyBytes: number | undefined;
+  /** Renders a `@Render()` route's view. */
   readonly renderView: HttpKernelOptions["renderView"];
+  /** The logger failures are reported through. */
   readonly logger: LoggerService | undefined;
 }
 
-/**
- * Builds the kernel a host dispatches requests into.
- *
- * The kernel owns the request pipeline once a route matches: decode and
- * validate, apply the declared headers and status, run guards and interceptors,
- * call the handler, serialize, and answer. A failure is offered to the route's
- * filters first and answered as Problem Details last.
- *
- * @param options - The mounts, logger, state, and policies to run with.
- * @returns The kernel.
- */
-export function createHttpKernel(options: HttpKernelOptions): HttpKernel {
-  const matcher = createRouteMatcher(options.routes);
-  const runtime: KernelRuntime = {
+/** Builds the runtime one platform's routes execute with. */
+export function createRouteExecutionRuntime(options: HttpKernelOptions): RouteExecutionRuntime {
+  return {
     store: options.store ?? {},
     globalPipes: options.globalPipes ?? [],
     maxBodyBytes: options.maxBodyBytes,
     renderView: options.renderView,
     logger: options.logger,
   };
+}
+
+/**
+ * Builds the kernel a host dispatches requests into.
+ *
+ * The kernel owns routing only when a host wants one shared matcher. A platform
+ * with its own router mounts each route through {@link createRouteHandler} and
+ * keeps its native matching, middleware, and response objects.
+ *
+ * @param options - The mounts, logger, state, and policies to run with.
+ * @returns The kernel.
+ */
+export function createHttpKernel(options: HttpKernelOptions): HttpKernel {
+  const matcher = createRouteMatcher(options.routes);
+  const runtime = createRouteExecutionRuntime(options);
 
   async function tryHandle(
     request: Request,
@@ -66,17 +82,15 @@ export function createHttpKernel(options: HttpKernelOptions): HttpKernel {
     const context = createContext(request, url, match, runtime.store, info);
     try {
       const respond = async (): Promise<Response> =>
-        buildResponse(await execute(match, context, runtime), context.set, request.method);
+        buildRouteResponse(await executeMountedRoute(match.mount, context, runtime), context);
       const result =
         options.middleware === undefined
           ? await respond()
           : await options.middleware(context, respond);
 
-      return result instanceof Response
-        ? result
-        : buildResponse(result, context.set, request.method);
+      return result instanceof Response ? result : buildRouteResponse(result, context);
     } catch (error) {
-      return await answerFailure(error, match, context, runtime);
+      return await answerRouteFailure(error, match.mount, context, runtime);
     }
   }
 
@@ -96,48 +110,50 @@ export function createHttpKernel(options: HttpKernelOptions): HttpKernel {
   });
 }
 
-function createContext(
-  request: Request,
-  url: URL,
-  match: RouteMatch,
-  store: Record<string, unknown>,
-  info: HostRequestInfo | undefined,
-): PlatformRouteContext {
-  const set: {
-    status?: number | string;
-    headers: Record<string, string | number | string[] | undefined>;
-  } = {
-    headers: {},
+/**
+ * Creates the handler one mounted route runs on a platform's own router.
+ *
+ * The platform builds a {@link PlatformRouteContext} from its native request and
+ * response objects and calls this handler; everything that defines the request
+ * contract — decoding, validation, guards, interceptors, pipes, the handler,
+ * serialization, views, SSE, and the filter chain — runs here, so every platform
+ * executes the same semantics without sharing a router.
+ *
+ * @param mount - The route the platform mounted.
+ * @param options - The logger, state, pipes, and policies the boot resolved.
+ * @returns A handler that answers one request with a `Response`.
+ */
+export function createRouteHandler(
+  mount: MountedRoute,
+  options: HttpKernelOptions,
+): (context: PlatformRouteContext) => Promise<Response> {
+  const runtime = createRouteExecutionRuntime(options);
+  return async (context: PlatformRouteContext): Promise<Response> => {
+    try {
+      return buildRouteResponse(await executeMountedRoute(mount, context, runtime), context);
+    } catch (error) {
+      return await answerRouteFailure(error, mount, context, runtime);
+    }
   };
-  return {
-    body: undefined,
-    query: readQuery(url),
-    params: match.params,
-    headers: readHeaders(request),
-    cookie: readCookies(request),
-    request,
-    path: match.mount.route.path,
-    set,
-    store,
-    status: (status, body) => {
-      set.status = status;
-      return buildResponse(body, set, request.method);
-    },
-    ...(info?.ip === undefined ? {} : { server: { requestIP: () => ({ address: info.ip }) } }),
-    ...(info?.native === undefined ? {} : { native: info.native }),
-  } as PlatformRouteContext;
 }
 
-async function execute(
-  match: RouteMatch,
+/**
+ * Executes one mounted route against a context the platform built.
+ *
+ * @param mount - The mounted route.
+ * @param context - The request context.
+ * @param runtime - What the pipeline runs with.
+ * @returns The handler's value, after interceptors, serialization, render, or SSE.
+ */
+export async function executeMountedRoute(
+  mount: MountedRoute,
   context: PlatformRouteContext,
-  runtime: KernelRuntime,
+  runtime: RouteExecutionRuntime,
 ): Promise<unknown> {
-  const { mount } = match;
   const { route } = mount;
 
-  await decodeAndValidate(mount, context, runtime);
-  applyDeclaredSettings(route, context);
+  await decodeRouteRequest(mount, context, runtime);
+  applyRouteSettings(route, context);
 
   const instance = mount.resolveInstance?.(context) ?? mount.instance;
   const handler = (instance as Record<PropertyKey, unknown>)[route.propertyKey] as
@@ -216,10 +232,18 @@ async function execute(
   return value;
 }
 
-async function decodeAndValidate(
+/**
+ * Decodes and validates the slots one route declares.
+ *
+ * A body is read when the route declares a body slot or binds `@Body()`;
+ * query, params, headers, and cookies are validated only when the schema names
+ * them. The decoded values replace the raw context fields, so a handler reads
+ * exactly what the validator produced.
+ */
+export async function decodeRouteRequest(
   mount: MountedRoute,
   context: PlatformRouteContext,
-  runtime: KernelRuntime,
+  runtime: RouteExecutionRuntime,
 ): Promise<void> {
   const { schema } = mount.route;
   if (schema === undefined && !mount.route.parameters.some((entry) => entry.kind === "body")) {
@@ -227,10 +251,6 @@ async function decodeAndValidate(
   }
 
   const state = context as unknown as Record<string, unknown>;
-  if (schema !== undefined) {
-    // A body is decoded when the route declares a body slot or a `@Body()`
-    // parameter: without either, an unread body is left to `@Req()`.
-  }
   if (schema?.body !== undefined || mount.route.parameters.some((entry) => entry.kind === "body")) {
     const body = await readBody(context.request, runtime.maxBodyBytes);
     state.body =
@@ -266,7 +286,11 @@ async function decodeAndValidate(
   }
 }
 
-function applyDeclaredSettings(route: MountedRoute["route"], context: PlatformRouteContext): void {
+/** Applies the headers, status, and SSE settings one route declares. */
+export function applyRouteSettings(
+  route: MountedRoute["route"],
+  context: PlatformRouteContext,
+): void {
   if (route.httpCode !== undefined) {
     context.set.status = route.httpCode;
   }
@@ -279,9 +303,24 @@ function applyDeclaredSettings(route: MountedRoute["route"], context: PlatformRo
     context.set.headers["cache-control"] = "no-cache";
     context.set.headers["connection"] = "keep-alive";
   }
+  // Before the guards, so a refusal carries the policy too.
+  if (route.deprecation !== undefined) {
+    applyDeprecationHeaders(context.set.headers, route.deprecation);
+  }
 }
 
-function toEventStream(value: unknown, context: PlatformRouteContext): Response {
+/** Builds the response one route's value and settings answer with. */
+export function buildRouteResponse(value: unknown, context: PlatformRouteContext): Response {
+  // A `Response` the pipeline built keeps its own status and body, and gains the
+  // headers the route declared — which is what makes `@Header()` and
+  // `@Deprecated()` observable on a guard refusal too.
+  return value instanceof Response
+    ? withSettingsHeaders(value, context)
+    : buildResponse(value, context.set, context.request.method);
+}
+
+/** Streams an async iterable as Server-Sent Events. */
+export function toEventStream(value: unknown, context: PlatformRouteContext): Response {
   const iterable = value as Partial<AsyncIterable<unknown>> | null;
   if (iterable === null || typeof iterable?.[Symbol.asyncIterator] !== "function") {
     return buildResponse(value, context.set, "GET");
@@ -313,22 +352,29 @@ function toEventStream(value: unknown, context: PlatformRouteContext): Response 
   });
 }
 
-async function answerFailure(
+/**
+ * Answers a failure through the route's filters and the default mapping.
+ *
+ * A filter answers with a value or a `Response`; a `null` or `undefined` answer
+ * declines it. A throwing filter is reported and declines, because one filter's
+ * failure may not replace the answer the remaining chain would give.
+ */
+export async function answerRouteFailure(
   error: unknown,
-  match: RouteMatch,
+  mount: MountedRoute,
   context: PlatformRouteContext,
-  runtime: KernelRuntime,
+  runtime: RouteExecutionRuntime,
 ): Promise<Response> {
   if (error instanceof HttpError) {
-    return error.toResponse();
+    return withSettingsHeaders(error.toResponse(), context);
   }
 
-  const host = new StaticRouteExecutionContext(match.mount.instance, () => undefined, {
-    method: match.mount.route.method,
-    path: match.mount.route.path,
+  const host = new StaticRouteExecutionContext(mount.instance, () => undefined, {
+    method: mount.route.method,
+    path: mount.route.path,
   }).fork(context);
 
-  for (const filter of match.mount.filters) {
+  for (const filter of mount.filters) {
     if (!matchesFilter(filter.exceptions, error)) {
       continue;
     }
@@ -341,15 +387,79 @@ async function answerFailure(
       }
     } catch (filterFailure) {
       reportFailure(runtime.logger, filterFailure);
-      return problemResponse(filterFailure);
     }
   }
 
   reportFailure(runtime.logger, error);
-  return problemResponse(error);
+  return withSettingsHeaders(problemResponse(error), context);
 }
 
-function matchesFilter(exceptions: readonly ClassToken<unknown>[], error: unknown): boolean {
+/**
+ * Carries the route's declared settings onto a failure answer.
+ *
+ * A filter's answer already runs through `buildResponse`, which applies them;
+ * the two paths here — an `HttpError`'s own response and the default problem
+ * document — build their responses without the context. A permission refusal
+ * still has to carry the headers the route declared, which is what makes
+ * `@Deprecated()` and `@Header()` observable on the refusal as well.
+ */
+function withSettingsHeaders(response: Response, context: PlatformRouteContext): Response {
+  const entries = Object.entries(context.set.headers);
+  if (entries.length === 0) {
+    return response;
+  }
+
+  const headers = new Headers(response.headers);
+  for (const [name, value] of entries) {
+    if (value === undefined || headers.has(name)) {
+      continue;
+    }
+    headers.set(name, Array.isArray(value) ? value.join(", ") : String(value));
+  }
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+function createContext(
+  request: Request,
+  url: URL,
+  match: RouteMatch,
+  store: Record<string, unknown>,
+  info: HostRequestInfo | undefined,
+): PlatformRouteContext {
+  const set: {
+    status?: number | string;
+    headers: Record<string, string | number | string[] | undefined>;
+  } = {
+    headers: {},
+  };
+  return {
+    body: undefined,
+    query: readQuery(url),
+    params: match.params,
+    headers: readHeaders(request),
+    cookie: readCookies(request),
+    request,
+    path: match.mount.route.path,
+    set,
+    store,
+    ip: info?.ip,
+    host: url.host,
+    status: (status, body) => {
+      set.status = status;
+      return buildResponse(body, set, request.method);
+    },
+    ...(info?.ip === undefined ? {} : { server: { requestIP: () => ({ address: info.ip }) } }),
+    ...(info?.native === undefined ? {} : { native: info.native }),
+  } as PlatformRouteContext;
+}
+
+/** Reports whether a filter's `@Catch()` list covers an exception, empty meaning all. */
+export function matchesFilter(exceptions: readonly ClassToken<unknown>[], error: unknown): boolean {
   if (exceptions.length === 0) {
     return true;
   }

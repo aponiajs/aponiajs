@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 /**
  * The JSDoc source every published barrel carries, and the barrels it reads.
  *
- * The name index a reader browses is `docs/api.md`, generated from
+ * The name index a reader browses is `docs/reference/api.md`, generated from
  * `docs/public-api.json` by `scripts/build-api-reference.ts`. The JSDoc
  * reference is built by the isolated `tools/api-docs` project, which pins a
  * TypeScript release TypeDoc supports. What this guard reads is the source the
@@ -14,6 +14,7 @@ import { resolve } from "node:path";
  */
 const packageBarrels = [
   "packages/common/src/index.ts",
+  "packages/compiler/src/index.ts",
   "packages/core/src/index.ts",
   "packages/platform-elysia/src/index.ts",
   "packages/cli/src/index.ts",

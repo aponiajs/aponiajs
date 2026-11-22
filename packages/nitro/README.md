@@ -2,6 +2,10 @@
 
 Delivery adapter for Nitro.
 
+> **Superseded by `@aponiajs/platform-h3`.** This package remains a delivery
+> adapter: it mounts an application already booted on a platform. New
+> applications should boot on the platform package directly.
+
 ```bash
 bun add @aponiajs/nitro@alpha
 ```
@@ -10,6 +14,18 @@ bun add @aponiajs/nitro@alpha
 
 ```ts
 import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+import { toNitroHandler } from "@aponiajs/nitro";
+
+const application = await AponiaFactory.create(AppModule);
+export default toNitroHandler(application);
+```
+
+Boot on H3 when the application is meant to run on Nitro: Nitro serves an H3
+application, so no extra host is needed.
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-h3";
 import { AppModule } from "./app.module.ts";
 import { toNitroHandler } from "@aponiajs/nitro";
 

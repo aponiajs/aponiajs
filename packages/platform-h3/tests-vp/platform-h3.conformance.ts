@@ -32,3 +32,18 @@ test("declines a request it has no route for", async () => {
   expect(await application.tryHandle(new Request("http://localhost/none"))).toBeUndefined();
   await application.close();
 });
+
+import {
+  conformanceCreate,
+  platformConformanceCases,
+} from "../../platform-core/tests/support/platform-contract.ts";
+
+const sharedContractCreate = conformanceCreate((root, options) =>
+  AponiaFactory.create(root, options),
+);
+
+for (const conformanceCase of platformConformanceCases) {
+  test(`the shared platform contract: ${conformanceCase.name}`, async () => {
+    await conformanceCase.run(sharedContractCreate);
+  });
+}

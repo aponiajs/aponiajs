@@ -21,4 +21,4 @@ Most HTTP applications receive this package through
 adapter or using the container without HTTP.
 
 [npm package](https://www.npmjs.com/package/@aponiajs/core) ·
-[complete package catalog](../../docs/packages.md)
+[complete package catalog](../../docs/reference/packages.md)

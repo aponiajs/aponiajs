@@ -13,7 +13,7 @@
 - `McpPromptRegistry` / `defineMcpPrompt`: publish prompt templates with typed arguments and answer `prompts/list` and `prompts/get`.
 - [MCP_PROTOCOL_VERSION](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/protocol/protocol.constants.ts): the fallback handshake version (`"2024-11-05"`).
 - [MCP_PROTOCOL_VERSIONS](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/protocol/protocol.constants.ts): every handshake version the package answers.
-- [createStatelessHttpHandler](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/server/http-handler.ts): the readiness document, JSON-RPC POST handling, and protocol header checks.
+- [createStatelessHttpHandler](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/server/http-handler.ts): the readiness document, JSON-RPC POST handling, protocol header checks, and the `authorize`/`allowedOrigins`/`requireJson` boundary.
 
 ## Behavior a consumer can rely on
 
@@ -22,9 +22,10 @@
 - `tools/list` publishes each tool's `outputSchema` when it declares one; `tools/call` passes `structuredContent` through unchanged.
 - `resources` and `prompts` capabilities appear only when the server has an entry for them; a failed read or prompt build answers a generic error.
 - A stateless request that states one version in `Mcp-Protocol-Version` and another in `params._meta` is refused.
+- A POST requires `application/json`; a request with an unlisted `Origin` is refused, and `authorize` supplies the authentication decision.
 - Standard error codes follow JSON-RPC 2.0: parse (`-32700`), invalid request (`-32600`), unknown method (`-32601`), invalid params (`-32602`), internal (`-32603`).
 
 ## Documentation
 
-- [MCP Specification Guide](../../docs/mcp.md): Complete Model Context Protocol integration and usage documentation.
-- [Published packages](../../docs/packages.md): The npm catalog and install commands.
+- [MCP Specification Guide](../../docs/services/mcp.md): Complete Model Context Protocol integration and usage documentation.
+- [Published packages](../../docs/reference/packages.md): The npm catalog and install commands.

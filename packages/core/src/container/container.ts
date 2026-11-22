@@ -24,6 +24,15 @@ import type { ModuleGraph } from "../graph/module-graph.ts";
 export type RequestContextAccessor = () => object | undefined;
 
 /**
+ * A guard that reports whether a request context's lifetime is still open.
+ *
+ * The platform supplies it beside the accessor, so a request-scoped resolution
+ * after the response boundary fails with `STALE_LIFETIME` instead of writing
+ * into a cache map nobody will read again.
+ */
+export type RequestContextGuard = (context: object) => boolean;
+
+/**
  * The dependency injection container: one cached instance per provider per
  * module, resolved through the compiled module graph.
  *
@@ -44,6 +53,7 @@ export class AponiaContainer {
     Map<ModuleDefinition, Map<ControllerDefinition, unknown>>
   >();
   #contextAccessor?: RequestContextAccessor;
+  #contextGuard?: RequestContextGuard;
 
   constructor(graph: ModuleGraph) {
     this.graph = graph;
@@ -53,9 +63,15 @@ export class AponiaContainer {
    * Sets the ambient request context accessor used to resolve request-scoped providers.
    *
    * @param accessor - Function returning the active request context object, or undefined.
+   * @param isOpen - Reports whether a context's lifetime is still open; a closed
+   * context refuses a request-scoped resolution with `STALE_LIFETIME`.
    */
-  setRequestContextAccessor(accessor: RequestContextAccessor | undefined): void {
+  setRequestContextAccessor(
+    accessor: RequestContextAccessor | undefined,
+    isOpen?: RequestContextGuard,
+  ): void {
     this.#contextAccessor = accessor;
+    this.#contextGuard = isOpen;
   }
 
   /**
@@ -181,15 +197,18 @@ export class AponiaContainer {
 
     const scope = this.providerScope(location.module, location.provider);
     const activeContext = context ?? this.#contextAccessor?.();
-    if (scope === "request" && !activeContext) {
-      throw new AponiaError(
-        "MISSING_REQUEST_CONTEXT",
-        `Cannot create request-scoped provider "${getTokenName(location.provider.provide)}" outside of an active request context.`,
-        {
-          module: location.module.id,
-          token: getTokenName(location.provider.provide),
-        },
-      );
+    if (scope === "request") {
+      if (!activeContext) {
+        throw new AponiaError(
+          "MISSING_REQUEST_CONTEXT",
+          `Cannot create request-scoped provider "${getTokenName(location.provider.provide)}" outside of an active request context.`,
+          {
+            module: location.module.id,
+            token: getTokenName(location.provider.provide),
+          },
+        );
+      }
+      this.#assertContextOpen(activeContext, location.module, location.provider.provide);
     }
 
     this.#assertNoProviderCycle(location);
@@ -248,6 +267,7 @@ export class AponiaContainer {
           { module: module.id, token: getTokenName(controller.token) },
         );
       }
+      this.#assertContextOpen(activeContext, module, controller.token);
 
       let contextModules = this.#requestControllers.get(activeContext);
       const cachedInstance = contextModules?.get(module)?.get(controller);
@@ -316,6 +336,7 @@ export class AponiaContainer {
           },
         );
       }
+      this.#assertContextOpen(activeContext, location.module, location.provider.provide);
 
       const contextModules = this.#requestInstances.get(activeContext);
       if (contextModules) {
@@ -422,6 +443,22 @@ export class AponiaContainer {
       }
       throw error;
     }
+  }
+
+  /** Refuses a request-scoped resolution whose context lifetime has ended. */
+  #assertContextOpen(context: object, module: ModuleDefinition, token: InjectionDependency): void {
+    if (this.#contextGuard === undefined || this.#contextGuard(context)) {
+      return;
+    }
+    throw new AponiaError(
+      "STALE_LIFETIME",
+      `Cannot resolve request-scoped "${getTokenName(token)}" from a request context whose lifetime has ended.`,
+      {
+        module: module.id,
+        token: getTokenName(token),
+        reason: "closed",
+      },
+    );
   }
 
   #moduleCache<TKey extends object>(

@@ -1,5 +1,10 @@
 import { randomUUID } from "node:crypto";
-import { AponiaError, type OnModuleDestroy, type OnModuleInit } from "@aponiajs/common";
+import {
+  AponiaError,
+  runOutsideAsyncContexts,
+  type OnModuleDestroy,
+  type OnModuleInit,
+} from "@aponiajs/common";
 import type {
   QueueDrainSummary,
   QueueEnqueueOptions,
@@ -9,6 +14,11 @@ import type {
   QueueTimer,
 } from "./queue-job.types.ts";
 import type { QueueStore } from "./queue-store.types.ts";
+import {
+  queueJobMachine,
+  revivedQueueJobState,
+  validateQueueJobState,
+} from "./queue-job-machine.ts";
 import type { QueueServiceOptions, ResolvedQueueServiceOptions } from "./queue-service.types.ts";
 
 interface MutableJob {
@@ -206,7 +216,7 @@ export class QueueService implements OnModuleDestroy, OnModuleInit {
     const revived: MutableJob = {
       ...job,
       attempts: 0,
-      state: "pending",
+      state: revivedQueueJobState(),
       availableAt: this.#options.now(),
       lastError: undefined,
     };
@@ -287,9 +297,10 @@ export class QueueService implements OnModuleDestroy, OnModuleInit {
     }
     const stored = await store.load();
     for (const job of stored) {
+      validateQueueJobState(job.state);
       const revived = mutableJob(job);
       if (revived.state === "failed") {
-        this.#deadLetters.set(revived.id, revived);
+        this.#setDeadLetter(revived);
         continue;
       }
       revived.state = "pending";
@@ -310,8 +321,9 @@ export class QueueService implements OnModuleDestroy, OnModuleInit {
   }
 
   async #process(job: MutableJob): Promise<"completed" | "retried" | "deadLettered"> {
+    const running = queueJobMachine().transition("run");
     this.#running.add(job.id);
-    job.state = "running";
+    job.state = running.state;
     job.attempts += 1;
     const controller = new AbortController();
     this.#controllers.add(controller);
@@ -324,10 +336,13 @@ export class QueueService implements OnModuleDestroy, OnModuleInit {
           Object.freeze({ name: job.name }),
         );
       }
-      const result = handler(job.payload, freezeJob(job), controller.signal);
-      await (job.timeoutMs > 0
-        ? withTimeout(result, job.timeoutMs, this.#options.timer, controller)
-        : result);
+      await runOutsideAsyncContexts(() => {
+        const result = handler(job.payload, freezeJob(job), controller.signal);
+        return job.timeoutMs > 0
+          ? withTimeout(result, job.timeoutMs, this.#options.timer, controller)
+          : result;
+      });
+      job.state = running.transition("complete").state;
       this.#jobs.delete(job.id);
       this.#forgetIdempotency(job);
       this.#forget(job.id);
@@ -337,12 +352,12 @@ export class QueueService implements OnModuleDestroy, OnModuleInit {
       this.#options.onError(error, freezeJob(job));
       if (job.attempts >= job.maxAttempts) {
         this.#jobs.delete(job.id);
-        const dead = { ...job, state: "failed" as const };
-        this.#deadLetters.set(job.id, dead);
+        const dead = { ...job, state: running.transition("fail").state };
+        this.#setDeadLetter(dead);
         this.#persist(dead);
         return "deadLettered";
       }
-      job.state = "pending";
+      job.state = running.transition("retry").state;
       job.availableAt = this.#options.now() + this.#backoff(job.attempts);
       this.#persist(job);
       return "retried";
@@ -356,6 +371,16 @@ export class QueueService implements OnModuleDestroy, OnModuleInit {
     if (job.idempotencyKey !== undefined) {
       this.#idempotency.delete(job.idempotencyKey);
     }
+  }
+
+  #setDeadLetter(job: MutableJob): void {
+    if (!this.#deadLetters.has(job.id) && this.#deadLetters.size >= this.#options.maxDeadLetters) {
+      const oldest = this.#deadLetters.keys().next().value;
+      if (oldest !== undefined) {
+        this.#deadLetters.delete(oldest);
+      }
+    }
+    this.#deadLetters.set(job.id, job);
   }
 
   #persist(job: MutableJob): void {
@@ -550,6 +575,7 @@ function resolveQueueOptions(options: QueueServiceOptions): ResolvedQueueService
   const backoffMs = options.backoffMs ?? 100;
   const maxBackoffMs = options.maxBackoffMs ?? 30_000;
   const maxJobs = options.maxJobs ?? 1_000;
+  const maxDeadLetters = options.maxDeadLetters ?? maxJobs;
   const jobTimeoutMs = options.jobTimeoutMs ?? 0;
   const autoStart = options.autoStart ?? true;
   const issues: string[] = [];
@@ -568,6 +594,9 @@ function resolveQueueOptions(options: QueueServiceOptions): ResolvedQueueService
   }
   if (!Number.isInteger(maxJobs) || maxJobs < 1) {
     issues.push("maxJobs must be a positive integer");
+  }
+  if (!Number.isInteger(maxDeadLetters) || maxDeadLetters < 1) {
+    issues.push("maxDeadLetters must be a positive integer");
   }
   if (!Number.isInteger(jobTimeoutMs) || jobTimeoutMs < 0) {
     issues.push("jobTimeoutMs must be a non-negative integer");
@@ -593,6 +622,7 @@ function resolveQueueOptions(options: QueueServiceOptions): ResolvedQueueService
     backoffMs,
     maxBackoffMs,
     maxJobs,
+    maxDeadLetters,
     jobTimeoutMs,
     autoStart,
     now: options.now ?? Date.now,

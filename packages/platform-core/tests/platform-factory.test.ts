@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import {
+  AponiaError,
   Controller,
+  Deprecated,
   Get,
   Injectable,
   Module,
@@ -9,7 +11,7 @@ import {
   type OnApplicationBootstrap,
 } from "@aponiajs/common";
 import { createPlatformFactory } from "../src/index.ts";
-import type { HostDispatcher, PlatformHost } from "../src/host/platform-host.types.ts";
+import { fakeHost } from "./fixtures/fake-host.ts";
 
 @Injectable()
 class AllowGuard implements CanActivate {
@@ -39,28 +41,63 @@ class GreetingController {
 @Module({ controllers: [GreetingController], providers: [AllowGuard, Startup] })
 class AppModule {}
 
-interface FakeApp {
-  readonly name: string;
-  dispatch?: HostDispatcher;
+@Injectable()
+class DenyGuard implements CanActivate {
+  canActivate(): boolean {
+    return false;
+  }
 }
 
-function fakeHost(): PlatformHost<FakeApp> {
-  return {
-    name: "fake",
-    createApplication(name) {
-      return { name };
-    },
-    mount(application, dispatch) {
-      application.dispatch = dispatch;
-    },
-    async fetch(application, request) {
-      return (
-        (await application.dispatch?.(request, {})) ?? new Response("host 404", { status: 404 })
-      );
-    },
-    async close() {},
-  };
+@Controller("legacy")
+class LegacyController {
+  @Get("/")
+  @Deprecated({ sunset: "2031-01-01T00:00:00Z", link: "https://example.test/v2" })
+  read(): string {
+    return "legacy";
+  }
+
+  @Get("/guarded")
+  @UseGuards(DenyGuard)
+  @Deprecated()
+  guarded(): string {
+    return "never";
+  }
 }
+
+@Module({ controllers: [LegacyController], providers: [DenyGuard] })
+class LegacyModule {}
+
+test("answers a deprecated route with its policy headers", async () => {
+  const application = await createPlatformFactory(fakeHost()).create(LegacyModule, {
+    logger: false,
+  });
+
+  try {
+    const response = await application.handle(new Request("http://localhost/legacy"));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("deprecation")).toBe("true");
+    expect(response.headers.get("sunset")).toBe(new Date("2031-01-01T00:00:00Z").toUTCString());
+    expect(response.headers.get("link")).toBe('<https://example.test/v2>; rel="deprecation"');
+  } finally {
+    await application.close();
+  }
+});
+
+test("a guard refusal carries the deprecation policy", async () => {
+  const application = await createPlatformFactory(fakeHost()).create(LegacyModule, {
+    logger: false,
+  });
+
+  try {
+    const response = await application.handle(new Request("http://localhost/legacy/guarded"));
+
+    expect(response.status).toBe(403);
+    expect(response.headers.get("deprecation")).toBe("true");
+  } finally {
+    await application.close();
+  }
+});
 
 describe("createPlatformFactory", () => {
   test("boots a module graph and serves the routes it mounted", async () => {
@@ -116,5 +153,69 @@ describe("createPlatformFactory", () => {
     await application.close();
     await application.close();
     expect(true).toBe(true);
+  });
+
+  test("mounts liveness and readiness, and drains readiness when the stop begins", async () => {
+    const application = await createPlatformFactory(fakeHost()).create(AppModule, {
+      logger: false,
+      health: true,
+    });
+
+    const live = await application.handle(new Request("http://localhost/health/live"));
+    expect(live.status).toBe(200);
+    expect(live.headers.get("content-type")).toBe("application/health+json");
+    expect(await live.json()).toEqual({ status: "pass" });
+
+    const ready = await application.handle(new Request("http://localhost/health/ready"));
+    expect(ready.status).toBe(200);
+    expect(await ready.json()).toEqual({ status: "pass" });
+
+    await application.close();
+
+    const drained = await application.handle(new Request("http://localhost/health/ready"));
+    expect(drained.status).toBe(503);
+    expect(await drained.json()).toEqual({ status: "fail" });
+    // Liveness keeps answering: a process that should be restarted is one that
+    // stops answering at all.
+    const stillLive = await application.handle(new Request("http://localhost/health/live"));
+    expect(stillLive.status).toBe(200);
+  });
+
+  test("refuses a probe path a controller already claims", async () => {
+    @Controller("health")
+    class HealthController {
+      @Get("live")
+      live(): string {
+        return "mine";
+      }
+    }
+
+    @Module({ controllers: [HealthController] })
+    class HealthModule {}
+
+    let thrown: unknown;
+    try {
+      await createPlatformFactory(fakeHost()).create(HealthModule, { logger: false, health: true });
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect((thrown as AponiaError).code).toBe("DUPLICATE_ROUTE");
+    expect((thrown as AponiaError).details).toMatchObject({
+      method: "GET",
+      path: "/health/live",
+      controller: "HealthController",
+    });
+  });
+
+  test("honours the paths the health option states", async () => {
+    const application = await createPlatformFactory(fakeHost()).create(AppModule, {
+      logger: false,
+      health: { livenessPath: "/livez", readinessPath: "/readyz" },
+    });
+
+    expect((await application.handle(new Request("http://localhost/livez"))).status).toBe(200);
+    expect((await application.handle(new Request("http://localhost/readyz"))).status).toBe(200);
+    await application.close();
   });
 });

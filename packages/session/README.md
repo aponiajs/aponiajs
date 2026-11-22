@@ -104,6 +104,6 @@ await application.listen(Number(Bun.env.PORT ?? 3000));
 
 ## Documentation
 
-- [Published packages](../../docs/packages.md)
-- [AponiaJS architecture](../../docs/architecture-and-style.md)
+- [Published packages](../../docs/reference/packages.md)
+- [AponiaJS architecture](../../docs/build/architecture-and-style.md)
 - [npm](https://www.npmjs.com/package/@aponiajs/session)

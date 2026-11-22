@@ -1,9 +1,8 @@
 # 11 · Testing
 
-**Use when:** verifying behavior — prefer this over reading the graph by hand.
+**Use when:** verifying application behavior.
 
-An application answers a `Request` without binding a port, so a test exercises
-the real module graph, the real container, and the real routes:
+An application answers a `Request` without binding a port, so a test exercises the real module graph, container, and routes:
 
 ```ts
 import { expect, test } from "bun:test";
@@ -26,20 +25,13 @@ test("creates a user", async () => {
 
 ## Three habits
 
-- Exercise public entrypoints. Build the application and assert through
-  `application.handle`, rather than calling a controller method directly.
+- Exercise public entrypoints. Build the application and assert through `application.handle`.
 - Assert `AponiaError.code`, not message text.
 - Pass `{ logger: false }` so test output stays readable.
 
-Asserting a rejected request is the same shape with a `422` expectation, and a
-service with no transport concern is still a plain unit test.
+## Test kit
 
-## The test kit
-
-`@aponiajs/testing` is the same boot with the three habits built in:
-`createTestApplication(AppModule).compile()` defaults `logger` to `false`, closes
-idempotently through `await using`, and — the part the factory has no answer for —
-replaces one provider for one boot:
+`@aponiajs/testing` wraps the same boot and adds provider overrides:
 
 ```ts
 const application = await createTestApplication(AppModule)
@@ -48,26 +40,12 @@ const application = await createTestApplication(AppModule)
   .compile();
 ```
 
-An override rewrites the compiled module graph in the builder's own memory, so
-the application's module class is untouched and two boots from one class share
-nothing. A token no module in the graph provides is refused with
-`MISSING_PROVIDER` rather than silently doing nothing. The one case that needs a
-real socket — a WebSocket gateway — uses `application.listen()`, which binds port
-`0` and reports both URLs.
+The override rewrites the compiled graph in memory, so the module class is untouched and two boots from one class share nothing. A token no module provides raises `MISSING_PROVIDER`.
 
-It is not a test runner and not a mocking framework: `test` and `expect` stay
-yours, and a dependency a module imported directly is beyond its reach.
+The test kit is not a runner or a mocking framework. `test` and `expect` stay yours.
 
 ## In this repository
 
-Two mirrored lanes: Bun owns `packages/*/tests/*.test.ts`, Vite+ owns
-`packages/*/tests-vp/*.conformance.ts`, and new framework behavior normally
-needs a case in both. `bun test`, `bun run test:coverage`,
-`bun run test:vite-plus`, and `bun run check` run before submitting. The
-coverage lane enforces 98% line coverage, 95% function coverage, and a 95%
-per-package line floor.
-`packages/cli/e2e/` packs the CLI and boots a generated application, so it is
-slow and excluded from the default lanes.
+Bun owns `packages/*/tests/*.test.ts`; Vite+ owns `packages/*/tests-vp/*.conformance.ts`. New framework behavior normally needs a case in both. Run `bun test`, `bun run test:coverage`, `bun run test:vite-plus`, and `bun run check` before submitting.
 
-Next: [12 · Releasing](./12-releasing.md) · Deep dive: [testing](../testing.md) ·
-[`@aponiajs/testing`](../../packages/testing/README.md)
+Next: [12 · Releasing](./12-releasing.md) · Deep dive: [testing](../build/testing.md)

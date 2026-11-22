@@ -1,9 +1,8 @@
 # 02 · Install and generate
 
-**Use when:** starting a new application, or adding AponiaJS to an existing Bun
-project.
+**Use when:** starting a new application or adding AponiaJS to an existing Bun project.
 
-## A new application
+## New application
 
 ```bash
 bun add --global @aponiajs/cli@alpha
@@ -12,37 +11,33 @@ cd my-api
 bun run dev
 ```
 
-`bun create aponia@alpha my-api` reaches the same generator without a global
-install.
+`bun create aponia@alpha my-api` uses the same generator without a global install.
 
-## An existing project
+## Existing project
 
 ```bash
 bun add @aponiajs/common@alpha @aponiajs/platform-elysia@alpha elysia@2.0.0-rc.4
 ```
 
-Every public package shares one version, and the channel a release goes to is
-derived from that version: a prerelease publishes under the tag its identifier
-names — `alpha`, `beta`, `rc`, or `canary` — and never under `latest`. The
-published line is on the alpha channel, so the `@alpha` tag is what to install
-today; the workspace targets `1.0.0-beta.N`, which publishes under `beta` once
-that line ships.
-`elysia` is an exact peer of `@aponiajs/platform-elysia`, so it is pinned rather
-than left to resolve the latest release.
+Every public package shares one version. The published line is `0.6.0-alpha.N`, so install with `@alpha`. `elysia` is an exact peer and must be pinned.
 
-## What the generator writes
+## Generated layout
 
-`aponia new` follows Nest's flat starter layout: `src/app.module.ts` composes the
-application, `src/main.ts` bootstraps it, and one controller and one service sit
-beside them with the controller's spec. Its `src/config.ts` declares the
-application's configuration — one `PORT` schema validated once at boot and read
-back through `application.get(AppConfig)`, which the
-[configuration guide](../configuration.md) covers. The starter writes more than
-those — its own `src/logger.ts`, the generated `src/descriptors.generated.ts` and
-`src/invokers.generated.ts`, and the files around them. [The CLI
-reference](../cli.md) prints the complete tree.
+`aponia new` writes Nest's flat starter layout:
 
-Later resources get their own directory:
+```text
+src/
+  app.module.ts
+  main.ts
+  app.controller.ts
+  app.service.ts
+  app.controller.spec.ts
+  config.ts
+```
+
+`config.ts` declares configuration once. Read it back through `application.get(AppConfig)`.
+
+Generate later resources into their own directory:
 
 ```bash
 aponia generate module users
@@ -52,8 +47,6 @@ aponia g mo users
 aponia g res users
 ```
 
-A REST resource also writes `users.model.ts`, which owns separate
-`@Validation()` classes for create input, partial update input, and shared path
-parameters. The controller and service use those classes directly.
+A REST resource also writes `users.model.ts` with separate `@Validation()` classes for create input, partial update input, and path parameters.
 
-Next: [03 · Modules](./03-modules.md) · Deep dive: [CLI reference](../cli.md)
+Next: [03 · Modules](./03-modules.md) · Deep dive: [CLI reference](../tooling/cli.md)

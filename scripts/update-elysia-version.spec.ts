@@ -122,7 +122,7 @@ describe("update-elysia-version", () => {
       }),
     );
 
-    const docsDir = join(dir, "docs");
+    const docsDir = join(dir, "docs", "platforms");
     await mkdir(docsDir, { recursive: true });
     await Bun.write(
       join(docsDir, "elysia-compatibility.md"),
@@ -142,7 +142,7 @@ describe("update-elysia-version", () => {
     expect(result.targetVersion).toBe("2.0.0-beta.24");
     expect(result.edenUpdated).toBe(true);
     expect(result.updatedFiles).toContain("packages/platform-elysia/package.json");
-    expect(result.updatedFiles).toContain("docs/elysia-compatibility.md");
+    expect(result.updatedFiles).toContain("docs/platforms/elysia-compatibility.md");
 
     const updatedDoc = await Bun.file(join(docsDir, "elysia-compatibility.md")).text();
     expect(updatedDoc).toContain('"elysia": "2.0.0-beta.24"');

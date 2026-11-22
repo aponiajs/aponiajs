@@ -25,15 +25,32 @@ export interface GenerateSchematicResult {
   readonly dryRun: boolean;
 }
 
-/** One file the generator writes: its path, content, and change kind. */
-export interface PendingFile {
+/** The fields every pending file carries. */
+interface PendingFileBase {
   /** The absolute path to write. */
   readonly path: string;
-  /** The formatted source to write. */
-  readonly content: string;
   /** `CREATE` for a new file, `UPDATE` for a rewritten one. */
   readonly kind: "CREATE" | "UPDATE";
 }
+
+/** A pending file whose bytes the generator writes. */
+export interface PendingContentFile extends PendingFileBase {
+  /** Distinguishes a written file from a symlink. */
+  readonly type: "content";
+  /** The formatted source to write. */
+  readonly content: string;
+}
+
+/** A pending relative symlink, used for agent-guide aliases. */
+export interface PendingLinkFile extends PendingFileBase {
+  /** Distinguishes a symlink from a written file. */
+  readonly type: "link";
+  /** The relative target the symlink points at. */
+  readonly link: string;
+}
+
+/** One file the generator writes: either content or a relative symlink. */
+export type PendingFile = PendingContentFile | PendingLinkFile;
 
 /** The `generateOptions` an `aponia.json` declares: flat and spec defaults. */
 export interface GenerateDefaults {
@@ -72,8 +89,11 @@ export interface ResolvedProject {
   readonly generateOptions?: GenerateDefaults;
 }
 
-/** A single-file component schematic: everything but app, library, and resource. */
-export type ComponentSchematic = Exclude<GenerateSchematic, "app" | "library" | "resource">;
+/** A single-file component schematic: everything but the package generators and a resource. */
+export type ComponentSchematic = Exclude<
+  GenerateSchematic,
+  "app" | "library" | "plugin" | "resource"
+>;
 
 /** One schematic's file layout and module registration. */
 export interface SchematicDefinition {

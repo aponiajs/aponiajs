@@ -79,7 +79,7 @@ creating them. Registering it is opt-in for an application you already have, and
 still generates without bundling.
 
 The generate command supports the Aponia schematic catalog: application,
-library, class, controller, decorator, filter, gateway, guard, interface,
+library, plugin, class, controller, decorator, filter, gateway, guard, interface,
 interceptor, middleware, module, pipe, provider, resolver, resource, and service. Nest aliases are
 supported, and `router`, `routers`, and `route` map to Aponia controllers.
 
@@ -111,5 +111,5 @@ to the same generator. The documented CLI workflow uses the globally installed
 `aponia` command consistently.
 
 [npm package](https://www.npmjs.com/package/@aponiajs/cli) ·
-[complete CLI guide](../../docs/cli.md) ·
-[complete package catalog](../../docs/packages.md)
+[complete CLI guide](../../docs/tooling/cli.md) ·
+[complete package catalog](../../docs/reference/packages.md)

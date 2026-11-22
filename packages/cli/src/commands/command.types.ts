@@ -86,6 +86,8 @@ export interface LibraryCommandOptions {
   readonly query?: string;
   /** The library name for the `new` action. */
   readonly name?: string;
+  /** The package kind the `new` action writes; defaults to a module library. */
+  readonly kind?: "module" | "plugin";
   /** The npm scope for the `new` action. */
   readonly scope?: string;
   /** Skip install for the `new` action. */

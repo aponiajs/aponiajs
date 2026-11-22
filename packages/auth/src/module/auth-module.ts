@@ -8,7 +8,7 @@ import {
   type Provider,
   type Token,
 } from "@aponiajs/common";
-import { RequestContextModule, RequestContextService, RolesGuard } from "@aponiajs/platform-elysia";
+import { RequestContextModule, RequestContextService, RolesGuard } from "@aponiajs/platform-core";
 import { AUTH_TOKEN_OPTIONS, AUTH_VERIFIER } from "../authentication/auth.constants.ts";
 import { AuthService } from "../authentication/auth.service.ts";
 import { AuthGuard } from "../authentication/auth.guard.ts";

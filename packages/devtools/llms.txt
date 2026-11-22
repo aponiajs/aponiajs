@@ -41,4 +41,4 @@ The package is a leaf: nothing in the framework depends on it. An application re
 ## Documentation
 
 - [Package README](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/devtools/README.md): installation and registration.
-- [Published packages](../../docs/packages.md): the npm catalog and install commands.
+- [Published packages](../../docs/reference/packages.md): the npm catalog and install commands.

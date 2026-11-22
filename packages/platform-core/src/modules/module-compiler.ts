@@ -53,6 +53,14 @@ export interface RootCompilationOptions {
   readonly compileController?: (controller: ClassToken<unknown>) => ControllerDefinition;
   /** Refuses a compiled graph whose routes two declarations claim. */
   readonly assertRoutes?: (root: ModuleDefinition) => void;
+  /**
+   * The symbol key a cached descriptor is stored under on a root class.
+   *
+   * Defaults to `aponia.compiled.descriptors`. A platform whose controller
+   * lowering differs states its own key, so one class booted on two platforms
+   * in one process keeps one graph per platform.
+   */
+  readonly cacheKey?: string;
 }
 
 export function compileRootModule(
@@ -60,16 +68,17 @@ export function compileRootModule(
   options: RootCompilationOptions = {},
 ): ModuleDefinition {
   const unwrapped = resolveForwardRef(rootModule);
-  if (
-    (typeof unwrapped === "function" || typeof unwrapped === "object") &&
-    unwrapped !== null &&
-    (unwrapped as unknown as Record<PropertyKey, unknown>)[
-      Symbol.for("aponia.compiled.descriptors")
-    ] !== undefined
-  ) {
-    return (unwrapped as unknown as Record<PropertyKey, unknown>)[
-      Symbol.for("aponia.compiled.descriptors")
-    ] as ModuleDefinition;
+  if ((typeof unwrapped === "function" || typeof unwrapped === "object") && unwrapped !== null) {
+    const target = unwrapped as unknown as Record<PropertyKey, unknown>;
+    // The default key is a literal so the framework-contract guard can audit
+    // every key the runtime writes; a platform states its own through `cacheKey`.
+    const cached =
+      options.cacheKey === undefined
+        ? target[Symbol.for("aponia.compiled.descriptors")]
+        : target[Symbol.for(options.cacheKey)];
+    if (cached !== undefined) {
+      return cached as ModuleDefinition;
+    }
   }
   const compiledRoot = isModuleDefinition(unwrapped)
     ? unwrapped

@@ -1,4 +1,5 @@
 import {
+  getDeprecationMetadata,
   getEnhancerMetadata,
   getHttpCode,
   getPipesMetadata,
@@ -56,6 +57,9 @@ export function compileRoutes(
     const template = getViewTemplate(controller.prototype, route.propertyKey);
     const viewOptions =
       template === undefined ? undefined : getViewOptions(controller.prototype, route.propertyKey);
+    const deprecation =
+      getDeprecationMetadata(controller.prototype, route.propertyKey) ??
+      getDeprecationMetadata(controller);
 
     return Object.freeze({
       method: route.method,
@@ -86,6 +90,7 @@ export function compileRoutes(
           }),
       ...(responseHeaders === undefined ? {} : { responseHeaders }),
       ...(httpCode === undefined ? {} : { httpCode }),
+      ...(deprecation === undefined ? {} : { deprecation }),
     });
   });
 

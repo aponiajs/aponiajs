@@ -37,6 +37,14 @@ export interface DevtoolsOptions {
    */
   readonly enabled: boolean;
   /**
+   * Authorizes one request to the devtools surface.
+   *
+   * The surface has no built-in authentication. A deployment that enables it
+   * outside a loopback development machine supplies this predicate. A false
+   * answer is a 401 and the request never reaches an endpoint.
+   */
+  readonly authorize?: (request: Request) => boolean | Promise<boolean>;
+  /**
    * The logger whose lines `/__devtools/logs` records: pass the **same** value
    * the application gives `AponiaFactory.create`.
    *

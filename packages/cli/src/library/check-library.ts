@@ -3,6 +3,21 @@ import { join, resolve } from "node:path";
 import type { LibraryCheckOptions, LibraryCheckResult } from "./check-library.types.ts";
 
 const libraryKinds = new Set(["module", "plugin", "adapter", "utility"]);
+const knownPlatforms = new Set(["elysia", "hono", "h3"]);
+
+/**
+ * Packages a library may not depend on at run time: a platform and its runtime
+ * belong in `peerDependencies` or `devDependencies`, because a library that
+ * mounted one would stop being portable.
+ */
+const platformRuntimeDependencies = new Set([
+  "@aponiajs/platform-elysia",
+  "@aponiajs/platform-hono",
+  "@aponiajs/platform-h3",
+  "elysia",
+  "hono",
+  "h3",
+]);
 
 /**
  * Checks one generated library's package, manifest, and required files.
@@ -30,6 +45,8 @@ export async function checkLibrary(options: LibraryCheckOptions = {}): Promise<L
   }
   if (manifest !== undefined) {
     checkManifest(manifest, packageJson, issues);
+    await checkRegistrationStandard(directory, manifest, issues);
+    await checkSourceNeutrality(directory, manifest, issues);
   }
   const barrel = Bun.file(join(directory, "src/index.ts"));
   if (await barrel.exists()) {
@@ -131,6 +148,15 @@ function checkPackageJson(
     issues.push("package.json must not declare a postinstall script");
   }
   const dependencies = packageJson.dependencies;
+  if (typeof dependencies === "object" && dependencies !== null) {
+    for (const name of Object.keys(dependencies)) {
+      if (platformRuntimeDependencies.has(name)) {
+        issues.push(
+          `package.json must not depend on ${name} at run time; declare it as a peerDependency`,
+        );
+      }
+    }
+  }
   const peers = packageJson.peerDependencies;
   const hasCommon =
     (typeof dependencies === "object" &&
@@ -210,6 +236,20 @@ function checkManifest(
   if (typeof manifest.kind !== "string" || !libraryKinds.has(manifest.kind)) {
     issues.push('aponia.library.json kind must be "module", "plugin", "adapter", or "utility"');
   }
+  const platforms = manifest.platforms;
+  if (platforms !== undefined) {
+    if (!Array.isArray(platforms) || platforms.length === 0) {
+      issues.push("aponia.library.json platforms must be a non-empty array when stated");
+    } else {
+      for (const platform of platforms) {
+        if (typeof platform !== "string" || !knownPlatforms.has(platform)) {
+          issues.push(
+            `aponia.library.json platforms names an unknown platform: ${String(platform)}`,
+          );
+        }
+      }
+    }
+  }
   const framework = manifest.framework;
   if (
     typeof framework !== "object" ||
@@ -242,6 +282,71 @@ function checkManifest(
     (security as Record<string, unknown>).postinstall === true
   ) {
     issues.push("aponia.library.json security.postinstall must not be true");
+  }
+}
+
+/**
+ * Requires the Nest-style registration surface on a module or plugin library.
+ *
+ * @param directory - The package root.
+ * @param manifest - The library contract.
+ * @param issues - The issue list the check fills.
+ */
+async function checkRegistrationStandard(
+  directory: string,
+  manifest: Readonly<Record<string, unknown>>,
+  issues: string[],
+): Promise<void> {
+  if (manifest.kind !== "module" && manifest.kind !== "plugin") {
+    return;
+  }
+  let source = "";
+  for await (const path of new Bun.Glob("src/**/*.ts").scan({
+    cwd: directory,
+    onlyFiles: true,
+  })) {
+    source += await Bun.file(join(directory, path)).text();
+  }
+  for (const member of ["forRoot(", "forRootAsync("]) {
+    if (!source.includes(member)) {
+      issues.push(
+        `a ${String(manifest.kind)} library must declare static ${member.slice(0, -1)}(...) returning a DynamicModule`,
+      );
+    }
+  }
+}
+
+/**
+ * Refuses a platform or runtime import in a library's own source.
+ *
+ * A native mount belongs in an `adapter` library, which states the platform in
+ * `platforms` and is allowed to import it; every other kind stays neutral.
+ *
+ * @param directory - The package root.
+ * @param manifest - The library contract.
+ * @param issues - The issue list the check fills.
+ */
+async function checkSourceNeutrality(
+  directory: string,
+  manifest: Readonly<Record<string, unknown>>,
+  issues: string[],
+): Promise<void> {
+  if (manifest.kind === "adapter") {
+    return;
+  }
+  const runtimeImport =
+    /from\s+["'](?:elysia|hono|h3|nitro|@aponiajs\/platform-(?:elysia|hono|h3))(?:["'/])/;
+  for await (const path of new Bun.Glob("src/**/*.ts").scan({
+    cwd: directory,
+    onlyFiles: true,
+  })) {
+    if (path.startsWith("src/adapters/")) {
+      continue;
+    }
+    const source = await Bun.file(join(directory, path)).text();
+    if (runtimeImport.test(source)) {
+      issues.push(`${path} imports a platform at run time; keep the library runtime-neutral`);
+    }
   }
 }
 

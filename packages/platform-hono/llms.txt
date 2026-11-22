@@ -23,4 +23,4 @@
 ## Links
 
 - [Repository guide](https://github.com/aponiajs/aponiajs/blob/release/beta/AGENTS.md)
-- [Adapters](https://github.com/aponiajs/aponiajs/blob/release/beta/docs/adapters.md)
+- [Adapters](https://github.com/aponiajs/aponiajs/blob/release/beta/docs/platforms/adapters.md)

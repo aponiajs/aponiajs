@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { expect, test } from "bun:test";
 
 test("every workspace package has a feature-status row", async () => {
-  const document = await Bun.file("docs/feature-status.md").text();
+  const document = await Bun.file("docs/reference/feature-status.md").text();
   const directories = await readdir("packages", { withFileTypes: true });
   const packages = directories.filter((entry) => entry.isDirectory());
 
@@ -21,7 +21,7 @@ test("every workspace package has a feature-status row", async () => {
 });
 
 test("known gaps name their boundary", async () => {
-  const document = await Bun.file("docs/feature-status.md").text();
+  const document = await Bun.file("docs/reference/feature-status.md").text();
   for (const gap of [
     "distributed queue brokers",
     "MVC adapters",

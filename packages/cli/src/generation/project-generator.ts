@@ -1,7 +1,8 @@
-import { lstat, mkdir, readdir, rm } from "node:fs/promises";
+import { lstat, mkdir, readdir, rm, symlink } from "node:fs/promises";
 import { basename, dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { aponiaVersion } from "../version.ts";
+import { agentGuideAliases } from "./file-writer.ts";
 import type { GenerateProjectOptions, GenerateProjectResult } from "./project-generator.types.ts";
 
 const projectNamePattern = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
@@ -27,7 +28,7 @@ export async function generateProject(
   const templateFiles = await listFiles(templateDirectory);
   const workspace = options.workspace === true;
   const appPrefix = workspace ? "apps/api" : "";
-  const relativeFiles = [
+  const baseFiles = [
     ...templateFiles.map((file) =>
       workspace
         ? join(appPrefix, outputPath(relative(templateDirectory, file)))
@@ -35,6 +36,12 @@ export async function generateProject(
     ),
     ...(workspace ? Object.keys(workspaceRootFiles(options.name)) : []),
   ].toSorted();
+  const guideAliasFiles = baseFiles
+    .filter((file) => basename(file) === "AGENTS.md")
+    .flatMap((file) => agentGuideAliases.map((alias) => join(dirname(file), alias)))
+    .filter((file) => !baseFiles.includes(file))
+    .toSorted();
+  const relativeFiles = [...baseFiles, ...guideAliasFiles].toSorted();
 
   if (options.dryRun) {
     return {
@@ -69,6 +76,10 @@ export async function generateProject(
         await mkdir(dirname(outputFile), { recursive: true });
         await Bun.write(outputFile, content);
       }
+    }
+
+    for (const aliasFile of guideAliasFiles) {
+      await symlink("AGENTS.md", join(projectDirectory, aliasFile));
     }
 
     if (!options.skipInstall) {
@@ -128,7 +139,7 @@ function workspaceRootFiles(projectName: string): Readonly<Record<string, string
       2,
     )}\n`,
     "README.md": `# ${projectName}\n\nAn AponiaJS workspace. Applications live under \`apps/\` and shared libraries under \`libs/\`.\n`,
-    "AGENTS.md": `# ${projectName}\n\nRead the [AponiaJS repository guide](https://github.com/aponiajs/aponiajs/blob/release/alpha/AGENTS.md). Product code lives in \`apps/\`; reusable modules live in \`libs/\`.\n`,
+    "AGENTS.md": `# ${projectName}\n\n\`CLAUDE.md\` and \`GEMINI.md\` are symlinks to this file.\n\nRead the [AponiaJS repository guide](https://github.com/aponiajs/aponiajs/blob/release/alpha/AGENTS.md). Product code lives in \`apps/\`; reusable modules live in \`libs/\`.\n`,
     ".gitignore": "node_modules\ndist\n.env\n*.log\n",
     "libs/.gitkeep": "",
   };

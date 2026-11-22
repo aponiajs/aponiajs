@@ -3,18 +3,17 @@ import { Glob } from "bun";
 import { resolve } from "node:path";
 
 /**
- * The published surfaces a reader meets, and the one directory deliberately left
- * out of them.
+ * The published surfaces a reader meets.
  *
- * `docs/superpowers/` holds the specs and plans that record past decisions, so a
- * sample in one may name a release that was current when it was written. It is
- * outside the set by construction: no pattern below reaches it.
+ * Every Markdown page under `docs/` is a published page, including the category
+ * READMEs and the learning path. The generated site and the frozen snapshot are
+ * read by their own guards, so a moved page stays covered here without a second
+ * list to maintain.
  */
 const publishedSurfaces = [
   "README.md",
   "AGENTS.md",
-  "docs/*.md",
-  "docs/learn/*.md",
+  "docs/**/*.md",
   "packages/*/README.md",
   "packages/*/AGENTS.md",
   "packages/*/llms.txt",
@@ -33,7 +32,7 @@ const publishedSurfaces = [
  * record that reports which descriptor artifact served a boot. They are an
  * allow-list rather than a scan for every version-shaped string,
  * because the same documents cite other projects' versions that are correct as
- * they stand: `docs/elysia-compatibility.md` pins `2.0.0-rc.4` for Elysia
+ * they stand: `docs/platforms/elysia-compatibility.md` pins `2.0.0-rc.4` for Elysia
  * beside `^1.3.0` for typebox, and the platform's own guide names
  * `2.0.0-exp.64` as the release a caret on that pin would reach. A guard
  * that policed every version-shaped string would fail on the day it was written.

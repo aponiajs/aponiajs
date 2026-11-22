@@ -1,0 +1,27 @@
+# @aponiajs/compiler
+
+> Compiler-grade invariants for an AponiaJS application: scoped lifetimes, exclusive mutation, typestate, and linear consumption.
+
+## What this package exports
+
+- `LifetimeScope`, `Scoped`, `withLifetime`, `LifetimeScopeOptions`, `LifetimeHandleController`.
+- `RwCell`, `RwCellOptions`, `AsyncRwLock`, `AsyncRwLockOptions`, `AsyncLocalStorageBorrowContext`, `BorrowContext`, `BorrowToken`.
+- `createStateMachine`, `StateMachine`, `StateMachineDefinition`, `StateMachineOptions`, `StateName`, `EventName`, `NextState`.
+- `Owned`, `once`.
+- `provideSharedState`, `SharedStateService`, `SharedStateOptions`, `SharedStateRegistration`.
+- `DeepReadonly`, `BorrowMode`, `BorrowFailureReason`, `BorrowOptions`.
+
+## Behavior a consumer can rely on
+
+- `Scoped<T>` is not `T`; `get()` checks its scope and `moveOut()` transfers and revokes.
+- `scope.guard(object)` revokes every trap after exit, binds methods and getters to the target, and preserves `instanceof`; it does not preserve identity.
+- `RwCell` fails fast with `BORROW_CONFLICT`; read views throw `READONLY_VIEW` on writes; a captured view throws `STALE_LIFETIME` after release.
+- `AsyncRwLock` queues FIFO, runs readers concurrently, detects self-reentrancy immediately, and rejects with `reason: "timeout"` or `"aborted"`.
+- `createStateMachine` keeps states and events literal; invalid chains are `tsc` errors and dynamic invalid transitions throw `INVALID_STATE_TRANSITION`.
+- `Owned` and `once` throw `CONSUMED_STATE` on reuse and implement `using` support.
+
+## Documentation
+
+- [Package README](./README.md)
+- [Invariants guide](../../docs/build/invariants.md)
+- [Agent surface](../../docs/agent/README.md)

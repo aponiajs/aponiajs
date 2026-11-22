@@ -146,7 +146,14 @@ export class HttpService {
       );
 
       if (redirect === "manual" || !redirectStatuses.has(response.status)) {
-        return this.#toResponse<T>(response, current, maxResponseBytes, options, redirects > 0);
+        return this.#toResponse<T>(
+          response,
+          current,
+          maxResponseBytes,
+          options,
+          redirects > 0,
+          timeoutMs,
+        );
       }
       if (redirect === "error") {
         throw new AponiaError(
@@ -179,7 +186,14 @@ export class HttpService {
 
       const location = response.headers.get("location");
       if (location === null) {
-        return this.#toResponse<T>(response, current, maxResponseBytes, options, redirects > 0);
+        return this.#toResponse<T>(
+          response,
+          current,
+          maxResponseBytes,
+          options,
+          redirects > 0,
+          timeoutMs,
+        );
       }
       current = new URL(location, current);
       redirects += 1;
@@ -270,8 +284,9 @@ export class HttpService {
     maxResponseBytes: number,
     options: HttpRequestOptions,
     redirected: boolean,
+    timeoutMs: number,
   ): Promise<HttpResponse<T>> {
-    const bytes = await readBody(response, maxResponseBytes, url);
+    const bytes = await readBody(response, maxResponseBytes, url, timeoutMs, options.signal);
     const contentType = response.headers.get("content-type") ?? "";
     let data: unknown = parseBody(bytes, contentType);
 
@@ -316,16 +331,31 @@ export class HttpService {
   }
 }
 
-async function readBody(response: Response, maxBytes: number, url: URL): Promise<Uint8Array> {
+async function readBody(
+  response: Response,
+  maxBytes: number,
+  url: URL,
+  timeoutMs: number,
+  callerSignal: AbortSignal | undefined,
+): Promise<Uint8Array> {
   if (response.body === null) {
     return new Uint8Array();
   }
+  const controller = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
+  const onCallerAbort = (): void => controller.abort(callerSignal?.reason);
+  callerSignal?.addEventListener("abort", onCallerAbort, { once: true });
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];
   let total = 0;
+  const abortGate = abortRejection(controller.signal, url, timeoutMs, () => timedOut);
   try {
     for (;;) {
-      const { done, value } = await reader.read();
+      const { done, value } = await Promise.race([reader.read(), abortGate.promise]);
       if (done) {
         break;
       }
@@ -340,7 +370,23 @@ async function readBody(response: Response, maxBytes: number, url: URL): Promise
       }
       chunks.push(value);
     }
+  } catch (error) {
+    if (controller.signal.aborted) {
+      if (timedOut) {
+        throw new AponiaError("HTTP_CLIENT_TIMEOUT", "The outbound request timed out.", {
+          url: safeUrl(url),
+          timeoutMs,
+        });
+      }
+      throw new AponiaError("HTTP_CLIENT_FAILED", "The outbound request was aborted.", {
+        url: safeUrl(url),
+      });
+    }
+    throw error;
   } finally {
+    abortGate.dispose();
+    clearTimeout(timer);
+    callerSignal?.removeEventListener("abort", onCallerAbort);
     reader.releaseLock();
   }
   const bytes = new Uint8Array(total);
@@ -350,6 +396,42 @@ async function readBody(response: Response, maxBytes: number, url: URL): Promise
     offset += chunk.byteLength;
   }
   return bytes;
+}
+
+function abortRejection(
+  signal: AbortSignal,
+  url: URL,
+  timeoutMs: number,
+  timedOut: () => boolean,
+): { readonly promise: Promise<never>; readonly dispose: () => void } {
+  let fail: (() => void) | undefined;
+  const promise = new Promise<never>((_resolve, reject) => {
+    fail = (): void => {
+      reject(
+        timedOut()
+          ? new AponiaError("HTTP_CLIENT_TIMEOUT", "The outbound request timed out.", {
+              url: safeUrl(url),
+              timeoutMs,
+            })
+          : new AponiaError("HTTP_CLIENT_FAILED", "The outbound request was aborted.", {
+              url: safeUrl(url),
+            }),
+      );
+    };
+    if (signal.aborted) {
+      fail();
+      return;
+    }
+    signal.addEventListener("abort", fail, { once: true });
+  });
+  return {
+    promise,
+    dispose: () => {
+      if (fail !== undefined) {
+        signal.removeEventListener("abort", fail);
+      }
+    },
+  };
 }
 
 function parseBody(bytes: Uint8Array, contentType: string): unknown {

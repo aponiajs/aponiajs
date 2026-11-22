@@ -6,11 +6,11 @@ All notable changes to this project are recorded here. The format follows
 notes for every published tag; this file records the changes a reader needs when
 moving between releases.
 
-## 1.0.0-beta.60 — unreleased
+## 1.0.0-beta.61 — unreleased
 
 The development line. Nothing in this line is published on npm yet; the registry
 serves the `0.6.0-alpha.N` line for the six packages listed in
-[Packages](docs/packages.md#on-npm-today). Changes between the published alpha
+[Packages](./docs/reference/packages.md#on-npm-today). Changes between the published alpha
 and this line are recorded in the repository history and in the pull requests
 that carried them.
 

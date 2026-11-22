@@ -70,12 +70,18 @@ test("packed workspaces generate an application that installs, validates, builds
         "07-create-aponia",
         bunTemporaryDirectory,
       ),
+      compiler: await packWorkspace(
+        "packages/compiler",
+        archiveDirectory,
+        "08-compiler",
+        bunTemporaryDirectory,
+      ),
       // `platform-elysia` depends on this package, so a generated application
       // resolves it from the registry unless the lane packs it too.
       platformCore: await packWorkspace(
         "packages/platform-core",
         archiveDirectory,
-        "08-platform-core",
+        "09-platform-core",
         bunTemporaryDirectory,
       ),
     } as const;
@@ -184,6 +190,7 @@ test("packed workspaces generate an application that installs, validates, builds
     ] as const;
     const localOverrides = [
       ["@aponiajs/mcp", archives.mcp],
+      ["@aponiajs/compiler", archives.compiler],
       ["@aponiajs/platform-core", archives.platformCore],
     ] as const;
     let localManifest = await Bun.file(generatedManifestPath).text();
@@ -301,6 +308,16 @@ async function assertInstalledPackageGraph(
   version: string,
 ): Promise<void> {
   await assertPackageDependency(
+    join(projectDirectory, "node_modules/@aponiajs/platform-core/package.json"),
+    "@aponiajs/compiler",
+    version,
+  );
+  await assertPackageDependency(
+    join(projectDirectory, "node_modules/@aponiajs/compiler/package.json"),
+    "@aponiajs/common",
+    version,
+  );
+  await assertPackageDependency(
     join(projectDirectory, "node_modules/@aponiajs/core/package.json"),
     "@aponiajs/common",
     version,
@@ -376,10 +393,10 @@ async function expectServer(
 
   const environment: Record<string, string | undefined> = {
     ...Bun.env,
-    // The starter serves the devtools unless `NODE_ENV` is `production`, and
+    // The starter serves the devtools only when the application opts in, and
     // this case is asserting that it does. Stated rather than inherited,
     // because the lane's own environment would otherwise decide it.
-    NODE_ENV: "development",
+    APONIA_DEVTOOLS: "true",
   };
   if (configuredPort === undefined) {
     // Absent rather than inherited: this is the case where the schema's default

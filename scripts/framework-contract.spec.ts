@@ -66,6 +66,16 @@ describe("framework contract", () => {
     const root = (await Bun.file("package.json").json()) as { readonly version?: unknown };
     expect(frameworkContract.frameworkVersion).toBe(String(root.version));
     expect(frameworkContract.versioningStrategies).toEqual(["uri", "header", "media-type"]);
+    expect(frameworkContract.platformModule).toEqual({
+      declaration: "providePlatformModule",
+      platforms: ["elysia", "hono", "h3"],
+      refusal: "UNSUPPORTED_PLATFORM_FEATURE",
+      adapterHost: "PLATFORM_ADAPTER_HOST",
+    });
+    expect(frameworkContract.errorCodes).toContain(frameworkContract.platformModule.refusal);
+    const platformCoreBarrel = await Bun.file("packages/platform-core/src/index.ts").text();
+    expect(platformCoreBarrel).toContain(frameworkContract.platformModule.declaration);
+    expect(platformCoreBarrel).toContain(frameworkContract.platformModule.adapterHost);
     expect(frameworkContract.contractVersion).toBe(1);
   });
 

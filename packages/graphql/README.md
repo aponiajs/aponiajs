@@ -195,7 +195,7 @@ the module: its plugin is built from a value the container resolves, so it
 exists only inside a boot. An application that needs the route table untouched
 by a registration mounts the raw plugin through
 `AponiaApplicationOptions.plugins` — see
-[Native Elysia Plugins](../../docs/native-plugins.md) — and gives up the module
+[Native Elysia Plugins](../../docs/platforms/native-plugins.md) — and gives up the module
 and its validation to do it.
 
 ## Errors
@@ -267,7 +267,7 @@ it.
 - [Package README](./README.md)
 - [`@elysia/graphql-yoga` on npm](https://www.npmjs.com/package/@elysia/graphql-yoga)
 - [GraphQL Yoga](https://the-guild.dev/graphql/yoga-server)
-- [Plugin package authoring](../../docs/plugin-packages.md)
-- [Native Elysia Plugins](../../docs/native-plugins.md)
-- [Configuration](../../docs/configuration.md)
-- [Published packages](../../docs/packages.md)
+- [Plugin package authoring](../../docs/tooling/plugin-packages.md)
+- [Native Elysia Plugins](../../docs/platforms/native-plugins.md)
+- [Configuration](../../docs/build/configuration.md)
+- [Published packages](../../docs/reference/packages.md)

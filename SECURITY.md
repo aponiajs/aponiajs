@@ -3,9 +3,8 @@
 ## Supported versions
 
 The **published alpha line** is supported with security fixes on its newest
-release (`0.6.0-alpha.39` at the time of writing). Older alpha releases receive
-no fixes; upgrade to the newest published release before reporting a problem in
-an older one.
+release (`0.6.0-alpha.N`). Older alpha releases receive no fixes; upgrade to the
+newest published release before reporting a problem in an older one.
 
 The `1.0.0-beta.N` development line in this repository is **not published yet**
 and is therefore not a supported distribution channel. It becomes supported when
@@ -20,7 +19,7 @@ issue for an exploitable problem. Include the affected package and version, a
 reproduction, and the impact you observed. A report is acknowledged within three
 business days and triaged within seven; the fix targets per severity, the
 supported channels, and the exact support window are stated in
-[`docs/support.md`](docs/support.md). A fix ships with a release note that names
+[`docs/reference/support.md`](./docs/reference/support.md). A fix ships with a release note that names
 the package and the behavior that changed.
 
 ## Scope
@@ -49,7 +48,7 @@ Out of scope:
 
 ## Security model
 
-The reference points are [`docs/threat-model.md`](docs/threat-model.md) and the
+The reference points are [`docs/reference/threat-model.md`](./docs/reference/threat-model.md) and the
 package guides. The short version:
 
 - A provider is visible only where the module graph exports it; the container
@@ -79,7 +78,7 @@ Every third-party workflow action is pinned to a commit SHA, and the publish
 lane requests an OIDC token (`id-token: write`) and publishes with
 `--provenance`. A CycloneDX 1.5 SBOM is generated from `bun.lock` by
 `bun run release:sbom` and attached to the GitHub release by the publish
-workflow; [`docs/releasing.md`](docs/releasing.md) states what it contains.
+workflow; [`docs/operations/releasing.md`](./docs/operations/releasing.md) states what it contains.
 
 ## Hardening checklist for a deployment
 

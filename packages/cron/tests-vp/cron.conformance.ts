@@ -23,7 +23,7 @@ type Expect<TAssertion extends true> = TAssertion;
  * The compile-time half of this lane: the contract a consumer writes against.
  *
  * `CronJobOptions` is the assertion that matters most. It is derived from
- * `@elysia/cron`'s own `CronConfig` rather than restated here, so naming every
+ * croner's own `CronOptions` rather than restated here, so naming every
  * option croner accepts is what pins the derivation: a release that adds, renames,
  * or drops an option moves this type, and a hand-written copy that stopped
  * matching the dependency fails `bun run check` instead of shipping.

@@ -1,8 +1,8 @@
 # 16 · Lifecycle
 
-**Use when:** something has to happen when the application starts, or to be closed when it stops.
+**Use when:** something must happen when the application starts or is closed when it stops.
 
-A provider declares what it needs to do at each moment as a method. There is nothing to register:
+A provider implements the lifecycle methods it needs. There is nothing to register:
 
 ```ts
 import { Injectable, type OnApplicationShutdown, type OnModuleInit } from "@aponiajs/common";
@@ -19,9 +19,8 @@ export class CacheService implements OnModuleInit, OnApplicationShutdown {
 }
 ```
 
-The five methods are `onModuleInit`, `onApplicationBootstrap`, `beforeApplicationShutdown`,
-`onModuleDestroy`, and `onApplicationShutdown`, named as Nest names them. `onApplicationBootstrap`
-is the one to reach for when the hook needs the whole application rather than its own module.
+The five hooks are `onModuleInit`, `onApplicationBootstrap`, `beforeApplicationShutdown`, `onModuleDestroy`, and `onApplicationShutdown`.
 
-Next: nothing — this is the last chapter. ·
-Deep dive: [lifecycle](../lifecycle.md)
+`onApplicationBootstrap` runs after every route and gateway is mounted, before the application listens. `onModuleInit` runs when the module's providers are initialized.
+
+Last chapter. Deep dive: [lifecycle](../build/lifecycle.md)

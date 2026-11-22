@@ -15,9 +15,15 @@ const blockedRanges = new Set([
   "benchmarking",
   "documentation",
   "as112",
+  "as112v6",
   "amt",
   "deprecated",
+  "deprecatedOrchid",
+  "discard",
   "orchid2",
+  "rfc6052",
+  "rfc6145",
+  "segmentRouting",
   "6to4",
   "teredo",
 ]);
@@ -116,7 +122,34 @@ function isAddress(value: string): boolean {
 
 function isBlockedAddress(value: string): boolean {
   const parsed = ipaddr.process(value);
-  return blockedRanges.has(parsed.range());
+  if (blockedRanges.has(parsed.range())) {
+    return true;
+  }
+  if (parsed.kind() !== "ipv6") {
+    return false;
+  }
+  return isIpv4Compatible(parsed as ipaddr.IPv6);
+}
+
+/**
+ * Whether an IPv6 address is the deprecated IPv4-compatible form.
+ *
+ * The first 96 bits are zero and the last 32 bits are an IPv4 address. The
+ * unspecified and loopback forms are already covered by their own ranges, so
+ * only an address that embeds a different IPv4 target is refused here.
+ */
+function isIpv4Compatible(address: ipaddr.IPv6): boolean {
+  const bytes = address.toByteArray();
+  for (let index = 0; index < 12; index += 1) {
+    if (bytes[index] !== 0) {
+      return false;
+    }
+  }
+  const last = bytes[15] ?? 0;
+  const previous = bytes[14] ?? 0;
+  const beforePrevious = bytes[13] ?? 0;
+  const firstOfLastWord = bytes[12] ?? 0;
+  return firstOfLastWord !== 0 || beforePrevious !== 0 || previous !== 0 || last > 1;
 }
 
 function blocked(url: URL, reason: string): AponiaError {

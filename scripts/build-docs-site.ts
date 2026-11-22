@@ -13,6 +13,9 @@
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { marked } from "marked";
+import { getHeadingList, gfmHeadingId } from "marked-gfm-heading-id";
+
+marked.use(gfmHeadingId());
 
 /** Where a document belongs in the navigation. */
 type DocsGroup = string;
@@ -40,20 +43,41 @@ export interface DocsSiteOptions {
 /** What one build produced. */
 export interface DocsSiteResult {
   readonly pages: readonly string[];
+  /** Pages that exist only to redirect an old URL to its new location. */
+  readonly redirects: readonly string[];
   readonly index: string;
   /** The client-side search document the site loads. */
   readonly searchIndex: string;
 }
 
+interface DocsRedirect {
+  readonly from: string;
+  readonly to: string;
+  readonly output: string;
+  readonly targetOutput: string;
+  readonly title: string;
+}
+
 const skippedFiles = new Set(["AGENTS.md", "CLAUDE.md", "GEMINI.md"]);
 const skippedDirectories = new Set(["superpowers"]);
-const groupOrder: readonly string[] = ["Guide", "Learn", "Agent"];
+const groupOrder: readonly string[] = [
+  "Guide",
+  "Learn",
+  "Build",
+  "Platforms",
+  "Services",
+  "Tooling",
+  "Operations",
+  "Reference",
+  "Agent",
+];
 const repositoryBlob = "https://github.com/aponiajs/aponiajs/blob/main";
 
 export async function buildDocsSite(options: DocsSiteOptions = {}): Promise<DocsSiteResult> {
   const docsRoot = resolve(options.docsRoot ?? "docs");
   const outputRoot = resolve(options.outputRoot ?? "docs-site");
   const pages = await collectPages(docsRoot);
+  const redirects = await readRedirects(docsRoot, pages);
   const ordered = orderPages(pages);
   const navigation = renderNavigation(ordered);
   const searchEntries: SearchEntry[] = [];
@@ -76,18 +100,79 @@ export async function buildDocsSite(options: DocsSiteOptions = {}): Promise<Docs
     await writeFile(destination, html);
   }
 
+  for (const redirect of redirects) {
+    const destination = join(outputRoot, redirect.output);
+    await mkdir(dirname(destination), { recursive: true });
+    await writeFile(destination, renderRedirect(redirect));
+  }
+
   const index = join(outputRoot, "index.html");
   await mkdir(outputRoot, { recursive: true });
   await writeFile(index, renderIndex(ordered, navigation));
   await writeFile(join(outputRoot, "search-index.json"), `${JSON.stringify(searchEntries)}\n`);
 
   const log = options.log ?? (() => {});
-  log(`Built ${ordered.length + 1} documentation pages in ${outputRoot}.`);
+  log(
+    `Built ${ordered.length + 1} documentation pages and ${redirects.length} redirects in ${outputRoot}.`,
+  );
   return Object.freeze({
     pages: Object.freeze([...ordered.map((page) => page.output), "index.html"]),
+    redirects: Object.freeze(redirects.map((redirect) => redirect.output)),
     index: "index.html",
     searchIndex: "search-index.json",
   });
+}
+
+/**
+ * Reads the old-URL map every build serves as static redirects.
+ *
+ * A redirect that names a missing target, points at itself, or shadows a real
+ * page is a build failure rather than an HTML page that silently sends a reader
+ * to a 404.
+ */
+async function readRedirects(
+  docsRoot: string,
+  pages: readonly DocsPage[],
+): Promise<readonly DocsRedirect[]> {
+  const path = join(docsRoot, "redirects.json");
+  if (!(await Bun.file(path).exists())) {
+    throw new Error(`Missing redirect map: ${path}`);
+  }
+  const raw = (await Bun.file(path).json()) as unknown;
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
+    throw new Error(`Redirect map must be a JSON object: ${path}`);
+  }
+
+  const bySource = new Map(pages.map((page) => [page.relativeSource, page]));
+  const redirects: DocsRedirect[] = [];
+
+  for (const [from, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof value !== "string") {
+      throw new Error(`Redirect target for ${from} must be a string.`);
+    }
+    if (!from.endsWith(".md") || !value.endsWith(".md")) {
+      throw new Error(`Redirect ${from} -> ${value} must name Markdown pages.`);
+    }
+    if (from === value) {
+      throw new Error(`Redirect ${from} points at itself.`);
+    }
+    if (bySource.has(from)) {
+      throw new Error(`Redirect ${from} collides with a real page.`);
+    }
+    const target = bySource.get(value);
+    if (target === undefined) {
+      throw new Error(`Redirect ${from} points at missing page ${value}.`);
+    }
+    redirects.push({
+      from,
+      to: value,
+      output: from.replace(/\.md$/, ".html"),
+      targetOutput: value.replace(/\.md$/, ".html"),
+      title: target.title,
+    });
+  }
+
+  return Object.freeze(redirects);
 }
 
 interface SearchEntry {
@@ -219,8 +304,19 @@ function descriptionOf(markdown: string): string {
   return "";
 }
 
-function renderMarkdown(markdown: string): string {
+export function renderMarkdown(markdown: string): string {
   return marked.parse(markdown, { async: false, gfm: true });
+}
+
+/**
+ * The heading identifiers the site renders for a page, in document order.
+ *
+ * The link guard reads these instead of reimplementing GitHub's slug rules, so
+ * an anchor that resolves here resolves in the built site.
+ */
+export function headingIdsOf(markdown: string): readonly string[] {
+  renderMarkdown(markdown);
+  return Object.freeze(getHeadingList().map((heading) => heading.id));
 }
 
 function rewriteLinks(
@@ -336,6 +432,26 @@ const searchScript = `<script>
   });
 })();
 </script>`;
+
+function renderRedirect(redirect: DocsRedirect): string {
+  const target = `/${redirect.targetOutput}`;
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Redirecting to ${escapeHtml(redirect.title)} · AponiaJS</title>
+<link rel="canonical" href="${target}">
+<meta name="robots" content="noindex">
+<meta http-equiv="refresh" content="0; url=${target}">
+<style>${styles}</style>
+</head>
+<body><main><p>This page moved to <a href="${target}">${escapeHtml(redirect.title)}</a>.</p></main>
+<script>location.replace(${JSON.stringify(target)} + location.search + location.hash);</script>
+</body>
+</html>
+`;
+}
 
 function renderPage(
   page: DocsPage,

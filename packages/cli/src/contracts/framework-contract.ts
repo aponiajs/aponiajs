@@ -13,6 +13,12 @@ export interface FrameworkContract {
   readonly schematics: readonly string[];
   readonly lifecycle: readonly string[];
   readonly versioningStrategies: readonly string[];
+  readonly platformModule: {
+    readonly declaration: string;
+    readonly platforms: readonly string[];
+    readonly refusal: string;
+    readonly adapterHost: string;
+  };
 }
 
 /**
@@ -33,7 +39,6 @@ export const frameworkContract: FrameworkContract = Object.freeze({
     "@aponiajs/platform-elysia",
     "@aponiajs/platform-h3",
     "@aponiajs/platform-hono",
-    "@aponiajs/platform-nitro",
     "@aponiajs/cli",
     "create-aponia",
     "@aponiajs/devtools",
@@ -65,6 +70,7 @@ export const frameworkContract: FrameworkContract = Object.freeze({
     "@aponiajs/h3",
     "@aponiajs/hono",
     "@aponiajs/nitro",
+    "@aponiajs/compiler",
   ]),
   decorators: Object.freeze([
     "Module",
@@ -121,6 +127,7 @@ export const frameworkContract: FrameworkContract = Object.freeze({
     "aponia.application.lifecycle",
     "aponia.application.native",
     "aponia.compiled.descriptors",
+    "aponia.compiled.descriptors.elysia",
     "aponia.controller.metadata",
     "aponia.deprecation.metadata",
     "aponia.enhancer-catch.metadata",
@@ -223,6 +230,11 @@ export const frameworkContract: FrameworkContract = Object.freeze({
     "INVALID_MIGRATION",
     "INVALID_METRICS_OPTIONS",
     "INVALID_IDEMPOTENCY_OPTIONS",
+    "STALE_LIFETIME",
+    "BORROW_CONFLICT",
+    "READONLY_VIEW",
+    "CONSUMED_STATE",
+    "INVALID_STATE_TRANSITION",
   ]),
   routeSlots: Object.freeze(["body", "query", "params", "headers", "cookie", "response"]),
   schematics: Object.freeze([...schematicNames]),
@@ -234,4 +246,10 @@ export const frameworkContract: FrameworkContract = Object.freeze({
     "onApplicationShutdown",
   ]),
   versioningStrategies: Object.freeze(["uri", "header", "media-type"]),
+  platformModule: Object.freeze({
+    declaration: "providePlatformModule",
+    platforms: Object.freeze(["elysia", "hono", "h3"]),
+    refusal: "UNSUPPORTED_PLATFORM_FEATURE",
+    adapterHost: "PLATFORM_ADAPTER_HOST",
+  }),
 });

@@ -6,7 +6,7 @@ import {
   provideFactory,
   provideValue,
 } from "@aponiajs/common";
-import { ELYSIA_PLUGIN } from "./plugin-module.ts";
+import { ELYSIA_PLUGIN, provideElysiaPlugin } from "./plugin-module.ts";
 import type {
   AsyncPluginOptions,
   ElysiaBridgePluginDefinition,
@@ -41,6 +41,7 @@ export function wrapElysiaPlugin<TOptions = Record<string, unknown>>(
         providers: Object.freeze([
           provideValue(optionsToken, options),
           provideValue(ELYSIA_PLUGIN, nativePlugin),
+          ...provideElysiaPlugin(moduleKey),
         ]),
         exports: Object.freeze([]),
       });
@@ -65,6 +66,7 @@ export function wrapElysiaPlugin<TOptions = Record<string, unknown>>(
           provideFactory(ELYSIA_PLUGIN, [optionsToken], (resolvedOptions: TOptions) =>
             definition.plugin(resolvedOptions),
           ),
+          ...provideElysiaPlugin(moduleKey),
         ]),
         exports: Object.freeze([]),
       });

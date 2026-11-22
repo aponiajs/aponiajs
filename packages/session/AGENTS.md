@@ -22,8 +22,11 @@ bounded store. It is a leaf: nothing in the framework depends on it.
 - **The cookie carries an id, never data.** Session data stays in the store.
 - **The cookie is signed and `HttpOnly`.** Verify with a timing-safe comparison;
   never trust an unsigned or tampered value.
-- **A tampered or expired cookie is cleared.** The plugin marks the state
-  destroyed and the after-handle hook removes the cookie.
+- **A tampered or expired cookie is cleared.** The middleware installs the
+  cookie writers before the request reaches the handler, and the service writes
+  the cookie the moment the session changes. Nothing waits for a hook after the
+  handler, so the cookie is correct on a platform whose middleware chain does
+  not wrap the handler.
 - **The memory store is bounded.** `maxSessions` is a positive integer; a new
   session evicts the oldest insertion. Do not add an unbounded map.
 - **`start`, `update`, and `destroy` are request-scoped.** The service reads the

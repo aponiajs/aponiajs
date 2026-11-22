@@ -2,6 +2,10 @@
 
 Delivery adapter for H3.
 
+> **Superseded by `@aponiajs/platform-h3`.** This package remains a delivery
+> adapter: it mounts an application already booted on a platform. New
+> applications should boot on the platform package directly.
+
 ```bash
 bun add @aponiajs/h3@alpha
 ```

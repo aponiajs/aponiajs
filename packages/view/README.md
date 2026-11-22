@@ -60,4 +60,8 @@ export class UsersController {
 - `@if(expression) ... @else ... @endif`, `@unless(...)`, and `@foreach(items as item)`
 - Dot-notation lookup: `users.show` resolves `views/users/show.html`
 
-The engine caches template sources and compiled expressions in memory, so repeated renders do not parse or compile the same template again.
+The engine caches template sources and compiled expressions in memory, so repeated renders do not parse or compile the same template again. Values are captured during rendering and resolved once at the end, so a value containing Blade delimiters stays data rather than becoming a second template.
+
+`HtmlViewEngine` escapes every interpolated value. It has no raw-output
+syntax; use `fragment()` for trusted markup or select the Blade engine when a
+template needs `{!! ... !!}`.

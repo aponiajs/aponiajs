@@ -1,5 +1,5 @@
 import { afterEach, expect, spyOn, test } from "bun:test";
-import { mkdir, mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readlink, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -59,6 +59,10 @@ test("parses the workspace flag and generates apps plus libs", async () => {
   expect(rootManifest.workspaces).toEqual(["apps/*", "libs/*"]);
   expect(await Bun.file(join(projectDirectory, "apps/api/src/main.ts")).exists()).toBe(true);
   expect(projectConfiguration.projects).toHaveProperty("api");
+  expect(await readlink(join(projectDirectory, "CLAUDE.md"))).toBe("AGENTS.md");
+  expect(await readlink(join(projectDirectory, "GEMINI.md"))).toBe("AGENTS.md");
+  expect(await readlink(join(projectDirectory, "apps/api/CLAUDE.md"))).toBe("AGENTS.md");
+  expect(await readlink(join(projectDirectory, "apps/api/GEMINI.md"))).toBe("AGENTS.md");
 });
 
 test("generates a module-controller-service application", async () => {
@@ -127,7 +131,9 @@ test("ships agent guidance that names the project and points at the framework", 
   expect(guide).toContain("aponia generate resource users");
   expect(guide).toContain("AponiaFactory.create(AppModule, { logger: false })");
   expect(index).toContain("# sample-api");
-  expect(index).toContain("](AGENTS.md)");
+  expect(index).toContain("](./AGENTS.md)");
+  expect(await readlink(join(projectDirectory, "CLAUDE.md"))).toBe("AGENTS.md");
+  expect(await readlink(join(projectDirectory, "GEMINI.md"))).toBe("AGENTS.md");
 });
 
 test("ships a runnable inspection script wired into the manifest", async () => {

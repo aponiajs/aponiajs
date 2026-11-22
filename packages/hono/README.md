@@ -2,6 +2,10 @@
 
 Delivery adapter for Hono.
 
+> **Superseded by `@aponiajs/platform-hono`.** This package remains a delivery
+> adapter: it mounts an application already booted on a platform. New
+> applications should boot on the platform package directly.
+
 ```bash
 bun add @aponiajs/hono@alpha
 ```

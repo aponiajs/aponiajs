@@ -1,5 +1,7 @@
 # {{PROJECT_NAME}} — agent guide
 
+`CLAUDE.md` and `GEMINI.md` are symlinks to this file.
+
 This is an AponiaJS application: Nest-style modules, controllers, and dependency
 injection running on Bun, with Elysia as the HTTP layer.
 
@@ -123,7 +125,7 @@ in place rather than replacing it, so the lines the boot writes about itself are
 what `/__devtools/logs` serves. Hand it to one and not the other and the stream
 is missing exactly what the other wrote.
 
-The surface is served unless `NODE_ENV` is `production`, on the application's own
+The surface is served only when `APONIA_DEVTOOLS=true`, on the application's own
 port under `/__devtools` — it is part of the route table the application mounts,
 and an application route that claims a devtools path wins it, because the more
 specific route answers: a static or parameter route beats this wildcard whether
@@ -136,7 +138,7 @@ never reads the environment to choose its own behaviour. This application reads
 it where it declares it to: `src/config.ts` declares the `PORT` schema, and the
 `provideConfiguration(AppConfig)` provider in `src/app.module.ts` validates it
 once at boot — that read is the application's. Both halves of the trade are in the
-[devtools guide](https://github.com/aponiajs/aponiajs/blob/main/docs/devtools.md).
+[devtools guide](https://github.com/aponiajs/aponiajs/blob/main/docs/services/devtools.md).
 
 ## Authoring rules
 
@@ -180,5 +182,5 @@ Pass `{ logger: false }` in tests so bootstrap does not print its route table.
 
 ## Reference
 
-[`llms.txt`](llms.txt) indexes the framework documentation and published
+[`llms.txt`](./llms.txt) indexes the framework documentation and published
 packages.

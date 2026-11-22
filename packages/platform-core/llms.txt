@@ -19,4 +19,4 @@
 ## Links
 
 - [Repository guide](https://github.com/aponiajs/aponiajs/blob/release/beta/AGENTS.md)
-- [Enhancers](https://github.com/aponiajs/aponiajs/blob/release/beta/docs/enhancers.md)
+- [Enhancers](https://github.com/aponiajs/aponiajs/blob/release/beta/docs/build/enhancers.md)

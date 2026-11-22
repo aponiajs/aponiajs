@@ -19,7 +19,7 @@ export { RevocationService } from "./revocation/revocation.service.ts";
 export { MemoryRevocationStore } from "./revocation/memory-revocation-store.ts";
 export { PermissionsGuard } from "./authorization/permissions.guard.ts";
 export { Roles, Permissions, Public } from "./authorization/authorization.decorators.ts";
-export { RolesGuard } from "@aponiajs/platform-elysia";
+export { RolesGuard } from "@aponiajs/platform-core";
 export type {
   AuthModuleOptions,
   AuthUser,

@@ -67,6 +67,10 @@ export interface PlatformRouteContext<
   /** Sets the answer's status and returns the response to return or throw. */
   readonly status: (status: number | string, body?: unknown) => Response;
   /** The peer address, when the host states one. */
+  readonly ip?: string | undefined;
+  /** The request host, as the request states it. */
+  readonly host: string;
+  /** The peer address, when the host states one. */
   readonly server?: { readonly requestIP?: () => { readonly address?: string } | undefined };
   /** The host's own request object, when the platform forwarded one. */
   readonly native?: unknown;

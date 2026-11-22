@@ -1,9 +1,12 @@
 import type { ViewEngine } from "../module/view.types.ts";
+import { escapeHtml } from "./escape-html.ts";
 
 /**
  * Ultra-fast native template substitution engine.
  *
- * Replaces `{{key}}` or `<%= key %>` tokens in templates with zero external dependencies.
+ * Replaces `{{key}}` or `<%= key %>` tokens in templates with zero external
+ * dependencies. Every value is HTML-escaped, so a template can render
+ * application data without opting into raw markup.
  */
 export class HtmlViewEngine implements ViewEngine {
   readonly #cache = new Map<string, string>();
@@ -37,9 +40,9 @@ export class HtmlViewEngine implements ViewEngine {
       if (val === undefined || val === null) {
         return "";
       }
-      return typeof val === "object"
-        ? JSON.stringify(val)
-        : String(val as string | number | boolean);
+      return escapeHtml(
+        typeof val === "object" ? JSON.stringify(val) : String(val as string | number | boolean),
+      );
     });
   }
 }

@@ -1,10 +1,10 @@
 # @aponiajs/cron
 
-> Declare scheduled jobs in an Aponia module, with the jobs read from a validated configuration. A thin adapter over `@elysia/cron` (which wraps croner): AponiaJS contributes a module a registration belongs in and a validated configuration the jobs come from, and no scheduling engine of its own.
+> Declare scheduled jobs in an Aponia module, with the jobs read from a validated configuration. A module over [croner](https://github.com/hexagon/croner): AponiaJS contributes a module a registration belongs in and a validated configuration the jobs come from, and no scheduling features of its own.
 
 **This is not a job queue.** There is no persistence, no retries, no cross-process coordination, and no distributed lock. A cron expression in one process runs in that process: two instances of an application running the same registration both run the same jobs, at the same moment, once each. A job that did not run because the process was down did not run, and nothing replays it. An application that needs work to happen exactly once across a fleet needs a different package.
 
-**The raw plugin remains available for applications that do not want the module or its validation.** Mount [`@elysia/cron`](https://www.npmjs.com/package/@elysia/cron) through an Aponia `PluginModule` when the registration should stay outside the module graph; the scheduling behavior is identical.
+**The raw engine remains available for applications that do not want the module or its validation.** Construct a `Cron` from [croner](https://github.com/hexagon/croner) directly when the registration should stay outside the module graph; the scheduling behavior is identical, and the package is runtime-neutral so the same registration runs on every Aponia platform.
 
 ## What this package exports
 
@@ -15,7 +15,7 @@ import type { CronJob, CronJobContext, CronJobOptions, CronConfiguration, CronMo
 
 - `CronModule` — `CronModule.register(options)` returns the `DynamicModule` an application's `imports` accepts.
 - `CronScheduler` — the per-boot scheduler, which the module exports, so `application.get(CronScheduler)` reaches the boot's own jobs and the names the engine actually has.
-- `CronJob`, `CronJobContext`, `CronJobOptions`, `CronConfiguration` — the job contract. `CronJobOptions` is derived from `@elysia/cron`'s own `CronConfig`, so it cannot drift from the engine.
+- `CronJob`, `CronJobContext`, `CronJobOptions`, `CronConfiguration` — the job contract. `CronJobOptions` is derived from croner's own `CronOptions`, so it cannot drift from the engine.
 - `CronModuleOptions` — `configuration`, `source`, and `key`.
 
 ## Declaring a scheduler
@@ -67,9 +67,9 @@ The module provides this token itself and exports it, so the application can rea
 
 ## A job
 
-`name` and `pattern` are both required and both must be non-empty; the scheduler checks that before it mounts anything. `pattern` is a cron expression, an ISO 8601 time, or a date, exactly as croner accepts it — six fields include seconds, five do not. `options` is forwarded to croner untouched: `timezone`, `maxRuns`, `protect`, `paused`, `startAt`, `stopAt`, `utcOffset`, `interval`, `legacyMode`, `context`, `catch`, `kill`, and `unref`. `run` is called once per tick with a frozen `CronJobContext` — the job's own `name`, `pattern`, and the options this package forwarded — and may be asynchronous. Its return value is ignored. `protect: true` skips a tick while the previous one is still running.
+`name` and `pattern` are both required and both must be non-empty; the scheduler checks that before it mounts anything. `pattern` is a cron expression, an ISO 8601 time, or a date, exactly as croner accepts it — six fields include seconds, five do not. `options` is forwarded to croner (as a copy, so the engine's defaults never reach the context): `timezone`, `maxRuns`, `protect`, `paused`, `startAt`, `stopAt`, `utcOffset`, `interval`, `legacyMode`, `context`, `catch`, `kill`, and `unref`. `run` is called once per tick with a frozen `CronJobContext` — the job's own `name`, `pattern`, and the options it declared — and may be asynchronous. Its return value is ignored. `protect: true` skips a tick while the previous one is still running.
 
-`run` receives a context, not the Elysia store. That is the one place this adapter's contract differs from the plugin it wraps: `@elysia/cron` calls `run` with the store — its own type claims `Cron`, which is not the value it passes — and a scheduled job here has no use for a store. A job lifted out of a raw `@elysia/cron` call needs its parameter changed and nothing else.
+`run` receives a context, not the engine's timer callback arguments: the job's own `name`, `pattern`, and the options it declared. An options object croner mutated is never what a job reads.
 
 ## Lifecycle
 
@@ -84,8 +84,7 @@ A job's own throw is not one of these. It is the engine's, it is not retried, an
 ## Links
 
 - [Package README](./README.md)
-- [`@elysia/cron` on npm](https://www.npmjs.com/package/@elysia/cron)
 - [croner](https://github.com/hexagon/croner)
 - [Configuration](../common/README.md)
-- [Native plugins](../../docs/native-plugins.md)
-- [Published packages](../../docs/packages.md)
+- [Native plugins](../../docs/platforms/native-plugins.md)
+- [Published packages](../../docs/reference/packages.md)

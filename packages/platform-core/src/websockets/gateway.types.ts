@@ -1,4 +1,9 @@
-import type { CanActivate, ClassToken, WebSocketParameterMetadata } from "@aponiajs/common";
+import type {
+  CanActivate,
+  ClassToken,
+  WebSocketMessageSchema,
+  WebSocketParameterMetadata,
+} from "@aponiajs/common";
 
 /**
  * One socket as a platform states it.
@@ -9,6 +14,13 @@ import type { CanActivate, ClassToken, WebSocketParameterMetadata } from "@aponi
 export interface GatewaySocket {
   /** The socket's identifier, when the runtime states one. */
   readonly id?: string;
+  /**
+   * The upgrade request, when the host can state it.
+   *
+   * Handshake guards read this request through `switchToHttp()`; a host that
+   * cannot state it still closes the socket on a guard failure.
+   */
+  readonly request?: Request;
   /** Emits one named event to this client, encoded the way the adapter states. */
   emit(event: string, data: unknown): void;
   /** Sends one raw text frame. */
@@ -29,6 +41,10 @@ export interface GatewayHandlerPlan {
   readonly propertyKey: string | symbol;
   /** The parameters the handler reads. */
   readonly parameters: readonly WebSocketParameterMetadata[];
+  /** The schema validating the incoming payload, when the handler declares one. */
+  readonly schema?: WebSocketMessageSchema | undefined;
+  /** The handler's own filters, most-specific-first. */
+  readonly filters?: readonly ClassToken<unknown>[] | undefined;
 }
 
 /** One gateway as a platform mounts it. */
@@ -39,6 +55,8 @@ export interface GatewayPlan {
   readonly handlers: readonly GatewayHandlerPlan[];
   /** The handshake guards, in run order. */
   readonly guards: readonly ClassToken<CanActivate>[];
+  /** The gateway's class-scope filters, most-specific-first. */
+  readonly filters?: readonly ClassToken<unknown>[] | undefined;
   /** The payload bound, when declared. */
   readonly maxPayloadLength?: number | undefined;
   /** The origins the handshake must name, when declared. */
@@ -57,6 +75,14 @@ export interface GatewayServer {
 
 /** What a host runs for one mounted gateway. */
 export interface GatewayHooks {
+  /**
+   * Decides the upgrade before the socket opens.
+   *
+   * A host that can answer the handshake runs this and refuses with the
+   * returned `Response`; a host that cannot runs the guards when the socket
+   * opens instead.
+   */
+  handshake?(request: Request): Promise<Response | undefined>;
   /** Emits one event to every client this gateway serves. */
   broadcast?(event: string, data: unknown): void;
   /** Runs once the server is ready. */

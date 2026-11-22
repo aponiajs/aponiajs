@@ -5,6 +5,7 @@ import {
 } from "@aponiajs/platform-core";
 import type { ModuleDefinition } from "@aponiajs/common";
 import { compileDecoratedController } from "./controller-lowering.ts";
+import { ELYSIA_DESCRIPTOR_CACHE_KEY } from "../compiler/descriptor-cache.ts";
 import { assertUniqueElysiaRoutes } from "./route-uniqueness.ts";
 
 export { isModuleDefinition };
@@ -29,5 +30,6 @@ export function compileRootModule(rootModule: AponiaRootModule): ModuleDefinitio
   return compilePlatformRootModule(rootModule, {
     compileController: compileDecoratedController,
     assertRoutes: assertUniqueElysiaRoutes,
+    cacheKey: ELYSIA_DESCRIPTOR_CACHE_KEY,
   });
 }

@@ -1,18 +1,14 @@
-import type { CronConfig } from "@elysia/cron";
+import type { CronOptions } from "croner";
 
 /**
  * The scheduler options one job forwards to the underlying engine.
  *
- * Derived from `@elysia/cron`'s own declaration rather than restated beside it.
- * The plugin destructures a config into `pattern`, `name`, `run`, and the rest,
- * and spreads the rest into the `Cron` it constructs, so the rest is exactly
- * what croner accepts: `timezone`, `maxRuns`, `protect`, `paused`, `startAt`,
- * `stopAt`, `utcOffset`, `interval`, `legacyMode`, `context`, `catch`, `kill`,
- * and `unref`. Deriving the type is what keeps it in step with the dependency:
- * a `@elysia/cron` release that widened, renamed, or dropped a job option moves
- * this type with it, and no copy inside this package can drift.
+ * Derived from croner's own `CronOptions` rather than restated beside it, so a
+ * croner release that widens, renames, or drops an option moves this type with
+ * it and no copy inside this package can drift. `name` is the one member this
+ * package owns: a job states it, and the scheduler hands it to the engine.
  */
-export type CronJobOptions = Omit<CronConfig, "name" | "pattern" | "run">;
+export type CronJobOptions = Omit<CronOptions, "name">;
 
 /**
  * What a job's `run` is called with: the job's own identity and the options the
@@ -20,14 +16,13 @@ export type CronJobOptions = Omit<CronConfig, "name" | "pattern" | "run">;
  *
  * The options are handed back so a `run` declared once reads the value its
  * configuration produced without closing over the whole configuration. They are
- * the same object the scheduler forwards to croner, so what a job observes here
- * is what the engine was configured with, not a second copy of it.
+ * the declaration, not the copy the scheduler hands the engine: croner fills its
+ * own defaults into the object it is given, and a job observing those would be
+ * reading options it never declared.
  *
- * This is where the adapter's contract differs from the raw plugin's, and the
- * difference is deliberate: `@elysia/cron` calls `run` with the Elysia store —
- * its own type says `Cron`, which is the value it never passes — while a job
- * declared through AponiaJS is called with this context, because a store is a
- * transport detail of the plugin it wraps.
+ * A job is called with this context rather than with the arguments the engine's
+ * own timer callback receives, so a `run` declared once reads its own identity
+ * and the options it wrote.
  */
 export interface CronJobContext<TOptions extends CronJobOptions = CronJobOptions> {
   readonly name: string;

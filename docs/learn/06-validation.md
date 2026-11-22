@@ -2,8 +2,7 @@
 
 **Use when:** a route accepts input that must be rejected when it is wrong.
 
-Wrap one validator in one validation-model class, then use that class in the
-route slot. An invalid request never reaches the handler:
+Wrap one validator in one model class and use that class in the route slot:
 
 ```ts
 import { Body, Controller, Post, Validation, type InferValidatorOutput } from "@aponiajs/common";
@@ -25,71 +24,22 @@ export class UserController {
 }
 ```
 
-The class and the same-named interface are two halves of one model:
-`@Validation()` records the validator, and the interface merges that validator's
-output type into the class. TypeScript cannot contextually type a decorated
-method's parameters, so the merge is what makes `body: CreateUser` mean the
-validated shape rather than an empty class — without it, `body.name` fails to
-compile with _Property 'name' does not exist on type 'CreateUser'_.
-
-A rejected request returns `422` without running the handler.
-
-## Accepted validators
-
-Any [Standard Schema](https://standardschema.dev) implementation works — Zod,
-ArkType, Valibot — as do TypeBox and Elysia's `t`. `@aponiajs/common` matches the
-first kind through `~standard` and the second by the markers a TypeBox 1 builder
-declares, so a `t.Object()` needs no conversion. Reading the value such a schema
-produces takes a type-only TypeBox import, and that type-only import is the whole
-dependency: nothing in the contract layer reaches TypeBox at runtime.
-
-`@Validation()` accepts exactly one complete validator. Different route
-contracts use different classes:
-
-```ts
-const updateUserSchema = createUserSchema.partial();
-const userParamsSchema = z.object({ id: z.string().uuid() });
-
-@Validation(updateUserSchema)
-export class UpdateUser {}
-export interface UpdateUser extends InferValidatorOutput<typeof updateUserSchema> {}
-
-@Validation(userParamsSchema)
-export class UserParams {}
-export interface UserParams extends InferValidatorOutput<typeof userParamsSchema> {}
-```
-
-Use `CreateUser` as the POST body, `UpdateUser` as the PATCH body, and
-`UserParams` as the params model shared by read, update, and delete routes. A
-delete route normally validates its identifier in `params`; it does not need a
-request-body model.
-
-## Deriving a schema
-
-`partialSchema`, `pickSchema`, `omitSchema`, and `intersectSchema` call the
-validator's own combinators, so an update model is a derived validator rather
-than a hand-copied one:
-
-```ts
-import { partialSchema } from "@aponiajs/common";
-import { z } from "zod";
-
-const CreateUser = z.object({ email: z.email(), name: z.string() });
-const UpdateUser = partialSchema(CreateUser);
-```
-
-A validator that exposes no `partial`, `pick`, `omit`, or `extend` — a TypeBox
-object schema, for example — is refused with `INVALID_VALIDATION_MODEL`; the
-framework never reimplements an operation the validator does not state.
+`@Validation()` records the validator. The same-named interface merges its output type into the class, so `body.name` is typed without repeating `typeof`.
 
 ## Slots
 
-`body`, `query`, `params`, `headers`, `cookie`, and `response`. Each slot accepts
-a validation-model class or a raw validator. Raw route schemas remain available
-for low-level and native integrations.
+| Slot       | Validates       |
+| ---------- | --------------- |
+| `body`     | Request body    |
+| `query`    | Query string    |
+| `params`   | Path parameters |
+| `headers`  | Request headers |
+| `cookie`   | Cookies         |
+| `response` | Response body   |
 
-`response` accepts one success validator or a status-specific map. The latter
-also narrows Elysia's `context.status` helper:
+Each slot accepts a model class or a raw validator. Raw validators are the low-level escape hatch.
+
+`response` accepts one validator or a status-specific map:
 
 ```ts
 import { Controller, Get } from "@aponiajs/common";
@@ -112,19 +62,22 @@ class UserController {
 }
 ```
 
-Cookie schemas are handed to Elysia unchanged, so validation and
-`context.cookie.session.value` use the same inferred value type.
+## Deriving schemas
 
-## Types come from model annotations
+`partialSchema`, `pickSchema`, `omitSchema`, and `intersectSchema` call the validator's own combinators:
 
-A handler's types still come from what you write, exactly as in NestJS.
-Controllers annotate `CreateUser`, `UpdateUser`, or `UserParams` directly, and
-each annotation carries the fields its same-named interface merged in. The CLI
-emits that declaration-merging line for generated REST resources.
-When a method needs the whole native context,
-`HandlerContext<typeof routeSchema>` and
-`ResponseStatus<typeof routeSchema>` accept the same model-backed schema and
-preserve body, params, cookie, and status-specific response inference.
+```ts
+import { partialSchema } from "@aponiajs/common";
+import { z } from "zod";
 
-Next: [07 · Request parameters](./07-request-parameters.md) ·
-Deep dive: [architecture and style](../architecture-and-style.md)
+const CreateUser = z.object({ email: z.email(), name: z.string() });
+const UpdateUser = partialSchema(CreateUser);
+```
+
+A validator that does not expose the requested combinator is refused with `INVALID_VALIDATION_MODEL`. The framework never reimplements an operation the validator does not state.
+
+## Types
+
+Handler types come from the annotations you write. `HandlerContext<typeof schema>` and `ResponseStatus<typeof schema>` accept the same model-backed schema and keep body, params, cookie, and response inference.
+
+Next: [07 · Request parameters](./07-request-parameters.md) · Deep dive: [architecture and style](../build/architecture-and-style.md)

@@ -10,4 +10,6 @@ import type { AnyElysia } from "elysia";
 export interface ApplicationBootstrapResult {
   readonly nativeApplication: AnyElysia;
   readonly logger: LoggerService | undefined;
+  /** Ends one request's lifetime; idempotent at the response boundary. */
+  readonly releaseRequest?: (request: Request) => void;
 }

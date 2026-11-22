@@ -19,24 +19,10 @@ import {
   type OnModuleDestroy,
 } from "@aponiajs/common";
 import { createPlatformFactory } from "../src/index.ts";
-import type { HostDispatcher, PlatformHost } from "../src/host/platform-host.types.ts";
+import { fakeHost } from "./fixtures/fake-host.ts";
 
 interface FakeApp {
   readonly name: string;
-  dispatch?: HostDispatcher;
-}
-
-function fakeHost(): PlatformHost<FakeApp> {
-  return {
-    name: "fake",
-    createApplication(name) {
-      return { name };
-    },
-    mount(application, dispatch) {
-      application.dispatch = dispatch;
-    },
-    async close() {},
-  };
 }
 
 const order: string[] = [];

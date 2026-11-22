@@ -22,4 +22,4 @@ The gateway responds with a `chat.message` envelope. The end-to-end suite also
 asserts lifecycle-compatible native sockets, falsy response values, unknown
 events, and safe handler errors.
 
-[WebSocket guide](../../docs/websockets.md)
+[WebSocket guide](../../docs/platforms/websockets.md)

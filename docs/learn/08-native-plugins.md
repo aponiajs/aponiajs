@@ -1,10 +1,8 @@
 # 08 · Native plugins
 
-**Use when:** reusing an existing Elysia plugin, or adding something to the
-request context that every controller can read.
+**Use when:** reusing an Elysia plugin or adding request context for every controller.
 
-For a plugin owned by one controller, use the native callback path and let
-Elysia infer everything:
+For a plugin owned by one controller, use the native callback and let Elysia infer the context:
 
 ```ts
 const healthController = controller(HealthController, (app) =>
@@ -12,10 +10,7 @@ const healthController = controller(HealthController, (app) =>
 );
 ```
 
-That form needs no manual context type or `typeof`.
-
-For a plugin shared by several controllers, convert it into a module import once
-and mount it:
+For a plugin shared by several controllers, convert it into a module import once:
 
 ```ts
 // src/clock.plugin.ts
@@ -34,14 +29,11 @@ export type clock = typeof clock;
 export class AppModule {}
 ```
 
-The `key` is the plugin's identity: two modules importing the same keyed plugin
-install it once, and two different plugins sharing a key raise
-`DUPLICATE_MODULE`.
+`key` is the plugin identity. Two modules importing the same keyed plugin install it once. Two different plugins sharing a key raise `DUPLICATE_MODULE`.
 
-## Typing what it adds
+## Typing the additions
 
-Compiling a decorated controller erases the plugin instances a module imports,
-so name the plugins in the context type:
+Compiling a decorated controller erases plugin instances, so name the plugins in the context type:
 
 ```ts
 @Get()
@@ -50,21 +42,12 @@ read(@Context() context: HandlerContext<clock>) {
 }
 ```
 
-The first type argument takes either the plugins or a route schema, a tuple
-covers several, and the second argument is only needed when both matter. A
-plugin exported through `definePlugin` beside a same-named type needs no
-`typeof`.
+The first type argument accepts one plugin, a tuple of plugins, or a route schema. A plugin exported through `definePlugin` beside a same-named type needs no `typeof`.
 
-## What actually reaches a controller
+`decorate`, `state`, and global or scoped derives and resolves reach the controller. A plugin-local derive stays inside the plugin.
 
-`decorate`, `state`, and `global` or `scoped` derives and resolves arrive and are
-typed. A plugin-local derive stays inside the plugin, and the type mapping
-excludes it for exactly that reason.
+## Configuration
 
-## Plugins that need configuration
+`PluginModule.registerAsync` builds the plugin from the container, so it can read a `ConfigService` before construction.
 
-`PluginModule.registerAsync` builds the plugin from the container, so it
-can read a `ConfigService` before constructing the plugin.
-
-Next: [09 · Logging](./09-logging.md) ·
-Deep dive: [native plugins](../native-plugins.md)
+Next: [09 · Logging](./09-logging.md) · Deep dive: [native plugins](../platforms/native-plugins.md)

@@ -2,6 +2,7 @@ export {
   AponiaContainer,
   createContainer,
   type RequestContextAccessor,
+  type RequestContextGuard,
 } from "./container/container.ts";
 export {
   formatMissingProviderDiagnostic,

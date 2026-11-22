@@ -11,7 +11,7 @@ holding a placeholder export until it re-exports a settled framework API.
 ## Invariants
 
 - The package stays `private` until the facade is real. It is not part of the
-  publish order in `.github/workflows/publish.yml`, and `docs/packages.md` tells
+  publish order in `.github/workflows/publish.yml`, and `docs/reference/packages.md` tells
   users not to install it.
 - It still shares the synchronized workspace version, so `bun run version:*`
   bumps it with everything else.

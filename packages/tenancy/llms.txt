@@ -21,6 +21,6 @@
 
 ## Documentation
 
-- [Package README](README.md)
-- [Tenancy guide](../../docs/tenancy.md)
+- [Package README](./README.md)
+- [Tenancy guide](../../docs/services/tenancy.md)
 - [npm](https://www.npmjs.com/package/@aponiajs/tenancy)

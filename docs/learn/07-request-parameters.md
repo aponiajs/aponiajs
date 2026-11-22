@@ -1,25 +1,24 @@
 # 07 · Request parameters
 
-**Use when:** a handler needs one piece of the request rather than the whole
-context.
+**Use when:** a handler needs one piece of the request instead of the whole context.
 
-| Decorator              | Injects                        |
-| ---------------------- | ------------------------------ |
-| `@Body()`              | The validated request body     |
-| `@Query("term")`       | The parsed query string        |
-| `@Param("id")`         | Path parameters                |
-| `@Headers("x-agent")`  | Request headers                |
-| `@Cookie("session")`   | Cookies, or one cookie's value |
-| `@Ip()`                | The peer address, when known   |
-| `@HostParam()`         | The request host               |
-| `@HostParam("tenant")` | The first label of the host    |
-| `@State()`             | Typed application state        |
-| `@Req()`               | The native `Request`           |
-| `@ResponseSettings()`  | Mutable response settings      |
-| `@HttpStatus()`        | The typed status helper        |
-| `@Context()`           | The whole Elysia context       |
+| Decorator              | Injects                     |
+| ---------------------- | --------------------------- |
+| `@Body()`              | Validated request body      |
+| `@Query("term")`       | Parsed query string         |
+| `@Param("id")`         | Path parameters             |
+| `@Headers("x-agent")`  | Request headers             |
+| `@Cookie("session")`   | Cookies or one cookie value |
+| `@Ip()`                | Peer address, when known    |
+| `@HostParam()`         | Request host                |
+| `@HostParam("tenant")` | First label of the host     |
+| `@State()`             | Typed application state     |
+| `@Req()`               | Native `Request`            |
+| `@ResponseSettings()`  | Mutable response settings   |
+| `@HttpStatus()`        | Typed status helper         |
+| `@Context()`           | Whole Elysia context        |
 
-Each accepts an optional name that selects a single property:
+Each decorator accepts an optional property name:
 
 ```ts
 @Post()
@@ -33,25 +32,16 @@ findOne(@Param("id") id: string, @Query("expand") expand: string | undefined) {
 }
 ```
 
-Annotate the injected values with `AppState<AppPlugins>`, `ElysiaResponseSettings`, and
-`ResponseStatus<typeof schema>` from `@aponiajs/platform-elysia` when exact plugin
-or response types matter.
+## Whole context
 
-## Taking the whole context
+A handler with no parameter decorators may declare one unannotated parameter to receive the context. `@Context()` does the same explicitly.
 
-A handler with no parameter decorators may declare one unannotated parameter to
-receive the context, and `@Context()` does the same explicitly. The annotation
-decides what it reads:
-
-| Annotation                                                 | From                        | Use when                                               |
-| ---------------------------------------------------------- | --------------------------- | ------------------------------------------------------ |
-| `RouteContext<typeof schema>`                              | `@aponiajs/common`          | The handler should stay platform-neutral               |
-| `HandlerContext<typeof schema>`                            | `@aponiajs/platform-elysia` | The handler reads Elysia's own context                 |
-| `ElysiaResponseSettings` / `ResponseStatus<typeof schema>` | `@aponiajs/platform-elysia` | A parameter decorator injects only the response helper |
-
-`HandlerContext` keeps Elysia's own `status`, `set`, `cookie`, `store`, and
-`redirect` typed; `RouteContext` covers the validated slots and the native
-`Request` without them.
+| Annotation                      | From                        | Use when                               |
+| ------------------------------- | --------------------------- | -------------------------------------- |
+| `RouteContext<typeof schema>`   | `@aponiajs/common`          | The handler stays platform-neutral     |
+| `HandlerContext<typeof schema>` | `@aponiajs/platform-elysia` | The handler reads Elysia context       |
+| `ElysiaResponseSettings`        | `@aponiajs/platform-elysia` | Only response settings are needed      |
+| `ResponseStatus<typeof schema>` | `@aponiajs/platform-elysia` | Only the typed status helper is needed |
 
 ```ts
 import { Context, Controller, Post } from "@aponiajs/common";
@@ -66,5 +56,4 @@ create(@Context() context: HandlerContext<typeof createUserSchema>) {
 }
 ```
 
-Next: [08 · Native plugins](./08-native-plugins.md) ·
-Deep dive: [architecture and style](../architecture-and-style.md)
+Next: [08 · Native plugins](./08-native-plugins.md) · Deep dive: [architecture and style](../build/architecture-and-style.md)

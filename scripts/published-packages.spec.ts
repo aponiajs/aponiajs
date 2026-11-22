@@ -9,7 +9,7 @@ import { expect, test } from "bun:test";
  * Tests may not reach the network, so this list is the checked-in record of what
  * is installable. Publishing a package means adding it here and moving its row
  * from the "Not on npm yet" table to the "On npm today" table in
- * `docs/packages.md` in the same change; the guard fails until both halves move
+ * `docs/reference/packages.md` in the same change; the guard fails until both halves move
  * together. The list is not derived from the workspace, because every workspace
  * package exists whether or not a release has shipped it.
  */
@@ -22,7 +22,7 @@ const publishedOnNpm = [
   "create-aponia",
 ] as const;
 
-const documentPath = "docs/packages.md";
+const documentPath = "docs/reference/packages.md";
 const publishedHeading = "## On npm today";
 const unpublishedHeading = "## Not on npm yet";
 

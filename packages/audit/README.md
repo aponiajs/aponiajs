@@ -56,6 +56,6 @@ await application.listen(Number(Bun.env.PORT ?? 3000));
 
 ## Documentation
 
-- [Audit guide](../../docs/audit.md)
-- [Published packages](../../docs/packages.md)
+- [Audit guide](../../docs/services/audit.md)
+- [Published packages](../../docs/reference/packages.md)
 - [npm](https://www.npmjs.com/package/@aponiajs/audit)

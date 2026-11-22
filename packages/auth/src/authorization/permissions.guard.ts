@@ -6,7 +6,7 @@ import {
   type ExecutionContext,
   type RouteContext,
 } from "@aponiajs/common";
-import { httpErrors } from "@aponiajs/platform-elysia";
+import { httpErrors } from "@aponiajs/platform-core";
 import type { AuthUser } from "../module/auth.types.ts";
 
 /** Requires every permission a route declares. */

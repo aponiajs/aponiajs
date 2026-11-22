@@ -16,6 +16,7 @@ import { installShutdownSignalHandlers } from "./shutdown-signals.ts";
 export class AponiaApplication<TNativeApplication extends AnyElysia = Elysia> {
   readonly #nativeApplication: TNativeApplication;
   readonly #logger: LoggerService | undefined;
+  readonly #releaseRequest: ((request: Request) => void) | undefined;
   /**
    * Whether this application already owns the process's stop signals.
    *
@@ -25,9 +26,14 @@ export class AponiaApplication<TNativeApplication extends AnyElysia = Elysia> {
    */
   #shutdownSignalsInstalled = false;
 
-  constructor(nativeApplication: TNativeApplication, logger: LoggerService | undefined) {
+  constructor(
+    nativeApplication: TNativeApplication,
+    logger: LoggerService | undefined,
+    releaseRequest?: (request: Request) => void,
+  ) {
     this.#nativeApplication = nativeApplication;
     this.#logger = logger;
+    this.#releaseRequest = releaseRequest;
   }
 
   /**
@@ -77,7 +83,12 @@ export class AponiaApplication<TNativeApplication extends AnyElysia = Elysia> {
    * ```
    */
   handle(request: Request): Response | Promise<Response> {
-    return this.#nativeApplication.handle(request);
+    const result = this.#nativeApplication.handle(request);
+    if (typeof (result as Promise<Response>).then === "function") {
+      return (result as Promise<Response>).finally(() => this.#releaseRequest?.(request));
+    }
+    this.#releaseRequest?.(request);
+    return result;
   }
 
   /**

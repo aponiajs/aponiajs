@@ -54,7 +54,7 @@ export function registrationFor(schematic: GenerateSchematic): ModuleRegistratio
   if (schematic === "resource") {
     return "imports";
   }
-  if (schematic === "app" || schematic === "library") {
+  if (schematic === "app" || schematic === "library" || schematic === "plugin") {
     return undefined;
   }
   return schematicDefinitions[schematic].registration;

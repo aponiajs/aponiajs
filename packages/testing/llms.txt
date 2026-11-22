@@ -70,7 +70,7 @@ Port `0` asks the operating system for a free port and `getUrl()` reports the on
 ## Links
 
 - [Package README](./README.md)
-- [Testing applications](../../docs/testing.md)
-- [Lifecycle](../../docs/lifecycle.md)
-- [Dependency injection](../../docs/dependency-injection.md)
-- [Published packages](../../docs/packages.md)
+- [Testing applications](../../docs/build/testing.md)
+- [Lifecycle](../../docs/build/lifecycle.md)
+- [Dependency injection](../../docs/build/dependency-injection.md)
+- [Published packages](../../docs/reference/packages.md)

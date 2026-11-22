@@ -57,6 +57,6 @@ await application.listen(Number(Bun.env.PORT ?? 3000));
 
 ## Documentation
 
-- [Tenancy guide](../../docs/tenancy.md)
-- [Published packages](../../docs/packages.md)
+- [Tenancy guide](../../docs/services/tenancy.md)
+- [Published packages](../../docs/reference/packages.md)
 - [npm](https://www.npmjs.com/package/@aponiajs/tenancy)

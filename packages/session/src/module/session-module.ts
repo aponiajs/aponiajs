@@ -1,10 +1,15 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import { AponiaError, Module, provideValue, type DynamicModule } from "@aponiajs/common";
-import { PluginModule, type ElysiaPlugin } from "@aponiajs/platform-elysia";
-import { Elysia } from "elysia";
-import { issueSessionToken, readSessionId } from "../policy/session-token.ts";
+import {
+  AponiaError,
+  Module,
+  createToken,
+  provideClass,
+  provideValue,
+  type DynamicModule,
+  type MiddlewareConsumer,
+} from "@aponiajs/common";
+import { SessionMiddleware } from "../middleware/session-middleware.ts";
 import { SessionService, type SessionRequestState } from "../service/session-service.ts";
-import { sessionStateKey } from "../service/session-parameter.ts";
 import { MemorySessionStore } from "../store/memory-session-store.ts";
 import type {
   ResolvedSessionOptions,
@@ -15,9 +20,25 @@ import type {
 const defaultTtlMs = 86_400_000;
 const defaultMaxSessions = 10_000;
 
-/** Provides the session service and mounts the cookie plugin. */
+const SESSION_STORAGE =
+  createToken<AsyncLocalStorage<SessionRequestState>>("aponia.session.storage");
+const SESSION_STORE = createToken<SessionStore>("aponia.session.store");
+const SESSION_OPTIONS = createToken<ResolvedSessionOptions>("aponia.session.options");
+
+/** Provides the session service and mounts the cookie middleware. */
 @Module({})
 export class SessionModule {
+  /**
+   * Mounts the session middleware ahead of every route.
+   *
+   * The middleware is a provider the registration exports, so a module's own
+   * `configure` can name it and the container resolves the store, storage, and
+   * options it runs with.
+   */
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(SessionMiddleware).forRoutes("/*");
+  }
+
   /**
    * Builds a session registration.
    *
@@ -30,90 +51,25 @@ export class SessionModule {
     const store = options.store ?? new MemorySessionStore({ maxSessions: resolved.maxSessions });
     const storage = new AsyncLocalStorage<SessionRequestState>();
     const service = new SessionService(storage, store, resolved);
-    const plugin = buildSessionPlugin(storage, store, resolved);
-    const pluginModule = PluginModule.register(plugin, { key: options.key ?? "session" });
+    const moduleKey = options.key ?? "session";
 
     return Object.freeze({
-      ...pluginModule,
+      module: SessionModule,
+      id: `SessionModule[${moduleKey}]`,
+      instanceId: Symbol.for(`aponia.session:${moduleKey}`),
+      imports: Object.freeze([]),
       providers: Object.freeze([
-        ...(pluginModule.providers ?? []),
+        provideValue(SESSION_STORAGE, storage),
+        provideValue(SESSION_STORE, store),
+        provideValue(SESSION_OPTIONS, resolved),
+        provideClass(SessionMiddleware, [SESSION_STORAGE, SESSION_STORE, SESSION_OPTIONS]),
         provideValue(SessionService, service),
       ]),
-      exports: Object.freeze([SessionService]),
+      // The middleware is exported so the root's own `apply` can resolve the
+      // request-scoped wiring; the service because a handler injects it.
+      exports: Object.freeze([SessionService, SessionMiddleware]),
     });
   }
-}
-
-function buildSessionPlugin(
-  storage: AsyncLocalStorage<SessionRequestState>,
-  store: SessionStore,
-  options: ResolvedSessionOptions,
-): ElysiaPlugin {
-  return new Elysia({ name: "aponia:session", seed: options })
-    .onBeforeHandle("global", async (context) => {
-      const state: SessionRequestState = {
-        session: undefined,
-        started: false,
-        touched: false,
-        destroyed: false,
-      };
-      storage.enterWith(state);
-      (context.store as Record<PropertyKey, unknown>)[sessionStateKey] = state;
-
-      const cookie = context.cookie[options.cookieName];
-      const token = cookie.value;
-      if (typeof token !== "string") {
-        return;
-      }
-
-      const id = readSessionId(token, options.secret);
-      if (id === undefined) {
-        state.destroyed = true;
-        return;
-      }
-
-      const session = await store.get(id);
-      if (session === undefined || session.expiresAt <= Date.now()) {
-        state.destroyed = true;
-        return;
-      }
-
-      state.session = session;
-      if (options.rolling) {
-        const extended = Object.freeze({
-          ...session,
-          expiresAt: Date.now() + options.ttlMs,
-        });
-        await store.set(extended);
-        state.session = extended;
-        state.touched = true;
-      }
-    })
-    .onAfterHandle("global", (context) => {
-      const state = storage.getStore();
-      if (state === undefined) {
-        return;
-      }
-      const cookie = context.cookie[options.cookieName];
-
-      if (state.destroyed) {
-        cookie.remove();
-        return;
-      }
-      if (state.session === undefined || (!state.started && !state.touched)) {
-        return;
-      }
-
-      cookie.set({
-        value: issueSessionToken(state.session.id, options.secret),
-        httpOnly: true,
-        secure: options.cookie.secure,
-        sameSite: options.cookie.sameSite,
-        path: options.cookie.path,
-        maxAge: Math.max(1, Math.ceil((state.session.expiresAt - Date.now()) / 1_000)),
-        ...(options.cookie.domain === undefined ? {} : { domain: options.cookie.domain }),
-      });
-    });
 }
 
 function resolveOptions(options: SessionModuleOptions): ResolvedSessionOptions {

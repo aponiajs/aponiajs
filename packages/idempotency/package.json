@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/idempotency",
-  "version": "1.0.0-beta.60",
+  "version": "1.0.0-beta.61",
   "description": "Idempotent request replay for an Aponia application, with a bounded store and conflict detection.",
   "keywords": [
     "api",
@@ -44,6 +44,7 @@
   },
   "dependencies": {
     "@aponiajs/common": "workspace:*",
+    "@aponiajs/compiler": "workspace:*",
     "@aponiajs/platform-elysia": "workspace:*"
   },
   "devDependencies": {

@@ -76,7 +76,7 @@ the runtime boundary it describes.
   "configureNative">` is `never`, so the paragraph that states the limitation
   fails this lane rather than quietly becoming false if the platform ever moves
   that option onto the base contract. The claim was wrong in this package's first
-  draft — in the README, in this guide, and in `docs/testing.md` — and every copy
+  draft — in the README, in this guide, and in `docs/build/testing.md` — and every copy
   of it was corrected together, because a limitation stated in one place and
   denied in another is worse than either.
 - **`logger` defaults to `false`, and that is the one difference from the

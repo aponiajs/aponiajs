@@ -37,7 +37,7 @@ import { DevtoolsModule } from "@aponiajs/devtools";
 @Module({
   imports: [
     DevtoolsModule.register({
-      enabled: Bun.env.NODE_ENV !== "production",
+      enabled: Bun.env.APONIA_DEVTOOLS === "true",
     }),
   ],
 })
@@ -55,7 +55,7 @@ import { devtoolsPlugin } from "@aponiajs/devtools";
 const application = await AponiaFactory.create(AppModule, {
   plugins: [
     devtoolsPlugin({
-      enabled: Bun.env.NODE_ENV !== "production",
+      enabled: Bun.env.APONIA_DEVTOOLS === "true",
       logger: appLogger,
     }),
   ],
@@ -300,8 +300,8 @@ curl http://localhost:3000/__devtools/meta
 
 ## Documentation
 
-- [Devtools guide](../../docs/devtools.md): the endpoint contract, the accepted
+- [Devtools guide](../../docs/services/devtools.md): the endpoint contract, the accepted
   limitations, and how a consumer polls it.
-- [Published packages](../../docs/packages.md): the npm catalog and install
+- [Published packages](../../docs/reference/packages.md): the npm catalog and install
   commands.
 - [Repository guide](../../AGENTS.md): how the framework is organized.

@@ -24,6 +24,8 @@ bun add @aponiajs/store-redis@alpha redis
 - `RedisRateLimitStore` reports the bucket's live `PTTL`, so `RateLimit-Reset`
   and `Retry-After` do not slide forward on every increment.
 - `RedisIdempotencyStore` claims a key with `SET NX PX` and releases it on
-  success or failure.
+  success or failure. Response records live under `response:` and claims under
+  `claim:`, and the caller's key is percent-encoded inside its segment, so one
+  key cannot spell another record's internal name.
 - `RedisRefreshTokenStore` consumes a token in one Lua round trip and keeps a
   short family tombstone so a replay can revoke the family.

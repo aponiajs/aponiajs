@@ -122,6 +122,7 @@ describe("createRepository", () => {
 describe("DatabaseService", () => {
   test("wraps an asynchronous transaction and exposes its handle", async () => {
     const statements: string[] = [];
+    let escaped: DatabaseTransaction | undefined;
     const service = new DatabaseService({
       database: {
         select: () => ({}),
@@ -137,11 +138,15 @@ describe("DatabaseService", () => {
     const result = await service.transaction(async (transaction) => {
       await transaction.execute("insert 1");
       expect(transaction.client).toBeDefined();
+      escaped = transaction;
       return "done";
     });
 
     expect(result).toBe("done");
     expect(statements).toEqual(["insert 1"]);
+    expect(() => escaped?.execute("insert 2")).toThrow(
+      expect.objectContaining({ code: "STALE_LIFETIME" }),
+    );
   });
 
   test("runs a raw statement through execute or run", async () => {
@@ -171,6 +176,14 @@ describe("DatabaseService", () => {
       transaction.execute(sql`insert into users (id, name) values ('1', 'ada')`);
     });
     expect(service.transactionSync(() => countRows(database))).toBe(1);
+
+    let escaped: DatabaseTransaction | undefined;
+    service.transactionSync((transaction) => {
+      escaped = transaction;
+    });
+    expect(() => escaped?.execute(sql`select 1`)).toThrow(
+      expect.objectContaining({ code: "STALE_LIFETIME" }),
+    );
 
     expect(() =>
       service.transactionSync((transaction) => {

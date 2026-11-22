@@ -112,6 +112,24 @@ describe("QueueService", () => {
     expect(queue.deadLetters()).toEqual([]);
   });
 
+  test("bounds the dead-letter map", async () => {
+    const queue = new QueueService({
+      autoStart: false,
+      maxAttempts: 1,
+      maxDeadLetters: 1,
+    });
+    queue.registerHandler("fails", () => {
+      throw new Error("nope");
+    });
+
+    queue.enqueue("fails", 1);
+    await queue.drain();
+    queue.enqueue("fails", 2);
+    await queue.drain();
+
+    expect(queue.deadLetters()).toHaveLength(1);
+  });
+
   test("dead-letters a job whose handler is missing", async () => {
     const queue = new QueueService({ autoStart: false, maxAttempts: 1 });
     const codes: string[] = [];
@@ -226,6 +244,7 @@ describe("QueueService", () => {
         "backoffMs must be a non-negative finite number",
         "maxBackoffMs must be a non-negative finite number",
         "maxJobs must be a positive integer",
+        "maxDeadLetters must be a positive integer",
         "autoStart must be a boolean",
         "onError must be a function",
         "now must be a function",

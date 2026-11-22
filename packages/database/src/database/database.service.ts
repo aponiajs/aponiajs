@@ -1,4 +1,5 @@
 import { AponiaError, type OnModuleInit } from "@aponiajs/common";
+import { LifetimeScope } from "@aponiajs/compiler";
 import { MemoryMigrationStore } from "../migration/memory-migration-store.ts";
 import { MigrationRunner } from "../migration/migration-runner.ts";
 import type {
@@ -75,9 +76,14 @@ export class DatabaseService<TDatabase extends object = object> implements OnMod
         Object.freeze({ issues: Object.freeze(["database.transaction must be a function"]) }),
       );
     }
-    return (await database.transaction(
-      async (transaction: unknown) => await run(transactionHandle(database, transaction)),
-    )) as T;
+    const scope = new LifetimeScope({ label: "database-transaction" });
+    return (await database.transaction(async (transaction: unknown) => {
+      try {
+        return await run(scope.guard(transactionHandle(database, transaction)));
+      } finally {
+        scope.exit("transaction-complete");
+      }
+    })) as T;
   }
 
   /** Runs one synchronous unit of work inside a synchronous driver's boundary. */
@@ -90,9 +96,14 @@ export class DatabaseService<TDatabase extends object = object> implements OnMod
         Object.freeze({ issues: Object.freeze(["database.transaction must be a function"]) }),
       );
     }
-    return database.transaction((transaction: unknown) =>
-      run(transactionHandle(database, transaction)),
-    ) as T;
+    const scope = new LifetimeScope({ label: "database-transaction" });
+    return database.transaction((transaction: unknown) => {
+      try {
+        return run(scope.guard(transactionHandle(database, transaction)));
+      } finally {
+        scope.exit("transaction-complete");
+      }
+    }) as T;
   }
 
   /** Runs one raw statement outside an explicit transaction. */

@@ -28,6 +28,7 @@ Options:
       --path <path>   Override the configured source root
       --entry <path>  Entrypoint for aponia dev (default src/main.ts)
       --publish       Generate a publishable library package
+      --kind <kind>   Library package kind: module or plugin
       --scope <name>  Npm scope for a publishable library
       --yes           Publish without stopping for confirmation
       --tag <tag>     Npm dist-tag for library publish
@@ -45,7 +46,7 @@ Options:
   -v, --version       Show CLI version
 
 Schematics:
-  app, library (lib), class (cl), controller (co), decorator (d),
+  app, library (lib), plugin (pl), class (cl), controller (co), decorator (d),
   filter (f), gateway (ga), guard (gu), interface (itf),
   interceptor (itc), module (mo), provider (pr), resolver (r),
   resource (res), service (s)

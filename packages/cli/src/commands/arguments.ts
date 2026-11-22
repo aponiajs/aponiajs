@@ -20,6 +20,8 @@ const schematicAliases: Readonly<Record<string, GenerateSchematic>> = {
   application: "app",
   lib: "library",
   library: "library",
+  pl: "plugin",
+  plugin: "plugin",
   cl: "class",
   class: "class",
   co: "controller",
@@ -144,6 +146,7 @@ function parseLibraryCommand(arguments_: readonly string[]): LibraryCommandOptio
   }
   assertKnownOptions(parsed, [
     "json",
+    "kind",
     "path",
     "publish",
     "scope",
@@ -152,6 +155,9 @@ function parseLibraryCommand(arguments_: readonly string[]): LibraryCommandOptio
     "yes",
     "remote",
   ]);
+  if (action !== "new" && parsed.kind !== undefined) {
+    throw new Error('Option "--kind" is only valid with "library new".');
+  }
 
   return {
     command: "library",
@@ -166,6 +172,7 @@ function parseLibraryCommand(arguments_: readonly string[]): LibraryCommandOptio
     ...(action === "new"
       ? {
           name: positionals[0],
+          kind: readLibraryKind(parsed),
           scope: readStringOption(parsed, "scope"),
           skipInstall: readBooleanOption(parsed, "skip-install", false),
         }
@@ -399,7 +406,7 @@ function parseOptions(arguments_: readonly string[]): ParsedOptions {
   return parseCliArguments([...arguments_], {
     alias: optionAliases,
     boolean: [...valueLessOptions],
-    string: ["clients", "cwd", "entry", "module", "path", "project", "type"],
+    string: ["clients", "cwd", "entry", "kind", "module", "path", "project", "type"],
     configuration: {
       "camel-case-expansion": false,
       "dot-notation": false,
@@ -447,6 +454,17 @@ function readStringOption(options: ParsedOptions, name: string): string | undefi
   }
   if (typeof value !== "string") {
     throw new Error(`Option "--${name}" requires a value.`);
+  }
+  return value;
+}
+
+function readLibraryKind(options: ParsedOptions): "module" | "plugin" | undefined {
+  const value = readStringOption(options, "kind");
+  if (value === undefined) {
+    return undefined;
+  }
+  if (value !== "module" && value !== "plugin") {
+    throw new Error('The library kind must be "module" or "plugin".');
   }
   return value;
 }

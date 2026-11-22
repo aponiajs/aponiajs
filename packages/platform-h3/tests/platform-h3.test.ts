@@ -14,6 +14,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
   type CanActivate,
+  type ExecutionContext,
 } from "@aponiajs/common";
 import { Type } from "typebox";
 import { H3 } from "h3";
@@ -92,6 +93,31 @@ class EchoGateway {
 
 @Module({ providers: [EchoGateway] })
 class GatewayModule {}
+
+@Injectable()
+class HeaderGuard implements CanActivate {
+  canActivate(context: ExecutionContext): boolean {
+    const http = context.switchToHttp().getRequest() as { readonly request: Request };
+    seenAuthorization = http.request.headers.get("authorization");
+    return seenAuthorization === "Bearer ok";
+  }
+}
+
+let seenAuthorization: string | null = null;
+let guardedRuns = 0;
+
+@WebSocketGateway({ path: "/guarded", guards: [HeaderGuard] })
+@Injectable()
+class GuardedGateway {
+  @SubscribeMessage("echo")
+  echo(@MessageBody() data: unknown): unknown {
+    guardedRuns += 1;
+    return data;
+  }
+}
+
+@Module({ providers: [GuardedGateway, HeaderGuard] })
+class GuardedGatewayModule {}
 
 function request(path: string, init?: RequestInit): Request {
   return new Request(`http://localhost${path}`, init);
@@ -210,26 +236,52 @@ describe("Aponia on H3", () => {
 
   test("answers without a peer address when the runtime cannot state one", async () => {
     const host = createH3Host();
-    let middleware:
-      | ((event: unknown, next: () => Promise<unknown>) => Promise<unknown>)
-      | undefined;
+    let routeHandler: ((event: unknown) => Promise<Response>) | undefined;
     const fake = {
-      use(handler: (event: unknown, next: () => Promise<unknown>) => Promise<unknown>) {
-        middleware = handler;
+      on(_method: string, _path: string, handler: (event: unknown) => Promise<Response>) {
+        routeHandler = handler;
+      },
+      all(_path: string, handler: (event: unknown) => Promise<Response>) {
+        routeHandler = handler;
       },
     } as never;
-    host.mount(fake, async (_request, info) => new Response(info.ip ?? "none"));
+    let seen: unknown = "unset";
+    host.mountRoute(
+      fake,
+      {
+        route: {
+          method: "GET",
+          path: "/x",
+          propertyKey: "handle",
+          parameters: [],
+          schema: undefined,
+          declaredParameterCount: 0,
+          pipes: [],
+          enhancers: { guards: [], interceptors: [], filters: [] },
+          serializer: undefined,
+        },
+        controller: class {},
+        instance: {},
+        guards: [],
+        interceptors: [],
+        filters: [],
+        pipes: [],
+      } as never,
+      async (context) => {
+        seen = context.ip;
+        return new Response("ok");
+      },
+    );
 
     const event = {
       req: new Request("http://localhost/x"),
       url: new URL("http://localhost/x"),
-      get context(): never {
-        throw new Error("the event carries no context");
-      },
+      context: {},
     };
-    const response = (await middleware?.(event, async () => new Response("next"))) as Response;
+    const response = await routeHandler?.(event);
 
-    expect(await response?.text()).toBe("none");
+    expect(await response?.text()).toBe("ok");
+    expect(seen).toBeUndefined();
   });
 
   test("answers through the managed wrapper's handle", async () => {
@@ -290,8 +342,70 @@ describe("Aponia on H3", () => {
       text: () => JSON.stringify({ event: "echo", data: { n: 1 } }),
     });
     await hooks?.close?.(peer);
+    await Bun.sleep(0);
 
     expect(sent.map((frame) => JSON.parse(frame))).toEqual([{ event: "echo", data: { n: 1 } }]);
+    await application.close();
+  });
+
+  test("runs a handshake guard against the upgrade request", async () => {
+    const application = await AponiaFactory.create(GuardedGatewayModule, { logger: false });
+    const response = await application
+      .getNativeApplication()
+      .fetch(new Request("http://localhost/guarded", { headers: { upgrade: "websocket" } }));
+    const hooks = (
+      response as unknown as {
+        readonly crossws?: {
+          open?(peer: unknown): unknown;
+          message?(peer: unknown, message: unknown): unknown;
+        };
+      }
+    ).crossws;
+    expect(hooks).toBeDefined();
+
+    const sent: string[] = [];
+    const closed: { readonly code?: number }[] = [];
+    const allowed = {
+      id: "allowed-peer",
+      request: new Request("http://localhost/guarded", {
+        headers: { authorization: "Bearer ok" },
+      }),
+      send(data: string) {
+        sent.push(data);
+      },
+      close(code?: number) {
+        closed.push({ code });
+      },
+      subscribe() {},
+      publish() {},
+    };
+    await hooks?.open?.(allowed);
+    await hooks?.message?.(allowed, {
+      text: () => JSON.stringify({ event: "echo", data: { n: 1 } }),
+    });
+    await Bun.sleep(0);
+    expect(seenAuthorization).toBe("Bearer ok");
+    expect(guardedRuns).toBe(1);
+
+    const denied = {
+      id: "denied-peer",
+      request: new Request("http://localhost/guarded"),
+      send(data: string) {
+        sent.push(data);
+      },
+      close(code?: number) {
+        closed.push({ code });
+      },
+      subscribe() {},
+      publish() {},
+    };
+    await hooks?.open?.(denied);
+    await hooks?.message?.(denied, {
+      text: () => JSON.stringify({ event: "echo", data: { n: 2 } }),
+    });
+    await Bun.sleep(0);
+    expect(guardedRuns).toBe(1);
+    expect(closed[0]?.code).toBe(1008);
     await application.close();
   });
 

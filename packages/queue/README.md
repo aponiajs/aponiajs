@@ -61,11 +61,16 @@ it again. An explicit `drain()` still runs while paused.
 
 - A failed attempt is retried with `backoffMs * 2^(attempts - 1)`, capped at `maxBackoffMs`.
 - A job that exhausts `maxAttempts` moves to the dead letter queue.
+- Dead letters keep their payloads, so `maxDeadLetters` bounds them; it defaults
+  to `maxJobs` and evicts the oldest entry when full.
 - `queue.deadLetters()` lists them; `queue.retryDeadLetter(id)` grants a fresh attempt budget.
 - `queue.stats()` reports pending, running, and dead-lettered counts.
 - `priority` orders due jobs: a higher value runs first, then earlier enqueue time.
 - `jobTimeoutMs` (or a per-job `timeoutMs`) fails an attempt that runs too long; a failed attempt follows the retry policy, and an exhausted job is dead-lettered with the timeout as its last error.
 - The handler receives `(payload, job, signal)`; the signal aborts on timeout and on `close()`. Cancellation is cooperative.
+- A handler runs outside every registered request-context store. Read the
+  caller and tenant from the payload; `AuthService.current()` and
+  `TenantService.current()` are undefined inside a job.
 - `onModuleDestroy` drains due jobs, aborts in-flight work, and flushes tracked writes.
 
 ## Durable backlog
@@ -136,6 +141,6 @@ elapsed.
 ## Documentation
 
 - [Agent surface](../../docs/agent/README.md)
-- [Jobs and outbox guide](../../docs/queues.md)
-- [Published packages](../../docs/packages.md)
+- [Jobs and outbox guide](../../docs/services/queues.md)
+- [Published packages](../../docs/reference/packages.md)
 - [npm](https://www.npmjs.com/package/@aponiajs/queue)

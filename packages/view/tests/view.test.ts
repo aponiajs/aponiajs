@@ -15,7 +15,16 @@ describe("HtmlViewEngine", () => {
       nullVal: null,
       obj: { key: "val" },
     });
-    expect(withNulls).toContain('Obj: {"key":"val"}');
+    expect(withNulls).toContain("Obj: {&quot;key&quot;:&quot;val&quot;}");
+  });
+
+  test("escapes HTML in every interpolated value", async () => {
+    const engine = new HtmlViewEngine();
+    const rendered = await engine.render("<p>{{ value }}</p>", {
+      value: "<script>alert(1)</script>",
+    });
+
+    expect(rendered).toBe("<p>&lt;script&gt;alert(1)&lt;/script&gt;</p>");
   });
 
   test("reads from filesystem if file exists or caches", async () => {

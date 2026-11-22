@@ -23,7 +23,7 @@ const compatibility = Object.freeze({
   bun: ">=1.4.4",
 });
 
-const docs = "https://github.com/aponiajs/aponiajs/blob/release/alpha/docs/packages.md";
+const docs = "https://github.com/aponiajs/aponiajs/blob/release/alpha/docs/reference/packages.md";
 const repository = "https://github.com/aponiajs/aponiajs";
 
 /** The bundled catalog. It is data, not a hosted registry. */

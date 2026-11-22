@@ -9,7 +9,7 @@ import {
   provideValue,
 } from "@aponiajs/common";
 import { AponiaFactory } from "../src/application/aponia-factory.ts";
-import { createServicePlugin } from "../src/plugins/service-plugin.ts";
+import { createServicePlugin } from "@aponiajs/platform-core";
 
 class MockDatabaseClient {
   constructor(readonly url: string) {}

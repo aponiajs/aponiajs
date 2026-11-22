@@ -1,13 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
-const parityDoc = await Bun.file("docs/platform-parity.md").text();
+const parityDoc = await Bun.file("docs/platforms/platform-parity.md").text();
 
 const platformPackages = [
   "@aponiajs/platform-core",
   "@aponiajs/platform-elysia",
   "@aponiajs/platform-hono",
   "@aponiajs/platform-h3",
-  "@aponiajs/platform-nitro",
 ] as const;
 
 describe("the platform parity page", () => {
@@ -30,7 +29,7 @@ describe("the platform parity page", () => {
   });
 
   test("the adapters page points at it", async () => {
-    const adapters = await Bun.file("docs/adapters.md").text();
+    const adapters = await Bun.file("docs/platforms/adapters.md").text();
 
     expect(adapters).toContain("platform-parity.md");
   });

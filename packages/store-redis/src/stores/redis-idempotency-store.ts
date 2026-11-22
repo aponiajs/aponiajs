@@ -69,10 +69,20 @@ export class RedisIdempotencyStore implements IdempotencyStore {
   }
 
   #key(key: string): string {
-    return `${this.#prefix}${key}`;
+    return `${this.#prefix}response:${encodeKey(key)}`;
   }
 
   #claimKey(key: string): string {
-    return `${this.#prefix}claim:${key}`;
+    return `${this.#prefix}claim:${encodeKey(key)}`;
   }
+}
+
+/**
+ * Encodes one caller-supplied key into an internal Redis key segment.
+ *
+ * A raw key must not be able to spell another record's internal name, so the
+ * separator and every other reserved character are percent-encoded.
+ */
+function encodeKey(key: string): string {
+  return encodeURIComponent(key);
 }

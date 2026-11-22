@@ -1,7 +1,6 @@
 # 04 · Providers and injection
 
-**Use when:** a class needs a collaborator, or a value that is not a class needs
-to be injectable.
+**Use when:** a class needs a collaborator or a non-class value must be injectable.
 
 ## Class providers
 
@@ -14,11 +13,11 @@ export class UserService {
 }
 ```
 
-`@Injectable()` is deliberately a no-op. It exists so `emitDecoratorMetadata`
-records the constructor's parameter types, which is how the container knows what
-to resolve.
+`@Injectable()` is a no-op. It exists so `emitDecoratorMetadata` records the constructor parameter types the container resolves.
 
-## Anything that is not a class needs a token
+## Tokens
+
+Anything that is not a class needs a token:
 
 ```ts
 import {
@@ -48,21 +47,21 @@ export class GreetingService {
 }
 ```
 
-| Helper                                   | Provides                                  |
-| ---------------------------------------- | ----------------------------------------- |
-| `provideValue(token, value)`             | A ready value                             |
-| `provideFactory(token, inject, factory)` | The factory's result, built once          |
-| `provideClass(Class, inject)`            | An instance under the class's own token   |
-| `provideClass(token, Class, inject)`     | The same instance under a token you name  |
-| `provideAlias(token, target)`            | Another token's instance under a new name |
+| Helper                                   | Provides                          |
+| ---------------------------------------- | --------------------------------- |
+| `provideValue(token, value)`             | A ready value                     |
+| `provideFactory(token, inject, factory)` | The factory result                |
+| `provideClass(Class, inject)`            | An instance under the class token |
+| `provideClass(token, Class, inject)`     | An instance under a named token   |
+| `provideAlias(token, target)`            | Another token's instance          |
 
 ## Scopes
 
-Aponia supports three lifetime scopes via the `Scope` object:
-
-- **`Scope.DEFAULT` (`"singleton"`)**: Cached per owning module.
-- **`Scope.REQUEST` (`"request"`)**: Instantiated once per HTTP request and cached within the request context.
-- **`Scope.TRANSIENT` (`"transient"`)**: A fresh instance is instantiated on every resolution.
+| Scope                             | Lifetime                       |
+| --------------------------------- | ------------------------------ |
+| `Scope.DEFAULT` (`"singleton"`)   | One instance per owning module |
+| `Scope.REQUEST` (`"request"`)     | One instance per request       |
+| `Scope.TRANSIENT` (`"transient"`) | A new instance per resolution  |
 
 ```ts
 import { Injectable, Scope } from "@aponiajs/common";
@@ -73,10 +72,8 @@ export class RequestScopedLogger {}
 
 ## Global modules and circular references
 
-Mark a utility module with `@Global()` to make its exported providers visible across the whole module graph without needing explicit imports. For mutual dependencies, use `forwardRef()` to defer resolution.
+`@Global()` shares a module's exports without explicit imports. `forwardRef()` defers one side of a circular dependency.
 
-`container.get()` enforces root-module visibility on purpose. Resolving inside
-an arbitrary module is a platform-internal operation, not application API.
+`container.get()` enforces root-module visibility. Resolving inside another module is a platform-internal operation.
 
-Next: [05 · Controllers and routes](./05-controllers-and-routes.md) ·
-Deep dive: [dependency injection](../dependency-injection.md)
+Next: [05 · Controllers and routes](./05-controllers-and-routes.md) · Deep dive: [dependency injection](../build/dependency-injection.md)

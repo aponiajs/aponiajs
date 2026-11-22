@@ -57,7 +57,7 @@ schema escape hatch, `controller(...)` exposes native Elysia inference
 when it is specifically needed, and `defineController` remains the
 advanced descriptor escape hatch.
 
-See `docs/logging.md` for logger configuration, JSON output, level filtering,
+See `docs/build/logging.md` for logger configuration, JSON output, level filtering,
 and custom logger integration.
 
 ```ts
@@ -111,7 +111,7 @@ is bound once; a request-scoped one is resolved once per socket, with its
 `@SubscribeMessage` supports per-message validation with Standard Schema and
 TypeBox, and `@WebSocketGateway` accepts handshake upgrade guards and payload bounds.
 `WebSocketClient` exposes the real native client wrapper. See the
-[WebSocket gateway guide](../../docs/websockets.md) for responses, lifecycle,
+[WebSocket gateway guide](../../docs/platforms/websockets.md) for responses, lifecycle,
 errors, and native publish/subscribe.
 
 ### Declared gateways
@@ -196,7 +196,7 @@ Tests can call `treaty(app)` directly without opening a port. No contract
 adapter, assertion, or custom fetcher is required. Decorated routes still run
 normally, but their runtime metadata cannot contribute TypeScript route
 generics without the planned build-time compiler. See the
-[Eden Treaty guide](../../docs/eden-treaty.md) for controller injection, tests,
+[Eden Treaty guide](../../docs/platforms/eden-treaty.md) for controller injection, tests,
 and the exact inference boundary.
 
 ## Route compilation policy
@@ -253,7 +253,7 @@ versions it was generated against:
 ```ts
 // src/invokers.generated.ts
 export const controllerInvokerArtifact = Object.freeze({
-  framework: "1.0.0-beta.60",
+  framework: "1.0.0-beta.61",
   elysia: "2.0.0-rc.4",
   invokers: new Map([
     [UsersController, (instance: UsersController) => new Map([["ping", () => instance.ping()]])],
@@ -312,7 +312,7 @@ it was generated against:
 ```ts
 // src/descriptors.generated.ts
 export const moduleDescriptorArtifact = Object.freeze({
-  framework: "1.0.0-beta.60",
+  framework: "1.0.0-beta.61",
   elysia: "2.0.0-rc.4",
   modules: Object.freeze({ AppModule: AppModuleDescriptor }),
 });
@@ -589,7 +589,7 @@ All of this reaches the routes the platform mounts from a compiled plan. A
 controller registered through its own `registerRoutes` callback owns its routes'
 hooks, and a definition mounted through its own `buildPlugin` resolves nothing,
 so neither runs a declared enhancer, a global enhancer, or the default mapping.
-See the [enhancers guide](../../docs/enhancers.md).
+See the [enhancers guide](../../docs/build/enhancers.md).
 
 ## Pipes and parameter transformation
 
@@ -981,7 +981,7 @@ For authoring reusable plugin packages, `@aponiajs/platform-elysia` exposes thre
 - `createEnhancerPlugin`: creates route guard, interceptor, and filter modules.
 - `wrapElysiaPlugin`: bridges existing Elysia plugins directly into Aponia modules.
 
-See the [plugin packages guide](../../docs/plugin-packages.md) for full contracts.
+See the [plugin packages guide](../../docs/tooling/plugin-packages.md) for full contracts.
 
 ## Graceful shutdown and health probes
 
@@ -1017,7 +1017,7 @@ runs for one.
 Neither surface covers what this release does not ship: there is no drain
 deadline or per-check report, only the single `status` member the IETF
 health-check draft requires, and a signal that arrives before `listen` has
-finished is not caught. See the [lifecycle guide](../../docs/lifecycle.md) for
+finished is not caught. See the [lifecycle guide](../../docs/build/lifecycle.md) for
 the full contract.
 
 ## Bootstrap diagnostics
@@ -1067,7 +1067,7 @@ export class OrderService {
 }
 ```
 
-See the [request context guide](../../docs/request-context.md) for options, header sanitization, and typed token storage.
+See the [request context guide](../../docs/build/request-context.md) for options, header sanitization, and typed token storage.
 
 ## Inspecting an application
 
@@ -1092,12 +1092,12 @@ decorated module is inspected instead. Routes registered by `controller`
 and `defineController` callbacks are not included, because their routes
 only exist once the callback runs; build the application and read
 `getNativeApplication().routes` for the complete native route table. See the
-[introspection guide](../../docs/introspection.md) for the full contract.
+[introspection guide](../../docs/platforms/introspection.md) for the full contract.
 
 [npm package](https://www.npmjs.com/package/@aponiajs/platform-elysia) ·
-[configuration guide](../../docs/configuration.md) ·
-[lifecycle guide](../../docs/lifecycle.md) ·
-[request context guide](../../docs/request-context.md) ·
-[native plugin guide](../../docs/native-plugins.md) ·
-[Eden Treaty guide](../../docs/eden-treaty.md) ·
-[complete package catalog](../../docs/packages.md)
+[configuration guide](../../docs/build/configuration.md) ·
+[lifecycle guide](../../docs/build/lifecycle.md) ·
+[request context guide](../../docs/build/request-context.md) ·
+[native plugin guide](../../docs/platforms/native-plugins.md) ·
+[Eden Treaty guide](../../docs/platforms/eden-treaty.md) ·
+[complete package catalog](../../docs/reference/packages.md)

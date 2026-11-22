@@ -38,11 +38,18 @@ refused with `409` Problem Details.
 | `methods`    | `POST`, `PATCH`, `PUT`       | The methods the plugin covers.                   |
 | `store`      | bounded process-local memory | A shared or durable implementation.              |
 | `onError`    | silence                      | Called when the store cannot read or write.      |
-| `scope`      | none                         | Namespaces a key by caller, e.g. subject/tenant. |
+| `scope`      | credential headers           | Namespaces a key by caller, e.g. subject/tenant. |
+
+When `scope` is omitted, the plugin hashes the request's credential-bearing
+headers (`authorization`, `cookie`, `x-api-key`, `x-tenant-id`, `x-user-id`)
+into the key. Two callers with different credentials therefore cannot replay
+each other's answer. Supply `scope` when the application has a stable subject
+and tenant identity; an unauthenticated request has no identity to bind.
 
 ## Limits
 
-The recorded body must be JSON-serializable. A `Response`, a stream, a
+The recorded body must be JSON-serializable. The fingerprint covers the method,
+the route path, the query string, and the body. A `Response`, a stream, a
 generator, or an `undefined` result is answered normally but not recorded, so a
 repeat runs the handler again. Replay restores the status and body; headers a
 handler set itself are not replayed. Concurrent repeats share the first run.
@@ -67,5 +74,5 @@ await application.listen(Number(Bun.env.PORT ?? 3000));
 ## Documentation
 
 - [Agent surface](../../docs/agent/README.md)
-- [Published packages](../../docs/packages.md)
+- [Published packages](../../docs/reference/packages.md)
 - [npm](https://www.npmjs.com/package/@aponiajs/idempotency)

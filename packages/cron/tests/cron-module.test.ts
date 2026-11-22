@@ -392,7 +392,7 @@ test("refuses two registrations that share a key", async (): Promise<void> => {
   // two modules: the graph refuses the boot rather than mounting one of them and
   // dropping the other, which would silently schedule half of what was declared.
   expect(codeOf(failure)).toBe("DUPLICATE_MODULE");
-  expect((failure as AponiaError).details).toMatchObject({ module: "PluginModule[cron]" });
+  expect((failure as AponiaError).details).toMatchObject({ module: "CronModule[cron]" });
 });
 
 test(

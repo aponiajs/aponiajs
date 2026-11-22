@@ -54,6 +54,7 @@ export async function generateInvokers(
       path: outputPath,
       content: await formatGeneratedSource(projectRoot, invokerModuleFileName, emitted.source),
       kind: (await Bun.file(outputPath).exists()) ? "UPDATE" : "CREATE",
+      type: "content",
     },
   ];
   const descriptorExists = await Bun.file(descriptorPath).exists();
@@ -65,6 +66,7 @@ export async function generateInvokers(
       path: descriptorPath,
       content: await formatGeneratedSource(projectRoot, descriptorModuleFileName, descriptorSource),
       kind: descriptorExists ? "UPDATE" : "CREATE",
+      type: "content",
     });
   }
   const result = await writePendingFiles(projectRoot, pending, options.dryRun);

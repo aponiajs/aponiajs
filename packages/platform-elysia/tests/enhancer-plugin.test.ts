@@ -9,7 +9,7 @@ import {
   type ExecutionContext,
 } from "@aponiajs/common";
 import { AponiaFactory } from "../src/application/aponia-factory.ts";
-import { createEnhancerPlugin } from "../src/plugins/enhancer-plugin.ts";
+import { createEnhancerPlugin } from "@aponiajs/platform-core";
 
 @Injectable()
 class SecurityGuard implements CanActivate {

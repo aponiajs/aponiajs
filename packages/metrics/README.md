@@ -62,6 +62,6 @@ a Prometheus scrape per process or an aggregating gateway.
 ## Documentation
 
 - [Agent surface](../../docs/agent/README.md)
-- [Metrics guide](../../docs/metrics.md)
-- [Published packages](../../docs/packages.md)
+- [Metrics guide](../../docs/services/metrics.md)
+- [Published packages](../../docs/reference/packages.md)
 - [npm](https://www.npmjs.com/package/@aponiajs/metrics)

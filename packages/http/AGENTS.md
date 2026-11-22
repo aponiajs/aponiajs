@@ -21,6 +21,8 @@ is a leaf: nothing in the framework depends on it.
 - **Secure by default.** Only `http:` and `https:` are allowed; credentials in
   a URL are refused; `Host` cannot be supplied; private, loopback, link-local,
   metadata, carrier-grade NAT, multicast, and reserved addresses are blocked.
+  The IPv6 translation ranges `rfc6052` and `rfc6145` and the deprecated
+  IPv4-compatible form are blocked as well.
 - **Every hostname is resolved and every address checked.** Do not replace the
   resolver check with a hostname string check alone. The default resolver uses
   the runtime's DNS lookup; a test supplies its own. The validated address is
@@ -29,8 +31,9 @@ is a leaf: nothing in the framework depends on it.
   a second time to a private address.
 - **Every redirect is re-validated.** A redirect with a request body is refused
   rather than replayed. The `error` and `manual` policies are explicit.
-- **Responses are bounded and errors are redacted.** Never include a response
-  body, query string, or credentials in an `AponiaError` detail. Use `safeUrl`.
+- **Responses are bounded and errors are redacted.** The timeout covers the
+  body read, not only the headers. Never include a response body, query string,
+  or credentials in an `AponiaError` detail. Use `safeUrl`.
 - **Retries are idempotent, or keyed.** `GET`, `HEAD`, `OPTIONS`, `PUT`, and
   `DELETE` may retry; `POST` and `PATCH` retry only when the request states an
   `idempotencyKey`, which is also sent as the header. `Retry-After` on a

@@ -179,7 +179,7 @@ credentials.** `recordBody: { request: true }` puts the request body on the span
 or `cookie` puts a live credential on the same span, and `"*"` captures all of
 them. Both leave the process. The pair is refused at boot:
 
-```
+```text
 "recordBody" cannot record the request while "headersToSpanAttributes.request" captures "authorization": both are recorded on the exported span
 ```
 
@@ -239,8 +239,8 @@ spans themselves, and their export.
 
 - [Package guide](./AGENTS.md) — the invariants this package is held to.
 - [`@elysia/opentelemetry` on npm](https://www.npmjs.com/package/@elysia/opentelemetry)
-- [Plugin package authoring](../../docs/plugin-packages.md)
-- [Published packages](../../docs/packages.md)
+- [Plugin package authoring](../../docs/tooling/plugin-packages.md)
+- [Published packages](../../docs/reference/packages.md)
 
 ## Native escape hatch
 

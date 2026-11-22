@@ -70,7 +70,7 @@ export async function runCli(arguments_: readonly string[]): Promise<number> {
       if (command.action === "new") {
         const result = await generateSchematic({
           command: "generate",
-          schematic: "library",
+          schematic: command.kind === "plugin" ? "plugin" : "library",
           name: command.name ?? "",
           dryRun: false,
           skipImport: false,

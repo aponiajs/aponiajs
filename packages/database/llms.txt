@@ -26,5 +26,5 @@
 
 ## Documentation
 
-- [Package README](README.md)
+- [Package README](./README.md)
 - [Agent surface](../../docs/agent/README.md)

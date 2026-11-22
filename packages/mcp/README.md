@@ -40,7 +40,10 @@ import { createStatelessHttpHandler } from "@aponiajs/mcp";
 import { Elysia } from "elysia";
 import { server } from "./mcp-server.ts";
 
-const handler = createStatelessHttpHandler(server);
+const handler = createStatelessHttpHandler(server, {
+  authorize: (request) => request.headers.get("authorization") === `Bearer ${Bun.env.MCP_TOKEN}`,
+  allowedOrigins: [`https://${Bun.env.APP_HOST}`],
+});
 const endpoint = PluginModule.register(
   new Elysia({ name: "mcp-endpoint" }).all("/mcp", ({ request }) => handler(request)),
   { key: "mcp" },
@@ -49,6 +52,18 @@ const endpoint = PluginModule.register(
 @Module({ imports: [endpoint] })
 export class AppModule {}
 ```
+
+## Security
+
+The transport requires `application/json` for a POST, which forces a CORS
+preflight on a cross-origin browser request. A request that carries an `Origin`
+is refused unless `allowedOrigins` names it. `authorize` is the authentication
+decision; a `false` or throwing answer is a `401`.
+
+The endpoint is a tool-dispatch surface. Mount it through the compiled route
+pipeline when the application's global guards should apply, or supply
+`authorize` and keep the endpoint on a network that is already authenticated.
+It is not a public endpoint by default.
 
 ## Bootstrap
 

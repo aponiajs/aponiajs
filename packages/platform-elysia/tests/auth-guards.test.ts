@@ -30,6 +30,15 @@ class AuthProtectedController {
   }
 }
 
+@Controller("base-auth")
+@UseGuards(AuthGuard)
+class BaseAuthController {
+  @Get()
+  read(): string {
+    return "base";
+  }
+}
+
 @Controller("rbac")
 @UseGuards(RolesGuard)
 class RbacController {
@@ -54,8 +63,8 @@ class RbacController {
 }
 
 @Module({
-  controllers: [AuthProtectedController, RbacController],
-  providers: [CustomAuthGuard, RolesGuard, Reflector],
+  controllers: [AuthProtectedController, BaseAuthController, RbacController],
+  providers: [AuthGuard, CustomAuthGuard, RolesGuard, Reflector],
 })
 class SecurityModule {}
 
@@ -142,7 +151,7 @@ describe("AuthGuard & RolesGuard", () => {
     expect(() => guard.canActivate(forbiddenContext as any)).toThrow();
   });
 
-  test("AuthGuard default validateToken passes non-empty token", async () => {
+  test("AuthGuard default validateToken refuses every token", async () => {
     const defaultGuard = new AuthGuard();
     const context = {
       switchToHttp: () => ({
@@ -153,7 +162,11 @@ describe("AuthGuard & RolesGuard", () => {
         }),
       }),
     };
-    expect(await defaultGuard.canActivate(context as any)).toBe(true);
+    const failure = await defaultGuard.canActivate(context as any).then(
+      () => undefined,
+      (error: unknown) => error,
+    );
+    expect(failure).toMatchObject({ message: "Invalid or expired authentication token." });
 
     const badScheme = {
       switchToHttp: () => ({
@@ -165,5 +178,17 @@ describe("AuthGuard & RolesGuard", () => {
       }),
     };
     expect(() => defaultGuard.canActivate(badScheme as any)).toThrow();
+  });
+
+  test("the exported base guard refuses a non-empty bearer token", async () => {
+    const app = await AponiaFactory.create(SecurityModule, { logger: false });
+    const response = await app.handle(
+      new Request("http://localhost/base-auth", {
+        headers: { authorization: "Bearer anything" },
+      }),
+    );
+
+    expect(response.status).toBe(401);
+    await app.close();
   });
 });

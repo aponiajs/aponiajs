@@ -300,6 +300,59 @@ describe("@aponiajs/mcp server and protocol", () => {
     expect(notifRes.status).toBe(204);
   });
 
+  test("refuses an unauthorized, cross-origin, or non-JSON POST", async () => {
+    const server = new McpServer({ name: "guarded", version: "1.0.0" });
+    const body = JSON.stringify({ jsonrpc: "2.0", id: 1, method: "ping" });
+    const handler = createStatelessHttpHandler(server, {
+      authorize: (request) => request.headers.get("authorization") === "Bearer mcp",
+      allowedOrigins: ["https://app.example"],
+    });
+
+    const noJson = await handler(
+      new Request("http://localhost/mcp", {
+        method: "POST",
+        headers: { authorization: "Bearer mcp" },
+        body,
+      }),
+    );
+    expect(noJson.status).toBe(415);
+
+    const wrongOrigin = await handler(
+      new Request("http://localhost/mcp", {
+        method: "POST",
+        headers: {
+          authorization: "Bearer mcp",
+          "content-type": "application/json",
+          origin: "https://evil.example",
+        },
+        body,
+      }),
+    );
+    expect(wrongOrigin.status).toBe(403);
+
+    const unauthorized = await handler(
+      new Request("http://localhost/mcp", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body,
+      }),
+    );
+    expect(unauthorized.status).toBe(401);
+
+    const allowed = await handler(
+      new Request("http://localhost/mcp", {
+        method: "POST",
+        headers: {
+          authorization: "Bearer mcp",
+          "content-type": "application/json",
+          origin: "https://app.example",
+        },
+        body,
+      }),
+    );
+    expect(allowed.status).toBe(200);
+  });
+
   test("negotiates the handshake version a supported client asks for", async () => {
     const server = new McpServer({ name: "negotiated", version: "1.0.0" });
 

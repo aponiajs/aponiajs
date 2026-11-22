@@ -20,7 +20,10 @@
     "paths": {
       "@aponiajs/common": ["../common/src/index.ts"],
       "@aponiajs/core": ["../core/src/index.ts"],
-      "@aponiajs/platform-elysia": ["../platform-elysia/src/index.ts"]
+      "@aponiajs/platform-core": ["../platform-core/src/index.ts"],
+      "@aponiajs/platform-elysia": ["../platform-elysia/src/index.ts"],
+      "@aponiajs/platform-h3": ["../platform-h3/src/index.ts"],
+      "@aponiajs/platform-hono": ["../platform-hono/src/index.ts"]
     }
   }
 }

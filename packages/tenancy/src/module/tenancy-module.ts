@@ -5,7 +5,7 @@ import {
   provideValue,
   type DynamicModule,
 } from "@aponiajs/common";
-import { RequestContextModule, RequestContextService } from "@aponiajs/platform-elysia";
+import { RequestContextModule, RequestContextService } from "@aponiajs/platform-core";
 import { TenantGuard } from "../guard/tenant.guard.ts";
 import { TenantService } from "../service/tenant.service.ts";
 import { TENANT_OPTIONS } from "./tenancy.constants.ts";

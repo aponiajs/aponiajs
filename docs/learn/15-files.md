@@ -1,9 +1,8 @@
 # 15 · Files
 
-**Use when:** a route receives an uploaded file, or answers with one.
+**Use when:** a route receives an uploaded file or answers with one.
 
-An upload is a body. Elysia parses the multipart request, so the `body` slot is where a
-file is declared and `@Body()` is how it arrives:
+An upload is a body. Elysia parses the multipart request, so the `body` slot declares the file and `@Body()` receives it:
 
 ```ts
 import { Body, Controller, Post } from "@aponiajs/common";
@@ -22,17 +21,13 @@ export class FilesController {
 await fetch("http://localhost:3080/files", { method: "POST", body: form });
 ```
 
-`form` is a `FormData` holding the file, and the request sets no `content-type` header:
-the engine writes the boundary. `t.File()` alone as the body schema refuses the
-upload; name it inside `t.Object({ file: t.File() })`, or reach for `t.Files()` when a
-request may carry several.
+`form` is a `FormData` holding the file. Do not set `content-type`; the engine writes the boundary. A bare `t.File()` as the body schema refuses the upload. Name it inside `t.Object({ file: t.File() })`, or use `t.Files()` for several files.
 
-The handler receives the platform's own `File`. There is no Aponia file type to learn,
-and `@Body("file")` already selects one part without a dedicated decorator.
+The handler receives the platform's `File`. `@Body("file")` selects one part without a dedicated decorator.
 
-A download is named rather than rebuilt. `downloadFile` writes the header the response
-cannot name itself with — encoded, so a name outside ASCII arrives intact — and returns
-the file the platform streams:
+## Download
+
+`downloadFile` writes an encoded `content-disposition` header and returns the file the platform streams:
 
 ```ts
 import { Get, ResponseSettings, type ResponseSettingsState } from "@aponiajs/common";
@@ -44,4 +39,4 @@ download(@ResponseSettings() set: ResponseSettingsState) {
 }
 ```
 
-Next: [16 · Lifecycle](./16-lifecycle.md) · Deep dive: [files](../files.md)
+Next: [16 · Lifecycle](./16-lifecycle.md) · Deep dive: [files](../build/files.md)

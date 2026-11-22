@@ -6,12 +6,12 @@ The published surface is the globally installed `aponia` binary (`bun add --glob
 
 ## Commands
 
-- [aponia new <name>](../../docs/cli.md): creates a project from the application template, and also installs its dependencies unless `--skip-install` is passed; `--dry-run` reports the planned files without writing.
-- [aponia generate <schematic> <name>](../../docs/cli.md): generates one schematic, registering it in the nearest Aponia module unless `--skip-import` is passed.
-- [Schematic catalog](../../docs/cli.md): application, library, class, controller, decorator, filter, gateway, guard, interface, interceptor, middleware, module, pipe, provider, resolver, resource, and service, with Nest aliases.
-- [aponia g resource <name> --type rest](../../docs/cli.md): REST, GraphQL code-first, GraphQL schema-first, microservice, and WebSocket resource transports; a REST resource also emits validated create, update, and path-parameter models.
-- [aponia g gateway <name>](../../docs/cli.md): emits a `@WebSocketGateway()` provider, and a WebSocket CRUD resource emits the create, find-all, find-one, update, and remove message handlers.
-- [aponia --version, aponia --help](../../docs/cli.md): print the CLI version or the usage summary.
+- [aponia new <name>](../../docs/tooling/cli.md): creates a project from the application template, and also installs its dependencies unless `--skip-install` is passed; `--dry-run` reports the planned files without writing.
+- [aponia generate <schematic> <name>](../../docs/tooling/cli.md): generates one schematic, registering it in the nearest Aponia module unless `--skip-import` is passed.
+- [Schematic catalog](../../docs/tooling/cli.md): application, library, class, controller, decorator, filter, gateway, guard, interface, interceptor, middleware, module, pipe, provider, resolver, resource, and service, with Nest aliases.
+- [aponia g resource <name> --type rest](../../docs/tooling/cli.md): REST, GraphQL code-first, GraphQL schema-first, microservice, and WebSocket resource transports; a REST resource also emits validated create, update, and path-parameter models.
+- [aponia g gateway <name>](../../docs/tooling/cli.md): emits a `@WebSocketGateway()` provider, and a WebSocket CRUD resource emits the create, find-all, find-one, update, and remove message handlers.
+- [aponia --version, aponia --help](../../docs/tooling/cli.md): print the CLI version or the usage summary.
 
 ## What this package exports
 
@@ -32,6 +32,6 @@ The `aponia` binary is the normal entry point. The same behavior is available pr
 ## Documentation
 
 - [Package README](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/cli/README.md): the command examples and the schematic catalog.
-- [Aponia CLI](../../docs/cli.md): the complete generator catalog, aliases, and options.
+- [Aponia CLI](../../docs/tooling/cli.md): the complete generator catalog, aliases, and options.
 - [Install and generate](../../docs/learn/02-install-and-generate.md): how to start a project and what the generator produces.
-- [Published packages](../../docs/packages.md): the npm catalog and install commands.
+- [Published packages](../../docs/reference/packages.md): the npm catalog and install commands.

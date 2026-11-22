@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from "bun:test";
-import { mkdir, mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readlink, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -24,7 +24,7 @@ afterEach(async () => {
 });
 
 const expectedPrimaryFiles: Readonly<
-  Record<Exclude<GenerateSchematic, "app" | "library">, string>
+  Record<Exclude<GenerateSchematic, "app" | "library" | "plugin">, string>
 > = {
   class: "src/sample.ts",
   controller: "src/sample/sample.controller.ts",
@@ -47,6 +47,7 @@ test("supports the complete Nest generate schematic catalog and aliases", () => 
   expect(schematicNames).toEqual([
     "app",
     "library",
+    "plugin",
     "class",
     "controller",
     "decorator",
@@ -190,7 +191,7 @@ test("generates resolvable guard, interceptor, and filter scaffolds", async () =
 
 test("generates every component and resource schematic", async () => {
   for (const schematic of schematicNames) {
-    if (schematic === "app" || schematic === "library") continue;
+    if (schematic === "app" || schematic === "library" || schematic === "plugin") continue;
 
     const projectRoot = await createProjectRoot(`aponia-${schematic}-`);
     const result = await generateSchematic({
@@ -323,11 +324,14 @@ test("generates a publishable library with exports, tests, and a library manifes
   expect(libraryManifest.provides.map((entry) => entry.token)).toEqual([
     "WidgetsModule",
     "WidgetsService",
+    "WIDGETS_OPTIONS",
   ]);
 
   for (const file of [
     "README.md",
     "AGENTS.md",
+    "CLAUDE.md",
+    "GEMINI.md",
     "llms.txt",
     "tsconfig.json",
     "tsconfig.build.json",
@@ -337,6 +341,8 @@ test("generates a publishable library with exports, tests, and a library manifes
   ]) {
     expect(await Bun.file(join(directory, file)).exists(), file).toBe(true);
   }
+  expect(await readlink(join(directory, "CLAUDE.md"))).toBe("AGENTS.md");
+  expect(await readlink(join(directory, "GEMINI.md"))).toBe("AGENTS.md");
 });
 
 test("registers controllers, providers, and feature modules in the nearest module", async () => {

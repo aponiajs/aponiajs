@@ -2,17 +2,10 @@ import { AponiaError, type ModuleDefinition } from "@aponiajs/common";
 import type { Elysia } from "elysia";
 import { collectClaimedElysiaRoutes } from "../modules/route-uniqueness.ts";
 import { registerNativeRoute } from "../routing/native-route.ts";
-import type { AponiaHealthOptions, AponiaHealthStatus } from "./application-health.types.ts";
+import { answerHealthProbe, type ApplicationReadiness } from "@aponiajs/platform-core";
+import type { AponiaHealthOptions } from "./application-health.types.ts";
 
-/**
- * The media type the health-check draft defines, which is the only thing that
- * distinguishes a probe's answer from any other JSON document an orchestrator
- * might be polling.
- */
-const healthContentType = "application/health+json";
-
-/** The one member the draft requires, and the only one this platform sends. */
-const statusMember = "status";
+export { ApplicationReadiness } from "@aponiajs/platform-core";
 
 const defaultLivenessPath = "/health/live";
 const defaultReadinessPath = "/health/ready";
@@ -33,46 +26,6 @@ interface HealthProbe {
   readonly kind: HealthProbeKind;
   readonly method: "GET";
   readonly path: string;
-}
-
-/**
- * The one fact a readiness probe reports.
- *
- * It is the boot's own rather than a provider's, because the shutdown plan
- * already runs inside the boot and the probes are mounted beside it: a token
- * would put a mutable lifecycle flag in reach of every route, and what a probe
- * answers is not an application's to set.
- *
- * Only readiness reads it. Liveness answers from the fact that the process
- * answered at all, which is what keeps an orchestrator from restarting an
- * application that is busy draining — the mistake that makes a graceful stop
- * impossible.
- *
- * @internal
- */
-export class ApplicationReadiness {
-  #ready: boolean;
-
-  /**
-   * A boot that has just mounted its probes is ready by definition: the flag
-   * describes an application that has begun to stop, and only one call moves it.
-   */
-  constructor() {
-    this.#ready = true;
-  }
-
-  /**
-   * Flips the probe to `fail`. The shutdown plan calls this before its first
-   * hook, so a request that arrives while the application is stopping is told to
-   * go elsewhere rather than being answered by a half-torn-down graph.
-   */
-  markShuttingDown(): void {
-    this.#ready = false;
-  }
-
-  isReady(): boolean {
-    return this.#ready;
-  }
 }
 
 /**
@@ -156,31 +109,10 @@ export function mountHealthProbes(
       application,
       probe.method,
       probe.path,
-      () => answerProbe(probe.kind, readiness),
+      () => answerHealthProbe(probe.kind, readiness),
       undefined,
     );
   }
-}
-
-/**
- * The answer one probe gives.
- *
- * `no-store` is stated rather than left to a default, because a cached probe
- * answer is a stale one: an intermediary that replayed a `pass` from before the
- * application began to stop is exactly the dropped request the readiness flip
- * exists to prevent.
- */
-function answerProbe(kind: HealthProbeKind, readiness: ApplicationReadiness): Response {
-  const ready = kind === "liveness" || readiness.isReady();
-  const status: AponiaHealthStatus = ready ? "pass" : "fail";
-
-  return new Response(JSON.stringify(Object.freeze({ [statusMember]: status })), {
-    status: ready ? 200 : 503,
-    headers: {
-      "content-type": healthContentType,
-      "cache-control": "no-store",
-    },
-  });
 }
 
 /**

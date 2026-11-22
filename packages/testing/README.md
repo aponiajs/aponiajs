@@ -53,7 +53,7 @@ test layout, and knows nothing about component testing.
 A reader who wants none of this should keep using `@aponiajs/platform-elysia`
 directly: `AponiaFactory.create(AppModule, { logger: false })` plus
 `application.handle(...)` is the whole of the headline path, and
-[Testing applications](../../docs/testing.md) shows it without this package.
+[Testing applications](../../docs/build/testing.md) shows it without this package.
 
 ## Booting an application
 
@@ -113,7 +113,7 @@ expect(await service.findAll()).toEqual([]);
 
 `moduleRef` provides:
 
-- `.get(token)`: resolves a provider or controller synchronously from the test container.
+- `.get(token)`: resolves a provider synchronously from the test container. A controller is not a provider, so `get(SomeController)` raises `MISSING_PROVIDER`.
 - `.resolve(token, context?)`: resolves a provider asynchronously, including scoped providers.
 - `.createAponiaApplication(options?)`: boots a full `AponiaApplication` from this testing module with all overrides intact.
 - `.close()`: runs lifecycle teardown hooks (`onModuleDestroy`).
@@ -227,7 +227,7 @@ Nothing else in this package opens a port.
 
 ## Links
 
-- [Testing applications](../../docs/testing.md)
-- [Lifecycle](../../docs/lifecycle.md)
-- [Dependency injection](../../docs/dependency-injection.md)
-- [Published packages](../../docs/packages.md)
+- [Testing applications](../../docs/build/testing.md)
+- [Lifecycle](../../docs/build/lifecycle.md)
+- [Dependency injection](../../docs/build/dependency-injection.md)
+- [Published packages](../../docs/reference/packages.md)

@@ -36,6 +36,9 @@ runtime boundary it describes.
   `outputSchema` is published only when the tool declares it.
 - **Errors are JSON-RPC codes, not AponiaError.** Keep the closed numeric set:
   `-32700`, `-32600`, `-32601`, `-32602`, `-32603`.
+- **Tool dispatch has an authorization boundary.** The HTTP transport requires
+  JSON, refuses an unlisted Origin, and exposes `authorize`; do not describe a
+  bare `createStatelessHttpHandler(server)` mount as production-ready.
 - **Capabilities follow the registries.** `resources` and `prompts` appear in
   `initialize` and `server/discover` only when that registry holds an entry;
   `tools` is always advertised. A failed resource read or prompt build answers

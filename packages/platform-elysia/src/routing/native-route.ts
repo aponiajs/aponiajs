@@ -7,7 +7,7 @@ import type { ElysiaRouteHook } from "./route-compiler.types.ts";
  *
  * Elysia 2 registers routes with `route(method, path, hook, handler)`, so a
  * version that moves the API lands here instead of across the route compiler.
- * See `docs/elysia-compatibility.md`.
+ * See `docs/platforms/elysia-compatibility.md`.
  *
  * The guard exists because a mismatched pair otherwise fails as a bare
  * `TypeError` from inside a compiled dependency, which names neither AponiaJS

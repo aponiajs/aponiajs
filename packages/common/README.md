@@ -22,7 +22,7 @@ include the five provider lifecycle contracts — `OnModuleInit`,
 `OnApplicationBootstrap`, `BeforeApplicationShutdown`, `OnModuleDestroy`, and
 `OnApplicationShutdown` — which a provider implements by declaring the method;
 the platform reads that method from the instance, never the type, so
-`implements` is optional ([lifecycle guide](../../docs/lifecycle.md)). This package does
+`implements` is optional ([lifecycle guide](../../docs/build/lifecycle.md)). This package does
 not depend on Elysia, Bun runtime APIs, or another Aponia package.
 
 ```ts
@@ -61,7 +61,7 @@ Constructor dependencies follow the constructor that actually runs. A subclass
 that declares no constructor of its own resolves the parent's reflected
 parameter types and `@Inject()` tokens; one that declares its own constructor
 reads its own metadata. The
-[dependency injection guide](../../docs/dependency-injection.md) covers token
+[dependency injection guide](../../docs/build/dependency-injection.md) covers token
 and visibility rules in full.
 
 ## Route validation
@@ -216,7 +216,7 @@ the request's `RouteContext`.
 This package records the declarations and publishes the contracts; the platform
 resolves each enhancer as a provider while the controller mounts, so an enhancer
 that is not declared fails the boot with `MISSING_PROVIDER`. The
-[enhancers guide](../../docs/enhancers.md) covers precedence, resolution, and the
+[enhancers guide](../../docs/build/enhancers.md) covers precedence, resolution, and the
 default filter.
 
 ## Pipes and parameter transformation
@@ -340,8 +340,8 @@ class ChatModule {}
 `@ConnectedSocket()` injects the platform socket, `@WebSocketServer()` injects
 the native server, and `OnGatewayInit`, `OnGatewayConnection`, and
 `OnGatewayDisconnect` describe lifecycle methods without importing a platform.
-The [WebSocket guide](../../docs/websockets.md) documents the wire protocol and
+The [WebSocket guide](../../docs/platforms/websockets.md) documents the wire protocol and
 Elysia runtime types.
 
 [npm package](https://www.npmjs.com/package/@aponiajs/common) ·
-[complete package catalog](../../docs/packages.md)
+[complete package catalog](../../docs/reference/packages.md)

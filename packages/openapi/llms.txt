@@ -53,5 +53,5 @@ Elysia mounts a *named* plugin once, and this plugin is named. Two registrations
 
 - [Package README](./README.md)
 - [`@elysia/openapi` on npm](https://www.npmjs.com/package/@elysia/openapi)
-- [Plugin package authoring](../../docs/plugin-packages.md)
-- [Published packages](../../docs/packages.md)
+- [Plugin package authoring](../../docs/tooling/plugin-packages.md)
+- [Published packages](../../docs/reference/packages.md)

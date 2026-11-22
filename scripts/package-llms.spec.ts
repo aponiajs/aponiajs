@@ -140,8 +140,8 @@ function readLlmsDocument(workspacePackage: WorkspacePackage): Promise<string> {
 
 /**
  * Accepts an `https://` link, or a path inside this repository that exists when
- * resolved either from the package root (`../../docs/cli.md`) or from the
- * repository root (`docs/cli.md`). Every other absolute URL, including a plain
+ * resolved either from the package root (`../../docs/tooling/cli.md`) or from the
+ * repository root (`docs/tooling/cli.md`). Every other absolute URL, including a plain
  * `http://` one, is rejected.
  *
  * A link into this repository's own source is checked further: the path behind

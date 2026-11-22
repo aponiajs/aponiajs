@@ -70,6 +70,11 @@ export type {
 } from "./enhancers/enhancer.types.ts";
 export { AponiaError } from "./errors/aponia-error.ts";
 export type { AponiaErrorCode } from "./errors/aponia-error.types.ts";
+export {
+  registerAsyncContextExit,
+  runOutsideAsyncContexts,
+} from "./async-context/async-context.ts";
+export type { AsyncContextExit } from "./async-context/async-context.ts";
 export type {
   BeforeApplicationShutdown,
   OnApplicationBootstrap,

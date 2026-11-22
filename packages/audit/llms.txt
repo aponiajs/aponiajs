@@ -19,6 +19,6 @@
 
 ## Documentation
 
-- [Package README](README.md)
-- [Audit guide](../../docs/audit.md)
+- [Package README](./README.md)
+- [Audit guide](../../docs/services/audit.md)
 - [npm](https://www.npmjs.com/package/@aponiajs/audit)

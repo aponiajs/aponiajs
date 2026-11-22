@@ -70,5 +70,5 @@ A registration is a `DynamicModule`, not a `@Module()` class the build can read 
 
 - [Package README](./README.md)
 - [`@elysia/opentelemetry` on npm](https://www.npmjs.com/package/@elysia/opentelemetry)
-- [Plugin package authoring](../../docs/plugin-packages.md)
-- [Published packages](../../docs/packages.md)
+- [Plugin package authoring](../../docs/tooling/plugin-packages.md)
+- [Published packages](../../docs/reference/packages.md)

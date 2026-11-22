@@ -156,6 +156,32 @@ test.serial("the option path mounts the surface the module path mounts", async (
   }
 });
 
+test.serial("the option path refuses a request the authorize predicate rejects", async () => {
+  const application = await AponiaFactory.create(PluginOptionsModule, {
+    logger: false,
+    plugins: [
+      devtoolsPlugin({
+        enabled: true,
+        authorize: (request) => request.headers.get("authorization") === "Bearer dev",
+      }),
+    ],
+  });
+
+  try {
+    const refused = await ask(application, "/__devtools/meta");
+    expect(refused.status).toBe(401);
+
+    const allowed = await application.handle(
+      new Request("http://localhost/__devtools/meta", {
+        headers: { authorization: "Bearer dev" },
+      }),
+    );
+    expect(allowed.status).toBe(200);
+  } finally {
+    await application.close();
+  }
+});
+
 test.serial("the option path's stream records the lines the boot wrote", async () => {
   const restoreOutput = captureOutput();
   const untapped = loggedMethod(reportLogger);

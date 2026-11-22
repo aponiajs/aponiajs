@@ -5,7 +5,7 @@ import {
   type ExecutionContext,
   type RouteContext,
 } from "@aponiajs/common";
-import { httpErrors, RequestContextService } from "@aponiajs/platform-elysia";
+import { httpErrors, RequestContextService } from "@aponiajs/platform-core";
 import { TenantService } from "../service/tenant.service.ts";
 import { TENANT_OPTIONS } from "../module/tenancy.constants.ts";
 import type { ResolvedTenantOptions } from "../module/tenancy.types.ts";

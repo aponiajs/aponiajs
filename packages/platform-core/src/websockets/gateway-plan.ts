@@ -1,4 +1,5 @@
 import {
+  getEnhancerMetadata,
   getWebSocketGatewayMetadata,
   getWebSocketMessageMetadata,
   getWebSocketParameterMetadata,
@@ -18,18 +19,24 @@ export function compileGatewayPlan(gateway: ClassToken<unknown>): GatewayPlan | 
     return undefined;
   }
 
-  const handlers = getWebSocketMessageMetadata(gateway).map((message) =>
-    Object.freeze({
+  const handlers = getWebSocketMessageMetadata(gateway).map((message) => {
+    const filters = getEnhancerMetadata(gateway, message.propertyKey).filters;
+    return Object.freeze({
       event: message.event,
       propertyKey: message.propertyKey,
       parameters: getWebSocketParameterMetadata(gateway, message.propertyKey),
-    }),
-  );
+      ...(message.schema === undefined ? {} : { schema: message.schema }),
+      ...(filters.length === 0 ? {} : { filters }),
+    });
+  });
+
+  const filters = getEnhancerMetadata(gateway).filters;
 
   return Object.freeze({
     path: metadata.path,
     handlers: Object.freeze(handlers),
     guards: Object.freeze(metadata.guards ?? []),
+    ...(filters.length === 0 ? {} : { filters }),
     ...(metadata.maxPayloadLength === undefined
       ? {}
       : { maxPayloadLength: metadata.maxPayloadLength }),

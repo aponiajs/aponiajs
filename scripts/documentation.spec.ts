@@ -4,8 +4,8 @@ import { resolve } from "node:path";
 
 const cliDocumentation = [
   "README.md",
-  "docs/cli.md",
-  "docs/packages.md",
+  "docs/tooling/cli.md",
+  "docs/reference/packages.md",
   "packages/cli/README.md",
 ] as const;
 
@@ -41,8 +41,8 @@ const adapterPackages = ["cron", "cors", "graphql", "openapi", "opentelemetry"] 
  * snippet. A snippet must show where the application came from.
  */
 const applicationAccessAllowlist = new Map([
-  ["docs/cli.md", "the reference describes the generated main.ts in prose"],
-  ["docs/plugin-packages.md", "the authoring guide discusses the read-back API"],
+  ["docs/tooling/cli.md", "the reference describes the generated main.ts in prose"],
+  ["docs/tooling/plugin-packages.md", "the authoring guide discusses the read-back API"],
 ]);
 
 describe("CLI documentation", () => {
@@ -82,7 +82,7 @@ describe("framework-first package documentation", () => {
   test("an application access snippet shows how the application was created", async () => {
     const repositoryRoot = resolve(import.meta.dir, "..");
     const documents = new Set<string>();
-    for (const pattern of ["packages/*/README.md", "docs/*.md"]) {
+    for (const pattern of ["packages/*/README.md", "docs/**/*.md"]) {
       for await (const path of new Glob(pattern).scan({ cwd: repositoryRoot, onlyFiles: true })) {
         documents.add(path);
       }

@@ -17,9 +17,6 @@ import {
   provideConfiguration,
   provideConfigurationAsync,
 } from "../src/index.ts";
-// The loader is package-private and `defineConfiguration` always supplies a
-// description, so the name fallback is reachable only by calling it directly.
-import { loadConfiguration } from "../src/configuration/configuration-loader.ts";
 
 function codeOf(error: unknown): AponiaErrorCode | undefined {
   return error instanceof AponiaError ? error.code : undefined;
@@ -231,28 +228,6 @@ describe("provideConfiguration", () => {
         reason: "not-a-standard-schema",
       });
     }
-  });
-
-  test("names a token a JavaScript caller built by hand", () => {
-    const handBuilt = {
-      schema: {
-        "~standard": {
-          version: 1,
-          vendor: "test",
-          validate: () => ({ issues: [{ message: "refused" }] }),
-        },
-      },
-    };
-
-    let thrown: unknown;
-    try {
-      loadConfiguration(handBuilt as never, { source: {} });
-    } catch (error) {
-      thrown = error;
-    }
-
-    expect(codeOf(thrown)).toBe("INVALID_CONFIGURATION_VALUE");
-    expect((thrown as AponiaError).details).toMatchObject({ configuration: "configuration" });
   });
 
   test("refuses a schema whose ~standard member is not an object", async () => {

@@ -13,6 +13,13 @@ export interface QueueServiceOptions {
   readonly maxBackoffMs?: number;
   /** How many jobs may wait at once; defaults to 1000. */
   readonly maxJobs?: number;
+  /**
+   * How many failed jobs may be retained; defaults to `maxJobs`.
+   *
+   * Dead letters keep their payloads, so this is a memory bound rather than a
+   * retention policy. The oldest dead letter is evicted when the map is full.
+   */
+  readonly maxDeadLetters?: number;
   /** How long one attempt may run; `0` means no limit and is the default. */
   readonly jobTimeoutMs?: number;
   /** Whether `enqueue` schedules draining itself; defaults to true. */
@@ -40,6 +47,7 @@ export interface ResolvedQueueServiceOptions {
   readonly backoffMs: number;
   readonly maxBackoffMs: number;
   readonly maxJobs: number;
+  readonly maxDeadLetters: number;
   readonly jobTimeoutMs: number;
   readonly autoStart: boolean;
   readonly now: () => number;

@@ -1,6 +1,6 @@
 # @aponiajs/h3
 
-> Delivery adapter that mounts an Aponia application inside H3.
+> Superseded by `@aponiajs/platform-h3`. Delivery adapter that mounts an Aponia application inside H3.
 
 ## What this package exports
 
@@ -14,6 +14,6 @@
 
 ## Documentation
 
-- [Package README](README.md)
-- [Deployment guide](../../docs/deployment.md)
+- [Package README](./README.md)
+- [Deployment guide](../../docs/operations/deployment.md)
 

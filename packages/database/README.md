@@ -136,6 +136,6 @@ DDL; drizzle-kit or hand-written SQL owns that.
 ## Documentation
 
 - [Agent surface](../../docs/agent/README.md)
-- [Database guide](../../docs/database.md)
-- [Published packages](../../docs/packages.md)
+- [Database guide](../../docs/services/database.md)
+- [Published packages](../../docs/reference/packages.md)
 - [npm](https://www.npmjs.com/package/@aponiajs/database)

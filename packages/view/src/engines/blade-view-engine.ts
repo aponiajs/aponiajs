@@ -1,5 +1,7 @@
 import type { ViewEngine } from "@aponiajs/common";
+import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
+import { escapeHtml } from "./escape-html.ts";
 
 /** Options for the Laravel-style Blade view engine. */
 export interface BladeViewEngineOptions {
@@ -13,6 +15,19 @@ export interface BladeViewEngineOptions {
 
 type Data = Record<string, unknown>;
 type Expression = (data: Data) => unknown;
+
+/**
+ * One render's deferred data values.
+ *
+ * Data is captured behind an opaque token and resolved once, after every
+ * template has composed its final string. The token contains none of Blade's
+ * delimiters, so a value can never be mistaken for template source on a later
+ * pass.
+ */
+interface RenderState {
+  capture(value: string): string;
+  resolve(output: string): string;
+}
 
 /**
  * A Laravel-style Blade template engine.
@@ -46,7 +61,16 @@ export class BladeViewEngine implements ViewEngine {
     data: Data,
     options?: { readonly layout?: string; readonly fragment?: boolean },
   ): Promise<string> {
-    return await this.#renderTemplate(template, { ...this.#shared, ...data }, options, 0);
+    const state = createRenderState();
+    const rendered = await this.#renderTemplate(
+      template,
+      { ...this.#shared, ...data },
+      options,
+      0,
+      undefined,
+      state,
+    );
+    return state.resolve(rendered);
   }
 
   async #renderTemplate(
@@ -55,13 +79,21 @@ export class BladeViewEngine implements ViewEngine {
     options: { readonly layout?: string; readonly fragment?: boolean } | undefined,
     depth: number,
     inheritedSections?: Map<string, string>,
+    state?: RenderState,
   ): Promise<string> {
     if (this.#active.has(template)) {
       throw new Error(`Blade template "${template}" includes itself.`);
     }
     this.#active.add(template);
     try {
-      return await this.#renderTemplateInner(template, data, options, depth, inheritedSections);
+      return await this.#renderTemplateInner(
+        template,
+        data,
+        options,
+        depth,
+        inheritedSections,
+        state ?? createRenderState(),
+      );
     } finally {
       this.#active.delete(template);
     }
@@ -72,7 +104,8 @@ export class BladeViewEngine implements ViewEngine {
     data: Data,
     options: { readonly layout?: string; readonly fragment?: boolean } | undefined,
     depth: number,
-    inheritedSections?: Map<string, string>,
+    inheritedSections: Map<string, string> | undefined,
+    state: RenderState,
   ): Promise<string> {
     if (depth > 32) {
       throw new Error("Blade template recursion exceeded the supported depth.");
@@ -86,8 +119,8 @@ export class BladeViewEngine implements ViewEngine {
     const layout = extendsMatch?.[1] ?? options?.layout;
     body = body.replace(/@extends\s*\(\s*['"][^'"]+['"]\s*\)/g, "");
 
-    body = await this.#extractSections(body, data, sections);
-    let rendered = await this.#renderSource(body, data, sections);
+    body = await this.#extractSections(body, data, sections, state);
+    let rendered = await this.#renderSource(body, data, sections, state);
 
     if (options?.fragment) {
       return sections.get("content") ?? rendered;
@@ -105,7 +138,14 @@ export class BladeViewEngine implements ViewEngine {
       }
       layoutData.sections = Object.fromEntries(sections);
       layoutData.content = sections.get("content") ?? rendered;
-      rendered = await this.#renderTemplate(layout, layoutData, undefined, depth + 1, sections);
+      rendered = await this.#renderTemplate(
+        layout,
+        layoutData,
+        undefined,
+        depth + 1,
+        sections,
+        state,
+      );
     }
 
     return rendered;
@@ -115,6 +155,7 @@ export class BladeViewEngine implements ViewEngine {
     source: string,
     data: Data,
     sections: Map<string, string>,
+    state: RenderState,
   ): Promise<string> {
     let result = source;
     const block = /@section\s*\(\s*['"]([^'"]+)['"]\s*\)([\s\S]*?)@endsection/g;
@@ -123,7 +164,10 @@ export class BladeViewEngine implements ViewEngine {
       replacements.push({ full: match[0], name: match[1]!, content: match[2] ?? "" });
     }
     for (const replacement of replacements) {
-      sections.set(replacement.name, await this.#renderSource(replacement.content, data, sections));
+      sections.set(
+        replacement.name,
+        await this.#renderSource(replacement.content, data, sections, state),
+      );
       result = result.replace(replacement.full, "");
     }
 
@@ -136,19 +180,29 @@ export class BladeViewEngine implements ViewEngine {
     return result;
   }
 
-  async #renderSource(source: string, data: Data, sections: Map<string, string>): Promise<string> {
+  async #renderSource(
+    source: string,
+    data: Data,
+    sections: Map<string, string>,
+    state: RenderState,
+  ): Promise<string> {
     let result = source;
 
-    result = await this.#renderBlocks(result, data, sections);
-    result = await this.#renderIncludes(result, data);
-    result = await this.#renderComponents(result, data, sections);
-    result = this.#renderYields(result, sections, data);
-    result = this.#renderEchoes(result, data);
+    result = await this.#renderBlocks(result, data, sections, state);
+    result = await this.#renderIncludes(result, data, state);
+    result = await this.#renderComponents(result, data, sections, state);
+    result = this.#renderYields(result, sections, data, state);
+    result = this.#renderEchoes(result, data, state);
 
     return result;
   }
 
-  async #renderBlocks(source: string, data: Data, sections: Map<string, string>): Promise<string> {
+  async #renderBlocks(
+    source: string,
+    data: Data,
+    sections: Map<string, string>,
+    state: RenderState,
+  ): Promise<string> {
     let result = source;
 
     result = await replaceAsync(
@@ -157,7 +211,7 @@ export class BladeViewEngine implements ViewEngine {
       async (_match, expression: string, inner: string) => {
         const [truthy, falsy] = splitElse(inner);
         const branch = this.#evaluate(expression.trim(), data) ? truthy : falsy;
-        return await this.#renderSource(branch, data, sections);
+        return await this.#renderSource(branch, data, sections, state);
       },
     );
 
@@ -166,7 +220,7 @@ export class BladeViewEngine implements ViewEngine {
       /@unless\s*\(([\s\S]*?)\)\s*([\s\S]*?)@endunless/g,
       async (_match, expression: string, inner: string) => {
         const branch = this.#evaluate(expression.trim(), data) ? "" : inner;
-        return await this.#renderSource(branch, data, sections);
+        return await this.#renderSource(branch, data, sections, state);
       },
     );
 
@@ -202,7 +256,7 @@ export class BladeViewEngine implements ViewEngine {
           if (keyName !== undefined) {
             scope[keyName] = key;
           }
-          output += await this.#renderSource(inner, scope, sections);
+          output += await this.#renderSource(inner, scope, sections, state);
         }
         return output;
       },
@@ -211,13 +265,20 @@ export class BladeViewEngine implements ViewEngine {
     return result;
   }
 
-  async #renderIncludes(source: string, data: Data): Promise<string> {
+  async #renderIncludes(source: string, data: Data, state: RenderState): Promise<string> {
     return await replaceAsync(
       source,
       /@include\s*\(\s*['"]([^'"]+)['"]\s*(?:,\s*([\s\S]*?))?\)/g,
       async (_match, name: string, expression: string | undefined) => {
         const extra = expression === undefined ? {} : this.#evaluateObject(expression, data);
-        return await this.#renderTemplate(name, { ...data, ...extra }, undefined, 0);
+        return await this.#renderTemplate(
+          name,
+          { ...data, ...extra },
+          undefined,
+          0,
+          undefined,
+          state,
+        );
       },
     );
   }
@@ -226,6 +287,7 @@ export class BladeViewEngine implements ViewEngine {
     source: string,
     data: Data,
     sections: Map<string, string>,
+    state: RenderState,
   ): Promise<string> {
     let result = source;
     let guard = 0;
@@ -238,39 +300,48 @@ export class BladeViewEngine implements ViewEngine {
         return result;
       }
       const [full, name, attrs, inner] = match;
-      const props = this.#parseAttributes(attrs ?? "", data);
-      const slot = inner === undefined ? "" : await this.#renderSource(inner, data, sections);
+      const props = this.#parseAttributes(attrs ?? "", data, state);
+      const slot =
+        inner === undefined ? "" : await this.#renderSource(inner, data, sections, state);
       const component = await this.#renderTemplate(
         `components/${name}`,
         { ...data, ...props, slot },
         undefined,
         0,
+        undefined,
+        state,
       );
-      result = result.replace(full, component);
+      result = result.replace(full, () => component);
     }
 
     throw new Error("Blade component nesting exceeded the supported depth.");
   }
 
-  #renderYields(source: string, sections: Map<string, string>, data: Data): string {
+  #renderYields(
+    source: string,
+    sections: Map<string, string>,
+    data: Data,
+    state: RenderState,
+  ): string {
     return source.replace(
       /@yield\s*\(\s*['"]([^'"]+)['"](?:\s*,\s*(['"])([\s\S]*?)\2)?\s*\)/g,
       (_match, name: string, _quote: string | undefined, fallback: string | undefined) =>
-        sections.get(name) ?? (fallback === undefined ? "" : this.#resolveString(fallback, data)),
+        sections.get(name) ??
+        (fallback === undefined ? "" : this.#resolveString(fallback, data, state)),
     );
   }
 
-  #renderEchoes(source: string, data: Data): string {
-    return source
-      .replace(/\{!!\s*([\s\S]*?)\s*!!\}/g, (_match, expression: string) =>
-        this.#stringify(this.#evaluate(expression.trim(), data)),
-      )
-      .replace(/\{\{\s*([\s\S]*?)\s*\}\}/g, (_match, expression: string) =>
-        escapeHtml(this.#stringify(this.#evaluate(expression.trim(), data))),
-      );
+  #renderEchoes(source: string, data: Data, state: RenderState): string {
+    let result = source.replace(/\{!!\s*([\s\S]*?)\s*!!\}/g, (_match, expression: string) =>
+      state.capture(this.#stringify(this.#evaluate(expression.trim(), data))),
+    );
+    result = result.replace(/\{\{\s*([\s\S]*?)\s*\}\}/g, (_match, expression: string) =>
+      state.capture(escapeHtml(this.#stringify(this.#evaluate(expression.trim(), data)))),
+    );
+    return result;
   }
 
-  #parseAttributes(source: string, data: Data): Data {
+  #parseAttributes(source: string, data: Data, state: RenderState): Data {
     const props: Data = {};
     const pattern = /(?<bound>:)?([A-Za-z_][A-Za-z0-9_-]*)(?:\s*=\s*"([^"]*)")?/g;
     for (const match of source.matchAll(pattern)) {
@@ -281,7 +352,7 @@ export class BladeViewEngine implements ViewEngine {
         props[name] = true;
         continue;
       }
-      props[name] = bound ? this.#evaluate(value, data) : this.#resolveString(value, data);
+      props[name] = bound ? this.#evaluate(value, data) : this.#resolveString(value, data, state);
     }
     return props;
   }
@@ -295,9 +366,9 @@ export class BladeViewEngine implements ViewEngine {
     return typeof value === "object" && value !== null ? (value as Data) : {};
   }
 
-  #resolveString(value: string, data: Data): string {
+  #resolveString(value: string, data: Data, state: RenderState): string {
     return value.replace(/\{\{\s*([\s\S]*?)\s*\}\}/g, (_match, expression: string) =>
-      this.#stringify(this.#evaluate(expression.trim(), data)),
+      state.capture(this.#stringify(this.#evaluate(expression.trim(), data))),
     );
   }
 
@@ -424,11 +495,42 @@ async function replaceAsync(
   return result;
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+/**
+ * Creates one render's deferred-value table.
+ *
+ * The token is random per render and contains no Blade delimiters, so a value
+ * that itself contains braces cannot be mistaken for template source.
+ */
+function createRenderState(): RenderState {
+  const nonce = randomUUID();
+  let sequence = 0;
+  const values = new Map<string, string>();
+  const tokenPattern = /%%aponia:([0-9a-f-]+):(\d+)%%/g;
+  return {
+    capture(value: string): string {
+      const token = `%%aponia:${nonce}:${sequence}%%`;
+      sequence += 1;
+      values.set(token, value);
+      return token;
+    },
+    resolve(output: string): string {
+      let current = output;
+      for (let pass = 0; pass <= values.size; pass += 1) {
+        let changed = false;
+        const next = current.replace(tokenPattern, (token) => {
+          const value = values.get(token);
+          if (value === undefined) {
+            return token;
+          }
+          changed = true;
+          return value;
+        });
+        if (!changed) {
+          return next;
+        }
+        current = next;
+      }
+      return current;
+    },
+  };
 }

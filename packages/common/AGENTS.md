@@ -25,6 +25,7 @@ tokens, providers, errors, and logging. Its only runtime dependency is
 | `enhancers/`     | Enhancer decorators, guard, interceptor, filter, and host contracts             |
 | `pipes/`         | Pipe contracts, `@UsePipes()`, and built-in parameter transformation pipes      |
 | `middleware/`    | Middleware contracts (`AponiaMiddleware`, `MiddlewareConsumer`, `AponiaModule`) |
+| `async-context/` | Registered async-context boundaries for background work                         |
 
 Runtime implementation and `*.types.ts` contracts stay beside each other in
 their owning domain. `src/index.ts` is the package's only public barrel.
@@ -39,6 +40,10 @@ their owning domain. `src/index.ts` is the package's only public barrel.
   schema produces needs the type-level `StaticDecode` mapper, which is imported
   as a type only: `typebox` stays a declared compile-time contract and never a
   runtime dependency.
+- Async-context boundaries are registered, not imported. A runtime that owns an
+  `AsyncLocalStorage` registers its `exit` through
+  `registerAsyncContextExit`; background work calls
+  `runOutsideAsyncContexts` so it cannot inherit a request identity.
 - Decorators only write `reflect-metadata` entries under
   `Symbol.for("aponia.*.metadata")`. They build no graph, no routes, no
   container. `@Injectable()` stays a no-op that exists for

@@ -19,7 +19,7 @@ generator.
 ## Invariants
 
 - An example is an application built _with_ the framework, so it follows the
-  application conventions in [`docs/architecture-and-style.md`](../docs/architecture-and-style.md),
+  application conventions in [`docs/build/architecture-and-style.md`](../docs/build/architecture-and-style.md),
   not the framework-repository layout.
 - Examples import workspace packages by package name, resolved through workspace
   links. Never reach into another package's `src/`.

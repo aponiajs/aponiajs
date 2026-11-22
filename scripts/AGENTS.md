@@ -14,24 +14,28 @@ and documentation guards that CI enforces.
 | `canary-version.ts`              | Stamping `X.Y.Z-canary.<stamp>.<sha>` in CI, never committed                |
 | `coverage-gate.ts`               | Aggregate LCOV floor and runtime-source completeness                        |
 | `public-api.ts`                  | The frozen public surface snapshot and its verify/freeze entries            |
-| `build-docs-site.ts`             | The static documentation site generated from `docs/`                        |
+| `build-docs-site.ts`             | The static documentation site: categories, heading ids, and redirects       |
 | `benchmark.ts`                   | The in-process request-path benchmark run by `bun run bench`                |
 | `sbom.ts`                        | The CycloneDX SBOM generated from `bun.lock` for a release                  |
 | `agent-guides.spec.ts`           | Guide inventory, aliases, and mandatory per-turn `RULES.md` loading         |
 | `ci-workflows.spec.ts`           | Complete CI, publish, packaging, and dependency-security command matrix     |
 | `cli-runtime-surface.spec.ts`    | The runtime surface `@aponiajs/cli` repeats by hand                         |
 | `source-layout.spec.ts`          | Package owner directories, barrels, type-only modules, local imports        |
+| `plugin-standard.spec.ts`        | The platform standard: a package imports a runtime only as a tracked debt   |
 | `toolchain-config.spec.ts`       | The decorator transpiler options and the single Bun version pin             |
 | `package-llms.spec.ts`           | The `llms.txt` every published package ships and lists in `files`           |
-| `published-packages.spec.ts`     | The npm publication record behind `docs/packages.md`                        |
-| `build-api-reference.ts`         | The generated `docs/api.md` index of every public export                    |
+| `published-packages.spec.ts`     | The npm publication record behind `docs/reference/packages.md`              |
+| `build-api-reference.ts`         | The generated `docs/reference/api.md` index of every public export          |
 | `api-reference.spec.ts`          | The generated page stays current with `docs/public-api.json`                |
 | `governance.spec.ts`             | Changelog, code of conduct, roadmap, and issue/pull-request templates       |
 | `retired-literals.spec.ts`       | Literals a published surface may no longer state                            |
 | `documentation-versions.spec.ts` | Release stamps in the published documents                                   |
 | `api-docs.spec.ts`               | JSDoc completeness over every package barrel the API reference builds from  |
 | `*.spec.ts`                      | Guard tests over the above and over documentation wording                   |
-| `docs-site.spec.ts`              | Page coverage, navigation, and link rewriting of the generated site         |
+| `docs-site.spec.ts`              | Page coverage, navigation groups, redirects, anchors, and link rewriting    |
+| `docs-links.spec.ts`             | Relative links, internal anchors, blob links, and the redirect map          |
+| `docs-index.spec.ts`             | One root index, one README per category, and reachability of every page     |
+| `docs-claims.spec.ts`            | Package counts, publish order, npm split, and the library sample version    |
 | `public-api.spec.ts`             | Barrel parsing, difference reporting, and the committed snapshot            |
 | `workflow-actions.spec.ts`       | Third-party workflow actions pinned to commit SHAs                          |
 
@@ -60,12 +64,19 @@ and documentation guards that CI enforces.
   the file exists. The append replaces a read-then-rewrite, so a path whose
   directory is missing or unwritable still fails instead of being ignored.
 - `build-docs-site.ts` owns the published site and nothing else: it reads the
-  repository Markdown, rewrites links that stay inside `docs/`, and points a
-  link that leaves it at the repository blob URL. It never invents content, so
-  a page missing from the site means a page missing from `docs/`. The generated
-  output is `docs-site/`, which is ignored by Git.
+  repository Markdown, rewrites links that stay inside `docs/`, points a link
+  that leaves it at the repository blob URL, renders GitHub-compatible heading
+  ids, and serves `docs/redirects.json` as static redirects outside navigation
+  and search. It never invents content, so a page missing from the site means a
+  page missing from `docs/`. The generated output is `docs-site/`, which is
+  ignored by Git.
+- `docs-links.spec.ts` and `docs-index.spec.ts` hold the structure the site
+  renders: a link or anchor that works in the guard works in the site, and a
+  page no index links is a failure. `docs-claims.spec.ts` derives the package
+  counts, publish order, and library sample from the workspace rather than a
+  second hand-maintained list.
 - Guard specs make documentation part of the test suite. A wording edit in
-  `README.md`, `docs/cli.md`, `docs/packages.md`, or `packages/cli/README.md`
+  `README.md`, `docs/tooling/cli.md`, `docs/reference/packages.md`, or `packages/cli/README.md`
   can fail `bun test`.
 - `agent-guides.spec.ts` prevents removal of the root guide's mandatory
   per-turn `RULES.md` loading sequence.

@@ -249,6 +249,10 @@ separate focused modules. `src/index.ts` is the only public barrel.
   which the source-layout guard then rejects and a `git add -A` will commit.
 - Generated applications follow Nest's flat starter layout; later resources
   belong in `src/<resource>/`.
+- Generated applications and packages write `AGENTS.md` as the real guide and
+  `CLAUDE.md` and `GEMINI.md` as relative symlinks to it. The alias list lives
+  once in `generation/file-writer.ts`; extend it there rather than adding a
+  second spelling.
 - The application starter registers the build plugin. `bun run build` runs
   `scripts/build.ts`, which bundles through `Bun.build` with
   `buildPlugin()`, so both generated modules are rewritten before the
@@ -377,7 +381,7 @@ separate focused modules. `src/index.ts` is the only public barrel.
   graph cannot reach fails the mount with `MISSING_PROVIDER`.
 - Documentation wording is guarded: `scripts/documentation.spec.ts` requires
   `bun add --global @aponiajs/cli` and forbids `bunx aponia` across `README.md`,
-  `docs/cli.md`, `docs/packages.md`, and this package's README.
+  `docs/tooling/cli.md`, `docs/reference/packages.md`, and this package's README.
 - `generation/controller-routes.ts` is pure source analysis: it parses a
   controller file with `ts-morph`, emits nothing, and returns frozen data in
   declaration order. It recognizes only decorators the same file imports from
@@ -440,6 +444,22 @@ separate focused modules. `src/index.ts` is the only public barrel.
   `files`, `publishConfig`, both test lanes, `aponia.library.json`, `llms.txt`,
   and `AGENTS.md`. `aponia library check` validates the package and library
   contracts without writing files.
+- `generatePlugin` shares that scaffold with `generateLibrary`; the package
+  kind, the `plugin` keyword, and one extra file differ. A plugin writes
+  `src/adapters/<name>.adapters.ts`, which owns the `providePlatformModule`
+  declaration: the supported platforms and the native mount each one needs. The
+  module source stays neutral, and the generated tests prove the declaration
+  resolves on every shipped platform through `compileRootModule` and
+  `resolvePlatformModules` without booting an HTTP runtime.
+- Both package kinds use the same Nest-style registration surface:
+  `forRoot(options)` and `forRootAsync({ imports, inject, useFactory })`
+  returning a `DynamicModule`. A plugin's platform support is the package's
+  declaration, so it does not change with the factory's value. Keep the two
+  emitters in `workspace-generators.ts` sharing one template builder rather
+  than forking a second scaffold.
+- `plugin` is a package schematic like `library`: it is not a component, it has
+  no module registration, and `--kind plugin` gives `aponia library new` the
+  standalone form. The flag is rejected with any other `library` action.
 - `src/contracts/framework-contract.ts` is the machine-readable framework
   contract `aponia manifest` prints. `scripts/framework-contract.spec.ts`
   guards it against the error union, metadata keys, published packages, route
@@ -448,8 +468,10 @@ separate focused modules. `src/index.ts` is the only public barrel.
   stdout protocol-only, and every tool is read-only: no write, shell, or network
   capability is exposed yet. `aponia_library_check` confines its path to the
   workspace root.
-- `initAgent` writes an Aponia marker block to `AGENTS.md` and selected client
-  skill files. It is idempotent and preserves user content outside the marker.
+- `initAgent` writes an Aponia marker block to `AGENTS.md`, creates
+  `CLAUDE.md` and `GEMINI.md` as relative symlinks to it when they are absent,
+  and writes selected client skill files. It is idempotent, preserves user
+  content outside the marker, and never replaces an existing alias file.
   `--allow-write` exposes plan/apply; `--allow-exec` exposes only the allowlisted
   verification scripts.
 - `src/library/catalog.ts` is the curated library catalog. Every `official`

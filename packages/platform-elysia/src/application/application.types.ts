@@ -7,7 +7,15 @@ import type {
 } from "@aponiajs/common";
 import type { AnyElysia, Elysia } from "elysia";
 import type { ElysiaConfig, EventScope } from "elysia/types";
-import type { AponiaModuleDescriptorArtifact } from "@aponiajs/platform-core";
+import type {
+  AponiaModuleDescriptorArtifact,
+  AponiaVersioningOptions,
+  CompressionOptions,
+  CorsOptions,
+  EtagOptions,
+  SecurityHeadersOptions,
+  StaticAssetsOptions,
+} from "@aponiajs/platform-core";
 import type { ElysiaPlugin } from "../plugins/plugin.types.ts";
 import type { AponiaInvokerArtifact } from "@aponiajs/platform-core";
 import type { AponiaHealthOptions } from "./application-health.types.ts";
@@ -57,6 +65,16 @@ export interface AponiaApplicationOptions {
    * OpenAPI document and introspection name the versioned path.
    */
   readonly versioning?: AponiaVersioningOptions;
+  /** Directories served beside the routes, before plugins, middleware, and guards. */
+  readonly staticAssets?: StaticAssetsOptions | readonly StaticAssetsOptions[];
+  /** Cross-origin policy; `true` allows every origin. */
+  readonly cors?: CorsOptions | boolean;
+  /** Security headers; `true` selects the framework defaults. */
+  readonly securityHeaders?: SecurityHeadersOptions | boolean;
+  /** Entity tags and `304` answers; `true` emits a weak tag. */
+  readonly etag?: EtagOptions | boolean;
+  /** Response compression; `true` selects the defaults. */
+  readonly compression?: CompressionOptions | boolean;
   /**
    * Transports that deliver messages to the decorated handlers this boot
    * compiled.
@@ -216,16 +234,14 @@ export interface AponiaApplicationOptions {
 }
 
 /** The version-negotiation options `AponiaFactory.create` accepts. */
-export interface AponiaVersioningOptions {
-  /** The strategy; defaults to `uri`. */
-  readonly type?: "uri" | "header" | "media-type";
-  /** The request header for `header`; defaults to `x-api-version`. */
-  readonly header?: string;
-  /** The `Accept` parameter for `media-type`; defaults to `version`. */
-  readonly parameter?: string;
-  /** The version used when a request states none. */
-  readonly defaultVersion?: string;
-}
+export type {
+  AponiaVersioningOptions,
+  CompressionOptions,
+  CorsOptions,
+  EtagOptions,
+  SecurityHeadersOptions,
+  StaticAssetsOptions,
+};
 
 /** The factory options plus the native configurator preserving Eden route types. */
 export interface ConfiguredAponiaApplicationOptions<

@@ -169,6 +169,23 @@ describe("readBody", () => {
       expect((error as HttpError).code).toBe("PAYLOAD_TOO_LARGE");
     }
   });
+
+  test("refuses a multipart body over the bound", async () => {
+    const form = new FormData();
+    form.set("file", new Blob(["0123456789"], { type: "text/plain" }), "file.txt");
+    try {
+      await readBody(
+        new Request("http://localhost/", {
+          method: "POST",
+          body: form,
+        }),
+        10,
+      );
+      throw new Error("Expected the body to be refused.");
+    } catch (error) {
+      expect((error as HttpError).code).toBe("PAYLOAD_TOO_LARGE");
+    }
+  });
 });
 
 describe("buildResponse", () => {

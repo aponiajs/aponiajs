@@ -240,10 +240,12 @@ function statesRetiredIdentifier(content: string, literal: string): boolean {
  * templates a build ships, the examples, and the tests that state what a surface
  * emits.
  *
- * `docs/superpowers/` is deliberately outside the set. A spec or a plan is the
- * record of a change, so it names the literal it retired on purpose. This guard
- * is inside `scripts/`, which is a covered surface, and it states one as its own
- * data, so it is skipped by name below rather than by sitting outside a pattern.
+ * `docs/superpowers/` never existed in this tree; every page under `docs/` is a
+ * published surface, and a page that deliberately names a retired literal is an
+ * exception here rather than a directory outside the scan.
+ * This guard is inside `scripts/`, which is a covered surface, and it states one
+ * as its own data, so it is skipped by name below rather than by sitting outside
+ * a pattern.
  *
  * Every pattern is resolved against the repository root rather than the process
  * working directory, so the scan covers the same set wherever it is run from
@@ -253,8 +255,7 @@ const publishedSurfaces = [
   "README.md",
   "AGENTS.md",
   "RULES.md",
-  "docs/*.md",
-  "docs/learn/*.md",
+  "docs/**/*.md",
   "examples/**/*.{ts,md,json}",
   "packages/*/README.md",
   "packages/*/llms.txt",
@@ -292,7 +293,7 @@ const requiredFiles: readonly string[] = [
   "AGENTS.md",
   "README.md",
   "RULES.md",
-  "docs/logging.md",
+  "docs/build/logging.md",
   "docs/learn/README.md",
   "examples/basic/src/main.ts",
   "packages/cli/e2e/generated-application.e2e.ts",

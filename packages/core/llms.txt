@@ -24,8 +24,8 @@ This package consumes frozen descriptors only. It never imports `reflect-metadat
 ## Documentation
 
 - [Package README](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/core/README.md): what the package owns and when to install it directly.
-- [Dependency injection](../../docs/dependency-injection.md): tokens, module visibility, providers, and the failure codes.
+- [Dependency injection](../../docs/build/dependency-injection.md): tokens, module visibility, providers, and the failure codes.
 - [Modules](../../docs/learn/03-modules.md): how code is grouped and what a module exposes.
 - [Providers and injection](../../docs/learn/04-providers-and-injection.md): how dependencies are declared and resolved.
 - [Errors](../../docs/learn/10-errors.md): which failures are raised, when, and how to assert on them.
-- [Published packages](../../docs/packages.md): the npm catalog and install commands.
+- [Published packages](../../docs/reference/packages.md): the npm catalog and install commands.

@@ -177,5 +177,5 @@ await application.listen(Number(Bun.env.PORT ?? 3000));
 ## Documentation
 
 - [Agent surface](../../docs/agent/README.md)
-- [Published packages](../../docs/packages.md)
+- [Published packages](../../docs/reference/packages.md)
 - [npm](https://www.npmjs.com/package/@aponiajs/auth)

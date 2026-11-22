@@ -154,7 +154,7 @@ test("register returns an inert module when disabled and a plugin module when en
   const enabled = DevtoolsModule.register({ enabled: true });
 
   expect(enabled.id).toBe("PluginModule[devtools]");
-  expect(enabled.providers).toHaveLength(1);
+  expect(enabled.providers).toHaveLength(3);
   expect(Object.isFrozen(enabled)).toBe(true);
 });
 

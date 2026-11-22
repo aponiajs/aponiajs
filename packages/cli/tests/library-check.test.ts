@@ -28,6 +28,21 @@ describe("aponia library check", () => {
     });
   });
 
+  test("parses the standalone plugin kind and rejects it elsewhere", () => {
+    expect(parseArguments(["library", "new", "widgets", "--kind", "plugin"])).toMatchObject({
+      command: "library",
+      action: "new",
+      name: "widgets",
+      kind: "plugin",
+    });
+    expect(() => parseArguments(["library", "new", "widgets", "--kind", "extension"])).toThrow(
+      'The library kind must be "module" or "plugin".',
+    );
+    expect(() => parseArguments(["library", "check", "libs/widgets", "--kind", "plugin"])).toThrow(
+      'Option "--kind" is only valid with "library new".',
+    );
+  });
+
   test("parses the publish action and its confirmation flags", () => {
     expect(
       parseArguments(["library", "publish", "libs/widgets", "--yes", "--tag", "beta"]),
@@ -91,6 +106,70 @@ describe("aponia library check", () => {
 
     expect(result.ok).toBe(true);
     expect(result.issues).toEqual([]);
+    const libraryManifest = (await Bun.file(
+      join(projectRoot, "libs/widgets/aponia.library.json"),
+    ).json()) as { readonly platforms?: readonly string[] };
+    expect(libraryManifest.platforms).toEqual(["elysia", "hono", "h3"]);
+  });
+
+  test("reports a run-time dependency on a platform package", async () => {
+    const projectRoot = await createProjectRoot("aponia-library-platform-deps-");
+    await generateSchematic({
+      command: "generate",
+      schematic: "library",
+      name: "widgets",
+      dryRun: false,
+      skipImport: false,
+      crud: false,
+      type: "rest",
+      publish: true,
+      skipInstall: true,
+      cwd: projectRoot,
+    });
+    const manifestPath = join(projectRoot, "libs/widgets/package.json");
+    const manifest = (await Bun.file(manifestPath).json()) as Record<string, unknown> & {
+      dependencies?: Record<string, string>;
+    };
+    await Bun.write(
+      manifestPath,
+      `${JSON.stringify({ ...manifest, dependencies: { elysia: "2.0.0-rc.4" } }, undefined, 2)}\n`,
+    );
+
+    const result = await checkLibrary({ cwd: projectRoot, path: "libs/widgets", publish: true });
+
+    expect(result.ok).toBe(false);
+    expect(result.issues).toContain(
+      "package.json must not depend on elysia at run time; declare it as a peerDependency",
+    );
+  });
+
+  test("reports a declared platform the framework does not ship", async () => {
+    const projectRoot = await createProjectRoot("aponia-library-platform-name-");
+    await generateSchematic({
+      command: "generate",
+      schematic: "library",
+      name: "widgets",
+      dryRun: false,
+      skipImport: false,
+      crud: false,
+      type: "rest",
+      publish: true,
+      skipInstall: true,
+      cwd: projectRoot,
+    });
+    const manifestPath = join(projectRoot, "libs/widgets/aponia.library.json");
+    const manifest = (await Bun.file(manifestPath).json()) as Record<string, unknown>;
+    await Bun.write(
+      manifestPath,
+      `${JSON.stringify({ ...manifest, platforms: ["elysia", "deno"] }, undefined, 2)}\n`,
+    );
+
+    const result = await checkLibrary({ cwd: projectRoot, path: "libs/widgets", publish: true });
+
+    expect(result.ok).toBe(false);
+    expect(result.issues).toContain(
+      "aponia.library.json platforms names an unknown platform: deno",
+    );
   });
 
   test("reports a missing package surface file", async () => {
@@ -167,6 +246,44 @@ describe("aponia library check", () => {
 
     expect(lines.some((line) => line.startsWith("CREATE"))).toBe(true);
     expect(await Bun.file(join(projectRoot, "widgets/package.json")).exists()).toBe(true);
+  });
+
+  test("creates a standalone plugin through the CLI library action", async () => {
+    const projectRoot = await createProjectRoot("aponia-library-plugin-cli-");
+    const previous = process.cwd();
+    const lines: string[] = [];
+    const log = spyOn(console, "log").mockImplementation((message) => {
+      lines.push(String(message));
+    });
+    try {
+      process.chdir(projectRoot);
+      expect(
+        await runCli([
+          "library",
+          "new",
+          "widgets",
+          "--kind",
+          "plugin",
+          "--scope",
+          "acme",
+          "--skip-install",
+        ]),
+      ).toBe(0);
+    } finally {
+      process.chdir(previous);
+      log.mockRestore();
+    }
+
+    expect(lines.some((line) => line.startsWith("CREATE"))).toBe(true);
+    const directory = join(projectRoot, "widgets");
+    const manifest = (await Bun.file(join(directory, "aponia.library.json")).json()) as {
+      readonly kind: string;
+    };
+    expect(manifest.kind).toBe("plugin");
+    expect(await Bun.file(join(directory, "src/adapters/widgets.adapters.ts")).exists()).toBe(true);
+    expect(
+      (await checkLibrary({ cwd: projectRoot, path: "widgets", publish: true })).issues,
+    ).toEqual([]);
   });
 
   test("reports a failed publish check without running npm", async () => {
@@ -296,6 +413,93 @@ describe("aponia library check", () => {
       ]),
     );
   });
+});
+
+test("requires the Nest registration surface on a module library", async () => {
+  const projectRoot = await createProjectRoot("aponia-library-registration-");
+  await generateSchematic({
+    command: "generate",
+    schematic: "library",
+    name: "widgets",
+    dryRun: false,
+    skipImport: false,
+    crud: false,
+    type: "rest",
+    publish: true,
+    skipInstall: true,
+    cwd: projectRoot,
+  });
+  await Bun.write(
+    join(projectRoot, "libs/widgets/src/widgets.module.ts"),
+    'import { Module } from "@aponiajs/common";\n\n@Module({})\nexport class WidgetsModule {}\n',
+  );
+
+  const result = await checkLibrary({ cwd: projectRoot, path: "libs/widgets", publish: true });
+
+  expect(result.ok).toBe(false);
+  expect(result.issues).toContain(
+    "a module library must declare static forRoot(...) returning a DynamicModule",
+  );
+  expect(result.issues).toContain(
+    "a module library must declare static forRootAsync(...) returning a DynamicModule",
+  );
+});
+
+test("refuses a platform import in a module library's source", async () => {
+  const projectRoot = await createProjectRoot("aponia-library-neutrality-");
+  await generateSchematic({
+    command: "generate",
+    schematic: "library",
+    name: "widgets",
+    dryRun: false,
+    skipImport: false,
+    crud: false,
+    type: "rest",
+    publish: true,
+    skipInstall: true,
+    cwd: projectRoot,
+  });
+  const servicePath = join(projectRoot, "libs/widgets/src/widgets.service.ts");
+  const service = await Bun.file(servicePath).text();
+  await Bun.write(servicePath, `import { Elysia } from "elysia";\n${service}`);
+
+  const result = await checkLibrary({ cwd: projectRoot, path: "libs/widgets", publish: true });
+
+  expect(result.ok).toBe(false);
+  expect(result.issues.some((issue) => issue.includes("imports a platform at run time"))).toBe(
+    true,
+  );
+});
+
+test("allows an adapter library to import its platform", async () => {
+  const projectRoot = await createProjectRoot("aponia-library-adapter-");
+  await generateSchematic({
+    command: "generate",
+    schematic: "library",
+    name: "widgets",
+    dryRun: false,
+    skipImport: false,
+    crud: false,
+    type: "rest",
+    publish: true,
+    skipInstall: true,
+    cwd: projectRoot,
+  });
+  const manifestPath = join(projectRoot, "libs/widgets/aponia.library.json");
+  const manifest = (await Bun.file(manifestPath).json()) as Record<string, unknown>;
+  await Bun.write(
+    manifestPath,
+    `${JSON.stringify({ ...manifest, kind: "adapter" }, undefined, 2)}\n`,
+  );
+  const servicePath = join(projectRoot, "libs/widgets/src/widgets.service.ts");
+  const service = await Bun.file(servicePath).text();
+  await Bun.write(servicePath, `import { Elysia } from "elysia";\n${service}`);
+
+  const result = await checkLibrary({ cwd: projectRoot, path: "libs/widgets", publish: true });
+
+  expect(result.issues.some((issue) => issue.includes("imports a platform at run time"))).toBe(
+    false,
+  );
 });
 
 async function createProjectRoot(prefix: string): Promise<string> {

@@ -3,8 +3,8 @@
 This roadmap states the work the project intends to do next, what this line has
 already shipped, and what it deliberately will not do. It is a plan, not a
 promise: an item ships only when its tests, documentation, and release gates
-pass. The per-package state is in [Feature Status](docs/feature-status.md); what
-npm serves today is in [Packages](docs/packages.md).
+pass. The per-package state is in [Feature Status](./docs/reference/feature-status.md); what
+npm serves today is in [Packages](./docs/reference/packages.md).
 
 ## Shipped in the 1.0.0-beta line
 
@@ -61,11 +61,54 @@ npm serves today is in [Packages](docs/packages.md).
 - Live Pub/Sub and Service Bus lanes; the other six adapters now have live
   lanes.
 
+## Shipped: independent platforms
+
+- Elysia, Hono, and H3 are independent platforms: each depends only on
+  `@aponiajs/common`, `@aponiajs/core`, `@aponiajs/platform-core`, and its own
+  runtime peer. `scripts/platform-independence.spec.ts` fails a platform that
+  imports or depends on another.
+- `@aponiajs/platform-nitro` is retired. Nitro owns its server, so
+  `@aponiajs/nitro` is the delivery adapter: boot on `@aponiajs/platform-h3` and
+  export the handler it builds.
+- One shared conformance contract runs the same behavioral cases on every
+  platform in both test lanes
+  (`packages/platform-core/tests/support/platform-contract.ts`).
+- Header and media-type version negotiation, the gateway payload-limit/schema/
+  filter/generator behavior, and the RFC 8187 `downloadFile` encoder are shared
+  in `@aponiajs/platform-core`, so every platform answers them the same way.
+
+## Next — cross-platform typed client
+
+- Generate a route map in `aponia build` and ship `@aponiajs/client` with an
+  Eden-like `treaty` surface. `@elysia/eden` stays the Elysia-native answer for
+  native and declared routes; decorator metadata cannot produce it.
+
+## Shipped: static assets and response policies
+
+- `staticAssets` serves directories on every platform through one shared path
+  rule and response shape; the host supplies only the file opener.
+- `cors`, `securityHeaders`, `etag`, and `compression` run at one request
+  boundary that both `handle` and `listen` use, so a real listener and a native
+  application answer alike. A CORS preflight is decided before routing.
+- The boot compiles them into one `RequestPipeline`; a host that serves through
+  its native fetch runs it too.
+
+## Next — capability adoption
+
+1. Rewrite `@aponiajs/compression`, `@aponiajs/cors`, and `@aponiajs/security`
+   as thin wrappers over the shared policies, then drop their
+   `platforms: ["elysia"]` declaration.
+2. An SSRF-safe proxy built on `@aponiajs/http`.
+3. Portable `handle(Request)` coverage on Workers/Deno/Node for Hono and H3.
+4. First-party module neutrality: `metrics`, `idempotency`, `session`,
+   `opentelemetry`, then `openapi`, `graphql`, `devtools`, `testing`.
+5. `@aponiajs/testing` boots any platform adapter.
+
 ## Shipped: HTTP platforms beyond Elysia
 
 The Hono, H3, and Nitro entry points are first-class platforms, not only
 delivery adapters. `@aponiajs/platform-core` holds the runtime-neutral kernel
-the platforms share, and `docs/platform-parity.md` states the deltas. WebSocket
+the platforms share, and `docs/platforms/platform-parity.md` states the deltas. WebSocket
 gateways run on every platform: Hono upgrades through `hono/bun`, H3 through
 `crossws` (mounted on the H3 application and on the Bun listener), and Nitro
 through the crossws server it runs. A custom host whose runtime states no

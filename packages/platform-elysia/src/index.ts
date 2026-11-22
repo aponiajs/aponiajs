@@ -15,6 +15,11 @@ export type {
 export type {
   AponiaApplicationOptions,
   AponiaVersioningOptions,
+  CompressionOptions,
+  CorsOptions,
+  EtagOptions,
+  SecurityHeadersOptions,
+  StaticAssetsOptions,
   AponiaListenOptions,
   ConfiguredAponiaApplicationOptions,
   RouteCompilationOptions,
@@ -89,8 +94,8 @@ export type {
   ResolveHttpErrorStatus,
 } from "@aponiajs/platform-core";
 export { PluginModule, definePlugin } from "./plugins/plugin-module.ts";
-export { createServicePlugin } from "./plugins/service-plugin.ts";
-export { createEnhancerPlugin } from "./plugins/enhancer-plugin.ts";
+export { createServicePlugin } from "@aponiajs/platform-core";
+export { createEnhancerPlugin } from "@aponiajs/platform-core";
 export { wrapElysiaPlugin } from "./plugins/elysia-bridge-plugin.ts";
 export type {
   AsyncPluginOptions,
@@ -98,6 +103,7 @@ export type {
   ElysiaBridgePluginModule,
   EnhancerPluginDefinition,
   EnhancerPluginModule,
+  PlatformSupportOptions,
   ServicePluginDefinition,
   ServicePluginModule,
 } from "./plugins/plugin-builder.types.ts";
@@ -123,9 +129,9 @@ export type {
 } from "./request-context/request-context.types.ts";
 export { createMiddlewareConsumer } from "@aponiajs/platform-core";
 export type { ResolvedMiddlewareConfig } from "@aponiajs/platform-core";
-export { AuthGuard } from "./controllers/auth-guard.ts";
-export { RolesGuard } from "./controllers/roles-guard.ts";
-export type { AuthGuardOptions, AuthenticatedUser } from "./controllers/security.types.ts";
+export { AuthGuard } from "@aponiajs/platform-core";
+export { RolesGuard } from "@aponiajs/platform-core";
+export type { AuthGuardOptions, AuthenticatedUser } from "@aponiajs/platform-core";
 export {
   compileModuleInMemory,
   COMPILED_DESCRIPTOR_SYMBOL,

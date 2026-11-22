@@ -1,6 +1,6 @@
 # @aponiajs/hono
 
-> Delivery adapter that mounts an Aponia application inside Hono.
+> Superseded by `@aponiajs/platform-hono`. Delivery adapter that mounts an Aponia application inside Hono.
 
 ## What this package exports
 
@@ -15,6 +15,6 @@
 
 ## Documentation
 
-- [Package README](README.md)
-- [Deployment guide](../../docs/deployment.md)
+- [Package README](./README.md)
+- [Deployment guide](../../docs/operations/deployment.md)
 

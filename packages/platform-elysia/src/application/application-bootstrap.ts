@@ -14,7 +14,6 @@ import {
   type EnhancerMetadata,
   type LoggerService,
   type MiddlewareConsumer,
-  type ModuleDefinition,
   type Token,
   type ViewEngine,
 } from "@aponiajs/common";
@@ -53,8 +52,12 @@ import {
 import { isModuleDefinition } from "../modules/module-compiler.ts";
 import type { AponiaRootModule } from "@aponiajs/platform-core";
 import { selectRootModuleDescriptor } from "@aponiajs/platform-core";
-import { getElysiaPlugin, isPluginModule } from "../plugins/plugin-module.ts";
-import { RequestContextService } from "../request-context/request-context.service.ts";
+import {
+  applyPlatformModules,
+  PLATFORM_ADAPTER_HOST,
+  REQUEST_CONTEXT_REGISTRATION,
+  type RequestContextRegistration,
+} from "@aponiajs/platform-core";
 import { selectInvokerArtifact } from "@aponiajs/platform-core";
 import type {
   ControllerHandlerFactory,
@@ -85,10 +88,14 @@ import type {
 import {
   attachApplicationShutdown,
   collectLifecycleCalls,
+  normalizeStaticAssets,
+  resolveHttpPolicies,
   type LifecycleCall,
 } from "@aponiajs/platform-core";
 import { LazyModuleLoader } from "./lazy-module-loader.ts";
 import { installVersionRouting } from "./versioning.ts";
+import { mountStaticAssets } from "../routing/static-assets.ts";
+import { installHttpPolicies } from "../routing/http-policy.ts";
 import {
   collectMessageHandlers,
   createMicroserviceHandlerTable,
@@ -142,32 +149,34 @@ export async function bootstrapAponiaApplication(
     ? "declared"
     : "decorated";
   const lazyModuleLoader = new LazyModuleLoader(logger);
+  // Created before the container so the running platform is injectable from the
+  // first provider: `configureNative` must return the instance it receives, so
+  // the identity this publishes is the one every request reaches.
+  const baseApplication = new Elysia({
+    ...options.elysia,
+    name: compiledRootModule.id,
+  });
   const container = createContainer(compiledRootModule, [
     provideValue(LOGGER, logger ?? NOOP_LOGGER),
     provideValue(LazyModuleLoader, lazyModuleLoader),
+    provideValue(
+      PLATFORM_ADAPTER_HOST,
+      Object.freeze({ platform: "elysia", nativeApplication: baseApplication }),
+    ),
     provideClass(Reflector, []),
   ]);
   // The root may import a module that imports `RequestContextModule` without
   // re-exporting the service — `AuthModule` and `TenantModule` do. Root
   // visibility alone would leave the ambient accessor unset, so a request-scoped
   // provider could not resolve even though the service exists in the graph.
-  const requestContextModule = locateRequestContextModule(container);
-  if (requestContextModule !== undefined) {
-    container.setRequestContextAccessor(() => {
-      try {
-        return container
-          .resolveModuleProvider(requestContextModule, RequestContextService)
-          .current();
-      } catch {
-        return undefined;
-      }
-    });
+  const requestContext = locateRequestContextRegistration(container);
+  if (requestContext !== undefined) {
+    container.setRequestContextAccessor(
+      () => requestContext.service.current(),
+      (context) => requestContext.service.isActive(context),
+    );
   }
   const webSocketGateways = compileWebSocketGateways(container.graph.modules);
-  const baseApplication = new Elysia({
-    ...options.elysia,
-    name: compiledRootModule.id,
-  });
   // Elysia 2 carries no WebSocket support in its core entrypoint: `.ws()` throws
   // while the router builds unless the `websocket` capability is mounted first.
   // It is mounted here, before the plugin and module passes, because a native
@@ -183,6 +192,26 @@ export async function bootstrapAponiaApplication(
       "INVALID_NATIVE_APPLICATION",
       "configureNative must return the Elysia application it receives.",
     );
+  }
+
+  // The neutral request-context registration is installed as Elysia's own
+  // request-phase hook, so the same module works on this platform and on the
+  // native kernel platforms.
+  if (requestContext !== undefined) {
+    nativeApplication.onRequest((rawContext: unknown) => {
+      const { request, set } = rawContext as {
+        readonly request: Request;
+        readonly set: { headers: Record<string, string> };
+      };
+      requestContext.enter(request, (name, value) => {
+        set.headers[name] = value;
+      });
+    });
+    baseApplication.onAfterResponse("global", (rawContext: unknown) => {
+      const { request } = rawContext as { readonly request: Request };
+      requestContext.release(request);
+      return undefined;
+    });
   }
 
   // The probes an application asked for are mounted here, before its own plugins
@@ -208,6 +237,22 @@ export async function bootstrapAponiaApplication(
     mountHealthProbes(nativeApplication, readiness, healthProbes);
   }
 
+  // Static files answer before plugins, middleware, and controllers: an asset
+  // is fetched without the application's credentials, so nothing the
+  // application declares may sit in front of it.
+  mountStaticAssets(nativeApplication, normalizeStaticAssets(options.staticAssets));
+  installHttpPolicies(
+    nativeApplication,
+    resolveHttpPolicies({
+      ...(options.cors === undefined ? {} : { cors: options.cors }),
+      ...(options.securityHeaders === undefined
+        ? {}
+        : { securityHeaders: options.securityHeaders }),
+      ...(options.etag === undefined ? {} : { etag: options.etag }),
+      ...(options.compression === undefined ? {} : { compression: options.compression }),
+    }),
+  );
+
   // The application's own plugins mount here, beside the module-graph pass and
   // for the same reason: a plugin contributes routes and request context, so it
   // is in place before any controller mounts beside it. They mount first
@@ -228,9 +273,6 @@ export async function bootstrapAponiaApplication(
 
   for (const module of container.graph.modules) {
     container.initializeModule(module);
-    if (isPluginModule(module)) {
-      nativeApplication.use(getElysiaPlugin(container, module));
-    }
     if (typeof module.configure === "function") {
       module.configure(middlewareConsumer);
     } else if (
@@ -251,6 +293,11 @@ export async function bootstrapAponiaApplication(
     }
     logger?.log(`${module.id} dependencies initialized`, "InstanceLoader");
   }
+
+  // Every package's declared platform is checked before the first mount, and
+  // the selected native mount runs before middleware and controllers, exactly
+  // where a plugin module's `use()` used to.
+  await applyPlatformModules(container, nativeApplication, "elysia");
 
   mountMiddleware(nativeApplication, getMiddlewareConfigs(), container, prefix);
 
@@ -596,7 +643,13 @@ export async function bootstrapAponiaApplication(
     logger,
   );
 
-  return Object.freeze({ nativeApplication, logger });
+  return Object.freeze({
+    nativeApplication,
+    logger,
+    ...(requestContext === undefined
+      ? {}
+      : { releaseRequest: (request: Request) => requestContext.release(request) }),
+  });
 }
 
 /**
@@ -785,7 +838,7 @@ function inferControllerPath(routes: readonly { readonly path: string }[]): stri
 }
 
 /**
- * Finds the module that owns `RequestContextService`.
+ * Finds the request-context registration a module graph holds.
  *
  * Root visibility is the normal path. When a root imports a package module that
  * imports the request-context module without re-exporting the service, the
@@ -793,17 +846,25 @@ function inferControllerPath(routes: readonly { readonly path: string }[]): stri
  * available for request-scoped providers. The first reachable owner wins, which
  * matches the one-registration contract `RequestContextModule.forRoot` states.
  */
-function locateRequestContextModule(
+function locateRequestContextRegistration(
   container: ReturnType<typeof createContainer>,
-): ModuleDefinition | undefined {
+): RequestContextRegistration | undefined {
   try {
-    return container.graph.locate(container.graph.root, RequestContextService).module;
+    const owner = container.graph.locate(container.graph.root, REQUEST_CONTEXT_REGISTRATION);
+    return container.resolveModuleProvider(
+      owner.module,
+      REQUEST_CONTEXT_REGISTRATION,
+    ) as RequestContextRegistration;
   } catch {
     for (const module of container.graph.modules) {
       try {
-        return container.graph.locate(module, RequestContextService).module;
+        container.graph.locate(module, REQUEST_CONTEXT_REGISTRATION);
+        return container.resolveModuleProvider(
+          module,
+          REQUEST_CONTEXT_REGISTRATION,
+        ) as RequestContextRegistration;
       } catch {
-        // This module cannot reach the service; keep looking.
+        // This module cannot reach the registration; keep looking.
       }
     }
     return undefined;

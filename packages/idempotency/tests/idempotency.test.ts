@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { AponiaError, Body, Controller, Get, Module, Post } from "@aponiajs/common";
+import { AponiaError, Body, Controller, Get, Headers, Module, Post } from "@aponiajs/common";
 import { AponiaFactory, type AponiaApplication } from "@aponiajs/platform-elysia";
 import { IdempotencyModule, MemoryIdempotencyStore, type IdempotencyStore } from "../src/index.ts";
 
@@ -152,6 +152,55 @@ describe("IdempotencyModule", () => {
     expect(conflict.status).toBe(409);
     expect(body.status).toBe(409);
     expect(calls).toBe(1);
+  });
+
+  test("binds the default scope to the caller's credential", async () => {
+    let calls = 0;
+
+    @Controller("orders")
+    class OrdersController {
+      @Post()
+      create(
+        @Body() body: { readonly id: number },
+        @Headers("authorization") authorization: string,
+      ): string {
+        calls += 1;
+        return `created:${body.id}:${authorization}`;
+      }
+    }
+
+    @Module({ imports: [IdempotencyModule.register()], controllers: [OrdersController] })
+    class AppModule {}
+
+    application = await AponiaFactory.create(AppModule, { logger: false });
+    const first = send("/orders", { id: 1 }, "order-1");
+    first.headers.set("authorization", "Bearer user-a");
+    const second = send("/orders", { id: 1 }, "order-1");
+    second.headers.set("authorization", "Bearer user-b");
+
+    expect(await (await application.handle(first)).text()).toBe("created:1:Bearer user-a");
+    expect(await (await application.handle(second)).text()).toBe("created:1:Bearer user-b");
+    expect(calls).toBe(2);
+  });
+
+  test("includes the query string in the request fingerprint", async () => {
+    @Controller("orders")
+    class OrdersController {
+      @Post()
+      create(@Body() body: { readonly id: number }): string {
+        return `created:${body.id}`;
+      }
+    }
+
+    @Module({ imports: [IdempotencyModule.register()], controllers: [OrdersController] })
+    class AppModule {}
+
+    application = await AponiaFactory.create(AppModule, { logger: false });
+    const first = await application.handle(send("/orders?tenant=a", { id: 1 }, "order-1"));
+    const second = await application.handle(send("/orders?tenant=b", { id: 1 }, "order-1"));
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(409);
   });
 
   test("refuses a covered request without a key when the registration requires one", async () => {

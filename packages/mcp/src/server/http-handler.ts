@@ -15,7 +15,36 @@ import type { McpServer } from "./mcp-server.ts";
  *   version in the `Mcp-Protocol-Version` header and, when it also states one
  *   in `params._meta`, both must agree.
  */
-export function createStatelessHttpHandler(server: McpServer) {
+export interface StatelessHttpHandlerOptions {
+  /** Authorizes one request; a false or throwing answer is a 401. */
+  readonly authorize?: (request: Request) => boolean | Promise<boolean>;
+  /**
+   * Browser origins allowed to call the endpoint.
+   *
+   * When stated, any request carrying a different Origin is refused. When
+   * omitted, a request carrying an Origin is refused, which keeps a browser
+   * from calling the endpoint without an explicit allowlist.
+   */
+  readonly allowedOrigins?: readonly string[];
+  /**
+   * Whether a POST must declare `application/json`.
+   *
+   * Defaults to true. The JSON content type requires a CORS preflight for a
+   * cross-origin browser request, which is the transport's CSRF boundary.
+   */
+  readonly requireJson?: boolean;
+}
+
+/**
+ * Creates the stateless HTTP transport for one MCP server.
+ *
+ * The POST branch requires JSON, refuses an unlisted Origin, and runs the
+ * optional `authorize` decision before it parses or dispatches a message.
+ */
+export function createStatelessHttpHandler(
+  server: McpServer,
+  options: StatelessHttpHandlerOptions = {},
+) {
   return async function handleHttpRequest(
     request: Request,
     parsedBody?: unknown,
@@ -39,6 +68,31 @@ export function createStatelessHttpHandler(server: McpServer) {
         status: 405,
         headers: { allow: "GET, POST" },
       });
+    }
+
+    const origin = request.headers.get("origin");
+    if (origin !== null) {
+      if (options.allowedOrigins === undefined || !options.allowedOrigins.includes(origin)) {
+        return new Response(null, { status: 403 });
+      }
+    }
+    if (options.authorize !== undefined) {
+      let allowed = false;
+      try {
+        allowed = await options.authorize(request);
+      } catch {
+        allowed = false;
+      }
+      if (!allowed) {
+        return new Response(null, { status: 401 });
+      }
+    }
+    if (
+      (options.requireJson ?? true) &&
+      parsedBody === undefined &&
+      !isJsonContentType(request.headers.get("content-type"))
+    ) {
+      return new Response(null, { status: 415 });
     }
 
     const headerVersion = request.headers.get(MCP_PROTOCOL_VERSION_HEADER);
@@ -86,6 +140,13 @@ export function createStatelessHttpHandler(server: McpServer) {
       headers: { "content-type": "application/json" },
     });
   };
+}
+
+function isJsonContentType(value: string | null): boolean {
+  if (value === null) {
+    return false;
+  }
+  return value.split(";")[0]?.trim().toLowerCase() === "application/json";
 }
 
 function protocolError(message: string): Response {

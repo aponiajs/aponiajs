@@ -13,6 +13,7 @@ const packageLayouts: readonly PackageLayout[] = [
     sourceRoot: "packages/common/src",
     files: ["index.ts"],
     directories: [
+      "async-context",
       "configuration",
       "controllers",
       "decorators",
@@ -39,6 +40,11 @@ const packageLayouts: readonly PackageLayout[] = [
     sourceRoot: "packages/cache/src",
     files: ["index.ts"],
     directories: ["module", "service", "store"],
+  },
+  {
+    sourceRoot: "packages/compiler/src",
+    files: ["index.ts"],
+    directories: ["borrow", "lifetime", "shared", "typestate"],
   },
   {
     sourceRoot: "packages/compression/src",
@@ -68,22 +74,17 @@ const packageLayouts: readonly PackageLayout[] = [
   {
     sourceRoot: "packages/session/src",
     files: ["index.ts"],
-    directories: ["module", "policy", "service", "store"],
+    directories: ["middleware", "module", "policy", "service", "store"],
   },
   {
     sourceRoot: "packages/platform-h3/src",
     files: ["index.ts"],
-    directories: ["application", "host"],
-  },
-  {
-    sourceRoot: "packages/platform-nitro/src",
-    files: ["index.ts"],
-    directories: ["application", "host"],
+    directories: ["application", "host", "routing"],
   },
   {
     sourceRoot: "packages/platform-hono/src",
     files: ["index.ts"],
-    directories: ["application", "host"],
+    directories: ["application", "host", "routing"],
   },
   {
     sourceRoot: "packages/platform-elysia/src",
@@ -110,14 +111,20 @@ const packageLayouts: readonly PackageLayout[] = [
     directories: [
       "application",
       "artifacts",
+      "configuration",
       "enhancers",
       "errors",
+      "health",
       "host",
       "kernel",
       "middleware",
       "modules",
       "pipes",
+      "policy",
+      "plugins",
+      "request-context",
       "routing",
+      "security",
       "websockets",
     ],
   },

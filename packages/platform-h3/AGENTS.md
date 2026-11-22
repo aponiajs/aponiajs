@@ -5,33 +5,37 @@ specific to this package.
 
 ## What this package owns
 
-The H3 binding of the Aponia kernel. It states only what the runtime owns —
-how a native application is created, how the kernel's dispatcher is mounted, how
-a request is answered through the native application, and how a listener is
-started — and imports the rest from `@aponiajs/platform-core`.
+The H3 binding of an Aponia application. It states only what the runtime owns —
+how a native application is created, how each compiled route is registered on
+H3's router, how module middleware is mounted, and how a listener is started —
+and imports the shared request contract from `@aponiajs/platform-core`.
 
 | Domain         | Owns                                                          |
 | -------------- | ------------------------------------------------------------- |
 | `application/` | `AponiaFactory`, the managed application type, the middleware |
 | `host/`        | `createH3Host` and the request info one H3 context states     |
+| `routing/`     | `downloadFile`, the shared disposition header over `Bun.file` |
 
 `src/index.ts` is the only public barrel.
 
 ## Invariants
 
-- **The dispatch is middleware, not a catch-all.** A request the kernel does not
-  answer continues to whatever the application registered next; a catch-all
-  route would answer `404` before the application's own routes could.
-- **Middleware registered earlier runs earlier.** The host mounts its dispatcher
-  when the boot finishes, so `createNative` plus `toH3PlatformHandler` is the
-  shape for an application that already has middleware of its own.
+- **Routes are H3's.** Every compiled route registers with `app.on` (or
+  `app.all` for `@All()`), so H3's router and middleware precedence decide
+  matching; the platform never answers a route it did not mount.
+- **Module middleware is H3 middleware.** A module's `configure(consumer)`
+  chain mounts once, before the routes, and a short-circuiting middleware
+  answers the request itself.
 - **Gateways upgrade through crossws.** A gateway mounts as an H3 route built
-  with `defineWebSocketHandler`, which Nitro's server upgrades; the Bun
+  with `defineWebSocketHandler`, which a Nitro server upgrades; the Bun
   listener upgrades it through crossws directly. A runtime that loads no
   crossws adapter states no `mountGateway`, and the boot refuses a gateway with
   `UNSUPPORTED_PLATFORM_FEATURE`.
-- **No second route table, container, or guard pipeline.** Routing, validation,
-  enhancers, and lifecycle belong to `@aponiajs/platform-core`.
+- **No second route table, container, or guard pipeline.** Validation,
+  enhancers, lifecycle, version negotiation, and the shared route handler belong
+  to `@aponiajs/platform-core`.
+- **No platform depends on another.** This package names only `common`,
+  `core`, and `platform-core`; `scripts/platform-independence.spec.ts` holds it.
 - **`listen` is Bun's server.** The runtime this repository targets is Bun; a
   listener outside it is not emulated.
 - **A peer, never a bundled dependency.** An application that never mounts this

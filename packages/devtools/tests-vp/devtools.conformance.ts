@@ -62,7 +62,7 @@ type DevtoolsContractAssertions = [
   Expect<Equals<AponiaRequestRecordFields, RequestRecord>>,
   Expect<Equals<AponiaBuildPayload["graph"], "declared" | "decorated">>,
   Expect<Equals<AponiaBuildPayload["invokers"]["accepted"], boolean>>,
-  Expect<Equals<keyof DevtoolsOptions, "enabled" | "logger" | "capture">>,
+  Expect<Equals<keyof DevtoolsOptions, "enabled" | "authorize" | "logger" | "capture">>,
   Expect<Equals<Extract<"startDevtoolsServer" | "DevtoolsServer", keyof DevtoolsBarrel>, never>>,
 ];
 

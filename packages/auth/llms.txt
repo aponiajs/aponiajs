@@ -32,6 +32,6 @@
 
 ## Documentation
 
-- [Package README](README.md)
+- [Package README](./README.md)
 - [Agent surface](../../docs/agent/README.md)
 - [npm](https://www.npmjs.com/package/@aponiajs/auth)

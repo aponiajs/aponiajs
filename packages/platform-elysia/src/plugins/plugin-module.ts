@@ -4,10 +4,10 @@ import {
   provideFactory,
   provideValue,
   type DynamicModule,
-  type ModuleDefinition,
+  type Provider,
   type Token,
 } from "@aponiajs/common";
-import type { AponiaContainer } from "@aponiajs/core";
+import { providePlatformModule, type PlatformModuleAdapter } from "@aponiajs/platform-core";
 import type { AnyElysia } from "elysia";
 import type {
   AsyncPluginModuleOptions,
@@ -17,10 +17,18 @@ import type {
 } from "./plugin.types.ts";
 
 /**
- * The private token marking a provider as carrying a native Elysia plugin to mount.
+ * The private token carrying the native Elysia plugin a registration mounted.
  * @internal
  */
 export const ELYSIA_PLUGIN = createToken<ElysiaPlugin>("aponia.elysia.native-plugin");
+
+/**
+ * The private token carrying the mount that installs the plugin above.
+ * @internal
+ */
+export const ELYSIA_PLUGIN_ADAPTER = createToken<PlatformModuleAdapter<AnyElysia>>(
+  "aponia.elysia.plugin-adapter",
+);
 
 const keyedModuleIdentityPrefix = "aponia.elysia.plugin-module:";
 
@@ -28,8 +36,9 @@ const keyedModuleIdentityPrefix = "aponia.elysia.plugin-module:";
  * The framework's one path for a native plugin to join the module graph.
  *
  * `register` mounts an existing plugin value; `registerAsync` builds one from
- * container values once per boot. The boot recognizes the module by its
- * private plugin token, which only this seam provides.
+ * container values once per boot. Both state the platform declaration the
+ * neutral boot reads, so the plugin mounts through the same seam a package
+ * using any other platform does.
  */
 @Module({})
 export class PluginModule {
@@ -65,8 +74,7 @@ export class PluginModule {
    *
    * The framework's one seam for a plugin that does not exist until the
    * container has built one: the factory runs once per boot, after the
-   * providers it names exist. The boot recognizes the module by its private
-   * `ELYSIA_PLUGIN` token, which only this seam provides.
+   * providers it names exist.
    *
    * @param options - The key, imports, injected tokens, and factory building the plugin.
    * @returns A frozen module import the application's `imports` accepts.
@@ -117,59 +125,63 @@ export function definePlugin<const TPlugin extends AnyElysia>(
   plugin: TPlugin,
   options: PluginModuleOptions = {},
 ): PluginImport<TPlugin> {
-  const pluginProvider = provideValue(ELYSIA_PLUGIN, plugin);
-  const module = createPluginModule(
-    {
-      providers: [pluginProvider],
-    },
-    options.key,
-  );
+  assertPluginKey(options.key);
+  const providers = Object.freeze([
+    provideValue(ELYSIA_PLUGIN, plugin),
+    ...elysiaPluginProviders(options.key ?? "PluginModule"),
+  ]);
+  const module = createPluginModule({ providers }, options.key);
 
   return Object.freeze({
     ...module,
     imports: Object.freeze([] as const),
     controllers: Object.freeze([] as const),
-    providers: Object.freeze([pluginProvider]),
+    providers,
     exports: Object.freeze([] as const),
     plugin,
   });
 }
 
-/**
- * Answers whether a module carries the private plugin token this seam provides.
- *
- * @param module - The module to test.
- * @returns `true` when the module was built through this seam.
- *
- * @internal
- */
-export function isPluginModule(module: ModuleDefinition): boolean {
-  return module.providers.some((provider) => provider.provide === ELYSIA_PLUGIN);
+/** The mount that installs whatever `ELYSIA_PLUGIN` carries, plus its declaration. */
+function elysiaPluginProviders(key: string): readonly Provider[] {
+  return Object.freeze([
+    provideFactory(ELYSIA_PLUGIN_ADAPTER, [ELYSIA_PLUGIN], (plugin: ElysiaPlugin) => {
+      return (application: AnyElysia): void => {
+        application.use(plugin);
+      };
+    }),
+    providePlatformModule({
+      key,
+      platforms: ["elysia"],
+      adapters: { elysia: ELYSIA_PLUGIN_ADAPTER },
+    }),
+  ]);
+}
+
+/** Refuses an empty identity before anything is built from it. */
+function assertPluginKey(key: string | undefined): void {
+  if (key !== undefined && key.trim().length === 0) {
+    throw new TypeError("Elysia plugin module key must not be empty.");
+  }
 }
 
 /**
- * Reads the native plugin a plugin module carries, through its owning module.
+ * The providers that make a native plugin value mount through the neutral seam.
  *
- * @param container - The container the boot built.
- * @param module - The plugin module to read.
- * @returns The native plugin to mount.
+ * @param key - The module identity a refusal names.
+ * @returns The mount provider and the platform declaration.
  *
  * @internal
  */
-export function getElysiaPlugin(
-  container: AponiaContainer,
-  module: ModuleDefinition,
-): ElysiaPlugin {
-  return container.resolveModuleProvider(module, ELYSIA_PLUGIN);
+export function provideElysiaPlugin(key: string): readonly Provider[] {
+  return elysiaPluginProviders(key);
 }
 
 function createPluginModule(
   metadata: Pick<DynamicModule, "imports" | "providers">,
   key: string | undefined,
 ): DynamicModule {
-  if (key !== undefined && key.trim().length === 0) {
-    throw new TypeError("Elysia plugin module key must not be empty.");
-  }
+  assertPluginKey(key);
 
   const hasStableKey = key !== undefined;
   const id = hasStableKey ? `PluginModule[${key}]` : "PluginModule";
@@ -180,6 +192,9 @@ function createPluginModule(
     id,
     instanceId,
     imports: Object.freeze([...(metadata.imports ?? [])]),
-    providers: Object.freeze([...(metadata.providers ?? [])]),
+    providers: Object.freeze([
+      ...(metadata.providers ?? []),
+      ...elysiaPluginProviders(key ?? "PluginModule"),
+    ]),
   });
 }

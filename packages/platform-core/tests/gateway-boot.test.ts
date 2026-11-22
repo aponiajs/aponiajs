@@ -10,7 +10,7 @@ import {
   type CanActivate,
 } from "@aponiajs/common";
 import { createPlatformFactory } from "../src/index.ts";
-import type { GatewayHooks, GatewayPlan, HostDispatcher, PlatformHost } from "../src/index.ts";
+import type { GatewayHooks, GatewayPlan, PlatformHost } from "../src/index.ts";
 
 @Injectable()
 class AllowGuard implements CanActivate {
@@ -59,7 +59,6 @@ class GuardedGateway {
 
 interface FakeApp {
   readonly name: string;
-  dispatch?: HostDispatcher;
 }
 
 function hostWithGateway(): PlatformHost<FakeApp> & {
@@ -70,9 +69,7 @@ function hostWithGateway(): PlatformHost<FakeApp> & {
     name: "fake",
     mounted,
     createApplication: (name) => ({ name }),
-    mount(application, dispatch) {
-      application.dispatch = dispatch;
-    },
+    mountRoute() {},
     mountGateway(_application, plan, hooks) {
       mounted.push({ plan, hooks });
     },
@@ -83,7 +80,7 @@ function hostWithoutGateway(): PlatformHost<FakeApp> {
   return {
     name: "plain",
     createApplication: (name) => ({ name }),
-    mount() {},
+    mountRoute() {},
   };
 }
 

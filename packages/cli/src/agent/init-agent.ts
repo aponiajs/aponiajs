@@ -1,6 +1,7 @@
-import { mkdir } from "node:fs/promises";
+import { lstat, mkdir, symlink } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
 import type { AgentClient } from "../commands/command.types.ts";
+import { agentGuideAliases } from "../generation/file-writer.ts";
 
 /** Options `aponia agent init` accepts. */
 export interface AgentInitOptions {
@@ -44,8 +45,9 @@ const cursorRule = `---\ndescription: AponiaJS project rules\nalwaysApply: true\
  * Installs AponiaJS guidance for the requested agent clients.
  *
  * `AGENTS.md` is appended only when the marker block is absent, so user content
- * outside the block is preserved. Generated skill files are compared before
- * writing, which makes a second run a no-op.
+ * outside the block is preserved. `CLAUDE.md` and `GEMINI.md` are created as
+ * relative symlinks when neither exists, and generated skill files are compared
+ * before writing, which makes a second run a no-op.
  */
 export async function initAgent(options: AgentInitOptions = {}): Promise<AgentInitResult> {
   const root = resolve(options.cwd ?? process.cwd());
@@ -54,6 +56,7 @@ export async function initAgent(options: AgentInitOptions = {}): Promise<AgentIn
   const changes: AgentInitChange[] = [];
 
   await syncFile(root, join(root, "AGENTS.md"), appendBlock, changes, dryRun);
+  await ensureGuideAliases(root, changes, dryRun);
   if (clients.includes("codex")) {
     await syncFile(root, join(root, ".agents/skills/aponia/SKILL.md"), skill, changes, dryRun);
   }
@@ -65,6 +68,36 @@ export async function initAgent(options: AgentInitOptions = {}): Promise<AgentIn
   }
 
   return Object.freeze({ dryRun, changes: Object.freeze(changes) });
+}
+
+async function ensureGuideAliases(
+  root: string,
+  changes: AgentInitChange[],
+  dryRun: boolean,
+): Promise<void> {
+  for (const alias of agentGuideAliases) {
+    const path = join(root, alias);
+    if (await pathExists(path)) {
+      continue;
+    }
+
+    changes.push(Object.freeze({ kind: "CREATE", path: alias }));
+    if (!dryRun) {
+      await symlink("AGENTS.md", path);
+    }
+  }
+}
+
+async function pathExists(path: string): Promise<boolean> {
+  try {
+    await lstat(path);
+    return true;
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      return false;
+    }
+    throw error;
+  }
 }
 
 function appendBlock(existing: string): string {

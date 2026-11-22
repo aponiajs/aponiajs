@@ -84,7 +84,7 @@ export class AppModule {}
 
 // Phase 2: the application gains a route and an `imports` collection the build
 // cannot read statically, so the root module is undeclarable. This is the shape
-// `docs/plugin-packages.md` describes: an `imports` entry that is not a single
+// `docs/tooling/plugin-packages.md` describes: an `imports` entry that is not a single
 // identifier naming a declaration read from the project's own source declines
 // the module that wrote it, and the route it registers still mounts at run time.
 const undeclarableAppModule = `import { Module } from "@aponiajs/common";

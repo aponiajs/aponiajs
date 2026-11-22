@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
-import { AponiaError } from "@aponiajs/common";
+import { AponiaError, registerAsyncContextExit } from "@aponiajs/common";
 import type { ResolvedSessionOptions, Session, SessionStore } from "../module/session.types.ts";
 
 /** The mutable state one request carries between the plugin and the service. */
@@ -9,6 +9,17 @@ export interface SessionRequestState {
   started: boolean;
   touched: boolean;
   destroyed: boolean;
+  /**
+   * Writes the response cookie for one session.
+   *
+   * The plugin installs it before the request reaches the handler, and the
+   * service calls it the moment the session changes. Writing at the change
+   * rather than after `next()` keeps the cookie correct on a platform whose
+   * middleware chain does not wrap the handler.
+   */
+  writeCookie?: ((session: Session) => void) | undefined;
+  /** Clears the response cookie. */
+  clearCookie?: (() => void) | undefined;
 }
 
 /** The session operations a handler calls. */
@@ -24,6 +35,7 @@ export class SessionService {
     options: ResolvedSessionOptions,
   ) {
     this.#storage = storage;
+    registerAsyncContextExit((work) => this.#storage.exit(work));
     this.#store = store;
     this.#options = options;
   }
@@ -49,6 +61,7 @@ export class SessionService {
     state.session = session;
     state.started = true;
     state.destroyed = false;
+    state.writeCookie?.(session);
     return session;
   }
 
@@ -80,6 +93,7 @@ export class SessionService {
     state.started = true;
     state.touched = false;
     state.destroyed = false;
+    state.writeCookie?.(session);
     return session;
   }
 
@@ -102,6 +116,9 @@ export class SessionService {
     await this.#store.set(session);
     state.session = session;
     state.touched = this.#options.rolling;
+    if (state.touched) {
+      state.writeCookie?.(session);
+    }
     return session;
   }
 
@@ -116,6 +133,7 @@ export class SessionService {
     const deleted = await this.#store.delete(current.id);
     state.session = undefined;
     state.destroyed = true;
+    state.clearCookie?.();
     return deleted;
   }
 

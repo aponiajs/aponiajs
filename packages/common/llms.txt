@@ -52,13 +52,13 @@ This package records metadata and declares contracts. It never builds a module g
 ## Documentation
 
 - [Package README](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/common/README.md): install, the decorator surface, validation models, and the request parameter table.
-- [Dependency injection](../../docs/dependency-injection.md): tokens, visibility, providers, and the error codes raised on failure.
-- [WebSocket gateways](../../docs/websockets.md): the `{ event, data }` envelope, responses, and lifecycle methods.
-- [Logging](../../docs/logging.md): logger configuration, JSON output, and level filtering.
-- [Lifecycle](../../docs/lifecycle.md): the five moments a provider can hook, and what the framework does when it fails.
+- [Dependency injection](../../docs/build/dependency-injection.md): tokens, visibility, providers, and the error codes raised on failure.
+- [WebSocket gateways](../../docs/platforms/websockets.md): the `{ event, data }` envelope, responses, and lifecycle methods.
+- [Logging](../../docs/build/logging.md): logger configuration, JSON output, and level filtering.
+- [Lifecycle](../../docs/build/lifecycle.md): the five moments a provider can hook, and what the framework does when it fails.
 - [Modules](../../docs/learn/03-modules.md): how code is grouped and what a module exposes.
 - [Controllers and routes](../../docs/learn/05-controllers-and-routes.md): how a request reaches a controller method.
 - [Validation](../../docs/learn/06-validation.md): how invalid requests are rejected before the handler.
 - [Request parameters](../../docs/learn/07-request-parameters.md): taking one piece of the request instead of the whole context.
 - [Errors](../../docs/learn/10-errors.md): which failures are raised, when, and how to assert on them.
-- [Published packages](../../docs/packages.md): the npm catalog and install commands.
+- [Published packages](../../docs/reference/packages.md): the npm catalog and install commands.

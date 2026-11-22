@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/tenancy",
-  "version": "1.0.0-beta.60",
+  "version": "1.0.0-beta.61",
   "description": "Request-scoped multi-tenancy for AponiaJS, with a tenant guard and safe tenant identifiers.",
   "keywords": [
     "aponia",
@@ -45,13 +45,13 @@
   },
   "dependencies": {
     "@aponiajs/common": "workspace:*",
+    "@aponiajs/platform-core": "workspace:*",
     "@aponiajs/platform-elysia": "workspace:*"
   },
   "devDependencies": {
     "@aponiajs/core": "workspace:*",
-    "elysia": "2.0.0-rc.4"
-  },
-  "peerDependencies": {
+    "@aponiajs/platform-h3": "workspace:*",
+    "@aponiajs/platform-hono": "workspace:*",
     "elysia": "2.0.0-rc.4"
   },
   "engines": {

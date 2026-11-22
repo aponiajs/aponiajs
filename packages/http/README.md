@@ -39,6 +39,8 @@ export class UsersClient {
 - URLs carrying credentials are refused.
 - `localhost`, `.localhost`, metadata hostnames, loopback, private,
   link-local, carrier-grade NAT, multicast, and reserved addresses are blocked.
+  NAT64 (`64:ff9b::/96`), IPv4-translated (`::ffff:0:0/96`), and deprecated
+  IPv4-compatible IPv6 forms are blocked too.
 - Every hostname is resolved before the request, and every resolved address is
   checked. A hostname that resolves to a blocked address is refused.
 - The validated address is pinned for the connection, with the original
@@ -47,7 +49,7 @@ export class UsersClient {
 - Every redirect is re-validated. A redirect with a request body is not followed.
 - `Host` is never supplied by the caller.
 - Responses are bounded; the default is 1 MiB.
-- Requests time out; the default is 10 seconds.
+- Requests time out, including the response body; the default is 10 seconds.
 - Retries apply only to `GET`, `HEAD`, `OPTIONS`, `PUT`, and `DELETE`.
 
 `allowPrivateNetworks: true` is the explicit opt-out for a trusted internal
@@ -108,6 +110,6 @@ await application.listen(Number(Bun.env.PORT ?? 3000));
 
 ## Documentation
 
-- [Published packages](../../docs/packages.md)
-- [AponiaJS architecture](../../docs/architecture-and-style.md)
+- [Published packages](../../docs/reference/packages.md)
+- [AponiaJS architecture](../../docs/build/architecture-and-style.md)
 - [npm](https://www.npmjs.com/package/@aponiajs/http)

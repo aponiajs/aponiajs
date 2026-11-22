@@ -6,6 +6,7 @@ import {
   QueueModule,
   QueueService,
   type QueueJob,
+  type QueueJobState,
   type QueueStore,
 } from "../src/index.ts";
 
@@ -142,6 +143,24 @@ describe("queue store", () => {
     expect(runs).toBe(1);
     expect(store.jobs.has("pending-1")).toBe(false);
     expect(store.jobs.has("dead-1")).toBe(true);
+  });
+
+  test("refuses a stored state the lifecycle does not declare", async () => {
+    const store = new TestStore();
+    store.jobs.set(
+      "unknown-1",
+      storedPending({ id: "unknown-1", state: "vanished" as QueueJobState }),
+    );
+    const queue = new QueueService({ autoStart: false, store });
+
+    let failure: unknown;
+    try {
+      await queue.onModuleInit();
+    } catch (error) {
+      failure = error;
+    }
+
+    expect(failure).toMatchObject({ code: "INVALID_STATE_TRANSITION" });
   });
 
   test("restores the idempotency key a stored job carried", async () => {

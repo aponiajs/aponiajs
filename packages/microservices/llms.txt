@@ -36,5 +36,5 @@ The handler decorators and boot contract live in `@aponiajs/common`:
 
 ## Documentation
 
-- [Package README](README.md)
-- [Microservices guide](../../docs/microservices.md)
+- [Package README](./README.md)
+- [Microservices guide](../../docs/services/microservices.md)

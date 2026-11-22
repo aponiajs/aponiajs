@@ -222,7 +222,7 @@ describe("RedisIdempotencyStore", () => {
     expect(fetched).toEqual(resp);
 
     // Invalid JSON
-    await client.set("aponia:idempotency:corrupted", "{invalid");
+    await client.set("aponia:idempotency:response:corrupted", "{invalid");
     expect(await store.get("corrupted")).toBeUndefined();
 
     expect(await store.delete("idem-key")).toBe(true);
@@ -250,6 +250,17 @@ describe("RedisIdempotencyStore", () => {
     await store.claim("clear-key", 60_000);
     await store.clear();
     expect(client.data.has("aponia:idempotency:claim:clear-key")).toBe(false);
+  });
+
+  test("keeps response and claim keys in separate namespaces", async () => {
+    const client = new MockRedisClient();
+    const store = new RedisIdempotencyStore({ client });
+    const resp = { status: 201, value: { id: "res-1" }, fingerprint: "fp-123" };
+
+    await store.set("claim:victim", resp, 60_000);
+
+    expect(client.data.has("aponia:idempotency:response:claim%3Avictim")).toBe(true);
+    expect(await store.claim("victim", 60_000)).toBe(true);
   });
 });
 
