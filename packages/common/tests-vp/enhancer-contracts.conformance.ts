@@ -52,7 +52,7 @@ type EnhancerContractAssertions = [
   Expect<Equals<keyof WsArgumentsHost, "getClient" | "getData" | "getPattern">>,
   Expect<Equals<ReturnType<ArgumentsHost["getContext"]>, RouteContext>>,
   Expect<Equals<ReturnType<ArgumentsHost["switchToHttp"]>, HttpArgumentsHost>>,
-  Expect<Equals<ReturnType<ArgumentsHost["getType"]>, "http" | "rpc" | "ws">>,
+  Expect<Equals<ReturnType<ArgumentsHost["getType"]>, "http" | "rpc" | "ws" | "mcp">>,
   Expect<Equals<ReturnType<HttpArgumentsHost["getRequest"]>, RouteContext>>,
   Expect<Equals<ReturnType<ExecutionContext["getClass"]>, ClassToken<unknown>>>,
   Expect<Equals<ReturnType<ExecutionContext["getHandler"]>, (...arguments_: never[]) => unknown>>,

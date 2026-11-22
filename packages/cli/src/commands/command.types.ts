@@ -12,6 +12,42 @@ export interface NewCommandOptions {
   readonly skipInstall: boolean;
   /** Generate a Nest-style workspace with `apps/*` and `libs/*`. */
   readonly workspace: boolean;
+  /** The HTTP platform the generated application boots on. */
+  readonly platform: "elysia" | "hono" | "h3";
+  /** The coding-agent clients whose skills are installed. */
+  readonly skills: readonly AgentClient[];
+  /** Skip installing coding-agent skills. */
+  readonly skipSkills: boolean;
+  /** Skip initializing a Git repository. */
+  readonly skipGit: boolean;
+}
+
+/** The `aponia start` command. */
+export interface StartCommandOptions {
+  /** Always `"start"`. */
+  readonly command: "start";
+  /** The project root; defaults to the working directory. */
+  readonly cwd?: string;
+  /** The entry file, relative to the project root. */
+  readonly entry?: string;
+  /** An explicit file to run. */
+  readonly path?: string;
+  /** Run under Bun's watcher. */
+  readonly watch: boolean;
+  /** Run with Bun's inspector. */
+  readonly debug: boolean;
+  /** Run the built entry from `dist`. */
+  readonly prod: boolean;
+}
+
+/** The `aponia info` command. */
+export interface InfoCommandOptions {
+  /** Always `"info"`. */
+  readonly command: "info";
+  /** Print one JSON object instead of a table. */
+  readonly json: boolean;
+  /** The project root; defaults to the working directory. */
+  readonly cwd?: string;
 }
 
 /** A schematic `aponia generate` accepts, including its short aliases. */
@@ -139,6 +175,8 @@ export type CliCommand =
   | DevCommandOptions
   | LibraryCommandOptions
   | ManifestCommandOptions
+  | StartCommandOptions
+  | InfoCommandOptions
   | AgentCommandOptions
   | { readonly command: "help" }
   | { readonly command: "version" };

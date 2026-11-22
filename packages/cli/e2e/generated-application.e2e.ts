@@ -83,6 +83,12 @@ test("packed workspaces generate an application that installs, validates, builds
         "09-platform-core",
         bunTemporaryDirectory,
       ),
+      testing: await packWorkspace(
+        "packages/testing",
+        archiveDirectory,
+        "10-testing",
+        bunTemporaryDirectory,
+      ),
     } as const;
     const workspaceManifest = (await Bun.file(join(workspaceDirectory, "package.json")).json()) as {
       readonly version: string;
@@ -190,6 +196,7 @@ test("packed workspaces generate an application that installs, validates, builds
     const localOverrides = [
       ["@aponiajs/compiler", archives.compiler],
       ["@aponiajs/platform-core", archives.platformCore],
+      ["@aponiajs/testing", archives.testing],
     ] as const;
     let localManifest = await Bun.file(generatedManifestPath).text();
     for (const [packageName, section, archive] of localPackages) {

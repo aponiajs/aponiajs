@@ -2,8 +2,30 @@
 
 `aponia new my-api --workspace` creates `apps/api` plus `libs/`; the default
 single-app layout is unchanged. `aponia g library <name>` writes a workspace
-library under `libs/`, adds it to the target app as `workspace:*`, and installs
-the workspace link. Add `--publish` for a publishable npm package.
+library under `libs/`, registers it as a library project in `aponia.json`, and
+adds the `@app/<name>` path alias to the workspace `tsconfig.json`. Add
+`--publish` for a publishable npm package; a private workspace library is
+imported through the alias, not through a package dependency.
+
+## Workspace project and alias
+
+The generator writes one project entry shaped like `nest-cli.json`.
+
+```json
+{
+  "widgets": {
+    "type": "library",
+    "root": "libs/widgets",
+    "entryFile": "index",
+    "sourceRoot": "libs/widgets/src",
+    "compilerOptions": { "tsConfigPath": "libs/widgets/tsconfig.lib.json" }
+  }
+}
+```
+
+The root `tsconfig.json` gains two ESM mappings. An application imports
+`@app/widgets`, and `aponia build widgets` builds the library through
+`vp pack`.
 
 ```bash
 aponia g library widgets --publish --scope acme
@@ -37,6 +59,9 @@ an application imports either package the same way.
 | `aponia.library.json`                | The machine-readable library contract               |
 | `README.md`, `AGENTS.md`, `llms.txt` | Human and agent documentation                       |
 | `tsconfig*.json`, `vite.config.ts`   | Package build and test configuration                |
+
+`tsconfig.lib.json` extends the workspace root and is the config Vite+ packs
+with, which is the Nest library convention.
 
 A plugin adds one file, `src/adapters/<name>.adapters.ts`. It owns the
 `providePlatformModule` declaration: the platforms the package supports and the

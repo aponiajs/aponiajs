@@ -21,6 +21,7 @@ import {
   type Token,
 } from "@aponiajs/common";
 import { createContainer, type AponiaContainer } from "@aponiajs/core";
+import { attachApplicationContainer } from "./application-container.ts";
 import type {
   AponiaAdapter,
   AponiaApplicationContract,
@@ -513,6 +514,7 @@ export function createPlatformFactory<TNative>(host: PlatformHost<TNative, unkno
       ),
       provideClass(Reflector, []),
     ]);
+    attachApplicationContainer(configured as object, container);
     const requestContext = locateRequestContext(container);
     if (requestContext !== undefined) {
       container.setRequestContextAccessor(

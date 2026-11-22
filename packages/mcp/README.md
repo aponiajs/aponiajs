@@ -1,102 +1,86 @@
 # @aponiajs/mcp
 
 ```bash
-bun add @aponiajs/mcp @modelcontextprotocol/sdk zod
+bun add @aponiajs/mcp @modelcontextprotocol/server zod
 ```
 
-Serve a Model Context Protocol endpoint from an Aponia application.
-
-The package is a thin adapter over
-[`@modelcontextprotocol/sdk`](https://www.npmjs.com/package/@modelcontextprotocol/sdk).
-Every JSON-RPC frame, handshake version, tool listing, resource read, and
-streamable HTTP exchange is the SDK's. AponiaJS contributes a module the
-endpoint is declared in, a validated policy read from a configuration, the
-request gate, and the lifecycle that closes sessions when the application
-closes.
+Serve a Model Context Protocol endpoint from an Aponia application. Tools,
+resources, and prompts are methods of providers, declared with decorators and
+discovered when the endpoint mounts.
 
 ## Use it
 
 ```ts
-import { Module, defineConfiguration } from "@aponiajs/common";
-import { McpModule } from "@aponiajs/mcp";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { Injectable, Module } from "@aponiajs/common";
+import { McpModule, Tool, type McpContext } from "@aponiajs/mcp";
 import { z } from "zod";
 
-export const McpConfig = defineConfiguration(
-  z.object({
-    path: z.string().default("/mcp"),
-    allowedOrigins: z.array(z.string()).default([]),
-    allowUnauthenticated: z.boolean().default(false),
-  }),
-  "mcp.config",
-);
+@Injectable()
+export class OrdersTools {
+  @Tool({
+    description: "Find one order",
+    inputSchema: z.object({ orderId: z.string() }),
+  })
+  findOrder({ orderId }: { orderId: string }, _context: McpContext): string {
+    return `order-${orderId}`;
+  }
+}
 
-const token = Bun.env.MCP_TOKEN ?? "";
-
-const mcp = McpModule.register({
-  configuration: McpConfig,
-  useFactory: () => () => {
-    const server = new McpServer({ name: "my-app", version: "1.0.0" });
-    server.registerTool(
-      "add",
-      { description: "Add two numbers", inputSchema: { a: z.number(), b: z.number() } },
-      async ({ a, b }) => ({ content: [{ type: "text", text: String(a + b) }] }),
-    );
-    return server;
-  },
-  authorize: (request) => request.headers.get("authorization") === `Bearer ${token}`,
-});
-
-@Module({ imports: [mcp] })
+@Module({
+  imports: [McpModule.forRoot({ name: "cat-store", version: "1.0.0" })],
+  providers: [OrdersTools],
+})
 export class AppModule {}
 ```
 
-The factory returns a server factory rather than a server. Stateless mode calls
-it once per request and stateful mode once per session, because an SDK server
-connects to exactly one transport.
+`McpModule.forRootAsync({ imports, inject, useFactory })` builds the same
+metadata from a factory. `path`, `include`, and the enhancer lists stay at the
+top level because they are known when the module is defined.
 
-## The validated configuration
+## Primitives
 
-The policy arrives through a `defineConfiguration` token, so a value the schema
-refuses fails the boot before a socket exists:
+```ts
+import { Prompt, Resource, ResourceTemplate, Tool } from "@aponiajs/mcp";
+```
 
-| Field                  | Default | Contract                                                  |
-| ---------------------- | ------- | --------------------------------------------------------- |
-| `path`                 | `/mcp`  | An absolute path                                          |
-| `allowedOrigins`       | `[]`    | Exact origin strings; empty refuses every browser request |
-| `allowUnauthenticated` | `false` | Required when the registration carries no `authorize`     |
+- `@Tool({ inputSchema, outputSchema?, description?, annotations? })` receives the validated arguments and an `McpContext`.
+- `@Resource({ uri, mimeType? })` answers one fixed URI.
+- `@ResourceTemplate({ uriTemplate })` answers every URI the RFC 6570 template matches and receives the variables.
+- `@Prompt({ argsSchema })` answers a prompt template.
 
-The module guards the value again after the schema, because a configuration
-transform is arbitrary JavaScript. A relative path, an origin list that is not
-non-empty strings, or a registration with no authentication path throws an
-`AponiaError` with code `INVALID_CONFIGURATION_VALUE` and an `issues` list.
+Names default to the method name and must use 1-128 characters of
+`A-Z a-z 0-9 _ - .`. A duplicate name, an invalid name, or an `include` entry
+that names no module fails the mount with an `AponiaError`.
 
-## Authentication and origins
+## Enhancers
 
-`authorize` is the authentication decision. A `false` answer or a thrown error
-is a `401` with `WWW-Authenticate: Bearer`. A request that carries an `Origin`
-not named in `allowedOrigins` is a `403`, answered before `authorize` runs.
-`OPTIONS` is answered with `204` and the cross-origin headers a browser client
-needs, without reaching the transport.
+Every call runs through the same enhancer model as a route:
 
-The endpoint is a tool-dispatch surface. Keep it behind `authorize`, or set
-`allowUnauthenticated: true` deliberately and reach it only on a network that is
-already authenticated.
+1. guards from the module options, the class, and the method;
+2. interceptors' `interceptBefore` halves;
+3. pipes, with the input bound as the call's body;
+4. the method;
+5. interceptors' `interceptAfter` halves, reversed;
+6. filters when the method throws.
 
-## Stateless and stateful
+`getType()` answers `"mcp"`, and `McpExecutionContext.create(context)` reads the
+call, the input, the context, and the platform request.
 
-`sessions` defaults to `"stateless"`: each request builds a server and a
-transport, and both are closed when the response body ends or the client
-disconnects. That is the shape a serverless host needs.
+## Transports
 
-`sessions: "stateful"` keeps one transport per `mcp-session-id` for the life of
-the client session. A `DELETE` ends it, an unknown id is a `404`, and
-`application.close()` closes every transport the boot still holds. The session
-store is in memory, so stateful mode is one instance.
+The HTTP endpoint defaults to `/mcp`. Each request builds one SDK server and
+closes it when the response ends, so no state survives the request. Set
+`path: false` for a stdio-only application.
 
-`jsonResponse: true` asks for JSON bodies instead of Server-Sent Events. The SDK
-default is `false`, and a client must still send `Accept: application/json,
-text/event-stream`.
+```ts
+import { serveMcpStdio } from "@aponiajs/mcp";
+
+const handle = serveMcpStdio(application);
+// stdout carries protocol frames; diagnostics belong on stderr.
+```
+
+`listenMcpStdio(application)` resolves when the client closes stdin and closes
+the connection afterwards.
 
 ## Bootstrap
 
@@ -108,34 +92,23 @@ const application = await AponiaFactory.create(AppModule);
 await application.listen(Number(Bun.env.PORT ?? 3000));
 ```
 
-`aponia build` cannot lower a registration: a `DynamicModule` in `imports` is
-declined, and the boot lowers the root from its decorators instead. The endpoint
-still mounts; what is given up is the declared-graph boot.
-
 ## Native escape hatch
 
-An application that needs a transport shape this package does not own mounts
-the SDK itself:
+An application that needs a transport or server shape this package does not
+model mounts the SDK itself.
 
 ```ts
-import { Module } from "@aponiajs/common";
+import { McpServer, createMcpHandler } from "@modelcontextprotocol/server";
 import { PluginModule } from "@aponiajs/platform-elysia";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { Elysia } from "elysia";
 
-const endpoint = new Elysia({ name: "mcp-endpoint" }).all("/mcp", async ({ request }) => {
-  const transport = new WebStandardStreamableHTTPServerTransport({ enableJsonResponse: true });
-  const server = new McpServer({ name: "my-app", version: "1.0.0" });
-  await server.connect(transport);
-  return transport.handleRequest(request);
+const handler = createMcpHandler(() => {
+  const server = new McpServer({ name: "app", version: "1.0.0" });
+  return server;
 });
-
+const endpoint = new Elysia({ name: "mcp" }).all("/mcp", ({ request }) => handler.fetch(request));
 const mcp = PluginModule.register(endpoint, { key: "mcp" });
-
-@Module({ imports: [mcp] })
-export class AppModule {}
 ```
 
-That path gives up the validated policy, the Origin refusal, and the session
-cleanup this package contributes.
+That path gives up discovery, the enhancer pipeline, and the validated options
+this package contributes.

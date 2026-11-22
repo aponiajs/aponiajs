@@ -465,10 +465,18 @@ const unreadDecorators: ReadonlyMap<string, string> = new Map([
   ["Header", "a route with @Header() is declined to the decorated graph rather than emitted"],
   ["HttpCode", "a route with @HttpCode() is declined to the decorated graph rather than emitted"],
   ["UsePipes", "pipes are applied during route parameter binding and runtime execution"],
+  ["Tool", "MCP primitives are read by the MCP module at mount, not lowered by a build"],
+  ["Resource", "MCP primitives are read by the MCP module at mount, not lowered by a build"],
+  [
+    "ResourceTemplate",
+    "MCP primitives are read by the MCP module at mount, not lowered by a build",
+  ],
+  ["Prompt", "MCP primitives are read by the MCP module at mount, not lowered by a build"],
 ]);
 
 /** The analysis that must account for each metadata key `packages/common` reads. */
 const metadataKeyAnalyses: ReadonlyMap<string, string> = new Map([
+  ["aponia.mcp.primitives.metadata", "module-descriptors.ts's @Module"],
   ["aponia.controller.metadata", "controller-routes.ts's @Controller"],
   ["aponia.module.metadata", "module-descriptors.ts's @Module"],
   ["aponia.global.metadata", "module-descriptors.ts's @Global"],

@@ -8,6 +8,8 @@ import type {
   GenerateCommandOptions,
   GenerateSchematic,
   LibraryCommandOptions,
+  StartCommandOptions,
+  InfoCommandOptions,
   AgentClient,
   AgentCommandOptions,
   NewCommandOptions,
@@ -19,6 +21,7 @@ const schematicAliases: Readonly<Record<string, GenerateSchematic>> = {
   application: "app",
   lib: "library",
   library: "library",
+  mcp: "mcp",
   pl: "plugin",
   plugin: "plugin",
   cl: "class",
@@ -118,6 +121,14 @@ export function parseArguments(arguments_: readonly string[]): CliCommand {
     return { command: "manifest" };
   }
 
+  if (command === "start") {
+    return parseStartCommand(rest);
+  }
+
+  if (command === "info") {
+    return parseInfoCommand(rest);
+  }
+
   if (command === "agent") {
     return parseAgentCommand(rest);
   }
@@ -181,9 +192,9 @@ function parseLibraryCommand(arguments_: readonly string[]): LibraryCommandOptio
 
 function parseBuildCommand(arguments_: readonly string[]): BuildCommandOptions {
   const parsed = parseOptions(arguments_);
-  const [extraPositional] = parsed._;
-  if (extraPositional !== undefined) {
-    throw new Error(`Unexpected argument "${extraPositional}".`);
+  const [positional, ...extraPositionals] = parsed._;
+  if (extraPositionals.length > 0) {
+    throw new Error(`Unexpected argument "${extraPositionals[0]}".`);
   }
 
   assertKnownOptions(parsed, ["dry-run", "project"]);
@@ -191,7 +202,7 @@ function parseBuildCommand(arguments_: readonly string[]): BuildCommandOptions {
   return {
     command: "build",
     dryRun: readBooleanOption(parsed, "dry-run", false),
-    project: readStringOption(parsed, "project"),
+    project: readStringOption(parsed, "project") ?? positional,
   };
 }
 
@@ -220,7 +231,20 @@ function parseNewCommand(arguments_: readonly string[]): NewCommandOptions {
     throw new Error(`Unexpected argument "${extraPositionals[0]}".`);
   }
 
-  assertKnownOptions(parsed, ["dry-run", "skip-install", "workspace"]);
+  assertKnownOptions(parsed, [
+    "dry-run",
+    "platform",
+    "skip-git",
+    "skip-install",
+    "skip-skills",
+    "skills",
+    "workspace",
+  ]);
+
+  const platform = readStringOption(parsed, "platform") ?? "elysia";
+  if (platform !== "elysia" && platform !== "hono" && platform !== "h3") {
+    throw new Error('Option "--platform" must be "elysia", "hono", or "h3".');
+  }
 
   return {
     command: "new",
@@ -228,6 +252,41 @@ function parseNewCommand(arguments_: readonly string[]): NewCommandOptions {
     dryRun: readBooleanOption(parsed, "dry-run", false),
     skipInstall: readBooleanOption(parsed, "skip-install", false),
     workspace: readBooleanOption(parsed, "workspace", false),
+    platform,
+    skills: readClients(readStringOption(parsed, "skills")),
+    skipSkills: readBooleanOption(parsed, "skip-skills", false),
+    skipGit: readBooleanOption(parsed, "skip-git", false),
+  };
+}
+
+function parseStartCommand(arguments_: readonly string[]): StartCommandOptions {
+  const parsed = parseOptions(arguments_);
+  const [entry, ...extra] = parsed._;
+  if (extra.length > 0) {
+    throw new Error(`Unexpected argument "${extra[0]}".`);
+  }
+  assertKnownOptions(parsed, ["cwd", "debug", "path", "prod", "watch"]);
+  return {
+    command: "start",
+    cwd: readStringOption(parsed, "cwd"),
+    ...(entry === undefined ? {} : { entry }),
+    path: readStringOption(parsed, "path"),
+    watch: readBooleanOption(parsed, "watch", false),
+    debug: readBooleanOption(parsed, "debug", false),
+    prod: readBooleanOption(parsed, "prod", false),
+  };
+}
+
+function parseInfoCommand(arguments_: readonly string[]): InfoCommandOptions {
+  const parsed = parseOptions(arguments_);
+  if (parsed._.length > 0) {
+    throw new Error(`Unexpected argument "${parsed._[0]}".`);
+  }
+  assertKnownOptions(parsed, ["cwd", "json"]);
+  return {
+    command: "info",
+    json: readBooleanOption(parsed, "json", false),
+    cwd: readStringOption(parsed, "cwd"),
   };
 }
 
@@ -300,13 +359,18 @@ interface ParsedOptions extends Readonly<Record<string, unknown>> {
 // name: a declared boolean never consumes the token after it.
 const valueLessOptions = [
   "crud",
+  "debug",
   "dry-run",
   "flat",
   "json",
+  "prod",
   "publish",
+  "skip-git",
   "skip-import",
   "skip-install",
+  "skip-skills",
   "spec",
+  "watch",
 ] as const;
 
 const optionAliases: Readonly<Record<string, string[]>> = {

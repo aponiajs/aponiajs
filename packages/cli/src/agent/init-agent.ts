@@ -8,6 +8,8 @@ export interface AgentInitOptions {
   readonly cwd?: string;
   readonly clients?: readonly AgentClient[];
   readonly dryRun?: boolean;
+  /** Leave `AGENTS.md` untouched, for a project that already ships one. */
+  readonly skipAgents?: boolean;
 }
 
 /** One planned or written agent-guidance file. */
@@ -54,7 +56,9 @@ export async function initAgent(options: AgentInitOptions = {}): Promise<AgentIn
   const dryRun = options.dryRun === true;
   const changes: AgentInitChange[] = [];
 
-  await syncFile(root, join(root, "AGENTS.md"), appendBlock, changes, dryRun);
+  if (options.skipAgents !== true) {
+    await syncFile(root, join(root, "AGENTS.md"), appendBlock, changes, dryRun);
+  }
   await ensureGuideAliases(root, changes, dryRun);
   if (clients.includes("codex")) {
     await syncFile(root, join(root, ".agents/skills/aponia/SKILL.md"), skill, changes, dryRun);

@@ -32,6 +32,7 @@ const expectedPrimaryFiles: Readonly<
   filter: "src/sample.filter.ts",
   gateway: "src/sample.gateway.ts",
   guard: "src/sample.guard.ts",
+  mcp: "src/sample/sample.tools.ts",
   interface: "src/sample.interface.ts",
   interceptor: "src/sample.interceptor.ts",
   middleware: "src/sample.middleware.ts",
@@ -47,6 +48,7 @@ test("supports the complete Nest generate schematic catalog and aliases", () => 
   expect(schematicNames).toEqual([
     "app",
     "library",
+    "mcp",
     "plugin",
     "class",
     "controller",

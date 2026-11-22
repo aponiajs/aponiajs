@@ -1,66 +1,105 @@
-import type { ConfigurationToken, ModuleImport, Token, TokenMap } from "@aponiajs/common";
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { McpConfiguration } from "../policy/mcp-policy.types.ts";
+import type { ClassToken, ModuleImport, PipeType, Token, TokenMap } from "@aponiajs/common";
 
-/**
- * Builds one MCP server.
- *
- * Called once per request in stateless mode and once per session in stateful
- * mode, because an SDK server connects to exactly one transport. A factory that
- * closes over injected providers is what lets a tool read application state.
- */
-export type McpServerFactory = () => McpServer;
+/** How the HTTP endpoint serves protocol revisions it does not own. */
+export type McpHttpLegacy = "stateless" | "reject";
 
-/** The authentication decision the endpoint asks before a tool runs. */
-export type McpAuthorize = (request: Request) => boolean | Promise<boolean>;
+/** How a modern request's response is shaped. */
+export type McpResponseMode = "auto" | "json" | "sse";
 
-/**
- * How an application declares its MCP endpoint in its `imports`.
- *
- * The policy arrives through `configuration`, which is validated at boot, and
- * the tools arrive through `useFactory`, which is where dependency injection
- * reaches a tool handler. The factory returns a server factory rather than a
- * server, because a stateless endpoint serves each request with its own server.
- */
-export interface McpModuleOptions<TDependencies extends readonly Token<unknown>[] = readonly []> {
+/** How the stdio connection serves the 2025 handshake. */
+export type McpStdioLegacy = "serve" | "reject";
+
+/** The HTTP endpoint's policy. */
+export interface McpHttpOptions {
+  /** How 2025-era requests are answered; defaults to `"stateless"`. */
+  readonly legacy?: McpHttpLegacy;
+  /** How a 2026-07-28 response is shaped; defaults to `"auto"`. */
+  readonly responseMode?: McpResponseMode;
   /**
-   * The declaration whose value states the endpoint path, origins, and the
-   * unauthenticated switch.
+   * The browser origins allowed to reach the endpoint, by hostname.
    *
-   * The module provides and exports this token itself, so the application can
-   * read back the same validated value the endpoint was built from.
+   * Defaults to `localhost`, `127.0.0.1`, and `[::1]`. `false` turns the
+   * check off.
    */
-  readonly configuration: ConfigurationToken<McpConfiguration>;
-  /** Modules whose exports the factory may inject. */
-  readonly imports?: readonly ModuleImport[];
-  /** Providers the factory receives, in order. */
-  readonly inject?: TDependencies;
-  /** Builds the server factory from the injected providers. */
-  readonly useFactory: (...dependencies: TokenMap<TDependencies>) => McpServerFactory;
-  /**
-   * The authentication decision.
-   *
-   * A `false` answer or a thrown error is a `401`. When this is absent the
-   * configuration must set `allowUnauthenticated: true`; the boot refuses
-   * otherwise.
-   */
-  readonly authorize?: McpAuthorize;
-  /**
-   * Whether the endpoint keeps a session per client.
-   *
-   * Defaults to `"stateless"`, which builds a server per request and works in
-   * serverless hosts. `"stateful"` keeps a transport per `mcp-session-id` and
-   * closes them when the application closes.
-   */
-  readonly sessions?: "stateless" | "stateful";
-  /**
-   * Whether JSON-RPC answers use a JSON body instead of an SSE stream.
-   *
-   * Defaults to `false`, which is the SDK's own default.
-   */
-  readonly jsonResponse?: boolean;
-  /** The record the configuration's schema validates, instead of `process.env`. */
-  readonly source?: Readonly<Record<string, unknown>>;
-  /** The module's stable identity; defaults to `"mcp"`. */
+  readonly allowedOrigins?: readonly string[] | false;
+  /** The hostnames the `Host` header must name; omitted means no check. */
+  readonly allowedHosts?: readonly string[];
+  /** The largest request body the handler reads; defaults to 4 MiB. */
+  readonly maxRequestBodySize?: number;
+}
+
+/** The stdio connection's policy. */
+export interface McpStdioOptions {
+  /** How the 2025 handshake is answered; defaults to `"serve"`. */
+  readonly legacy?: McpStdioLegacy;
+}
+
+/** The server identity and transport policy a factory may build. */
+export interface McpServerMetadata {
+  readonly name: string;
+  readonly version: string;
+  readonly title?: string;
+  readonly description?: string;
+  readonly websiteUrl?: string;
+  readonly icons?: readonly Readonly<Record<string, unknown>>[];
+  readonly instructions?: string;
+  readonly http?: McpHttpOptions;
+  readonly stdio?: McpStdioOptions;
+}
+
+/** The top-level fields both registrations state. */
+export interface McpModuleTopLevel {
+  /** The endpoint path; defaults to `"/mcp"`. `false` disables HTTP. */
+  readonly path?: string | false;
+  /** The modules whose providers are searched; omitted means every module. */
+  readonly include?: readonly ModuleImport[];
+  /** Guards every MCP call runs, before the primitive's own. */
+  readonly guards?: readonly ClassToken<unknown>[];
+  /** Interceptors every MCP call runs, before the primitive's own. */
+  readonly interceptors?: readonly ClassToken<unknown>[];
+  /** Filters every MCP call consults, after the primitive's own. */
+  readonly filters?: readonly ClassToken<unknown>[];
+  /** Pipes every MCP call runs, before the primitive's own. */
+  readonly pipes?: readonly PipeType[];
+  /** The module identity; defaults to `"mcp"`. */
   readonly key?: string;
+}
+
+/** What `McpModule.forRoot` accepts. */
+export interface McpModuleOptions extends McpModuleTopLevel, McpServerMetadata {}
+
+/** What `McpModule.forRootAsync` accepts. */
+export interface McpModuleAsyncOptions<
+  TDependencies extends readonly Token<unknown>[] = readonly [],
+> extends McpModuleTopLevel {
+  /** The modules whose exports the factory may inject. */
+  readonly imports?: readonly ModuleImport[];
+  /** The providers the factory receives. */
+  readonly inject?: TDependencies;
+  /** Builds the server identity and transport policy. */
+  readonly useFactory: (...dependencies: TokenMap<TDependencies>) => McpServerMetadata;
+}
+
+/** The options the runtime reads after defaults are applied. @internal */
+export interface ResolvedMcpOptions {
+  readonly name: string;
+  readonly version: string;
+  readonly title?: string;
+  readonly description?: string;
+  readonly websiteUrl?: string;
+  readonly icons?: readonly Readonly<Record<string, unknown>>[];
+  readonly instructions?: string;
+  readonly path: string | false;
+  readonly include: readonly ModuleImport[];
+  readonly guards: readonly ClassToken<unknown>[];
+  readonly interceptors: readonly ClassToken<unknown>[];
+  readonly filters: readonly ClassToken<unknown>[];
+  readonly pipes: readonly PipeType[];
+  readonly legacy: McpHttpLegacy;
+  readonly responseMode: McpResponseMode;
+  readonly allowedOrigins: readonly string[] | false;
+  readonly allowedHosts: readonly string[] | undefined;
+  readonly maxRequestBodySize: number;
+  readonly stdioLegacy: McpStdioLegacy;
+  readonly key: string;
 }

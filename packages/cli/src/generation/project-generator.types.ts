@@ -10,6 +10,14 @@ export interface GenerateProjectOptions {
   readonly skipInstall?: boolean;
   /** Generate a workspace with `apps/api` and `libs/`. */
   readonly workspace?: boolean;
+  /** The HTTP platform the application boots on. */
+  readonly platform?: "elysia" | "hono" | "h3";
+  /** The coding-agent clients whose skills are installed. */
+  readonly skills?: readonly ("codex" | "claude" | "cursor")[];
+  /** Skip installing coding-agent skills. */
+  readonly skipSkills?: boolean;
+  /** Skip initializing a Git repository. */
+  readonly skipGit?: boolean;
 }
 
 /** What a project run reports: its directory, files, and install state. */

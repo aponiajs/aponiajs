@@ -15,7 +15,6 @@
     "@aponiajs/core": "workspace:*",
     "@aponiajs/mcp": "workspace:*",
     "@aponiajs/platform-elysia": "workspace:*",
-    "@modelcontextprotocol/sdk": "^1.32.2",
     "elysia": "2.0.0-rc.4",
     "zod": "^4.6.6"
   }

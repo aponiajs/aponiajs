@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { createApplication } from "./application.ts";
 
 const endpoint = "http://localhost:3200";
+const token = "aponia-example-token";
 
 let savedToken: string | undefined;
 
@@ -33,7 +34,7 @@ function initializeBody(): Record<string, unknown> {
 
 function post(
   body: unknown,
-  options: { readonly path?: string; readonly token?: string; readonly origin?: string } = {},
+  options: { readonly token?: string; readonly origin?: string } = {},
 ): Request {
   const headers = new Headers({
     accept: "application/json, text/event-stream",
@@ -47,44 +48,49 @@ function post(
     headers.set("origin", options.origin);
   }
 
-  return new Request(`${endpoint}${options.path ?? "/mcp"}`, {
+  return new Request(`${endpoint}/mcp`, {
     method: "POST",
     body: JSON.stringify(body),
     headers,
   });
 }
 
+async function payloadOf(response: Response): Promise<Record<string, unknown>> {
+  const text = await response.text();
+  if (response.headers.get("content-type")?.includes("text/event-stream")) {
+    const data = text
+      .split("\n")
+      .filter((line) => line.startsWith("data: "))
+      .map((line) => line.slice(6))
+      .join("\n");
+    return JSON.parse(data) as Record<string, unknown>;
+  }
+  return JSON.parse(text) as Record<string, unknown>;
+}
+
 describe("mcp example", () => {
-  test("refuses a request without the bearer token", async () => {
+  test("serves the handshake and lists the decorated tools", async () => {
     const application = await createApplication();
-
-    const response = await application.handle(post(initializeBody()));
-
-    expect(response.status).toBe(401);
-    await application.close();
-  });
-
-  test("serves the handshake and a tool call with the bearer token", async () => {
-    const application = await createApplication();
-    const token = "aponia-example-token";
 
     const initialized = await application.handle(post(initializeBody(), { token }));
     expect(initialized.status).toBe(200);
-    const initializedPayload = (await initialized.json()) as {
-      result: { serverInfo: { name: string } };
-    };
-    expect(initializedPayload.result.serverInfo.name).toBe("aponia-mcp-example");
 
     const listed = await application.handle(
       post({ jsonrpc: "2.0", id: 2, method: "tools/list" }, { token }),
     );
-    const listedPayload = (await listed.json()) as {
+    const listedPayload = (await payloadOf(listed)) as {
       result: { tools: readonly { name: string }[] };
     };
     expect(listedPayload.result.tools.map((tool) => tool.name)).toEqual([
-      "describe_application",
       "add",
+      "describeApplication",
     ]);
+
+    await application.close();
+  });
+
+  test("runs a tool with its validated arguments", async () => {
+    const application = await createApplication();
 
     const called = await application.handle(
       post(
@@ -97,7 +103,7 @@ describe("mcp example", () => {
         { token },
       ),
     );
-    const calledPayload = (await called.json()) as {
+    const calledPayload = (await payloadOf(called)) as {
       result: { content: readonly { text: string }[] };
     };
     expect(calledPayload.result.content[0]?.text).toBe("42");
@@ -105,34 +111,54 @@ describe("mcp example", () => {
     await application.close();
   });
 
-  test("mounts on the configured path", async () => {
-    const application = await createApplication({ MCP_PATH: "/rpc" });
-    const token = "aponia-example-token";
+  test("answers an injected provider through a tool", async () => {
+    const application = await createApplication();
 
-    const served = await application.handle(post(initializeBody(), { path: "/rpc", token }));
-    expect(served.status).toBe(200);
-
-    const missing = await application.handle(post(initializeBody(), { path: "/mcp", token }));
-    expect(missing.status).toBe(404);
+    const called = await application.handle(
+      post(
+        {
+          jsonrpc: "2.0",
+          id: 4,
+          method: "tools/call",
+          params: { name: "describeApplication", arguments: {} },
+        },
+        { token },
+      ),
+    );
+    const calledPayload = (await payloadOf(called)) as {
+      result: { content: readonly { text: string }[] };
+    };
+    expect(calledPayload.result.content[0]?.text).toContain("AponiaJS application");
 
     await application.close();
   });
 
-  test("refuses an origin the configuration does not allow", async () => {
-    const application = await createApplication({
-      MCP_ALLOWED_ORIGINS: "https://app.example",
-    });
-    const token = "aponia-example-token";
+  test("returns a tool error when the guard refuses the call", async () => {
+    const application = await createApplication();
+
+    const called = await application.handle(
+      post({
+        jsonrpc: "2.0",
+        id: 5,
+        method: "tools/call",
+        params: { name: "add", arguments: { a: 1, b: 2 } },
+      }),
+    );
+    const calledPayload = (await payloadOf(called)) as {
+      result: { isError?: boolean };
+    };
+    expect(calledPayload.result.isError).toBe(true);
+
+    await application.close();
+  });
+
+  test("refuses a browser origin outside the default allowlist", async () => {
+    const application = await createApplication();
 
     const refused = await application.handle(
       post(initializeBody(), { token, origin: "https://evil.example" }),
     );
     expect(refused.status).toBe(403);
-
-    const allowed = await application.handle(
-      post(initializeBody(), { token, origin: "https://app.example" }),
-    );
-    expect(allowed.status).toBe(200);
 
     await application.close();
   });

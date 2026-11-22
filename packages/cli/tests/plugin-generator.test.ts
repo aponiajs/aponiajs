@@ -286,8 +286,18 @@ describe("aponia g plugin", () => {
 
     const application = (await Bun.file(
       join(projectRoot, "apps", "api", "package.json"),
-    ).json()) as { readonly dependencies: Readonly<Record<string, string>> };
-    expect(application.dependencies["widgets"]).toBe("workspace:*");
+    ).json()) as { readonly dependencies?: Readonly<Record<string, string>> };
+    expect(application.dependencies?.["widgets"]).toBeUndefined();
+
+    const configuration = (await Bun.file(join(projectRoot, "aponia.json")).json()) as {
+      readonly projects: Readonly<Record<string, { readonly type?: string }>>;
+    };
+    expect(configuration.projects.widgets?.type).toBe("library");
+
+    const tsconfig = (await Bun.file(join(projectRoot, "tsconfig.json")).json()) as {
+      readonly compilerOptions: { readonly paths: Readonly<Record<string, readonly string[]>> };
+    };
+    expect(tsconfig.compilerOptions.paths["@app/widgets"]).toEqual(["./libs/widgets/src/index.ts"]);
 
     const rootManifest = (await Bun.file(join(projectRoot, "package.json")).json()) as {
       readonly workspaces: readonly string[];

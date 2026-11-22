@@ -165,6 +165,9 @@ export async function bootstrapAponiaApplication(
     ),
     provideClass(Reflector, []),
   ]);
+  // Attached before any package mounts: a platform adapter reads the container
+  // while the boot is still composing, not only once the application is built.
+  attachApplicationContainer(baseApplication, container);
   // The root may import a module that imports `RequestContextModule` without
   // re-exporting the service — `AuthModule` and `TenantModule` do. Root
   // visibility alone would leave the ambient accessor unset, so a request-scoped

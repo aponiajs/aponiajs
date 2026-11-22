@@ -1,6 +1,8 @@
 import { expect, test } from "bun:test";
 import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { createTestApplication } from "@aponiajs/testing";
 import { AppModule } from "../src/app.module.ts";
+import { AppService } from "../src/app.service.ts";
 
 test("GET / routes through AppController and AppService", async () => {
   const application = await AponiaFactory.create(AppModule, { logger: false });
@@ -8,5 +10,16 @@ test("GET / routes through AppController and AppService", async () => {
 
   expect(response.status).toBe(200);
   expect(await response.text()).toBe("Hello from {{PROJECT_NAME}}!");
+  await application.close();
+});
+
+test("overrides a provider for one boot", async () => {
+  const application = await createTestApplication(AppModule)
+    .overrideProvider(AppService)
+    .useValue({ getGreeting: () => "Overridden greeting" })
+    .compile();
+  const response = await application.handle(new Request("http://localhost/"));
+
+  expect(await response.text()).toBe("Overridden greeting");
   await application.close();
 });

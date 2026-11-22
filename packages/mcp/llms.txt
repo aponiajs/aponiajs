@@ -1,30 +1,30 @@
 # @aponiajs/mcp
 
-> A Model Context Protocol endpoint for an Aponia application, mounted from the official `@modelcontextprotocol/sdk` server. The package contributes a module registration, a validated endpoint policy, a request gate, and stateful session cleanup; every protocol frame is the SDK's.
+> A Nest-style Model Context Protocol server for AponiaJS. Tools, resources, resources templates, and prompts are decorated provider methods, discovered when the endpoint mounts and served through the official `@modelcontextprotocol/server` SDK.
 
 ## What this package exports
 
-- `McpModule` — `McpModule.register(options)` returns the `DynamicModule` an application's `imports` accepts.
-- `McpConfiguration` — the value a `defineConfiguration` token validates: `path`, `allowedOrigins`, and `allowUnauthenticated`.
-- `McpModuleOptions` — `configuration`, `imports`, `inject`, `useFactory`, `authorize`, `sessions`, `jsonResponse`, `source`, and `key`.
-- `McpServerFactory` — `() => McpServer`, called once per request in stateless mode and once per session in stateful mode.
-- `McpAuthorize` — `(request) => boolean | Promise<boolean>`; `false` or a throw is a `401`.
+- `McpModule` — `forRoot(options)` and `forRootAsync({ imports, inject, useFactory })`.
+- `Tool`, `Resource`, `ResourceTemplate`, `Prompt` — method decorators.
+- `McpContext` — the second argument of every decorated method.
+- `McpExecutionContext` — the execution context a guard, interceptor, pipe, or filter receives.
+- `serveMcpStdio` and `listenMcpStdio` — the stdio entrypoints.
 
 ## Where the behavior lives
 
-- [McpModule](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/module/mcp-module.ts): the registration, the configuration provider, and the session registry provider.
-- [readMcpPolicy](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/policy/mcp-policy.ts): the boot guard, the Origin gate, the `authorize` decision, and the preflight answer.
-- [McpSessionRegistry](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/session/mcp-session-registry.ts): the stateful sessions one boot owns and their shutdown.
+- [McpModule](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/module/mcp-module.ts): the registration, options, and platform adapters.
+- [Discovery](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/discovery/mcp-discovery.ts): walks the graph, reads decorator metadata, and refuses duplicates.
+- [Execution](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/execution/mcp-invoker.ts): guards, interceptors, pipes, filters, and the method call.
+- [Runtime](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/transport/mcp-runtime.ts): one SDK server per request, the Origin and Host gate, and the body bound.
 
 ## Use it
 
 ```ts
-const mcp = McpModule.register({
-  configuration: McpConfig,
-  inject: [UsersService],
-  useFactory: (users) => () => buildServer(users),
-  authorize: (request) => verifyToken(request),
-});
+@Module({
+  imports: [McpModule.forRoot({ name: "app", version: "1.0.0" })],
+  providers: [OrdersTools],
+})
+export class AppModule {}
 ```
 
 [Package README](./README.md) · [MCP guide](../../docs/services/mcp.md)

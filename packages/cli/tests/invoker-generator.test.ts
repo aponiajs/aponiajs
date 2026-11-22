@@ -323,7 +323,7 @@ test("refuses two controllers that share a class name", async () => {
 });
 
 test("rejects an unexpected positional argument to build", () => {
-  expect(() => parseArguments(["build", "extra"])).toThrow('Unexpected argument "extra".');
+  expect(() => parseArguments(["build", "one", "two"])).toThrow('Unexpected argument "two".');
 });
 
 test("reports the change and the next step through runCli", async () => {

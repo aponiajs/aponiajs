@@ -7,6 +7,8 @@ Usage:
   aponia g <schematic> <name> [options]
   aponia build [options]
   aponia dev [entry] [options]
+  aponia start [entry] [options]
+  aponia info [options]
   aponia library check [path] [options]
   aponia library new <name> [options]
   aponia library publish [path] [options]

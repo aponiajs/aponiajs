@@ -62,7 +62,10 @@ describe("framework-first package documentation", () => {
   test("every module package README registers the module and boots the application", async () => {
     for (const name of modulePackages) {
       const content = await Bun.file(`packages/${name}/README.md`).text();
-      expect(content, `${name}: module registration`).toContain("Module.register");
+      expect(
+        content.includes("Module.register") || content.includes("Module.forRoot"),
+        `${name}: module registration`,
+      ).toBe(true);
       expect(content, `${name}: boot`).toContain("AponiaFactory.create");
     }
   });

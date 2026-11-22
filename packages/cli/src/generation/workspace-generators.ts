@@ -69,10 +69,17 @@ async function generatePackage(
   const scope = options.scope?.trim().replace(/^@/, "");
   const packageName = scope ? `@${scope}/${names.fileName}` : names.fileName;
 
-  const files = createPackageFiles({ directory, names, kind, publish, packageName });
+  const files = createPackageFiles({
+    directory,
+    names,
+    kind,
+    publish,
+    packageName,
+    standalone,
+  });
   const result = await writePendingFiles(projectRoot, files, options.dryRun);
   if (!options.dryRun && !standalone) {
-    await wireWorkspaceLibrary(projectRoot, packageName, options, kind);
+    await wireWorkspaceLibrary(projectRoot, names, packageName, options, kind);
   }
   if (!options.dryRun && standalone && options.skipInstall !== true) {
     const install = Bun.spawn(["bun", "install"], {
@@ -95,10 +102,11 @@ interface PackageSpec {
   readonly kind: PackageKind;
   readonly publish: boolean;
   readonly packageName: string;
+  readonly standalone: boolean;
 }
 
 function createPackageFiles(spec: PackageSpec): PendingFile[] {
-  const { directory, names, kind, publish, packageName } = spec;
+  const { directory, names, kind, publish, packageName, standalone } = spec;
   const optionsToken = `${constantCase(names.className)}_OPTIONS`;
   const platformProvider = `${names.fileName}PlatformProvider`;
   const label = kind === "plugin" ? "plugin" : "library";
@@ -181,6 +189,11 @@ function createPackageFiles(spec: PackageSpec): PendingFile[] {
       )}\n`,
     ),
     createFile(directory, "tsconfig.json", packageTsconfig()),
+    createFile(
+      directory,
+      "tsconfig.lib.json",
+      packageLibTsconfig(standalone ? undefined : "../../tsconfig.json"),
+    ),
     createFile(directory, "tsconfig.build.json", packageBuildTsconfig()),
     createFile(directory, "vite.config.ts", packageViteConfig()),
     createFile(directory, "README.md", packageReadme(spec)),
@@ -505,6 +518,7 @@ function packageBarrel(names: ComponentNames, optionsToken: string): string {
 
 async function wireWorkspaceLibrary(
   projectRoot: string,
+  names: ComponentNames,
   packageName: string,
   options: GenerateSchematicOptions,
   kind: PackageKind,
@@ -529,6 +543,55 @@ async function wireWorkspaceLibrary(
     `${JSON.stringify({ ...rootManifest, workspaces }, undefined, 2)}\n`,
   );
 
+  const configurationPath = join(projectRoot, "aponia.json");
+  const configurationFile = Bun.file(configurationPath);
+  const configuration = (await configurationFile.exists())
+    ? ((await configurationFile.json()) as Record<string, unknown>)
+    : {};
+  const prefix =
+    typeof configuration.defaultLibraryPrefix === "string"
+      ? configuration.defaultLibraryPrefix
+      : "@app";
+  const libraryRoot = `libs/${names.fileName}`;
+  const projects = {
+    ...(configuration.projects as Record<string, unknown> | undefined),
+    [names.fileName]: {
+      type: "library",
+      root: libraryRoot,
+      entryFile: "index",
+      sourceRoot: `${libraryRoot}/src`,
+      compilerOptions: { tsConfigPath: `${libraryRoot}/tsconfig.lib.json` },
+    },
+  };
+  await Bun.write(
+    configurationPath,
+    `${JSON.stringify(
+      { ...configuration, defaultLibraryPrefix: prefix, projects },
+      undefined,
+      2,
+    )}\n`,
+  );
+
+  const tsconfigPath = join(projectRoot, "tsconfig.json");
+  const tsconfigFile = Bun.file(tsconfigPath);
+  const tsconfig = (await tsconfigFile.exists())
+    ? ((await tsconfigFile.json()) as Record<string, unknown>)
+    : { compilerOptions: {} };
+  const compilerOptions = (tsconfig.compilerOptions as Record<string, unknown> | undefined) ?? {};
+  const paths = {
+    ...(compilerOptions.paths as Record<string, readonly string[]> | undefined),
+    [`${prefix}/${names.fileName}`]: [`./${libraryRoot}/src/index.ts`],
+    [`${prefix}/${names.fileName}/*`]: [`./${libraryRoot}/src/*`],
+  };
+  await Bun.write(
+    tsconfigPath,
+    `${JSON.stringify(
+      { ...tsconfig, compilerOptions: { ...compilerOptions, paths } },
+      undefined,
+      2,
+    )}\n`,
+  );
+
   const appsDirectory = join(projectRoot, "apps");
   const apps = await readdir(appsDirectory, { withFileTypes: true }).catch(() => []);
   const projectName = options.project ?? apps.find((entry) => entry.isDirectory())?.name;
@@ -542,14 +605,16 @@ async function wireWorkspaceLibrary(
     readonly dependencies?: Readonly<Record<string, string>>;
     readonly [key: string]: unknown;
   };
-  await Bun.write(
-    targetPath,
-    `${JSON.stringify(
-      { ...target, dependencies: { ...target.dependencies, [packageName]: "workspace:*" } },
-      undefined,
-      2,
-    )}\n`,
-  );
+  if (options.publish === true) {
+    await Bun.write(
+      targetPath,
+      `${JSON.stringify(
+        { ...target, dependencies: { ...target.dependencies, [packageName]: "workspace:*" } },
+        undefined,
+        2,
+      )}\n`,
+    );
+  }
 
   if (options.skipInstall !== true) {
     const install = Bun.spawn(["bun", "install"], {
@@ -621,7 +686,24 @@ function packageBuildTsconfig(): string {
 }
 
 function packageViteConfig(): string {
-  return `import { defineConfig } from "vite-plus";\n\nexport default defineConfig({\n  test: {\n    globals: true,\n    include: ["tests-vp/**/*.conformance.ts"],\n  },\n  pack: {\n    tsconfig: "tsconfig.build.json",\n    dts: true,\n    exports: true,\n    deps: {\n      neverBundle: ["@aponiajs/common", "@aponiajs/core", "@aponiajs/platform-core"],\n    },\n  },\n  lint: {\n    options: {\n      typeAware: true,\n      typeCheck: true,\n    },\n  },\n  fmt: {},\n});\n`;
+  return `import { defineConfig } from "vite-plus";\n\nexport default defineConfig({\n  test: {\n    globals: true,\n    include: ["tests-vp/**/*.conformance.ts"],\n  },\n  pack: {\n    tsconfig: "tsconfig.lib.json",\n    dts: true,\n    exports: true,\n    deps: {\n      neverBundle: ["@aponiajs/common", "@aponiajs/core", "@aponiajs/platform-core"],\n    },\n  },\n  lint: {\n    options: {\n      typeAware: true,\n      typeCheck: true,\n    },\n  },\n  fmt: {},\n});\n`;
+}
+
+function packageLibTsconfig(extendsPath: string | undefined): string {
+  return `${JSON.stringify(
+    {
+      ...(extendsPath === undefined ? {} : { extends: extendsPath }),
+      compilerOptions: {
+        rootDir: "src",
+        outDir: "dist",
+        declaration: true,
+        noEmit: false,
+      },
+      include: ["src"],
+    },
+    undefined,
+    2,
+  )}\n`;
 }
 
 function packageReadme(spec: PackageSpec): string {

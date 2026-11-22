@@ -47,6 +47,8 @@ aponia generate <schematic> <name> [options]
 aponia g <schematic> <name> [options]
 aponia build [options]
 aponia dev [entry] [options]
+aponia start [entry] [options]
+aponia info [options]
 aponia help
 aponia version
 ```
@@ -56,6 +58,11 @@ aponia version
 the watcher's reload output and the stop signal reach the process that started
 the CLI, and it returns the watcher's exit code. It starts no server of its own
 and reads no configuration: the entrypoint is the application's own `main.ts`.
+
+`aponia start` runs the same entry without a watcher by default. `--watch`
+adds Bun's watcher, `--debug` adds the inspector, and `--prod` runs
+`dist/<entry>.js`. `aponia info` prints the CLI, framework, Bun, workspace,
+project, lockfile, Vite+, and Git facts; `--json` prints one object.
 
 Project names must use lowercase kebab-case:
 
@@ -78,6 +85,7 @@ schematics:
 | ------------- | ----- | --------------------- |
 | `app`         | —     | workspace application |
 | `library`     | `lib` | workspace library     |
+| `mcp`         | `mcp` | MCP tools module      |
 | `plugin`      | `pl`  | workspace plugin      |
 | `class`       | `cl`  | plain class           |
 | `controller`  | `co`  | HTTP controller       |

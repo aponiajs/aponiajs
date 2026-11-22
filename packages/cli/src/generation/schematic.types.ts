@@ -62,25 +62,58 @@ export interface GenerateDefaults {
 
 /** The `aponia.json` configuration: source roots and per-project generation defaults. */
 export interface AponiaConfiguration {
+  /** The schematic collection the CLI reads. */
+  readonly collection?: string;
   /** The source root generation reads and writes. */
   readonly sourceRoot?: string;
+  /** The entry file a project builds and starts. */
+  readonly entryFile?: string;
+  /** Whether the workspace holds `apps/` and `libs/`. */
+  readonly monorepo?: boolean;
+  /** The alias prefix workspace libraries are imported under. */
+  readonly defaultLibraryPrefix?: string;
+  /** The platform a generated application boots on. */
+  readonly platform?: "elysia" | "hono" | "h3";
+  /** The source language. */
+  readonly language?: "typescript";
+  /** Compiler settings a project inherits. */
+  readonly compilerOptions?: {
+    readonly tsConfigPath?: string;
+    readonly webpack?: boolean;
+  };
   /** The generation defaults of the default project. */
   readonly generateOptions?: GenerateDefaults;
   /** The named projects of a multi-project workspace. */
-  readonly projects?: Readonly<
-    Record<
-      string,
-      {
-        readonly root?: string;
-        readonly sourceRoot?: string;
-        readonly generateOptions?: GenerateDefaults;
-      }
-    >
-  >;
+  readonly projects?: Readonly<Record<string, AponiaProjectConfiguration>>;
+}
+
+/** One project entry, shaped like `nest-cli.json`'s `projects` value. */
+export interface AponiaProjectConfiguration {
+  /** Whether the project is an application or a library. */
+  readonly type?: "application" | "library";
+  /** The project root, relative to the workspace. */
+  readonly root?: string;
+  /** The entry file name, `main` for an application and `index` for a library. */
+  readonly entryFile?: string;
+  /** The source root generation reads and writes. */
+  readonly sourceRoot?: string;
+  /** The project's compiler settings. */
+  readonly compilerOptions?: {
+    readonly tsConfigPath?: string;
+    readonly webpack?: boolean;
+  };
+  /** The generation defaults of this project. */
+  readonly generateOptions?: GenerateDefaults;
 }
 
 /** One resolved project: its root, source root, and generation defaults. */
 export interface ResolvedProject {
+  /** Whether the project is an application or a library. */
+  readonly type?: "application" | "library";
+  /** The entry file name. */
+  readonly entryFile?: string;
+  /** The project's tsconfig path. */
+  readonly tsConfigPath?: string;
   /** The project root, absent for the default project. */
   readonly root?: string;
   /** The source root generation reads and writes. */

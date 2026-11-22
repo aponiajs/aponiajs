@@ -70,6 +70,17 @@ export type {
 } from "./enhancers/enhancer.types.ts";
 export { AponiaError } from "./errors/aponia-error.ts";
 export type { AponiaErrorCode } from "./errors/aponia-error.types.ts";
+export { Prompt, Resource, ResourceTemplate, Tool } from "./mcp/mcp-decorators.ts";
+export { getMcpPrimitiveMetadata, mcpPrimitivesMetadataKey } from "./mcp/mcp-metadata.ts";
+export type {
+  McpPrimitiveKind,
+  McpPrimitiveMetadata,
+  McpPrimitiveOptions,
+  McpPromptOptions,
+  McpResourceOptions,
+  McpResourceTemplateOptions,
+  McpToolOptions,
+} from "./mcp/mcp.types.ts";
 export {
   registerAsyncContextExit,
   runOutsideAsyncContexts,

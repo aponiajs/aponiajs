@@ -23,6 +23,7 @@ const packageLayouts: readonly PackageLayout[] = [
       "logging",
       "middleware",
       "microservices",
+      "mcp",
       "modules",
       "pipes",
       "providers",
@@ -161,7 +162,7 @@ const packageLayouts: readonly PackageLayout[] = [
   {
     sourceRoot: "packages/mcp/src",
     files: ["index.ts"],
-    directories: ["module", "policy", "session"],
+    directories: ["adapters", "discovery", "execution", "module", "transport"],
   },
   {
     sourceRoot: "packages/openapi/src",

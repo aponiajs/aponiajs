@@ -29,8 +29,11 @@ export function resolveProject(
     throw new Error(`Unknown project "${requestedProject}" in aponia.json.`);
   }
   return {
+    type: project.type,
+    entryFile: project.entryFile,
     root: project.root,
     sourceRoot: project.sourceRoot ?? join(project.root ?? "", "src"),
+    tsConfigPath: project.compilerOptions?.tsConfigPath,
     generateOptions: project.generateOptions,
   };
 }

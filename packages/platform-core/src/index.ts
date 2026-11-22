@@ -13,6 +13,10 @@ export {
   AponiaHttpApplication,
   createPlatformFactory,
 } from "./application/http-bootstrap.ts";
+export {
+  attachApplicationContainer,
+  getApplicationContainer,
+} from "./application/application-container.ts";
 export type { BootedHttpApplication, ListenerRef } from "./application/http-bootstrap.ts";
 export type {
   AponiaHttpApplicationOptions,

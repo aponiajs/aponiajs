@@ -54,6 +54,10 @@ test("parses the same flags bare, negated, and through their short aliases", () 
     dryRun: true,
     skipInstall: true,
     workspace: false,
+    platform: "elysia",
+    skills: ["codex", "claude", "cursor"],
+    skipSkills: false,
+    skipGit: false,
   });
   expect(parseArguments(["new", "app", "-d", "-s"])).toEqual({
     command: "new",
@@ -61,6 +65,10 @@ test("parses the same flags bare, negated, and through their short aliases", () 
     dryRun: true,
     skipInstall: true,
     workspace: false,
+    platform: "elysia",
+    skills: ["codex", "claude", "cursor"],
+    skipSkills: false,
+    skipGit: false,
   });
   expect(parseArguments(["new", "app", "--no-dry-run", "--no-skip-install"])).toEqual({
     command: "new",
@@ -68,6 +76,10 @@ test("parses the same flags bare, negated, and through their short aliases", () 
     dryRun: false,
     skipInstall: false,
     workspace: false,
+    platform: "elysia",
+    skills: ["codex", "claude", "cursor"],
+    skipSkills: false,
+    skipGit: false,
   });
   expect(
     parseArguments([
@@ -119,6 +131,10 @@ test("never consumes the token after a flag, wherever the flag stands", () => {
     dryRun: true,
     skipInstall: false,
     workspace: false,
+    platform: "elysia",
+    skills: ["codex", "claude", "cursor"],
+    skipSkills: false,
+    skipGit: false,
   });
   expect(parseArguments(["new", "-d", "app"])).toEqual({
     command: "new",
@@ -126,6 +142,10 @@ test("never consumes the token after a flag, wherever the flag stands", () => {
     dryRun: true,
     skipInstall: false,
     workspace: false,
+    platform: "elysia",
+    skills: ["codex", "claude", "cursor"],
+    skipSkills: false,
+    skipGit: false,
   });
   expect(parseArguments(["new", "--skip-install", "app"])).toEqual({
     command: "new",
@@ -133,6 +153,10 @@ test("never consumes the token after a flag, wherever the flag stands", () => {
     dryRun: false,
     skipInstall: true,
     workspace: false,
+    platform: "elysia",
+    skills: ["codex", "claude", "cursor"],
+    skipSkills: false,
+    skipGit: false,
   });
   expect(parseArguments(["new", "--no-dry-run", "app"])).toEqual({
     command: "new",
@@ -140,6 +164,10 @@ test("never consumes the token after a flag, wherever the flag stands", () => {
     dryRun: false,
     skipInstall: false,
     workspace: false,
+    platform: "elysia",
+    skills: ["codex", "claude", "cursor"],
+    skipSkills: false,
+    skipGit: false,
   });
   expect(parseArguments(["generate", "--flat", "controller", "user"])).toMatchObject({
     schematic: "controller",

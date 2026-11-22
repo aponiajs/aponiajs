@@ -17,7 +17,6 @@ const pendingPort = new Set([
   "devtools",
   "graphql",
   "idempotency",
-  "mcp",
   "metrics",
   "opentelemetry",
   "openapi",

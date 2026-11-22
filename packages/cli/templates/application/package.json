@@ -6,11 +6,19 @@
   "scripts": {
     "dev": "bun --watch src/main.ts",
     "start": "bun src/main.ts",
+    "start:dev": "bun --watch src/main.ts",
+    "start:debug": "bun --inspect src/main.ts",
+    "start:prod": "bun dist/main.js",
     "build": "bun run scripts/build.ts",
+    "format": "vp fmt",
+    "lint": "vp lint",
+    "check": "vp check",
     "test": "bun test",
+    "test:watch": "bun test --watch",
+    "test:cov": "bun test --coverage",
+    "test:debug": "bun --inspect test",
     "test:e2e": "bun test ./test/app.e2e-spec.ts",
-    "inspect": "bun run scripts/inspect.ts",
-    "check": "vp check"
+    "inspect": "bun run scripts/inspect.ts"
   },
   "dependencies": {
     "@aponiajs/common": "{{APONIA_VERSION}}",
@@ -21,9 +29,13 @@
   },
   "devDependencies": {
     "@aponiajs/cli": "{{APONIA_VERSION}}",
+    "@aponiajs/testing": "{{APONIA_VERSION}}",
     "@types/bun": "^1.4.4",
     "typescript": "^7.0.2",
     "vite-plus": "^1.6.0"
+  },
+  "engines": {
+    "bun": ">=1.4.4"
   },
   "packageManager": "bun@1.4.4"
 }

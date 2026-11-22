@@ -19,6 +19,7 @@ export const schematicDefinitions: Readonly<Record<ComponentSchematic, Schematic
   interface: { defaultFlat: true, spec: false, suffix: "interface" },
   interceptor: { defaultFlat: true, spec: true, suffix: "interceptor", registration: "providers" },
   middleware: { defaultFlat: true, spec: true, suffix: "middleware", registration: "providers" },
+  mcp: { defaultFlat: false, spec: true, suffix: "tools" },
   module: { defaultFlat: false, spec: false, suffix: "module", registration: "imports" },
   pipe: { defaultFlat: true, spec: true, suffix: "pipe", registration: "providers" },
   provider: { defaultFlat: true, spec: true, suffix: "", registration: "providers" },

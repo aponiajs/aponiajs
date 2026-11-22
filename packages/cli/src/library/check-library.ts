@@ -307,10 +307,10 @@ async function checkRegistrationStandard(
   })) {
     source += await Bun.file(join(directory, path)).text();
   }
-  for (const member of ["forRoot(", "forRootAsync("]) {
-    if (!source.includes(member)) {
+  for (const member of ["forRoot", "forRootAsync"]) {
+    if (!new RegExp(`\\b${member}\\s*[<(]`).test(source)) {
       issues.push(
-        `a ${String(manifest.kind)} library must declare static ${member.slice(0, -1)}(...) returning a DynamicModule`,
+        `a ${String(manifest.kind)} library must declare static ${member}(...) returning a DynamicModule`,
       );
     }
   }

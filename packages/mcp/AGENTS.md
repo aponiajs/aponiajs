@@ -5,47 +5,39 @@ specific to this package.
 
 ## What this package owns
 
-The Model Context Protocol endpoint an Aponia application mounts. The protocol
-itself is the official `@modelcontextprotocol/sdk`; this package owns the module
-registration, the validated endpoint policy, the request gate, and the lifecycle
-of the transports it mounts.
+The Nest-style Model Context Protocol endpoint. Decorators are metadata-only and
+live in `@aponiajs/common`; this package re-exports them and owns discovery,
+execution, transports, and platform mounts.
 
-| Domain     | Owns                                                                                           |
-| ---------- | ---------------------------------------------------------------------------------------------- |
-| `module/`  | `McpModule.register`, the options contract, and the server factory type                        |
-| `policy/`  | The configuration guard, the Origin and `authorize` gate, the preflight answer, and the plugin |
-| `session/` | The stateful session registry and its `onApplicationShutdown` cleanup                          |
+| Domain       | Owns                                                                                |
+| ------------ | ----------------------------------------------------------------------------------- |
+| `module/`    | `McpModule.forRoot`, `forRootAsync`, options, and defaults                          |
+| `discovery/` | Walking the container graph, reading decorator metadata, and refusing invalid plans |
+| `execution/` | `McpExecutionContext`, `McpContext`, and the guard/interceptor/pipe/filter pipeline |
+| `transport/` | `createMcpHandler` wiring, Origin/Host/body gate, and the stdio entrypoints         |
+| `adapters/`  | `providePlatformModule` mounts for Elysia, Hono, and H3                             |
 
-`src/index.ts` is the only public barrel. Keep `*.types.ts` colocated with the
-runtime boundary it describes.
+`src/index.ts` is the only public barrel.
 
 ## Invariants
 
-- **The SDK is the only protocol implementation.** No JSON-RPC engine, version
-  negotiation, discovery, or tool registry lives here. A protocol behavior that
-  is missing is the SDK's to add.
-- **The factory returns a server factory.** An SDK server connects to exactly
-  one transport, so stateless mode builds a server per request and stateful mode
-  builds one per session. Never cache a server across requests.
-- **Authentication fails closed.** The registration refuses to mount when the
-  configuration does not set `allowUnauthenticated: true` and the options carry
-  no `authorize`. A `false` answer or a thrown error is a `401`.
-- **Origin is checked before authorization.** A request carrying an `Origin`
-  the policy does not name is a `403`, and `OPTIONS` is answered without
-  reaching the transport.
-- **Stateless requests are cleaned up.** The transport and server close when the
-  response body ends or the client cancels, including an SSE stream that outlives
-  `handleRequest`.
-- **Sessions belong to one boot.** `McpSessionRegistry` is a provider, not a
-  module-level map, so one application's shutdown cannot close another's
-  sessions. `onsessionclosed` deletes, and `onApplicationShutdown` closes every
-  transport still held.
-- The configuration guard reports every issue with code
-  `INVALID_CONFIGURATION_VALUE` and the declaration's name; tests assert the
-  code and the issue list, never the message.
+- **The SDK is the only protocol implementation.** No JSON-RPC or tool registry
+  lives here. `@modelcontextprotocol/server` v2 speaks the wire.
+- **Discovery is a boot decision.** A duplicate tool or prompt name, an invalid
+  name, or an `include` entry outside the graph throws before the endpoint
+  serves a request.
+- **One SDK server per request and per stdio connection.** Never cache a server
+  across requests; stateless serving is the contract.
+- **Enhancers are explicit.** Module options, class decorators, and method
+  decorators run in that order. HTTP globals from `AponiaFactory.create` are
+  not inherited automatically.
+- **The module is runtime-neutral.** Elysia, Hono, and H3 imports belong in
+  `src/adapters/`, and each mount reads the container the boot attached.
+- **The endpoint is a tool-dispatch surface.** Keep the Origin allowlist and the
+  Host check in place; `path: false` disables HTTP deliberately.
 
 ## Tests
 
-Bun tests live in `packages/mcp/tests/*.test.ts` and drive the endpoint through
-`application.handle` with real `Request` objects. The Vite+ conformance lane
-pins the public types in `packages/mcp/tests-vp/*.conformance.ts`.
+`packages/mcp/tests/*.test.ts` drives the endpoint through Elysia, Hono, H3, and
+an in-memory stdio transport. `packages/mcp/tests-vp/*.conformance.ts` pins the
+public types.

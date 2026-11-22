@@ -1,111 +1,127 @@
 import {
-  AponiaError,
   Module,
+  createToken,
+  dynamicModule,
   provideFactory,
+  provideValue,
   type DynamicModule,
-  type ModuleImport,
+  type Provider,
   type Token,
   type TokenMap,
 } from "@aponiajs/common";
-import { PluginModule, provideConfiguration } from "@aponiajs/platform-elysia";
-import { buildMcpPlugin, readMcpPolicy } from "../policy/mcp-policy.ts";
-import { McpSessionRegistry } from "../session/mcp-session-registry.ts";
-import type { McpModuleOptions } from "./mcp-module.types.ts";
+import { providePlatformModule } from "@aponiajs/platform-core";
+import {
+  MCP_ELYSIA_ADAPTER,
+  MCP_H3_ADAPTER,
+  MCP_HONO_ADAPTER,
+  elysiaAdapter,
+  h3Adapter,
+  honoAdapter,
+} from "../adapters/mcp.adapters.ts";
+import { resolveMcpOptions, topLevelOf } from "./mcp-options.ts";
+import type {
+  McpModuleAsyncOptions,
+  McpModuleOptions,
+  ResolvedMcpOptions,
+} from "./mcp-module.types.ts";
 
-const defaultKey = "mcp";
+/** The resolved options the adapters read. @internal */
+export const MCP_OPTIONS = createToken<ResolvedMcpOptions>("aponia.mcp.options");
 
 /**
  * The module an application imports to serve a Model Context Protocol endpoint.
  *
  * ```ts
- * const mcp = McpModule.register({
- *   configuration: McpConfig,
- *   inject: [UsersService],
- *   useFactory: (users) => () => buildServer(users),
- *   authorize: (request) => verifyToken(request),
- * });
- *
- * @Module({ imports: [mcp] })
+ * @Module({
+ *   imports: [McpModule.forRoot({ name: "cat-store", version: "1.0.0" })],
+ *   providers: [OrdersTools],
+ * })
  * export class AppModule {}
  * ```
  *
- * The package owns no protocol code. The endpoint is the official
- * `@modelcontextprotocol/sdk` server and its web-standard streamable HTTP
- * transport; this module contributes the validated policy, the module graph
- * identity, and the request gate.
- *
- * `aponia build` cannot lower a registration: an `imports` entry that names a
- * `DynamicModule` is declined, and the application boots by lowering the root
- * from its decorators instead. The endpoint still mounts; what is given up is
- * the declared-graph boot.
+ * Tools, resources, and prompts are methods of providers, decorated with
+ * `@Tool()`, `@Resource()`, `@ResourceTemplate()`, and `@Prompt()`. The module
+ * discovers them at mount time and builds one SDK server per request.
  */
 @Module({})
 export class McpModule {
   /**
-   * Builds the MCP endpoint module for one application.
+   * Registers the endpoint with literal options.
    *
-   * @param options - The configuration, injected factory, gate, session mode, and module key.
-   * @returns A frozen registration the application's `imports` accepts.
-   * @throws An `AponiaError` with `INVALID_CONFIGURATION_VALUE` when the policy or the server factory is invalid.
+   * @param options - The server identity, transports, and enhancers.
+   * @returns The dynamic module an application imports.
    */
-  static register<const TDependencies extends readonly Token<unknown>[] = readonly []>(
-    options: McpModuleOptions<TDependencies>,
-  ): DynamicModule {
-    const {
-      configuration,
-      source,
-      key,
-      imports,
-      inject,
-      useFactory,
-      authorize,
-      sessions,
-      jsonResponse,
-    } = options;
-    const moduleKey = key ?? defaultKey;
-    const injected = (inject ?? []) as TDependencies;
-    const stateful = sessions === "stateful";
+  static forRoot(options: McpModuleOptions): DynamicModule {
+    const resolved = resolveMcpOptions(options, topLevelOf(options));
 
-    const pluginModule = PluginModule.registerAsync({
-      key: moduleKey,
-      imports: imports ?? [],
-      inject: [configuration, McpSessionRegistry, ...injected],
-      useFactory: (
-        value: unknown,
-        registry: McpSessionRegistry,
-        ...dependencies: TokenMap<TDependencies>
-      ) => {
-        const policy = readMcpPolicy(value, configuration, authorize);
-        const serverFactory = useFactory(...dependencies);
-
-        if (typeof serverFactory !== "function") {
-          throw new AponiaError(
-            "INVALID_CONFIGURATION_VALUE",
-            `The MCP factory for "${configuration.description}" did not return a server factory.`,
-            { configuration: configuration.description },
-          );
-        }
-
-        return buildMcpPlugin({
-          policy,
-          serverFactory,
-          authorize,
-          registry,
-          stateful,
-          jsonResponse: jsonResponse ?? false,
-        });
-      },
-    });
-
-    return Object.freeze({
-      ...pluginModule,
-      imports: Object.freeze([...(imports ?? [])]) as readonly ModuleImport[],
-      providers: Object.freeze([
-        provideConfiguration(configuration, source === undefined ? undefined : { source }),
-        provideFactory(McpSessionRegistry, [], () => new McpSessionRegistry()),
-        ...(pluginModule.providers ?? []),
-      ]),
-      exports: Object.freeze([configuration]),
+    return dynamicModule({
+      module: McpModule,
+      id: `McpModule[${resolved.key}]`,
+      instanceId: Symbol.for(`aponia.plugin.mcp:${resolved.key}`),
+      providers: [
+        provideValue(MCP_OPTIONS, resolved),
+        ...adapterProviders(),
+        platformProvider(resolved.key),
+      ],
+      exports: [],
     });
   }
+
+  /**
+   * Registers the endpoint with metadata a factory builds.
+   *
+   * The factory runs synchronously during the provider pass, matching the
+   * container's registration contract in this release.
+   *
+   * @param options - The imports, injected tokens, factory, and top-level fields.
+   * @returns The dynamic module an application imports.
+   */
+  static forRootAsync<const TDependencies extends readonly Token<unknown>[] = readonly []>(
+    options: McpModuleAsyncOptions<TDependencies>,
+  ): DynamicModule {
+    const top = topLevelOf(options);
+    const key = top.key ?? "mcp";
+    const injected = (options.inject ?? []) as TDependencies;
+
+    return dynamicModule({
+      module: McpModule,
+      id: `McpModule[${key}]`,
+      instanceId: Symbol.for(`aponia.plugin.mcp:${key}`),
+      imports: [...(options.imports ?? [])],
+      providers: [
+        provideFactory(MCP_OPTIONS, injected, (...dependencies: TokenMap<TDependencies>) =>
+          resolveMcpOptions(options.useFactory(...dependencies), top),
+        ),
+        ...adapterProviders(),
+        platformProvider(key),
+      ],
+      exports: [],
+    });
+  }
+}
+
+function adapterProviders(): readonly Provider[] {
+  return [
+    provideFactory(MCP_ELYSIA_ADAPTER, [MCP_OPTIONS], (options: ResolvedMcpOptions) =>
+      elysiaAdapter(options),
+    ),
+    provideFactory(MCP_HONO_ADAPTER, [MCP_OPTIONS], (options: ResolvedMcpOptions) =>
+      honoAdapter(options),
+    ),
+    provideFactory(MCP_H3_ADAPTER, [MCP_OPTIONS], (options: ResolvedMcpOptions) =>
+      h3Adapter(options),
+    ),
+  ];
+}
+
+function platformProvider(key: string): Provider {
+  return providePlatformModule({
+    key,
+    platforms: ["elysia", "hono", "h3"],
+    adapters: {
+      elysia: MCP_ELYSIA_ADAPTER,
+      hono: MCP_HONO_ADAPTER,
+      h3: MCP_H3_ADAPTER,
+    },
+  });
 }

@@ -28,6 +28,9 @@ const nativeApplicationKey: unique symbol = Symbol.for("aponia.application.nativ
  * @internal
  */
 export function attachApplicationContainer(application: object, container: AponiaContainer): void {
+  if (Object.prototype.hasOwnProperty.call(application, containerKey)) {
+    return;
+  }
   Object.defineProperty(application, containerKey, {
     value: container,
     enumerable: false,

@@ -46,7 +46,7 @@ export interface ArgumentsHost {
   switchToHttp(): HttpArgumentsHost;
   switchToRpc(): RpcArgumentsHost;
   switchToWs(): WsArgumentsHost;
-  getType(): "http" | "rpc" | "ws";
+  getType(): "http" | "rpc" | "ws" | "mcp";
 }
 
 /** What a guard and an interceptor are given: the host plus the route's class, handler, and mounted path. */

@@ -32,6 +32,10 @@ test("parses Nest-style new aliases and safety options", () => {
     dryRun: true,
     skipInstall: true,
     workspace: false,
+    platform: "elysia",
+    skills: ["codex", "claude", "cursor"],
+    skipSkills: false,
+    skipGit: false,
   });
 });
 
@@ -284,6 +288,8 @@ test.serial("removes a partially generated project when Bun install fails", asyn
       await generateProject({
         name: "failed-api",
         cwd: temporaryDirectory,
+        skipGit: true,
+        skipSkills: true,
       });
     } catch (error) {
       thrownError = error;
@@ -309,6 +315,8 @@ test.serial("keeps a generated project when Bun install succeeds", async () => {
     const result = await generateProject({
       name: "installed-api",
       cwd: temporaryDirectory,
+      skipGit: true,
+      skipSkills: true,
     });
 
     installed = result.installed;

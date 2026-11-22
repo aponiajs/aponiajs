@@ -10,6 +10,9 @@ import { aponiaVersion } from "../version.ts";
 import { parseArguments } from "./arguments.ts";
 import { runDevServer } from "./dev-server.ts";
 import { helpText } from "./help-text.ts";
+import { runInfoCommand } from "./info.ts";
+import { runStartCommand } from "./start-server.ts";
+import { readConfiguration } from "../generation/project-configuration.ts";
 
 /**
  * Runs the CLI from parsed arguments to printed change lines.
@@ -48,6 +51,18 @@ export async function runCli(arguments_: readonly string[]): Promise<number> {
     }
 
     if (command.command === "build") {
+      const configuration = await readConfiguration(process.cwd());
+      const project =
+        command.project === undefined ? undefined : configuration.projects?.[command.project];
+      if (project !== undefined && project.type === "library") {
+        const child = Bun.spawn(["bun", "run", "build"], {
+          cwd: project.root ?? `libs/${command.project}`,
+          stdin: "inherit",
+          stdout: "inherit",
+          stderr: "inherit",
+        });
+        return await child.exited;
+      }
       const result = await generateInvokers(command);
       for (const line of formatBuildReport(result)) {
         console.log(line);
@@ -62,6 +77,15 @@ export async function runCli(arguments_: readonly string[]): Promise<number> {
 
     if (command.command === "dev") {
       return await runDevServer(command.entry);
+    }
+
+    if (command.command === "start") {
+      return await runStartCommand(command);
+    }
+
+    if (command.command === "info") {
+      await runInfoCommand(command);
+      return 0;
     }
 
     if (command.command === "library") {

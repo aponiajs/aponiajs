@@ -14,6 +14,7 @@ import {
 import { primaryFile, registrationFor, symbolFor } from "./schematic-definitions.ts";
 import type { GenerateSchematicOptions, GenerateSchematicResult } from "./schematic.types.ts";
 import { generateApplication, generateLibrary, generatePlugin } from "./workspace-generators.ts";
+import { generateMcpFeature } from "./mcp-generator.ts";
 
 /**
  * Plans, renders, registers, and writes one schematic: a component, a
@@ -58,6 +59,9 @@ export async function generateSchematic(
   }
   if (options.schematic === "plugin") {
     return generatePlugin(projectRoot, names, schematicOptions);
+  }
+  if (options.schematic === "mcp") {
+    return generateMcpFeature(projectRoot, componentName, schematicOptions);
   }
 
   const configuration = await readConfiguration(projectRoot);

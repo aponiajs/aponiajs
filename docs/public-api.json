@@ -785,6 +785,10 @@
           "kind": "value"
         },
         {
+          "name": "getMcpPrimitiveMetadata",
+          "kind": "value"
+        },
+        {
           "name": "getMessagePatternMetadata",
           "kind": "value"
         },
@@ -979,6 +983,38 @@
         {
           "name": "maximumMessagePatternLength",
           "kind": "value"
+        },
+        {
+          "name": "McpPrimitiveKind",
+          "kind": "type"
+        },
+        {
+          "name": "McpPrimitiveMetadata",
+          "kind": "type"
+        },
+        {
+          "name": "McpPrimitiveOptions",
+          "kind": "type"
+        },
+        {
+          "name": "mcpPrimitivesMetadataKey",
+          "kind": "value"
+        },
+        {
+          "name": "McpPromptOptions",
+          "kind": "type"
+        },
+        {
+          "name": "McpResourceOptions",
+          "kind": "type"
+        },
+        {
+          "name": "McpResourceTemplateOptions",
+          "kind": "type"
+        },
+        {
+          "name": "McpToolOptions",
+          "kind": "type"
         },
         {
           "name": "MESSAGE_HANDLER_ERROR_CODE",
@@ -1237,6 +1273,10 @@
           "kind": "value"
         },
         {
+          "name": "Prompt",
+          "kind": "value"
+        },
+        {
           "name": "provideAlias",
           "kind": "value"
         },
@@ -1294,6 +1334,14 @@
         },
         {
           "name": "resolveRouteValidator",
+          "kind": "value"
+        },
+        {
+          "name": "Resource",
+          "kind": "value"
+        },
+        {
+          "name": "ResourceTemplate",
           "kind": "value"
         },
         {
@@ -1423,6 +1471,10 @@
         {
           "name": "TokenValue",
           "kind": "type"
+        },
+        {
+          "name": "Tool",
+          "kind": "value"
         },
         {
           "name": "UNKNOWN_MESSAGE_PATTERN_CODE",
@@ -2239,11 +2291,23 @@
       "name": "@aponiajs/mcp",
       "exports": [
         {
-          "name": "McpAuthorize",
+          "name": "listenMcpStdio",
+          "kind": "value"
+        },
+        {
+          "name": "McpContext",
           "kind": "type"
         },
         {
-          "name": "McpConfiguration",
+          "name": "McpExecutionContext",
+          "kind": "value"
+        },
+        {
+          "name": "McpHttpLegacy",
+          "kind": "type"
+        },
+        {
+          "name": "McpHttpOptions",
           "kind": "type"
         },
         {
@@ -2251,12 +2315,80 @@
           "kind": "value"
         },
         {
+          "name": "McpModuleAsyncOptions",
+          "kind": "type"
+        },
+        {
           "name": "McpModuleOptions",
           "kind": "type"
         },
         {
-          "name": "McpServerFactory",
+          "name": "McpModuleTopLevel",
           "kind": "type"
+        },
+        {
+          "name": "McpPrimitiveKind",
+          "kind": "type"
+        },
+        {
+          "name": "McpPrimitiveMetadata",
+          "kind": "type"
+        },
+        {
+          "name": "McpPromptOptions",
+          "kind": "type"
+        },
+        {
+          "name": "McpResourceOptions",
+          "kind": "type"
+        },
+        {
+          "name": "McpResourceTemplateOptions",
+          "kind": "type"
+        },
+        {
+          "name": "McpResponseMode",
+          "kind": "type"
+        },
+        {
+          "name": "McpServerMetadata",
+          "kind": "type"
+        },
+        {
+          "name": "McpStdioLegacy",
+          "kind": "type"
+        },
+        {
+          "name": "McpStdioOptions",
+          "kind": "type"
+        },
+        {
+          "name": "McpStdioServerOptions",
+          "kind": "type"
+        },
+        {
+          "name": "McpToolOptions",
+          "kind": "type"
+        },
+        {
+          "name": "Prompt",
+          "kind": "value"
+        },
+        {
+          "name": "Resource",
+          "kind": "value"
+        },
+        {
+          "name": "ResourceTemplate",
+          "kind": "value"
+        },
+        {
+          "name": "serveMcpStdio",
+          "kind": "value"
+        },
+        {
+          "name": "Tool",
+          "kind": "value"
         }
       ]
     },
@@ -2677,6 +2809,10 @@
           "kind": "type"
         },
         {
+          "name": "attachApplicationContainer",
+          "kind": "value"
+        },
+        {
           "name": "attachApplicationShutdown",
           "kind": "value"
         },
@@ -2855,6 +2991,10 @@
         {
           "name": "GatewaySocket",
           "kind": "type"
+        },
+        {
+          "name": "getApplicationContainer",
+          "kind": "value"
         },
         {
           "name": "HealthProbeMount",
