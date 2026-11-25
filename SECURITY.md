@@ -80,6 +80,20 @@ lane requests an OIDC token (`id-token: write`) and publishes with
 `bun run release:sbom` and attached to the GitHub release by the publish
 workflow; [`docs/operations/releasing.md`](./docs/operations/releasing.md) states what it contains.
 
+## Code scanning
+
+CodeQL runs through advanced setup in `.github/workflows/codeql.yml` on every
+push and pull request to `main` and the release branches, and weekly on a
+schedule. It scans the JavaScript and TypeScript surface with the
+`security-extended` query suite; generated runtime bundles, the built docs site,
+coverage output, and template files are excluded. Results are uploaded to the
+repository's Security tab under Code scanning and are not committed as SARIF.
+
+Code scanning complements the dependency audit and the dependency-review action
+in the `security` lane; neither replaces the other. The CodeQL check is not part
+of the required `verify` aggregate until the baseline is clean, at which point it
+can be required through branch protection.
+
 ## Hardening checklist for a deployment
 
 1. Disable devtools in production (`enabled: false`).

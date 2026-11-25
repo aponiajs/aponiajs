@@ -5,7 +5,7 @@ import { expect, test } from "bun:test";
 const repositoryRoot = resolve(import.meta.dir, "..");
 const workflowsDirectory = join(repositoryRoot, ".github", "workflows");
 
-const shaPinnedReference = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+@[0-9a-f]{40}$/;
+const shaPinnedReference = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)*@[0-9a-f]{40}$/;
 
 /**
  * A workflow's `uses:` references, as written.

@@ -141,6 +141,24 @@ test("CI isolates failures while preserving one required verify gate", async () 
   expect(workflow).toContain("fail-on-severity: high");
 });
 
+test("CodeQL scans the TypeScript surface with pinned actions", async () => {
+  const workflow = await Bun.file(".github/workflows/codeql.yml").text();
+
+  expect(workflow).toContain("security-events: write");
+  expect(workflow).toContain("javascript-typescript");
+  expect(workflow).toContain("build-mode: none");
+  expect(workflow).toContain("schedule:");
+  expect(workflow).toContain("cron:");
+  expect(workflow).toMatch(/github\/codeql-action\/init@[0-9a-f]{40}/);
+  expect(workflow).toMatch(/github\/codeql-action\/analyze@[0-9a-f]{40}/);
+});
+
+test("a tag-pinned CodeQL action is refused", () => {
+  const tagPinned = "github/codeql-action/init@v4";
+
+  expect(/github\/codeql-action\/init@[0-9a-f]{40}/.test(tagPinned)).toBe(false);
+});
+
 test("coverage tooling protects both line and function regressions", async () => {
   const configuration = await Bun.file("bunfig.toml").text();
   const manifest = (await Bun.file("package.json").json()) as {
