@@ -16,15 +16,17 @@ import { Module } from "@aponiajs/common";
 import { CorsModule } from "@aponiajs/cors";
 import { CorsConfig } from "./config.ts";
 
-const cors = CorsModule.register({ configuration: CorsConfig });
+const cors = CorsModule.forRoot({ configuration: CorsConfig });
 
 @Module({ imports: [cors], controllers: [WidgetsController] })
 export class AppModule {}
 ```
 
-The policy is applied by the mounted plugin; no service needs to be injected
-for the default behavior. An application that needs a pattern or predicate
-origin uses the native plugin described in `## Native escape hatch`.
+The policy is a neutral `HttpPolicy` the shared request pipeline runs, so the
+same registration answers the same headers and preflight on every platform. No
+service needs to be injected for the default behavior. An application that needs
+a pattern or predicate origin uses the raw plugin described in
+`## Native escape hatch`.
 
 ## Bootstrap
 
@@ -38,7 +40,7 @@ await application.listen(Number(Bun.env.PORT ?? 3000));
 
 ## Declaring a policy
 
-`CorsModule.register` returns a `DynamicModule`, which is what an `imports`
+`CorsModule.forRoot` returns a `DynamicModule`, which is what an `imports`
 entry accepts:
 
 ```ts
@@ -46,7 +48,7 @@ import { Module } from "@aponiajs/common";
 import { CorsModule } from "@aponiajs/cors";
 import { CorsConfig } from "./config.ts";
 
-const cors = CorsModule.register({ configuration: CorsConfig });
+const cors = CorsModule.forRoot({ configuration: CorsConfig });
 
 @Module({ imports: [cors], controllers: [WidgetsController] })
 export class AppModule {}
@@ -59,7 +61,7 @@ that share one key are one module identity, which the graph refuses as
 ## The validated configuration
 
 The policy comes from a configuration the application declares and the module
-validates, not from the plugin's defaults:
+validates, not from a runtime's defaults:
 
 ```ts
 import { defineConfiguration } from "@aponiajs/common";
@@ -82,24 +84,24 @@ export const CorsConfig = defineConfiguration(
 | Field            | Required | Default                        | Refused when                                 |
 | ---------------- | -------- | ------------------------------ | -------------------------------------------- |
 | `origins`        | yes      | —                              | not a non-empty array of non-empty strings   |
-| `methods`        | no       | the plugin's: echo the request | present but not a non-empty array of strings |
-| `allowedHeaders` | no       | the plugin's: echo the request | present but not a non-empty array of strings |
-| `exposeHeaders`  | no       | the plugin's: echo the request | present but not a non-empty array of strings |
+| `methods`        | no       | echo the requested method      | present but not a non-empty array of strings |
+| `allowedHeaders` | no       | echo the requested headers     | present but not a non-empty array of strings |
+| `exposeHeaders`  | no       | echo the request's own headers | present but not a non-empty array of strings |
 | `credentials`    | no       | **`false`**                    | present but not a boolean                    |
 | `maxAge`         | no       | `5`                            | present but not a non-negative number        |
 | `preflight`      | no       | `true`                         | present but not a boolean                    |
 
-`origins` is required, and `credentials` defaults to `false`, because **the
-wrapped plugin's own defaults are permissive in a way this package will not
-inherit silently**. `@elysia/cors` defaults `origin` to `true`, which reflects
-whatever `Origin` a request carries, and defaults `credentials` to `true`: the
-pair ships `Access-Control-Allow-Origin: <any site>` beside
-`Access-Control-Allow-Credentials: true` on every response. An application that
-wants credentialed requests says so — and must then name its origins, because
-`origins: ["*"]` together with `credentials: true` is refused at boot: a browser
-rejects that pair, so it is not a policy the server can serve.
+`origins` is required, and `credentials` defaults to `false`, because a pair of
+permissive defaults is not a policy this package will serve silently. Reflecting
+whatever `Origin` a request carries while also answering
+`Access-Control-Allow-Credentials: true` ships
+`Access-Control-Allow-Origin: <any site>` beside the credential header on every
+response. An application that wants credentialed requests says so — and must then
+name its origins, because `origins: ["*"]` together with `credentials: true` is
+refused at boot: a browser rejects that pair, so it is not a policy the server
+can serve.
 
-`CorsModule.register` provides this token itself, from `process.env`, and
+`CorsModule.forRoot` provides this token itself, from `process.env`, and
 exports it, so the application reads the same validated value back:
 
 ```ts
@@ -125,33 +127,32 @@ and `credentials` left at its default:
 | a request that matched no route            | `404`, with the policy's headers                                                                                   |
 | `credentials: true`                        | every answer also states `Access-Control-Allow-Credentials: true`                                                  |
 
-`methods`, `allowedHeaders`, and `exposeHeaders` are omitted above, which is the
-plugin's own default of echoing the request: an allowed response additionally
-carries `Access-Control-Allow-Methods`, `Access-Control-Allow-Headers`, and
-`Access-Control-Expose-Headers` naming what the request asked about. A policy
-that declares those lists states them instead.
+`methods`, `allowedHeaders`, and `exposeHeaders` are omitted above, which means
+the preflight echoes what the request asked about: an allowed response
+additionally carries `Access-Control-Allow-Methods`,
+`Access-Control-Allow-Headers`, and `Access-Control-Expose-Headers` naming that.
+A policy that declares those lists states them instead.
 
-The plugin answers from a `request` hook that runs before routing, so an error
-response carries the policy too — a browser reporting a CORS failure instead of
-the `404` the server actually sent is the case that avoids.
+The policy answers before routing, so an error response carries the policy too —
+a browser reporting a CORS failure instead of the `404` the server actually sent
+is the case that avoids.
 
-`preflight: false` stops the plugin mounting its own `OPTIONS` routes, so a
+`preflight: false` stops the policy answering an `OPTIONS` request, so a
 preflight falls through to the application's own route table (`404` unless a
 controller declares `OPTIONS`). The headers are still applied to that response.
 
 ## One registration per application
 
-Elysia mounts a _named_ plugin once, and this plugin is named: it derives its
-identity from the options it was handed. Two consequences, both measured:
+A registration's `key` is its module identity. Two consequences, both measured:
 
 - **Two registrations under one key** are `DUPLICATE_MODULE`
-  (`{"module":"PluginModule[cors]"}`), whichever policies they resolve.
-- **Two registrations under distinct keys that resolve equal policies** produce
-  two graph nodes and one native mount — two `OPTIONS` routes, not four.
-- **Two registrations under distinct keys that resolve different policies** both
-  mount, and both answer: a request from either policy's origins is allowed.
-  That is a union of two policies in one application, not two policies selected
-  per request. One registration per application is the supported shape.
+  (`{"module":"CorsModule[cors]"}`), whichever policies they resolve.
+- **Two registrations under distinct keys** produce two graph nodes and two
+  policies in the pipeline. Equal policies answer the same headers twice;
+  different policies answer as a union, so a request from either policy's origins
+  is allowed. That is a union of two policies in one application, not two
+  policies selected per request. One registration per application is the
+  supported shape.
 
 ## `aponia build`
 
@@ -163,12 +164,11 @@ with the artifact holding nothing for it.
 The application is whole anyway: a boot handed an artifact with no declaration
 for the root module it was given lowers that root from its decorators instead,
 and the policy answers. What the decline costs is the lowering, not the policy.
-`tests/generated-descriptors.test.ts` measures both halves.
+`src/generated-descriptors.spec.ts` measures both halves.
 
-Unlike `@aponiajs/devtools`, this package cannot export a plugin value beside
-the module: its plugin is built from a value the container resolves, so it
-exists only inside a boot. An application that needs the route table untouched
-by a registration mounts the raw plugin through
+There is no plugin value to export beside the module: the policy is a pipeline
+transform built from a value the container resolves. An application that needs a
+pattern or predicate origin mounts the raw `@elysia/cors` plugin through
 `AponiaApplicationOptions.plugins` — see
 [Native Elysia Plugins](../../docs/platforms/native-plugins.md) — and gives up the module
 and its validation to do it.
@@ -190,17 +190,14 @@ Standard Schema, or whose validation answers asynchronously, both of which
 
 ## Native escape hatch
 
-The module above is the supported path. The native plugin remains available when the module's validation, graph node, or configuration contract is not wanted.
+The module above is the supported path. A raw plugin remains available when the
+module's validation, graph node, or configuration contract is not wanted.
 
-**This package implements no CORS.** Every header, every preflight answer, and
-every matching rule is
-[`@elysia/cors`](https://www.npmjs.com/package/@elysia/cors)'s. This package is a
-small adapter over that plugin, and it contributes exactly two things:
+**The matching rules are the shared pipeline's, not a runtime plugin's.** This
+package contributes exactly two things:
 
-- a module the plugin is declared in, so the policy is mounted through the
-  framework's own seam, is a node in the compiled graph, and is initialized in
-  the boot's instance-loading pass — the `InstanceLoader` line reads
-  `PluginModule[cors] dependencies initialized`;
+- a module the policy is declared in, so it is a node in the compiled graph and
+  initialized in the boot's instance-loading pass;
 - a validated configuration the policy comes from, so a missing origin, a
   malformed list, or a wildcard paired with credentialed requests is a refused
   boot with a code and an issue list, rather than a response nobody inspected.
@@ -245,8 +242,9 @@ value a deployment can supply, and nothing more.
 
 ## Requirements
 
-`elysia` is a peer dependency and must be installed by the application;
-`@elysia/cors` is a dependency of this package and is installed with it.
+The package depends only on `@aponiajs/common` and `@aponiajs/platform-core`.
+The headers and the preflight answer come from the shared request pipeline, so
+no runtime package is a dependency.
 
 ## Links
 

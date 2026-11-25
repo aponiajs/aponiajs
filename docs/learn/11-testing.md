@@ -46,6 +46,6 @@ The test kit is not a runner or a mocking framework. `test` and `expect` stay yo
 
 ## In this repository
 
-Bun owns `packages/*/tests/*.test.ts`; Vite+ owns `packages/*/tests-vp/*.conformance.ts`. New framework behavior normally needs a case in both. Run `bun test`, `bun run test:coverage`, `bun run test:vite-plus`, and `bun run check` before submitting.
+Bun owns `packages/*/src/**/*.spec.ts`; Vite+ owns `packages/*/test/*.conformance.ts`. New framework behavior normally needs a case in both. Run `bun test`, `bun run test:coverage`, `bun run test:vite-plus`, and `bun run check` before submitting.
 
 Next: [12 · Releasing](./12-releasing.md) · Deep dive: [testing](../build/testing.md)

@@ -12,7 +12,7 @@ import type {
   TransportHandler,
   TransportSubscription,
   TransportSubscriptionHandle,
-} from "../../transport/transport.types.ts";
+} from "../../interfaces/transport.interface.ts";
 
 /** Options for one gRPC transport. */
 export interface GrpcTransportOptions {

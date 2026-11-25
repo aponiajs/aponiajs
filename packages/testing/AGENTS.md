@@ -15,11 +15,13 @@ framework depends on it.
 | -------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `application/` | `createTestApplication`, the builder, `TestApplication`, `PlatformTestApplication`, and the option and server contracts |
 | `overrides/`   | `applyProviderOverrides`, the rewrite that substitutes one provider per overridden token in a module tree               |
+| `conformance/` | The structural checks a plugin package's own lane uses                                                                  |
+| `interfaces/`  | The test-application, builder, override, and testing-module contracts                                                   |
 
 `src/index.ts` is the only public barrel. `applyProviderOverrides` is internal and
 deliberately not exported: `overrideProvider` is the surface, and a second way to
-name one rewrite is a second contract to keep. Keep `*.types.ts` colocated with
-the runtime boundary it describes.
+name one rewrite is a second contract to keep. Type-only contracts live in
+`interfaces/<name>.interface.ts`.
 
 ## Invariants
 
@@ -50,7 +52,7 @@ the runtime boundary it describes.
   same `ModuleDefinition`. Producing two copies of it would leave two definitions
   sharing one identity, and `compileModuleGraph` refuses that with
   `DUPLICATE_MODULE` — a boot that fails for a reason the application never
-  stated. `tests/provider-overrides.test.ts` boots a diamond, so removing the
+  stated. `src/overrides/provider-overrides.spec.ts` boots a diamond, so removing the
   memo is a failing test rather than a rare crash.
 - **`compile()` with nothing overridden hands the root straight to the factory.**
   A boot with no overrides has no graph to rewrite, and rewriting it anyway would
@@ -72,7 +74,7 @@ the runtime boundary it describes.
   `AponiaFactory.create`. Making the builder generic over `TNativeApplication`
   would not help either — the wrapper's `application` getter is the erased type
   by design, so the parameter would be decoration.
-  `tests-vp/testing.conformance.ts` asserts `Extract<keyof TestApplicationOptions,
+  `test/testing.conformance.ts` asserts `Extract<keyof TestApplicationOptions,
   "configureNative">` is `never`, so the paragraph that states the limitation
   fails this lane rather than quietly becoming false if the platform ever moves
   that option onto the base contract. The claim was wrong in this package's first
@@ -82,7 +84,7 @@ the runtime boundary it describes.
 - **`logger` defaults to `false`, and that is the one difference from the
   factory.** The factory's own default is a `Logger` writing to the process
   streams; a test report does not want a boot's startup lines unless the case is
-  about them. `tests/test-application.test.ts` captures `process.stdout` and
+  about them. `src/application/test-application.spec.ts` captures `process.stdout` and
   `process.stderr` — the two writes the system logger can reach, since it bypasses
   `console` — and asserts that a default boot wrote no line while a plain factory
   boot did, so the measurement cannot pass by capturing nothing.
@@ -109,6 +111,20 @@ the runtime boundary it describes.
   the most natural stub in the language. An omitted `inject` states a factory that
   resolves nothing, which is the cast in `test-application-builder.ts` and the
   only place this package narrows a generic to the default it already declares.
+- **`Test.createTestingModule` matches Nest's builder.** `.useMocker` supplies a
+  value for every provider token no explicit override names (`undefined` leaves
+  the provider alone), `.overrideModule` matches by reference and rewrites the
+  compiled graph, `.setLogger` is the logger `createAponiaApplication` installs,
+  `.resolve` creates a context id when none is passed, and `useFactory` accepts
+  either a bare function or `{ factory, inject }`. `compile()` is asynchronous
+  and awaits a `Promise<DynamicModule>` import. The four enhancer override names
+  are the provider rewrite under the name a case looks for.
+- **`conformance/plugin-conformance.ts` states the structural obligations.**
+  Besides registration names, module identity, freeze, and isolation it checks
+  the options token (`optionsTokenIssues`), the three asynchronous shapes
+  (`asyncRegistrationShapeIssues`), and teardown idempotence (`teardownIssues`).
+  Behavioral evidence still belongs to the package's own boot test; these
+  helpers never replace it.
 - **`overrideProvider` builds its four methods as arrow functions.** They capture
   the builder lexically, so a case that detaches `useValue` from the chain still
   registers on the builder that handed it out. A `const builder = this` alias does
@@ -124,11 +140,11 @@ the runtime boundary it describes.
 
 ## Tests
 
-`tests/*.test.ts` under Bun, `tests-vp/*.conformance.ts` under Vite+. Both lanes
+`src/**/*.spec.ts` under Bun, `test/*.conformance.ts` under Vite+. Both lanes
 boot real applications; neither lane mocks the framework it is testing.
 
 The Vite+ lane runs on **Node, not Bun**, and Elysia 2 has no adapter there: a
-`listen()` in `tests-vp/**` throws `requires an adapter` from inside Elysia. So
+`listen()` in `test/**` throws `requires an adapter` from inside Elysia. So
 the conformance lane never calls `listen()` and never binds a socket, and every
 real-port case belongs in the Bun lane. This is a property of the lane rather
 than of this package, and `@aponiajs/platform-elysia`'s guide states the same
@@ -154,13 +170,13 @@ The Bun lane owns:
 11. a real port from `listen()`, released by `close()`;
 12. a gateway over a real socket, with the `{ event, data }` envelope asserted
     end to end — the case the port harness exists for, driven through
-    `tests/gateway.test.ts` and never through a reserved port.
+    `src/gateway.spec.ts` and never through a reserved port.
 
 The Vite+ lane mirrors the public contract: the option alias, the builder and
 application shapes, the barrel's value exports, an override reaching a route, the
 `MISSING_PROVIDER` refusal, and the no-override equivalence — all without a
 socket.
 
-`tests/fixtures.ts` holds the tokens, the two greeter implementations, and the
+`test/fixtures.ts` holds the tokens, the two greeter implementations, and the
 shutdown probe both lanes share. It is not a test file and Bun's glob does not
 collect it.

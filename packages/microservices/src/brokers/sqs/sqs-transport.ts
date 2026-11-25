@@ -16,7 +16,7 @@ import type {
   TransportHandler,
   TransportSubscription,
   TransportSubscriptionHandle,
-} from "../../transport/transport.types.ts";
+} from "../../interfaces/transport.interface.ts";
 import type {
   SqsDeliveredMessage,
   SqsReceiveMessageOutput,
@@ -24,7 +24,7 @@ import type {
   SqsSdkLoader,
   SqsSdkModule,
   SqsTransportOptions,
-} from "./sqs-transport.types.ts";
+} from "../../interfaces/sqs-transport.interface.ts";
 
 const transportName = "aws-sqs";
 const packageName = "@aws-sdk/client-sqs";

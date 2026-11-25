@@ -5,7 +5,7 @@ operations. It is a leaf package: it mounts no route and makes no authorization
 decision.
 
 ```ts
-@Module({ imports: [AuditModule.register({ redact: ["ssn"] })] })
+@Module({ imports: [AuditModule.forRoot({ redact: ["ssn"] })] })
 export class AppModule {}
 ```
 

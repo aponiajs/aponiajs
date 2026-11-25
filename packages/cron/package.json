@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/cron",
-  "version": "1.0.0-beta.61",
+  "version": "1.0.0-beta.62",
   "description": "Declare scheduled jobs in an Aponia module, with options from a validated configuration.",
   "keywords": [
     "aponia",
@@ -53,6 +53,7 @@
     "@aponiajs/platform-elysia": "workspace:*",
     "@aponiajs/platform-h3": "workspace:*",
     "@aponiajs/platform-hono": "workspace:*",
+    "@aponiajs/testing": "workspace:*",
     "elysia": "2.0.0-rc.4",
     "zod": "^4.6.6"
   },

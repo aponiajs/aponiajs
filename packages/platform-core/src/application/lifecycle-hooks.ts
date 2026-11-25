@@ -5,6 +5,7 @@ import type {
   OnModuleDestroy,
   OnModuleInit,
 } from "@aponiajs/common";
+import { isApplicationEnhancerToken } from "@aponiajs/common";
 import type { AponiaContainer } from "@aponiajs/core";
 import type { ControllerDefinition, ModuleDefinition } from "@aponiajs/common";
 
@@ -94,6 +95,14 @@ export interface LifecycleCollectionOptions {
   readonly includeControllers?: boolean;
   /** Whether one controller takes part; a platform states its own descriptor kind. */
   readonly includeController?: (controller: ControllerDefinition) => boolean;
+  /**
+   * Whether the module order is reversed for a stopping pass.
+   *
+   * Nest reverses the modules — root first, deepest last — and keeps each
+   * module's own declaration order. Reversing the flat call list instead would
+   * also reverse the providers inside one module, which is a different order.
+   */
+  readonly reverseModules?: boolean;
 }
 
 export function collectLifecycleCalls(
@@ -104,6 +113,8 @@ export function collectLifecycleCalls(
   const settings = typeof options === "boolean" ? { includeControllers: options } : options;
   const includeControllers = settings.includeControllers ?? true;
   const includeController = settings.includeController ?? (() => true);
+  const modules = container.graph.lifecycleModules();
+  const orderedModules = settings.reverseModules === true ? [...modules].reverse() : modules;
   const calls: LifecycleCall[] = [];
   const collected = new Set<unknown>();
 
@@ -119,7 +130,7 @@ export function collectLifecycleCalls(
     }
   };
 
-  for (const module of container.graph.modules) {
+  for (const module of orderedModules) {
     // A module class can declare the same lifecycle hooks as a provider; Nest
     // runs them as part of the module, before its providers.
     const moduleInstance = moduleInstanceOf(module);
@@ -127,13 +138,18 @@ export function collectLifecycleCalls(
       collect(moduleInstance);
     }
     for (const provider of module.providers) {
+      // An `APP_*` token is a pseudo-provider: it names enhancers to collect,
+      // not an instance whose lifecycle hook runs.
+      if (isApplicationEnhancerToken(provider.provide)) {
+        continue;
+      }
       // A provider whose dependencies bubble its lifetime to "request" has no
       // instance at this moment either, so it is skipped with the declared
       // request-scoped and transient ones.
       if (container.providerScope(module, provider) !== "singleton") {
         continue;
       }
-      collect(container.resolveModuleProvider(module, provider.provide));
+      collect(container.resolveProvider(module, provider));
     }
     if (includeControllers) {
       for (const controller of module.controllers) {

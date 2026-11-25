@@ -1,6 +1,6 @@
 import { AponiaError } from "@aponiajs/common";
 import { normalizeRoutePrefix, stripRoutePrefix } from "./route-prefix.ts";
-import type { StaticAssetsOptions } from "./static-assets.types.ts";
+import type { StaticAssetsOptions } from "../interfaces/static-assets.interface.ts";
 
 /**
  * Resolves one request path to the file a static directory serves.

@@ -1,6 +1,6 @@
 import { camelCase, pascalCase } from "change-case";
-import type { ResourceTransport } from "../commands/command.types.ts";
-import type { ComponentNames } from "./component-names.types.ts";
+import type { ResourceTransport } from "../interfaces/command.interface.ts";
+import type { ComponentNames } from "../interfaces/component-names.interface.ts";
 import { resourceTransportStem } from "./schematic-definitions.ts";
 
 export function renderResourceModule(names: ComponentNames, type: ResourceTransport): string {

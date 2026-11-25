@@ -31,6 +31,24 @@ separate focused modules. `src/index.ts` is the only public barrel.
 
 ## Invariants
 
+- The project configuration is `aponia-cli.json`, with the `nest-cli.json`
+  schema and defaults. `aponia.json` is read once as a legacy fallback with one
+  warning, `language: "typescript"` normalizes to `"ts"`, and a legacy
+  `platform` key is dropped because an application is platform-neutral. The
+  generator and the build require a configuration file; `info` and `start` read
+  the defaults.
+- `@aponiajs/schematics` is the collection `aponia-cli.json` names. `--collection`
+  resolves a package's `collection.json`, validates options against its
+  `schema.json`, loads the factory, and writes the files it plans. The default
+  collection is only resolved on disk when `--collection` names it; the
+  built-in generators render Aponia sources from this package's own templates.
+- `webpack` and `rspack` are refused by name when a configuration loads or a
+  `--builder` flag names them. `tsc` and `swc` map to the project's Bun/Vite+
+  build.
+- `aponia new` is Bun-first: `.ts` import extensions, `bun test`, and the Bun
+  template set. `--type esm` selects the Nest-compatible ESM set (`.js`
+  extensions, Vitest) and `--type cjs` the CommonJS set (extensionless imports,
+  Jest). A `.js` extension must never appear in the Bun default.
 - Reuse before build. CLI parsing, AST manipulation, case conversion, and
   inflection all come from maintained packages. File discovery is the one
   exception: it reads through the runtime's own `Bun.Glob`, because the
@@ -50,7 +68,7 @@ separate focused modules. `src/index.ts` is the only public barrel.
   `-<alias>=<value>` spellings before `parseCliArguments` runs, through the same
   `readBooleanFlagValue` the parsed options go through, and `valueLessOptions` is
   the single list both the declaration and the pre-scan read. Extend that list,
-  not a second one. `tests/flag-values.test.ts` locks the rejection and the
+  not a second one. `src/flag-values.spec.ts` locks the rejection and the
   position-independence.
 - Requested module registration is never skipped silently. When a schematic has
   a registration kind and `--skip-import` was not passed, a target module that
@@ -86,7 +104,7 @@ separate focused modules. `src/index.ts` is the only public barrel.
   parameter no decorator named is passed `undefined`, and both are exactly what
   the platform's own binding passes, so the annotation is the application's
   promise about its own handler rather than something this emitter can prove.
-  `tests/controller-invokers.test.ts` pins the assertion and the token import.
+  `src/generation/controller-invokers.spec.ts` pins the assertion and the token import.
 - `generation/descriptor-emitter.ts` always writes a parameter's `property`,
   as the literal `undefined` when the decorator named none. The platform's
   metadata requires the field, so omitting it makes the generated module fail
@@ -212,8 +230,8 @@ separate focused modules. `src/index.ts` is the only public barrel.
   another file can name is the emitter's, which asks it with
   `readExpressionImports` against the model file's own imports.
 - Both emitters are covered in the Bun lane only.
-  `tests/generated-invokers.integration.test.ts` and
-  `tests/generated-descriptors.integration.test.ts` reach
+  `src/generated-invokers.integration.spec.ts` and
+  `src/generated-descriptors.integration.spec.ts` reach
   `@aponiajs/platform-elysia` on purpose: they are the only places the emitters
   and the runtime that consumes their output meet, and they assert the acceptance
   criterion for each — an application booted from a generated module answers
@@ -226,7 +244,7 @@ separate focused modules. `src/index.ts` is the only public barrel.
   conformance lane already covers, and what these tests add is CLI-internal
   analysis with no public type or runtime behavior of its own.
 - `tsconfig.json` maps `@aponiajs/*` to workspace sources. Without it, a fixture
-  written under `tests/` resolves those names through a package `dist` that may
+  written under `src/` resolves those names through a package `dist` that may
   be stale or absent — the CI test lane installs and runs without building — so a
   fixture would silently exercise an older build. This is a test affordance only:
   the package's own source still imports nothing from the runtime packages.
@@ -259,36 +277,37 @@ separate focused modules. `src/index.ts` is the only public barrel.
   bundler resolves the entrypoint that would read them. `@aponiajs/cli` is a
   starter devDependency for that, and the packed lane installs it into the
   generated project.
-- The starter mounts `@aponiajs/devtools` through `AponiaFactory.create`'s
-  `plugins` option, never through `AppModule`'s `imports`. A registration returns
-  a `DynamicModule` rather than a declaration read from the project's own source,
-  so an `imports` entry naming it declines the root in every spelling — the
-  starter's only declarable module — and a build that lowered nothing would
-  replace `descriptors.generated.ts` with an empty record: the boot would refuse
-  it and compile the decorated graph instead, so the registration would mount but
-  the declared-graph boot the template promises would be given up. The option is
-  not an `imports` entry, so the
-  root stays declarable and the declared-graph boot the template promises is
-  still the one that happens. `tests/starter-artifact-freshness.test.ts` and the
-  packed lane's startup-line assertion are the two guards that would notice, and
-  the packed lane additionally asserts the devtools surface answers on the
-  application's own port, which is what says the option path reached a generated
-  application rather than only being written in it. That request goes to the same
-  server those assertions already booted, and the starter declares no route under
-  `/__devtools`, so the `200` it reads belongs to the plugin's mount rather than
-  to an application route. `@aponiajs/devtools` is therefore a starter
-  **dependency** — `src/main.ts` imports it at run time — while `@aponiajs/cli`
-  stays a devDependency.
+- The starter registers `@aponiajs/devtools` in `AppModule`'s `imports` through
+  `DevtoolsModule.forRoot(...)`. A registration returns a `DynamicModule` rather
+  than a declaration read from the project's own source, so a root that imports
+  one is declined by `aponia build` in every spelling and the committed
+  descriptor artifact cannot serve that root: the boot lowers the decorated graph
+  instead and still mounts the surface. That is the trade the module registration
+  makes; mounting a plugin value through `AponiaFactory.create`'s `plugins`
+  option keeps the root declarable but leaves the surface outside the graph, so
+  nothing about it reaches `compileRootModule`, inspection, or a generated
+  artifact. `src/starter-artifact-freshness.spec.ts` and the packed lane's
+  startup-line assertion are the two guards that notice which graph served a
+  generated application. `@aponiajs/devtools` is a starter **dependency** —
+  `src/main.ts` imports it at run time — while `@aponiajs/cli` stays a
+  devDependency.
 - The starter's own devtools choices, none of which the framework makes for it:
-  the surface is enabled unless `NODE_ENV` is `production`, and it is served on
-  the application's own port under `/__devtools` — the address `src/main.ts`
-  already hands to `listen`. Those two are stated in the template's `AGENTS.md`,
-  `README.md`, `.env.example`, and `src/main.ts`. The third choice is the logger:
-  `src/main.ts` hands the **same** object to `AponiaFactory.create` and to
-  `devtoolsPlugin`, which is what makes `/__devtools/logs` carry the boot's own
-  lines, and it is stated in the template's `AGENTS.md`, `README.md`, and
-  `src/main.ts` — not in `.env.example`, which carries environment values and no
-  logger.
+  the surface is off unless `APONIA_DEVTOOLS=true`, and it is served on the
+  application's own port under `/__devtools` — the address `src/main.ts` already
+  hands to `listen`. Those two are stated in the template's `AGENTS.md`,
+  `README.md`, `.env.example`, and `src/app.module.ts`. The third choice is the
+  logger: `src/main.ts` hands the **same** object to `AponiaFactory.create` and
+  `src/app.module.ts` hands it to `DevtoolsModule.forRoot`, which is what makes
+  `/__devtools/logs` carry the boot's own lines, and it is stated in the
+  template's `AGENTS.md`, `README.md`, and `src/main.ts` — not in `.env.example`,
+  which carries environment values and no logger.
+- `--no-observe` removes the devtools registration, its dependency, and every
+  generated file that described it. `generation/no-observe-documentation.ts`
+  rewrites the README, the agent guide, `llms.txt`, `.env.example`, and the
+  logger's own comment, and removes the guide's devtools heading. A template edit
+  that moves one of those blocks throws by name rather than writing documentation
+  for a module the project does not mount, and the generator's Bun case asserts
+  that no generated file mentions the surface.
 - The starter commits both generated modules and `src/main.ts` adopts both
   artifacts, so a freshly generated application serves through generated route
   invokers and boots from the declared module graph before any build has run.
@@ -306,7 +325,7 @@ separate focused modules. `src/index.ts` is the only public barrel.
   version would make every artifact a fresh application ships refuse itself. A
   build reports both as `UPDATE`, which is the one place this package's change
   lines do not mean "did not exist before".
-- `tests/starter-artifact-freshness.test.ts` regenerates the starter's own
+- `src/starter-artifact-freshness.spec.ts` regenerates the starter's own
   sources and fails when what it produces differs from the committed modules.
   That guard protects the optimization rather than safety: a stale artifact is
   refused by `routing/invoker-artifact.ts` and
@@ -327,9 +346,9 @@ separate focused modules. `src/index.ts` is the only public barrel.
   property of this package and the sources it read, not of which release
   resolved on the machine that ran the build; a range would let the same sources
   produce different bytes on someone else's install, which is the drift this
-  seam exists to remove. `tests/generated-source-formatter.test.ts` asserts the
+  seam exists to remove. `src/generation/generated-source-formatter.spec.ts` asserts the
   manifest entry is an exact version, and
-  `tests/starter-artifact-freshness.test.ts` is what notices when the pinned copy
+  `src/starter-artifact-freshness.spec.ts` is what notices when the pinned copy
   and the project's copy stop agreeing on the layout.
 - That dependency is the fallback, not the first choice. A project's own
   `vite-plus/fmt` is preferred whenever the project has installed `vite-plus`:
@@ -445,18 +464,22 @@ separate focused modules. `src/index.ts` is the only public barrel.
   and `AGENTS.md`. `aponia library check` validates the package and library
   contracts without writing files.
 - `generatePlugin` shares that scaffold with `generateLibrary`; the package
-  kind, the `plugin` keyword, and one extra file differ. A plugin writes
-  `src/adapters/<name>.adapters.ts`, which owns the `providePlatformModule`
-  declaration: the supported platforms and the native mount each one needs. The
-  module source stays neutral, and the generated tests prove the declaration
-  resolves on every shipped platform through `compileRootModule` and
-  `resolvePlatformModules` without booting an HTTP runtime.
+  kind, the `plugin` keyword, and its neutral contribution files differ. A
+  plugin writes `src/<name>.controller.ts` and `src/<name>.policy.ts`, registers
+  the controller, its options, the service, and the `provideHttpPolicyAsync`
+  policy in `providers`, and declares the `http` capability with
+  `requirePlatformCapabilities("<name>", ["http"])`. Its source imports no
+  platform package and no HTTP runtime, and `aponia.library.json` states no
+  `platforms` array; a native mount belongs in a separate `adapter` library,
+  never in a plugin. The generated tests resolve the service, the controller,
+  and the policy from `compileRootModule` plus `createContainer` without booting
+  an HTTP runtime.
 - Both package kinds use the same Nest-style registration surface:
   `forRoot(options)` and `forRootAsync({ imports, inject, useFactory })`
-  returning a `DynamicModule`. A plugin's platform support is the package's
-  declaration, so it does not change with the factory's value. Keep the two
-  emitters in `workspace-generators.ts` sharing one template builder rather
-  than forking a second scaffold.
+  returning a `DynamicModule`. A plugin's contribution is neutral, so it does
+  not change with the factory's value. Keep the two emitters in
+  `workspace-generators.ts` sharing one template builder rather than forking a
+  second scaffold.
 - `plugin` is a package schematic like `library`: it is not a component, it has
   no module registration, and `--kind plugin` gives `aponia library new` the
   standalone form. The flag is rejected with any other `library` action.
@@ -477,6 +500,6 @@ separate focused modules. `src/index.ts` is the only public barrel.
 
 ## Tests
 
-`tests/*.test.ts` under Bun. `e2e/generated-application.e2e.ts` packs the CLI and
+`src/**/*.spec.ts` under Bun. `test/generated-application.e2e-spec.ts` packs the CLI and
 boots a generated application; it is slow and excluded from the default lanes,
 so run it with `bun run test:generated-app` when templates or manifests change.

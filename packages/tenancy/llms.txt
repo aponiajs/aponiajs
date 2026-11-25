@@ -4,7 +4,8 @@
 
 ## What this package exports
 
-- `TenantModule.register({ header?, required?, pattern?, resolver?, principal?, claim? })`: the module an application imports.
+- `TenantModule.forRoot({ header?, required?, pattern?, resolver?, principal?, claim?, isGlobal? })`: the module an application imports; `register({...})` is the deprecated alias and `forRootAsync` accepts the three Nest shapes.
+- `MODULE_OPTIONS_TOKEN` (`TENANCY_MODULE_OPTIONS`): the options token the registration provides and exports.
 - `TenantGuard`: resolves the tenant from a resolver, a verified principal claim, or an explicitly configured header.
 - `TenantService`: `current()` and `require()`.
 - `TENANT`: the request-context token the tenant id is stored under.

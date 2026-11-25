@@ -1,5 +1,5 @@
 import type { LoggerService } from "@aponiajs/common";
-import { reportThroughLogger } from "../errors/default-exception-filter.ts";
+import { reportThroughLogger } from "../exceptions/default-exception.filter.ts";
 
 /**
  * The signals a graceful shutdown answers.

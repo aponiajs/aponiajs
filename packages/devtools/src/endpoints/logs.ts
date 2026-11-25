@@ -1,6 +1,6 @@
 import type { LogLevel } from "@aponiajs/common";
-import type { LogBuffer } from "../logging/log-buffer.types.ts";
-import type { AponiaLogsPayload } from "./payloads.types.ts";
+import type { LogBuffer } from "../interfaces/log-buffer.interface.ts";
+import type { AponiaLogsPayload } from "../interfaces/payloads.interface.ts";
 
 /** The path this endpoint is served under, relative to the devtools prefix. */
 export const devtoolsLogsPath = "/logs";

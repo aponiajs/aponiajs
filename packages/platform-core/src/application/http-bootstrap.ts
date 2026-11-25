@@ -10,6 +10,7 @@ import {
   getCatchMetadata,
   getControllerMetadata,
   getWebSocketServerProperties,
+  notifySystemLogger,
   provideClass,
   provideValue,
   type CanActivate,
@@ -18,44 +19,56 @@ import {
   type Interceptor,
   type LoggerService,
   type ModuleDefinition,
+  type PipeType,
   type Token,
 } from "@aponiajs/common";
 import { createContainer, type AponiaContainer } from "@aponiajs/core";
-import { attachApplicationContainer } from "./application-container.ts";
+import {
+  APPLICATION_CONTAINER,
+  attachApplicationContainer,
+  createApplicationContainerRef,
+} from "./application-container.ts";
+import { provideHttpAdapterHost } from "../host/http-adapter-host.ts";
 import type {
   AponiaAdapter,
   AponiaApplicationContract,
   PlatformHost,
   RequestPipeline,
-} from "../host/platform-host.types.ts";
+} from "../interfaces/platform-host.interface.ts";
 import type {
   HostRequestInfo,
   MountedRoute,
   PlatformRouteContext,
-  ResolvedFilter,
-} from "../kernel/kernel.types.ts";
+} from "../interfaces/kernel.interface.ts";
 import { createRouteHandler } from "../kernel/http-kernel.ts";
 import {
   resolveApplicationPipe,
   resolveApplicationPipes,
   resolvePipe,
-} from "../pipes/pipe-resolver.ts";
-import { compileRootModule, HttpControllerKind } from "../modules/module-compiler.ts";
-import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
+} from "../pipes/pipe.resolver.ts";
+import {
+  compileRootModuleAsync,
+  HttpControllerKind,
+  isModuleDefinition,
+} from "../modules/module-compiler.ts";
+import type { AponiaRootModule } from "../interfaces/module-compiler.interface.ts";
 import { compileRoutes } from "../routing/route-compilation.ts";
 import { createGatewayDispatcher, injectGatewayServer } from "../websockets/gateway-dispatch.ts";
 import { compileGatewayPlan } from "../websockets/gateway-plan.ts";
-import type { GatewayPlan } from "../websockets/gateway.types.ts";
 import { joinPaths } from "../routing/route-path.ts";
 import { normalizeRoutePrefix } from "../routing/route-prefix.ts";
 import { createVersionNegotiator } from "../routing/version-negotiation.ts";
 import { normalizeStaticAssets } from "../routing/static-assets.ts";
-import { applyHttpPolicies, corsPreflight, resolveHttpPolicies } from "../policy/http-policy.ts";
-import type { ResolvedHttpPolicies } from "../policy/http-policy.types.ts";
+import {
+  corsPreflight,
+  resolveApplicationHttpPolicies,
+  resolveHttpPolicies,
+} from "../policy/http.policy.ts";
+import type { ResolvedHttpPolicies } from "../interfaces/http-policy.interface.ts";
 import type {
   VersionNegotiationRoute,
   VersionNegotiator,
-} from "../routing/version-negotiation.types.ts";
+} from "../interfaces/version-negotiation.interface.ts";
 import { createRouteMatcher, type RouteMatcher } from "../kernel/route-matcher.ts";
 import { createMiddlewareConsumer } from "../middleware/middleware-consumer.ts";
 import {
@@ -63,19 +76,44 @@ import {
   resolveMiddlewareInstance,
   runMiddlewareChain,
 } from "../middleware/route-matching.ts";
-import type { ResolvedMiddlewareConfig } from "../middleware/middleware-consumer.types.ts";
-import type { AponiaHttpApplicationOptions, AponiaListenOptions } from "./application.types.ts";
+import type { ResolvedMiddlewareConfig } from "../interfaces/middleware-consumer.interface.ts";
+import type {
+  AponiaApplicationSurfaceConfig,
+  AponiaHttpApplicationOptions,
+  AponiaListenOptions,
+} from "../interfaces/application.interface.ts";
+import {
+  createApplicationSurfaceConfig,
+  mergeApplicationSurfaceOptions,
+} from "./application-surface.ts";
 import {
   attachApplicationShutdown,
   collectLifecycleCalls,
   type ApplicationShutdown,
-  type LifecycleCall,
 } from "./lifecycle-hooks.ts";
 import { installShutdownSignalHandlers } from "./shutdown-signals.ts";
-import { REQUEST_CONTEXT_REGISTRATION } from "../request-context/request-context-module.ts";
-import type { RequestContextRegistration } from "../request-context/request-context.types.ts";
-import { applyPlatformModules, PLATFORM_ADAPTER_HOST } from "../plugins/platform-module.ts";
+import { createShutdown } from "./bootstrap-lifecycle.ts";
+import { resolveClasses, resolveGatewayFilters, resolveGlobal } from "./bootstrap.resolver.ts";
+import { createRequestPipeline } from "./request-pipeline.ts";
+import { compareRouteSpecificity } from "../routing/route-specificity.ts";
+import { mergeGatewayOptions } from "../websockets/gateway-options.ts";
+import { locateRequestContext } from "../request-context/request-context-locator.ts";
+import { applyPlatformModules, PLATFORM_ADAPTER_HOST } from "../platform/platform-module.ts";
 import { ApplicationReadiness, compileHealthProbes } from "../health/health-probes.ts";
+import {
+  BOOT_DIAGNOSTICS,
+  createBootDiagnosticsRef,
+  type AponiaRouteDiagnostics,
+} from "./boot-diagnostics.ts";
+import {
+  assertPlatformCapabilities,
+  providePlatformCapabilities,
+} from "../capabilities/platform-capabilities.ts";
+import {
+  resolveRequestLifecycleHooks,
+  type RequestLifecycleHook,
+} from "../kernel/request-hooks.ts";
+import type { HttpPolicy } from "../policy/http.policy.ts";
 
 /** What one boot produced. */
 export interface BootedHttpApplication<TNative = unknown> {
@@ -99,174 +137,75 @@ export interface BootedHttpApplication<TNative = unknown> {
   readonly versionNegotiator?: VersionNegotiator | undefined;
   /** The response policies the boot resolved, when the application states any. */
   readonly policies?: ResolvedHttpPolicies | undefined;
+  /** The neutral policies the graph's packages contributed. */
+  readonly pluginPolicies?: readonly HttpPolicy[] | undefined;
+  /** The neutral lifecycle hooks the graph's packages contributed. */
+  readonly hooks?: readonly RequestLifecycleHook[] | undefined;
 }
 
 /** Where a listening application keeps the listener its shutdown plan stops. */
 export interface ListenerRef {
-  current?: { readonly url: string; close(force?: boolean): Promise<void> } | undefined;
-}
-
-function reportFailure(logger: unknown, error: unknown): void {
-  try {
-    (logger as { error?: (failure: unknown, context?: string) => void } | undefined)?.error?.(
-      error,
-      "ApplicationShutdown",
-    );
-  } catch {
-    // A logger that refuses may not stop the shutdown plan.
-  }
-}
-
-async function runHooks(
-  calls: readonly LifecycleCall[],
-  logger: unknown,
-  signal?: string,
-): Promise<void> {
-  for (const call of calls) {
-    try {
-      await call(signal);
-    } catch (error) {
-      reportFailure(logger, error);
-    }
-  }
-}
-
-/**
- * Builds the shutdown plan a boot attaches.
- *
- * The order is Nest's: `beforeApplicationShutdown`, then the listener stops,
- * then `onModuleDestroy` reversed, then `onApplicationShutdown`. A hook that
- * throws is reported and the remaining hooks still run.
- */
-function createShutdown(
-  container: AponiaContainer,
-  logger: unknown,
-  stop: (force?: boolean) => Promise<void>,
-): ApplicationShutdown {
-  const before = collectLifecycleCalls(container, "beforeApplicationShutdown");
-  const destroy = [...collectLifecycleCalls(container, "onModuleDestroy")].reverse();
-  const after = collectLifecycleCalls(container, "onApplicationShutdown");
-  let closed = false;
-
-  return async (force = true, signal?: string): Promise<void> => {
-    if (closed) {
-      return;
-    }
-    closed = true;
-    await runHooks(before, logger, signal);
-    await stop(force);
-    await runHooks(destroy, logger);
-    await runHooks(after, logger, signal);
-  };
-}
-
-function resolveGlobal<T>(container: AponiaContainer, token: Token<unknown>): readonly T[] {
-  try {
-    container.graph.locate(container.graph.root, token);
-  } catch (error) {
-    if (error instanceof AponiaError && error.code === "MISSING_PROVIDER") {
-      return Object.freeze([]);
-    }
-    throw error;
-  }
-
-  const value = container.resolveModuleProvider(container.graph.root, token);
-  return Object.freeze(entriesOf(value).map((entry) => resolveGlobalInstance<T>(container, entry)));
-}
-
-/**
- * Resolves one value provided under a global enhancer token.
- *
- * A class provided as a value is constructed when the graph does not provide
- * it, which is the low-level shape `APP_GUARD: [GuardClass]` states. A route's
- * own enhancer stays strict: this tolerance belongs only to the application's
- * global declaration.
- */
-function resolveGlobalInstance<T>(container: AponiaContainer, entry: unknown): T {
-  if (typeof entry === "function") {
-    try {
-      return container.resolveModuleProvider(container.graph.root, entry as Token<unknown>) as T;
-    } catch (error) {
-      if (error instanceof AponiaError && error.code === "MISSING_PROVIDER") {
-        return Reflect.construct(entry, []) as T;
+  current?:
+    | {
+        readonly url: string;
+        /** The runtime's server object, when the host states one. */
+        readonly server?: unknown;
+        close(force?: boolean): Promise<void>;
       }
-      throw error;
-    }
-  }
-  return entry as T;
+    | undefined;
 }
 
-function resolveClasses<T>(
-  container: AponiaContainer,
-  module: ModuleDefinition,
-  classes: readonly ClassToken<unknown>[],
-): readonly T[] {
-  return Object.freeze(classes.map((entry) => resolveInstance<T>(container, module, entry)));
-}
-
-function resolveGatewayFilters(
-  container: AponiaContainer,
-  module: ModuleDefinition,
-  plan: GatewayPlan,
-): ReadonlyMap<string, readonly ResolvedFilter[]> {
-  const resolve = (classes: readonly ClassToken<unknown>[]): readonly ResolvedFilter[] =>
-    Object.freeze(
-      resolveClasses<ExceptionFilter>(container, module, classes).map((instance) =>
-        Object.freeze({
-          instance,
-          exceptions: getCatchMetadata(instance.constructor as ClassToken<unknown>),
-        }),
-      ),
-    );
-  const classFilters = resolve(plan.filters ?? []);
-  const byEvent = new Map<string, readonly ResolvedFilter[]>();
-  for (const handler of plan.handlers) {
-    const merged = Object.freeze([...resolve(handler.filters ?? []), ...classFilters]);
-    if (merged.length > 0) {
-      byEvent.set(handler.event, merged);
-    }
-  }
-  return byEvent;
-}
-
-function resolveInstance<T>(
-  container: AponiaContainer,
-  module: ModuleDefinition,
-  entry: unknown,
-): T {
-  if (typeof entry === "function") {
-    return container.resolveModuleProvider(module, entry as Token<unknown>) as T;
-  }
-  return entry as T;
-}
-
-function entriesOf(value: unknown): readonly unknown[] {
-  return Array.isArray(value) ? value : [value];
+/**
+ * What the shared wrapper needs to re-run the boot for a surface configuration
+ * stated after `create`.
+ *
+ * The factory supplies it; an application no boot produced has none, and the
+ * surface methods then refuse a configuration they cannot apply.
+ *
+ * @internal
+ */
+export interface AponiaHttpApplicationBoot<TNative = unknown> {
+  readonly options: AponiaHttpApplicationOptions;
+  readonly reboot: (
+    options: AponiaHttpApplicationOptions,
+  ) => Promise<AponiaHttpApplication<TNative>>;
 }
 
 /**
  * One managed application served by a host.
+ *
+ * `handle` answers without a port, `listen` binds one, and `close` runs the
+ * shutdown plan whether or not anything ever listened. The Nest application
+ * surface methods are here too: a boot mounts its routes during `create`, so a
+ * surface method records its configuration and `init()` re-runs the boot once,
+ * before the application serves anything. A boot with no surface configuration
+ * is never re-run.
  */
 export class AponiaHttpApplication<TNative = unknown> {
-  readonly #native: TNative;
-  readonly #host: PlatformHost<TNative, unknown>;
-  readonly #matcher: RouteMatcher;
-  readonly #container: AponiaContainer;
-  readonly #shutdown: ApplicationShutdown;
-  readonly #listener: ListenerRef;
-  readonly #readiness: ApplicationReadiness;
-  readonly #logger: unknown;
-  readonly #versionNegotiator: VersionNegotiator | undefined;
-  readonly #policies: ResolvedHttpPolicies | undefined;
-  readonly #pipeline: RequestPipeline | undefined;
+  #native: TNative;
+  #host: PlatformHost<TNative, unknown>;
+  #matcher: RouteMatcher;
+  #container: AponiaContainer;
+  #shutdown: ApplicationShutdown;
+  #listener: ListenerRef;
+  #readiness: ApplicationReadiness;
+  #logger: unknown;
+  #versionNegotiator: VersionNegotiator | undefined;
+  #policies: ResolvedHttpPolicies | undefined;
+  #pipeline: RequestPipeline | undefined;
+  readonly #boot: AponiaHttpApplicationBoot<TNative> | undefined;
+  readonly #surface: AponiaApplicationSurfaceConfig = createApplicationSurfaceConfig();
+  #applied = false;
   #closed = false;
   #signalsInstalled = false;
+  #shutdownSignalsRequested = false;
 
   /** @internal */
   constructor(
     host: PlatformHost<TNative, unknown>,
     booted: BootedHttpApplication<TNative>,
     logger: unknown,
+    boot?: AponiaHttpApplicationBoot<TNative>,
   ) {
     this.#host = host;
     this.#native = booted.native;
@@ -278,7 +217,13 @@ export class AponiaHttpApplication<TNative = unknown> {
     this.#logger = logger;
     this.#versionNegotiator = booted.versionNegotiator;
     this.#policies = booted.policies;
-    this.#pipeline = createRequestPipeline(booted.versionNegotiator, booted.policies);
+    this.#boot = boot;
+    this.#pipeline = createRequestPipeline({
+      negotiator: booted.versionNegotiator,
+      policies: booted.policies,
+      pluginPolicies: booted.pluginPolicies,
+      hooks: booted.hooks,
+    });
   }
 
   /** Answers one request through the platform's own router. */
@@ -340,6 +285,205 @@ export class AponiaHttpApplication<TNative = unknown> {
   }
 
   /**
+   * The runtime's server, once the application is listening.
+   *
+   * Elysia's wrapper returns the native Elysia server; the Bun-backed Hono and
+   * H3 hosts return the `Bun.serve` object their listener bound.
+   *
+   * @returns The bound server, or `undefined` before `listen`.
+   * @throws `UNSUPPORTED_PLATFORM_FEATURE` when a listening host states no server.
+   */
+  getHttpServer(): unknown {
+    const listener = this.#listener.current;
+    if (listener === undefined) {
+      return undefined;
+    }
+    if (listener.server === undefined) {
+      throw new AponiaError(
+        "UNSUPPORTED_PLATFORM_FEATURE",
+        `The ${this.#host.name} host does not state its server.`,
+        { feature: "getHttpServer", platform: this.#host.name },
+      );
+    }
+    return listener.server;
+  }
+
+  /**
+   * Registers application-wide guards.
+   *
+   * They run before the guards a controller or handler declares, in the order
+   * they were registered, and before the `APP_GUARD` declarations. The
+   * configuration takes effect when `init()` runs; calling it after the
+   * application serves traffic is refused, because a mounted route has already
+   * compiled its guards.
+   *
+   * @param guards - The guard classes to resolve through the root module.
+   * @returns This application.
+   */
+  useGlobalGuards(...guards: readonly ClassToken<unknown>[]): this {
+    this.#assertConfigurable();
+    this.#surface.guards.push(...guards);
+    this.#surface.enabled = true;
+    return this;
+  }
+
+  /** Registers application-wide interceptors, resolved the way guards are. */
+  useGlobalInterceptors(...interceptors: readonly ClassToken<unknown>[]): this {
+    this.#assertConfigurable();
+    this.#surface.interceptors.push(...interceptors);
+    this.#surface.enabled = true;
+    return this;
+  }
+
+  /** Registers application-wide pipes, resolved the way guards are. */
+  useGlobalPipes(...pipes: readonly PipeType[]): this {
+    this.#assertConfigurable();
+    this.#surface.pipes.push(...pipes);
+    this.#surface.enabled = true;
+    return this;
+  }
+
+  /** Registers application-wide exception filters, resolved the way guards are. */
+  useGlobalFilters(...filters: readonly ClassToken<unknown>[]): this {
+    this.#assertConfigurable();
+    this.#surface.filters.push(...filters);
+    this.#surface.enabled = true;
+    return this;
+  }
+
+  /**
+   * Declares the cross-origin policy.
+   *
+   * @param options - The policy, or nothing for the framework defaults.
+   * @returns This application.
+   */
+  enableCors(options?: AponiaHttpApplicationOptions["cors"]): this {
+    this.#assertConfigurable();
+    this.#surface.cors = options ?? true;
+    this.#surface.enabled = true;
+    return this;
+  }
+
+  /**
+   * Declares the security headers.
+   *
+   * Calling it twice refuses with `INVALID_CONFIGURATION`, as the Elysia
+   * platform does: the second call would have to replace a policy the first
+   * already compiled.
+   *
+   * @param options - The headers, or nothing for the framework defaults.
+   * @returns This application.
+   */
+  useSecurityHeaders(options?: AponiaHttpApplicationOptions["securityHeaders"]): this {
+    this.#assertConfigurable();
+    if (this.#surface.securityHeaders !== undefined) {
+      throw new AponiaError(
+        "INVALID_CONFIGURATION",
+        "useSecurityHeaders() may only be called once.",
+        { option: "securityHeaders" },
+      );
+    }
+    this.#surface.securityHeaders = options ?? true;
+    this.#surface.enabled = true;
+    return this;
+  }
+
+  /**
+   * Mounts every compiled route under one path prefix.
+   *
+   * @param prefix - The prefix; it must begin with `/`.
+   * @returns This application.
+   */
+  setGlobalPrefix(prefix: string): this {
+    this.#assertConfigurable();
+    this.#surface.prefix = prefix;
+    this.#surface.enabled = true;
+    return this;
+  }
+
+  /**
+   * Installs header or media-type version negotiation.
+   *
+   * @param options - The strategy and the header or media-type parameter.
+   * @returns This application.
+   */
+  enableVersioning(options: NonNullable<AponiaHttpApplicationOptions["versioning"]>): this {
+    this.#assertConfigurable();
+    this.#surface.versioning = options;
+    this.#surface.enabled = true;
+    return this;
+  }
+
+  /**
+   * Takes over the process's stop signals.
+   *
+   * Equivalent to `listen(port, { shutdownSignals: true })`; a signal that
+   * arrives after `listen` runs this application's `close`.
+   *
+   * @returns This application.
+   */
+  enableShutdownHooks(): this {
+    this.#shutdownSignalsRequested = true;
+    if (this.#listener.current !== undefined && !this.#signalsInstalled) {
+      this.#installShutdownSignals();
+    }
+    return this;
+  }
+
+  /**
+   * Replaces the system logger.
+   *
+   * @param logger - The logger every later report uses.
+   * @returns This application.
+   */
+  useLogger(logger: LoggerService): this {
+    this.#logger = logger;
+    notifySystemLogger(logger);
+    this.#surface.logger = logger;
+    this.#surface.enabled = true;
+    return this;
+  }
+
+  /**
+   * Flushes buffered logs.
+   *
+   * Aponia's loggers write every line as it is logged, so there is no buffer to
+   * flush; the method exists because a Nest application calls it.
+   */
+  flushLogs(): void {}
+
+  /**
+   * Applies a surface configuration stated after `create`.
+   *
+   * A boot with nothing configured returns this application unchanged. One with
+   * a configuration re-runs the boot against the same root module and the merged
+   * options, so the routes mount with the guards, pipes, prefix, and policies
+   * the surface states.
+   *
+   * @returns This application, ready to serve.
+   * @throws `INVALID_CONFIGURATION` when this application was not produced by a factory.
+   */
+  async init(): Promise<this> {
+    if (this.#applied || !this.#surface.enabled) {
+      return this;
+    }
+    if (this.#boot === undefined) {
+      throw new AponiaError(
+        "INVALID_CONFIGURATION",
+        "This application was not produced by a platform factory, so it has no root module to reconfigure.",
+        { option: "surface" },
+      );
+    }
+
+    const rebound = await this.#boot.reboot(
+      mergeApplicationSurfaceOptions(this.#boot.options, this.#surface),
+    );
+    this.#adopt(rebound);
+    this.#applied = true;
+    return this;
+  }
+
+  /**
    * Binds a port and resolves with the application itself.
    *
    * @param port - The port to bind, or `0` for one the runtime picks.
@@ -352,13 +496,15 @@ export class AponiaHttpApplication<TNative = unknown> {
       throw new AponiaError(
         "UNSUPPORTED_PLATFORM_FEATURE",
         `The ${this.#host.name} host does not provide a listener.`,
-        { feature: "listen" },
+        { feature: "listen", platform: this.#host.name },
       );
     }
     this.#listener.current = await this.#host.listen(this.#native, port, this.#pipeline);
-    if (options.shutdownSignals === true && !this.#signalsInstalled) {
-      this.#signalsInstalled = true;
-      installShutdownSignalHandlers((signal) => this.close(true, signal), this.#logger as never);
+    if (
+      (options.shutdownSignals === true || this.#shutdownSignalsRequested) &&
+      !this.#signalsInstalled
+    ) {
+      this.#installShutdownSignals();
     }
     return this;
   }
@@ -399,6 +545,47 @@ export class AponiaHttpApplication<TNative = unknown> {
       await this.#host.close(this.#native);
     }
   }
+
+  /** Refuses a route-affecting configuration once the application serves. */
+  #assertConfigurable(): void {
+    if (this.#applied) {
+      throw new AponiaError(
+        "INVALID_CONFIGURATION",
+        "A surface method cannot change routes the application already mounted. Call it before init().",
+        { option: "surface" },
+      );
+    }
+  }
+
+  #installShutdownSignals(): void {
+    this.#signalsInstalled = true;
+    installShutdownSignalHandlers((signal) => this.close(true, signal), this.#logger as never);
+  }
+
+  /**
+   * Takes over the state a re-run boot produced.
+   *
+   * A surface configuration re-runs the whole boot, so the wrapper must speak
+   * through the new native application, matcher, container, and shutdown plan;
+   * keeping any of the old ones would answer requests from a graph the surface
+   * never configured. The new application has not listened, so the stop-signal
+   * installation starts over.
+   */
+  #adopt(next: AponiaHttpApplication<TNative>): void {
+    this.#host = next.#host;
+    this.#native = next.#native;
+    this.#matcher = next.#matcher;
+    this.#container = next.#container;
+    this.#shutdown = next.#shutdown;
+    this.#listener = next.#listener;
+    this.#readiness = next.#readiness;
+    this.#logger = next.#logger;
+    this.#versionNegotiator = next.#versionNegotiator;
+    this.#policies = next.#policies;
+    this.#pipeline = next.#pipeline;
+    this.#closed = false;
+    this.#signalsInstalled = false;
+  }
 }
 
 /** The boot options the unified factory takes when the adapter is a field. */
@@ -413,6 +600,19 @@ function isAdapter<TNative>(value: unknown): value is AponiaAdapter<TNative> {
     "kind" in value &&
     (value.kind === "host" || value.kind === "application")
   );
+}
+
+/**
+ * Resolves the logger option into the service failures are reported through.
+ */
+function resolveLogger(option: AponiaHttpApplicationOptions["logger"]): LoggerService | undefined {
+  if (option === false) {
+    return undefined;
+  }
+  if (Array.isArray(option)) {
+    return new Logger("AponiaFactory", { logLevels: option, timestamp: true });
+  }
+  return option as LoggerService | undefined;
 }
 
 /**
@@ -498,7 +698,7 @@ export function createPlatformFactory<TNative>(host: PlatformHost<TNative, unkno
     options: AponiaHttpApplicationOptions,
   ): Promise<AponiaHttpApplication<TNative>> {
     const logger = resolveLogger(options.logger);
-    const compiledRoot = compileRootModule(rootModule);
+    const compiledRoot = await compileRootModuleAsync(rootModule);
     // Created before the container so the running platform is injectable from
     // the first provider that resolves.
     const native = host.createApplication(compiledRoot.id);
@@ -506,15 +706,32 @@ export function createPlatformFactory<TNative>(host: PlatformHost<TNative, unkno
       options.configureNative === undefined
         ? native
         : (options.configureNative(native as never) as TNative);
+    const containerRef = createApplicationContainerRef();
+    const diagnosticsRef = createBootDiagnosticsRef();
     const container = createContainer(compiledRoot, [
+      provideValue(APPLICATION_CONTAINER, containerRef),
+      provideValue(BOOT_DIAGNOSTICS, diagnosticsRef),
       provideValue(LOGGER, logger ?? NOOP_LOGGER),
       provideValue(
         PLATFORM_ADAPTER_HOST,
         Object.freeze({ platform: host.name, nativeApplication: configured }),
       ),
       provideClass(Reflector, []),
+      provideHttpAdapterHost(),
+      ...(host.capabilities === undefined
+        ? []
+        : [
+            providePlatformCapabilities({
+              platform: host.name,
+              capabilities: host.capabilities,
+            }),
+          ]),
     ]);
+    containerRef.current = container;
     attachApplicationContainer(configured as object, container);
+    // Refused before anything mounts: a registration that needs a capability
+    // this platform does not have must not leave a half-mounted application.
+    assertPlatformCapabilities(container);
     const requestContext = locateRequestContext(container);
     if (requestContext !== undefined) {
       container.setRequestContextAccessor(
@@ -526,7 +743,7 @@ export function createPlatformFactory<TNative>(host: PlatformHost<TNative, unkno
     const listener: ListenerRef = {};
 
     for (const module of container.graph.modules) {
-      container.initializeModule(module);
+      await container.initializeModuleAsync(module);
     }
 
     // Refuses an undeclared platform before anything mounts, then runs each
@@ -591,6 +808,7 @@ export function createPlatformFactory<TNative>(host: PlatformHost<TNative, unkno
     ]);
 
     const routes: MountedRoute[] = [];
+    const diagnosticRoutes: AponiaRouteDiagnostics[] = [];
     const versionRoutes: VersionNegotiationRoute[] = [];
     for (const module of container.graph.modules) {
       for (const definition of module.controllers) {
@@ -614,6 +832,14 @@ export function createPlatformFactory<TNative>(host: PlatformHost<TNative, unkno
           : container.instantiateController(module, definition);
 
         for (const route of compiled) {
+          diagnosticRoutes.push(
+            Object.freeze({
+              module: module.id,
+              controller: token.name,
+              route,
+              source: "compiled" as const,
+            }),
+          );
           routes.push(
             Object.freeze({
               route: Object.freeze({
@@ -657,6 +883,7 @@ export function createPlatformFactory<TNative>(host: PlatformHost<TNative, unkno
     // route context: a package that parks per-request state there must see the
     // same object in both phases, and `options.state` may be absent.
     const state = options.state ?? {};
+    const requestHooks = resolveRequestLifecycleHooks(container);
 
     const kernelOptions = {
       routes,
@@ -665,6 +892,7 @@ export function createPlatformFactory<TNative>(host: PlatformHost<TNative, unkno
       ...(options.maxBodyBytes === undefined ? {} : { maxBodyBytes: options.maxBodyBytes }),
       ...(options.renderView === undefined ? {} : { renderView: options.renderView }),
       globalPipes,
+      requestHooks,
     };
 
     const mountOptions = {
@@ -805,13 +1033,27 @@ export function createPlatformFactory<TNative>(host: PlatformHost<TNative, unkno
     }
 
     const versionNegotiator = createVersionNegotiator(versionRoutes, options.versioning, prefix);
-    const policies = resolveHttpPolicies({
+    const policies = resolveApplicationHttpPolicies({
       ...(options.cors === undefined ? {} : { cors: options.cors }),
       ...(options.securityHeaders === undefined
         ? {}
         : { securityHeaders: options.securityHeaders }),
       ...(options.etag === undefined ? {} : { etag: options.etag }),
       ...(options.compression === undefined ? {} : { compression: options.compression }),
+    });
+    const pluginPolicies = resolveHttpPolicies(container);
+    diagnosticsRef.current = Object.freeze({
+      framework: null,
+      graph: isModuleDefinition(rootModule) ? "declared" : "decorated",
+      rootModule: compiledRoot,
+      modules: container.graph.modules,
+      routes: Object.freeze(diagnosticRoutes),
+      callbackRoutes: Object.freeze([]),
+      globalEnhancers: collectDeclaredEnhancers(container),
+      interceptorHalves: new Map(),
+      artifacts: null,
+      invokers: null,
+      mappedExceptions: null,
     });
     const booted: BootedHttpApplication<TNative> = {
       native: configured,
@@ -824,120 +1066,44 @@ export function createPlatformFactory<TNative>(host: PlatformHost<TNative, unkno
       readiness,
       versionNegotiator,
       policies,
+      pluginPolicies,
+      hooks: requestHooks,
     };
-    return new AponiaHttpApplication(host, booted, logger);
+    return new AponiaHttpApplication(host, booted, logger, {
+      options,
+      reboot: (rebootOptions) => boot(rootModule, rebootOptions),
+    });
   }
 }
 
-function createRequestPipeline(
-  negotiator: VersionNegotiator | undefined,
-  policies: ResolvedHttpPolicies | undefined,
-): RequestPipeline | undefined {
-  if (negotiator === undefined && policies === undefined) {
-    return undefined;
-  }
-  return async (request, next) => {
-    const negotiated = negotiator?.(request);
-    if (negotiated instanceof Response) {
-      return negotiated;
-    }
-    const effective = negotiated ?? request;
-    if (policies !== undefined) {
-      const preflight = corsPreflight(effective, policies);
-      if (preflight !== undefined) {
-        return preflight;
+/** The class tokens a module declared under the four application-enhancer tokens. */
+function collectDeclaredEnhancers(container: AponiaContainer): {
+  readonly guards: readonly ClassToken<unknown>[];
+  readonly interceptors: readonly ClassToken<unknown>[];
+  readonly filters: readonly ClassToken<unknown>[];
+} {
+  const guards: ClassToken<unknown>[] = [];
+  const interceptors: ClassToken<unknown>[] = [];
+  const filters: ClassToken<unknown>[] = [];
+  for (const module of container.graph.modules) {
+    for (const provider of module.providers) {
+      if (provider.kind !== "class") {
+        continue;
+      }
+      if (provider.provide === APP_GUARD) {
+        guards.push(provider.useClass);
+      } else if (provider.provide === APP_INTERCEPTOR) {
+        interceptors.push(provider.useClass);
+      } else if (provider.provide === APP_FILTER) {
+        filters.push(provider.useClass);
       }
     }
-    const response = await next(effective);
-    return policies === undefined
-      ? response
-      : await applyHttpPolicies(effective, response, policies);
-  };
-}
-
-function mergeGatewayOptions(
-  target: {
-    maxPayloadLength?: number;
-    idleTimeoutSeconds?: number;
-    sendPings?: boolean;
-  },
-  plan: {
-    readonly maxPayloadLength?: number | undefined;
-    readonly idleTimeoutMs?: number | undefined;
-    readonly sendPings?: boolean | undefined;
-  },
-): void {
-  if (plan.maxPayloadLength !== undefined) {
-    target.maxPayloadLength =
-      target.maxPayloadLength === undefined
-        ? plan.maxPayloadLength
-        : Math.min(target.maxPayloadLength, plan.maxPayloadLength);
   }
-  if (plan.idleTimeoutMs !== undefined) {
-    const seconds = Math.max(1, Math.ceil(plan.idleTimeoutMs / 1_000));
-    target.idleTimeoutSeconds =
-      target.idleTimeoutSeconds === undefined
-        ? seconds
-        : Math.min(target.idleTimeoutSeconds, seconds);
-  }
-  if (plan.sendPings === true) {
-    target.sendPings = true;
-  }
-}
-
-/** Orders mounts so a runtime whose router resolves first-match sees literals first. */
-function compareRouteSpecificity(left: MountedRoute, right: MountedRoute): number {
-  return routeSpecificity(right.route.path) - routeSpecificity(left.route.path);
-}
-
-function routeSpecificity(path: string): number {
-  let specificity = 0;
-  for (const segment of path.split("/").slice(1)) {
-    if (segment === "*") {
-      continue;
-    }
-    if (segment.startsWith(":")) {
-      specificity += segment.endsWith("?") ? 1 : 2;
-      continue;
-    }
-    specificity += 4;
-  }
-  return specificity;
-}
-
-/** Finds the request-context registration a module graph holds, if any. */
-function locateRequestContext(container: AponiaContainer): RequestContextRegistration | undefined {
-  try {
-    const owner = container.graph.locate(container.graph.root, REQUEST_CONTEXT_REGISTRATION);
-    return container.resolveModuleProvider(
-      owner.module,
-      REQUEST_CONTEXT_REGISTRATION,
-    ) as RequestContextRegistration;
-  } catch {
-    for (const module of container.graph.modules) {
-      try {
-        container.graph.locate(module, REQUEST_CONTEXT_REGISTRATION);
-        return container.resolveModuleProvider(
-          module,
-          REQUEST_CONTEXT_REGISTRATION,
-        ) as RequestContextRegistration;
-      } catch {
-        // This module cannot reach the registration; keep looking.
-      }
-    }
-    return undefined;
-  }
-}
-
-/** Resolves the logger option into the service failures are reported through. */
-function resolveLogger(option: AponiaHttpApplicationOptions["logger"]): LoggerService | undefined {
-  if (option === false) {
-    return undefined;
-  }
-  if (Array.isArray(option)) {
-    return new Logger("AponiaFactory", { logLevels: option, timestamp: true });
-  }
-  return option as LoggerService | undefined;
+  return Object.freeze({
+    guards: Object.freeze(guards),
+    interceptors: Object.freeze(interceptors),
+    filters: Object.freeze(filters),
+  });
 }
 
 /** Middleware runner reused by platform hosts. */

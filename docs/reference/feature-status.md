@@ -33,6 +33,7 @@ it.
 | `@aponiajs/platform-h3`     | Complete | H3 host over the shared kernel                                                       |
 | `@aponiajs/platform-hono`   | Complete | Hono host over the shared kernel                                                     |
 | `@aponiajs/cli`             | Complete | project and resource generators, library check, MCP                                  |
+| `@aponiajs/schematics`      | Complete | Nest-shaped collection, schemas, factories, copied templates                         |
 | `create-aponia`             | Complete | `bun create aponia` entrypoint                                                       |
 | `@aponiajs/testing`         | Complete | test applications, overrides, teardown                                               |
 | `@aponiajs/devtools`        | Complete | opt-in page, routes, requests, MCP                                                   |
@@ -69,8 +70,8 @@ it.
 - Distributed queue brokers are optional peer adapters: `@aponiajs/microservices`
   ships NATS, MQTT, RabbitMQ, Kafka, Redis Streams, SQS, Pub/Sub, and Service
   Bus transports, and the framework never provisions their topics, queues, or
-  subscriptions. A durable outbox table is not bundled; the queue exposes a
-  durable backlog contract instead.
+  subscriptions. A SQLite outbox table ships as `SqliteOutboxStore`; draining it
+  into a broker is the application's relay, not the queue's.
 - Distributed revocation, refresh, session, rate-limit, cache, and idempotency
   stores are available via `@aponiajs/store-redis` or application-supplied; the
   built-in default stores remain process-local.

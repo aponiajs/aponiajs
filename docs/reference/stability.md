@@ -19,7 +19,7 @@ evidence a change must carry.
 
 | Component        | Supported contract                                                                                         |
 | ---------------- | ---------------------------------------------------------------------------------------------------------- |
-| Bun              | `1.4.4`, the version pinned by `packageManager` and the CI toolchain                                       |
+| Bun              | `1.4.5`, the version pinned by `packageManager` and the CI toolchain                                       |
 | Elysia           | `2.0.0-rc.4`, declared as the exact peer of the platform package                                           |
 | TypeBox          | `^1.4.6` as Elysia's peer; Aponia does not add a runtime TypeBox edge                                      |
 | TypeScript       | The repository toolchain, with `experimentalDecorators` and `emitDecoratorMetadata` required in a consumer |

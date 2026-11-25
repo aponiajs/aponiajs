@@ -6,10 +6,11 @@ Read the [repository guide](../../AGENTS.md) and [RULES.md](../../RULES.md) firs
 
 The Redis storage implementations for cache, rate-limit, session, idempotency, and auth token tracking.
 
-| Domain    | Owns                                                 |
-| --------- | ---------------------------------------------------- |
-| `stores/` | Redis-backed stores implementing framework contracts |
-| `common/` | Redis client interfaces and option normalization     |
+| Domain        | Owns                                                 |
+| ------------- | ---------------------------------------------------- |
+| `stores/`     | Redis-backed stores implementing framework contracts |
+| `common/`     | Redis client helpers and option normalization        |
+| `interfaces/` | the client and store contracts                       |
 
 `src/index.ts` is the only public barrel.
 
@@ -27,10 +28,14 @@ The Redis storage implementations for cache, rate-limit, session, idempotency, a
   either segment.
 - `RedisRefreshTokenStore.consume` is one Lua round trip: read, delete, and keep
   a family tombstone so a replay revokes the family.
+- Every store exposes an idempotent `close()` and `Symbol.asyncDispose`. A store
+  releases the client it was given unless `closeClient: false` is stated; a
+  client shared by several stores is released once, so the first `close()` quits
+  it and the rest resolve. A cache write with no lifetime persists without `EX`.
 
 ## Tests
 
-`tests/*.test.ts` runs the stores against a mock client and is part of the
-default Bun lane. `tests/live-redis.e2e-spec.ts` is the live-server counterpart:
+`src/**/*.spec.ts` runs the stores against a mock client and is part of the
+default Bun lane. `test/live-redis.e2e-spec.ts` is the live-server counterpart:
 Bun's default glob skips it, and it runs only through `bun run test:redis`
 (`APONIA_REDIS_E2E=1`) against the Redis service the broker workflow starts.

@@ -6,13 +6,13 @@ This package consumes frozen descriptors only. It never imports `reflect-metadat
 
 ## What this package exports
 
-- [compileModuleGraph](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/core/src/graph/graph-compiler.ts): walks imports depth-first and validates the whole graph before any instance exists.
-- [ModuleGraph](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/core/src/graph/module-graph.ts): resolves a token against a module's own providers first, then against imports that export it.
-- [createContainer, AponiaContainer](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/core/src/container/container.ts): creates the container and caches one instance per provider per module.
+- [compileModuleGraph](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/core/src/scanner/graph-compiler.ts): walks imports depth-first and validates the whole graph before any instance exists.
+- [ModuleGraph](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/core/src/scanner/module-graph.ts): resolves a token against a module's own providers first, then against imports that export it.
+- [createContainer, AponiaContainer](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/core/src/injector/container.ts): creates the container and caches one instance per provider per module.
 
 ## Public types
 
-- [GraphInspection, ModuleInspection, ProviderLocation](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/core/src/graph/graph.types.ts): the frozen shapes returned for inspecting a compiled graph.
+- [GraphInspection, ModuleInspection, ProviderLocation](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/core/src/interfaces/graph.interface.ts): the frozen shapes returned for inspecting a compiled graph.
 
 ## Behavior a consumer can rely on
 

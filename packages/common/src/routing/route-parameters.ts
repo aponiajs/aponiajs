@@ -1,7 +1,11 @@
 import "reflect-metadata";
-import type { PipeType } from "../pipes/pipe.types.ts";
-import type { ClassToken } from "../tokens/token.types.ts";
-import type { RouteParameterKind, RouteParameterMetadata } from "./route-parameters.types.ts";
+import { httpStatus } from "../exceptions/http-status.ts";
+import type { PipeType } from "../interfaces/pipe.interface.ts";
+import type { ClassToken } from "../interfaces/token.interface.ts";
+import type {
+  RouteParameterKind,
+  RouteParameterMetadata,
+} from "../interfaces/route-parameters.interface.ts";
 
 /**
  * The parameter kinds a handler binds to, in canonical order.
@@ -155,9 +159,17 @@ export const ResponseSettings = createParameterDecorator("set");
 /**
  * Injects the platform's type-narrowing response status helper.
  *
+ * The same value carries Nest's numeric `HttpStatus` constants, so
+ * `@HttpStatus()` names the parameter decorator and
+ * `HttpCode(HttpStatus.CREATED)` names the status, exactly as a migrated
+ * application expects. The collision is the one namespace deviation recorded in
+ * the migration guide: Nest has no parameter decorator with this name.
+ *
  * @returns A parameter decorator recording the binding.
  */
-export const HttpStatus = createParameterDecorator("status");
+export const HttpStatus = Object.assign(createParameterDecorator("status"), httpStatus) as {
+  (propertyOrPipe?: string | PipeType, ...additionalPipes: readonly PipeType[]): ParameterDecorator;
+} & typeof httpStatus;
 
 /**
  * Reads the parameter bindings the route parameter decorators recorded for one

@@ -1,4 +1,4 @@
-import type { AponiaRouteBinding } from "./payloads.types.ts";
+import type { AponiaRouteBinding } from "../interfaces/payloads.interface.ts";
 
 /**
  * The binding a record states for one route, or `null` when it states none this

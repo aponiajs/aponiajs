@@ -7,7 +7,7 @@ import {
   type ObjectLiteralExpression,
   type SourceFile,
 } from "ts-morph";
-import type { ModuleRegistrationKind } from "./module-registration.types.ts";
+import type { ModuleRegistrationKind } from "../interfaces/module-registration.interface.ts";
 
 export function registerInModule(
   source: string,

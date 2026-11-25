@@ -32,6 +32,11 @@ and imports the shared request contract from `@aponiajs/platform-core`.
 - **No second route table, container, or guard pipeline.** Validation,
   enhancers, lifecycle, version negotiation, and the shared route handler belong
   to `@aponiajs/platform-core`.
+- **The managed application is the shared surface.** `AponiaFactory.create`
+  returns `platform-core`'s `AponiaHttpApplication`, so the Nest configuration
+  methods record their state and `init()` re-runs the boot through this host;
+  `getHttpServer()` is the `Bun.serve` object `listen` bound, and is `undefined`
+  before `listen`. A delivery adapter keeps its narrower documented surface.
 - **No platform depends on another.** This package names only `common`,
   `core`, and `platform-core`; `scripts/platform-independence.spec.ts` holds it.
 - **`listen` is Bun's server.** The runtime this repository targets is Bun; a
@@ -41,7 +46,7 @@ and imports the shared request contract from `@aponiajs/platform-core`.
 
 ## Tests
 
-`tests/*.test.ts` under Bun boot real decorated modules through
+`src/**/*.spec.ts` under Bun boot real decorated modules through
 `AponiaFactory.create` and read the answers through the native application.
-`tests-vp/*.conformance.ts` mirrors the public contract and must not call
+`test/*.conformance.ts` mirrors the public contract and must not call
 `listen`: the lane runs on Node, where the Bun listener does not exist.

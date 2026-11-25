@@ -15,7 +15,7 @@ import {
   type ClassToken,
   type EnhancerMetadata,
 } from "@aponiajs/common";
-import type { CompiledRoute } from "./compiled-route.types.ts";
+import type { CompiledRoute } from "../interfaces/compiled-route.interface.ts";
 import { joinPaths } from "./route-path.ts";
 
 /**

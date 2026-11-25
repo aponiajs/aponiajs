@@ -19,6 +19,8 @@ const blockedRanges = new Set([
   "amt",
   "deprecated",
   "deprecatedOrchid",
+  "deprecatedSiteLocal",
+  "ipv4Mapped",
   "discard",
   "orchid2",
   "rfc6052",

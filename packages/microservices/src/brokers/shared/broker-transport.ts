@@ -8,7 +8,7 @@ import type {
   TransportHandler,
   TransportSubscription,
   TransportSubscriptionHandle,
-} from "../../transport/transport.types.ts";
+} from "../../interfaces/transport.interface.ts";
 import { brokerDestinationIssue, brokerGroupIssue } from "./broker-config.ts";
 
 /**

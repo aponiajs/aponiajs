@@ -11,22 +11,38 @@
  * reader who wants none of this can keep using `@aponiajs/platform-elysia`
  * directly.
  */
-export { createTestApplication } from "./application/test-application-builder.ts";
-export { Test } from "./application/testing-module.ts";
+export { createTestApplication } from "./application/test-application.builder.ts";
+export {
+  asyncRegistrationShapeIssues,
+  dynamicModuleIssues,
+  optionsTokenIssues,
+  pluginRegistrationIssues,
+  registrationIsolationIssues,
+  teardownIssues,
+} from "./conformance/plugin-conformance.ts";
+export type {
+  PluginConformanceOptions,
+  PluginRegistrationSurface,
+} from "./conformance/plugin-conformance.ts";
+export { Test } from "./application/test.ts";
 export { TestApplication } from "./application/test-application.ts";
 export {
   PlatformTestApplication,
   wrapPlatformApplication,
 } from "./application/platform-test-application.ts";
-export type { TestableApplication } from "./application/platform-test-application.types.ts";
+export type { TestableApplication } from "./interfaces/platform-test-application.interface.ts";
 export type {
   TestApplicationBuilder,
   TestProviderOverride,
-} from "./application/test-application-builder.types.ts";
+} from "./interfaces/test-application-builder.interface.ts";
 export type {
+  ModuleOverrideBuilder,
   OverrideFactoryOptions,
   OverrideProviderBuilder,
   TestingModule,
   TestingModuleBuilder,
-} from "./application/testing-module.types.ts";
-export type { TestApplicationOptions, TestServer } from "./application/test-application.types.ts";
+} from "./interfaces/testing-module.interface.ts";
+export type {
+  TestApplicationOptions,
+  TestServer,
+} from "./interfaces/test-application.interface.ts";

@@ -8,13 +8,17 @@ specific to this package.
 The audit module, service, store contract, and bounded memory store. It is a
 leaf: nothing in the framework depends on it.
 
-| Domain     | Owns                                                 |
-| ---------- | ---------------------------------------------------- |
-| `module/`  | `AuditModule.register`, options, and event contracts |
-| `service/` | `AuditService` and metadata redaction                |
-| `store/`   | `AuditStore` and `MemoryAuditStore`                  |
+| Domain        | Owns                                                                    |
+| ------------- | ----------------------------------------------------------------------- |
+| `module/`     | `AuditModule.forRoot`, the `.module-definition.ts` builder, and options |
+| `service/`    | `AuditService` and metadata redaction                                   |
+| `store/`      | `AuditStore` and `MemoryAuditStore`                                     |
+| `interfaces/` | the event and store contracts                                           |
 
-`src/index.ts` is the only public barrel.
+`src/index.ts` is the only public barrel. The registration is a
+`ConfigurableModuleBuilder` definition with `MODULE_OPTIONS_TOKEN`
+(`AUDIT_MODULE_OPTIONS`) and the `isGlobal` extra; `register`/`registerAsync`
+remain as deprecated aliases.
 
 ## Invariants
 
@@ -33,5 +37,5 @@ leaf: nothing in the framework depends on it.
 
 ## Tests
 
-`tests/*.test.ts` under Bun, `tests-vp/*.conformance.ts` under Vite+. The Bun
+`src/**/*.spec.ts` under Bun, `test/*.conformance.ts` under Vite+. The Bun
 lane covers redaction, freezing, ordering, eviction, clearing, and invalid bounds.

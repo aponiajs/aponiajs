@@ -12,6 +12,7 @@ docs-site
 # Local agent tooling and generated research inputs
 .agents/
 .claude/
+.code-improver/
 .superpowers/
 skills-lock.json
 research.md

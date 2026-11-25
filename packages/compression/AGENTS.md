@@ -5,15 +5,18 @@ specific to this package.
 
 ## What this package owns
 
-The compression module, the encoding policy, and the Elysia plugin. It is a
+The compression module and the encoding policy. The policy is a neutral
+`HttpPolicy`, so the shared request pipeline runs it on every platform. It is a
 leaf: nothing in the framework depends on it.
 
-| Domain    | Owns                                                           |
-| --------- | -------------------------------------------------------------- |
-| `module/` | `CompressionModule.register` and options                       |
-| `policy/` | encoding negotiation, compressibility, response transformation |
+| Domain        | Owns                                                               |
+| ------------- | ------------------------------------------------------------------ |
+| `module/`     | `CompressionModule.forRoot` and options                            |
+| `policy/`     | encoding negotiation, compressibility, the neutral response policy |
+| `interfaces/` | the option and policy contracts                                    |
 
-`src/index.ts` is the only public barrel.
+`src/index.ts` is the only public barrel. Type-only contracts live in
+`interfaces/<name>.interface.ts`.
 
 ## Invariants
 
@@ -31,6 +34,8 @@ leaf: nothing in the framework depends on it.
 
 ## Tests
 
-`tests/*.test.ts` under Bun, `tests-vp/*.conformance.ts` under Vite+. The Bun
-lane boots a real application through `AponiaFactory.create`, exercises gzip and
-Brotli, decompresses the bodies, and checks the threshold and skip paths.
+`src/**/*.spec.ts` under Bun, `test/*.conformance.ts` under Vite+, and
+`test/platform-parity.spec.ts` across Elysia, Hono, H3, and the serverless fetch
+adapter. The Bun lane boots a real application through `AponiaFactory.create`,
+exercises gzip and Brotli, decompresses the bodies, and checks the threshold and
+skip paths.

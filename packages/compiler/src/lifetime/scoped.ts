@@ -1,5 +1,5 @@
 import { AponiaError } from "@aponiajs/common";
-import type { LifetimeHandleController } from "./lifetime.types.ts";
+import type { LifetimeHandleController } from "../interfaces/lifetime.interface.ts";
 
 /**
  * A value whose lifetime is owned by a {@link LifetimeScope}.

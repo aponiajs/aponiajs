@@ -4,7 +4,7 @@ import {
   encodeMicroserviceEnvelope,
 } from "../envelope/microservice-envelope.ts";
 import { microserviceEnvelopeVersion } from "../envelope/microservice-envelope.constants.ts";
-import type { MicroserviceReplyEnvelope } from "../envelope/microservice-envelope.types.ts";
+import type { MicroserviceReplyEnvelope } from "../interfaces/microservice-envelope.interface.ts";
 import {
   TransportLifecycle,
   translateTransportFailure,
@@ -20,9 +20,12 @@ import type {
   Transport,
   TransportMessage,
   TransportSubscriptionHandle,
-} from "../transport/transport.types.ts";
+} from "../interfaces/transport.interface.ts";
 import { MicroserviceCallError } from "./microservice-call-error.ts";
-import type { MicroserviceClient, MicroserviceClientConfig } from "./microservice-client.types.ts";
+import type {
+  MicroserviceClient,
+  MicroserviceClientConfig,
+} from "../interfaces/microservice-client.interface.ts";
 
 const defaultRequestTimeoutMs = 30_000;
 const defaultConnectTimeoutMs = 10_000;

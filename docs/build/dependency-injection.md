@@ -61,6 +61,75 @@ one of the forms above. A decorated `useClass` without `inject` infers its
 constructor dependencies; a descriptor written by hand should state `inject`
 explicitly, because `defineModule` does not read decorator metadata.
 
+## Configurable modules
+
+`ConfigurableModuleBuilder` generates the registration pair a library module
+exposes: a synchronous method that stores literal options, an asynchronous
+method that builds the same options from the container, and the token both
+forms provide. The builder mirrors
+[`ConfigurableModuleBuilder`](https://github.com/nestjs/nest/blob/master/packages/common/module-utils/configurable-module.builder.ts)
+in Nest, including `setClassMethodName`, `setFactoryMethodName`, `setExtras`,
+`MODULE_OPTIONS_TOKEN`, `OPTIONS_TYPE`, and `ASYNC_OPTIONS_TYPE`.
+
+```ts
+import { ConfigurableModuleBuilder, Inject, Injectable, Module } from "@aponiajs/common";
+
+export interface GreetingOptions {
+  readonly prefix: string;
+  readonly isGlobal?: boolean;
+}
+
+const { ConfigurableModuleClass, MODULE_OPTIONS_TOKEN } = new ConfigurableModuleBuilder<
+  GreetingOptions,
+  "forRoot",
+  "create",
+  { readonly isGlobal: boolean }
+>()
+  .setClassMethodName("forRoot")
+  .setFactoryMethodName("create")
+  .setExtras({ isGlobal: false }, (definition, extras) => ({
+    ...definition,
+    global: extras.isGlobal,
+  }))
+  .build();
+
+@Injectable()
+export class GreetingService {
+  constructor(@Inject(MODULE_OPTIONS_TOKEN) readonly options: GreetingOptions) {}
+}
+
+@Module({ providers: [GreetingService], exports: [GreetingService] })
+export class GreetingModule extends ConfigurableModuleClass {}
+```
+
+An application registers it with literal options or with a container-built
+factory:
+
+```ts
+@Module({
+  imports: [
+    GreetingModule.forRoot({ prefix: "hello" }),
+    // or: GreetingModule.forRootAsync({ inject: [CONFIG], useFactory: (config) => config.greeting })
+  ],
+})
+export class AppModule {}
+```
+
+`forRootAsync` accepts the same three shapes Nest accepts. `useFactory` receives
+its `inject` tokens and may return the options object or a Promise for it.
+`useClass` and `useExisting` name a class implementing the factory method, whose
+method may also return a Promise. The boot awaits the result before any provider
+that injects `MODULE_OPTIONS_TOKEN` resolves, and a rejected factory refuses the
+boot with the same error it threw.
+
+`.setExtras` declares options that shape the module definition rather than the
+options object. The transform receives the generated `DynamicModule` and the
+merged extras, so `isGlobal`, route prefixes, or platform selection can be
+applied without putting those fields in the options token. `extraProviders`
+adds registration-specific providers beside the generated options provider.
+`forFeature` declares one named feature registration when a module contributes
+providers to an existing registration.
+
 ## Scopes
 
 Aponia supports three provider lifetime scopes via the `Scope` object:
@@ -275,6 +344,7 @@ they do not throw through the application HTTP error path.
 | `INVALID_NATIVE_APPLICATION`          | `configureNative` returned a different Elysia instance                      |
 | `UNSUPPORTED_ELYSIA_VERSION`          | The installed Elysia does not expose the route API this platform calls      |
 | `APPLICATION_NOT_LISTENING`           | `getUrl()` is called before `listen()`                                      |
+| `UNSUPPORTED_ARGUMENT_HOST`           | An execution context is asked for an argument host it does not provide      |
 | `INVALID_WEBSOCKET_GATEWAY`           | A gateway declaration or lifecycle method is invalid                        |
 | `DUPLICATE_WEBSOCKET_GATEWAY`         | Two gateways claim the same path                                            |
 | `DUPLICATE_WEBSOCKET_HANDLER`         | One gateway declares the same message event more than once                  |

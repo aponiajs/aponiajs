@@ -8,6 +8,6 @@
  * document's own metadata is read from. An application that wants the raw
  * plugin should install `@elysia/openapi` directly.
  */
-export { OpenApiModule } from "./module/openapi-module.ts";
-export type { OpenApiModuleOptions } from "./module/openapi-module.types.ts";
-export type { OpenApiConfiguration, OpenApiInfo } from "./document/openapi-document.types.ts";
+export { OpenApiModule } from "./openapi.module.ts";
+export type { OpenApiModuleOptions } from "./interfaces/openapi-module.interface.ts";
+export type { OpenApiConfiguration, OpenApiInfo } from "./interfaces/openapi-document.interface.ts";

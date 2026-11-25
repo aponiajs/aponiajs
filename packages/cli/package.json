@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/cli",
-  "version": "1.0.0-beta.61",
+  "version": "1.0.0-beta.62",
   "description": "Bun-native project generator and command-line interface for Aponia.",
   "keywords": [
     "aponia",
@@ -49,6 +49,7 @@
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
+    "@aponiajs/schematics": "workspace:*",
     "change-case": "^5.4.4",
     "inflection": "^3.0.2",
     "oxfmt": "0.60.0",

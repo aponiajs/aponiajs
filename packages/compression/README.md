@@ -14,12 +14,12 @@ import { Module } from "@aponiajs/common";
 import { CompressionModule } from "@aponiajs/compression";
 
 @Module({
-  imports: [CompressionModule.register()],
+  imports: [CompressionModule.forRoot()],
 })
 export class AppModule {}
 ```
 
-The plugin negotiates `Accept-Encoding`, preferring Brotli when both encodings
+The policy negotiates `Accept-Encoding`, preferring Brotli when both encodings
 are accepted, and leaves responses under the threshold untouched.
 
 ## Options
@@ -28,7 +28,7 @@ are accepted, and leaves responses under the threshold untouched.
 | ---------------- | ---------------- | --------------------------------------- |
 | `thresholdBytes` | `1024`           | Minimum body size before compression.   |
 | `encodings`      | `["br", "gzip"]` | Offered encodings, in preference order. |
-| `key`            | `compression`    | Plugin module identity.                 |
+| `key`            | `compression`    | Module identity.                        |
 
 ## Behavior
 

@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import { createToken } from "../tokens/token.ts";
-import type { InjectionToken } from "../tokens/token.types.ts";
+import type { InjectionToken } from "../interfaces/token.interface.ts";
 
 /** Options for rendering a view template. */
 export interface ViewRenderOptions {

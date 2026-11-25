@@ -40,8 +40,8 @@ bun run docs:build
 ```
 
 - Every behavioral change ships tests in both lanes when the public contract
-  changes: `packages/*/tests/*.test.ts` (Bun) and
-  `packages/*/tests-vp/*.conformance.ts` (Vite+).
+  changes: `packages/*/src/**/*.spec.ts` (Bun) and
+  `packages/*/test/*.conformance.ts` (Vite+).
 - Coverage floors are enforced: 98% aggregate lines, 95% functions, and 95%
   lines per package. A changed executable line needs a case that runs it.
 - A public behavior change ships its documentation in the same pull request, in

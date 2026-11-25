@@ -1,4 +1,4 @@
-import type { RouteContext } from "./route-schema.types.ts";
+import type { RouteContext } from "../interfaces/route-schema.interface.ts";
 
 /** A function that shapes one route handler's result before it is sent. */
 export type ResponseSerializer<T = unknown> = (

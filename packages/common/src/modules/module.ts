@@ -1,6 +1,7 @@
-import type { DynamicModule, DynamicModuleOptions } from "../decorators/decorators.types.ts";
+import type { DynamicModule, DynamicModuleOptions } from "../interfaces/decorators.interface.ts";
 import { normalizeProvider } from "../providers/provider.ts";
-import type { ModuleDescriptor, ModuleOptions } from "./module.types.ts";
+import type { Provider } from "../interfaces/provider.interface.ts";
+import type { ModuleDescriptor, ModuleOptions } from "../interfaces/module.interface.ts";
 
 /**
  * Declares a module descriptor by hand, without decorators.
@@ -55,5 +56,31 @@ export function dynamicModule(options: DynamicModuleOptions): DynamicModule {
     ...options,
     id,
     instanceId: options.instanceId ?? Symbol(id),
+  });
+}
+
+/**
+ * Appends the providers an asynchronous registration supplied beside the ones a
+ * plugin module already declares.
+ *
+ * A module that builds its registration through a helper (a plugin seam, a
+ * generated module) has no way to accept `extraProviders` itself, so the plugin
+ * merges them here. The input module is never mutated, and an empty list is the
+ * module unchanged.
+ *
+ * @param module - The registration the helper built.
+ * @param providers - The extra providers the caller supplied, if any.
+ * @returns A frozen registration carrying the extra providers.
+ */
+export function withModuleProviders(
+  module: DynamicModule,
+  providers: readonly Provider[] | undefined,
+): DynamicModule {
+  if (providers === undefined || providers.length === 0) {
+    return module;
+  }
+  return Object.freeze({
+    ...module,
+    providers: Object.freeze([...(module.providers ?? []), ...providers]),
   });
 }

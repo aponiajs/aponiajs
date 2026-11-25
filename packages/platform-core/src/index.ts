@@ -2,42 +2,77 @@ export { selectInvokerArtifact } from "./artifacts/invoker-artifact.ts";
 export type {
   AponiaInvokerArtifact,
   AponiaInvokerSelection,
-} from "./artifacts/invoker-artifact.types.ts";
+} from "./interfaces/invoker-artifact.interface.ts";
 export { selectRootModuleDescriptor } from "./artifacts/module-descriptor-artifact.ts";
 export type {
   AponiaModuleDescriptorArtifact,
   AponiaRootModuleSelection,
-} from "./artifacts/module-descriptor-artifact.types.ts";
+} from "./interfaces/module-descriptor-artifact.interface.ts";
 export {
   AponiaFactory,
   AponiaHttpApplication,
   createPlatformFactory,
 } from "./application/http-bootstrap.ts";
 export {
+  BOOT_DIAGNOSTICS,
+  createBootDiagnosticsRef,
+  readBootDiagnostics,
+} from "./application/boot-diagnostics.ts";
+export type {
+  AponiaBootDiagnostics,
+  AponiaCallbackRouteDiagnostics as AponiaNeutralCallbackRouteDiagnostics,
+  AponiaRouteDiagnostics,
+  BootDiagnosticsRef,
+} from "./application/boot-diagnostics.ts";
+export {
+  APPLICATION_CONTAINER,
   attachApplicationContainer,
+  createApplicationContainerRef,
   getApplicationContainer,
 } from "./application/application-container.ts";
-export type { BootedHttpApplication, ListenerRef } from "./application/http-bootstrap.ts";
+export type { ApplicationContainerRef } from "./application/application-container.ts";
 export type {
+  AponiaHttpApplicationBoot,
+  BootedHttpApplication,
+  ListenerRef,
+} from "./application/http-bootstrap.ts";
+export type {
+  AponiaApplicationSurfaceConfig,
   AponiaHttpApplicationOptions,
   AponiaListenOptions,
-} from "./application/application.types.ts";
+} from "./interfaces/application.interface.ts";
+export {
+  createApplicationSurfaceConfig,
+  mergeApplicationSurfaceOptions,
+} from "./application/application-surface.ts";
 export {
   installShutdownSignalHandlers,
   type ShutdownSignal,
   type ShutdownSignalTarget,
 } from "./application/shutdown-signals.ts";
+export { RequestContextModule } from "./request-context/request-context.module.ts";
 export {
   REQUEST_CONTEXT_REGISTRATION,
-  RequestContextModule,
   RequestContextService,
-} from "./request-context/request-context-module.ts";
+} from "./request-context/request-context.service.ts";
 export { isValidRequestId, resolveRequestId } from "./request-context/request-context-header.ts";
 export type {
   RequestContext,
   RequestContextModuleOptions,
   RequestContextRegistration,
-} from "./request-context/request-context.types.ts";
+} from "./interfaces/request-context.interface.ts";
+export {
+  collectApplicationEnhancerEntries,
+  resolveApplicationEnhancer,
+  resolveApplicationFilters,
+  resolveApplicationGuards,
+  resolveApplicationInterceptors,
+  resolveApplicationPipeOccurrences,
+} from "./application/application-enhancers.ts";
+export type {
+  ApplicationEnhancerOccurrence,
+  ResolvedApplicationFilter,
+} from "./application/application-enhancers.ts";
 export {
   attachApplicationShutdown,
   collectLifecycleCalls,
@@ -50,8 +85,23 @@ export type {
   LifecycleCollectionOptions,
   LifecycleHookContract,
 } from "./application/lifecycle-hooks.ts";
-export { HttpError, httpError, httpErrors } from "./errors/http-error.ts";
-export type { HttpErrorFactories } from "./errors/http-error.ts";
+export { HttpError, httpError, httpErrors } from "./exceptions/http-error.ts";
+export {
+  CONTEXT,
+  ContextIdFactory,
+  INQUIRER,
+  REQUEST,
+  REQUEST_CONTEXT_ID,
+  attachRequestContextId,
+} from "@aponiajs/core";
+export type {
+  ContextId,
+  ContextIdResolver,
+  ContextIdResolverFn,
+  ContextIdStrategy,
+  HostComponentInfo,
+} from "@aponiajs/core";
+export type { HttpErrorFactories } from "./exceptions/http-error.ts";
 export type {
   HttpErrorFactory,
   HttpErrorOptions,
@@ -60,14 +110,14 @@ export type {
   HttpErrorStatusName,
   ProblemDetails,
   ResolveHttpErrorStatus,
-} from "./errors/http-error.types.ts";
+} from "./interfaces/http-error.interface.ts";
 export {
   httpStatusCodes,
   statusCodeOf,
   statusNameOf,
   type HttpStatusCode,
   type HttpStatusName,
-} from "./errors/http-status.ts";
+} from "./exceptions/http-status.ts";
 export type {
   AponiaAdapter,
   AponiaApplicationContract,
@@ -79,7 +129,7 @@ export type {
   PlatformMountOptions,
   PlatformRouteHandler,
   RequestPipeline,
-} from "./host/platform-host.types.ts";
+} from "./interfaces/platform-host.interface.ts";
 export { createGatewayDispatcher, injectGatewayServer } from "./websockets/gateway-dispatch.ts";
 export { compileGatewayPlan } from "./websockets/gateway-plan.ts";
 export type {
@@ -89,7 +139,7 @@ export type {
   GatewayPlan,
   GatewayServer,
   GatewaySocket,
-} from "./websockets/gateway.types.ts";
+} from "./interfaces/gateway.interface.ts";
 export { createHttpKernel, createRouteHandler } from "./kernel/http-kernel.ts";
 export type { RouteExecutionRuntime } from "./kernel/http-kernel.ts";
 export type {
@@ -100,7 +150,7 @@ export type {
   PlatformRouteContext,
   ResolvedFilter,
   RouteMatch,
-} from "./kernel/kernel.types.ts";
+} from "./interfaces/kernel.interface.ts";
 export { buildArguments, readParameterValue } from "./kernel/parameter-binding.ts";
 export {
   defaultMaxBodyBytes,
@@ -128,36 +178,28 @@ export {
   resolveMiddlewareInstance,
   runMiddlewareChain,
 } from "./middleware/route-matching.ts";
-export type { ResolvedMiddlewareConfig } from "./middleware/middleware-consumer.types.ts";
+export type { ResolvedMiddlewareConfig } from "./interfaces/middleware-consumer.interface.ts";
+export { HttpAdapterHost, provideHttpAdapterHost } from "./host/http-adapter-host.ts";
 export {
   ALL_PLATFORMS,
   applyPlatformModules,
   PLATFORM_ADAPTER_HOST,
   providePlatformModule,
   resolvePlatformModules,
-} from "./plugins/platform-module.ts";
+} from "./platform/platform-module.ts";
 export type {
   PlatformAdapterEntry,
   PlatformAdapterHost,
   PlatformModuleAdapter,
   PlatformModuleSupport,
   ResolvedPlatformModule,
-} from "./plugins/platform-module.types.ts";
-export { createServicePlugin } from "./plugins/service-plugin.ts";
-export { createEnhancerPlugin } from "./plugins/enhancer-plugin.ts";
-export type {
-  AsyncPluginOptions,
-  EnhancerPluginDefinition,
-  EnhancerPluginModule,
-  PlatformSupportOptions,
-  ServicePluginDefinition,
-  ServicePluginModule,
-} from "./plugins/plugin-builder.types.ts";
+} from "./platform/platform-module.types.ts";
+export type { AsyncPluginOptions } from "./platform/plugin-builder.types.ts";
 export { provideConfiguration, provideConfigurationAsync } from "./configuration/provider.ts";
 export type { AsyncConfigurationOptions } from "./configuration/provider.ts";
-export { AuthGuard } from "./security/auth-guard.ts";
-export { RolesGuard } from "./security/roles-guard.ts";
-export type { AuthGuardOptions, AuthenticatedUser } from "./security/security.types.ts";
+export { AuthGuard } from "./security/auth.guard.ts";
+export { RolesGuard } from "./security/roles.guard.ts";
+export type { AuthGuardOptions, AuthenticatedUser } from "./interfaces/security.interface.ts";
 export {
   answerHealthProbe,
   ApplicationReadiness,
@@ -168,49 +210,98 @@ export type {
   AponiaHealthOptions,
   AponiaHealthResponse,
   AponiaHealthStatus,
-} from "./health/health.types.ts";
-export type { AponiaRootModule } from "./modules/module-compiler.types.ts";
+} from "./interfaces/health.interface.ts";
+export type {
+  AponiaRootModule,
+  ResolvedModuleImports,
+} from "./interfaces/module-compiler.interface.ts";
 export {
   compileRootModule,
+  compileRootModuleAsync,
   HttpControllerKind,
   isModuleDefinition,
 } from "./modules/module-compiler.ts";
+export { resolveModuleImports } from "./modules/module-import.resolver.ts";
 export type { RootCompilationOptions } from "./modules/module-compiler.ts";
 export {
   executePipes,
   resolveApplicationPipe,
   resolveApplicationPipes,
   resolvePipe,
-} from "./pipes/pipe-resolver.ts";
-export type { ParameterPipesMap, ResolvedPipe } from "./pipes/pipe-resolver.types.ts";
-export type { CompiledRoute } from "./routing/compiled-route.types.ts";
+} from "./pipes/pipe.resolver.ts";
+export type { ParameterPipesMap, ResolvedPipe } from "./interfaces/pipe-resolver.interface.ts";
+export type { CompiledRoute } from "./interfaces/compiled-route.interface.ts";
 export { compileRoutes } from "./routing/route-compilation.ts";
 export { joinPaths } from "./routing/route-path.ts";
-export type { RoutePlan } from "./routing/route-plan.types.ts";
+export type { RoutePlan } from "./interfaces/route-plan.interface.ts";
 export { normalizeRoutePrefix, stripRoutePrefix } from "./routing/route-prefix.ts";
 export { contentDisposition } from "./routing/content-disposition.ts";
-export type { DownloadFileOptions } from "./routing/content-disposition.types.ts";
+export type { DownloadFileOptions } from "./interfaces/content-disposition.interface.ts";
 export {
   answerStaticAsset,
   normalizeStaticAssets,
   resolveStaticAssetPath,
 } from "./routing/static-assets.ts";
 export type { StaticFileOpener, StaticFileSource } from "./routing/static-assets.ts";
-export type { StaticAssetsOptions } from "./routing/static-assets.types.ts";
-export { applyHttpPolicies, corsPreflight, resolveHttpPolicies } from "./policy/http-policy.ts";
+export type { StaticAssetsOptions } from "./interfaces/static-assets.interface.ts";
+export {
+  applyCors,
+  applyHttpPolicies,
+  applyHttpPolicyResponses,
+  corsPreflight,
+  HTTP_POLICIES,
+  provideHttpPolicies,
+  provideHttpPoliciesAsync,
+  provideHttpPolicy,
+  provideHttpPolicyAsync,
+  resolveApplicationHttpPolicies,
+  resolveCorsOptions,
+  resolveHttpPolicies,
+  runHttpPolicyRequests,
+} from "./policy/http.policy.ts";
 export type {
   CompressionOptions,
   CorsOptions,
   EtagOptions,
+  HttpPolicy,
   HttpPolicyOptions,
   ResolvedCors,
   ResolvedHttpPolicies,
   SecurityHeadersOptions,
-} from "./policy/http-policy.types.ts";
+} from "./interfaces/http-policy.interface.ts";
+export {
+  assertPlatformCapabilities,
+  PLATFORM_CAPABILITIES,
+  PLATFORM_CAPABILITY_REQUIREMENT,
+  platformCapabilities,
+  providePlatformCapabilities,
+  readPlatformCapabilities,
+  requirePlatformCapabilities,
+} from "./capabilities/platform-capabilities.ts";
+export type {
+  PlatformCapabilities,
+  PlatformCapability,
+  PlatformCapabilityRequirement,
+} from "./interfaces/platform-capabilities.interface.ts";
+export {
+  notifyRequestError,
+  notifyRequestResponse,
+  provideRequestLifecycleHook,
+  provideRequestLifecycleHooks,
+  provideRequestLifecycleHooksAsync,
+  REQUEST_LIFECYCLE_HOOKS,
+  resolveRequestLifecycleHooks,
+  runRequestHooks,
+} from "./kernel/request-hooks.ts";
+export type { RequestLifecycleHook } from "./interfaces/request-hooks.interface.ts";
+export { matchedRouteOf, rememberMatchedRoute } from "./kernel/matched-route.ts";
 export { createVersionNegotiator } from "./routing/version-negotiation.ts";
 export type {
   AponiaVersioningOptions,
   VersionNegotiationRoute,
   VersionNegotiator,
-} from "./routing/version-negotiation.types.ts";
-export type { ControllerHandlerFactory, RouteHandler } from "./routing/route-handler.types.ts";
+} from "./interfaces/version-negotiation.interface.ts";
+export type {
+  ControllerHandlerFactory,
+  RouteHandler,
+} from "./interfaces/route-handler.interface.ts";

@@ -1,9 +1,10 @@
 import "reflect-metadata";
-import type { ForwardReference } from "../modules/forward-ref.types.ts";
+import type { ForwardReference } from "../interfaces/forward-ref.interface.ts";
 import { isRouteResponseSchemaMap } from "../routing/route-schema.ts";
-import type { RouteSchema } from "../routing/route-schema.types.ts";
+import type { RouteSchema } from "../interfaces/route-schema.interface.ts";
 import { optionalDependency } from "../tokens/token.ts";
-import type { ClassToken, InjectionDependency, Token } from "../tokens/token.types.ts";
+import type { ClassToken, InjectionDependency, Token } from "../interfaces/token.interface.ts";
+import { normalizeProviderScope } from "../providers/provider.ts";
 import type {
   ControllerMetadata,
   InjectableOptions,
@@ -12,7 +13,7 @@ import type {
   RequestMethod,
   RouteDecoratorFactory,
   RouteMetadata,
-} from "./decorators.types.ts";
+} from "../interfaces/decorators.interface.ts";
 
 const moduleMetadataKey = Symbol.for("aponia.module.metadata");
 const globalMetadataKey = Symbol.for("aponia.global.metadata");
@@ -44,6 +45,7 @@ export function Module(metadata: ModuleMetadata): ClassDecorator {
     controllers: Object.freeze([...(metadata.controllers ?? [])]),
     providers: Object.freeze([...(metadata.providers ?? [])]),
     exports: Object.freeze([...(metadata.exports ?? [])]),
+    ...(metadata.global === undefined ? {} : { global: metadata.global }),
   });
 
   return (target) => {
@@ -95,13 +97,22 @@ export function isGlobalModule(target: object): boolean {
  */
 export function Injectable(options?: InjectableOptions): ClassDecorator {
   return (target) => {
-    if (options?.scope) {
-      Reflect.defineMetadata(
-        injectableMetadataKey,
-        Object.freeze({ scope: options.scope }),
-        target,
-      );
+    if (options === undefined) {
+      return;
     }
+    const scope = options.scope === undefined ? undefined : normalizeProviderScope(options.scope);
+    const durable = options.durable === true;
+    if (scope === undefined && !durable) {
+      return;
+    }
+    Reflect.defineMetadata(
+      injectableMetadataKey,
+      Object.freeze({
+        ...(scope === undefined ? {} : { scope }),
+        ...(durable ? { durable: true } : {}),
+      }),
+      target,
+    );
   };
 }
 

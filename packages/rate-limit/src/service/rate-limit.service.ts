@@ -4,8 +4,8 @@ import type {
   RateLimitDecision,
   RateLimitOverride,
   ResolvedRateLimitOptions,
-} from "../module/rate-limit.types.ts";
-import type { RateLimitStore } from "../store/rate-limit-store.types.ts";
+} from "../module/rate-limit.interface.ts";
+import type { RateLimitStore } from "../store/rate-limit-store.interface.ts";
 
 /** The rate-limit decision an application can read or test directly. */
 @Injectable()

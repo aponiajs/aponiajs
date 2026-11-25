@@ -2,8 +2,8 @@
 
 `aponia new my-api --workspace` creates `apps/api` plus `libs/`; the default
 single-app layout is unchanged. `aponia g library <name>` writes a workspace
-library under `libs/`, registers it as a library project in `aponia.json`, and
-adds the `@app/<name>` path alias to the workspace `tsconfig.json`. Add
+library under `libs/`, registers it as a library project in `aponia-cli.json`,
+and adds the `@app/<name>` path alias to the workspace `tsconfig.json`. Add
 `--publish` for a publishable npm package; a private workspace library is
 imported through the alias, not through a package dependency.
 
@@ -53,9 +53,9 @@ an application imports either package the same way.
 | `src/<name>.module.ts`               | `forRoot` / `forRootAsync` and the module class     |
 | `src/<name>.service.ts`              | The injectable service                              |
 | `src/<name>.constants.ts`            | The options token the module provides               |
-| `src/<name>.types.ts`                | The registration options                            |
-| `tests/`                             | Bun tests                                           |
-| `tests-vp/`                          | Vite+ conformance tests                             |
+| `src/interfaces/<name>.interface.ts` | The registration options                            |
+| Colocated `src/**/*.spec.ts`         | Bun tests                                           |
+| `test/*.conformance.ts`              | Vite+ conformance tests                             |
 | `aponia.library.json`                | The machine-readable library contract               |
 | `README.md`, `AGENTS.md`, `llms.txt` | Human and agent documentation                       |
 | `tsconfig*.json`, `vite.config.ts`   | Package build and test configuration                |
@@ -63,10 +63,12 @@ an application imports either package the same way.
 `tsconfig.lib.json` extends the workspace root and is the config Vite+ packs
 with, which is the Nest library convention.
 
-A plugin adds one file, `src/adapters/<name>.adapters.ts`. It owns the
-`providePlatformModule` declaration: the platforms the package supports and the
-native mount each one needs. That folder is the only place a plugin may import a
-runtime, and `aponia library check` allows it there.
+A plugin adds two neutral contribution files, `src/<name>.controller.ts` and
+`src/<name>.policy.ts`, beside a module that registers the controller, the
+service, the options, the `HttpPolicy` built from them, and
+`requirePlatformCapabilities("<name>", ["http"])`. It adds no `adapters/`
+directory and states no platform: a native mount belongs in a separate `adapter`
+library.
 
 A publishable package declares `exports`, `files`, `publishConfig.access`,
 `sideEffects: false`, the `aponiajs` and `aponia-library` npm keywords, and
@@ -96,44 +98,94 @@ export class AppModule {}
 export class AsyncAppModule {}
 ```
 
-The options travel through an exported token (`WIDGETS_OPTIONS`), and the
-service injects it optionally, so a plain import of the module still boots. The
-factory runs synchronously in this release; an async factory is not awaited, so
-declare the value it builds as already-resolved.
+A module with options builds its registration with
+`ConfigurableModuleBuilder` in one `<name>.module-definition.ts` file. That file
+exports `ConfigurableModuleClass`, `MODULE_OPTIONS_TOKEN`, `OPTIONS_TYPE`, and
+`ASYNC_OPTIONS_TYPE`; the module class extends the generated class and its
+`forRoot`/`forRootAsync` delegate to the generated methods. `isGlobal` (or the
+package's `global`) is a definition-shaping extra: it is absent from the
+injected options and reaches only the module definition.
+
+The asynchronous form accepts the three Nest shapes — `useFactory`, `useClass`,
+and `useExisting` — and a Promise a factory answers is awaited before the value
+is validated, so a resolved value is refused exactly as a literal is. That
+lowering is `moduleOptionsProviders` from `@aponiajs/common`; never restate it
+per package. The options token is provided and exported, so a consumer can read
+what the registration received.
+
+`register` and `registerAsync` remain as deprecated aliases of `forRoot` and
+`forRootAsync` for one release. A registration whose options decide the provider
+list — a configuration-token module or one with a `jwt`/`oidc` arm — states that
+limit in its package guide and refuses the asynchronous form by name instead of
+accepting one that cannot work.
+
+Name the upstream package a library mirrors: `cache` mirrors
+`@nestjs/cache-manager`, `cron` mirrors `@nestjs/schedule`, `events` mirrors
+`@nestjs/event-emitter`, `http` mirrors `@nestjs/http-client`, `auth` mirrors
+`@nestjs/authentication` and `@nestjs/authorization` where they overlap,
+`database` mirrors the `@nestjs/drizzle` boundary, `queue` mirrors
+`@nestjs/bullmq`'s names, `rate-limit` mirrors `@nestjs/throttler`, and
+`microservices` mirrors `@nestjs/microservices`. `audit`, `tenancy`,
+`store-redis`, `view`, `compiler`, `platform-core`, `metrics`, `mcp`, and
+`idempotency` are Aponia extensions with no Nest counterpart; they adopt the same
+builder surface but must not claim parity with a package that does not exist.
+
+Four of those mirrors carry their library's own class surface, not only its
+registration names:
+
+- `cron` publishes `Cron`, `Interval`, `Timeout`, `SchedulerRegistry`, and the
+  `cronJobs`/`intervals`/`timeouts` switches.
+- `auth` publishes `@CurrentUser()`/`@CurrentSession()` and registers
+  `AuthGuard` as a global `APP_GUARD` unless `globalGuard: false` is stated.
+- `http` splits `forRoot` (app-wide defaults, no client) from `register` (one
+  client), and publishes `getHttpClientToken`, `@InjectHttpClient`, and
+  `HttpClientInterceptor`.
+- `queue` publishes `@Processor`, `WorkerHost`, `@InjectQueue`, `JOB_REF`, and
+  `getQueueToken`; the processor name is the job name, and the token is
+  `AponiaQueue_<name>` rather than a broker queue.
+
+Each package guide states the deviations that remain — no cross-process cron
+lock, no broker worker, no named-client streaming or dispatcher — next to the
+surface it publishes.
 
 ## Plugin packages
 
 A generated plugin uses the same registration surface as a generated library:
 `forRoot(options)` and `forRootAsync({ imports, inject, useFactory })` return a
-`DynamicModule`, and the application imports the result. The platform
-declaration is separate because it is a property of the package rather than of
-one registration:
+`DynamicModule`, and the application imports the result. What differs is the
+contribution, which is neutral and states no platform:
 
 ```ts
-// src/adapters/widgets.adapters.ts
-export const widgetsPlatformProvider = providePlatformModule({
-  key: "widgets",
-  platforms: ALL_PLATFORMS,
-  adapters: widgetsAdapters,
+// src/widgets.module.ts
+return dynamicModule({
+  module: WidgetsModule,
+  id: `WidgetsModule[${key}]`,
+  instanceId: Symbol.for(`aponia.widgets:${key}`),
+  providers: [
+    provideConfiguration(options.configuration),
+    provideHttpPolicyAsync([options.configuration], (value) => buildWidgetsPolicy(value)),
+    requirePlatformCapabilities("widgets", ["http"]),
+  ],
+  controllers: [WidgetsController],
+  exports: [options.configuration],
 });
 ```
 
-The boot refuses a platform the declaration omits with
-`UNSUPPORTED_PLATFORM_FEATURE` before it mounts anything, and runs only the
-adapter for the platform it serves. The registration key is the module identity,
-so one registration per application is the supported shape: two that share a key
-fail with `DUPLICATE_MODULE`, and two keyed registrations that both export the
-service make its read `AMBIGUOUS_PROVIDER`. Keep the platforms in the adapters
-file and `aponia.library.json` in step.
+There is no platform allowlist. A registration that needs a request-path
+capability the platform lacks is refused at boot with
+`UNSUPPORTED_PLATFORM_FEATURE`, naming the package, the capability, and the
+platform. The registration key is the module identity, so one registration per
+application is the supported shape: two that share a key fail with
+`DUPLICATE_MODULE`, and two keyed registrations that both export the service make
+its read `AMBIGUOUS_PROVIDER`.
 
-[Authoring a plugin package](./plugin-packages.md) covers the native-mount seam
-in depth.
+[Authoring a plugin package](./plugin-packages.md) covers the neutral
+contribution contract in depth.
 
-A library's source is runtime-neutral: it imports `@aponiajs/common` and never
-a platform package or an HTTP runtime. A package that must mount one is an
-`adapter` library, states the platform in `platforms`, and keeps the import
-under `src/adapters/`; `aponia library check` refuses a platform import in any
-other kind.
+A library's source is runtime-neutral: it imports `@aponiajs/common` and never a
+platform package or an HTTP runtime. A package that must mount a runtime value
+belongs in a separate `adapter` library; `aponia library check` refuses a runtime
+import in any other kind.
 
 The generated tests prove the registration without booting an HTTP platform:
 `compileRootModule` lowers the `DynamicModule` and `createContainer` resolves
@@ -150,7 +202,6 @@ the package:
   "contractVersion": 1,
   "name": "widgets",
   "kind": "module",
-  "platforms": ["elysia", "hono", "h3"],
   "framework": { "aponia": "1.0.0-beta.61", "bun": ">=1.4.4" },
   "entrypoints": [{ "subpath": ".", "module": "./dist/index.mjs" }],
   "provides": [
@@ -166,12 +217,12 @@ the package:
 public barrel in step; `aponia library check` compares them with the package
 surface it can see.
 
-`platforms` states which of the framework's platforms the library runs on. A
-library whose code is runtime-neutral omits it or lists all four. A library that
-needs a runtime keeps that runtime in `peerDependencies` or `devDependencies`
-and mounts it through `adapters` in its module registration — never in
-`dependencies`, which `aponia library check` refuses because a run-time platform
-dependency is how a library stops being portable. The mount contract is
+A library's source is runtime-neutral, so the manifest states no platform
+allowlist. A library that needs a runtime keeps that runtime in
+`peerDependencies` or `devDependencies` — never in `dependencies`, which
+`aponia library check` refuses because a run-time platform dependency is how a
+library stops being portable. A package that must mount a runtime value is an
+`adapter` library, separate from the neutral module. The mount contract is
 [Authoring a plugin package](./plugin-packages.md); the cross-platform contract
 is [Platform Parity](../platforms/platform-parity.md).
 
@@ -183,8 +234,8 @@ manifest, the public barrel, both test lanes, and the documentation files.
 `publishConfig.access` set to `public`, npm keywords, a license, a semver
 version, and a peer dependency on `@aponiajs/common`. A run-time dependency on a
 platform package or runtime (`@aponiajs/platform-elysia`, `elysia`, `hono`,
-`h3`) is an issue, and a `platforms` entry the framework does not ship
-is an issue. `--json` prints the frozen result.
+`h3`) is an issue, and a plugin that states a platform or ships an adapter is an
+issue. `--json` prints the frozen result.
 
 `aponia library publish [path]` runs the publish check, build, and `npm pack
 --dry-run`. It stops with the exact publish command unless `--yes` is passed;

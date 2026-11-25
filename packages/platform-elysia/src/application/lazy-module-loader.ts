@@ -8,7 +8,7 @@ import {
   type Token,
 } from "@aponiajs/common";
 import { createContainer, type AponiaContainer } from "@aponiajs/core";
-import { compileModuleInMemory } from "../compiler/in-memory-compiler.ts";
+import { compileModuleInMemoryAsync } from "../compiler/in-memory-compiler.ts";
 import type { AponiaRootModule } from "@aponiajs/platform-core";
 import { runShutdownHooks } from "./application-bootstrap.ts";
 import { collectLifecycleCalls } from "@aponiajs/platform-core";
@@ -37,15 +37,24 @@ export class LazyModuleRef {
     }
     this.#closed = true;
     await runShutdownHooks(
-      collectLifecycleCalls(this.#container, "beforeApplicationShutdown", false),
+      collectLifecycleCalls(this.#container, "beforeApplicationShutdown", {
+        includeControllers: false,
+        reverseModules: true,
+      }),
       this.#logger,
     );
     await runShutdownHooks(
-      [...collectLifecycleCalls(this.#container, "onModuleDestroy", false)].reverse(),
+      collectLifecycleCalls(this.#container, "onModuleDestroy", {
+        includeControllers: false,
+        reverseModules: true,
+      }),
       this.#logger,
     );
     await runShutdownHooks(
-      collectLifecycleCalls(this.#container, "onApplicationShutdown", false),
+      collectLifecycleCalls(this.#container, "onApplicationShutdown", {
+        includeControllers: false,
+        reverseModules: true,
+      }),
       this.#logger,
     );
   }
@@ -69,7 +78,7 @@ export class LazyModuleLoader {
    */
   async load(load: () => AponiaRootModule | Promise<AponiaRootModule>): Promise<LazyModuleRef> {
     const root = await load();
-    const compiledRoot = compileModuleInMemory(root);
+    const compiledRoot = await compileModuleInMemoryAsync(root);
     const container = createContainer(compiledRoot, [
       provideValue(LOGGER, this.#logger ?? NOOP_LOGGER),
       provideValue(LazyModuleLoader, this),
@@ -77,7 +86,7 @@ export class LazyModuleLoader {
     ]);
 
     for (const module of container.graph.modules) {
-      container.initializeModule(module);
+      await container.initializeModuleAsync(module);
     }
     for (const call of collectLifecycleCalls(container, "onModuleInit", false)) {
       await call();

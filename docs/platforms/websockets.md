@@ -370,8 +370,8 @@ callback; return a `WsResponse` instead.
 ## Verify it
 
 ```bash
-bun test packages/platform-elysia/tests/websocket-gateway.test.ts
-bun test packages/platform-core/tests/websocket-gateway.test.ts
+bun test packages/platform-elysia/src/websockets/websocket-gateway.spec.ts
+bun test packages/platform-core/src/websocket-gateway.spec.ts
 bun run example:websockets
 ```
 

@@ -1,5 +1,8 @@
 import type { LoggerService } from "@aponiajs/common";
-import type { AponiaInvokerArtifact, AponiaInvokerSelection } from "./invoker-artifact.types.ts";
+import type {
+  AponiaInvokerArtifact,
+  AponiaInvokerSelection,
+} from "../interfaces/invoker-artifact.interface.ts";
 
 /**
  * The invokers this artifact may contribute, and the reason when it may not.

@@ -1,4 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
+import { AponiaError, createToken } from "@aponiajs/common";
+import { getApplicationContainer, type ApplicationContainerRef } from "@aponiajs/platform-core";
 import {
   McpServer,
   ResourceTemplate,
@@ -7,11 +9,11 @@ import {
   type McpRequestContext,
   type ServerContext,
 } from "@modelcontextprotocol/server";
-import type { McpPlan } from "../discovery/mcp-plan.types.ts";
+import type { McpPlan } from "../interfaces/mcp-plan.interface.ts";
 import { buildMcpPlan } from "../discovery/mcp-discovery.ts";
-import type { McpContext } from "../execution/mcp-context.types.ts";
+import type { McpContext } from "../interfaces/mcp-context.interface.ts";
 import { invokeMcpPrimitive, type McpContainer } from "../execution/mcp-invoker.ts";
-import type { ResolvedMcpOptions } from "../module/mcp-module.types.ts";
+import type { ResolvedMcpOptions } from "../interfaces/mcp-module.interface.ts";
 
 const platformContext = new AsyncLocalStorage<unknown>();
 const runtimeKey: unique symbol = Symbol.for("aponia.mcp.runtime");
@@ -27,6 +29,9 @@ const passthroughSchema = {
     },
   },
 };
+
+/** The runtime one registration built. @internal */
+export const MCP_RUNTIME = createToken<McpRuntime>("aponia.mcp.runtime");
 
 /** One boot's MCP plan, handler, and container. @internal */
 export interface McpRuntime {
@@ -47,7 +52,7 @@ export function attachMcpRuntime(application: object, runtime: McpRuntime): void
   });
 }
 
-/** Reads the MCP runtime a boot attached. @internal */
+/** Reads the MCP runtime a boot produced. @internal */
 export function readMcpRuntime(application: unknown): McpRuntime | undefined {
   const direct = (application as { [runtimeKey]?: McpRuntime } | null | undefined)?.[runtimeKey];
   if (direct !== undefined) {
@@ -57,7 +62,59 @@ export function readMcpRuntime(application: unknown): McpRuntime | undefined {
   const native = (
     application as { getNativeApplication?: () => unknown } | null | undefined
   )?.getNativeApplication?.();
-  return native === undefined ? undefined : (native as { [runtimeKey]?: McpRuntime })[runtimeKey];
+  const container =
+    getApplicationContainer(application) ??
+    (native === undefined ? undefined : getApplicationContainer(native));
+  if (container === undefined) {
+    return undefined;
+  }
+  try {
+    return container.get(MCP_RUNTIME) as McpRuntime;
+  } catch {
+    for (const module of container.graph.modules) {
+      if (!module.providers.some((provider) => provider.provide === MCP_RUNTIME)) {
+        continue;
+      }
+      return container.resolveModuleProvider(module, MCP_RUNTIME) as McpRuntime;
+    }
+    return undefined;
+  }
+}
+
+/**
+ * Builds the runtime from the boot's container reference.
+ *
+ * @internal
+ */
+export function createMcpRuntimeFromContainer(
+  containerRef: ApplicationContainerRef,
+  options: ResolvedMcpOptions,
+): McpRuntime {
+  if (containerRef.current === undefined) {
+    throw new AponiaError(
+      "INVALID_MCP_OPTIONS",
+      "The MCP endpoint was constructed before its application's container existed.",
+    );
+  }
+  return createMcpRuntime(containerRef.current as never, options);
+}
+
+/** Releases one runtime once, however many times a stop reaches it. @internal */
+export class McpRuntimeShutdown {
+  readonly #runtime: McpRuntime;
+  #closed = false;
+
+  constructor(runtime: McpRuntime) {
+    this.#runtime = runtime;
+  }
+
+  async onApplicationShutdown(): Promise<void> {
+    if (this.#closed) {
+      return;
+    }
+    this.#closed = true;
+    await this.#runtime.close();
+  }
 }
 
 /**
@@ -300,7 +357,18 @@ function promptResult(value: unknown): unknown {
 }
 
 function messageOf(error: unknown): string {
-  return error instanceof Error ? error.message : "Internal server error";
+  // Authored failures (an AponiaError or an HttpError) carry a safe message;
+  // any other throw may carry internals, so the caller sees a generic line.
+  if (error instanceof AponiaError) {
+    return error.message;
+  }
+  if (
+    error instanceof Error &&
+    typeof (error as { toResponse?: unknown }).toResponse === "function"
+  ) {
+    return error.message;
+  }
+  return "Internal server error";
 }
 
 function refuseRequest(

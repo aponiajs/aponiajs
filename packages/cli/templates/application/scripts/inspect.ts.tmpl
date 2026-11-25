@@ -11,9 +11,10 @@ import { AppModule } from "../src/app.module.ts";
  * bun run inspect --json   # the whole inspection, for tooling
  * ```
  *
- * The descriptor artifact is resolved the way `src/main.ts` resolves it, so this
- * reports the graph the application boots from rather than the decorated classes
- * it names. `logger: false` keeps the line reporting that choice out of the
+ * The descriptor artifact is handed over by this script alone, so the summary
+ * reports the graph this artifact describes. The committed artifact holds no
+ * declaration for the root, so the decorated graph is reported until a build
+ * fills it. `logger: false` keeps the line reporting that choice out of the
  * summary, and out of the `--json` document a tool reads.
  *
  * Routes registered through `controller` callbacks do not appear here;

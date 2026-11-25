@@ -5,12 +5,10 @@
 ```ts
 const metrics = new MetricsRegistry();
 
-@Module({ imports: [MetricsModule.register({ registry: metrics, path: "/metrics" })] })
+@Module({ imports: [MetricsModule.forRoot({ registry: metrics, path: "/metrics" })] })
 export class AppModule {}
 
-const application = await AponiaFactory.create(AppModule, {
-  filters: [MetricsExceptionFilter],
-});
+const application = await AponiaFactory.create(AppModule);
 ```
 
 `GET /metrics` answers the Prometheus text format and is excluded from the
@@ -31,16 +29,26 @@ traffic volume, or memory use.
 The `route` label is the registered route template: a request to
 `/widgets/42` counts under `/widgets/:id`, so one route stays one series.
 
-The plugin also publishes the process gauges `process_uptime_seconds`,
+The instrumentation also publishes the process gauges `process_uptime_seconds`,
 `process_resident_memory_bytes`, and `process_heap_used_bytes`; set
 `processMetrics: false` to omit them. `registerCollector` refreshes a gauge
 before every render, which is how a value read elsewhere stays current.
 
 Success statuses come from the response the handler answered; a `201` set
-through `@HttpStatus()` is recorded as `201`. Failures are recorded by
-`MetricsExceptionFilter`, which is why the application declares it as a global
-filter: the route's own error path answers the response, so the plugin's hooks
-never observe the exception.
+through `@HttpStatus()` is recorded as `201`. The registration supplies a
+neutral `RequestLifecycleHook` that records a failure before the route's filters,
+so no global filter has to be declared for the observed metrics to be complete.
+`MetricsExceptionFilter` remains exported for an application that wants one of
+its own, and is redundant beside this registration.
+
+## How it is neutral
+
+The scrape is a controller mounted on the application's own route table and the
+request record is a `RequestLifecycleHook`, so the same registration answers on
+`@aponiajs/platform-elysia`, `@aponiajs/platform-hono`,
+`@aponiajs/platform-h3`, and the serverless Web Fetch handler. No source file
+imports a platform package, and `requirePlatformCapabilities("metrics", ["http"])`
+states what the registration needs.
 
 ## Application metrics
 

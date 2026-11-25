@@ -15,7 +15,7 @@ import {
 import type {
   MicroserviceEnvelope,
   MicroserviceReplyEnvelope,
-} from "../envelope/microservice-envelope.types.ts";
+} from "../interfaces/microservice-envelope.interface.ts";
 import {
   TransportLifecycle,
   translateTransportFailure,
@@ -35,8 +35,11 @@ import type {
   TransportMessage,
   TransportSubscription,
   TransportSubscriptionHandle,
-} from "../transport/transport.types.ts";
-import type { MicroserviceServer, MicroserviceServerConfig } from "./microservice-server.types.ts";
+} from "../interfaces/transport.interface.ts";
+import type {
+  MicroserviceServer,
+  MicroserviceServerConfig,
+} from "../interfaces/microservice-server.interface.ts";
 
 const defaultMaxInFlight = 1_000;
 const defaultConnectTimeoutMs = 10_000;

@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import type { BorrowContext, BorrowToken } from "./borrow.types.ts";
+import type { BorrowContext, BorrowToken } from "../interfaces/borrow.interface.ts";
 
 /**
  * The `node:async_hooks` implementation of a {@link BorrowContext}.

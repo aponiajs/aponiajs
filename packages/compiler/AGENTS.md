@@ -9,14 +9,16 @@ The runtime half of compiler-grade invariants: revocable lifetimes, exclusive
 mutation views, typestate, and linear consumption. It is runtime-neutral except
 for `node:async_hooks`, which is used only for borrow identity.
 
-| Domain       | Owns                                                          |
-| ------------ | ------------------------------------------------------------- |
-| `lifetime/`  | `LifetimeScope`, `Scoped<T>`, `withLifetime`, `scope.guard`   |
-| `borrow/`    | `RwCell<T>`, `AsyncRwLock`, deep readonly and exclusive views |
-| `typestate/` | `createStateMachine`, `Owned<T>`, `once`, and `using` support |
-| `shared/`    | `provideSharedState`, `SharedStateService`                    |
+| Domain        | Owns                                                          |
+| ------------- | ------------------------------------------------------------- |
+| `lifetime/`   | `LifetimeScope`, `Scoped<T>`, `withLifetime`, `scope.guard`   |
+| `borrow/`     | `RwCell<T>`, `AsyncRwLock`, deep readonly and exclusive views |
+| `typestate/`  | `createStateMachine`, `Owned<T>`, `once`, and `using` support |
+| `shared/`     | `provideSharedState`, `SharedStateService`                    |
+| `interfaces/` | the lifetime, borrow, and typestate contracts                 |
 
-`src/index.ts` is the only public barrel.
+`src/index.ts` is the only public barrel. Type-only contracts live in
+`interfaces/<name>.interface.ts`.
 
 ## Invariants
 
@@ -63,7 +65,7 @@ for `node:async_hooks`, which is used only for borrow identity.
 
 ## Tests
 
-`tests/*.test.ts` under Bun, `tests-vp/*.conformance.ts` under Vite+. Unit cases
+`src/**/*.spec.ts` under Bun, `test/*.conformance.ts` under Vite+. Unit cases
 cover success, failure, reuse, release, timeout, abort, and hydration. Integration
 cases boot Elysia, Hono, and H3 through `application.handle` and prove each
 request's scope is independent and revoked at the response boundary.

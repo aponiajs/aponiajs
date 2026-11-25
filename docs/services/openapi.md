@@ -2,36 +2,24 @@
 
 `@aponiajs/openapi` serves an OpenAPI document for the routes an application
 compiled, and takes the document's own metadata from a validated configuration.
-
-It is a thin adapter over
-[`@elysia/openapi`](https://www.npmjs.com/package/@elysia/openapi), which builds
-the document from the route table Elysia compiled. AponiaJS contributes a module
-the plugin is declared in and a validated configuration the `info` comes from.
-Everything else — which routes appear, what a schema looks like, how a parameter
-is lowered into a path item, and the page served beside the document — is the
-wrapped plugin's.
+It is a neutral module: the document is built from the compiled route plans and
+served by a controller on the application's own route table, so the same
+registration answers the same document on every platform.
 
 ## What the document is not
 
-The document **describes** the routes the platform compiled. It does not
-validate a request, generate a client, or serve an interface of this package's
-own. Nothing here makes a request conform to what the document says; a request
-that violates every schema in it reaches the handler unless the route's own
-`@Validation` refuses it first, and what answers then is the framework's
-ordinary `422`, not the document.
+The document **describes** the routes the application compiled. It does not
+validate a request, generate a client, or serve a UI of its own beyond the small
+HTML index beside the document. Nothing here makes a request conform to what the
+document says; a request that violates every schema in it reaches the handler
+unless the route's own `@Validation` refuses it first, and what answers then is
+the framework's ordinary `422`, not the document.
 
 A client generated from the document is a third-party generator's reading of it,
-with that generator's own gaps, and the page served at the mount path is
-Scalar's — the wrapped plugin's, with the plugin's own options and version. A
-reader who assumes the document is a contract the server enforces ships a client
-for endpoints that answer `422`, or an integration against a route that was never
-declared. There is no option here that changes that; enforcement is a different
-package.
-
-A reader who wants the raw plugin should install
-[`@elysia/openapi`](https://www.npmjs.com/package/@elysia/openapi) directly: see
-[Native Elysia Plugins](../platforms/native-plugins.md) for both the `plugins` option and
-`definePlugin`.
+with that generator's own gaps. A reader who assumes the document is a contract
+the server enforces ships a client for endpoints that answer `422`, or an
+integration against a route that was never declared. There is no option here
+that changes that; enforcement is a different package.
 
 ## Registration
 
@@ -41,15 +29,15 @@ import { OpenApiModule } from "@aponiajs/openapi";
 import { WidgetsController } from "./widgets.controller.ts";
 import { OpenApiConfig } from "./openapi.config.ts";
 
-const docs = OpenApiModule.register({ configuration: OpenApiConfig });
+const docs = OpenApiModule.forRoot({ configuration: OpenApiConfig });
 
 @Module({ imports: [docs], controllers: [WidgetsController] })
 export class AppModule {}
 ```
 
-The document is served at `"/openapi/json"` and the interface at `"/openapi"`,
-both moved together by `path`. `key` names the module's identity and defaults to
-`"openapi"`; two registrations that share one key are refused as
+The document is served as JSON at `"/openapi/json"` and the HTML index at
+`"/openapi"`, both moved together by `path`. `key` names the module's identity
+and defaults to `"openapi"`; two registrations that share one key are refused as
 `DUPLICATE_MODULE` rather than serving one document twice.
 
 `aponia build` declines a module whose `imports` name a registration — a
@@ -87,12 +75,9 @@ export const OpenApiConfig = defineConfiguration(
 ```
 
 `title` and `version` are required because OpenAPI requires them: a document
-without them is one no tool reads. Without this package the plugin fills them
-with `"Elysia Documentation"` and `"0.0.0"`, and fills an absent description
-with `"Development documentation"` — claims the application never made, served
-to every consumer of the document. This package overrides all three: what it
-serves is what the application declared, and an absent description is served as
-no description at all.
+without them is one no tool reads. This package does not fill them with a
+placeholder; what it serves is what the application declared, and an absent
+description is served as no description at all.
 
 The module provides this token itself, from `process.env`, and exports it, so
 the application reads the same value back through
@@ -118,24 +103,21 @@ document rather than in a message:
   AponiaJS registers no model. Every declared schema is inlined into the
   operation that declared it, so a document generated here is longer than one
   built from a registry and its schemas cannot be shared by `$ref`.
-- **A WebSocket gateway is not in the document.** The platform mounts a gateway
-  as a route whose method really is `ws`, and `ws` is not an OpenAPI path-item
-  field: left in, the document carries a path item no validator accepts. The
-  registration mounts the plugin with `exclude.methods: ["options", "ws"]` for
-  that reason.
+- **A route a registration callback mounted is not in the document.** Only
+  compiled plans are described, because a callback route has no plan to read.
+  A WebSocket gateway is not an HTTP operation either; `ALL`, `OPTIONS`, and
+  `HEAD` are omitted.
 - **A deprecated route is marked.** `@Deprecated()` sets `detail.deprecated`, so
   the operation carries `deprecated: true` next to the route's deprecation
   headers.
 
 ## One document per application
 
-Elysia mounts a _named_ plugin once. `@elysia/openapi`'s plugin is named, and a
-second instance is skipped rather than mounted, so an application that declares
-two registrations with distinct keys gets two graph nodes and one document: the
-one whose registration mounted first, at that registration's path. The second
-path answers `404`, and because both modules export the same configuration
-token, reading it back raises `AMBIGUOUS_PROVIDER` rather than picking a winner.
-One registration per application is the supported shape.
+A registration is one graph node with one identity. Two registrations with
+distinct keys produce two graph nodes and two controllers; each path serves the
+document its own configuration describes. Both modules export the same
+configuration token, so reading it back raises `AMBIGUOUS_PROVIDER` rather than
+picking a winner. One registration per application is the supported shape.
 
 ## Errors
 
@@ -150,10 +132,12 @@ to fix. A `path` that is not absolute is a `TypeError` raised while the
 registration runs, not an `AponiaError`: it is a source-level mistake rather
 than a value an environment supplied.
 
+The document answers `503` when it is asked before a boot published the
+application container.
+
 ## Links
 
 - [Package README](../../packages/openapi/README.md)
 - [Authoring a plugin package](../tooling/plugin-packages.md)
-- [Native Elysia Plugins](../platforms/native-plugins.md)
+- [Platform parity](../platforms/platform-parity.md)
 - [Configuration](../build/configuration.md)
-- [`@elysia/openapi` on npm](https://www.npmjs.com/package/@elysia/openapi)

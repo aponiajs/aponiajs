@@ -9,23 +9,28 @@ The Elysia adapter: it lowers decorated classes into descriptors, bootstraps the
 application, maps HTTP routes and WebSocket gateways, and mounts native plugins.
 It depends on `common` and `core`, with `elysia` as a peer.
 
-| Domain           | Owns                                                                                                                                    |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `application/`   | Factory orchestration, application lifecycle wrapper, readiness and liveness probes, the stop-signal installer, public option contracts |
-| `compiler/`      | In-memory JIT compilation, Bun preload hook, and descriptor caching                                                                     |
-| `configuration/` | The boot-time loader that validates a declared configuration                                                                            |
-| `modules/`       | `compileRootModule` and decorator-to-descriptor lowering                                                                                |
-| `controllers/`   | Controller descriptors, direct registration, enhancer resolution, `CONTROLLER_KIND`                                                     |
-| `errors/`        | Typed HTTP errors, RFC 9457 Problem Details responses, and the default mapping                                                          |
-| `inspection/`    | Read-only projection of a compiled application for build-time consumers                                                                 |
-| `plugins/`       | Native plugin module registration and plugin contracts                                                                                  |
-| `routing/`       | Route plans, compiled invokers, schemas, native context types, downloads, and the static-asset hook                                     |
-| `websockets/`    | Provider discovery, gateway plans, message dispatch, and native socket types                                                            |
-| `middleware/`    | Middleware mounting over the shared `runMiddlewareChain`                                                                                |
-| `version.ts`     | The package's own version, read from its manifest, which generated artifacts are checked against                                        |
+| Domain             | Owns                                                                                                                                    |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `adapters/`        | The native Elysia adapter the shared factory boots                                                                                      |
+| `application/`     | Factory orchestration, application lifecycle wrapper, readiness and liveness probes, the stop-signal installer, public option contracts |
+| `compiler/`        | In-memory JIT compilation, Bun preload hook, and descriptor caching                                                                     |
+| `configuration/`   | The boot-time loader that validates a declared configuration                                                                            |
+| `modules/`         | `compileRootModule` and decorator-to-descriptor lowering                                                                                |
+| `controllers/`     | Controller descriptors, direct registration, enhancer resolution, `CONTROLLER_KIND`                                                     |
+| `exceptions/`      | Typed HTTP errors, RFC 9457 Problem Details responses, and the default mapping                                                          |
+| `inspection/`      | Read-only projection of a compiled application for build-time consumers                                                                 |
+| `interfaces/`      | The type-only contracts for the application, context, gateway, and route surface                                                        |
+| `plugins/`         | Native plugin module registration and plugin contracts                                                                                  |
+| `routing/`         | Route plans, compiled invokers, schemas, native context types, downloads, and the static-asset hook                                     |
+| `websockets/`      | Provider discovery, gateway plans, message dispatch, and native socket types                                                            |
+| `middleware/`      | Middleware mounting over the shared `runMiddlewareChain`                                                                                |
+| `microservices/`   | The Elysia microservice runtime binding                                                                                                 |
+| `request-context/` | The Elysia request-context binding                                                                                                      |
+| `version.ts`       | The package's own version, read from its manifest, which generated artifacts are checked against                                        |
 
-`src/index.ts` is the only public barrel. Keep `*.types.ts` colocated with the
-runtime boundary it describes.
+`src/index.ts` is the only public barrel. Type-only contracts live in
+`interfaces/<name>.interface.ts`; a runtime module stays beside the domain that
+owns it.
 
 ## Invariants
 
@@ -78,7 +83,7 @@ runtime boundary it describes.
   element type is `ElysiaPlugin | undefined` from `plugins/plugin.types.ts`
   so an entry is exactly what `.use()` accepts. Both hook phases run in mount
   order, so a hook declared here runs before one a module's plugin declares;
-  `tests/application-plugins.test.ts` pins that order and the option's three
+  `src/application-plugins.spec.ts` pins that order and the option's three
   shapes. The option exists for the plugins no module can declare — an `imports`
   entry is lowered only when it is a single identifier naming a declaration read
   from the project's own source, so a registration's `DynamicModule` declines the
@@ -144,8 +149,9 @@ runtime boundary it describes.
   route's `error` array the next bullet describes. The run order is the
   contract (`docs/build/enhancers.md` `## Run order`): guards, before halves, the
   handler, after halves reversed, filters most-specific-first, the default
-  mapping last. A middleware or pipe stage, if one ever lands, runs before
-  the guards — that position is reserved, not implemented. Guards and before halves
+  mapping last. Middleware and pipes run at their own documented positions —
+  route middleware before the guards, pipes after the `interceptBefore` halves
+  (`docs/build/enhancers.md` `## Run order`). Guards and before halves
   share one hook function so their order is the one the code states — the guards
   in declaration order, with the application's own declarations before the
   route's, then the before halves — rather than the order Elysia's own
@@ -162,14 +168,14 @@ runtime boundary it describes.
   default mapping below and Elysia answers it through its own `toResponse()`. A
   route that declares no enhancer carries no `beforeHandle` and no `afterHandle`,
   and no `ExecutionContext` is built for one; the one hook it does carry is the
-  default mapping. `routing/route-compiler.types.ts` declares the route hook the
+  default mapping. `interfaces/route-compiler.interface.ts` declares the route hook the
   platform mounts, so a lifecycle member is added there rather than by widening
   the native signature.
 - A route's `ExecutionContext` is a per-request fork, never a shared mutable
   instance. The mount compiles one prototype per route for the immutable
   class/handler/route identity; each hook invocation calls `fork(context)` so a
   concurrent request cannot replace the context an async guard or interceptor is
-  about to read. `tests/enhancer-concurrency.test.ts` pins the overlapping-request
+  about to read. `src/controllers/enhancer-concurrency.spec.ts` pins the overlapping-request
   case; a route with no enhancer still allocates no context.
 - Application-level pipes (`AponiaApplicationOptions.pipes`) resolve once
   through the root module and run before controller, method, and parameter
@@ -179,6 +185,29 @@ runtime boundary it describes.
   class goes through the container and propagates `MISSING_PROVIDER`, while
   `resolvePipe`'s empty-constructor fallback stays the route-level behavior and
   is never reached by a global pipe.
+- `APP_GUARD`, `APP_INTERCEPTOR`, `APP_FILTER`, and `APP_PIPE` are collected by
+  `@aponiajs/platform-core` from every module, in module order and declaration
+  order within a module; an array expands where it was declared. A module may
+  declare the same token more than once, and every registration runs. A class
+  entry resolves in its declaring module; there is no `Reflect.construct`
+  fallback, so a class no module provides fails the boot with
+  `MISSING_PROVIDER`. Reading an `APP_*` token through `application.get` or
+  `ModuleRef.get` refuses with `MISSING_PROVIDER` and `pseudoProvider: true`.
+- `AponiaApplication` carries the Nest surface: `useGlobalGuards`,
+  `useGlobalInterceptors`, `useGlobalPipes`, `useGlobalFilters`, `enableCors`,
+  `useSecurityHeaders`, `setGlobalPrefix`, `enableVersioning`,
+  `enableShutdownHooks`, `useLogger`, `flushLogs`, `getHttpAdapter`,
+  `getHttpServer`, `init`, and `close`. Because a boot mounts routes during
+  `AponiaFactory.create`, a surface method records its configuration and
+  `init()` re-runs the boot against the merged options once; a boot with no
+  surface configuration is never re-run, and the factory options remain the
+  descriptor path. `useSecurityHeaders` may be called only once. The merge is
+  `@aponiajs/platform-core`'s `mergeApplicationSurfaceOptions`, the same one the
+  shared Hono and H3 wrapper uses, so the three platforms cannot drift.
+- `@Version()` and version negotiation add `VersioningType.CUSTOM`: the
+  `versioning.extractor` reads the requested version from the request, and a
+  custom registration without an extractor fails with
+  `INVALID_CONFIGURATION_VALUE`.
 - A request-scoped controller — declared with `@Injectable({ scope: Scope.REQUEST })`
   or bubbled there by a request-scoped dependency — is constructed once per
   request. Bootstrap does not construct it, mounts its compiled plan with the
@@ -327,7 +356,7 @@ runtime boundary it describes.
   process's stop signals, and it is asked for at the end of a successful
   `listen` rather than at boot. A boot that installed handlers would take the
   signals of every process that ever built an application object, which is the
-  compatibility break the opt-in exists to avoid, and `tests/graceful-shutdown.test.ts`
+  compatibility break the opt-in exists to avoid, and `src/graceful-shutdown.spec.ts`
   pins both halves: no listener appears without the option, and exactly one
   appears with it. `application/shutdown-signals.ts` owns the installation, and
   its two safety properties are the reason both loops are written the way they
@@ -339,8 +368,8 @@ runtime boundary it describes.
   installation would run the teardown twice and re-raise a signal the first set
   had already answered. Its target is a structural `ShutdownSignalTarget` that
   defaults to `process`, which is what lets a case observe the listeners and the
-  re-raise without sending the test runner a signal; `tests/graceful-shutdown.test.ts`
-  reads that seam, and `tests/fixtures/shutdown-signal-app.ts` is where the real
+  re-raise without sending the test runner a signal; `src/graceful-shutdown.spec.ts`
+  reads that seam, and `test/fixtures/shutdown-signal-app.ts` is where the real
   target is exercised, in a process whose own death is the assertion.
 - Route parameter binding is compiled once while the controller is mounted.
   Generated invokers must expose each used context field directly and call the
@@ -374,7 +403,7 @@ runtime boundary it describes.
   the single place a supplied invoker is widened to the annotation the platform
   calls one with; the compiler's own handler needs no widening, and only the
   platform ever calls an invoker. Testing this contract is what
-  `tests-vp/route-invokers.conformance.ts` is for: it pins the type, pins the
+  `test/route-invokers.conformance.ts` is for: it pins the type, pins the
   generated shape's assignability, and boots the README's own map literal.
 - `routing/invoker-artifact.ts` refuses an artifact whose `framework` is not
   `version.ts`'s own version, and one that carries no invoker map, before any
@@ -478,7 +507,7 @@ runtime boundary it describes.
   `getApplicationFromStore` is its reader on the barrel — the one internal
   export that appears there, because the consumer is `@aponiajs/devtools` rather
   than an application, and Elysia hands a request context the `store` and not the
-  instance. `tests/application-diagnostics.test.ts` pins the publication, the
+  instance. `src/application/application-diagnostics.spec.ts` pins the publication, the
   absence a plain `Elysia` reads, and the early return that leaves a value with no
   `store` unpublished rather than throwing.
 - `defineControllerRoutes` is the descriptor path's counterpart to
@@ -603,50 +632,50 @@ Elysia 2 is the supported release. Its changes were verified by running
 `2.0.0-rc.4`, not by reading the release notes, because the published docs
 were still 1.x:
 
-| Call site                                                                                | Elysia 2                                                                                       |
-| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `routing/native-route.ts`                                                                | `route(method, path, hook, handler)`; the hook is the third argument                           |
-| `routing/route-compiler.ts` (`TSchema`)                                                  | no longer root-exported; import from `typebox`                                                 |
-| `routing/route-compiler.ts` (`AnySchema`)                                                | now `TypeBoxSchema \| StandardSchemaV1Like`                                                    |
-| `routing/route-context.types.ts` (`SingletonBase`, `MergeElysiaInstances`, `EventScope`) | no longer root-exported; import from `elysia/types`                                            |
-| `routing/route-context.types.ts` (`~Singleton`/`~Ephemeral` `resolve` keys)              | `resolve` removed; its timing folded into `derive`                                             |
-| `websockets/websocket-gateway.types.ts` (`ElysiaWS<Context, Route>`)                     | one type argument; `ElysiaWS<Route>` in `elysia/ws`                                            |
-| `errors/http-error.ts`, `errors/http-error.types.ts` (`InvertedStatusMap`)               | renamed to `StatusMapBack`                                                                     |
-| `errors/http-error.ts` (`ElysiaCustomStatusResponse`)                                    | renamed by Elysia to its own custom-status class, read in `errors/default-exception-filter.ts` |
-| `application/application.types.ts` (`ElysiaConfig`)                                      | no longer carries `aot`; needs at least two type arguments                                     |
+| Call site                                                                                       | Elysia 2                                                                                           |
+| ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `routing/native-route.ts`                                                                       | `route(method, path, hook, handler)`; the hook is the third argument                               |
+| `routing/route-compiler.ts` (`TSchema`)                                                         | no longer root-exported; import from `typebox`                                                     |
+| `routing/route-compiler.ts` (`AnySchema`)                                                       | now `TypeBoxSchema \| StandardSchemaV1Like`                                                        |
+| `interfaces/route-context.interface.ts` (`SingletonBase`, `MergeElysiaInstances`, `EventScope`) | no longer root-exported; import from `elysia/types`                                                |
+| `interfaces/route-context.interface.ts` (`~Singleton`/`~Ephemeral` `resolve` keys)              | `resolve` removed; its timing folded into `derive`                                                 |
+| `interfaces/websocket-gateway.interface.ts` (`ElysiaWS<Context, Route>`)                        | one type argument; `ElysiaWS<Route>` in `elysia/ws`                                                |
+| `routing/http-error.ts` (`InvertedStatusMap`)                                                   | renamed to `StatusMapBack`                                                                         |
+| `routing/http-error.ts` (`ElysiaCustomStatusResponse`)                                          | renamed by Elysia to its own custom-status class, read in `exceptions/default-exception.filter.ts` |
+| `interfaces/application.interface.ts` (`ElysiaConfig`)                                          | no longer carries `aot`; needs at least two type arguments                                         |
 
 `docs/platforms/elysia-compatibility.md` is the user-facing half of this. Update both
 together, and re-verify against a real install rather than the blog post.
 
 ## Tests
 
-`tests/*.test.ts` under Bun, `tests-vp/*.conformance.ts` under Vite+.
+`src/**/*.spec.ts` under Bun, `test/*.conformance.ts` under Vite+.
 Prefer building an application with `AponiaFactory.create` and asserting through
 `application.handle(new Request(...))`.
 
-`tests/plugin-context.test.ts` and `tests/plugin-definition.test.ts` hold
+`src/plugins/plugin-context.spec.ts` and `src/plugins/plugin-definition.spec.ts` hold
 compile-time assertions beside their runtime cases; they fail `bun run check`
 when a plugin type is lost or widened. Keep both lanes in step when the context
 mapping changes, and document behavior in
 [`docs/platforms/native-plugins.md`](../../docs/platforms/native-plugins.md).
 
-WebSocket behavior belongs in `tests/websocket-gateway.test.ts`, with the public
-contract mirrored in `tests-vp/websocket-gateway.conformance.ts` and a real
+WebSocket behavior belongs in `src/websockets/websocket-gateway.spec.ts`, with the public
+contract mirrored in `test/websocket-gateway.conformance.ts` and a real
 socket path in `examples/websockets/`.
 
-Inspection behavior belongs in `tests/inspection.test.ts`, mirrored in
-`tests-vp/inspection.conformance.ts`. Cover shapes, ordering, frozen-ness,
+Inspection behavior belongs in `src/inspection/inspection.spec.ts`, mirrored in
+`test/inspection.conformance.ts`. Cover shapes, ordering, frozen-ness,
 serialization, and the `AponiaError` codes inspection shares with bootstrap;
 assert on codes, never on message text.
 
-Probe and stop-signal behavior belongs in `tests/health-probes.test.ts` and
-`tests/graceful-shutdown.test.ts`, with the public contracts mirrored in
-`tests-vp/production-lifecycle.conformance.ts`. Neither case may send the lane a
+Probe and stop-signal behavior belongs in `src/health-probes.spec.ts` and
+`src/graceful-shutdown.spec.ts`, with the public contracts mirrored in
+`test/production-lifecycle.conformance.ts`. Neither case may send the lane a
 real signal, so the installer is read through its `ShutdownSignalTarget` seam and
 the two cases that do reach the real `process` restore the listeners they found.
 The one property no in-process case can hold — that a real process answers a real
 `SIGTERM`, finishes its teardown, and only then ends — lives in
-`tests/fixtures/shutdown-signal-app.ts`, a process a case spawns rather than a
+`test/fixtures/shutdown-signal-app.ts`, a process a case spawns rather than a
 case's own runner. That directory holds applications a case runs, never a test
 file: Bun's default glob does not collect it, and a fixture added there must be
 run only through `Bun.spawn` or `Bun.spawnSync`.

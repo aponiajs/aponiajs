@@ -3,7 +3,7 @@ import type {
   RouteResponseSchema,
   RouteResponseSchemaMap,
   ValidatorSchema,
-} from "./route-schema.types.ts";
+} from "../interfaces/route-schema.interface.ts";
 
 /**
  * The route schema slots a route decorator accepts, in canonical order.

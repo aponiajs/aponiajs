@@ -314,7 +314,7 @@ test("exposes the clock decorator", async () => {
 });
 ```
 
-`packages/platform-elysia/tests/plugin-context.test.ts` and
+`packages/platform-elysia/src/plugins/plugin-context.spec.ts` and
 `plugin-definition.test.ts` exercise every case above, including compile-time
 assertions that fail `bun run check` when a plugin type is lost or widened.
 

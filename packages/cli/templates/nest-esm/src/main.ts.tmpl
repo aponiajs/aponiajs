@@ -1,0 +1,5 @@
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.js";
+
+const application = await AponiaFactory.create(AppModule, { logger: false });
+await application.listen(Number(process.env.PORT ?? 3000));

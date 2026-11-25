@@ -6,14 +6,18 @@ specific to this package.
 ## What this package owns
 
 The security module, the response-header policy, and the signed double-submit
-CSRF policy. It is a leaf: nothing in the framework depends on it.
+CSRF policy. Both policies are neutral `HttpPolicy` values the shared request
+pipeline runs on every platform. It is a leaf: nothing in the framework depends
+on it.
 
-| Domain    | Owns                                                              |
-| --------- | ----------------------------------------------------------------- |
-| `module/` | `SecurityModule.register`                                         |
-| `policy/` | header defaults/validation, CSRF token issue/verify, plugin build |
+| Domain        | Owns                                                                      |
+| ------------- | ------------------------------------------------------------------------- |
+| `module/`     | `SecurityModule.forRoot`                                                  |
+| `policy/`     | header defaults/validation, CSRF token issue/verify, neutral policy build |
+| `interfaces/` | the option, header, and CSRF contracts                                    |
 
-`src/index.ts` is the only public barrel.
+`src/index.ts` is the only public barrel. Type-only contracts live in
+`interfaces/<name>.interface.ts`.
 
 ## Invariants
 
@@ -25,7 +29,7 @@ CSRF policy. It is a leaf: nothing in the framework depends on it.
   reuse a nonce across requests, and do not attach one when the policy states no
   placeholder.
 - **A partial header override merges with the defaults.** Setting a field to
-  `false` omits it; `headers: false` disables the whole plugin.
+  `false` omits it; `headers: false` disables the header policy.
 - **CSRF is opt-in.** It is only meaningful for cookie-based sessions; do not
   enable it silently for token-authenticated APIs.
 - **The CSRF cookie is readable on purpose.** Double-submit requires the client
@@ -37,13 +41,13 @@ CSRF policy. It is a leaf: nothing in the framework depends on it.
   include the token, cookie, secret, or stack.
 - **Configuration failures are `AponiaError` with
   `INVALID_SECURITY_OPTIONS`.** Keep the code and the frozen issue list.
-- **The plugin is global.** Headers run from the `request` hook, CSRF from a
-  global `beforeHandle`, so both reach every mounted route and headers also
-  reach a missing route.
+- **Both policies are global.** The header policy answers the response phase and
+  the CSRF policy runs before routing, so both reach every mounted route and the
+  headers also reach a missing route.
 
 ## Tests
 
-`tests/*.test.ts` under Bun, `tests-vp/*.conformance.ts` under Vite+. The Bun
+`src/**/*.spec.ts` under Bun, `test/*.conformance.ts` under Vite+. The Bun
 lane boots a real application through `AponiaFactory.create` and drives it via
 `application.handle`; it covers default/partial/disabled headers, cookie issue,
 accepted and refused CSRF requests, excluded paths, and option refusals.

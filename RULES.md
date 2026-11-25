@@ -26,7 +26,8 @@ test run never justifies bypassing an architectural contract.
   round around it, remove the gate, or exclude code merely to make CI pass.
 - Every runtime TypeScript source under `packages/*/src/**/*.ts` and every
   executable `scripts/*.ts` file must appear in the LCOV report. The only
-  default exclusions are type-only `*.types.ts` files and test specifications.
+  default exclusions are type-only `*.types.ts` and `*.interface.ts` files and
+  test specifications.
 - New runtime locations must be added to the source-completeness discovery in
   `scripts/coverage-gate.ts` in the same change that introduces them.
 - Changed executable lines and functions are expected to have direct test
@@ -55,6 +56,25 @@ For every behavior change, cover every applicable category:
 Assertions must prove observable behavior. Tests that only execute code, only
 assert that it does not throw, or mirror implementation details without checking
 the public contract do not count as sufficient evidence.
+
+### Configurable module evidence
+
+A package that publishes a dynamic registration covers its synchronous literal
+and its asynchronous form. The asynchronous cases include a `useFactory` that
+returns a Promise, a `useClass` implementing the factory method, and
+`useExisting`; the synchronous cases include every option the package validates.
+The registration's structural contract — the module class as `module`, a frozen
+definition, an id and instance identity, and independent identities for two
+registrations — is asserted with the shared checks exported by
+`@aponiajs/testing`. Behavior is asserted by booting the package's real module;
+shape checks never replace that boot.
+
+`ConfigurableModuleBuilder` behavior is proven once in `packages/common` and once
+through a real platform boot, including `setClassMethodName`,
+`setFactoryMethodName`, `setExtras`, `alwaysTransient`, `MODULE_OPTIONS_TOKEN`,
+`forFeature`, and `provideInjectionTokensFrom`. A plugin package uses the shared
+`moduleOptionsProviders` lowering instead of a local copy of the async-options
+switch.
 
 ### Test-lane ownership
 
@@ -91,6 +111,10 @@ test must not replace focused failure and edge-case tests.
   acceptable only when the complete serialized shape is itself the contract.
 - Keep compile-time assertions referenced so `bun run check` cannot silently
   drop them as unused.
+- This workspace builds and publishes from `src/`, while the surveyed official
+  Nest libraries build from `lib/`. Mirror their naming and folder shape, not the
+  build root; `docs/build/migrating-from-nest.md` states the deviation so no
+  package half-migrates.
 
 ### Required verification gates
 
@@ -125,14 +149,25 @@ scripts, and tests. New code should look native to this repository.
 
 ### Ownership and file structure
 
-- Organize source by domain owner such as `routing/`, `graph/`, `generation/`,
-  or `application/`; do not create miscellaneous utility or package-wide type
-  buckets.
+- Organize source by domain owner such as `routing/`, `scanner/`, `injector/`,
+  `generation/`, or `application/`; do not create miscellaneous utility or
+  package-wide type buckets.
 - Keep `src/index.ts` as the only public barrel. Implementation modules remain
   private unless the package contract explicitly exports them.
-- Co-locate type-only contracts as `*.types.ts` beside their owning
-  implementation. Use `*.constants.ts` only for values shared by runtime and
-  type modules.
+- Name a file with the Nest kind it implements: `<name>.module.ts`,
+  `.controller.ts`, `.service.ts`, `.guard.ts`, `.interceptor.ts`, `.pipe.ts`,
+  `.filter.ts`, `.middleware.ts`, `.gateway.ts`, `.strategy.ts`, `.decorator.ts`,
+  `.dto.ts`, `.entity.ts`, `.repository.ts`, `.provider.ts`, `.providers.ts`,
+  `.accessor.ts`, and `.explorer.ts`. One Nest kind per file; split a file that
+  exports two kinded classes. Keep a descriptive name where Nest's own core keeps
+  one (`scanner.ts`, `graph-compiler.ts`, `injector.ts`).
+- Co-locate type-only contracts as `interfaces/<name>.interface.ts` beside their
+  owning domain. A `*.types.ts` file remains only where the mirrored Nest package
+  has one. Use `*.constants.ts` only for values shared by runtime and type
+  modules.
+- Keep tests beside the source they exercise as `<name>.spec.ts`; the Vite+
+  lane lives in `test/*.conformance.ts`, and a lane that needs a live dependency
+  in `test/*.e2e-spec.ts`. Do not move a test to a kind suffix it does not have.
 - Keep orchestration functions thin. Parsing, planning, rendering,
   transformation, filesystem writes, and runtime registration belong to focused
   collaborators.
@@ -161,6 +196,10 @@ scripts, and tests. New code should look native to this repository.
 - Framework failures use `AponiaError` with a member of the closed
   `AponiaErrorCode` union and frozen structured details.
 - CLI argument and generator-input mistakes use plain `Error` or `TypeError`.
+- Declarative authoring mistakes — a decorator factory called with an argument it
+  cannot accept — throw `TypeError` while the declaration is made, before any
+  descriptor exists. They are caller errors rather than framework runtime
+  failures, and `packages/common` tests pin that contract.
 - Preserve the original error when translating only a specific known failure;
   rethrow unknown failures unchanged.
 

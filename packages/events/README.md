@@ -13,7 +13,7 @@ bun add @aponiajs/events@alpha
 import { Module } from "@aponiajs/common";
 import { EventEmitterModule } from "@aponiajs/events";
 
-@Module({ imports: [EventEmitterModule.register()] })
+@Module({ imports: [EventEmitterModule.forRoot()] })
 export class AppModule {}
 ```
 
@@ -60,7 +60,7 @@ class UserEvents implements OnModuleInit {
 }
 
 @Module({
-  imports: [EventEmitterModule.register()],
+  imports: [EventEmitterModule.forRoot()],
   providers: [Mailer, UserEvents],
 })
 export class AppModule {}
@@ -90,6 +90,12 @@ import { AppModule } from "./app.module.ts";
 const application = await AponiaFactory.create(AppModule);
 await application.listen(Number(Bun.env.PORT ?? 3000));
 ```
+
+## Registration contract
+
+`EventEmitterModule.forRoot()` is global by default and provides and exports the
+`EVENT_EMITTER_MODULE_OPTIONS` symbol token. It takes no options in this
+release, so there is no asynchronous form; `register()` is the deprecated alias.
 
 ## Documentation
 

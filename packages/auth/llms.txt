@@ -4,7 +4,9 @@
 
 ## What this package exports
 
-- `AuthModule.register({ jwt | oidc, refresh?, revocation? })`: the module an application imports. `jwt` states a local secret; `oidc` states an issuer.
+- `AuthModule.forRoot({ jwt | oidc, token?, refresh?, revocation?, isGlobal?, globalGuard? })`: the module an application imports; `register({...})` is the deprecated alias. `jwt` states a local secret; `oidc` states an issuer. It is global and registers `AuthGuard` as an `APP_GUARD` by default; `globalGuard: false` leaves the guard to routes. There is no `forRootAsync`: the verifier arm decides the provider list.
+- `MODULE_OPTIONS_TOKEN` (`AUTH_MODULE_OPTIONS`): the options token the registration provides and exports.
+- `CurrentUser(key?)` and `CurrentSession()`: parameter decorators reading the authenticated user and session; both answer `null` on a `@Public()` route.
 - `JwtService`: `sign` and `verify`; `keys`/`activeKid` rotate signing secrets, `kid` is read from the token header, and an unknown kid is refused.
 - `OidcService`: `discover`, `verify`, `clear`; reads `<issuer>/.well-known/openid-configuration` and verifies against the published key set.
 - `AuthGuard`, `RolesGuard`, `PermissionsGuard`: the bearer/cookie, role, and permission guards.

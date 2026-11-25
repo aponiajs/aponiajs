@@ -11,13 +11,13 @@ import {
 } from "./project-configuration.ts";
 import { collectSourceImports } from "./source-imports.ts";
 import { scanSourceFiles } from "./file-scanner.ts";
-import type { AnalyzedController } from "./controller-routes.types.ts";
-import type { AnalyzedModule } from "./module-descriptors.types.ts";
-import type { DescriptorSourceFile } from "./descriptor-emitter.types.ts";
+import type { AnalyzedController } from "../interfaces/controller-routes.interface.ts";
+import type { AnalyzedModule } from "../interfaces/module-descriptors.interface.ts";
+import type { DescriptorSourceFile } from "../interfaces/descriptor-emitter.interface.ts";
 import type {
   AnalyzeBuildProjectOptions,
   BuildProjectAnalysis,
-} from "./build-project-analysis.types.ts";
+} from "../interfaces/build-project-analysis.interface.ts";
 import { aponiaVersion } from "../version.ts";
 
 /** Fixed invoker artifact filename, relative to the configured source root. */

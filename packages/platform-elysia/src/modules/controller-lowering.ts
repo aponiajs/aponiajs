@@ -8,9 +8,9 @@ import {
   type ControllerDefinition,
 } from "@aponiajs/common";
 import { Elysia } from "elysia";
-import { unmountedRouteEnhancers } from "../controllers/enhancer-resolver.ts";
+import { unmountedRouteEnhancers } from "../controllers/enhancer.resolver.ts";
 import { CONTROLLER_KIND } from "../controllers/controller.constants.ts";
-import type { RuntimeElysiaController } from "../controllers/controller.types.ts";
+import type { RuntimeElysiaController } from "../interfaces/controller.interface.ts";
 import {
   compileElysiaRoutes,
   joinPaths,
@@ -39,6 +39,7 @@ export function compileDecoratedController(controller: ClassToken<unknown>): Con
 
   const routes = compileElysiaRoutes(controller, metadata.path);
   const scope = getInjectableMetadata(controller)?.scope;
+  const durable = getInjectableMetadata(controller)?.durable;
   const registerRoutes = (plugin: Elysia, instance: unknown): void => {
     // Bootstrap mounts this controller's plan itself, where the enhancer
     // resolution exists; this callback is what the definition's own
@@ -53,6 +54,7 @@ export function compileDecoratedController(controller: ClassToken<unknown>): Con
     inject: getConstructorDependencies(controller),
     useClass: controller as Constructor<unknown, never[]>,
     ...(scope === undefined ? {} : { scope }),
+    ...(durable === undefined ? {} : { durable }),
     compiledRoutes: routes,
     buildPlugin: (instance: unknown) => {
       const plugin = new Elysia();

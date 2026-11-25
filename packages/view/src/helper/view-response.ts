@@ -1,6 +1,6 @@
 import type { ViewRenderOptions } from "@aponiajs/common";
 import { BladeViewEngine } from "../engines/blade-view-engine.ts";
-import type { ViewEngine } from "../module/view.types.ts";
+import type { ViewEngine } from "../interfaces/view.interface.ts";
 
 let defaultEngine: ViewEngine = new BladeViewEngine();
 

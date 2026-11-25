@@ -7,7 +7,7 @@ import type {
   MigrationLock,
   MigrationResult,
   MigrationStore,
-} from "./migration.types.ts";
+} from "../interfaces/migration.interface.ts";
 
 /** Applies ordered `.sql` migrations once each, in file-name order. */
 export class MigrationRunner {

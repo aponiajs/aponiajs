@@ -1,0 +1,35 @@
+{
+  "name": "{{PROJECT_NAME}}",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "aponia start",
+    "start:dev": "aponia start --watch",
+    "start:debug": "aponia start --debug --watch",
+    "start:prod": "aponia start --prod",
+    "build": "tsc -p tsconfig.build.json",
+    "check": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:e2e": "jest --config ./test/jest-e2e.json"
+  },
+  "dependencies": {
+    "@aponiajs/common": "{{APONIA_VERSION}}",
+    "@aponiajs/platform-elysia": "{{APONIA_VERSION}}",
+    "elysia": "2.0.0-rc.4"
+  },
+  "devDependencies": {
+    "@aponiajs/cli": "{{APONIA_VERSION}}",
+    "@aponiajs/testing": "{{APONIA_VERSION}}",
+    "@types/bun": "^1.4.4",
+    "@types/jest": "^29.5.14",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.0",
+    "typescript": "^7.0.2"
+  },
+  "engines": {
+    "bun": ">=1.4.4"
+  },
+  "packageManager": "bun@1.4.5"
+}

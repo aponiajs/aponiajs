@@ -17,7 +17,7 @@ import { OpenApiModule } from "@aponiajs/openapi";
 import { WidgetsController } from "./widgets.controller.ts";
 import { OpenApiConfig } from "./openapi.config.ts";
 
-const docs = OpenApiModule.register({ configuration: OpenApiConfig });
+const docs = OpenApiModule.forRoot({ configuration: OpenApiConfig });
 
 @Module({ imports: [docs], controllers: [WidgetsController] })
 export class AppModule {}
@@ -38,7 +38,7 @@ await application.listen(Number(Bun.env.PORT ?? 3000));
 
 ## Declaring a document
 
-`OpenApiModule.register` returns a `DynamicModule`, which is what an `imports`
+`OpenApiModule.forRoot` returns a `DynamicModule`, which is what an `imports`
 entry accepts:
 
 ```ts
@@ -46,18 +46,17 @@ import { Module } from "@aponiajs/common";
 import { OpenApiModule } from "@aponiajs/openapi";
 import { OpenApiConfig } from "./config.ts";
 
-const docs = OpenApiModule.register({ configuration: OpenApiConfig });
+const docs = OpenApiModule.forRoot({ configuration: OpenApiConfig });
 
 @Module({ imports: [docs], controllers: [WidgetsController] })
 export class AppModule {}
 ```
 
-`path` moves the mount point and defaults to `"/openapi"`, where the wrapped
-plugin's default also puts it. The document is served at `${path}/json` and the
-interface at `${path}`, both spelled by the plugin. A `path` that is not an
-absolute path is refused with a `TypeError` while the registration runs,
-because it is written in source where a wrong one is a programming mistake
-rather than data an environment supplied.
+`path` moves the mount point and defaults to `"/openapi"`. The document is
+served at `${path}/json` and the HTML index at `${path}`. A `path` that is not an
+absolute path is refused with a `TypeError` while the registration runs, because
+it is written in source where a wrong one is a programming mistake rather than
+data an environment supplied.
 
 `key` names the module's identity and defaults to `"openapi"`. Two registrations
 that share one key are one module identity, which the graph refuses as a
@@ -66,7 +65,7 @@ duplicate rather than quietly serving one document twice.
 ## The validated configuration
 
 The document's metadata comes from a configuration the application declares and
-the module validates, not from the plugin's defaults:
+the module validates, not from a placeholder:
 
 ```ts
 import { defineConfiguration } from "@aponiajs/common";
@@ -91,17 +90,15 @@ export const OpenApiConfig = defineConfiguration(
 ```
 
 `title` and `version` are required because OpenAPI requires them; a document
-without them is one no tool will read. What this shape buys is that a
-deployment which supplied neither is refused before anything is served, with
+without them is one no tool will read. What this shape buys is that a deployment
+which supplied neither is refused before anything is served, with
 `INVALID_CONFIGURATION_VALUE` and a list of the fields that were wrong, rather
-than a document carrying the plugin's placeholder — `"Elysia Documentation"`,
-`"0.0.0"` — which is a claim the application never made.
+than a document carrying a placeholder claim the application never made.
 
-An absent `description` is served as no description at all, not as the plugin's
-`"Development documentation"`. That placeholder is the one default this package
-overrides rather than inherits, for the same reason.
+An absent `description` is served as no description at all rather than as a
+generated placeholder, for the same reason.
 
-`OpenApiModule.register` provides this token itself, from `process.env`, and
+`OpenApiModule.forRoot` provides this token itself, from `process.env`, and
 exports it, so the application can read the same validated value back:
 
 ```ts
@@ -134,33 +131,30 @@ Two things follow that a reader should know rather than discover:
   AponiaJS registers no model: every declared schema is inlined into the
   operation that declared it. A document generated here is longer than one built
   from a registry, and its schemas are not reusable by `$ref`.
-- **A WebSocket gateway is not in the document.** The platform mounts a gateway
-  as a route whose method really is `ws`, which is not an OpenAPI path-item
-  field: left in, it is an object no validator accepts. This package mounts the
-  plugin with `exclude.methods: ["options", "ws"]` for that reason, so the HTTP
-  operations stand alone.
+- **A WebSocket gateway is not in the document.** A gateway is a compiled
+  gateway plan rather than an HTTP route, so it contributes no operation. `ALL`,
+  `OPTIONS`, and `HEAD` routes are omitted for the same reason: an OpenAPI path
+  item has no field for them.
 - **A deprecated route is marked.** `@Deprecated()` writes the route's
   `detail.deprecated` flag, so the operation carries `deprecated: true` beside
   the response headers the route sends.
 
 ## One document per application
 
-Elysia mounts a _named_ plugin once. `@elysia/openapi`'s plugin is named, and a
-second instance is skipped rather than mounted, so an application that declares
-two registrations with distinct keys gets two graph nodes and **one document** —
-whichever registration mounted first, at that registration's path. The second
-path answers `404`, and reading the shared configuration token back raises
-`AMBIGUOUS_PROVIDER` rather than picking a winner. One registration per
+A registration is one graph node with one identity and one controller. An
+application that declares two registrations with distinct keys gets two graph
+nodes and two controllers; each path serves the document its own configuration
+describes. Both modules export the same configuration token, so reading it back
+raises `AMBIGUOUS_PROVIDER` rather than picking a winner. One registration per
 application is the supported shape.
 
-## The `plugins` option is a different path
+## Serving a document another way
 
-Mounting the plugin yourself through `AponiaApplicationOptions.plugins`, or
-through a bare `PluginModule.register`, mounts the _same_ plugin rather than a
-document built by this one: no configuration is validated, and the document's
-metadata is whatever you passed the raw plugin. That is a supported way to mount
-it — see [Native Elysia Plugins](../../docs/platforms/native-plugins.md) — and it is not a
-way to use this package.
+Mounting some other OpenAPI plugin yourself through
+`AponiaApplicationOptions.plugins`, or through `PluginModule.register`, is an
+application decision: no configuration here is validated, and the document's
+metadata is whatever that plugin was given. It is not a way to use this package.
+See [Native Elysia Plugins](../../docs/platforms/native-plugins.md).
 
 ## Errors
 
@@ -181,54 +175,35 @@ environment supplied.
 
 ## Native escape hatch
 
-The module above is the supported path. The native plugin remains available when the module's validation, graph node, or configuration contract is not wanted.
-
-**This package generates no schema and no document.** The generator is
-[`@elysia/openapi`](https://www.npmjs.com/package/@elysia/openapi), which reads
-the route table Elysia compiled. This package is a thin adapter over that
-plugin, and it contributes exactly two things:
-
-- a module the plugin is declared in, so the document is mounted through the
-  framework's own seam, is part of the compiled graph, and can be read back from
-  it;
-- a validated configuration the document's `info` comes from, so a missing or
-  malformed title and version is a refused boot with a code and an issue list,
-  rather than a document served with a placeholder nobody declared.
-
-Everything else — which routes appear, what each schema looks like, how a
-parameter is lowered into a path item — is `@elysia/openapi`'s. **A reader who
-wants the raw plugin should use
-[`@elysia/openapi`](https://www.npmjs.com/package/@elysia/openapi) directly**:
-nothing here is unavailable there, and mounting it yourself through a
-`PluginModule` costs a few lines.
+The module above is the supported path. The document is built by this package
+from the compiled route plans and served by a controller on the application's
+own route table, so it runs on every platform without a native plugin. An
+application that wants a different OpenAPI implementation mounts that plugin
+itself through `AponiaApplicationOptions.plugins` and keeps its own metadata;
+that is not a way to use this package.
 
 **This package does not validate requests, does not generate clients, and serves
 no interface of its own.** The document it serves is a _description_ of the
 routes the platform compiled; it is not a validator, and nothing in this package
 makes a request conform to what the document says. A client generated from the
 document is a third-party generator's reading of it, with that generator's own
-gaps. The one interface this package offers is whatever the wrapped plugin serves
-at the mount path — Scalar's page by default — and that page is
-`@elysia/openapi`'s, with its own configuration and its own Scalar version. **A
-reader who assumes the document is a contract the server enforces will ship a
-client for endpoints that answer `422`, or an integration against a route that
-was never declared**, and no option here changes that: a package that promises
-enforcement is a different package, and this one deliberately does not pretend
-to be it.
+gaps. The HTML index beside the document is this package's own small page, not a
+rendered API console. **A reader who assumes the document is a contract the
+server enforces will ship a client for endpoints that answer `422`, or an
+integration against a route that was never declared**, and no option here
+changes that: a package that promises enforcement is a different package, and
+this one deliberately does not pretend to be it.
 
 ## Requirements
 
-`elysia` is a peer dependency and must be installed by the application;
-`@elysia/openapi` is a dependency of this package and is installed with it. The
-plugin's own peer dependencies — `typebox` and `@scalar/types` — are type-only
-and are not needed at run time.
+The package depends on `@aponiajs/common`, `@aponiajs/core`, and
+`@aponiajs/platform-core`. It has no Elysia or HTTP-runtime dependency.
 
 ## Links
 
 - [Package README](./README.md)
-- [`@elysia/openapi` on npm](https://www.npmjs.com/package/@elysia/openapi)
 - [OpenAPI Specification](https://spec.openapis.org/oas/latest.html)
 - [Plugin package authoring](../../docs/tooling/plugin-packages.md)
-- [Native Elysia Plugins](../../docs/platforms/native-plugins.md)
+- [Platform parity](../../docs/platforms/platform-parity.md)
 - [Configuration](../../docs/build/configuration.md)
 - [Published packages](../../docs/reference/packages.md)

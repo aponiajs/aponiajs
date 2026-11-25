@@ -14,7 +14,7 @@ import { Module } from "@aponiajs/common";
 import { AuthModule } from "@aponiajs/auth";
 
 @Module({
-  imports: [AuthModule.register({ jwt: { secret: process.env.JWT_SECRET! } })],
+  imports: [AuthModule.forRoot({ jwt: { secret: process.env.JWT_SECRET! } })],
 })
 export class AppModule {}
 ```
@@ -72,7 +72,7 @@ needs CSRF protection on unsafe requests — pair it with `@aponiajs/security`.
 ## Key rotation
 
 ```ts
-AuthModule.register({
+AuthModule.forRoot({
   jwt: {
     secret: process.env.JWT_SECRET!,
     keys: [
@@ -92,7 +92,7 @@ list.
 ## Refresh tokens and revocation
 
 ```ts
-AuthModule.register({
+AuthModule.forRoot({
   jwt: { secret: process.env.JWT_SECRET! },
   refresh: { ttlMs: 30 * 24 * 60 * 60 * 1_000, maxTokens: 10_000 },
   revocation: { maxEntries: 10_000 },
@@ -123,7 +123,7 @@ class Sessions {
 ## OpenID Connect
 
 ```ts
-AuthModule.register({ oidc: { issuer: "https://login.example.com", audience: "my-api" } });
+AuthModule.forRoot({ oidc: { issuer: "https://login.example.com", audience: "my-api" } });
 ```
 
 `OidcService` reads the provider's discovery document, pins the configured
@@ -138,7 +138,7 @@ an application that runs more than one instance supplies a store that shares
 state:
 
 ```ts
-AuthModule.register({
+AuthModule.forRoot({
   jwt: { secret: process.env.JWT_SECRET! },
   refresh: { store: sharedRefreshStore },
   revocation: { store: sharedRevocationStore },
@@ -173,6 +173,18 @@ import { AppModule } from "./app.module.ts";
 const application = await AponiaFactory.create(AppModule);
 await application.listen(Number(Bun.env.PORT ?? 3000));
 ```
+
+## Registration contract
+
+`AuthModule.forRoot` is the only registration; `MODULE_OPTIONS_TOKEN`
+(`AUTH_MODULE_OPTIONS`) is the options token it provides and exports.
+`isGlobal` and `globalGuard` default to true, matching
+`@nestjs/authentication`: the module is global and `AuthGuard` runs on every
+route unless the registration states `globalGuard: false`. `@Public()` opts a
+route out, and `@CurrentUser()`/`@CurrentSession()` read the authenticated user
+and session (`{ user, token, claims }`). The `jwt`/`oidc` arm decides which
+verifier provider exists, so there is no `forRootAsync`: resolve an asynchronous
+configuration before registering. `register` remains as the deprecated alias.
 
 ## Documentation
 

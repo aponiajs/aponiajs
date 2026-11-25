@@ -1,5 +1,5 @@
 import { createRingBuffer } from "../buffer/ring-buffer.ts";
-import type { LogBuffer, LogEntry } from "./log-buffer.types.ts";
+import type { LogBuffer, LogEntry } from "../interfaces/log-buffer.interface.ts";
 
 /**
  * How many log lines one devtools surface retains.

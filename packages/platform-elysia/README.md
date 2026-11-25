@@ -580,10 +580,16 @@ of it, never by removing it.
 
 Every enhancer must be a declared provider in a module the controller's module
 can reach, and an undeclared one fails the boot with `MISSING_PROVIDER`. Global
-enhancers are factory options — `guards`, `interceptors`, and `filters` — rather
-than `useGlobal*` methods, because every route mounts during
-`AponiaFactory.create`; a global enhancer runs before the ones a route declares
-and resolves through the root module.
+enhancers are factory options — `guards`, `interceptors`, `pipes`, and `filters`
+— or the application surface's `useGlobalGuards`, `useGlobalInterceptors`,
+`useGlobalPipes`, and `useGlobalFilters`; the surface records its configuration
+and applies it when `init()` re-runs the boot, which is why a boot with no
+surface configuration is never re-run. A global enhancer runs before the ones a
+route declares and resolves through the root module. `APP_GUARD`,
+`APP_INTERCEPTOR`, `APP_FILTER`, and `APP_PIPE` are the module-declared form:
+repeated registrations run in declaration order, and reading one through
+`application.get` refuses because it names a set of enhancers rather than one
+instance.
 
 All of this reaches the routes the platform mounts from a compiled plan. A
 controller registered through its own `registerRoutes` callback owns its routes'
@@ -973,15 +979,18 @@ costs nothing at runtime — the values are still there, only untyped.
 preserves Elysia's accumulated plugin types on `createNative()` and
 `getNativeApplication()`.
 
-### Standard plugin builders
+### Bridging an Elysia plugin
 
-For authoring reusable plugin packages, `@aponiajs/platform-elysia` exposes three standard builders:
+`wrapElysiaPlugin` bridges an existing native Elysia plugin into a module
+registration with `.forRoot()` and `.forRootAsync()`, for the case where a plugin
+is already owned by another package and this application only needs to mount it.
 
-- `createServicePlugin`: creates client and database provider modules (`.forRoot()` and `.forRootAsync()`).
-- `createEnhancerPlugin`: creates route guard, interceptor, and filter modules.
-- `wrapElysiaPlugin`: bridges existing Elysia plugins directly into Aponia modules.
-
-See the [plugin packages guide](../../docs/tooling/plugin-packages.md) for full contracts.
+A reusable AponiaJS plugin package of your own does not wrap a runtime: it
+contributes a neutral `DynamicModule` built from providers, controllers,
+`HttpPolicy` values, `RequestLifecycleHook` values, and
+`requirePlatformCapabilities`. See the
+[plugin packages guide](../../docs/tooling/plugin-packages.md) for that contract
+and the smallest complete registration.
 
 ## Graceful shutdown and health probes
 

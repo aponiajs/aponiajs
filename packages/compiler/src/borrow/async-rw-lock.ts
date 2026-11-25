@@ -6,7 +6,7 @@ import type {
   BorrowMode,
   BorrowOptions,
   BorrowToken,
-} from "./borrow.types.ts";
+} from "../interfaces/borrow.interface.ts";
 
 interface Waiter {
   readonly mode: BorrowMode;

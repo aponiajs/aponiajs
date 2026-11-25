@@ -1,7 +1,7 @@
 import { camelCase, kebabCase, pascalCase } from "change-case";
 import { singularize } from "inflection";
 import { isAbsolute } from "node:path";
-import type { ComponentNames } from "./component-names.types.ts";
+import type { ComponentNames } from "../interfaces/component-names.interface.ts";
 
 export function createComponentNames(input: string): ComponentNames {
   const segments = normalizeNameSegments(input);

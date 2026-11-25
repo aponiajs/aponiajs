@@ -2,14 +2,7 @@ import type { DynamicModule, Token } from "@aponiajs/common";
 import type { AsyncPluginOptions } from "@aponiajs/platform-core";
 import type { ElysiaPlugin } from "./plugin.types.ts";
 
-export type {
-  AsyncPluginOptions,
-  EnhancerPluginDefinition,
-  EnhancerPluginModule,
-  PlatformSupportOptions,
-  ServicePluginDefinition,
-  ServicePluginModule,
-} from "@aponiajs/platform-core";
+export type { AsyncPluginOptions } from "@aponiajs/platform-core";
 
 /**
  * Module shape returned by `wrapElysiaPlugin`.

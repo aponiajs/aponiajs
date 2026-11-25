@@ -1,8 +1,8 @@
 # Packages
 
-AponiaJS ships 38 publishable packages from this repository and 1 private facade
+AponiaJS ships 39 publishable packages from this repository and 1 private facade
 (`aponiajs`), which is not published. **Six are on npm today**; the other
-32 belong to the unreleased `1.0.0-beta.N` line and cannot be installed until that line is published.
+33 belong to the unreleased `1.0.0-beta.N` line and cannot be installed until that line is published.
 The registry serves the older `0.6.0-alpha.N` line for the six.
 
 ## On npm today
@@ -55,6 +55,7 @@ command naming one of them answers `404` until that line is published.
 | `@aponiajs/queue`         | In-process jobs, retries, dead letters, and outbox |
 | `@aponiajs/rate-limit`    | Fixed-window rate limiting guard and store         |
 | `@aponiajs/security`      | Security headers and signed CSRF                   |
+| `@aponiajs/schematics`    | Nest-shaped schematic collection for the CLI       |
 | `@aponiajs/serverless`    | Web Fetch and AWS Lambda adapters                  |
 | `@aponiajs/session`       | Signed session cookies and store                   |
 | `@aponiajs/store-redis`   | Redis stores for the published store contracts     |
@@ -207,14 +208,12 @@ registration is runtime-neutral and runs on every platform.
 ### `@aponiajs/cors`
 
 Answer cross-origin requests for an application's routes, with the policy read
-from a validated configuration. The package is an adapter over
-[`@elysia/cors`](https://www.npmjs.com/package/@elysia/cors): AponiaJS
-contributes a module a registration belongs in and a configuration the origins,
-methods, headers, and credentials are validated through, and no CORS
-implementation of its own. It is the smallest package in the set — a literal
-policy needs no package at all — and it carries one boundary worth stating: an
-origin that is a `RegExp` or a function is code rather than data, so it is not
-expressible through a configuration and belongs with the raw plugin.
+from a validated configuration. The policy is a neutral `HttpPolicy` the shared
+request pipeline runs, so the same registration answers the same headers and
+preflight on every platform, and the package has no HTTP-runtime dependency. It
+carries one boundary worth stating: an origin that is a `RegExp` or a function
+is code rather than data, so it is not expressible through a configuration and
+belongs with the raw plugin.
 
 [Package README](../../packages/cors/README.md) ·
 [Authoring a plugin package](../tooling/plugin-packages.md)
@@ -222,15 +221,14 @@ expressible through a configuration and belongs with the raw plugin.
 ### `@aponiajs/graphql`
 
 Serve a GraphQL endpoint for an application's queries, with the mount path read
-from a validated configuration. The package is an adapter over
-[`@elysia/graphql-yoga`](https://www.npmjs.com/package/@elysia/graphql-yoga),
-which wraps Yoga: AponiaJS contributes a module the plugin is declared in and a
+from a validated configuration. The endpoint is a neutral `HttpPolicy` built on
+GraphQL Yoga: AponiaJS contributes a module the registration lives in and a
 configuration the path is validated through, and no schema of its own. The
 schema is the application's — `typeDefs` plus `resolvers`, or a prebuilt
 `GraphQLSchema` — returned from an injected factory so resolvers close over
-providers. The module sets both the plugin's `path` and yoga's `graphqlEndpoint`
-from the one declared value, which is what makes a non-default endpoint answer
-instead of returning `404`.
+providers. The module sets both the policy's `path` and Yoga's
+`graphqlEndpoint` from the one declared value, which is what makes a non-default
+endpoint answer instead of returning `404`.
 
 [Package README](../../packages/graphql/README.md) ·
 [Authoring a plugin package](../tooling/plugin-packages.md)
@@ -253,13 +251,11 @@ one real port it can bind exists for the WebSocket case that needs one.
 
 Serve an OpenAPI document for an application's own routes, with the document's
 `title`, `version`, and `description` read from a validated configuration. The
-package is an adapter over
-[`@elysia/openapi`](https://www.npmjs.com/package/@elysia/openapi), which builds
-the document from the route table Elysia compiled: AponiaJS contributes a module
-the plugin is declared in and a configuration the metadata is validated through,
-and no generator of its own. The document describes the routes; it does not
-validate requests, generate clients, or serve any interface but the wrapped
-plugin's.
+document is built from the compiled route plans and served by a controller on
+the application's own route table, so the same registration answers on every
+platform and the package has no HTTP-runtime dependency. The document describes
+the routes; it does not validate requests, generate clients, or serve an API
+console — only a small HTML index beside the JSON document.
 
 [Package README](../../packages/openapi/README.md) ·
 [OpenAPI](../services/openapi.md)
@@ -283,17 +279,16 @@ An application that declares its configuration does read one, through
 
 ### `@aponiajs/opentelemetry`
 
-Trace an application's routes with OpenTelemetry, with the policy read from a
-validated configuration. The package is an adapter over
-[`@elysia/opentelemetry`](https://www.npmjs.com/package/@elysia/opentelemetry):
-AponiaJS contributes a module the plugin is declared in and a configuration the
-service name, body recording, header capture, and URL redaction are validated
-through, and no tracing backend of its own. **It ships no exporter and no
-instrumentation** — the span processors, the exporters, and the instrumentations
-are the application's, passed to `register` because they are live objects a
-configuration cannot carry. Its sharpest limit is the wrapped plugin's: the
-plugin's `NodeSDK` is process-global, so the first registration in a process owns
-it and every later one is inert, and `application.close()` does not stop it.
+Trace an application's routes with OpenTelemetry, with the configuration
+validated at registration. Tracing is a neutral `RequestLifecycleHook`: one
+server span per request, active for the handler, the guards, and every service
+they call, built on `@opentelemetry/api` and started with `@opentelemetry/sdk-node`.
+**It ships no exporter and no instrumentation** — the span processors, the
+exporters, and the instrumentations are the application's, passed to `forRoot`
+because they are live objects a configuration cannot carry. Its sharpest limit is
+the SDK's: the `NodeSDK` is process-global, so the first registration in a
+process owns it and every later one is inert, and `application.close()` does not
+stop it.
 
 [Package README](../../packages/opentelemetry/README.md) ·
 [Authoring a plugin package](../tooling/plugin-packages.md)
@@ -439,6 +434,19 @@ container, routes, guards, validation, and filters stay in charge. Nitro support
 is experimental while its current release is an RC.
 
 [Adapters guide](../platforms/adapters.md) · [Deployment guide](../operations/deployment.md)
+
+### `@aponiajs/schematics`
+
+The Nest-shaped schematic collection `aponia-cli.json` names. It publishes
+`collection.json`, one `schema.json` per schematic, and a plain-function factory
+per schematic. The templates are copied from the pinned `@nestjs/schematics`
+release recorded in the package's `PROVENANCE.md`; `@aponiajs/cli` resolves the
+collection for `--collection` and `aponia add`, while its built-in generation
+renders Aponia-native sources.
+
+[Package README](../../packages/schematics/README.md) ·
+[CLI guide](../tooling/cli.md) ·
+[Provenance](../../packages/schematics/PROVENANCE.md)
 
 ## Project creation and CLI
 

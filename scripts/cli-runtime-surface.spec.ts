@@ -57,16 +57,17 @@ const repositoryRoot = resolve(import.meta.dir, "..");
  */
 const runtimeSourceRoot = "packages/common/src";
 const controllerRoutesFile = "packages/cli/src/generation/controller-routes.ts";
-const controllerRoutesTypesFile = "packages/cli/src/generation/controller-routes.types.ts";
-const invokerArtifactTypesFile = "packages/platform-core/src/artifacts/invoker-artifact.types.ts";
+const controllerRoutesTypesFile = "packages/cli/src/interfaces/controller-routes.interface.ts";
+const invokerArtifactTypesFile =
+  "packages/platform-core/src/interfaces/invoker-artifact.interface.ts";
 const moduleDescriptorArtifactTypesFile =
-  "packages/platform-core/src/artifacts/module-descriptor-artifact.types.ts";
+  "packages/platform-core/src/interfaces/module-descriptor-artifact.interface.ts";
 const controllerInvokersFile = "packages/cli/src/generation/controller-invokers.ts";
-const controllerInvokersTypesFile = "packages/cli/src/generation/controller-invokers.types.ts";
+const controllerInvokersTypesFile = "packages/cli/src/interfaces/controller-invokers.interface.ts";
 const descriptorEmitterFile = "packages/cli/src/generation/descriptor-emitter.ts";
 const moduleDescriptorsFile = "packages/cli/src/generation/module-descriptors.ts";
-const moduleDescriptorsTypesFile = "packages/cli/src/generation/module-descriptors.types.ts";
-const tokenTypesFile = "packages/common/src/tokens/token.types.ts";
+const moduleDescriptorsTypesFile = "packages/cli/src/interfaces/module-descriptors.interface.ts";
+const tokenTypesFile = "packages/common/src/interfaces/token.interface.ts";
 
 /**
  * A `*Decorator` return type is what makes an export a decorator factory rather
@@ -104,6 +105,14 @@ function readDecoratorFactories(content: string): readonly string[] {
   }
 
   for (const match of content.matchAll(/^export const (\w+) = (\w+)\(/gm)) {
+    if (declaresDecoratorReturn(lines, match[2]!)) {
+      factories.add(match[1]!);
+    }
+  }
+
+  // A decorator merged with values keeps its factory call one level down:
+  // `export const HttpStatus = Object.assign(createParameterDecorator("status"), …)`.
+  for (const match of content.matchAll(/^export const (\w+) = Object\.assign\(\s*(\w+)\(/gm)) {
     if (declaresDecoratorReturn(lines, match[2]!)) {
       factories.add(match[1]!);
     }
@@ -427,8 +436,16 @@ const decoratorAnalyses: ReadonlyMap<string, string> = new Map([
 const unreadDecorators: ReadonlyMap<string, string> = new Map([
   ["Catch", "a filter class is imported by reference, so its own decorator runs when it loads"],
   [
+    "applyDecorators",
+    "it composes other decorators at decoration time, so the CLI cannot statically see which route or metadata it produces; a controller that uses it is lowered from its decorators at boot",
+  ],
+  [
     "MessagePattern",
     "message handlers stay on the decorated controller class, so the runtime bootstrap reads them after a descriptor mount",
+  ],
+  [
+    "SerializeOptions",
+    "the serializer interceptor reads the options from the decorated class or handler at request time; a descriptor does not carry them",
   ],
   [
     "EventPattern",
@@ -509,6 +526,10 @@ const unreadMetadataKeys: ReadonlyMap<string, string> = new Map([
     "a filter class is imported by reference, so its own decorator runs when it loads",
   ],
   [
+    "aponia.serialize-options.metadata",
+    "the serializer interceptor reads the options at request time; a descriptor does not carry them",
+  ],
+  [
     "aponia.forward-ref",
     "forward references are resolved at graph compilation time in the runtime",
   ],
@@ -567,7 +588,7 @@ interface RepeatedUnion {
 
 const repeatedUnions: readonly RepeatedUnion[] = [
   {
-    runtimeFile: "packages/common/src/decorators/decorators.types.ts",
+    runtimeFile: "packages/common/src/interfaces/decorators.interface.ts",
     runtimeName: "RequestMethod",
     runtimeReading: "string-union",
     cliFile: controllerRoutesTypesFile,
@@ -576,7 +597,7 @@ const repeatedUnions: readonly RepeatedUnion[] = [
     ordered: false,
   },
   {
-    runtimeFile: "packages/common/src/websockets/websocket-gateway.types.ts",
+    runtimeFile: "packages/common/src/interfaces/websocket-gateway.interface.ts",
     runtimeName: "WebSocketParameterKind",
     runtimeReading: "string-union",
     cliFile: moduleDescriptorsTypesFile,
@@ -614,7 +635,7 @@ const repeatedUnions: readonly RepeatedUnion[] = [
     ordered: true,
   },
   {
-    runtimeFile: "packages/common/src/enhancers/enhancer-decorators.types.ts",
+    runtimeFile: "packages/common/src/interfaces/enhancer-decorators.interface.ts",
     runtimeName: "EnhancerMetadata",
     runtimeReading: "interface-properties",
     cliFile: controllerRoutesTypesFile,
@@ -766,15 +787,15 @@ const minimumRuntimeSourceFiles = 29;
  */
 const requiredRuntimeSourceFiles: readonly string[] = [
   "packages/common/src/decorators/decorators.ts",
-  "packages/common/src/decorators/decorators.types.ts",
-  "packages/common/src/enhancers/enhancer-decorators.ts",
-  "packages/common/src/enhancers/enhancer-decorators.types.ts",
+  "packages/common/src/interfaces/decorators.interface.ts",
+  "packages/common/src/enhancers/enhancer.decorator.ts",
+  "packages/common/src/interfaces/enhancer-decorators.interface.ts",
   "packages/common/src/index.ts",
   "packages/common/src/routing/route-parameters.ts",
   "packages/common/src/routing/route-schema.ts",
   "packages/common/src/routing/validation.ts",
-  "packages/common/src/websockets/websocket-gateway.ts",
-  "packages/common/src/websockets/websocket-gateway.types.ts",
+  "packages/common/src/websockets/websocket.gateway.ts",
+  "packages/common/src/interfaces/websocket-gateway.interface.ts",
 ];
 
 /**
@@ -833,7 +854,11 @@ const runtimeSourcePaths = Object.freeze(
         onlyFiles: true,
       }),
     )
-  ).toSorted(),
+  )
+    // A colocated spec writes metadata keys as its own fixtures; the CLI
+    // analysis is held to what the runtime source declares.
+    .filter((path) => !path.endsWith(".spec.ts"))
+    .toSorted(),
 );
 
 const runtimeSources: ReadonlyMap<string, string> = new Map(
@@ -1211,7 +1236,7 @@ describe("CLI runtime surface", () => {
     );
 
     const requestMethods = readStringUnion(
-      runtimeSources.get("packages/common/src/decorators/decorators.types.ts")!,
+      runtimeSources.get("packages/common/src/interfaces/decorators.interface.ts")!,
       "RequestMethod",
     );
     const parameterKinds = readStringArrayConstant(
@@ -1219,7 +1244,7 @@ describe("CLI runtime surface", () => {
       "routeParameterKinds",
     );
     const enhancerKinds = readInterfacePropertyNames(
-      runtimeSources.get("packages/common/src/enhancers/enhancer-decorators.types.ts")!,
+      runtimeSources.get("packages/common/src/interfaces/enhancer-decorators.interface.ts")!,
       "EnhancerMetadata",
     );
 

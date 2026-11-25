@@ -1,5 +1,8 @@
 import { AponiaError } from "@aponiajs/common";
-import type { LifetimeHandleController, LifetimeScopeOptions } from "./lifetime.types.ts";
+import type {
+  LifetimeHandleController,
+  LifetimeScopeOptions,
+} from "../interfaces/lifetime.interface.ts";
 import { Scoped } from "./scoped.ts";
 
 /**

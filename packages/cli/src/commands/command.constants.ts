@@ -1,9 +1,10 @@
 /** The schematics `aponia generate` accepts, aliases included elsewhere. */
 export const schematicNames = [
+  "application",
   "app",
   "library",
-  "mcp",
   "plugin",
+  "mcp",
   "class",
   "controller",
   "decorator",
@@ -17,6 +18,8 @@ export const schematicNames = [
   "pipe",
   "provider",
   "resolver",
+  "configuration",
   "resource",
   "service",
+  "upgrade",
 ] as const;

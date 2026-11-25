@@ -6,7 +6,7 @@ import {
   provideFactory,
   provideValue,
 } from "@aponiajs/common";
-import { ELYSIA_PLUGIN, provideElysiaPlugin } from "./plugin-module.ts";
+import { ELYSIA_PLUGIN, provideElysiaPlugin } from "./plugin.module.ts";
 import type {
   AsyncPluginOptions,
   ElysiaBridgePluginDefinition,

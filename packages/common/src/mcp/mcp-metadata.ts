@@ -1,4 +1,4 @@
-import type { McpPrimitiveMetadata } from "./mcp.types.ts";
+import type { McpPrimitiveMetadata } from "../interfaces/mcp.interface.ts";
 
 /** Symbol key storing MCP primitive metadata on a provider prototype. */
 export const mcpPrimitivesMetadataKey = Symbol.for("aponia.mcp.primitives.metadata");

@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import type { MicroserviceFailure } from "./microservice.types.ts";
+import type { MicroserviceFailure } from "../interfaces/microservice.interface.ts";
 
 /** Symbol key storing message-handler metadata on controller prototypes. */
 export const messagePatternMetadataKey = Symbol.for("aponia.message-pattern.metadata");

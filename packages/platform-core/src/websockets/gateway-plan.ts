@@ -5,7 +5,7 @@ import {
   getWebSocketParameterMetadata,
   type ClassToken,
 } from "@aponiajs/common";
-import type { GatewayPlan } from "./gateway.types.ts";
+import type { GatewayPlan } from "../interfaces/gateway.interface.ts";
 
 /**
  * Reads one class's gateway declaration into the plan a host mounts.

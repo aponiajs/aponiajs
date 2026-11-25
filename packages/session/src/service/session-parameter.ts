@@ -1,17 +1,29 @@
 import { createParamDecorator } from "@aponiajs/common";
-import type { Session as SessionRecord } from "../module/session.types.ts";
-import type { SessionRequestState } from "./session-service.ts";
+import type { Session as SessionRecord } from "../interfaces/session.interface.ts";
+import type { SessionRequestState } from "./session.service.ts";
 
 /** The session record the plugin loaded for the current request. */
 export type Session = SessionRecord;
 
 /**
- * The store key the plugin mirrors its request state onto, so a parameter
- * decorator can answer without reaching the `AsyncLocalStorage`.
+ * Per-request state, keyed by the request object.
+ *
+ * It deliberately never touches the platform `store`: that store is shared by
+ * every request on the application, so a concurrent request would overwrite the
+ * state a handler is about to read.
+ */
+const requestStates = new WeakMap<Request, SessionRequestState>();
+
+/**
+ * Records the state the session middleware loaded for one request.
  *
  * @internal
+ * @param request - The request the middleware is running for.
+ * @param state - The state the parameter decorator answers from.
  */
-export const sessionStateKey = Symbol.for("aponia.session.state");
+export function setSessionRequestState(request: Request, state: SessionRequestState): void {
+  requestStates.set(request, state);
+}
 
 /**
  * Injects the current session, or one field of its data.
@@ -30,8 +42,7 @@ export const sessionStateKey = Symbol.for("aponia.session.state");
  * ```
  */
 export const Session = createParamDecorator((property, context) => {
-  const store = (context as unknown as { readonly store?: Record<PropertyKey, unknown> }).store;
-  const state = store?.[sessionStateKey] as SessionRequestState | undefined;
+  const state = requestStates.get(context.request);
   const session = state?.session;
   if (session === undefined) {
     return undefined;

@@ -437,7 +437,7 @@ part of the default suite:
   a fixed-duration run with several requests in flight and reports the failure
   count, throughput, and p50/p99 latency. The script keeps its own application
   and closes it.
-- The property-based cases under `packages/*/tests/*.property.test.ts` are part
+- The property-based cases under `packages/*/src/**/*.property.spec.ts` are part
   of the Bun lane and use `fast-check`. They state invariants over an input
   space — every outbound microservice envelope the encoder accepts round-trips
   through the wire, arbitrary bytes are refused with a typed error rather than a

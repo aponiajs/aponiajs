@@ -4,13 +4,14 @@ import type {
   AponiaVersioningOptions,
   VersionNegotiationRoute,
   VersionNegotiator,
-} from "./version-negotiation.types.ts";
+} from "../interfaces/version-negotiation.interface.ts";
 
 interface ResolvedVersioning {
-  readonly type: "header" | "media-type";
+  readonly type: "header" | "media-type" | "custom";
   readonly header: string;
   readonly parameter: string;
   readonly defaultVersion: string | undefined;
+  readonly extractor?: (request: Request) => string | undefined;
 }
 
 interface VersionedPathEntry {
@@ -96,8 +97,11 @@ function resolveVersioning(
     return undefined;
   }
   const issues: string[] = [];
-  if (options.type !== "header" && options.type !== "media-type") {
-    issues.push('versioning.type must be "uri", "header", or "media-type"');
+  if (options.type !== "header" && options.type !== "media-type" && options.type !== "custom") {
+    issues.push('versioning.type must be "uri", "header", "media-type", or "custom"');
+  }
+  if (options.type === "custom" && typeof options.extractor !== "function") {
+    issues.push('versioning.extractor must be a function for "custom"');
   }
   const header = options.header ?? "x-api-version";
   if (typeof header !== "string" || header.trim() === "") {
@@ -119,10 +123,11 @@ function resolveVersioning(
     });
   }
   return Object.freeze({
-    type: options.type as "header" | "media-type",
+    type: options.type as "header" | "media-type" | "custom",
     header,
     parameter,
     defaultVersion: options.defaultVersion,
+    ...(options.extractor === undefined ? {} : { extractor: options.extractor }),
   });
 }
 
@@ -251,6 +256,10 @@ function escapeRegExp(value: string): string {
 }
 
 function readRequestedVersion(request: Request, options: ResolvedVersioning): string | undefined {
+  if (options.type === "custom") {
+    const value = options.extractor?.(request);
+    return value === undefined || value.trim() === "" ? undefined : value.trim();
+  }
   if (options.type === "header") {
     const value = request.headers.get(options.header);
     return value === null || value.trim() === "" ? undefined : value.trim();

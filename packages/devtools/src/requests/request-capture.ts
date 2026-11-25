@@ -1,6 +1,6 @@
-import type { DevtoolsOptions } from "../module/devtools-module.types.ts";
+import type { DevtoolsOptions } from "../interfaces/devtools-module.interface.ts";
 import { createRequestBuffer, defaultRequestBufferCapacity } from "./request-buffer.ts";
-import type { RequestBuffer, RequestRecord } from "./request-buffer.types.ts";
+import type { RequestBuffer, RequestRecord } from "../interfaces/request-buffer.interface.ts";
 
 /** The literal a redacted header is replaced with. */
 const redactedValue = "[redacted]";

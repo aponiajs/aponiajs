@@ -4,7 +4,7 @@ import type {
   McpModuleTopLevel,
   McpServerMetadata,
   ResolvedMcpOptions,
-} from "./mcp-module.types.ts";
+} from "../interfaces/mcp-module.interface.ts";
 
 const defaultAllowedOrigins = Object.freeze(["localhost", "127.0.0.1", "[::1]"]);
 const defaultMaxRequestBodySize = 4 * 1024 * 1024;
@@ -84,6 +84,16 @@ export function topLevelOf(options: TopLevelSource): McpModuleTopLevel {
     ...(options.pipes === undefined ? {} : { pipes: options.pipes }),
     ...(options.key === undefined ? {} : { key: options.key }),
   };
+}
+
+/**
+ * Normalizes the endpoint path a registration states, for the controller the
+ * module mounts. Returns `false` when HTTP is disabled.
+ *
+ * @internal
+ */
+export function resolveMcpHttpPath(path: string | false | undefined): string | false {
+  return path === false ? false : normalizePath(path);
 }
 
 function normalizePath(path: string | undefined): string {

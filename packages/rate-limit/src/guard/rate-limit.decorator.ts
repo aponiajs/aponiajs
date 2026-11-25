@@ -1,5 +1,5 @@
 import { SetMetadata } from "@aponiajs/common";
-import type { RateLimitOverride } from "../module/rate-limit.types.ts";
+import type { RateLimitOverride } from "../module/rate-limit.interface.ts";
 
 /** The custom metadata key the guard reads. */
 export const rateLimitMetadataKey = "rate-limit";

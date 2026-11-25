@@ -31,7 +31,12 @@ router.
 
 A platform binds one of two adapter shapes, and both return the same
 `AponiaApplicationContract`: `handle`, `tryHandle`, `listen`, `getUrl`, `get`,
-`getHttpAdapter`, and `close`.
+`getHttpAdapter`, `getHttpServer`, `close`, and the Nest configuration methods
+(`useGlobalGuards`, `useGlobalInterceptors`, `useGlobalPipes`,
+`useGlobalFilters`, `enableCors`, `useSecurityHeaders`, `setGlobalPrefix`,
+`enableVersioning`, `enableShutdownHooks`, `useLogger`, `flushLogs`, and
+`init`). A configuration method records its state and `init()` re-runs the boot
+once. A delivery adapter is not a platform and keeps the narrower surface below.
 
 - A **kernel host** (`KernelAdapter`) lowers the graph with
   `createPlatformFactory` and registers each compiled route on its own router.
@@ -42,7 +47,7 @@ A platform binds one of two adapter shapes, and both return the same
   types are part of its contract.
 
 A new platform implements one of these shapes and passes the shared conformance
-contract in `packages/platform-core/tests/support/platform-contract.ts`.
+contract in `packages/platform-core/test/support/platform-contract.ts`.
 
 ## Platforms
 
@@ -101,7 +106,13 @@ instead of being answered `404` by the platform.
 ## Delivery adapters
 
 A delivery adapter mounts an application already booted on a platform inside
-another runtime. It translates the delivery envelope only.
+another runtime. It translates the delivery envelope only, so its documented
+surface stays narrower than a platform's: `createHonoApp(application)`,
+`toH3Handler(application)`, `toNitroHandler(application)`, and the
+`@aponiajs/serverless` handlers forward requests to the application and return
+its responses. They do not expose `listen`, `getUrl`, the Nest configuration
+methods, or any other member of `AponiaApplicationContract`; configure and boot
+the application on a platform first, then hand it to the adapter.
 
 ### Hono
 

@@ -1,16 +1,17 @@
 import { createServer } from "node:net";
 import type { LoggerService } from "@aponiajs/common";
-import { devtoolsPathPrefix, devtoolsPlugin } from "@aponiajs/devtools";
+import { devtoolsPathPrefix } from "@aponiajs/devtools";
 import { AponiaFactory, type AponiaApplication } from "@aponiajs/platform-elysia";
-import { AppModule } from "../src/app.module.ts";
+import { createAppModule } from "../src/app.module.ts";
 
 /**
  * A logger that records what it is given and writes nothing.
  *
- * The plugin patches the logger it is handed so `/__devtools/logs` can serve
- * those lines, and the factory writes its own bootstrap lines through the logger
- * it is handed. One object reaches both, which is the example's point, so the
- * case that asserts `/logs` is asserting on a line the boot really wrote.
+ * The devtools registration patches the logger it is handed so
+ * `/__devtools/logs` can serve those lines, and the factory writes its own
+ * bootstrap lines through the logger it is handed. One object reaches both,
+ * which is the example's point, so the case that asserts `/logs` is asserting on
+ * a line the boot really wrote.
  */
 export interface RecordingLogger extends LoggerService {
   readonly lines: readonly string[];
@@ -60,10 +61,10 @@ export async function createApplication(enabled = true): Promise<DevtoolsApplica
   const port = await reservePort();
   const logger = createRecordingLogger();
 
-  const application = await AponiaFactory.create(AppModule, {
-    logger,
-    plugins: [devtoolsPlugin({ enabled, logger })],
-  });
+  const application = await AponiaFactory.create(
+    createAppModule({ devtools: { enabled, logger } }),
+    { logger },
+  );
   await application.listen(port);
 
   return {

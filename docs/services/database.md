@@ -13,7 +13,7 @@ import { Database } from "bun:sqlite";
 
 const database = drizzle(new Database("app.sqlite"));
 
-@Module({ imports: [DatabaseModule.register({ database })] })
+@Module({ imports: [DatabaseModule.forRoot({ database })] })
 export class AppModule {}
 
 const application = await AponiaFactory.create(AppModule);
@@ -90,7 +90,7 @@ no condition is passed, and answer the affected count.
 ## Migrations
 
 ```ts
-DatabaseModule.register({
+DatabaseModule.forRoot({
   database,
   migrations: { files: await loadMigrations("./migrations") },
 });

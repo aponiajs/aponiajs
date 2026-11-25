@@ -4,7 +4,7 @@
 
 ## What this package exports
 
-- `CompressionModule.register({ thresholdBytes?, encodings?, key? })`: the plugin registration an application imports.
+- `CompressionModule.forRoot({ thresholdBytes?, encodings?, key? })`: the registration an application imports; `register` is the deprecated beta alias.
 - `CompressionModuleOptions`: the public contract.
 
 ## Behavior a consumer can rely on

@@ -1,10 +1,10 @@
 # @aponiajs/openapi
 
-> Serve an OpenAPI document for an Aponia application's routes, with the document's own metadata read from a validated configuration. A thin adapter over `@elysia/openapi`: AponiaJS contributes a module the plugin is declared in and a validated configuration the document's `title`, `version`, and `description` come from, and no generator of its own.
+> Serve an OpenAPI document for an Aponia application's routes. The document is generated from the compiled route plans the application declared, and its `title`, `version`, and `description` come from a validated configuration. A controller serves the JSON document and a minimal HTML page on every platform.
 
-**This package does not validate requests, does not generate clients, and serves no interface of its own.** The document is a *description* of the routes the platform compiled, not a contract the server enforces: nothing here makes a request conform to what the document says, and a client generated from the document is a third-party generator's reading of it, with that generator's own gaps. The only interface served is the wrapped plugin's, at the mount path — Scalar's page by default. A reader who assumes enforcement will ship a client for endpoints that answer `422`, or an integration against a route that was never declared.
+**This package does not validate requests and does not generate clients.** The document is a *description* of the routes the application declared, not a contract the server enforces: nothing here makes a request conform to what the document says. The mount path serves the JSON document at `<path>/json` and a minimal HTML page at `<path>`. A reader who assumes enforcement will ship a client for endpoints that answer `422`, or an integration against a route that was never declared.
 
-**The raw plugin remains available for applications that do not want the module.** Mount [`@elysia/openapi`](https://www.npmjs.com/package/@elysia/openapi) through `PluginModule`; this package adds declaration through a module and validation of the document's metadata, and nothing else.
+**The mount path is a controller, not a second server.** An application that does not want the module can serve its own document; this package adds the module, the validated metadata, and the generator over the compiled plans.
 
 ## What this package exports
 
@@ -13,9 +13,9 @@ import { OpenApiModule } from "@aponiajs/openapi";
 import type { OpenApiConfiguration, OpenApiInfo, OpenApiModuleOptions } from "@aponiajs/openapi";
 ```
 
-- `OpenApiModule` — `OpenApiModule.register(options)` returns the `DynamicModule` an application's `imports` accepts.
+- `OpenApiModule` — `OpenApiModule.forRoot(options)` returns the `DynamicModule` an application's `imports` accepts; `register` is the deprecated beta alias.
 - `OpenApiConfiguration` — `{ info }`, the value the module validates and exports.
-- `OpenApiInfo` — `{ title, version, description? }`. `title` and `version` are required because OpenAPI requires them; an absent `description` is served as no description rather than as the plugin's `"Development documentation"` placeholder.
+- `OpenApiInfo` — `{ title, version, description? }`. `title` and `version` are required because OpenAPI requires them; an absent `description` is served as no description rather than as a placeholder.
 - `OpenApiModuleOptions` — `configuration`, `source`, `key`, and `path`.
 
 ## Declaring a document
@@ -39,11 +39,11 @@ The document is served at `"/openapi/json"` and the interface at `"/openapi"`, b
 
 What the platform lowered from the route decorations, and nothing else: the path and method of each route, `requestBody` from a declared `body`, `parameters` from `query`, `params`, `headers`, and `cookie`, and `responses` from a declared `response` — one validator as the `200` answer, a status map as the status-specific answers. A route with no schema is still an operation.
 
-Two absences to know: `components.schemas` is empty, because AponiaJS registers no model and every declared schema is inlined into the operation that declared it; and a WebSocket gateway is not in the document, because the platform mounts it as a route whose method is `ws`, which is not an OpenAPI path-item field — the plugin is mounted with `exclude.methods: ["options", "ws"]` for that reason. `operationId`, `summary`, `tags`, `security`, and `servers` are not populated: the framework declares none of them. A route marked with `@Deprecated()` is marked `deprecated: true` in the operation.
+Two absences to know: `components.schemas` is empty, because AponiaJS registers no model and every declared schema is inlined into the operation that declared it; and a WebSocket gateway is not in the document, because a gateway is a provider rather than a controller route plan. `operationId`, `summary`, `tags`, `security`, and `servers` are not populated: the framework declares none of them. A route marked with `@Deprecated()` is marked `deprecated: true` in the operation.
 
 ## One document per application
 
-Elysia mounts a *named* plugin once, and this plugin is named. Two registrations with distinct keys produce two graph nodes and one document — whichever mounted first — while the second path answers `404` and reading the shared configuration token back raises `AMBIGUOUS_PROVIDER`. One registration per application is the supported shape.
+Two registrations with distinct keys produce two graph nodes and two controllers; each path serves the document its own configuration describes. Reading the shared configuration token back from two imports raises `AMBIGUOUS_PROVIDER`, so one registration per application is the supported shape.
 
 ## Errors
 

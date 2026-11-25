@@ -7,7 +7,8 @@
 - `InMemoryTransport({ name? })`: process-local transport and client with `send(pattern, data)` and `emit(pattern, data)`.
 - `createMicroserviceServer({ transport, subscriptions, target?, name?, replyDestinations?, maxInFlight?, connectTimeoutMs?, closeTimeoutMs?, logger? })`: a boot transport over one broker adapter.
 - `createMicroserviceClient({ transport, destination, replyTo, replySubscription?, target?, name?, requestTimeoutMs?, connectTimeoutMs?, maxPendingCalls? })`: correlated requests and events.
-- `MicroserviceClientsModule.register({ client, autoConnect? })`: provides one client under `microserviceClientToken`.
+- `MicroserviceClientsModule.forRoot({ client, autoConnect?, isGlobal? })` (also exported as `ClientsModule`): provides one client under `microserviceClientToken`; `register({...})` is the deprecated alias and `forRootAsync` accepts the three Nest shapes.
+- `MODULE_OPTIONS_TOKEN` (`MICROSERVICE_CLIENTS_MODULE_OPTIONS`): the options token the registration provides and exports.
 - `encodeMicroserviceEnvelope`, `decodeMicroserviceEnvelope`, and the envelope types.
 - `MicroserviceCallError`: the client failure carrying a stable `code`.
 - Broker factories: `natsTransport`, `mqttTransport`, `rabbitmqTransport`, `kafkaTransport`, `redisTransport`, `sqsTransport`, `pubSubTransport`, `azureServiceBusTransport`.

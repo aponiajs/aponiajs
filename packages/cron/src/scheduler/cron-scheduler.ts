@@ -1,6 +1,6 @@
 import { AponiaError, type ConfigurationToken, type OnApplicationShutdown } from "@aponiajs/common";
 import { Cron } from "croner";
-import type { CronConfiguration, CronJob } from "./cron-scheduler.types.ts";
+import type { CronConfiguration, CronJob } from "../interfaces/cron-scheduler.interface.ts";
 
 /**
  * The jobs one boot schedules, and the switch that ends them.

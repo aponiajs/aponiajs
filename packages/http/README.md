@@ -14,7 +14,7 @@ import { Module } from "@aponiajs/common";
 import { HttpModule } from "@aponiajs/http";
 
 @Module({
-  imports: [HttpModule.register({ baseUrl: "https://api.example.com" })],
+  imports: [HttpModule.forRoot({ baseUrl: "https://api.example.com" })],
 })
 export class AppModule {}
 ```
@@ -47,6 +47,8 @@ export class UsersClient {
   hostname in `Host` and TLS SNI, so a second DNS answer cannot rebind the
   connection to a private address.
 - Every redirect is re-validated. A redirect with a request body is not followed.
+- A redirect that changes origin drops `Authorization`, `Cookie`, and
+  `Proxy-Authorization` before the next hop.
 - `Host` is never supplied by the caller.
 - Responses are bounded; the default is 1 MiB.
 - Requests time out, including the response body; the default is 10 seconds.
@@ -70,6 +72,34 @@ deployment. Do not enable it for a client that accepts user-supplied URLs.
 | `fetch`                | global   | Fetch implementation, for tests or adapters. |
 | `resolveAddresses`     | DNS      | Hostname resolver, for tests or adapters.    |
 | `pinResolvedAddress`   | `true`   | Connect to the validated address.            |
+| `isGlobal`             | `false`  | Makes the registration's exports global.     |
+
+The registration is split as `@nestjs/http-client` splits it: `forRoot` /
+`forRootAsync` register app-wide defaults and **no client**; `register` /
+`registerAsync` create one client each. Without a name the client is injected as
+`HttpClient`/`HttpService`; with one, use `@InjectHttpClient("github")` or
+`getHttpClientToken("github")`.
+
+```ts
+@Module({
+  imports: [
+    HttpModule.forRoot({ headers: { "user-agent": "api" } }),
+    HttpModule.register({ name: "github", baseUrl: "https://api.github.com" }),
+  ],
+})
+export class AppModule {}
+
+@Injectable()
+class GithubService {
+  constructor(@InjectHttpClient("github") private readonly client: HttpClient) {}
+}
+```
+
+An interceptor is a class (`HttpClientInterceptor`), an instance, or a
+function. Classes are passed beside `useFactory` for an async registration so
+the container can create them; an instance and a function may also be returned
+by the factory. The chain wraps the same SSRF-safe send, so an interceptor
+cannot skip address validation or the response bound.
 
 ## Request options
 

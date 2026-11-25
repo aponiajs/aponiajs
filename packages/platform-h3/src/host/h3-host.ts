@@ -16,6 +16,7 @@ import {
   type MountedRoute,
   type PlatformMountOptions,
   type PlatformRouteContext,
+  type PlatformCapability,
   type PlatformRouteHandler,
   type RequestPipeline,
   type ResolvedMiddlewareConfig,
@@ -27,6 +28,7 @@ export type H3Application = H3;
 
 interface H3Listener {
   readonly url: string;
+  readonly server?: unknown;
   close(force?: boolean): Promise<void>;
 }
 
@@ -142,6 +144,12 @@ export function createH3Host(
   return Object.freeze({
     kind: "host" as const,
     name: "h3",
+    capabilities: Object.freeze<PlatformCapability[]>([
+      "http",
+      "streaming",
+      "multipart",
+      ...(crosswsFactory === undefined ? [] : ["websockets" as PlatformCapability]),
+    ]),
     createApplication(): H3Application {
       return new H3();
     },
@@ -260,6 +268,7 @@ export function createH3Host(
       });
       return {
         url: `http://localhost:${server.port}`,
+        server,
         close: async (force) => {
           await (force === false ? server.stop() : server.stop(true));
         },

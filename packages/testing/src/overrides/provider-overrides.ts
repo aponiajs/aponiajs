@@ -8,7 +8,7 @@ import {
   type Provider,
   type Token,
 } from "@aponiajs/common";
-import type { ProviderOverrides } from "./provider-overrides.types.ts";
+import type { ProviderOverrides } from "../interfaces/provider-overrides.interface.ts";
 
 /**
  * Replaces the provider each override names, across a compiled module graph.
@@ -74,7 +74,7 @@ export function applyProviderOverrides(
 
   const rewrittenRoot = rewrite(root);
   for (const token of overrides.keys()) {
-    if (!replacedTokens.has(token)) {
+    if (!replacedTokens.has(token) && !providedBeyond(root, token, new Set())) {
       throw new AponiaError(
         "MISSING_PROVIDER",
         `No module in the compiled graph provides token "${getTokenName(token)}", so overriding it would change nothing.`,
@@ -84,6 +84,37 @@ export function applyProviderOverrides(
   }
 
   return rewrittenRoot;
+}
+
+/**
+ * Whether a module tree provides a token a `forwardRef` keeps out of the eager
+ * rewrite.
+ *
+ * A `forwardRef` import is rewritten lazily so a cycle stays a cycle, which
+ * means its providers are not in `replacedTokens` when the coverage check runs.
+ * They are still provided — the graph compiler resolves the reference and the
+ * lazy rewrite substitutes inside it — so the check has to see them or refuse a
+ * legitimate override. The walk is cycle-safe for the same reason it exists.
+ */
+function providedBeyond(
+  module: ModuleDefinition,
+  token: Token<unknown>,
+  visited: Set<ModuleDefinition>,
+): boolean {
+  if (visited.has(module)) {
+    return false;
+  }
+  visited.add(module);
+  if (module.providers.some((provider) => provider.provide === token)) {
+    return true;
+  }
+  for (const entry of module.imports) {
+    const imported = isForwardRef(entry) ? entry.forwardRef() : entry;
+    if (providedBeyond(imported, token, visited)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /** The part of a compiled route plan a pipe override rewrites. */

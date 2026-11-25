@@ -14,7 +14,7 @@ import { SessionModule } from "@aponiajs/session";
 
 @Module({
   imports: [
-    SessionModule.register({
+    SessionModule.forRoot({
       secret: process.env.SESSION_SECRET!,
     }),
   ],
@@ -40,7 +40,7 @@ export class LoginService {
 }
 ```
 
-The global plugin reads the signed cookie before the handler and writes or
+The global middleware reads the signed cookie before the handler and writes or
 removes it after the handler. `SessionService.current()` reads the session the
 request loaded, and `@Session()` injects it as a handler parameter:
 

@@ -1,12 +1,12 @@
 # @aponiajs/opentelemetry
 
-> Trace an Aponia application's routes with OpenTelemetry, with the policy read from a validated configuration. A thin adapter over `@elysia/opentelemetry`: AponiaJS contributes a module the plugin is declared in and a validated configuration the service name, body recording, header capture, and URL redaction come from, and no tracing backend of its own.
+> Trace an Aponia application's routes with OpenTelemetry, with the policy read from a validated configuration. Tracing is a neutral request lifecycle hook: one server span per request, active for the handler and every service it calls, on every platform. The package ships no tracing backend.
 
-**This package is not a tracing backend and ships no exporter.** No OTLP client, no Jaeger or Tempo or Honeycomb client, no collector configuration, and no query surface. The root span, the per-stage spans, the attributes, the propagation, and the `NodeSDK` startup are `@elysia/opentelemetry`'s. For a policy that is a literal in source, mounting `PluginModule.register(opentelemetry({ serviceName: "api" }), { key: "opentelemetry" })` in an `imports` needs no package.
+**This package is not a tracing backend and ships no exporter.** No OTLP client, no Jaeger or Tempo or Honeycomb client, no collector configuration, and no query surface. The server span, its attributes, the propagation, and the `NodeSDK` startup are this package's; the span processors, exporters, and instrumentations are the application's.
 
 **The span processors, the exporters, and the instrumentations are the application's.** They are live objects, so no configuration can carry them; they are passed to `OpentelemetryModule.register` beside `configuration`.
 
-**The raw plugin remains available for applications that do not want the module or its configuration.** Mount [`@elysia/opentelemetry`](https://www.npmjs.com/package/@elysia/opentelemetry) through `PluginModule`; the span behavior is the plugin's either way.
+**An application that does not want the module can wire `@opentelemetry/api` itself.** The module contributes validation, the one server span per request, and the shutdown provider.
 
 ## What this package exports
 
@@ -17,7 +17,7 @@ import type { OpentelemetryConfiguration, OpentelemetryModuleOptions } from "@ap
 
 - `OpentelemetryModule` — `OpentelemetryModule.register(options)` returns the `DynamicModule` an application's `imports` accepts.
 - `OpentelemetryConfiguration` — the value the module validates and exports: `serviceName` (required), `recordBody`, `headersToSpanAttributes`, and `spanUrlRedaction`.
-- `OpentelemetryModuleOptions` — `configuration`, `source`, `key`, plus the wrapped plugin's own options with those four fields removed: `spanProcessors`, `instrumentations`, `contextManager`, `checkIfShouldTrace`, and the rest of the `NodeSDK` options.
+- `OpentelemetryModuleOptions` — `configuration`, `source`, `key`, plus the `NodeSDK` options a configuration cannot carry: `spanProcessors`, `instrumentations`, `sampler`, and the rest.
 
 ## Declaring a policy
 
@@ -46,7 +46,7 @@ export class AppModule {}
 
 ## One registration per process
 
-The wrapped plugin's `NodeSDK` is process-global. The first registration in a process starts it; every later one mounts its Elysia plugin but its `serviceName`, its span processors, and every other `NodeSDK` option never take effect, and spans are exported through the first registration's configuration. A distinct `key` does not buy a second tracer, because the plugin names itself and declares no seed, so Elysia deduplicates it by name. `application.close()` does not stop the SDK either: the plugin keeps it in a closure that no lifecycle hook reaches.
+The `NodeSDK` is process-global. The first registration in a process that declares a processor or an instrumentation starts it; every later one's `serviceName`, span processors, and other `NodeSDK` options never take effect, and spans are exported through the first registration's configuration. A registration that declares neither starts no SDK and takes nothing from a later one. `application.close()` stops the span processors the registration declared through `OpentelemetryShutdown`; it does not shut the SDK itself down.
 
 The module provides one provider that flushes and shuts down the span processors you declared in `onApplicationShutdown`; an application-owned SDK handle passed as `sdk` is flushed and shut down after them. A processor you built but did not pass to `register`, and an exporter `NodeSDK` the application neither owns nor passes, are outside its reach.
 
@@ -64,7 +64,7 @@ A request is a root span named for the route. The trace context is async-local, 
 
 ## `aponia build`
 
-A registration is a `DynamicModule`, not a `@Module()` class the build can read from source, so a module whose `imports` name one is declined (`DECLINED module <Name>`) and the descriptor artifact holds nothing for it. The application still boots, because the platform lowers such a root from its decorators, and the tracing still serves. Unlike `@aponiajs/devtools`, no plugin value can be exported beside the module, because the plugin is built from a container-resolved configuration. Mounting the raw plugin through `AponiaApplicationOptions.plugins` keeps the artifact and gives up the module and its validation.
+A registration is a `DynamicModule`, not a `@Module()` class the build can read from source, so a module whose `imports` name one is declined (`DECLINED module <Name>`) and the descriptor artifact holds nothing for it. The application still boots, because the platform lowers such a root from its decorators, and the tracing still serves. No tracing value can be exported beside the module, because the hook is built from a container-resolved configuration. Mounting the raw tracing plugin through `AponiaApplicationOptions.plugins` keeps the artifact and gives up the module and its validation.
 
 ## Links
 

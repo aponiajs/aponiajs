@@ -12,12 +12,12 @@ import {
   type Token,
 } from "@aponiajs/common";
 import { createContainer, type AponiaContainer } from "@aponiajs/core";
-import { compileModuleInMemory } from "../compiler/in-memory-compiler.ts";
+import { compileModuleInMemoryAsync } from "../compiler/in-memory-compiler.ts";
 import { selectRootModuleDescriptor } from "@aponiajs/platform-core";
 import type { AponiaRootModule } from "@aponiajs/platform-core";
 import { aponiaVersion } from "../version.ts";
 import { createSystemLogger, runShutdownHooks } from "./application-bootstrap.ts";
-import type { AponiaApplicationOptions } from "./application.types.ts";
+import type { AponiaApplicationOptions } from "../interfaces/application.interface.ts";
 import { collectLifecycleCalls } from "@aponiajs/platform-core";
 import { LazyModuleLoader } from "./lazy-module-loader.ts";
 import {
@@ -74,7 +74,7 @@ export class AponiaApplicationContext {
       aponiaVersion,
       logger,
     );
-    const compiledRoot = compileModuleInMemory(rootSelection.rootModule);
+    const compiledRoot = await compileModuleInMemoryAsync(rootSelection.rootModule);
     const lazyModuleLoader = new LazyModuleLoader(logger);
     const container = createContainer(compiledRoot, [
       provideValue(LOGGER, logger ?? NOOP_LOGGER),
@@ -83,7 +83,7 @@ export class AponiaApplicationContext {
     ]);
 
     for (const module of container.graph.modules) {
-      container.initializeModule(module);
+      await container.initializeModuleAsync(module);
       logger?.log(`${module.id} dependencies initialized`, "InstanceLoader");
     }
 
@@ -154,16 +154,25 @@ export class AponiaApplicationContext {
     await this.#microserviceRuntime?.close();
     this.#microserviceRuntime = undefined;
     await runShutdownHooks(
-      collectLifecycleCalls(this.#container, "beforeApplicationShutdown", false),
+      collectLifecycleCalls(this.#container, "beforeApplicationShutdown", {
+        includeControllers: false,
+        reverseModules: true,
+      }),
       this.#logger,
       signal,
     );
     await runShutdownHooks(
-      [...collectLifecycleCalls(this.#container, "onModuleDestroy", false)].reverse(),
+      collectLifecycleCalls(this.#container, "onModuleDestroy", {
+        includeControllers: false,
+        reverseModules: true,
+      }),
       this.#logger,
     );
     await runShutdownHooks(
-      collectLifecycleCalls(this.#container, "onApplicationShutdown", false),
+      collectLifecycleCalls(this.#container, "onApplicationShutdown", {
+        includeControllers: false,
+        reverseModules: true,
+      }),
       this.#logger,
       signal,
     );

@@ -14,7 +14,7 @@ import { ViewModule } from "@aponiajs/view";
 import { ArticlesModule } from "./articles/articles.module.ts";
 
 @Module({
-  imports: [ViewModule.register({ defaultEngine: "blade" }), ArticlesModule],
+  imports: [ViewModule.forRoot({ defaultEngine: "blade" }), ArticlesModule],
 })
 export class AppModule {}
 ```
@@ -120,10 +120,12 @@ The view stack is adapter-neutral. Controllers rendering Blade views answer iden
 
 `{{ value }}` escapes HTML. `{!! value !!}` is an explicit escape hatch for trusted markup only. Blade expressions are developer-authored templates compiled into functions. Rendered values are never scanned again as template source, so a value containing `{{ ... }}` stays data. Never construct template names from unvalidated user input.
 
-`HtmlViewEngine`, the default when `ViewModule.register` names no engine,
+`HtmlViewEngine`, the default when `ViewModule.forRoot` names no engine,
 escapes every value it interpolates. It has no raw-output syntax; use
 `fragment()` for trusted markup or select the Blade engine when a template
-needs `{!! ... !!}`.
+needs `{!! ... !!}`. Placeholder names are flat identifiers, so
+`{{ user.name }}` renders literally under `HtmlViewEngine`; Blade is the engine
+that resolves nested expression paths.
 
 ## Runnable examples
 

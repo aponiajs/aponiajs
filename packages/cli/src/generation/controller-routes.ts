@@ -10,7 +10,7 @@ import {
   type SourceFile,
 } from "ts-morph";
 import { readExpressionImports, readSourceImports } from "./source-imports.ts";
-import type { SourceImports } from "./source-imports.types.ts";
+import type { SourceImports } from "../interfaces/source-imports.interface.ts";
 import type {
   AnalyzedController,
   AnalyzedEnhancerKind,
@@ -22,7 +22,7 @@ import type {
   AnalyzedRouteSchema,
   AnalyzedRouteSchemaSlot,
   AnalyzedRouteSchemaSlotName,
-} from "./controller-routes.types.ts";
+} from "../interfaces/controller-routes.interface.ts";
 
 const aponiaModuleSpecifier = "@aponiajs/common";
 const controllerDecoratorName = "Controller";
@@ -80,7 +80,7 @@ const parameterDecorators: ReadonlyMap<string, AnalyzedRouteParameterKind> = new
 
 /**
  * The enhancer decorators of `@aponiajs/common`, keyed by the name the package
- * exports (`packages/common/src/enhancers/enhancer-decorators.ts`).
+ * exports (`packages/common/src/enhancers/enhancer.decorator.ts`).
  */
 const enhancerDecorators: ReadonlyMap<string, AnalyzedEnhancerKind> = new Map([
   ["UseFilters", "filters"],

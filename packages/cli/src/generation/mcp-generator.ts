@@ -1,7 +1,10 @@
 import { basename, join, relative } from "node:path";
 import { createFile, writePendingFiles } from "./file-writer.ts";
 import { createComponentNames } from "./component-names.ts";
-import type { GenerateSchematicOptions, GenerateSchematicResult } from "./schematic.types.ts";
+import type {
+  GenerateSchematicOptions,
+  GenerateSchematicResult,
+} from "../interfaces/schematic.interface.ts";
 import {
   findModuleFile,
   readConfiguration,

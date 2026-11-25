@@ -5,5 +5,8 @@
  * above a size threshold, skips already-encoded and bodyless responses, and
  * appends `Vary: Accept-Encoding`.
  */
-export { CompressionModule } from "./module/compression-module.ts";
-export type { CompressionModuleOptions } from "./module/compression.types.ts";
+export { CompressionModule } from "./module/compression.module.ts";
+export type {
+  CompressionModuleAsyncOptions,
+  CompressionModuleOptions,
+} from "./interfaces/compression.interface.ts";

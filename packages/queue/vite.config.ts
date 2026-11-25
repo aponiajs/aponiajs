@@ -10,7 +10,7 @@ export default defineConfig({
         .pathname,
     },
     globals: true,
-    include: ["tests-vp/**/*.conformance.ts"],
+    include: ["test/**/*.conformance.ts"],
   },
   pack: {
     tsconfig: "tsconfig.build.json",

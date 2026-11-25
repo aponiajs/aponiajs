@@ -23,11 +23,21 @@ Elysia application:
 - `n` is its short alias;
 - `--dry-run` and `-d` report changes without writing;
 - `--skip-install` and `-s` create files without installing dependencies;
-- `generate` and `g` expose the complete built-in Nest schematic catalog;
+- `generate` and `g` expose the complete built-in Nest schematic catalog, plus
+  the Aponia-only `plugin` and `mcp` extensions;
+- `--collection` resolves a package's `collection.json`;
 - generated declarations are registered in the nearest module by default;
 - generated projects use a canonical source root and a small bootstrap file;
-- project metadata lives in `aponia.json`, analogous to the organizational role
-  of `nest-cli.json`.
+- workspaces hold `apps/<name>` and `libs/<name>`, as `nest-cli.json` workspaces
+  do;
+- project metadata lives in `aponia-cli.json`, with the `nest-cli.json` schema.
+  `aponia.json` is accepted once with a deprecation warning.
+
+The Bun-first default is an Aponia extension: `aponia new` emits a Bun runtime
+project with `.ts` import extensions and `bun test`. Pass `--type esm` or
+`--type cjs` for the Nest-compatible template sets, which run Vitest or Jest
+respectively; only the ESM set adds `.js` extensions. `.js` extensions never
+appear in the Bun default or in the CommonJS set.
 
 Official Nest references:
 
@@ -45,10 +55,12 @@ aponia new <name> [options]
 aponia n <name> [options]
 aponia generate <schematic> <name> [options]
 aponia g <schematic> <name> [options]
-aponia build [options]
-aponia dev [entry] [options]
-aponia start [entry] [options]
+aponia update [options]
+aponia build [project] [options]
+aponia start [app|entry] [options]
 aponia info [options]
+aponia add <package> [options]
+aponia dev [entry] [options]
 aponia help
 aponia version
 ```
@@ -59,10 +71,23 @@ the watcher's reload output and the stop signal reach the process that started
 the CLI, and it returns the watcher's exit code. It starts no server of its own
 and reads no configuration: the entrypoint is the application's own `main.ts`.
 
-`aponia start` runs the same entry without a watcher by default. `--watch`
-adds Bun's watcher, `--debug` adds the inspector, and `--prod` runs
-`dist/<entry>.js`. `aponia info` prints the CLI, framework, Bun, workspace,
-project, lockfile, Vite+, and Git facts; `--json` prints one object.
+`aponia start` runs the configured project's entry without a watcher by default.
+A positional that names a configured project starts that project; any other
+positional is read as an entry file. It runs the configured `exec` (default
+`bun`), and accepts `--watch`, `--debug`, `--path`, and `--config`. `--prod`
+runs `dist/<entry>.js`.
+
+`aponia update` (also `aponia g upgrade`) rewrites every `@aponiajs/*`
+dependency to the running CLI release and installs unless `--skip-install` is
+passed. `--tag` must name the channel the pinned release belongs to.
+
+`aponia add <package>` resolves the package's `collection.json`, runs its
+`ng-add`, `nest-add`, or `add` schematic, and installs. A package with no
+collection, or a collection with no add schematic, fails with a plain `Error`
+naming the package.
+
+`aponia info` prints the CLI, framework, Bun, workspace, project, lockfile,
+Vite+, and Git facts; `--json` prints one object.
 
 Project names must use lowercase kebab-case:
 
@@ -76,35 +101,82 @@ The generator refuses to overwrite an existing target directory.
 Generated manifests pin Aponia runtime packages to the CLI version so decorators
 and runtime packages cannot drift to different releases.
 
+## Configuration
+
+`aponia-cli.json` follows `nest-cli.json` exactly:
+
+```json
+{
+  "collection": "@aponiajs/schematics",
+  "sourceRoot": "src",
+  "entryFile": "main",
+  "language": "ts",
+  "generateOptions": { "spec": true },
+  "compilerOptions": { "deleteOutDir": true }
+}
+```
+
+The accepted keys are `language`, `collection`, `sourceRoot`, `entryFile`,
+`exec`, `monorepo`, `compilerOptions`, `generateOptions`, and `projects`.
+`compilerOptions` accepts `tsConfigPath`, `webpack` (deprecated),
+`webpackConfigPath` (deprecated), `plugins`, `assets`, `deleteOutDir`,
+`allowOutsidePaths`, `manualRestart`, `builder`, `emitDeclarations`,
+`bundleDependencies`, and `includeLibraryAssets`. `generateOptions` accepts
+`spec`, `flat`, `specFileSuffix`, and `baseDir`. A project entry accepts
+`type`, `root`, `entryFile`, `exec`, `sourceRoot`, `compilerOptions`, and
+`generateOptions`. `defaultLibraryPrefix` is an Aponia extension that sets the
+prefix workspace libraries are imported under; a library's `--prefix` overrides
+it. `generateOptions` applies to `--collection` schematics as well as the
+built-in generators.
+
+The defaults are `@nestjs/cli`'s: `language: "ts"`, `sourceRoot: "src"`,
+`entryFile: "main"`, `projects: {}`, `monorepo: false`, `compilerOptions` with
+a `tsc` builder, `webpack: false`, empty `plugins` and `assets`, and
+`manualRestart: false`. `collection` names `@aponiajs/schematics`, and `exec`
+names `bun`.
+
+Two legacy spellings are accepted with one warning each: an `aponia.json` file
+is read as `aponia-cli.json`, and `language: "typescript"` is read as `"ts"`.
+A legacy `platform` key is dropped: a generated application is platform-neutral,
+and the adapter is chosen in `main.ts`.
+
+`tsc` and `swc` build with the project's own Bun/Vite+ build. `webpack` and
+`rspack` are refused when the configuration loads, with a plain `Error` naming
+the supported builders.
+
 ## Generate
 
 The published `@aponiajs/cli` package supports the Nest CLI's built-in
 schematics:
 
-| Schematic     | Alias | Output                |
-| ------------- | ----- | --------------------- |
-| `app`         | —     | workspace application |
-| `library`     | `lib` | workspace library     |
-| `mcp`         | `mcp` | MCP tools module      |
-| `plugin`      | `pl`  | workspace plugin      |
-| `class`       | `cl`  | plain class           |
-| `controller`  | `co`  | HTTP controller       |
-| `decorator`   | `d`   | custom decorator      |
-| `filter`      | `f`   | exception filter      |
-| `gateway`     | `ga`  | WebSocket gateway     |
-| `guard`       | `gu`  | request guard         |
-| `interface`   | `itf` | TypeScript interface  |
-| `interceptor` | `itc` | request interceptor   |
-| `middleware`  | `mi`  | route middleware      |
-| `module`      | `mo`  | Aponia module         |
-| `pipe`        | `pi`  | parameter pipe        |
-| `provider`    | `pr`  | injectable provider   |
-| `resolver`    | `r`   | GraphQL resolver      |
-| `resource`    | `res` | complete resource     |
-| `service`     | `s`   | injectable service    |
+| Schematic       | Alias     | Output                     |
+| --------------- | --------- | -------------------------- |
+| `application`   | —         | application starter        |
+| `app`           | `sub-app` | workspace application      |
+| `library`       | `lib`     | workspace library          |
+| `configuration` | `config`  | `aponia-cli.json`          |
+| `upgrade`       | `update`  | update the Aponia packages |
+| `mcp`           | `mcp`     | MCP tools module (Aponia)  |
+| `plugin`        | `pl`      | workspace plugin (Aponia)  |
+| `class`         | `cl`      | plain class                |
+| `controller`    | `co`      | HTTP controller            |
+| `decorator`     | `d`       | custom decorator           |
+| `filter`        | `f`       | exception filter           |
+| `gateway`       | `ga`      | WebSocket gateway          |
+| `guard`         | `gu`      | request guard              |
+| `interface`     | `itf`     | TypeScript interface       |
+| `interceptor`   | `itc`     | request interceptor        |
+| `middleware`    | `mi`      | route middleware           |
+| `module`        | `mo`      | Aponia module              |
+| `pipe`          | `pi`      | parameter pipe             |
+| `provider`      | `pr`      | injectable provider        |
+| `resolver`      | `r`       | GraphQL resolver           |
+| `resource`      | `res`     | complete resource          |
+| `service`       | `s`       | injectable service         |
 
 `router`, `routers`, and `route` are convenience aliases for `controller`, since
-Aponia controllers own the Elysia route declarations.
+Aponia controllers own the Elysia route declarations. The verified Nest set has
+no `enum`, `test`, or `dto` schematic; `plugin` and `mcp` are Aponia extensions.
 
 ```bash
 aponia g module users
@@ -112,6 +184,9 @@ aponia g controller users
 aponia g service users
 aponia g router health --no-spec
 aponia g resource users --type rest
+aponia g configuration
+aponia g app admin
+aponia g library widgets
 ```
 
 Component options follow Nest conventions:
@@ -120,28 +195,74 @@ Component options follow Nest conventions:
 --dry-run, -d
 --flat / --no-flat
 --spec / --no-spec
+--spec-file-suffix <name>
 --skip-import
 --module <name>
 --project, -p <name>
 --path <path>
---publish
---kind <kind>
---json
+--language <ts|js>
+--strict / --no-strict
+--collection <package>
+--no-interactive
 ```
 
-The flags that take no value — `--dry-run`, `--skip-install`, `--flat`,
-`--spec`, `--skip-import`, `--crud`, `--publish`, and the short aliases `-d` and `-s` — reject
-an attached value instead of ignoring it, so `--dry-run=true` exits non-zero and
-writes nothing. Negate one with `--no-flat`, `--no-spec`, or `--no-crud`. A flag
-does not consume the argument after it, so `aponia new --dry-run my-api` reads
-`my-api` as the project name.
+`--language js` is refused by name: the generator emits TypeScript only.
+`--collection <package>` resolves that package's `collection.json` and runs the
+named schematic's factory; a missing collection or schematic is a plain `Error`
+naming the package and the schematic. `generateOptions.baseDir` and
+`specFileSuffix` apply when a flag does not override them. The built-in path
+without `--collection` renders Aponia-native sources from the CLI's own
+templates; the `@aponiajs/schematics` factories render the pinned upstream Nest
+templates, which is the compatibility surface.
 
-`aponia new <name> --workspace` creates a workspace with `apps/api` and `libs/`;
-the default single-app layout is unchanged. `aponia g library <name>` writes to
-`libs/<name>`, adds the package to the target app as `workspace:*`, and installs
-the link. Add `--publish` and `--scope @name` for a publishable package with
-`exports`, `files`, `publishConfig`, both test lanes, `llms.txt`, `AGENTS.md`,
-and `aponia.library.json`.
+The flags that take no value — `--dry-run`, `--skip-install`, `--flat`,
+`--spec`, `--skip-import`, `--crud`, `--publish`, `--interactive`,
+`--type-check`, `--emit-declarations`, and the short aliases `-d` and `-s` —
+reject an attached value instead of ignoring it, so `--dry-run=true` exits
+non-zero and writes nothing. Negate one with `--no-flat`, `--no-spec`,
+`--no-crud`, or `--no-interactive`. A flag does not consume the argument after
+it, so `aponia new --dry-run my-api` reads `my-api` as the project name.
+
+`aponia new` flags:
+
+```text
+--directory <dir>
+--type <bun|esm|cjs>
+--test-runner <bun|vitest|jest>
+--minimal
+--package-manager <bun|npm|pnpm|yarn>
+--language <ts|js>
+--strict / --no-strict
+--collection <package>
+--observe / --no-observe
+--skills <list>
+--skip-skills
+--skip-git
+--skip-install, -s
+--dry-run, -d
+```
+
+`--type bun` is the default and pairs with `--test-runner bun`;
+`--type esm` pairs with `vitest`, and `--type cjs` pairs with `jest`. A
+mismatched pair is refused by name rather than producing a template set whose
+scripts and spec files disagree. `--minimal` writes the single-file starter for
+the Bun and ESM sets; the CommonJS set has no single-file form, so
+`--type cjs --minimal` is refused by name. `--observe` and `--no-observe` control
+the Bun starter's devtools surface; the Nest-compatible sets do not mount it.
+`--no-observe` also lowers the generated `README.md`, `AGENTS.md`, `llms.txt`,
+`.env.example`, and logger documentation to the project it emits, so no generated
+guide describes a surface the application does not mount.
+
+`aponia g app <name>` creates `apps/<name>` with `tsconfig.app.json`, adds the
+project to `aponia-cli.json` with `type: "application"`, and marks the workspace
+`monorepo: true`. `aponia g library <name>` writes
+`libs/<name>/src/{index.ts, <name>.module.ts, <name>.service.ts}` plus
+`tsconfig.lib.json`, records the project with `type: "library"` and
+`entryFile: "index"`, and maps `<prefix>/<name>` in the root `tsconfig.json`.
+`--prefix` overrides the mapping prefix, whose default is `@app`. Add
+`--publish` and `--scope @name` for a publishable package with `exports`,
+`files`, `publishConfig`, both test lanes, `llms.txt`, `AGENTS.md`, and
+`aponia.library.json`.
 
 `aponia library new <name> --scope @name` creates the publishable package
 standalone; add `--kind plugin` for a standalone plugin. `aponia library check`
@@ -151,11 +272,12 @@ the check, build, and pack verification before an explicit publish, and
 `aponia-library`.
 
 Resources additionally support `--crud` / `--no-crud` and these transports:
-`rest`, `mvc`, `graphql-code-first`, `graphql-schema-first`, `microservice`, and `ws`.
+`rest`, `graphql` (an alias for code-first), `graphql-code-first`,
+`graphql-schema-first`, `microservice`, `ws`, and the Aponia `mvc` extension.
 REST resources generate a mounted controller; GraphQL resources generate an
 unconnected resolver scaffold — the class is emitted beside the service, but the
 module registers only the service, and the file's own comment names the seam to
-connect (`GraphQLModule.register` with the service in `inject`); microservice
+connect (`GraphQLModule.forRoot` with the service in `inject`); microservice
 resources generate a registered `@Controller()` whose methods carry
 `@MessagePattern()` — connect a transport in
 `AponiaFactory.create({ microservices: [transport] })`; and WebSocket resources
@@ -249,8 +371,9 @@ validator; create, update, and path-parameter contracts are intentionally
 separate. Non-REST transports continue to generate ordinary DTO files.
 
 CLI flags override project-specific `generateOptions`, which override global
-`generateOptions` in `aponia.json`. Both `spec` and `flat` defaults are
-supported. `spec` may be a boolean or a map keyed by schematic name.
+`generateOptions` in `aponia-cli.json`. `spec`, `flat`, `specFileSuffix`, and
+`baseDir` defaults are supported. `spec` may be a boolean or a map keyed by
+schematic name.
 
 Controllers are added to `controllers`; services, providers, gateways, guards,
 interceptors, and filters to `providers` — an enhancer only reaches a route when
@@ -268,7 +391,17 @@ generator refuses to overwrite an existing file.
 aponia new my-api
 aponia new my-api --skip-install
 aponia new my-api --dry-run
+aponia new my-api --type esm --test-runner vitest
+aponia new my-api --type cjs --test-runner jest
+aponia new my-api --minimal --no-observe
 ```
+
+`aponia new` is Bun-first by default: `.ts` import extensions, `bun test`, and
+the devtools surface. `--type esm` selects the Nest-compatible ESM set, whose
+relative imports carry `.js` extensions and whose tests run under Vitest;
+`--type cjs` selects the CommonJS set, which uses extensionless imports and
+Jest. A generated application always names `@aponiajs/schematics` in
+`aponia-cli.json`; the runtime adapter is chosen in `src/main.ts`.
 
 ## Generated project
 
@@ -277,7 +410,7 @@ my-api/
 |-- .env.example
 |-- .gitignore
 |-- AGENTS.md
-|-- aponia.json
+|-- aponia-cli.json
 |-- llms.txt
 |-- package.json
 |-- README.md
@@ -319,48 +452,39 @@ main.ts
        descriptors: moduleDescriptorArtifact,
        invokers: controllerInvokerArtifact,
        logger: appLogger,
-       plugins: [devtoolsPlugin({ enabled, logger: appLogger })],
      })
      -> AppModule
+        -> imports: [DevtoolsModule.forRoot({ enabled, logger: appLogger })]
         -> provideConfiguration(AppConfig)
      -> AppController
      -> AppService
   -> application.get(AppConfig).port -> listen
 ```
 
-`main.ts` owns only bootstrap configuration, the two generated artifacts, the
-logger it holds, the devtools plugin, the read it passes to `listen`, and
-`listen`. Decorated controllers own routes. Services own application behavior.
-Generated application code does not import Elysia or low-level runtime
-descriptors.
+`main.ts` owns only bootstrap configuration, the logger it holds, the read it
+passes to `listen`, and `listen`. Decorated controllers own routes. Services own
+application behavior. Generated application code does not import Elysia or
+low-level runtime descriptors.
 
-`src/logger.ts` holds the application's logger, and `src/main.ts` hands that one
-object to both `AponiaFactory.create` and `devtoolsPlugin`, so every bootstrap
-line is written through the logger the application also holds.
+`src/logger.ts` holds the application's logger, and the same object goes to
+`AponiaFactory.create` in `src/main.ts` and to `DevtoolsModule.forRoot` in
+`src/app.module.ts`, so every bootstrap line is written through the logger the
+application also holds.
 
-The starter mounts [devtools](../services/devtools.md) itself, through the factory's
-`plugins` option — `devtoolsPlugin({ enabled, logger: appLogger })`, the same
-logger — and it is served unless `NODE_ENV` is `production`, from the
-application's own address under `/__devtools`. The placement is the
-point:
-`DevtoolsModule.register(...)` in the root module's `imports` returns a
-`DynamicModule`, and `aponia build` lowers an entry only when it is a single
-identifier naming a declaration read from the project's own source — a module
-class is such a declaration, and a registration result is not one in any
-spelling — so the root — the only module a
-starter build can declare — would be reported as `DECLINED`, and the build would
-replace the committed `descriptors.generated.ts` with an empty record. The boot
-would refuse it and compile the decorated graph instead, mounting the
-registration but giving up the declared-graph boot this starter commits to. A
-plugin mounted through the option is not an `imports` entry, so the root
-stays declarable and the application keeps booting from the declared graph. The
-[devtools guide](../services/devtools.md) states what the option path gives up in exchange:
-nothing about the plugin reaches the module graph, so `bun run inspect` does not
-list it and no generated artifact carries it.
+The starter mounts [devtools](../services/devtools.md) itself through
+`DevtoolsModule.forRoot(...)` in `AppModule`'s `imports`, and `src/app.module.ts`
+enables it only when `APONIA_DEVTOOLS=true`, on the application's own address
+under `/__devtools`. A registration is a `DynamicModule` rather than a
+declaration `aponia build` can read from the project's own source, so a root that
+imports one is reported as `DECLINED` and the committed `descriptors.generated.ts`
+cannot serve that root: the inspection reports the decorated graph instead and
+the registration still mounts. The [devtools guide](../services/devtools.md)
+states that trade.
 
-The starter ships both generated modules, so a freshly generated application
-serves through generated route invokers and boots from the declared module graph
-without a build having run. `bun run build` refreshes them instead of creating
+The starter ships both generated modules, and `src/main.ts` imports neither: a
+`bunfig.toml` preload registers the platform's in-memory compiler, so a freshly
+generated application lowers the decorated graph and compiles its routes without
+a build having run. `bun run build` refreshes both modules instead of creating
 them.
 
 This is standard mode and intentionally matches the flat starter structure
@@ -375,13 +499,14 @@ for a publishable package with `exports`, `files`, `publishConfig`, both test
 lanes, `llms.txt`, `AGENTS.md`, and `aponia.library.json`.
 
 `aponia g plugin <name>` writes the same package surface with `kind: "plugin"`
-in `aponia.library.json` and one addition: `src/adapters/<name>.adapters.ts`
-owns the `providePlatformModule` declaration, so the plugin states the
-platforms it runs on and the native mount each one needs. The generated module
-still imports no platform and no HTTP runtime, so the same registration boots on
-Elysia, Hono, and H3. Both package generators use the same scaffold, tests, and
-Nest-style `forRoot` / `forRootAsync` registration; only the kind and the
-platform declaration differ.
+in `aponia.library.json` and a neutral contribution set:
+`src/<name>.controller.ts`, `src/<name>.policy.ts`, and a module that registers
+the controller, the service, the options, an `HttpPolicy`, and
+`requirePlatformCapabilities("<name>", ["http"])`. The generated source imports
+no platform package and no HTTP runtime, and the manifest states no `platforms`
+array; a native mount belongs in a separate `adapter` library. Both package
+generators use the same scaffold, tests, and Nest-style `forRoot` /
+`forRootAsync` registration; only the kind and the contribution files differ.
 
 ```bash
 aponia g library widgets --publish
@@ -402,10 +527,11 @@ the library manifest, or a required documentation file is missing. See
 `aponia manifest` prints the framework contract as JSON. It lists the published
 packages, framework version, decorators, metadata keys, error codes, route slots,
 schematics, lifecycle hooks, supported versioning strategies, and the platform
-standard (`providePlatformModule`, the four shipped platforms, the refusal code,
-and the adapter-host token). The contract is guarded by
-`scripts/framework-contract.spec.ts` against the runtime sources, so an agent can
-treat it as the machine-readable surface of one release.
+capability set (`http`, `websockets`, `streaming`, `multipart`,
+`backgroundWork`) with the refusal code and the adapter-host token. Contract
+version 2 replaces the platform allowlist with capabilities. The contract is
+guarded by `scripts/framework-contract.spec.ts` against the runtime sources, so
+an agent can treat it as the machine-readable surface of one release.
 
 ## Agent
 
@@ -417,12 +543,25 @@ reports the files without writing them.
 ## Build
 
 ```bash
-aponia build            # write the generated modules
-aponia build --dry-run  # report the files without writing them
+aponia build                 # run the configured project's build script
+aponia build api             # build one configured project
+aponia build --all           # build every configured project
+aponia build --dry-run       # print the build command without running it
+aponia build --watch         # pass --watch to the build script
+aponia build --type-check    # pass --type-check to the build script
+aponia build --builder swc   # supported: tsc or swc
 ```
 
-`aponia build` reads every source file under the configured source root and
-writes up to two modules.
+`aponia build` resolves the project from `aponia-cli.json` (`--project` or a
+positional name), then runs `bun run build` in that project's root with the
+extra flags appended. `--webpack` and `--rspack` are refused by name: both map
+to no build here, while `tsc` and `swc` map to the project's own Bun/Vite+
+build. `--config` reads a different configuration file.
+
+The Bun starter's `build` script runs `scripts/build.ts`, which bundles through
+`Bun.build` with `buildPlugin()` and writes the two generated modules as part of
+the bundle. The Nest-compatible ESM and CJS sets run `tsc`. A project with no
+`build` script fails with the package manager's own error.
 
 ### Route invokers
 
@@ -469,7 +608,7 @@ An `imports`, `controllers`, or `exports` entry is lowered only when it is a
 single identifier naming a declaration the build read from the project's own
 source — a `@Module()`, `@Controller()`, `@Injectable()`, or
 `@WebSocketGateway()` class under the configured source root. A call expression
-is not one, and neither is a `const` that holds its result: `CronModule.register({ ... })` returns a
+is not one, and neither is a `const` that holds its result: `CronModule.forRoot({ ... })` returns a
 `DynamicModule`, a runtime value rather than a declaration, so no spelling of it
 is lowered. An entry naming a module class from an installed
 package declines for the same reason, because the build reads only the project's
@@ -563,8 +702,9 @@ The command only reads source, so it never starts the application, never
 connects to anything, and never runs provider factories. Run it again whenever a
 controller or a module changes: a file left behind keeps serving the graph it
 recorded, so a route added since the last build is missing from the application
-until `aponia build` writes it into the file. It is separate from `bun run build`,
-which bundles the application for deployment.
+until the next build writes it into the file. The starter's `bun run build`
+does that generation through the plugin below, and `aponia build` runs the same
+script, so one command writes the modules and bundles the application.
 
 ### Generating during a bundle
 
@@ -591,13 +731,13 @@ bun run scripts/build.ts
 ```
 
 The plugin runs both generators with the same discovery the command uses, so it
-finds the project through `aponia.json` the same way. Its options are passed
+finds the project through `aponia-cli.json` the same way. Its options are passed
 straight through:
 
-| Option    | Meaning                                                             |
-| --------- | ------------------------------------------------------------------- |
-| `cwd`     | Directory to resolve the project from. Defaults to `process.cwd()`. |
-| `project` | A named project from `aponia.json`, for a multi-project repository. |
+| Option    | Meaning                                                                |
+| --------- | ---------------------------------------------------------------------- |
+| `cwd`     | Directory to resolve the project from. Defaults to `process.cwd()`.    |
+| `project` | A named project from `aponia-cli.json`, for a multi-project workspace. |
 
 Generation runs in the plugin's `onStart` hook, which Bun awaits before it
 resolves the first import. That ordering is the whole point: the artifacts have

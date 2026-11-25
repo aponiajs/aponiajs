@@ -4,8 +4,8 @@
 
 ## What this package exports
 
-- `MetricsModule.register({ path?, registry?, prefix?, maxSeriesPerMetric?, buckets?, exclude? })`: the module an application imports.
-- `metricsPlugin(options?)`: the native plugin, for an application that mounts plugins through `AponiaFactory.create`.
+- `MetricsModule.forRoot({ path?, registry?, prefix?, maxSeriesPerMetric?, buckets?, exclude? })`: the module an application imports; `register` is the deprecated beta alias.
+- `createMetricsInstrumentation(options?)`: the neutral request hook and the registry it records into.
 - `MetricsRegistry`: `counter`, `gauge`, `histogram`, `render`, `clear`.
 - `MetricsExceptionFilter`: the global filter that records failed request statuses.
 - `metricsContentType`, `defaultHistogramBuckets`.
@@ -15,7 +15,7 @@
 
 - The scrape endpoint defaults to `GET /metrics` and answers `text/plain; version=0.0.4`.
 - `authorize(request)` runs before rendering; a false answer is `401` with `cache-control: no-store`.
-- The plugin records `http_requests_total` and `http_request_duration_seconds` using the registered route template, not the request path, as the `route` label.
+- The hook records `http_requests_total` and `http_request_duration_seconds` using the matched route template, not the request path, as the `route` label.
 - `process_uptime_seconds`, `process_resident_memory_bytes`, and `process_heap_used_bytes` are published by default; `processMetrics: false` omits them.
 - `registerCollector` refreshes gauges before every render.
 - `MetricsExceptionFilter` records failed statuses and declines the response, so the application's own error path still answers.

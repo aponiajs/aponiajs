@@ -4,14 +4,14 @@ A progressive TypeScript framework for building efficient, reliable, and scalabl
 
 [![CI](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml/badge.svg)](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml)
 [![CLI npm version](https://img.shields.io/npm/v/%40aponiajs%2Fcli/alpha?label=CLI)](https://www.npmjs.com/package/@aponiajs/cli)
-[![Bun](https://img.shields.io/badge/Bun-1.4.4-black)](https://bun.sh)
+[![Bun](https://img.shields.io/badge/Bun-1.4.5-black)](https://bun.sh)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 
 ## Description
 
 AponiaJS runs on [Bun](https://bun.sh). [Elysia](https://elysiajs.com) is the default HTTP platform; Hono, H3, and Nitro are supported beside it. The framework provides modules, dependency injection, declarative routing, validation, and focused packages for authentication, persistence, messaging, and observability.
 
-Requires Bun 1.4.4 or later. Decorator-based applications need `experimentalDecorators` and `emitDecoratorMetadata`; the CLI starter configures both.
+Requires Bun 1.4.5 or later. Decorator-based applications need `experimentalDecorators` and `emitDecoratorMetadata`; the CLI starter configures both.
 
 ## Installation
 

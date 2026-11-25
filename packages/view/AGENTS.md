@@ -6,12 +6,19 @@ Read the [repository guide](../../AGENTS.md) and [RULES.md](../../RULES.md) firs
 
 The Laravel-style template engines and the view module that provides `VIEW_ENGINE`.
 
-| Domain     | Owns                                            |
-| ---------- | ----------------------------------------------- |
-| `engines/` | `HtmlViewEngine` and `BladeViewEngine`          |
-| `module/`  | `ViewModule`, `ViewService`, and view contracts |
+| Domain        | Owns                                                                 |
+| ------------- | -------------------------------------------------------------------- |
+| `engines/`    | `HtmlViewEngine` and `BladeViewEngine`                               |
+| `helper/`     | The standalone `view()` response helper                              |
+| `module/`     | `ViewModule`, `ViewService`, and the `.module-definition.ts` builder |
+| `interfaces/` | the view-engine and module contracts                                 |
 
-`src/index.ts` is the only public barrel. Blade templates are developer-authored; expression evaluation is cached and templates are cached in memory. Every render returns a string that the platform serves as `text/html; charset=utf-8`.
+`src/index.ts` is the only public barrel. Blade templates are developer-authored;
+expression evaluation is cached and templates are cached in memory. Every render
+returns a string that the platform serves as `text/html; charset=utf-8`. The
+registration is a `ConfigurableModuleBuilder` definition with
+`MODULE_OPTIONS_TOKEN` (`VIEW_MODULE_OPTIONS`) and `isGlobal` (default true);
+`register`/`registerAsync` remain as deprecated aliases.
 
 - **Rendered data is not template source.** Capture every echoed value behind a
   per-render token and resolve the tokens once after composition. Never run a

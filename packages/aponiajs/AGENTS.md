@@ -21,5 +21,5 @@ holding a placeholder export until it re-exports a settled framework API.
 
 ## Tests
 
-`tests/` and `tests-vp/` exist so the package participates in both lanes. Keep
+`src/` and `test/` exist so the package participates in both lanes. Keep
 them meaningful once the facade exports something.

@@ -1,5 +1,5 @@
 import { formatLogValue, type LogLevel, type LoggerService } from "@aponiajs/common";
-import type { LogBuffer, LogEntry } from "./log-buffer.types.ts";
+import type { LogBuffer, LogEntry } from "../interfaces/log-buffer.interface.ts";
 
 /**
  * The `LoggerService` methods a tap records: every level the interface declares,

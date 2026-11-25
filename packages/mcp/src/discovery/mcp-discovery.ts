@@ -7,8 +7,8 @@ import {
   type ModuleDefinition,
 } from "@aponiajs/common";
 import { getApplicationContainer } from "@aponiajs/platform-core";
-import type { ResolvedMcpOptions } from "../module/mcp-module.types.ts";
-import type { McpPlan, McpPrimitivePlan } from "./mcp-plan.types.ts";
+import type { ResolvedMcpOptions } from "../interfaces/mcp-module.interface.ts";
+import type { McpPlan, McpPrimitivePlan } from "../interfaces/mcp-plan.interface.ts";
 
 type McpContainer = NonNullable<ReturnType<typeof getApplicationContainer>>;
 
@@ -36,6 +36,12 @@ export function buildMcpPlan(container: McpContainer, options: ResolvedMcpOption
 
     for (const provider of module.providers) {
       if (provider.kind !== "class") {
+        continue;
+      }
+      // A provider with no MCP metadata is never exposed, so resolving it here
+      // would instantiate every class in the graph — request-scoped ones fail
+      // the boot for no registration.
+      if (getMcpPrimitiveMetadata(provider.useClass.prototype).size === 0) {
         continue;
       }
       collectFor(

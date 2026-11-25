@@ -5,10 +5,10 @@ export type {
   GenerateCommandOptions,
   GenerateSchematic,
   ResourceTransport,
-} from "./commands/command.types.ts";
+} from "./interfaces/command.interface.ts";
 export { runCli } from "./commands/run-cli.ts";
 export { buildPlugin, buildPluginName } from "./bundler/aponia-build-plugin.ts";
-export type { BuildPluginOptions } from "./bundler/aponia-build-plugin.types.ts";
+export type { BuildPluginOptions } from "./interfaces/aponia-build-plugin.interface.ts";
 export { analyzeControllerRoutes } from "./generation/controller-routes.ts";
 export { emitControllerInvokers } from "./generation/controller-invokers.ts";
 export {
@@ -22,7 +22,7 @@ export type {
   DescriptorSourceFile,
   EmittedModuleDescriptors,
   ModuleDescriptorProvenance,
-} from "./generation/descriptor-emitter.types.ts";
+} from "./interfaces/descriptor-emitter.interface.ts";
 export { analyzeModuleDescriptors } from "./generation/module-descriptors.ts";
 export type {
   AnalyzedConstructorDependency,
@@ -37,19 +37,22 @@ export type {
   AnalyzedTokenKind,
   AnalyzedTypedDependency,
   AnalyzedUnreadableDependency,
-} from "./generation/module-descriptors.types.ts";
+} from "./interfaces/module-descriptors.interface.ts";
 export { generateInvokers } from "./generation/invoker-generator.ts";
 export { checkLibrary } from "./library/check-library.ts";
-export type { LibraryCheckOptions, LibraryCheckResult } from "./library/check-library.types.ts";
+export type {
+  LibraryCheckOptions,
+  LibraryCheckResult,
+} from "./interfaces/check-library.interface.ts";
 export { analyzeBuildProject, invokerModuleFileName } from "./generation/build-project-analysis.ts";
 export type {
   AnalyzeBuildProjectOptions,
   BuildProjectAnalysis,
-} from "./generation/build-project-analysis.types.ts";
+} from "./interfaces/build-project-analysis.interface.ts";
 export type {
   GenerateInvokersOptions,
   GenerateInvokersResult,
-} from "./generation/invoker-generator.types.ts";
+} from "./interfaces/invoker-generator.interface.ts";
 export type {
   ControllerImportSpecifiers,
   ControllerInvokerProvenance,
@@ -58,7 +61,7 @@ export type {
   EmittableControllerHandler,
   EmittableRouteParameter,
   EmittableRouteParameterKind,
-} from "./generation/controller-invokers.types.ts";
+} from "./interfaces/controller-invokers.interface.ts";
 export type {
   AnalyzedController,
   AnalyzedRequestMethod,
@@ -68,7 +71,7 @@ export type {
   AnalyzedRouteSchema,
   AnalyzedRouteSchemaSlot,
   AnalyzedRouteSchemaSlotName,
-} from "./generation/controller-routes.types.ts";
+} from "./interfaces/controller-routes.interface.ts";
 export { collectSourceImports, parseSourceExpression } from "./generation/source-imports.ts";
 export type {
   SourceImport,
@@ -76,15 +79,15 @@ export type {
   SourceImportKind,
   SourceImports,
   SourceImportsReading,
-} from "./generation/source-imports.types.ts";
+} from "./interfaces/source-imports.interface.ts";
 export { generateProject } from "./generation/project-generator.ts";
 export type {
   GenerateProjectOptions,
   GenerateProjectResult,
-} from "./generation/project-generator.types.ts";
+} from "./interfaces/project-generator.interface.ts";
 export { generateSchematic } from "./generation/schematic-generator.ts";
 export type {
   GenerateSchematicOptions,
   GenerateSchematicResult,
   SchematicChange,
-} from "./generation/schematic.types.ts";
+} from "./interfaces/schematic.interface.ts";

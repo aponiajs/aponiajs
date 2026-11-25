@@ -4,7 +4,7 @@ import type {
   InjectionDependency,
   Token,
   TokenMap,
-} from "../tokens/token.types.ts";
+} from "../interfaces/token.interface.ts";
 import type {
   AliasProvider,
   ClassProvider,
@@ -13,8 +13,68 @@ import type {
   Provider,
   ProviderScope,
   ValueProvider,
-} from "./provider.types.ts";
-import { AponiaError } from "../errors/aponia-error.ts";
+} from "../interfaces/provider.interface.ts";
+import {
+  Scope,
+  type LegacyProviderScope,
+  type NormalizedProviderScope,
+} from "./provider.constants.ts";
+import { Logger } from "../services/console-logger.service.ts";
+import { AponiaError } from "../exceptions/aponia-error.ts";
+
+const legacyScopeNames: Readonly<Record<LegacyProviderScope, NormalizedProviderScope>> =
+  Object.freeze({
+    singleton: "singleton",
+    request: "request",
+    transient: "transient",
+  });
+
+const warnedLegacyScopes = new Set<LegacyProviderScope>();
+
+/**
+ * Lowers a declared scope to the lifetime the container runs.
+ *
+ * Nest's numeric `Scope` values pass through unchanged. The legacy string
+ * spellings are accepted for one release, lowered to the same lifetimes, and
+ * reported once per spelling; a value this release cannot honor is returned
+ * unchanged so the graph raises `UNSUPPORTED_PROVIDER_SCOPE` with the original.
+ *
+ * @param scope - The scope a provider or controller declares.
+ * @returns The normalized lifetime.
+ */
+export function normalizeProviderScope(scope: ProviderScope | undefined): NormalizedProviderScope {
+  if (scope === undefined) {
+    return "singleton";
+  }
+  if (typeof scope === "string") {
+    const normalized = legacyScopeNames[scope];
+    if (normalized !== undefined) {
+      warnLegacyScope(scope, normalized);
+      return normalized;
+    }
+    return scope as unknown as NormalizedProviderScope;
+  }
+  switch (scope) {
+    case Scope.DEFAULT:
+      return "singleton";
+    case Scope.REQUEST:
+      return "request";
+    case Scope.TRANSIENT:
+      return "transient";
+    default:
+      return scope as unknown as NormalizedProviderScope;
+  }
+}
+
+function warnLegacyScope(scope: LegacyProviderScope, normalized: NormalizedProviderScope): void {
+  if (warnedLegacyScopes.has(scope)) {
+    return;
+  }
+  warnedLegacyScopes.add(scope);
+  new Logger("Scope").warn(
+    `Provider scope "${scope}" is deprecated; use Scope.${normalized === "singleton" ? "DEFAULT" : normalized.toUpperCase()} (${Scope[normalized === "singleton" ? "DEFAULT" : normalized === "request" ? "REQUEST" : "TRANSIENT"]}) instead.`,
+  );
+}
 
 /**
  * Lowers a Nest-shaped provider literal to the canonical `Provider` union.
@@ -30,7 +90,10 @@ export function normalizeProvider(provider: Provider | NestProvider): Provider {
   if ("kind" in provider) {
     return provider;
   }
-  const options = provider.scope === undefined ? {} : { scope: provider.scope };
+  const options: ProviderScopeOption = {
+    ...(provider.scope === undefined ? {} : { scope: provider.scope }),
+    ...(provider.durable === undefined ? {} : { durable: provider.durable }),
+  };
   if ("useValue" in provider) {
     return provideValue(provider.provide, provider.useValue, options);
   }
@@ -61,14 +124,37 @@ export function normalizeProvider(provider: Provider | NestProvider): Provider {
 
 /** The trailing options every `provide*` factory accepts. */
 export interface ProviderScopeOption {
-  /**
-   * The lifetime the instance is kept for.
-   *
-   * Only `"singleton"` is instantiated today; `"request"` and `"transient"`
-   * are reserved and resolving one fails with `UNSUPPORTED_PROVIDER_SCOPE`
-   * until the scope is implemented.
-   */
+  /** The lifetime the instance is kept for. */
   readonly scope?: ProviderScope;
+  /** Shares a request-scoped instance by the parent context id a strategy resolves. */
+  readonly durable?: boolean;
+}
+
+/** The scope and durability fields a provider record carries. */
+function scopeFields(options: ProviderScopeOption): {
+  readonly scope?: ProviderScope;
+  readonly durable?: boolean;
+} {
+  return {
+    ...(options.scope === undefined
+      ? {}
+      : { scope: scopeValue(normalizeProviderScope(options.scope)) }),
+    ...(options.durable === undefined ? {} : { durable: options.durable }),
+  };
+}
+
+/** Maps a normalized lifetime back to its numeric Nest value. */
+function scopeValue(scope: NormalizedProviderScope): ProviderScope {
+  if (scope === "singleton") {
+    return Scope.DEFAULT;
+  }
+  if (scope === "request") {
+    return Scope.REQUEST;
+  }
+  if (scope === "transient") {
+    return Scope.TRANSIENT;
+  }
+  return scope as unknown as ProviderScope;
 }
 
 /**
@@ -98,7 +184,7 @@ export function provideValue<T>(
     kind: "value",
     provide,
     useValue,
-    ...(options.scope === undefined ? {} : { scope: options.scope }),
+    ...scopeFields(options),
   });
 }
 
@@ -123,7 +209,7 @@ export function provideValue<T>(
 export function provideFactory<T, const TDependencies extends readonly InjectionDependency[]>(
   provide: Token<T>,
   inject: TDependencies,
-  useFactory: (...dependencies: TokenMap<TDependencies>) => T,
+  useFactory: (...dependencies: TokenMap<TDependencies>) => T | Promise<T>,
   options: ProviderScopeOption = {},
 ): FactoryProvider<T, TDependencies> {
   return Object.freeze({
@@ -131,7 +217,7 @@ export function provideFactory<T, const TDependencies extends readonly Injection
     provide,
     inject,
     useFactory,
-    ...(options.scope === undefined ? {} : { scope: options.scope }),
+    ...scopeFields(options),
   });
 }
 
@@ -189,23 +275,21 @@ export function provideClass<T, const TDependencies extends readonly InjectionDe
 ): ClassProvider<T, TDependencies> {
   if (injected === undefined || !Array.isArray(injected)) {
     const useClass = provideOrClass as ClassToken<T> & Constructor<T, TokenMap<TDependencies>>;
-    const scope = (injected as ProviderScopeOption | undefined)?.scope;
     return Object.freeze({
       kind: "class",
       provide: useClass,
       inject: classOrInject as TDependencies,
       useClass,
-      ...(scope === undefined ? {} : { scope }),
+      ...scopeFields((injected as ProviderScopeOption | undefined) ?? {}),
     }) as ClassProvider<T, TDependencies>;
   }
 
-  const scope = options?.scope;
   return Object.freeze({
     kind: "class",
     provide: provideOrClass,
     inject: injected,
     useClass: classOrInject as Constructor<T, TokenMap<TDependencies>>,
-    ...(scope === undefined ? {} : { scope }),
+    ...scopeFields(options ?? {}),
   }) as ClassProvider<T, TDependencies>;
 }
 
@@ -235,6 +319,6 @@ export function provideAlias<T>(
     kind: "alias",
     provide,
     useExisting,
-    ...(options.scope === undefined ? {} : { scope: options.scope }),
+    ...scopeFields(options),
   });
 }

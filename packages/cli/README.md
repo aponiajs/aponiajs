@@ -25,9 +25,9 @@ aponia dev
 aponia --version
 ```
 
-The build command generates code from an application's own source. It parses
-every file under the configured source root and writes two modules beside it:
-`invokers.generated.ts`, which holds the route invokers the runtime would
+`aponia build` runs the configured project's own `build` script. The Bun
+starter's `scripts/build.ts` registers the build plugin, so the same command
+writes the two generated modules and bundles the application: `invokers.generated.ts`, which holds the route invokers the runtime would
 otherwise compile at startup, and `descriptors.generated.ts`, which declares the
 module graph as data so the application can boot without its decorators being
 lowered. A declared route states the validator its `@Validation()` model was
@@ -75,13 +75,21 @@ generated application passes `controllerInvokerArtifact` and
 serves through generated invokers, and boots from the declared module graph
 before any build has run. `bun run build` then refreshes them rather than
 creating them. Registering it is opt-in for an application you already have, and
-`aponia build`
-still generates without bundling.
+a project without its own build script falls back to generating the two modules
+without bundling.
 
-The generate command supports the Aponia schematic catalog: application,
-library, plugin, class, controller, decorator, filter, gateway, guard, interface,
-interceptor, middleware, module, pipe, provider, resolver, resource, and service. Nest aliases are
-supported, and `router`, `routers`, and `route` map to Aponia controllers.
+`aponia new` is Bun-first: `.ts` import extensions and `bun test`. `--type esm`
+selects the Nest-compatible ESM set with `.js` extensions and Vitest, and
+`--type cjs` the CommonJS set with extensionless imports and Jest. Project
+configuration lives in `aponia-cli.json`, and `aponia update` rewrites the
+Aponia dependencies to the running release.
+
+The generate command supports the Aponia schematic catalog: application, sub-app
+(`app`), library, configuration, upgrade, plugin, mcp, class, controller,
+decorator, filter, gateway, guard, interface, interceptor, middleware, module,
+pipe, provider, resolver, resource, and service. Nest aliases are supported, and
+`router`, `routers`, and `route` map to Aponia controllers. `--collection`
+resolves a package's `collection.json`.
 
 Generated controllers, providers, services, modules, resources, gateways,
 guards, interceptors, pipes, middleware, and filters are registered in the nearest Aponia module

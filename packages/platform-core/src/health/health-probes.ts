@@ -1,7 +1,7 @@
 import { AponiaError, type ClassToken } from "@aponiajs/common";
-import type { PlatformRouteHandler } from "../host/platform-host.types.ts";
-import type { MountedRoute } from "../kernel/kernel.types.ts";
-import type { AponiaHealthOptions, AponiaHealthStatus } from "./health.types.ts";
+import type { PlatformRouteHandler } from "../interfaces/platform-host.interface.ts";
+import type { MountedRoute } from "../interfaces/kernel.interface.ts";
+import type { AponiaHealthOptions, AponiaHealthStatus } from "../interfaces/health.interface.ts";
 
 /** The media type the health-check draft defines. */
 const healthContentType = "application/health+json";

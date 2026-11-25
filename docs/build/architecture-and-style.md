@@ -40,7 +40,7 @@ contract. A change that weakens one is a redesign, not a refactor.
 | Change                                            | Owned by                                                                              |
 | ------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | A decorator or metadata key                       | `packages/common/src/` and the descriptor compiler                                    |
-| Graph, visibility, scopes, or provider cache      | `packages/core/src/graph` and `packages/core/src/container`                           |
+| Graph, visibility, scopes, or provider cache      | `packages/core/src/scanner` and `packages/core/src/injector`                          |
 | Route lowering, parameter binding, or hooks       | `packages/platform-elysia/src/routing` and `packages/platform-core/src/routing`       |
 | Native plugin typing or module registration       | `packages/platform-elysia/src/plugins`                                                |
 | WebSocket gateway compilation or dispatch         | `packages/platform-core/src/websockets` and `packages/platform-elysia/src/websockets` |
@@ -126,72 +126,107 @@ explicitly; `aponia new` remains standard mode.
 
 ### Framework package source
 
-Published package internals use a domain-first layout. Each directory owns one
-conceptual boundary, and `src/index.ts` is the only public barrel:
+Published package internals use a domain-first, Nest-shaped layout. Each
+directory owns one conceptual boundary, implementation files carry the Nest kind
+suffix they implement, and `src/index.ts` is the only public barrel:
 
 ```text
 packages/<package>/src/
 |-- <domain>/
-|   |-- <capability>.ts
-|   `-- <capability>.types.ts
+|   |-- <name>.ts
+|   `-- <name>.interface.ts
+|-- <name>.module.ts
+|-- <name>.service.ts
+|-- <name>.constants.ts
 `-- index.ts
 ```
 
-Type-only contracts stay beside their owning implementation. Do not create a
-package-wide `types/` directory: it hides ownership and attracts unrelated
-contracts. Use `*.constants.ts` only for runtime values shared by an
-implementation and its type contracts.
+Type-only contracts live in `interfaces/<original-basename>.interface.ts` beside
+the domain that owns them, one file per original basename. Do not create a
+package-wide `types/` directory or merge several contracts into one interface
+file: it hides ownership and attracts unrelated contracts. A `*.types.ts` file
+remains only where the mirrored Nest package has one. Use `*.constants.ts` only
+for runtime values shared by an implementation and its type contracts.
+
+The workspace builds from `src/` while the surveyed official libraries build
+from `lib/`. The naming and folder shape are mirrored; the build root is not, and
+`docs/build/migrating-from-nest.md` records that deviation.
 
 The current package boundaries are:
 
-| Package                     | Source domains                                                                                           |
-| --------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `@aponiajs/common`          | controllers, decorators, errors, logging, modules, providers, routing, tokens                            |
-| `@aponiajs/core`            | container, graph                                                                                         |
-| `@aponiajs/cache`           | module, service, store                                                                                   |
-| `@aponiajs/compression`     | module, policy                                                                                           |
-| `@aponiajs/events`          | emitter, listener, module                                                                                |
-| `@aponiajs/http`            | client, module, security                                                                                 |
-| `@aponiajs/rate-limit`      | guard, module, service, store                                                                            |
-| `@aponiajs/security`        | module, policy                                                                                           |
-| `@aponiajs/session`         | module, policy, service, store                                                                           |
-| `@aponiajs/auth`            | authentication, authorization, jwt, module, password                                                     |
-| `@aponiajs/audit`           | module, service, store                                                                                   |
-| `@aponiajs/tenancy`         | guard, module, service                                                                                   |
-| `@aponiajs/platform-elysia` | application, controllers, modules, plugins, routing                                                      |
-| `@aponiajs/platform-core`   | application, artifacts, enhancers, errors, host, kernel, middleware, modules, pipes, routing, websockets |
-| `@aponiajs/platform-hono`   | application, host                                                                                        |
-| `@aponiajs/platform-h3`     | application, host                                                                                        |
-| `@aponiajs/cli`             | commands, generation                                                                                     |
-| `@aponiajs/cors`            | module, policy                                                                                           |
-| `@aponiajs/cron`            | module, scheduler                                                                                        |
-| `@aponiajs/devtools`        | buffer, endpoints, logging, module, requests, server                                                     |
-| `@aponiajs/graphql`         | endpoint, module                                                                                         |
-| `@aponiajs/testing`         | application, overrides                                                                                   |
-| `@aponiajs/openapi`         | document, module                                                                                         |
-| `@aponiajs/opentelemetry`   | module, tracing                                                                                          |
+| Package                     | Source domains                                                                                                                                                                                             |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@aponiajs/common`          | async-context, configuration, decorators, enhancers, exceptions, interfaces, mcp, microservices, modules, module-utils, pipes, providers, routing, services, tokens, websockets                            |
+| `@aponiajs/core`            | hooks, injector, interfaces, scanner, `constants.ts`                                                                                                                                                       |
+| `@aponiajs/compiler`        | borrow, interfaces, lifetime, shared, typestate                                                                                                                                                            |
+| `@aponiajs/cache`           | decorators, interceptors, interfaces                                                                                                                                                                       |
+| `@aponiajs/compression`     | interfaces, module, policy                                                                                                                                                                                 |
+| `@aponiajs/events`          | decorators, interfaces                                                                                                                                                                                     |
+| `@aponiajs/http`            | interfaces, security                                                                                                                                                                                       |
+| `@aponiajs/rate-limit`      | guard, module, service, store                                                                                                                                                                              |
+| `@aponiajs/security`        | interfaces, module, policy                                                                                                                                                                                 |
+| `@aponiajs/session`         | interfaces, middleware, module, policy, service, store                                                                                                                                                     |
+| `@aponiajs/auth`            | interfaces, password, plus `<name>.ts` kinds at the root                                                                                                                                                   |
+| `@aponiajs/audit`           | interfaces, module, service, store                                                                                                                                                                         |
+| `@aponiajs/tenancy`         | interfaces, plus `<name>.ts` kinds at the root                                                                                                                                                             |
+| `@aponiajs/platform-elysia` | adapters, application, compiler, configuration, controllers, exceptions, inspection, interfaces, microservices, middleware, modules, plugins, request-context, routing, websockets                         |
+| `@aponiajs/platform-core`   | application, artifacts, capabilities, configuration, enhancers, exceptions, health, host, interfaces, kernel, middleware, modules, pipes, platform, policy, request-context, routing, security, websockets |
+| `@aponiajs/platform-hono`   | application, host, routing                                                                                                                                                                                 |
+| `@aponiajs/platform-h3`     | application, host, routing                                                                                                                                                                                 |
+| `@aponiajs/cli`             | agent, bundler, commands, contracts, generation, interfaces, library                                                                                                                                       |
+| `@aponiajs/schematics`      | `lib/<schematic>/` collections                                                                                                                                                                             |
+| `@aponiajs/cors`            | interfaces, module, policy                                                                                                                                                                                 |
+| `@aponiajs/cron`            | decorators, interfaces, scheduler                                                                                                                                                                          |
+| `@aponiajs/devtools`        | buffer, endpoints, interfaces, logging, module, requests, server, source                                                                                                                                   |
+| `@aponiajs/graphql`         | endpoint, interfaces                                                                                                                                                                                       |
+| `@aponiajs/mcp`             | discovery, execution, interfaces, module, transport                                                                                                                                                        |
+| `@aponiajs/metrics`         | interfaces, registry, plus `<name>.ts` kinds at the root                                                                                                                                                   |
+| `@aponiajs/idempotency`     | interfaces, module, runtime, store                                                                                                                                                                         |
+| `@aponiajs/testing`         | application, conformance, interfaces, overrides                                                                                                                                                            |
+| `@aponiajs/openapi`         | document, interfaces                                                                                                                                                                                       |
+| `@aponiajs/opentelemetry`   | interfaces, module, tracing                                                                                                                                                                                |
+| `@aponiajs/queue`           | decorators, hosts, interfaces, outbox, processors, queue                                                                                                                                                   |
+| `@aponiajs/database`        | interfaces, migration, repository                                                                                                                                                                          |
+| `@aponiajs/microservices`   | brokers, client, envelope, interfaces, module, server, transport                                                                                                                                           |
+| `@aponiajs/store-redis`     | common, interfaces, stores                                                                                                                                                                                 |
+| `@aponiajs/view`            | engines, helper, interfaces, module                                                                                                                                                                        |
+| `@aponiajs/serverless`      | fetch, interfaces, lambda                                                                                                                                                                                  |
 
-Keep package tests at `tests/*.test.ts` and Vite+ conformance tests at
-`tests-vp/*.conformance.ts`; those flat locations are part of the configured
-test discovery. `scripts/source-layout.spec.ts` prevents source modules from
-drifting back into package roots and verifies that `*.types.ts` files remain
-type-only.
+Keep package tests at `src/**/*.spec.ts`, Vite+ conformance tests at
+`test/*.conformance.ts`, and a live-dependency lane at `test/*.e2e-spec.ts`;
+those locations are part of the configured test discovery.
+`scripts/source-layout.spec.ts` prevents source modules from drifting back into
+package roots and holds the Nest kind suffixes.
 
 ## File responsibilities
 
-| File suffix      | Responsibility                                                |
-| ---------------- | ------------------------------------------------------------- |
-| `.module.ts`     | Imports, providers, exports, and module identity              |
-| `.service.ts`    | Business rules and reusable application behavior              |
-| `.controller.ts` | Route ownership and transport-to-service delegation           |
-| `.gateway.ts`    | WebSocket message ownership and service delegation            |
-| `.model.ts`      | One-schema validation classes and their derived input types   |
-| `.tokens.ts`     | Named public injection tokens                                 |
-| `.types.ts`      | Type-only contracts colocated with their framework owner      |
-| `.constants.ts`  | Runtime constants shared across implementation/type modules   |
-| `.spec.ts`       | Unit tests colocated with the owning controller or service    |
-| `.e2e-spec.ts`   | End-to-end tests under the top-level `test` directory         |
-| `main.ts`        | Container creation, platform bootstrap, and process ownership |
+| File suffix       | Responsibility                                                |
+| ----------------- | ------------------------------------------------------------- |
+| `.module.ts`      | Imports, providers, exports, and module identity              |
+| `.service.ts`     | Business rules and reusable application behavior              |
+| `.controller.ts`  | Route ownership and transport-to-service delegation           |
+| `.gateway.ts`     | WebSocket message ownership and service delegation            |
+| `.guard.ts`       | A `CanActivate` implementation                                |
+| `.interceptor.ts` | An around-handler `Interceptor` implementation                |
+| `.pipe.ts`        | A `PipeTransform` implementation                              |
+| `.filter.ts`      | An exception filter with its `@Catch()` declaration           |
+| `.middleware.ts`  | An `AponiaMiddleware` implementation                          |
+| `.strategy.ts`    | A strategy class                                              |
+| `.decorator.ts`   | A decorator factory                                           |
+| `.dto.ts`         | A non-REST input contract                                     |
+| `.entity.ts`      | A persistence entity                                          |
+| `.repository.ts`  | A repository over one entity                                  |
+| `.provider.ts`    | A provider that is neither a service nor a repository         |
+| `.providers.ts`   | Provider-factory helpers                                      |
+| `.accessor.ts`    | A metadata/configuration reader                               |
+| `.explorer.ts`    | A declaration discoverer                                      |
+| `.model.ts`       | One-schema validation classes and their derived input types   |
+| `.interface.ts`   | A type-only contract under `interfaces/`                      |
+| `.constants.ts`   | Runtime constants shared across implementation/type modules   |
+| `.spec.ts`        | Unit tests colocated with the owning source                   |
+| `.conformance.ts` | Vite+ public-contract tests under `test/`                     |
+| `.e2e-spec.ts`    | End-to-end tests under a top-level `test` directory           |
+| `main.ts`         | Container creation, platform bootstrap, and process ownership |
 
 ## Naming
 

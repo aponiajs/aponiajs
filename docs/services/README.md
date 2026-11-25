@@ -14,6 +14,7 @@ enforces and the store or transport the application still owns.
 | [Multi-tenancy](./tenancy.md)                 | Request-scoped tenant resolution, the guard, and the identifier policy    |
 | [Jobs and the outbox](./queues.md)            | In-process jobs, retries, dead letters, and the transactional outbox      |
 | [Database](./database.md)                     | The Drizzle boundary, repositories, and ordered SQL migrations            |
+| [GraphQL](./graphql.md)                       | A neutral GraphQL endpoint, its validated path, and injected resolvers    |
 | [Metrics](./metrics.md)                       | The Prometheus registry, request instrumentation, and the scrape endpoint |
 | [Microservices](./microservices.md)           | Message patterns, CBOR client and server, and optional broker adapters    |
 | [Model Context Protocol (MCP)](./mcp.md)      | Endpoint policy, the official SDK server, and the session lifecycle       |

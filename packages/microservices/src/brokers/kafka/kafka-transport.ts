@@ -16,7 +16,7 @@ import type {
   TransportMessage,
   TransportSubscription,
   TransportSubscriptionHandle,
-} from "../../transport/transport.types.ts";
+} from "../../interfaces/transport.interface.ts";
 import type {
   KafkaEachMessagePayload,
   KafkaSdkClient,
@@ -25,7 +25,7 @@ import type {
   KafkaSdkModule,
   KafkaSdkProducer,
   KafkaTransportOptions,
-} from "./kafka-transport.types.ts";
+} from "../../interfaces/kafka-transport.interface.ts";
 
 const transportName = "kafka";
 const packageName = "kafkajs";

@@ -24,7 +24,7 @@ class LoginController {
 }
 
 @Module({
-  imports: [RateLimitModule.register({ limit: 60, windowMs: 60_000 })],
+  imports: [RateLimitModule.forRoot({ limit: 60, windowMs: 60_000 })],
   controllers: [LoginController],
 })
 export class AppModule {}
@@ -43,7 +43,7 @@ client can spoof those. Supply a `key` function when the deployment has a truste
 proxy that establishes the client address:
 
 ```ts
-RateLimitModule.register({
+RateLimitModule.forRoot({
   key: (context) => {
     const request = context.switchToHttp().getRequest();
     return request.headers["x-real-ip"] ?? "unknown";
@@ -75,8 +75,13 @@ contract.
 | `maxKeys`  | `10_000` | Memory-store bucket cap.        |
 | `store`    | memory   | A custom `RateLimitStore`.      |
 | `key`      | route id | Default bucket-key function.    |
+| `isGlobal` | `false`  | Makes the exports global.       |
 
-An invalid option fails the boot with `INVALID_RATE_LIMIT` and an issue list.
+An invalid option fails the registration with `INVALID_RATE_LIMIT` and an issue
+list. The registration is a `ConfigurableModuleBuilder` definition: it provides
+and exports `MODULE_OPTIONS_TOKEN` (`RATE_LIMIT_MODULE_OPTIONS`), accepts the
+three asynchronous shapes through `forRootAsync`, and keeps
+`register`/`registerAsync` as deprecated aliases.
 
 ## Bootstrap
 

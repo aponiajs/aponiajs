@@ -43,7 +43,7 @@ class UsersRepository {
 
 @Module({
   imports: [
-    DatabaseModule.register({
+    DatabaseModule.forRoot({
       database,
       migrations: { files: await loadMigrations("./migrations") },
     }),
@@ -132,6 +132,15 @@ a positive integer and an offset a non-negative one.
 Joins, relations, and dialect-specific features stay in the application's own
 Drizzle queries through `service.client`. The package does not transpile or plan
 DDL; drizzle-kit or hand-written SQL owns that.
+
+## Registration contract
+
+`DatabaseModule.forRoot` is a `ConfigurableModuleBuilder` definition: it provides
+and exports `MODULE_OPTIONS_TOKEN` (`DATABASE_MODULE_OPTIONS`), accepts
+`isGlobal` as a definition-shaping extra and the three asynchronous shapes
+through `forRootAsync`, and keeps `register`/`registerAsync` as deprecated
+aliases. Both forms validate the database, every migration file, the store, and
+the lock before the boot proceeds, reporting every issue at once.
 
 ## Documentation
 

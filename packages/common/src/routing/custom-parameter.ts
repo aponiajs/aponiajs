@@ -1,8 +1,8 @@
 import "reflect-metadata";
-import type { PipeType } from "../pipes/pipe.types.ts";
-import type { CustomParamFactory } from "./custom-parameter.types.ts";
+import type { PipeType } from "../interfaces/pipe.interface.ts";
+import type { CustomParamFactory } from "../interfaces/custom-parameter.interface.ts";
 import { routeParametersMetadataKey } from "./route-parameters.ts";
-import type { RouteParameterMetadata } from "./route-parameters.types.ts";
+import type { RouteParameterMetadata } from "../interfaces/route-parameters.interface.ts";
 
 /**
  * Creates a custom route parameter decorator backed by a factory function.

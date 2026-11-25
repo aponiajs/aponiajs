@@ -6,68 +6,61 @@ specific to this package.
 ## What this package owns
 
 The module an application imports to serve a GraphQL endpoint, and the
-validated configuration the mount path is read from. It wraps
-[`@elysia/graphql-yoga`](https://www.npmjs.com/package/@elysia/graphql-yoga),
-which wraps Yoga and supplies the schema execution, the resolver results, and
-the error shapes. It is a leaf — nothing in the framework depends on it.
+validated configuration the mount path is read from. It wraps [`graphql-yoga`](https://www.npmjs.com/package/graphql-yoga), which
+supplies the schema execution, the resolver results, and the error shapes, and
+serves it through a neutral `HttpPolicy`. It is a leaf — nothing in the
+framework depends on it.
 
-| Domain      | Owns                                                                                                          |
-| ----------- | ------------------------------------------------------------------------------------------------------------- |
-| `module/`   | `GraphQLModule.register`, `GraphQLModuleOptions`, the `DynamicModule` one registration lowers into            |
-| `endpoint/` | the plugin the registration mounts, the guard that reads a configuration value into a path, and the contracts |
+| Domain              | Owns                                                                                                  |
+| ------------------- | ----------------------------------------------------------------------------------------------------- |
+| `graphql.module.ts` | `GraphQLModule.forRoot`, `GraphQLModuleOptions`, and the `DynamicModule` one registration lowers into |
+| `endpoint/`         | the `HttpPolicy` endpoint and the guard that reads a configuration value into a path                  |
+| `interfaces/`       | the module and endpoint contracts                                                                     |
 
-`src/index.ts` is the only public barrel. Keep `*.types.ts` colocated with the
-runtime boundary it describes.
+`src/index.ts` is the only public barrel. Type-only contracts live in
+`interfaces/<name>.interface.ts`.
 
 ## Invariants
 
 - **This package serves no schema, and no claim in it may imply one.** The
-  fields, the resolver results, and the error shapes are
-  `@elysia/graphql-yoga`'s. What is contributed is a module a registration
-  belongs in and a validated configuration the mount path comes from. A feature
-  that would make this package more than an adapter — a decorator that derives
-  a schema from controllers, a code-first builder, a mapping between Aponia
-  routes and GraphQL fields — is a different package, and the answer to
-  "should the adapter do this?" is no even when the answer would be convenient.
-  The README leads with module registration and keeps the schema boundary and
-  raw-plugin alternative in its final Native escape hatch section: a package
-  that oversells a thin adapter is the defect this repository cares most about.
-- **The configuration carries the path only, and the module sets the pair the
-  raw plugin needs.** The wrapped plugin needs `path` for the Elysia route and
-  yoga's `graphqlEndpoint` for the handler, defaulting independently; setting
-  only one answers `404` at the declared path. `GraphQLConfiguration` has one
-  field, and `buildGraphQLPlugin` sets both from it, which is what makes a
-  non-default endpoint answer. `tests/graphql-module.test.ts` boots both sides
-  of the boundary — the module answering `200` where the raw plugin with only
-  `path` set answers `404` — so a change that drops one half of the pair has
-  to change the README with it.
-- **The schema options are derived from the plugin's own config, not restated.**
-  `GraphQLSchemaOptions` is a distributive `Omit` of the `yoga` parameter over
-  `"path" | "graphqlEndpoint"`, so a release of the plugin that adds a yoga
-  option is accepted here without this package changing, and the two fields the
-  configuration owns are removed from it. The `Omit` is distributive because
-  the config is a union — one arm carries `typeDefs` + `resolvers`, the other
+  fields, the resolver results, and the error shapes are GraphQL Yoga's. What is
+  contributed is a module a registration belongs in, a validated configuration
+  the mount path comes from, and the neutral `HttpPolicy` that delegates to
+  Yoga's fetch handler. A feature that would make this package more than an
+  adapter — a decorator that derives a schema from controllers, a code-first
+  builder, a mapping between Aponia routes and GraphQL fields — is a different
+  package, and the answer to "should the adapter do this?" is no even when the
+  answer would be convenient. The README leads with module registration and
+  keeps the schema boundary and raw-plugin alternative in its final Native
+  escape hatch section.
+- **The configuration carries the path only, and the policy sets the pair Yoga
+  needs.** Yoga needs `graphqlEndpoint` for the handler, and the policy matches
+  the same declared path, defaulting independently in a raw mount; setting only
+  one answers `404` at the declared path. `GraphQLConfiguration` has one field,
+  and `buildGraphQLPolicy` sets the policy path and `graphqlEndpoint` from it,
+  which is what makes a non-default endpoint answer.
+  `src/graphql-module.spec.ts` boots both sides of the boundary — the module
+  answering `200` where a raw mount with only one half set answers `404` — so a
+  change that drops one half of the pair has to change the README with it.
+- **The schema options are derived from Yoga's own config, not restated.**
+  `GraphQLSchemaOptions` is a distributive `Omit` of `createYoga`'s parameter
+  over `"path" | "graphqlEndpoint"`, so a release of Yoga that adds an option is
+  accepted here without this package changing, and the two fields the
+  configuration owns are removed from it. The `Omit` is distributive because the
+  config is a union — one arm carries `typeDefs` + `resolvers`, the other
   carries `schema` — and collapsing it would erase which fields a given arm
-  requires. `tests-vp/graphql.conformance.ts` pins that `path` and
-  `graphqlEndpoint` are absent and that `typeDefs` is present, so the widening
-  fails `bun run check` instead.
-- **The endpoint mounts through `use()`, outside the compiled route table, and
-  both halves are pinned.** No guard, interceptor, or exception filter reaches
-  it, and a controller declaring the same `(method, path)` shadows it silently
-  with no `DUPLICATE_ROUTE` — because `yoga()` returns a synchronous function,
-  the plugin's routes are already in the table when the controller pass runs.
-  The Bun lane pins the guard half and the shadowing half (three routes, the
-  controller's answer), so a change that routes enhancers to the endpoint has
-  to change the README with it.
-- **One registration per application is the supported shape, and both halves
-  are pinned.** Two registrations sharing a key are `DUPLICATE_MODULE`
-  (`PluginModule[graphql]`); two under distinct keys both mount — four routes,
-  two per plugin — even when they resolve the same path, because the plugin's
-  factory is **unnamed** and Elysia does not deduplicate it, unlike the named
-  cors and openapi plugins that collapse. Both modules export the same
-  configuration token, so reading it back raises `AMBIGUOUS_PROVIDER`. The Bun
-  lane pins the four-route mount and the ambiguity, so a change that lifts the
-  limitation has to change the README with it.
+  requires. `test/graphql.conformance.ts` pins that `path` and `graphqlEndpoint`
+  are absent and that `typeDefs` is present, so the widening fails
+  `bun run check` instead.
+- **The endpoint is a request policy, not a mounted route.** It answers the
+  declared path before routing, so it runs on every platform and every method;
+  a controller at the same path is reached only for paths the policy declines.
+  No `DUPLICATE_ROUTE` is raised, and the Bun lane pins the precedence.
+- **One registration per application is the supported shape.** Two
+  registrations sharing a key are `DUPLICATE_MODULE`; two under distinct keys
+  each contribute a policy, and the first matching policy answers. Both modules
+  export the same configuration token, so reading it back raises
+  `AMBIGUOUS_PROVIDER`. The Bun lane pins the ambiguity.
 - **Every refusal of the configuration is `AponiaError` with
   `INVALID_CONFIGURATION_VALUE` and `{ configuration, issues }`.** The shape a
   schema refusal already carries, so a caller reads one contract whichever half
@@ -81,13 +74,11 @@ runtime boundary it describes.
   application that wrote it. `source` exists because `provideConfiguration`
   accepts it: a test validates a literal rather than mutating the process
   environment, and no case in either lane touches `process.env`.
-- **No plugin value can be exported beside the module.** `@aponiajs/devtools`
-  exports `devtoolsPlugin`, because its plugin is built from options fixed in
-  source. This one's plugin is built from a value the container resolves, so it
-  exists only inside a boot — which is also why the module uses
-  `PluginModule.registerAsync` rather than `PluginModule.register`. An
-  application that needs the descriptor artifact untouched mounts the raw plugin
-  through `AponiaApplicationOptions.plugins` and gives up the module.
+- **No endpoint value can be exported beside the module.** The endpoint is built
+  from a value the container resolves, so it exists only inside a boot. An
+  application that needs the descriptor artifact untouched mounts the raw
+  `@elysia/graphql-yoga` plugin through `AponiaApplicationOptions.plugins` and
+  gives up the module and its validated path.
 - **Resolvers reach providers through `useFactory` injection.** `imports`
   lists the modules whose exports the factory may inject, and `inject` names
   the tokens it receives, so a resolver closes over a service the container
@@ -98,7 +89,7 @@ runtime boundary it describes.
 
 ## Tests
 
-`tests/*.test.ts` under Bun, `tests-vp/*.conformance.ts` under Vite+. Both lanes
+`src/**/*.spec.ts` under Bun, `test/*.conformance.ts` under Vite+. Both lanes
 boot real applications through `AponiaFactory.create` and read real responses
 through `application.handle(new Request(...))`, because what this package
 promises is an answered query and nothing less than one proves it. No case
@@ -123,15 +114,14 @@ The Bun lane owns:
 6. a schema refusal, a value only a runtime can produce, and a value that
    states no endpoint, each failing the boot with the code and the issue list;
 7. the double-mount behaviour, both profiles — the same key is
-   `DUPLICATE_MODULE` (`PluginModule[graphql]`), distinct keys mount twice
-   (four routes, counted in the native route table and in the inspected graph)
-   and read back as `AMBIGUOUS_PROVIDER`;
-8. the shadowing profile: a controller at the same method and path registers
-   after the synchronous plugin and answers, with no `DUPLICATE_ROUTE` and
-   three routes in the table;
+   `DUPLICATE_MODULE` (`GraphQLModule[graphql]`), distinct keys each contribute
+   a policy, the first matching policy answers, and the shared token reads back
+   as `AMBIGUOUS_PROVIDER`;
+8. the shadowing profile: a controller at the same method and path is reached
+   only for paths the policy declines, with no `DUPLICATE_ROUTE`;
 9. the barrel holding a single value export, so a second export cannot arrive
    quietly;
-10. `tests/generated-descriptors.test.ts` pins the `aponia build` consequence: a
+10. `src/generated-descriptors.spec.ts` pins the `aponia build` consequence: a
     module whose `imports` name a registration is declined, the artifact holds
     nothing for it, and the application boots and answers anyway because the
     platform lowers the root from its decorators.

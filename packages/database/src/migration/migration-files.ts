@@ -1,6 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { MigrationFile } from "./migration.types.ts";
+import type { MigrationFile } from "../interfaces/migration.interface.ts";
 
 /** Reads every `.sql` file in one directory, ordered by file name. */
 export async function loadMigrations(directory: string): Promise<readonly MigrationFile[]> {

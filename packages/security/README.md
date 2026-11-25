@@ -15,7 +15,7 @@ import { SecurityModule } from "@aponiajs/security";
 
 @Module({
   imports: [
-    SecurityModule.register({
+    SecurityModule.forRoot({
       csrf: { secret: process.env.CSRF_SECRET! },
     }),
   ],
@@ -40,7 +40,7 @@ for cookie-based sessions.
 | `cross-origin-resource-policy` | `same-origin`                                                                                        |
 
 Override any field, or set it to `false` to omit it. `headers: false` disables
-the header plugin. The headers are applied to matched routes and missing routes.
+the header policy. The headers are applied to matched routes and missing routes.
 
 ### CSP nonce
 
@@ -48,7 +48,7 @@ A `{nonce}` placeholder in the CSP is replaced with a fresh per-request nonce,
 and the handler reads the same value through `getCspNonce(request)`:
 
 ```ts
-SecurityModule.register({
+SecurityModule.forRoot({
   headers: { contentSecurityPolicy: "default-src 'self'; script-src 'nonce-{nonce}'" },
 });
 
@@ -68,7 +68,7 @@ the cookie receives one; every unsafe request must echo the same value in the
 configured header.
 
 ```ts
-SecurityModule.register({
+SecurityModule.forRoot({
   csrf: {
     secret: process.env.CSRF_SECRET!,
     cookieName: "aponia.csrf",

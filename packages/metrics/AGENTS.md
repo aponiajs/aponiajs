@@ -5,24 +5,28 @@ specific to this package.
 
 ## What this package owns
 
-The Prometheus registry, the scrape endpoint mounted as a native plugin, the
-request instrumentation, and the exception filter that records failed statuses.
-It is a leaf: nothing in the framework depends on it.
+The Prometheus registry, the scrape controller served on the application's own
+route table, the request instrumentation, and the exception filter that records
+failed statuses. It is a leaf: nothing in the framework depends on it.
 
-| Domain      | Owns                                                       |
-| ----------- | ---------------------------------------------------------- |
-| `registry/` | `MetricsRegistry`, metric kinds, validation, and rendering |
-| `runtime/`  | `metricsPlugin`, the instrumentation hooks, and the filter |
-| `module/`   | `MetricsModule.register` and the composed plugin module    |
+| Domain                       | Owns                                                               |
+| ---------------------------- | ------------------------------------------------------------------ |
+| `registry/`                  | `MetricsRegistry`, metric kinds, validation, and rendering         |
+| `metrics.controller.ts`      | The scrape controller mounted on the application's own route table |
+| `metrics-instrumentation.ts` | `createMetricsInstrumentation` and the request policy              |
+| `metrics.filter.ts`          | `MetricsExceptionFilter`, which records failed statuses            |
+| `metrics.module.ts`          | `MetricsModule.forRoot` and the composed registration              |
+| `metrics.constants.ts`       | Tokens and defaults the registration provides                      |
+| `interfaces/`                | The registry, option, and payload contracts                        |
 
-`src/index.ts` is the only public barrel. Keep `*.types.ts` beside the runtime
-that reads it.
+`src/index.ts` is the only public barrel. Type-only contracts live in
+`interfaces/<name>.interface.ts`.
 
 ## Invariants
 
 - **The registry is bounded.** A new label set past `maxSeriesPerMetric` is
   dropped; never let a scrape or a label grow memory without a cap.
-- **Labels use the route template.** The plugin and the exception filter read
+- **Labels use the route template.** The instrumentation and the exception filter read
   `context.route` before `context.path`, so a dynamic route reports `/users/:id`
   and not one series per id. `path` is the fallback for a literal matched route;
   when neither is present the label is `unmatched`, never the raw request URL.
@@ -31,7 +35,7 @@ that reads it.
   unauthorized scrape.
 - **The scrape path is excluded from instrumentation.** Recording the scrape
   itself would make every scrape change the numbers it reports.
-- **Statuses come from the response, then the filter.** The plugin reads the
+- **Statuses come from the response, then the filter.** The instrumentation reads the
   status a handler returned; the global `MetricsExceptionFilter` records the
   statuses of exceptions and declines them so the application's error path still
   answers.
@@ -46,6 +50,6 @@ that reads it.
 
 ## Tests
 
-`tests/*.test.ts` under Bun, `tests-vp/*.conformance.ts` under Vite+. The Bun
+`src/**/*.spec.ts` under Bun, `test/*.conformance.ts` under Vite+. The Bun
 lane boots a real application through `AponiaFactory.create` and asserts the
 scrape body after real requests, including a `201`, a `404`, and a `500`.

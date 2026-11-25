@@ -1,6 +1,6 @@
-import type { ComponentNames } from "./component-names.types.ts";
+import type { ComponentNames } from "../interfaces/component-names.interface.ts";
 import { classSuffix } from "./schematic-definitions.ts";
-import type { ComponentSchematic } from "./schematic.types.ts";
+import type { ComponentSchematic } from "../interfaces/schematic.interface.ts";
 
 export function renderComponent(schematic: ComponentSchematic, names: ComponentNames): string {
   const className = `${names.className}${classSuffix(schematic)}`;

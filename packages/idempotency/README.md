@@ -12,7 +12,7 @@ bun add @aponiajs/idempotency@alpha
 import { Module } from "@aponiajs/common";
 import { IdempotencyModule } from "@aponiajs/idempotency";
 
-@Module({ imports: [IdempotencyModule.register()] })
+@Module({ imports: [IdempotencyModule.forRoot()] })
 export class AppModule {}
 ```
 
@@ -35,12 +35,12 @@ refused with `409` Problem Details.
 | `maxEntries` | 1000                         | The default store's bound.                       |
 | `header`     | `idempotency-key`            | The request header carrying the key.             |
 | `requireKey` | `false`                      | Refuse a covered request without a key.          |
-| `methods`    | `POST`, `PATCH`, `PUT`       | The methods the plugin covers.                   |
+| `methods`    | `POST`, `PATCH`, `PUT`       | The methods the policy covers.                   |
 | `store`      | bounded process-local memory | A shared or durable implementation.              |
 | `onError`    | silence                      | Called when the store cannot read or write.      |
 | `scope`      | credential headers           | Namespaces a key by caller, e.g. subject/tenant. |
 
-When `scope` is omitted, the plugin hashes the request's credential-bearing
+When `scope` is omitted, the policy hashes the request's credential-bearing
 headers (`authorization`, `cookie`, `x-api-key`, `x-tenant-id`, `x-user-id`)
 into the key. Two callers with different credentials therefore cannot replay
 each other's answer. Supply `scope` when the application has a stable subject

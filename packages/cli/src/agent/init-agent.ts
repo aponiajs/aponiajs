@@ -1,6 +1,6 @@
 import { lstat, mkdir, symlink } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
-import type { AgentClient } from "../commands/command.types.ts";
+import type { AgentClient } from "../interfaces/command.interface.ts";
 import { agentGuideAliases } from "../generation/file-writer.ts";
 
 /** Options `aponia agent init` accepts. */

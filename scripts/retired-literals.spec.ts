@@ -201,7 +201,7 @@ const retiredLiterals: readonly RetiredLiteral[] = [
     literal: "ElysiaStatus",
     replacedBy: "ResponseStatus",
     match: "identifier",
-    except: ["packages/platform-elysia/src/errors/default-exception-filter.ts"],
+    except: ["packages/platform-elysia/src/exceptions/default-exception.filter.ts"],
   },
   // devtools: the `/aot` and `/flow` families renamed to say what they report.
   { literal: "AponiaAotController", replacedBy: "AponiaBuildController", match: "identifier" },
@@ -261,9 +261,7 @@ const publishedSurfaces = [
   "packages/*/llms.txt",
   "packages/*/AGENTS.md",
   "packages/*/src/**/*.ts",
-  "packages/*/tests/**/*.ts",
-  "packages/*/tests-vp/**/*.ts",
-  "packages/*/e2e/**/*.ts",
+  "packages/*/test/**/*.ts",
   "packages/cli/templates/**",
   "scripts/**/*.ts",
 ] as const;
@@ -296,14 +294,14 @@ const requiredFiles: readonly string[] = [
   "docs/build/logging.md",
   "docs/learn/README.md",
   "examples/basic/src/main.ts",
-  "packages/cli/e2e/generated-application.e2e.ts",
+  "packages/cli/test/generated-application.e2e-spec.ts",
   "packages/cli/templates/application/src/main.ts.tmpl",
-  "packages/common/src/logging/log-value.ts",
+  "packages/common/src/services/log-value.ts",
   "packages/devtools/AGENTS.md",
   "packages/devtools/README.md",
   "packages/devtools/llms.txt",
-  "packages/devtools/tests/one-line.test.ts",
-  "packages/devtools/tests-vp/devtools.conformance.ts",
+  "packages/devtools/src/logging/one-line.spec.ts",
+  "packages/devtools/test/devtools.conformance.ts",
   "scripts/verify-release.ts",
 ];
 

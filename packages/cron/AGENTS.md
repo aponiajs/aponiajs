@@ -12,38 +12,55 @@ configuration into jobs. The engine is
 dependency. It is a leaf — nothing in the framework depends on it — and its
 registration is runtime-neutral, so it runs on every Aponia platform.
 
-| Domain       | Owns                                                                                                                                                             |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `module/`    | `CronModule.register`, `CronModuleOptions`, the `DynamicModule` one registration lowers into                                                                     |
-| `scheduler/` | `CronScheduler`, the job contract (`CronJob`, `CronJobContext`, `CronJobOptions`, `CronConfiguration`), and the guard that reads a configuration value into jobs |
+| Domain                                        | Owns                                                                                                                                        |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cron.module.ts`, `cron.module-definition.ts` | `CronModule.forRoot`, `CronModuleOptions`, and the `DynamicModule` one registration lowers into                                             |
+| `cron.constants.ts`                           | The tokens and defaults the registration provides                                                                                           |
+| `decorators/`                                 | `@Cron`, `@Interval`, and `@Timeout` metadata                                                                                               |
+| `scheduler/`                                  | `CronScheduler`, `SchedulerRegistry`, `SchedulerOrchestrator`, `ScheduleExplorer`, and the guard that reads a configuration value into jobs |
+| `interfaces/`                                 | the module, schedule, and scheduler contracts                                                                                               |
 
-`src/index.ts` is the only public barrel. Keep `*.types.ts` colocated with the
-runtime boundary it describes.
+`src/index.ts` is the only public barrel; `schedule.constants.ts` holds the
+metadata keys and `SchedulerType` the decorators record.
 
 ## Invariants
 
-- **This package adds no scheduling features, and no claim in it may imply
-  one.** The engine is croner's. What is contributed is a module a registration
-  belongs in and a validated configuration the jobs come from. A feature that
-  would make this package more than a module — a retry, a persisted run, a lock
-  across processes, a queue — is a different package, and the answer to "should
-  the scheduler do this?" is no even when the answer would be convenient. The
-  README states that boundary and the raw-engine alternative in its final Native
-  escape hatch section; keep it there, because a reader who assumes exactly-once
-  loses data, and no option here makes that assumption true.
-- **The registration is an ordinary `DynamicModule`.** `CronModule.register`
+- **This package contributes scheduling, and it does so by mirroring
+  `@nestjs/schedule`.** The engine remains croner's: `@Cron`, `@Interval`, and
+  `@Timeout` record metadata, and `ScheduleExplorer` mounts them on
+  `SchedulerOrchestrator`. `SchedulerRegistry` exposes the official methods
+  (`getCronJob`, `addInterval`, `deleteTimeout`, and the rest). What the package
+  still does not add is a job queue: there is no retry, no persisted run, no
+  cross-process lock, and no exactly-once delivery. The README states that
+  boundary and the raw-engine alternative in its final Native escape hatch
+  section; keep it there, because a reader who assumes exactly-once loses data,
+  and no option here makes that assumption true.
+- **Decorator jobs are named, registered, and stopped per boot.** A `@Cron`
+  method is collected at `onModuleInit`, mounted at `onApplicationBootstrap`,
+  and stopped at `beforeApplicationShutdown`; `@Interval`/`@Timeout` use the
+  injected `SCHEDULE_TIMER`, which a test replaces to stay deterministic. The
+  module options gate each kind (`cronJobs`, `intervals`, `timeouts`, default
+  true), matching `@nestjs/schedule`.
+- **The registration is an ordinary `DynamicModule`.** `CronModule.forRoot`
   returns a frozen module whose `module` is the class itself, with a stable
   `id` (`CronModule[<key>]`) and `instanceId` derived from `key`. There is no
   native plugin and no platform import: a scheduler is providers and a
   lifecycle hook, so it runs wherever the container does. `aponia build` still
   declines the module that imports the registration — a `DynamicModule` is not a
   declaration — and the application boots from decorators.
+- **The definition is a `ConfigurableModuleBuilder` registration.** `key` and
+  `isGlobal` (default true, as the official module is always global) are the
+  definition-shaping extras, `MODULE_OPTIONS_TOKEN` is the
+  `SCHEDULE_MODULE_OPTIONS` token, and `forRoot` is the only registration:
+  `registerAsync` is refused because the module provides the configuration token
+  it schedules, which a factory result cannot name before the registration is
+  built. `register` remains as the deprecated alias.
 - **The scheduler is a provider, not a module-level value.** A registration is
   one `DynamicModule` and a module class is declared once, so two applications
   built from one module class are two boots over one registration. Handles held
   in a closure or a module variable would be one application's jobs reachable
   from another's `close()`. The provider factory runs once per container, which
-  is what makes each boot's handles its own; `tests/cron-module.test.ts` pins it
+  is what makes each boot's handles its own; `src/cron-module.spec.ts` pins it
   by closing one of two applications built from one class and asserting the
   other's jobs are still scheduled.
 - **`start()` runs once, in the provider factory.** The factory reads the
@@ -54,7 +71,7 @@ runtime boundary it describes.
 - **croner is given a copy of the options, never the declaration.** croner
   fills its own defaults into the object it receives; a job's context must carry
   the options the job declared, or it observes values nobody wrote.
-  `tests/cron-module.test.ts` pins the absence of `catch`, `interval`,
+  `src/cron-module.spec.ts` pins the absence of `catch`, `interval`,
   `legacyMode`, `paused`, and `unref` in a job's context.
 - **A job name is this package's, not croner's.** croner keeps a process-global
   registry of named jobs and refuses a second live job with the same name, which
@@ -82,7 +99,7 @@ runtime boundary it describes.
   release after it is written, and the failure is silent: the option exists, the
   type does not, and a caller cannot pass it. Deriving the type means a
   dependency that adds, renames, or drops an option moves this one, and
-  `tests-vp/cron.conformance.ts` names the option set so the move is visible
+  `test/cron.conformance.ts` names the option set so the move is visible
   rather than absorbed.
 - **`CronJob.run` stays a method declaration rather than a property holding a
   function type.** Under `strictFunctionTypes` a property is checked
@@ -128,7 +145,7 @@ runtime boundary it describes.
 
 ## Tests
 
-`tests/*.test.ts` under Bun, `tests-vp/*.conformance.ts` under Vite+. Both lanes
+`src/**/*.spec.ts` under Bun, `test/*.conformance.ts` under Vite+. Both lanes
 run real boots through `AponiaFactory.create` and assert what a scheduler does,
 because timing is the whole subject: a case that only compiled the contract would
 not notice a scheduler started with no job at all.

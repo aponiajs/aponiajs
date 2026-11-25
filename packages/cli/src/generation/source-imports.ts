@@ -1,6 +1,10 @@
 import { dirname, resolve } from "node:path";
 import { Node, Project, type Identifier, type SourceFile } from "ts-morph";
-import type { SourceImport, SourceImports, SourceImportsReading } from "./source-imports.types.ts";
+import type {
+  SourceImport,
+  SourceImports,
+  SourceImportsReading,
+} from "../interfaces/source-imports.interface.ts";
 
 /**
  * Reads the names a build-time analysis can substitute into generated source.

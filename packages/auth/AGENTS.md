@@ -9,16 +9,19 @@ The auth module, JWT service, bearer guard, authorization guards, request user
 state, refresh-token rotation, access-token revocation, and password hashing.
 It is a leaf: nothing in the framework depends on it.
 
-| Domain            | Owns                                                  |
-| ----------------- | ----------------------------------------------------- |
-| `module/`         | `AuthModule.register`, options, and validation        |
-| `jwt/`            | Signing and verification through `jose`               |
-| `authentication/` | Bearer guard, current user, and request-context token |
-| `authorization/`  | Role/permission decorators and guards                 |
-| `password/`       | Bun password hashing and verification                 |
-| `oidc/`           | Discovery, key-set verification, and OIDC options     |
-| `refresh/`        | Opaque refresh tokens, rotation families, stores      |
-| `revocation/`     | Revoked access-token `jti` set and store              |
+| Domain                                                      | Owns                                                                  |
+| ----------------------------------------------------------- | --------------------------------------------------------------------- |
+| `auth.module.ts`, `auth.module-definition.ts`               | `AuthModule.forRoot`, options, and validation                         |
+| `jwt.service.ts`                                            | Signing and verification through `jose`                               |
+| `auth.guard.ts`, `auth.service.ts`, `claims.ts`             | The bearer guard, request user/session state, and claims              |
+| `current-user.decorator.ts`, `authorization.decorator.ts`   | `@CurrentUser()`, `@CurrentSession()`, and role/permission decorators |
+| `permissions.guard.ts`                                      | The authorization guard                                               |
+| `oidc.service.ts`                                           | Discovery, key-set verification, and OIDC options                     |
+| `refresh-token.service.ts`, `memory-refresh-token.store.ts` | Opaque refresh tokens, rotation families, and the built-in store      |
+| `revocation.service.ts`, `memory-revocation.store.ts`       | The revoked access-token `jti` set and its built-in store             |
+| `password/password-hasher.service.ts`                       | Bun password hashing and verification                                 |
+| `auth.constants.ts`                                         | Tokens and defaults the registration and guard read                   |
+| `interfaces/`                                               | The auth, OIDC, refresh, revocation, and verifier contracts           |
 
 `src/index.ts` is the only public barrel.
 
@@ -31,6 +34,19 @@ It is a leaf: nothing in the framework depends on it.
   shared per normalized header, so `TenantModule` may import it too. Do not add a
   second request-context header: one `RequestContextService` token cannot
   disambiguate two storages.
+- **The registration is a `ConfigurableModuleBuilder` definition with one arm.**
+  `MODULE_OPTIONS_TOKEN` is the `AUTH_MODULE_OPTIONS` token, and `isGlobal` and
+  `globalGuard` are the definition-shaping extras, both defaulting to true as
+  `@nestjs/authentication` does. `globalGuard: true` adds
+  `{ provide: APP_GUARD, useValue: AuthGuard }`; `globalGuard: false` leaves the
+  guard to each route. `register` remains the deprecated alias.
+  `registerAsync` is refused: the `jwt`/`oidc` arm decides which verifier
+  provider exists, and a container factory cannot change a provider list.
+  Resolve an asynchronous configuration before registering.
+- **`@CurrentUser()` and `@CurrentSession()` read the route context.** `AuthGuard`
+  writes `user` and a frozen `{ user, token, claims }` session onto the
+  `RouteContext`; both decorators answer `null` on a `@Public()` route and
+  outside a request. Do not read the request directly in application code.
 - **Tokens are verified with issuer/audience/algorithm checks.** A token that
   names a `kid` is verified only with that key; a token with no `kid` is tried
   against the default secret and then every rotation key. Never accept a
@@ -66,7 +82,7 @@ It is a leaf: nothing in the framework depends on it.
 
 ## Tests
 
-`tests/*.test.ts` under Bun, `tests-vp/*.conformance.ts` under Vite+. The Bun
+`src/**/*.spec.ts` under Bun, `test/*.conformance.ts` under Vite+. The Bun
 lane boots a real application through `AponiaFactory.create`, signs tokens with
 `JwtService`, and exercises public, protected, role, permission, and invalid
 token paths. Password tests are Bun-only because `Bun.password` is not a Node API.

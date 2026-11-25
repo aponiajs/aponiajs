@@ -1,5 +1,9 @@
 import { resolveForwardRef } from "../modules/forward-ref.ts";
-import type { InjectionDependency, InjectionToken, OptionalInjection } from "./token.types.ts";
+import type {
+  InjectionDependency,
+  InjectionToken,
+  OptionalInjection,
+} from "../interfaces/token.interface.ts";
 
 /**
  * Mints an explicit injection token for a value no class names.

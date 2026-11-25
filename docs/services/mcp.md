@@ -65,6 +65,8 @@ Every call runs through the same enhancer model as a route.
 
 `ExecutionContext.getType()` answers `"mcp"`. `McpExecutionContext.create(context)`
 reads `getInput()`, `getKind()`, `getName()`, `getRequest()`, and `getMcpContext()`.
+`switchToWs()` has no WebSocket host to return and throws `AponiaError` with
+`UNSUPPORTED_ARGUMENT_HOST`; read MCP arguments through `switchToRpc()`.
 
 HTTP globals passed to `AponiaFactory.create` are not inherited by MCP calls.
 Pass the same enhancer classes to `McpModule.forRoot` when they should run.
@@ -93,10 +95,19 @@ await listenMcpStdio(application);
 stdout carries protocol frames only. `serveMcpStdio` returns the SDK handle when
 an application owns the loop itself.
 
+## How it is neutral
+
+The HTTP endpoint is a controller and a request policy on the application's own
+route table, and the stdio entrypoints read the same container graph, so the
+registration works on `@aponiajs/platform-elysia`, `@aponiajs/platform-hono`,
+`@aponiajs/platform-h3`, and the serverless Web Fetch handler. No source file
+imports a platform package; the transport adapters under `transport/` are the
+framework-neutral SDK wiring, not a per-platform mount.
+
 ## Verification
 
 ```bash
-bun test packages/mcp/tests
+bun test packages/mcp
 bun test examples/mcp/test/mcp.e2e-spec.ts
 bun run check
 ```

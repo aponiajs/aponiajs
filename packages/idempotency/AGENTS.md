@@ -9,11 +9,12 @@ The request plugin that records and replays a mutating request against its
 idempotency key, the bounded default store, and the replay contract. It is a
 leaf: nothing in the framework depends on it.
 
-| Domain     | Owns                                                           |
-| ---------- | -------------------------------------------------------------- |
-| `module/`  | `IdempotencyModule.register` and the resolved option contract  |
-| `runtime/` | The global plugin, fingerprinting, replay, and conflict checks |
-| `store/`   | `IdempotencyStore`, the stored shape, and the memory store     |
+| Domain        | Owns                                                                                   |
+| ------------- | -------------------------------------------------------------------------------------- |
+| `module/`     | `IdempotencyModule.forRoot` and the resolved option contract                           |
+| `runtime/`    | The `HttpPolicy`, raw-byte fingerprinting, replay, conflict checks, and claim teardown |
+| `store/`      | `IdempotencyStore`, the stored shape, and the memory store                             |
+| `interfaces/` | The module and store contracts                                                         |
 
 `src/index.ts` is the only public barrel.
 
@@ -45,6 +46,6 @@ leaf: nothing in the framework depends on it.
 
 ## Tests
 
-`tests/*.test.ts` under Bun, `tests-vp/*.conformance.ts` under Vite+. The Bun
+`src/**/*.spec.ts` under Bun, `test/*.conformance.ts` under Vite+. The Bun
 lane boots a real application through `AponiaFactory.create` and drives it
 through `application.handle`.

@@ -16,5 +16,7 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "skipLibCheck": true
-  }
+  },
+  "include": ["src"],
+  "exclude": ["src/**/*.spec.ts", "test", "dist"]
 }

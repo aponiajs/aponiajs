@@ -5,14 +5,21 @@
  * bounded in-memory store. It records data; it does not mount a route or decide
  * who may read the audit stream.
  */
-export { AuditModule } from "./module/audit-module.ts";
-export { AuditService } from "./service/audit-service.ts";
-export { MemoryAuditStore } from "./store/memory-audit-store.ts";
+export { AuditModule } from "./module/audit.module.ts";
+export {
+  MODULE_OPTIONS_TOKEN,
+  type AuditModuleExtras,
+  type AuditModuleRegistrationAsyncOptions,
+  type AuditModuleSyncOptions,
+} from "./module/audit.module-definition.ts";
+export { AuditService } from "./service/audit.service.ts";
+export { MemoryAuditStore } from "./store/memory-audit.store.ts";
 export type {
   AuditEvent,
   AuditEventInput,
+  AuditModuleAsyncOptions,
   AuditModuleOptions,
   AuditOutcome,
   AuditStore,
-} from "./module/audit.types.ts";
-export type { MemoryAuditStoreOptions } from "./store/memory-audit-store.types.ts";
+} from "./interfaces/audit.interface.ts";
+export type { MemoryAuditStoreOptions } from "./interfaces/memory-audit-store.interface.ts";

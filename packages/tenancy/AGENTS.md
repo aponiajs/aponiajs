@@ -8,13 +8,18 @@ specific to this package.
 The tenancy module, tenant service, tenant guard, and identifier policy. It is a
 leaf: nothing in the framework depends on it.
 
-| Domain     | Owns                                            |
-| ---------- | ----------------------------------------------- |
-| `module/`  | `TenantModule.register`, options, and constants |
-| `guard/`   | `TenantGuard`                                   |
-| `service/` | `TenantService` and the request-context token   |
+| Domain                                              | Owns                                                                |
+| --------------------------------------------------- | ------------------------------------------------------------------- |
+| `tenancy.module.ts`, `tenancy.module-definition.ts` | `TenantModule.forRoot`, the builder definition, options, and tokens |
+| `tenant.guard.ts`                                   | `TenantGuard`                                                       |
+| `tenant.service.ts`                                 | `TenantService` and the request-context token                       |
+| `tenancy.constants.ts`, `tenant.constants.ts`       | Tokens and defaults                                                 |
+| `interfaces/`                                       | The tenancy option and service contracts                            |
 
-`src/index.ts` is the only public barrel.
+`src/index.ts` is the only public barrel. The registration is a
+`ConfigurableModuleBuilder` definition with `MODULE_OPTIONS_TOKEN`
+(`TENANCY_MODULE_OPTIONS`) and the `isGlobal` extra; `register`/`registerAsync`
+remain as deprecated aliases.
 
 ## Invariants
 
@@ -37,6 +42,6 @@ leaf: nothing in the framework depends on it.
 
 ## Tests
 
-`tests/*.test.ts` under Bun, `tests-vp/*.conformance.ts` under Vite+. The Bun
+`src/**/*.spec.ts` under Bun, `test/*.conformance.ts` under Vite+. The Bun
 lane covers required/optional tenancy, invalid identifiers, resolver precedence,
 and registration failures.

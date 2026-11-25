@@ -11,11 +11,11 @@ import {
 } from "@aponiajs/common";
 import { Elysia, type AnyElysia } from "elysia";
 import { joinPaths, registerCompiledElysiaRoutes } from "../routing/route-compiler.ts";
-import type { CompiledElysiaRoute } from "../routing/route-compiler.types.ts";
-import type { InferredEdenRoutes } from "../routing/route-eden.types.ts";
+import type { CompiledElysiaRoute } from "../interfaces/route-compiler.interface.ts";
+import type { InferredEdenRoutes } from "../interfaces/route-eden.interface.ts";
 import type { RoutePlan } from "@aponiajs/platform-core";
 import { CONTROLLER_KIND } from "./controller.constants.ts";
-import { unmountedRouteEnhancers } from "./enhancer-resolver.ts";
+import { unmountedRouteEnhancers } from "./enhancer.resolver.ts";
 import type {
   DeclaredControllerDefinition,
   ControllerRegistrationResult,
@@ -26,7 +26,7 @@ import type {
   RegisteredControllerDefinition,
   RegisteredApplication,
   RuntimeElysiaController,
-} from "./controller.types.ts";
+} from "../interfaces/controller.interface.ts";
 
 export { CONTROLLER_KIND } from "./controller.constants.ts";
 

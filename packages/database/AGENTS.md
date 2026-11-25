@@ -8,15 +8,18 @@ specific to this package.
 The Drizzle transaction seam, one typed repository over a table, and ordered SQL
 migrations. It is a leaf: nothing in the framework depends on it.
 
-| Domain        | Owns                                                            |
-| ------------- | --------------------------------------------------------------- |
-| `module/`     | `DatabaseModule.register` and its option contract               |
-| `database/`   | `DatabaseService`, the narrow client contract, and transactions |
-| `repository/` | `createRepository` and the row/insert inference helpers         |
-| `migration/`  | `MigrationRunner`, the store contract, and `.sql` loading       |
+| Domain                                                | Owns                                                            |
+| ----------------------------------------------------- | --------------------------------------------------------------- |
+| `database.module.ts`, `database.module-definition.ts` | `DatabaseModule.forRoot` and its option contract                |
+| `database.service.ts`                                 | `DatabaseService`, the narrow client contract, and transactions |
+| `repository/`                                         | `createRepository` and the row/insert inference helpers         |
+| `migration/`                                          | `MigrationRunner`, the store contracts, and `.sql` loading      |
+| `interfaces/`                                         | The module, client, repository, and migration contracts         |
 
-`src/index.ts` is the only public barrel. Keep `*.types.ts` beside the runtime
-that reads it.
+`src/index.ts` is the only public barrel. Type-only contracts live in
+`interfaces/<name>.interface.ts`. The registration is a `ConfigurableModuleBuilder` definition with
+`MODULE_OPTIONS_TOKEN` (`DATABASE_MODULE_OPTIONS`) and the `isGlobal` extra;
+`register`/`registerAsync` remain as deprecated aliases.
 
 ## Invariants
 
@@ -47,10 +50,15 @@ that reads it.
 - **Configuration failures are `AponiaError` with `INVALID_DATABASE_OPTIONS`.**
   A missing written row is `DATABASE_WRITE_FAILED`; a bad migration is
   `INVALID_MIGRATION`.
+- **The registration fails fast and reports every issue.** `forRoot` validates
+  the database object, every migration file, the store's `applied`/`record`
+  methods, the optional `checksum`, and the lock before the module is imported;
+  `forRootAsync` validates the resolved value when the options token first
+  resolves. The issue list is total, not first-failure.
 
 ## Tests
 
-`tests/*.test.ts` under Bun, `tests-vp/*.conformance.ts` under Vite+. The Bun
+`src/**/*.spec.ts` under Bun, `test/*.conformance.ts` under Vite+. The Bun
 lane exercises repositories and synchronous transactions against Bun's
 in-memory SQLite through `drizzle-orm/bun-sqlite`, and migration file loading
 against a temporary directory that the test removes.

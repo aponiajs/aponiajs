@@ -15,7 +15,7 @@ import {
   type MicroserviceReply,
   type MicroserviceTransport,
 } from "@aponiajs/common";
-import { reportThroughLogger } from "../errors/default-exception-filter.ts";
+import { reportThroughLogger } from "../exceptions/default-exception.filter.ts";
 
 interface MicroserviceBinding {
   readonly pattern: string;

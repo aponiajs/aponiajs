@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/session",
-  "version": "1.0.0-beta.61",
+  "version": "1.0.0-beta.62",
   "description": "Signed session cookies and a bounded session store for an Aponia application.",
   "keywords": [
     "aponia",
@@ -49,7 +49,11 @@
   },
   "devDependencies": {
     "@aponiajs/core": "workspace:*",
+    "@aponiajs/platform-core": "workspace:*",
     "@aponiajs/platform-elysia": "workspace:*",
+    "@aponiajs/platform-h3": "workspace:*",
+    "@aponiajs/platform-hono": "workspace:*",
+    "@aponiajs/serverless": "workspace:*",
     "elysia": "2.0.0-rc.4"
   },
   "engines": {

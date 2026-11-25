@@ -6,7 +6,7 @@ import type {
   RequestMethod,
   RouteTarget,
 } from "@aponiajs/common";
-import type { ResolvedMiddlewareConfig } from "./middleware-consumer.types.ts";
+import type { ResolvedMiddlewareConfig } from "../interfaces/middleware-consumer.interface.ts";
 
 /**
  * Creates an empty middleware consumer and returns the consumer plus its collected configurations.

@@ -1,7 +1,7 @@
 import type { Token } from "@aponiajs/common";
 import type { AnyElysia } from "elysia";
 import type { AponiaApplication } from "@aponiajs/platform-elysia";
-import type { TestServer } from "./test-application.types.ts";
+import type { TestServer } from "../interfaces/test-application.interface.ts";
 
 /**
  * One booted application, with the teardown a test can rely on.

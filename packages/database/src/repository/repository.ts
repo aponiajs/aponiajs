@@ -8,7 +8,7 @@ import type {
   RepositoryQuery,
   RowOf,
   TableWithId,
-} from "./repository.types.ts";
+} from "../interfaces/repository.interface.ts";
 
 /**
  * Binds one Drizzle table to the narrow read and write surface a repository

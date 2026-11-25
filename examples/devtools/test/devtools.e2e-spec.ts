@@ -10,19 +10,22 @@ afterEach(async () => {
   booted = undefined;
 });
 
-test("meta reports the contract and the versions the boot ran", async () => {
+test("meta reports the contract and the release the boot ran", async () => {
   booted = await createApplication();
 
-  const meta = await read<{ contract: number; framework: string; elysia: string | null }>(
-    `${booted.devtools}/meta`,
-  );
+  const meta = await read<{
+    contract: number;
+    framework: string;
+    artifacts: { invokers: string | null; descriptors: string | null };
+    startedAt: string;
+  }>(`${booted.devtools}/meta`);
 
   expect(meta.contract).toBe(devtoolsContractVersion);
   expect(meta.framework).toBe(aponiaVersion);
-  // The release the endpoint resolves from the application's own tree, which is
-  // the one this workspace installs: the example reports Elysia 2 because that
-  // is what it ran against.
-  expect(meta.elysia).toStartWith("2.");
+  // This example supplies no build artifact, so the boot adopted neither and
+  // the stamps state that rather than naming a release.
+  expect(meta.artifacts).toEqual({ invokers: null, descriptors: null });
+  expect(Number.isNaN(Date.parse(meta.startedAt))).toBe(false);
 });
 
 test("graph reports the module the boot compiled", async () => {
@@ -96,7 +99,7 @@ test("logs serves the lines the one logger both places were handed wrote", async
       message: "Aponia application successfully started",
     }),
   );
-  // The same object reached the plugin: what the factory wrote is what the
+  // The same object reached the registration: what the factory wrote is what the
   // endpoint serves. A second logger would leave this list empty.
   expect(booted.logger.lines).toContain("Aponia application successfully started");
 });

@@ -6,8 +6,9 @@
  * that emitted the event, in registration order. Durable delivery belongs to a
  * queue or an outbox, not here.
  */
-export { EventEmitterModule } from "./module/event-emitter-module.ts";
-export { EventEmitter } from "./emitter/event-emitter.ts";
-export { OnEvent, getEventHandlers } from "./listener/on-event.ts";
-export type { EventHandler, EventName } from "./emitter/event-emitter.types.ts";
-export type { EventHandlerMetadata } from "./listener/on-event.types.ts";
+export { EventEmitterModule } from "./events.module.ts";
+export { EVENT_EMITTER_MODULE_OPTIONS } from "./events.constants.ts";
+export { EventEmitter } from "./event-emitter.ts";
+export { OnEvent, getEventHandlers } from "./decorators/on-event.decorator.ts";
+export type { EventHandler, EventName } from "./interfaces/event-emitter.interface.ts";
+export type { EventHandlerMetadata } from "./interfaces/on-event.interface.ts";

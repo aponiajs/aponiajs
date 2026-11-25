@@ -1,0 +1,8 @@
+import { Injectable } from "@aponiajs/common";
+
+@Injectable()
+export class AppService {
+  getGreeting(): string {
+    return "Hello from {{PROJECT_NAME}}!";
+  }
+}

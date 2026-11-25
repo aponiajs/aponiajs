@@ -1,5 +1,5 @@
-import type { DeclinedDescriptor } from "./descriptor-emitter.types.ts";
-import type { GenerateInvokersResult } from "./invoker-generator.types.ts";
+import type { DeclinedDescriptor } from "../interfaces/descriptor-emitter.interface.ts";
+import type { GenerateInvokersResult } from "../interfaces/invoker-generator.interface.ts";
 
 /**
  * The lines one build reports: a change line per file it wrote, then a decline

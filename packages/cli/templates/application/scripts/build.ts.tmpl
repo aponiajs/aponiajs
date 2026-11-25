@@ -9,9 +9,9 @@ import { buildPlugin } from "@aponiajs/cli";
  * are committed; `aponia build` writes the same ones without bundling.
  *
  * `bun run dev`, `bun start`, and `bun test` read the sources directly and need
- * nothing from a build. `src/main.ts` passes the committed invoker artifact to
- * `AponiaFactory.create`, so they serve through generated route invokers until a
- * build regenerates the module from newer sources.
+ * nothing from a build: a `bunfig.toml` preload registers the platform's
+ * in-memory compiler, so they lower the decorated graph and compile their routes.
+ * `scripts/inspect.ts` reads the descriptor artifact this build writes.
  */
 const result = await Bun.build({
   entrypoints: ["./src/main.ts"],

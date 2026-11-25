@@ -1,4 +1,4 @@
-import type { RingBuffer, RingBufferRead } from "./ring-buffer.types.ts";
+import type { RingBuffer, RingBufferRead } from "../interfaces/ring-buffer.interface.ts";
 
 /**
  * A bounded cursor buffer, built for one capacity.

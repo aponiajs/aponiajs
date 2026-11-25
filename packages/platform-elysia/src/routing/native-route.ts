@@ -1,6 +1,6 @@
 import { AponiaError, type RequestMethod, type RouteContext } from "@aponiajs/common";
 import type { Elysia } from "elysia";
-import type { ElysiaRouteHook } from "./route-compiler.types.ts";
+import type { ElysiaRouteHook } from "../interfaces/route-compiler.interface.ts";
 
 /**
  * The only place this platform calls Elysia's route registration API.

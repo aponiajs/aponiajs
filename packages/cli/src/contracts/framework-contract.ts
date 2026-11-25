@@ -3,7 +3,7 @@ import { schematicNames } from "../commands/command.constants.ts";
 
 /** The machine-readable contract one framework release publishes. */
 export interface FrameworkContract {
-  readonly contractVersion: 1;
+  readonly contractVersion: 2;
   readonly frameworkVersion: string;
   readonly packages: readonly string[];
   readonly decorators: readonly string[];
@@ -13,9 +13,8 @@ export interface FrameworkContract {
   readonly schematics: readonly string[];
   readonly lifecycle: readonly string[];
   readonly versioningStrategies: readonly string[];
-  readonly platformModule: {
-    readonly declaration: string;
-    readonly platforms: readonly string[];
+  readonly platformCapabilities: {
+    readonly capabilities: readonly string[];
     readonly refusal: string;
     readonly adapterHost: string;
   };
@@ -30,7 +29,7 @@ export interface FrameworkContract {
  * here in the same change.
  */
 export const frameworkContract: FrameworkContract = Object.freeze({
-  contractVersion: 1,
+  contractVersion: 2,
   frameworkVersion: aponiaVersion,
   packages: Object.freeze([
     "@aponiajs/common",
@@ -40,6 +39,7 @@ export const frameworkContract: FrameworkContract = Object.freeze({
     "@aponiajs/platform-h3",
     "@aponiajs/platform-hono",
     "@aponiajs/cli",
+    "@aponiajs/schematics",
     "create-aponia",
     "@aponiajs/devtools",
     "@aponiajs/cron",
@@ -115,6 +115,7 @@ export const frameworkContract: FrameworkContract = Object.freeze({
     "SetMetadata",
     "Validation",
     "Serialize",
+    "SerializeOptions",
     "Header",
     "HttpCode",
     "Version",
@@ -152,6 +153,7 @@ export const frameworkContract: FrameworkContract = Object.freeze({
     "aponia.response-serializer.metadata",
     "aponia.route-parameters.metadata",
     "aponia.route.metadata",
+    "aponia.serialize-options.metadata",
     "aponia.sse.metadata",
     "aponia.validation.metadata",
     "aponia.version.metadata",
@@ -171,6 +173,7 @@ export const frameworkContract: FrameworkContract = Object.freeze({
     "AMBIGUOUS_PROVIDER",
     "MISSING_PROVIDER",
     "PROVIDER_CYCLE",
+    "ASYNC_PROVIDER_RESOLUTION",
     "INVALID_PROVIDER",
     "UNSUPPORTED_PROVIDER_SCOPE",
     "MISSING_REQUEST_CONTEXT",
@@ -187,6 +190,7 @@ export const frameworkContract: FrameworkContract = Object.freeze({
     "UNSUPPORTED_ELYSIA_VERSION",
     "APPLICATION_NOT_LISTENING",
     "UNSUPPORTED_CONTROLLER",
+    "UNSUPPORTED_ARGUMENT_HOST",
     "INVALID_WEBSOCKET_GATEWAY",
     "DUPLICATE_WEBSOCKET_GATEWAY",
     "DUPLICATE_WEBSOCKET_HANDLER",
@@ -253,10 +257,9 @@ export const frameworkContract: FrameworkContract = Object.freeze({
     "onModuleDestroy",
     "onApplicationShutdown",
   ]),
-  versioningStrategies: Object.freeze(["uri", "header", "media-type"]),
-  platformModule: Object.freeze({
-    declaration: "providePlatformModule",
-    platforms: Object.freeze(["elysia", "hono", "h3"]),
+  versioningStrategies: Object.freeze(["uri", "header", "media-type", "custom"]),
+  platformCapabilities: Object.freeze({
+    capabilities: Object.freeze(["http", "websockets", "streaming", "multipart", "backgroundWork"]),
     refusal: "UNSUPPORTED_PLATFORM_FEATURE",
     adapterHost: "PLATFORM_ADAPTER_HOST",
   }),

@@ -1,6 +1,9 @@
 import { readdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import type { LibraryCheckOptions, LibraryCheckResult } from "./check-library.types.ts";
+import type {
+  LibraryCheckOptions,
+  LibraryCheckResult,
+} from "../interfaces/check-library.interface.ts";
 
 const libraryKinds = new Set(["module", "plugin", "adapter", "utility"]);
 const knownPlatforms = new Set(["elysia", "hono", "h3"]);
@@ -319,8 +322,9 @@ async function checkRegistrationStandard(
 /**
  * Refuses a platform or runtime import in a library's own source.
  *
- * A native mount belongs in an `adapter` library, which states the platform in
- * `platforms` and is allowed to import it; every other kind stays neutral.
+ * Only an `adapter` library may import a runtime; every other kind stays
+ * neutral and contributes providers, controllers, policies, or lifecycle hooks
+ * through the shared contracts.
  *
  * @param directory - The package root.
  * @param manifest - The library contract.
@@ -340,9 +344,6 @@ async function checkSourceNeutrality(
     cwd: directory,
     onlyFiles: true,
   })) {
-    if (path.startsWith("src/adapters/")) {
-      continue;
-    }
     const source = await Bun.file(join(directory, path)).text();
     if (runtimeImport.test(source)) {
       issues.push(`${path} imports a platform at run time; keep the library runtime-neutral`);

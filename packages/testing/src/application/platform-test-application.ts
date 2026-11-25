@@ -1,5 +1,5 @@
 import type { Token } from "@aponiajs/common";
-import type { TestableApplication } from "./platform-test-application.types.ts";
+import type { TestableApplication } from "../interfaces/platform-test-application.interface.ts";
 
 /**
  * A boot from any platform, with the teardown a test can rely on.

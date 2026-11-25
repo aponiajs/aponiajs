@@ -72,72 +72,62 @@ Every later feature is a directory under `src/<resource>/`, holding its module,
 controller, service, models, and tests together.
 
 `src/invokers.generated.ts` and `src/descriptors.generated.ts` sit beside those
-sources and are committed. `src/main.ts` passes `controllerInvokerArtifact` and
-`moduleDescriptorArtifact` to `AponiaFactory.create` while still naming the
-decorated `AppModule`, so the application serves through generated route
-invokers and boots from the declared module graph from `bun run dev`,
-`bun start`, and `bun test` without a build having run. `bun run build`
-regenerates both in place, which is why a controller or a module change is not
-live in the generated artifacts until the next build.
+sources and are committed. `bun run build` regenerates both in place, which is why
+a controller or a module change is not live in them until the next build.
+`src/main.ts` imports neither: a `bunfig.toml` preload registers the platform's
+in-memory compiler, so `bun run dev`, `bun start`, and `bun test` lower the
+decorated graph and compile their routes without a build having run.
+`scripts/inspect.ts` is what reads the descriptor artifact.
 
-Both modules are stamped with the framework release that wrote them, and each is
-refused rather than used when that release is not the one running. The startup
-log says which graph answered, under `RoutesResolver`:
-
-```text
-[RoutesResolver] Booting AppModule from the generated module descriptors, so the declared graph serves this application.
-```
-
-A mismatch is slower but never wrong — the runtime compiles every route from
-decorator metadata and lowers the module graph from its decorators instead — and
-it is the only cost: nothing needs repairing by hand. The same applies to a
-descriptor module left behind by a module rename, because the renamed root has no
-entry and the decorated graph answers. `aponia build` writes the same two modules
+That artifact holds no declaration for `AppModule` in this starter, because
+`src/app.module.ts` imports the `DevtoolsModule.forRoot(...)` call `aponia build`
+cannot lower. The inspection therefore reports the decorated graph rather than a
+declared one, and it still lists `DevtoolsModule` because the registration is in
+the graph. Both files are stamped with the framework release that wrote them, and the
+inspection refuses one from another release rather than using it, which costs the
+optimization and never a wrong answer. `aponia build` writes the same two modules
 without bundling.
 
 ## Devtools
 
-This starter mounts `@aponiajs/devtools` through `AponiaFactory.create`'s
-`plugins` option in `src/main.ts`, and not through `AppModule`'s `imports`. The
-placement is the decision. `aponia build` lowers an `imports` entry only when it
-is a single identifier naming a declaration read from the project's own source,
-and `DevtoolsModule.register(...)` returns a `DynamicModule` rather than such a
-declaration, so it declines the module that wrote it in every spelling, and here
-that module is the root and the only module a build can
-declare: the build would leave an artifact holding no declaration for the root —
-written without this module, or replaced with an empty record when it was the only
-module a build could lower — so the boot would refuse it and compile the decorated
-graph instead, mounting the registration but losing the declared-graph boot this
-starter commits to. A plugin mounted through the option is not an
-`imports` entry, so the root stays declarable and the application keeps booting
-from the declared graph, which the startup log reports. Move the registration
-into `imports` when the module graph should carry it, and give up that boot for
-this root.
+This starter imports `@aponiajs/devtools` in `src/app.module.ts` through
+`DevtoolsModule.forRoot(...)`, so the devtools surface is a module in the graph:
+its API is a controller, its request record is a `RequestLifecycleHook`, and
+`bun run inspect` lists it beside the application's own module.
 
-The plugin is therefore not in the module graph: `bun run inspect` describes the
-graph the application boots from and lists no devtools entry, because nothing
-about a plugin mounted through the option reaches it.
+That placement has one cost. `aponia build` lowers an `imports` entry only when
+it is a single identifier naming a declaration read from the project's own
+source, and `DevtoolsModule.forRoot(...)` returns a `DynamicModule` rather than
+such a declaration, so the build declines the root module and
+`src/descriptors.generated.ts` carries an empty module record. The inspection
+that hands that artifact over therefore reports the decorated graph instead of a
+declared one. Nothing is missing: the decorated graph still mounts the devtools
+controller and its hook, and the surface answers as it does at run time. Carrying
+the registration in the graph is the trade this starter makes, and it is why the
+descriptor artifact is deliberately empty.
 
-`src/logger.ts` holds the application's logger and `src/main.ts` hands the same
-object to `AponiaFactory.create` and to `devtoolsPlugin`, which is the half the
-devtools needs from the application: the plugin patches the logger it is given
-in place rather than replacing it, so the lines the boot writes about itself are
-what `/__devtools/logs` serves. Hand it to one and not the other and the stream
-is missing exactly what the other wrote.
+`src/logger.ts` holds the application's logger. `src/main.ts` hands it to
+`AponiaFactory.create` and `src/app.module.ts` hands the same object to
+`DevtoolsModule.forRoot`, which is the half the devtools needs from the
+application: the registration patches the logger it is given in place rather
+than replacing it, so the lines the boot writes about itself are what
+`/__devtools/logs` serves. Hand it to one and not the other and the stream is
+missing exactly what the other wrote.
 
 The surface is served only when `APONIA_DEVTOOLS=true`, on the application's own
 port under `/__devtools` — it is part of the route table the application mounts,
 and an application route that claims a devtools path wins it, because the more
 specific route answers: a static or parameter route beats this wildcard whether
-it is mounted before or after the plugin. It is reachable
+it is mounted before or after the devtools controller. It is reachable
 wherever the application is, and `/requests` records headers and bodies with no
 warning: this is a development surface, and `enabled` is how an application keeps
 it out of production. `enabled: false` mounts nothing at all: no route and no
-endpoint. The expression in `src/main.ts` is this starter's choice; the framework
-never reads the environment to choose its own behaviour. This application reads
-it where it declares it to: `src/config.ts` declares the `PORT` schema, and the
-`provideConfiguration(AppConfig)` provider in `src/app.module.ts` validates it
-once at boot — that read is the application's. Both halves of the trade are in the
+endpoint. The expression in `src/app.module.ts` is this starter's choice; the
+framework never reads the environment to choose its own behaviour. This
+application reads it where it declares it to: `src/config.ts` declares the
+`PORT` schema, and the `provideConfiguration(AppConfig)` provider in
+`src/app.module.ts` validates it once at boot — that read is the application's.
+The trade is stated in the
 [devtools guide](https://github.com/aponiajs/aponiajs/blob/main/docs/services/devtools.md).
 
 ## Authoring rules

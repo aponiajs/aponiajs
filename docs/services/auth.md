@@ -5,7 +5,7 @@ request-scoped current user, refresh-token rotation, access-token revocation,
 and Bun-native password hashing.
 
 ```ts
-AuthModule.register({ jwt: { secret: process.env.JWT_SECRET! } });
+AuthModule.forRoot({ jwt: { secret: process.env.JWT_SECRET! } });
 ```
 
 ```ts
@@ -41,7 +41,7 @@ verifies through `Bun.password`.
 ## OpenID Connect
 
 ```ts
-AuthModule.register({
+AuthModule.forRoot({
   oidc: {
     issuer: "https://login.example.com",
     audience: "my-api",
@@ -64,7 +64,7 @@ answers `401` like a local secret would. A registration states exactly one of
 keeps the access token in an `HttpOnly` cookie can name it:
 
 ```ts
-AuthModule.register({
+AuthModule.forRoot({
   jwt: { secret: process.env.JWT_SECRET! },
   token: { cookieName: "aponia.at" },
 });
@@ -83,7 +83,7 @@ OIDC authentication.
 ## Key rotation
 
 ```ts
-AuthModule.register({
+AuthModule.forRoot({
   jwt: {
     secret: process.env.JWT_SECRET!,
     keys: [
@@ -105,7 +105,7 @@ required: it is what a token minted before rotation was signed with.
 ## Refresh tokens
 
 ```ts
-AuthModule.register({
+AuthModule.forRoot({
   jwt: { secret: process.env.JWT_SECRET! },
   refresh: { ttlMs: 30 * 24 * 60 * 60 * 1_000, maxTokens: 10_000 },
   revocation: { maxEntries: 10_000 },
@@ -144,7 +144,7 @@ cannot be rotated either way. A multi-instance deployment passes its own store
 instead:
 
 ```ts
-AuthModule.register({
+AuthModule.forRoot({
   jwt: { secret: process.env.JWT_SECRET! },
   refresh: { store: sharedRefreshStore },
   revocation: { store: sharedRevocationStore },

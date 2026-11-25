@@ -5,6 +5,7 @@ import {
   NOOP_LOGGER,
   Reflector,
   getTokenName,
+  normalizeProviderScope,
   provideClass,
   provideValue,
   resolveForwardRef,
@@ -15,7 +16,7 @@ import {
 } from "@aponiajs/common";
 import { createContainer, getProviderDependencies } from "@aponiajs/core";
 import { isElysiaController } from "../controllers/controller-definition.ts";
-import type { RuntimeElysiaController } from "../controllers/controller.types.ts";
+import type { RuntimeElysiaController } from "../interfaces/controller.interface.ts";
 import { compileRootModule } from "../modules/module-compiler.ts";
 import { normalizeRoutePrefix } from "@aponiajs/platform-core";
 import { joinPaths } from "../routing/route-compiler.ts";
@@ -23,8 +24,8 @@ import type { AponiaRootModule } from "@aponiajs/platform-core";
 import { selectRootModuleDescriptor } from "@aponiajs/platform-core";
 import { selectInvokerArtifact } from "@aponiajs/platform-core";
 import { aponiaVersion } from "../version.ts";
-import { compileWebSocketGateways } from "../websockets/websocket-gateway.ts";
-import type { CompiledWebSocketGateway } from "../websockets/websocket-gateway.types.ts";
+import { compileWebSocketGateways } from "../websockets/websocket.gateway.ts";
+import type { CompiledWebSocketGateway } from "../interfaces/websocket-gateway.interface.ts";
 import type {
   AponiaApplicationInspection,
   AponiaGatewayInspection,
@@ -32,7 +33,7 @@ import type {
   AponiaModuleInspection,
   AponiaProviderInspection,
   AponiaRouteInspection,
-} from "./application-inspection.types.ts";
+} from "../interfaces/application-inspection.interface.ts";
 
 /**
  * Projects a root module into plain, frozen, JSON-serializable data describing
@@ -127,13 +128,14 @@ function inspectModule(module: ModuleDefinition): AponiaModuleInspection {
 }
 
 function inspectProvider(provider: Provider): AponiaProviderInspection {
+  const scope = provider.scope === undefined ? undefined : normalizeProviderScope(provider.scope);
   return Object.freeze({
     token: getTokenName(provider.provide),
     kind: provider.kind,
     dependencies: Object.freeze(
       getProviderDependencies(provider).map((dependency) => getTokenName(dependency)),
     ),
-    ...(provider.scope ? { scope: provider.scope } : {}),
+    ...(scope === undefined ? {} : { scope }),
   });
 }
 

@@ -1,5 +1,5 @@
 import { FORWARD_REF_SYMBOL } from "./forward-ref.constants.ts";
-import type { ForwardReference } from "./forward-ref.types.ts";
+import type { ForwardReference } from "../interfaces/forward-ref.interface.ts";
 
 export { FORWARD_REF_SYMBOL };
 

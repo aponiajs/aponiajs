@@ -1,12 +1,12 @@
 import "reflect-metadata";
-import { AponiaError } from "../errors/aponia-error.ts";
+import { AponiaError } from "../exceptions/aponia-error.ts";
 import { isStandardSchema, isValidatorSchema } from "./route-schema.ts";
-import type { RouteValidator } from "./route-schema.types.ts";
+import type { RouteValidator } from "../interfaces/route-schema.interface.ts";
 import type {
   RouteValidatorInput,
   ValidationMetadata,
   ValidationModelClass,
-} from "./validation.types.ts";
+} from "../interfaces/validation.interface.ts";
 
 const validationMetadataKey = Symbol.for("aponia.validation.metadata");
 

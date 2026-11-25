@@ -1,78 +1,242 @@
-import { AponiaError, type ConfigurationToken } from "@aponiajs/common";
-import type { ElysiaPlugin } from "@aponiajs/platform-elysia";
-import { openapi } from "@elysia/openapi";
-import type { OpenApiConfiguration, OpenApiInfo } from "./openapi-document.types.ts";
+import {
+  AponiaError,
+  getControllerMetadata,
+  isRouteResponseSchemaMap,
+  resolveRouteValidator,
+  type ClassToken,
+  type ConfigurationToken,
+  type RouteValidatorInput,
+} from "@aponiajs/common";
+import type { AponiaContainer } from "@aponiajs/core";
+import { compileRoutes } from "@aponiajs/platform-core";
+import type {
+  OpenApiConfiguration,
+  OpenApiInfo,
+} from "../interfaces/openapi-document.interface.ts";
 
-/**
- * The methods the served document omits, whatever the application mounts.
- *
- * `options` is the wrapped plugin's own default and stays: an `OPTIONS` route
- * is Elysia's, not a declaration an application made. `ws` is this package's
- * addition, and it is a correctness fix rather than a preference. A WebSocket
- * gateway mounted through the platform reaches the native route table as a
- * route whose method really is `ws`, and the plugin turns it into
- * `{ "/events": { "ws": { … } } }`. `ws` is not one of OpenAPI's path-item
- * fields, so that object is a document no validator accepts — a route the
- * platform mounted, described in a vocabulary the specification does not have.
- * Excluding it is the honest answer: this package documents HTTP operations,
- * and a gateway's message protocol is not one.
- */
-const excludedMethods = Object.freeze(["options", "ws"]);
+/** The methods the served document omits, whatever the application mounts. */
+const excludedMethods: ReadonlySet<string> = new Set(["ALL", "OPTIONS", "HEAD"]);
 
-/**
- * The options one registration hands the plugin builder.
- *
- * @internal
- */
-interface OpenApiPluginOptions {
-  readonly configuration: ConfigurationToken<OpenApiConfiguration>;
-  readonly path: string;
+/** One parameter, as an OpenAPI operation states it. */
+export interface OpenApiParameter {
+  readonly name: string;
+  readonly in: string;
+  readonly required: boolean;
+  readonly schema: unknown;
+}
+
+/** One operation, as this package writes it. */
+export interface OpenApiOperation {
+  readonly operationId: string;
+  readonly parameters: readonly OpenApiParameter[];
+  readonly requestBody?: {
+    readonly required: boolean;
+    readonly content: Readonly<Record<string, { readonly schema: unknown }>>;
+  };
+  readonly responses: Readonly<Record<string, OpenApiResponse>>;
+  readonly deprecated?: boolean;
+}
+
+interface OpenApiResponse {
+  readonly description: string;
+  readonly content?: Readonly<Record<string, { readonly schema: unknown }>>;
+}
+
+/** The document this package serves. */
+export interface OpenApiDocument {
+  readonly openapi: string;
+  readonly info: OpenApiInfo;
+  readonly paths: Readonly<Record<string, Readonly<Record<string, OpenApiOperation>>>>;
+  readonly components: { readonly schemas: Readonly<Record<string, unknown>> };
 }
 
 /**
- * Builds the native plugin for one registration, once, while the module mounts.
+ * Builds the document from the routes the application declared.
  *
- * The plugin is the wrapped one, configured from the value the container
- * resolved: the document's `info` is the validated configuration's, the mount
- * path is the registration's, and nothing else about it is this package's.
- * Everything a reader sees beyond that — the paths, the operations, the
- * schemas, the Scalar UI the plugin serves at the mount path — is
- * `@elysia/openapi`'s own lowering of the route table the platform compiled.
+ * Only compiled plans are described: a controller mounted through a
+ * registration callback has no route plan to read, and a WebSocket gateway is
+ * not an HTTP operation.
  *
  * @internal
  */
-export function createOpenApiPlugin<TSourceValue>(
-  value: TSourceValue,
-  options: OpenApiPluginOptions,
-): ElysiaPlugin {
-  return openapi({
-    path: options.path,
-    documentation: { info: readOpenApiInfo(value, options.configuration) },
-    exclude: { methods: [...excludedMethods] },
+export function buildOpenApiDocument(
+  container: AponiaContainer,
+  info: OpenApiInfo,
+  mountPath: string,
+): OpenApiDocument {
+  const paths: Record<string, Record<string, OpenApiOperation>> = {};
+
+  for (const module of container.graph.modules) {
+    for (const definition of module.controllers) {
+      const token = definition.token as ClassToken<unknown>;
+      const metadata = getControllerMetadata(token);
+      if (metadata === undefined) {
+        continue;
+      }
+      for (const route of compileRoutes(token, metadata.path)) {
+        if (excludedMethods.has(route.method) || route.path.startsWith(mountPath)) {
+          continue;
+        }
+        const path = toOpenApiPath(route.path);
+        const operation = buildOperation(route, path);
+        (paths[path] ??= {})[route.method.toLowerCase()] = operation;
+      }
+    }
+  }
+
+  return Object.freeze({
+    openapi: "3.1.0",
+    info,
+    paths: Object.freeze(paths),
+    components: Object.freeze({ schemas: Object.freeze({}) }),
   });
 }
 
+function buildOperation(
+  route: ReturnType<typeof compileRoutes>[number],
+  path: string,
+): OpenApiOperation {
+  const parameters: OpenApiParameter[] = [];
+  const schema = route.schema;
+
+  parameters.push(...containerParameters(schema?.params, "path", pathParameters(path)));
+  parameters.push(...containerParameters(schema?.query, "query"));
+  parameters.push(...containerParameters(schema?.headers, "header"));
+  parameters.push(...containerParameters(schema?.cookie, "cookie"));
+
+  const body = schema?.body === undefined ? undefined : toJsonSchema(schema.body);
+  const responses = responseSchemas(schema?.response, route.httpCode);
+
+  return Object.freeze({
+    operationId: operationIdOf(route.method, path),
+    parameters: Object.freeze(parameters),
+    ...(body === undefined
+      ? {}
+      : {
+          requestBody: Object.freeze({
+            required: true,
+            content: Object.freeze({ "application/json": Object.freeze({ schema: body }) }),
+          }),
+        }),
+    responses,
+    ...(route.deprecation === undefined ? {} : { deprecated: true }),
+  });
+}
+
+function responseSchemas(
+  response: unknown,
+  httpCode: number | undefined,
+): Readonly<Record<string, OpenApiResponse>> {
+  if (response === undefined) {
+    return Object.freeze({
+      [String(httpCode ?? 200)]: Object.freeze({ description: "The route's answer." }),
+    });
+  }
+  if (isRouteResponseSchemaMap(response as never)) {
+    const map: Record<string, OpenApiResponse> = {};
+    for (const [status, validator] of Object.entries(response as Record<string, unknown>)) {
+      map[status] = Object.freeze({
+        description: `The ${status} answer.`,
+        content: Object.freeze({
+          "application/json": Object.freeze({ schema: toJsonSchema(validator as never) }),
+        }),
+      });
+    }
+    return Object.freeze(map);
+  }
+  return Object.freeze({
+    [String(httpCode ?? 200)]: Object.freeze({
+      description: "The route's answer.",
+      content: Object.freeze({
+        "application/json": Object.freeze({ schema: toJsonSchema(response as never) }),
+      }),
+    }),
+  });
+}
+
+function containerParameters(
+  validator: RouteValidatorInput | undefined,
+  location: string,
+  fallback: readonly string[] = [],
+): OpenApiParameter[] {
+  if (validator === undefined) {
+    return fallback.map((name) =>
+      Object.freeze({ name, in: location, required: true, schema: { type: "string" } }),
+    );
+  }
+  const json = toJsonSchema(validator) as {
+    readonly properties?: Readonly<Record<string, unknown>>;
+    readonly required?: readonly string[];
+  };
+  const properties = json.properties ?? {};
+  const required = new Set(json.required ?? []);
+  return Object.entries(properties).map(([name, parameterSchema]) =>
+    Object.freeze({
+      name,
+      in: location,
+      required: required.has(name) || location === "path",
+      schema: parameterSchema,
+    }),
+  );
+}
+
+function toJsonSchema(validator: RouteValidatorInput): unknown {
+  const resolved = resolveRouteValidator(validator) as unknown;
+  if (typeof resolved === "object" && resolved !== null) {
+    const standard = (
+      resolved as {
+        readonly "~standard"?: { readonly jsonSchema?: { input?: () => unknown } };
+      }
+    )["~standard"];
+    if (standard?.jsonSchema?.input !== undefined) {
+      return stripMeta(standard.jsonSchema.input());
+    }
+    const clone = JSON.parse(JSON.stringify(resolved)) as Record<string, unknown>;
+    delete clone["~standard"];
+    delete clone["$schema"];
+    return Object.freeze(clone);
+  }
+  return Object.freeze({});
+}
+
+function stripMeta(schema: unknown): unknown {
+  if (typeof schema !== "object" || schema === null) {
+    return schema;
+  }
+  const clone = JSON.parse(JSON.stringify(schema)) as Record<string, unknown>;
+  delete clone["$schema"];
+  return clone;
+}
+
+function pathParameters(path: string): string[] {
+  return [...path.matchAll(/\{([^}]+)\}/g)].map((match) => match[1]!);
+}
+
+function toOpenApiPath(path: string): string {
+  const normalized = path.length > 1 && path.endsWith("/") ? path.slice(0, -1) : path;
+  return normalized.replace(/:([A-Za-z0-9_]+)/g, "{$1}");
+}
+
+function operationIdOf(method: string, path: string): string {
+  const words = path
+    .split("/")
+    .filter((segment) => segment !== "")
+    .map((segment) => segment.replace(/[{}:]/g, ""))
+    .map((segment) =>
+      segment.replace(/[^A-Za-z0-9]+(.)?/g, (_m, next: string | undefined) =>
+        next === undefined ? "" : next.toUpperCase(),
+      ),
+    )
+    .map((segment) => `${segment.charAt(0).toUpperCase()}${segment.slice(1)}`);
+  return `${method.toLowerCase()}${words.join("")}`;
+}
+
 /**
- * The document metadata, read from the value a configuration validated into.
+ * The metadata, read from the value a configuration validated into.
  *
- * A guard rather than a cast, for the reason `readCronJobs` is one: a
- * `defineConfiguration` transform is arbitrary JavaScript, and a JavaScript
- * caller can hand `provideConfiguration` a schema that answers anything at all.
- * What arrives therefore has to be checked before it becomes the `info` of a
- * document a client generator will trust — a document titled `undefined` is one
- * a generator will happily write a client from.
- *
- * The refusal is this framework's: `INVALID_CONFIGURATION_VALUE`, with the
- * declaration's name and the same `issues` list a schema refusal carries, so a
- * caller reads one shape whichever half of the validation refused. The list is
- * total — every field that fails is reported rather than the first — so one
- * boot names every field to fix.
- *
- * `description` is reported as present-but-`undefined` rather than omitted when
- * the configuration states none, because the wrapped plugin fills an absent
- * `description` with its own placeholder. An own property whose value is
- * `undefined` overrides that default, so what the document ends up saying about
- * the application is what the application declared.
+ * A guard rather than a cast: a `defineConfiguration` transform is arbitrary
+ * JavaScript, so a document a client generator will trust is only served from a
+ * value this package checked. Every failing field is reported at once.
  *
  * @internal
  */
@@ -95,8 +259,6 @@ export function readOpenApiInfo<TSourceValue>(
     throw invalidConfigurationValue(name, issues);
   }
 
-  // The guard above is what makes these strings; this states what it proved, the
-  // way the scheduler's guard states its job list after checking it.
   const checked = info as RawInfo;
 
   return Object.freeze({
@@ -106,10 +268,6 @@ export function readOpenApiInfo<TSourceValue>(
   });
 }
 
-/**
- * The shape a JavaScript caller can produce in place of what
- * `OpenApiConfiguration` promises.
- */
 interface RawInfo {
   readonly title?: unknown;
   readonly version?: unknown;
@@ -138,13 +296,6 @@ function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
 }
 
-/**
- * The refusal, in the shape a schema refusal already uses.
- *
- * The message names the declaration and states no field count, because what a
- * caller acts on is the `issues` list — the same one `provideConfiguration`
- * attaches when the schema itself is what refused.
- */
 function invalidConfigurationValue(name: string, issues: readonly string[]): AponiaError {
   return new AponiaError(
     "INVALID_CONFIGURATION_VALUE",

@@ -12,7 +12,7 @@
 
 ## Where the behavior lives
 
-- [McpModule](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/module/mcp-module.ts): the registration, options, and platform adapters.
+- [McpModule](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/module/mcp.module.ts): the registration, options, and platform adapters.
 - [Discovery](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/discovery/mcp-discovery.ts): walks the graph, reads decorator metadata, and refuses duplicates.
 - [Execution](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/execution/mcp-invoker.ts): guards, interceptors, pipes, filters, and the method call.
 - [Runtime](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/transport/mcp-runtime.ts): one SDK server per request, the Origin and Host gate, and the body bound.

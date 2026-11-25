@@ -1,0 +1,56 @@
+{
+  "name": "@aponiajs/schematics",
+  "version": "1.0.0-beta.62",
+  "description": "Nest-shaped schematic collection for Aponia projects.",
+  "keywords": [
+    "aponia",
+    "aponiajs",
+    "collection",
+    "scaffolding",
+    "schematics",
+    "typescript"
+  ],
+  "homepage": "https://github.com/aponiajs/aponiajs#readme",
+  "bugs": {
+    "url": "https://github.com/aponiajs/aponiajs/issues"
+  },
+  "license": "MIT",
+  "author": "AponiaJS contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aponiajs/aponiajs.git",
+    "directory": "packages/schematics"
+  },
+  "files": [
+    "collection.json",
+    "dist",
+    "llms.txt",
+    "PROVENANCE.md",
+    "README.md"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js",
+    "./collection.json": "./collection.json",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "bun run scripts/build.ts",
+    "test": "bun test",
+    "check": "bunx --bun vp check",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "change-case": "^5.4.4",
+    "inflection": "^3.0.2"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2"
+  },
+  "engines": {
+    "bun": ">=1.4.4"
+  }
+}

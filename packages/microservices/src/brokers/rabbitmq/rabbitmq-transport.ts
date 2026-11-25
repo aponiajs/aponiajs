@@ -12,7 +12,7 @@ import type {
   TransportMessage,
   TransportSubscription,
   TransportSubscriptionHandle,
-} from "../../transport/transport.types.ts";
+} from "../../interfaces/transport.interface.ts";
 import type {
   RabbitMqSdkConnection,
   RabbitMqSdkConsumer,
@@ -21,7 +21,7 @@ import type {
   RabbitMqSdkModule,
   RabbitMqSdkPublisher,
   RabbitMqTransportOptions,
-} from "./rabbitmq-transport.types.ts";
+} from "../../interfaces/rabbitmq-transport.interface.ts";
 
 const transportName = "rabbitmq";
 const packageName = "rabbitmq-client";

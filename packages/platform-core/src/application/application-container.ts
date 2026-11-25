@@ -1,3 +1,4 @@
+import { createToken } from "@aponiajs/common";
 import type { AponiaContainer } from "@aponiajs/core";
 
 // A registered key rather than a fresh symbol: every platform package and every
@@ -28,4 +29,35 @@ export function attachApplicationContainer(application: object, container: Aponi
  */
 export function getApplicationContainer(application: unknown): AponiaContainer | undefined {
   return (application as { [containerKey]?: AponiaContainer } | null | undefined)?.[containerKey];
+}
+
+/**
+ * The boot's container, reachable from a provider.
+ *
+ * The container a boot builds is what a package's provider needs to discover
+ * the graph, and it does not exist when the provider list is written. The boot
+ * provides this holder first and fills `current` immediately after the
+ * container is created, before any module initializes.
+ *
+ * @internal
+ */
+export interface ApplicationContainerRef {
+  current?: AponiaContainer | undefined;
+}
+
+/**
+ * The token carrying the boot's container reference.
+ * @internal
+ */
+export const APPLICATION_CONTAINER = createToken<ApplicationContainerRef>(
+  "aponia.application.container-reference",
+);
+
+/**
+ * Creates the holder a boot fills once its container exists.
+ *
+ * @internal
+ */
+export function createApplicationContainerRef(): ApplicationContainerRef {
+  return {};
 }

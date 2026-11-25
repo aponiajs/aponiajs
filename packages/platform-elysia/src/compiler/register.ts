@@ -30,6 +30,6 @@ export const aponiaCompilerPlugin: AponiaBunPlugin = {
 };
 
 // Register Bun plugin for automatic zero-config compilation
-void plugin(aponiaCompilerPlugin as any);
+void plugin(aponiaCompilerPlugin as Parameters<typeof plugin>[0]);
 
 export { COMPILED_DESCRIPTOR_SYMBOL };

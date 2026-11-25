@@ -8,14 +8,14 @@ import {
 } from "@aponiajs/common";
 import type { AnyElysia, Elysia } from "elysia";
 import { isElysiaController } from "../controllers/controller-definition.ts";
-import type { InterceptorPhases } from "../controllers/enhancer-resolver.ts";
+import type { InterceptorPhases } from "../controllers/enhancer.resolver.ts";
 import type {
   AponiaApplicationDiagnostics,
   AponiaArtifactProvenance,
   AponiaCallbackRouteDiagnostics,
   AponiaCompiledRouteDiagnostics,
   AponiaInvokerDiagnostics,
-} from "./application-diagnostics.types.ts";
+} from "../interfaces/application-diagnostics.interface.ts";
 
 /**
  * The key one boot's record is attached under.

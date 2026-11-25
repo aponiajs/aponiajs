@@ -1,9 +1,9 @@
 import type { LoggerService, ModuleDefinition } from "@aponiajs/common";
-import type { AponiaRootModule } from "../modules/module-compiler.types.ts";
+import type { AponiaRootModule } from "../interfaces/module-compiler.interface.ts";
 import type {
   AponiaModuleDescriptorArtifact,
   AponiaRootModuleSelection,
-} from "./module-descriptor-artifact.types.ts";
+} from "../interfaces/module-descriptor-artifact.interface.ts";
 
 /**
  * The root module bootstrap compiles: the artifact's declared descriptor when it

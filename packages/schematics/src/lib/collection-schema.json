@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "id": "AponiaSchematicCollection",
+  "title": "Aponia schematic collection",
+  "type": "object",
+  "properties": {
+    "schematics": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "factory": { "type": "string" },
+          "description": { "type": "string" },
+          "schema": { "type": "string" },
+          "aliases": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["factory", "description"]
+      }
+    }
+  },
+  "required": ["schematics"]
+}

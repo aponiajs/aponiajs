@@ -6,66 +6,54 @@ specific to this package.
 ## What this package owns
 
 The module an application imports to serve an OpenAPI document for its own
-routes, and the validated configuration the document's `info` is read from. It
-wraps [`@elysia/openapi`](https://www.npmjs.com/package/@elysia/openapi), which
-builds the document from the route table Elysia compiled. It is a leaf — nothing
-in the framework depends on it.
+routes, and the validated configuration the document's `info` is read from. The
+document is built from the compiled route plans and served by a controller on the
+application's own route table, so the same registration answers on every
+platform. It is a leaf — nothing in the framework depends on it.
 
-| Domain      | Owns                                                                                                                |
-| ----------- | ------------------------------------------------------------------------------------------------------------------- |
-| `module/`   | `OpenApiModule.register`, `OpenApiModuleOptions`, the `DynamicModule` one registration lowers into                  |
-| `document/` | the plugin the registration mounts, the guard that reads a configuration value into `OpenApiInfo`, and the contract |
+| Domain              | Owns                                                                                                  |
+| ------------------- | ----------------------------------------------------------------------------------------------------- |
+| `openapi.module.ts` | `OpenApiModule.forRoot`, `OpenApiModuleOptions`, and the `DynamicModule` one registration lowers into |
+| `document/`         | the controller and document builder the registration mounts, plus the configuration guard             |
+| `interfaces/`       | the module and document contracts                                                                     |
 
-`src/index.ts` is the only public barrel. Keep `*.types.ts` colocated with the
-runtime boundary it describes.
+`src/index.ts` is the only public barrel. Type-only contracts live in
+`interfaces/<name>.interface.ts`.
 
 ## Invariants
 
-- **This package adds no document generator, and no claim in it may imply one.**
-  The generator is `@elysia/openapi`'s and its output is a reading of the route
-  table the platform compiled. What is contributed is a module a registration
-  belongs in and a validated configuration the metadata comes from. A feature
-  that would make this package more than an adapter — a schema registry, a
-  decorator of its own for tags or summaries, a served interface of its own — is
-  a different package, and the answer to "should this package generate that?" is
-  no even when the answer would be convenient. The README leads with module
-  registration and keeps that boundary and the raw-plugin alternative in its
-  final Native escape hatch section; keep it there, because a reader who
-  assumes the document is enforced loses an integration, and no option here
-  makes that assumption true.
-- **`OpenApiInfo` is derived from the plugin's own `documentation.info`, never
-  restated.** The metadata is handed to `@elysia/openapi` unchanged, so a
-  package that restated the shape would keep compiling after a release that
-  reshaped it, and the failure would be a document no tool parses.
-  `tests-vp/openapi.conformance.ts` asserts the assignment against
-  `ElysiaOpenAPIConfig` — derived from the dependency rather than copied — so a
-  release that moves it fails `bun run check` instead of shipping.
+- **The document is generated from compiled route plans, and it describes routes;
+  it does not enforce them.** `buildOpenApiDocument` walks the container's
+  controllers and lowers each compiled plan into a path item; nothing here
+  validates a request. A schema registry, a decorator of its own for tags or
+  summaries, or a served Scalar UI is a different package, and the answer to
+  "should this package generate that?" is no even when the answer would be
+  convenient. Keep the README's statement that the document is a description,
+  because a reader who assumes enforcement loses an integration.
+- **`OpenApiInfo` is the document's own contract.** The three fields are the
+  ones OpenAPI's Info Object names, and the document builder writes them from the
+  validated configuration rather than from a generated placeholder.
+  `test/openapi.conformance.ts` pins `keyof OpenApiModuleOptions` and the nested
+  `info` shape, so widening it fails `bun run check` instead of shipping a
+  document no tool parses.
 - **The description this package serves is the one the application declared.**
-  The wrapped plugin defaults `documentation.info` to a placeholder — a title,
-  `"0.0.0"`, and the description `"Development documentation"` — and it
-  shallow-merges what it is given over that. Passing a key explicitly as
-  `undefined` overrides the placeholder with an absent description; omitting the
-  key inherits it. The guard reads the configuration's value, not the merged
-  document, so a document making a claim the application never declared cannot
-  be served. `tests/openapi-module.test.ts` pins it, because the failure is
-  invisible: a placeholder in a document looks like a document.
+  `title` and `version` are required, and an absent description is served as no
+  description rather than as a generated sentence. The guard reads the
+  configuration's value, not a merged document, so a document making a claim the
+  application never declared cannot be served. `src/openapi-module.spec.ts` pins
+  it, because the failure is invisible: a placeholder in a document looks like a
+  document.
 - **A registration is one `DynamicModule`, and one registration per application
-  is the supported shape.** Elysia mounts a _named_ plugin once — it identifies a
-  mounted plugin by a hash derived from its name — and this plugin is named, so
-  two registrations with distinct keys produce two graph nodes and one document:
-  whichever mounted first, at that registration's path. The second path answers
-  `404`, and both modules export the same configuration token, so reading it back
-  raises `AMBIGUOUS_PROVIDER` rather than picking a winner. A per-registration
-  handle would remove the ambiguity and is deliberately not here, for the same
-  reason cron gives. Both halves are pinned in the Bun lane, so a change that
-  lifts the limitation has to change the README with it.
-- **A `ws` route is excluded, and the exclusion is this package's to state.** The
-  platform mounts a WebSocket gateway as a route whose method really is `ws`,
-  which is not an OpenAPI path-item field: left in, the document carries a path
-  item no validator accepts. The registration mounts the plugin with
-  `exclude.methods: ["options", "ws"]`, and the Bun lane pins a gateway's
-  absence rather than leaving it to the plugin's defaults. `options` is excluded
-  beside it for the reason the plugin excludes it by default.
+  is the supported shape.** Two registrations with distinct keys produce two
+  graph nodes and two controllers; each path serves the document its own
+  configuration describes. Both modules export the same configuration token, so
+  reading it back raises `AMBIGUOUS_PROVIDER` rather than picking a winner. A
+  per-registration handle would remove the ambiguity and is deliberately not
+  here, for the same reason cron gives. The Bun lane pins both halves.
+- **Methods an OpenAPI path item cannot state are omitted.** `ALL`, `OPTIONS`,
+  and `HEAD` are excluded by the document builder, and a WebSocket gateway is a
+  gateway plan rather than an HTTP route, so neither reaches the document. The
+  Bun lane pins a gateway's absence rather than leaving it to a default.
 - **A mount path is a `TypeError`, not an `AponiaError`.** It is written in
   source, where a relative one is a programming mistake, while the metadata is
   data an environment supplies and is refused with a stable code and an issue
@@ -94,31 +82,30 @@ runtime boundary it describes.
 
 ## Tests
 
-`tests/*.test.ts` under Bun, `tests-vp/*.conformance.ts` under Vite+. Both lanes
+`src/**/*.spec.ts` under Bun, `test/*.conformance.ts` under Vite+. Both lanes
 run real boots through `AponiaFactory.create` and read the document through
 `application.handle(new Request(...))`, because what this package promises is a
 document and nothing less than parsing one proves it.
 
 The Bun lane owns:
 
-1. the document is served at the registration's path, the interface is served at
-   the path beside it, the plugin's default path is not mounted, and the
-   metadata is the configuration's value;
+1. the document is served at `${path}/json`, the HTML index at `${path}`, and
+   the metadata is the configuration's value;
 2. every declared schema slot appears on the operation that declared it —
    `body`, `query`, `params`, `headers`, `cookie`, a single `response`, and a
    status-specific response map — and a route with no schema is still an
    operation;
-3. an absent description is served as no description, which is what proves the
-   plugin's placeholder was overridden;
+3. an absent description is served as no description, not as a generated
+   placeholder;
 4. a WebSocket gateway's route is not in the document;
 5. a schema refusal, a value only a runtime can produce, and a value that states
    no metadata at all each fail the boot with the code and the issue list;
 6. a non-absolute mount path is refused while the registration runs, and the
    default is not;
 7. two registrations sharing a key are `DUPLICATE_MODULE`, and two with distinct
-   keys produce one document, a `404` at the second path, and
-   `AMBIGUOUS_PROVIDER` on read-back;
-8. `tests/generated-descriptors.test.ts` reads the same graph two ways — from a
+   keys each serve the document their own configuration describes and raise
+   `AMBIGUOUS_PROVIDER` on read-back of the shared token;
+8. `src/generated-descriptors.spec.ts` reads the same graph two ways — from a
    module's decorators and from the descriptor artifact `aponia build` emits —
    and asserts the two documents are equal, which is the acceptance criterion
    the CLI's own integration test states for the artifact, restated for a
@@ -126,8 +113,7 @@ The Bun lane owns:
    name a registration is not lowerable in any spelling, the platform lowers such
    a root from its decorators, and the document is served anyway.
 
-The Vite+ lane mirrors the contract compile-time: `keyof OpenApiModuleOptions`,
-the nested `info` key, and the assignability of `OpenApiInfo` into the plugin's
-own `documentation.info`. It must not call `listen()`: the lane runs on Node,
+The Vite+ lane mirrors the contract compile-time: `keyof OpenApiModuleOptions`
+and the nested `info` key. It must not call `listen()`: the lane runs on Node,
 where Elysia 2 has no adapter and a listen throws. Cases that need a real port
 belong in the Bun lane.

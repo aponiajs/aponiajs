@@ -29,3 +29,7 @@ bun add @aponiajs/store-redis@alpha redis
   key cannot spell another record's internal name.
 - `RedisRefreshTokenStore` consumes a token in one Lua round trip and keeps a
   short family tombstone so a replay can revoke the family.
+- Every store exposes an idempotent `close()` and `Symbol.asyncDispose`. It
+  releases the client it was given unless `closeClient: false` is stated; a
+  client shared by several stores is released once, so the first `close()` quits
+  it and the rest resolve. A cache write with no lifetime persists without `EX`.

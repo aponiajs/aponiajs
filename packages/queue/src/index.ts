@@ -7,14 +7,27 @@
  * process-local and must be replaced with a broker or durable store when the
  * application runs more than one instance.
  */
-export { QueueModule } from "./module/queue-module.ts";
-export { QueueService } from "./queue/queue-service.ts";
-export { OutboxService } from "./outbox/outbox-service.ts";
-export { SqliteOutboxStore } from "./outbox/sqlite-outbox-store.ts";
-export type { SqliteOutboxStoreOptions } from "./outbox/sqlite-outbox-store.ts";
-export { MemoryQueueStore } from "./queue/memory-queue-store.ts";
-export type { QueueStore } from "./queue/queue-store.types.ts";
-export type { QueueModuleOptions } from "./module/queue-module.types.ts";
+export { QueueModule } from "./queue.module.ts";
+export {
+  MODULE_OPTIONS_TOKEN,
+  type QueueModuleExtras,
+  type QueueModuleRegistrationAsyncOptions,
+  type QueueModuleSyncOptions,
+} from "./queue.module-definition.ts";
+export { getQueueToken, InjectQueue } from "./decorators/inject-queue.decorator.ts";
+export { Processor, type ProcessorOptions } from "./decorators/processor.decorator.ts";
+export { WorkerHost } from "./hosts/worker-host.ts";
+export { JOB_REF, JobRefService } from "./queue/job-ref.service.ts";
+export { QueueService } from "./queue/queue.service.ts";
+export { OutboxService } from "./outbox/outbox.service.ts";
+export { SqliteOutboxStore } from "./outbox/sqlite-outbox.store.ts";
+export type { SqliteOutboxStoreOptions } from "./outbox/sqlite-outbox.store.ts";
+export { MemoryQueueStore } from "./queue/memory-queue.store.ts";
+export type { QueueStore } from "./interfaces/queue-store.interface.ts";
+export type {
+  QueueModuleAsyncOptions,
+  QueueModuleOptions,
+} from "./interfaces/queue-module.interface.ts";
 export type {
   QueueDrainSummary,
   QueueEnqueueOptions,
@@ -23,12 +36,12 @@ export type {
   QueueJobState,
   QueueStats,
   QueueTimer,
-} from "./queue/queue-job.types.ts";
-export type { QueueServiceOptions } from "./queue/queue-service.types.ts";
+} from "./interfaces/queue-job.interface.ts";
+export type { QueueServiceOptions } from "./interfaces/queue-service.interface.ts";
 export type {
   OutboxFlushResult,
   OutboxMessage,
   OutboxOptions,
   OutboxSink,
   OutboxStore,
-} from "./outbox/outbox.types.ts";
+} from "./interfaces/outbox.interface.ts";

@@ -39,7 +39,7 @@ structural three-member contract.
 
 ## Tests
 
-`tests/*.test.ts` under Bun, `tests-vp/*.conformance.ts` under Vite+. Cover both
+`src/**/*.spec.ts` under Bun, `test/*.conformance.ts` under Vite+. Cover both
 payload versions, multi-value headers and query strings, base64 request and
 response bodies, binary responses, cookies, empty bodies, and a real Aponia
 application answering through the Lambda handler.

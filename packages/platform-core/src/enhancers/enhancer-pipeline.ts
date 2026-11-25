@@ -1,14 +1,7 @@
-import type { CanActivate } from "@aponiajs/common";
+import type { CanActivate, RouteContext } from "@aponiajs/common";
 import type { StaticRouteExecutionContext } from "./static-execution-context.ts";
 
-interface StatusMutableContext {
-  set?: {
-    status?: number | string;
-    headers?: Record<string, string>;
-  };
-}
-
-function applyForbiddenStatus(context: StatusMutableContext): void {
+function applyForbiddenStatus(context: RouteContext): void {
   if (context.set) {
     context.set.status = 403;
     if (
@@ -21,10 +14,7 @@ function applyForbiddenStatus(context: StatusMutableContext): void {
   }
 }
 
-function extractForbiddenResponse(
-  context: StatusMutableContext,
-  forbiddenResponse: unknown,
-): unknown {
+function extractForbiddenResponse(context: RouteContext, forbiddenResponse: unknown): unknown {
   applyForbiddenStatus(context);
   return forbiddenResponse instanceof Response ? forbiddenResponse.clone() : forbiddenResponse;
 }
@@ -33,7 +23,7 @@ function runRemainingGuards(
   guards: readonly CanActivate[],
   startIndex: number,
   execContext: StaticRouteExecutionContext,
-  context: StatusMutableContext,
+  context: RouteContext,
   forbiddenResponse: unknown,
   promise: Promise<boolean>,
 ): Promise<unknown> {
@@ -63,14 +53,14 @@ export function compileUnrolledGuards(
   guards: readonly CanActivate[],
   execContext: StaticRouteExecutionContext,
   forbiddenResponse: unknown,
-): ((context: any) => unknown) | undefined {
+): ((context: RouteContext) => unknown) | undefined {
   if (guards.length === 0) {
     return undefined;
   }
 
   if (guards.length === 1) {
     const g0 = guards[0]!;
-    return function singleGuardHook(context: any) {
+    return function singleGuardHook(context: RouteContext) {
       const requestContext = execContext.fork(context);
       const result = g0.canActivate(requestContext);
       if (result === false) {
@@ -91,7 +81,7 @@ export function compileUnrolledGuards(
   if (guards.length === 2) {
     const g0 = guards[0]!;
     const g1 = guards[1]!;
-    return function twoGuardsHook(context: any) {
+    return function twoGuardsHook(context: RouteContext) {
       const requestContext = execContext.fork(context);
       const res0 = g0.canActivate(requestContext);
       if (res0 === false) {
@@ -134,7 +124,7 @@ export function compileUnrolledGuards(
     };
   }
 
-  return function multiGuardHook(context: any) {
+  return function multiGuardHook(context: RouteContext) {
     const requestContext = execContext.fork(context);
     for (let i = 0; i < guards.length; i++) {
       const result = guards[i]!.canActivate(requestContext);

@@ -1,16 +1,74 @@
 # Authoring a Plugin Package
 
-A plugin package is a published package that ships an Aponia module wrapping a
-native Elysia plugin. An application imports the module like any other, declares
-it in `imports`, and gets the plugin mounted through the framework's own seam
-instead of calling `use()` on the application itself. `@aponiajs/cors` is the
-reference implementation of this shape, and this page is the author's side of
-it; [Native Elysia Plugins](../platforms/native-plugins.md) is the consumer's side.
+A plugin package is a published package that ships an Aponia module contributing
+neutral behavior: providers, controllers, `HttpPolicy` transforms, request
+lifecycle hooks, and capability requirements. An application imports the module
+in `imports`, and the shared request pipeline runs it on every platform.
+`@aponiajs/cors` and `@aponiajs/compression` are the reference implementations of
+this shape, and this page is the author's side of it;
+[Platform Parity](../platforms/platform-parity.md) is the runtime contract.
 
 The whole of the shape is one registration method that returns a
-`DynamicModule`. The generated standard uses `forRoot` and `forRootAsync`;
-`register` is the spelling the hand-written native wrappers in this repository
-use. Everything below is why it is written the way it is.
+`DynamicModule`. This page is the standard: the contract every module package in
+this repository follows, then the authoring path that produces one.
+
+## The contract
+
+`scripts/plugin-standard.spec.ts` enforces the mechanical half of this table; the
+two test lanes prove the behavioral half. A package that cannot meet a row states
+why in its package `AGENTS.md` rather than inventing a second shape.
+
+| #   | Rule                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Evidence                               |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| P1  | `forRoot(options?)` is the canonical registration; `register(options?)` remains as a deprecated beta alias that delegates to it. A generated package exposes `forRoot` and `forRootAsync` only.                                                                                                                                                                                                                                                                             | static guard + package tests           |
+| P2  | A module whose `forRoot` accepts plain options exports `forRootAsync(options: ModuleAsyncOptions<TOptions>)`. The factory may return the options object or a Promise for it; the boot awaits it and validates the resolved value exactly as `forRoot` validates a literal. `useFactory`, `useClass`, and `useExisting` are all accepted. Modules registering a `ConfigurationToken` need no `forRootAsync`: that configuration is already container-resolved and validated. | package tests                          |
+| P3  | Malformed options fail at registration with an `AponiaError` carrying a closed code and a frozen `issues` list naming each field. `forRootAsync` reports the same issues when its provider resolves.                                                                                                                                                                                                                                                                        | failure tests per package              |
+| P4  | Source is Nest-shaped and domain-first: one barrel `src/index.ts`, the module as `src/<name>.module.ts`, a service as `src/<name>.service.ts`, a controller as `src/<name>.controller.ts`, a policy as `src/<name>.policy.ts`, and type-only contracts as `src/interfaces/<name>.interface.ts`. Constants use `*.constants.ts` only when runtime and types read the same value.                                                                                             | `scripts/source-layout.spec.ts`        |
+| P5  | A package contributes neutral artifacts only — providers, controllers, `HttpPolicy`, `RequestLifecycleHook`, and capability requirements — and states the capabilities it serves with `requirePlatformCapabilities`. It states no `platforms` allowlist and ships no per-runtime `adapters/` directory.                                                                                                                                                                     | `scripts/plugin-standard.spec.ts`      |
+| P6  | A module that owns a timer, socket, connection, or bounded store closes it in `onModuleDestroy` or `onApplicationShutdown`; closing is idempotent and tested.                                                                                                                                                                                                                                                                                                               | lifecycle tests per package            |
+| P7  | No module-level mutable state. Registration state lives on the providers the registration returns.                                                                                                                                                                                                                                                                                                                                                                          | review + `source-layout` guard         |
+| P8  | The package README shows `forRoot` and the `AponiaFactory.create` boot, `llms.txt` ships, and both test lanes cover the public contract.                                                                                                                                                                                                                                                                                                                                    | `scripts/documentation.spec.ts`, lanes |
+
+### What a registration returns
+
+- A frozen `DynamicModule`. The module class is the registration's `module`;
+  `dynamicModule` derives `id` from the class name and a fresh `instanceId`, so
+  two registrations of one class stay distinct.
+- The option token is exported when an importer may read it back; store tokens
+  are exported only when the store is a supported extension point.
+- `forRootAsync` puts the factory-built options behind the same token, so every
+  other provider is identical in both forms.
+
+### Diagnostics
+
+An option failure names the field, the rule it broke, and what to do:
+
+```text
+The rate-limit registration is invalid: limit must be a positive integer.
+```
+
+The code is stable; the `details.issues` array is frozen and safe to print. Do
+not paraphrase a code into prose in a README: link the error code instead.
+
+### Conformance kit
+
+`@aponiajs/testing` exports the checks a package uses in its Bun lane. They
+return a frozen list of broken rules, so a package asserts the contract rather
+than a message.
+
+| Check                          | Proves                                                                                           |
+| ------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `pluginRegistrationIssues`     | `forRoot` exists, and `forRootAsync` exists unless the package documents why it cannot.          |
+| `dynamicModuleIssues`          | The registration names its own module class, is frozen, and carries an id and instance identity. |
+| `registrationIsolationIssues`  | Two registrations of one module keep distinct definitions and instance identities.               |
+| `optionsTokenIssues`           | The options token is provided and exported where the contract says it should be.                 |
+| `asyncRegistrationShapeIssues` | The three asynchronous shapes lower through `moduleOptionsProviders`.                            |
+| `teardownIssues`               | Closing twice stops nothing twice.                                                               |
+
+Behavior — the options token resolving, a Promise factory being awaited,
+`useClass` and `useExisting` resolving, and teardown running — is asserted by
+booting the package's real module through `AponiaFactory.create`; the shape
+checks do not replace that boot.
 
 ## Generate the package
 
@@ -18,28 +76,30 @@ use. Everything below is why it is written the way it is.
 `aponia library new <name> --kind plugin --scope @name` writes the same package
 standalone. It shares one scaffold with `aponia g library`, including the public
 barrel, both test lanes, `aponia.library.json`, and the Nest-style
-`forRoot` / `forRootAsync` registration. The plugin kind adds the platform
-declaration:
+`forRoot` / `forRootAsync` registration. The plugin kind adds the neutral
+contribution files:
 
 ```text
 src/
 |-- index.ts
-|-- <name>.adapters.ts   (under adapters/)
 |-- <name>.constants.ts
+|-- <name>.controller.ts
 |-- <name>.module.ts
+|-- <name>.policy.ts
 |-- <name>.service.ts
-`-- <name>.types.ts
+`-- interfaces/
+    `-- <name>.interface.ts
 ```
 
-`src/adapters/<name>.adapters.ts` is the one place the package may import a
-runtime. It owns the `providePlatformModule` declaration, so the module source
-stays neutral and the same registration boots on every platform the declaration
-names. A package that only needs the container needs no adapter at all: list the
-platforms and leave the adapter record empty.
+The module registers the controller, its options, the service, the policy built
+with `provideHttpPolicyAsync`, and `requirePlatformCapabilities("<name>", ["http"])`.
+The generated source imports no platform package and no HTTP runtime, and the
+manifest states no `platforms` array. A native mount belongs in a separate
+`adapter` library, never in a plugin.
 
 `aponia library check` validates the generated plugin like any other library,
-including the platform names, the required documentation, and the rule that a
-runtime import lives under `src/adapters/`.
+including the required documentation and the rule that a plugin source imports no
+runtime package.
 
 ## What an adapter is worth
 
@@ -48,137 +108,75 @@ A native Elysia plugin needs no adapter. An application can mount one with
 `plugins` option, and nothing here discourages that. A package is worth
 publishing only when one of these is true:
 
-- **The declaration needs a module to live in.** A registration is a node in
-  the compiled graph, so an application names it in `imports` beside its own
-  modules, and `application.get` reads it back. Because it is a module,
-  `inspectAponiaApplication` lists it — cors's registration appears as the
-  module `PluginModule[cors]`, carrying its configuration token and its plugin
-  token — and the boot reports it on `InstanceLoader`. A
-  plugin mounted through the factory's `plugins` option reaches none of that:
-  it is outside the graph, so nothing about it is in `compileRootModule`,
-  inspection, or a generated artifact.
+- **The declaration needs a module to live in.** A registration is a node in the
+  compiled graph, so an application names it in `imports` beside its own modules,
+  and `application.get` reads it back. Because it is a module,
+  `inspectAponiaApplication` lists it, and the boot reports it on
+  `InstanceLoader`. A plugin mounted through the factory's `plugins` option
+  reaches none of that: it is outside the graph, so nothing about it is in
+  `compileRootModule`, inspection, or a generated artifact.
 - **The plugin's options need validating.** A declared
-  [configuration](../build/configuration.md) turns a malformed value into a refused
-  boot with a stable code and an issue list, instead of a constructor throwing
-  from inside a plugin halfway through a mount.
+  [configuration](../build/configuration.md) turns a malformed value into a
+  refused boot with a stable code and an issue list, instead of a constructor
+  throwing from inside a plugin halfway through a mount.
 
 If neither is true, the application can mount the plugin itself and a package
-around it adds a name and a version to maintain. The honest value of this
-pattern is narrow, and a README that claims more than it delivers is the first
-defect the next reader meets.
+around it adds a name and a version to maintain. The honest value of this pattern
+is narrow, and a README that claims more than it delivers is the first defect the
+next reader meets.
 
 ## Standard plugin authoring builders
 
-While low-level adapters assemble `DynamicModule` with `PluginModule.registerAsync`,
-AponiaJS provides three standardized high-level builder functions. They live in
-`@aponiajs/platform-core` and are re-exported from `@aponiajs/platform-elysia`,
-so an existing import keeps working.
+A package contributes through the neutral contract in `@aponiajs/platform-core`:
 
-The first two are platform-neutral: a package built on them runs wherever its
-code runs. All three accept the standard's optional `platforms` and `adapters`
-fields. `platforms` states where the package runs (omitted means every shipped
-platform), and `adapters` states the native mount per platform name. The boot
-checks every declaration before it mounts anything, refuses an undeclared
-platform with `UNSUPPORTED_PLATFORM_FEATURE` naming the package and the
-platform, and runs `adapters[platform]` on the runtime's own application ahead
-of middleware and routes. `[Platform Parity](../platforms/platform-parity.md)` is the
-contract; this page is the author's side of it.
+| Builder                                  | Contributes                                                                     |
+| ---------------------------------------- | ------------------------------------------------------------------------------- |
+| `provideHttpPolicy(name, handler)`       | one request/response transform; `onRequest` may answer, `onResponse` transforms |
+| `provideHttpPolicies(...policies)`       | several policies in one module                                                  |
+| `provideHttpPolicyAsync(deps, factory)`  | a policy built once from a validated value or an injected service               |
+| `provideRequestLifecycleHook(hook)`      | `onRequest`, `onResponse`, and `onError` observation                            |
+| `requirePlatformCapabilities(key, caps)` | the request-path capabilities the registration needs                            |
 
-### 1. Service/Client Provider (`createServicePlugin`)
-
-For plugins that establish connections or provide injectable client services (e.g., Database, Redis, Mailer, SDKs).
-
-```ts
-import { createServicePlugin } from "@aponiajs/platform-elysia";
-import { DatabaseClient } from "./database-client.ts";
-
-export const DatabaseModule = createServicePlugin({
-  name: "database",
-  service: DatabaseClient,
-  factory: (options: { url: string }) => {
-    return new DatabaseClient(options.url);
-  },
-});
-```
-
-An application consumes it seamlessly:
-
-```ts
-@Module({
-  imports: [
-    DatabaseModule.forRoot({ url: "postgres://localhost:5432/db" }),
-    // Or asynchronous configuration:
-    // DatabaseModule.forRootAsync({ inject: [Config], useFactory: (c) => ({ url: c.url }) }),
-  ],
-})
-export class AppModule {}
-```
-
-### 2. Enhancer/Guard Provider (`createEnhancerPlugin`)
-
-For plugins contributing route guards, interceptors, or filters.
-
-```ts
-import { createEnhancerPlugin } from "@aponiajs/platform-elysia";
-import { SecurityGuard } from "./security.guard.ts";
-
-export const SecurityModule = createEnhancerPlugin({
-  name: "security",
-  guards: [SecurityGuard],
-});
-```
-
-### 3. Native Elysia Bridge (`wrapElysiaPlugin`)
-
-For wrapping community and official Elysia plugins into first-class Aponia modules.
-
-```ts
-import { wrapElysiaPlugin } from "@aponiajs/platform-elysia";
-import { swagger } from "@elysiajs/swagger";
-
-export const SwaggerModule = wrapElysiaPlugin({
-  name: "swagger",
-  plugin: (options) => swagger(options),
-});
-```
+There is no platform allowlist and no per-platform adapter. A registration that
+needs a capability the platform lacks is refused at boot with
+`UNSUPPORTED_PLATFORM_FEATURE` naming the package, the capability, and the
+platform. `[Platform Parity](../platforms/platform-parity.md)` is the contract;
+this page is the author's side of it.
 
 ## The smallest complete registration
 
+A route-serving feature is a controller; a request-path feature is an
+`HttpPolicy` or a `RequestLifecycleHook`. A plugin that contributes both keeps
+them in one registration:
+
 ```ts
-// packages/widgets/src/module/widgets-module.ts
-import { Module, provideFactory, type DynamicModule } from "@aponiajs/common";
-import { PluginModule, provideConfiguration } from "@aponiajs/platform-elysia";
-import { WidgetsService, readWidgets } from "../service/widgets-service.ts";
-import type { WidgetsModuleOptions } from "./widgets-module.types.ts";
+// packages/widgets/src/widgets.module.ts
+import { Module, dynamicModule, type DynamicModule } from "@aponiajs/common";
+import {
+  provideConfiguration,
+  provideHttpPolicyAsync,
+  requirePlatformCapabilities,
+} from "@aponiajs/platform-core";
+import { WidgetsController } from "./widgets.controller.ts";
+import { buildWidgetsPolicy } from "./widgets.policy.ts";
+import type { WidgetsModuleOptions } from "./interfaces/widgets.interface.ts";
 
 @Module({})
 export class WidgetsModule {
-  static register(options: WidgetsModuleOptions): DynamicModule {
-    // The framework's one seam for a plugin built from a value the container
-    // already holds. The factory runs once per boot, after the provider it
-    // injects exists.
-    const pluginModule = PluginModule.registerAsync({
-      key: options.key ?? "widgets",
-      inject: [WidgetsService],
-      useFactory: (service: WidgetsService) => service.buildPlugin(),
-    });
+  static forRoot(options: WidgetsModuleOptions): DynamicModule {
+    const key = options.key ?? "widgets";
 
-    return Object.freeze({
-      ...pluginModule,
-      imports: Object.freeze([]),
-      providers: Object.freeze([
-        provideConfiguration(
-          options.configuration,
-          options.source === undefined ? undefined : { source: options.source },
-        ),
-        provideFactory(
-          WidgetsService,
-          [options.configuration],
-          (value) => new WidgetsService(readWidgets(value)),
-        ),
-        ...(pluginModule.providers ?? []),
-      ]),
-      exports: Object.freeze([options.configuration, WidgetsService]),
+    return dynamicModule({
+      module: WidgetsModule,
+      id: `WidgetsModule[${key}]`,
+      instanceId: Symbol.for(`aponia.widgets:${key}`),
+      providers: [
+        provideConfiguration(options.configuration),
+        provideHttpPolicyAsync([options.configuration], (value) => buildWidgetsPolicy(value)),
+        requirePlatformCapabilities("widgets", ["http"]),
+      ],
+      controllers: [WidgetsController],
+      exports: [options.configuration],
     });
   }
 }
@@ -191,70 +189,20 @@ import { Module } from "@aponiajs/common";
 import { WidgetsModule } from "@examplejs/widgets";
 import { WidgetsConfig } from "./config.ts";
 
-const widgets = WidgetsModule.register({ configuration: WidgetsConfig });
+const widgets = WidgetsModule.forRoot({ configuration: WidgetsConfig });
 
 @Module({ imports: [widgets] })
 export class AppModule {}
 ```
 
-Both spellings mount the same module, and neither is lowered into the descriptor
-artifact a build writes; see [What a build can read](#what-a-build-can-read).
-
-## The seam is `PluginModule.registerAsync`
-
-`PluginModule.register(plugin, ...)` and `definePlugin(plugin, ...)` take a
-plugin **value**, so the value has to exist when the module is evaluated. A
-plugin built from something the container resolved — a validated configuration, a
-service the application injected — has no value until the container has built
-one, and `PluginModule.registerAsync({ inject, useFactory })` is the framework's
-one seam that builds it there.
-
-There is no hand-rolled alternative. The boot recognizes a plugin module by
-asking whether its providers include one whose token is a private `ELYSIA_PLUGIN`
-token, and asks for the plugin through that token. That token is created with
-`createToken`, so its identity is a fresh symbol rather than a name, and it is
-not exported from `@aponiajs/platform-elysia`. A `DynamicModule` you assemble by
-hand — even one that sets `module: PluginModule` — carries a token of your own,
-so nothing recognizes it as a plugin module and the boot mounts no plugin for
-it. `registerAsync` is what puts the plugin in the graph.
-
-The factory's `inject` tokens resolve against the module that declares the
-plugin provider: its own providers first, then the exports of that module's
-`imports`. `registerAsync` also accepts `imports`, so a factory can inject a
-token an imported module exports — but a registration is one `DynamicModule`,
-and a package keeps the value it builds and the native mount in that one module, because the module
-that holds the service has no class an application could name and a split would
-need one.
-
-### The shape of the returned value
-
-Three details of the shape above are not stylistic:
-
-- **`providers` is spread with a fallback.** `DynamicModule.providers` is
-  optional in its type, so `pluginModule.providers` is possibly `undefined` even
-  though the seam always supplies one. `...(pluginModule.providers ?? [])` is
-  what keeps the declaration honest about that.
-- **The collections the registration owns are restated, not inherited.** The
-  result spreads the plugin module, so it inherits whatever that module was
-  built with. Cors was registered without imports, so its `imports` is already
-  empty; writing `imports: Object.freeze([])` keeps the registration from
-  inheriting an import it did not choose.
-- **The whole value is frozen**, and the arrays inside it are frozen too. Public
-  descriptors in this framework are immutable, and a `DynamicModule` an
-  application holds is one.
-
-The returned module is the `module` field's module, not the class `register`
-hangs off: cors's registration reports its identity as `PluginModule[cors]`.
-The class is only the namespace the method is reached through.
-
 ## Identity and one registration per application
 
 A registration's `key` is its module identity. The seam derives a stable
 `instanceId` from it, so two registrations that share a key are not two modules:
-the graph refuses the boot with `DUPLICATE_MODULE` — cors's carries
-`{ module: "PluginModule[cors]" }` — rather than mounting one and dropping the
-other, which would silently run half of what was declared. `key` defaults to the
-package's own name (`"cors"`), so two registrations that both omit it collide.
+the graph refuses the boot with `DUPLICATE_MODULE` rather than mounting one and
+dropping the other, which would silently run half of what was declared. `key`
+defaults to the package's own name, so two registrations that both omit it
+collide.
 
 The service the module provides is exported under its own class token, which is
 what makes `application.get(Service)` the ordinary way to read a boot back. That
@@ -265,33 +213,28 @@ disagree and the read raises `AMBIGUOUS_PROVIDER`. The graph names the ambiguity
 rather than picking a winner, which is the framework's ordinary rule for a token
 two imports both export.
 
-State the limitation in the README and pin both codes in tests: two
-registrations that share a key are `DUPLICATE_MODULE`, and reading one token two
-keyed registrations both provide is `AMBIGUOUS_PROVIDER`. A later
-change that lifts the limitation has to change the README with it. Per-key
-tokens minted by `register` would remove the ambiguity, and are deliberately not
-part of the shape — they would give every plugin package a second way to name
-one thing.
+State the limitation in the README and pin both codes in tests: two registrations
+that share a key are `DUPLICATE_MODULE`, and reading one token two keyed
+registrations both provide is `AMBIGUOUS_PROVIDER`.
 
 ## Stopping is a provider hook
 
-A native plugin starts work when it mounts, often before anything listens. The
-work has to stop from the module graph, not from the plugin.
+Work starts when a registration mounts, often before anything listens, and it
+has to stop from the module graph rather than from a native plugin.
 
 `application.close()` runs the plan a boot attached whether or not the
 application ever called `listen()`: `beforeApplicationShutdown`, then the native
 server stop **only if a server exists**, then `onModuleDestroy`, then
-`onApplicationShutdown`. A plugin's own teardown is reached through the native
-stop, so an application that is only ever driven through `application.handle()` —
-a test, a serverless handler — never reaches it, and a stop tied to the server
-would leave such an application running its jobs forever.
+`onApplicationShutdown`. A plugin's own teardown is reached through a provider
+hook, so an application that is only ever driven through `application.handle()` —
+a test, a serverless handler — still stops it.
 
 So the module provides a service that owns the work and implements a provider
 lifecycle hook. Cron implements `onApplicationShutdown`, which runs last, after
 every other hook this application declared has had its say, and it calls `stop()`
 rather than `pause()` and drops the handles afterwards, so a second `close()`
-stops nothing a second time. [Lifecycle](../build/lifecycle.md) is the full set of
-moments.
+stops nothing a second time. [Lifecycle](../build/lifecycle.md) is the full set
+of moments.
 
 ## What a build can read
 
@@ -299,51 +242,33 @@ moments.
 the entry is a **single identifier naming a declaration the build read from the
 project's own source** — a `@Module()`, `@Controller()`, `@Injectable()`, or
 `@WebSocketGateway()` class under the configured source root. A registration is
-not one. `WidgetsModule.register({ ... })` returns a `DynamicModule`, which is a
+not one. `WidgetsModule.forRoot({ ... })` returns a `DynamicModule`, which is a
 runtime value rather than a declaration, so the build declines the module that
 wrote it — it reports `DECLINED module <Name>: …` and leaves that module out of
 `descriptors.generated.ts`. **No spelling changes that.** Written inline in
 `imports`, held in a `const` and named there, or spread into the module from the
 package's own source, the registration result is the same value and is declined
 the same way. An entry that names a module class from an installed package
-declines too, because the build reads only the project's own source:
-
-```ts
-const widgets = WidgetsModule.register({ configuration: WidgetsConfig });
-
-@Module({ imports: [widgets] })
-export class AppModule {}
-```
+declines too, because the build reads only the project's own source.
 
 Both spellings mount the same module at run time, which is why the decline is
 easy to miss: what runs does not change, only what a build can read. The cost is
 the descriptor artifact: the build writes it without the declined module when
 another module is still lowerable, and replaces the artifact on disk with an
-empty record when the declined module is the only one a build could have
-lowered. Either way the artifact holds no declaration for the root the
-application named, so bootstrap refuses it whole and lowers the root from its
-decorators. The registration mounts, and the declared-graph boot is given up for
-that root.
+empty record when the declined module is the only one a build could have lowered.
+Either way the artifact holds no declaration for the root the application named,
+so bootstrap refuses it whole and lowers the root from its decorators. The
+registration mounts, and the declared-graph boot is given up for that root.
 
-That is why the `DECLINED module` line a build prints is the one to read, and
-why a README should say so rather than imply a spelling gets around it. A
-consumer who would rather keep the declared-graph boot mounts the raw plugin
-itself through the factory's `plugins` option — no `imports` entry is involved,
-so the root stays declarable — and gives up this module for it, the validated
+That is why the `DECLINED module` line a build prints is the one to read, and why
+a README should say so rather than imply a spelling gets around it. A consumer
+who would rather keep the declared-graph boot mounts the raw plugin itself
+through the factory's `plugins` option — no `imports` entry is involved, so the
+root stays declarable — and gives up this module for it, the validated
 configuration included. Nothing about a plugin mounted that way reaches
 `compileRootModule`, `inspectAponiaApplication`, or a generated artifact.
-[Native Elysia Plugins](../platforms/native-plugins.md#the-plugins-option) states the same
-trade from the consumer's side.
-
-A package can spare its consumers that choice. When its plugin needs nothing the
-container holds, export the value beside the module — `@aponiajs/devtools` ships
-`devtoolsPlugin` next to `DevtoolsModule`, and its README states the same trade —
-and an application that would rather keep the descriptor artifact mounts that
-value through `plugins`: the artifact is adopted and the plugin still serves,
-while what the application gives up is the module, its provider, and the
-read-back. A plugin built from a value the container resolved has nothing to
-export, because it does not exist until the container has built one; openapi,
-cors, and graphql are that shape.
+[Native Elysia Plugins](../platforms/native-plugins.md#the-plugins-option)
+states the same trade from the consumer's side.
 
 ## The build configuration
 
@@ -360,18 +285,17 @@ export default defineConfig({
     alias: {
       "@aponiajs/common": new URL("../common/src/index.ts", import.meta.url).pathname,
       "@aponiajs/core": new URL("../core/src/index.ts", import.meta.url).pathname,
-      "@aponiajs/platform-elysia": new URL("../platform-elysia/src/index.ts", import.meta.url)
-        .pathname,
+      "@aponiajs/platform-core": new URL("../platform-core/src/index.ts", import.meta.url).pathname,
     },
     globals: true,
-    include: ["tests-vp/**/*.conformance.ts"],
+    include: ["test/**/*.conformance.ts"],
   },
   pack: {
     tsconfig: "tsconfig.build.json",
     dts: true,
     exports: true,
     deps: {
-      neverBundle: ["@aponiajs/common", "@aponiajs/platform-elysia", "elysia"],
+      neverBundle: ["@aponiajs/common", "@aponiajs/platform-core"],
     },
   },
   lint: { options: { typeAware: true, typeCheck: true } },
@@ -381,92 +305,51 @@ export default defineConfig({
 
 With `paths` visible to the declaration emitter, `vp pack` follows the mappings
 into the other packages' sources and writes a `.d.ts` file beside every source
-file it finds, with the packages that own them — which the source-layout guard
-then rejects. Every package in this workspace that declares such mappings keeps
-a `paths`-free build tsconfig for this reason.
+file it finds — which the source-layout guard then rejects. Every package in this
+workspace that declares such mappings keeps a `paths`-free build tsconfig for
+this reason.
 
 ## Stating the boundary
 
 **An adapter that does not state its boundary sets a false expectation, and the
 false expectation is the defect.** Lead the README with the module, the service,
-and the boot; state the boundary in the final `## Native escape hatch` section
-so the supported path is never buried under a disclaimer. Cron says, in the
-reader's own words:
-
-> **This is not a job queue.** There is no persistence: a job that did not run
-> because the process was down did not run, and nothing replays it. There are no
-> retries: a `run` that throws is the engine's business... There is no
-> cross-process coordination and no distributed lock...
-
-Keep that paragraph, but place it after the usage sections, and make it concrete:
-
-- Name the engine and link to it, and say plainly that a reader who wants the
-  raw plugin should install it directly.
-- Write the sentence as `**This is not a <thing>.**` and then list what the
-  package does **not** do. Do not soften it with "currently" or "yet"; a
-  guarantee the engine does not give is not a roadmap item.
-- Name the cost of the wrong assumption. Cron's says a reader who assumes
-  exactly-once "will lose data", which is why the paragraph cannot be dropped.
-- Say where the guarantee a reader does want lives — a different package — rather
-  than implying a later option will add it.
-
-The same paragraph belongs in `llms.txt`, shortened, because that is the surface
-an agent reads first.
+and the boot; state the boundary in the final `## Native escape hatch` section so
+the supported path is never buried under a disclaimer. Name the engine, say
+plainly that a reader who wants the raw plugin should install it directly, and
+name the cost of the wrong assumption. The same paragraph belongs in `llms.txt`,
+shortened, because that is the surface an agent reads first.
 
 ## Adding a package to this repository
 
-A package is not added by creating its directory. The following shared files
-were all edited when `@aponiajs/cron` was added, and a new package needs the same
+A package is not added by creating its directory. The following shared files were
+all edited when `@aponiajs/cron` was added, and a new package needs the same
 edits:
 
-| File                                   | What changes                                                                                 |
-| -------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `packages/<name>/`                     | The package itself: manifest, `src/`, `tests/`, `tests-vp/`, README, `llms.txt`, `AGENTS.md` |
-| `package.json` (root)                  | The manifest list in `version:bump`, and the package loop in `release:dry-run`               |
-| `scripts/workspace-versions.ts`        | The package in `versionedPackageFiles` and in `versionedWorkspacePaths`                      |
-| `AGENTS.md` (root)                     | The package table, and the guide-index table below it                                        |
-| `docs/reference/packages.md`           | The catalog table, a section for the package, and every count of packages                    |
-| `docs/operations/releasing.md`         | The dependency-ordered publish list, and every count of packages                             |
-| `docs/build/architecture-and-style.md` | The package-boundary table                                                                   |
-| `scripts/agent-guides.spec.ts`         | The package in `guideDirectories`                                                            |
-| `scripts/source-layout.spec.ts`        | The package's `src/` layout: its files and its owner directories                             |
-| `.github/workflows/publish.yml`        | The pack destination and the publish loop                                                    |
-| `.github/workflows/canary.yml`         | The same, for the nightly canary                                                             |
+| File                                   | What changes                                                                   |
+| -------------------------------------- | ------------------------------------------------------------------------------ |
+| `packages/<name>/`                     | The package itself: manifest, `src/`, `test/`, README, `llms.txt`, `AGENTS.md` |
+| `package.json` (root)                  | The manifest list in `version:bump`, and the package loop in `release:dry-run` |
+| `scripts/workspace-versions.ts`        | The package in `versionedPackageFiles` and in `versionedWorkspacePaths`        |
+| `AGENTS.md` (root)                     | The package table, and the guide-index table below it                          |
+| `docs/reference/packages.md`           | The catalog table, a section for the package, and every count of packages      |
+| `docs/operations/releasing.md`         | The dependency-ordered publish list, and every count of packages               |
+| `docs/build/architecture-and-style.md` | The package-boundary table                                                     |
+| `scripts/agent-guides.spec.ts`         | The package in `guideDirectories`                                              |
+| `scripts/source-layout.spec.ts`        | The package's `src/` layout: its files and its owner directories               |
+| `.github/workflows/publish.yml`        | The pack destination and the publish loop                                      |
+| `.github/workflows/canary.yml`         | The same, for the nightly canary                                               |
 
 The package's own files follow the workspace's conventions: `src/index.ts` is the
 only barrel, implementation lives under owner directories such as `module/` and
 `scheduler/` rather than a package-wide `types/` bucket, type-only contracts sit
-in `*.types.ts` beside the implementation that owns them, `tsconfig.json`
-declares `experimentalDecorators` and `emitDecoratorMetadata`, and `elysia` is a
-peer dependency pinned to the exact version the rest of the workspace pins.
+in `interfaces/<name>.interface.ts`, `tsconfig.json` declares
+`experimentalDecorators` and `emitDecoratorMetadata`, and any runtime peer is
+pinned to the exact version the rest of the workspace pins.
 
 Three guards discover packages from the workspace and need no edit when one is
 added: `scripts/package-llms.spec.ts`, `scripts/coverage-gate.ts`, and the root
 `bun run --workspaces` scripts. The root `package.json` `workspaces` glob already
 covers `packages/*`.
-
-## The standard registration shape
-
-Every package above follows one declaration, and a new one keeps it rather than
-inventing its own: `Module.register({ configuration, source?, key?, ...runtime })`
-returns a `DynamicModule` built on `PluginModule.registerAsync`, provides the
-configuration it consumes through `provideConfiguration`, exports that token so
-the application reads the same validated value back, and names its identity
-with `key` (defaulting to the package's own name). What varies is only what
-`register` takes beside the configuration:
-
-- config-only (`cors`, `openapi`): the validated value is the whole policy;
-- config plus runtime options (`opentelemetry`): live objects a configuration
-  cannot carry — processors, exporters, instrumentations — arrive as ordinary
-  `register` fields, and the module spreads the validated value after them so
-  the configuration stays authoritative;
-- config plus injected factory (`graphql`): `imports`/`inject`/`useFactory`
-  resolve providers from the container so the plugin is built from values only
-  a boot holds.
-
-A package that needs more than these three — a second token, a per-key handle,
-its own lifecycle beyond a provider hook — states it in its README as the
-limitation it is rather than widening this shape quietly.
 
 ## In this repository
 
@@ -476,13 +359,11 @@ package's lanes should mirror. The Bun lane runs real boots through
 the policy is observed rather than assumed: an allowed origin answers, a denied
 one does not, the preflight is answered without reaching a route, and an invalid
 configuration fails the boot with `INVALID_CONFIGURATION_VALUE`. The Vite+ lane
-mirrors the contract and adds the compile-time assertions, because a type
-derived from the wrapped plugin's own declaration is where an adapter's claim is
-actually checked. Reading `packages/cors/README.md` beside `packages/cors/AGENTS.md` is
-the fastest way to see the shape, the boundary paragraph, and the reasons for
-each choice together.
+mirrors the contract and adds the compile-time assertions. Reading
+`packages/cors/README.md` beside `packages/cors/AGENTS.md` is the fastest way to
+see the shape, the boundary paragraph, and the reasons for each choice together.
 
-[Native Elysia Plugins](../platforms/native-plugins.md) ·
+[Platform Parity](../platforms/platform-parity.md) ·
 [Configuration](../build/configuration.md) ·
 [Lifecycle](../build/lifecycle.md) ·
 [Introspection](../platforms/introspection.md) ·

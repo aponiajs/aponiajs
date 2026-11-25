@@ -1,8 +1,12 @@
 import { pascalCase } from "change-case";
-import type { GenerateSchematic, ResourceTransport } from "../commands/command.types.ts";
-import type { ComponentNames } from "./component-names.types.ts";
-import type { ModuleRegistrationKind } from "./module-registration.types.ts";
-import type { ComponentSchematic, PendingFile, SchematicDefinition } from "./schematic.types.ts";
+import type { GenerateSchematic, ResourceTransport } from "../interfaces/command.interface.ts";
+import type { ComponentNames } from "../interfaces/component-names.interface.ts";
+import type { ModuleRegistrationKind } from "../interfaces/module-registration.interface.ts";
+import type {
+  ComponentSchematic,
+  PendingFile,
+  SchematicDefinition,
+} from "../interfaces/schematic.interface.ts";
 
 export const schematicDefinitions: Readonly<Record<ComponentSchematic, SchematicDefinition>> = {
   class: { defaultFlat: true, spec: true, suffix: "" },
@@ -55,10 +59,17 @@ export function registrationFor(schematic: GenerateSchematic): ModuleRegistratio
   if (schematic === "resource") {
     return "imports";
   }
-  if (schematic === "app" || schematic === "library" || schematic === "plugin") {
+  if (
+    schematic === "app" ||
+    schematic === "application" ||
+    schematic === "configuration" ||
+    schematic === "upgrade" ||
+    schematic === "library" ||
+    schematic === "plugin"
+  ) {
     return undefined;
   }
-  return schematicDefinitions[schematic].registration;
+  return schematicDefinitions[schematic as ComponentSchematic].registration;
 }
 
 export function primaryFile(

@@ -1,7 +1,7 @@
 import type { RouteParameterKind, RouteParameterMetadata } from "@aponiajs/common";
-import { executePipes, resolvePipe } from "../pipes/pipe-resolver.ts";
-import type { ResolvedPipe } from "../pipes/pipe-resolver.types.ts";
-import type { PlatformRouteContext } from "./kernel.types.ts";
+import { executePipes, resolvePipe } from "../pipes/pipe.resolver.ts";
+import type { ResolvedPipe } from "../interfaces/pipe-resolver.interface.ts";
+import type { PlatformRouteContext } from "../interfaces/kernel.interface.ts";
 
 /** The parameter kinds whose value a pipe may transform. */
 const pipedKinds: ReadonlySet<RouteParameterKind> = new Set([

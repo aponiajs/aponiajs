@@ -39,6 +39,7 @@ const guideDirectories = [
   "packages/queue",
   "packages/rate-limit",
   "packages/security",
+  "packages/schematics",
   "packages/session",
   "packages/tenancy",
   "packages/testing",

@@ -1,4 +1,7 @@
-import type { DevtoolsHandlers, DevtoolsRequestHandler } from "./devtools-server.types.ts";
+import type {
+  DevtoolsHandlers,
+  DevtoolsRequestHandler,
+} from "../interfaces/devtools-server.interface.ts";
 
 /** The path prefix every devtools endpoint lives under. */
 export const devtoolsPathPrefix = "/__devtools";

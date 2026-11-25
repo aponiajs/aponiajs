@@ -9,6 +9,6 @@
  * this package's configuration cannot carry, should install `@elysia/cors`
  * directly.
  */
-export { CorsModule } from "./module/cors-module.ts";
-export type { CorsModuleOptions } from "./module/cors-module.types.ts";
-export type { CorsConfiguration } from "./policy/cors-policy.types.ts";
+export { CorsModule } from "./module/cors.module.ts";
+export type { CorsModuleOptions } from "./interfaces/cors-module.interface.ts";
+export type { CorsConfiguration } from "./interfaces/cors-policy.interface.ts";

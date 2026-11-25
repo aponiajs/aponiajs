@@ -4,7 +4,7 @@
 in the request context.
 
 ```ts
-@Module({ imports: [TenantModule.register({ header: "x-tenant-id" })] })
+@Module({ imports: [TenantModule.forRoot({ header: "x-tenant-id" })] })
 export class AppModule {}
 ```
 
@@ -34,7 +34,7 @@ holds the verified principal (for example `AUTH_USER` from `@aponiajs/auth`) and
 ```ts
 import { AUTH_USER } from "@aponiajs/auth";
 
-@Module({ imports: [TenantModule.register({ principal: AUTH_USER })] })
+@Module({ imports: [TenantModule.forRoot({ principal: AUTH_USER })] })
 export class AppModule {}
 ```
 

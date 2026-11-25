@@ -4,7 +4,7 @@
 
 ## What this package exports
 
-- `SessionModule.register({ secret, cookieName?, ttlMs?, store?, maxSessions?, cookie?, rolling?, key? })`: the module registration an application imports.
+- `SessionModule.forRoot({ secret, cookieName?, ttlMs?, store?, maxSessions?, cookie?, rolling?, key? })`: the module registration an application imports; `register` is the deprecated beta alias.
 - `SessionService`: `current`, `start`, `regenerate`, `update`, `destroy`, `get`, and `clear`.
 - `MemorySessionStore`: a bounded process-local store with lazy expiry and oldest-insertion eviction.
 - `Session`, `SessionStore`, `SessionCookieOptions`, `SessionModuleOptions`: the public contracts.

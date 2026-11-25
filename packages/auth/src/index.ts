@@ -5,34 +5,41 @@
  * guard, role and permission guards, and Bun-native password hashing. It mounts
  * no HTTP route and reads no environment variable; the application declares it.
  */
-export { AuthModule } from "./module/auth-module.ts";
-export { AuthGuard } from "./authentication/auth.guard.ts";
-export { AuthService } from "./authentication/auth.service.ts";
-export { AUTH_TOKEN_OPTIONS, AUTH_USER, AUTH_VERIFIER } from "./authentication/auth.constants.ts";
-export type { AuthVerifier } from "./authentication/token-verifier.types.ts";
-export { JwtService } from "./jwt/jwt.service.ts";
-export { OidcService } from "./oidc/oidc.service.ts";
-export { PasswordService } from "./password/password.service.ts";
-export { RefreshTokenService } from "./refresh/refresh-token.service.ts";
-export { MemoryRefreshTokenStore } from "./refresh/memory-refresh-token-store.ts";
-export { RevocationService } from "./revocation/revocation.service.ts";
-export { MemoryRevocationStore } from "./revocation/memory-revocation-store.ts";
-export { PermissionsGuard } from "./authorization/permissions.guard.ts";
-export { Roles, Permissions, Public } from "./authorization/authorization.decorators.ts";
+export { AuthModule } from "./auth.module.ts";
+export {
+  MODULE_OPTIONS_TOKEN,
+  type AuthModuleExtras,
+  type AuthModuleSyncOptions,
+} from "./auth.module-definition.ts";
+export { AuthGuard } from "./auth.guard.ts";
+export { AuthService } from "./auth.service.ts";
+export { CurrentSession, CurrentUser } from "./current-user.decorator.ts";
+export { AUTH_TOKEN_OPTIONS, AUTH_USER, AUTH_VERIFIER } from "./auth.constants.ts";
+export type { AuthVerifier } from "./interfaces/token-verifier.interface.ts";
+export { JwtService } from "./jwt.service.ts";
+export { OidcService } from "./oidc.service.ts";
+export { PasswordService } from "./password/password-hasher.service.ts";
+export { RefreshTokenService } from "./refresh-token.service.ts";
+export { MemoryRefreshTokenStore } from "./memory-refresh-token.store.ts";
+export { RevocationService } from "./revocation.service.ts";
+export { MemoryRevocationStore } from "./memory-revocation.store.ts";
+export { PermissionsGuard } from "./permissions.guard.ts";
+export { Roles, Permissions, Public } from "./authorization.decorator.ts";
 export { RolesGuard } from "@aponiajs/platform-core";
 export type {
   AuthModuleOptions,
+  AuthSession,
   AuthUser,
   AuthVerificationOptions,
   AuthTokenOptions,
   JwtOptions,
   JwtKey,
-} from "./module/auth.types.ts";
-export type { OidcOptions, OidcProviderMetadata } from "./oidc/oidc.types.ts";
-export type { RefreshOptions, RevocationOptions } from "./module/auth.types.ts";
+} from "./interfaces/auth.interface.ts";
+export type { OidcOptions, OidcProviderMetadata } from "./interfaces/oidc.interface.ts";
+export type { RefreshOptions, RevocationOptions } from "./interfaces/auth.interface.ts";
 export type {
   IssuedRefreshToken,
   RefreshTokenRecord,
   RefreshTokenStore,
-} from "./refresh/refresh-token.types.ts";
-export type { RevocationStore } from "./revocation/revocation.types.ts";
+} from "./interfaces/refresh-token.interface.ts";
+export type { RevocationStore } from "./interfaces/revocation.interface.ts";

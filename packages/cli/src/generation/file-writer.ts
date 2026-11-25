@@ -1,6 +1,6 @@
 import { lstat, mkdir, symlink } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
-import type { GenerateSchematicResult, PendingFile } from "./schematic.types.ts";
+import type { GenerateSchematicResult, PendingFile } from "../interfaces/schematic.interface.ts";
 
 /** The aliases every generated agent guide carries beside its real file. */
 export const agentGuideAliases = ["CLAUDE.md", "GEMINI.md"] as const;

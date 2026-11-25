@@ -62,7 +62,7 @@ describe("aggregate coverage gate", () => {
 
     expect(sources).toContain("packages/common/src/index.ts");
     expect(sources).toContain("scripts/verify-release.ts");
-    expect(sources).not.toContain("packages/common/src/logging/logger.types.ts");
+    expect(sources).not.toContain("packages/common/src/interfaces/logger.interface.ts");
     expect(sources).not.toContain("scripts/coverage-gate.spec.ts");
   });
 });

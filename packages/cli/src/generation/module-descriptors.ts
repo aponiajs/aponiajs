@@ -24,7 +24,7 @@ import type {
   AnalyzedModuleEntry,
   AnalyzedToken,
   AnalyzedValidationModel,
-} from "./module-descriptors.types.ts";
+} from "../interfaces/module-descriptors.interface.ts";
 
 const aponiaModuleSpecifier = "@aponiajs/common";
 const controllerDecoratorName = "Controller";
@@ -44,7 +44,7 @@ const injectionTokenFactoryName = "createToken";
  * The path `@WebSocketGateway()` falls back to when it declares none.
  *
  * Mirrors `normalizeGatewayPath` in `@aponiajs/common`
- * (`packages/common/src/websockets/websocket-gateway.ts`), including its
+ * (`packages/common/src/websockets/websocket.gateway.ts`), including its
  * rejection of an empty path.
  */
 const defaultGatewayPath = "/ws";
@@ -52,7 +52,7 @@ const defaultGatewayPath = "/ws";
 /**
  * The options `@Module()` reads, which are exactly `ModuleMetadata`'s
  * collections in `@aponiajs/common`
- * (`packages/common/src/decorators/decorators.types.ts`).
+ * (`packages/common/src/interfaces/decorators.interface.ts`).
  */
 const moduleCollectionNames = ["imports", "controllers", "providers", "exports"] as const;
 

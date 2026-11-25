@@ -15,7 +15,7 @@ import { MetricsExceptionFilter, MetricsModule, MetricsRegistry } from "@aponiaj
 
 const metrics = new MetricsRegistry();
 
-@Module({ imports: [MetricsModule.register({ registry: metrics, path: "/metrics" })] })
+@Module({ imports: [MetricsModule.forRoot({ registry: metrics, path: "/metrics" })] })
 export class AppModule {}
 
 const application = await AponiaFactory.create(AppModule, {
@@ -23,7 +23,7 @@ const application = await AponiaFactory.create(AppModule, {
 });
 ```
 
-A scrape of `GET /metrics` answers the Prometheus text format. The plugin
+A scrape of `GET /metrics` answers the Prometheus text format. The hook
 records two metrics for every mounted route:
 
 - `http_requests_total{method,route,status}` — every answered request and every
@@ -35,7 +35,7 @@ records two metrics for every mounted route:
 a global filter; the route's own filters and the default Problem Details mapping
 still answer the response.
 
-The plugin also publishes `process_uptime_seconds`,
+The registration also publishes `process_uptime_seconds`,
 `process_resident_memory_bytes`, and `process_heap_used_bytes`, refreshed at
 every scrape. Pass `processMetrics: false` to leave them out.
 

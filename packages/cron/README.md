@@ -17,7 +17,7 @@ import { Module } from "@aponiajs/common";
 import { CronModule } from "@aponiajs/cron";
 import { CronConfig } from "./config.ts";
 
-const scheduler = CronModule.register({ configuration: CronConfig });
+const scheduler = CronModule.forRoot({ configuration: CronConfig });
 
 @Module({ imports: [scheduler] })
 export class AppModule {}
@@ -39,7 +39,7 @@ await application.listen(Number(Bun.env.PORT ?? 3000));
 
 ## Declaring a scheduler
 
-`CronModule.register` returns a `DynamicModule`, which is what an `imports`
+`CronModule.forRoot` returns a `DynamicModule`, which is what an `imports`
 entry accepts:
 
 ```ts
@@ -47,7 +47,7 @@ import { Module } from "@aponiajs/common";
 import { CronModule } from "@aponiajs/cron";
 import { CronConfig } from "./config.ts";
 
-const scheduler = CronModule.register({ configuration: CronConfig });
+const scheduler = CronModule.forRoot({ configuration: CronConfig });
 
 @Module({ imports: [scheduler] })
 export class AppModule {}
@@ -56,7 +56,7 @@ export class AppModule {}
 Both spellings mount the same module, and neither is lowered into the descriptor
 artifact `aponia build` writes. `aponia build` lowers an `imports` entry only
 when it is a single identifier naming a declaration read from the project's own
-source, and `CronModule.register({ ... })` returns a `DynamicModule` — a runtime
+source, and `CronModule.forRoot({ ... })` returns a `DynamicModule` — a runtime
 value rather than such a declaration — so the module that names it is reported
 as `DECLINED` and left out of `descriptors.generated.ts` in every spelling,
 inline or held in a `const`. The scheduler still mounts and the application
@@ -112,7 +112,7 @@ which is why the example above can hand a job a number parsed from an
 environment variable while the job's `run` stays a closure over the
 application's own services.
 
-`CronModule.register` provides this token itself, from `process.env`, and
+`CronModule.forRoot` provides this token itself, from `process.env`, and
 exports it, so the application can read the same validated value back:
 
 ```ts
@@ -128,7 +128,7 @@ application.get(CronConfig); // the value the scheduler scheduled
 environment — which is what a test uses:
 
 ```ts
-const scheduler = CronModule.register({
+const scheduler = CronModule.forRoot({
   configuration: CronConfig,
   source: { CRON_PATTERN: "*/1 * * * * *" },
 });
@@ -261,6 +261,42 @@ moment, once each. **A cron expression in one process runs in that process.** A
 user who assumes otherwise will lose data, and no option here changes that — a
 scheduler for work that must happen exactly once across a fleet is a different
 package, and this one deliberately does not pretend to be it.
+
+## Scheduled methods and the registry
+
+The choreography surface mirrors `@nestjs/schedule`:
+
+```ts
+import { Cron, Interval, Timeout } from "@aponiajs/cron";
+
+@Injectable()
+class Reports {
+  @Cron("0 * * * *", { name: "hourly-report" })
+  hourly(): void {}
+
+  @Interval("poll", 30_000)
+  poll(): void {}
+
+  @Timeout("warmup", 5_000)
+  warmup(): void {}
+}
+```
+
+The class must be a provider of a module that imports the registration.
+`SchedulerRegistry` exposes `getCronJob`, `getInterval`, `getTimeout`,
+`addCronJob`, `addInterval`, `addTimeout`, `deleteCronJob`, `deleteInterval`,
+`deleteTimeout`, `getCronJobs`, `getIntervals`, `getTimeouts`, and
+`doesExist`. The module options `cronJobs`, `intervals`, and `timeouts` default
+to true and switch each kind off.
+
+## Registration contract
+
+`CronModule.forRoot` is a `ConfigurableModuleBuilder` definition: `key` and
+`isGlobal` (default true) are definition-shaping extras and it provides and
+exports `MODULE_OPTIONS_TOKEN` (`SCHEDULE_MODULE_OPTIONS`). There is no
+asynchronous form: the module provides the configuration token it schedules,
+which a factory result cannot name before the registration is built. `register`
+remains as the deprecated alias.
 
 ## Requirements
 

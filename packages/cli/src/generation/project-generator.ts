@@ -3,47 +3,78 @@ import { basename, dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { aponiaVersion } from "../version.ts";
 import { agentGuideAliases } from "./file-writer.ts";
+import { stripDevtoolsDocumentation } from "./no-observe-documentation.ts";
 import { initAgent } from "../agent/init-agent.ts";
-import type { GenerateProjectOptions, GenerateProjectResult } from "./project-generator.types.ts";
+import type {
+  GenerateProjectOptions,
+  GenerateProjectResult,
+} from "../interfaces/project-generator.interface.ts";
 
 const projectNamePattern = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
 
+const templateDirectories = {
+  bun: "application",
+  esm: "nest-esm",
+  cjs: "nest-cjs",
+} as const;
+
+const canonicalTestRunners = {
+  bun: "bun",
+  esm: "vitest",
+  cjs: "jest",
+} as const;
+
 /**
- * Generates a project from the starter template: names, versions, and
- * install state resolved, files planned or written.
+ * Generates a project from one of the starter template sets: names, versions,
+ * and install state resolved, files planned or written.
+ *
+ * The Bun set is the default. The ESM and CJS sets are Nest-compatible: they
+ * carry `.js` extensions and Vitest or Jest respectively, and the Bun set never
+ * emits a `.js` extension.
  *
  * @param options - The project name and creation flags.
  * @returns The project directory, files, and install state.
- * @throws A plain `Error` for a project name outside the kebab-case shape.
+ * @throws A plain `Error` for an invalid name or an incompatible runner.
  */
 export async function generateProject(
   options: GenerateProjectOptions,
 ): Promise<GenerateProjectResult> {
   validateProjectName(options.name);
+  const type = options.type ?? "bun";
+  const testRunner = options.testRunner ?? canonicalTestRunners[type];
+  if (testRunner !== canonicalTestRunners[type]) {
+    throw new Error(
+      `--type ${type} pairs with --test-runner ${canonicalTestRunners[type]}; "${testRunner}" is not supported for that template set.`,
+    );
+  }
+  if (options.language !== undefined && options.language !== "ts") {
+    throw new Error(
+      'The Aponia generator emits TypeScript only; "--language js" is not supported.',
+    );
+  }
+  if (options.minimal === true && type === "cjs") {
+    throw new Error(
+      "--type cjs cannot be combined with --minimal: generate the standard CommonJS project, or use --type bun or --type esm.",
+    );
+  }
 
   const workingDirectory = options.cwd ?? process.cwd();
-  const projectDirectory = join(workingDirectory, options.name);
+  const directoryName = options.directory ?? options.name;
+  const projectDirectory = join(workingDirectory, directoryName);
   const templateDirectory = fileURLToPath(
-    new URL("./templates/application/", import.meta.resolve("@aponiajs/cli/package.json")),
+    new URL(
+      `./templates/${templateDirectories[type]}/`,
+      import.meta.resolve("@aponiajs/cli/package.json"),
+    ),
   );
   const templateFiles = await listFiles(templateDirectory);
-  const platform = options.platform ?? "elysia";
-  const workspace = options.workspace === true;
-  const appPrefix = workspace ? "apps/api" : "";
-  const baseFiles = [
-    ...templateFiles.map((file) =>
-      workspace
-        ? join(appPrefix, outputPath(relative(templateDirectory, file)))
-        : outputPath(relative(templateDirectory, file)),
-    ),
-    ...(workspace ? Object.keys(workspaceRootFiles(options.name, platform)) : []),
-  ].toSorted();
-  const guideAliasFiles = baseFiles
+  const planned = planFiles(templateFiles, templateDirectory, options);
+  const guideAliasFiles = planned
     .filter((file) => basename(file) === "AGENTS.md")
     .flatMap((file) => agentGuideAliases.map((alias) => join(dirname(file), alias)))
-    .filter((file) => !baseFiles.includes(file))
+    .filter((file) => !planned.includes(file))
     .toSorted();
-  const relativeFiles = [...baseFiles, ...guideAliasFiles].toSorted();
+  const relativeFiles = [...planned, ...guideAliasFiles].toSorted();
 
   if (options.dryRun) {
     return {
@@ -61,38 +92,18 @@ export async function generateProject(
   await mkdir(projectDirectory, { recursive: false });
   try {
     for (const templateFile of templateFiles) {
-      const relativeFile = workspace
-        ? join(appPrefix, outputPath(relative(templateDirectory, templateFile)))
-        : outputPath(relative(templateDirectory, templateFile));
-      const outputFile = join(projectDirectory, relativeFile);
+      const plannedFile = plannedFileFor(templateFile, templateDirectory, options);
+      if (plannedFile === undefined) {
+        continue;
+      }
+      const outputFile = join(projectDirectory, plannedFile);
       const template = await Bun.file(templateFile).text();
-      const output = applyPlatform(
-        relativeFile,
-        renderTemplate(template, workspace ? "api" : options.name),
-        platform,
-      );
+      const rendered = applyOptions(plannedFile, renderTemplate(template, options.name), options);
+      const output =
+        options.observe === false ? stripDevtoolsDocumentation(plannedFile, rendered) : rendered;
 
       await mkdir(dirname(outputFile), { recursive: true });
       await Bun.write(outputFile, output);
-    }
-
-    if (workspace) {
-      for (const [relativeFile, content] of Object.entries(
-        workspaceRootFiles(options.name, platform),
-      )) {
-        const outputFile = join(projectDirectory, relativeFile);
-        await mkdir(dirname(outputFile), { recursive: true });
-        await Bun.write(outputFile, content);
-      }
-    }
-
-    if (workspace) {
-      const appTsconfigPath = join(projectDirectory, "apps/api/tsconfig.json");
-      const appTsconfig = await Bun.file(appTsconfigPath).text();
-      await Bun.write(
-        appTsconfigPath,
-        appTsconfig.replace(/^\{/, `{\n  "extends": "../../tsconfig.json",`),
-      );
     }
 
     for (const aliasFile of guideAliasFiles) {
@@ -117,7 +128,8 @@ export async function generateProject(
     }
 
     if (!options.skipInstall) {
-      const process = Bun.spawn(["bun", "install"], {
+      const packageManager = options.packageManager ?? "bun";
+      const process = Bun.spawn([packageManager, "install"], {
         cwd: projectDirectory,
         stdin: "inherit",
         stdout: "inherit",
@@ -125,7 +137,7 @@ export async function generateProject(
       });
       const exitCode = await process.exited;
       if (exitCode !== 0) {
-        throw new Error(`Bun install failed with exit code ${exitCode}.`);
+        throw new Error(`${packageManager} install failed with exit code ${exitCode}.`);
       }
     }
   } catch (error) {
@@ -142,140 +154,138 @@ export async function generateProject(
   };
 }
 
-function workspaceRootFiles(
-  projectName: string,
-  platform: "elysia" | "hono" | "h3" = "elysia",
-): Readonly<Record<string, string>> {
-  return {
-    "package.json": `${JSON.stringify(
-      {
-        name: projectName,
-        version: "0.0.1",
-        private: true,
-        type: "module",
-        workspaces: ["apps/*", "libs/*"],
-        scripts: {
-          dev: "bun run --filter api dev",
-          build: "bun run --workspaces build",
-          test: "bun test",
-          check: "vp check",
-        },
-        devDependencies: { "vite-plus": "^1.5.0" },
-      },
-      undefined,
-      2,
-    )}\n`,
-    "aponia.json": `${JSON.stringify(
-      {
-        defaultLibraryPrefix: "@app",
-        platform,
-        projects: {
-          api: {
-            type: "application",
-            root: "apps/api",
-            entryFile: "main",
-            sourceRoot: "apps/api/src",
-            compilerOptions: { tsConfigPath: "apps/api/tsconfig.json" },
-          },
-        },
-        generateOptions: { spec: true },
-      },
-      undefined,
-      2,
-    )}\n`,
-    "README.md": `# ${projectName}\n\nAn AponiaJS workspace. Applications live under \`apps/\` and shared libraries under \`libs/\`.\n`,
-    "AGENTS.md": `# ${projectName}\n\n\`CLAUDE.md\` and \`GEMINI.md\` are symlinks to this file.\n\nRead the [AponiaJS repository guide](https://github.com/aponiajs/aponiajs/blob/release/alpha/AGENTS.md).\nProduct code lives in \`apps/\`; reusable modules live in \`libs/\`.\n`,
-    ".gitignore": "node_modules\ndist\n.env\n*.log\n",
-    "tsconfig.json":
-      JSON.stringify(
-        {
-          compilerOptions: {
-            target: "ESNext",
-            lib: ["ESNext"],
-            module: "Preserve",
-            moduleResolution: "Bundler",
-            moduleDetection: "force",
-            types: ["bun"],
-            strict: true,
-            experimentalDecorators: true,
-            emitDecoratorMetadata: true,
-            noUnusedLocals: true,
-            noEmit: true,
-            allowImportingTsExtensions: true,
-            isolatedModules: true,
-            verbatimModuleSyntax: true,
-            skipLibCheck: true,
-          },
-          paths: {},
-        },
-        undefined,
-        2,
-      ) + "\n",
-    "libs/.gitkeep": "",
-  };
+function planFiles(
+  templateFiles: readonly string[],
+  templateDirectory: string,
+  options: GenerateProjectOptions,
+): string[] {
+  return templateFiles
+    .map((file) => plannedFileFor(file, templateDirectory, options))
+    .filter((file): file is string => file !== undefined)
+    .toSorted();
 }
 
-function applyPlatform(
+function plannedFileFor(
+  templateFile: string,
+  templateDirectory: string,
+  options: GenerateProjectOptions,
+): string | undefined {
+  const relativeFile = outputPath(relative(templateDirectory, templateFile));
+  if (basename(templateFile) === "main.minimal.ts.tmpl") {
+    return options.minimal === true ? "src/main.ts" : undefined;
+  }
+  if (options.minimal === true) {
+    return minimalFile(relativeFile);
+  }
+  return relativeFile;
+}
+
+function minimalFile(relativeFile: string): string | undefined {
+  if (relativeFile.startsWith("src/main.")) {
+    return undefined;
+  }
+  const allowed = new Set([
+    ".env.example",
+    ".gitignore",
+    "aponia-cli.json",
+    "package.json",
+    "tsconfig.json",
+  ]);
+  return allowed.has(relativeFile) ? relativeFile : undefined;
+}
+
+function applyOptions(
   relativeFile: string,
   content: string,
-  platform: "elysia" | "hono" | "h3",
+  options: GenerateProjectOptions,
 ): string {
-  const packageName =
-    platform === "elysia"
-      ? "@aponiajs/platform-elysia"
-      : platform === "hono"
-        ? "@aponiajs/platform-hono"
-        : "@aponiajs/platform-h3";
-
-  if (relativeFile.endsWith("package.json")) {
-    if (platform === "elysia") {
-      return content;
-    }
+  if (relativeFile === "package.json") {
     const manifest = JSON.parse(content) as {
       dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+      scripts?: Record<string, string>;
       [key: string]: unknown;
     };
-    const dependencies = manifest.dependencies ?? {};
-    delete dependencies["@aponiajs/platform-elysia"];
-    delete dependencies["@aponiajs/devtools"];
-    delete dependencies.elysia;
-    delete dependencies.hono;
-    delete dependencies.h3;
-    dependencies[packageName] = aponiaVersion;
-    if (platform === "hono") {
-      dependencies.hono = "^4.13.17";
-    } else {
-      dependencies.h3 = "^2.0.8";
+    if (options.minimal === true) {
+      applyMinimalManifest(manifest, options.type ?? "bun");
     }
-    manifest.dependencies = Object.fromEntries(
-      Object.entries(dependencies).toSorted(([left], [right]) => left.localeCompare(right)),
-    );
+    if (options.observe === false && manifest.dependencies !== undefined) {
+      delete manifest.dependencies["@aponiajs/devtools"];
+    }
     return `${JSON.stringify(manifest, undefined, 2)}\n`;
   }
 
-  if (relativeFile.endsWith("main.ts") || relativeFile.endsWith("app.e2e-spec.ts")) {
-    let rendered = content.replaceAll("@aponiajs/platform-elysia", packageName);
-    if (platform !== "elysia") {
-      rendered = rendered
-        .replace(/import \{ devtoolsPlugin \} from "@aponiajs\/devtools";\n/, "")
-        .replace(/\n\s*plugins: \[\n[\s\S]*?\n\s*\],/, "");
-    }
-    return rendered;
-  }
-
-  if (relativeFile.endsWith("bunfig.toml") && platform !== "elysia") {
-    return "";
-  }
-
-  if (relativeFile.endsWith("aponia.json")) {
-    const configuration = JSON.parse(content) as Record<string, unknown>;
-    configuration.platform = platform;
-    configuration.type = "application";
-    configuration.entryFile ??= "main";
+  if (relativeFile === "tsconfig.json" && options.strict === false) {
+    const configuration = JSON.parse(content) as {
+      compilerOptions?: Record<string, unknown>;
+      [key: string]: unknown;
+    };
+    const compilerOptions = configuration.compilerOptions ?? {};
+    compilerOptions.strict = false;
+    configuration.compilerOptions = compilerOptions;
     return `${JSON.stringify(configuration, undefined, 2)}\n`;
   }
 
+  if (relativeFile === "aponia-cli.json" && options.collection !== undefined) {
+    const configuration = JSON.parse(content) as Record<string, unknown>;
+    configuration.collection = options.collection;
+    return `${JSON.stringify(configuration, undefined, 2)}\n`;
+  }
+
+  if (options.observe === false && relativeFile === "src/app.module.ts") {
+    return content
+      .replace(/import \{ DevtoolsModule \} from "@aponiajs\/devtools";\n/, "")
+      .replace(/import \{ appLogger \} from "\.\/logger\.ts";\n/, "")
+      .replace(/\n\s*imports: \[\n[\s\S]*?\n\s*\],/, "");
+  }
+
   return content;
+}
+
+function applyMinimalManifest(
+  manifest: {
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+    scripts?: Record<string, string>;
+    [key: string]: unknown;
+  },
+  type: "bun" | "esm" | "cjs",
+): void {
+  const scripts = manifest.scripts ?? {};
+  delete scripts.build;
+  delete scripts.inspect;
+  const devDependencies = manifest.devDependencies ?? {};
+  if (manifest.dependencies !== undefined) {
+    delete manifest.dependencies["@aponiajs/devtools"];
+  }
+
+  if (type === "bun") {
+    delete devDependencies["@aponiajs/cli"];
+  } else {
+    // The Nest-compatible minimal starter runs its one file directly, so the
+    // CLI's `start` scripts and the test runner's setup go with the specs.
+    scripts.start = "bun src/main.ts";
+    scripts["start:dev"] = "bun --watch src/main.ts";
+    scripts["start:debug"] = "bun --inspect src/main.ts";
+    scripts["start:prod"] = "bun dist/main.js";
+    for (const script of ["test", "test:watch", "test:cov", "test:e2e", "test:debug"]) {
+      delete scripts[script];
+    }
+    for (const dependency of [
+      "@aponiajs/cli",
+      "@aponiajs/testing",
+      "@types/jest",
+      "@vitest/coverage-v8",
+      "jest",
+      "ts-jest",
+      "vitest",
+    ]) {
+      delete devDependencies[dependency];
+    }
+  }
+
+  manifest.scripts = scripts;
+  manifest.devDependencies = devDependencies;
 }
 
 function renderTemplate(template: string, projectName: string): string {

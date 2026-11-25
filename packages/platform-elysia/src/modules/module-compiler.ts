@@ -1,5 +1,6 @@
 import {
   compileRootModule as compilePlatformRootModule,
+  compileRootModuleAsync as compilePlatformRootModuleAsync,
   isModuleDefinition,
   type AponiaRootModule,
 } from "@aponiajs/platform-core";
@@ -28,6 +29,26 @@ export { isModuleDefinition };
  */
 export function compileRootModule(rootModule: AponiaRootModule): ModuleDefinition {
   return compilePlatformRootModule(rootModule, {
+    compileController: compileDecoratedController,
+    assertRoutes: assertUniqueElysiaRoutes,
+    cacheKey: ELYSIA_DESCRIPTOR_CACHE_KEY,
+  });
+}
+
+/**
+ * Lowers a root module whose graph may hold asynchronous registrations.
+ *
+ * The asynchronous half of {@link compileRootModule}: it awaits every
+ * `Promise<DynamicModule>` a module declares, then lowers the resolved graph
+ * with the same controller compiler and duplicate-route check.
+ *
+ * @param rootModule - The root class, descriptor, or registration.
+ * @returns The frozen root descriptor the container builds from.
+ */
+export async function compileRootModuleAsync(
+  rootModule: AponiaRootModule,
+): Promise<ModuleDefinition> {
+  return compilePlatformRootModuleAsync(rootModule, {
     compileController: compileDecoratedController,
     assertRoutes: assertUniqueElysiaRoutes,
     cacheKey: ELYSIA_DESCRIPTOR_CACHE_KEY,

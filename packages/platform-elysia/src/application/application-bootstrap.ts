@@ -34,17 +34,18 @@ import {
   type MountedRouteEnhancers,
   type ResolvedControllerEnhancers,
   type ResolvedEnhancers,
-} from "../controllers/enhancer-resolver.ts";
-import type { RuntimeElysiaController } from "../controllers/controller.types.ts";
+} from "../controllers/enhancer.resolver.ts";
+import type { RuntimeElysiaController } from "../interfaces/controller.interface.ts";
 import {
   createDefaultExceptionFilter,
   reportThroughLogger,
-} from "../errors/default-exception-filter.ts";
+} from "../exceptions/default-exception.filter.ts";
 import { createMiddlewareConsumer } from "@aponiajs/platform-core";
 import { mountMiddleware } from "../middleware/middleware-pipeline.ts";
-import { compileModuleInMemory } from "../compiler/in-memory-compiler.ts";
+import { compileModuleInMemoryAsync } from "../compiler/in-memory-compiler.ts";
 import { normalizeRoutePrefix } from "@aponiajs/platform-core";
 import {
+  provideHttpAdapterHost,
   resolveApplicationPipe,
   resolveApplicationPipes,
   type ResolvedPipe,
@@ -62,40 +63,50 @@ import { selectInvokerArtifact } from "@aponiajs/platform-core";
 import type {
   ControllerHandlerFactory,
   RouteViewRenderer,
-} from "../routing/route-compiler.types.ts";
+} from "../interfaces/route-compiler.interface.ts";
 import { registerCompiledElysiaRoutes } from "../routing/route-compiler.ts";
 import {
   compileWebSocketGateways,
   registerWebSocketGateways,
-} from "../websockets/websocket-gateway.ts";
+} from "../websockets/websocket.gateway.ts";
 import { aponiaVersion } from "../version.ts";
 import {
   ApplicationReadiness,
   compileHealthProbes,
   mountHealthProbes,
 } from "./application-health.ts";
+import {
+  APPLICATION_CONTAINER,
+  BOOT_DIAGNOSTICS,
+  createApplicationContainerRef,
+  createBootDiagnosticsRef,
+} from "@aponiajs/platform-core";
 import { attachApplicationContainer, publishApplicationOnStore } from "./application-container.ts";
 import {
   attachApplicationDiagnostics,
   createApplicationDiagnostics,
 } from "./application-diagnostics.ts";
-import type { AponiaCallbackRouteDiagnostics } from "./application-diagnostics.types.ts";
-import type { ApplicationBootstrapResult } from "./application-bootstrap.types.ts";
+import type { AponiaCallbackRouteDiagnostics } from "../interfaces/application-diagnostics.interface.ts";
+import type { ApplicationBootstrapResult } from "../interfaces/application-bootstrap.interface.ts";
 import type {
   AponiaApplicationOptions,
   ConfiguredAponiaApplicationOptions,
-} from "./application.types.ts";
+} from "../interfaces/application.interface.ts";
 import {
   attachApplicationShutdown,
   collectLifecycleCalls,
   normalizeStaticAssets,
+  resolveApplicationHttpPolicies,
   resolveHttpPolicies,
+  resolveRequestLifecycleHooks,
+  assertPlatformCapabilities,
+  providePlatformCapabilities,
   type LifecycleCall,
 } from "@aponiajs/platform-core";
 import { LazyModuleLoader } from "./lazy-module-loader.ts";
 import { installVersionRouting } from "./versioning.ts";
 import { mountStaticAssets } from "../routing/static-assets.ts";
-import { installHttpPolicies } from "../routing/http-policy.ts";
+import { installHttpPolicies } from "../routing/http.policy.ts";
 import {
   collectMessageHandlers,
   createMicroserviceHandlerTable,
@@ -140,7 +151,7 @@ export async function bootstrapAponiaApplication(
     aponiaVersion,
     logger,
   );
-  const compiledRootModule = compileModuleInMemory(rootSelection.rootModule);
+  const compiledRootModule = await compileModuleInMemoryAsync(rootSelection.rootModule);
   // Which graph served the application is decided by the shape of the root the
   // selector resolved, never by re-reading the artifact: a descriptor is data
   // the container compiles as it stands, while a class and a dynamic module both
@@ -156,15 +167,28 @@ export async function bootstrapAponiaApplication(
     ...options.elysia,
     name: compiledRootModule.id,
   });
+  const containerRef = createApplicationContainerRef();
+  const diagnosticsRef = createBootDiagnosticsRef();
   const container = createContainer(compiledRootModule, [
+    provideValue(APPLICATION_CONTAINER, containerRef),
+    provideValue(BOOT_DIAGNOSTICS, diagnosticsRef),
     provideValue(LOGGER, logger ?? NOOP_LOGGER),
     provideValue(LazyModuleLoader, lazyModuleLoader),
     provideValue(
       PLATFORM_ADAPTER_HOST,
       Object.freeze({ platform: "elysia", nativeApplication: baseApplication }),
     ),
+    providePlatformCapabilities({
+      platform: "elysia",
+      capabilities: ["http", "websockets", "streaming", "multipart", "backgroundWork"],
+    }),
     provideClass(Reflector, []),
+    provideHttpAdapterHost(),
   ]);
+  // Refused before anything mounts: a registration that needs a capability this
+  // platform does not have must not leave a half-mounted application.
+  assertPlatformCapabilities(container);
+  containerRef.current = container;
   // Attached before any package mounts: a platform adapter reads the container
   // while the boot is still composing, not only once the application is built.
   attachApplicationContainer(baseApplication, container);
@@ -244,17 +268,6 @@ export async function bootstrapAponiaApplication(
   // is fetched without the application's credentials, so nothing the
   // application declares may sit in front of it.
   mountStaticAssets(nativeApplication, normalizeStaticAssets(options.staticAssets));
-  installHttpPolicies(
-    nativeApplication,
-    resolveHttpPolicies({
-      ...(options.cors === undefined ? {} : { cors: options.cors }),
-      ...(options.securityHeaders === undefined
-        ? {}
-        : { securityHeaders: options.securityHeaders }),
-      ...(options.etag === undefined ? {} : { etag: options.etag }),
-      ...(options.compression === undefined ? {} : { compression: options.compression }),
-    }),
-  );
 
   // The application's own plugins mount here, beside the module-graph pass and
   // for the same reason: a plugin contributes routes and request context, so it
@@ -275,7 +288,7 @@ export async function bootstrapAponiaApplication(
     createMiddlewareConsumer();
 
   for (const module of container.graph.modules) {
-    container.initializeModule(module);
+    await container.initializeModuleAsync(module);
     if (typeof module.configure === "function") {
       module.configure(middlewareConsumer);
     } else if (
@@ -296,6 +309,24 @@ export async function bootstrapAponiaApplication(
     }
     logger?.log(`${module.id} dependencies initialized`, "InstanceLoader");
   }
+
+  // The application's policies and every package's contributions are installed
+  // once the provider pass has run: an asynchronous registration's policy is a
+  // factory result, and the synchronous policy compile reads the cached value.
+  // A `wrap` covers `handle`, `listen`, and the native instance, so installing
+  // it here still reaches every request.
+  installHttpPolicies(nativeApplication, {
+    policies: resolveApplicationHttpPolicies({
+      ...(options.cors === undefined ? {} : { cors: options.cors }),
+      ...(options.securityHeaders === undefined
+        ? {}
+        : { securityHeaders: options.securityHeaders }),
+      ...(options.etag === undefined ? {} : { etag: options.etag }),
+      ...(options.compression === undefined ? {} : { compression: options.compression }),
+    }),
+    pluginPolicies: resolveHttpPolicies(container),
+    hooks: resolveRequestLifecycleHooks(container),
+  });
 
   // Every package's declared platform is checked before the first mount, and
   // the selected native mount runs before middleware and controllers, exactly
@@ -525,14 +556,15 @@ export async function bootstrapAponiaApplication(
   // keeps the behaviour it has today.
   const beforeShutdown = collectLifecycleCalls(container, "beforeApplicationShutdown", {
     includeController: isElysiaController,
+    reverseModules: true,
   });
-  const moduleDestroy = [
-    ...collectLifecycleCalls(container, "onModuleDestroy", {
-      includeController: isElysiaController,
-    }),
-  ].reverse();
+  const moduleDestroy = collectLifecycleCalls(container, "onModuleDestroy", {
+    includeController: isElysiaController,
+    reverseModules: true,
+  });
   const applicationShutdown = collectLifecycleCalls(container, "onApplicationShutdown", {
     includeController: isElysiaController,
+    reverseModules: true,
   });
 
   // Each group of stopping hooks runs once per boot, and a second caller joins the
@@ -582,29 +614,47 @@ export async function bootstrapAponiaApplication(
   // key that declared it — and the record is attached here, once the container
   // holds every plan, rather than after the gateway work, which mounts through
   // its own path.
-  attachApplicationDiagnostics(
-    nativeApplication,
-    createApplicationDiagnostics({
-      framework: aponiaVersion,
-      logger,
-      graph,
-      invokers: {
-        accepted: invokerSelection.invokers !== undefined,
-        reason: invokerSelection.reason,
-      },
-      artifacts: {
-        invokers: invokerSelection.builtBy,
-        descriptors: rootSelection.builtBy,
-      },
-      rootModule: compiledRootModule,
-      modules: container.graph.modules,
-      generatedInvokers,
-      callbackRoutes,
-      globalEnhancers: globalEnhancerDeclarations,
-      mappedExceptions,
-      interceptorHalves,
-    }),
-  );
+  const bootDiagnostics = createApplicationDiagnostics({
+    framework: aponiaVersion,
+    logger,
+    graph,
+    invokers: {
+      accepted: invokerSelection.invokers !== undefined,
+      reason: invokerSelection.reason,
+    },
+    artifacts: {
+      invokers: invokerSelection.builtBy,
+      descriptors: rootSelection.builtBy,
+    },
+    rootModule: compiledRootModule,
+    modules: container.graph.modules,
+    generatedInvokers,
+    callbackRoutes,
+    globalEnhancers: globalEnhancerDeclarations,
+    mappedExceptions,
+    interceptorHalves,
+  });
+  attachApplicationDiagnostics(nativeApplication, bootDiagnostics);
+  diagnosticsRef.current = Object.freeze({
+    framework: bootDiagnostics.framework,
+    graph: bootDiagnostics.graph,
+    rootModule: bootDiagnostics.rootModule,
+    modules: container.graph.modules,
+    routes: bootDiagnostics.routes.map((entry) =>
+      Object.freeze({
+        module: entry.module,
+        controller: entry.controller,
+        route: entry.route,
+        source: entry.source,
+      }),
+    ),
+    callbackRoutes: bootDiagnostics.callbackRoutes,
+    globalEnhancers: bootDiagnostics.globalEnhancers,
+    interceptorHalves: bootDiagnostics.interceptorHalves,
+    artifacts: bootDiagnostics.artifacts,
+    invokers: bootDiagnostics.invokers,
+    mappedExceptions: bootDiagnostics.mappedExceptions,
+  }) as never;
   attachApplicationContainer(nativeApplication, container);
   // The application published on its own store, beside the two instance seams
   // above and for the caller that holds neither: a plugin answering a request is

@@ -16,7 +16,7 @@ import type {
   TransportHandler,
   TransportSubscription,
   TransportSubscriptionHandle,
-} from "../../transport/transport.types.ts";
+} from "../../interfaces/transport.interface.ts";
 import type {
   RedisSdkClient,
   RedisSdkLoader,
@@ -24,7 +24,7 @@ import type {
   RedisStreamFields,
   RedisStreamMessage,
   RedisTransportOptions,
-} from "./redis-transport.types.ts";
+} from "../../interfaces/redis-transport.interface.ts";
 
 const transportName = "redis";
 const packageName = "redis";

@@ -8,14 +8,17 @@ specific to this package.
 The rate-limit module, service, guard, route decorator, store contract, and the
 bounded in-memory store. It is a leaf: nothing in the framework depends on it.
 
-| Domain     | Owns                                                     |
-| ---------- | -------------------------------------------------------- |
-| `module/`  | `RateLimitModule.register`, tokens, and resolved options |
-| `guard/`   | `RateLimitGuard` and `@RateLimit()`                      |
-| `service/` | `RateLimitService` and the decision contract             |
-| `store/`   | `RateLimitStore` and `MemoryRateLimitStore`              |
+| Domain     | Owns                                                                                         |
+| ---------- | -------------------------------------------------------------------------------------------- |
+| `module/`  | `RateLimitModule.forRoot`, the `.module-definition.ts` builder, tokens, and resolved options |
+| `guard/`   | `RateLimitGuard` and `@RateLimit()`                                                          |
+| `service/` | `RateLimitService` and the decision contract                                                 |
+| `store/`   | `RateLimitStore` and `MemoryRateLimitStore`, with their interface files beside them          |
 
-`src/index.ts` is the only public barrel.
+`src/index.ts` is the only public barrel. The registration is a
+`ConfigurableModuleBuilder` definition with `MODULE_OPTIONS_TOKEN`
+(`RATE_LIMIT_MODULE_OPTIONS`) and the `isGlobal` extra; `register`/`registerAsync`
+remain as deprecated aliases.
 
 ## Invariants
 
@@ -36,7 +39,7 @@ bounded in-memory store. It is a leaf: nothing in the framework depends on it.
 
 ## Tests
 
-`tests/*.test.ts` under Bun, `tests-vp/*.conformance.ts` under Vite+. The Bun
+`src/**/*.spec.ts` under Bun, `test/*.conformance.ts` under Vite+. The Bun
 lane boots a real application through `AponiaFactory.create` and drives it
 through `application.handle`; the memory store's clock is injectable, so no case
 sleeps for a window.

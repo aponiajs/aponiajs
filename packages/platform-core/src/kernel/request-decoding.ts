@@ -1,4 +1,4 @@
-import { HttpError } from "../errors/http-error.ts";
+import { HttpError } from "../exceptions/http-error.ts";
 
 /** The largest body the kernel reads unless an application states another bound. */
 export const defaultMaxBodyBytes = 1024 * 1024;
@@ -13,9 +13,11 @@ export const defaultMaxBodyBytes = 1024 * 1024;
  * @returns The record.
  */
 export function readQuery(url: URL): Readonly<Record<string, string | string[]>> {
-  const query: Record<string, string | string[]> = {};
+  // A null prototype keeps a query named `constructor` or `__proto__` from
+  // reaching Object.prototype and corrupting the record.
+  const query: Record<string, string | string[]> = Object.create(null);
   for (const [name, value] of url.searchParams) {
-    const existing = query[name];
+    const existing = Object.hasOwn(query, name) ? query[name] : undefined;
     if (existing === undefined) {
       query[name] = value;
     } else if (Array.isArray(existing)) {
@@ -59,7 +61,7 @@ export function readCookies(
     return Object.freeze({});
   }
 
-  const cookies: Record<string, { readonly value: string }> = {};
+  const cookies: Record<string, { readonly value: string }> = Object.create(null);
   for (const pair of header.split(";")) {
     const separator = pair.indexOf("=");
     if (separator < 0) {
@@ -74,7 +76,14 @@ export function readCookies(
   return Object.freeze(cookies);
 }
 
-function decode(value: string): string {
+/**
+ * Percent-decodes one value, keeping the raw value when the escape is invalid.
+ *
+ * `decodeURIComponent` throws on a malformed sequence such as `100%zz`; a
+ * request may carry one, so the decoder falls back rather than failing the
+ * request.
+ */
+export function decode(value: string): string {
   try {
     return decodeURIComponent(value);
   } catch {

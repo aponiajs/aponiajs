@@ -1,3 +1,4 @@
+import { AponiaError } from "@aponiajs/common";
 import type {
   ClassToken,
   ExecutionContext,
@@ -6,7 +7,7 @@ import type {
   RpcArgumentsHost,
   WsArgumentsHost,
 } from "@aponiajs/common";
-import type { McpContext } from "./mcp-context.types.ts";
+import type { McpContext } from "../interfaces/mcp-context.interface.ts";
 
 const mcpRoute = Object.freeze({ method: "POST" as const, path: "/mcp" });
 
@@ -105,6 +106,6 @@ export class McpExecutionContext implements ExecutionContext {
   }
 
   switchToWs(): WsArgumentsHost {
-    throw new Error("An MCP call has no WebSocket host.");
+    throw new AponiaError("UNSUPPORTED_ARGUMENT_HOST", "An MCP call has no WebSocket host.");
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/compiler",
-  "version": "1.0.0-beta.61",
+  "version": "1.0.0-beta.62",
   "description": "Compiler-grade invariants for an Aponia application: scoped lifetimes, exclusive mutation, typestate, and linear consumption.",
   "keywords": [
     "aponia",

@@ -7,12 +7,14 @@ import {
 } from "@aponiajs/common";
 import { compileUnrolledGuards } from "../enhancers/enhancer-pipeline.ts";
 import { StaticRouteExecutionContext } from "../enhancers/static-execution-context.ts";
-import { HttpError } from "../errors/http-error.ts";
-import type { ResolvedPipe } from "../pipes/pipe-resolver.types.ts";
+import { HttpError } from "../exceptions/http-error.ts";
+import type { ResolvedPipe } from "../interfaces/pipe-resolver.interface.ts";
 import { buildArguments } from "./parameter-binding.ts";
 import { readBody, readCookies, readHeaders, readQuery } from "./request-decoding.ts";
 import { buildResponse } from "./response-building.ts";
 import { createRouteMatcher } from "./route-matcher.ts";
+import { notifyRequestError, type RequestLifecycleHook } from "./request-hooks.ts";
+import { rememberMatchedRoute } from "./matched-route.ts";
 import type {
   HostRequestInfo,
   HttpKernel,
@@ -20,7 +22,7 @@ import type {
   MountedRoute,
   PlatformRouteContext,
   RouteMatch,
-} from "./kernel.types.ts";
+} from "../interfaces/kernel.interface.ts";
 import { validateSlot } from "./validation.ts";
 
 /**
@@ -41,6 +43,8 @@ export interface RouteExecutionRuntime {
   readonly renderView: HttpKernelOptions["renderView"];
   /** The logger failures are reported through. */
   readonly logger: LoggerService | undefined;
+  /** The neutral lifecycle hooks the graph's packages contributed. */
+  readonly requestHooks: readonly RequestLifecycleHook[];
 }
 
 /** Builds the runtime one platform's routes execute with. */
@@ -51,6 +55,7 @@ export function createRouteExecutionRuntime(options: HttpKernelOptions): RouteEx
     maxBodyBytes: options.maxBodyBytes,
     renderView: options.renderView,
     logger: options.logger,
+    requestHooks: options.requestHooks ?? [],
   };
 }
 
@@ -80,6 +85,7 @@ export function createHttpKernel(options: HttpKernelOptions): HttpKernel {
     }
 
     const context = createContext(request, url, match, runtime.store, info);
+    rememberMatchedRoute(request, match.mount.route.path);
     try {
       const respond = async (): Promise<Response> =>
         buildRouteResponse(await executeMountedRoute(match.mount, context, runtime), context);
@@ -129,6 +135,7 @@ export function createRouteHandler(
 ): (context: PlatformRouteContext) => Promise<Response> {
   const runtime = createRouteExecutionRuntime(options);
   return async (context: PlatformRouteContext): Promise<Response> => {
+    rememberMatchedRoute(context.request, mount.route.path);
     try {
       return buildRouteResponse(await executeMountedRoute(mount, context, runtime), context);
     } catch (error) {
@@ -295,8 +302,10 @@ export function applyRouteSettings(
     context.set.status = route.httpCode;
   }
   for (const [name, value] of Object.entries(route.responseHeaders ?? {})) {
+    // A declared array (two `set-cookie` values) stays an array so the response
+    // builders emit each entry as its own header; joining would merge the cookies.
     context.set.headers[name] =
-      typeof value === "string" || typeof value === "number" ? value : value.join(", ");
+      typeof value === "string" || typeof value === "number" ? value : [...value];
   }
   if (route.sse === true) {
     context.set.headers["content-type"] = "text/event-stream";
@@ -365,6 +374,8 @@ export async function answerRouteFailure(
   context: PlatformRouteContext,
   runtime: RouteExecutionRuntime,
 ): Promise<Response> {
+  await notifyRequestError(runtime.requestHooks, context.request, error);
+
   if (error instanceof HttpError) {
     return withSettingsHeaders(error.toResponse(), context);
   }
@@ -411,10 +422,21 @@ function withSettingsHeaders(response: Response, context: PlatformRouteContext):
 
   const headers = new Headers(response.headers);
   for (const [name, value] of entries) {
-    if (value === undefined || headers.has(name)) {
+    if (value === undefined) {
       continue;
     }
-    headers.set(name, Array.isArray(value) ? value.join(", ") : String(value));
+    if (Array.isArray(value)) {
+      // Two cookies are two `set-cookie` headers; joining them would corrupt
+      // both. Every other setting reaches here as a string.
+      for (const item of value) {
+        headers.append(name, String(item));
+      }
+      continue;
+    }
+    if (headers.has(name)) {
+      continue;
+    }
+    headers.set(name, String(value));
   }
 
   return new Response(response.body, {

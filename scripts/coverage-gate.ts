@@ -152,7 +152,12 @@ export async function collectExpectedRuntimeSources(
 
   return Object.freeze(
     [...packageSources, ...scriptSources]
-      .filter((path) => !path.endsWith(".types.ts") && !path.endsWith(".spec.ts"))
+      .filter(
+        (path) =>
+          !path.endsWith(".types.ts") &&
+          !path.endsWith(".interface.ts") &&
+          !path.endsWith(".spec.ts"),
+      )
       .toSorted(),
   );
 }

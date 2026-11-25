@@ -1,5 +1,5 @@
-import { AponiaError } from "../errors/aponia-error.ts";
-import type { RouteValidator } from "./route-schema.types.ts";
+import { AponiaError } from "../exceptions/aponia-error.ts";
+import type { RouteValidator } from "../interfaces/route-schema.interface.ts";
 
 /** The shape a validator must expose for one combinator to call it. */
 interface CombinableSchema {

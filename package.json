@@ -1,6 +1,6 @@
 {
   "name": "aponiajs-workspace",
-  "version": "1.0.0-beta.61",
+  "version": "1.0.0-beta.62",
   "private": true,
   "description": "Bun-first application architecture powered by Elysia.",
   "license": "MIT",
@@ -46,14 +46,14 @@
     "test": "bun run --workspaces test",
     "test:coverage": "bun test --coverage --coverage-reporter=text --coverage-reporter=lcov && bun scripts/coverage-gate.ts",
     "test:examples": "bun test ./examples/*/test/*.e2e-spec.ts",
-    "test:generated-app": "bun test ./packages/cli/e2e/generated-application.e2e.ts",
+    "test:generated-app": "bun test ./packages/cli/test/generated-application.e2e-spec.ts",
     "test:vite-plus": "vp test",
-    "test:brokers": "APONIA_BROKER_E2E=1 bun test ./packages/microservices/tests/brokers.e2e-spec.ts",
-    "test:redis": "APONIA_REDIS_E2E=1 bun test ./packages/store-redis/tests/live-redis.e2e-spec.ts",
-    "test:postgres": "APONIA_POSTGRES_E2E=1 bun test ./packages/database/tests/live-postgres.e2e-spec.ts",
+    "test:brokers": "APONIA_BROKER_E2E=1 bun test ./packages/microservices/test/brokers.e2e-spec.ts",
+    "test:redis": "APONIA_REDIS_E2E=1 bun test ./packages/store-redis/test/live-redis.e2e-spec.ts",
+    "test:postgres": "APONIA_POSTGRES_E2E=1 bun test ./packages/database/test/live-postgres.e2e-spec.ts",
     "check": "vp check && bun run docs:lint",
     "doctor": "vp env doctor",
-    "version:bump": "bumpp package.json packages/aponiajs/package.json packages/audit/package.json packages/auth/package.json packages/cache/package.json packages/cli/package.json packages/common/package.json packages/compiler/package.json packages/compression/package.json packages/core/package.json packages/cors/package.json packages/create-aponia/package.json packages/cron/package.json packages/database/package.json packages/devtools/package.json packages/events/package.json packages/graphql/package.json packages/http/package.json packages/idempotency/package.json packages/mcp/package.json packages/metrics/package.json packages/microservices/package.json packages/h3/package.json packages/hono/package.json packages/nitro/package.json packages/serverless/package.json packages/openapi/package.json packages/opentelemetry/package.json packages/platform-core/package.json packages/platform-elysia/package.json packages/platform-h3/package.json packages/platform-hono/package.json packages/queue/package.json packages/rate-limit/package.json packages/security/package.json packages/session/package.json packages/store-redis/package.json packages/view/package.json packages/tenancy/package.json packages/testing/package.json --all --no-commit --no-tag --no-push --execute \"bun run version:sync\"",
+    "version:bump": "bumpp package.json packages/aponiajs/package.json packages/audit/package.json packages/auth/package.json packages/cache/package.json packages/cli/package.json packages/common/package.json packages/compiler/package.json packages/compression/package.json packages/core/package.json packages/cors/package.json packages/create-aponia/package.json packages/cron/package.json packages/database/package.json packages/devtools/package.json packages/events/package.json packages/graphql/package.json packages/http/package.json packages/idempotency/package.json packages/mcp/package.json packages/metrics/package.json packages/microservices/package.json packages/h3/package.json packages/hono/package.json packages/nitro/package.json packages/serverless/package.json packages/openapi/package.json packages/opentelemetry/package.json packages/platform-core/package.json packages/platform-elysia/package.json packages/platform-h3/package.json packages/platform-hono/package.json packages/queue/package.json packages/rate-limit/package.json packages/security/package.json packages/schematics/package.json packages/session/package.json packages/store-redis/package.json packages/view/package.json packages/tenancy/package.json packages/testing/package.json --all --no-commit --no-tag --no-push --execute \"bun run version:sync\"",
     "version:patch": "bun run version:bump -- --release patch --yes",
     "version:minor": "bun run version:bump -- --release minor --yes",
     "version:major": "bun run version:bump -- --release major --yes",
@@ -67,7 +67,7 @@
     "release:tag": "bun scripts/distribution-tag.ts",
     "release:branch": "bun scripts/release-branch.ts",
     "release:canary": "bun scripts/canary-version.ts",
-    "release:dry-run": "for package in audit auth cache compression events http idempotency common compiler core platform-core platform-elysia platform-h3 platform-hono queue cli create-aponia devtools cron database cors graphql mcp metrics microservices serverless h3 hono nitro testing openapi opentelemetry rate-limit security session tenancy store-redis view; do bun pm pack --cwd packages/$package --dry-run; done",
+    "release:dry-run": "status=0; for package in audit auth cache compression events http idempotency common compiler core platform-core platform-elysia platform-h3 platform-hono queue schematics cli create-aponia devtools cron database cors graphql mcp metrics microservices serverless h3 hono nitro testing openapi opentelemetry rate-limit security session tenancy store-redis view; do bun pm pack --cwd packages/$package --dry-run || status=1; done; exit $status",
     "release:sbom": "bun run scripts/sbom.ts",
     "prepare": "bunx --bun vp config"
   },
@@ -90,9 +90,12 @@
   },
   "overrides": {
     "@graphql-tools/utils": "^12.0.3",
+    "@opentelemetry/core": "2.9.0",
     "@opentelemetry/propagator-jaeger": "2.9.0",
     "@opentelemetry/sdk-node": "0.217.0",
     "exact-mirror": "^1.2.7",
+    "katex": "^0.18.2",
+    "minimatch": "^11.0.1",
     "protobufjs": "8.8.0",
     "source-map-js": "^1.2.2",
     "tinypool": "^2.1.2",
@@ -102,9 +105,9 @@
   "devEngines": {
     "packageManager": {
       "name": "bun",
-      "version": "1.4.4",
+      "version": "1.4.5",
       "onFail": "download"
     }
   },
-  "packageManager": "bun@1.4.4"
+  "packageManager": "bun@1.4.5"
 }

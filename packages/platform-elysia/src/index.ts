@@ -1,6 +1,10 @@
 export { AponiaApplication } from "./application/aponia-elysia-application.ts";
-export { AponiaFactory } from "./application/aponia-factory.ts";
-export { elysiaAdapter } from "./application/elysia-adapter.ts";
+export type {
+  AponiaApplicationBoot,
+  ApplicationReboot,
+} from "./application/aponia-elysia-application.ts";
+export { AponiaFactory } from "./application/aponia.factory.ts";
+export { elysiaAdapter } from "./adapters/elysia-adapter.ts";
 export { AponiaApplicationContext } from "./application/application-context.ts";
 export { LazyModuleLoader, LazyModuleRef } from "./application/lazy-module-loader.ts";
 export { getApplicationDiagnostics } from "./application/application-diagnostics.ts";
@@ -11,7 +15,7 @@ export type {
   AponiaCallbackRouteDiagnostics,
   AponiaCompiledRouteDiagnostics,
   AponiaInvokerDiagnostics,
-} from "./application/application-diagnostics.types.ts";
+} from "./interfaces/application-diagnostics.interface.ts";
 export type {
   AponiaApplicationOptions,
   AponiaVersioningOptions,
@@ -24,16 +28,16 @@ export type {
   ConfiguredAponiaApplicationOptions,
   RouteCompilationOptions,
   ElysiaConfigurator,
-} from "./application/application.types.ts";
+} from "./interfaces/application.interface.ts";
 export type {
   AponiaHealthOptions,
   AponiaHealthResponse,
   AponiaHealthStatus,
-} from "./application/application-health.types.ts";
-export type { ElysiaApplication } from "./application/native-application.types.ts";
+} from "./interfaces/application-health.interface.ts";
+export type { ElysiaApplication } from "./interfaces/native-application.interface.ts";
 export { provideConfiguration, provideConfigurationAsync } from "./configuration/provider.ts";
 export type { AsyncConfigurationOptions } from "./configuration/provider.ts";
-export { compileRootModule } from "./modules/module-compiler.ts";
+export { compileRootModule, compileRootModuleAsync } from "./modules/module-compiler.ts";
 export type { AponiaModuleDescriptorArtifact, AponiaRootModule } from "@aponiajs/platform-core";
 export { inspectAponiaApplication } from "./inspection/application-inspection.ts";
 export type {
@@ -45,7 +49,7 @@ export type {
   AponiaProviderInspection,
   AponiaRouteInspection,
   AponiaRouteParameterInspection,
-} from "./inspection/application-inspection.types.ts";
+} from "./interfaces/application-inspection.interface.ts";
 export type {
   RouteInputSchema,
   PluginSource,
@@ -54,7 +58,7 @@ export type {
   ElysiaResponseSettings,
   ResponseStatus,
   AppState,
-} from "./routing/route-context.types.ts";
+} from "./interfaces/route-context.interface.ts";
 export type {
   AponiaInvokerArtifact,
   ControllerHandlerFactory,
@@ -64,14 +68,14 @@ export type {
 export { downloadFile } from "./routing/download-file.ts";
 export { sse } from "elysia";
 export type { SSEPayload as SseEvent } from "elysia";
-export type { DownloadFileOptions } from "./routing/download-file.types.ts";
+export type { DownloadFileOptions } from "./interfaces/download-file.interface.ts";
 export { defineControllerRoutes } from "./controllers/controller-definition.ts";
 export {
   CONTROLLER_KIND,
   defineController,
   controller,
 } from "./controllers/controller-definition.ts";
-export type { InterceptorPhases } from "./controllers/enhancer-resolver.ts";
+export type { InterceptorPhases } from "./controllers/enhancer.resolver.ts";
 export type {
   ControllerRegistrationResult,
   ControllerDescriptor,
@@ -81,8 +85,23 @@ export type {
   DeclaredControllerDefinition,
   RegisteredControllerDefinition,
   RegisteredApplication,
-} from "./controllers/controller.types.ts";
+} from "./interfaces/controller.interface.ts";
 export { HttpError, httpError, httpErrors } from "@aponiajs/platform-core";
+export {
+  CONTEXT,
+  ContextIdFactory,
+  INQUIRER,
+  REQUEST,
+  REQUEST_CONTEXT_ID,
+  attachRequestContextId,
+} from "@aponiajs/core";
+export type {
+  ContextId,
+  ContextIdResolver,
+  ContextIdResolverFn,
+  ContextIdStrategy,
+  HostComponentInfo,
+} from "@aponiajs/core";
 export type { HttpErrorFactories } from "@aponiajs/platform-core";
 export type {
   HttpErrorFactory,
@@ -93,19 +112,12 @@ export type {
   ProblemDetails,
   ResolveHttpErrorStatus,
 } from "@aponiajs/platform-core";
-export { PluginModule, definePlugin } from "./plugins/plugin-module.ts";
-export { createServicePlugin } from "@aponiajs/platform-core";
-export { createEnhancerPlugin } from "@aponiajs/platform-core";
+export { PluginModule, definePlugin } from "./plugins/plugin.module.ts";
 export { wrapElysiaPlugin } from "./plugins/elysia-bridge-plugin.ts";
 export type {
   AsyncPluginOptions,
   ElysiaBridgePluginDefinition,
   ElysiaBridgePluginModule,
-  EnhancerPluginDefinition,
-  EnhancerPluginModule,
-  PlatformSupportOptions,
-  ServicePluginDefinition,
-  ServicePluginModule,
 } from "./plugins/plugin-builder.types.ts";
 export type {
   AsyncPluginModuleOptions,
@@ -119,14 +131,17 @@ export type {
   WebSocketGatewayOptions,
   WebSocketGatewayPlan,
   WebSocketHandlerPlan,
-} from "./websockets/gateway-plan.types.ts";
-export type { WebSocketClient, WebSocketServerRef } from "./websockets/websocket-gateway.types.ts";
+} from "./interfaces/gateway-plan.interface.ts";
+export type {
+  WebSocketClient,
+  WebSocketServerRef,
+} from "./interfaces/websocket-gateway.interface.ts";
 export { RequestContextService } from "./request-context/request-context.service.ts";
 export { RequestContextModule } from "./request-context/request-context-module.ts";
 export type {
   RequestContext,
   RequestContextModuleOptions,
-} from "./request-context/request-context.types.ts";
+} from "./interfaces/request-context.interface.ts";
 export { createMiddlewareConsumer } from "@aponiajs/platform-core";
 export type { ResolvedMiddlewareConfig } from "@aponiajs/platform-core";
 export { AuthGuard } from "@aponiajs/platform-core";
@@ -136,5 +151,5 @@ export {
   compileModuleInMemory,
   COMPILED_DESCRIPTOR_SYMBOL,
 } from "./compiler/in-memory-compiler.ts";
-export type { InferredEdenRoutes, TypedRoutePlan } from "./routing/route-eden.types.ts";
-export type { TreatyApp } from "./application/native-application.types.ts";
+export type { InferredEdenRoutes, TypedRoutePlan } from "./interfaces/route-eden.interface.ts";
+export type { TreatyApp } from "./interfaces/native-application.interface.ts";

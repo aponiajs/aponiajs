@@ -6,7 +6,7 @@
  * and serves them from the official `@modelcontextprotocol/server` SDK.
  */
 
-export { McpModule } from "./module/mcp-module.ts";
+export { MCP_OPTIONS, McpModule } from "./module/mcp.module.ts";
 export type {
   McpHttpLegacy,
   McpHttpOptions,
@@ -17,9 +17,9 @@ export type {
   McpServerMetadata,
   McpStdioLegacy,
   McpStdioOptions,
-} from "./module/mcp-module.types.ts";
+} from "./interfaces/mcp-module.interface.ts";
 export { McpExecutionContext } from "./execution/mcp-execution-context.ts";
-export type { McpContext } from "./execution/mcp-context.types.ts";
+export type { McpContext } from "./interfaces/mcp-context.interface.ts";
 export { listenMcpStdio, serveMcpStdio } from "./transport/mcp-stdio.ts";
 export type { McpStdioServerOptions } from "./transport/mcp-stdio.ts";
 

@@ -1,5 +1,5 @@
-import type { RequestBuffer } from "../requests/request-buffer.types.ts";
-import type { AponiaRequestsPayload } from "./payloads.types.ts";
+import type { RequestBuffer } from "../interfaces/request-buffer.interface.ts";
+import type { AponiaRequestsPayload } from "../interfaces/payloads.interface.ts";
 
 /** The path this endpoint is served under, relative to the devtools prefix. */
 export const devtoolsRequestsPath = "/requests";

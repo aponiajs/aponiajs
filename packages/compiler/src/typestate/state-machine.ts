@@ -6,7 +6,7 @@ import type {
   StateMachineDefinition,
   StateMachineOptions,
   StateName,
-} from "./typestate.types.ts";
+} from "../interfaces/typestate.interface.ts";
 
 /**
  * Creates an immutable typestate machine from a literal transition table.

@@ -3,9 +3,28 @@ import { defineConfig } from "vite-plus";
 export default defineConfig({
   test: {
     alias: {
+      "@aponiajs/audit": new URL("./packages/audit/src/index.ts", import.meta.url).pathname,
+      "@aponiajs/auth": new URL("./packages/auth/src/index.ts", import.meta.url).pathname,
       "@aponiajs/cache": new URL("./packages/cache/src/index.ts", import.meta.url).pathname,
       "@aponiajs/compression": new URL("./packages/compression/src/index.ts", import.meta.url)
         .pathname,
+      "@aponiajs/cors": new URL("./packages/cors/src/index.ts", import.meta.url).pathname,
+      "@aponiajs/cron": new URL("./packages/cron/src/index.ts", import.meta.url).pathname,
+      "@aponiajs/database": new URL("./packages/database/src/index.ts", import.meta.url).pathname,
+      "@aponiajs/devtools": new URL("./packages/devtools/src/index.ts", import.meta.url).pathname,
+      "@aponiajs/graphql": new URL("./packages/graphql/src/index.ts", import.meta.url).pathname,
+      "@aponiajs/idempotency": new URL("./packages/idempotency/src/index.ts", import.meta.url)
+        .pathname,
+      "@aponiajs/metrics": new URL("./packages/metrics/src/index.ts", import.meta.url).pathname,
+      "@aponiajs/openapi": new URL("./packages/openapi/src/index.ts", import.meta.url).pathname,
+      "@aponiajs/opentelemetry": new URL("./packages/opentelemetry/src/index.ts", import.meta.url)
+        .pathname,
+      "@aponiajs/queue": new URL("./packages/queue/src/index.ts", import.meta.url).pathname,
+      "@aponiajs/store-redis": new URL("./packages/store-redis/src/index.ts", import.meta.url)
+        .pathname,
+      "@aponiajs/tenancy": new URL("./packages/tenancy/src/index.ts", import.meta.url).pathname,
+      "@aponiajs/testing": new URL("./packages/testing/src/index.ts", import.meta.url).pathname,
+      "@aponiajs/view": new URL("./packages/view/src/index.ts", import.meta.url).pathname,
       "@aponiajs/common": new URL("./packages/common/src/index.ts", import.meta.url).pathname,
       "@aponiajs/compiler": new URL("./packages/compiler/src/index.ts", import.meta.url).pathname,
       "@aponiajs/core": new URL("./packages/core/src/index.ts", import.meta.url).pathname,
@@ -35,7 +54,7 @@ export default defineConfig({
       ).pathname,
     },
     globals: true,
-    include: ["packages/*/tests-vp/**/*.conformance.ts"],
+    include: ["packages/*/test/**/*.conformance.ts"],
   },
   staged: {
     "*": "vp check --fix",

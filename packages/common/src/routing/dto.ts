@@ -1,4 +1,4 @@
-import type { InferValidatorOutput, RouteValidator } from "./route-schema.types.ts";
+import type { InferValidatorOutput, RouteValidator } from "../interfaces/route-schema.interface.ts";
 import { Validation } from "./validation.ts";
 
 const validationMetadataKey = Symbol.for("aponia.validation.metadata");

@@ -315,12 +315,12 @@ const application = await AponiaFactory.create(AppModule, {
 });
 ```
 
-There is deliberately no `useGlobalGuards()`, `useGlobalInterceptors()`, or
-`useGlobalFilters()` method. Nest can offer one because it resolves its route
-table when the application starts listening; Aponia mounts every route during
-`AponiaFactory.create`, so by the time a caller holds an application the hook
-arrays are already built. A method that appeared to register a global enhancer
-and silently affected nothing would be worse than its absence.
+`useGlobalGuards()`, `useGlobalInterceptors()`, `useGlobalPipes()`, and
+`useGlobalFilters()` register the same application-wide enhancers on the returned
+application, on every platform. Because `AponiaFactory.create` mounts every route
+before it returns, the registration is recorded and applied when `init()` runs;
+calling one after the application serves traffic is refused, and the factory
+options remain the descriptor path.
 
 ### Application-level tokens
 
@@ -448,8 +448,10 @@ Each of these is a decision, not an omission.
    requires owning the handler invocation, which forfeits Elysia's source-static
    handler compilation for every route carrying an enhancer.
 2. **`interceptBefore` cannot short-circuit.** Guards cover refusal.
-3. **No `useGlobalGuards`, `useGlobalInterceptors`, or `useGlobalFilters`.**
-   Routes mount during `AponiaFactory.create`; the equivalent is an option.
+3. **Global enhancer methods apply at `init()`.** `useGlobalGuards`,
+   `useGlobalInterceptors`, `useGlobalPipes`, and `useGlobalFilters` record their
+   configuration on the returned application and re-run the boot once, on every
+   platform; the factory options state the same thing without the re-run.
 4. **Enhancers must be declared providers.** Nest instantiates them implicitly.
 5. **`ArgumentsHost` and `getType()` are not carried.** One transport.
 6. **Middleware and pipes use descriptor-backed ahead-of-time compilation.**
@@ -459,12 +461,12 @@ Each of these is a decision, not an omission.
 ## In this repository
 
 Guards, `interceptBefore`, and the hook order belong to
-`packages/platform-elysia/tests/guards.test.ts`,
+`packages/platform-elysia/src/guards.spec.ts`,
 `interceptors.test.ts`, and `route-enhancers.test.ts`; filters and the default
 mapping to `exception-filters.test.ts`; the mounts that run none of it to
 `unmounted-route-enhancers.test.ts`; resolution and precedence to
 `enhancer-resolution.test.ts` and `global-enhancers.test.ts`; the decorators to
-`packages/common/tests/enhancer-decorators.test.ts`. The
+`packages/common/src/enhancers/enhancer-decorators.spec.ts`. The
 [enhancers chapter](../learn/13-enhancers.md) is the short walkthrough.
 
 [native plugin guide](../platforms/native-plugins.md) ·

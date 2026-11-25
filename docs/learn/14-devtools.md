@@ -1,69 +1,46 @@
 # 14 · Devtools
 
-**Use when:** inspecting what the application compiled and which requests it answered.
+**Use when:** you need to see what a running application compiled, serves, logged, or answered, in development.
 
-`@aponiajs/devtools` mounts a read-only HTTP API at `/__devtools` on the application's own address.
-
-```bash
-bun add @aponiajs/devtools@alpha
-```
-
-## Register it
-
-Pass the plugin to the factory so a generated descriptor keeps booting:
-
-```ts
-import { AponiaFactory } from "@aponiajs/platform-elysia";
-import { devtoolsPlugin } from "@aponiajs/devtools";
-import { appLogger } from "./logger.ts";
-
-const application = await AponiaFactory.create(AppModule, {
-  logger: appLogger,
-  plugins: [devtoolsPlugin({ enabled: Bun.env.APONIA_DEVTOOLS === "true", logger: appLogger })],
-});
-```
-
-The module spelling mounts the same surface:
+The devtools surface answers what your running application actually is: the
+graph it compiled, the routes it serves, the stages each route runs, the lines
+it logged, and the requests it answered. Turn it on deliberately in development.
 
 ```ts
 import { Module } from "@aponiajs/common";
 import { DevtoolsModule } from "@aponiajs/devtools";
 
-@Module({ imports: [DevtoolsModule.register({ enabled: true, logger: appLogger })] })
+@Module({
+  imports: [DevtoolsModule.forRoot({ enabled: Bun.env.NODE_ENV !== "production" })],
+})
 export class AppModule {}
 ```
 
-`enabled` is required. The framework never reads an environment variable to decide whether devtools load. Pass the same logger object to `AponiaFactory.create` and to the registration.
+Nothing is mounted while `enabled` is false. While it is true, the surface is a
+controller under `/__devtools` on the address the application already answers,
+and it reports from the neutral boot record, so the same registration works on
+`@aponiajs/platform-elysia`, `@aponiajs/platform-hono`,
+`@aponiajs/platform-h3`, and the serverless Web Fetch handler.
 
-| Option      | Meaning                                              |
-| ----------- | ---------------------------------------------------- |
-| `enabled`   | Mount the devtools surface. Required.                |
-| `authorize` | Authorizes one request; a `false` answer is a `401`. |
-| `logger`    | Logger recorded by `/logs`, or `false`.              |
-| `capture`   | Per-field opt-out for `/requests`, or `false`.       |
+Open `/__devtools` for the page, or read the endpoints directly:
 
-## Endpoints
+| Path                   | Answers                                                                  |
+| ---------------------- | ------------------------------------------------------------------------ |
+| `/__devtools/meta`     | contract version, boot release, artifact stamps                          |
+| `/__devtools/graph`    | the compiled modules, providers, controllers, routes, gateways           |
+| `/__devtools/routes`   | the compiled plans and callback routes                                   |
+| `/__devtools/flow`     | each route's validation, guards, interceptors, binding, handler, filters |
+| `/__devtools/aot`      | the build verdict for the project                                        |
+| `/__devtools/logs`     | the log stream, read from a cursor                                       |
+| `/__devtools/requests` | the request record, read from a cursor                                   |
 
-| Endpoint   | Answers                                |
-| ---------- | -------------------------------------- |
-| `meta`     | Contract version, releases, start time |
-| `graph`    | Module graph compiled at boot          |
-| `routes`   | Routes the application answers         |
-| `flow`     | Stages and filters per route           |
-| `logs`     | Log entries from a cursor              |
-| `requests` | Recorded requests and responses        |
-| `aot`      | Build decisions for generated invokers |
+Two limits are stated rather than hidden. A plugin's own contributed hooks — a
+`derive`, a `resolve`, a native `beforeHandle` — are not part of the neutral
+record, so `/flow` reports the compiled plan's stages and not those
+contributions. And a route mounted directly on a native application, outside the
+module graph, is not reported by `/routes` or `/flow`.
 
-```bash
-curl http://localhost:3000/__devtools/routes
-```
-
-`/logs` and `/requests` are polled with the cursor from the previous answer. A request writes an arrival entry and a completion entry with the same `id`; group by `id` and keep the last entry in the window.
-
-The surface is one wildcard route, `ALL /__devtools/*`, in the application's own route table. It answers under `application.handle()` and `listen()`. A more specific application route wins. `enabled` is how production keeps it out.
-
-`/requests` records request headers and bodies by default. Treat the surface as a development tool.
-
-Devtools serve JSON only. There is no UI, asset bundle, or mutation endpoint.
+`DevtoolsModule.forRoot({ enabled })` is the only registration; there is no
+plugin option, and no platform package appears in this package's source.
 
 Next: [15 · Files](./15-files.md) · Deep dive: [devtools](../services/devtools.md)

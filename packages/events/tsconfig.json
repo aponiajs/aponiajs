@@ -21,7 +21,8 @@
       "@aponiajs/cli": ["../cli/src/index.ts"],
       "@aponiajs/common": ["../common/src/index.ts"],
       "@aponiajs/core": ["../core/src/index.ts"],
-      "@aponiajs/platform-elysia": ["../platform-elysia/src/index.ts"]
+      "@aponiajs/platform-elysia": ["../platform-elysia/src/index.ts"],
+      "@aponiajs/testing": ["../testing/src/index.ts"]
     }
   }
 }

@@ -15,6 +15,7 @@ import {
   type KernelAdapter,
   type MountedRoute,
   type PlatformRouteContext,
+  type PlatformCapability,
   type PlatformRouteHandler,
   type PlatformMountOptions,
   type RequestPipeline,
@@ -27,6 +28,7 @@ export type HonoApplication = Hono;
 
 interface HonoListener {
   readonly url: string;
+  readonly server?: unknown;
   close(force?: boolean): Promise<void>;
 }
 
@@ -129,6 +131,12 @@ export function createHonoHost(
   return Object.freeze({
     kind: "host" as const,
     name: "hono",
+    capabilities: Object.freeze<PlatformCapability[]>([
+      "http",
+      "streaming",
+      "multipart",
+      ...(adapter === undefined ? [] : ["websockets" as PlatformCapability]),
+    ]),
     createApplication(): HonoApplication {
       return new Hono();
     },
@@ -218,6 +226,7 @@ export function createHonoHost(
       });
       return {
         url: `http://localhost:${server.port}`,
+        server,
         close: async (force) => {
           await (force === true ? server.stop(true) : server.stop());
         },

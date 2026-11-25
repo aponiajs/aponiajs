@@ -6,41 +6,41 @@ specific to this package.
 ## What this package owns
 
 The module an application imports to answer cross-origin requests, and the
-validated configuration the policy is read from. It wraps
-[`@elysia/cors`](https://www.npmjs.com/package/@elysia/cors), which supplies
-every header, the preflight handling, and the matching rules. It is a leaf —
-nothing in the framework depends on it.
+validated configuration the policy is read from. The policy is a neutral
+`HttpPolicy` built from `@aponiajs/platform-core`'s CORS helpers, so the shared
+request pipeline answers the same headers and preflight on every platform. It
+is a leaf — nothing in the framework depends on it.
 
-| Domain    | Owns                                                                                                          |
-| --------- | ------------------------------------------------------------------------------------------------------------- |
-| `module/` | `CorsModule.register`, `CorsModuleOptions`, the `DynamicModule` one registration lowers into                  |
-| `policy/` | the plugin the registration mounts, the guard that reads a configuration value into options, and the contract |
+| Domain        | Owns                                                                                          |
+| ------------- | --------------------------------------------------------------------------------------------- |
+| `module/`     | `CorsModule.forRoot`, `CorsModuleOptions`, the `DynamicModule` one registration lowers into   |
+| `policy/`     | the neutral CORS policy, the guard that reads a configuration value into it, and the contract |
+| `interfaces/` | the module and policy contracts                                                               |
 
-`src/index.ts` is the only public barrel. Keep `*.types.ts` colocated with the
-runtime boundary it describes.
+`src/index.ts` is the only public barrel. Type-only contracts live in
+`interfaces/<name>.interface.ts`.
 
 ## Invariants
 
-- **This package implements no CORS, and no claim in it may imply one.** The
-  matching rules, the headers, the preflight answer, and the header values are
-  `@elysia/cors`'s. What is contributed is a module a registration belongs in and
-  a validated configuration the policy comes from. A feature that would make this
-  package more than an adapter — an origin predicate of its own, a route-scoped
-  policy, a header builder — is a different package, and the answer to "should
-  the adapter do this?" is no even when the answer would be convenient. The
-  README leads with module registration and keeps the literal-policy boundary
-  and raw-plugin alternative in its final Native escape hatch section: this is
-  the smallest candidate in the set, and a package that oversells a thin
-  adapter is the defect this repository cares most about.
+- **The policy is the shared pipeline's, not a runtime plugin's.** The headers,
+  the preflight answer, and the header values come from
+  `@aponiajs/platform-core`'s CORS helpers, which the same request pipeline runs
+  on every platform. A feature that would make this package more than that — an
+  origin predicate of its own, a route-scoped policy, a header builder — is a
+  different package, and the answer to "should this package do this?" is no even
+  when the answer would be convenient. The README leads with module registration
+  and keeps the raw-plugin alternative in its final Native escape hatch section;
+  a package that oversells a thin policy is the defect this repository cares most
+  about.
 - **The configuration carries data only, and the boundary is stated rather than
   widened.** The wrapped plugin's `origin` also accepts a `RegExp` and a
   `(request) => boolean` function. Neither is a value an environment can supply,
   so `CorsConfiguration.origins` is a list of exact origin strings and the guard
   refuses anything else with `INVALID_CONFIGURATION_VALUE`. A reader who needs a
   pattern or a predicate mounts the raw plugin, which the README names and
-  `tests/cors-module.test.ts` demonstrates by booting both sides of the boundary.
+  `src/module/cors-module.spec.ts` demonstrates by booting both sides of the boundary.
   Widening the type to match the plugin's own `CORSConfig` would make that
-  paragraph false; `tests-vp/cors.conformance.ts` pins `keyof CorsConfiguration`
+  paragraph false; `test/cors.conformance.ts` pins `keyof CorsConfiguration`
   so the widening fails `bun run check` instead.
 - **`credentials` defaults to `false`, which is this adapter's own default and
   not the plugin's.** `@elysia/cors` defaults `credentials` to `true` and its
@@ -86,17 +86,15 @@ runtime boundary it describes.
   application that wrote it. `source` exists because `provideConfiguration`
   accepts it: a test validates a literal rather than mutating the process
   environment, and no case in either lane touches `process.env`.
-- **No plugin value can be exported beside the module.** `@aponiajs/devtools`
-  exports `devtoolsPlugin`, because its plugin is built from options fixed in
-  source. This one's plugin is built from a value the container resolves, so it
-  exists only inside a boot — which is also why the module uses
-  `PluginModule.registerAsync` rather than `PluginModule.register`. An
-  application that needs the descriptor artifact untouched mounts the raw plugin
-  through `AponiaApplicationOptions.plugins` and gives up the module.
+- **No policy value can be exported beside the module.** The CORS policy is
+  built from a value the container resolves, so it exists only inside a boot. An
+  application that needs the descriptor artifact untouched mounts the raw Elysia
+  CORS plugin through `AponiaApplicationOptions.plugins` and gives up the module
+  and its validation.
 
 ## Tests
 
-`tests/*.test.ts` under Bun, `tests-vp/*.conformance.ts` under Vite+. Both lanes
+`src/**/*.spec.ts` under Bun, `test/*.conformance.ts` under Vite+. Both lanes
 boot real applications through `AponiaFactory.create` and read real response
 headers through `application.handle(new Request(...))`, because what this package
 promises is a set of headers and nothing less than a response proves it. No case
@@ -120,7 +118,7 @@ The Bun lane owns:
    keys with different policies are two mounts;
 6. the boundary: a `RegExp` origin is refused through this package and served by
    the raw plugin, which is the paragraph the README states;
-7. `tests/generated-descriptors.test.ts` pins the `aponia build` consequence: a
+7. `src/generated-descriptors.spec.ts` pins the `aponia build` consequence: a
    module whose `imports` name a registration is declined, the artifact holds
    nothing for it, and the application boots and answers anyway because the
    platform lowers the root from its decorators.

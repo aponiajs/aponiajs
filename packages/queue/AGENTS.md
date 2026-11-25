@@ -8,14 +8,20 @@ specific to this package.
 The in-process job queue, its retry and dead-letter policy, and the
 transactional outbox. It is a leaf: nothing in the framework depends on it.
 
-| Domain    | Owns                                                           |
-| --------- | -------------------------------------------------------------- |
-| `module/` | `QueueModule.register` and the resolved option contract        |
-| `queue/`  | `QueueService`, job snapshots, handlers, retries, dead letters |
-| `outbox/` | `OutboxService` and its delivery contract                      |
+| Domain        | Owns                                                                                         |
+| ------------- | -------------------------------------------------------------------------------------------- |
+| `module/`     | `QueueModule.forRoot`, the `.module-definition.ts` builder, and the resolved option contract |
+| `queue/`      | `QueueService`, job snapshots, handlers, retries, dead letters, `JobRefService`              |
+| `outbox/`     | `OutboxService` and its delivery contract                                                    |
+| `decorators/` | `@Processor()`, `@InjectQueue()`, and `getQueueToken()`                                      |
+| `hosts/`      | `WorkerHost`                                                                                 |
+| `processors/` | `ProcessorExplorer`, which registers decorated processors                                    |
+| `interfaces/` | the job, queue, outbox, and module contracts                                                 |
 
-`src/index.ts` is the only public barrel. Keep `*.types.ts` beside the runtime
-that reads it.
+`src/index.ts` is the only public barrel. The registration is a
+`ConfigurableModuleBuilder` definition with `MODULE_OPTIONS_TOKEN`
+(`QUEUE_MODULE_OPTIONS`), `isGlobal`, and `name` (the `@InjectQueue()` token);
+`register`/`registerAsync` remain as deprecated aliases.
 
 ## Invariants
 
@@ -63,10 +69,21 @@ that reads it.
   tail.
 - **Configuration failures are `AponiaError` with `INVALID_QUEUE_OPTIONS` and a
   frozen issue list.** Job misuse is `INVALID_QUEUE_JOB`.
+- **The registration fails fast and reports every issue.** `forRoot` validates
+  the queue bounds, the outbox bounds, and both store shapes before the module is
+  imported; `forRootAsync` validates the resolved value when the options token
+  first resolves. The issue list is total, not first-failure.
+- **The processor surface is a name mapping, not a broker.** `@Processor("email")`
+  registers its `WorkerHost.process(job)` as the handler for job name `email`;
+  it does not subscribe to a queue, claim a worker, or renew a lock. `WorkerHost.worker`
+  refuses rather than inventing one, and `JOB_REF` is a forwarding view of the
+  job the current async chain is handling, answering `undefined` outside a
+  handler. `getQueueToken(name)` is `AponiaQueue_<name>`, not BullMQ's
+  `BullQueue_<name>`.
 
 ## Tests
 
-`tests/*.test.ts` under Bun, `tests-vp/*.conformance.ts` under Vite+. Both lanes
+`src/**/*.spec.ts` under Bun, `test/*.conformance.ts` under Vite+. Both lanes
 boot a real application through `AponiaFactory.create` and read the injected
 `QueueService` and `OutboxService`. Coverage must exercise success, retry,
 dead-letter, idempotency, capacity, and lifecycle paths without wall-clock

@@ -4,7 +4,7 @@ import type {
   WebSocketGatewayOptions,
   WebSocketGatewayPlan,
   WebSocketHandlerPlan,
-} from "./gateway-plan.types.ts";
+} from "../interfaces/gateway-plan.interface.ts";
 
 /**
  * Defines a WebSocket gateway whose path, message handlers, and server

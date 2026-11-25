@@ -1,5 +1,5 @@
 import { AponiaError } from "@aponiajs/common";
-import type { DeepReadonly } from "./borrow.types.ts";
+import type { DeepReadonly } from "../interfaces/borrow.interface.ts";
 
 /** The shared revocation state of every proxy one borrow produced. */
 export interface BorrowViewState {

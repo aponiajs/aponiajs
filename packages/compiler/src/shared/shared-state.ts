@@ -5,7 +5,11 @@ import {
   type ValueProvider,
 } from "@aponiajs/common";
 import { AsyncRwLock } from "../borrow/async-rw-lock.ts";
-import type { AsyncRwLockOptions, BorrowOptions, DeepReadonly } from "../borrow/borrow.types.ts";
+import type {
+  AsyncRwLockOptions,
+  BorrowOptions,
+  DeepReadonly,
+} from "../interfaces/borrow.interface.ts";
 import { RwCell } from "../borrow/rw-cell.ts";
 
 /** Options one `provideSharedState` registration accepts. */

@@ -1,10 +1,10 @@
-import type { AponiaApplicationInspection } from "@aponiajs/platform-elysia";
+import type { DevtoolsInspection } from "../interfaces/inspection.interface.ts";
 import type {
   DevtoolsGraphDiagnostics,
   DevtoolsGraphEdge,
   DevtoolsGraphNode,
   LinkableGraphPayload,
-} from "./linkable-graph.types.ts";
+} from "../interfaces/linkable-graph.interface.ts";
 
 /**
  * Builds an interconnected directed graph of nodes and edges from an inspection projection.
@@ -12,7 +12,7 @@ import type {
  * @param inspection - The compiled application inspection projection.
  * @returns The frozen linkable graph payload with nodes, edges, and diagnostics.
  */
-export function buildLinkableGraph(inspection: AponiaApplicationInspection): LinkableGraphPayload {
+export function buildLinkableGraph(inspection: DevtoolsInspection): LinkableGraphPayload {
   const nodes: DevtoolsGraphNode[] = [];
   const edges: DevtoolsGraphEdge[] = [];
 

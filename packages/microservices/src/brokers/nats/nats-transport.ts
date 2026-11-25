@@ -12,13 +12,13 @@ import type {
   TransportHandler,
   TransportSubscription,
   TransportSubscriptionHandle,
-} from "../../transport/transport.types.ts";
+} from "../../interfaces/transport.interface.ts";
 import type {
   NatsSdkConnection,
   NatsSdkLoader,
   NatsSdkModule,
   NatsTransportOptions,
-} from "./nats-transport.types.ts";
+} from "../../interfaces/nats-transport.interface.ts";
 
 const transportName = "nats";
 const packageName = "nats";

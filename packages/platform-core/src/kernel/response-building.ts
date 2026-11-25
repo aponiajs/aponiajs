@@ -1,5 +1,5 @@
 import type { ResponseSettingsState } from "@aponiajs/common";
-import { statusCodeOf } from "../errors/http-status.ts";
+import { statusCodeOf } from "../exceptions/http-status.ts";
 
 /**
  * Turns a handler's return value and the response settings it wrote into the

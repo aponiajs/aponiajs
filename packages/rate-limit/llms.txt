@@ -4,7 +4,8 @@
 
 ## What this package exports
 
-- `RateLimitModule.register({ limit?, windowMs?, maxKeys?, store?, key? })`: the dynamic module an application imports.
+- `RateLimitModule.forRoot({ limit?, windowMs?, maxKeys?, store?, key?, isGlobal? })`: the dynamic module an application imports; `register({...})` is the deprecated alias and `forRootAsync` accepts the three Nest shapes.
+- `MODULE_OPTIONS_TOKEN` (`RATE_LIMIT_MODULE_OPTIONS`): the options token the registration provides and exports.
 - `RateLimitGuard`: a guard that consumes one token per request and throws a `429` Problem Details answer when exhausted.
 - `RateLimit(options)`: per-route `limit`, `windowMs`, and `key` overrides.
 - `RateLimitService`: direct access to the decision for tests and custom guards.

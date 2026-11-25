@@ -32,7 +32,7 @@ class EmailJobs implements OnModuleInit {
 }
 
 @Module({
-  imports: [QueueModule.register({ queue: { concurrency: 4, maxAttempts: 5 } })],
+  imports: [QueueModule.forRoot({ queue: { concurrency: 4, maxAttempts: 5 } })],
   providers: [EmailJobs],
   exports: [EmailJobs],
 })
@@ -77,7 +77,7 @@ it again. An explicit `drain()` still runs while paused.
 
 ```ts
 const store: QueueStore = createSharedBacklog();
-const jobs = QueueModule.register({ queue: { store } });
+const jobs = QueueModule.forRoot({ queue: { store } });
 
 @Module({ imports: [jobs] })
 export class AppModule {}
@@ -137,6 +137,42 @@ process-local unless an `OutboxStore` is supplied; `SqliteOutboxStore` is the
 bundled durable one, and the application owns its database. `waitForIdle()`
 waits for the work that is runnable now, not for a job whose backoff has not
 elapsed.
+
+## Processor surface
+
+The BullMQ-shaped names are available over the same in-process queue:
+
+```ts
+import { Processor, WorkerHost, InjectQueue } from "@aponiajs/queue";
+import type { QueueJob } from "@aponiajs/queue";
+
+@Processor("email")
+class EmailProcessor extends WorkerHost {
+  async process(job: QueueJob<{ to: string }>): Promise<void> {
+    await send(job.payload.to);
+  }
+}
+
+@Injectable()
+class SignupService {
+  constructor(@InjectQueue("email") private readonly queue: QueueService) {}
+}
+```
+
+The processor's name is the **job name** it handles; the class must be a
+provider of a module that imports the registration. `JOB_REF` is a forwarding
+view of the job a handler is running, for a provider that cannot take the
+argument directly. `getQueueToken(name)` is `AponiaQueue_<name>`. This is not a
+broker: there is no worker subscription, lock renewal, or cross-process claim.
+
+## Registration contract
+
+`QueueModule.forRoot` is a `ConfigurableModuleBuilder` definition: it provides
+and exports `MODULE_OPTIONS_TOKEN` (`QUEUE_MODULE_OPTIONS`), accepts `isGlobal`
+as a definition-shaping extra and the three asynchronous shapes through
+`forRootAsync`, and keeps `register`/`registerAsync` as deprecated aliases. Both
+forms validate the queue bounds, the outbox bounds, and both store shapes before
+the boot proceeds, reporting every issue at once.
 
 ## Documentation
 

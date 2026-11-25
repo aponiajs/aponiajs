@@ -25,9 +25,9 @@ The `aponia` binary is the normal entry point. The same behavior is available pr
 
 ## Public types
 
-- [CliCommand, GenerateCommandOptions, GenerateSchematic, ResourceTransport](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/cli/src/commands/command.types.ts): the parsed command contract.
-- [GenerateProjectOptions, GenerateProjectResult](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/cli/src/generation/project-generator.types.ts): project scaffolding inputs and result.
-- [GenerateSchematicOptions, GenerateSchematicResult, SchematicChange](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/cli/src/generation/schematic.types.ts): schematic inputs, result, and the per-file change record.
+- [CliCommand, GenerateCommandOptions, GenerateSchematic, ResourceTransport](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/cli/src/interfaces/command.interface.ts): the parsed command contract.
+- [GenerateProjectOptions, GenerateProjectResult](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/cli/src/interfaces/project-generator.interface.ts): project scaffolding inputs and result.
+- [GenerateSchematicOptions, GenerateSchematicResult, SchematicChange](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/cli/src/interfaces/schematic.interface.ts): schematic inputs, result, and the per-file change record.
 
 ## Documentation
 

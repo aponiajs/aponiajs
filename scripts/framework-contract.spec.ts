@@ -7,7 +7,9 @@ import { routeSchemaSlots } from "../packages/common/src/routing/route-schema.ts
 
 describe("framework contract", () => {
   test("matches the closed error union", async () => {
-    const source = await Bun.file("packages/common/src/errors/aponia-error.types.ts").text();
+    const source = await Bun.file(
+      "packages/common/src/exceptions/aponia-error.interface.ts",
+    ).text();
     const codes = [...source.matchAll(/\|\s*"([A-Z0-9_]+)"/g)].map((match) => match[1]);
 
     expect(new Set(frameworkContract.errorCodes)).toEqual(new Set(codes));
@@ -21,6 +23,11 @@ describe("framework contract", () => {
       "packages/platform-elysia/src",
     ]) {
       for (const file of await listTypeScriptFiles(root)) {
+        // A spec states a key it asserts against; the contract is about what the
+        // runtime source writes.
+        if (file.endsWith(".spec.ts")) {
+          continue;
+        }
         const source = await Bun.file(file).text();
         for (const match of source.matchAll(/Symbol\.for\(\s*"([^"]+)"/g)) {
           keys.add(match[1]!);
@@ -58,25 +65,30 @@ describe("framework contract", () => {
     expect(frameworkContract.routeSlots).toEqual([...routeSchemaSlots]);
     expect(frameworkContract.schematics).toEqual([...schematicNames]);
 
-    const lifecycle = await Bun.file("packages/common/src/lifecycle/lifecycle.types.ts").text();
+    const lifecycle = await Bun.file(
+      "packages/common/src/interfaces/lifecycle.interface.ts",
+    ).text();
     for (const hook of frameworkContract.lifecycle) {
       expect(lifecycle).toContain(`${hook}(`);
     }
 
     const root = (await Bun.file("package.json").json()) as { readonly version?: unknown };
     expect(frameworkContract.frameworkVersion).toBe(String(root.version));
-    expect(frameworkContract.versioningStrategies).toEqual(["uri", "header", "media-type"]);
-    expect(frameworkContract.platformModule).toEqual({
-      declaration: "providePlatformModule",
-      platforms: ["elysia", "hono", "h3"],
+    expect(frameworkContract.versioningStrategies).toEqual([
+      "uri",
+      "header",
+      "media-type",
+      "custom",
+    ]);
+    expect(frameworkContract.platformCapabilities).toEqual({
+      capabilities: ["http", "websockets", "streaming", "multipart", "backgroundWork"],
       refusal: "UNSUPPORTED_PLATFORM_FEATURE",
       adapterHost: "PLATFORM_ADAPTER_HOST",
     });
-    expect(frameworkContract.errorCodes).toContain(frameworkContract.platformModule.refusal);
+    expect(frameworkContract.errorCodes).toContain(frameworkContract.platformCapabilities.refusal);
     const platformCoreBarrel = await Bun.file("packages/platform-core/src/index.ts").text();
-    expect(platformCoreBarrel).toContain(frameworkContract.platformModule.declaration);
-    expect(platformCoreBarrel).toContain(frameworkContract.platformModule.adapterHost);
-    expect(frameworkContract.contractVersion).toBe(1);
+    expect(platformCoreBarrel).toContain(frameworkContract.platformCapabilities.adapterHost);
+    expect(frameworkContract.contractVersion).toBe(2);
   });
 
   test("names decorators the common package still exports", async () => {

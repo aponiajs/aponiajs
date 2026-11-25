@@ -10,7 +10,7 @@ bun add @aponiajs/audit@alpha
 import { Module } from "@aponiajs/common";
 import { AuditModule, AuditService } from "@aponiajs/audit";
 
-@Module({ imports: [AuditModule.register({ redact: ["ssn"] })] })
+@Module({ imports: [AuditModule.forRoot({ redact: ["ssn"] })] })
 export class AppModule {}
 
 @Injectable()
@@ -53,6 +53,13 @@ import { AppModule } from "./app.module.ts";
 const application = await AponiaFactory.create(AppModule);
 await application.listen(Number(Bun.env.PORT ?? 3000));
 ```
+
+## Registration contract
+
+`AuditModule.forRoot` is a `ConfigurableModuleBuilder` definition: it provides
+and exports `MODULE_OPTIONS_TOKEN` (`AUDIT_MODULE_OPTIONS`), accepts `isGlobal`
+as a definition-shaping extra and the three asynchronous shapes through
+`forRootAsync`, and keeps `register`/`registerAsync` as deprecated aliases.
 
 ## Documentation
 

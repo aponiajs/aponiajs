@@ -11,7 +11,7 @@ import type {
   RateLimitDecision,
   RateLimitOverride,
   ResolvedRateLimitOptions,
-} from "../module/rate-limit.types.ts";
+} from "../module/rate-limit.interface.ts";
 import { RateLimitService } from "../service/rate-limit.service.ts";
 import { rateLimitMetadataKey } from "./rate-limit.decorator.ts";
 

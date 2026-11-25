@@ -7,9 +7,14 @@ import {
   type WsResponse,
 } from "@aponiajs/common";
 import { matchesFilter } from "../kernel/http-kernel.ts";
-import type { ResolvedFilter } from "../kernel/kernel.types.ts";
+import type { ResolvedFilter } from "../interfaces/kernel.interface.ts";
 import { validateSlot } from "../kernel/validation.ts";
-import type { GatewayHooks, GatewayPlan, GatewayServer, GatewaySocket } from "./gateway.types.ts";
+import type {
+  GatewayHooks,
+  GatewayPlan,
+  GatewayServer,
+  GatewaySocket,
+} from "../interfaces/gateway.interface.ts";
 
 /**
  * Builds the hooks one mounted gateway runs.

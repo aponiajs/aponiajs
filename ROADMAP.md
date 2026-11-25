@@ -16,6 +16,13 @@ npm serves today is in [Packages](./docs/reference/packages.md).
 - A global route prefix that composes with version negotiation, middleware
   matching, and inspection.
 - `ParseEnumPipe`, `ParseArrayPipe`, and `ParseFilePipe`.
+- `ParseDatePipe`, with Nest's optional/default handling and refusal of a day
+  past its month's end, plus `MisdirectedException` (`421`) and
+  `HttpVersionNotSupportedException` (`505`).
+- The Nest application surface on every platform: `platform-hono` and
+  `platform-h3` carry the same global-enhancer, CORS, security-header, prefix,
+  versioning, shutdown-hook, logger, `getHttpServer`, and `init` methods as the
+  Elysia application.
 - `ModuleRef.create` for a caller that must own its instance, and a `Reflector`
   the boot provides without a module declaring it.
 - `aponia dev`, which runs the entrypoint under Bun's watcher.
@@ -72,7 +79,7 @@ npm serves today is in [Packages](./docs/reference/packages.md).
   export the handler it builds.
 - One shared conformance contract runs the same behavioral cases on every
   platform in both test lanes
-  (`packages/platform-core/tests/support/platform-contract.ts`).
+  (`packages/platform-core/test/support/platform-contract.ts`).
 - Header and media-type version negotiation, the gateway payload-limit/schema/
   filter/generator behavior, and the RFC 8187 `downloadFile` encoder are shared
   in `@aponiajs/platform-core`, so every platform answers them the same way.
@@ -93,16 +100,19 @@ npm serves today is in [Packages](./docs/reference/packages.md).
 - The boot compiles them into one `RequestPipeline`; a host that serves through
   its native fetch runs it too.
 
-## Next — capability adoption
+## Shipped — capability adoption
 
-1. Rewrite `@aponiajs/compression`, `@aponiajs/cors`, and `@aponiajs/security`
-   as thin wrappers over the shared policies, then drop their
-   `platforms: ["elysia"]` declaration.
-2. An SSRF-safe proxy built on `@aponiajs/http`.
-3. Portable `handle(Request)` coverage on Workers/Deno/Node for Hono and H3.
-4. First-party module neutrality: `metrics`, `idempotency`, `session`,
-   `opentelemetry`, then `openapi`, `graphql`, `devtools`, `testing`.
-5. `@aponiajs/testing` boots any platform adapter.
+`@aponiajs/compression`, `cors`, `security`, `session`, `metrics`, `idempotency`,
+`opentelemetry`, `openapi`, `graphql`, and `devtools` contribute neutral
+artifacts — providers, controllers, `HttpPolicy`, and `RequestLifecycleHook` —
+and state the capabilities they need with `requirePlatformCapabilities`. No
+feature package states a platform allowlist, and `@aponiajs/testing` boots a test
+application on any platform adapter.
+
+## Next
+
+1. An SSRF-safe proxy built on `@aponiajs/http`.
+2. Portable `handle(Request)` coverage on Workers/Deno/Node for Hono and H3.
 
 ## Shipped: HTTP platforms beyond Elysia
 

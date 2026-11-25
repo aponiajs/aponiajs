@@ -1,7 +1,12 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { aponiaVersion } from "../version.ts";
-import type { InfoCommandOptions } from "./command.types.ts";
+import { loadCliConfiguration } from "../generation/cli-configuration.ts";
+import {
+  configurationFileName,
+  legacyConfigurationFileName,
+} from "../generation/cli-configuration.constants.ts";
+import type { InfoCommandOptions } from "../interfaces/command.interface.ts";
 
 /** What `aponia info` reports. */
 interface ProjectInfo {
@@ -60,7 +65,8 @@ export async function runInfoCommand(options: InfoCommandOptions): Promise<void>
 
 async function readInfo(root: string): Promise<EnvironmentInfo> {
   const packageJson = await readJson(resolve(root, "package.json"));
-  const configuration = await readJson(resolve(root, "aponia.json"));
+  const loaded = await loadCliConfiguration(root).catch(() => undefined);
+  const configuration = loaded?.configuration;
   const projects: ProjectInfo[] = [];
   const configured = configuration?.projects;
 
@@ -82,19 +88,38 @@ async function readInfo(root: string): Promise<EnvironmentInfo> {
     }
   }
 
+  const configurationPath = [configurationFileName, legacyConfigurationFileName]
+    .map((name) => resolve(root, name))
+    .find((path) => existsSync(path));
+
   return {
     cli: aponiaVersion,
-    framework: typeof packageJson?.version === "string" ? packageJson.version : null,
+    framework: frameworkVersion(packageJson),
     bun: Bun.version,
     os: `${process.platform} ${process.arch}`,
     root,
-    configuration: existsSync(resolve(root, "aponia.json")) ? resolve(root, "aponia.json") : null,
+    configuration: configurationPath ?? null,
     projects: Object.freeze(projects),
-    packageManager: "bun",
+    packageManager:
+      typeof packageJson?.packageManager === "string" ? packageJson.packageManager : "bun",
     lockfile: ["bun.lock", "bun.lockb"].find((name) => existsSync(resolve(root, name))) ?? null,
     vitePlus: dependencyVersion(packageJson, "vite-plus"),
     git: readGit(root),
   };
+}
+
+/**
+ * The framework release an application declares.
+ *
+ * The platform package is what an application installs for the runtime, so it
+ * is read first; `common` is the fallback for an application that declares
+ * only the authoring package.
+ */
+function frameworkVersion(manifest: Record<string, unknown> | undefined): string | null {
+  return (
+    dependencyVersion(manifest, "@aponiajs/platform-elysia") ??
+    dependencyVersion(manifest, "@aponiajs/common")
+  );
 }
 
 async function readJson(path: string): Promise<Record<string, unknown> | undefined> {

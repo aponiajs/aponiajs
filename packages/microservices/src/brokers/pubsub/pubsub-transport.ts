@@ -12,14 +12,14 @@ import type {
   TransportHandler,
   TransportSubscription,
   TransportSubscriptionHandle,
-} from "../../transport/transport.types.ts";
+} from "../../interfaces/transport.interface.ts";
 import type {
   PubSubDeliveredMessage,
   PubSubSdkClient,
   PubSubSdkLoader,
   PubSubSdkModule,
   PubSubTransportOptions,
-} from "./pubsub-transport.types.ts";
+} from "../../interfaces/pubsub-transport.interface.ts";
 
 const transportName = "gcp-pubsub";
 const packageName = "@google-cloud/pubsub";

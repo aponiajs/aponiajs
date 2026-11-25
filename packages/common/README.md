@@ -258,6 +258,7 @@ Built-in transformation pipes:
 - `ParseUUIDPipe`: validates standard UUID string format.
 - `ParseEnumPipe`: validates that a value is a member of a declared enum.
 - `ParseArrayPipe`: splits a delimited string (default `,`) into an array.
+- `ParseDatePipe`: transforms a date string, timestamp, or `Date` into a `Date`; a day past its month's end is refused rather than rolled forward.
 - `ParseFilePipe`: validates an uploaded file's presence, size, and media type.
 - `DefaultValuePipe`: supplies a fallback default when input is `undefined` or `null`.
 

@@ -4,8 +4,11 @@
 
 ## What this package exports
 
-- `CacheModule.register({ ttlMs?, maxEntries?, keyPrefix?, store? })`: the dynamic module an application imports.
+- `CacheModule.forRoot({ ttlMs?, maxEntries?, keyPrefix?, store?, isGlobal? })`: the dynamic module an application imports; `register({...})` is the deprecated alias. `forRootAsync({ useFactory | useClass | useExisting, inject?, isGlobal? })` validates the resolved options at boot.
+- `MODULE_OPTIONS_TOKEN` (`CACHE_MODULE_OPTIONS`) and `CACHE_MANAGER`: the options token and the Nest-compatible name for the service.
 - `CacheService`: `get`, `set`, `delete`, `clear`, and `wrap`; every key is prefixed by the registration.
+- `CacheKey(key)` and `CacheTTL(ttlMs)`: per-handler metadata `CacheInterceptor` reads.
+- `CacheInterceptor`: writes a cacheable `GET` response; it cannot replay one.
 - `MemoryCacheStore`: a bounded process-local store with lazy expiry and oldest-insertion eviction.
 - `CacheStore`: the synchronous or asynchronous store contract.
 - `CACHE_STORE`: the token a custom store is provided under.

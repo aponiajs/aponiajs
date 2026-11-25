@@ -13,7 +13,11 @@ import { CronModule, CronScheduler } from "@aponiajs/cron";
 import type { CronJob, CronJobContext, CronJobOptions, CronConfiguration, CronModuleOptions } from "@aponiajs/cron";
 ```
 
-- `CronModule` — `CronModule.register(options)` returns the `DynamicModule` an application's `imports` accepts.
+- `CronModule` — `CronModule.forRoot(options)` returns the `DynamicModule` an application's `imports` accepts; `register(options)` is the deprecated alias. There is no asynchronous form: the module provides the configuration token it schedules. `key` names the module identity and `isGlobal` (default true) makes its exports global.
+- `MODULE_OPTIONS_TOKEN` (`SCHEDULE_MODULE_OPTIONS`) reports the registration the application declared.
+- `Cron`, `Interval`, `Timeout` — the method decorators `@nestjs/schedule` publishes. `ScheduleExplorer` mounts them; the module options `cronJobs`, `intervals`, and `timeouts` gate each kind.
+- `SchedulerRegistry` — `getCronJob`, `getInterval`, `getTimeout`, `addCronJob`, `addInterval`, `addTimeout`, `deleteCronJob`, `deleteInterval`, `deleteTimeout`, `getCronJobs`, `getIntervals`, `getTimeouts`, `doesExist`.
+- `SCHEDULE_TIMER` — the injectable timer a test replaces so interval and timeout cases are deterministic.
 - `CronScheduler` — the per-boot scheduler, which the module exports, so `application.get(CronScheduler)` reaches the boot's own jobs and the names the engine actually has.
 - `CronJob`, `CronJobContext`, `CronJobOptions`, `CronConfiguration` — the job contract. `CronJobOptions` is derived from croner's own `CronOptions`, so it cannot drift from the engine.
 - `CronModuleOptions` — `configuration`, `source`, and `key`.

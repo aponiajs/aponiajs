@@ -2,8 +2,8 @@ export { defineConfiguration } from "./configuration/configuration.ts";
 export type {
   ConfigurationOptions,
   ConfigurationToken,
-} from "./configuration/configuration.types.ts";
-export type { ControllerDefinition } from "./controllers/controller.types.ts";
+} from "./interfaces/configuration.interface.ts";
+export type { ControllerDefinition } from "./interfaces/controller.interface.ts";
 export {
   All,
   Controller,
@@ -27,6 +27,7 @@ export {
   getRouteMetadata,
   isGlobalModule,
 } from "./decorators/decorators.ts";
+export { applyDecorators } from "./decorators/apply-decorators.ts";
 export type {
   ControllerMetadata,
   DynamicModule,
@@ -41,7 +42,7 @@ export type {
   RouteDecoratorFactory,
   RouteMetadata,
   RouteMethodDecorator,
-} from "./decorators/decorators.types.ts";
+} from "./interfaces/decorators.interface.ts";
 export {
   Catch,
   UseFilters,
@@ -49,9 +50,16 @@ export {
   UseInterceptors,
   getCatchMetadata,
   getEnhancerMetadata,
-} from "./enhancers/enhancer-decorators.ts";
-export type { EnhancerMetadata } from "./enhancers/enhancer-decorators.types.ts";
-export { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from "./enhancers/enhancer-tokens.ts";
+} from "./enhancers/enhancer.decorator.ts";
+export type { EnhancerMetadata } from "./interfaces/enhancer-decorators.interface.ts";
+export {
+  APP_FILTER,
+  APP_GUARD,
+  APP_INTERCEPTOR,
+  APP_PIPE,
+  applicationEnhancerTokens,
+  isApplicationEnhancerToken,
+} from "./enhancers/enhancer-tokens.ts";
 export type {
   ApplicationEnhancer,
   ApplicationEnhancerBinding,
@@ -67,10 +75,46 @@ export type {
   Interceptor,
   RpcArgumentsHost,
   WsArgumentsHost,
-} from "./enhancers/enhancer.types.ts";
-export { AponiaError } from "./errors/aponia-error.ts";
-export type { AponiaErrorCode } from "./errors/aponia-error.types.ts";
-export { Prompt, Resource, ResourceTemplate, Tool } from "./mcp/mcp-decorators.ts";
+} from "./interfaces/enhancer.interface.ts";
+export { AponiaError } from "./exceptions/aponia-error.ts";
+export type { AponiaErrorCode } from "./exceptions/aponia-error.interface.ts";
+export { HttpException } from "./exceptions/http.exception.ts";
+export { IntrinsicException } from "./exceptions/intrinsic.exception.ts";
+export { httpStatus } from "./exceptions/http-status.ts";
+export type { HttpStatusCode, HttpStatusName } from "./exceptions/http-status.ts";
+export {
+  BadGatewayException,
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  GatewayTimeoutException,
+  GoneException,
+  HttpVersionNotSupportedException,
+  ImATeapotException,
+  InternalServerErrorException,
+  MethodNotAllowedException,
+  MisdirectedException,
+  NotAcceptableException,
+  NotFoundException,
+  NotImplementedException,
+  PayloadTooLargeException,
+  PreconditionFailedException,
+  RequestTimeoutException,
+  ServiceUnavailableException,
+  TooManyRequestsException,
+  UnauthorizedException,
+  UnprocessableEntityException,
+  UnsupportedMediaTypeException,
+  type BuiltInExceptionOptions,
+} from "./exceptions/built-in.exception.ts";
+export { ClassSerializerInterceptor } from "./enhancers/class-serializer.interceptor.ts";
+export { StandardSchemaValidationPipe, ValidationPipe } from "./pipes/validation.pipe.ts";
+export type {
+  StandardSchemaValidationPipeOptions,
+  ValidationError,
+  ValidationPipeOptions,
+} from "./pipes/validation.pipe.ts";
+export { Prompt, Resource, ResourceTemplate, Tool } from "./mcp/mcp.decorator.ts";
 export { getMcpPrimitiveMetadata, mcpPrimitivesMetadataKey } from "./mcp/mcp-metadata.ts";
 export type {
   McpPrimitiveKind,
@@ -80,7 +124,7 @@ export type {
   McpResourceOptions,
   McpResourceTemplateOptions,
   McpToolOptions,
-} from "./mcp/mcp.types.ts";
+} from "./interfaces/mcp.interface.ts";
 export {
   registerAsyncContextExit,
   runOutsideAsyncContexts,
@@ -92,61 +136,87 @@ export type {
   OnApplicationShutdown,
   OnModuleDestroy,
   OnModuleInit,
-} from "./lifecycle/lifecycle.types.ts";
-export { ConsoleLogger, Logger } from "./logging/console-logger.ts";
-export { formatLogValue } from "./logging/log-value.ts";
-export { LOGGER } from "./logging/logger-token.ts";
-export { NOOP_LOGGER, notifySystemLogger, observeSystemLogger } from "./logging/logger-observer.ts";
-export type { ConsoleLoggerOptions, LoggerService, LogLevel } from "./logging/logger.types.ts";
+} from "./interfaces/lifecycle.interface.ts";
+export { ConsoleLogger, Logger } from "./services/console-logger.service.ts";
+export { formatLogValue } from "./services/log-value.ts";
+export { LOGGER } from "./services/logger-token.ts";
+export {
+  NOOP_LOGGER,
+  notifySystemLogger,
+  observeSystemLogger,
+} from "./services/logger-observer.service.ts";
+export type {
+  ConsoleLoggerOptions,
+  LoggerService,
+  LogLevel,
+} from "./interfaces/logger.interface.ts";
 export type {
   AponiaMiddleware,
   AponiaModule,
   MiddlewareConfigProxy,
   MiddlewareConsumer,
   RouteTarget,
-} from "./middleware/middleware.types.ts";
-export { defineModule, dynamicModule } from "./modules/module.ts";
+} from "./interfaces/middleware.interface.ts";
+export { defineModule, dynamicModule, withModuleProviders } from "./modules/module.ts";
+export {
+  CONFIGURABLE_MODULE_ID,
+  ConfigurableModuleBuilder,
+  forFeature,
+  type ConfigurableModuleAsyncOptions,
+  type ConfigurableModuleBuilderOptions,
+  type ConfigurableModuleClass,
+  type ConfigurableModuleHost,
+  type ConfigurableModuleOptionsFactory,
+  type FeatureModuleOptions,
+} from "./module-utils/configurable-module.builder.ts";
 export { ModuleRef } from "./modules/module-ref.ts";
+export type { ModuleRefGetOptions } from "./modules/module-ref.ts";
+export { moduleOptionsProviders } from "./module-utils/module-async-options.ts";
 export type {
+  ModuleAsyncOptions,
   ModuleDefinition,
   ModuleDescriptor,
   ModuleImportDescriptor,
   ModuleOptions,
-} from "./modules/module.types.ts";
+  ModuleOptionsFactory,
+} from "./interfaces/module.interface.ts";
 export {
   FORWARD_REF_SYMBOL,
   forwardRef,
   isForwardRef,
   resolveForwardRef,
 } from "./modules/forward-ref.ts";
-export type { ForwardReference } from "./modules/forward-ref.types.ts";
+export type { ForwardReference } from "./interfaces/forward-ref.interface.ts";
 export {
   DefaultValuePipe,
   ParseArrayPipe,
   ParseBoolPipe,
+  ParseDatePipe,
   ParseEnumPipe,
   ParseFilePipe,
   ParseFloatPipe,
   ParseIntPipe,
   ParseUUIDPipe,
-} from "./pipes/built-in-pipes.ts";
+} from "./pipes/built-in.pipe.ts";
 export type {
   ParseArrayPipeOptions,
+  ParseDatePipeOptions,
   ParseEnumValues,
   ParseFilePipeOptions,
   ParsePipeOptions,
   UploadedFileLike,
-} from "./pipes/built-in-pipes.ts";
-export { UsePipes, getPipesMetadata } from "./pipes/pipe-decorators.ts";
+} from "./pipes/built-in.pipe.ts";
+export { UsePipes, getPipesMetadata } from "./pipes/pipe.decorator.ts";
 export { pipeMetadataKey } from "./pipes/pipe.constants.ts";
 export type {
   ArgumentMetadata,
   ArgumentType,
   PipeTransform,
   PipeType,
-} from "./pipes/pipe.types.ts";
+} from "./interfaces/pipe.interface.ts";
 export {
   normalizeProvider,
+  normalizeProviderScope,
   provideAlias,
   provideClass,
   provideFactory,
@@ -157,11 +227,13 @@ export type {
   AliasProvider,
   ClassProvider,
   FactoryProvider,
+  LegacyProviderScope,
   NestProvider,
+  NormalizedProviderScope,
   Provider,
   ProviderScope,
   ValueProvider,
-} from "./providers/provider.types.ts";
+} from "./interfaces/provider.interface.ts";
 export {
   Body,
   Context,
@@ -182,12 +254,16 @@ export {
   routeParametersMetadataKey,
 } from "./routing/route-parameters.ts";
 export { createParamDecorator } from "./routing/custom-parameter.ts";
-export type { CustomParamFactory } from "./routing/custom-parameter.types.ts";
+export type { CustomParamFactory } from "./interfaces/custom-parameter.interface.ts";
 export { createDto } from "./routing/dto.ts";
 export type { DtoConstructor, Infer } from "./routing/dto.ts";
 export { Serialize, getResponseSerializer } from "./routing/response-serializer.ts";
+export { SerializeOptions, getSerializeOptions } from "./routing/serialize-options.ts";
+export type { SerializeOptions as SerializeOptionsInput } from "./routing/serialize-options.ts";
+export { StreamableFile } from "./routing/streamable-file.ts";
+export type { StreamableFileOptions } from "./routing/streamable-file.ts";
 export { Header, HttpCode, getHttpCode, getResponseHeaders } from "./routing/response-metadata.ts";
-export type { ResponseHeaderValue } from "./routing/response-metadata.types.ts";
+export type { ResponseHeaderValue } from "./interfaces/response-metadata.interface.ts";
 export { Render, getViewTemplate, getViewOptions } from "./routing/view.ts";
 export { VIEW_ENGINE } from "./routing/view.ts";
 export type { ViewEngine, ViewRenderOptions } from "./routing/view.ts";
@@ -210,7 +286,7 @@ export { Sse, isSseRoute } from "./routing/sse.ts";
 export type {
   RouteParameterKind,
   RouteParameterMetadata,
-} from "./routing/route-parameters.types.ts";
+} from "./interfaces/route-parameters.interface.ts";
 export {
   isRouteResponseSchemaMap,
   isStandardSchema,
@@ -234,13 +310,13 @@ export type {
   RouteSchemaSlot,
   RouteValidator,
   ValidatorSchema,
-} from "./routing/route-schema.types.ts";
+} from "./interfaces/route-schema.interface.ts";
 export { Validation, getValidationMetadata, resolveRouteValidator } from "./routing/validation.ts";
 export type {
   RouteValidatorInput,
   ValidationMetadata,
   ValidationModelClass,
-} from "./routing/validation.types.ts";
+} from "./interfaces/validation.interface.ts";
 export {
   EventPattern,
   MESSAGE_HANDLER_ERROR_CODE,
@@ -266,7 +342,7 @@ export type {
   MicroserviceMessage,
   MicroserviceReply,
   MicroserviceTransport,
-} from "./microservices/microservice.types.ts";
+} from "./interfaces/microservice.interface.ts";
 export {
   createToken,
   getTokenName,
@@ -282,7 +358,7 @@ export type {
   Token,
   TokenMap,
   TokenValue,
-} from "./tokens/token.types.ts";
+} from "./interfaces/token.interface.ts";
 export {
   ConnectedSocket,
   MessageBody,
@@ -293,7 +369,7 @@ export {
   getWebSocketMessageMetadata,
   getWebSocketParameterMetadata,
   getWebSocketServerProperties,
-} from "./websockets/websocket-gateway.ts";
+} from "./websockets/websocket.gateway.ts";
 export type {
   OnGatewayConnection,
   OnGatewayDisconnect,
@@ -305,4 +381,4 @@ export type {
   WebSocketParameterKind,
   WebSocketParameterMetadata,
   WsResponse,
-} from "./websockets/websocket-gateway.types.ts";
+} from "./interfaces/websocket-gateway.interface.ts";

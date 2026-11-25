@@ -2,23 +2,31 @@ import { pascalCase } from "change-case";
 import parseCliArguments from "yargs-parser";
 import { schematicNames } from "./command.constants.ts";
 import type {
+  AddCommandOptions,
+  AgentClient,
+  AgentCommandOptions,
+  ApplicationType,
   BuildCommandOptions,
   CliCommand,
   DevCommandOptions,
   GenerateCommandOptions,
   GenerateSchematic,
-  LibraryCommandOptions,
-  StartCommandOptions,
   InfoCommandOptions,
-  AgentClient,
-  AgentCommandOptions,
+  LibraryCommandOptions,
   NewCommandOptions,
   ResourceTransport,
-} from "./command.types.ts";
+  StartCommandOptions,
+  TestRunner,
+} from "../interfaces/command.interface.ts";
 
 const schematicAliases: Readonly<Record<string, GenerateSchematic>> = {
   app: "app",
-  application: "app",
+  "sub-app": "app",
+  application: "application",
+  config: "configuration",
+  configuration: "configuration",
+  update: "upgrade",
+  upgrade: "upgrade",
   lib: "library",
   library: "library",
   mcp: "mcp",
@@ -59,14 +67,19 @@ const schematicAliases: Readonly<Record<string, GenerateSchematic>> = {
   service: "service",
 };
 
-const resourceTransports = new Set<ResourceTransport>([
+const resourceTransports = new Set<string>([
   "rest",
-  "mvc",
+  "graphql",
   "graphql-code-first",
   "graphql-schema-first",
   "microservice",
+  "mvc",
   "ws",
 ]);
+
+const applicationTypes = new Set<ApplicationType>(["bun", "esm", "cjs"]);
+const testRunners = new Set<TestRunner>(["bun", "vitest", "jest"]);
+const packageManagers = new Set(["bun", "npm", "pnpm", "yarn"]);
 
 /**
  * Parses raw CLI arguments into a typed command.
@@ -75,7 +88,7 @@ const resourceTransports = new Set<ResourceTransport>([
  * no value reject an attached value instead of ignoring it.
  *
  * @param arguments_ - The raw command-line arguments, without the binary name.
- * @returns The parsed command: `new`, `generate`, `build`, `help`, or `version`.
+ * @returns The parsed command.
  * @throws A plain `Error` for an unknown command or an invalid flag value.
  *
  * @example
@@ -102,8 +115,24 @@ export function parseArguments(arguments_: readonly string[]): CliCommand {
     return parseGenerateCommand(rest);
   }
 
+  if (command === "update" || command === "upgrade") {
+    return parseUpgradeCommand(rest);
+  }
+
   if (command === "build") {
     return parseBuildCommand(rest);
+  }
+
+  if (command === "start") {
+    return parseStartCommand(rest);
+  }
+
+  if (command === "info") {
+    return parseInfoCommand(rest);
+  }
+
+  if (command === "add") {
+    return parseAddCommand(rest);
   }
 
   if (command === "dev") {
@@ -121,19 +150,263 @@ export function parseArguments(arguments_: readonly string[]): CliCommand {
     return { command: "manifest" };
   }
 
-  if (command === "start") {
-    return parseStartCommand(rest);
-  }
-
-  if (command === "info") {
-    return parseInfoCommand(rest);
-  }
-
   if (command === "agent") {
     return parseAgentCommand(rest);
   }
 
   throw new Error(`Unknown command "${command}".`);
+}
+
+function parseNewCommand(arguments_: readonly string[]): NewCommandOptions {
+  const parsed = parseOptions(arguments_);
+  const [name, ...extraPositionals] = parsed._;
+  if (!name) {
+    throw new Error("Project name is required.");
+  }
+  if (extraPositionals.length > 0) {
+    throw new Error(`Unexpected argument "${extraPositionals[0]}".`);
+  }
+
+  assertKnownOptions(parsed, [
+    "collection",
+    "directory",
+    "dry-run",
+    "language",
+    "minimal",
+    "observe",
+    "package-manager",
+    "skip-git",
+    "skip-install",
+    "skip-skills",
+    "skills",
+    "strict",
+    "test-runner",
+    "type",
+  ]);
+
+  const type = readApplicationType(parsed);
+  const testRunner = readTestRunner(parsed, type);
+  const packageManager = readStringOption(parsed, "package-manager");
+  if (packageManager !== undefined && !packageManagers.has(packageManager)) {
+    throw new Error('Option "--package-manager" must be "bun", "npm", "pnpm", or "yarn".');
+  }
+
+  return {
+    command: "new",
+    name,
+    directory: readStringOption(parsed, "directory"),
+    dryRun: readBooleanOption(parsed, "dry-run", false),
+    type,
+    testRunner,
+    minimal: readBooleanOption(parsed, "minimal", false),
+    skipInstall: readBooleanOption(parsed, "skip-install", false),
+    skipGit: readBooleanOption(parsed, "skip-git", false),
+    ...(packageManager === undefined ? {} : { packageManager }),
+    language: readLanguageOption(parsed),
+    strict: readBooleanOption(parsed, "strict", true),
+    collection: readStringOption(parsed, "collection"),
+    observe: readOptionalBooleanOption(parsed, "observe"),
+    skills: readClients(readStringOption(parsed, "skills")),
+    skipSkills: readBooleanOption(parsed, "skip-skills", false),
+  };
+}
+
+function parseGenerateCommand(arguments_: readonly string[]): GenerateCommandOptions {
+  const parsed = parseOptions(arguments_);
+  const [schematicName, name, ...extraPositionals] = parsed._;
+  if (!schematicName) {
+    throw new Error("Schematic name is required.");
+  }
+
+  const schematic = schematicAliases[schematicName];
+  if (!schematic) {
+    throw new Error(
+      `Unknown schematic "${schematicName}". Available schematics: ${schematicNames.join(", ")}.`,
+    );
+  }
+  const requiresName = schematic !== "upgrade" && schematic !== "configuration";
+  if (requiresName && !name) {
+    throw new Error(`${pascalCase(schematic)} name is required.`);
+  }
+  if (extraPositionals.length > 0) {
+    throw new Error(`Unexpected argument "${extraPositionals[0]}".`);
+  }
+
+  assertKnownOptions(parsed, [
+    "collection",
+    "crud",
+    "dry-run",
+    "flat",
+    "interactive",
+    "language",
+    "module",
+    "observe",
+    "path",
+    "prefix",
+    "publish",
+    "project",
+    "scope",
+    "skip-import",
+    "skip-install",
+    "spec",
+    "spec-file-suffix",
+    "strict",
+    "tag",
+    "type",
+  ]);
+
+  const applicationType = schematic === "application" ? readApplicationType(parsed) : undefined;
+  const type = applicationType === undefined ? readResourceTransport(parsed) : "rest";
+
+  return {
+    command: "generate",
+    schematic,
+    ...(name === undefined ? {} : { name }),
+    dryRun: readBooleanOption(parsed, "dry-run", false),
+    flat: readOptionalBooleanOption(parsed, "flat"),
+    spec: readOptionalBooleanOption(parsed, "spec"),
+    specFileSuffix: readStringOption(parsed, "spec-file-suffix"),
+    skipImport: readBooleanOption(parsed, "skip-import", false),
+    path: readStringOption(parsed, "path"),
+    module: readStringOption(parsed, "module"),
+    project: readStringOption(parsed, "project"),
+    crud: readBooleanOption(parsed, "crud", true),
+    type,
+    ...(applicationType === undefined ? {} : { applicationType }),
+    publish: readBooleanOption(parsed, "publish", false),
+    scope: readStringOption(parsed, "scope"),
+    prefix: readStringOption(parsed, "prefix"),
+    skipInstall: readBooleanOption(parsed, "skip-install", false),
+    language: readLanguageOption(parsed),
+    strict: readOptionalBooleanOption(parsed, "strict"),
+    collection: readStringOption(parsed, "collection"),
+    interactive: readBooleanOption(parsed, "interactive", true),
+    tag: readStringOption(parsed, "tag"),
+  };
+}
+
+function parseUpgradeCommand(arguments_: readonly string[]): GenerateCommandOptions {
+  const base = parseGenerateCommand(["upgrade", ...arguments_]);
+  return { ...base, schematic: "upgrade", name: undefined };
+}
+
+function parseBuildCommand(arguments_: readonly string[]): BuildCommandOptions {
+  const parsed = parseOptions(arguments_);
+  const [positional, ...extraPositionals] = parsed._;
+  if (extraPositionals.length > 0) {
+    throw new Error(`Unexpected argument "${extraPositionals[0]}".`);
+  }
+
+  assertKnownOptions(parsed, [
+    "all",
+    "builder",
+    "config",
+    "dry-run",
+    "emit-declarations",
+    "path",
+    "project",
+    "rspack",
+    "swc",
+    "tsc",
+    "type-check",
+    "watch",
+    "webpack",
+  ]);
+
+  const all = readBooleanOption(parsed, "all", false);
+  const project = readStringOption(parsed, "project") ?? positional;
+  if (all && project !== undefined) {
+    throw new Error('Option "--all" cannot be combined with a project name.');
+  }
+
+  return {
+    command: "build",
+    dryRun: readBooleanOption(parsed, "dry-run", false),
+    project,
+    path: readStringOption(parsed, "path"),
+    watch: readBooleanOption(parsed, "watch", false),
+    builder: readBuilder(parsed),
+    all,
+    config: readStringOption(parsed, "config"),
+    typeCheck: readOptionalBooleanOption(parsed, "type-check"),
+    emitDeclarations: readBooleanOption(parsed, "emit-declarations", false),
+  };
+}
+
+function parseAddCommand(arguments_: readonly string[]): AddCommandOptions {
+  const parsed = parseOptions(arguments_);
+  const [library, ...extra] = parsed._;
+  if (!library) {
+    throw new Error("A package name is required.");
+  }
+  if (extra.length > 0) {
+    throw new Error(`Unexpected argument "${extra[0]}".`);
+  }
+  assertKnownOptions(parsed, ["dry-run", "skip-install"]);
+  return {
+    command: "add",
+    library,
+    dryRun: readBooleanOption(parsed, "dry-run", false),
+    skipInstall: readBooleanOption(parsed, "skip-install", false),
+  };
+}
+
+function parseDevCommand(arguments_: readonly string[]): DevCommandOptions {
+  const parsed = parseOptions(arguments_);
+  const [positional, ...extra] = parsed._;
+  if (extra.length > 0) {
+    throw new Error(`Unexpected argument "${extra[0]}".`);
+  }
+
+  assertKnownOptions(parsed, ["entry"]);
+
+  return {
+    command: "dev",
+    entry: positional ?? readStringOption(parsed, "entry") ?? "src/main.ts",
+  };
+}
+
+function parseStartCommand(arguments_: readonly string[]): StartCommandOptions {
+  const parsed = parseOptions(arguments_);
+  const [entry, ...extra] = parsed._;
+  if (extra.length > 0) {
+    throw new Error(`Unexpected argument "${extra[0]}".`);
+  }
+  assertKnownOptions(parsed, [
+    "config",
+    "cwd",
+    "debug",
+    "exec",
+    "path",
+    "prod",
+    "project",
+    "watch",
+  ]);
+  return {
+    command: "start",
+    cwd: readStringOption(parsed, "cwd"),
+    ...(entry === undefined ? {} : { entry }),
+    path: readStringOption(parsed, "path"),
+    project: readStringOption(parsed, "project"),
+    exec: readStringOption(parsed, "exec"),
+    config: readStringOption(parsed, "config"),
+    watch: readBooleanOption(parsed, "watch", false),
+    debug: readBooleanOption(parsed, "debug", false),
+    prod: readBooleanOption(parsed, "prod", false),
+  };
+}
+
+function parseInfoCommand(arguments_: readonly string[]): InfoCommandOptions {
+  const parsed = parseOptions(arguments_);
+  if (parsed._.length > 0) {
+    throw new Error(`Unexpected argument "${parsed._[0]}".`);
+  }
+  assertKnownOptions(parsed, ["cwd", "json"]);
+  return {
+    command: "info",
+    json: readBooleanOption(parsed, "json", false),
+    cwd: readStringOption(parsed, "cwd"),
+  };
 }
 
 function parseLibraryCommand(arguments_: readonly string[]): LibraryCommandOptions {
@@ -190,195 +463,6 @@ function parseLibraryCommand(arguments_: readonly string[]): LibraryCommandOptio
   };
 }
 
-function parseBuildCommand(arguments_: readonly string[]): BuildCommandOptions {
-  const parsed = parseOptions(arguments_);
-  const [positional, ...extraPositionals] = parsed._;
-  if (extraPositionals.length > 0) {
-    throw new Error(`Unexpected argument "${extraPositionals[0]}".`);
-  }
-
-  assertKnownOptions(parsed, ["dry-run", "project"]);
-
-  return {
-    command: "build",
-    dryRun: readBooleanOption(parsed, "dry-run", false),
-    project: readStringOption(parsed, "project") ?? positional,
-  };
-}
-
-function parseDevCommand(arguments_: readonly string[]): DevCommandOptions {
-  const parsed = parseOptions(arguments_);
-  const [positional, ...extra] = parsed._;
-  if (extra.length > 0) {
-    throw new Error(`Unexpected argument "${extra[0]}".`);
-  }
-
-  assertKnownOptions(parsed, ["entry"]);
-
-  return {
-    command: "dev",
-    entry: positional ?? readStringOption(parsed, "entry") ?? "src/main.ts",
-  };
-}
-
-function parseNewCommand(arguments_: readonly string[]): NewCommandOptions {
-  const parsed = parseOptions(arguments_);
-  const [name, ...extraPositionals] = parsed._;
-  if (!name) {
-    throw new Error("Project name is required.");
-  }
-  if (extraPositionals.length > 0) {
-    throw new Error(`Unexpected argument "${extraPositionals[0]}".`);
-  }
-
-  assertKnownOptions(parsed, [
-    "dry-run",
-    "platform",
-    "skip-git",
-    "skip-install",
-    "skip-skills",
-    "skills",
-    "workspace",
-  ]);
-
-  const platform = readStringOption(parsed, "platform") ?? "elysia";
-  if (platform !== "elysia" && platform !== "hono" && platform !== "h3") {
-    throw new Error('Option "--platform" must be "elysia", "hono", or "h3".');
-  }
-
-  return {
-    command: "new",
-    name,
-    dryRun: readBooleanOption(parsed, "dry-run", false),
-    skipInstall: readBooleanOption(parsed, "skip-install", false),
-    workspace: readBooleanOption(parsed, "workspace", false),
-    platform,
-    skills: readClients(readStringOption(parsed, "skills")),
-    skipSkills: readBooleanOption(parsed, "skip-skills", false),
-    skipGit: readBooleanOption(parsed, "skip-git", false),
-  };
-}
-
-function parseStartCommand(arguments_: readonly string[]): StartCommandOptions {
-  const parsed = parseOptions(arguments_);
-  const [entry, ...extra] = parsed._;
-  if (extra.length > 0) {
-    throw new Error(`Unexpected argument "${extra[0]}".`);
-  }
-  assertKnownOptions(parsed, ["cwd", "debug", "path", "prod", "watch"]);
-  return {
-    command: "start",
-    cwd: readStringOption(parsed, "cwd"),
-    ...(entry === undefined ? {} : { entry }),
-    path: readStringOption(parsed, "path"),
-    watch: readBooleanOption(parsed, "watch", false),
-    debug: readBooleanOption(parsed, "debug", false),
-    prod: readBooleanOption(parsed, "prod", false),
-  };
-}
-
-function parseInfoCommand(arguments_: readonly string[]): InfoCommandOptions {
-  const parsed = parseOptions(arguments_);
-  if (parsed._.length > 0) {
-    throw new Error(`Unexpected argument "${parsed._[0]}".`);
-  }
-  assertKnownOptions(parsed, ["cwd", "json"]);
-  return {
-    command: "info",
-    json: readBooleanOption(parsed, "json", false),
-    cwd: readStringOption(parsed, "cwd"),
-  };
-}
-
-function parseGenerateCommand(arguments_: readonly string[]): GenerateCommandOptions {
-  const parsed = parseOptions(arguments_);
-  const [schematicName, name, ...extraPositionals] = parsed._;
-  if (!schematicName) {
-    throw new Error("Schematic name is required.");
-  }
-
-  const schematic = schematicAliases[schematicName];
-  if (!schematic) {
-    throw new Error(
-      `Unknown schematic "${schematicName}". Available schematics: ${schematicNames.join(", ")}.`,
-    );
-  }
-  if (!name) {
-    throw new Error(`${pascalCase(schematic)} name is required.`);
-  }
-  if (extraPositionals.length > 0) {
-    throw new Error(`Unexpected argument "${extraPositionals[0]}".`);
-  }
-
-  assertKnownOptions(parsed, [
-    "crud",
-    "dry-run",
-    "flat",
-    "module",
-    "path",
-    "publish",
-    "project",
-    "scope",
-    "skip-import",
-    "skip-install",
-    "spec",
-    "type",
-  ]);
-
-  const type = readStringOption(parsed, "type") ?? "rest";
-  if (!resourceTransports.has(type as ResourceTransport)) {
-    throw new Error(`Unknown resource transport "${type}".`);
-  }
-
-  return {
-    command: "generate",
-    schematic,
-    name,
-    dryRun: readBooleanOption(parsed, "dry-run", false),
-    flat: readOptionalBooleanOption(parsed, "flat"),
-    spec: readOptionalBooleanOption(parsed, "spec"),
-    skipImport: readBooleanOption(parsed, "skip-import", false),
-    path: readStringOption(parsed, "path"),
-    module: readStringOption(parsed, "module"),
-    project: readStringOption(parsed, "project"),
-    crud: readBooleanOption(parsed, "crud", true),
-    type: type as ResourceTransport,
-    publish: readBooleanOption(parsed, "publish", false),
-    scope: readStringOption(parsed, "scope"),
-    skipInstall: readBooleanOption(parsed, "skip-install", false),
-  };
-}
-
-interface ParsedOptions extends Readonly<Record<string, unknown>> {
-  readonly _: readonly string[];
-}
-
-// The options that take no value. Declaring them in yargs-parser's `boolean`
-// list keeps a bare flag, its short alias, and `--no-<flag>` meaning what they
-// mean, and it keeps `aponia new --dry-run app` reading `app` as the project
-// name: a declared boolean never consumes the token after it.
-const valueLessOptions = [
-  "crud",
-  "debug",
-  "dry-run",
-  "flat",
-  "json",
-  "prod",
-  "publish",
-  "skip-git",
-  "skip-import",
-  "skip-install",
-  "skip-skills",
-  "spec",
-  "watch",
-] as const;
-
-const optionAliases: Readonly<Record<string, string[]>> = {
-  "dry-run": ["d"],
-  project: ["p"],
-  "skip-install": ["s"],
-};
-
 function parseAgentCommand(arguments_: readonly string[]): AgentCommandOptions {
   const parsed = parseOptions(arguments_);
   const [action, ...positionals] = parsed._;
@@ -399,6 +483,110 @@ function parseAgentCommand(arguments_: readonly string[]): AgentCommandOptions {
   };
 }
 
+interface ParsedOptions extends Readonly<Record<string, unknown>> {
+  readonly _: readonly string[];
+}
+
+// The options that take no value. Declaring them in yargs-parser's `boolean`
+// list keeps a bare flag, its short alias, and `--no-<flag>` meaning what they
+// mean, and it keeps `aponia new --dry-run app` reading `app` as the project
+// name: a declared boolean never consumes the token after it.
+const valueLessOptions = [
+  "all",
+  "crud",
+  "debug",
+  "dry-run",
+  "emit-declarations",
+  "flat",
+  "interactive",
+  "json",
+  "minimal",
+  "observe",
+  "prod",
+  "publish",
+  "rspack",
+  "skip-git",
+  "skip-import",
+  "skip-install",
+  "skip-skills",
+  "spec",
+  "strict",
+  "swc",
+  "tsc",
+  "type-check",
+  "watch",
+  "webpack",
+] as const;
+
+const optionAliases: Readonly<Record<string, string[]>> = {
+  "dry-run": ["d"],
+  project: ["p"],
+  "skip-install": ["s"],
+};
+
+function readApplicationType(parsed: ParsedOptions): ApplicationType {
+  const value = readStringOption(parsed, "type") ?? "bun";
+  if (!applicationTypes.has(value as ApplicationType)) {
+    throw new Error('Option "--type" must be "bun", "esm", or "cjs".');
+  }
+  return value as ApplicationType;
+}
+
+function readTestRunner(parsed: ParsedOptions, type: ApplicationType): TestRunner {
+  const value =
+    readStringOption(parsed, "test-runner") ??
+    (type === "esm" ? "vitest" : type === "cjs" ? "jest" : "bun");
+  if (!testRunners.has(value as TestRunner)) {
+    throw new Error('Option "--test-runner" must be "bun", "vitest", or "jest".');
+  }
+  return value as TestRunner;
+}
+
+function readLanguageOption(parsed: ParsedOptions): string | undefined {
+  const value = readStringOption(parsed, "language");
+  if (value === undefined) {
+    return undefined;
+  }
+  if (value === "typescript") {
+    return "ts";
+  }
+  if (value === "javascript") {
+    return "js";
+  }
+  if (value !== "ts" && value !== "js") {
+    throw new Error('Option "--language" must be "ts" or "js".');
+  }
+  return value;
+}
+
+function readResourceTransport(parsed: ParsedOptions): ResourceTransport {
+  const value = readStringOption(parsed, "type") ?? "rest";
+  if (!resourceTransports.has(value)) {
+    throw new Error(`Unknown resource transport "${value}".`);
+  }
+  return (value === "graphql" ? "graphql-code-first" : value) as ResourceTransport;
+}
+
+function readBuilder(parsed: ParsedOptions): string | undefined {
+  const explicit = readStringOption(parsed, "builder");
+  const flags = ["tsc", "swc", "webpack", "rspack"].filter((builder) =>
+    readBooleanOption(parsed, builder, false),
+  );
+  if (flags.length > 1) {
+    throw new Error(`Use one builder flag at a time; received ${flags.join(", ")}.`);
+  }
+  const builder = explicit ?? flags[0];
+  if (builder === "webpack" || builder === "rspack") {
+    throw new Error(
+      `The "${builder}" builder is not supported by the Aponia CLI. Use "tsc" or "swc": both map to the workspace's Bun/Vite+ build.`,
+    );
+  }
+  if (builder !== undefined && builder !== "tsc" && builder !== "swc") {
+    throw new Error(`Unknown builder "${builder}". Use "tsc" or "swc".`);
+  }
+  return builder;
+}
+
 function readClients(value: string | undefined): readonly AgentClient[] {
   if (value === undefined) {
     return Object.freeze(["codex", "claude", "cursor"]);
@@ -407,13 +595,16 @@ function readClients(value: string | undefined): readonly AgentClient[] {
     .split(",")
     .map((client) => client.trim())
     .filter(Boolean);
+  const expanded = clients.flatMap((client) =>
+    client === "all" || client === "agents" ? ["codex", "claude", "cursor"] : [client],
+  );
   const valid = new Set<AgentClient>(["codex", "claude", "cursor"]);
-  for (const client of clients) {
+  for (const client of expanded) {
     if (!valid.has(client as AgentClient)) {
       throw new Error(`Unknown agent client "${client}".`);
     }
   }
-  return Object.freeze([...new Set(clients as AgentClient[])]);
+  return Object.freeze([...new Set(expanded as AgentClient[])]);
 }
 
 // The option a spelling names, when that option takes no value.
@@ -448,7 +639,28 @@ function parseOptions(arguments_: readonly string[]): ParsedOptions {
   return parseCliArguments([...arguments_], {
     alias: optionAliases,
     boolean: [...valueLessOptions],
-    string: ["clients", "cwd", "entry", "kind", "module", "path", "project", "type"],
+    string: [
+      "builder",
+      "clients",
+      "collection",
+      "config",
+      "cwd",
+      "directory",
+      "entry",
+      "exec",
+      "kind",
+      "language",
+      "module",
+      "package-manager",
+      "path",
+      "prefix",
+      "project",
+      "scope",
+      "spec-file-suffix",
+      "tag",
+      "test-runner",
+      "type",
+    ],
     configuration: {
       "camel-case-expansion": false,
       "dot-notation": false,

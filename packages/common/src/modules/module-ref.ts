@@ -1,29 +1,47 @@
-import type { Token } from "../tokens/token.types.ts";
+import type { Token } from "../interfaces/token.interface.ts";
+
+/** Options `ModuleRef.get` accepts. */
+export interface ModuleRefGetOptions {
+  /**
+   * Resolve only what the receiving module can see.
+   *
+   * `true` is the default, which is Nest's `ModuleRef` behavior: a token the
+   * graph holds but this module cannot reach raises `MISSING_PROVIDER`.
+   * `false` searches the whole graph from the root.
+   */
+  readonly strict?: boolean;
+  /** Return every instance of the token instead of the first. */
+  readonly each?: boolean;
+}
 
 /**
  * Resolves providers from the module that receives it.
  *
  * A provider injects `ModuleRef` like any other dependency. `get` resolves a
- * token visible to that module; `resolve` accepts the request context a
- * request-scoped provider needs.
+ * cached instance visible to that module; `resolve` builds a request sub-tree
+ * under a context id; `create` instantiates a class without caching it.
  */
 export abstract class ModuleRef {
   /**
    * Resolves a token visible from the receiving module.
    *
    * @param token - The token to resolve.
+   * @param options - Strictness and whether every instance is wanted.
    * @returns The resolved value.
    */
-  abstract get<T>(token: Token<T>): T;
+  abstract get<T>(token: Token<T>, options?: ModuleRefGetOptions): T;
 
   /**
-   * Resolves a token, optionally for one request context.
+   * Resolves a token inside a request sub-tree.
+   *
+   * A context id is created when none is passed, so two calls without one
+   * produce two sub-trees. Passing the same id shares one.
    *
    * @param token - The token to resolve.
-   * @param context - The request context a request-scoped provider needs.
-   * @returns The resolved value.
+   * @param contextId - The context id the sub-tree hangs under.
+   * @returns The resolved value for that context.
    */
-  abstract resolve<T>(token: Token<T>, context?: object): T;
+  abstract resolve<T>(token: Token<T>, contextId?: object): T;
 
   /**
    * Instantiates a provider without reusing a cached instance.
@@ -34,8 +52,19 @@ export abstract class ModuleRef {
    * instance rather than share the application's.
    *
    * @param token - The provider token to instantiate.
-   * @param context - The request context a request-scoped provider needs.
+   * @param contextId - The context id a request-scoped provider needs.
    * @returns A new instance.
    */
-  abstract create<T>(token: Token<T>, context?: object): T;
+  abstract create<T>(token: Token<T>, contextId?: object): T;
+
+  /**
+   * Records the request object a context id resolves `REQUEST` to.
+   *
+   * @param request - The request object.
+   * @param contextId - The context id the request resolves under.
+   */
+  abstract registerRequestByContextId<TRequest extends object>(
+    request: TRequest,
+    contextId: object,
+  ): void;
 }

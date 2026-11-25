@@ -1,0 +1,35 @@
+{
+  "name": "{{PROJECT_NAME}}",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "aponia start",
+    "start:dev": "aponia start --watch",
+    "start:debug": "aponia start --debug --watch",
+    "start:prod": "aponia start --prod",
+    "build": "tsc -p tsconfig.build.json",
+    "check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:cov": "vitest run --coverage",
+    "test:e2e": "vitest run --config vitest.config.e2e.ts"
+  },
+  "dependencies": {
+    "@aponiajs/common": "{{APONIA_VERSION}}",
+    "@aponiajs/platform-elysia": "{{APONIA_VERSION}}",
+    "elysia": "2.0.0-rc.4"
+  },
+  "devDependencies": {
+    "@aponiajs/cli": "{{APONIA_VERSION}}",
+    "@aponiajs/testing": "{{APONIA_VERSION}}",
+    "@types/bun": "^1.4.4",
+    "@vitest/coverage-v8": "^5.1.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  },
+  "engines": {
+    "bun": ">=1.4.4"
+  },
+  "packageManager": "bun@1.4.5"
+}

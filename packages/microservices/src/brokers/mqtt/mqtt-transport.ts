@@ -12,14 +12,14 @@ import type {
   TransportMessage,
   TransportSubscription,
   TransportSubscriptionHandle,
-} from "../../transport/transport.types.ts";
+} from "../../interfaces/transport.interface.ts";
 import type {
   MqttSdkClient,
   MqttSdkConnectOptions,
   MqttSdkLoader,
   MqttSdkModule,
   MqttTransportOptions,
-} from "./mqtt-transport.types.ts";
+} from "../../interfaces/mqtt-transport.interface.ts";
 
 const transportName = "mqtt";
 const packageName = "mqtt";

@@ -53,7 +53,7 @@ export class BladeViewEngine implements ViewEngine {
 
   /** Adds one value every subsequent render can read. */
   share(key: string, value: unknown): void {
-    (this.#shared as Record<string, unknown>)[key] = value;
+    this.#shared[key] = value;
   }
 
   async render(
@@ -127,9 +127,7 @@ export class BladeViewEngine implements ViewEngine {
     }
 
     if (layout !== undefined) {
-      if (sections.size === 0) {
-        sections.set("content", rendered);
-      } else if (!sections.has("content")) {
+      if (!sections.has("content")) {
         sections.set("content", rendered);
       }
       const layoutData: Data = { ...data };
@@ -248,7 +246,7 @@ export class BladeViewEngine implements ViewEngine {
             index += 1;
           }
         } else if (typeof iterable === "object") {
-          entries.push(...Object.entries(iterable as Record<string, unknown>));
+          entries.push(...Object.entries(iterable));
         }
         let output = "";
         for (const [key, item] of entries) {
@@ -327,7 +325,7 @@ export class BladeViewEngine implements ViewEngine {
       /@yield\s*\(\s*['"]([^'"]+)['"](?:\s*,\s*(['"])([\s\S]*?)\2)?\s*\)/g,
       (_match, name: string, _quote: string | undefined, fallback: string | undefined) =>
         sections.get(name) ??
-        (fallback === undefined ? "" : this.#resolveString(fallback, data, state)),
+        (fallback === undefined ? "" : this.#resolveString(fallback, data, state, true)),
     );
   }
 
@@ -366,10 +364,12 @@ export class BladeViewEngine implements ViewEngine {
     return typeof value === "object" && value !== null ? (value as Data) : {};
   }
 
-  #resolveString(value: string, data: Data, state: RenderState): string {
-    return value.replace(/\{\{\s*([\s\S]*?)\s*\}\}/g, (_match, expression: string) =>
-      state.capture(this.#stringify(this.#evaluate(expression.trim(), data))),
-    );
+  #resolveString(value: string, data: Data, state: RenderState, escape = false): string {
+    return value.replace(/\{\{\s*([\s\S]*?)\s*\}\}/g, (_match, expression: string) => {
+      const rendered = this.#stringify(this.#evaluate(expression.trim(), data));
+      // A yield fallback is rendered into the document; a component prop is not.
+      return state.capture(escape ? escapeHtml(rendered) : rendered);
+    });
   }
 
   #evaluate(expression: string, data: Data): unknown {

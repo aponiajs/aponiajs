@@ -8,13 +8,16 @@ specific to this package.
 The in-process event emitter, the `@OnEvent()` metadata, and the module that
 provides the emitter. It is a leaf: nothing in the framework depends on it.
 
-| Domain      | Owns                                                  |
-| ----------- | ----------------------------------------------------- |
-| `emitter/`  | `EventEmitter`, event names, and handler contracts    |
-| `listener/` | `@OnEvent()`, listener metadata, and metadata reading |
-| `module/`   | `EventEmitterModule.register`                         |
+| Domain                | Owns                                              |
+| --------------------- | ------------------------------------------------- |
+| `event-emitter.ts`    | The emitter, event names, and handler dispatch    |
+| `events.module.ts`    | `EventEmitterModule.forRoot`                      |
+| `events.constants.ts` | The tokens and defaults the registration provides |
+| `decorators/`         | `@OnEvent()` and its metadata                     |
+| `interfaces/`         | the emitter and listener contracts                |
 
-`src/index.ts` is the only public barrel.
+`src/index.ts` is the only public barrel. Type-only contracts live in
+`interfaces/<name>.interface.ts`.
 
 ## Invariants
 
@@ -32,10 +35,12 @@ provides the emitter. It is a leaf: nothing in the framework depends on it.
 - **`@OnEvent()` records metadata only.** `EventEmitter.bind(instance)` binds
   methods; the decorator must not construct or subscribe anything.
 - **One emitter per registration.** Two registrations are two emitters; an
-  application normally uses one.
+  application normally uses one. The registration is global by default and
+  provides `EVENT_EMITTER_MODULE_OPTIONS` (a symbol, as the official package
+  does). It takes no options in this release, so there is no asynchronous form.
 
 ## Tests
 
-`tests/*.test.ts` under Bun, `tests-vp/*.conformance.ts` under Vite+. The Bun
+`src/**/*.spec.ts` under Bun, `test/*.conformance.ts` under Vite+. The Bun
 lane boots a real application through `AponiaFactory.create`; both lanes assert
 ordering, `once`, unsubscribe, payload preservation, and aggregate errors.

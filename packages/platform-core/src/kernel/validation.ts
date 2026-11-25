@@ -6,7 +6,7 @@ import {
   type RouteValidatorInput,
 } from "@aponiajs/common";
 import { Convert, Parse, ParseError } from "typebox/value";
-import { HttpError } from "../errors/http-error.ts";
+import { HttpError } from "../exceptions/http-error.ts";
 
 /** One slot refusal: where the request failed and why. */
 export interface ValidationIssue {

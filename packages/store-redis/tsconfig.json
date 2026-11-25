@@ -25,7 +25,8 @@
       "@aponiajs/session": ["../session/src/index.ts"],
       "@aponiajs/idempotency": ["../idempotency/src/index.ts"],
       "@aponiajs/auth": ["../auth/src/index.ts"],
-      "@aponiajs/platform-elysia": ["../platform-elysia/src/index.ts"]
+      "@aponiajs/platform-elysia": ["../platform-elysia/src/index.ts"],
+      "@aponiajs/testing": ["../testing/src/index.ts"]
     }
   }
 }

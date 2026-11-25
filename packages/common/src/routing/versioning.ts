@@ -18,6 +18,7 @@ export const VersioningType = Object.freeze({
   URI: "uri",
   HEADER: "header",
   MEDIA_TYPE: "media-type",
+  CUSTOM: "custom",
 } as const);
 
 /** A versioning strategy name. */

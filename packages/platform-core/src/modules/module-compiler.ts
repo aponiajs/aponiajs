@@ -24,7 +24,13 @@ import {
   type Provider,
   type Token,
 } from "@aponiajs/common";
-import type { AponiaRootModule } from "./module-compiler.types.ts";
+import type {
+  AponiaRootModule,
+  ResolvedModuleImports,
+} from "../interfaces/module-compiler.interface.ts";
+import { isModuleDefinition } from "./module-definition.ts";
+import { resolveModuleImports } from "./module-import.resolver.ts";
+import { isThenableModuleImport } from "./module-thenable.ts";
 
 /** The kind a module lowered without a platform's own controller compiler states. */
 export const HttpControllerKind = "aponia.http-controller";
@@ -61,6 +67,13 @@ export interface RootCompilationOptions {
    * in one process keeps one graph per platform.
    */
   readonly cacheKey?: string;
+  /**
+   * The import replacements an asynchronous resolver produced.
+   *
+   * @internal A boot supplies this after awaiting `resolveModuleImports`; an
+   * application never states it.
+   */
+  readonly resolvedImports?: ResolvedModuleImports;
 }
 
 export function compileRootModule(
@@ -68,6 +81,9 @@ export function compileRootModule(
   options: RootCompilationOptions = {},
 ): ModuleDefinition {
   const unwrapped = resolveForwardRef(rootModule);
+  if (isThenableModuleImport(unwrapped)) {
+    throw thenableRootFailure();
+  }
   if ((typeof unwrapped === "function" || typeof unwrapped === "object") && unwrapped !== null) {
     const target = unwrapped as unknown as Record<PropertyKey, unknown>;
     // The default key is a literal so the framework-contract guard can audit
@@ -87,15 +103,55 @@ export function compileRootModule(
   return compiledRoot;
 }
 
+/**
+ * Lowers a root module whose graph may hold asynchronous registrations.
+ *
+ * A module may declare `imports: [Something.forRoot()]` where `forRoot()` is
+ * `async`, exactly as Nest's `ConfigModule.forRoot()` is. This awaits those
+ * registrations first, then lowers the resolved graph through the same
+ * synchronous compiler every other caller uses.
+ *
+ * @param rootModule - The root class, descriptor, or registration.
+ * @param options - The same lowering options `compileRootModule` accepts.
+ * @returns The frozen root descriptor the container builds from.
+ * @throws An `AponiaError` with the graph or route code naming the invalid declaration.
+ *
+ * @example
+ * ```ts
+ * const root = await compileRootModuleAsync(AppModule);
+ * ```
+ */
+export async function compileRootModuleAsync(
+  rootModule: AponiaRootModule,
+  options: RootCompilationOptions = {},
+): Promise<ModuleDefinition> {
+  const resolvedImports = await resolveModuleImports(rootModule);
+  return compileRootModule(resolvedImports.rootModule, { ...options, resolvedImports });
+}
+
+function thenableRootFailure(): AponiaError {
+  return new AponiaError(
+    "INVALID_MODULE",
+    "A module import is a Promise. Boot the application, which awaits it, or call compileRootModuleAsync instead of compileRootModule.",
+    { module: "Promise" },
+  );
+}
+
 function compileModuleImports(
   rootModule: ModuleImport,
   options: RootCompilationOptions,
 ): ModuleDefinition {
   const compiledClasses = new Map<ModuleClass, ModuleDefinition>();
   const compiledDynamicModules = new Map<DynamicModule, ModuleDefinition>();
-  const visiting: ModuleImport[] = [];
+  // Only a class or a dynamic module is ever pushed while lowering, so the
+  // stack is not a ModuleImport list: that union includes an asynchronous
+  // registration, which this synchronous pass rejects before it is visited.
+  const visiting: Array<ModuleClass | DynamicModule> = [];
 
   const compile = (moduleImport: ModuleImport): ModuleImportDescriptor => {
+    if (isThenableModuleImport(moduleImport)) {
+      throw thenableRootFailure();
+    }
     if (isForwardRef(moduleImport)) {
       return forwardRef(() => {
         const unwrapped = moduleImport.forwardRef();
@@ -126,7 +182,9 @@ function compileModuleImports(
     visiting.push(moduleClass);
     try {
       const isGlobal = isGlobalModule(moduleClass) || (metadata.global ?? false);
-      const imports = Object.freeze((metadata.imports ?? []).map(compile));
+      const declaredImports =
+        options.resolvedImports?.classImports.get(moduleClass) ?? metadata.imports ?? [];
+      const imports = Object.freeze(declaredImports.map(compile));
       const directImports = imports.filter(
         (entry): entry is ModuleDefinition => !isForwardRef(entry),
       );
@@ -162,7 +220,9 @@ function compileModuleImports(
     visiting.push(dynamicModule);
     try {
       const isGlobal = isGlobalModule(dynamicModule.module) || (mergedMetadata.global ?? false);
-      const imports = Object.freeze((mergedMetadata.imports ?? []).map(compile));
+      const declaredImports =
+        options.resolvedImports?.dynamicImports.get(dynamicModule) ?? mergedMetadata.imports ?? [];
+      const imports = Object.freeze(declaredImports.map(compile));
       const directImports = imports.filter(
         (entry): entry is ModuleDefinition => !isForwardRef(entry),
       );
@@ -198,15 +258,7 @@ function compileModuleImports(
  *
  * @internal
  */
-export function isModuleDefinition(moduleImport: unknown): moduleImport is ModuleDefinition {
-  return (
-    typeof moduleImport === "object" &&
-    moduleImport !== null &&
-    !isForwardRef(moduleImport) &&
-    "controllers" in moduleImport &&
-    !("module" in moduleImport)
-  );
-}
+export { isModuleDefinition } from "./module-definition.ts";
 
 function moduleIdentity(moduleClass: ModuleClass): symbol {
   const existing = moduleIdentities.get(moduleClass);
@@ -219,6 +271,9 @@ function moduleIdentity(moduleClass: ModuleClass): symbol {
 }
 
 function moduleImportName(moduleImport: ModuleImport): string {
+  if (isThenableModuleImport(moduleImport)) {
+    return "Promise";
+  }
   if (isForwardRef(moduleImport)) {
     return moduleImportName(moduleImport.forwardRef());
   }
@@ -379,6 +434,7 @@ function compileProvider(provider: ModuleProvider): Provider {
   }
 
   const scope = getInjectableMetadata(provider)?.scope;
+  const durable = getInjectableMetadata(provider)?.durable;
 
   return Object.freeze({
     kind: "class",
@@ -386,6 +442,7 @@ function compileProvider(provider: ModuleProvider): Provider {
     inject,
     useClass: provider as Constructor<unknown, never[]>,
     ...(scope === undefined ? {} : { scope }),
+    ...(durable === undefined ? {} : { durable }),
   });
 }
 
@@ -406,11 +463,13 @@ function compileNeutralController(controller: ClassToken<unknown>): ControllerDe
   }
 
   const scope = getInjectableMetadata(controller)?.scope;
+  const durable = getInjectableMetadata(controller)?.durable;
   return Object.freeze({
     kind: HttpControllerKind,
     token: controller,
     inject: getConstructorDependencies(controller),
     useClass: controller as Constructor<unknown, never[]>,
     ...(scope === undefined ? {} : { scope }),
+    ...(durable === undefined ? {} : { durable }),
   });
 }

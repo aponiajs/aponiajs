@@ -1,24 +1,45 @@
 import { readdir } from "node:fs/promises";
 import { dirname, join, relative, resolve, sep } from "node:path";
+import { loadCliConfiguration } from "./cli-configuration.ts";
 import { scanSourceFiles } from "./file-scanner.ts";
-import type { GenerateSchematic } from "../commands/command.types.ts";
 import type {
-  AponiaConfiguration,
-  FindModuleFileOptions,
+  AponiaCliConfiguration,
   GenerateDefaults,
   ResolvedProject,
-} from "./schematic.types.ts";
+} from "../interfaces/cli-configuration.interface.ts";
+import type { FindModuleFileOptions } from "../interfaces/schematic.interface.ts";
+import type { GenerateSchematic } from "../interfaces/command.interface.ts";
 
-export async function readConfiguration(projectRoot: string): Promise<AponiaConfiguration> {
-  const file = Bun.file(join(projectRoot, "aponia.json"));
-  if (!(await file.exists())) {
-    throw new Error('Could not find "aponia.json". Run the command from an Aponia project root.');
+/**
+ * Reads the project configuration, refusing a directory that declares none.
+ *
+ * `info` and `start` read the defaults through `loadCliConfiguration`; the
+ * generator and the build require a project, so a directory with neither
+ * `aponia-cli.json` nor the legacy `aponia.json` is an error there.
+ *
+ * @param projectRoot - The directory the configuration is read from.
+ * @returns The merged configuration.
+ * @throws A plain `Error` when the directory declares no configuration.
+ */
+export async function readConfiguration(projectRoot: string): Promise<AponiaCliConfiguration> {
+  const loaded = await loadCliConfiguration(projectRoot);
+  if (loaded.source === "defaults") {
+    throw new Error(
+      'Could not find "aponia-cli.json" (or a legacy "aponia.json"). Run the command from an Aponia project root.',
+    );
   }
-  return (await file.json()) as AponiaConfiguration;
+  return loaded.configuration;
 }
-
+/**
+ * Resolves one configured project, applying the workspace defaults.
+ *
+ * @param configuration - The merged `aponia-cli.json` configuration.
+ * @param requestedProject - The project the caller named, if any.
+ * @returns The project's root, source root, and generation defaults.
+ * @throws A plain `Error` when the name is not a configured project.
+ */
 export function resolveProject(
-  configuration: AponiaConfiguration,
+  configuration: AponiaCliConfiguration,
   requestedProject: string | undefined,
 ): ResolvedProject {
   if (!requestedProject) {
@@ -26,18 +47,29 @@ export function resolveProject(
   }
   const project = configuration.projects?.[requestedProject];
   if (!project) {
-    throw new Error(`Unknown project "${requestedProject}" in aponia.json.`);
+    throw new Error(`Unknown project "${requestedProject}" in aponia-cli.json.`);
   }
+  const fallbackSourceRoot =
+    project.root === undefined ? (configuration.sourceRoot ?? "src") : join(project.root, "src");
   return {
     type: project.type,
-    entryFile: project.entryFile,
+    entryFile: project.entryFile ?? configuration.entryFile,
+    exec: project.exec ?? configuration.exec,
     root: project.root,
-    sourceRoot: project.sourceRoot ?? join(project.root ?? "", "src"),
-    tsConfigPath: project.compilerOptions?.tsConfigPath,
+    sourceRoot: project.sourceRoot ?? fallbackSourceRoot,
+    tsConfigPath:
+      project.compilerOptions?.tsConfigPath ?? configuration.compilerOptions?.tsConfigPath,
     generateOptions: project.generateOptions,
   };
 }
 
+/**
+ * Reads the spec default for one schematic.
+ *
+ * @param value - The `generateOptions.spec` value.
+ * @param schematic - The schematic being generated.
+ * @returns The boolean default, or `undefined` when the configuration is silent.
+ */
 export function readSpecDefault(
   value: GenerateDefaults["spec"],
   schematic: GenerateSchematic,
@@ -48,6 +80,14 @@ export function readSpecDefault(
   return value[schematic];
 }
 
+/**
+ * Resolves a requested path inside a root, refusing one that escapes it.
+ *
+ * @param root - The root the path must stay inside.
+ * @param path - The requested path.
+ * @returns The absolute path.
+ * @throws A plain `Error` when the path escapes the root.
+ */
 export function resolveInside(root: string, path: string): string {
   const resolved = resolve(root, path);
   if (resolved !== root && !resolved.startsWith(`${root}${sep}`)) {
@@ -56,6 +96,12 @@ export function resolveInside(root: string, path: string): string {
   return resolved;
 }
 
+/**
+ * Finds the module a generated declaration registers in.
+ *
+ * @param options - The source root, starting directory, and requested module.
+ * @returns The module file, or `undefined` when none is reachable.
+ */
 export async function findModuleFile(options: FindModuleFileOptions): Promise<string | undefined> {
   if (options.requestedModule) {
     const candidates = await listModuleFiles(options.sourceRoot);
@@ -96,6 +142,13 @@ export async function findModuleFile(options: FindModuleFileOptions): Promise<st
   return undefined;
 }
 
+/**
+ * Builds the relative import path from a module to a generated file.
+ *
+ * @param moduleFile - The module the import is written into.
+ * @param generatedFile - The file the module imports.
+ * @returns A relative specifier starting with `./` or `../`.
+ */
 export function toImportPath(moduleFile: string, generatedFile: string): string {
   let path = relative(dirname(moduleFile), generatedFile).replaceAll("\\", "/");
   if (!path.startsWith(".")) {

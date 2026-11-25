@@ -23,6 +23,11 @@ async function sourceFiles(root: string): Promise<string[]> {
   const files: string[] = [];
   const glob = new Bun.Glob("**/*.ts");
   for await (const path of glob.scan({ cwd: root, onlyFiles: true })) {
+    // A colocated spec may reach a sibling package's test support; the rule is
+    // about the platform source an application loads, not about a test fixture.
+    if (path.endsWith(".spec.ts")) {
+      continue;
+    }
     files.push(path);
   }
   return files;

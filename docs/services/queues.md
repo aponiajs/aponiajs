@@ -25,7 +25,7 @@ class EmailJobs implements OnModuleInit {
 }
 
 @Module({
-  imports: [QueueModule.register({ queue: { concurrency: 4, maxAttempts: 5 } })],
+  imports: [QueueModule.forRoot({ queue: { concurrency: 4, maxAttempts: 5 } })],
   providers: [EmailJobs],
   exports: [EmailJobs],
 })
@@ -107,7 +107,7 @@ the oldest message when full.
 ## Durable backlog
 
 ```ts
-QueueModule.register({ queue: { store: sharedBacklog } });
+QueueModule.forRoot({ queue: { store: sharedBacklog } });
 ```
 
 A `QueueStore` receives every job state and rebuilds the backlog when the
@@ -128,7 +128,7 @@ in-memory implementation for tests.
 Without a store, a restart loses the queue, and the outbox is process-local
 unless an `OutboxStore` is supplied. `SqliteOutboxStore` is the bundled durable
 one: the application opens the database and passes it to
-`QueueModule.register({ outbox: { store: new SqliteOutboxStore({ database }) } })`,
+`QueueModule.forRoot({ outbox: { store: new SqliteOutboxStore({ database }) } })`,
 and the outbox hydrates from it and writes every change back. It is still one
 consumer's outbox; several consumers need a broker.
 

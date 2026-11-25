@@ -16,7 +16,7 @@ import { ViewModule } from "@aponiajs/view";
 
 @Module({
   imports: [
-    ViewModule.register({
+    ViewModule.forRoot({
       defaultEngine: "blade",
       rootDir: new URL("./views", import.meta.url).pathname,
       shared: { appName: "AponiaJS" },
@@ -64,4 +64,14 @@ The engine caches template sources and compiled expressions in memory, so repeat
 
 `HtmlViewEngine` escapes every interpolated value. It has no raw-output
 syntax; use `fragment()` for trusted markup or select the Blade engine when a
-template needs `{!! ... !!}`.
+template needs `{!! ... !!}`. Placeholder names are flat identifiers, so
+`{{ user.name }}` renders literally; Blade is the engine that resolves nested
+expression paths.
+
+## Registration contract
+
+`ViewModule.forRoot` is a `ConfigurableModuleBuilder` definition: it provides and
+exports `MODULE_OPTIONS_TOKEN` (`VIEW_MODULE_OPTIONS`), is global by default
+(`isGlobal: false` opts out), accepts the three asynchronous shapes through
+`forRootAsync`, and keeps `register`/`registerAsync` as deprecated aliases.
+`ViewService` and `VIEW_ENGINE` stay exported beside the module.

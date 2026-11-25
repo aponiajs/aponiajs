@@ -1,19 +1,17 @@
 import { AponiaError, type ConfigurationToken } from "@aponiajs/common";
-import type { ElysiaPlugin } from "@aponiajs/platform-elysia";
-import { yoga } from "@elysia/graphql-yoga";
-import type { GraphQLConfiguration, GraphQLSchemaOptions } from "./graphql-endpoint.types.ts";
+import { createSchema, createYoga } from "graphql-yoga";
+import type { HttpPolicy } from "@aponiajs/platform-core";
+import type {
+  GraphQLConfiguration,
+  GraphQLSchemaOptions,
+} from "../interfaces/graphql-endpoint.interface.ts";
 
 /**
  * Reads the mount path out of the value a configuration validated into.
  *
- * A guard rather than a cast, for the reason `readCorsPolicy` and
- * `readOpenApiInfo` are: a `defineConfiguration` transform is arbitrary
- * JavaScript, and a JavaScript caller can hand `provideConfiguration` a schema
- * that answers anything at all. A path the plugin cannot mount is not an
- * endpoint, so it is refused before the plugin is built.
- *
- * The refusal is this framework's: `INVALID_CONFIGURATION_VALUE`, with the
- * declaration's name and the same `issues` list a schema refusal carries.
+ * A guard rather than a cast: a `defineConfiguration` transform is arbitrary
+ * JavaScript, so a path the endpoint cannot serve is refused before yoga is
+ * built.
  *
  * @internal
  */
@@ -42,26 +40,51 @@ export function readGraphQLMount<TSourceValue>(
     throw invalidConfigurationValue(name, issues);
   }
 
-  const path = (candidate as GraphQLConfiguration).path;
-
-  return path;
+  return (candidate as GraphQLConfiguration).path;
 }
 
 /**
- * Builds the native GraphQL plugin for one registration, while the module
- * mounts.
+ * Builds the neutral GraphQL endpoint one registration contributes.
  *
- * The plugin is the wrapped `@elysia/graphql-yoga` one. This package's whole
- * contribution to it is the pair of fields below: the plugin's own `path` and
- * yoga's `graphqlEndpoint` are both set from the one declared value, which is
- * what makes a non-default endpoint answer instead of returning `404`. The
- * schema, the resolvers, and every other yoga option come from the application
- * unchanged.
+ * The handler is `graphql-yoga`'s own fetch handler, so the same registration
+ * answers the same query on every platform: the policy matches the declared
+ * path and delegates the request, and yoga owns the schema, the resolvers, the
+ * error shapes, and GraphiQL.
  *
  * @internal
  */
-export function buildGraphQLPlugin(path: string, options: GraphQLSchemaOptions): ElysiaPlugin {
-  return yoga({ ...options, path, graphqlEndpoint: path });
+export function buildGraphQLPolicy(path: string, options: GraphQLSchemaOptions): HttpPolicy {
+  const { typeDefs, resolvers, ...rest } = options as GraphQLSchemaOptions & {
+    readonly typeDefs?: unknown;
+    readonly resolvers?: unknown;
+  };
+  const schema =
+    typeDefs === undefined
+      ? (rest as { readonly schema?: unknown }).schema
+      : createSchema({
+          typeDefs: typeDefs as never,
+          resolvers: resolvers as never,
+        });
+  const yoga = createYoga({
+    ...rest,
+    schema: schema as never,
+    graphqlEndpoint: path,
+  });
+  return {
+    name: "graphql",
+    onRequest: (request) => {
+      let pathname: string;
+      try {
+        pathname = new URL(request.url).pathname;
+      } catch {
+        return undefined;
+      }
+      if (pathname !== path) {
+        return undefined;
+      }
+      return yoga.fetch(request);
+    },
+  };
 }
 
 /**

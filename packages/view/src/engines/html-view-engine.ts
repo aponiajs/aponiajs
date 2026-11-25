@@ -1,4 +1,4 @@
-import type { ViewEngine } from "../module/view.types.ts";
+import type { ViewEngine } from "../interfaces/view.interface.ts";
 import { escapeHtml } from "./escape-html.ts";
 
 /**
@@ -34,7 +34,7 @@ export class HtmlViewEngine implements ViewEngine {
       }
     }
 
-    const pattern = new RegExp("(?:\\{\\{\\s*|<%=\\s*)([a-zA-Z0-9_$.]+)(?:\\s*\\}\\}|\\s*%>)", "g");
+    const pattern = new RegExp("(?:\\{\\{\\s*|<%=\\s*)([a-zA-Z0-9_$]+)(?:\\s*\\}\\}|\\s*%>)", "g");
     return content.replace(pattern, (_match, key) => {
       const val = data[key];
       if (val === undefined || val === null) {

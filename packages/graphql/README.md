@@ -18,7 +18,7 @@ import { GraphQLModule } from "@aponiajs/graphql";
 import { GraphQLConfig } from "./config.ts";
 import { UserService } from "./users.service.ts";
 
-const graphql = GraphQLModule.register({
+const graphql = GraphQLModule.forRoot({
   configuration: GraphQLConfig,
   inject: [UserService],
   useFactory: (users) => ({
@@ -47,7 +47,7 @@ await application.listen(Number(Bun.env.PORT ?? 3000));
 
 ## Declaring an endpoint
 
-`GraphQLModule.register` returns a `DynamicModule`, which is what an `imports`
+`GraphQLModule.forRoot` returns a `DynamicModule`, which is what an `imports`
 entry accepts:
 
 ```ts
@@ -56,7 +56,7 @@ import { GraphQLModule } from "@aponiajs/graphql";
 import { GraphQLConfig } from "./config.ts";
 import { UserService } from "./users.service.ts";
 
-const graphql = GraphQLModule.register({
+const graphql = GraphQLModule.forRoot({
   configuration: GraphQLConfig,
   inject: [UserService],
   useFactory: (users) => ({
@@ -77,13 +77,13 @@ A factory that names no `inject` receives nothing and returns a schema fixed in
 source. A factory that returns `{ schema }` serves a prebuilt `GraphQLSchema`
 unchanged. `imports` lists the modules whose exports the factory may inject: a
 provider the factory names in `inject` is resolved against the module that
-declares the plugin, so a service a resolver uses has to be exported by a
+declares the registration, so a service a resolver uses has to be exported by a
 module listed there.
 
 ## The validated configuration
 
 The mount path comes from a configuration the application declares and the
-module validates, not from the plugin's defaults:
+module validates, not from a runtime's defaults:
 
 ```ts
 import { defineConfiguration } from "@aponiajs/common";
@@ -101,7 +101,7 @@ export const GraphQLConfig = defineConfiguration(
 | ------ | -------- | ---------- | ----------------------------------------- |
 | `path` | yes      | `/graphql` | not a non-empty string beginning with `/` |
 
-`GraphQLModule.register` provides this token itself, from `process.env`, and
+`GraphQLModule.forRoot` provides this token itself, from `process.env`, and
 exports it, so the application reads the same validated value back:
 
 ```ts
@@ -115,7 +115,7 @@ environment — which is what a test passes.
 
 ## The path pair
 
-The wrapped plugin needs the mount path twice: its own `path` moves the Elysia
+A raw yoga server needs the mount path stated as `graphqlEndpoint`; the
 route, and yoga's `graphqlEndpoint` decides which requests the yoga handler
 answers. The two default independently to `/graphql`, so an application that
 sets one and not the other gets a route that answers `404` for every request.
@@ -150,31 +150,29 @@ stays `200` and the partial data stays in the body.
 
 ## What never reaches the endpoint
 
-The endpoint mounts through `use()`, outside the compiled route table. Two
-consequences, both measured:
+The endpoint is a request policy, not a mounted route. Two consequences, both
+measured:
 
 - **No guard, interceptor, or exception filter reaches it.** A guard that
-  refuses its own controller with `403` Problem Details still answers, while
-  the query beside it answers `200`. An application that needs authorization on
+  refuses its own controller with `403` Problem Details still answers, while the
+  query beside it answers `200`. An application that needs authorization on
   GraphQL enforces it inside its resolvers.
-- **A controller at the same method and path shadows it silently.** `yoga()`
-  returns a synchronous function, so the plugin's routes are already in the
-  table when the controller pass registers the same `(method, path)`. No
-  `DUPLICATE_ROUTE` is raised: the boot succeeds, the route table holds the
-  endpoint's two routes plus the controller's one, and the controller answers.
+- **A controller at the same method and path is reached only for paths the
+  policy declines.** The policy answers the declared path before routing, so a
+  controller at that path is shadowed without a `DUPLICATE_ROUTE`; the boot
+  succeeds and the controller answers elsewhere.
 
 ## One registration per application
 
-The wrapped plugin's factory is **unnamed**, so Elysia does not deduplicate
-it. Two consequences, both measured, and the first is the contrast with the
-cors and openapi packages, whose named plugins collapse:
+The endpoint is a request policy, so two registrations under distinct keys each
+contribute one and the first matching policy answers. Two consequences, both
+measured:
 
 - **Two registrations under one key** are `DUPLICATE_MODULE`
-  (`{"module":"PluginModule[graphql]"}`), whichever paths they declare.
-- **Two registrations under distinct keys** both mount — four routes, two per
-  plugin — even when they resolve the same path. Both modules export the same
-  configuration token, so reading it back raises `AMBIGUOUS_PROVIDER` rather
-  than picking a winner.
+  (`{"module":"GraphQLModule[graphql]"}`), whichever paths they declare.
+- **Two registrations under distinct keys** each contribute a policy. Both
+  modules export the same configuration token, so reading it back raises
+  `AMBIGUOUS_PROVIDER` rather than picking a winner.
 
 One registration per application is the supported shape.
 
@@ -188,15 +186,13 @@ with the artifact holding nothing for it.
 The application is whole anyway: a boot handed an artifact with no declaration
 for the root module it was given lowers that root from its decorators instead,
 and the endpoint answers. What the decline costs is the lowering, not the
-endpoint. `tests/generated-descriptors.test.ts` measures both halves.
+endpoint. `src/generated-descriptors.spec.ts` measures both halves.
 
-Unlike `@aponiajs/devtools`, this package cannot export a plugin value beside
-the module: its plugin is built from a value the container resolves, so it
-exists only inside a boot. An application that needs the route table untouched
-by a registration mounts the raw plugin through
-`AponiaApplicationOptions.plugins` — see
-[Native Elysia Plugins](../../docs/platforms/native-plugins.md) — and gives up the module
-and its validation to do it.
+No endpoint value can be exported beside the module: the policy is built from a
+value the container resolves, so it exists only inside a boot. An application
+that needs the compiled route table untouched by a registration mounts a raw
+GraphQL plugin through `AponiaApplicationOptions.plugins` and gives up the
+module and its validation to do it.
 
 ## Errors
 
@@ -212,45 +208,39 @@ whose validation answers asynchronously, both of which
 
 ## Native escape hatch
 
-The module above is the supported path. The native plugin remains available when the module's validation, graph node, or configuration contract is not wanted.
+The module above is the supported path. A raw GraphQL plugin remains available
+when the module's validation, graph node, or configuration contract is not
+wanted.
 
 **This package serves no schema of its own.** Every field, every resolver
-result, and every error shape is
-[`@elysia/graphql-yoga`](https://www.npmjs.com/package/@elysia/graphql-yoga)'s,
-which wraps [GraphQL Yoga](https://the-guild.dev/graphql/yoga-server). The
-schema is the application's — `typeDefs` plus `resolvers`, or a prebuilt
-`GraphQLSchema` — built in the module's factory, where a resolver can close
-over any provider the factory injects. This package is a small adapter over
-that plugin, and it contributes exactly two things:
+result, and every error shape is [GraphQL Yoga](https://the-guild.dev/graphql/yoga-server)'s,
+which this package depends on directly. The schema is the application's —
+`typeDefs` plus `resolvers`, or a prebuilt `GraphQLSchema` — built in the
+module's factory, where a resolver can close over any provider the factory
+injects. This package contributes two things:
 
-- a module the endpoint is declared in, so the path is mounted through the
-  framework's own seam, is a node in the compiled graph, and is initialized in
-  the boot's instance-loading pass — the `InstanceLoader` line reads
-  `PluginModule[graphql] dependencies initialized`;
+- a module the endpoint is declared in, so the endpoint is a node in the
+  compiled graph and is initialized in the boot's instance-loading pass;
 - a validated configuration the mount path comes from, so a missing path or a
   relative one is a refused boot with a code and an issue list, rather than a
   route nobody answers.
 
 **This is not a schema-first Aponia integration.** There is no decorator that
-derives a schema from controllers, no code-first builder, and no mapping
-between Aponia routes and GraphQL fields. A query is answered by the resolvers
-the factory returned, and nothing else. An application that wants the raw
-plugin — a schema fixed in source and a path it sets itself — should install
+derives a schema from controllers, no code-first builder, and no mapping between
+Aponia routes and GraphQL fields. A query is answered by the resolvers the
+factory returned, and nothing else. An application that wants a raw Elysia mount
+— a schema fixed in source and a path it sets itself — can install
 [`@elysia/graphql-yoga`](https://www.npmjs.com/package/@elysia/graphql-yoga)
-directly:
+directly and mount it through `AponiaApplicationOptions.plugins`:
 
 ```ts
-import { Module } from "@aponiajs/common";
-import { PluginModule } from "@aponiajs/platform-elysia";
+import { AponiaFactory } from "@aponiajs/platform-elysia";
 import { yoga } from "@elysia/graphql-yoga";
+import { AppModule } from "./app.module.ts";
 
-const endpoint = PluginModule.register(
-  yoga({ typeDefs, resolvers, path: "/gql", graphqlEndpoint: "/gql" }),
-  { key: "graphql" },
-);
-
-@Module({ imports: [endpoint] })
-export class AppModule {}
+const application = await AponiaFactory.create(AppModule, {
+  plugins: [yoga({ typeDefs, resolvers, path: "/gql", graphqlEndpoint: "/gql" })],
+});
 ```
 
 Note the pair: the raw plugin needs `path` **and** `graphqlEndpoint` set
@@ -258,16 +248,15 @@ together, which is the footgun this package closes.
 
 ## Requirements
 
-`elysia` is a peer dependency and must be installed by the application;
-`@elysia/graphql-yoga` is a dependency of this package and is installed with
-it.
+The package depends on `@aponiajs/common` and `@aponiajs/platform-core`, and on
+`graphql-yoga` for the fetch handler. `graphql` is a peer dependency the
+application installs. It has no Elysia dependency.
 
 ## Links
 
 - [Package README](./README.md)
-- [`@elysia/graphql-yoga` on npm](https://www.npmjs.com/package/@elysia/graphql-yoga)
 - [GraphQL Yoga](https://the-guild.dev/graphql/yoga-server)
 - [Plugin package authoring](../../docs/tooling/plugin-packages.md)
-- [Native Elysia Plugins](../../docs/platforms/native-plugins.md)
+- [Platform parity](../../docs/platforms/platform-parity.md)
 - [Configuration](../../docs/build/configuration.md)
 - [Published packages](../../docs/reference/packages.md)

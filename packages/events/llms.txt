@@ -4,7 +4,7 @@
 
 ## What this package exports
 
-- `EventEmitterModule.register()`: the dynamic module an application imports.
+- `EventEmitterModule.forRoot()`: the dynamic module an application imports; `register()` is the deprecated alias. It is global by default and provides the `EVENT_EMITTER_MODULE_OPTIONS` symbol token. It takes no options, so there is no asynchronous form.
 - `EventEmitter`: `on`, `once`, `off`, `emit`, `listenerCount`, and `bind`.
 - `OnEvent(event)`: a method decorator that records a listener.
 - `getEventHandlers(instance)`: reads the listener metadata a class declares.

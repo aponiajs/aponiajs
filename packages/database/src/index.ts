@@ -4,21 +4,30 @@
  * The package owns the transaction boundary, a typed repository over one
  * Drizzle table, and ordered SQL migrations. It builds no connection pool and
  * picks no dialect: the application constructs its Drizzle database and hands
- * it to `DatabaseModule.register`.
+ * it to `DatabaseModule.forRoot`.
  */
-export { DatabaseModule } from "./module/database-module.ts";
-export { DatabaseService } from "./database/database.service.ts";
+export { DatabaseModule } from "./database.module.ts";
+export {
+  MODULE_OPTIONS_TOKEN,
+  type DatabaseModuleExtras,
+  type DatabaseModuleRegistrationAsyncOptions,
+  type DatabaseModuleSyncOptions,
+} from "./database.module-definition.ts";
+export { DatabaseService } from "./database.service.ts";
 export { createRepository } from "./repository/repository.ts";
 export { MigrationRunner } from "./migration/migration-runner.ts";
-export { MemoryMigrationStore } from "./migration/memory-migration-store.ts";
+export { MemoryMigrationStore } from "./migration/memory-migration.store.ts";
 export { loadMigrations } from "./migration/migration-files.ts";
 export type {
   Awaitable,
   DatabaseClient,
   DatabaseServiceOptions,
   DatabaseTransaction,
-} from "./database/database.types.ts";
-export type { DatabaseModuleOptions } from "./module/database-module.types.ts";
+} from "./interfaces/database.interface.ts";
+export type {
+  DatabaseModuleAsyncOptions,
+  DatabaseModuleOptions,
+} from "./interfaces/database-module.interface.ts";
 export type {
   InsertOf,
   Repository,
@@ -28,10 +37,10 @@ export type {
   RepositorySelect,
   RowOf,
   TableWithId,
-} from "./repository/repository.types.ts";
+} from "./interfaces/repository.interface.ts";
 export type {
   MigrationExecutor,
   MigrationFile,
   MigrationResult,
   MigrationStore,
-} from "./migration/migration.types.ts";
+} from "./interfaces/migration.interface.ts";

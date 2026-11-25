@@ -12,7 +12,7 @@ export default defineConfig({
       "@aponiajs/platform-hono": new URL("../platform-hono/src/index.ts", import.meta.url).pathname,
     },
     globals: true,
-    include: ["tests-vp/**/*.conformance.ts"],
+    include: ["test/**/*.conformance.ts"],
   },
   pack: {
     tsconfig: "tsconfig.build.json",

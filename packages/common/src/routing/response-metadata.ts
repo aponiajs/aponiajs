@@ -1,6 +1,6 @@
 import "reflect-metadata";
-import type { ClassToken } from "../tokens/token.types.ts";
-import type { ResponseHeaderValue } from "./response-metadata.types.ts";
+import type { ClassToken } from "../interfaces/token.interface.ts";
+import type { ResponseHeaderValue } from "../interfaces/response-metadata.interface.ts";
 
 /**
  * Own-only metadata keys. A method decorator records per handler property, and

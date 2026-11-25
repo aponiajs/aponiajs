@@ -1,6 +1,6 @@
 import { formatBuildReport } from "../generation/build-report.ts";
 import { generateInvokers } from "../generation/invoker-generator.ts";
-import type { BuildPluginOptions } from "./aponia-build-plugin.types.ts";
+import type { BuildPluginOptions } from "../interfaces/aponia-build-plugin.interface.ts";
 
 /** The name Bun reports this plugin under in a build error. */
 export const buildPluginName = "aponia-build";

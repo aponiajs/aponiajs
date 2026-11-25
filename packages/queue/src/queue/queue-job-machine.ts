@@ -1,5 +1,5 @@
 import { createStateMachine, type StateMachine } from "@aponiajs/compiler";
-import type { QueueJobState } from "./queue-job.types.ts";
+import type { QueueJobState } from "../interfaces/queue-job.interface.ts";
 
 /**
  * The one lifecycle every job follows.

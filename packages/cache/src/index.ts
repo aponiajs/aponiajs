@@ -6,11 +6,23 @@
  * depends on it. Applications that need a shared or distributed cache supply a
  * `CacheStore` and keep this package's TTL and key rules.
  */
-export { CacheModule } from "./module/cache-module.ts";
-export { CACHE_STORE } from "./module/cache-module.constants.ts";
-export type { CacheModuleOptions } from "./module/cache-module.types.ts";
-export { CacheService } from "./service/cache-service.ts";
-export type { CacheEntryOptions } from "./service/cache-service.types.ts";
-export { MemoryCacheStore } from "./store/memory-cache-store.ts";
-export type { MemoryCacheStoreOptions } from "./store/memory-cache-store.types.ts";
-export type { CacheStore } from "./store/cache-store.types.ts";
+export { CacheModule } from "./cache.module.ts";
+export { CACHE_MANAGER, CACHE_STORE } from "./cache.constants.ts";
+export {
+  MODULE_OPTIONS_TOKEN,
+  type CacheModuleExtras,
+  type CacheModuleRegistrationAsyncOptions,
+  type CacheModuleSyncOptions,
+} from "./cache.module-definition.ts";
+export type {
+  CacheModuleAsyncOptions,
+  CacheModuleOptions,
+} from "./interfaces/cache-module.interface.ts";
+export { CacheService } from "./cache.service.ts";
+export type { CacheEntryOptions } from "./interfaces/cache-service.interface.ts";
+export { CacheKey } from "./decorators/cache-key.decorator.ts";
+export { CacheTTL } from "./decorators/cache-ttl.decorator.ts";
+export { CacheInterceptor } from "./interceptors/cache.interceptor.ts";
+export { MemoryCacheStore } from "./memory-cache.store.ts";
+export type { MemoryCacheStoreOptions } from "./interfaces/memory-cache-store.interface.ts";
+export type { CacheStore } from "./interfaces/cache-store.interface.ts";

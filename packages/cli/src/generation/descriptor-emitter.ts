@@ -13,7 +13,7 @@ import type {
   AnalyzedEnhancers,
   AnalyzedRoute,
   AnalyzedRouteSchemaSlot,
-} from "./controller-routes.types.ts";
+} from "../interfaces/controller-routes.interface.ts";
 import type {
   AnalyzedConstructorDependency,
   AnalyzedGateway,
@@ -22,20 +22,20 @@ import type {
   AnalyzedModule,
   AnalyzedModuleEntry,
   AnalyzedTypedDependency,
-} from "./module-descriptors.types.ts";
+} from "../interfaces/module-descriptors.interface.ts";
 import type {
   SourceImport,
   SourceImportForm,
   SourceImportKind,
   SourceImports,
-} from "./source-imports.types.ts";
+} from "../interfaces/source-imports.interface.ts";
 import type {
   DeclinedDescriptor,
   DeclinedRouteDescriptor,
   DescriptorSourceFile,
   EmittedModuleDescriptors,
   ModuleDescriptorProvenance,
-} from "./descriptor-emitter.types.ts";
+} from "../interfaces/descriptor-emitter.interface.ts";
 
 /**
  * The file a build writes, relative to the configured source root. It is a

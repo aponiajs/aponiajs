@@ -9,17 +9,21 @@ The broker-neutral messaging runtime. Decorators, the dispatch contract, and the
 boot integration belong to `@aponiajs/common` and
 `@aponiajs/platform-elysia`; this package owns the wire a transport carries.
 
-| Domain       | Owns                                                                         |
-| ------------ | ---------------------------------------------------------------------------- |
-| `client/`    | `createMicroserviceClient`, correlation, timeouts, pending-call bounds       |
-| `server/`    | `createMicroserviceServer`, target and reply checks, in-flight bounds        |
-| `module/`    | `MicroserviceClientsModule`, lifecycle, registration token                   |
-| `envelope/`  | CBOR v1 encoding, decoding, preflight limits, request-context recovery       |
-| `transport/` | The SDK-neutral `Transport` seam, lifecycle, validation, `InMemoryTransport` |
-| `brokers/`   | Broker adapters, shared SDK loading, config validation, broker base class    |
+| Domain       | Owns                                                                                                |
+| ------------ | --------------------------------------------------------------------------------------------------- |
+| `client/`    | `createMicroserviceClient`, correlation, timeouts, pending-call bounds                              |
+| `server/`    | `createMicroserviceServer`, target and reply checks, in-flight bounds                               |
+| `module/`    | `MicroserviceClientsModule`, its `.module-definition.ts` builder, lifecycle, and registration token |
+| `envelope/`  | CBOR v1 encoding, decoding, preflight limits, request-context recovery                              |
+| `transport/` | The SDK-neutral `Transport` seam, lifecycle, validation, `InMemoryTransport`                        |
+| `brokers/`   | Broker adapters, shared SDK loading, config validation, broker base class                           |
 
 `src/index.ts` is the only public barrel. Broker classes stay unpublished
-unless the factory contract needs them; test seams are imported relatively.
+unless the factory contract needs them; test seams are imported relatively. The
+module is also exported as `ClientsModule`, the name `@nestjs/microservices`
+publishes; its registration is a `ConfigurableModuleBuilder` definition with
+`MODULE_OPTIONS_TOKEN` (`MICROSERVICE_CLIENTS_MODULE_OPTIONS`) and the
+`isGlobal` extra.
 
 ## Invariants
 
@@ -53,9 +57,9 @@ unless the factory contract needs them; test seams are imported relatively.
 
 ## Tests
 
-`tests/*.test.ts` under Bun, `tests-vp/*.conformance.ts` under Vite+. Bun tests
+`src/**/*.spec.ts` under Bun, `test/*.conformance.ts` under Vite+. Bun tests
 use fake SDKs and a fake `Transport`; they never open a broker connection.
-Live broker checks belong in `tests/brokers.e2e-spec.ts`, which Bun's default
+Live broker checks belong in `test/brokers.e2e-spec.ts`, which Bun's default
 glob skips, and run only through `bun run test:brokers`.
 
 Every adapter test proves lazy loading, option rejection, publish and subscribe

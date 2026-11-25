@@ -6,8 +6,11 @@ import {
 } from "./descriptor-emitter.ts";
 import { writePendingFiles } from "./file-writer.ts";
 import { formatGeneratedSource } from "./generated-source-formatter.ts";
-import type { GenerateInvokersOptions, GenerateInvokersResult } from "./invoker-generator.types.ts";
-import type { PendingFile } from "./schematic.types.ts";
+import type {
+  GenerateInvokersOptions,
+  GenerateInvokersResult,
+} from "../interfaces/invoker-generator.interface.ts";
+import type { PendingFile } from "../interfaces/schematic.interface.ts";
 
 export { invokerModuleFileName } from "./build-project-analysis.ts";
 

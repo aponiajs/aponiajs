@@ -1,5 +1,6 @@
 import { addRoute, createRouter, findRoute } from "rou3";
-import type { MountedRoute, RouteMatch } from "./kernel.types.ts";
+import { decode } from "./request-decoding.ts";
+import type { MountedRoute, RouteMatch } from "../interfaces/kernel.interface.ts";
 
 /** Resolves a method and path to the route one platform mounted. */
 export interface RouteMatcher {
@@ -41,9 +42,14 @@ export function createRouteMatcher(routes: readonly MountedRoute[]): RouteMatche
         return undefined;
       }
 
+      const params: Record<string, string> = {};
+      for (const [name, value] of Object.entries(found.params ?? {})) {
+        params[name] = decode(value);
+      }
+
       return Object.freeze({
         mount: found.data,
-        params: Object.freeze({ ...found.params }),
+        params: Object.freeze(params),
       });
     },
   });

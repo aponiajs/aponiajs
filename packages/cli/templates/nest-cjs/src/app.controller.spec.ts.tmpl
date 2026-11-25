@@ -1,0 +1,10 @@
+import { AppController } from "./app.controller";
+import { AppService } from "./app.service";
+
+describe("AppController", () => {
+  it("returns the application greeting", () => {
+    const controller = new AppController(new AppService());
+
+    expect(controller.getGreeting()).toBe("Hello from {{PROJECT_NAME}}!");
+  });
+});

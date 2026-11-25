@@ -12,16 +12,31 @@ import { join } from "node:path";
  * a package that is not on it may not gain a runtime import.
  */
 const pendingPort = new Set([
+  // The test kit builds an Elysia test application by design: it is the
+  // platform's test surface, not a plugin.
+  "testing",
+]);
+
+/**
+ * Packages migrated to the neutral contract.
+ *
+ * Each contributes only providers, controllers, HTTP policies, request
+ * lifecycle hooks, and capability requirements. The guard below refuses a
+ * platform declaration, a platform token, and a runtime import in every one of
+ * them, so a regression cannot arrive quietly.
+ */
+const neutralSeams = new Set([
   "compression",
   "cors",
-  "devtools",
   "graphql",
   "idempotency",
+  "mcp",
   "metrics",
-  "opentelemetry",
   "openapi",
+  "opentelemetry",
   "security",
-  "testing",
+  "session",
+  "devtools",
 ]);
 
 /** Packages whose job is a runtime, or the toolchain around one. */
@@ -66,7 +81,9 @@ async function runtimeImportsOf(directory: string): Promise<string[]> {
   const glob = new Bun.Glob("src/**/*.ts");
   const hits: string[] = [];
   for await (const path of glob.scan({ cwd: join(workspaceRoot, "packages", directory) })) {
-    if (path.startsWith("src/adapters/")) {
+    // A colocated spec drives a runtime to prove the contract; the rule is about
+    // the source a published package ships.
+    if (path.startsWith("src/adapters/") || path.endsWith(".spec.ts")) {
       continue;
     }
     const source = await Bun.file(join(workspaceRoot, "packages", directory, path)).text();
@@ -76,6 +93,114 @@ async function runtimeImportsOf(directory: string): Promise<string[]> {
   }
   return hits.sort();
 }
+
+describe("the plugin registration standard", () => {
+  /** Modules that register a `ConfigurationToken`; its provider is the async path. */
+  const configurationModules = new Set(["cors", "cron", "graphql", "openapi", "opentelemetry"]);
+
+  /** Modules that take no options, so a synchronous `forRoot()` is the whole contract. */
+  const optionlessModules = new Set(["events"]);
+
+  /**
+   * Modules whose synchronous registration decides which providers exist, which
+   * a container factory cannot change: auth picks a JWT or an OIDC verifier, and
+   * devtools mounts nothing at all when disabled. Their package guide states the
+   * limit; both are the documented exception rather than an unfinished async form.
+   */
+  const registrationShapedModules = new Set(["auth", "devtools"]);
+
+  async function moduleSources(): Promise<Map<string, string>> {
+    const sources = new Map<string, string>();
+    const glob = new Bun.Glob("packages/*/src/module/*-module.ts");
+    for await (const path of glob.scan({ cwd: workspaceRoot, onlyFiles: true })) {
+      const directory = path.split("/")[1]!;
+      sources.set(directory, await Bun.file(join(workspaceRoot, path)).text());
+    }
+    return sources;
+  }
+
+  test("every module package registers through forRoot", async () => {
+    const missing: string[] = [];
+    for (const [directory, source] of await moduleSources()) {
+      if (!/\bforRoot\b/.test(source)) {
+        missing.push(directory);
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+
+  test("every configurable module package accepts forRootAsync", async () => {
+    const missing: string[] = [];
+    for (const [directory, source] of await moduleSources()) {
+      if (
+        configurationModules.has(directory) ||
+        optionlessModules.has(directory) ||
+        registrationShapedModules.has(directory)
+      ) {
+        continue;
+      }
+      if (!/\bforRootAsync\b/.test(source)) {
+        missing.push(directory);
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+
+  test("every registration names its own module class as the identity", async () => {
+    const offenders: string[] = [];
+    for (const [directory, source] of await moduleSources()) {
+      const moduleClass = /^export (?:abstract )?class (\w+Module)\b/m.exec(source)?.[1];
+      if (moduleClass === undefined) {
+        continue;
+      }
+      if (!source.includes(`module: ${moduleClass}`) && !source.includes("module: this")) {
+        offenders.push(`${directory}: ${moduleClass}`);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  test("a registration never spreads another module into its definition", async () => {
+    const offenders: string[] = [];
+    for (const [directory, source] of await moduleSources()) {
+      if (/\.\.\.(?:pluginModule|mounted|parentModule)\b/.test(source)) {
+        offenders.push(directory);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  test("a plugin module source depends on the neutral platform, not the Elysia adapter", async () => {
+    const offenders: string[] = [];
+    for (const [directory, source] of await moduleSources()) {
+      if (directory === "devtools") {
+        // The devtools surface reads the Elysia boot record and mounts its own
+        // Elysia plugin by design; its package guide states the exception.
+        continue;
+      }
+      if (source.includes('from "@aponiajs/platform-elysia"')) {
+        offenders.push(directory);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  test("a retained register alias delegates to forRoot", async () => {
+    const nonDelegating: string[] = [];
+    for (const [directory, source] of await moduleSources()) {
+      const alias = source.match(
+        /static\s+register\s*(?:<[^>]*>)?\s*\([^)]*\)[^{]*\{([\s\S]*?)\n\s*\}/,
+      );
+      if (alias === null) {
+        continue;
+      }
+      if (!/\bforRoot\s*\(/.test(alias[1]!)) {
+        nonDelegating.push(directory);
+      }
+    }
+    expect(nonDelegating).toEqual([]);
+  });
+});
 
 describe("the platform standard", () => {
   test("a package imports a runtime only when it is a known, tracked exception", async () => {
@@ -116,5 +241,29 @@ describe("the platform standard", () => {
     for (const directory of ["common", "core", "platform-core"]) {
       expect(await runtimeImportsOf(directory)).toEqual([]);
     }
+  });
+
+  test("a migrated seam package states no platform declaration and imports no runtime", async () => {
+    const offenders: string[] = [];
+    const platformDeclaration =
+      /providePlatformModule|\bPLATFORM_MODULE\b|\bplatforms\s*:|\badapters\s*:|\b[A-Z_]+_ADAPTER\b/;
+
+    for (const directory of neutralSeams) {
+      const glob = new Bun.Glob("src/**/*.ts");
+      for await (const path of glob.scan({
+        cwd: join(workspaceRoot, "packages", directory),
+        onlyFiles: true,
+      })) {
+        if (path.endsWith(".spec.ts")) {
+          continue;
+        }
+        const source = await Bun.file(join(workspaceRoot, "packages", directory, path)).text();
+        if (platformDeclaration.test(source) || runtimeImport.test(source)) {
+          offenders.push(`${directory}: ${path}`);
+        }
+      }
+    }
+
+    expect(offenders).toEqual([]);
   });
 });

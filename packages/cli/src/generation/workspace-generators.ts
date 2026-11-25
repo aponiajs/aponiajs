@@ -1,15 +1,15 @@
-import { mkdir, readdir } from "node:fs/promises";
+import { mkdir, readdir, rm } from "node:fs/promises";
 import { constantCase } from "change-case";
 import { join } from "node:path";
 import { aponiaVersion } from "../version.ts";
-import type { ComponentNames } from "./component-names.types.ts";
+import type { ComponentNames } from "../interfaces/component-names.interface.ts";
 import { createAgentGuideLinks, createFile, writePendingFiles } from "./file-writer.ts";
 import { generateProject } from "./project-generator.ts";
 import type {
   GenerateSchematicOptions,
   GenerateSchematicResult,
   PendingFile,
-} from "./schematic.types.ts";
+} from "../interfaces/schematic.interface.ts";
 
 /** The package a generator writes: a Nest-style module library or a plugin. */
 type PackageKind = "module" | "plugin";
@@ -28,15 +28,113 @@ export async function generateApplication(
     cwd: appsDirectory,
     dryRun: options.dryRun,
     skipInstall: true,
+    skipGit: true,
+    skipSkills: true,
+    type: "bun",
+    testRunner: "bun",
+    strict: options.strict ?? true,
   });
 
+  const files = result.files.map((file) => toAppFile(file));
+  if (!options.dryRun) {
+    await renameAppTsconfig(projectRoot, join(appsDirectory, name));
+    await registerWorkspaceProject(projectRoot, name, "application");
+  }
   return {
     dryRun: options.dryRun,
-    changes: result.files.map((file) => ({
-      kind: "CREATE",
-      path: join("apps", name, file),
-    })),
+    changes: files.map((file) => ({ kind: "CREATE", path: join("apps", name, file) })),
   };
+}
+
+function toAppFile(file: string): string {
+  return file === "tsconfig.json" ? "tsconfig.app.json" : file;
+}
+
+async function renameAppTsconfig(projectRoot: string, appDirectory: string): Promise<void> {
+  const source = Bun.file(join(appDirectory, "tsconfig.json"));
+  if (!(await source.exists())) {
+    return;
+  }
+  const rootTsconfigExists = await Bun.file(join(projectRoot, "tsconfig.json")).exists();
+  const content = await source.text();
+  await Bun.write(
+    join(appDirectory, "tsconfig.app.json"),
+    rootTsconfigExists ? content.replace(/^\{/, `{\n  "extends": "../../tsconfig.json",`) : content,
+  );
+  await rm(join(appDirectory, "tsconfig.json"), { force: true });
+  const buildFile = Bun.file(join(appDirectory, "tsconfig.build.json"));
+  if (await buildFile.exists()) {
+    await Bun.write(
+      join(appDirectory, "tsconfig.build.json"),
+      (await buildFile.text()).replace(
+        '"extends": "./tsconfig.json"',
+        '"extends": "./tsconfig.app.json"',
+      ),
+    );
+  }
+}
+
+async function ensureWorkspaceRoot(projectRoot: string, workspaceGlob: string): Promise<void> {
+  const tsconfigPath = join(projectRoot, "tsconfig.json");
+  if (!(await Bun.file(tsconfigPath).exists())) {
+    await Bun.write(tsconfigPath, `${JSON.stringify({ compilerOptions: {} }, undefined, 2)}\n`);
+  }
+
+  const manifestPath = join(projectRoot, "package.json");
+  const manifestFile = Bun.file(manifestPath);
+  const manifest = (await manifestFile.exists())
+    ? ((await manifestFile.json()) as {
+        readonly workspaces?: readonly string[];
+        readonly [key: string]: unknown;
+      })
+    : { name: "workspace", private: true, type: "module" };
+  const workspaces = [...new Set([...(manifest.workspaces ?? []), workspaceGlob])].toSorted();
+  await Bun.write(manifestPath, `${JSON.stringify({ ...manifest, workspaces }, undefined, 2)}\n`);
+}
+
+async function registerWorkspaceProject(
+  projectRoot: string,
+  name: string,
+  type: "application" | "library",
+): Promise<void> {
+  await ensureWorkspaceRoot(projectRoot, `${type === "application" ? "apps" : "libs"}/*`);
+  const configurationPath = join(projectRoot, "aponia-cli.json");
+  const configurationFile = Bun.file(configurationPath);
+  const configuration = (await configurationFile.exists())
+    ? ((await configurationFile.json()) as Record<string, unknown>)
+    : {
+        collection: "@aponiajs/schematics",
+        sourceRoot: "src",
+        entryFile: "main",
+        language: "ts",
+        compilerOptions: { deleteOutDir: true },
+      };
+  const projects = (configuration.projects as Record<string, unknown> | undefined) ?? {};
+  const root = `${type === "application" ? "apps" : "libs"}/${name}`;
+  const entryFile = type === "application" ? "main" : "index";
+  const tsConfigPath =
+    type === "application" ? `${root}/tsconfig.app.json` : `${root}/tsconfig.lib.json`;
+  await Bun.write(
+    configurationPath,
+    `${JSON.stringify(
+      {
+        ...configuration,
+        monorepo: true,
+        projects: {
+          ...projects,
+          [name]: {
+            type,
+            root,
+            entryFile,
+            sourceRoot: `${root}/src`,
+            compilerOptions: { tsConfigPath },
+          },
+        },
+      },
+      undefined,
+      2,
+    )}\n`,
+  );
 }
 
 export async function generateLibrary(
@@ -108,7 +206,6 @@ interface PackageSpec {
 function createPackageFiles(spec: PackageSpec): PendingFile[] {
   const { directory, names, kind, publish, packageName, standalone } = spec;
   const optionsToken = `${constantCase(names.className)}_OPTIONS`;
-  const platformProvider = `${names.fileName}PlatformProvider`;
   const label = kind === "plugin" ? "plugin" : "library";
   const keywords = [
     "aponia",
@@ -120,7 +217,6 @@ function createPackageFiles(spec: PackageSpec): PendingFile[] {
     contractVersion: 1,
     name: packageName,
     kind,
-    platforms: ["elysia", "hono", "h3"],
     framework: { aponia: aponiaVersion, bun: ">=1.4.4" },
     entrypoints: [
       {
@@ -132,6 +228,7 @@ function createPackageFiles(spec: PackageSpec): PendingFile[] {
     provides: [
       { kind: "module", token: `${names.className}Module` },
       { kind: "provider", token: `${names.className}Service` },
+      ...(kind === "plugin" ? [{ kind: "controller", token: `${names.className}Controller` }] : []),
       { kind: "provider", token: optionsToken },
     ],
     requires: [],
@@ -149,7 +246,7 @@ function createPackageFiles(spec: PackageSpec): PendingFile[] {
           description: `${names.className} ${label} for AponiaJS.`,
           license: "MIT",
           keywords,
-          packageManager: "bun@1.4.4",
+          packageManager: "bun@1.4.5",
           type: "module",
           sideEffects: false,
           ...(publish
@@ -210,7 +307,7 @@ function createPackageFiles(spec: PackageSpec): PendingFile[] {
     createFile(
       join(directory, "src"),
       `${names.fileName}.module.ts`,
-      packageModule(names, kind, optionsToken, platformProvider),
+      packageModule(names, kind, optionsToken),
     ),
     createFile(
       join(directory, "src"),
@@ -220,10 +317,11 @@ function createPackageFiles(spec: PackageSpec): PendingFile[] {
     ...(kind === "plugin"
       ? [
           createFile(
-            join(directory, "src", "adapters"),
-            `${names.fileName}.adapters.ts`,
-            packageAdapters(names, platformProvider),
+            join(directory, "src"),
+            `${names.fileName}.controller.ts`,
+            packageController(names),
           ),
+          createFile(join(directory, "src"), `${names.fileName}.policy.ts`, packagePolicy(names)),
         ]
       : []),
     createFile(join(directory, "tests"), `${names.fileName}.test.ts`, packageTests(names, kind)),
@@ -232,7 +330,7 @@ function createPackageFiles(spec: PackageSpec): PendingFile[] {
       `${names.fileName}.conformance.ts`,
       packageConformance(names, kind),
     ),
-    createFile(join(directory, "src"), "index.ts", packageBarrel(names, optionsToken)),
+    createFile(join(directory, "src"), "index.ts", packageBarrel(names, optionsToken, kind)),
   ];
 }
 
@@ -267,12 +365,12 @@ export interface ${names.className}ModuleAsyncOptions {
 /**
  * The options ${names.className}Module.forRoot accepts.
  *
- * Platform support is the package's own declaration in
- * \`adapters/${names.fileName}.adapters.ts\`, so every registration of this plugin runs
- * on the same platforms.
+ * The module contributes these options to a controller and an HTTP policy. Its
+ * source is runtime-neutral, so every registration runs on any platform that
+ * has the \`http\` capability.
  */
 export interface ${names.className}ModuleOptions {
-  /** The greeting the service answers; defaults to "Hello from ${names.className}". */
+  /** The greeting the service and the controller answer. */
   readonly greeting?: string;
 }
 
@@ -296,12 +394,7 @@ function packageConstants(names: ComponentNames, optionsToken: string): string {
   return `import { createToken } from "@aponiajs/common";\nimport type { ${names.className}ModuleOptions } from "./${names.fileName}.types.ts";\n\n/** The options token the module provides and the service injects. */\nexport const ${optionsToken} = createToken<${names.className}ModuleOptions>("${optionsToken}");\n`;
 }
 
-function packageModule(
-  names: ComponentNames,
-  kind: PackageKind,
-  optionsToken: string,
-  platformProvider: string,
-): string {
+function packageModule(names: ComponentNames, kind: PackageKind, optionsToken: string): string {
   if (kind === "plugin") {
     return `import {
   Module,
@@ -309,9 +402,16 @@ function packageModule(
   provideFactory,
   provideValue,
   type DynamicModule,
+  type ModuleImport,
+  type Provider,
 } from "@aponiajs/common";
-import { ${platformProvider} } from "./adapters/${names.fileName}.adapters.ts";
+import {
+  provideHttpPolicyAsync,
+  requirePlatformCapabilities,
+} from "@aponiajs/platform-core";
 import { ${optionsToken} } from "./${names.fileName}.constants.ts";
+import { ${names.className}Controller } from "./${names.fileName}.controller.ts";
+import { build${names.className}Policy } from "./${names.fileName}.policy.ts";
 import { ${names.className}Service } from "./${names.fileName}.service.ts";
 import type {
   ${names.className}ModuleAsyncOptions,
@@ -324,11 +424,10 @@ const pluginKey = "${names.fileName}";
 /**
  * Registers the ${names.className} plugin.
  *
- * The module is runtime-neutral: its own source imports no platform package and
- * no HTTP runtime. The platform declaration lives in
- * \`adapters/${names.fileName}.adapters.ts\`, so the same registration boots on every
- * platform the package states, and a boot on one it does not declare is refused
- * with \`UNSUPPORTED_PLATFORM_FEATURE\` before anything mounts.
+ * The module is runtime-neutral: it contributes a controller, an HTTP policy,
+ * the service, and the \`http\` capability requirement through the shared
+ * contracts. Its source imports no platform package and no HTTP runtime, so the
+ * same registration runs wherever the platform has that capability.
  *
  * One registration per application is the supported shape: the registration key
  * is the module identity, so two registrations that share it fail with
@@ -339,47 +438,50 @@ export class ${names.className}Module {
   /**
    * Registers the plugin with literal options.
    *
-   * @param options - The greeting the service answers with.
+   * @param options - The greeting the service and controller answer with.
    * @returns The dynamic module an application imports.
    */
   static forRoot(options: ${names.className}ModuleOptions = {}): DynamicModule {
-    return dynamicModule({
-      module: ${names.className}Module,
-      id: "${names.className}Module[" + pluginKey + "]",
-      instanceId: Symbol.for("aponia.plugin.${names.fileName}:" + pluginKey),
-      providers: [
-        provideValue(${optionsToken}, Object.freeze({ ...options })),
-        ${platformProvider},
-        ${names.className}Service,
-      ],
-      exports: [${names.className}Service, ${optionsToken}],
-    });
+    return registration([provideValue(${optionsToken}, Object.freeze({ ...options }))]);
   }
 
   /**
    * Registers the plugin with options a factory builds.
    *
    * The factory runs synchronously in this release; an async factory is not
-   * awaited by the container. Platform support stays the package's own
-   * declaration, so it does not change with the value the factory builds.
+   * awaited by the container.
    *
    * @param options - The imports, injected tokens, and factory.
    * @returns The dynamic module an application imports.
    */
   static forRootAsync(options: ${names.className}ModuleAsyncOptions): DynamicModule {
-    return dynamicModule({
-      module: ${names.className}Module,
-      id: "${names.className}Module[" + pluginKey + "]",
-      instanceId: Symbol.for("aponia.plugin.${names.fileName}:" + pluginKey),
-      imports: [...(options.imports ?? [])],
-      providers: [
-        provideFactory(${optionsToken}, options.inject ?? [], options.useFactory),
-        ${platformProvider},
-        ${names.className}Service,
-      ],
-      exports: [${names.className}Service, ${optionsToken}],
-    });
+    return registration(
+      [provideFactory(${optionsToken}, options.inject ?? [], options.useFactory)],
+      options.imports,
+    );
   }
+}
+
+function registration(
+  optionsProviders: readonly Provider[],
+  imports: readonly ModuleImport[] = [],
+): DynamicModule {
+  return dynamicModule({
+    module: ${names.className}Module,
+    id: "${names.className}Module[" + pluginKey + "]",
+    instanceId: Symbol.for("aponia.plugin.${names.fileName}:" + pluginKey),
+    imports: [...imports],
+    providers: [
+      ...optionsProviders,
+      ${names.className}Service,
+      provideHttpPolicyAsync([${optionsToken}], (options: ${names.className}ModuleOptions) =>
+        build${names.className}Policy(options),
+      ),
+      requirePlatformCapabilities(pluginKey, ["http"]),
+    ],
+    controllers: [${names.className}Controller],
+    exports: [${names.className}Service, ${optionsToken}],
+  });
 }
 `;
   }
@@ -393,36 +495,50 @@ function packageService(names: ComponentNames, kind: PackageKind, optionsToken: 
   return `import { Inject, Injectable, Optional } from "@aponiajs/common";\nimport { ${optionsToken} } from "./${names.fileName}.constants.ts";\nimport type { ${names.className}ModuleOptions } from "./${names.fileName}.types.ts";\n\n/** ${description} */\n@Injectable()\nexport class ${names.className}Service {\n  readonly #options: ${names.className}ModuleOptions;\n\n  constructor(@Optional() @Inject(${optionsToken}) options?: ${names.className}ModuleOptions) {\n    this.#options = options ?? {};\n  }\n\n  /** Answers the greeting the registration chose, or the default. */\n  greet(): string {\n    return this.#options.greeting ?? "Hello from ${names.className}";\n  }\n}\n`;
 }
 
-function packageAdapters(names: ComponentNames, platformProvider: string): string {
-  return `import {
-  ALL_PLATFORMS,
-  providePlatformModule,
-  type PlatformAdapterEntry,
-} from "@aponiajs/platform-core";
+function packageController(names: ComponentNames): string {
+  return `import { Controller, Get } from "@aponiajs/common";
+import { ${names.className}Service } from "./${names.fileName}.service.ts";
+
+/** The route the plugin contributes to every application that registers it. */
+@Controller("${names.fileName}")
+export class ${names.className}Controller {
+  constructor(private readonly ${names.propertyName}Service: ${names.className}Service) {}
+
+  /** Answers the greeting the registration chose. */
+  @Get()
+  getGreeting(): string {
+    return this.${names.propertyName}Service.greet();
+  }
+}
+`;
+}
+
+function packagePolicy(names: ComponentNames): string {
+  return `import type { HttpPolicy } from "@aponiajs/platform-core";
+import type { ${names.className}ModuleOptions } from "./${names.fileName}.types.ts";
 
 /**
- * The native mount for each platform, keyed by platform name.
+ * The neutral HTTP policy the plugin contributes.
  *
- * An entry calls into that runtime's own application. Put a runtime import in
- * this folder when the plugin needs one, and state the same platforms in
- * \`aponia.library.json\`: the boot refuses a platform the declaration omits
- * with \`UNSUPPORTED_PLATFORM_FEATURE\` before it mounts anything.
+ * The shared request pipeline runs it on every platform, so the plugin never
+ * touches a native request or response object. This example adds the
+ * registration's greeting to every response.
  */
-export const ${names.fileName}Adapters: Readonly<Record<string, PlatformAdapterEntry>> =
-  Object.freeze({});
-
-/**
- * The package's platform declaration.
- *
- * \`platforms\` is the set the boot accepts; \`adapters\` is what it mounts on the
- * platform it serves. A platform may be listed with no adapter when the plugin
- * needs nothing from that runtime.
- */
-export const ${platformProvider} = providePlatformModule({
-  key: "${names.fileName}",
-  platforms: ALL_PLATFORMS,
-  adapters: ${names.fileName}Adapters,
-});
+export function build${names.className}Policy(options: ${names.className}ModuleOptions): HttpPolicy {
+  const greeting = options.greeting ?? "Hello from ${names.className}";
+  return {
+    name: "${names.fileName}",
+    onResponse(_request, response) {
+      const headers = new Headers(response.headers);
+      headers.set("x-${names.fileName}", greeting);
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers,
+      });
+    },
+  };
+}
 `;
 }
 
@@ -430,47 +546,47 @@ function packageTests(names: ComponentNames, kind: PackageKind): string {
   if (kind === "plugin") {
     return `import { describe, expect, test } from "bun:test";
 import { createContainer } from "@aponiajs/core";
+import { compileRootModule, resolveHttpPolicies } from "@aponiajs/platform-core";
 import {
-  ALL_PLATFORMS,
-  compileRootModule,
-  resolvePlatformModules,
-} from "@aponiajs/platform-core";
-import { ${names.className}Module, ${names.className}Service } from "../src/index.ts";
+  ${names.className}Controller,
+  ${names.className}Module,
+  ${names.className}Service,
+} from "../src/index.ts";
 
 /**
  * Resolves the registration from the module graph alone.
  *
- * No HTTP platform is booted: the container and the platform declaration are
- * the whole contract a plugin needs, which is what keeps this test true on
- * every platform.
+ * No HTTP platform is booted: the module, the controller it declares, and the
+ * policy it contributes are the whole contract a plugin needs, which is what
+ * keeps this test true on every platform.
  */
 function containerFor(registration: ReturnType<typeof ${names.className}Module.forRoot>) {
   return createContainer(compileRootModule(registration));
 }
 
 describe("${names.className}Module", () => {
-  test("declares the plugin on every shipped platform", () => {
-    const container = containerFor(${names.className}Module.forRoot());
-    for (const platform of ALL_PLATFORMS) {
-      expect(resolvePlatformModules(container, platform).map((entry) => entry.key)).toEqual([
-        "${names.fileName}",
-      ]);
-    }
-  });
+  test("contributes the service, controller, and HTTP policy", async () => {
+    const container = containerFor(${names.className}Module.forRoot({ greeting: "Hi" }));
+    expect(container.get(${names.className}Service).greet()).toBe("Hi");
 
-  test("forRoot provides its options to the service", () => {
-    const service = containerFor(${names.className}Module.forRoot({ greeting: "Hi" })).get(
-      ${names.className}Service,
+    const controller = new ${names.className}Controller(container.get(${names.className}Service));
+    expect(controller.getGreeting()).toBe("Hi");
+
+    const policies = resolveHttpPolicies(container);
+    expect(policies.map((policy) => policy.name)).toEqual(["${names.fileName}"]);
+    const response = await policies[0]?.onResponse?.(
+      new Request("http://localhost/"),
+      new Response("ok"),
     );
-    expect(service.greet()).toBe("Hi");
+    expect(response?.headers.get("x-${names.fileName}")).toBe("Hi");
   });
 
-  test("forRootAsync builds the options from a factory", () => {
+  test("forRootAsync builds the options and keeps the contribution", () => {
     const container = containerFor(
       ${names.className}Module.forRootAsync({ useFactory: () => ({ greeting: "Async" }) }),
     );
     expect(container.get(${names.className}Service).greet()).toBe("Async");
-    expect(resolvePlatformModules(container, "hono").map((entry) => entry.key)).toEqual([
+    expect(resolveHttpPolicies(container).map((policy) => policy.name)).toEqual([
       "${names.fileName}",
     ]);
   });
@@ -489,20 +605,27 @@ describe("${names.className}Module", () => {
 function packageConformance(names: ComponentNames, kind: PackageKind): string {
   if (kind === "plugin") {
     return `import { createContainer } from "@aponiajs/core";
-import { compileRootModule, resolvePlatformModules } from "@aponiajs/platform-core";
-import { ${names.className}Module, ${names.className}Service } from "../src/index.ts";
+import { compileRootModule, resolveHttpPolicies } from "@aponiajs/platform-core";
+import {
+  ${names.className}Controller,
+  ${names.className}Module,
+  ${names.className}Service,
+} from "../src/index.ts";
 
 type VitePlusTest = typeof import("vite-plus/test");
 
 declare const test: VitePlusTest["test"];
 declare const expect: VitePlusTest["expect"];
 
-test("resolves the service and the platform declaration from the module graph", () => {
+test("resolves the service, controller, and HTTP policy from the module graph", () => {
   const container = createContainer(
     compileRootModule(${names.className}Module.forRoot({ greeting: "Conformance" })),
   );
   expect(container.get(${names.className}Service).greet()).toBe("Conformance");
-  expect(resolvePlatformModules(container, "h3").map((entry) => entry.key)).toEqual([
+  expect(
+    new ${names.className}Controller(container.get(${names.className}Service)).getGreeting(),
+  ).toBe("Conformance");
+  expect(resolveHttpPolicies(container).map((policy) => policy.name)).toEqual([
     "${names.fileName}",
   ]);
 });
@@ -512,8 +635,12 @@ test("resolves the service and the platform declaration from the module graph", 
   return `import { createContainer } from "@aponiajs/core";\nimport { compileRootModule } from "@aponiajs/platform-core";\nimport { ${names.className}Module, ${names.className}Service } from "../src/index.ts";\n\ntype VitePlusTest = typeof import("vite-plus/test");\n\ndeclare const test: VitePlusTest["test"];\ndeclare const expect: VitePlusTest["expect"];\n\ntest("resolves the service from the module graph", () => {\n  const container = createContainer(\n    compileRootModule(${names.className}Module.forRoot({ greeting: "Conformance" })),\n  );\n  expect(container.get(${names.className}Service).greet()).toBe("Conformance");\n});\n`;
 }
 
-function packageBarrel(names: ComponentNames, optionsToken: string): string {
-  return `export { ${names.className}Module } from "./${names.fileName}.module.ts";\nexport { ${names.className}Service } from "./${names.fileName}.service.ts";\nexport { ${optionsToken} } from "./${names.fileName}.constants.ts";\nexport type {\n  ${names.className}ModuleAsyncOptions,\n  ${names.className}ModuleOptions,\n} from "./${names.fileName}.types.ts";\n`;
+function packageBarrel(names: ComponentNames, optionsToken: string, kind: PackageKind): string {
+  const controller =
+    kind === "plugin"
+      ? `export { ${names.className}Controller } from "./${names.fileName}.controller.ts";\n`
+      : "";
+  return `export { ${names.className}Module } from "./${names.fileName}.module.ts";\n${controller}export { ${names.className}Service } from "./${names.fileName}.service.ts";\nexport { ${optionsToken} } from "./${names.fileName}.constants.ts";\nexport type {\n  ${names.className}ModuleAsyncOptions,\n  ${names.className}ModuleOptions,\n} from "./${names.fileName}.types.ts";\n`;
 }
 
 async function wireWorkspaceLibrary(
@@ -543,15 +670,28 @@ async function wireWorkspaceLibrary(
     `${JSON.stringify({ ...rootManifest, workspaces }, undefined, 2)}\n`,
   );
 
-  const configurationPath = join(projectRoot, "aponia.json");
+  const configurationPath = join(projectRoot, "aponia-cli.json");
   const configurationFile = Bun.file(configurationPath);
   const configuration = (await configurationFile.exists())
     ? ((await configurationFile.json()) as Record<string, unknown>)
-    : {};
-  const prefix =
-    typeof configuration.defaultLibraryPrefix === "string"
+    : {
+        collection: "@aponiajs/schematics",
+        sourceRoot: "src",
+        entryFile: "main",
+        language: "ts",
+        compilerOptions: { deleteOutDir: true },
+      };
+  const configuredPrefix =
+    options.prefix ??
+    (typeof configuration.defaultLibraryPrefix === "string"
       ? configuration.defaultLibraryPrefix
-      : "@app";
+      : undefined);
+  const prefix =
+    configuredPrefix === undefined
+      ? "@app"
+      : configuredPrefix.startsWith("@")
+        ? configuredPrefix
+        : `@${configuredPrefix}`;
   const libraryRoot = `libs/${names.fileName}`;
   const projects = {
     ...(configuration.projects as Record<string, unknown> | undefined),
@@ -566,7 +706,12 @@ async function wireWorkspaceLibrary(
   await Bun.write(
     configurationPath,
     `${JSON.stringify(
-      { ...configuration, defaultLibraryPrefix: prefix, projects },
+      {
+        ...configuration,
+        monorepo: true,
+        defaultLibraryPrefix: prefix,
+        projects,
+      },
       undefined,
       2,
     )}\n`,
@@ -710,29 +855,33 @@ function packageReadme(spec: PackageSpec): string {
   const { names, kind, publish, packageName } = spec;
   const label = kind === "plugin" ? "plugin" : "library";
   const command = kind === "plugin" ? "aponia g plugin" : "aponia g library";
-  const platformSection =
+  const contributionSection =
     kind === "plugin"
-      ? `\n## Platform support\n\nThe plugin is runtime-neutral. \`src/adapters/${names.fileName}.adapters.ts\` states the platforms the package supports and the native mount each one needs. A boot on a platform the declaration omits fails with \`UNSUPPORTED_PLATFORM_FEATURE\` before anything mounts. Keep the platforms in that file and \`aponia.library.json\` in step.\n\nOne registration per application is the supported shape: the registration key is the module identity, so two registrations that share it fail with \`DUPLICATE_MODULE\`.\n`
+      ? `\n## Contributions\n\nThe plugin is runtime-neutral. Its module contributes a controller, the \`${names.fileName}\` HTTP policy, the service, and the \`http\` capability requirement through the shared contracts. It imports no platform package and no HTTP runtime, so the same registration runs wherever the platform has \`http\`; a platform without it refuses the boot with \`UNSUPPORTED_PLATFORM_FEATURE\` before anything mounts.\n\nOne registration per application is the supported shape: the registration key is the module identity, so two registrations that share it fail with \`DUPLICATE_MODULE\`.\n`
       : "";
-  return `# ${packageName}\n\n${publish ? "A publishable" : "A private workspace"} AponiaJS ${label} generated by \`${command}\`.\n\n## Use it\n\n\`\`\`ts\nimport { Module } from "@aponiajs/common";\nimport { ${names.className}Module } from "${packageName}";\n\n@Module({ imports: [${names.className}Module.forRoot({ greeting: "Hi" })] })\nexport class AppModule {}\n\`\`\`\n\n\`forRootAsync\` builds the same options from a factory with injected dependencies:\n\n\`\`\`ts\n${names.className}Module.forRootAsync({\n  imports: [ConfigModule],\n  inject: [ConfigService],\n  useFactory: (config: ConfigService) => ({ greeting: config.greeting }),\n});\n\`\`\`\n\nThe module is runtime-neutral: its source imports nothing from a platform, so\nthe same registration runs on every Aponia platform.\n${platformSection}\n## Scripts\n\n- \`bun run build\` builds the package with Vite+.\n- \`bun test\` runs the Bun tests.\n- \`bun run test:vite-plus\` runs the conformance lane.\n- \`bun run check\` formats, lints, and type-checks.\n\n## Library contract\n\n\`aponia.library.json\` states the package name, kind, entrypoint, provided tokens, framework compatibility, and security posture. Keep it in step with \`src/index.ts\`.\n\n## Documentation\n\n- [AponiaJS](https://github.com/aponiajs/aponiajs)\n`;
+  const neutrality =
+    kind === "plugin"
+      ? "wherever the platform has the capabilities it requires"
+      : "on every Aponia platform";
+  return `# ${packageName}\n\n${publish ? "A publishable" : "A private workspace"} AponiaJS ${label} generated by \`${command}\`.\n\n## Use it\n\n\`\`\`ts\nimport { Module } from "@aponiajs/common";\nimport { ${names.className}Module } from "${packageName}";\n\n@Module({ imports: [${names.className}Module.forRoot({ greeting: "Hi" })] })\nexport class AppModule {}\n\`\`\`\n\n\`forRootAsync\` builds the same options from a factory with injected dependencies:\n\n\`\`\`ts\n${names.className}Module.forRootAsync({\n  imports: [ConfigModule],\n  inject: [ConfigService],\n  useFactory: (config: ConfigService) => ({ greeting: config.greeting }),\n});\n\`\`\`\n\nThe module is runtime-neutral: its source imports nothing from a platform, so\nthe same registration runs ${neutrality}.\n${contributionSection}\n## Scripts\n\n- \`bun run build\` builds the package with Vite+.\n- \`bun test\` runs the Bun tests.\n- \`bun run test:vite-plus\` runs the conformance lane.\n- \`bun run check\` formats, lints, and type-checks.\n\n## Library contract\n\n\`aponia.library.json\` states the package name, kind, entrypoint, provided tokens, framework compatibility, and security posture. Keep it in step with \`src/index.ts\`.\n\n## Documentation\n\n- [AponiaJS](https://github.com/aponiajs/aponiajs)\n`;
 }
 
 function packageAgents(names: ComponentNames, kind: PackageKind): string {
   const label = kind === "plugin" ? "plugin" : "package";
-  const platformInvariant =
+  const pluginInvariant =
     kind === "plugin"
-      ? `- **Platform support is declared once.** \`src/adapters/${names.fileName}.adapters.ts\` owns the \`providePlatformModule\` declaration: the platforms the package supports and the native mount each one needs. A runtime import belongs in \`src/adapters/\`, and a platform the declaration omits is refused with \`UNSUPPORTED_PLATFORM_FEATURE\` before anything mounts. Keep the declaration and \`aponia.library.json\` in step.\n- **One registration per application.** The registration key is the module identity; two registrations that share it fail with \`DUPLICATE_MODULE\`.\n`
+      ? `- **The plugin contributes neutrally.** The module declares a controller, the \`${names.fileName}\` HTTP policy, and \`requirePlatformCapabilities("${names.fileName}", ["http"])\`. A native mount belongs in a separate adapter library, never here.\n- **One registration per application.** The registration key is the module identity; two registrations that share it fail with \`DUPLICATE_MODULE\`.\n`
       : "";
-  return `# ${names.fileName} — Agent Guide\n\n\`CLAUDE.md\` and \`GEMINI.md\` are symlinks to this file.\n\nRead the [repository guide](../../AGENTS.md) first. This file covers only what is specific to this ${label}.\n\n## What this package owns\n\nThe ${names.className} module, its options, and its service. \`src/index.ts\`\nis the only public barrel.\n\n## Invariants\n\n- **The module is runtime-neutral.** Its source imports no platform package and\n  no HTTP runtime; a native mount belongs behind \`providePlatformModule\` in\n  \`adapters\`, and nothing else may name a platform.\n${platformInvariant}- **Nest's registration standard is the authoring surface.** The module exposes\n  \`forRoot(options)\` and \`forRootAsync({ imports, inject, useFactory })\`, both\n  returning a \`DynamicModule\`. Do not add a \`register\` alias.\n- **Options travel through a token.** \`${names.className}ModuleOptions\` is\n  provided under the exported \`*_OPTIONS\` token; the service injects it\n  optionally, so a plain import still boots.\n- **Tests boot the graph, not a platform.** \`compileRootModule\` plus\n  \`createContainer\` is the whole contract, which is what makes the test true on\n  every platform.\n- Export only through \`src/index.ts\`; never publish a deep source path.\n- Keep \`aponia.library.json\` in step with the exports and provided tokens.\n- Do not add a runtime dependency on \`@aponiajs/cli\`.\n\n## Tests\n\n\`tests/*.test.ts\` under Bun, \`tests-vp/*.conformance.ts\` under Vite+.\n`;
+  return `# ${names.fileName} — Agent Guide\n\n\`CLAUDE.md\` and \`GEMINI.md\` are symlinks to this file.\n\nRead the [repository guide](../../AGENTS.md) first. This file covers only what is specific to this ${label}.\n\n## What this package owns\n\nThe ${names.className} module, its options, and its service. \`src/index.ts\`\nis the only public barrel.\n\n## Invariants\n\n- **The module is runtime-neutral.** Its source imports no platform package and\n  no HTTP runtime; a native mount belongs in a separate adapter library, and\n  nothing else may name a platform.\n${pluginInvariant}- **Nest's registration standard is the authoring surface.** The module exposes\n  \`forRoot(options)\` and \`forRootAsync({ imports, inject, useFactory })\`, both\n  returning a \`DynamicModule\`. Do not add a \`register\` alias.\n- **Options travel through a token.** \`${names.className}ModuleOptions\` is\n  provided under the exported \`*_OPTIONS\` token; the service injects it\n  optionally, so a plain import still boots.\n- **Tests boot the graph, not a platform.** \`compileRootModule\` plus\n  \`createContainer\` is the whole contract, which is what makes the test true on\n  every platform.\n- Export only through \`src/index.ts\`; never publish a deep source path.\n- Keep \`aponia.library.json\` in step with the exports and provided tokens.\n- Do not add a runtime dependency on \`@aponiajs/cli\`.\n\n## Tests\n\n\`tests/*.test.ts\` under Bun, \`tests-vp/*.conformance.ts\` under Vite+.\n`;
 }
 
 function packageLlms(names: ComponentNames, kind: PackageKind): string {
   const optionsToken = `${constantCase(names.className)}_OPTIONS`;
   const label = kind === "plugin" ? "plugin" : "library";
   const command = kind === "plugin" ? "aponia g plugin" : "aponia g library";
-  const platformLine =
+  const contributionLine =
     kind === "plugin"
-      ? `\n- \`${names.fileName}PlatformProvider\`: the platform declaration the module provides.\n`
+      ? `\n- \`${names.className}Controller\`: the route the module contributes.\n- \`${names.fileName}\` HTTP policy: adds the registration's greeting to every response.\n- The module requires the \`http\` capability with \`requirePlatformCapabilities\`.\n`
       : "";
-  return `# ${names.fileName}\n\n> An AponiaJS ${label} package generated by \`${command}\`, exporting ${names.className}Module and ${names.className}Service.\n\n## What this package exports\n\n- \`${names.className}Module\`: the module an application imports; \`forRoot\` and \`forRootAsync\` return the registration.\n- \`${names.className}Service\`: the injectable service.\n- \`${names.className}ModuleOptions\` / \`${names.className}ModuleAsyncOptions\`: the registration options.\n- \`${optionsToken}\`: the options token the module provides.\n${platformLine}\n## Documentation\n\n- [Package README](README.md)\n- [AponiaJS](https://github.com/aponiajs/aponiajs)\n`;
+  return `# ${names.fileName}\n\n> An AponiaJS ${label} package generated by \`${command}\`, exporting ${names.className}Module and ${names.className}Service.\n\n## What this package exports\n\n- \`${names.className}Module\`: the module an application imports; \`forRoot\` and \`forRootAsync\` return the registration.\n- \`${names.className}Service\`: the injectable service.\n- \`${names.className}ModuleOptions\` / \`${names.className}ModuleAsyncOptions\`: the registration options.\n- \`${optionsToken}\`: the options token the module provides.\n${contributionLine}\n## Documentation\n\n- [Package README](README.md)\n- [AponiaJS](https://github.com/aponiajs/aponiajs)\n`;
 }

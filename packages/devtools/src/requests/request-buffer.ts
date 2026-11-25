@@ -1,5 +1,5 @@
 import { createRingBuffer } from "../buffer/ring-buffer.ts";
-import type { RequestBuffer, RequestRecord } from "./request-buffer.types.ts";
+import type { RequestBuffer, RequestRecord } from "../interfaces/request-buffer.interface.ts";
 
 /**
  * How many entries one devtools registration retains.

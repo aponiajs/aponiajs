@@ -7,15 +7,15 @@ specific to this package.
 
 The Nest-style Model Context Protocol endpoint. Decorators are metadata-only and
 live in `@aponiajs/common`; this package re-exports them and owns discovery,
-execution, transports, and platform mounts.
+execution, transports, and the HTTP controller.
 
-| Domain       | Owns                                                                                |
-| ------------ | ----------------------------------------------------------------------------------- |
-| `module/`    | `McpModule.forRoot`, `forRootAsync`, options, and defaults                          |
-| `discovery/` | Walking the container graph, reading decorator metadata, and refusing invalid plans |
-| `execution/` | `McpExecutionContext`, `McpContext`, and the guard/interceptor/pipe/filter pipeline |
-| `transport/` | `createMcpHandler` wiring, Origin/Host/body gate, and the stdio entrypoints         |
-| `adapters/`  | `providePlatformModule` mounts for Elysia, Hono, and H3                             |
+| Domain        | Owns                                                                                |
+| ------------- | ----------------------------------------------------------------------------------- |
+| `module/`     | `McpModule.forRoot`, `forRootAsync`, options, and the generated HTTP controller     |
+| `discovery/`  | Walking the container graph, reading decorator metadata, and refusing invalid plans |
+| `execution/`  | `McpExecutionContext`, `McpContext`, and the guard/interceptor/pipe/filter pipeline |
+| `transport/`  | `createMcpHandler` wiring, Origin/Host/body gate, and the stdio entrypoints         |
+| `interfaces/` | the module, tool, resource, prompt, and context contracts                           |
 
 `src/index.ts` is the only public barrel.
 
@@ -31,13 +31,15 @@ execution, transports, and platform mounts.
 - **Enhancers are explicit.** Module options, class decorators, and method
   decorators run in that order. HTTP globals from `AponiaFactory.create` are
   not inherited automatically.
-- **The module is runtime-neutral.** Elysia, Hono, and H3 imports belong in
-  `src/adapters/`, and each mount reads the container the boot attached.
+- **The module is runtime-neutral.** The endpoint is a controller over the
+  SDK's fetch handler, built from the boot's container reference. `readMcpRuntime`
+  answers from that container, which is what the stdio entry reads.
 - **The endpoint is a tool-dispatch surface.** Keep the Origin allowlist and the
-  Host check in place; `path: false` disables HTTP deliberately.
+  Host check in place; `path: false` disables HTTP deliberately. A stopping
+  application closes the transport once through `McpRuntimeShutdown`.
 
 ## Tests
 
-`packages/mcp/tests/*.test.ts` drives the endpoint through Elysia, Hono, H3, and
-an in-memory stdio transport. `packages/mcp/tests-vp/*.conformance.ts` pins the
+`packages/mcp/src/**/*.spec.ts` drives the endpoint through Elysia, Hono, H3, and
+an in-memory stdio transport. `packages/mcp/test/*.conformance.ts` pins the
 public types.

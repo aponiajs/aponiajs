@@ -10,7 +10,7 @@ export default defineConfig({
       "@aponiajs/serverless": new URL("../serverless/src/index.ts", import.meta.url).pathname,
     },
     globals: true,
-    include: ["tests-vp/**/*.conformance.ts"],
+    include: ["test/**/*.conformance.ts"],
   },
   pack: {
     tsconfig: "tsconfig.build.json",

@@ -1,5 +1,5 @@
 import { routeParameterKinds, type RouteParameterKind } from "@aponiajs/common";
-import type { AponiaRouteParameterInspection } from "@aponiajs/platform-elysia";
+import type { DevtoolsRouteParameterInspection } from "../interfaces/inspection.interface.ts";
 
 /**
  * The `@Body`-style bindings a record states for one route, as the payloads
@@ -23,12 +23,12 @@ import type { AponiaRouteParameterInspection } from "@aponiajs/platform-elysia";
  *
  * @internal
  */
-export function readRouteParameters(value: unknown): readonly AponiaRouteParameterInspection[] {
+export function readRouteParameters(value: unknown): readonly DevtoolsRouteParameterInspection[] {
   if (!Array.isArray(value)) {
     return Object.freeze([]);
   }
 
-  const parameters: AponiaRouteParameterInspection[] = [];
+  const parameters: DevtoolsRouteParameterInspection[] = [];
 
   for (const entry of value) {
     const parameter = readParameter(entry);
@@ -40,7 +40,7 @@ export function readRouteParameters(value: unknown): readonly AponiaRouteParamet
   return Object.freeze(parameters);
 }
 
-function readParameter(value: unknown): AponiaRouteParameterInspection | undefined {
+function readParameter(value: unknown): DevtoolsRouteParameterInspection | undefined {
   if (typeof value !== "object" || value === null) {
     return undefined;
   }

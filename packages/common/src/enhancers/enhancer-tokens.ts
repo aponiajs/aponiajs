@@ -1,7 +1,11 @@
 import { createToken } from "../tokens/token.ts";
-import type { InjectionToken, ClassToken } from "../tokens/token.types.ts";
-import type { PipeTransform } from "../pipes/pipe.types.ts";
-import type { CanActivate, ExceptionFilter, Interceptor } from "./enhancer.types.ts";
+import type { InjectionToken, ClassToken } from "../interfaces/token.interface.ts";
+import type { PipeTransform } from "../interfaces/pipe.interface.ts";
+import type {
+  CanActivate,
+  ExceptionFilter,
+  Interceptor,
+} from "../interfaces/enhancer.interface.ts";
 
 /**
  * One application-level enhancer: the class to resolve, or an instance to use.
@@ -16,9 +20,11 @@ export type ApplicationEnhancer<T> = ClassToken<T> | T;
 /**
  * What an `APP_*` token carries: one enhancer, or a list of them in run order.
  *
- * A list is how one token states several enhancers. The container registers one
- * provider per token in a module, so several `{ provide: APP_GUARD, ... }`
- * entries are refused as a duplicate provider; provide an array instead.
+ * A list is one way to state several enhancers under one token. Several
+ * `{ provide: APP_GUARD, ... }` entries in one module are also accepted — the
+ * four `APP_*` tokens are the only tokens exempt from the duplicate-token rule —
+ * and every entry runs in declaration order. An array is expanded in place, so
+ * its entries run where the array was declared.
  */
 export type ApplicationEnhancerBinding<T> =
   | ApplicationEnhancer<T>
@@ -52,3 +58,25 @@ export const APP_FILTER: InjectionToken<ApplicationEnhancerBinding<ExceptionFilt
 /** The token that declares an application-wide pipe. */
 export const APP_PIPE: InjectionToken<ApplicationEnhancerBinding<PipeTransform>> =
   createToken<ApplicationEnhancerBinding<PipeTransform>>("APP_PIPE");
+
+/**
+ * The four pseudo-provider tokens an application declares enhancers through.
+ *
+ * They are exempt from the duplicate-token rule because every registration is a
+ * separate enhancer, and they are deliberately unreachable through
+ * `application.get` and `ModuleRef.get`: a token that names a set of enhancers
+ * has no single instance to answer with.
+ */
+export const applicationEnhancerTokens: ReadonlySet<InjectionToken<unknown>> = Object.freeze(
+  new Set<InjectionToken<unknown>>([APP_GUARD, APP_INTERCEPTOR, APP_FILTER, APP_PIPE]),
+);
+
+/**
+ * Whether a token is one of the four application-enhancer pseudo-providers.
+ *
+ * @param token - The token to test.
+ * @returns Whether the token declares application-wide enhancers.
+ */
+export function isApplicationEnhancerToken(token: unknown): boolean {
+  return applicationEnhancerTokens.has(token as InjectionToken<unknown>);
+}

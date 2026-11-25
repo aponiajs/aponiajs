@@ -1,6 +1,6 @@
-export { toFetchHandler } from "./fetch/fetch-handler.ts";
-export type { FetchHandler } from "./fetch/fetch-handler.ts";
-export { createLambdaHandler } from "./lambda/lambda-handler.ts";
+export { toFetchHandler } from "./fetch/fetch.handler.ts";
+export type { FetchHandler } from "./fetch/fetch.handler.ts";
+export { createLambdaHandler } from "./lambda/lambda.handler.ts";
 export type {
   LambdaHandler,
   LambdaHeaders,
@@ -11,4 +11,4 @@ export type {
   LambdaHttpResultV1,
   LambdaHttpResultV2,
   ServerlessApplication,
-} from "./lambda/lambda.types.ts";
+} from "./interfaces/lambda.interface.ts";

@@ -1,5 +1,5 @@
 import { AponiaError } from "@aponiajs/common";
-import type { RedisClientInterface, RedisStoreOptions } from "./redis.types.ts";
+import type { RedisClientInterface, RedisStoreOptions } from "../interfaces/redis.interface.ts";
 
 /**
  * Validates and normalizes common Redis store options.
@@ -10,7 +10,11 @@ export function resolveRedisStoreOptions(
   options: RedisStoreOptions,
   defaultPrefix: string,
   storeName: string,
-): { readonly client: RedisClientInterface; readonly prefix: string } {
+): {
+  readonly client: RedisClientInterface;
+  readonly prefix: string;
+  readonly closeClient: boolean;
+} {
   if (typeof options !== "object" || options === null) {
     throw new AponiaError("INVALID_CONFIGURATION", `The ${storeName} options must be an object.`, {
       store: storeName,
@@ -32,9 +36,19 @@ export function resolveRedisStoreOptions(
     });
   }
 
+  const closeClient = options.closeClient ?? true;
+  if (typeof closeClient !== "boolean") {
+    throw new AponiaError(
+      "INVALID_CONFIGURATION",
+      `The ${storeName} closeClient must be a boolean.`,
+      { store: storeName },
+    );
+  }
+
   return Object.freeze({
     client: options.client,
     prefix,
+    closeClient,
   });
 }
 
@@ -76,4 +90,32 @@ export async function deleteKeys(
     return 0;
   }
   return client.unlink === undefined ? await client.del(keys) : await client.unlink(keys);
+}
+
+/** Clients a store already released, so a shared client is closed once. */
+const releasedClients = new WeakSet<object>();
+
+/**
+ * Releases a Redis client exactly once.
+ *
+ * A store may be given a client it shares with other stores, and every store
+ * exposes `close()` for application shutdown. The WeakSet makes the shared case
+ * safe: the first store to close releases the connection, and the rest resolve
+ * without a second `quit`/`disconnect`.
+ *
+ * @param client - The client the store was constructed with.
+ * @internal
+ */
+export async function closeRedisClient(client: RedisClientInterface): Promise<void> {
+  if (typeof client !== "object" || client === null || releasedClients.has(client)) {
+    return;
+  }
+  releasedClients.add(client);
+  if (typeof client.quit === "function") {
+    await client.quit();
+    return;
+  }
+  if (typeof client.disconnect === "function") {
+    await client.disconnect();
+  }
 }

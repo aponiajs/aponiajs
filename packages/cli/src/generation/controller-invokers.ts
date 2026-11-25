@@ -2,14 +2,14 @@ import type {
   AnalyzedController,
   AnalyzedRoute,
   AnalyzedRouteParameter,
-} from "./controller-routes.types.ts";
+} from "../interfaces/controller-routes.interface.ts";
 import type {
   ControllerImportSpecifiers,
   ControllerInvokerProvenance,
   DeclinedControllerHandler,
   EmittedControllerInvokers,
   EmittableRouteParameter,
-} from "./controller-invokers.types.ts";
+} from "../interfaces/controller-invokers.interface.ts";
 
 /**
  * The package a class token is named by.

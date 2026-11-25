@@ -4,7 +4,7 @@ AponiaJS uses a synchronized version for every workspace package. Releases
 follow [Semantic Versioning 2.0.0](https://semver.org), with
 [bumpp](https://github.com/antfu/bumpp) managing version changes.
 
-The release workflow publishes the 38 publishable workspace packages in
+The release workflow publishes the 39 publishable workspace packages in
 dependency order:
 
 1. `@aponiajs/common`
@@ -14,37 +14,38 @@ dependency order:
 5. `@aponiajs/platform-h3`
 6. `@aponiajs/platform-hono`
 7. `@aponiajs/platform-elysia`
-8. `@aponiajs/cli`
-9. `create-aponia`
-10. `@aponiajs/devtools`
-11. `@aponiajs/cron`
-12. `@aponiajs/graphql`
-13. `@aponiajs/cors`
-14. `@aponiajs/testing`
-15. `@aponiajs/openapi`
-16. `@aponiajs/opentelemetry`
-17. `@aponiajs/mcp`
-18. `@aponiajs/cache`
-19. `@aponiajs/events`
-20. `@aponiajs/http`
-21. `@aponiajs/rate-limit`
-22. `@aponiajs/security`
-23. `@aponiajs/session`
-24. `@aponiajs/compression`
-25. `@aponiajs/auth`
-26. `@aponiajs/audit`
-27. `@aponiajs/tenancy`
-28. `@aponiajs/queue`
-29. `@aponiajs/database`
-30. `@aponiajs/metrics`
-31. `@aponiajs/idempotency`
-32. `@aponiajs/microservices`
-33. `@aponiajs/serverless`
-34. `@aponiajs/h3`
-35. `@aponiajs/hono`
-36. `@aponiajs/nitro`
-37. `@aponiajs/store-redis`
-38. `@aponiajs/view`
+8. `@aponiajs/schematics`
+9. `@aponiajs/cli`
+10. `create-aponia`
+11. `@aponiajs/devtools`
+12. `@aponiajs/cron`
+13. `@aponiajs/graphql`
+14. `@aponiajs/cors`
+15. `@aponiajs/testing`
+16. `@aponiajs/openapi`
+17. `@aponiajs/opentelemetry`
+18. `@aponiajs/mcp`
+19. `@aponiajs/cache`
+20. `@aponiajs/events`
+21. `@aponiajs/http`
+22. `@aponiajs/rate-limit`
+23. `@aponiajs/security`
+24. `@aponiajs/session`
+25. `@aponiajs/compression`
+26. `@aponiajs/auth`
+27. `@aponiajs/audit`
+28. `@aponiajs/tenancy`
+29. `@aponiajs/queue`
+30. `@aponiajs/database`
+31. `@aponiajs/metrics`
+32. `@aponiajs/idempotency`
+33. `@aponiajs/microservices`
+34. `@aponiajs/serverless`
+35. `@aponiajs/h3`
+36. `@aponiajs/hono`
+37. `@aponiajs/nitro`
+38. `@aponiajs/store-redis`
+39. `@aponiajs/view`
 
 The `aponiajs` facade remains private until it exports the public framework API.
 

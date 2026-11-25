@@ -1,10 +1,10 @@
 import { resolve } from "node:path";
 import type { AnalyzedController, DeclinedControllerHandler } from "@aponiajs/cli";
 import type { LoggerService } from "@aponiajs/common";
-import type { AponiaApplicationDiagnostics } from "@aponiajs/platform-elysia";
+import type { AponiaBootDiagnostics } from "@aponiajs/platform-core";
 import { oneLine } from "../logging/one-line.ts";
 import { reportFailure } from "../logging/report-failure.ts";
-import type { AponiaBuildController, AponiaBuildPayload } from "./aot.types.ts";
+import type { AponiaBuildController, AponiaBuildPayload } from "../interfaces/aot.interface.ts";
 
 /** Existing Aponia build-artifact diagnostics path; not native Elysia AOT diagnostics. */
 export const devtoolsAotPath = "/aot";
@@ -28,7 +28,7 @@ const maximumRetryDelay = 30_000;
 
 /** Reads the endpoint's boot facts, returning absence for an unknown record shape. */
 export function readAotFacts(
-  diagnostics: AponiaApplicationDiagnostics | undefined,
+  diagnostics: AponiaBootDiagnostics | undefined,
 ): AponiaBuildFacts | undefined {
   const graph = diagnostics?.graph;
   const invokers = diagnostics?.invokers;

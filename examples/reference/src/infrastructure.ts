@@ -43,6 +43,10 @@ export const authModule = AuthModule.register({
     expiresIn: "15m",
   },
   refresh: { ttlMs: 7 * 24 * 60 * 60 * 1_000 },
+  // The example protects its administrator surface with `@UseGuards` and keeps
+  // login, health, and the metrics scrape reachable without a token, so the
+  // registration's optional global guard stays off.
+  globalGuard: false,
 });
 
 export const queueModule = QueueModule.register({

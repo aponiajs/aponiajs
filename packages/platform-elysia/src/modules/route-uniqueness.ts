@@ -6,7 +6,7 @@ import {
   type Token,
 } from "@aponiajs/common";
 import { isElysiaController } from "../controllers/controller-definition.ts";
-import type { CompiledElysiaRoute } from "../routing/route-compiler.types.ts";
+import type { CompiledElysiaRoute } from "../interfaces/route-compiler.interface.ts";
 
 /**
  * One registration of one route: the controller method that answers it, and the

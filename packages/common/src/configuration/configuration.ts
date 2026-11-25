@@ -1,6 +1,6 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { createToken } from "../tokens/token.ts";
-import type { ConfigurationToken } from "./configuration.types.ts";
+import type { ConfigurationToken } from "../interfaces/configuration.interface.ts";
 
 /**
  * Declares a configuration: the schema its value must satisfy, and the name a

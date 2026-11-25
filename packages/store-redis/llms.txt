@@ -10,7 +10,11 @@
 - `RedisIdempotencyStore`: implements `IdempotencyStore`
 - `RedisRevocationStore`: implements `RevocationStore`
 - `RedisRefreshTokenStore`: implements `RefreshTokenStore`
-- Types: `RedisClientInterface`, `RedisStoreOptions`
+- Types: `RedisClientInterface`, `RedisStoreOptions` (`client`, `prefix?`, `closeClient?`)
+
+Every store exposes an idempotent `close()` and `Symbol.asyncDispose`. A store
+releases the client it was given unless `closeClient: false`; a shared client is
+released once.
 
 ## Documentation
 

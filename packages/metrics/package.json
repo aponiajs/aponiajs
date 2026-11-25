@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/metrics",
-  "version": "1.0.0-beta.61",
+  "version": "1.0.0-beta.62",
   "description": "Prometheus metrics for an Aponia application: a bounded registry, request instrumentation, and a scrape endpoint.",
   "keywords": [
     "aponia",
@@ -44,13 +44,14 @@
   },
   "dependencies": {
     "@aponiajs/common": "workspace:*",
+    "@aponiajs/platform-core": "workspace:*",
     "@aponiajs/platform-elysia": "workspace:*"
   },
   "devDependencies": {
     "@aponiajs/core": "workspace:*",
-    "elysia": "2.0.0-rc.4"
-  },
-  "peerDependencies": {
+    "@aponiajs/platform-h3": "workspace:*",
+    "@aponiajs/platform-hono": "workspace:*",
+    "@aponiajs/serverless": "workspace:*",
     "elysia": "2.0.0-rc.4"
   },
   "engines": {

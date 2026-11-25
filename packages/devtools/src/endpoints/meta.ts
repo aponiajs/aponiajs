@@ -1,6 +1,6 @@
-import type { AponiaApplicationDiagnostics } from "@aponiajs/platform-elysia";
+import type { AponiaBootDiagnostics } from "@aponiajs/platform-core";
 import { aponiaVersion } from "../version.ts";
-import type { AponiaMetaPayload } from "./payloads.types.ts";
+import type { AponiaMetaPayload } from "../interfaces/payloads.interface.ts";
 
 /** The path this endpoint is served under, relative to the devtools prefix. */
 export const devtoolsMetaPath = "/meta";
@@ -19,8 +19,14 @@ export const devtoolsMetaPath = "/meta";
  * socket was bound. No field was added or removed, and a reader of `2` has no
  * other signal — the shape it validates still parses and the timestamp it reads
  * is still an ISO-8601 string, while the moment it names is a different one.
+ *
+ * It moved from `3` to `4` when `/meta` dropped its `elysia` field: the boot
+ * record is platform-neutral now, so no native runtime release is a fact the
+ * surface can state. A reader of `3` that validates the whole object would read
+ * a missing required field, and a reader that happened to treat it as optional
+ * would silently lose the one fact it asked this endpoint for.
  */
-export const devtoolsContractVersion = 3;
+export const devtoolsContractVersion = 4;
 
 /**
  * Builds the payload `/meta` answers with, once per boot.
@@ -52,8 +58,7 @@ export const devtoolsContractVersion = 3;
  * poll cannot observe a half-changed one.
  */
 export function buildMetaPayload(facts: {
-  readonly diagnostics: AponiaApplicationDiagnostics | undefined;
-  readonly elysia: string | null;
+  readonly diagnostics: AponiaBootDiagnostics | undefined;
   readonly startedAt: string;
 }): AponiaMetaPayload {
   const framework = facts.diagnostics?.framework ?? aponiaVersion;
@@ -61,7 +66,6 @@ export function buildMetaPayload(facts: {
   return Object.freeze({
     contract: devtoolsContractVersion,
     framework,
-    elysia: facts.elysia,
     artifacts: Object.freeze({
       invokers: facts.diagnostics?.artifacts?.invokers ?? null,
       descriptors: facts.diagnostics?.artifacts?.descriptors ?? null,

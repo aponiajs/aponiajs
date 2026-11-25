@@ -11,7 +11,7 @@ import type {
   MicroserviceEnvelope,
   MicroserviceOutboundEnvelope,
   MicroserviceReplyEnvelope,
-} from "./microservice-envelope.types.ts";
+} from "../interfaces/microservice-envelope.interface.ts";
 
 const maximumIdentifierLength = 128;
 const maximumReplyDestinationLength = 2048;

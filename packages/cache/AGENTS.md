@@ -8,30 +8,42 @@ specific to this package.
 The cache module, the cache service, the store contract, and the bounded
 in-memory store. It is a leaf: nothing in the framework depends on it.
 
-| Domain     | Owns                                                                  |
-| ---------- | --------------------------------------------------------------------- |
-| `module/`  | `CacheModule.register`, the tokens, and the resolved options contract |
-| `service/` | `CacheService` and per-entry options                                  |
-| `store/`   | `CacheStore`, `MemoryCacheStore`, and their contracts                 |
+| Domain                                          | Owns                                                                 |
+| ----------------------------------------------- | -------------------------------------------------------------------- |
+| `cache.module.ts`, `cache.module-definition.ts` | `CacheModule.forRoot`, the tokens, and the resolved options contract |
+| `cache.service.ts`                              | `CacheService` and per-entry options                                 |
+| `memory-cache.store.ts`                         | The bounded default store                                            |
+| `decorators/`                                   | `@CacheKey()` and `@CacheTTL()` metadata                             |
+| `interceptors/`                                 | `CacheInterceptor`, the `GET`-only response writer                   |
+| `interfaces/`                                   | The module, service, store, and memory-store contracts               |
 
-`src/index.ts` is the only public barrel. Keep `*.types.ts` beside the runtime
-that reads it.
+`src/index.ts` is the only public barrel. Type-only contracts live in
+`interfaces/<name>.interface.ts`. The registration is a `ConfigurableModuleBuilder` definition:
+`MODULE_OPTIONS_TOKEN`, `OPTIONS_TYPE`, and `ASYNC_OPTIONS_TYPE` come from
+`cache.module-definition.ts`, `register`/`registerAsync` remain as deprecated
+aliases, and `isGlobal` is the definition-shaping extra.
 
 ## Invariants
 
 - **The cache is application-level, not HTTP-level.** It does not set
   `Cache-Control`, `ETag`, or `Vary`; a route that needs HTTP caching declares
   those on its response. Do not add route-level response caching without a
-  separate opt-in that states the request-safety rules.
+  separate opt-in that states the request-safety rules. `CacheInterceptor` only
+  writes a `GET` response; it cannot replay one, because Aponia's interceptor
+  contract has no `next.handle()` — read-through is `CacheService.wrap`.
 - **`undefined` means absent.** `CacheService.set` deletes on `undefined`, and
   `get` answers `undefined` for a miss. Do not add a second sentinel.
-- **Every entry has a positive TTL.** A non-positive or non-finite TTL deletes
-  the entry. There is no unbounded mode.
+- **A missing TTL means no expiry, matching `@nestjs/cache-manager`.** It is the
+  registration default; a non-positive or non-finite per-entry TTL deletes the
+  entry. There is no other unbounded mode.
 - **The memory store is bounded.** Insertion into a full store evicts the oldest
   insertion. Expiry is lazy and creates no timer per entry.
 - **Values are references.** The package does not clone, serialize, encrypt, or
   validate cached values. Callers that store secrets own their lifetime and
   must clear them deliberately.
+- **`CACHE_MANAGER` is the same instance as `CacheService`.** The registration
+  aliases the Nest-compatible token, so `@Inject(CACHE_MANAGER)` and injecting
+  the class answer one service. Do not register a second cache manager.
 - **`wrap` is single-flight per key.** Concurrent misses share one factory run
   and one rejection; a failure leaves no entry, and a later call retries. Do not
   remove the in-flight map without replacing the stampede guarantee.
@@ -43,7 +55,7 @@ that reads it.
 
 ## Tests
 
-`tests/*.test.ts` under Bun, `tests-vp/*.conformance.ts` under Vite+. Both lanes
+`src/**/*.spec.ts` under Bun, `test/*.conformance.ts` under Vite+. Both lanes
 boot a real application through `AponiaFactory.create` and read the injected
 `CacheService`; the memory store's clock is injectable, so no case sleeps for a
 TTL.

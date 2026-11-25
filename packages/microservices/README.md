@@ -137,3 +137,13 @@ Defaults: target `default`, 10-second connect, 30-second request timeout,
 1 MiB envelope, 1,000 in-flight messages, 1,000 pending calls, and a 5-second
 close budget. No adapter claims exactly-once delivery, transactions, managed
 dead-letter routing, or global ordering.
+
+## Registration contract
+
+`MicroserviceClientsModule.forRoot` (also exported as `ClientsModule`) is a
+`ConfigurableModuleBuilder` definition: it provides and exports
+`MODULE_OPTIONS_TOKEN` (`MICROSERVICE_CLIENTS_MODULE_OPTIONS`) and the client
+token, accepts `isGlobal` as a definition-shaping extra and the three
+asynchronous shapes through `forRootAsync`, and keeps `register`/`registerAsync`
+as deprecated aliases. The module owns the client's `onModuleInit` connect and
+`onModuleDestroy` close.

@@ -4,7 +4,8 @@
 
 ## What this package exports
 
-- `DatabaseModule.register({ database, migrations? })`: the module an application imports with its own Drizzle database.
+- `DatabaseModule.forRoot({ database, migrations?, isGlobal? })`: the module an application imports with its own Drizzle database; `register({...})` is the deprecated alias and `forRootAsync` accepts the three Nest shapes.
+- `MODULE_OPTIONS_TOKEN` (`DATABASE_MODULE_OPTIONS`): the options token the registration provides and exports.
 - `DatabaseService`: `client`, `transaction`, `transactionSync`, `execute`, `migrate`.
 - `createRepository(database, table)`: `findById`, `findMany`, `count`, `exists`, `insert`, `insertMany`, `update`, `updateMany`, `deleteById`, `deleteMany`, and `table`.
 - `MigrationRunner`, `MemoryMigrationStore`, `loadMigrations`.
@@ -13,6 +14,7 @@
 ## Behavior a consumer can rely on
 
 - The package builds no pool and chooses no dialect; the application hands it a Drizzle database.
+- The registration validates its options eagerly: a missing database, a malformed migration file, or a store without `applied`/`record` fails with `INVALID_DATABASE_OPTIONS` and a total issue list.
 - `client` answers the exact database instance the application registered.
 - `transaction` awaits an asynchronous driver's callback; `transactionSync` is the synchronous-driver variant.
 - Repository reads and writes return frozen rows; `insert` throws `DATABASE_WRITE_FAILED` when the driver returns no row.

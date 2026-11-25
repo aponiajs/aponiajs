@@ -375,7 +375,7 @@ build-time module compiler; Aponia deliberately does not cast unknown runtime
 routes into a false contract.
 
 The contract is covered in both runtime/type tests at
-`packages/platform-elysia/tests/eden-contract.test.ts` and the Vite+
+`packages/platform-elysia/src/eden-contract.spec.ts` and the Vite+
 conformance lane.
 
 [Native plugins](./native-plugins.md) ·

@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { normalizeNameSegments } from "./component-names.ts";
-import type { ComponentNames } from "./component-names.types.ts";
+import type { ComponentNames } from "../interfaces/component-names.interface.ts";
 import { renderComponent, renderComponentSpec, renderSimpleSpec } from "./component-renderer.ts";
 import { createFile } from "./file-writer.ts";
 import {
@@ -24,7 +24,7 @@ import type {
   ComponentSchematic,
   GenerateSchematicOptions,
   PendingFile,
-} from "./schematic.types.ts";
+} from "../interfaces/schematic.interface.ts";
 
 export function createComponentFiles(
   basePath: string,
@@ -35,16 +35,21 @@ export function createComponentFiles(
   const schematic = options.schematic as ComponentSchematic;
   const definition = schematicDefinitions[schematic];
   const flat = options.flat ?? definition.defaultFlat;
-  const parentSegments = normalizeNameSegments(options.name).slice(0, -1);
+  const parentSegments = normalizeNameSegments(options.name ?? "").slice(0, -1);
   const directory = join(basePath, ...parentSegments, ...(flat ? [] : [names.fileName]));
   const stem = definition.suffix ? `${names.fileName}.${definition.suffix}` : names.fileName;
+  const specSuffix = options.specFileSuffix ?? "spec";
   const files: PendingFile[] = [
     createFile(directory, `${stem}.ts`, renderComponent(schematic, names)),
   ];
 
   if (definition.spec && specEnabled) {
     files.push(
-      createFile(directory, `${stem}.spec.ts`, renderComponentSpec(schematic, names, stem)),
+      createFile(
+        directory,
+        `${stem}.${specSuffix}.ts`,
+        renderComponentSpec(schematic, names, stem),
+      ),
     );
   }
 
@@ -58,7 +63,7 @@ export function createResourceFiles(
   specEnabled: boolean,
 ): PendingFile[] {
   const flat = options.flat ?? false;
-  const parentSegments = normalizeNameSegments(options.name).slice(0, -1);
+  const parentSegments = normalizeNameSegments(options.name ?? "").slice(0, -1);
   const directory = join(basePath, ...parentSegments, ...(flat ? [] : [names.fileName]));
   const dtoSuffix = options.type.startsWith("graphql") ? "input" : "dto";
   // The transport file's own stem: `rest` and `microservice` share the
@@ -151,17 +156,18 @@ export function createResourceFiles(
   }
 
   if (specEnabled) {
+    const specSuffix = options.specFileSuffix ?? "spec";
     files.push(
       createFile(
         directory,
-        `${names.fileName}.service.spec.ts`,
+        `${names.fileName}.service.${specSuffix}.ts`,
         options.crud
           ? renderResourceServiceSpec(names)
           : renderSimpleSpec(`./${names.fileName}.service.ts`, `${names.className}Service`),
       ),
       createFile(
         directory,
-        `${names.fileName}.${fileStem}.spec.ts`,
+        `${names.fileName}.${fileStem}.${specSuffix}.ts`,
         renderResourceTransportSpec(names, fileStem, options.crud, options.type === "microservice"),
       ),
     );

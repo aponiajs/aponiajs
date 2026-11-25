@@ -4,7 +4,10 @@
 
 ## What this package exports
 
-- `QueueModule.register({ queue?, outbox? })`: the module an application imports.
+- `QueueModule.forRoot({ queue?, outbox?, isGlobal?, name? })`: the module an application imports; `register({...})` is the deprecated alias and `forRootAsync` accepts the three Nest shapes.
+- `MODULE_OPTIONS_TOKEN` (`QUEUE_MODULE_OPTIONS`): the options token the registration provides and exports.
+- `Processor(nameOrOptions)`, `WorkerHost`, `InjectQueue(name?)`, `getQueueToken(name?)`: the BullMQ-shaped processor surface. The processor name is the job name it handles, and `getQueueToken` returns `AponiaQueue_<name>`; there is no broker worker or subscription.
+- `JOB_REF`: a forwarding view of the job the current handler is running.
 - `QueueService`: `registerHandler`, `enqueue`, `drain`, `waitForIdle`, `pending`, `deadLetters`, `retryDeadLetter`, `stats`, `flush`, `close`, `clear`.
 - `MemoryQueueStore`: a bounded in-memory `QueueStore` for tests.
 - `OutboxService`: `record`, `pending`, `flush`, `clear`.
@@ -13,6 +16,7 @@
 ## Behavior a consumer can rely on
 
 - `enqueue` returns a frozen job snapshot with a generated id and the attempt budget it will use.
+- The registration validates both option groups eagerly and reports every invalid bound or malformed store as `INVALID_QUEUE_OPTIONS`.
 - `pause`/`resume` stop and restart automatic draining; `paused` reports the state, and an explicit `drain` still runs while paused.
 - `priority` orders due jobs, highest first; equal priorities keep enqueue order.
 - `jobTimeoutMs`/`timeoutMs` bound one attempt; an overrun is a failure (`QUEUE_JOB_TIMEOUT`) that retries or dead-letters normally.

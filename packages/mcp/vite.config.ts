@@ -7,7 +7,7 @@ export default defineConfig({
       "@aponiajs/platform-core": new URL("../platform-core/src/index.ts", import.meta.url).pathname,
     },
     globals: true,
-    include: ["tests-vp/**/*.conformance.ts"],
+    include: ["test/**/*.conformance.ts"],
   },
   pack: {
     // The build reads a tsconfig without the workspace `paths` the test lane

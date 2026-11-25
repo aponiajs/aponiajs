@@ -13,7 +13,7 @@ import type {
   TransportHandler,
   TransportSubscription,
   TransportSubscriptionHandle,
-} from "../../transport/transport.types.ts";
+} from "../../interfaces/transport.interface.ts";
 import type {
   AzureSdkClient,
   AzureSdkLoader,
@@ -22,7 +22,7 @@ import type {
   AzureSdkReceiverSubscription,
   AzureSdkSender,
   AzureServiceBusTransportOptions,
-} from "./azure-service-bus-transport.types.ts";
+} from "../../interfaces/azure-service-bus-transport.interface.ts";
 
 const transportName = "azure-service-bus";
 const packageName = "@azure/service-bus";

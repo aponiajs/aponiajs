@@ -65,6 +65,14 @@ a failure is an `exception` frame with no stack or cause.
 - Routes, validation, guards, interceptors, filters, pipes, middleware, the
   route prefix, URI version mounts from `@Version()`, SSE, and lifecycle are the
   same contract as `@aponiajs/platform-elysia`.
+- The managed application carries the same Nest surface as the Elysia platform:
+  `useGlobalGuards`, `useGlobalInterceptors`, `useGlobalPipes`,
+  `useGlobalFilters`, `enableCors`, `useSecurityHeaders`, `setGlobalPrefix`,
+  `enableVersioning`, `enableShutdownHooks`, `useLogger`, `flushLogs`,
+  `getHttpServer`, and `init()`. A configuration method records its state and
+  `init()` re-runs the boot once; `getHttpServer()` is the bound Bun server after
+  `listen`. The repository's delivery adapters keep their narrower documented
+  surface.
 - The `versioning` option's header and media-type negotiation and the health
   probes are shared with the other platforms. Inspection is the Elysia
   platform's and is not provided here.
