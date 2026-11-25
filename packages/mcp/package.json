@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/mcp",
-  "version": "1.0.0-beta.62",
+  "version": "1.0.0-beta.63",
   "description": "Nest-style Model Context Protocol server for AponiaJS, with decorated tools, resources, and prompts served from the official SDK.",
   "keywords": [
     "agents",

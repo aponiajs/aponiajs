@@ -140,7 +140,7 @@ describe("Nest CLI surface", () => {
         name: "app",
         version: "1.0.0",
         packageManager: "bun@1.4.5",
-        dependencies: { "@aponiajs/platform-elysia": "1.0.0-beta.61" },
+        dependencies: { "@aponiajs/platform-elysia": "1.0.0-beta.63" },
       }),
     );
     const log = spyOn(console, "log").mockImplementation(() => {});
@@ -154,7 +154,7 @@ describe("Nest CLI surface", () => {
         readonly projects: readonly { readonly name: string; readonly type: string }[];
       };
       expect(payload.root).toBe(root);
-      expect(payload.framework).toBe("1.0.0-beta.61");
+      expect(payload.framework).toBe("1.0.0-beta.63");
       expect(payload.packageManager).toBe("bun@1.4.5");
       expect(payload.projects[0]).toMatchObject({ name: "api", type: "application" });
     } finally {
