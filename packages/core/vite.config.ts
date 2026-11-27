@@ -4,6 +4,7 @@ export default defineConfig({
   test: {
     alias: {
       "@aponiajs/common": new URL("../common/src/index.ts", import.meta.url).pathname,
+      "@aponiajs/compiler": new URL("../compiler/src/index.ts", import.meta.url).pathname,
     },
     globals: true,
     include: ["test/**/*.conformance.ts"],
@@ -13,7 +14,7 @@ export default defineConfig({
     dts: true,
     exports: true,
     deps: {
-      neverBundle: ["@aponiajs/common"],
+      neverBundle: ["@aponiajs/common", "@aponiajs/compiler"],
     },
   },
   lint: {

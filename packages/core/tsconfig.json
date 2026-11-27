@@ -18,7 +18,8 @@
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
     "paths": {
-      "@aponiajs/common": ["../common/src/index.ts"]
+      "@aponiajs/common": ["../common/src/index.ts"],
+      "@aponiajs/compiler": ["../compiler/src/index.ts"]
     }
   }
 }

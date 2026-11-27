@@ -320,10 +320,6 @@
         "@aponiajs/common": "workspace:*",
       },
       "devDependencies": {
-        "@aponiajs/core": "workspace:*",
-        "@aponiajs/platform-elysia": "workspace:*",
-        "@aponiajs/platform-h3": "workspace:*",
-        "@aponiajs/platform-hono": "workspace:*",
         "elysia": "2.0.0-rc.4",
         "h3": "^2.0.8",
         "hono": "^4.13.17",
