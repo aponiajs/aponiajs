@@ -51,14 +51,14 @@
   },
   "devDependencies": {
     "@elysia/eden": "2.0.0-rc.1",
-    "arktype": "^2.2.3",
-    "elysia": "2.0.0-rc.4",
-    "typebox": "^1.4.6",
+    "arktype": "^2.2.10",
+    "elysia": "2.0.0-rc.5",
+    "typebox": "^1.4.7",
     "zod": "^4.6.6"
   },
   "peerDependencies": {
-    "elysia": "2.0.0-rc.4",
-    "typebox": "^1.4.6"
+    "elysia": "2.0.0-rc.5",
+    "typebox": "^1.4.7"
   },
   "engines": {
     "bun": ">=1.4.4"

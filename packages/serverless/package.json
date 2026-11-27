@@ -45,7 +45,7 @@
   "devDependencies": {
     "@aponiajs/common": "workspace:*",
     "@aponiajs/platform-elysia": "workspace:*",
-    "elysia": "2.0.0-rc.4"
+    "elysia": "2.0.0-rc.5"
   },
   "engines": {
     "bun": ">=1.4.4"

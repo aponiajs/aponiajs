@@ -52,7 +52,7 @@
     "@aponiajs/schematics": "workspace:*",
     "change-case": "^5.4.4",
     "inflection": "^3.0.2",
-    "oxfmt": "0.60.0",
+    "oxfmt": "0.80.0",
     "ts-morph": "^28.0.0",
     "yargs-parser": "^22.0.0"
   },

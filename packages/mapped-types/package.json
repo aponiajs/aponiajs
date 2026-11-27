@@ -44,12 +44,12 @@
   },
   "dependencies": {
     "@aponiajs/common": "workspace:*",
-    "typebox": "^1.4.6"
+    "typebox": "^1.4.7"
   },
   "devDependencies": {
     "@aponiajs/cli": "workspace:*",
     "@aponiajs/platform-elysia": "workspace:*",
-    "elysia": "2.0.0-rc.4"
+    "elysia": "2.0.0-rc.5"
   },
   "engines": {
     "bun": ">=1.4.4"
