@@ -1,0 +1,15 @@
+# @aponiajs/mapped-types
+
+> Mapped DTO utilities (`PartialType`, `PickType`, `OmitType`, `IntersectionType`) for AponiaJS validation models and plain DTO classes.
+
+## Key exports
+
+- `PartialType(BaseClass)`
+- `PickType(BaseClass, keys)`
+- `OmitType(BaseClass, keys)`
+- `IntersectionType(ClassA, ClassB)`
+
+## Links
+
+- [Package README](./README.md)
+- [Published packages](../../docs/reference/packages.md)

@@ -2,67 +2,6 @@
   "contractVersion": 1,
   "packages": [
     {
-      "name": "@aponiajs/audit",
-      "exports": [
-        {
-          "name": "AuditEvent",
-          "kind": "type"
-        },
-        {
-          "name": "AuditEventInput",
-          "kind": "type"
-        },
-        {
-          "name": "AuditModule",
-          "kind": "value"
-        },
-        {
-          "name": "AuditModuleAsyncOptions",
-          "kind": "type"
-        },
-        {
-          "name": "AuditModuleOptions",
-          "kind": "type"
-        },
-        {
-          "name": "AuditOutcome",
-          "kind": "type"
-        },
-        {
-          "name": "AuditService",
-          "kind": "value"
-        },
-        {
-          "name": "AuditStore",
-          "kind": "type"
-        },
-        {
-          "name": "MemoryAuditStore",
-          "kind": "value"
-        },
-        {
-          "name": "MemoryAuditStoreOptions",
-          "kind": "type"
-        },
-        {
-          "name": "MODULE_OPTIONS_TOKEN",
-          "kind": "value"
-        },
-        {
-          "name": "type AuditModuleExtras",
-          "kind": "value"
-        },
-        {
-          "name": "type AuditModuleRegistrationAsyncOptions",
-          "kind": "value"
-        },
-        {
-          "name": "type AuditModuleSyncOptions",
-          "kind": "value"
-        }
-      ]
-    },
-    {
       "name": "@aponiajs/auth",
       "exports": [
         {
@@ -601,6 +540,30 @@
           "kind": "value"
         },
         {
+          "name": "ALL_PLATFORMS",
+          "kind": "value"
+        },
+        {
+          "name": "answerHealthProbe",
+          "kind": "value"
+        },
+        {
+          "name": "answerStaticAsset",
+          "kind": "value"
+        },
+        {
+          "name": "AponiaApplicationContract",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaApplicationSurfaceConfig",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaBootDiagnostics",
+          "kind": "type"
+        },
+        {
           "name": "AponiaError",
           "kind": "value"
         },
@@ -609,11 +572,63 @@
           "kind": "type"
         },
         {
+          "name": "AponiaHealthOptions",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaHealthResponse",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaHealthStatus",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaHttpApplicationOptions",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaInvokerArtifact",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaInvokerSelection",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaListenOptions",
+          "kind": "type"
+        },
+        {
           "name": "AponiaMiddleware",
           "kind": "type"
         },
         {
           "name": "AponiaModule",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaModuleDescriptorArtifact",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaNeutralCallbackRouteDiagnostics",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaRootModule",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaRootModuleSelection",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaRouteDiagnostics",
+          "kind": "type"
+        },
+        {
+          "name": "AponiaVersioningOptions",
           "kind": "type"
         },
         {
@@ -645,11 +660,31 @@
           "kind": "value"
         },
         {
+          "name": "ApplicationReadiness",
+          "kind": "value"
+        },
+        {
+          "name": "applyCors",
+          "kind": "value"
+        },
+        {
           "name": "applyDecorators",
           "kind": "value"
         },
         {
           "name": "applyDeprecationHeaders",
+          "kind": "value"
+        },
+        {
+          "name": "applyHttpPolicies",
+          "kind": "value"
+        },
+        {
+          "name": "applyHttpPolicyResponses",
+          "kind": "value"
+        },
+        {
+          "name": "applyPlatformModules",
           "kind": "value"
         },
         {
@@ -665,7 +700,31 @@
           "kind": "type"
         },
         {
+          "name": "assertPlatformCapabilities",
+          "kind": "value"
+        },
+        {
+          "name": "AsyncConfigurationOptions",
+          "kind": "type"
+        },
+        {
           "name": "AsyncContextExit",
+          "kind": "type"
+        },
+        {
+          "name": "AsyncPluginOptions",
+          "kind": "type"
+        },
+        {
+          "name": "AuthenticatedUser",
+          "kind": "type"
+        },
+        {
+          "name": "AuthGuard",
+          "kind": "value"
+        },
+        {
+          "name": "AuthGuardOptions",
           "kind": "type"
         },
         {
@@ -682,6 +741,18 @@
         },
         {
           "name": "Body",
+          "kind": "value"
+        },
+        {
+          "name": "BOOT_DIAGNOSTICS",
+          "kind": "value"
+        },
+        {
+          "name": "BootDiagnosticsRef",
+          "kind": "type"
+        },
+        {
+          "name": "buildResponse",
           "kind": "value"
         },
         {
@@ -702,6 +773,42 @@
         },
         {
           "name": "ClassToken",
+          "kind": "type"
+        },
+        {
+          "name": "clearCookie",
+          "kind": "value"
+        },
+        {
+          "name": "compareRouteSpecificity",
+          "kind": "value"
+        },
+        {
+          "name": "CompiledRoute",
+          "kind": "type"
+        },
+        {
+          "name": "compileGatewayPlan",
+          "kind": "value"
+        },
+        {
+          "name": "compileHealthProbes",
+          "kind": "value"
+        },
+        {
+          "name": "compileRootModule",
+          "kind": "value"
+        },
+        {
+          "name": "compileRootModuleAsync",
+          "kind": "value"
+        },
+        {
+          "name": "compileRoutes",
+          "kind": "value"
+        },
+        {
+          "name": "CompressionOptions",
           "kind": "type"
         },
         {
@@ -741,6 +848,10 @@
           "kind": "type"
         },
         {
+          "name": "contentDisposition",
+          "kind": "value"
+        },
+        {
           "name": "Context",
           "kind": "value"
         },
@@ -753,6 +864,10 @@
           "kind": "type"
         },
         {
+          "name": "ControllerHandlerFactory",
+          "kind": "type"
+        },
+        {
           "name": "ControllerMetadata",
           "kind": "type"
         },
@@ -761,7 +876,31 @@
           "kind": "value"
         },
         {
+          "name": "CookieOptions",
+          "kind": "type"
+        },
+        {
+          "name": "CorsOptions",
+          "kind": "type"
+        },
+        {
+          "name": "corsPreflight",
+          "kind": "value"
+        },
+        {
+          "name": "createApplicationSurfaceConfig",
+          "kind": "value"
+        },
+        {
+          "name": "createBootDiagnosticsRef",
+          "kind": "value"
+        },
+        {
           "name": "createDto",
+          "kind": "value"
+        },
+        {
+          "name": "createGatewayDispatcher",
           "kind": "value"
         },
         {
@@ -769,7 +908,15 @@
           "kind": "value"
         },
         {
+          "name": "createRequestPipeline",
+          "kind": "value"
+        },
+        {
           "name": "createToken",
+          "kind": "value"
+        },
+        {
+          "name": "createVersionNegotiator",
           "kind": "value"
         },
         {
@@ -779,6 +926,10 @@
         {
           "name": "CustomParamFactory",
           "kind": "type"
+        },
+        {
+          "name": "defaultMaxBodyBytes",
+          "kind": "value"
         },
         {
           "name": "DefaultValuePipe",
@@ -809,6 +960,10 @@
           "kind": "type"
         },
         {
+          "name": "DownloadFileOptions",
+          "kind": "type"
+        },
+        {
           "name": "DtoConstructor",
           "kind": "type"
         },
@@ -826,6 +981,10 @@
         },
         {
           "name": "EnhancerMetadata",
+          "kind": "type"
+        },
+        {
+          "name": "EtagOptions",
           "kind": "type"
         },
         {
@@ -866,6 +1025,34 @@
         },
         {
           "name": "ForwardReference",
+          "kind": "type"
+        },
+        {
+          "name": "GatewayHandlerPlan",
+          "kind": "type"
+        },
+        {
+          "name": "GatewayHooks",
+          "kind": "type"
+        },
+        {
+          "name": "GatewayHost",
+          "kind": "type"
+        },
+        {
+          "name": "GatewayPlan",
+          "kind": "type"
+        },
+        {
+          "name": "GatewayServer",
+          "kind": "type"
+        },
+        {
+          "name": "GatewayServerOptions",
+          "kind": "type"
+        },
+        {
+          "name": "GatewaySocket",
           "kind": "type"
         },
         {
@@ -1009,7 +1196,23 @@
           "kind": "value"
         },
         {
+          "name": "HealthProbeMount",
+          "kind": "type"
+        },
+        {
           "name": "HostParam",
+          "kind": "value"
+        },
+        {
+          "name": "HostRequestInfo",
+          "kind": "type"
+        },
+        {
+          "name": "HTTP_POLICIES",
+          "kind": "value"
+        },
+        {
+          "name": "HttpAdapterHost",
           "kind": "value"
         },
         {
@@ -1021,8 +1224,60 @@
           "kind": "value"
         },
         {
+          "name": "HttpControllerKind",
+          "kind": "value"
+        },
+        {
+          "name": "httpError",
+          "kind": "value"
+        },
+        {
+          "name": "HttpError",
+          "kind": "value"
+        },
+        {
+          "name": "HttpErrorFactories",
+          "kind": "type"
+        },
+        {
+          "name": "HttpErrorFactory",
+          "kind": "type"
+        },
+        {
+          "name": "HttpErrorOptions",
+          "kind": "type"
+        },
+        {
+          "name": "httpErrors",
+          "kind": "value"
+        },
+        {
+          "name": "HttpErrorStatus",
+          "kind": "type"
+        },
+        {
+          "name": "HttpErrorStatusCode",
+          "kind": "type"
+        },
+        {
+          "name": "HttpErrorStatusName",
+          "kind": "type"
+        },
+        {
           "name": "HttpException",
           "kind": "value"
+        },
+        {
+          "name": "HttpKernelOptions",
+          "kind": "type"
+        },
+        {
+          "name": "HttpPolicy",
+          "kind": "type"
+        },
+        {
+          "name": "HttpPolicyOptions",
+          "kind": "type"
         },
         {
           "name": "httpStatus",
@@ -1035,6 +1290,10 @@
         {
           "name": "HttpStatusCode",
           "kind": "type"
+        },
+        {
+          "name": "httpStatusCodes",
+          "kind": "value"
         },
         {
           "name": "HttpStatusName",
@@ -1069,12 +1328,20 @@
           "kind": "type"
         },
         {
+          "name": "injectGatewayServer",
+          "kind": "value"
+        },
+        {
           "name": "InjectionDependency",
           "kind": "type"
         },
         {
           "name": "InjectionToken",
           "kind": "type"
+        },
+        {
+          "name": "installShutdownSignalHandlers",
+          "kind": "value"
         },
         {
           "name": "Interceptor",
@@ -1113,6 +1380,10 @@
           "kind": "value"
         },
         {
+          "name": "isModuleDefinition",
+          "kind": "value"
+        },
+        {
           "name": "isOptionalInjection",
           "kind": "value"
         },
@@ -1133,6 +1404,14 @@
           "kind": "value"
         },
         {
+          "name": "joinPaths",
+          "kind": "value"
+        },
+        {
+          "name": "KernelAdapter",
+          "kind": "type"
+        },
+        {
           "name": "LegacyProviderScope",
           "kind": "type"
         },
@@ -1151,6 +1430,14 @@
         {
           "name": "LogLevel",
           "kind": "type"
+        },
+        {
+          "name": "matchedRouteOf",
+          "kind": "value"
+        },
+        {
+          "name": "matchesFilter",
+          "kind": "value"
         },
         {
           "name": "maximumMessagePatternLength",
@@ -1187,6 +1474,14 @@
         {
           "name": "McpToolOptions",
           "kind": "type"
+        },
+        {
+          "name": "mergeApplicationSurfaceOptions",
+          "kind": "value"
+        },
+        {
+          "name": "mergeGatewayOptions",
+          "kind": "value"
         },
         {
           "name": "MESSAGE_HANDLER_ERROR_CODE",
@@ -1317,6 +1612,10 @@
           "kind": "type"
         },
         {
+          "name": "MountedRoute",
+          "kind": "type"
+        },
+        {
           "name": "NestProvider",
           "kind": "type"
         },
@@ -1341,11 +1640,27 @@
           "kind": "value"
         },
         {
+          "name": "normalizeRoutePrefix",
+          "kind": "value"
+        },
+        {
+          "name": "normalizeStaticAssets",
+          "kind": "value"
+        },
+        {
           "name": "NotAcceptableException",
           "kind": "value"
         },
         {
           "name": "NotFoundException",
+          "kind": "value"
+        },
+        {
+          "name": "notifyRequestError",
+          "kind": "value"
+        },
+        {
+          "name": "notifyRequestResponse",
           "kind": "value"
         },
         {
@@ -1411,6 +1726,10 @@
         {
           "name": "Param",
           "kind": "value"
+        },
+        {
+          "name": "ParameterPipesMap",
+          "kind": "type"
         },
         {
           "name": "ParseArrayPipe",
@@ -1497,12 +1816,76 @@
           "kind": "type"
         },
         {
+          "name": "PLATFORM_ADAPTER_HOST",
+          "kind": "value"
+        },
+        {
+          "name": "PLATFORM_CAPABILITIES",
+          "kind": "value"
+        },
+        {
+          "name": "PLATFORM_CAPABILITY_REQUIREMENT",
+          "kind": "value"
+        },
+        {
+          "name": "PlatformAdapterEntry",
+          "kind": "type"
+        },
+        {
+          "name": "PlatformAdapterHost",
+          "kind": "type"
+        },
+        {
+          "name": "platformCapabilities",
+          "kind": "value"
+        },
+        {
+          "name": "PlatformCapabilities",
+          "kind": "type"
+        },
+        {
+          "name": "PlatformCapability",
+          "kind": "type"
+        },
+        {
+          "name": "PlatformCapabilityRequirement",
+          "kind": "type"
+        },
+        {
+          "name": "PlatformHost",
+          "kind": "type"
+        },
+        {
+          "name": "PlatformModuleAdapter",
+          "kind": "type"
+        },
+        {
+          "name": "PlatformModuleSupport",
+          "kind": "type"
+        },
+        {
+          "name": "PlatformMountOptions",
+          "kind": "type"
+        },
+        {
+          "name": "PlatformRouteContext",
+          "kind": "type"
+        },
+        {
+          "name": "PlatformRouteHandler",
+          "kind": "type"
+        },
+        {
           "name": "Post",
           "kind": "value"
         },
         {
           "name": "PreconditionFailedException",
           "kind": "value"
+        },
+        {
+          "name": "ProblemDetails",
+          "kind": "type"
         },
         {
           "name": "Prompt",
@@ -1517,12 +1900,60 @@
           "kind": "value"
         },
         {
+          "name": "provideConfiguration",
+          "kind": "value"
+        },
+        {
+          "name": "provideConfigurationAsync",
+          "kind": "value"
+        },
+        {
           "name": "provideFactory",
+          "kind": "value"
+        },
+        {
+          "name": "provideHttpAdapterHost",
+          "kind": "value"
+        },
+        {
+          "name": "provideHttpPolicies",
+          "kind": "value"
+        },
+        {
+          "name": "provideHttpPoliciesAsync",
+          "kind": "value"
+        },
+        {
+          "name": "provideHttpPolicy",
+          "kind": "value"
+        },
+        {
+          "name": "provideHttpPolicyAsync",
+          "kind": "value"
+        },
+        {
+          "name": "providePlatformCapabilities",
+          "kind": "value"
+        },
+        {
+          "name": "providePlatformModule",
           "kind": "value"
         },
         {
           "name": "Provider",
           "kind": "type"
+        },
+        {
+          "name": "provideRequestLifecycleHook",
+          "kind": "value"
+        },
+        {
+          "name": "provideRequestLifecycleHooks",
+          "kind": "value"
+        },
+        {
+          "name": "provideRequestLifecycleHooksAsync",
+          "kind": "value"
         },
         {
           "name": "ProviderScope",
@@ -1541,11 +1972,39 @@
           "kind": "value"
         },
         {
+          "name": "readBody",
+          "kind": "value"
+        },
+        {
+          "name": "readBootDiagnostics",
+          "kind": "value"
+        },
+        {
+          "name": "readCookies",
+          "kind": "value"
+        },
+        {
+          "name": "readHeaders",
+          "kind": "value"
+        },
+        {
+          "name": "readPlatformCapabilities",
+          "kind": "value"
+        },
+        {
+          "name": "readQuery",
+          "kind": "value"
+        },
+        {
           "name": "Reflector",
           "kind": "value"
         },
         {
           "name": "registerAsyncContextExit",
+          "kind": "value"
+        },
+        {
+          "name": "rememberMatchedRoute",
           "kind": "value"
         },
         {
@@ -1557,7 +2016,35 @@
           "kind": "value"
         },
         {
+          "name": "REQUEST_LIFECYCLE_HOOKS",
+          "kind": "value"
+        },
+        {
+          "name": "RequestContext",
+          "kind": "type"
+        },
+        {
+          "name": "RequestContextModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "RequestContextRegistration",
+          "kind": "type"
+        },
+        {
+          "name": "RequestLifecycleHook",
+          "kind": "type"
+        },
+        {
           "name": "RequestMethod",
+          "kind": "type"
+        },
+        {
+          "name": "RequestPipeline",
+          "kind": "type"
+        },
+        {
+          "name": "RequestPipelineOptions",
           "kind": "type"
         },
         {
@@ -1565,11 +2052,75 @@
           "kind": "value"
         },
         {
+          "name": "requirePlatformCapabilities",
+          "kind": "value"
+        },
+        {
+          "name": "resolveApplicationHttpPolicies",
+          "kind": "value"
+        },
+        {
+          "name": "resolveCorsOptions",
+          "kind": "value"
+        },
+        {
+          "name": "ResolvedCors",
+          "kind": "type"
+        },
+        {
+          "name": "ResolvedFilter",
+          "kind": "type"
+        },
+        {
+          "name": "ResolvedHttpPolicies",
+          "kind": "type"
+        },
+        {
+          "name": "ResolvedMiddlewareConfig",
+          "kind": "type"
+        },
+        {
+          "name": "ResolvedModuleImports",
+          "kind": "type"
+        },
+        {
+          "name": "ResolvedPipe",
+          "kind": "type"
+        },
+        {
+          "name": "ResolvedPlatformModule",
+          "kind": "type"
+        },
+        {
           "name": "resolveForwardRef",
           "kind": "value"
         },
         {
+          "name": "ResolveHttpErrorStatus",
+          "kind": "type"
+        },
+        {
+          "name": "resolveHttpPolicies",
+          "kind": "value"
+        },
+        {
+          "name": "resolveModuleImports",
+          "kind": "value"
+        },
+        {
+          "name": "resolvePlatformModules",
+          "kind": "value"
+        },
+        {
+          "name": "resolveRequestLifecycleHooks",
+          "kind": "value"
+        },
+        {
           "name": "resolveRouteValidator",
+          "kind": "value"
+        },
+        {
+          "name": "resolveStaticAssetPath",
           "kind": "value"
         },
         {
@@ -1597,6 +2148,14 @@
           "kind": "type"
         },
         {
+          "name": "RolesGuard",
+          "kind": "value"
+        },
+        {
+          "name": "RootCompilationOptions",
+          "kind": "type"
+        },
+        {
           "name": "RouteContext",
           "kind": "type"
         },
@@ -1606,6 +2165,14 @@
         },
         {
           "name": "RouteDecoratorFactory",
+          "kind": "type"
+        },
+        {
+          "name": "RouteHandler",
+          "kind": "type"
+        },
+        {
+          "name": "RouteMatch",
           "kind": "type"
         },
         {
@@ -1631,6 +2198,10 @@
         {
           "name": "routeParametersMetadataKey",
           "kind": "value"
+        },
+        {
+          "name": "RoutePlan",
+          "kind": "type"
         },
         {
           "name": "RouteResponseSchema",
@@ -1669,11 +2240,31 @@
           "kind": "type"
         },
         {
+          "name": "runHttpPolicyRequests",
+          "kind": "value"
+        },
+        {
           "name": "runOutsideAsyncContexts",
           "kind": "value"
         },
         {
+          "name": "runRequestHooks",
+          "kind": "value"
+        },
+        {
           "name": "Scope",
+          "kind": "value"
+        },
+        {
+          "name": "SecurityHeadersOptions",
+          "kind": "type"
+        },
+        {
+          "name": "selectInvokerArtifact",
+          "kind": "value"
+        },
+        {
+          "name": "selectRootModuleDescriptor",
           "kind": "value"
         },
         {
@@ -1713,12 +2304,36 @@
           "kind": "value"
         },
         {
+          "name": "StaticAssetsOptions",
+          "kind": "type"
+        },
+        {
+          "name": "StaticFileOpener",
+          "kind": "type"
+        },
+        {
+          "name": "StaticFileSource",
+          "kind": "type"
+        },
+        {
+          "name": "statusCodeOf",
+          "kind": "value"
+        },
+        {
+          "name": "statusNameOf",
+          "kind": "value"
+        },
+        {
           "name": "StreamableFile",
           "kind": "value"
         },
         {
           "name": "StreamableFileOptions",
           "kind": "type"
+        },
+        {
+          "name": "stripRoutePrefix",
+          "kind": "value"
         },
         {
           "name": "SubscribeMessage",
@@ -1773,6 +2388,22 @@
           "kind": "value"
         },
         {
+          "name": "type HttpStatusReasonCode",
+          "kind": "value"
+        },
+        {
+          "name": "type HttpStatusReasonName",
+          "kind": "value"
+        },
+        {
+          "name": "type ShutdownSignal",
+          "kind": "value"
+        },
+        {
+          "name": "type ShutdownSignalTarget",
+          "kind": "value"
+        },
+        {
           "name": "UnauthorizedException",
           "kind": "value"
         },
@@ -1817,11 +2448,19 @@
           "kind": "value"
         },
         {
+          "name": "validateSlot",
+          "kind": "value"
+        },
+        {
           "name": "Validation",
           "kind": "value"
         },
         {
           "name": "ValidationError",
+          "kind": "type"
+        },
+        {
+          "name": "ValidationIssue",
           "kind": "type"
         },
         {
@@ -1859,6 +2498,14 @@
         {
           "name": "VersioningType",
           "kind": "value"
+        },
+        {
+          "name": "VersionNegotiationRoute",
+          "kind": "type"
+        },
+        {
+          "name": "VersionNegotiator",
+          "kind": "type"
         },
         {
           "name": "versionPathSegment",
@@ -1914,6 +2561,10 @@
         },
         {
           "name": "withModuleProviders",
+          "kind": "value"
+        },
+        {
+          "name": "writeCookie",
           "kind": "value"
         },
         {
@@ -2065,6 +2716,59 @@
       ]
     },
     {
+      "name": "@aponiajs/config",
+      "exports": [
+        {
+          "name": "CONFIG_MODULE_OPTIONS",
+          "kind": "value"
+        },
+        {
+          "name": "ConfigFactory",
+          "kind": "type"
+        },
+        {
+          "name": "ConfigFactoryKeyHost",
+          "kind": "type"
+        },
+        {
+          "name": "ConfigModule",
+          "kind": "value"
+        },
+        {
+          "name": "ConfigModuleAsyncOptions",
+          "kind": "type"
+        },
+        {
+          "name": "ConfigModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "ConfigObject",
+          "kind": "type"
+        },
+        {
+          "name": "ConfigService",
+          "kind": "value"
+        },
+        {
+          "name": "CONFIGURATION_LOADER",
+          "kind": "value"
+        },
+        {
+          "name": "CONFIGURATION_TOKEN",
+          "kind": "value"
+        },
+        {
+          "name": "getConfigToken",
+          "kind": "value"
+        },
+        {
+          "name": "registerAs",
+          "kind": "value"
+        }
+      ]
+    },
+    {
       "name": "@aponiajs/core",
       "exports": [
         {
@@ -2088,11 +2792,59 @@
           "kind": "value"
         },
         {
+          "name": "APPLICATION_CONTAINER",
+          "kind": "value"
+        },
+        {
+          "name": "ApplicationContainerRef",
+          "kind": "type"
+        },
+        {
+          "name": "ApplicationEnhancerOccurrence",
+          "kind": "type"
+        },
+        {
+          "name": "ApplicationShutdown",
+          "kind": "type"
+        },
+        {
+          "name": "attachApplicationContainer",
+          "kind": "value"
+        },
+        {
+          "name": "attachApplicationShutdown",
+          "kind": "value"
+        },
+        {
           "name": "attachRequestContextId",
           "kind": "value"
         },
         {
+          "name": "buildArguments",
+          "kind": "value"
+        },
+        {
+          "name": "collectApplicationEnhancerEntries",
+          "kind": "value"
+        },
+        {
+          "name": "collectLifecycleCalls",
+          "kind": "value"
+        },
+        {
+          "name": "collectModuleMiddleware",
+          "kind": "value"
+        },
+        {
+          "name": "compileGuardsHook",
+          "kind": "value"
+        },
+        {
           "name": "compileModuleGraph",
+          "kind": "value"
+        },
+        {
+          "name": "compileUnrolledGuards",
           "kind": "value"
         },
         {
@@ -2120,11 +2872,43 @@
           "kind": "type"
         },
         {
+          "name": "createApplicationContainerRef",
+          "kind": "value"
+        },
+        {
           "name": "createContainer",
           "kind": "value"
         },
         {
+          "name": "createMiddlewareConsumer",
+          "kind": "value"
+        },
+        {
+          "name": "createRouteExecutionRuntime",
+          "kind": "value"
+        },
+        {
+          "name": "createRouteHandler",
+          "kind": "value"
+        },
+        {
+          "name": "createShutdown",
+          "kind": "value"
+        },
+        {
+          "name": "executeMountedRoute",
+          "kind": "value"
+        },
+        {
+          "name": "executePipes",
+          "kind": "value"
+        },
+        {
           "name": "formatMissingProviderDiagnostic",
+          "kind": "value"
+        },
+        {
+          "name": "getApplicationContainer",
           "kind": "value"
         },
         {
@@ -2144,6 +2928,42 @@
           "kind": "value"
         },
         {
+          "name": "isMiddlewareRouteExcluded",
+          "kind": "value"
+        },
+        {
+          "name": "isValidRequestId",
+          "kind": "value"
+        },
+        {
+          "name": "LifecycleCall",
+          "kind": "type"
+        },
+        {
+          "name": "lifecycleCallable",
+          "kind": "value"
+        },
+        {
+          "name": "LifecycleCollectionOptions",
+          "kind": "type"
+        },
+        {
+          "name": "LifecycleHookContract",
+          "kind": "type"
+        },
+        {
+          "name": "locateRequestContext",
+          "kind": "value"
+        },
+        {
+          "name": "matchesMiddlewarePath",
+          "kind": "value"
+        },
+        {
+          "name": "matchesMiddlewareTarget",
+          "kind": "value"
+        },
+        {
           "name": "ModuleGraph",
           "kind": "value"
         },
@@ -2156,8 +2976,20 @@
           "kind": "value"
         },
         {
+          "name": "normalizeMiddlewarePath",
+          "kind": "value"
+        },
+        {
           "name": "ProviderLocation",
           "kind": "type"
+        },
+        {
+          "name": "readApplicationShutdown",
+          "kind": "value"
+        },
+        {
+          "name": "readParameterValue",
+          "kind": "value"
         },
         {
           "name": "REQUEST",
@@ -2165,6 +2997,86 @@
         },
         {
           "name": "REQUEST_CONTEXT_ID",
+          "kind": "value"
+        },
+        {
+          "name": "REQUEST_CONTEXT_REGISTRATION",
+          "kind": "value"
+        },
+        {
+          "name": "RequestContextModule",
+          "kind": "value"
+        },
+        {
+          "name": "RequestContextService",
+          "kind": "value"
+        },
+        {
+          "name": "resolveApplicationEnhancer",
+          "kind": "value"
+        },
+        {
+          "name": "resolveApplicationFilters",
+          "kind": "value"
+        },
+        {
+          "name": "resolveApplicationGuards",
+          "kind": "value"
+        },
+        {
+          "name": "resolveApplicationInterceptors",
+          "kind": "value"
+        },
+        {
+          "name": "resolveApplicationPipe",
+          "kind": "value"
+        },
+        {
+          "name": "resolveApplicationPipeOccurrences",
+          "kind": "value"
+        },
+        {
+          "name": "resolveApplicationPipes",
+          "kind": "value"
+        },
+        {
+          "name": "resolveClasses",
+          "kind": "value"
+        },
+        {
+          "name": "ResolvedApplicationFilter",
+          "kind": "type"
+        },
+        {
+          "name": "resolveGatewayFilters",
+          "kind": "value"
+        },
+        {
+          "name": "resolveGlobal",
+          "kind": "value"
+        },
+        {
+          "name": "resolveMiddlewareInstance",
+          "kind": "value"
+        },
+        {
+          "name": "resolvePipe",
+          "kind": "value"
+        },
+        {
+          "name": "resolveRequestId",
+          "kind": "value"
+        },
+        {
+          "name": "RouteExecutionRuntime",
+          "kind": "type"
+        },
+        {
+          "name": "runMiddlewareChain",
+          "kind": "value"
+        },
+        {
+          "name": "StaticRouteExecutionContext",
           "kind": "value"
         },
         {
@@ -2195,6 +3107,91 @@
         {
           "name": "CorsModuleOptions",
           "kind": "type"
+        }
+      ]
+    },
+    {
+      "name": "@aponiajs/cqrs",
+      "exports": [
+        {
+          "name": "AggregateRoot",
+          "kind": "value"
+        },
+        {
+          "name": "CommandBus",
+          "kind": "value"
+        },
+        {
+          "name": "CommandHandler",
+          "kind": "value"
+        },
+        {
+          "name": "CqrsExplorer",
+          "kind": "value"
+        },
+        {
+          "name": "CqrsHandlerRegistration",
+          "kind": "type"
+        },
+        {
+          "name": "CqrsModule",
+          "kind": "value"
+        },
+        {
+          "name": "CqrsModuleOptions",
+          "kind": "type"
+        },
+        {
+          "name": "EventBus",
+          "kind": "value"
+        },
+        {
+          "name": "EventPublisher",
+          "kind": "value"
+        },
+        {
+          "name": "EventsHandler",
+          "kind": "value"
+        },
+        {
+          "name": "ICommand",
+          "kind": "type"
+        },
+        {
+          "name": "ICommandHandler",
+          "kind": "type"
+        },
+        {
+          "name": "IEvent",
+          "kind": "type"
+        },
+        {
+          "name": "IEventHandler",
+          "kind": "type"
+        },
+        {
+          "name": "IQuery",
+          "kind": "type"
+        },
+        {
+          "name": "IQueryHandler",
+          "kind": "type"
+        },
+        {
+          "name": "ISaga",
+          "kind": "type"
+        },
+        {
+          "name": "QueryBus",
+          "kind": "value"
+        },
+        {
+          "name": "QueryHandler",
+          "kind": "value"
+        },
+        {
+          "name": "Saga",
+          "kind": "value"
         }
       ]
     },
@@ -2700,32 +3697,6 @@
       ]
     },
     {
-      "name": "@aponiajs/h3",
-      "exports": [
-        {
-          "name": "toH3Handler",
-          "kind": "value"
-        }
-      ]
-    },
-    {
-      "name": "@aponiajs/hono",
-      "exports": [
-        {
-          "name": "createHonoApp",
-          "kind": "value"
-        },
-        {
-          "name": "HonoHandler",
-          "kind": "type"
-        },
-        {
-          "name": "toHonoHandler",
-          "kind": "value"
-        }
-      ]
-    },
-    {
       "name": "@aponiajs/http",
       "exports": [
         {
@@ -2855,35 +3826,31 @@
       ]
     },
     {
-      "name": "@aponiajs/idempotency",
+      "name": "@aponiajs/mapped-types",
       "exports": [
         {
-          "name": "createIdempotencyPolicy",
+          "name": "ClassConstructor",
+          "kind": "type"
+        },
+        {
+          "name": "IntersectionType",
           "kind": "value"
         },
         {
-          "name": "IdempotencyModule",
+          "name": "MappedType",
+          "kind": "type"
+        },
+        {
+          "name": "OmitType",
           "kind": "value"
         },
         {
-          "name": "IdempotencyModuleAsyncOptions",
-          "kind": "type"
-        },
-        {
-          "name": "IdempotencyModuleOptions",
-          "kind": "type"
-        },
-        {
-          "name": "IdempotencyStore",
-          "kind": "type"
-        },
-        {
-          "name": "MemoryIdempotencyStore",
+          "name": "PartialType",
           "kind": "value"
         },
         {
-          "name": "StoredIdempotentResponse",
-          "kind": "type"
+          "name": "PickType",
+          "kind": "value"
         }
       ]
     },
@@ -2993,87 +3960,6 @@
         {
           "name": "Tool",
           "kind": "value"
-        }
-      ]
-    },
-    {
-      "name": "@aponiajs/metrics",
-      "exports": [
-        {
-          "name": "Counter",
-          "kind": "type"
-        },
-        {
-          "name": "createMetricsInstrumentation",
-          "kind": "value"
-        },
-        {
-          "name": "defaultHistogramBuckets",
-          "kind": "value"
-        },
-        {
-          "name": "Gauge",
-          "kind": "type"
-        },
-        {
-          "name": "Histogram",
-          "kind": "type"
-        },
-        {
-          "name": "HistogramOptions",
-          "kind": "type"
-        },
-        {
-          "name": "MetricCollector",
-          "kind": "type"
-        },
-        {
-          "name": "MetricLabels",
-          "kind": "type"
-        },
-        {
-          "name": "MetricOptions",
-          "kind": "type"
-        },
-        {
-          "name": "metricsContentType",
-          "kind": "value"
-        },
-        {
-          "name": "MetricsExceptionFilter",
-          "kind": "value"
-        },
-        {
-          "name": "MetricsModule",
-          "kind": "value"
-        },
-        {
-          "name": "MetricsModuleAsyncOptions",
-          "kind": "type"
-        },
-        {
-          "name": "MetricsModuleOptions",
-          "kind": "type"
-        },
-        {
-          "name": "MetricsPluginOptions",
-          "kind": "type"
-        },
-        {
-          "name": "MetricsRegistry",
-          "kind": "value"
-        },
-        {
-          "name": "MetricsRegistryOptions",
-          "kind": "type"
-        },
-        {
-          "name": "renderMetricsScrape",
-          "kind": "value"
-        },
-        {
-          "name": "ResolvedMetricsOptions",
-          "kind": "type"
         }
       ]
     },
@@ -3325,1000 +4211,6 @@
         {
           "name": "OpenApiModuleOptions",
           "kind": "type"
-        }
-      ]
-    },
-    {
-      "name": "@aponiajs/opentelemetry",
-      "exports": [
-        {
-          "name": "OpentelemetryConfiguration",
-          "kind": "type"
-        },
-        {
-          "name": "OpentelemetryModule",
-          "kind": "value"
-        },
-        {
-          "name": "OpentelemetryModuleOptions",
-          "kind": "type"
-        },
-        {
-          "name": "OpentelemetryPolicy",
-          "kind": "type"
-        }
-      ]
-    },
-    {
-      "name": "@aponiajs/platform-core",
-      "exports": [
-        {
-          "name": "ALL_PLATFORMS",
-          "kind": "value"
-        },
-        {
-          "name": "answerHealthProbe",
-          "kind": "value"
-        },
-        {
-          "name": "answerStaticAsset",
-          "kind": "value"
-        },
-        {
-          "name": "AponiaAdapter",
-          "kind": "type"
-        },
-        {
-          "name": "AponiaApplicationContract",
-          "kind": "type"
-        },
-        {
-          "name": "AponiaApplicationSurfaceConfig",
-          "kind": "type"
-        },
-        {
-          "name": "AponiaBootDiagnostics",
-          "kind": "type"
-        },
-        {
-          "name": "AponiaFactory",
-          "kind": "value"
-        },
-        {
-          "name": "AponiaHealthOptions",
-          "kind": "type"
-        },
-        {
-          "name": "AponiaHealthResponse",
-          "kind": "type"
-        },
-        {
-          "name": "AponiaHealthStatus",
-          "kind": "type"
-        },
-        {
-          "name": "AponiaHttpApplication",
-          "kind": "value"
-        },
-        {
-          "name": "AponiaHttpApplicationBoot",
-          "kind": "type"
-        },
-        {
-          "name": "AponiaHttpApplicationOptions",
-          "kind": "type"
-        },
-        {
-          "name": "AponiaInvokerArtifact",
-          "kind": "type"
-        },
-        {
-          "name": "AponiaInvokerSelection",
-          "kind": "type"
-        },
-        {
-          "name": "AponiaListenOptions",
-          "kind": "type"
-        },
-        {
-          "name": "AponiaModuleDescriptorArtifact",
-          "kind": "type"
-        },
-        {
-          "name": "AponiaNeutralCallbackRouteDiagnostics",
-          "kind": "type"
-        },
-        {
-          "name": "AponiaRootModule",
-          "kind": "type"
-        },
-        {
-          "name": "AponiaRootModuleSelection",
-          "kind": "type"
-        },
-        {
-          "name": "AponiaRouteDiagnostics",
-          "kind": "type"
-        },
-        {
-          "name": "AponiaVersioningOptions",
-          "kind": "type"
-        },
-        {
-          "name": "APPLICATION_CONTAINER",
-          "kind": "value"
-        },
-        {
-          "name": "ApplicationAdapter",
-          "kind": "type"
-        },
-        {
-          "name": "ApplicationContainerRef",
-          "kind": "type"
-        },
-        {
-          "name": "ApplicationEnhancerOccurrence",
-          "kind": "type"
-        },
-        {
-          "name": "ApplicationReadiness",
-          "kind": "value"
-        },
-        {
-          "name": "ApplicationShutdown",
-          "kind": "type"
-        },
-        {
-          "name": "applyCors",
-          "kind": "value"
-        },
-        {
-          "name": "applyHttpPolicies",
-          "kind": "value"
-        },
-        {
-          "name": "applyHttpPolicyResponses",
-          "kind": "value"
-        },
-        {
-          "name": "applyPlatformModules",
-          "kind": "value"
-        },
-        {
-          "name": "assertPlatformCapabilities",
-          "kind": "value"
-        },
-        {
-          "name": "AsyncConfigurationOptions",
-          "kind": "type"
-        },
-        {
-          "name": "AsyncPluginOptions",
-          "kind": "type"
-        },
-        {
-          "name": "attachApplicationContainer",
-          "kind": "value"
-        },
-        {
-          "name": "attachApplicationShutdown",
-          "kind": "value"
-        },
-        {
-          "name": "attachRequestContextId",
-          "kind": "value"
-        },
-        {
-          "name": "AuthenticatedUser",
-          "kind": "type"
-        },
-        {
-          "name": "AuthGuard",
-          "kind": "value"
-        },
-        {
-          "name": "AuthGuardOptions",
-          "kind": "type"
-        },
-        {
-          "name": "BOOT_DIAGNOSTICS",
-          "kind": "value"
-        },
-        {
-          "name": "BootDiagnosticsRef",
-          "kind": "type"
-        },
-        {
-          "name": "BootedHttpApplication",
-          "kind": "type"
-        },
-        {
-          "name": "buildArguments",
-          "kind": "value"
-        },
-        {
-          "name": "buildResponse",
-          "kind": "value"
-        },
-        {
-          "name": "clearCookie",
-          "kind": "value"
-        },
-        {
-          "name": "collectApplicationEnhancerEntries",
-          "kind": "value"
-        },
-        {
-          "name": "collectLifecycleCalls",
-          "kind": "value"
-        },
-        {
-          "name": "collectModuleMiddleware",
-          "kind": "value"
-        },
-        {
-          "name": "CompiledRoute",
-          "kind": "type"
-        },
-        {
-          "name": "compileGatewayPlan",
-          "kind": "value"
-        },
-        {
-          "name": "compileGuardsHook",
-          "kind": "value"
-        },
-        {
-          "name": "compileHealthProbes",
-          "kind": "value"
-        },
-        {
-          "name": "compileRootModule",
-          "kind": "value"
-        },
-        {
-          "name": "compileRootModuleAsync",
-          "kind": "value"
-        },
-        {
-          "name": "compileRoutes",
-          "kind": "value"
-        },
-        {
-          "name": "compileUnrolledGuards",
-          "kind": "value"
-        },
-        {
-          "name": "CompressionOptions",
-          "kind": "type"
-        },
-        {
-          "name": "contentDisposition",
-          "kind": "value"
-        },
-        {
-          "name": "CONTEXT",
-          "kind": "value"
-        },
-        {
-          "name": "ContextId",
-          "kind": "type"
-        },
-        {
-          "name": "ContextIdFactory",
-          "kind": "value"
-        },
-        {
-          "name": "ContextIdResolver",
-          "kind": "type"
-        },
-        {
-          "name": "ContextIdResolverFn",
-          "kind": "type"
-        },
-        {
-          "name": "ContextIdStrategy",
-          "kind": "type"
-        },
-        {
-          "name": "ControllerHandlerFactory",
-          "kind": "type"
-        },
-        {
-          "name": "CookieOptions",
-          "kind": "type"
-        },
-        {
-          "name": "CorsOptions",
-          "kind": "type"
-        },
-        {
-          "name": "corsPreflight",
-          "kind": "value"
-        },
-        {
-          "name": "createApplicationContainerRef",
-          "kind": "value"
-        },
-        {
-          "name": "createApplicationSurfaceConfig",
-          "kind": "value"
-        },
-        {
-          "name": "createBootDiagnosticsRef",
-          "kind": "value"
-        },
-        {
-          "name": "createGatewayDispatcher",
-          "kind": "value"
-        },
-        {
-          "name": "createHttpKernel",
-          "kind": "value"
-        },
-        {
-          "name": "createMiddlewareConsumer",
-          "kind": "value"
-        },
-        {
-          "name": "createPlatformFactory",
-          "kind": "value"
-        },
-        {
-          "name": "createRouteHandler",
-          "kind": "value"
-        },
-        {
-          "name": "createRouteMatcher",
-          "kind": "value"
-        },
-        {
-          "name": "createVersionNegotiator",
-          "kind": "value"
-        },
-        {
-          "name": "defaultMaxBodyBytes",
-          "kind": "value"
-        },
-        {
-          "name": "DownloadFileOptions",
-          "kind": "type"
-        },
-        {
-          "name": "EtagOptions",
-          "kind": "type"
-        },
-        {
-          "name": "executePipes",
-          "kind": "value"
-        },
-        {
-          "name": "GatewayHandlerPlan",
-          "kind": "type"
-        },
-        {
-          "name": "GatewayHooks",
-          "kind": "type"
-        },
-        {
-          "name": "GatewayHost",
-          "kind": "type"
-        },
-        {
-          "name": "GatewayPlan",
-          "kind": "type"
-        },
-        {
-          "name": "GatewayServer",
-          "kind": "type"
-        },
-        {
-          "name": "GatewayServerOptions",
-          "kind": "type"
-        },
-        {
-          "name": "GatewaySocket",
-          "kind": "type"
-        },
-        {
-          "name": "getApplicationContainer",
-          "kind": "value"
-        },
-        {
-          "name": "HealthProbeMount",
-          "kind": "type"
-        },
-        {
-          "name": "HostComponentInfo",
-          "kind": "type"
-        },
-        {
-          "name": "HostDispatcher",
-          "kind": "type"
-        },
-        {
-          "name": "HostRequestInfo",
-          "kind": "type"
-        },
-        {
-          "name": "HTTP_POLICIES",
-          "kind": "value"
-        },
-        {
-          "name": "HttpAdapterHost",
-          "kind": "value"
-        },
-        {
-          "name": "HttpControllerKind",
-          "kind": "value"
-        },
-        {
-          "name": "httpError",
-          "kind": "value"
-        },
-        {
-          "name": "HttpError",
-          "kind": "value"
-        },
-        {
-          "name": "HttpErrorFactories",
-          "kind": "type"
-        },
-        {
-          "name": "HttpErrorFactory",
-          "kind": "type"
-        },
-        {
-          "name": "HttpErrorOptions",
-          "kind": "type"
-        },
-        {
-          "name": "httpErrors",
-          "kind": "value"
-        },
-        {
-          "name": "HttpErrorStatus",
-          "kind": "type"
-        },
-        {
-          "name": "HttpErrorStatusCode",
-          "kind": "type"
-        },
-        {
-          "name": "HttpErrorStatusName",
-          "kind": "type"
-        },
-        {
-          "name": "HttpKernel",
-          "kind": "type"
-        },
-        {
-          "name": "HttpKernelOptions",
-          "kind": "type"
-        },
-        {
-          "name": "HttpPolicy",
-          "kind": "type"
-        },
-        {
-          "name": "HttpPolicyOptions",
-          "kind": "type"
-        },
-        {
-          "name": "httpStatusCodes",
-          "kind": "value"
-        },
-        {
-          "name": "injectGatewayServer",
-          "kind": "value"
-        },
-        {
-          "name": "INQUIRER",
-          "kind": "value"
-        },
-        {
-          "name": "installShutdownSignalHandlers",
-          "kind": "value"
-        },
-        {
-          "name": "isMiddlewareRouteExcluded",
-          "kind": "value"
-        },
-        {
-          "name": "isModuleDefinition",
-          "kind": "value"
-        },
-        {
-          "name": "isValidRequestId",
-          "kind": "value"
-        },
-        {
-          "name": "joinPaths",
-          "kind": "value"
-        },
-        {
-          "name": "KernelAdapter",
-          "kind": "type"
-        },
-        {
-          "name": "LifecycleCall",
-          "kind": "type"
-        },
-        {
-          "name": "lifecycleCallable",
-          "kind": "value"
-        },
-        {
-          "name": "LifecycleCollectionOptions",
-          "kind": "type"
-        },
-        {
-          "name": "LifecycleHookContract",
-          "kind": "type"
-        },
-        {
-          "name": "ListenerRef",
-          "kind": "type"
-        },
-        {
-          "name": "matchedRouteOf",
-          "kind": "value"
-        },
-        {
-          "name": "matchesMiddlewarePath",
-          "kind": "value"
-        },
-        {
-          "name": "matchesMiddlewareTarget",
-          "kind": "value"
-        },
-        {
-          "name": "mergeApplicationSurfaceOptions",
-          "kind": "value"
-        },
-        {
-          "name": "MountedRoute",
-          "kind": "type"
-        },
-        {
-          "name": "normalizeMiddlewarePath",
-          "kind": "value"
-        },
-        {
-          "name": "normalizeRoutePrefix",
-          "kind": "value"
-        },
-        {
-          "name": "normalizeStaticAssets",
-          "kind": "value"
-        },
-        {
-          "name": "notifyRequestError",
-          "kind": "value"
-        },
-        {
-          "name": "notifyRequestResponse",
-          "kind": "value"
-        },
-        {
-          "name": "ParameterPipesMap",
-          "kind": "type"
-        },
-        {
-          "name": "PLATFORM_ADAPTER_HOST",
-          "kind": "value"
-        },
-        {
-          "name": "PLATFORM_CAPABILITIES",
-          "kind": "value"
-        },
-        {
-          "name": "PLATFORM_CAPABILITY_REQUIREMENT",
-          "kind": "value"
-        },
-        {
-          "name": "PlatformAdapterEntry",
-          "kind": "type"
-        },
-        {
-          "name": "PlatformAdapterHost",
-          "kind": "type"
-        },
-        {
-          "name": "platformCapabilities",
-          "kind": "value"
-        },
-        {
-          "name": "PlatformCapabilities",
-          "kind": "type"
-        },
-        {
-          "name": "PlatformCapability",
-          "kind": "type"
-        },
-        {
-          "name": "PlatformCapabilityRequirement",
-          "kind": "type"
-        },
-        {
-          "name": "PlatformHost",
-          "kind": "type"
-        },
-        {
-          "name": "PlatformModuleAdapter",
-          "kind": "type"
-        },
-        {
-          "name": "PlatformModuleSupport",
-          "kind": "type"
-        },
-        {
-          "name": "PlatformMountOptions",
-          "kind": "type"
-        },
-        {
-          "name": "PlatformRouteContext",
-          "kind": "type"
-        },
-        {
-          "name": "PlatformRouteHandler",
-          "kind": "type"
-        },
-        {
-          "name": "ProblemDetails",
-          "kind": "type"
-        },
-        {
-          "name": "provideConfiguration",
-          "kind": "value"
-        },
-        {
-          "name": "provideConfigurationAsync",
-          "kind": "value"
-        },
-        {
-          "name": "provideHttpAdapterHost",
-          "kind": "value"
-        },
-        {
-          "name": "provideHttpPolicies",
-          "kind": "value"
-        },
-        {
-          "name": "provideHttpPoliciesAsync",
-          "kind": "value"
-        },
-        {
-          "name": "provideHttpPolicy",
-          "kind": "value"
-        },
-        {
-          "name": "provideHttpPolicyAsync",
-          "kind": "value"
-        },
-        {
-          "name": "providePlatformCapabilities",
-          "kind": "value"
-        },
-        {
-          "name": "providePlatformModule",
-          "kind": "value"
-        },
-        {
-          "name": "provideRequestLifecycleHook",
-          "kind": "value"
-        },
-        {
-          "name": "provideRequestLifecycleHooks",
-          "kind": "value"
-        },
-        {
-          "name": "provideRequestLifecycleHooksAsync",
-          "kind": "value"
-        },
-        {
-          "name": "readApplicationShutdown",
-          "kind": "value"
-        },
-        {
-          "name": "readBody",
-          "kind": "value"
-        },
-        {
-          "name": "readBootDiagnostics",
-          "kind": "value"
-        },
-        {
-          "name": "readCookies",
-          "kind": "value"
-        },
-        {
-          "name": "readHeaders",
-          "kind": "value"
-        },
-        {
-          "name": "readParameterValue",
-          "kind": "value"
-        },
-        {
-          "name": "readPlatformCapabilities",
-          "kind": "value"
-        },
-        {
-          "name": "readQuery",
-          "kind": "value"
-        },
-        {
-          "name": "rememberMatchedRoute",
-          "kind": "value"
-        },
-        {
-          "name": "REQUEST",
-          "kind": "value"
-        },
-        {
-          "name": "REQUEST_CONTEXT_ID",
-          "kind": "value"
-        },
-        {
-          "name": "REQUEST_CONTEXT_REGISTRATION",
-          "kind": "value"
-        },
-        {
-          "name": "REQUEST_LIFECYCLE_HOOKS",
-          "kind": "value"
-        },
-        {
-          "name": "RequestContext",
-          "kind": "type"
-        },
-        {
-          "name": "RequestContextModule",
-          "kind": "value"
-        },
-        {
-          "name": "RequestContextModuleOptions",
-          "kind": "type"
-        },
-        {
-          "name": "RequestContextRegistration",
-          "kind": "type"
-        },
-        {
-          "name": "RequestContextService",
-          "kind": "value"
-        },
-        {
-          "name": "RequestLifecycleHook",
-          "kind": "type"
-        },
-        {
-          "name": "RequestPipeline",
-          "kind": "type"
-        },
-        {
-          "name": "requirePlatformCapabilities",
-          "kind": "value"
-        },
-        {
-          "name": "resolveApplicationEnhancer",
-          "kind": "value"
-        },
-        {
-          "name": "resolveApplicationFilters",
-          "kind": "value"
-        },
-        {
-          "name": "resolveApplicationGuards",
-          "kind": "value"
-        },
-        {
-          "name": "resolveApplicationHttpPolicies",
-          "kind": "value"
-        },
-        {
-          "name": "resolveApplicationInterceptors",
-          "kind": "value"
-        },
-        {
-          "name": "resolveApplicationPipe",
-          "kind": "value"
-        },
-        {
-          "name": "resolveApplicationPipeOccurrences",
-          "kind": "value"
-        },
-        {
-          "name": "resolveApplicationPipes",
-          "kind": "value"
-        },
-        {
-          "name": "resolveCorsOptions",
-          "kind": "value"
-        },
-        {
-          "name": "ResolvedApplicationFilter",
-          "kind": "type"
-        },
-        {
-          "name": "ResolvedCors",
-          "kind": "type"
-        },
-        {
-          "name": "ResolvedFilter",
-          "kind": "type"
-        },
-        {
-          "name": "ResolvedHttpPolicies",
-          "kind": "type"
-        },
-        {
-          "name": "ResolvedMiddlewareConfig",
-          "kind": "type"
-        },
-        {
-          "name": "ResolvedModuleImports",
-          "kind": "type"
-        },
-        {
-          "name": "ResolvedPipe",
-          "kind": "type"
-        },
-        {
-          "name": "ResolvedPlatformModule",
-          "kind": "type"
-        },
-        {
-          "name": "ResolveHttpErrorStatus",
-          "kind": "type"
-        },
-        {
-          "name": "resolveHttpPolicies",
-          "kind": "value"
-        },
-        {
-          "name": "resolveMiddlewareInstance",
-          "kind": "value"
-        },
-        {
-          "name": "resolveModuleImports",
-          "kind": "value"
-        },
-        {
-          "name": "resolvePipe",
-          "kind": "value"
-        },
-        {
-          "name": "resolvePlatformModules",
-          "kind": "value"
-        },
-        {
-          "name": "resolveRequestId",
-          "kind": "value"
-        },
-        {
-          "name": "resolveRequestLifecycleHooks",
-          "kind": "value"
-        },
-        {
-          "name": "resolveStaticAssetPath",
-          "kind": "value"
-        },
-        {
-          "name": "RolesGuard",
-          "kind": "value"
-        },
-        {
-          "name": "RootCompilationOptions",
-          "kind": "type"
-        },
-        {
-          "name": "RouteExecutionRuntime",
-          "kind": "type"
-        },
-        {
-          "name": "RouteHandler",
-          "kind": "type"
-        },
-        {
-          "name": "RouteMatch",
-          "kind": "type"
-        },
-        {
-          "name": "RouteMatcher",
-          "kind": "type"
-        },
-        {
-          "name": "RoutePlan",
-          "kind": "type"
-        },
-        {
-          "name": "runHttpPolicyRequests",
-          "kind": "value"
-        },
-        {
-          "name": "runMiddlewareChain",
-          "kind": "value"
-        },
-        {
-          "name": "runRequestHooks",
-          "kind": "value"
-        },
-        {
-          "name": "SecurityHeadersOptions",
-          "kind": "type"
-        },
-        {
-          "name": "selectInvokerArtifact",
-          "kind": "value"
-        },
-        {
-          "name": "selectRootModuleDescriptor",
-          "kind": "value"
-        },
-        {
-          "name": "StaticAssetsOptions",
-          "kind": "type"
-        },
-        {
-          "name": "StaticFileOpener",
-          "kind": "type"
-        },
-        {
-          "name": "StaticFileSource",
-          "kind": "type"
-        },
-        {
-          "name": "StaticRouteExecutionContext",
-          "kind": "value"
-        },
-        {
-          "name": "statusCodeOf",
-          "kind": "value"
-        },
-        {
-          "name": "statusNameOf",
-          "kind": "value"
-        },
-        {
-          "name": "stripRoutePrefix",
-          "kind": "value"
-        },
-        {
-          "name": "type HttpStatusCode",
-          "kind": "value"
-        },
-        {
-          "name": "type HttpStatusName",
-          "kind": "value"
-        },
-        {
-          "name": "type ShutdownSignal",
-          "kind": "value"
-        },
-        {
-          "name": "type ShutdownSignalTarget",
-          "kind": "value"
-        },
-        {
-          "name": "validateSlot",
-          "kind": "value"
-        },
-        {
-          "name": "ValidationIssue",
-          "kind": "type"
-        },
-        {
-          "name": "VersionNegotiationRoute",
-          "kind": "type"
-        },
-        {
-          "name": "VersionNegotiator",
-          "kind": "type"
-        },
-        {
-          "name": "writeCookie",
-          "kind": "value"
         }
       ]
     },
@@ -4586,10 +4478,6 @@
           "kind": "type"
         },
         {
-          "name": "elysiaAdapter",
-          "kind": "value"
-        },
-        {
           "name": "ElysiaApplication",
           "kind": "type"
         },
@@ -4847,15 +4735,15 @@
           "kind": "value"
         },
         {
+          "name": "AponiaHttpApplication",
+          "kind": "value"
+        },
+        {
           "name": "createH3Host",
           "kind": "value"
         },
         {
           "name": "downloadFile",
-          "kind": "value"
-        },
-        {
-          "name": "h3Adapter",
           "kind": "value"
         },
         {
@@ -4880,15 +4768,15 @@
           "kind": "value"
         },
         {
+          "name": "AponiaHttpApplication",
+          "kind": "value"
+        },
+        {
           "name": "createHonoHost",
           "kind": "value"
         },
         {
           "name": "downloadFile",
-          "kind": "value"
-        },
-        {
-          "name": "honoAdapter",
           "kind": "value"
         },
         {
@@ -5218,6 +5106,23 @@
       ]
     },
     {
+      "name": "@aponiajs/serve-static",
+      "exports": [
+        {
+          "name": "ServeStaticModule",
+          "kind": "value"
+        },
+        {
+          "name": "ServeStaticModuleAsyncOptions",
+          "kind": "type"
+        },
+        {
+          "name": "ServeStaticModuleOptions",
+          "kind": "type"
+        }
+      ]
+    },
+    {
       "name": "@aponiajs/serverless",
       "exports": [
         {
@@ -5312,88 +5217,87 @@
       ]
     },
     {
-      "name": "@aponiajs/store-redis",
+      "name": "@aponiajs/terminus",
       "exports": [
         {
-          "name": "RedisCacheStore",
-          "kind": "value"
-        },
-        {
-          "name": "RedisClientInterface",
+          "name": "DiskCheckOptions",
           "kind": "type"
         },
         {
-          "name": "RedisIdempotencyStore",
+          "name": "DiskHealthIndicator",
           "kind": "value"
         },
         {
-          "name": "RedisRateLimitStore",
+          "name": "HealthCheck",
           "kind": "value"
         },
         {
-          "name": "RedisRefreshTokenStore",
+          "name": "HealthCheckError",
           "kind": "value"
         },
         {
-          "name": "RedisRevocationStore",
-          "kind": "value"
-        },
-        {
-          "name": "RedisSessionStore",
-          "kind": "value"
-        },
-        {
-          "name": "RedisStoreOptions",
-          "kind": "type"
-        }
-      ]
-    },
-    {
-      "name": "@aponiajs/tenancy",
-      "exports": [
-        {
-          "name": "MODULE_OPTIONS_TOKEN",
-          "kind": "value"
-        },
-        {
-          "name": "TENANT",
-          "kind": "value"
-        },
-        {
-          "name": "TenantGuard",
-          "kind": "value"
-        },
-        {
-          "name": "TenantModule",
-          "kind": "value"
-        },
-        {
-          "name": "TenantModuleAsyncOptions",
+          "name": "HealthCheckResult",
           "kind": "type"
         },
         {
-          "name": "TenantModuleOptions",
+          "name": "HealthCheckService",
+          "kind": "value"
+        },
+        {
+          "name": "HealthCheckStatus",
           "kind": "type"
         },
         {
-          "name": "TenantPrincipal",
+          "name": "HealthIndicator",
+          "kind": "value"
+        },
+        {
+          "name": "HealthIndicatorFunction",
           "kind": "type"
         },
         {
-          "name": "TenantService",
+          "name": "HealthIndicatorResult",
+          "kind": "type"
+        },
+        {
+          "name": "HealthIndicatorService",
           "kind": "value"
         },
         {
-          "name": "type TenancyModuleExtras",
+          "name": "HealthIndicatorSession",
           "kind": "value"
         },
         {
-          "name": "type TenancyModuleRegistrationAsyncOptions",
+          "name": "HealthIndicatorStatus",
+          "kind": "type"
+        },
+        {
+          "name": "HttpCheckOptions",
+          "kind": "type"
+        },
+        {
+          "name": "HttpHealthIndicator",
           "kind": "value"
         },
         {
-          "name": "type TenancyModuleSyncOptions",
+          "name": "isHealthCheckMethod",
           "kind": "value"
+        },
+        {
+          "name": "MemoryHealthIndicator",
+          "kind": "value"
+        },
+        {
+          "name": "TerminusModule",
+          "kind": "value"
+        },
+        {
+          "name": "TerminusModuleAsyncOptions",
+          "kind": "type"
+        },
+        {
+          "name": "TerminusModuleOptions",
+          "kind": "type"
         }
       ]
     },

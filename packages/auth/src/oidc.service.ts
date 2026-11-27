@@ -111,7 +111,7 @@ function resolveOptions(options: OidcOptions): ResolvedOidcOptions {
   }
   const discoveryUrl =
     options.discoveryUrl ??
-    `${options.issuer.replace(/\/+$/, "")}/.well-known/openid-configuration`;
+    `${trimTrailingSlashes(options.issuer)}/.well-known/openid-configuration`;
   if (!isHttpUrl(discoveryUrl)) {
     throw invalid("oidc.discoveryUrl must be https, or http on a loopback host");
   }
@@ -124,6 +124,14 @@ function resolveOptions(options: OidcOptions): ResolvedOidcOptions {
     clockTolerance,
     fetch: options.fetch ?? globalThis.fetch,
   });
+}
+
+function trimTrailingSlashes(value: string): string {
+  let end = value.length;
+  while (end > 0 && value.charCodeAt(end - 1) === 47) {
+    end -= 1;
+  }
+  return end === value.length ? value : value.slice(0, end);
 }
 
 function validateMetadata(

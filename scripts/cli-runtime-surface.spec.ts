@@ -58,10 +58,9 @@ const repositoryRoot = resolve(import.meta.dir, "..");
 const runtimeSourceRoot = "packages/common/src";
 const controllerRoutesFile = "packages/cli/src/generation/controller-routes.ts";
 const controllerRoutesTypesFile = "packages/cli/src/interfaces/controller-routes.interface.ts";
-const invokerArtifactTypesFile =
-  "packages/platform-core/src/interfaces/invoker-artifact.interface.ts";
+const invokerArtifactTypesFile = "packages/common/src/interfaces/invoker-artifact.interface.ts";
 const moduleDescriptorArtifactTypesFile =
-  "packages/platform-core/src/interfaces/module-descriptor-artifact.interface.ts";
+  "packages/common/src/interfaces/module-descriptor-artifact.interface.ts";
 const controllerInvokersFile = "packages/cli/src/generation/controller-invokers.ts";
 const controllerInvokersTypesFile = "packages/cli/src/interfaces/controller-invokers.interface.ts";
 const descriptorEmitterFile = "packages/cli/src/generation/descriptor-emitter.ts";
@@ -513,6 +512,10 @@ const metadataKeyAnalyses: ReadonlyMap<string, string> = new Map([
 
 /** The keys `packages/common` writes that no CLI analysis reads, and why. */
 const unreadMetadataKeys: ReadonlyMap<string, string> = new Map([
+  [
+    "aponia.compiled.descriptors",
+    "internal descriptor-compilation cache symbol on compiled module definitions, not decorator metadata",
+  ],
   [
     "aponia.message-pattern.metadata",
     "message handlers stay on the decorated controller class, so the runtime bootstrap reads them after a descriptor mount",

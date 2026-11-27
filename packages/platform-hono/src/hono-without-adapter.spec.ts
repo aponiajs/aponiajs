@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { Controller, Get, Module } from "@aponiajs/common";
-import { createPlatformFactory } from "@aponiajs/platform-core";
+import { createBootstrapFactory } from "./application/bootstrap.ts";
 import { createHonoHost, loadBunAdapter } from "./host/hono-host.ts";
 
 @Controller("plain")
@@ -24,7 +24,7 @@ describe("a Hono host without its Bun adapter", () => {
   });
 
   test("boots, answers, and listens without websocket support", async () => {
-    const application = await createPlatformFactory(createHonoHost(null)).create(PlainModule, {
+    const application = await createBootstrapFactory(createHonoHost(null)).create(PlainModule, {
       logger: false,
     });
     const response = await application.getNativeApplication().request("/plain");

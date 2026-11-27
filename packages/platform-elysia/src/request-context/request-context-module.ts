@@ -1,6 +1,6 @@
-export { RequestContextModule, RequestContextService } from "@aponiajs/platform-core";
+export { RequestContextModule, RequestContextService } from "@aponiajs/core";
 export type {
   RequestContext,
   RequestContextModuleOptions,
   RequestContextRegistration,
-} from "@aponiajs/platform-core";
+} from "@aponiajs/common";

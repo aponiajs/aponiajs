@@ -9,6 +9,8 @@ configuration.
 
 ## Use it
 
+### Register the module
+
 Register the module in the application that owns the schedule, and keep the
 jobs in the validated configuration:
 
@@ -26,6 +28,54 @@ export class AppModule {}
 The scheduler starts when the module mounts, before the application listens, and
 stops when the application closes. A job's `run` closes over the module's own
 providers, so scheduling stays inside the application rather than beside it.
+
+### Use it in a controller
+
+```ts
+import { Controller, Get } from "@aponiajs/common";
+import { SchedulerRegistry } from "@aponiajs/cron";
+
+@Controller("jobs")
+export class JobsController {
+  constructor(private readonly registry: SchedulerRegistry) {}
+
+  @Get()
+  list() {
+    return [...this.registry.getCronJobs().keys()];
+  }
+}
+```
+
+### Use it in a service
+
+```ts
+import { Injectable } from "@aponiajs/common";
+import { Cron, SchedulerRegistry } from "@aponiajs/cron";
+
+@Injectable()
+export class ReportsService {
+  constructor(private readonly registry: SchedulerRegistry) {}
+
+  @Cron("0 * * * *", { name: "hourly-report" })
+  async hourly(): Promise<void> {
+    // build the report
+  }
+
+  scheduled(): boolean {
+    return this.registry.doesExist("cron", "hourly-report");
+  }
+}
+```
+
+The class that carries `@Cron`, `@Interval`, or `@Timeout` must be a provider of
+a module that imports the registration.
+
+### Async registration
+
+`CronModule` does not support an asynchronous registration. The module provides
+the configuration token it schedules, and a factory result cannot name that
+token before the registration is built, so `CronModule.registerAsync` refuses
+with `INVALID_CONFIGURATION_VALUE`. Declare the configuration in `forRoot`.
 
 ## Bootstrap
 

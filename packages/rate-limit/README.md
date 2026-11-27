@@ -9,31 +9,95 @@ bun add @aponiajs/rate-limit@alpha
 
 ## Use it
 
+### Register the module
+
 ```ts
-import { Controller, Get, Module, UseGuards } from "@aponiajs/common";
-import { RateLimit, RateLimitGuard, RateLimitModule } from "@aponiajs/rate-limit";
+import { Module } from "@aponiajs/common";
+import { RateLimitModule } from "@aponiajs/rate-limit";
+
+@Module({
+  imports: [RateLimitModule.forRoot({ limit: 60, windowMs: 60_000 })],
+})
+export class AppModule {}
+```
+
+### Use it in a controller
+
+```ts
+import { Controller, Get, UseGuards } from "@aponiajs/common";
+import { RateLimit, RateLimitGuard } from "@aponiajs/rate-limit";
 
 @Controller("login")
 @UseGuards(RateLimitGuard)
-class LoginController {
+export class LoginController {
   @Get()
   @RateLimit({ limit: 5, windowMs: 60_000 })
   read() {
     return "ok";
   }
 }
-
-@Module({
-  imports: [RateLimitModule.forRoot({ limit: 60, windowMs: 60_000 })],
-  controllers: [LoginController],
-})
-export class AppModule {}
 ```
 
 The guard answers `429` with a Problem Details body once the bucket is
 exhausted. Allowed answers carry `RateLimit-Limit`, `RateLimit-Remaining`, and
 `RateLimit-Reset`. The refusal also carries `Retry-After` in whole seconds, so a
 client waits for the reset window instead of retrying blindly.
+
+### Use it in a service
+
+```ts
+import { Injectable } from "@aponiajs/common";
+import { RateLimitService } from "@aponiajs/rate-limit";
+
+@Injectable()
+export class LoginThrottle {
+  constructor(private readonly rateLimit: RateLimitService) {}
+
+  attempt(userId: string) {
+    return this.rateLimit.check(`login:${userId}`);
+  }
+}
+```
+
+`RateLimitService.check` consumes one token and answers the decision
+(`allowed`, `limit`, `remaining`, `resetAt`); the guard uses the same service.
+
+### Async registration
+
+`RateLimitModule.forRootAsync` accepts a factory, a class, or an existing
+provider, and a factory may answer a Promise:
+
+```ts
+RateLimitModule.forRootAsync({
+  useFactory: async () => ({ limit: 60, windowMs: 60_000 }),
+});
+```
+
+```ts
+import { Injectable } from "@aponiajs/common";
+
+@Injectable()
+class RateLimitSettings {
+  create() {
+    return { limit: 120, windowMs: 60_000 };
+  }
+}
+
+RateLimitModule.forRootAsync({ useClass: RateLimitSettings });
+```
+
+```ts
+@Module({ providers: [RateLimitSettings], exports: [RateLimitSettings] })
+class RateLimitSettingsModule {}
+
+RateLimitModule.forRootAsync({
+  imports: [RateLimitSettingsModule],
+  useExisting: RateLimitSettings,
+});
+```
+
+`register`/`registerAsync` remain the deprecated aliases of
+`forRoot`/`forRootAsync`.
 
 ## Keys
 

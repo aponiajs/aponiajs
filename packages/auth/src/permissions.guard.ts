@@ -6,7 +6,7 @@ import {
   type ExecutionContext,
   type RouteContext,
 } from "@aponiajs/common";
-import { httpErrors } from "@aponiajs/platform-core";
+import { httpErrors } from "@aponiajs/common";
 import type { AuthUser } from "./interfaces/auth.interface.ts";
 
 /** Requires every permission a route declares. */

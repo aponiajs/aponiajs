@@ -29,11 +29,8 @@ const neutralSeams = new Set([
   "compression",
   "cors",
   "graphql",
-  "idempotency",
   "mcp",
-  "metrics",
   "openapi",
-  "opentelemetry",
   "security",
   "session",
   "devtools",
@@ -44,10 +41,7 @@ const platformPackages = new Set([
   "aponiajs",
   "cli",
   "create-aponia",
-  "h3",
-  "hono",
   "nitro",
-  "platform-core",
   "platform-elysia",
   "platform-h3",
   "platform-hono",
@@ -96,7 +90,7 @@ async function runtimeImportsOf(directory: string): Promise<string[]> {
 
 describe("the plugin registration standard", () => {
   /** Modules that register a `ConfigurationToken`; its provider is the async path. */
-  const configurationModules = new Set(["cors", "cron", "graphql", "openapi", "opentelemetry"]);
+  const configurationModules = new Set(["cors", "cron", "graphql", "openapi"]);
 
   /** Modules that take no options, so a synchronous `forRoot()` is the whole contract. */
   const optionlessModules = new Set(["events"]);
@@ -238,7 +232,7 @@ describe("the platform standard", () => {
   });
 
   test("the engine and the first-party guards are runtime-neutral", async () => {
-    for (const directory of ["common", "core", "platform-core"]) {
+    for (const directory of ["common", "core"]) {
       expect(await runtimeImportsOf(directory)).toEqual([]);
     }
   });

@@ -1,10 +1,6 @@
 import { Module, dynamicModule, provideFactory, type DynamicModule } from "@aponiajs/common";
-import {
-  APPLICATION_CONTAINER,
-  provideConfiguration,
-  requirePlatformCapabilities,
-  type ApplicationContainerRef,
-} from "@aponiajs/platform-core";
+import { provideConfiguration, requirePlatformCapabilities } from "@aponiajs/common";
+import { APPLICATION_CONTAINER, type ApplicationContainerRef } from "@aponiajs/core";
 import {
   createOpenApiController,
   OPENAPI_RUNTIME,

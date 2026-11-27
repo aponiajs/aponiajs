@@ -9,7 +9,7 @@ import {
   type ModuleImport,
   type Provider,
 } from "@aponiajs/common";
-import { provideHttpPoliciesAsync, requirePlatformCapabilities } from "@aponiajs/platform-core";
+import { provideHttpPoliciesAsync, requirePlatformCapabilities } from "@aponiajs/common";
 import {
   buildSecurityPolicies,
   resolveSecurityPolicy,

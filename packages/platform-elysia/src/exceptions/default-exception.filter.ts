@@ -2,7 +2,7 @@ import { AponiaError, formatLogValue, type LoggerService } from "@aponiajs/commo
 import { ElysiaStatus } from "elysia";
 import type { ResolvedFilter } from "../controllers/enhancer.resolver.ts";
 import type { ElysiaErrorHook } from "../interfaces/route-compiler.interface.ts";
-import { httpErrors } from "@aponiajs/platform-core";
+import { httpErrors } from "@aponiajs/common";
 
 /**
  * What an unhandled failure answers with.
@@ -104,9 +104,8 @@ export function createDefaultExceptionFilter(
 /**
  * The documented framework failures that carry a client status.
  *
- * A tenant is missing because the request did not select one (`400`), and a
- * refresh token is invalid or already consumed (`401`). Both are expected
- * outcomes of their packages, so the default boundary answers them directly
+ * A refresh token is invalid or already consumed (`401`), which is an expected
+ * outcome of `@aponiajs/auth`, so the default boundary answers it directly
  * rather than reporting a server failure. Any other `AponiaError` keeps the
  * generic `500` path.
  */
@@ -115,8 +114,6 @@ function mappedAponiaErrorResponse(error: unknown): Response | undefined {
     return undefined;
   }
   switch (error.code) {
-    case "MISSING_TENANT":
-      return httpErrors.badRequest("A tenant is required for this request.").toResponse();
     case "INVALID_REFRESH_TOKEN":
       return httpErrors.unauthorized("The refresh token is invalid or expired.").toResponse();
     default:

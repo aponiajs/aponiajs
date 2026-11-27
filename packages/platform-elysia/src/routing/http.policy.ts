@@ -9,7 +9,7 @@ import {
   type HttpPolicy,
   type RequestLifecycleHook,
   type ResolvedHttpPolicies,
-} from "@aponiajs/platform-core";
+} from "@aponiajs/common";
 import type { AnyElysia } from "elysia";
 
 /** Everything one boot installs on the fetch boundary. @internal */

@@ -3,7 +3,7 @@ import {
   provideConfiguration,
   provideHttpPolicyAsync,
   requirePlatformCapabilities,
-} from "@aponiajs/platform-core";
+} from "@aponiajs/common";
 import { buildCorsPolicy } from "../policy/cors.policy.ts";
 import type { CorsModuleOptions } from "../interfaces/cors-module.interface.ts";
 

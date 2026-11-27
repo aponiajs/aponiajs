@@ -1,4 +1,4 @@
-import type { AponiaBootDiagnostics } from "@aponiajs/platform-core";
+import type { AponiaBootDiagnostics } from "@aponiajs/common";
 import type { AponiaMountedRoute, AponiaRoutesPayload } from "../interfaces/payloads.interface.ts";
 import { readRouteParameters } from "./route-parameters.ts";
 import { readRouteSource } from "./route-source.ts";

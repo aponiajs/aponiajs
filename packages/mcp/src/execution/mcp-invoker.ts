@@ -1,5 +1,5 @@
 import type { ClassToken, ExecutionContext, PipeType } from "@aponiajs/common";
-import { httpErrors } from "@aponiajs/platform-core";
+import { httpErrors } from "@aponiajs/common";
 import type { McpPrimitivePlan } from "../interfaces/mcp-plan.interface.ts";
 import type { McpContext } from "../interfaces/mcp-context.interface.ts";
 import { McpExecutionContext } from "./mcp-execution-context.ts";

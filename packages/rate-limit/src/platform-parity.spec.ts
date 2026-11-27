@@ -1,8 +1,8 @@
 import { expect, test } from "bun:test";
 import { Controller, Get, Module, UseGuards } from "@aponiajs/common";
-import { createPlatformFactory, type AponiaApplicationContract } from "@aponiajs/platform-core";
-import { h3Adapter } from "@aponiajs/platform-h3";
-import { honoAdapter } from "@aponiajs/platform-hono";
+import { type AponiaApplicationContract } from "@aponiajs/common";
+import { AponiaFactory as H3AponiaFactory } from "@aponiajs/platform-h3";
+import { AponiaFactory as HonoAponiaFactory } from "@aponiajs/platform-hono";
 import { RateLimit, RateLimitGuard, RateLimitModule } from "./index.ts";
 
 // The guard keeps its window in the injected store and refuses through
@@ -35,7 +35,7 @@ async function assertLimitEnforced(application: AponiaApplicationContract): Prom
 }
 
 test("enforces the declared limit on hono", async () => {
-  const application = await createPlatformFactory(honoAdapter()).create(createAppModule(), {
+  const application = await HonoAponiaFactory.create(createAppModule(), {
     logger: false,
   });
 
@@ -47,7 +47,7 @@ test("enforces the declared limit on hono", async () => {
 });
 
 test("enforces the declared limit on h3", async () => {
-  const application = await createPlatformFactory(h3Adapter()).create(createAppModule(), {
+  const application = await H3AponiaFactory.create(createAppModule(), {
     logger: false,
   });
 

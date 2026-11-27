@@ -101,7 +101,6 @@
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/core": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
         "@aponiajs/platform-h3": "workspace:*",
         "h3": "^2.0.8",
       },
@@ -112,7 +111,6 @@
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/core": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
         "@aponiajs/platform-hono": "workspace:*",
         "hono": "^4.13.17",
       },
@@ -201,7 +199,6 @@
         "@aponiajs/common": "workspace:*",
         "@aponiajs/core": "workspace:*",
         "@aponiajs/database": "workspace:*",
-        "@aponiajs/metrics": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
         "@aponiajs/queue": "workspace:*",
         "drizzle-orm": "^0.45.4",
@@ -256,25 +253,12 @@
       "name": "aponiajs",
       "version": "1.0.0-beta.64",
     },
-    "packages/audit": {
-      "name": "@aponiajs/audit",
-      "version": "1.0.0-beta.64",
-      "dependencies": {
-        "@aponiajs/common": "workspace:*",
-      },
-      "devDependencies": {
-        "@aponiajs/core": "workspace:*",
-        "@aponiajs/platform-elysia": "workspace:*",
-        "@aponiajs/testing": "workspace:*",
-        "elysia": "2.0.0-rc.4",
-      },
-    },
     "packages/auth": {
       "name": "@aponiajs/auth",
       "version": "1.0.0-beta.64",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
+        "@aponiajs/core": "workspace:*",
         "jose": "^6.0.0",
       },
       "devDependencies": {
@@ -337,7 +321,6 @@
       },
       "devDependencies": {
         "@aponiajs/core": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
         "@aponiajs/platform-h3": "workspace:*",
         "@aponiajs/platform-hono": "workspace:*",
@@ -351,16 +334,28 @@
       "version": "1.0.0-beta.64",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
       },
       "devDependencies": {
         "@aponiajs/core": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
         "@aponiajs/platform-h3": "workspace:*",
         "@aponiajs/platform-hono": "workspace:*",
         "@aponiajs/serverless": "workspace:*",
         "elysia": "2.0.0-rc.4",
+      },
+    },
+    "packages/config": {
+      "name": "@aponiajs/config",
+      "version": "1.0.0-beta.64",
+      "dependencies": {
+        "@aponiajs/common": "workspace:*",
+      },
+      "devDependencies": {
+        "@aponiajs/cli": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
+        "elysia": "2.0.0-rc.4",
+        "typebox": "^1.4.6",
+        "zod": "^4.6.6",
       },
     },
     "packages/core": {
@@ -368,6 +363,7 @@
       "version": "1.0.0-beta.64",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
+        "@aponiajs/compiler": "workspace:*",
       },
     },
     "packages/cors": {
@@ -375,11 +371,9 @@
       "version": "1.0.0-beta.64",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
       },
       "devDependencies": {
         "@aponiajs/cli": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
         "@aponiajs/platform-h3": "workspace:*",
         "@aponiajs/platform-hono": "workspace:*",
@@ -387,6 +381,18 @@
         "@elysia/cors": "2.0.0-rc.1",
         "elysia": "2.0.0-rc.4",
         "zod": "^4.6.6",
+      },
+    },
+    "packages/cqrs": {
+      "name": "@aponiajs/cqrs",
+      "version": "1.0.0-beta.64",
+      "dependencies": {
+        "@aponiajs/common": "workspace:*",
+      },
+      "devDependencies": {
+        "@aponiajs/cli": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
+        "elysia": "2.0.0-rc.4",
       },
     },
     "packages/create-aponia": {
@@ -404,7 +410,6 @@
       "version": "1.0.0-beta.64",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
         "croner": "6.0.7",
       },
       "devDependencies": {
@@ -440,7 +445,6 @@
         "@aponiajs/cli": "workspace:*",
         "@aponiajs/common": "workspace:*",
         "@aponiajs/core": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
       },
       "devDependencies": {
         "@aponiajs/core": "workspace:*",
@@ -470,12 +474,10 @@
       "version": "1.0.0-beta.64",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
         "graphql-yoga": "^5.24.1",
       },
       "devDependencies": {
         "@aponiajs/cli": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
         "@aponiajs/platform-h3": "workspace:*",
         "@aponiajs/platform-hono": "workspace:*",
@@ -487,38 +489,6 @@
       },
       "peerDependencies": {
         "graphql": "^17.0.2",
-      },
-    },
-    "packages/h3": {
-      "name": "@aponiajs/h3",
-      "version": "1.0.0-beta.64",
-      "dependencies": {
-        "@aponiajs/serverless": "workspace:*",
-      },
-      "devDependencies": {
-        "@aponiajs/common": "workspace:*",
-        "@aponiajs/platform-elysia": "workspace:*",
-        "elysia": "2.0.0-rc.4",
-        "h3": "^2.0.8",
-      },
-      "peerDependencies": {
-        "h3": "^2.0.8",
-      },
-    },
-    "packages/hono": {
-      "name": "@aponiajs/hono",
-      "version": "1.0.0-beta.64",
-      "dependencies": {
-        "@aponiajs/serverless": "workspace:*",
-      },
-      "devDependencies": {
-        "@aponiajs/common": "workspace:*",
-        "@aponiajs/platform-elysia": "workspace:*",
-        "elysia": "2.0.0-rc.4",
-        "hono": "^4.13.17",
-      },
-      "peerDependencies": {
-        "hono": "^4.13.17",
       },
     },
     "packages/http": {
@@ -537,21 +507,16 @@
         "zod": "^4.6.6",
       },
     },
-    "packages/idempotency": {
-      "name": "@aponiajs/idempotency",
+    "packages/mapped-types": {
+      "name": "@aponiajs/mapped-types",
       "version": "1.0.0-beta.64",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
-        "@aponiajs/compiler": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
-        "@aponiajs/platform-elysia": "workspace:*",
+        "typebox": "^1.4.6",
       },
       "devDependencies": {
-        "@aponiajs/core": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
-        "@aponiajs/platform-h3": "workspace:*",
-        "@aponiajs/platform-hono": "workspace:*",
-        "@aponiajs/serverless": "workspace:*",
+        "@aponiajs/cli": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
         "elysia": "2.0.0-rc.4",
       },
     },
@@ -560,7 +525,6 @@
       "version": "1.0.0-beta.64",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
         "@modelcontextprotocol/server": "^2.4.0",
       },
       "devDependencies": {
@@ -584,22 +548,6 @@
         "h3",
         "hono",
       ],
-    },
-    "packages/metrics": {
-      "name": "@aponiajs/metrics",
-      "version": "1.0.0-beta.64",
-      "dependencies": {
-        "@aponiajs/common": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
-        "@aponiajs/platform-elysia": "workspace:*",
-      },
-      "devDependencies": {
-        "@aponiajs/core": "workspace:*",
-        "@aponiajs/platform-h3": "workspace:*",
-        "@aponiajs/platform-hono": "workspace:*",
-        "@aponiajs/serverless": "workspace:*",
-        "elysia": "2.0.0-rc.4",
-      },
     },
     "packages/microservices": {
       "name": "@aponiajs/microservices",
@@ -667,56 +615,15 @@
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/core": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
       },
       "devDependencies": {
         "@aponiajs/cli": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
         "@aponiajs/platform-h3": "workspace:*",
         "@aponiajs/platform-hono": "workspace:*",
         "@aponiajs/serverless": "workspace:*",
         "elysia": "2.0.0-rc.4",
         "zod": "^4.6.6",
-      },
-    },
-    "packages/opentelemetry": {
-      "name": "@aponiajs/opentelemetry",
-      "version": "1.0.0-beta.64",
-      "dependencies": {
-        "@aponiajs/common": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
-        "@opentelemetry/api": "^1.9.1",
-        "@opentelemetry/resources": "^2.7.1",
-        "@opentelemetry/sdk-node": "^0.217.0",
-        "@opentelemetry/sdk-trace-base": "^2.7.1",
-      },
-      "devDependencies": {
-        "@aponiajs/cli": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
-        "@aponiajs/platform-elysia": "workspace:*",
-        "@aponiajs/platform-h3": "workspace:*",
-        "@aponiajs/platform-hono": "workspace:*",
-        "@aponiajs/serverless": "workspace:*",
-        "@opentelemetry/sdk-trace-base": "^2.0.0",
-        "elysia": "2.0.0-rc.4",
-        "zod": "^4.6.6",
-      },
-    },
-    "packages/platform-core": {
-      "name": "@aponiajs/platform-core",
-      "version": "1.0.0-beta.64",
-      "dependencies": {
-        "@aponiajs/common": "workspace:*",
-        "@aponiajs/compiler": "workspace:*",
-        "@aponiajs/core": "workspace:*",
-        "rou3": "1.0.0",
-      },
-      "devDependencies": {
-        "typebox": "^1.4.6",
-      },
-      "peerDependencies": {
-        "typebox": "^1.4.6",
       },
     },
     "packages/platform-elysia": {
@@ -725,7 +632,6 @@
       "dependencies": {
         "@aponiajs/common": "workspace:*",
         "@aponiajs/core": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
       },
       "devDependencies": {
         "@elysia/eden": "2.0.0-rc.1",
@@ -744,10 +650,9 @@
       "version": "1.0.0-beta.64",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
+        "@aponiajs/core": "workspace:*",
       },
       "devDependencies": {
-        "@aponiajs/core": "workspace:*",
         "crossws": "^0.4.17",
         "h3": "^2.0.8",
       },
@@ -764,10 +669,9 @@
       "version": "1.0.0-beta.64",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
+        "@aponiajs/core": "workspace:*",
       },
       "devDependencies": {
-        "@aponiajs/core": "workspace:*",
         "hono": "^4.13.17",
       },
       "peerDependencies": {
@@ -793,7 +697,6 @@
       "version": "1.0.0-beta.64",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
       },
       "devDependencies": {
@@ -820,15 +723,25 @@
       "version": "1.0.0-beta.64",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
       },
       "devDependencies": {
         "@aponiajs/core": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
         "@aponiajs/platform-h3": "workspace:*",
         "@aponiajs/platform-hono": "workspace:*",
         "@aponiajs/serverless": "workspace:*",
+        "elysia": "2.0.0-rc.4",
+      },
+    },
+    "packages/serve-static": {
+      "name": "@aponiajs/serve-static",
+      "version": "1.0.0-beta.64",
+      "dependencies": {
+        "@aponiajs/common": "workspace:*",
+      },
+      "devDependencies": {
+        "@aponiajs/cli": "workspace:*",
+        "@aponiajs/platform-elysia": "workspace:*",
         "elysia": "2.0.0-rc.4",
       },
     },
@@ -846,11 +759,9 @@
       "version": "1.0.0-beta.64",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
       },
       "devDependencies": {
         "@aponiajs/core": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
         "@aponiajs/platform-h3": "workspace:*",
         "@aponiajs/platform-hono": "workspace:*",
@@ -858,44 +769,15 @@
         "elysia": "2.0.0-rc.4",
       },
     },
-    "packages/store-redis": {
-      "name": "@aponiajs/store-redis",
+    "packages/terminus": {
+      "name": "@aponiajs/terminus",
       "version": "1.0.0-beta.64",
       "dependencies": {
         "@aponiajs/common": "workspace:*",
       },
       "devDependencies": {
-        "@aponiajs/auth": "workspace:*",
-        "@aponiajs/cache": "workspace:*",
-        "@aponiajs/core": "workspace:*",
-        "@aponiajs/idempotency": "workspace:*",
+        "@aponiajs/cli": "workspace:*",
         "@aponiajs/platform-elysia": "workspace:*",
-        "@aponiajs/rate-limit": "workspace:*",
-        "@aponiajs/session": "workspace:*",
-        "@aponiajs/testing": "workspace:*",
-        "elysia": "2.0.0-rc.4",
-        "redis": "6.3.1",
-      },
-      "peerDependencies": {
-        "redis": "6.3.1",
-      },
-      "optionalPeers": [
-        "redis",
-      ],
-    },
-    "packages/tenancy": {
-      "name": "@aponiajs/tenancy",
-      "version": "1.0.0-beta.64",
-      "dependencies": {
-        "@aponiajs/common": "workspace:*",
-        "@aponiajs/platform-core": "workspace:*",
-        "@aponiajs/platform-elysia": "workspace:*",
-      },
-      "devDependencies": {
-        "@aponiajs/core": "workspace:*",
-        "@aponiajs/platform-h3": "workspace:*",
-        "@aponiajs/platform-hono": "workspace:*",
-        "@aponiajs/testing": "workspace:*",
         "elysia": "2.0.0-rc.4",
       },
     },
@@ -931,9 +813,6 @@
   },
   "overrides": {
     "@graphql-tools/utils": "^12.0.3",
-    "@opentelemetry/core": "2.9.0",
-    "@opentelemetry/propagator-jaeger": "2.9.0",
-    "@opentelemetry/sdk-node": "0.217.0",
     "exact-mirror": "^1.2.7",
     "katex": "^0.18.2",
     "minimatch": "^11.0.1",
@@ -944,8 +823,6 @@
     "vitest": "5.1.0",
   },
   "packages": {
-    "@aponiajs/audit": ["@aponiajs/audit@workspace:packages/audit"],
-
     "@aponiajs/auth": ["@aponiajs/auth@workspace:packages/auth"],
 
     "@aponiajs/cache": ["@aponiajs/cache@workspace:packages/cache"],
@@ -958,9 +835,13 @@
 
     "@aponiajs/compression": ["@aponiajs/compression@workspace:packages/compression"],
 
+    "@aponiajs/config": ["@aponiajs/config@workspace:packages/config"],
+
     "@aponiajs/core": ["@aponiajs/core@workspace:packages/core"],
 
     "@aponiajs/cors": ["@aponiajs/cors@workspace:packages/cors"],
+
+    "@aponiajs/cqrs": ["@aponiajs/cqrs@workspace:packages/cqrs"],
 
     "@aponiajs/cron": ["@aponiajs/cron@workspace:packages/cron"],
 
@@ -1014,27 +895,17 @@
 
     "@aponiajs/graphql": ["@aponiajs/graphql@workspace:packages/graphql"],
 
-    "@aponiajs/h3": ["@aponiajs/h3@workspace:packages/h3"],
-
-    "@aponiajs/hono": ["@aponiajs/hono@workspace:packages/hono"],
-
     "@aponiajs/http": ["@aponiajs/http@workspace:packages/http"],
 
-    "@aponiajs/idempotency": ["@aponiajs/idempotency@workspace:packages/idempotency"],
+    "@aponiajs/mapped-types": ["@aponiajs/mapped-types@workspace:packages/mapped-types"],
 
     "@aponiajs/mcp": ["@aponiajs/mcp@workspace:packages/mcp"],
-
-    "@aponiajs/metrics": ["@aponiajs/metrics@workspace:packages/metrics"],
 
     "@aponiajs/microservices": ["@aponiajs/microservices@workspace:packages/microservices"],
 
     "@aponiajs/nitro": ["@aponiajs/nitro@workspace:packages/nitro"],
 
     "@aponiajs/openapi": ["@aponiajs/openapi@workspace:packages/openapi"],
-
-    "@aponiajs/opentelemetry": ["@aponiajs/opentelemetry@workspace:packages/opentelemetry"],
-
-    "@aponiajs/platform-core": ["@aponiajs/platform-core@workspace:packages/platform-core"],
 
     "@aponiajs/platform-elysia": ["@aponiajs/platform-elysia@workspace:packages/platform-elysia"],
 
@@ -1050,13 +921,13 @@
 
     "@aponiajs/security": ["@aponiajs/security@workspace:packages/security"],
 
+    "@aponiajs/serve-static": ["@aponiajs/serve-static@workspace:packages/serve-static"],
+
     "@aponiajs/serverless": ["@aponiajs/serverless@workspace:packages/serverless"],
 
     "@aponiajs/session": ["@aponiajs/session@workspace:packages/session"],
 
-    "@aponiajs/store-redis": ["@aponiajs/store-redis@workspace:packages/store-redis"],
-
-    "@aponiajs/tenancy": ["@aponiajs/tenancy@workspace:packages/tenancy"],
+    "@aponiajs/terminus": ["@aponiajs/terminus@workspace:packages/terminus"],
 
     "@aponiajs/testing": ["@aponiajs/testing@workspace:packages/testing"],
 
@@ -1200,59 +1071,7 @@
 
     "@opentelemetry/api": ["@opentelemetry/api@1.9.1", "", {}, "sha512-gLyJlPHPZYdAk1JENA9LeHejZe1Ti77/pTeFm/nMXmQH/HFZlcS/O2XJB+L8fkbrNSqhdtlvjBVjxwUYanNH5Q=="],
 
-    "@opentelemetry/api-logs": ["@opentelemetry/api-logs@0.217.0", "", { "dependencies": { "@opentelemetry/api": "^1.3.0" } }, "sha512-Cdq0jW2lknrNfrAm92MyEAvpe2cRsKjdnQLHUL6xRA4IVUnsWx6P65E7NcUO0Y+L4w1Aee5iV8FvjSwd+lrs9A=="],
-
-    "@opentelemetry/configuration": ["@opentelemetry/configuration@0.217.0", "", { "dependencies": { "@opentelemetry/core": "2.7.1", "yaml": "^2.0.0" }, "peerDependencies": { "@opentelemetry/api": "^1.9.0" } }, "sha512-xCtrYOhBqdy6ZOMfe0Oa73ZKF+2LMhoOv4L5vmwAHVvOXUg+V3fvKuEIr9ZyD0Ow+vxllEjWO6PV1wd0DOtyvw=="],
-
-    "@opentelemetry/context-async-hooks": ["@opentelemetry/context-async-hooks@2.7.1", "", { "peerDependencies": { "@opentelemetry/api": ">=1.0.0 <1.10.0" } }, "sha512-OPFBYuXEn1E4ja3Y6eeA7O+ZnLBNcXTV5Cgsn1VaqBZ6hC5FnpZPLBNme1LJY8ZtF4aOujPKFoeWN4ik487KuQ=="],
-
     "@opentelemetry/core": ["@opentelemetry/core@2.9.0", "", { "dependencies": { "@opentelemetry/semantic-conventions": "^1.29.0" }, "peerDependencies": { "@opentelemetry/api": ">=1.0.0 <1.10.0" } }, "sha512-m2nckMT80NnmjTYSPjJQObBJ+8dgkoajEOUbznL8AHZ3T3yHRk2P7gI1PhEBc1+lOnrYE9UWrWHqJDsmqjmNbw=="],
-
-    "@opentelemetry/exporter-logs-otlp-grpc": ["@opentelemetry/exporter-logs-otlp-grpc@0.217.0", "", { "dependencies": { "@grpc/grpc-js": "^1.14.3", "@opentelemetry/core": "2.7.1", "@opentelemetry/otlp-exporter-base": "0.217.0", "@opentelemetry/otlp-grpc-exporter-base": "0.217.0", "@opentelemetry/otlp-transformer": "0.217.0", "@opentelemetry/sdk-logs": "0.217.0" }, "peerDependencies": { "@opentelemetry/api": "^1.3.0" } }, "sha512-vC5S0Dc+noxD86CVtNu1+awCHPA5Kewi1Sg23ps+9lh4YifwsKXh3pe4XTNEKtUJiAcjpJ5dqStGakLbrSE+YQ=="],
-
-    "@opentelemetry/exporter-logs-otlp-http": ["@opentelemetry/exporter-logs-otlp-http@0.217.0", "", { "dependencies": { "@opentelemetry/api-logs": "0.217.0", "@opentelemetry/core": "2.7.1", "@opentelemetry/otlp-exporter-base": "0.217.0", "@opentelemetry/otlp-transformer": "0.217.0", "@opentelemetry/sdk-logs": "0.217.0" }, "peerDependencies": { "@opentelemetry/api": "^1.3.0" } }, "sha512-KfLAdt1uilVE+3FxbgVnp2ZrzqbIawzcesnRoi+Kh9ckB5Ld5D8btUgoBvwTbdmuNx1j6b132Wsh72azq+pPNQ=="],
-
-    "@opentelemetry/exporter-logs-otlp-proto": ["@opentelemetry/exporter-logs-otlp-proto@0.217.0", "", { "dependencies": { "@opentelemetry/api-logs": "0.217.0", "@opentelemetry/core": "2.7.1", "@opentelemetry/otlp-exporter-base": "0.217.0", "@opentelemetry/otlp-transformer": "0.217.0", "@opentelemetry/resources": "2.7.1", "@opentelemetry/sdk-logs": "0.217.0", "@opentelemetry/sdk-trace-base": "2.7.1" }, "peerDependencies": { "@opentelemetry/api": "^1.3.0" } }, "sha512-Se0GG/ZO24mQTlQj7zprR4pNI0nKe4lPDPBsuJmi6508b9TlZEuUd3EfyuHk6oJxzL7fGyDFYAbxNigQvRP2ZQ=="],
-
-    "@opentelemetry/exporter-metrics-otlp-grpc": ["@opentelemetry/exporter-metrics-otlp-grpc@0.217.0", "", { "dependencies": { "@grpc/grpc-js": "^1.14.3", "@opentelemetry/core": "2.7.1", "@opentelemetry/exporter-metrics-otlp-http": "0.217.0", "@opentelemetry/otlp-exporter-base": "0.217.0", "@opentelemetry/otlp-grpc-exporter-base": "0.217.0", "@opentelemetry/otlp-transformer": "0.217.0", "@opentelemetry/resources": "2.7.1", "@opentelemetry/sdk-metrics": "2.7.1" }, "peerDependencies": { "@opentelemetry/api": "^1.3.0" } }, "sha512-0GpJKnCoVaVA1rKBMVPHziznfOQlXgH72S9ktjBAF1AnAVPzX7vVEBGrhwiSxxHDAiefXk+J8znApsMb/K6Z3w=="],
-
-    "@opentelemetry/exporter-metrics-otlp-http": ["@opentelemetry/exporter-metrics-otlp-http@0.217.0", "", { "dependencies": { "@opentelemetry/core": "2.7.1", "@opentelemetry/otlp-exporter-base": "0.217.0", "@opentelemetry/otlp-transformer": "0.217.0", "@opentelemetry/resources": "2.7.1", "@opentelemetry/sdk-metrics": "2.7.1" }, "peerDependencies": { "@opentelemetry/api": "^1.3.0" } }, "sha512-1zkMzzhiNJdVmLxuwkltqWGw4fOOam47bqRxmuQNjyKJe/9NmY5cIrZ4kiQV7sVGxoOgT0ZvGUfLcjvtpC/b9Q=="],
-
-    "@opentelemetry/exporter-metrics-otlp-proto": ["@opentelemetry/exporter-metrics-otlp-proto@0.217.0", "", { "dependencies": { "@opentelemetry/core": "2.7.1", "@opentelemetry/exporter-metrics-otlp-http": "0.217.0", "@opentelemetry/otlp-exporter-base": "0.217.0", "@opentelemetry/otlp-transformer": "0.217.0", "@opentelemetry/resources": "2.7.1", "@opentelemetry/sdk-metrics": "2.7.1" }, "peerDependencies": { "@opentelemetry/api": "^1.3.0" } }, "sha512-nfxt/KxVGFkjkO/M+58y1ugHu/dwPtxG4eYq0KApcQ7xk5CHzhdn+IuLZfDSvNDrJ3Uy5q++Fj/wbK7i8yryfQ=="],
-
-    "@opentelemetry/exporter-prometheus": ["@opentelemetry/exporter-prometheus@0.217.0", "", { "dependencies": { "@opentelemetry/core": "2.7.1", "@opentelemetry/resources": "2.7.1", "@opentelemetry/sdk-metrics": "2.7.1", "@opentelemetry/semantic-conventions": "^1.29.0" }, "peerDependencies": { "@opentelemetry/api": "^1.3.0" } }, "sha512-U9MCXxJu0sBCh5aEkylYRR4xVIL8D1CW6dGwvYXbfFr0qveSorfD0XJchCAWoW6QfAAIcY/yxjf4Dj8OgkHBPw=="],
-
-    "@opentelemetry/exporter-trace-otlp-grpc": ["@opentelemetry/exporter-trace-otlp-grpc@0.217.0", "", { "dependencies": { "@grpc/grpc-js": "^1.14.3", "@opentelemetry/core": "2.7.1", "@opentelemetry/otlp-exporter-base": "0.217.0", "@opentelemetry/otlp-grpc-exporter-base": "0.217.0", "@opentelemetry/otlp-transformer": "0.217.0", "@opentelemetry/resources": "2.7.1", "@opentelemetry/sdk-trace-base": "2.7.1" }, "peerDependencies": { "@opentelemetry/api": "^1.3.0" } }, "sha512-fPZs2fw7veLH3pEKu8vSepUa2fQpAE2P7al6qU10aH9GrEJJ8YaPgsd5xON7by5rbcEVS71FOU2aWyK6nzB7VQ=="],
-
-    "@opentelemetry/exporter-trace-otlp-http": ["@opentelemetry/exporter-trace-otlp-http@0.217.0", "", { "dependencies": { "@opentelemetry/core": "2.7.1", "@opentelemetry/otlp-exporter-base": "0.217.0", "@opentelemetry/otlp-transformer": "0.217.0", "@opentelemetry/resources": "2.7.1", "@opentelemetry/sdk-trace-base": "2.7.1" }, "peerDependencies": { "@opentelemetry/api": "^1.3.0" } }, "sha512-38YQoqtYjglz2GV94LGUN/djLvxtvGIQO68o6qAFPVshjmwSdX1F2i0c7vn3lEl1L5B/YqjB/bgKXaVx7KO+RQ=="],
-
-    "@opentelemetry/exporter-trace-otlp-proto": ["@opentelemetry/exporter-trace-otlp-proto@0.217.0", "", { "dependencies": { "@opentelemetry/core": "2.7.1", "@opentelemetry/otlp-exporter-base": "0.217.0", "@opentelemetry/otlp-transformer": "0.217.0", "@opentelemetry/resources": "2.7.1", "@opentelemetry/sdk-trace-base": "2.7.1" }, "peerDependencies": { "@opentelemetry/api": "^1.3.0" } }, "sha512-nPV8gKHUiSuTZpQcnZU3/pBlK7crSyEGpZuh5MtWySB0vv6NNG0QvvfKitQt+Fc2Mc6qfyU54KlZcurwoTbrVg=="],
-
-    "@opentelemetry/exporter-zipkin": ["@opentelemetry/exporter-zipkin@2.7.1", "", { "dependencies": { "@opentelemetry/core": "2.7.1", "@opentelemetry/resources": "2.7.1", "@opentelemetry/sdk-trace-base": "2.7.1", "@opentelemetry/semantic-conventions": "^1.29.0" }, "peerDependencies": { "@opentelemetry/api": "^1.0.0" } }, "sha512-mfsD9bKAxcKrh5+y08TPodvClBO0CznBE3p79YAGnO81WI4LrdsGA65T53e4iTSbCalW4WaUpkbeJcbpyIUHfg=="],
-
-    "@opentelemetry/instrumentation": ["@opentelemetry/instrumentation@0.217.0", "", { "dependencies": { "@opentelemetry/api-logs": "0.217.0", "import-in-the-middle": "^3.0.0", "require-in-the-middle": "^8.0.0" }, "peerDependencies": { "@opentelemetry/api": "^1.3.0" } }, "sha512-24ucQMjz7Y34Kw3trbxL2ZrssbtgWnR+Clpaa+YdeWuuyH3Cvk23Q03PcQvqiZrDvt8AmQmjgg9v6Y9PHoxG7w=="],
-
-    "@opentelemetry/otlp-exporter-base": ["@opentelemetry/otlp-exporter-base@0.217.0", "", { "dependencies": { "@opentelemetry/core": "2.7.1", "@opentelemetry/otlp-transformer": "0.217.0" }, "peerDependencies": { "@opentelemetry/api": "^1.3.0" } }, "sha512-eYfqnB3UhKu/5frhd1R6+FprKygbhkomuaceMXDyzxbfXB9tKgZOVmjaJ02CkLA6Tdzumxl+e2H+vo2a8jiMPQ=="],
-
-    "@opentelemetry/otlp-grpc-exporter-base": ["@opentelemetry/otlp-grpc-exporter-base@0.217.0", "", { "dependencies": { "@grpc/grpc-js": "^1.14.3", "@opentelemetry/core": "2.7.1", "@opentelemetry/otlp-exporter-base": "0.217.0", "@opentelemetry/otlp-transformer": "0.217.0" }, "peerDependencies": { "@opentelemetry/api": "^1.3.0" } }, "sha512-7RTAdZuOsCDnsyqTCG4+bDzrfnsWdzkRs7z0AVi/V3tEQx0oKeyc+OuRWYxnRsmaJXgxcmB8vb/lfxn58Dj6Ag=="],
-
-    "@opentelemetry/otlp-transformer": ["@opentelemetry/otlp-transformer@0.217.0", "", { "dependencies": { "@opentelemetry/api-logs": "0.217.0", "@opentelemetry/core": "2.7.1", "@opentelemetry/resources": "2.7.1", "@opentelemetry/sdk-logs": "0.217.0", "@opentelemetry/sdk-metrics": "2.7.1", "@opentelemetry/sdk-trace-base": "2.7.1", "protobufjs": "8.0.1" }, "peerDependencies": { "@opentelemetry/api": "^1.3.0" } }, "sha512-MKK8UHKFUOGAvbZRWh90MhwHG+Fxm6OROBdjKPCF+HQobjuJ/Kuf8Chs8CR45X1aqotxrMj7OxTdsXe8sXuGVA=="],
-
-    "@opentelemetry/propagator-b3": ["@opentelemetry/propagator-b3@2.7.1", "", { "dependencies": { "@opentelemetry/core": "2.7.1" }, "peerDependencies": { "@opentelemetry/api": ">=1.0.0 <1.10.0" } }, "sha512-RJid6E2CKyeGfKBzXKF21ejabGMHypFkPAh3qZ+NvI+SGjuIye79t3PmiqcDgtRzdKH6ynXzbfslQ8DfpRUg2A=="],
-
-    "@opentelemetry/propagator-jaeger": ["@opentelemetry/propagator-jaeger@2.9.0", "", { "dependencies": { "@opentelemetry/core": "2.9.0" }, "peerDependencies": { "@opentelemetry/api": ">=1.0.0 <1.10.0" } }, "sha512-4mYGty27rYvSM0jtp1ZUOqd3LfVRCYg9H5G9OFzSx5HViYToU21MFhWfco7x1HwXr7ER8yGOiCIHZUwjPksc0Q=="],
-
-    "@opentelemetry/resources": ["@opentelemetry/resources@2.7.1", "", { "dependencies": { "@opentelemetry/core": "2.7.1", "@opentelemetry/semantic-conventions": "^1.29.0" }, "peerDependencies": { "@opentelemetry/api": ">=1.3.0 <1.10.0" } }, "sha512-DeT6KKolmC4e/dRQvMQ/RwlnzhaqeiFOXY5ngoOPJ07GgVVKxZOg9EcrNZb5aTzUn+iCrJldAgOfQm1O/QfPAQ=="],
-
-    "@opentelemetry/sdk-logs": ["@opentelemetry/sdk-logs@0.217.0", "", { "dependencies": { "@opentelemetry/api-logs": "0.217.0", "@opentelemetry/core": "2.7.1", "@opentelemetry/resources": "2.7.1", "@opentelemetry/semantic-conventions": "^1.29.0" }, "peerDependencies": { "@opentelemetry/api": ">=1.4.0 <1.10.0" } }, "sha512-BB+PcHItcZDL63dPMW+mJvwN9rk37wuIDjRxbVlg6pPDvDR/7GL7UJHbGsllgoggOoTimsKgENaWPoGch/oE1A=="],
-
-    "@opentelemetry/sdk-metrics": ["@opentelemetry/sdk-metrics@2.7.1", "", { "dependencies": { "@opentelemetry/core": "2.7.1", "@opentelemetry/resources": "2.7.1" }, "peerDependencies": { "@opentelemetry/api": ">=1.9.0 <1.10.0" } }, "sha512-MpDJdkiFDs3Pm1RHO3KByuZbuBdJEXEAkiC0+yJdsZGVCdf1RpHR6n+LHDcS7ffmfrt5kVCzJSCfm4z2C7v0uQ=="],
-
-    "@opentelemetry/sdk-node": ["@opentelemetry/sdk-node@0.217.0", "", { "dependencies": { "@opentelemetry/api-logs": "0.217.0", "@opentelemetry/configuration": "0.217.0", "@opentelemetry/context-async-hooks": "2.7.1", "@opentelemetry/core": "2.7.1", "@opentelemetry/exporter-logs-otlp-grpc": "0.217.0", "@opentelemetry/exporter-logs-otlp-http": "0.217.0", "@opentelemetry/exporter-logs-otlp-proto": "0.217.0", "@opentelemetry/exporter-metrics-otlp-grpc": "0.217.0", "@opentelemetry/exporter-metrics-otlp-http": "0.217.0", "@opentelemetry/exporter-metrics-otlp-proto": "0.217.0", "@opentelemetry/exporter-prometheus": "0.217.0", "@opentelemetry/exporter-trace-otlp-grpc": "0.217.0", "@opentelemetry/exporter-trace-otlp-http": "0.217.0", "@opentelemetry/exporter-trace-otlp-proto": "0.217.0", "@opentelemetry/exporter-zipkin": "2.7.1", "@opentelemetry/instrumentation": "0.217.0", "@opentelemetry/otlp-exporter-base": "0.217.0", "@opentelemetry/propagator-b3": "2.7.1", "@opentelemetry/propagator-jaeger": "2.7.1", "@opentelemetry/resources": "2.7.1", "@opentelemetry/sdk-logs": "0.217.0", "@opentelemetry/sdk-metrics": "2.7.1", "@opentelemetry/sdk-trace-base": "2.7.1", "@opentelemetry/sdk-trace-node": "2.7.1", "@opentelemetry/semantic-conventions": "^1.29.0" }, "peerDependencies": { "@opentelemetry/api": ">=1.3.0 <1.10.0" } }, "sha512-K/60pSv42+NQiZKy1pAH18nYDkxltsDV4O3SJ233J0E9raU1ksyL9gsKuS8p30bYBb4AMPCfDuutHQaHYpcv0Q=="],
-
-    "@opentelemetry/sdk-trace-base": ["@opentelemetry/sdk-trace-base@2.7.1", "", { "dependencies": { "@opentelemetry/core": "2.7.1", "@opentelemetry/resources": "2.7.1", "@opentelemetry/semantic-conventions": "^1.29.0" }, "peerDependencies": { "@opentelemetry/api": ">=1.3.0 <1.10.0" } }, "sha512-NAYIlsF8MPUsKqJMiDQJTMPOmlbawC1Iz/omMLygZ1C9am8fTKYjTaI+OZM+WTY3t3Glo0wnOg/6/pac6RGPPw=="],
-
-    "@opentelemetry/sdk-trace-node": ["@opentelemetry/sdk-trace-node@2.7.1", "", { "dependencies": { "@opentelemetry/context-async-hooks": "2.7.1", "@opentelemetry/core": "2.7.1", "@opentelemetry/sdk-trace-base": "2.7.1" }, "peerDependencies": { "@opentelemetry/api": ">=1.0.0 <1.10.0" } }, "sha512-pCpQxU68lV+I9s9svqMyVu5iHdDDUnqUpSxqwyCU8A9ejEsSnMPCbearwsUO4yk08ZJzAIUCFuReMdVQvHrdvg=="],
 
     "@opentelemetry/semantic-conventions": ["@opentelemetry/semantic-conventions@1.39.0", "", {}, "sha512-R5R9tb2AXs2IRLNKLBJDynhkfmx7mX0vi8NkhZb3gUkPWHn6HXk5J8iQ/dql0U3ApfWym4kXXmBDRGO+oeOfjg=="],
 
@@ -1602,8 +1421,6 @@
 
     "character-reference-invalid": ["character-reference-invalid@2.0.1", "", {}, "sha512-iBZ4F4wRbyORVsu0jPV7gXkOsGYjGHPmAyv+HiHG8gi5PtC9KI2j1+v8/tlibRvjoWX027ypmG/n0HtO5t7unw=="],
 
-    "cjs-module-lexer": ["cjs-module-lexer@2.2.1", "", {}, "sha512-Ca8swihM+/4yKecYHY52kgJd300hi2lADU/a1RxNTRe+RJ9jvqQlESpbz9DnG9mowez8qwXHB8qYdIUw9e+F5Q=="],
-
     "cliui": ["cliui@8.0.1", "", { "dependencies": { "string-width": "^4.2.0", "strip-ansi": "^6.0.1", "wrap-ansi": "^7.0.0" } }, "sha512-BSeNnyus75C4//NQ9gQt1/csTXyo/8Sb+afLAkzAptFuMsod9HFokGNudZpi/oQV73hnVK+sR+5PVRMd+Dr7YQ=="],
 
     "code-block-writer": ["code-block-writer@13.0.3", "", {}, "sha512-Oofo0pq3IKnsFtuHqSF7TqBfr71aeyZDVJ0HpmqB7FBM2qEigL0iPONSCZSO9pE9dZTAxANe5XHG9Uy0YMv8cg=="],
@@ -1773,8 +1590,6 @@
     "ieee754": ["ieee754@1.2.1", "", {}, "sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA=="],
 
     "ignore": ["ignore@7.0.16", "", {}, "sha512-52N+Y4HRMOJmbLmr+DqO4iSRyyB7N52gm7PWCT6h0p978+oKbqHCB7gIJIwZvBUsjlSdWbrBFqUSmIFNZMpn0A=="],
-
-    "import-in-the-middle": ["import-in-the-middle@3.5.2", "", { "dependencies": { "cjs-module-lexer": "^2.2.0", "es-module-lexer": "^3.0.2", "module-details-from-path": "^1.0.4" } }, "sha512-WseIA/4o56+GYO3RmlOPvejYi771OFeJEeK/ejROsr9bdjW+E5NXTOD1Di8TL40Qgg3JJX9aa97Hf8iiSVIKZw=="],
 
     "inflection": ["inflection@3.0.2", "", {}, "sha512-+Bg3+kg+J6JUWn8J6bzFmOWkTQ6L/NHfDRSYU+EVvuKHDxUDHAXgqixHfVlzuBQaPOTac8hn43aPhMNk6rMe3g=="],
 
@@ -1958,8 +1773,6 @@
 
     "minimist": ["minimist@1.2.8", "", {}, "sha512-2yyAR8qBkN3YuheJanUpWC5U3bb5osDywNB8RzDVlDwDHbocAJveqqj1u8+SVD7jkWT4yvsHCpWqqWqAxb0zCA=="],
 
-    "module-details-from-path": ["module-details-from-path@1.0.4", "", {}, "sha512-EGWKgxALGMgzvxYF1UyGTy0HXX/2vHLkw6+NvDKW2jypWbHpjQuj4UMcqQWXHERJhVGKikolT06G3bcKe4fi7w=="],
-
     "mqtt": ["mqtt@5.16.1", "", { "dependencies": { "@types/readable-stream": "^4.0.21", "@types/ws": "^8.18.1", "commist": "^3.2.0", "concat-stream": "^2.0.0", "debug": "^4.4.1", "help-me": "^5.0.0", "lru-cache": "^10.4.3", "minimist": "^1.2.8", "mqtt-packet": "^9.0.2", "readable-stream": "^4.7.0", "rfdc": "^1.4.1", "socks": "^2.8.6", "split2": "^4.2.0", "worker-timers": "^8.0.23", "ws": "^8.18.3" }, "bin": { "mqtt": "build/bin/mqtt.js", "mqtt_pub": "build/bin/pub.js", "mqtt_sub": "build/bin/sub.js" } }, "sha512-9aEaiR/mLblsMAiynD8quhcGTaINdta2bdyknAtfVzESfoe6Ncdh/uEs5p+3zqcTEtgYErwL4pNk0QkAynXxlg=="],
 
     "mqtt-packet": ["mqtt-packet@9.0.2", "", { "dependencies": { "bl": "^6.0.8", "debug": "^4.3.4", "process-nextick-args": "^2.0.1" } }, "sha512-MvIY0B8/qjq7bKxdN1eD+nrljoeaai+qjLJgfRn3TiMuz0pamsIWY2bFODPZMSNmabsLANXsLl4EMoWvlaTZWA=="],
@@ -2075,8 +1888,6 @@
     "reflect-metadata": ["reflect-metadata@0.2.2", "", {}, "sha512-urBwgfrvVP/eAyXx4hluJivBKzuEbSQs9rKWCrCkbSxNv8mxPcUZKeuoF3Uy4mJl3Lwprp6yy5/39VWigZ4K6Q=="],
 
     "require-directory": ["require-directory@2.1.1", "", {}, "sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q=="],
-
-    "require-in-the-middle": ["require-in-the-middle@8.0.1", "", { "dependencies": { "debug": "^4.3.5", "module-details-from-path": "^1.0.3" } }, "sha512-QT7FVMXfWOYFbeRBF6nu+I6tr2Tf3u0q8RIEjNob/heKY/nh7drD/k7eeMFmSQgnTtCzLDcCu/XEnpW2wk4xCQ=="],
 
     "retry-request": ["retry-request@9.1.0", "", { "dependencies": { "extend": "^3.0.2" } }, "sha512-FILyVbis+DTo3KRbtKceqpj1595wIF+XQFW/+AVOBdCQmxwNDgcNXXr2FNM0Ej2qD7zVXbJGfH7lo4jB0wwhKA=="],
 
@@ -2220,26 +2031,6 @@
 
     "@opentelemetry/core/@opentelemetry/semantic-conventions": ["@opentelemetry/semantic-conventions@1.43.0", "", {}, "sha512-eSYWTm620tTk45EKSedaUL8MFYI8hW164hIXsgIHyxu3VobUB3fFCu5t0hQby6OoWRPsG1KkKUG2M5UadiLiVg=="],
 
-    "@opentelemetry/exporter-logs-otlp-grpc/@grpc/grpc-js": ["@grpc/grpc-js@1.14.5", "", { "dependencies": { "@grpc/proto-loader": "^0.8.0", "@js-sdsl/ordered-map": "^4.4.2" } }, "sha512-7VZM+SVdEcUUqSQeNI3zM8Qs/BhQKZndPo2h5VkYkAM8Iz0wJIa8mKV5ekQGqG8UUsnkQ0NMxIxwkIHYvj0qOw=="],
-
-    "@opentelemetry/exporter-metrics-otlp-grpc/@grpc/grpc-js": ["@grpc/grpc-js@1.14.5", "", { "dependencies": { "@grpc/proto-loader": "^0.8.0", "@js-sdsl/ordered-map": "^4.4.2" } }, "sha512-7VZM+SVdEcUUqSQeNI3zM8Qs/BhQKZndPo2h5VkYkAM8Iz0wJIa8mKV5ekQGqG8UUsnkQ0NMxIxwkIHYvj0qOw=="],
-
-    "@opentelemetry/exporter-prometheus/@opentelemetry/semantic-conventions": ["@opentelemetry/semantic-conventions@1.43.0", "", {}, "sha512-eSYWTm620tTk45EKSedaUL8MFYI8hW164hIXsgIHyxu3VobUB3fFCu5t0hQby6OoWRPsG1KkKUG2M5UadiLiVg=="],
-
-    "@opentelemetry/exporter-trace-otlp-grpc/@grpc/grpc-js": ["@grpc/grpc-js@1.14.5", "", { "dependencies": { "@grpc/proto-loader": "^0.8.0", "@js-sdsl/ordered-map": "^4.4.2" } }, "sha512-7VZM+SVdEcUUqSQeNI3zM8Qs/BhQKZndPo2h5VkYkAM8Iz0wJIa8mKV5ekQGqG8UUsnkQ0NMxIxwkIHYvj0qOw=="],
-
-    "@opentelemetry/exporter-zipkin/@opentelemetry/semantic-conventions": ["@opentelemetry/semantic-conventions@1.43.0", "", {}, "sha512-eSYWTm620tTk45EKSedaUL8MFYI8hW164hIXsgIHyxu3VobUB3fFCu5t0hQby6OoWRPsG1KkKUG2M5UadiLiVg=="],
-
-    "@opentelemetry/otlp-grpc-exporter-base/@grpc/grpc-js": ["@grpc/grpc-js@1.14.5", "", { "dependencies": { "@grpc/proto-loader": "^0.8.0", "@js-sdsl/ordered-map": "^4.4.2" } }, "sha512-7VZM+SVdEcUUqSQeNI3zM8Qs/BhQKZndPo2h5VkYkAM8Iz0wJIa8mKV5ekQGqG8UUsnkQ0NMxIxwkIHYvj0qOw=="],
-
-    "@opentelemetry/resources/@opentelemetry/semantic-conventions": ["@opentelemetry/semantic-conventions@1.43.0", "", {}, "sha512-eSYWTm620tTk45EKSedaUL8MFYI8hW164hIXsgIHyxu3VobUB3fFCu5t0hQby6OoWRPsG1KkKUG2M5UadiLiVg=="],
-
-    "@opentelemetry/sdk-logs/@opentelemetry/semantic-conventions": ["@opentelemetry/semantic-conventions@1.43.0", "", {}, "sha512-eSYWTm620tTk45EKSedaUL8MFYI8hW164hIXsgIHyxu3VobUB3fFCu5t0hQby6OoWRPsG1KkKUG2M5UadiLiVg=="],
-
-    "@opentelemetry/sdk-node/@opentelemetry/semantic-conventions": ["@opentelemetry/semantic-conventions@1.43.0", "", {}, "sha512-eSYWTm620tTk45EKSedaUL8MFYI8hW164hIXsgIHyxu3VobUB3fFCu5t0hQby6OoWRPsG1KkKUG2M5UadiLiVg=="],
-
-    "@opentelemetry/sdk-trace-base/@opentelemetry/semantic-conventions": ["@opentelemetry/semantic-conventions@1.43.0", "", {}, "sha512-eSYWTm620tTk45EKSedaUL8MFYI8hW164hIXsgIHyxu3VobUB3fFCu5t0hQby6OoWRPsG1KkKUG2M5UadiLiVg=="],
-
     "@whatwg-node/disposablestack/@whatwg-node/promise-helpers": ["@whatwg-node/promise-helpers@2.0.0", "", { "dependencies": { "tslib": "^2.6.3" } }, "sha512-/i9CS0Z96o+cPwaYoAyVxAThDiUX1wV3tDmNWPJbn+vtdR+JftuCDg1NGCXBrzIYVDGkJ8uT6ctwmrBOUzOpKQ=="],
 
     "@whatwg-node/node-fetch/@whatwg-node/disposablestack": ["@whatwg-node/disposablestack@0.0.6", "", { "dependencies": { "@whatwg-node/promise-helpers": "^1.0.0", "tslib": "^2.6.3" } }, "sha512-LOtTn+JgJvX8WfBVJtF08TGrdjuFzGJc4mkP8EdDI8ADbvO7kiexYep1o8dwnt0okb0jYclCDXF13xU7Ge4zSw=="],
@@ -2257,8 +2048,6 @@
     "gaxios/https-proxy-agent": ["https-proxy-agent@7.0.6", "", { "dependencies": { "agent-base": "^7.1.2", "debug": "4" } }, "sha512-vK9P5/iUfdl95AI+JVyUuIcVtd4ofvtrOr3HNtM2yxC9bnMbEdp3x01OhQNnjb8IJYi38VlTE3mBXwcfvywuSw=="],
 
     "google-gax/@grpc/grpc-js": ["@grpc/grpc-js@1.14.5", "", { "dependencies": { "@grpc/proto-loader": "^0.8.0", "@js-sdsl/ordered-map": "^4.4.2" } }, "sha512-7VZM+SVdEcUUqSQeNI3zM8Qs/BhQKZndPo2h5VkYkAM8Iz0wJIa8mKV5ekQGqG8UUsnkQ0NMxIxwkIHYvj0qOw=="],
-
-    "import-in-the-middle/es-module-lexer": ["es-module-lexer@3.0.2", "", {}, "sha512-BuIB67FngDSyQ/dpQNOZybwdEBDUGJQvOqwWr4ha/ufYiqzuEwPkKO2zLhRAgay28tStRIHUeWmszZAJo3GCOg=="],
 
     "micromatch/picomatch": ["picomatch@2.3.2", "", {}, "sha512-V7+vQEJ06Z+c5tSye8S+nHUfI51xoXIXjHQ99cQtKUkQqqO1kO/KCJUfZXuB47h/YBlDhah2H3hdUGXn8ie0oA=="],
 

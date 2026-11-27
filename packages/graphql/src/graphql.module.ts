@@ -12,7 +12,7 @@ import {
   provideHttpPolicyAsync,
   requirePlatformCapabilities,
   type HttpPolicy,
-} from "@aponiajs/platform-core";
+} from "@aponiajs/common";
 import { buildGraphQLPolicy, readGraphQLMount } from "./endpoint/graphql-endpoint.ts";
 import type { GraphQLConfiguration } from "./interfaces/graphql-endpoint.interface.ts";
 import type { GraphQLModuleOptions } from "./interfaces/graphql-module.interface.ts";

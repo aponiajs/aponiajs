@@ -6,7 +6,7 @@ import type {
   AponiaApplicationOptions,
   AponiaModuleDescriptorArtifact,
 } from "@aponiajs/platform-elysia";
-import { getApplicationContainer } from "@aponiajs/platform-core";
+import { getApplicationContainer } from "@aponiajs/core";
 import { buildOpenApiDocument } from "./document/openapi-document.ts";
 import {
   analyzeControllerRoutes,

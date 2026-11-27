@@ -3,7 +3,7 @@ import {
   compileRootModuleAsync as compilePlatformRootModuleAsync,
   isModuleDefinition,
   type AponiaRootModule,
-} from "@aponiajs/platform-core";
+} from "@aponiajs/common";
 import type { ModuleDefinition } from "@aponiajs/common";
 import { compileDecoratedController } from "./controller-lowering.ts";
 import { ELYSIA_DESCRIPTOR_CACHE_KEY } from "../compiler/descriptor-cache.ts";

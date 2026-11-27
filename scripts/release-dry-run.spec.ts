@@ -71,7 +71,7 @@ test("release:dry-run succeeds when every package packs", async () => {
 });
 
 test("release:dry-run fails when a package fails, and keeps packing the rest", async () => {
-  const failingPackage = "platform-core";
+  const failingPackage = "platform-hono";
   const result = await runDryRun(failingPackage);
 
   expect(result.exitCode).not.toBe(0);

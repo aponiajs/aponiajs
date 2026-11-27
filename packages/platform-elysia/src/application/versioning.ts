@@ -4,7 +4,7 @@ import {
   createVersionNegotiator,
   type AponiaVersioningOptions,
   type VersionNegotiationRoute,
-} from "@aponiajs/platform-core";
+} from "@aponiajs/common";
 
 /**
  * Routes a header or media-type request to the versioned mount of its path.

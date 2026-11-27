@@ -30,7 +30,7 @@ packages are installable today.
 | ------------------------------------ | ---------------------------------------------------------------------------- |
 | [Build](./build/README.md)           | Layout, modules, injection, configuration, lifecycle, enhancers, and testing |
 | [Platforms](./platforms/README.md)   | HTTP platforms, native plugins, WebSockets, Eden Treaty, and inspection      |
-| [Services](./services/README.md)     | Auth, auditing, tenancy, jobs, database, metrics, messaging, and protocols   |
+| [Services](./services/README.md)     | Auth, jobs, database, messaging, and protocols                               |
 | [Tooling](./tooling/README.md)       | The CLI, library authoring, and plugin-package authoring                     |
 | [Operations](./operations/README.md) | Deployment, release management, and AI-agent operation                       |
 | [Reference](./reference/README.md)   | The package catalog, API index, feature status, stability, and policies      |
@@ -51,8 +51,7 @@ packages are installable today.
 | Model modules, providers, and visibility       | [Dependency injection](./build/dependency-injection.md), [Modules](./learn/03-modules.md)                                                           |
 | Define HTTP routes, parameters, and validation | [Controllers and routes](./learn/05-controllers-and-routes.md), [Validation](./learn/06-validation.md)                                              |
 | Guard, wrap, or map failures                   | [Execution enhancers](./build/enhancers.md)                                                                                                         |
-| Authenticate users and protect sessions        | [Authentication](./services/auth.md), [Tenancy](./services/tenancy.md), [Threat model](./reference/threat-model.md)                                 |
-| Record an audit trail                          | [Audit events](./services/audit.md), [Threat model](./reference/threat-model.md)                                                                    |
+| Authenticate users and protect sessions        | [Authentication](./services/auth.md), [Threat model](./reference/threat-model.md)                                                                   |
 | Add security headers and CSRF protection       | [Package catalog](./reference/packages.md), [Threat model](./reference/threat-model.md)                                                             |
 | Call another service safely                    | [Package catalog](./reference/packages.md), [Threat model](./reference/threat-model.md)                                                             |
 | Work with files and downloads                  | [Files](./build/files.md)                                                                                                                           |
@@ -60,7 +59,7 @@ packages are installable today.
 | Persist data and run migrations                | [Database](./services/database.md)                                                                                                                  |
 | Enforce lifetimes, mutation, and typestate     | [Compiler invariants](./build/invariants.md), [Request context](./build/request-context.md)                                                         |
 | Run background work                            | [Jobs and the outbox](./services/queues.md), [Microservices](./services/microservices.md)                                                           |
-| Observe a running service                      | [Logging](./build/logging.md), [Metrics](./services/metrics.md), [Devtools](./services/devtools.md)                                                 |
+| Observe a running service                      | [Logging](./build/logging.md), [Devtools](./services/devtools.md)                                                                                   |
 | Deploy, scale, and drain                       | [Deployment](./operations/deployment.md), [Lifecycle](./build/lifecycle.md), [Configuration](./build/configuration.md)                              |
 | Expose OpenAPI, GraphQL, or MCP                | [OpenAPI](./services/openapi.md), [MCP](./services/mcp.md), [Agent surface](./agent/README.md)                                                      |
 | Look up an exported name                       | [API reference](./reference/api.md)                                                                                                                 |

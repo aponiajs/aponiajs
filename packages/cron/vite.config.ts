@@ -19,7 +19,7 @@ export default defineConfig({
     dts: true,
     exports: true,
     deps: {
-      neverBundle: ["@aponiajs/common", "@aponiajs/platform-core", "croner"],
+      neverBundle: ["@aponiajs/common", "croner"],
     },
   },
   lint: {

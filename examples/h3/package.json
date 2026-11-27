@@ -14,7 +14,6 @@
   "dependencies": {
     "@aponiajs/common": "workspace:*",
     "@aponiajs/core": "workspace:*",
-    "@aponiajs/platform-core": "workspace:*",
     "@aponiajs/platform-h3": "workspace:*",
     "h3": "^2.0.8"
   }

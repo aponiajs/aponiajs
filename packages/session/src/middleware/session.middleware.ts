@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import type { AponiaMiddleware, RouteContext } from "@aponiajs/common";
-import { clearCookie, readCookies, writeCookie } from "@aponiajs/platform-core";
+import { clearCookie, readCookies, writeCookie } from "@aponiajs/common";
 import { issueSessionToken, readSessionId } from "../policy/session-token.ts";
 import type { SessionRequestState } from "../service/session.service.ts";
 import { setSessionRequestState } from "../service/session-parameter.ts";

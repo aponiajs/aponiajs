@@ -1,7 +1,7 @@
 import type { ModuleDefinition } from "@aponiajs/common";
 import { ELYSIA_DESCRIPTOR_CACHE_SYMBOL } from "./descriptor-cache.ts";
 import { compileRootModule, compileRootModuleAsync } from "../modules/module-compiler.ts";
-import type { AponiaRootModule } from "@aponiajs/platform-core";
+import type { AponiaRootModule } from "@aponiajs/common";
 
 /**
  * Symbol used to attach compiled module descriptors directly onto class objects in RAM.

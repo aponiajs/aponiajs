@@ -21,7 +21,7 @@ import {
   type AponiaBootDiagnostics,
   type BootDiagnosticsRef,
   type RequestLifecycleHook,
-} from "@aponiajs/platform-core";
+} from "@aponiajs/common";
 import { createLogBuffer, defaultLogBufferCapacity } from "../logging/log-buffer.ts";
 import { isRecordableLogger, recordLogger } from "../logging/log-tap.ts";
 import type { LogStream } from "../logging/log-tap.ts";

@@ -1,5 +1,5 @@
 import type { AnyElysia } from "elysia";
-import type { AponiaRootModule } from "@aponiajs/platform-core";
+import type { AponiaRootModule } from "@aponiajs/common";
 import { bootstrapAponiaApplication } from "./application-bootstrap.ts";
 import { AponiaApplication } from "./aponia-elysia-application.ts";
 import { AponiaApplicationContext } from "./application-context.ts";

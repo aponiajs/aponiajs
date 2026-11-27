@@ -12,7 +12,7 @@ import type {
 } from "@aponiajs/common";
 import type { InputSchema } from "elysia";
 
-export type { ControllerHandlerFactory, RouteHandler } from "@aponiajs/platform-core";
+export type { ControllerHandlerFactory, RouteHandler } from "@aponiajs/common";
 
 /** Renders one route's view from the engine the application registered. */
 export type RouteViewRenderer = (

@@ -28,11 +28,6 @@ const repository = "https://github.com/aponiajs/aponiajs";
 
 /** The bundled catalog. It is data, not a hosted registry. */
 export const libraryCatalog: readonly LibraryCatalogEntry[] = Object.freeze([
-  entry("@aponiajs/audit", "module", "Bounded, redacting audit events.", ["audit", "security"]),
-  entry("@aponiajs/tenancy", "module", "Request-scoped multi-tenancy and tenant guards.", [
-    "tenancy",
-    "multi-tenant",
-  ]),
   entry("@aponiajs/auth", "plugin", "Bearer JWT authentication and authorization guards.", [
     "auth",
     "jwt",
@@ -50,10 +45,6 @@ export const libraryCatalog: readonly LibraryCatalogEntry[] = Object.freeze([
   entry("@aponiajs/graphql", "plugin", "A GraphQL endpoint served in a module.", [
     "graphql",
     "api",
-  ]),
-  entry("@aponiajs/opentelemetry", "plugin", "Tracing for the application's own routes.", [
-    "tracing",
-    "observability",
   ]),
   entry("@aponiajs/cache", "module", "Bounded application caching with TTL.", [
     "cache",

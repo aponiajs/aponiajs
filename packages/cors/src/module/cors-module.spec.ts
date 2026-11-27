@@ -1,3 +1,9 @@
+import {
+  assertPlatformCapabilities,
+  compileRootModule,
+  providePlatformCapabilities,
+} from "@aponiajs/common";
+import { createContainer } from "@aponiajs/core";
 import { expect, test } from "bun:test";
 import {
   AponiaError,
@@ -13,8 +19,8 @@ import {
   inspectAponiaApplication,
   type AponiaApplication,
 } from "@aponiajs/platform-elysia";
-import { createPlatformFactory } from "@aponiajs/platform-core";
-import { honoAdapter } from "@aponiajs/platform-hono";
+
+import { AponiaFactory as HonoAponiaFactory } from "@aponiajs/platform-hono";
 import { cors } from "@elysia/cors";
 import { z } from "zod";
 import { CorsModule } from "../index.ts";
@@ -523,17 +529,15 @@ test("cannot carry an origin a configuration cannot express, where the raw plugi
 test("refuses a platform without the http capability instead of mounting nothing", async () => {
   const CorsConfig = policyOf("cors.platform");
 
-  @Module({ imports: [CorsModule.register({ configuration: CorsConfig, source: {} })] })
+  @Module({
+    imports: [CorsModule.register({ configuration: CorsConfig, source: {} })],
+    providers: [providePlatformCapabilities({ platform: "bare", capabilities: [] })],
+  })
   class AppModule {}
 
   let thrown: unknown;
   try {
-    await createPlatformFactory({
-      name: "bare",
-      capabilities: [],
-      createApplication: () => ({}),
-      mountRoute: () => undefined,
-    }).create(AppModule, { logger: false });
+    assertPlatformCapabilities(createContainer(compileRootModule(AppModule)));
   } catch (error) {
     thrown = error;
   }
@@ -558,7 +562,7 @@ test("serves the same policy on the Hono platform", async () => {
   })
   class AppModule {}
 
-  const application = await createPlatformFactory(honoAdapter()).create(AppModule, {
+  const application = await HonoAponiaFactory.create(AppModule, {
     logger: false,
   });
 

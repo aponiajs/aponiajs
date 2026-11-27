@@ -2,4 +2,4 @@ export type {
   AponiaHealthOptions,
   AponiaHealthResponse,
   AponiaHealthStatus,
-} from "@aponiajs/platform-core";
+} from "@aponiajs/common";

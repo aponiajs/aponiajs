@@ -1,13 +1,9 @@
-import {
-  AponiaHttpApplication,
-  createPlatformFactory,
-  type AponiaHttpApplicationOptions,
-} from "@aponiajs/platform-core";
-import type { AponiaRootModule } from "@aponiajs/platform-core";
+import type { AponiaHttpApplicationOptions, AponiaRootModule } from "@aponiajs/common";
+import { AponiaHttpApplication, createBootstrapFactory } from "./bootstrap.ts";
 import type { Context, Hono, MiddlewareHandler } from "hono";
 import { createHonoHost, type HonoApplication } from "../host/hono-host.ts";
 
-const factory = createPlatformFactory<HonoApplication>(createHonoHost());
+const factory = createBootstrapFactory<HonoApplication>(createHonoHost());
 
 /** The managed application this platform returns. */
 export type HonoAponiaApplication = AponiaHttpApplication<HonoApplication>;

@@ -85,12 +85,6 @@ test("packed workspaces generate an application that installs, validates, builds
       ),
       // `platform-elysia` depends on this package, so a generated application
       // resolves it from the registry unless the lane packs it too.
-      platformCore: await packWorkspace(
-        "packages/platform-core",
-        archiveDirectory,
-        "09-platform-core",
-        bunTemporaryDirectory,
-      ),
       testing: await packWorkspace(
         "packages/testing",
         archiveDirectory,
@@ -205,7 +199,6 @@ test("packed workspaces generate an application that installs, validates, builds
     ] as const;
     const localOverrides = [
       ["@aponiajs/compiler", archives.compiler],
-      ["@aponiajs/platform-core", archives.platformCore],
       ["@aponiajs/schematics", archives.schematics],
       ["@aponiajs/testing", archives.testing],
     ] as const;
@@ -322,11 +315,6 @@ async function assertInstalledPackageGraph(
   projectDirectory: string,
   version: string,
 ): Promise<void> {
-  await assertPackageDependency(
-    join(projectDirectory, "node_modules/@aponiajs/platform-core/package.json"),
-    "@aponiajs/compiler",
-    version,
-  );
   await assertPackageDependency(
     join(projectDirectory, "node_modules/@aponiajs/compiler/package.json"),
     "@aponiajs/common",

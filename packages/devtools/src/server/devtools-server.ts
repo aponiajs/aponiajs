@@ -1,5 +1,5 @@
 import type { LoggerService } from "@aponiajs/common";
-import type { AponiaBootDiagnostics } from "@aponiajs/platform-core";
+import type { AponiaBootDiagnostics } from "@aponiajs/common";
 import {
   buildAotPayload,
   devtoolsAotPath,

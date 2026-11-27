@@ -11,7 +11,7 @@ page lives in one category, and each category has its own `README.md`.
 | ------------- | ------------------------------------------------------------------------------------ |
 | `build/`      | Layout, modules, injection, configuration, lifecycle, enhancers, testing, and views  |
 | `platforms/`  | HTTP platforms, native plugins, WebSockets, Eden Treaty, and application inspection  |
-| `services/`   | Auth, auditing, tenancy, jobs, database, metrics, messaging, and served protocols    |
+| `services/`   | Auth, jobs, database, messaging, and served protocols                                |
 | `tooling/`    | The CLI, library authoring, and plugin-package authoring                             |
 | `operations/` | Deployment, release management, and AI-agent operation                               |
 | `reference/`  | The package catalog, API index, feature status, stability, support, and threat model |

@@ -376,12 +376,7 @@ export class BladeViewEngine implements ViewEngine {
     const normalized = expression.replace(/\$([A-Za-z_][A-Za-z0-9_]*)/g, "$1");
     let compiled = this.#expressions.get(normalized);
     if (compiled === undefined) {
-      // Blade expressions are developer-authored templates, compiled once and cached.
-      // oxlint-disable-next-line typescript/no-implied-eval
-      compiled = new Function(
-        "data",
-        `with (data) { try { return (${normalized}); } catch { return undefined; } }`,
-      ) as Expression;
+      compiled = compileBladeExpression(normalized);
       this.#expressions.set(normalized, compiled);
     }
     try {
@@ -533,4 +528,455 @@ function createRenderState(): RenderState {
       return current;
     },
   };
+}
+
+type BladeToken =
+  | { readonly kind: "number"; readonly value: number }
+  | { readonly kind: "string"; readonly value: string }
+  | { readonly kind: "ident"; readonly value: string }
+  | { readonly kind: "op"; readonly value: string };
+
+const multiCharOps = ["===", "!==", "==", "!=", "<=", ">=", "&&", "||", "??"] as const;
+const blockedKeys = new Set(["__proto__", "constructor", "prototype"]);
+
+function tokenizeBladeExpression(source: string): readonly BladeToken[] | undefined {
+  const tokens: BladeToken[] = [];
+  let i = 0;
+
+  while (i < source.length) {
+    const ch = source[i] ?? "";
+    if (/\s/.test(ch)) {
+      i += 1;
+      continue;
+    }
+
+    const multi = multiCharOps.find((op) => source.startsWith(op, i));
+    if (multi !== undefined) {
+      tokens.push({ kind: "op", value: multi });
+      i += multi.length;
+      continue;
+    }
+
+    if ("+-*/%!<>?:.,()[]{}".includes(ch)) {
+      tokens.push({ kind: "op", value: ch });
+      i += 1;
+      continue;
+    }
+
+    if (ch === "'" || ch === '"') {
+      const quote = ch;
+      i += 1;
+      let text = "";
+      let closed = false;
+      while (i < source.length) {
+        const cur = source[i] ?? "";
+        if (cur === "\\") {
+          const next = source[i + 1];
+          if (next === undefined) {
+            return undefined;
+          }
+          text += next;
+          i += 2;
+          continue;
+        }
+        if (cur === quote) {
+          closed = true;
+          i += 1;
+          break;
+        }
+        text += cur;
+        i += 1;
+      }
+      if (!closed) {
+        return undefined;
+      }
+      tokens.push({ kind: "string", value: text });
+      continue;
+    }
+
+    if (/[0-9]/.test(ch)) {
+      let end = i + 1;
+      while (end < source.length && /[0-9.]/.test(source[end] ?? "")) {
+        end += 1;
+      }
+      const num = Number(source.slice(i, end));
+      if (Number.isNaN(num)) {
+        return undefined;
+      }
+      tokens.push({ kind: "number", value: num });
+      i = end;
+      continue;
+    }
+
+    if (/[A-Za-z_$]/.test(ch)) {
+      let end = i + 1;
+      while (end < source.length && /[A-Za-z0-9_$]/.test(source[end] ?? "")) {
+        end += 1;
+      }
+      tokens.push({ kind: "ident", value: source.slice(i, end) });
+      i = end;
+      continue;
+    }
+
+    return undefined;
+  }
+
+  return tokens;
+}
+
+function compileBladeExpression(source: string): Expression {
+  const tokens = tokenizeBladeExpression(source);
+  if (tokens === undefined || tokens.length === 0) {
+    return () => undefined;
+  }
+
+  let cursor = 0;
+  const peek = (): BladeToken | undefined => tokens[cursor];
+  const consume = (): BladeToken | undefined => {
+    const token = tokens[cursor];
+    cursor += 1;
+    return token;
+  };
+  const matchOp = (op: string): boolean => {
+    const token = peek();
+    if (token?.kind === "op" && token.value === op) {
+      cursor += 1;
+      return true;
+    }
+    return false;
+  };
+
+  const parseTernary = (): Expression | undefined => {
+    const condition = parseNullish();
+    if (condition === undefined) {
+      return undefined;
+    }
+    if (!matchOp("?")) {
+      return condition;
+    }
+    const whenTrue = parseTernary();
+    if (whenTrue === undefined || !matchOp(":")) {
+      return undefined;
+    }
+    const whenFalse = parseTernary();
+    if (whenFalse === undefined) {
+      return undefined;
+    }
+    return (data) => (condition(data) ? whenTrue(data) : whenFalse(data));
+  };
+
+  const parseNullish = (): Expression | undefined => {
+    let left = parseOr();
+    if (left === undefined) {
+      return undefined;
+    }
+    while (matchOp("??")) {
+      const right = parseOr();
+      if (right === undefined) {
+        return undefined;
+      }
+      const prev: Expression = left;
+      left = (data) => prev(data) ?? right(data);
+    }
+    return left;
+  };
+
+  const parseOr = (): Expression | undefined => {
+    let left = parseAnd();
+    if (left === undefined) {
+      return undefined;
+    }
+    while (matchOp("||")) {
+      const right = parseAnd();
+      if (right === undefined) {
+        return undefined;
+      }
+      const prev: Expression = left;
+      left = (data) => prev(data) || right(data);
+    }
+    return left;
+  };
+
+  const parseAnd = (): Expression | undefined => {
+    let left = parseEquality();
+    if (left === undefined) {
+      return undefined;
+    }
+    while (matchOp("&&")) {
+      const right = parseEquality();
+      if (right === undefined) {
+        return undefined;
+      }
+      const prev: Expression = left;
+      left = (data) => prev(data) && right(data);
+    }
+    return left;
+  };
+
+  const parseEquality = (): Expression | undefined => {
+    let left = parseRelational();
+    if (left === undefined) {
+      return undefined;
+    }
+    while (true) {
+      const op = peek();
+      if (
+        op?.kind === "op" &&
+        (op.value === "===" || op.value === "!==" || op.value === "==" || op.value === "!=")
+      ) {
+        consume();
+        const right = parseRelational();
+        if (right === undefined) {
+          return undefined;
+        }
+        const prev: Expression = left;
+        if (op.value === "===") {
+          left = (data) => prev(data) === right(data);
+        } else if (op.value === "!==") {
+          left = (data) => prev(data) !== right(data);
+        } else if (op.value === "==") {
+          // Intentionally mirrors JS `==` semantics when explicitly written in templates.
+          // oxlint-disable-next-line eqeqeq
+          left = (data) => prev(data) == right(data);
+        } else {
+          // oxlint-disable-next-line eqeqeq
+          left = (data) => prev(data) != right(data);
+        }
+      } else {
+        break;
+      }
+    }
+    return left;
+  };
+
+  const parseRelational = (): Expression | undefined => {
+    let left = parseAdditive();
+    if (left === undefined) {
+      return undefined;
+    }
+    while (true) {
+      const op = peek();
+      if (
+        op?.kind === "op" &&
+        (op.value === "<" || op.value === "<=" || op.value === ">" || op.value === ">=")
+      ) {
+        consume();
+        const right = parseAdditive();
+        if (right === undefined) {
+          return undefined;
+        }
+        const prev: Expression = left;
+        left = (data) => {
+          const l = prev(data) as number;
+          const r = right(data) as number;
+          if (op.value === "<") return l < r;
+          if (op.value === "<=") return l <= r;
+          if (op.value === ">") return l > r;
+          return l >= r;
+        };
+      } else {
+        break;
+      }
+    }
+    return left;
+  };
+
+  const parseAdditive = (): Expression | undefined => {
+    let left = parseMultiplicative();
+    if (left === undefined) {
+      return undefined;
+    }
+    while (true) {
+      const op = peek();
+      if (op?.kind === "op" && (op.value === "+" || op.value === "-")) {
+        consume();
+        const right = parseMultiplicative();
+        if (right === undefined) {
+          return undefined;
+        }
+        const prev: Expression = left;
+        left =
+          op.value === "+"
+            ? (data) => (prev(data) as number) + (right(data) as number)
+            : (data) => (prev(data) as number) - (right(data) as number);
+      } else {
+        break;
+      }
+    }
+    return left;
+  };
+
+  const parseMultiplicative = (): Expression | undefined => {
+    let left = parseUnary();
+    if (left === undefined) {
+      return undefined;
+    }
+    while (true) {
+      const op = peek();
+      if (op?.kind === "op" && (op.value === "*" || op.value === "/" || op.value === "%")) {
+        consume();
+        const right = parseUnary();
+        if (right === undefined) {
+          return undefined;
+        }
+        const prev: Expression = left;
+        left = (data) => {
+          const l = prev(data) as number;
+          const r = right(data) as number;
+          if (op.value === "*") return l * r;
+          if (op.value === "/") return l / r;
+          return l % r;
+        };
+      } else {
+        break;
+      }
+    }
+    return left;
+  };
+
+  const parseUnary = (): Expression | undefined => {
+    if (matchOp("!")) {
+      const operand = parseUnary();
+      return operand === undefined ? undefined : (data) => !operand(data);
+    }
+    if (matchOp("-")) {
+      const operand = parseUnary();
+      return operand === undefined ? undefined : (data) => -(operand(data) as number);
+    }
+    if (matchOp("+")) {
+      const operand = parseUnary();
+      return operand === undefined ? undefined : (data) => +(operand(data) as number);
+    }
+    return parseMember();
+  };
+
+  const parseMember = (): Expression | undefined => {
+    let target = parsePrimary();
+    if (target === undefined) {
+      return undefined;
+    }
+    while (true) {
+      if (matchOp(".")) {
+        const prop = consume();
+        if (prop?.kind !== "ident") {
+          return undefined;
+        }
+        const key = prop.value;
+        const prev: Expression = target;
+        target = (data) => {
+          const obj = prev(data);
+          if (obj === null || obj === undefined || blockedKeys.has(key)) {
+            return undefined;
+          }
+          return (obj as Record<string, unknown>)[key];
+        };
+      } else if (matchOp("[")) {
+        const keyExpr = parseTernary();
+        if (keyExpr === undefined || !matchOp("]")) {
+          return undefined;
+        }
+        const prev: Expression = target;
+        target = (data) => {
+          const obj = prev(data);
+          const key = keyExpr(data);
+          if (obj === null || obj === undefined || key === null || key === undefined) {
+            return undefined;
+          }
+          const keyString = String(key as string | number);
+          if (blockedKeys.has(keyString)) {
+            return undefined;
+          }
+          return (obj as Record<string, unknown>)[keyString];
+        };
+      } else {
+        break;
+      }
+    }
+    return target;
+  };
+
+  const parsePrimary = (): Expression | undefined => {
+    const token = consume();
+    if (token === undefined) {
+      return undefined;
+    }
+    if (token.kind === "number" || token.kind === "string") {
+      return () => token.value;
+    }
+    if (token.kind === "ident") {
+      if (token.value === "true") return () => true;
+      if (token.value === "false") return () => false;
+      if (token.value === "null") return () => null;
+      if (token.value === "undefined") return () => undefined;
+      const key = token.value;
+      if (blockedKeys.has(key)) {
+        return () => undefined;
+      }
+      return (data) => (Object.hasOwn(data, key) ? data[key] : undefined);
+    }
+    if (token.kind === "op" && token.value === "(") {
+      const inner = parseTernary();
+      return inner !== undefined && matchOp(")") ? inner : undefined;
+    }
+    if (token.kind === "op" && token.value === "[") {
+      const items: Expression[] = [];
+      if (!matchOp("]")) {
+        while (true) {
+          const item = parseTernary();
+          if (item === undefined) {
+            return undefined;
+          }
+          items.push(item);
+          if (matchOp("]")) {
+            break;
+          }
+          if (!matchOp(",")) {
+            return undefined;
+          }
+        }
+      }
+      return (data) => items.map((item) => item(data));
+    }
+    if (token.kind === "op" && token.value === "{") {
+      const entries: { readonly key: string; readonly value: Expression }[] = [];
+      if (!matchOp("}")) {
+        while (true) {
+          const keyToken = consume();
+          if (keyToken === undefined || (keyToken.kind !== "ident" && keyToken.kind !== "string")) {
+            return undefined;
+          }
+          if (!matchOp(":")) {
+            return undefined;
+          }
+          const value = parseTernary();
+          if (value === undefined) {
+            return undefined;
+          }
+          if (!blockedKeys.has(keyToken.value)) {
+            entries.push({ key: keyToken.value, value });
+          }
+          if (matchOp("}")) {
+            break;
+          }
+          if (!matchOp(",")) {
+            return undefined;
+          }
+        }
+      }
+      return (data) => {
+        const result: Data = {};
+        for (const entry of entries) {
+          result[entry.key] = entry.value(data);
+        }
+        return result;
+      };
+    }
+    return undefined;
+  };
+
+  const parsed = parseTernary();
+  if (parsed === undefined || cursor !== tokens.length) {
+    return () => undefined;
+  }
+  return parsed;
 }

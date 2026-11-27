@@ -5,7 +5,7 @@ import {
   resolveCorsOptions,
   type HttpPolicy,
   type ResolvedCors,
-} from "@aponiajs/platform-core";
+} from "@aponiajs/common";
 import type { CorsConfiguration } from "../interfaces/cors-policy.interface.ts";
 
 /**

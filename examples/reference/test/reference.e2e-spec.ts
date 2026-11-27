@@ -65,7 +65,7 @@ describe("reference application", () => {
     expect(JSON.stringify(users)).not.toContain("passwordHash");
   });
 
-  test("creates a user, runs the queued audit, and reports the metric", async () => {
+  test("creates a user and runs the queued audit", async () => {
     const created = await send(
       application,
       "/users",
@@ -83,10 +83,6 @@ describe("reference application", () => {
     ).json()) as readonly { type: string; userId: string }[];
     expect(audit.some((record) => record.type === "user.created")).toBe(true);
     expect(audit).toHaveLength(1);
-
-    const scrape = await (await get(application, "/metrics")).text();
-    expect(scrape).toContain("reference_users_created_total 1");
-    expect(scrape).toContain("reference_http_requests_total");
   });
 
   test("refuses a user without the administrator role", async () => {

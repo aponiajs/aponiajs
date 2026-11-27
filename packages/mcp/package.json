@@ -47,7 +47,6 @@
   },
   "dependencies": {
     "@aponiajs/common": "workspace:*",
-    "@aponiajs/platform-core": "workspace:*",
     "@modelcontextprotocol/server": "^2.4.0"
   },
   "devDependencies": {

@@ -39,6 +39,22 @@ export class UsersController {
 }
 ```
 
+### Use it in a service
+
+```ts
+import { Injectable } from "@aponiajs/common";
+import { ViewService } from "@aponiajs/view";
+
+@Injectable()
+export class PagesService {
+  constructor(private readonly views: ViewService) {}
+
+  home(name: string) {
+    return this.views.render("home", { name });
+  }
+}
+```
+
 `views/users/index.html`:
 
 ```html
@@ -75,3 +91,13 @@ exports `MODULE_OPTIONS_TOKEN` (`VIEW_MODULE_OPTIONS`), is global by default
 (`isGlobal: false` opts out), accepts the three asynchronous shapes through
 `forRootAsync`, and keeps `register`/`registerAsync` as deprecated aliases.
 `ViewService` and `VIEW_ENGINE` stay exported beside the module.
+
+## Bootstrap
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+
+const application = await AponiaFactory.create(AppModule);
+await application.listen(Number(Bun.env.PORT ?? 3000));
+```

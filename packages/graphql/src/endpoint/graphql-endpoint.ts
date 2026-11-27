@@ -1,6 +1,6 @@
 import { AponiaError, type ConfigurationToken } from "@aponiajs/common";
 import { createSchema, createYoga } from "graphql-yoga";
-import type { HttpPolicy } from "@aponiajs/platform-core";
+import type { HttpPolicy } from "@aponiajs/common";
 import type {
   GraphQLConfiguration,
   GraphQLSchemaOptions,

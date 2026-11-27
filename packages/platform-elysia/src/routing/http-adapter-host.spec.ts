@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { Injectable, Module } from "@aponiajs/common";
-import { HttpAdapterHost } from "@aponiajs/platform-core";
+import { HttpAdapterHost } from "@aponiajs/common";
 import { AponiaFactory } from "../index.ts";
 
 @Injectable()

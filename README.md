@@ -75,11 +75,11 @@ await application.listen(3000);
 
 The framework ships as focused packages with explicit dependencies:
 
-- **Runtime**: `@aponiajs/common`, `@aponiajs/core`, `@aponiajs/compiler`, `@aponiajs/platform-core`, `@aponiajs/platform-elysia`, `@aponiajs/platform-hono`, `@aponiajs/platform-h3`.
+- **Runtime**: `@aponiajs/common`, `@aponiajs/core`, `@aponiajs/compiler`, `@aponiajs/platform-elysia`, `@aponiajs/platform-hono`, `@aponiajs/platform-h3`.
 - **Tooling**: `@aponiajs/cli`, `create-aponia`, `@aponiajs/testing`, `@aponiajs/devtools`.
-- **Integrations**: `@aponiajs/graphql`, `@aponiajs/openapi`, `@aponiajs/mcp`, `@aponiajs/cors`, `@aponiajs/cron`, `@aponiajs/opentelemetry`.
-- **Services**: `@aponiajs/auth`, `@aponiajs/audit`, `@aponiajs/cache`, `@aponiajs/compression`, `@aponiajs/database`, `@aponiajs/events`, `@aponiajs/http`, `@aponiajs/idempotency`, `@aponiajs/metrics`, `@aponiajs/queue`, `@aponiajs/rate-limit`, `@aponiajs/security`, `@aponiajs/session`, `@aponiajs/tenancy`.
-- **Delivery**: `@aponiajs/microservices`, `@aponiajs/serverless`, `@aponiajs/h3`, `@aponiajs/hono`, `@aponiajs/nitro`.
+- **Integrations**: `@aponiajs/graphql`, `@aponiajs/openapi`, `@aponiajs/mcp`, `@aponiajs/cors`, `@aponiajs/cron`, `@aponiajs/config`, `@aponiajs/cqrs`, `@aponiajs/mapped-types`, `@aponiajs/serve-static`, `@aponiajs/terminus`.
+- **Services**: `@aponiajs/auth`, `@aponiajs/cache`, `@aponiajs/compression`, `@aponiajs/database`, `@aponiajs/events`, `@aponiajs/http`, `@aponiajs/queue`, `@aponiajs/rate-limit`, `@aponiajs/security`, `@aponiajs/session`.
+- **Delivery**: `@aponiajs/microservices`, `@aponiajs/serverless`, `@aponiajs/nitro`.
 
 All packages share one synchronized release version. See the [package catalog](./docs/reference/packages.md) for what is installable today.
 

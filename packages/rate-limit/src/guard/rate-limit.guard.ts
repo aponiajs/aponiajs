@@ -5,7 +5,7 @@ import {
   type CanActivate,
   type ExecutionContext,
 } from "@aponiajs/common";
-import { httpErrors } from "@aponiajs/platform-core";
+import { httpErrors } from "@aponiajs/common";
 import { RATE_LIMIT_OPTIONS } from "../module/rate-limit-module.constants.ts";
 import type {
   RateLimitDecision,

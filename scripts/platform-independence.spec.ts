@@ -8,7 +8,7 @@ import { readdir } from "node:fs/promises";
 const platforms = ["platform-elysia", "platform-hono", "platform-h3"] as const;
 
 /** The `@aponiajs/*` packages a platform may depend on. */
-const sharedPackages = new Set(["@aponiajs/common", "@aponiajs/core", "@aponiajs/platform-core"]);
+const sharedPackages = new Set(["@aponiajs/common", "@aponiajs/core"]);
 
 interface Manifest {
   readonly dependencies?: Readonly<Record<string, string>>;
@@ -37,12 +37,7 @@ describe("platform independence", () => {
   test("the platform family is exactly Elysia, Hono, and H3", async () => {
     const entries = await readdir("packages", { withFileTypes: true });
     const found = entries
-      .filter(
-        (entry) =>
-          entry.isDirectory() &&
-          entry.name !== "platform-core" &&
-          entry.name.startsWith("platform-"),
-      )
+      .filter((entry) => entry.isDirectory() && entry.name.startsWith("platform-"))
       .map((entry) => entry.name)
       .sort();
 
@@ -71,11 +66,7 @@ describe("platform independence", () => {
 
         for (const specifier of specifiers) {
           const own = `@aponiajs/${platform}`;
-          if (
-            specifier.startsWith("@aponiajs/platform-") &&
-            specifier !== "@aponiajs/platform-core" &&
-            specifier !== own
-          ) {
+          if (specifier.startsWith("@aponiajs/platform-") && specifier !== own) {
             throw new Error(`${platform}/${file} imports ${specifier}`);
           }
           if (specifier.includes("/platform-") && specifier.startsWith("..")) {

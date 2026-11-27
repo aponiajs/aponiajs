@@ -45,7 +45,6 @@
   },
   "dependencies": {
     "@aponiajs/common": "workspace:*",
-    "@aponiajs/platform-core": "workspace:*",
     "@aponiajs/platform-elysia": "workspace:*"
   },
   "devDependencies": {

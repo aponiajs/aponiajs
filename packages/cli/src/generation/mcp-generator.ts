@@ -109,7 +109,7 @@ export class ${names.className}Module {}
 
 function specSource(names: ReturnType<typeof createComponentNames>): string {
   return `import { expect, test } from "bun:test";
-import { compileRootModule } from "@aponiajs/platform-core";
+import { compileRootModule } from "@aponiajs/common";
 import { createContainer } from "@aponiajs/core";
 import { ${names.className}Module } from "./${names.fileName}.module.ts";
 import { ${names.className}Tools } from "./${names.fileName}.tools.ts";

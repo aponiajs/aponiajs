@@ -4,7 +4,6 @@ export default defineConfig({
   test: {
     alias: {
       "@aponiajs/common": new URL("../common/src/index.ts", import.meta.url).pathname,
-      "@aponiajs/platform-core": new URL("../platform-core/src/index.ts", import.meta.url).pathname,
     },
     globals: true,
     include: ["test/**/*.conformance.ts"],
@@ -19,7 +18,6 @@ export default defineConfig({
     deps: {
       neverBundle: [
         "@aponiajs/common",
-        "@aponiajs/platform-core",
         "@modelcontextprotocol/server",
         "elysia",
         "h3",

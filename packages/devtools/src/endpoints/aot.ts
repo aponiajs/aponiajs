@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import type { AnalyzedController, DeclinedControllerHandler } from "@aponiajs/cli";
 import type { LoggerService } from "@aponiajs/common";
-import type { AponiaBootDiagnostics } from "@aponiajs/platform-core";
+import type { AponiaBootDiagnostics } from "@aponiajs/common";
 import { oneLine } from "../logging/one-line.ts";
 import { reportFailure } from "../logging/report-failure.ts";
 import type { AponiaBuildController, AponiaBuildPayload } from "../interfaces/aot.interface.ts";

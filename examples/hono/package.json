@@ -14,7 +14,6 @@
   "dependencies": {
     "@aponiajs/common": "workspace:*",
     "@aponiajs/core": "workspace:*",
-    "@aponiajs/platform-core": "workspace:*",
     "@aponiajs/platform-hono": "workspace:*",
     "hono": "^4.13.17"
   }

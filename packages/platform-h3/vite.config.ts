@@ -5,7 +5,6 @@ export default defineConfig({
     alias: {
       "@aponiajs/common": new URL("../common/src/index.ts", import.meta.url).pathname,
       "@aponiajs/core": new URL("../core/src/index.ts", import.meta.url).pathname,
-      "@aponiajs/platform-core": new URL("../platform-core/src/index.ts", import.meta.url).pathname,
     },
     globals: true,
     include: ["test/**/*.conformance.ts"],
@@ -15,13 +14,7 @@ export default defineConfig({
     dts: true,
     exports: true,
     deps: {
-      neverBundle: [
-        "@aponiajs/common",
-        "@aponiajs/core",
-        "@aponiajs/platform-core",
-        "h3",
-        "crossws",
-      ],
+      neverBundle: ["@aponiajs/common", "@aponiajs/core", "h3", "crossws"],
     },
   },
   lint: {

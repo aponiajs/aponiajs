@@ -9,21 +9,22 @@ from a validated configuration.
 
 ## Use it
 
-Register the endpoint in the module that owns the schema, and inject the
-providers its resolvers need:
+### Register the module
+
+`GraphQLModule.forRoot` returns the `DynamicModule` an `imports` entry accepts.
+The registration is a node in the module graph, so the endpoint is initialized in
+the same boot as the application's controllers:
 
 ```ts
 import { Module } from "@aponiajs/common";
 import { GraphQLModule } from "@aponiajs/graphql";
-import { GraphQLConfig } from "./config.ts";
-import { UserService } from "./users.service.ts";
+import { GraphQLConfig } from "./graphql.config.ts";
 
 const graphql = GraphQLModule.forRoot({
   configuration: GraphQLConfig,
-  inject: [UserService],
-  useFactory: (users) => ({
-    typeDefs: `type Query { users: [String] }`,
-    resolvers: { Query: { users: () => users.all() } },
+  useFactory: () => ({
+    typeDefs: `type Query { hello: String }`,
+    resolvers: { Query: { hello: () => "world" } },
   }),
 });
 
@@ -31,9 +32,74 @@ const graphql = GraphQLModule.forRoot({
 export class AppModule {}
 ```
 
-A resolver reaches injected services through the factory closure. The endpoint
-mounts through the module graph, so the application sees it in the same boot as
-its controllers.
+A factory with no `inject` receives nothing and returns a schema fixed in
+source. The next section adds a service.
+
+### Use it in a resolver
+
+This package exports no `@Resolver` or `@Query` decorator: a resolver is the
+`resolvers` map GraphQL Yoga executes, built in `useFactory`. The factory runs
+once per boot, after the providers it names exist, so each field closes over a
+service the container constructed rather than a module-level constant:
+
+```ts
+import { Injectable, Module } from "@aponiajs/common";
+import { GraphQLModule } from "@aponiajs/graphql";
+import { GraphQLConfig } from "./graphql.config.ts";
+
+@Injectable()
+export class UserService {
+  all(): readonly string[] {
+    return ["ada", "grace"];
+  }
+}
+
+@Module({ providers: [UserService], exports: [UserService] })
+export class UsersModule {}
+
+const graphql = GraphQLModule.forRoot({
+  configuration: GraphQLConfig,
+  imports: [UsersModule],
+  inject: [UserService],
+  useFactory: (users: UserService) => ({
+    typeDefs: `type Query { users: [String!]! }`,
+    resolvers: {
+      Query: {
+        users: (): readonly string[] => users.all(),
+      },
+    },
+  }),
+});
+```
+
+`imports` lists the module whose export the factory injects; a service a resolver
+uses has to be exported by a module listed there.
+
+### Call the endpoint
+
+The endpoint answers the path the configuration states, `/graphql` by default.
+With the resolver above:
+
+```ts
+const response = await application.handle(new Request("http://localhost/graphql?query={users}"));
+
+response.status; // 200
+await response.json(); // { data: { users: ["ada", "grace"] } }
+```
+
+`POST /graphql` with `{ "query": "{ users }" }` answers the same body. A
+`GRAPHQL_PATH` of `/gql` moves the endpoint: `GET /gql` answers, and `/graphql`
+is not mounted. A resolver that throws still answers `200`, with partial `data`
+and a masked GraphQL `errors` entry; see the section below.
+
+### Async registration
+
+`GraphQLModule` exports `forRoot`, plus the deprecated `register` alias, and no
+`forRootAsync` or `registerAsync`. Neither input a registration takes is
+asynchronous: the mount path is a validated configuration the boot resolves and
+exports, and the schema options are a plain value built synchronously in
+`useFactory` after the providers it injects exist. There is nothing for an async
+factory to await that `useFactory` does not already receive.
 
 ## Bootstrap
 
@@ -160,7 +226,20 @@ measured:
 - **A controller at the same method and path is reached only for paths the
   policy declines.** The policy answers the declared path before routing, so a
   controller at that path is shadowed without a `DUPLICATE_ROUTE`; the boot
-  succeeds and the controller answers elsewhere.
+  succeeds and the controller answers elsewhere. This controller is legal and
+  boots, but never answers `GET /graphql`:
+
+```ts
+import { Controller, Get } from "@aponiajs/common";
+
+@Controller("graphql")
+export class GraphQLStatusController {
+  @Get("/")
+  status(): string {
+    return "shadowed by the GraphQL policy";
+  }
+}
+```
 
 ## One registration per application
 

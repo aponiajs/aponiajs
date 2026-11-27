@@ -1,1 +1,1 @@
-export { isValidRequestId, resolveRequestId } from "@aponiajs/platform-core";
+export { isValidRequestId, resolveRequestId } from "@aponiajs/core";

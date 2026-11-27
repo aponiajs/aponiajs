@@ -6,7 +6,7 @@ import {
   type ClassToken,
   type ModuleDefinition,
 } from "@aponiajs/common";
-import { getApplicationContainer } from "@aponiajs/platform-core";
+import { getApplicationContainer } from "@aponiajs/core";
 import type { ResolvedMcpOptions } from "../interfaces/mcp-module.interface.ts";
 import type { McpPlan, McpPrimitivePlan } from "../interfaces/mcp-plan.interface.ts";
 

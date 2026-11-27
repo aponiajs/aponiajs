@@ -1,6 +1,6 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { AponiaError, type ResponseSettingsState } from "@aponiajs/common";
-import { httpErrors, writeCookie, type HttpPolicy } from "@aponiajs/platform-core";
+import { httpErrors, writeCookie, type HttpPolicy } from "@aponiajs/common";
 import type {
   CsrfOptions,
   SecurityHeadersOptions,

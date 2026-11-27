@@ -9,7 +9,7 @@ import {
   type ModuleImport,
   type Provider,
 } from "@aponiajs/common";
-import { provideHttpPolicyAsync, requirePlatformCapabilities } from "@aponiajs/platform-core";
+import { provideHttpPolicyAsync, requirePlatformCapabilities } from "@aponiajs/common";
 import { buildCompressionPolicy, resolveCompressionOptions } from "../policy/compression.policy.ts";
 import type {
   CompressionModuleOptions,

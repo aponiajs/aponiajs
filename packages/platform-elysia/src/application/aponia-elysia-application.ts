@@ -16,9 +16,9 @@ import { readApplicationToken } from "./application-container.ts";
 import {
   createApplicationSurfaceConfig,
   mergeApplicationSurfaceOptions,
-  readApplicationShutdown,
   type AponiaApplicationSurfaceConfig,
-} from "@aponiajs/platform-core";
+} from "@aponiajs/common";
+import { readApplicationShutdown } from "@aponiajs/core";
 import { installShutdownSignalHandlers } from "./shutdown-signals.ts";
 
 /**

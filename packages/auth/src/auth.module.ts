@@ -9,7 +9,8 @@ import {
   type Token,
   type ConfigurableModuleAsyncOptions,
 } from "@aponiajs/common";
-import { RequestContextModule, RequestContextService, RolesGuard } from "@aponiajs/platform-core";
+import { RolesGuard } from "@aponiajs/common";
+import { RequestContextModule, RequestContextService } from "@aponiajs/core";
 import { AUTH_TOKEN_OPTIONS, AUTH_VERIFIER } from "./auth.constants.ts";
 import { AuthService } from "./auth.service.ts";
 import { AuthGuard } from "./auth.guard.ts";

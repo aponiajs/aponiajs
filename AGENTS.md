@@ -28,41 +28,37 @@ Bun workspace. Framework packages live in `packages/`:
 | `@aponiajs/compiler`        | Scoped lifetimes, borrow views, typestate, linear consumption   | `common`                                                                                         |
 | `@aponiajs/core`            | Module graph, visibility rules, dependency injection            | `@aponiajs/common`                                                                               |
 | `@aponiajs/cache`           | Bounded application cache, TTL, pluggable store                 | `common`                                                                                         |
-| `@aponiajs/compression`     | Brotli/gzip response compression, threshold negotiation         | `common`, `platform-core`                                                                        |
+| `@aponiajs/compression`     | Brotli/gzip response compression, threshold negotiation         | `common`                                                                                         |
 | `@aponiajs/events`          | Typed in-process events, ordered handlers, listeners            | `common`, `reflect-metadata`                                                                     |
 | `@aponiajs/http`            | SSRF-safe outbound HTTP, timeouts, bounded responses            | `common`, `@standard-schema/spec`, `ipaddr.js`                                                   |
-| `@aponiajs/rate-limit`      | Fixed-window request limiting, guard, store                     | `common`, `platform-core`, `platform-elysia`                                                     |
-| `@aponiajs/security`        | Security headers and signed double-submit CSRF                  | `common`, `platform-core`                                                                        |
-| `@aponiajs/session`         | Signed session cookies, session service, bounded store          | `common`, `platform-core`                                                                        |
-| `@aponiajs/auth`            | JWT authentication, guards, refresh rotation, revocation        | `common`, `platform-core`, `jose`                                                                |
-| `@aponiajs/audit`           | Bounded, redacting audit events and store                       | `common`                                                                                         |
-| `@aponiajs/tenancy`         | Request-scoped tenant service and guard                         | `common`, `platform-core`, `platform-elysia`                                                     |
+| `@aponiajs/rate-limit`      | Fixed-window request limiting, guard, store                     | `common`, `platform-elysia`                                                                      |
+| `@aponiajs/security`        | Security headers and signed double-submit CSRF                  | `common`                                                                                         |
+| `@aponiajs/session`         | Signed session cookies, session service, bounded store          | `common`                                                                                         |
+| `@aponiajs/auth`            | JWT authentication, guards, refresh rotation, revocation        | `common`, `jose`                                                                                 |
 | `@aponiajs/queue`           | In-process job queue, retries, dead letters, outbox             | `common`, `compiler`                                                                             |
 | `@aponiajs/database`        | Drizzle boundary, repositories, SQL migrations                  | `common`, `compiler`, `drizzle-orm`                                                              |
-| `@aponiajs/metrics`         | Prometheus registry, request instrumentation, scrape endpoint   | `common`, `platform-core`, `platform-elysia`                                                     |
-| `@aponiajs/idempotency`     | Idempotent request replay, conflict detection, store            | `common`, `compiler`, `platform-core`, `platform-elysia`                                         |
 | `@aponiajs/microservices`   | Message patterns, CBOR client/server, optional broker adapters  | `common`, `cborg`; optional broker SDK peers                                                     |
-| `@aponiajs/store-redis`     | Redis stores for cache, rate-limit, session, idempotency, auth  | `common`; optional peer `redis`                                                                  |
 | `@aponiajs/view`            | Blade views, components, props, slots, and shared data          | `common`                                                                                         |
 | `@aponiajs/serverless`      | AWS Lambda and Web Fetch adapters for an application            | —                                                                                                |
-| `@aponiajs/h3`              | H3 delivery adapter for an application                          | `serverless`, peer `h3`                                                                          |
-| `@aponiajs/hono`            | Hono delivery adapter for an application                        | `serverless`, peer `hono`                                                                        |
 | `@aponiajs/nitro`           | Nitro delivery adapter for an application                       | `serverless`, peer `nitro`                                                                       |
-| `@aponiajs/platform-elysia` | Elysia adapter, HTTP routes, WebSocket gateways, plugins        | `common`, `core`, `platform-core`; peer `elysia`, `typebox`                                      |
-| `@aponiajs/platform-core`   | Runtime-neutral primitives every HTTP platform shares           | `common`, `core`, `compiler`, `rou3`; peer `typebox`                                             |
-| `@aponiajs/platform-h3`     | AponiaJS on the H3 runtime                                      | `common`, `platform-core`; peer `h3`, `crossws`                                                  |
-| `@aponiajs/platform-hono`   | AponiaJS on the Hono runtime                                    | `common`, `platform-core`; peer `hono`                                                           |
+| `@aponiajs/platform-elysia` | Elysia adapter, HTTP routes, WebSocket gateways, plugins        | `common`, `core`; peer `elysia`, `typebox`                                                       |
+| `@aponiajs/platform-h3`     | AponiaJS on the H3 runtime                                      | `common`, `core`; peer `h3`, `crossws`                                                           |
+| `@aponiajs/platform-hono`   | AponiaJS on the Hono runtime                                    | `common`, `core`; peer `hono`                                                                    |
 | `@aponiajs/cli`             | `aponia new` and `aponia generate` schematics                   | `@aponiajs/schematics`, `change-case`, `ts-morph`, `yargs-parser`, `inflection`, `oxfmt` (exact) |
 | `@aponiajs/schematics`      | The Nest-shaped schematic collection `aponia-cli.json` names    | `change-case`, `inflection`                                                                      |
 | `create-aponia`             | `bun create aponia` entrypoint into the same generator          | `@aponiajs/cli`                                                                                  |
-| `@aponiajs/cron`            | Scheduled jobs declared in a module, from validated config      | `common`, `platform-core`, `croner`                                                              |
-| `@aponiajs/cors`            | Cross-origin policy declared in a module, from validated config | `common`, `platform-core`                                                                        |
-| `@aponiajs/devtools`        | Opt-in devtools served by the running application itself        | `cli`, `common`, `core`, `platform-core`                                                         |
-| `@aponiajs/graphql`         | GraphQL endpoint served in a module, from validated config      | `common`, `platform-core`, `graphql-yoga`; peer `graphql`                                        |
-| `@aponiajs/mcp`             | Model Context Protocol endpoint mounted from the official SDK   | `common`, `platform-core`, `@modelcontextprotocol/server`; peer `elysia`, `hono`, `h3`, `zod`    |
+| `@aponiajs/cron`            | Scheduled jobs declared in a module, from validated config      | `common`, `croner`                                                                               |
+| `@aponiajs/cors`            | Cross-origin policy declared in a module, from validated config | `common`                                                                                         |
+| `@aponiajs/devtools`        | Opt-in devtools served by the running application itself        | `cli`, `common`, `core`                                                                          |
+| `@aponiajs/graphql`         | GraphQL endpoint served in a module, from validated config      | `common`, `graphql-yoga`; peer `graphql`                                                         |
+| `@aponiajs/mcp`             | Model Context Protocol endpoint mounted from the official SDK   | `common`, `@modelcontextprotocol/server`; peer `elysia`, `hono`, `h3`, `zod`                     |
 | `@aponiajs/testing`         | Test application builder, provider overrides, teardown          | `common`, `core`, `platform-elysia`; peer `elysia`                                               |
-| `@aponiajs/openapi`         | OpenAPI document served for an application's routes             | `common`, `core`, `platform-core`                                                                |
-| `@aponiajs/opentelemetry`   | Tracing through a validated config, no backend or exporter      | `common`, `platform-core`, `@opentelemetry/api`, `@opentelemetry/sdk-node`                       |
+| `@aponiajs/openapi`         | OpenAPI document served for an application's routes             | `common`, `core`                                                                                 |
+| `@aponiajs/config`          | Nest-style `.env`, namespaces, and validated config             | `common`                                                                                         |
+| `@aponiajs/cqrs`            | `CommandBus`, `QueryBus`, `EventBus`, `@Saga`, `AggregateRoot`  | `common`                                                                                         |
+| `@aponiajs/mapped-types`    | `PartialType`, `PickType`, `OmitType`, `IntersectionType`       | `common`, `typebox`                                                                              |
+| `@aponiajs/serve-static`    | Static file and SPA serving via `ServeStaticModule`             | `common`                                                                                         |
+| `@aponiajs/terminus`        | `TerminusModule`, `HealthCheckService`, health indicators       | `common`                                                                                         |
 | `aponiajs`                  | Reserved public facade, private and unpublished                 | —                                                                                                |
 
 Supporting directories: `examples/` for executable examples, `docs/` for
@@ -105,52 +101,48 @@ Every package and supporting directory carries its own `AGENTS.md` with the
 invariants that apply there. Read this file first, then the one next to the code
 being changed:
 
-| Guide                                                              | Covers                                                          |
-| ------------------------------------------------------------------ | --------------------------------------------------------------- |
-| [`packages/common`](./packages/common/AGENTS.md)                   | Decorators, descriptors, tokens, errors, logging                |
-| [`packages/compiler`](./packages/compiler/AGENTS.md)               | Scoped lifetimes, borrow views, typestate, linear consumption   |
-| [`packages/core`](./packages/core/AGENTS.md)                       | Module graph, visibility, container                             |
-| [`packages/cache`](./packages/cache/AGENTS.md)                     | The bounded application-cache package                           |
-| [`packages/compression`](./packages/compression/AGENTS.md)         | The Brotli/gzip response-compression package                    |
-| [`packages/events`](./packages/events/AGENTS.md)                   | The typed in-process event package                              |
-| [`packages/http`](./packages/http/AGENTS.md)                       | The SSRF-safe outbound HTTP package                             |
-| [`packages/rate-limit`](./packages/rate-limit/AGENTS.md)           | The fixed-window rate-limit package                             |
-| [`packages/security`](./packages/security/AGENTS.md)               | The security headers and CSRF package                           |
-| [`packages/session`](./packages/session/AGENTS.md)                 | The signed session cookie package                               |
-| [`packages/auth`](./packages/auth/AGENTS.md)                       | The JWT authentication and authorization package                |
-| [`packages/audit`](./packages/audit/AGENTS.md)                     | The bounded audit-event package                                 |
-| [`packages/tenancy`](./packages/tenancy/AGENTS.md)                 | The request-scoped multi-tenancy package                        |
-| [`packages/queue`](./packages/queue/AGENTS.md)                     | The job queue and transactional outbox package                  |
-| [`packages/database`](./packages/database/AGENTS.md)               | The Drizzle database boundary, repositories, and migrations     |
-| [`packages/metrics`](./packages/metrics/AGENTS.md)                 | The Prometheus metrics registry, plugin, and scrape endpoint    |
-| [`packages/idempotency`](./packages/idempotency/AGENTS.md)         | The idempotent request replay package                           |
-| [`packages/platform-elysia`](./packages/platform-elysia/AGENTS.md) | Bootstrap, route mapping, native plugins, context types         |
-| [`packages/platform-core`](./packages/platform-core/AGENTS.md)     | Shared execution context, guard pipeline, pipes, middleware     |
-| [`packages/platform-h3`](./packages/platform-h3/AGENTS.md)         | The H3 platform: host binding, factory, middleware              |
-| [`packages/platform-hono`](./packages/platform-hono/AGENTS.md)     | The Hono platform: host binding, factory, middleware            |
-| [`packages/cli`](./packages/cli/AGENTS.md)                         | Schematics, templates, generated layout                         |
-| [`packages/schematics`](./packages/schematics/AGENTS.md)           | The Nest-shaped schematic collection and its templates          |
-| [`packages/create-aponia`](./packages/create-aponia/AGENTS.md)     | The `bun create aponia` entrypoint                              |
-| [`packages/cron`](./packages/cron/AGENTS.md)                       | The scheduled-jobs plugin package                               |
-| [`packages/cors`](./packages/cors/AGENTS.md)                       | The cross-origin plugin package                                 |
-| [`packages/devtools`](./packages/devtools/AGENTS.md)               | The opt-in devtools package, served by the application itself   |
-| [`packages/graphql`](./packages/graphql/AGENTS.md)                 | The GraphQL endpoint package, served by its own registration    |
-| [`packages/mcp`](./packages/mcp/AGENTS.md)                         | The MCP endpoint package, mounted from the official SDK         |
-| [`packages/testing`](./packages/testing/AGENTS.md)                 | The test kit: test applications, provider overrides, teardown   |
-| [`packages/openapi`](./packages/openapi/AGENTS.md)                 | The OpenAPI document package, served by its own registration    |
-| [`packages/opentelemetry`](./packages/opentelemetry/AGENTS.md)     | The OpenTelemetry tracing package, and its process-global limit |
-| [`packages/microservices`](./packages/microservices/AGENTS.md)     | Message patterns, CBOR client/server, optional broker adapters  |
-| [`packages/store-redis`](./packages/store-redis/AGENTS.md)         | Redis stores for cache, rate-limit, session, idempotency, auth  |
-| [`packages/view`](./packages/view/AGENTS.md)                       | Blade views, components, props, slots, and shared data          |
-| [`packages/serverless`](./packages/serverless/AGENTS.md)           | AWS Lambda and Web Fetch adapters for an application            |
-| [`packages/h3`](./packages/h3/AGENTS.md)                           | H3 delivery adapter for an application                          |
-| [`packages/hono`](./packages/hono/AGENTS.md)                       | Hono delivery adapter for an application                        |
-| [`packages/nitro`](./packages/nitro/AGENTS.md)                     | Nitro delivery adapter for an application                       |
-| [`packages/aponiajs`](./packages/aponiajs/AGENTS.md)               | The reserved, still-private facade                              |
-| [`scripts`](./scripts/AGENTS.md)                                   | Release channel derivation and documentation guards             |
-| [`docs`](./docs/AGENTS.md)                                         | The published documentation set and what guards it              |
-| [`docs/learn`](./docs/learn/README.md)                             | The ordered chapters that teach the framework                   |
-| [`examples`](./examples/AGENTS.md)                                 | Executable applications built with the framework                |
+| Guide                                                              | Covers                                                         |
+| ------------------------------------------------------------------ | -------------------------------------------------------------- |
+| [`packages/common`](./packages/common/AGENTS.md)                   | Decorators, descriptors, tokens, errors, logging               |
+| [`packages/compiler`](./packages/compiler/AGENTS.md)               | Scoped lifetimes, borrow views, typestate, linear consumption  |
+| [`packages/core`](./packages/core/AGENTS.md)                       | Module graph, visibility, container                            |
+| [`packages/cache`](./packages/cache/AGENTS.md)                     | The bounded application-cache package                          |
+| [`packages/compression`](./packages/compression/AGENTS.md)         | The Brotli/gzip response-compression package                   |
+| [`packages/events`](./packages/events/AGENTS.md)                   | The typed in-process event package                             |
+| [`packages/http`](./packages/http/AGENTS.md)                       | The SSRF-safe outbound HTTP package                            |
+| [`packages/rate-limit`](./packages/rate-limit/AGENTS.md)           | The fixed-window rate-limit package                            |
+| [`packages/security`](./packages/security/AGENTS.md)               | The security headers and CSRF package                          |
+| [`packages/session`](./packages/session/AGENTS.md)                 | The signed session cookie package                              |
+| [`packages/auth`](./packages/auth/AGENTS.md)                       | The JWT authentication and authorization package               |
+| [`packages/queue`](./packages/queue/AGENTS.md)                     | The job queue and transactional outbox package                 |
+| [`packages/database`](./packages/database/AGENTS.md)               | The Drizzle database boundary, repositories, and migrations    |
+| [`packages/platform-elysia`](./packages/platform-elysia/AGENTS.md) | Bootstrap, route mapping, native plugins, context types        |
+| [`packages/platform-h3`](./packages/platform-h3/AGENTS.md)         | The H3 platform: host binding, factory, middleware             |
+| [`packages/platform-hono`](./packages/platform-hono/AGENTS.md)     | The Hono platform: host binding, factory, middleware           |
+| [`packages/cli`](./packages/cli/AGENTS.md)                         | Schematics, templates, generated layout                        |
+| [`packages/schematics`](./packages/schematics/AGENTS.md)           | The Nest-shaped schematic collection and its templates         |
+| [`packages/create-aponia`](./packages/create-aponia/AGENTS.md)     | The `bun create aponia` entrypoint                             |
+| [`packages/cron`](./packages/cron/AGENTS.md)                       | The scheduled-jobs plugin package                              |
+| [`packages/cors`](./packages/cors/AGENTS.md)                       | The cross-origin plugin package                                |
+| [`packages/devtools`](./packages/devtools/AGENTS.md)               | The opt-in devtools package, served by the application itself  |
+| [`packages/graphql`](./packages/graphql/AGENTS.md)                 | The GraphQL endpoint package, served by its own registration   |
+| [`packages/mcp`](./packages/mcp/AGENTS.md)                         | The MCP endpoint package, mounted from the official SDK        |
+| [`packages/testing`](./packages/testing/AGENTS.md)                 | The test kit: test applications, provider overrides, teardown  |
+| [`packages/openapi`](./packages/openapi/AGENTS.md)                 | The OpenAPI document package, served by its own registration   |
+| [`packages/microservices`](./packages/microservices/AGENTS.md)     | Message patterns, CBOR client/server, optional broker adapters |
+| [`packages/view`](./packages/view/AGENTS.md)                       | Blade views, components, props, slots, and shared data         |
+| [`packages/serverless`](./packages/serverless/AGENTS.md)           | AWS Lambda and Web Fetch adapters for an application           |
+| [`packages/nitro`](./packages/nitro/AGENTS.md)                     | Nitro delivery adapter for an application                      |
+| [`packages/config`](./packages/config/AGENTS.md)                   | Nest-style `.env`, namespaces, and validated config            |
+| [`packages/cqrs`](./packages/cqrs/AGENTS.md)                       | `CommandBus`, `QueryBus`, `EventBus`, `@Saga`, `AggregateRoot` |
+| [`packages/mapped-types`](./packages/mapped-types/AGENTS.md)       | `PartialType`, `PickType`, `OmitType`, `IntersectionType`      |
+| [`packages/serve-static`](./packages/serve-static/AGENTS.md)       | Static file and SPA serving via `ServeStaticModule`            |
+| [`packages/terminus`](./packages/terminus/AGENTS.md)               | `TerminusModule`, `HealthCheckService`, health indicators      |
+| [`packages/aponiajs`](./packages/aponiajs/AGENTS.md)               | The reserved, still-private facade                             |
+| [`scripts`](./scripts/AGENTS.md)                                   | Release channel derivation and documentation guards            |
+| [`docs`](./docs/AGENTS.md)                                         | The published documentation set and what guards it             |
+| [`docs/learn`](./docs/learn/README.md)                             | The ordered chapters that teach the framework                  |
+| [`examples`](./examples/AGENTS.md)                                 | Executable applications built with the framework               |
 
 `scripts/agent-guides.spec.ts` keeps that list and the symlinks honest, and
 `scripts/learning-path.spec.ts` keeps the numbered chapters in `docs/learn/`
@@ -212,13 +204,13 @@ Applications can hand-write descriptors instead (`defineModule`,
 
 ### Dependency direction
 
-`common` ← `core` ← `platform-core` ← `platform-elysia`, one-way; `compiler`
-also depends only on `common`. Never add Elysia, HTTP, or Bun runtime APIs to
+`common` ← `core` ← `platform-elysia` / `platform-hono` / `platform-h3`,
+one-way; `compiler` also depends only on `common`, and `core` depends on
+`common` and `compiler`. Never add Elysia, HTTP, or Bun runtime APIs to
 `common`. Never import another package's private source path; cross-package
 imports use the package name, resolved through workspace links (Bun) and the
-aliases in the root `vite.config.ts` (Vite+). `platform-core` holds the
-primitives every HTTP platform shares and imports no HTTP runtime; a platform may
-import it, never the reverse.
+aliases in the root `vite.config.ts` (Vite+). Each platform is standalone and
+never imports another platform.
 
 ### Module graph and visibility
 
@@ -517,31 +509,25 @@ negotiation), route deprecation headers
 (`@Deprecated()`), Server-Sent Events (`@Sse()`),
 opt-in strict code generation (`strictCodegen`), bearer JWT authentication with
 OIDC discovery, refresh-token rotation, and access-token revocation
-(`@aponiajs/auth`), bounded audit events
-(`@aponiajs/audit`), multi-tenancy (`@aponiajs/tenancy`), health probes, lazy
+(`@aponiajs/auth`), health probes, lazy
 module loading (`LazyModuleLoader`),
 graceful shutdown,
 and the opt-in packages `@aponiajs/openapi`, `@aponiajs/cors`, `@aponiajs/cron`,
 `@aponiajs/schematics` (the Nest-shaped schematic collection `aponia-cli.json`
 names),
-`@aponiajs/graphql`, `@aponiajs/opentelemetry`, `@aponiajs/testing`,
+`@aponiajs/graphql`, `@aponiajs/testing`,
 `@aponiajs/devtools`, `@aponiajs/cache`, `@aponiajs/events`, `@aponiajs/http`,
 `@aponiajs/rate-limit`, `@aponiajs/security`, `@aponiajs/session`,
 `@aponiajs/compression`, `@aponiajs/queue` (in-process jobs and a bundled
 SQLite outbox),
 `@aponiajs/database` (Drizzle transactions, repositories, and SQL migrations),
-`@aponiajs/metrics` (a Prometheus registry, request instrumentation, and a
-scrape endpoint), `@aponiajs/idempotency` (idempotent request replay),
 `@aponiajs/compiler` (scoped lifetimes, borrow views, typestate, and linear
 consumption), and message-pattern microservices (`@aponiajs/microservices`: the transport
 contract, CBOR request/reply envelopes, a client and server runtime, an
 in-memory reference transport, adapter factories for NATS, MQTT, RabbitMQ,
 Kafka, Redis Streams, SQS, Pub/Sub, and Service Bus, and `@MessagePattern()` /
-`@EventPattern()` handlers dispatched by the boot), `@aponiajs/store-redis`
-(Redis stores for cache, rate-limit, session, idempotency, and auth
-revocation/refresh), `@aponiajs/mcp` (a Model Context Protocol endpoint mounted
-from the official SDK), delivery adapters (`@aponiajs/h3`, `@aponiajs/hono`,
-`@aponiajs/nitro`), first-class H3 and Hono platforms (`@aponiajs/platform-h3`,
+`@EventPattern()` handlers dispatched by the boot), `@aponiajs/mcp` (a Model Context Protocol endpoint mounted
+from the official SDK), delivery adapter (`@aponiajs/nitro`), first-class H3 and Hono platforms (`@aponiajs/platform-h3`,
 `@aponiajs/platform-hono`), and serverless adapters
 (`@aponiajs/serverless`: Web Fetch and AWS Lambda), a shared Nest application
 surface on Elysia, Hono, and H3 (`useGlobalGuards`, `useGlobalInterceptors`,
@@ -561,8 +547,8 @@ only neutral artifacts — providers, controllers, an `HttpPolicy`, a
 per-runtime `adapters/` directory, or states a `platforms` allowlist; a boot
 refuses a missing request-path capability with `UNSUPPORTED_PLATFORM_FEATURE`,
 naming the package, the capability, and the platform. `backgroundWork` is a
-deployment note rather than a refusal. The platform packages stay thin adapters
-over the shared pipeline in `platform-core`. See
+deployment note rather than a refusal. Each platform package is standalone
+over the shared contracts in `@aponiajs/common` and `@aponiajs/core`. See
 `docs/platforms/platform-parity.md`.
 
 ## Coding Style & Naming Conventions

@@ -63,11 +63,10 @@ jobs:
 
       - name: Pack publishable workspaces
         run: |
-          mkdir -p canary-artifacts/{01-common,02-core,02a-compiler,03-platform-core,04-platform-elysia,04a-schematics,05-cli,06-create-aponia,07-devtools,08-cron,09-graphql,10-testing,11-openapi,12-cors,13-opentelemetry,14-mcp,15-cache,16-events,17-http,18-rate-limit,19-security,20-session,21-compression,22-auth,23-audit,24-tenancy,25-queue,26-database,27-metrics,28-idempotency,29-microservices,30-serverless,31-h3,32-hono,33-nitro,34-store-redis,35-view,36-platform-hono,37-platform-h3}
+          mkdir -p canary-artifacts/{01-common,02-core,02a-compiler,04-platform-elysia,04a-schematics,05-cli,06-create-aponia,07-devtools,08-cron,09-graphql,10-testing,11-openapi,12-cors,14-mcp,15-cache,16-events,17-http,18-rate-limit,19-security,20-session,21-compression,22-auth,25-queue,26-database,29-microservices,30-serverless,33-nitro,35-view,36-platform-hono,37-platform-h3,38-config,39-cqrs,40-mapped-types,41-serve-static,42-terminus}
           bun pm pack --cwd packages/common --destination "$GITHUB_WORKSPACE/canary-artifacts/01-common"
           bun pm pack --cwd packages/core --destination "$GITHUB_WORKSPACE/canary-artifacts/02-core"
           bun pm pack --cwd packages/compiler --destination "$GITHUB_WORKSPACE/canary-artifacts/02a-compiler"
-          bun pm pack --cwd packages/platform-core --destination "$GITHUB_WORKSPACE/canary-artifacts/03-platform-core"
           bun pm pack --cwd packages/platform-elysia --destination "$GITHUB_WORKSPACE/canary-artifacts/04-platform-elysia"
           bun pm pack --cwd packages/schematics --destination "$GITHUB_WORKSPACE/canary-artifacts/04a-schematics"
           bun pm pack --cwd packages/cli --destination "$GITHUB_WORKSPACE/canary-artifacts/05-cli"
@@ -78,7 +77,6 @@ jobs:
           bun pm pack --cwd packages/testing --destination "$GITHUB_WORKSPACE/canary-artifacts/10-testing"
           bun pm pack --cwd packages/openapi --destination "$GITHUB_WORKSPACE/canary-artifacts/11-openapi"
           bun pm pack --cwd packages/cors --destination "$GITHUB_WORKSPACE/canary-artifacts/12-cors"
-          bun pm pack --cwd packages/opentelemetry --destination "$GITHUB_WORKSPACE/canary-artifacts/13-opentelemetry"
           bun pm pack --cwd packages/mcp --destination "$GITHUB_WORKSPACE/canary-artifacts/14-mcp"
           bun pm pack --cwd packages/cache --destination "$GITHUB_WORKSPACE/canary-artifacts/15-cache"
           bun pm pack --cwd packages/events --destination "$GITHUB_WORKSPACE/canary-artifacts/16-events"
@@ -88,21 +86,19 @@ jobs:
           bun pm pack --cwd packages/session --destination "$GITHUB_WORKSPACE/canary-artifacts/20-session"
           bun pm pack --cwd packages/compression --destination "$GITHUB_WORKSPACE/canary-artifacts/21-compression"
           bun pm pack --cwd packages/auth --destination "$GITHUB_WORKSPACE/canary-artifacts/22-auth"
-          bun pm pack --cwd packages/audit --destination "$GITHUB_WORKSPACE/canary-artifacts/23-audit"
-          bun pm pack --cwd packages/tenancy --destination "$GITHUB_WORKSPACE/canary-artifacts/24-tenancy"
           bun pm pack --cwd packages/queue --destination "$GITHUB_WORKSPACE/canary-artifacts/25-queue"
           bun pm pack --cwd packages/database --destination "$GITHUB_WORKSPACE/canary-artifacts/26-database"
-          bun pm pack --cwd packages/metrics --destination "$GITHUB_WORKSPACE/canary-artifacts/27-metrics"
-          bun pm pack --cwd packages/idempotency --destination "$GITHUB_WORKSPACE/canary-artifacts/28-idempotency"
           bun pm pack --cwd packages/microservices --destination "$GITHUB_WORKSPACE/canary-artifacts/29-microservices"
           bun pm pack --cwd packages/serverless --destination "$GITHUB_WORKSPACE/canary-artifacts/30-serverless"
-          bun pm pack --cwd packages/h3 --destination "$GITHUB_WORKSPACE/canary-artifacts/31-h3"
-          bun pm pack --cwd packages/hono --destination "$GITHUB_WORKSPACE/canary-artifacts/32-hono"
           bun pm pack --cwd packages/nitro --destination "$GITHUB_WORKSPACE/canary-artifacts/33-nitro"
-          bun pm pack --cwd packages/store-redis --destination "$GITHUB_WORKSPACE/canary-artifacts/34-store-redis"
           bun pm pack --cwd packages/view --destination "$GITHUB_WORKSPACE/canary-artifacts/35-view"
           bun pm pack --cwd packages/platform-hono --destination "$GITHUB_WORKSPACE/canary-artifacts/36-platform-hono"
           bun pm pack --cwd packages/platform-h3 --destination "$GITHUB_WORKSPACE/canary-artifacts/37-platform-h3"
+          bun pm pack --cwd packages/config --destination "$GITHUB_WORKSPACE/canary-artifacts/38-config"
+          bun pm pack --cwd packages/cqrs --destination "$GITHUB_WORKSPACE/canary-artifacts/39-cqrs"
+          bun pm pack --cwd packages/mapped-types --destination "$GITHUB_WORKSPACE/canary-artifacts/40-mapped-types"
+          bun pm pack --cwd packages/serve-static --destination "$GITHUB_WORKSPACE/canary-artifacts/41-serve-static"
+          bun pm pack --cwd packages/terminus --destination "$GITHUB_WORKSPACE/canary-artifacts/42-terminus"
 
       - name: Publish packages in dependency order
         working-directory: ${{ runner.temp }}

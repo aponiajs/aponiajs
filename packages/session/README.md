@@ -60,6 +60,22 @@ export class AccountController {
 `@Session()` answers the whole session; `@Session("userId")` answers one field
 of its data. A request with no valid session answers `undefined`.
 
+### Async registration
+
+`forRootAsync` accepts the same options through `useFactory`, `useClass`, or
+`useExisting`:
+
+```ts
+SessionModule.forRootAsync({
+  useFactory: () => ({
+    secret: process.env.SESSION_SECRET!,
+  }),
+});
+```
+
+A factory may return a Promise. `useClass` constructs a class implementing
+`create()`, and `useExisting` points at a provider that does.
+
 ## Options
 
 | Option            | Default      | Meaning                              |

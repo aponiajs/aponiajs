@@ -9,6 +9,8 @@ bun add @aponiajs/events@alpha
 
 ## Use it
 
+### Register the module
+
 ```ts
 import { Module } from "@aponiajs/common";
 import { EventEmitterModule } from "@aponiajs/events";
@@ -17,9 +19,30 @@ import { EventEmitterModule } from "@aponiajs/events";
 export class AppModule {}
 ```
 
+### Use it in a controller
+
+```ts
+import { Body, Controller, Post } from "@aponiajs/common";
+import { EventEmitter } from "@aponiajs/events";
+
+@Controller("users")
+export class UsersController {
+  constructor(private readonly events: EventEmitter) {}
+
+  @Post()
+  async create(@Body() body: { name: string }) {
+    const user = { id: "1", name: body.name };
+    await this.events.emit("user.created", user);
+    return user;
+  }
+}
+```
+
+### Use it in a service
+
 ```ts
 import { Injectable } from "@aponiajs/common";
-import { EventEmitter, OnEvent } from "@aponiajs/events";
+import { EventEmitter } from "@aponiajs/events";
 
 @Injectable()
 export class UsersService {
@@ -31,21 +54,24 @@ export class UsersService {
     return user;
   }
 }
-
-@Injectable()
-export class Mailer {
-  @OnEvent("user.created")
-  async sendWelcome(user: { name: string }): Promise<void> {
-    // send the message
-  }
-}
 ```
+
+`EventEmitterModule.forRoot()` takes no options in this release, so there is no
+asynchronous form.
 
 Bind decorated listeners once, in a provider that the module owns:
 
 ```ts
 import { Injectable, Module, type OnModuleInit } from "@aponiajs/common";
-import { EventEmitter, EventEmitterModule } from "@aponiajs/events";
+import { EventEmitter, EventEmitterModule, OnEvent } from "@aponiajs/events";
+
+@Injectable()
+class Mailer {
+  @OnEvent("user.created")
+  async sendWelcome(user: { name: string }): Promise<void> {
+    // send the message
+  }
+}
 
 @Injectable()
 class UserEvents implements OnModuleInit {

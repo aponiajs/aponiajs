@@ -1,7 +1,7 @@
 import { brotliCompress, gzip } from "node:zlib";
 import { promisify } from "node:util";
 import { AponiaError } from "@aponiajs/common";
-import type { HttpPolicy } from "@aponiajs/platform-core";
+import type { HttpPolicy } from "@aponiajs/common";
 
 import type {
   CompressionModuleOptions,

@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@aponiajs/common";
-import { RequestContextService } from "@aponiajs/platform-core";
+import { RequestContextService } from "@aponiajs/core";
 import { AUTH_USER } from "./auth.constants.ts";
 import type { AuthUser } from "./interfaces/auth.interface.ts";
 

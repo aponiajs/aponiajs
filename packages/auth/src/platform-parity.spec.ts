@@ -1,8 +1,8 @@
 import { expect, test } from "bun:test";
 import { Controller, Get, Module, UseGuards } from "@aponiajs/common";
-import { createPlatformFactory, type AponiaApplicationContract } from "@aponiajs/platform-core";
-import { h3Adapter } from "@aponiajs/platform-h3";
-import { honoAdapter } from "@aponiajs/platform-hono";
+import { type AponiaApplicationContract } from "@aponiajs/common";
+import { AponiaFactory as H3AponiaFactory } from "@aponiajs/platform-h3";
+import { AponiaFactory as HonoAponiaFactory } from "@aponiajs/platform-hono";
 import { AuthGuard, AuthModule, JwtService } from "./index.ts";
 
 const secret = "a-secret-that-is-at-least-32-characters-long";
@@ -41,7 +41,7 @@ async function assertAuthenticated(application: AponiaApplicationContract): Prom
 }
 
 test("answers an authenticated request on hono", async () => {
-  const application = await createPlatformFactory(honoAdapter()).create(AppModule, {
+  const application = await HonoAponiaFactory.create(AppModule, {
     logger: false,
   });
 
@@ -53,7 +53,7 @@ test("answers an authenticated request on hono", async () => {
 });
 
 test("answers an authenticated request on h3", async () => {
-  const application = await createPlatformFactory(h3Adapter()).create(AppModule, { logger: false });
+  const application = await H3AponiaFactory.create(AppModule, { logger: false });
 
   try {
     await assertAuthenticated(application);

@@ -1,9 +1,5 @@
-import {
-  resolveMiddlewareInstance,
-  runMiddlewareChain,
-  stripRoutePrefix,
-  type ResolvedMiddlewareConfig,
-} from "@aponiajs/platform-core";
+import { stripRoutePrefix, type ResolvedMiddlewareConfig } from "@aponiajs/common";
+import { resolveMiddlewareInstance, runMiddlewareChain } from "@aponiajs/core";
 import type { AponiaContainer } from "@aponiajs/core";
 import type { Elysia } from "elysia";
 

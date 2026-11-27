@@ -862,7 +862,7 @@ test("the Vite+ lane runs an application-level guard registered through APP_GUAR
 import {
   conformanceCreate,
   platformConformanceCases,
-} from "../../platform-core/test/support/platform-contract.ts";
+} from "../../common/test/support/platform-contract.ts";
 
 const sharedContractCreate = conformanceCreate((root, options) =>
   AponiaFactory.create(root, options),

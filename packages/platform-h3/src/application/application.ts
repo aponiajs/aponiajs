@@ -1,13 +1,9 @@
-import {
-  AponiaHttpApplication,
-  createPlatformFactory,
-  type AponiaHttpApplicationOptions,
-  type AponiaRootModule,
-} from "@aponiajs/platform-core";
+import type { AponiaHttpApplicationOptions, AponiaRootModule } from "@aponiajs/common";
+import { AponiaHttpApplication, createBootstrapFactory } from "./bootstrap.ts";
 import type { H3Event, Middleware } from "h3";
 import { createH3Host, type H3Application } from "../host/h3-host.ts";
 
-const factory = createPlatformFactory<H3Application>(createH3Host());
+const factory = createBootstrapFactory<H3Application>(createH3Host());
 
 /** The managed application this platform returns. */
 export type H3AponiaApplication = AponiaHttpApplication<H3Application>;

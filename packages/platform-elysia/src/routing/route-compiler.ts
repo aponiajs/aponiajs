@@ -17,7 +17,7 @@ import {
 } from "@aponiajs/common";
 import { type Elysia } from "elysia";
 import type { MountedRouteEnhancers } from "../controllers/enhancer.resolver.ts";
-import { joinPaths, rememberMatchedRoute, type ResolvedPipe } from "@aponiajs/platform-core";
+import { joinPaths, rememberMatchedRoute, type ResolvedPipe } from "@aponiajs/common";
 import { isMethodSynchronous } from "./ast-sync-analyzer.ts";
 import { registerNativeRoute } from "./native-route.ts";
 import {
@@ -213,6 +213,7 @@ export function registerCompiledElysiaRoutes(
   globalPipes: readonly ResolvedPipe[] = [],
   instanceResolver?: () => unknown,
   prefix = "",
+  recordMatchedRoutes = false,
 ): ReadonlySet<string | symbol> {
   const generatedKeys = new Set<string | symbol>();
 
@@ -278,9 +279,9 @@ export function registerCompiledElysiaRoutes(
     );
     // The route a request matched is not on the request after routing, and a
     // response observer at the boundary cannot recover it from the raw path.
-    // Recorded here, where the template is known, so a metrics or tracing hook
-    // reads `/users/:id` rather than one series per id.
-    const recordedHook = withRouteMemory(hook, mountPath);
+    // Record it only when at least one request lifecycle hook (such as devtools)
+    // is mounted, so uninstrumented routes avoid a `transform` hook.
+    const recordedHook = recordMatchedRoutes ? withRouteMemory(hook, mountPath) : hook;
     registerNativeRoute(
       application,
       route.method,

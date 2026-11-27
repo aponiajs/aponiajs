@@ -9,9 +9,9 @@ import {
 } from "@aponiajs/common";
 import { createContainer, type AponiaContainer } from "@aponiajs/core";
 import { compileModuleInMemoryAsync } from "../compiler/in-memory-compiler.ts";
-import type { AponiaRootModule } from "@aponiajs/platform-core";
+import type { AponiaRootModule } from "@aponiajs/common";
 import { runShutdownHooks } from "./application-bootstrap.ts";
-import { collectLifecycleCalls } from "@aponiajs/platform-core";
+import { collectLifecycleCalls } from "@aponiajs/core";
 
 /** A loaded module graph with no listener or controller mount. */
 export class LazyModuleRef {

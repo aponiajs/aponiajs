@@ -5,7 +5,6 @@ export default defineConfig({
     alias: {
       "@aponiajs/common": new URL("../common/src/index.ts", import.meta.url).pathname,
       "@aponiajs/core": new URL("../core/src/index.ts", import.meta.url).pathname,
-      "@aponiajs/platform-core": new URL("../platform-core/src/index.ts", import.meta.url).pathname,
       "@aponiajs/platform-elysia": new URL("../platform-elysia/src/index.ts", import.meta.url)
         .pathname,
       "@aponiajs/platform-h3": new URL("../platform-h3/src/index.ts", import.meta.url).pathname,

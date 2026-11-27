@@ -1,4 +1,4 @@
-import { answerStaticAsset, type StaticAssetsOptions } from "@aponiajs/platform-core";
+import { answerStaticAsset, type StaticAssetsOptions } from "@aponiajs/common";
 import type { Elysia } from "elysia";
 
 /**

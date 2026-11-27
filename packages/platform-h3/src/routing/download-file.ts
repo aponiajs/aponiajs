@@ -1,5 +1,5 @@
 import type { ResponseSettingsState } from "@aponiajs/common";
-import { contentDisposition, type DownloadFileOptions } from "@aponiajs/platform-core";
+import { contentDisposition, type DownloadFileOptions } from "@aponiajs/common";
 
 /**
  * Names a download and returns the response the platform streams.

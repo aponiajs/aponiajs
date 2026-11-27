@@ -198,4 +198,52 @@ describe("BladeViewEngine", () => {
     circular.self = circular;
     expect(await engine.render("stringify", { user: circular })).toBe("");
   });
+
+  test("evaluates Blade expressions safely without dynamic code evaluation", async () => {
+    const exprRoot = await mkdtemp(join(tmpdir(), "aponia-blade-expr-"));
+    try {
+      await writeFile(
+        join(exprRoot, "expr.html"),
+        [
+          "{{ ok ? 'yes' : 'no' }}",
+          "{{ missing ?? 'fallback' }}",
+          "{{ false || 'or' }}",
+          "{{ true && 'and' }}",
+          "{{ a === 2 }}-{{ a !== 3 }}-{{ a == '2' }}-{{ a != 3 }}",
+          "{{ a < 3 }}-{{ a <= 2 }}-{{ a > 1 }}-{{ a >= 2 }}",
+          "{{ a + 3 }}-{{ a - 1 }}-{{ a * 4 }}-{{ 8 / a }}-{{ 5 % a }}",
+          "{{ !false }}-{{ -a }}-{{ +a }}-{{ (a + 1) * 2 }}",
+          "{{ items[0] }}-{{ [1, 2][1] }}-{{ { k: 'v' }.k }}-{{ 'a\\'b' }}",
+          "{{ null }}-{{ undefined }}-{{ __proto__ }}-{{ items.__proto__ }}-{{ items['prototype'] }}",
+          "{{ @bad }}-{{ 'unclosed }}-{{ 1 + }}-{{ { }}",
+          "{{ 1 ? 2 }}-{{ 1 ? 2 : }}-{{ 1 ?? }}-{{ 1 || }}-{{ 1 && }}-{{ 1 === }}-{{ 1 < }}-{{ 1 * }}",
+          "{{ ! }}-{{ - }}-{{ + }}-{{ (1 }}-{{ [1 2] }}-{{ { a 1 } }}-{{ { a: } }}-{{ { 1: 2 } }}",
+          "{{ items. }}-{{ items[ }}-{{ items[1 }}",
+        ].join("|"),
+        "utf8",
+      );
+      const exprEngine = new BladeViewEngine({ rootDir: exprRoot });
+      const rendered = await exprEngine.render("expr", { ok: true, a: 2, items: ["first"] });
+      expect(rendered).toBe(
+        [
+          "yes",
+          "fallback",
+          "or",
+          "and",
+          "true-true-true-true",
+          "true-true-true-true",
+          "5-1-8-4-1",
+          "true--2-2-6",
+          "first-2-v-a&#39;b",
+          "----",
+          "---",
+          "-------",
+          "-------",
+          "--",
+        ].join("|"),
+      );
+    } finally {
+      await rm(exprRoot, { recursive: true, force: true });
+    }
+  });
 });

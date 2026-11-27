@@ -125,10 +125,9 @@ Name the upstream package a library mirrors: `cache` mirrors
 `@nestjs/authentication` and `@nestjs/authorization` where they overlap,
 `database` mirrors the `@nestjs/drizzle` boundary, `queue` mirrors
 `@nestjs/bullmq`'s names, `rate-limit` mirrors `@nestjs/throttler`, and
-`microservices` mirrors `@nestjs/microservices`. `audit`, `tenancy`,
-`store-redis`, `view`, `compiler`, `platform-core`, `metrics`, `mcp`, and
-`idempotency` are Aponia extensions with no Nest counterpart; they adopt the same
-builder surface but must not claim parity with a package that does not exist.
+`microservices` mirrors `@nestjs/microservices`. `view`, `compiler`, and `mcp`
+are Aponia extensions with no Nest counterpart; they adopt the same builder surface
+but must not claim parity with a package that does not exist.
 
 Four of those mirrors carry their library's own class surface, not only its
 registration names:

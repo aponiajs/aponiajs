@@ -21,7 +21,6 @@
       "@aponiajs/platform-elysia": ["../../packages/platform-elysia/src/index.ts"],
       "@aponiajs/auth": ["../../packages/auth/src/index.ts"],
       "@aponiajs/database": ["../../packages/database/src/index.ts"],
-      "@aponiajs/metrics": ["../../packages/metrics/src/index.ts"],
       "@aponiajs/queue": ["../../packages/queue/src/index.ts"]
     }
   }

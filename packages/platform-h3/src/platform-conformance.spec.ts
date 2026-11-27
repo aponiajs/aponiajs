@@ -2,7 +2,7 @@ import { test } from "bun:test";
 import {
   conformanceCreate,
   platformConformanceCases,
-} from "../../platform-core/test/support/platform-contract.ts";
+} from "../../common/test/support/platform-contract.ts";
 import { AponiaFactory } from "./index.ts";
 
 const create = conformanceCreate((root, options) => AponiaFactory.create(root, options));

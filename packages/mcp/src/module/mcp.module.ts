@@ -10,11 +10,8 @@ import {
   type Provider,
   type Token,
 } from "@aponiajs/common";
-import {
-  APPLICATION_CONTAINER,
-  requirePlatformCapabilities,
-  type ApplicationContainerRef,
-} from "@aponiajs/platform-core";
+import { requirePlatformCapabilities } from "@aponiajs/common";
+import { APPLICATION_CONTAINER, type ApplicationContainerRef } from "@aponiajs/core";
 import {
   MCP_RUNTIME,
   McpRuntimeShutdown,

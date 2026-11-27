@@ -15,9 +15,9 @@ import type {
   EtagOptions,
   SecurityHeadersOptions,
   StaticAssetsOptions,
-} from "@aponiajs/platform-core";
+} from "@aponiajs/common";
 import type { ElysiaPlugin } from "../plugins/plugin.types.ts";
-import type { AponiaInvokerArtifact } from "@aponiajs/platform-core";
+import type { AponiaInvokerArtifact } from "@aponiajs/common";
 import type { AponiaHealthOptions } from "./application-health.interface.ts";
 
 /**

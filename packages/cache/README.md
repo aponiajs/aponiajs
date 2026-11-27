@@ -9,8 +9,7 @@ bun add @aponiajs/cache@alpha
 
 ## Use it
 
-Import the module, register it once, and inject `CacheService` where the
-application needs a cache.
+### Register the module
 
 ```ts
 import { Module } from "@aponiajs/common";
@@ -21,6 +20,25 @@ import { CacheModule } from "@aponiajs/cache";
 })
 export class AppModule {}
 ```
+
+### Use it in a controller
+
+```ts
+import { Controller, Get, Param } from "@aponiajs/common";
+import { CacheService } from "@aponiajs/cache";
+
+@Controller("users")
+export class UsersController {
+  constructor(private readonly cache: CacheService) {}
+
+  @Get(":id")
+  find(@Param("id") id: string) {
+    return this.cache.get(`user:${id}`);
+  }
+}
+```
+
+### Use it in a service
 
 ```ts
 import { Injectable } from "@aponiajs/common";
@@ -43,6 +61,43 @@ export class UsersService {
 `wrap` is single-flight: concurrent misses for one key share a single factory
 run, so a burst of traffic reaches the origin once. A rejection is shared with
 the waiting callers and leaves no entry behind, so the next call retries.
+
+### Async registration
+
+```ts
+import { Module } from "@aponiajs/common";
+import { CacheModule } from "@aponiajs/cache";
+
+@Module({
+  imports: [
+    CacheModule.forRootAsync({
+      useFactory: () => ({ ttlMs: 30_000, keyPrefix: "users:" }),
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+`useClass` constructs the factory class and reads its `create()` method;
+`useExisting` aliases an already-registered provider through the same method.
+
+```ts
+import { Injectable } from "@aponiajs/common";
+import { CacheModule, type CacheModuleOptions } from "@aponiajs/cache";
+
+@Injectable()
+class CacheOptionsFactory {
+  create(): CacheModuleOptions {
+    return { ttlMs: 30_000, keyPrefix: "users:" };
+  }
+}
+
+CacheModule.forRootAsync({ useClass: CacheOptionsFactory });
+CacheModule.forRootAsync({ useExisting: CacheOptionsFactory });
+```
+
+`useExisting` expects `CacheOptionsFactory` to be a provider of the module that
+imports the registration.
 
 ## What it guarantees
 

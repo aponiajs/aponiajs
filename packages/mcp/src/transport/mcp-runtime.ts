@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { AponiaError, createToken } from "@aponiajs/common";
-import { getApplicationContainer, type ApplicationContainerRef } from "@aponiajs/platform-core";
+import { getApplicationContainer, type ApplicationContainerRef } from "@aponiajs/core";
 import {
   McpServer,
   ResourceTemplate,

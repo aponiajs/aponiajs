@@ -13,7 +13,7 @@ import { Elysia, type AnyElysia } from "elysia";
 import { joinPaths, registerCompiledElysiaRoutes } from "../routing/route-compiler.ts";
 import type { CompiledElysiaRoute } from "../interfaces/route-compiler.interface.ts";
 import type { InferredEdenRoutes } from "../interfaces/route-eden.interface.ts";
-import type { RoutePlan } from "@aponiajs/platform-core";
+import type { RoutePlan } from "@aponiajs/common";
 import { CONTROLLER_KIND } from "./controller.constants.ts";
 import { unmountedRouteEnhancers } from "./enhancer.resolver.ts";
 import type {

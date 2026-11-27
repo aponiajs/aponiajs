@@ -9,7 +9,7 @@ import {
   type RouteContext,
 } from "@aponiajs/common";
 import type { AponiaContainer } from "@aponiajs/core";
-import { httpErrors } from "@aponiajs/platform-core";
+import { httpErrors } from "@aponiajs/common";
 import type { AnyElysia } from "elysia";
 import type { ResolvedFilter } from "../controllers/enhancer.resolver.ts";
 import {

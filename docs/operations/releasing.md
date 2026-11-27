@@ -4,48 +4,44 @@ AponiaJS uses a synchronized version for every workspace package. Releases
 follow [Semantic Versioning 2.0.0](https://semver.org), with
 [bumpp](https://github.com/antfu/bumpp) managing version changes.
 
-The release workflow publishes the 39 publishable workspace packages in
+The release workflow publishes the 34 publishable workspace packages in
 dependency order:
 
 1. `@aponiajs/common`
 2. `@aponiajs/core`
 3. `@aponiajs/compiler`
-4. `@aponiajs/platform-core`
-5. `@aponiajs/platform-h3`
-6. `@aponiajs/platform-hono`
-7. `@aponiajs/platform-elysia`
-8. `@aponiajs/schematics`
-9. `@aponiajs/cli`
-10. `create-aponia`
-11. `@aponiajs/devtools`
-12. `@aponiajs/cron`
-13. `@aponiajs/graphql`
-14. `@aponiajs/cors`
-15. `@aponiajs/testing`
-16. `@aponiajs/openapi`
-17. `@aponiajs/opentelemetry`
-18. `@aponiajs/mcp`
-19. `@aponiajs/cache`
-20. `@aponiajs/events`
-21. `@aponiajs/http`
-22. `@aponiajs/rate-limit`
-23. `@aponiajs/security`
-24. `@aponiajs/session`
-25. `@aponiajs/compression`
-26. `@aponiajs/auth`
-27. `@aponiajs/audit`
-28. `@aponiajs/tenancy`
-29. `@aponiajs/queue`
-30. `@aponiajs/database`
-31. `@aponiajs/metrics`
-32. `@aponiajs/idempotency`
-33. `@aponiajs/microservices`
-34. `@aponiajs/serverless`
-35. `@aponiajs/h3`
-36. `@aponiajs/hono`
-37. `@aponiajs/nitro`
-38. `@aponiajs/store-redis`
-39. `@aponiajs/view`
+4. `@aponiajs/platform-h3`
+5. `@aponiajs/platform-hono`
+6. `@aponiajs/platform-elysia`
+7. `@aponiajs/schematics`
+8. `@aponiajs/cli`
+9. `create-aponia`
+10. `@aponiajs/devtools`
+11. `@aponiajs/cron`
+12. `@aponiajs/graphql`
+13. `@aponiajs/cors`
+14. `@aponiajs/testing`
+15. `@aponiajs/openapi`
+16. `@aponiajs/mcp`
+17. `@aponiajs/cache`
+18. `@aponiajs/events`
+19. `@aponiajs/http`
+20. `@aponiajs/rate-limit`
+21. `@aponiajs/security`
+22. `@aponiajs/session`
+23. `@aponiajs/compression`
+24. `@aponiajs/auth`
+25. `@aponiajs/queue`
+26. `@aponiajs/database`
+27. `@aponiajs/microservices`
+28. `@aponiajs/serverless`
+29. `@aponiajs/nitro`
+30. `@aponiajs/view`
+31. `@aponiajs/config`
+32. `@aponiajs/cqrs`
+33. `@aponiajs/mapped-types`
+34. `@aponiajs/serve-static`
+35. `@aponiajs/terminus`
 
 The `aponiajs` facade remains private until it exports the public framework API.
 
@@ -98,7 +94,7 @@ Rules enforced by `bun run release:verify` and the publish workflow:
 - `canary` never receives the `next` alias and is never promoted to another tag.
   Promote by cutting a real `alpha`, `beta`, or `rc`.
 - A GitHub release for any non-`latest` tag is marked as a prerelease.
-- All 38 publishable packages share one version, so all of them move to the same tag together.
+- All 34 publishable packages share one version, so all of them move to the same tag together.
 
 ## Release Branches
 
@@ -193,7 +189,7 @@ other lanes.
 5. Merge the pull request into the matching release branch.
 6. The release workflow creates the matching `vX.Y.Z` tag and GitHub release,
    marking it as a prerelease for every non-`latest` channel.
-7. The npm publish workflow verifies, builds, packs, and publishes the 38
+7. The npm publish workflow verifies, builds, packs, and publishes the 34
    publishable packages in dependency order under the resolved tag, then moves the
    `next` alias when the channel is `alpha`, `beta`, or `rc`.
 8. A separate job, on a `release` event, generates the CycloneDX SBOM and

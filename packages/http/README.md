@@ -9,27 +9,123 @@ bun add @aponiajs/http@alpha
 
 ## Use it
 
+### Register the module
+
+`forRoot` registers app-wide defaults and no client; `register` creates one
+client. A client with no `name` is injected as `HttpClient`/`HttpService`.
+
 ```ts
 import { Module } from "@aponiajs/common";
 import { HttpModule } from "@aponiajs/http";
 
 @Module({
-  imports: [HttpModule.forRoot({ baseUrl: "https://api.example.com" })],
+  imports: [
+    HttpModule.forRoot({ timeoutMs: 5_000 }),
+    HttpModule.register({ baseUrl: "https://api.github.com" }),
+  ],
 })
 export class AppModule {}
 ```
+
+### Use it in a controller
+
+```ts
+import { Controller, Get, Param } from "@aponiajs/common";
+import { HttpService } from "@aponiajs/http";
+
+@Controller("repos")
+export class ReposController {
+  constructor(private readonly http: HttpService) {}
+
+  @Get(":owner/:name")
+  async find(@Param("owner") owner: string, @Param("name") name: string) {
+    const { data } = await this.http.get<{ full_name: string }>(`/repos/${owner}/${name}`);
+    return data;
+  }
+}
+```
+
+### Use it in a service
 
 ```ts
 import { Injectable } from "@aponiajs/common";
 import { HttpService } from "@aponiajs/http";
 
 @Injectable()
-export class UsersClient {
+export class PaymentsService {
   constructor(private readonly http: HttpService) {}
 
-  find(id: string) {
-    return this.http.get<User>(`/users/${id}`);
+  charge(orderId: string) {
+    return this.http.post("https://payments.example.com/charges", {
+      json: { orderId },
+      idempotencyKey: `charge:${orderId}`,
+    });
   }
+}
+```
+
+### Async registration
+
+`forRootAsync` resolves the app-wide defaults; `registerAsync` resolves one
+client and takes the same `name` extra.
+
+```ts
+HttpModule.forRootAsync({
+  useFactory: () => ({ timeoutMs: 5_000 }),
+});
+
+HttpModule.registerAsync({
+  name: "github",
+  useFactory: () => ({ baseUrl: "https://api.github.com" }),
+});
+```
+
+`useClass` constructs the factory class; `useExisting` aliases an
+already-registered provider. The root form reads
+`createHttpClientModuleOptions()`, and the client form reads
+`createHttpClientOptions()`.
+
+```ts
+import { Injectable } from "@aponiajs/common";
+import { HttpModule } from "@aponiajs/http";
+
+@Injectable()
+class HttpOptionsFactory {
+  createHttpClientModuleOptions() {
+    return { timeoutMs: 5_000 };
+  }
+
+  createHttpClientOptions() {
+    return { baseUrl: "https://api.github.com" };
+  }
+}
+
+HttpModule.forRootAsync({ useClass: HttpOptionsFactory });
+HttpModule.registerAsync({ name: "github", useClass: HttpOptionsFactory });
+HttpModule.forRootAsync({ useExisting: HttpOptionsFactory });
+```
+
+### Multiple registrations
+
+`forRoot` is declared once; every named `register` adds one client under its
+`HttpClient:<name>` token.
+
+```ts
+import { Injectable, Module } from "@aponiajs/common";
+import { HttpClient, HttpModule, InjectHttpClient } from "@aponiajs/http";
+
+@Module({
+  imports: [
+    HttpModule.forRoot({ headers: { "user-agent": "api" } }),
+    HttpModule.register({ name: "github", baseUrl: "https://api.github.com" }),
+    HttpModule.register({ name: "billing", baseUrl: "https://billing.example.com" }),
+  ],
+})
+export class AppModule {}
+
+@Injectable()
+class GithubService {
+  constructor(@InjectHttpClient("github") private readonly client: HttpClient) {}
 }
 ```
 
@@ -78,22 +174,8 @@ The registration is split as `@nestjs/http-client` splits it: `forRoot` /
 `forRootAsync` register app-wide defaults and **no client**; `register` /
 `registerAsync` create one client each. Without a name the client is injected as
 `HttpClient`/`HttpService`; with one, use `@InjectHttpClient("github")` or
-`getHttpClientToken("github")`.
-
-```ts
-@Module({
-  imports: [
-    HttpModule.forRoot({ headers: { "user-agent": "api" } }),
-    HttpModule.register({ name: "github", baseUrl: "https://api.github.com" }),
-  ],
-})
-export class AppModule {}
-
-@Injectable()
-class GithubService {
-  constructor(@InjectHttpClient("github") private readonly client: HttpClient) {}
-}
-```
+`getHttpClientToken("github")`. [Multiple registrations](#multiple-registrations)
+shows both forms together.
 
 An interceptor is a class (`HttpClientInterceptor`), an instance, or a
 function. Classes are passed beside `useFactory` for an async registration so

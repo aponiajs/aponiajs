@@ -8,7 +8,7 @@ import {
   type ConfigurableModuleAsyncOptions,
   type DynamicModule,
 } from "@aponiajs/common";
-import { provideConfiguration } from "@aponiajs/platform-core";
+import { provideConfiguration } from "@aponiajs/common";
 import { CronScheduler, readCronJobs } from "./scheduler/cron-scheduler.ts";
 import { ScheduleExplorer } from "./scheduler/schedule.explorer.ts";
 import { SCHEDULE_TIMER, systemScheduleTimer } from "./scheduler/schedule-timer.ts";

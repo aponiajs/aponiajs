@@ -1,9 +1,9 @@
 import { expect, test } from "bun:test";
 import { Controller, Get, Module, defineConfiguration } from "@aponiajs/common";
 import { AponiaFactory as ElysiaFactory } from "@aponiajs/platform-elysia";
-import { createPlatformFactory } from "@aponiajs/platform-core";
-import { h3Adapter } from "@aponiajs/platform-h3";
-import { honoAdapter } from "@aponiajs/platform-hono";
+
+import { AponiaFactory as H3AponiaFactory } from "@aponiajs/platform-h3";
+import { AponiaFactory as HonoAponiaFactory } from "@aponiajs/platform-hono";
 import { toFetchHandler } from "@aponiajs/serverless";
 import { z } from "zod";
 import { CorsModule } from "../src/index.ts";
@@ -63,8 +63,8 @@ const expected: Answer = {
 
 test("the same CORS registration answers identically on every platform", async () => {
   const elysia = await ElysiaFactory.create(AppModule, { logger: false });
-  const hono = await createPlatformFactory(honoAdapter()).create(AppModule, { logger: false });
-  const h3 = await createPlatformFactory(h3Adapter()).create(AppModule, { logger: false });
+  const hono = await HonoAponiaFactory.create(AppModule, { logger: false });
+  const h3 = await H3AponiaFactory.create(AppModule, { logger: false });
 
   try {
     const answers = {
@@ -90,8 +90,8 @@ test("the same CORS registration answers identically on every platform", async (
 
 test("a denied origin is answered without an allow-origin header on every platform", async () => {
   const elysia = await ElysiaFactory.create(AppModule, { logger: false });
-  const hono = await createPlatformFactory(honoAdapter()).create(AppModule, { logger: false });
-  const h3 = await createPlatformFactory(h3Adapter()).create(AppModule, { logger: false });
+  const hono = await HonoAponiaFactory.create(AppModule, { logger: false });
+  const h3 = await H3AponiaFactory.create(AppModule, { logger: false });
 
   try {
     for (const application of [elysia, hono, h3]) {

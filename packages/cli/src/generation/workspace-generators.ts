@@ -276,7 +276,6 @@ function createPackageFiles(spec: PackageSpec): PendingFile[] {
           devDependencies: {
             "@aponiajs/common": aponiaVersion,
             "@aponiajs/core": aponiaVersion,
-            "@aponiajs/platform-core": aponiaVersion,
             typescript: "^7.0.2",
             "vite-plus": "^1.5.0",
           },
@@ -334,17 +333,15 @@ function createPackageFiles(spec: PackageSpec): PendingFile[] {
   ];
 }
 
-function packageDependencies(kind: PackageKind): Readonly<Record<string, string>> {
+function packageDependencies(_kind: PackageKind): Readonly<Record<string, string>> {
   return {
     "@aponiajs/common": aponiaVersion,
-    ...(kind === "plugin" ? { "@aponiajs/platform-core": aponiaVersion } : {}),
   };
 }
 
-function packagePeerDependencies(kind: PackageKind): Readonly<Record<string, string>> {
+function packagePeerDependencies(_kind: PackageKind): Readonly<Record<string, string>> {
   return {
     "@aponiajs/common": `^${aponiaVersion}`,
-    ...(kind === "plugin" ? { "@aponiajs/platform-core": `^${aponiaVersion}` } : {}),
   };
 }
 
@@ -408,7 +405,7 @@ function packageModule(names: ComponentNames, kind: PackageKind, optionsToken: s
 import {
   provideHttpPolicyAsync,
   requirePlatformCapabilities,
-} from "@aponiajs/platform-core";
+} from "@aponiajs/common";
 import { ${optionsToken} } from "./${names.fileName}.constants.ts";
 import { ${names.className}Controller } from "./${names.fileName}.controller.ts";
 import { build${names.className}Policy } from "./${names.fileName}.policy.ts";
@@ -514,7 +511,7 @@ export class ${names.className}Controller {
 }
 
 function packagePolicy(names: ComponentNames): string {
-  return `import type { HttpPolicy } from "@aponiajs/platform-core";
+  return `import type { HttpPolicy } from "@aponiajs/common";
 import type { ${names.className}ModuleOptions } from "./${names.fileName}.types.ts";
 
 /**
@@ -546,7 +543,7 @@ function packageTests(names: ComponentNames, kind: PackageKind): string {
   if (kind === "plugin") {
     return `import { describe, expect, test } from "bun:test";
 import { createContainer } from "@aponiajs/core";
-import { compileRootModule, resolveHttpPolicies } from "@aponiajs/platform-core";
+import { compileRootModule, resolveHttpPolicies } from "@aponiajs/common";
 import {
   ${names.className}Controller,
   ${names.className}Module,
@@ -599,13 +596,13 @@ describe("${names.className}Module", () => {
 `;
   }
 
-  return `import { describe, expect, test } from "bun:test";\nimport { createContainer } from "@aponiajs/core";\nimport { compileRootModule } from "@aponiajs/platform-core";\nimport { ${names.className}Module, ${names.className}Service } from "../src/index.ts";\n\n/**\n * Resolves the service from the module graph alone.\n *\n * No HTTP platform is booted: the container is the whole contract a library\n * needs, which is what keeps this test true on every platform.\n */\nfunction resolve(registration: ReturnType<typeof ${names.className}Module.forRoot>) {\n  return createContainer(compileRootModule(registration)).get(${names.className}Service);\n}\n\ndescribe("${names.className}Module", () => {\n  test("forRoot provides its options to the service", () => {\n    expect(resolve(${names.className}Module.forRoot({ greeting: "Hi" })).greet()).toBe("Hi");\n  });\n\n  test("forRootAsync builds the options from a factory", () => {\n    expect(\n      resolve(\n        ${names.className}Module.forRootAsync({ useFactory: () => ({ greeting: "Async" }) }),\n      ).greet(),\n    ).toBe("Async");\n  });\n\n  test("falls back to the default greeting", () => {\n    expect(resolve(${names.className}Module.forRoot()).greet()).toBe(\n      "Hello from ${names.className}",\n    );\n  });\n});\n`;
+  return `import { describe, expect, test } from "bun:test";\nimport { createContainer } from "@aponiajs/core";\nimport { compileRootModule } from "@aponiajs/common";\nimport { ${names.className}Module, ${names.className}Service } from "../src/index.ts";\n\n/**\n * Resolves the service from the module graph alone.\n *\n * No HTTP platform is booted: the container is the whole contract a library\n * needs, which is what keeps this test true on every platform.\n */\nfunction resolve(registration: ReturnType<typeof ${names.className}Module.forRoot>) {\n  return createContainer(compileRootModule(registration)).get(${names.className}Service);\n}\n\ndescribe("${names.className}Module", () => {\n  test("forRoot provides its options to the service", () => {\n    expect(resolve(${names.className}Module.forRoot({ greeting: "Hi" })).greet()).toBe("Hi");\n  });\n\n  test("forRootAsync builds the options from a factory", () => {\n    expect(\n      resolve(\n        ${names.className}Module.forRootAsync({ useFactory: () => ({ greeting: "Async" }) }),\n      ).greet(),\n    ).toBe("Async");\n  });\n\n  test("falls back to the default greeting", () => {\n    expect(resolve(${names.className}Module.forRoot()).greet()).toBe(\n      "Hello from ${names.className}",\n    );\n  });\n});\n`;
 }
 
 function packageConformance(names: ComponentNames, kind: PackageKind): string {
   if (kind === "plugin") {
     return `import { createContainer } from "@aponiajs/core";
-import { compileRootModule, resolveHttpPolicies } from "@aponiajs/platform-core";
+import { compileRootModule, resolveHttpPolicies } from "@aponiajs/common";
 import {
   ${names.className}Controller,
   ${names.className}Module,
@@ -632,7 +629,7 @@ test("resolves the service, controller, and HTTP policy from the module graph", 
 `;
   }
 
-  return `import { createContainer } from "@aponiajs/core";\nimport { compileRootModule } from "@aponiajs/platform-core";\nimport { ${names.className}Module, ${names.className}Service } from "../src/index.ts";\n\ntype VitePlusTest = typeof import("vite-plus/test");\n\ndeclare const test: VitePlusTest["test"];\ndeclare const expect: VitePlusTest["expect"];\n\ntest("resolves the service from the module graph", () => {\n  const container = createContainer(\n    compileRootModule(${names.className}Module.forRoot({ greeting: "Conformance" })),\n  );\n  expect(container.get(${names.className}Service).greet()).toBe("Conformance");\n});\n`;
+  return `import { createContainer } from "@aponiajs/core";\nimport { compileRootModule } from "@aponiajs/common";\nimport { ${names.className}Module, ${names.className}Service } from "../src/index.ts";\n\ntype VitePlusTest = typeof import("vite-plus/test");\n\ndeclare const test: VitePlusTest["test"];\ndeclare const expect: VitePlusTest["expect"];\n\ntest("resolves the service from the module graph", () => {\n  const container = createContainer(\n    compileRootModule(${names.className}Module.forRoot({ greeting: "Conformance" })),\n  );\n  expect(container.get(${names.className}Service).greet()).toBe("Conformance");\n});\n`;
 }
 
 function packageBarrel(names: ComponentNames, optionsToken: string, kind: PackageKind): string {
@@ -831,7 +828,7 @@ function packageBuildTsconfig(): string {
 }
 
 function packageViteConfig(): string {
-  return `import { defineConfig } from "vite-plus";\n\nexport default defineConfig({\n  test: {\n    globals: true,\n    include: ["tests-vp/**/*.conformance.ts"],\n  },\n  pack: {\n    tsconfig: "tsconfig.lib.json",\n    dts: true,\n    exports: true,\n    deps: {\n      neverBundle: ["@aponiajs/common", "@aponiajs/core", "@aponiajs/platform-core"],\n    },\n  },\n  lint: {\n    options: {\n      typeAware: true,\n      typeCheck: true,\n    },\n  },\n  fmt: {},\n});\n`;
+  return `import { defineConfig } from "vite-plus";\n\nexport default defineConfig({\n  test: {\n    globals: true,\n    include: ["tests-vp/**/*.conformance.ts"],\n  },\n  pack: {\n    tsconfig: "tsconfig.lib.json",\n    dts: true,\n    exports: true,\n    deps: {\n      neverBundle: ["@aponiajs/common", "@aponiajs/core"],\n    },\n  },\n  lint: {\n    options: {\n      typeAware: true,\n      typeCheck: true,\n    },\n  },\n  fmt: {},\n});\n`;
 }
 
 function packageLibTsconfig(extendsPath: string | undefined): string {

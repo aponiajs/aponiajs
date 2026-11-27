@@ -3,7 +3,6 @@ import { describe, expect, test } from "bun:test";
 const parityDoc = await Bun.file("docs/platforms/platform-parity.md").text();
 
 const platformPackages = [
-  "@aponiajs/platform-core",
   "@aponiajs/platform-elysia",
   "@aponiajs/platform-hono",
   "@aponiajs/platform-h3",

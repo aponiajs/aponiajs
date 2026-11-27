@@ -12,14 +12,12 @@ request to an application already booted on a platform, and leaves routing there
 | `@aponiajs/platform-hono`   | Platform | yes             | yes          |
 | `@aponiajs/platform-h3`     | Platform | yes             | yes          |
 | `@aponiajs/serverless`      | Adapter  | no              | no           |
-| `@aponiajs/hono`            | Adapter  | no              | no           |
-| `@aponiajs/h3`              | Adapter  | no              | no           |
 | `@aponiajs/nitro`           | Adapter  | no              | no           |
 
 The three platforms are independent: each depends on `@aponiajs/common`,
-`@aponiajs/core`, `@aponiajs/platform-core`, and its own runtime peer, and no
+`@aponiajs/core`, and its own runtime peer, and no
 platform depends on another. `scripts/platform-independence.spec.ts` enforces
-that. `@aponiajs/platform-core` supplies the shared material every platform
+that. `@aponiajs/common` / `@aponiajs/core` supplies the shared material every platform
 calls: descriptor lowering, validation, parameter binding, enhancer ordering,
 pipes, filters, lifecycle, version negotiation, and the route handler each
 native route runs. Each platform keeps only what its runtime owns — Elysia
@@ -107,33 +105,11 @@ instead of being answered `404` by the platform.
 
 A delivery adapter mounts an application already booted on a platform inside
 another runtime. It translates the delivery envelope only, so its documented
-surface stays narrower than a platform's: `createHonoApp(application)`,
-`toH3Handler(application)`, `toNitroHandler(application)`, and the
+surface stays narrower than a platform's: `toNitroHandler(application)` and the
 `@aponiajs/serverless` handlers forward requests to the application and return
 its responses. They do not expose `listen`, `getUrl`, the Nest configuration
 methods, or any other member of `AponiaApplicationContract`; configure and boot
 the application on a platform first, then hand it to the adapter.
-
-### Hono
-
-```ts
-import { createHonoApp } from "@aponiajs/hono";
-
-const host = createHonoApp(application);
-export default host;
-```
-
-Hono middleware registered before the catch-all route runs before the Aponia
-handler. A route Hono answers itself does not reach the application.
-
-### H3
-
-```ts
-import { H3 } from "h3";
-import { toH3Handler } from "@aponiajs/h3";
-
-const host = new H3().use(toH3Handler(application));
-```
 
 ### Nitro
 

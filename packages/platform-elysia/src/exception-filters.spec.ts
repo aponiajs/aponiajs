@@ -27,11 +27,6 @@ class NotFoundError extends Error {}
 
 @Controller("documented-failures")
 class DocumentedFailureController {
-  @Get("tenant")
-  tenant(): string {
-    throw new AponiaError("MISSING_TENANT", "No tenant is selected for this request.");
-  }
-
   @Get("refresh")
   refresh(): string {
     throw new AponiaError("INVALID_REFRESH_TOKEN", "The refresh token is invalid or expired.");
@@ -421,14 +416,8 @@ describe("exception filters", () => {
     await application.close();
   });
 
-  test("documented client failures answer 400 and 401 instead of 500", async () => {
+  test("documented client failures answer 401 instead of 500", async () => {
     const application = await AponiaFactory.create(DocumentedFailureModule, { logger: false });
-
-    const tenant = await application.handle(
-      new Request("http://localhost/documented-failures/tenant"),
-    );
-    expect(tenant.status).toBe(400);
-    expect(tenant.headers.get("content-type")).toContain("application/problem+json");
 
     const refresh = await application.handle(
       new Request("http://localhost/documented-failures/refresh"),

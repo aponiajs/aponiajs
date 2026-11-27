@@ -15,8 +15,7 @@ import {
 } from "@aponiajs/common";
 import { Type } from "typebox";
 import { Hono } from "hono";
-import { AponiaFactory, createHonoHost, honoAdapter, toHonoPlatformHandler } from "./index.ts";
-import { AponiaFactory as UnifiedFactory } from "@aponiajs/platform-core";
+import { AponiaFactory, createHonoHost, toHonoPlatformHandler } from "./index.ts";
 
 @Injectable()
 class DenyGuard implements CanActivate {
@@ -210,23 +209,9 @@ describe("Aponia on Hono", () => {
     expect(response.status).toBe(200);
     await application.close();
   });
-  test("boots through the unified factory with honoAdapter()", async () => {
-    const application = await UnifiedFactory.create(AppModule, {
-      adapter: honoAdapter(),
-      logger: false,
-    });
-    const response = await application.handle(new Request("http://localhost/widgets"));
-
-    expect(response.status).toBe(200);
-    expect(application.getHttpAdapter()).toBeInstanceOf(Hono);
-    await application.close();
-  });
 
   test("listen resolves with the application and reads its own address", async () => {
-    const application = await UnifiedFactory.create(AppModule, {
-      adapter: honoAdapter(),
-      logger: false,
-    });
+    const application = await AponiaFactory.create(AppModule, { logger: false });
     const listening = await application.listen(0);
 
     expect(listening).toBe(application);

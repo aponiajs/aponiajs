@@ -2,7 +2,6 @@ import { randomUUID } from "node:crypto";
 import { Database } from "bun:sqlite";
 import { AuthModule } from "@aponiajs/auth";
 import { DatabaseModule } from "@aponiajs/database";
-import { MetricsModule, MetricsRegistry } from "@aponiajs/metrics";
 import { QueueModule } from "@aponiajs/queue";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 
@@ -44,18 +43,14 @@ export const authModule = AuthModule.register({
   },
   refresh: { ttlMs: 7 * 24 * 60 * 60 * 1_000 },
   // The example protects its administrator surface with `@UseGuards` and keeps
-  // login, health, and the metrics scrape reachable without a token, so the
-  // registration's optional global guard stays off.
+  // login and health reachable without a token, so the registration's optional
+  // global guard stays off.
   globalGuard: false,
 });
 
 export const queueModule = QueueModule.register({
   queue: { concurrency: 2, maxAttempts: 3, backoffMs: 25 },
 });
-
-export const metrics = new MetricsRegistry({ prefix: "reference" });
-
-export const metricsModule = MetricsModule.register({ registry: metrics, path: "/metrics" });
 
 /** The access-token id a login issues, so the example can revoke it. */
 export function newTokenId(): string {

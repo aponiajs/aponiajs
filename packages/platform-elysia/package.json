@@ -47,8 +47,7 @@
   },
   "dependencies": {
     "@aponiajs/common": "workspace:*",
-    "@aponiajs/core": "workspace:*",
-    "@aponiajs/platform-core": "workspace:*"
+    "@aponiajs/core": "workspace:*"
   },
   "devDependencies": {
     "@elysia/eden": "2.0.0-rc.1",

@@ -9,13 +9,17 @@ document's own metadata read from a validated configuration.
 
 ## Use it
 
-Register the document in the application whose routes it describes:
+### Register the module
+
+`OpenApiModule.forRoot` returns the `DynamicModule` the application's `imports`
+accepts. The registration mounts the document controller; the routes the
+document describes are the controllers the same application declares:
 
 ```ts
 import { Module } from "@aponiajs/common";
 import { OpenApiModule } from "@aponiajs/openapi";
-import { WidgetsController } from "./widgets.controller.ts";
 import { OpenApiConfig } from "./openapi.config.ts";
+import { WidgetsController } from "./widgets.controller.ts";
 
 const docs = OpenApiModule.forRoot({ configuration: OpenApiConfig });
 
@@ -23,8 +27,67 @@ const docs = OpenApiModule.forRoot({ configuration: OpenApiConfig });
 export class AppModule {}
 ```
 
-The document is served at `/openapi/json` and the interface at `/openapi`.
-Both move together when the configuration changes `path`.
+### Use it in a controller
+
+The document is a reading of the compiled route plans, so a controller declares
+its routes and schemas exactly as it does without this package:
+
+```ts
+import { Body, Controller, Get, Param, Post, Validation } from "@aponiajs/common";
+import { z } from "zod";
+
+const createWidgetSchema = z.object({ name: z.string().min(2) });
+
+@Validation(createWidgetSchema)
+class CreateWidget {}
+interface CreateWidget {
+  readonly name: string;
+}
+
+@Controller("widgets")
+export class WidgetsController {
+  @Get(":id")
+  read(@Param("id") id: string): { id: string; name: string } {
+    return { id, name: "widget" };
+  }
+
+  @Post("/", { body: CreateWidget })
+  create(@Body() body: CreateWidget): { id: string; name: string } {
+    return { id: "1", name: body.name };
+  }
+}
+```
+
+`GET /widgets/{id}` appears with its path parameter, and `POST /widgets` with a
+`requestBody` and a `200` response. The document describes these routes; it does
+not enforce them.
+
+### Call the endpoint
+
+The document is served at `${path}/json` and the HTML index at `${path}`, with
+`path` defaulting to `/openapi`:
+
+```ts
+const document = await application.handle(new Request("http://localhost/openapi/json"));
+
+document.status; // 200
+await document.json(); // { openapi: "3.…", info: { title: "Widgets API", version: "1.0.0" }, paths: { … } }
+
+const page = await application.handle(new Request("http://localhost/openapi"));
+page.headers.get("content-type"); // text/html
+```
+
+`path: "/docs"` moves both: `GET /docs/json` answers, and `GET /openapi/json` is
+`404`.
+
+### Async registration
+
+`OpenApiModule` exports `forRoot`, plus the deprecated `register` alias, and no
+`forRootAsync` or `registerAsync`. A registration has one input — the validated
+configuration — and `provideConfiguration` validates it synchronously, so there
+is nothing to await. The document's paths are not registration options at all:
+they are read from the compiled route plans inside a boot, which a factory that
+runs while the module is registered cannot observe.
 
 ## Bootstrap
 

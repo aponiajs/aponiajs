@@ -2,7 +2,6 @@ import { randomUUID } from "node:crypto";
 import { Inject, Injectable, type OnModuleInit } from "@aponiajs/common";
 import { PasswordService } from "@aponiajs/auth";
 import { DatabaseService, createRepository, type Repository } from "@aponiajs/database";
-import { MetricsRegistry } from "@aponiajs/metrics";
 import { QueueService } from "@aponiajs/queue";
 import { eq } from "drizzle-orm";
 import { AppConfig } from "../config.ts";
@@ -23,7 +22,6 @@ export class UsersService implements OnModuleInit {
   readonly #repository: Repository<typeof users>;
   readonly #queue: QueueService;
   readonly #passwords: PasswordService;
-  readonly #created: ReturnType<MetricsRegistry["counter"]>;
   readonly #audit: AuditRecord[] = [];
   readonly #config: ReferenceConfig;
 
@@ -31,15 +29,11 @@ export class UsersService implements OnModuleInit {
     @Inject(DatabaseService) database: DatabaseService,
     @Inject(QueueService) queue: QueueService,
     @Inject(PasswordService) passwords: PasswordService,
-    @Inject(MetricsRegistry) metrics: MetricsRegistry,
     @Inject(AppConfig) config: ReferenceConfig,
   ) {
     this.#repository = createRepository(database.client, users);
     this.#queue = queue;
     this.#passwords = passwords;
-    this.#created = metrics.counter("users_created_total", {
-      help: "Users the reference application created.",
-    });
     this.#config = config;
   }
 
@@ -92,7 +86,6 @@ export class UsersService implements OnModuleInit {
     readonly roles?: readonly string[];
   }): Promise<PublicUser> {
     const user = await this.#insert(input);
-    this.#created.inc();
     this.#queue.enqueue(
       auditJob,
       { type: "user.created", userId: user.id, at: Date.now() },

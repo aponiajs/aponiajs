@@ -1,1 +1,1 @@
-export type { DownloadFileOptions } from "@aponiajs/platform-core";
+export type { DownloadFileOptions } from "@aponiajs/common";

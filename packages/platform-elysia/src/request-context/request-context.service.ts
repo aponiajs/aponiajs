@@ -1,1 +1,1 @@
-export { RequestContextService } from "@aponiajs/platform-core";
+export { RequestContextService } from "@aponiajs/core";

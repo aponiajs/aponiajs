@@ -6,7 +6,7 @@ import {
   type ExecutionContext,
   type RouteContext,
 } from "@aponiajs/common";
-import { httpErrors } from "@aponiajs/platform-core";
+import { httpErrors } from "@aponiajs/common";
 import { AuthService } from "./auth.service.ts";
 import { AUTH_TOKEN_OPTIONS, AUTH_VERIFIER } from "./auth.constants.ts";
 import type { AuthVerifier } from "./interfaces/token-verifier.interface.ts";

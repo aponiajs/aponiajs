@@ -46,8 +46,7 @@
   "dependencies": {
     "@aponiajs/cli": "workspace:*",
     "@aponiajs/common": "workspace:*",
-    "@aponiajs/core": "workspace:*",
-    "@aponiajs/platform-core": "workspace:*"
+    "@aponiajs/core": "workspace:*"
   },
   "devDependencies": {
     "@aponiajs/core": "workspace:*",

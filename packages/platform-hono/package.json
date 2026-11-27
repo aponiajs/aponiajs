@@ -44,10 +44,9 @@
   },
   "dependencies": {
     "@aponiajs/common": "workspace:*",
-    "@aponiajs/platform-core": "workspace:*"
+    "@aponiajs/core": "workspace:*"
   },
   "devDependencies": {
-    "@aponiajs/core": "workspace:*",
     "hono": "^4.13.17"
   },
   "peerDependencies": {

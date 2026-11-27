@@ -13,7 +13,6 @@ export const elysiaTargetFiles = [
   "packages/graphql/package.json",
   "packages/mcp/package.json",
   "packages/openapi/package.json",
-  "packages/opentelemetry/package.json",
   "packages/testing/package.json",
   "packages/cli/templates/application/package.json",
   "examples/basic/package.json",
@@ -46,7 +45,6 @@ export const elysiaTargetFiles = [
   "packages/cors/src/generated-descriptors.spec.ts",
   "packages/graphql/src/generated-descriptors.spec.ts",
   "packages/openapi/src/generated-descriptors.spec.ts",
-  "packages/opentelemetry/src/module/opentelemetry-module.spec.ts",
   "scripts/documentation-versions.spec.ts",
   "examples/files/test/uploads.e2e-spec.ts",
 ] as const;

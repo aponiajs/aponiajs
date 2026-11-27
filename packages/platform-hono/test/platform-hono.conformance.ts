@@ -70,7 +70,7 @@ test("the shared application surface applies a global guard and headers at init"
 import {
   conformanceCreate,
   platformConformanceCases,
-} from "../../platform-core/test/support/platform-contract.ts";
+} from "../../common/test/support/platform-contract.ts";
 
 const sharedContractCreate = conformanceCreate((root, options) =>
   AponiaFactory.create(root, options),

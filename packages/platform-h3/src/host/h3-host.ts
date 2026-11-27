@@ -5,7 +5,6 @@ import {
   readCookies,
   readHeaders,
   readQuery,
-  runMiddlewareChain,
   statusCodeOf,
   stripRoutePrefix,
   type GatewayHooks,
@@ -21,7 +20,8 @@ import {
   type RequestPipeline,
   type ResolvedMiddlewareConfig,
   type StaticAssetsOptions,
-} from "@aponiajs/platform-core";
+} from "@aponiajs/common";
+import { runMiddlewareChain } from "@aponiajs/core";
 
 /** The native application this platform creates. */
 export type H3Application = H3;
@@ -435,13 +435,4 @@ function toBunWebSocketOptions(options: GatewayServerOptions): Record<string, un
       : { idleTimeout: options.idleTimeoutSeconds }),
     ...(options.sendPings === undefined ? {} : { sendPings: options.sendPings }),
   };
-}
-
-/**
- * The H3 binding the unified factory accepts.
- *
- * @returns The adapter.
- */
-export function h3Adapter(): KernelAdapter<H3Application, H3Event> {
-  return createH3Host();
 }

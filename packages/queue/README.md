@@ -9,12 +9,65 @@ bun add @aponiajs/queue@alpha
 
 ## Use it
 
+### Register the module
+
 ```ts
-import { Injectable, Module, type OnModuleInit } from "@aponiajs/common";
-import { QueueModule, QueueService } from "@aponiajs/queue";
+import { Module } from "@aponiajs/common";
+import { QueueModule } from "@aponiajs/queue";
+
+@Module({
+  imports: [QueueModule.forRoot({ queue: { concurrency: 4, maxAttempts: 5 } })],
+})
+export class AppModule {}
+```
+
+### Use it in a controller
+
+```ts
+import { Body, Controller, Post } from "@aponiajs/common";
+import { InjectQueue, type QueueService } from "@aponiajs/queue";
+
+@Controller("signups")
+export class SignupsController {
+  constructor(@InjectQueue("default") private readonly queue: QueueService) {}
+
+  @Post()
+  register(@Body() body: { email: string }) {
+    return this.queue.enqueue(
+      "email.send",
+      { to: body.email },
+      { idempotencyKey: `welcome:${body.email}` },
+    );
+  }
+}
+```
+
+### Use it in a service
+
+```ts
+import { Injectable } from "@aponiajs/common";
+import { InjectQueue, type QueueService } from "@aponiajs/queue";
 
 @Injectable()
-class EmailJobs implements OnModuleInit {
+export class SignupService {
+  constructor(@InjectQueue("default") private readonly queue: QueueService) {}
+
+  welcome(email: string) {
+    return this.queue.enqueue("email.send", { to: email }, { idempotencyKey: `welcome:${email}` });
+  }
+}
+```
+
+A handler is registered once, where the application owns the work. A controller
+or service enqueues through `QueueService`; nothing registers a handler at
+module scope.
+
+```ts
+import { Injectable, type OnModuleInit } from "@aponiajs/common";
+import { QueueService } from "@aponiajs/queue";
+
+@Injectable()
+export class EmailJobs implements OnModuleInit {
   constructor(
     private readonly queue: QueueService,
     private readonly mailer: Mailer,
@@ -25,31 +78,62 @@ class EmailJobs implements OnModuleInit {
       await this.mailer.send(payload, { idempotencyKey: job.idempotencyKey });
     });
   }
+}
+```
 
-  enqueueWelcome(to: string): Promise<unknown> {
-    return this.queue.enqueue("email.send", { to }, { idempotencyKey: `welcome:${to}` });
+`Mailer` is an application provider, so the handler closes over the same
+dependencies as the rest of the application.
+
+### Async registration
+
+```ts
+QueueModule.forRootAsync({
+  useFactory: () => ({ queue: { concurrency: 4, maxAttempts: 5 } }),
+});
+```
+
+`useClass` constructs the factory class and reads its `create()` method;
+`useExisting` aliases an already-registered provider through the same method.
+
+```ts
+import { Injectable } from "@aponiajs/common";
+import { QueueModule, type QueueModuleOptions } from "@aponiajs/queue";
+
+@Injectable()
+class QueueOptionsFactory {
+  create(): QueueModuleOptions {
+    return { queue: { concurrency: 4, maxAttempts: 5 } };
   }
 }
 
-@Module({
-  imports: [QueueModule.forRoot({ queue: { concurrency: 4, maxAttempts: 5 } })],
-  providers: [EmailJobs],
-  exports: [EmailJobs],
-})
-export class AppModule {}
+QueueModule.forRootAsync({ useClass: QueueOptionsFactory });
+QueueModule.forRootAsync({ useExisting: QueueOptionsFactory });
 ```
 
-A queue handler is registered once, where the application owns the work. A
-controller or service that injects `EmailJobs` enqueues through it; nothing
-registers a handler at module scope. `Mailer` is an application provider, so the
-handler closes over the same dependencies as the rest of the application.
+`useExisting` expects `QueueOptionsFactory` to be a provider of the module that
+imports the registration.
+
+### Multiple registrations
+
+Name each registration and inject it through the matching `@InjectQueue()` token;
+two registrations are distinct modules.
 
 ```ts
-import { AponiaFactory } from "@aponiajs/platform-elysia";
-import { AppModule } from "./app.module.ts";
+import { Injectable, Module } from "@aponiajs/common";
+import { InjectQueue, QueueModule, type QueueService } from "@aponiajs/queue";
 
-const application = await AponiaFactory.create(AppModule);
-await application.listen(Number(Bun.env.PORT ?? 3000));
+@Module({
+  imports: [
+    QueueModule.forRoot({ name: "email", queue: { concurrency: 2 } }),
+    QueueModule.forRoot({ name: "reports", queue: { concurrency: 1 } }),
+  ],
+})
+export class AppModule {}
+
+@Injectable()
+class EmailService {
+  constructor(@InjectQueue("email") private readonly queue: QueueService) {}
+}
 ```
 
 `enqueue` schedules a drain by default. Call `await queue.drain()` to run every
@@ -173,6 +257,16 @@ as a definition-shaping extra and the three asynchronous shapes through
 `forRootAsync`, and keeps `register`/`registerAsync` as deprecated aliases. Both
 forms validate the queue bounds, the outbox bounds, and both store shapes before
 the boot proceeds, reporting every issue at once.
+
+## Bootstrap
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+
+const application = await AponiaFactory.create(AppModule);
+await application.listen(Number(Bun.env.PORT ?? 3000));
+```
 
 ## Documentation
 

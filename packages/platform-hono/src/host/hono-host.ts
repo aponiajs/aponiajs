@@ -5,7 +5,6 @@ import {
   readCookies,
   readHeaders,
   readQuery,
-  runMiddlewareChain,
   statusCodeOf,
   stripRoutePrefix,
   type GatewayHooks,
@@ -21,7 +20,8 @@ import {
   type RequestPipeline,
   type ResolvedMiddlewareConfig,
   type StaticAssetsOptions,
-} from "@aponiajs/platform-core";
+} from "@aponiajs/common";
+import { runMiddlewareChain } from "@aponiajs/core";
 
 /** The native application this platform creates. */
 export type HonoApplication = Hono;
@@ -433,13 +433,4 @@ function refuseOrigin(context: Context, plan: GatewayPlan): Response | undefined
     return context.text("Forbidden", 403);
   }
   return undefined;
-}
-
-/**
- * The Hono binding the unified factory accepts.
- *
- * @returns The adapter.
- */
-export function honoAdapter(): KernelAdapter<HonoApplication, Context> {
-  return createHonoHost();
 }

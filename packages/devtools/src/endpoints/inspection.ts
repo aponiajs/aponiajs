@@ -5,7 +5,7 @@ import {
   type ModuleDefinition,
 } from "@aponiajs/common";
 import { getProviderDependencies } from "@aponiajs/core";
-import { compileGatewayPlan, type AponiaBootDiagnostics } from "@aponiajs/platform-core";
+import { compileGatewayPlan, type AponiaBootDiagnostics } from "@aponiajs/common";
 import type {
   DevtoolsGatewayInspection,
   DevtoolsInspection,

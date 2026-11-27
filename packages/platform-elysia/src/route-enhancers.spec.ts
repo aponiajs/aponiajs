@@ -14,6 +14,7 @@ import {
   provideClass,
 } from "@aponiajs/common";
 import { AponiaFactory, defineControllerRoutes } from "./index.ts";
+import { matchedRouteOf, provideRequestLifecycleHook } from "@aponiajs/common";
 import { compileElysiaRoutes } from "./routing/route-compiler.ts";
 
 const gatewayGuardCalls: string[] = [];
@@ -163,22 +164,59 @@ describe("compiled route enhancers", () => {
 
     expect(open?.hooks?.beforeHandle).toBeUndefined();
     expect(open?.hooks?.afterHandle).toBeUndefined();
-    // The route-memory transform is the one hook every route mounts, so a
-    // response observer can read the template the platform matched.
-    expect(typeof open?.hooks?.transform).toBe("function");
+    expect(open?.hooks?.transform).toBeUndefined();
     // The default mapping is compiled into every route's own `error` array, so
-    // that array is the one hook a route declaring no enhancer gains. It is
-    // synchronous, which is what leaves the route compiling the way it compiled
-    // before the mapping existed. Elysia 2 keeps a route's hooks as bare
-    // handlers, so the array entry is the mapping itself.
-    expect(Object.keys(open?.hooks ?? {}).filter((key) => !key.startsWith("~"))).toEqual([
-      "error",
-      "transform",
-    ]);
+    // that array is the one hook a route declaring no enhancer gains when no
+    // lifecycle observer requests route templates. It is synchronous, which is
+    // what leaves the route compiling the way it compiled before the mapping
+    // existed. Elysia 2 keeps a route's hooks as bare handlers, so the array
+    // entry is the mapping itself.
+    expect(Object.keys(open?.hooks ?? {}).filter((key) => !key.startsWith("~"))).toEqual(["error"]);
     expect(errorHooks).toHaveLength(1);
     expect(typeof errorHooks?.[0]).toBe("function");
     expect(errorHooks?.[0]?.constructor.name).not.toBe("AsyncFunction");
     await application.close();
+  });
+
+  test("mounts route-memory transform only when a request lifecycle hook is registered", async () => {
+    const templates: (string | undefined)[] = [];
+
+    @Controller("observed")
+    class ObservedController {
+      @Get(":id")
+      read(): string {
+        return "ok";
+      }
+    }
+
+    @Module({
+      controllers: [ObservedController],
+      providers: [
+        provideRequestLifecycleHook({
+          name: "observer",
+          onResponse(request) {
+            templates.push(matchedRouteOf(request));
+          },
+        }),
+      ],
+    })
+    class ObservedModule {}
+
+    const application = await AponiaFactory.create(ObservedModule, { logger: false });
+    try {
+      const route = application
+        .getNativeApplication()
+        .routes.find((entry) => entry.path === "/observed/:id") as
+        | { hooks?: Record<string, unknown> }
+        | undefined;
+      expect(typeof route?.hooks?.transform).toBe("function");
+
+      const response = await application.handle(new Request("http://localhost/observed/42"));
+      expect(response.status).toBe(200);
+      expect(templates).toEqual(["/observed/:id"]);
+    } finally {
+      await application.close();
+    }
   });
 
   test("a controller that declares a guard still mounts without error", async () => {

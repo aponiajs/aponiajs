@@ -9,85 +9,123 @@ bun add @aponiajs/database@alpha drizzle-orm
 
 ## Use it
 
+### Register the module
+
 ```ts
-import { Injectable, Module } from "@aponiajs/common";
+import { Module } from "@aponiajs/common";
 import { DatabaseModule } from "@aponiajs/database";
-import { DatabaseService, createRepository } from "@aponiajs/database";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import { Database } from "bun:sqlite";
-import { sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 const database = drizzle(new Database("app.sqlite"));
 
-const users = sqliteTable("users", {
+@Module({
+  imports: [DatabaseModule.forRoot({ database })],
+})
+export class AppModule {}
+```
+
+The registration also accepts `migrations: { files: await loadMigrations("./migrations") }`;
+the module applies them during `onModuleInit`, before handlers run. The package
+builds no pool and picks no dialect. The application constructs its Drizzle
+database, and the module owns the transaction seam and migrations.
+
+### Use it in a controller
+
+```ts
+import { Controller, Get, Param } from "@aponiajs/common";
+import { DatabaseService } from "@aponiajs/database";
+import { sql } from "drizzle-orm";
+
+@Controller("accounts")
+export class AccountsController {
+  constructor(private readonly database: DatabaseService) {}
+
+  @Get(":id")
+  find(@Param("id") id: string) {
+    return this.database.execute(sql`select * from accounts where id = ${id}`);
+  }
+}
+```
+
+### Use it in a service
+
+```ts
+import { Injectable } from "@aponiajs/common";
+import { DatabaseService, createRepository } from "@aponiajs/database";
+import { eq } from "drizzle-orm";
+import { sqliteTable, text } from "drizzle-orm/sqlite-core";
+
+const accounts = sqliteTable("accounts", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
 });
 
 @Injectable()
-class UsersRepository {
-  readonly #repository;
+export class AccountsRepository {
+  readonly #accounts;
 
-  constructor(databaseService: DatabaseService) {
-    this.#repository = createRepository(databaseService.client, users);
+  constructor(database: DatabaseService) {
+    this.#accounts = createRepository(database.client, accounts);
   }
 
   insert(input: { readonly id: string; readonly name: string }) {
-    return this.#repository.insert(input);
+    return this.#accounts.insert(input);
   }
 
   findById(id: string) {
-    return this.#repository.findById(id);
+    return this.#accounts.findById(id);
+  }
+
+  listNamed(name: string) {
+    return this.#accounts.findMany({ where: eq(accounts.name, name), limit: 10 });
   }
 }
+```
+
+The repository also exposes `update`, `deleteById`, `count`, `exists`,
+`updateMany`, and `deleteMany`; `## Limits` states their conditions.
+
+### Async registration
+
+```ts
+import { Module } from "@aponiajs/common";
+import { DatabaseModule } from "@aponiajs/database";
+import { drizzle } from "drizzle-orm/bun-sqlite";
+import { Database } from "bun:sqlite";
 
 @Module({
   imports: [
-    DatabaseModule.forRoot({
-      database,
-      migrations: { files: await loadMigrations("./migrations") },
+    DatabaseModule.forRootAsync({
+      useFactory: () => ({ database: drizzle(new Database("app.sqlite")) }),
     }),
   ],
-  providers: [UsersRepository],
-  exports: [UsersRepository],
 })
 export class AppModule {}
 ```
 
-```ts
-import { AponiaFactory } from "@aponiajs/platform-elysia";
-import { AppModule } from "./app.module.ts";
-
-const application = await AponiaFactory.create(AppModule);
-await application.listen(Number(Bun.env.PORT ?? 3000));
-```
-
-The package builds no pool and picks no dialect. The application constructs its
-Drizzle database, and the module owns the transaction seam and migrations.
+`useClass` constructs the factory class and reads its `create()` method;
+`useExisting` aliases an already-registered provider through the same method.
 
 ```ts
+import { Injectable } from "@aponiajs/common";
+import { DatabaseModule, type DatabaseModuleOptions } from "@aponiajs/database";
+import { drizzle } from "drizzle-orm/bun-sqlite";
+import { Database } from "bun:sqlite";
+
 @Injectable()
-class UsersRepository {
-  // constructor from the registration above
-
-  async listActive(): Promise<void> {
-    await this.#repository.insert({ id: "1", name: "ada" });
-    await this.#repository.findById("1");
-    await this.#repository.update("1", { name: "Ada" });
-    await this.#repository.deleteById("1");
-    await this.#repository.findMany({
-      where: eq(users.name, "Ada"),
-      orderBy: [asc(users.id)],
-      limit: 10,
-      offset: 0,
-    });
-    await this.#repository.count({ where: eq(users.name, "Ada") });
-    await this.#repository.exists(eq(users.name, "Ada"));
-    await this.#repository.updateMany({ where: eq(users.name, "Ada"), value: { name: "Ada L." } });
-    await this.#repository.deleteMany(eq(users.name, "Ada L."));
+class DatabaseOptionsFactory {
+  create(): DatabaseModuleOptions {
+    return { database: drizzle(new Database("app.sqlite")) };
   }
 }
+
+DatabaseModule.forRootAsync({ useClass: DatabaseOptionsFactory });
+DatabaseModule.forRootAsync({ useExisting: DatabaseOptionsFactory });
 ```
+
+`useExisting` expects `DatabaseOptionsFactory` to be a provider of the module
+that imports the registration.
 
 ## Transactions
 
@@ -141,6 +179,16 @@ and exports `MODULE_OPTIONS_TOKEN` (`DATABASE_MODULE_OPTIONS`), accepts
 through `forRootAsync`, and keeps `register`/`registerAsync` as deprecated
 aliases. Both forms validate the database, every migration file, the store, and
 the lock before the boot proceeds, reporting every issue at once.
+
+## Bootstrap
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+
+const application = await AponiaFactory.create(AppModule);
+await application.listen(Number(Bun.env.PORT ?? 3000));
+```
 
 ## Documentation
 

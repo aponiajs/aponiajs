@@ -16,7 +16,7 @@ import {
   type ModuleDefinition,
 } from "@aponiajs/common";
 import type { AponiaContainer } from "@aponiajs/core";
-import { collectApplicationEnhancerEntries } from "@aponiajs/platform-core";
+import { collectApplicationEnhancerEntries } from "@aponiajs/core";
 import type { ElysiaErrorHook } from "../interfaces/route-compiler.interface.ts";
 
 /**

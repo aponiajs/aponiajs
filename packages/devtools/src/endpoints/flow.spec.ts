@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { Catch, Validation } from "@aponiajs/common";
-import type { AponiaBootDiagnostics, CompiledRoute } from "@aponiajs/platform-core";
+import type { AponiaBootDiagnostics, CompiledRoute } from "@aponiajs/common";
 import { buildFlowPayload } from "./flow.ts";
 
 /**

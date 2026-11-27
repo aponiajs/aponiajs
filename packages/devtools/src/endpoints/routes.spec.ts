@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import type { AponiaBootDiagnostics, CompiledRoute } from "@aponiajs/platform-core";
+import type { AponiaBootDiagnostics, CompiledRoute } from "@aponiajs/common";
 import type { AponiaRoutesPayload } from "../index.ts";
 import { buildRoutesPayload } from "./routes.ts";
 

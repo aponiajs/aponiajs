@@ -1,9 +1,9 @@
 import { expect, test } from "bun:test";
 import { Injectable, Module } from "@aponiajs/common";
 import { AponiaFactory as ElysiaFactory } from "@aponiajs/platform-elysia";
-import { createPlatformFactory } from "@aponiajs/platform-core";
-import { h3Adapter } from "@aponiajs/platform-h3";
-import { honoAdapter } from "@aponiajs/platform-hono";
+
+import { AponiaFactory as H3AponiaFactory } from "@aponiajs/platform-h3";
+import { AponiaFactory as HonoAponiaFactory } from "@aponiajs/platform-hono";
 import { toFetchHandler } from "@aponiajs/serverless";
 import { McpModule, Tool } from "../src/index.ts";
 import { McpRuntimeShutdown, type McpRuntime } from "../src/transport/mcp-runtime.ts";
@@ -103,8 +103,8 @@ async function observe(fetch: (request: Request) => Response | Promise<Response>
 
 test("the same MCP registration answers identically on every platform", async () => {
   const elysia = await ElysiaFactory.create(ElysiaModule, { logger: false });
-  const hono = await createPlatformFactory(honoAdapter()).create(HonoModule, { logger: false });
-  const h3 = await createPlatformFactory(h3Adapter()).create(H3Module, { logger: false });
+  const hono = await HonoAponiaFactory.create(HonoModule, { logger: false });
+  const h3 = await H3AponiaFactory.create(H3Module, { logger: false });
 
   try {
     const answers = {

@@ -40,26 +40,22 @@ import {
   createDefaultExceptionFilter,
   reportThroughLogger,
 } from "../exceptions/default-exception.filter.ts";
-import { createMiddlewareConsumer } from "@aponiajs/platform-core";
+import { createMiddlewareConsumer } from "@aponiajs/core";
 import { mountMiddleware } from "../middleware/middleware-pipeline.ts";
 import { compileModuleInMemoryAsync } from "../compiler/in-memory-compiler.ts";
-import { normalizeRoutePrefix } from "@aponiajs/platform-core";
-import {
-  provideHttpAdapterHost,
-  resolveApplicationPipe,
-  resolveApplicationPipes,
-  type ResolvedPipe,
-} from "@aponiajs/platform-core";
+import { normalizeRoutePrefix } from "@aponiajs/common";
+import { provideHttpAdapterHost, type ResolvedPipe } from "@aponiajs/common";
+import { resolveApplicationPipe, resolveApplicationPipes } from "@aponiajs/core";
 import { isModuleDefinition } from "../modules/module-compiler.ts";
-import type { AponiaRootModule } from "@aponiajs/platform-core";
-import { selectRootModuleDescriptor } from "@aponiajs/platform-core";
+import type { AponiaRootModule } from "@aponiajs/common";
+import { selectRootModuleDescriptor } from "@aponiajs/common";
 import {
   applyPlatformModules,
   PLATFORM_ADAPTER_HOST,
-  REQUEST_CONTEXT_REGISTRATION,
   type RequestContextRegistration,
-} from "@aponiajs/platform-core";
-import { selectInvokerArtifact } from "@aponiajs/platform-core";
+} from "@aponiajs/common";
+import { REQUEST_CONTEXT_REGISTRATION } from "@aponiajs/core";
+import { selectInvokerArtifact } from "@aponiajs/common";
 import type {
   ControllerHandlerFactory,
   RouteViewRenderer,
@@ -75,12 +71,8 @@ import {
   compileHealthProbes,
   mountHealthProbes,
 } from "./application-health.ts";
-import {
-  APPLICATION_CONTAINER,
-  BOOT_DIAGNOSTICS,
-  createApplicationContainerRef,
-  createBootDiagnosticsRef,
-} from "@aponiajs/platform-core";
+import { BOOT_DIAGNOSTICS, createBootDiagnosticsRef } from "@aponiajs/common";
+import { APPLICATION_CONTAINER, createApplicationContainerRef } from "@aponiajs/core";
 import { attachApplicationContainer, publishApplicationOnStore } from "./application-container.ts";
 import {
   attachApplicationDiagnostics,
@@ -93,16 +85,18 @@ import type {
   ConfiguredAponiaApplicationOptions,
 } from "../interfaces/application.interface.ts";
 import {
-  attachApplicationShutdown,
-  collectLifecycleCalls,
   normalizeStaticAssets,
   resolveApplicationHttpPolicies,
   resolveHttpPolicies,
   resolveRequestLifecycleHooks,
   assertPlatformCapabilities,
   providePlatformCapabilities,
+} from "@aponiajs/common";
+import {
+  attachApplicationShutdown,
+  collectLifecycleCalls,
   type LifecycleCall,
-} from "@aponiajs/platform-core";
+} from "@aponiajs/core";
 import { LazyModuleLoader } from "./lazy-module-loader.ts";
 import { installVersionRouting } from "./versioning.ts";
 import { mountStaticAssets } from "../routing/static-assets.ts";
@@ -315,6 +309,8 @@ export async function bootstrapAponiaApplication(
   // factory result, and the synchronous policy compile reads the cached value.
   // A `wrap` covers `handle`, `listen`, and the native instance, so installing
   // it here still reaches every request.
+  const requestLifecycleHooks = resolveRequestLifecycleHooks(container);
+  const recordMatchedRoutes = requestLifecycleHooks.length > 0;
   installHttpPolicies(nativeApplication, {
     policies: resolveApplicationHttpPolicies({
       ...(options.cors === undefined ? {} : { cors: options.cors }),
@@ -325,7 +321,7 @@ export async function bootstrapAponiaApplication(
       ...(options.compression === undefined ? {} : { compression: options.compression }),
     }),
     pluginPolicies: resolveHttpPolicies(container),
-    hooks: resolveRequestLifecycleHooks(container),
+    hooks: requestLifecycleHooks,
   });
 
   // Every package's declared platform is checked before the first mount, and
@@ -502,6 +498,7 @@ export async function bootstrapAponiaApplication(
           globalPipes,
           requestScoped ? () => container.instantiateController(module, controller) : undefined,
           prefix,
+          recordMatchedRoutes,
         );
         // The table grew by exactly the routes this controller mounted, which is
         // the slice the boot reports on `RoutesResolver` and the only observation
@@ -772,6 +769,7 @@ function registerControllerRoutes(
   globalPipes: readonly ResolvedPipe[],
   instanceResolver?: () => unknown,
   prefix = "",
+  recordMatchedRoutes = false,
 ): ReadonlySet<string | symbol> | undefined {
   const compiledRoutes = controller.compiledRoutes;
   if (!compiledRoutes) {
@@ -798,6 +796,7 @@ function registerControllerRoutes(
     globalPipes,
     instanceResolver,
     prefix,
+    recordMatchedRoutes,
   );
 }
 

@@ -8,7 +8,7 @@ import {
   type RouteValidatorInput,
 } from "@aponiajs/common";
 import type { AponiaContainer } from "@aponiajs/core";
-import { compileRoutes } from "@aponiajs/platform-core";
+import { compileRoutes } from "@aponiajs/common";
 import type {
   OpenApiConfiguration,
   OpenApiInfo,

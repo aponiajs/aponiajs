@@ -19,7 +19,7 @@ describe("framework contract", () => {
     const keys = new Set<string>();
     for (const root of [
       "packages/common/src",
-      "packages/platform-core/src",
+      "packages/core/src",
       "packages/platform-elysia/src",
     ]) {
       for (const file of await listTypeScriptFiles(root)) {
@@ -86,8 +86,8 @@ describe("framework contract", () => {
       adapterHost: "PLATFORM_ADAPTER_HOST",
     });
     expect(frameworkContract.errorCodes).toContain(frameworkContract.platformCapabilities.refusal);
-    const platformCoreBarrel = await Bun.file("packages/platform-core/src/index.ts").text();
-    expect(platformCoreBarrel).toContain(frameworkContract.platformCapabilities.adapterHost);
+    const commonBarrel = await Bun.file("packages/common/src/index.ts").text();
+    expect(commonBarrel).toContain(frameworkContract.platformCapabilities.adapterHost);
     expect(frameworkContract.contractVersion).toBe(2);
   });
 

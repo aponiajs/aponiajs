@@ -4,7 +4,6 @@ import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { generateSchematic, parseArguments } from "./index.ts";
 import { checkLibrary } from "./library/check-library.ts";
-import { aponiaVersion } from "./version.ts";
 
 const repositoryRoot = join(import.meta.dir, "..", "..", "..");
 const temporaryDirectories: string[] = [];
@@ -12,7 +11,6 @@ const temporaryDirectories: string[] = [];
 const workspaceSources: Readonly<Record<string, string>> = {
   "@aponiajs/common": join(repositoryRoot, "packages", "common", "src", "index.ts"),
   "@aponiajs/core": join(repositoryRoot, "packages", "core", "src", "index.ts"),
-  "@aponiajs/platform-core": join(repositoryRoot, "packages", "platform-core", "src", "index.ts"),
 };
 
 afterEach(async () => {
@@ -77,7 +75,7 @@ function probeSource(directory: string): string {
       ";",
     "import { createContainer } from " + JSON.stringify(workspaceSources["@aponiajs/core"]) + ";",
     "import { compileRootModule, resolveHttpPolicies } from " +
-      JSON.stringify(workspaceSources["@aponiajs/platform-core"]) +
+      JSON.stringify(workspaceSources["@aponiajs/common"]) +
       ";",
     "const generated = (await import(" + JSON.stringify(join(directory, "index.ts")) + ")) as {",
     "  readonly WidgetsModule: {",
@@ -214,7 +212,6 @@ describe("aponia g plugin", () => {
       readonly peerDependencies: Readonly<Record<string, string>>;
     };
     expect(packageJson.keywords).toContain("plugin");
-    expect(packageJson.peerDependencies["@aponiajs/platform-core"]).toBe("^" + aponiaVersion);
 
     const checked = await checkLibrary({ cwd: projectRoot, path: "libs/widgets", publish: true });
     expect(checked.issues).toEqual([]);
@@ -296,7 +293,6 @@ describe("aponia g plugin", () => {
       readonly dependencies: Readonly<Record<string, string>>;
     };
     expect(manifest.private).toBe(true);
-    expect(manifest.dependencies["@aponiajs/platform-core"]).toBe(aponiaVersion);
   });
 
   test("wires a workspace plugin into the application that imports it", async () => {

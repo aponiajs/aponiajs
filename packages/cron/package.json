@@ -46,7 +46,6 @@
   },
   "dependencies": {
     "@aponiajs/common": "workspace:*",
-    "@aponiajs/platform-core": "workspace:*",
     "croner": "6.0.7"
   },
   "devDependencies": {

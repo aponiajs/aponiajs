@@ -25,10 +25,13 @@ const packageBarrels = [
   "packages/mcp/src/index.ts",
   "packages/testing/src/index.ts",
   "packages/openapi/src/index.ts",
-  "packages/opentelemetry/src/index.ts",
   "packages/microservices/src/index.ts",
-  "packages/store-redis/src/index.ts",
   "packages/view/src/index.ts",
+  "packages/config/src/index.ts",
+  "packages/cqrs/src/index.ts",
+  "packages/mapped-types/src/index.ts",
+  "packages/serve-static/src/index.ts",
+  "packages/terminus/src/index.ts",
 ] as const;
 
 const repositoryRoot = resolve(import.meta.dir, "..");

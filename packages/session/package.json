@@ -44,12 +44,10 @@
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
-    "@aponiajs/common": "workspace:*",
-    "@aponiajs/platform-core": "workspace:*"
+    "@aponiajs/common": "workspace:*"
   },
   "devDependencies": {
     "@aponiajs/core": "workspace:*",
-    "@aponiajs/platform-core": "workspace:*",
     "@aponiajs/platform-elysia": "workspace:*",
     "@aponiajs/platform-h3": "workspace:*",
     "@aponiajs/platform-hono": "workspace:*",

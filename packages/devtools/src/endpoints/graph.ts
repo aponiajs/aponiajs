@@ -1,4 +1,4 @@
-import type { AponiaBootDiagnostics } from "@aponiajs/platform-core";
+import type { AponiaBootDiagnostics } from "@aponiajs/common";
 import { inspectBootDiagnostics } from "./inspection.ts";
 import { buildLinkableGraph } from "./linkable-graph.ts";
 import type { AponiaGraphPayload } from "../interfaces/payloads.interface.ts";

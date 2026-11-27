@@ -45,7 +45,7 @@
   },
   "dependencies": {
     "@aponiajs/common": "workspace:*",
-    "@aponiajs/platform-core": "workspace:*",
+    "@aponiajs/core": "workspace:*",
     "jose": "^6.0.0"
   },
   "devDependencies": {

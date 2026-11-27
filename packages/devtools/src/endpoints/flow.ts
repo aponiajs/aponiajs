@@ -8,7 +8,7 @@ import {
   type RouteSchemaSlot,
   type ValidationModelClass,
 } from "@aponiajs/common";
-import type { AponiaBootDiagnostics } from "@aponiajs/platform-core";
+import type { AponiaBootDiagnostics } from "@aponiajs/common";
 import type {
   AponiaRouteStage,
   AponiaRouteStageKind,

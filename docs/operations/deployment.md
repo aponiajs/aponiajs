@@ -18,7 +18,7 @@ two.
   validation, filters, and Problem Details mapping are not reimplemented by the
   deployment.
 - **Built-in stores are process-local.** Each replica has its own sessions,
-  rate-limit counters, refresh tokens, revocations, cache, idempotency records,
+  rate-limit counters, refresh tokens, revocations, cache,
   queue, and outbox unless the application supplies a shared store. The state
   matrix below names every one.
 - **Shutdown is observable on the Elysia platform.** Its readiness probe flips
@@ -76,18 +76,15 @@ This table is the operational consequence of each package's default store. A
 row that names a process-local default needs a shared implementation, a broker,
 or single-replica routing before it is correct under horizontal scale.
 
-| Capability                  | Built-in default                      | Multi-instance requirement                                                                              |
-| --------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Session                     | `MemorySessionStore` (process)        | A shared session store, or sticky routing while the session lives                                       |
-| Rate limit                  | `MemoryRateLimitStore` (process)      | A shared counter store; otherwise each replica allows the full limit                                    |
-| Cache                       | In-memory bounded store (process)     | A shared cache when a cached value must be visible to every replica                                     |
-| Idempotency                 | `MemoryIdempotencyStore` (process)    | A shared store implementing atomic `claim`/`release`; otherwise a replay can execute on another replica |
-| Auth refresh and revocation | In-memory stores (process)            | Shared stores; otherwise a rotated token or revoked token is accepted elsewhere                         |
-| Queue and outbox            | In-process queue and outbox (process) | A durable broker or database-backed backlog; in-flight jobs do not survive a restart                    |
-| Audit events                | Bounded in-memory store (process)     | A shared or durable store when retention is a compliance requirement                                    |
-| Metrics                     | Prometheus registry per process       | Scrape every replica, or aggregate at the collector; a series is not cluster-wide                       |
-| Request context             | `AsyncLocalStorage` per process       | No sharing needed; correlation is per request and per process                                           |
-| Devtools                    | In-process capture                    | Development only; do not expose it as a production dependency                                           |
+| Capability                  | Built-in default                      | Multi-instance requirement                                                           |
+| --------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------ |
+| Session                     | `MemorySessionStore` (process)        | A shared session store, or sticky routing while the session lives                    |
+| Rate limit                  | `MemoryRateLimitStore` (process)      | A shared counter store; otherwise each replica allows the full limit                 |
+| Cache                       | In-memory bounded store (process)     | A shared cache when a cached value must be visible to every replica                  |
+| Auth refresh and revocation | In-memory stores (process)            | Shared stores; otherwise a rotated token or revoked token is accepted elsewhere      |
+| Queue and outbox            | In-process queue and outbox (process) | A durable broker or database-backed backlog; in-flight jobs do not survive a restart |
+| Request context             | `AsyncLocalStorage` per process       | No sharing needed; correlation is per request and per process                        |
+| Devtools                    | In-process capture                    | Development only; do not expose it as a production dependency                        |
 
 ## Configuration and secrets
 
@@ -153,14 +150,11 @@ through the system logger and do not prevent the remaining hooks from running.
 
 ## Observability baseline
 
-| Signal      | Provided by                                                     | Operational note                                                                |
-| ----------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| Logs        | The system logger, bootstrap decisions, and the `500` path      | Include the request ID; do not log credentials, cookies, or raw bodies          |
-| Correlation | `@aponiajs/request-context`, header `x-request-id` by default   | The ID is read or generated per request and echoed unless `echo: false`         |
-| Metrics     | `@aponiajs/metrics`, Prometheus text at the scrape path         | Scrape every replica; route labels are bounded by the registered route pattern  |
-| Traces      | `@aponiajs/opentelemetry` when the application supplies the SDK | The SDK is process-global; the first registration in a process owns it          |
-| Audit       | `@aponiajs/audit` with a bounded, redacting store               | Record security and business events; retention is an application store decision |
-| Devtools    | `@aponiajs/devtools`                                            | Opt-in and development-facing; it is not a production telemetry backend         |
+| Signal      | Provided by                                                   | Operational note                                                        |
+| ----------- | ------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Logs        | The system logger, bootstrap decisions, and the `500` path    | Include the request ID; do not log credentials, cookies, or raw bodies  |
+| Correlation | `@aponiajs/request-context`, header `x-request-id` by default | The ID is read or generated per request and echoed unless `echo: false` |
+| Devtools    | `@aponiajs/devtools`                                          | Opt-in and development-facing; it is not a production telemetry backend |
 
 Emit one structured log line per failed request at minimum, carrying the request
 ID, method, route pattern, status, and latency. Do not put a user identifier or
@@ -168,17 +162,15 @@ tenant identifier in a log line unless the application's data policy allows it.
 
 ## Failure modes
 
-| Symptom                                      | Likely cause                                                                 | First action                                                                                     |
-| -------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Process exits during boot                    | Configuration, provider, or route validation failed                          | Read the `AponiaError` code and details; the port never opened, so this is not a traffic failure |
-| Readiness stays `503` after a deploy         | Shutdown began, or the application never completed bootstrap                 | Check the boot log and whether a stop signal arrived                                             |
-| Sessions or logins disappear across replicas | The default session store is process-local                                   | Register a shared session store or make routing sticky                                           |
-| Rate limits reset on every request           | Each replica owns its counter                                                | Use a shared rate-limit store                                                                    |
-| An idempotent request executes twice         | The replay record lives on another replica, or the store has no atomic claim | Use a shared idempotency store with atomic `claim`/`release`, and a caller/tenant `scope`        |
-| Queue jobs vanish after a restart            | The in-process queue is not durable                                          | Use a durable backlog or broker, or accept the loss explicitly                                   |
-| Metrics look incomplete                      | Only one replica is scraped                                                  | Scrape every instance or aggregate in the collector                                              |
-| WebSocket clients reconnect repeatedly       | A replica restarted or does not own the socket                               | Use sticky routing or an external publish/subscribe layer                                        |
-| Every request returns `500` with no detail   | An unhandled exception reached the default Problem Details mapping           | Correlate the request ID with the logger; the response deliberately omits the stack and cause    |
+| Symptom                                      | Likely cause                                                       | First action                                                                                     |
+| -------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| Process exits during boot                    | Configuration, provider, or route validation failed                | Read the `AponiaError` code and details; the port never opened, so this is not a traffic failure |
+| Readiness stays `503` after a deploy         | Shutdown began, or the application never completed bootstrap       | Check the boot log and whether a stop signal arrived                                             |
+| Sessions or logins disappear across replicas | The default session store is process-local                         | Register a shared session store or make routing sticky                                           |
+| Rate limits reset on every request           | Each replica owns its counter                                      | Use a shared rate-limit store                                                                    |
+| Queue jobs vanish after a restart            | The in-process queue is not durable                                | Use a durable backlog or broker, or accept the loss explicitly                                   |
+| WebSocket clients reconnect repeatedly       | A replica restarted or does not own the socket                     | Use sticky routing or an external publish/subscribe layer                                        |
+| Every request returns `500` with no detail   | An unhandled exception reached the default Problem Details mapping | Correlate the request ID with the logger; the response deliberately omits the stack and cause    |
 
 ## Rollout checklist
 
@@ -190,10 +182,6 @@ tenant identifier in a log line unless the application's data policy allows it.
   replica count.
 - Run migrations before the new version serves traffic, and keep the previous
   schema compatible through the rollout.
-- Scrape every replica; verify the route labels are the bounded patterns, not
-  raw paths.
-- Confirm audit retention and access policy if the application records security
-  events.
 - Smoke-test a real route, not only the probes.
 - Roll back by restoring the previous image and configuration pair; do not roll
   back a schema change without a reverse migration.
@@ -209,13 +197,11 @@ Hono and H3 are first-class platforms through
 [`@aponiajs/platform-hono` and `@aponiajs/platform-h3`](../platforms/adapters.md): each
 boots the module graph and runs Aponia's own route table on its runtime. Nitro
 owns its server, so it is a delivery adapter: boot on `@aponiajs/platform-h3`
-and export the handler `@aponiajs/nitro` builds. The remaining delivery adapters
-(`@aponiajs/hono` and `@aponiajs/h3`) mount an application already booted on a
-platform. Nitro support is experimental while its current release is an RC.
+and export the handler `@aponiajs/nitro` builds. Nitro support is experimental while its current release is an RC.
 
 ## A reference deployment
 
 `examples/reference` composes the framework the way this page describes: a
 validated configuration, a Drizzle database with a boot migration, JWT login
-with role guards, a queued audit job, `GET /metrics`, and both health probes.
+with role guards, a queued audit job, and both health probes.
 Read it beside this page when wiring a real service.

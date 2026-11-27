@@ -11,7 +11,8 @@ import {
   type RouteParameterKind,
   type RouteParameterMetadata,
 } from "@aponiajs/common";
-import { executePipes, resolvePipe, type ResolvedPipe } from "@aponiajs/platform-core";
+import { type ResolvedPipe } from "@aponiajs/common";
+import { executePipes, resolvePipe } from "@aponiajs/core";
 import type {
   CompiledElysiaRoute,
   ParameterBinding,

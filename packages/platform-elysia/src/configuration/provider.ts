@@ -1,2 +1,2 @@
-export { provideConfiguration, provideConfigurationAsync } from "@aponiajs/platform-core";
-export type { AsyncConfigurationOptions } from "@aponiajs/platform-core";
+export { provideConfiguration, provideConfigurationAsync } from "@aponiajs/common";
+export type { AsyncConfigurationOptions } from "@aponiajs/common";

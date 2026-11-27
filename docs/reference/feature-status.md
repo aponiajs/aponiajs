@@ -11,59 +11,55 @@ The npm registry's `alpha` tag serves all six published packages on the
 `0.6.0-alpha.N` line: `@aponiajs/common`, `@aponiajs/core`,
 `@aponiajs/platform-elysia`, `@aponiajs/cli`, `create-aponia`, and
 `@aponiajs/devtools`. The `latest` tag serves the older stable `0.5.0` for five
-of them and `0.6.0-alpha.26` for `@aponiajs/devtools`. The other 32 packages have
+of them and `0.6.0-alpha.26` for `@aponiajs/devtools`. The other 28 packages have
 never been published, and the `1.0.0-beta.N` line described here is not
 published under `@beta` yet. A row marked Complete is evidence about this
 source, not a promise that the same package is installable from npm today.
 See [Packages](./packages.md) for the live split.
 
-The delivery adapters `@aponiajs/h3`, `@aponiajs/hono`, and `@aponiajs/nitro`
-are complete and superseded: they translate a runtime envelope to
+The delivery adapter `@aponiajs/nitro`
+is complete and superseded: it translates a runtime envelope to
 `application.handle` and add no routing. Nitro is a delivery adapter rather than
 a platform because it owns its server; boot on `@aponiajs/platform-h3` beside
 it.
 
-| Package                     | Status   | Evidence                                                                             |
-| --------------------------- | -------- | ------------------------------------------------------------------------------------ |
-| `@aponiajs/common`          | Complete | decorators, descriptors, tokens, errors, WebSockets                                  |
-| `@aponiajs/compiler`        | Complete | scoped lifetimes, borrow views, typestate, linear consumption                        |
-| `@aponiajs/core`            | Complete | graph, visibility, scopes, container                                                 |
-| `@aponiajs/platform-elysia` | Complete | routes, validation, enhancers, gateways, versioning                                  |
-| `@aponiajs/platform-core`   | Complete | shared execution context, guard pipeline, pipes, middleware consumer                 |
-| `@aponiajs/platform-h3`     | Complete | H3 host over the shared kernel                                                       |
-| `@aponiajs/platform-hono`   | Complete | Hono host over the shared kernel                                                     |
-| `@aponiajs/cli`             | Complete | project and resource generators, library check, MCP                                  |
-| `@aponiajs/schematics`      | Complete | Nest-shaped collection, schemas, factories, copied templates                         |
-| `create-aponia`             | Complete | `bun create aponia` entrypoint                                                       |
-| `@aponiajs/testing`         | Complete | test applications, overrides, teardown                                               |
-| `@aponiajs/devtools`        | Complete | opt-in page, routes, requests, MCP                                                   |
-| `@aponiajs/openapi`         | Complete | registered document and validated metadata                                           |
-| `@aponiajs/cors`            | Complete | registered policy and validated configuration                                        |
-| `@aponiajs/cron`            | Complete | registered scheduler and validated jobs                                              |
-| `@aponiajs/graphql`         | Complete | registered endpoint and injected schema factory                                      |
-| `@aponiajs/opentelemetry`   | Complete | registered tracing and application SDK pieces                                        |
-| `@aponiajs/mcp`             | Complete | official SDK endpoint, validated policy, request gate, session lifecycle             |
-| `@aponiajs/cache`           | Complete | bounded cache, TTL, store contract                                                   |
-| `@aponiajs/events`          | Complete | in-process events and listeners                                                      |
-| `@aponiajs/http`            | Complete | SSRF-safe client and response validation                                             |
-| `@aponiajs/rate-limit`      | Complete | guard, fixed window, shared store contract                                           |
-| `@aponiajs/security`        | Complete | headers, CSP nonce, CSRF                                                             |
-| `@aponiajs/session`         | Complete | signed sessions and store contract                                                   |
-| `@aponiajs/auth`            | Complete | JWT, OIDC, refresh rotation, revocation; in-memory stores in tests                   |
-| `@aponiajs/audit`           | Complete | bounded audit events and store contract                                              |
-| `@aponiajs/tenancy`         | Complete | request tenant service and guard                                                     |
-| `@aponiajs/queue`           | Complete | jobs, retries, dead letters, outbox, durable store contract                          |
-| `@aponiajs/database`        | Complete | Drizzle boundary, repositories, SQL migrations; SQLite and live PostgreSQL lanes     |
-| `@aponiajs/metrics`         | Complete | Prometheus registry, instrumentation, scrape endpoint                                |
-| `@aponiajs/idempotency`     | Complete | replay, conflict detection, store contract                                           |
-| `@aponiajs/compression`     | Complete | Brotli and gzip negotiation                                                          |
-| `@aponiajs/microservices`   | Complete | message patterns, CBOR client/server, nine broker adapters; six live-tested          |
-| `@aponiajs/store-redis`     | Complete | Redis stores for cache, rate-limit, session, idempotency, auth; mock client in tests |
-| `@aponiajs/view`            | Complete | Blade layouts, components, props, slots, and shared data                             |
-| `@aponiajs/serverless`      | Complete | Web Fetch and AWS Lambda adapters                                                    |
-| `@aponiajs/h3`              | Complete | H3 delivery adapter                                                                  |
-| `@aponiajs/hono`            | Complete | Hono delivery adapter                                                                |
-| `@aponiajs/nitro`           | Complete | Nitro 3 RC delivery adapter                                                          |
+| Package                     | Status   | Evidence                                                                         |
+| --------------------------- | -------- | -------------------------------------------------------------------------------- |
+| `@aponiajs/common`          | Complete | decorators, descriptors, tokens, errors, WebSockets                              |
+| `@aponiajs/compiler`        | Complete | scoped lifetimes, borrow views, typestate, linear consumption                    |
+| `@aponiajs/core`            | Complete | graph, visibility, scopes, container                                             |
+| `@aponiajs/platform-elysia` | Complete | routes, validation, enhancers, gateways, versioning                              |
+| `@aponiajs/platform-h3`     | Complete | H3 host over the shared kernel                                                   |
+| `@aponiajs/platform-hono`   | Complete | Hono host over the shared kernel                                                 |
+| `@aponiajs/cli`             | Complete | project and resource generators, library check, MCP                              |
+| `@aponiajs/schematics`      | Complete | Nest-shaped collection, schemas, factories, copied templates                     |
+| `create-aponia`             | Complete | `bun create aponia` entrypoint                                                   |
+| `@aponiajs/testing`         | Complete | test applications, overrides, teardown                                           |
+| `@aponiajs/devtools`        | Complete | opt-in page, routes, requests, MCP                                               |
+| `@aponiajs/openapi`         | Complete | registered document and validated metadata                                       |
+| `@aponiajs/cors`            | Complete | registered policy and validated configuration                                    |
+| `@aponiajs/cron`            | Complete | registered scheduler and validated jobs                                          |
+| `@aponiajs/graphql`         | Complete | registered endpoint and injected schema factory                                  |
+| `@aponiajs/mcp`             | Complete | official SDK endpoint, validated policy, request gate, session lifecycle         |
+| `@aponiajs/cache`           | Complete | bounded cache, TTL, store contract                                               |
+| `@aponiajs/events`          | Complete | in-process events and listeners                                                  |
+| `@aponiajs/http`            | Complete | SSRF-safe client and response validation                                         |
+| `@aponiajs/rate-limit`      | Complete | guard, fixed window, shared store contract                                       |
+| `@aponiajs/security`        | Complete | headers, CSP nonce, CSRF                                                         |
+| `@aponiajs/session`         | Complete | signed sessions and store contract                                               |
+| `@aponiajs/auth`            | Complete | JWT, OIDC, refresh rotation, revocation; in-memory stores in tests               |
+| `@aponiajs/queue`           | Complete | jobs, retries, dead letters, outbox, durable store contract                      |
+| `@aponiajs/database`        | Complete | Drizzle boundary, repositories, SQL migrations; SQLite and live PostgreSQL lanes |
+| `@aponiajs/compression`     | Complete | Brotli and gzip negotiation                                                      |
+| `@aponiajs/microservices`   | Complete | message patterns, CBOR client/server, nine broker adapters; six live-tested      |
+| `@aponiajs/view`            | Complete | Blade layouts, components, props, slots, and shared data                         |
+| `@aponiajs/serverless`      | Complete | Web Fetch and AWS Lambda adapters                                                |
+| `@aponiajs/nitro`           | Complete | Nitro 3 RC delivery adapter                                                      |
+| `@aponiajs/config`          | Complete | `.env` loading, variable expansion, `registerAs`, and schema validation          |
+| `@aponiajs/cqrs`            | Complete | `CommandBus`, `QueryBus`, `EventBus`, `@Saga`, and `AggregateRoot`               |
+| `@aponiajs/mapped-types`    | Complete | `PartialType`, `PickType`, `OmitType`, and `IntersectionType`                    |
+| `@aponiajs/serve-static`    | Complete | `ServeStaticModule` static file and SPA fallback serving                         |
+| `@aponiajs/terminus`        | Complete | `TerminusModule`, `HealthCheckService`, HTTP, memory, and disk health indicators |
 
 ## Known gaps
 
@@ -72,8 +68,8 @@ it.
   Bus transports, and the framework never provisions their topics, queues, or
   subscriptions. A SQLite outbox table ships as `SqliteOutboxStore`; draining it
   into a broker is the application's relay, not the queue's.
-- Distributed revocation, refresh, session, rate-limit, cache, and idempotency
-  stores are available via `@aponiajs/store-redis` or application-supplied; the
+- Distributed revocation, refresh, session, rate-limit, and cache
+  stores are application-supplied; the
   built-in default stores remain process-local.
 - MVC adapters for Express or Fastify are not provided; Elysia is the default
   HTTP platform, and Hono, H3, and Nitro are first-class platforms beside it.

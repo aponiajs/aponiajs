@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { Controller, Get, Module } from "@aponiajs/common";
-import { createPlatformFactory } from "@aponiajs/platform-core";
+import { createBootstrapFactory } from "./application/bootstrap.ts";
 import { createH3Host, loadCrossws } from "./host/h3-host.ts";
 
 @Controller("plain")
@@ -24,7 +24,7 @@ describe("an H3 host without crossws", () => {
   });
 
   test("boots, answers, and listens without websocket support", async () => {
-    const application = await createPlatformFactory(createH3Host(null)).create(PlainModule, {
+    const application = await createBootstrapFactory(createH3Host(null)).create(PlainModule, {
       logger: false,
     });
     const response = await application.handle(new Request("http://localhost/plain"));

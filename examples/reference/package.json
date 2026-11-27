@@ -16,7 +16,6 @@
     "@aponiajs/common": "workspace:*",
     "@aponiajs/core": "workspace:*",
     "@aponiajs/database": "workspace:*",
-    "@aponiajs/metrics": "workspace:*",
     "@aponiajs/platform-elysia": "workspace:*",
     "@aponiajs/queue": "workspace:*",
     "drizzle-orm": "^0.45.4",

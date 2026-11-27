@@ -7,7 +7,7 @@ import {
   type Provider,
   type Token,
 } from "@aponiajs/common";
-import { providePlatformModule, type PlatformModuleAdapter } from "@aponiajs/platform-core";
+import { providePlatformModule, type PlatformModuleAdapter } from "@aponiajs/common";
 import type { AnyElysia } from "elysia";
 import type {
   AsyncPluginModuleOptions,

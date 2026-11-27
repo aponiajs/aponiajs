@@ -10,6 +10,8 @@ application compiled, what it answers, and what it logged, served under
 
 ## Use it
 
+### Register the module
+
 ```ts
 import { Module } from "@aponiajs/common";
 import { DevtoolsModule } from "@aponiajs/devtools";
@@ -22,6 +24,29 @@ export class AppModule {}
 
 `enabled: false` is an inert module — no provider and no controller, so no
 route either.
+
+### Use it in a controller
+
+```ts
+import { Controller, Get } from "@aponiajs/common";
+
+@Controller("widgets")
+export class WidgetsController {
+  @Get()
+  list() {
+    return [];
+  }
+}
+```
+
+No service is injected; this package contributes a policy/endpoint. The
+registration contributes its own controller under `/__devtools`, so the
+application's controllers stay untouched: `GET /__devtools/meta` returns the
+contract version and artifact stamps, `/graph`, `/routes`, and `/flow` describe
+the compiled application, `/aot` returns build verdicts, and `/logs` and
+`/requests` read the bounded streams from a cursor.
+
+## Bootstrap
 
 ```ts
 import { AponiaFactory } from "@aponiajs/platform-elysia";

@@ -134,8 +134,7 @@ const release = once(() => store.release("key"));
 release();
 ```
 
-`@aponiajs/idempotency` wraps `RequestState.release` in `once`, so a claim cannot
-be released twice by overlapping hooks. `@aponiajs/database` guards every
+`@aponiajs/database` guards every
 transaction handle with a per-transaction scope, so a handle used after its
 callback throws `STALE_LIFETIME`.
 

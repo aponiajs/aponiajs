@@ -9,6 +9,8 @@ from a validated configuration.
 
 ## Use it
 
+### Register the module
+
 Register the policy once in the root module:
 
 ```ts
@@ -22,11 +24,26 @@ const cors = CorsModule.forRoot({ configuration: CorsConfig });
 export class AppModule {}
 ```
 
-The policy is a neutral `HttpPolicy` the shared request pipeline runs, so the
-same registration answers the same headers and preflight on every platform. No
-service needs to be injected for the default behavior. An application that needs
-a pattern or predicate origin uses the raw plugin described in
-`## Native escape hatch`.
+### Use it in a controller
+
+```ts
+import { Controller, Get } from "@aponiajs/common";
+
+@Controller("widgets")
+export class WidgetsController {
+  @Get()
+  list() {
+    return [];
+  }
+}
+```
+
+No service is injected; this package contributes a policy/endpoint. A `GET` from
+an allowed origin answers `access-control-allow-origin` and `vary: origin`, and
+an `OPTIONS` preflight answers `204` with the allow-origin, the requested method
+echoed, and the configured max-age. The policy runs before routing, so a `404`
+carries the same headers. An application that needs a pattern or predicate
+origin uses the raw plugin described in `## Native escape hatch`.
 
 ## Bootstrap
 

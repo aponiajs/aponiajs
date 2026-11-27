@@ -16,8 +16,8 @@ import {
   type ViewRenderOptions,
 } from "@aponiajs/common";
 import type { AnySchema } from "elysia";
-import { httpErrors } from "@aponiajs/platform-core";
-import { compileUnrolledGuards, StaticRouteExecutionContext } from "@aponiajs/platform-core";
+import { httpErrors } from "@aponiajs/common";
+import { compileUnrolledGuards, StaticRouteExecutionContext } from "@aponiajs/core";
 import type {
   CompiledElysiaRoute,
   ElysiaErrorHook,

@@ -83,6 +83,25 @@ rejects at its timeout. `emit` waits only for the broker to accept the event. A
 broker that separates a reply topic from its subscription — Google Pub/Sub —
 uses `replySubscription` for the distinct subscription name.
 
+### Use it in a service
+
+Register the client through `MicroserviceClientsModule.forRoot`, then inject the
+exported token:
+
+```ts
+import { Inject, Injectable } from "@aponiajs/common";
+import { microserviceClientToken, type MicroserviceClient } from "@aponiajs/microservices";
+
+@Injectable()
+export class OrdersClient {
+  constructor(@Inject(microserviceClientToken) private readonly client: MicroserviceClient) {}
+
+  find(id: string) {
+    return this.client.send("orders.findOne", { id });
+  }
+}
+```
+
 ## Adapters
 
 Every adapter validates its options, loads its SDK lazily, connects once,

@@ -2,10 +2,10 @@ import { AponiaError, type ModuleDefinition } from "@aponiajs/common";
 import type { Elysia } from "elysia";
 import { collectClaimedElysiaRoutes } from "../modules/route-uniqueness.ts";
 import { registerNativeRoute } from "../routing/native-route.ts";
-import { answerHealthProbe, type ApplicationReadiness } from "@aponiajs/platform-core";
+import { answerHealthProbe, type ApplicationReadiness } from "@aponiajs/common";
 import type { AponiaHealthOptions } from "../interfaces/application-health.interface.ts";
 
-export { ApplicationReadiness } from "@aponiajs/platform-core";
+export { ApplicationReadiness } from "@aponiajs/common";
 
 const defaultLivenessPath = "/health/live";
 const defaultReadinessPath = "/health/ready";

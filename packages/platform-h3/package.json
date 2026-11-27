@@ -44,10 +44,9 @@
   },
   "dependencies": {
     "@aponiajs/common": "workspace:*",
-    "@aponiajs/platform-core": "workspace:*"
+    "@aponiajs/core": "workspace:*"
   },
   "devDependencies": {
-    "@aponiajs/core": "workspace:*",
     "crossws": "^0.4.17",
     "h3": "^2.0.8"
   },

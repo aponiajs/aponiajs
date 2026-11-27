@@ -1,11 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { Controller, Get, Injectable, Module, type InjectionToken } from "@aponiajs/common";
 import { AponiaApplication } from "@aponiajs/platform-elysia";
-import {
-  RequestContextModule,
-  RequestContextService,
-  type RequestContext,
-} from "@aponiajs/platform-core";
+import type { RequestContext } from "@aponiajs/common";
+import { RequestContextModule, RequestContextService } from "@aponiajs/core";
 import { AponiaFactory as ElysiaFactory } from "@aponiajs/platform-elysia";
 import { AponiaFactory as H3Factory } from "@aponiajs/platform-h3";
 import { AponiaFactory as HonoFactory } from "@aponiajs/platform-hono";

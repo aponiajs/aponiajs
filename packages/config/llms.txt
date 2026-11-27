@@ -1,0 +1,17 @@
+# @aponiajs/config
+
+> Nest-style configuration module for AponiaJS (`ConfigModule`, `ConfigService`, `registerAs`), with `.env` loading, `${VAR}` expansion, namespaced factories, and schema validation.
+
+## Key exports
+
+- `ConfigModule.forRoot(options)`
+- `ConfigModule.forRootAsync(options)`
+- `ConfigModule.forFeature(factory)`
+- `ConfigService` (`get`, `getOrThrow`, `internalConfig`)
+- `registerAs(token, factory)`
+- `getConfigToken(token)`
+
+## Links
+
+- [Package README](./README.md)
+- [Published packages](../../docs/reference/packages.md)

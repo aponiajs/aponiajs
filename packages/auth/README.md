@@ -9,6 +9,8 @@ bun add @aponiajs/auth@alpha
 
 ## Use it
 
+### Register the module
+
 ```ts
 import { Module } from "@aponiajs/common";
 import { AuthModule } from "@aponiajs/auth";
@@ -19,16 +21,24 @@ import { AuthModule } from "@aponiajs/auth";
 export class AppModule {}
 ```
 
+The registration is global and runs `AuthGuard` on every route by default, as
+`@nestjs/authentication` does; `globalGuard: false` leaves the guard to each
+route.
+
+### Use it in a controller
+
 ```ts
 import { Controller, Get, UseGuards } from "@aponiajs/common";
 import {
   AuthGuard,
   AuthService,
+  CurrentUser,
   Permissions,
+  PermissionsGuard,
   Public,
   Roles,
   RolesGuard,
-  PermissionsGuard,
+  type AuthUser,
 } from "@aponiajs/auth";
 
 @Controller("users")
@@ -45,11 +55,56 @@ export class UsersController {
   @Roles("admin")
   @Permissions("users:read")
   @Get()
-  list() {
-    return { userId: this.auth.current()?.id };
+  list(@CurrentUser() user: AuthUser | null) {
+    return { userId: user?.id, current: this.auth.current()?.id };
   }
 }
 ```
+
+`AuthGuard` verifies the bearer token and writes the user onto the route
+context; `@CurrentUser()` and `@CurrentSession()` read that value, and both
+answer `null` on a `@Public()` route.
+
+### Use it in a service
+
+```ts
+import { Injectable } from "@aponiajs/common";
+import { AuthService, JwtService } from "@aponiajs/auth";
+
+@Injectable()
+export class AuthTokens {
+  constructor(
+    private readonly auth: AuthService,
+    private readonly jwt: JwtService,
+  ) {}
+
+  async accessToken(): Promise<string> {
+    const user = this.auth.current();
+    if (user?.id === undefined) {
+      throw new Error("No authenticated user for this request.");
+    }
+    return await this.jwt.sign({ sub: user.id });
+  }
+}
+```
+
+`AuthService` is request-scoped, so it reads the user `AuthGuard` entered, and
+`JwtService` signs with the configured secret and mints a `jti`.
+
+### Async registration
+
+`AuthModule` does not support an asynchronous registration, and the refusal is
+structural: the `jwt`/`oidc` arm decides which verifier provider the
+registration contributes, and a container factory cannot change a provider
+list. Resolve the configuration before registering:
+
+```ts
+const auth = AuthModule.forRoot({
+  jwt: { secret: await readJwtSecret() },
+});
+```
+
+`register` remains the deprecated alias of `forRoot`.
 
 ## What it provides
 

@@ -8,7 +8,7 @@ import type {
 import type { AnyElysia, Elysia } from "elysia";
 import type { RouteBase } from "elysia/types";
 import type { CompiledElysiaRoute } from "./route-compiler.interface.ts";
-import type { RoutePlan } from "@aponiajs/platform-core";
+import type { RoutePlan } from "@aponiajs/common";
 import type { CONTROLLER_KIND } from "../controllers/controller.constants.ts";
 
 /** A descriptor-first controller carrying a native plugin. */

@@ -4,7 +4,6 @@ export type {
   ApplicationReboot,
 } from "./application/aponia-elysia-application.ts";
 export { AponiaFactory } from "./application/aponia.factory.ts";
-export { elysiaAdapter } from "./adapters/elysia-adapter.ts";
 export { AponiaApplicationContext } from "./application/application-context.ts";
 export { LazyModuleLoader, LazyModuleRef } from "./application/lazy-module-loader.ts";
 export { getApplicationDiagnostics } from "./application/application-diagnostics.ts";
@@ -38,7 +37,7 @@ export type { ElysiaApplication } from "./interfaces/native-application.interfac
 export { provideConfiguration, provideConfigurationAsync } from "./configuration/provider.ts";
 export type { AsyncConfigurationOptions } from "./configuration/provider.ts";
 export { compileRootModule, compileRootModuleAsync } from "./modules/module-compiler.ts";
-export type { AponiaModuleDescriptorArtifact, AponiaRootModule } from "@aponiajs/platform-core";
+export type { AponiaModuleDescriptorArtifact, AponiaRootModule } from "@aponiajs/common";
 export { inspectAponiaApplication } from "./inspection/application-inspection.ts";
 export type {
   AponiaApplicationInspection,
@@ -64,7 +63,7 @@ export type {
   ControllerHandlerFactory,
   RouteHandler,
   RoutePlan,
-} from "@aponiajs/platform-core";
+} from "@aponiajs/common";
 export { downloadFile } from "./routing/download-file.ts";
 export { sse } from "elysia";
 export type { SSEPayload as SseEvent } from "elysia";
@@ -86,7 +85,7 @@ export type {
   RegisteredControllerDefinition,
   RegisteredApplication,
 } from "./interfaces/controller.interface.ts";
-export { HttpError, httpError, httpErrors } from "@aponiajs/platform-core";
+export { HttpError, httpError, httpErrors } from "@aponiajs/common";
 export {
   CONTEXT,
   ContextIdFactory,
@@ -102,7 +101,7 @@ export type {
   ContextIdStrategy,
   HostComponentInfo,
 } from "@aponiajs/core";
-export type { HttpErrorFactories } from "@aponiajs/platform-core";
+export type { HttpErrorFactories } from "@aponiajs/common";
 export type {
   HttpErrorFactory,
   HttpErrorOptions,
@@ -111,7 +110,7 @@ export type {
   HttpErrorStatusName,
   ProblemDetails,
   ResolveHttpErrorStatus,
-} from "@aponiajs/platform-core";
+} from "@aponiajs/common";
 export { PluginModule, definePlugin } from "./plugins/plugin.module.ts";
 export { wrapElysiaPlugin } from "./plugins/elysia-bridge-plugin.ts";
 export type {
@@ -142,11 +141,11 @@ export type {
   RequestContext,
   RequestContextModuleOptions,
 } from "./interfaces/request-context.interface.ts";
-export { createMiddlewareConsumer } from "@aponiajs/platform-core";
-export type { ResolvedMiddlewareConfig } from "@aponiajs/platform-core";
-export { AuthGuard } from "@aponiajs/platform-core";
-export { RolesGuard } from "@aponiajs/platform-core";
-export type { AuthGuardOptions, AuthenticatedUser } from "@aponiajs/platform-core";
+export { createMiddlewareConsumer } from "@aponiajs/core";
+export type { ResolvedMiddlewareConfig } from "@aponiajs/common";
+export { AuthGuard } from "@aponiajs/common";
+export { RolesGuard } from "@aponiajs/common";
+export type { AuthGuardOptions, AuthenticatedUser } from "@aponiajs/common";
 export {
   compileModuleInMemory,
   COMPILED_DESCRIPTOR_SYMBOL,

@@ -45,7 +45,8 @@
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
-    "@aponiajs/common": "workspace:*"
+    "@aponiajs/common": "workspace:*",
+    "@aponiajs/compiler": "workspace:*"
   },
   "engines": {
     "bun": ">=1.4.4"

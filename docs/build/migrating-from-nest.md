@@ -216,7 +216,7 @@ without a re-run. Where a runtime cannot state what a method describes, the
 method still exists and fails with `UNSUPPORTED_PLATFORM_FEATURE` rather than
 being silently absent.
 
-The delivery adapters (`@aponiajs/h3`, `@aponiajs/hono`, `@aponiajs/nitro`, and
+The delivery adapters (`@aponiajs/nitro` and
 `@aponiajs/serverless`) keep their narrower documented surface. Each forwards a
 request to an application already booted on a platform and adds no application
 members of its own.

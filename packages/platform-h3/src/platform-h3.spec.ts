@@ -18,7 +18,7 @@ import {
 } from "@aponiajs/common";
 import { Type } from "typebox";
 import { H3 } from "h3";
-import { AponiaFactory, createH3Host, h3Adapter, toH3PlatformHandler } from "./index.ts";
+import { AponiaFactory, createH3Host, toH3PlatformHandler } from "./index.ts";
 
 @Injectable()
 class DenyGuard implements CanActivate {
@@ -425,13 +425,6 @@ describe("Aponia on H3", () => {
 
     expect(await closed).toBe(1000);
     await application.close();
-  });
-
-  test("states the h3 adapter for the unified factory", () => {
-    const adapter = h3Adapter();
-
-    expect(adapter.kind).toBe("host");
-    expect(adapter.name).toBe("h3");
   });
 
   test("emits to one client and broadcasts to every client", async () => {

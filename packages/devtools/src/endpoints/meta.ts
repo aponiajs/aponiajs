@@ -1,4 +1,4 @@
-import type { AponiaBootDiagnostics } from "@aponiajs/platform-core";
+import type { AponiaBootDiagnostics } from "@aponiajs/common";
 import { aponiaVersion } from "../version.ts";
 import type { AponiaMetaPayload } from "../interfaces/payloads.interface.ts";
 

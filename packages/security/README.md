@@ -9,6 +9,8 @@ bun add @aponiajs/security@alpha
 
 ## Use it
 
+### Register the module
+
 ```ts
 import { Module } from "@aponiajs/common";
 import { SecurityModule } from "@aponiajs/security";
@@ -25,6 +27,60 @@ export class AppModule {}
 
 `headers` is enabled by default. `csrf` is opt-in because it is only meaningful
 for cookie-based sessions.
+
+### Use it in a controller
+
+```ts
+import { Controller, Get, Req } from "@aponiajs/common";
+import { getCspNonce } from "@aponiajs/security";
+
+@Controller("page")
+export class PageController {
+  @Get()
+  render(@Req() request: Request) {
+    return `<script nonce="${getCspNonce(request)}">…</script>`;
+  }
+}
+```
+
+No service is injected; this package contributes a policy/endpoint. Every
+matched response carries the header policy, and a safe request receives the CSRF
+cookie whose value must be echoed in `x-csrf-token` on an unsafe request; a
+missing or mismatched token answers `403` Problem Details.
+
+### Async registration
+
+`SecurityModule.forRootAsync` accepts a factory, a class, or an existing
+provider, and a factory may answer a Promise:
+
+```ts
+SecurityModule.forRootAsync({
+  useFactory: async () => ({ csrf: { secret: process.env.CSRF_SECRET! } }),
+});
+```
+
+```ts
+import { Injectable } from "@aponiajs/common";
+
+@Injectable()
+class SecuritySettings {
+  create() {
+    return { csrf: { secret: process.env.CSRF_SECRET! } };
+  }
+}
+
+SecurityModule.forRootAsync({ useClass: SecuritySettings });
+```
+
+```ts
+@Module({ providers: [SecuritySettings], exports: [SecuritySettings] })
+class SecuritySettingsModule {}
+
+SecurityModule.forRootAsync({
+  imports: [SecuritySettingsModule],
+  useExisting: SecuritySettings,
+});
+```
 
 ## Default headers
 

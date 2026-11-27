@@ -1,9 +1,6 @@
 import type { LoggerService } from "@aponiajs/common";
-import {
-  getApplicationContainer,
-  readBootDiagnostics,
-  type AponiaBootDiagnostics,
-} from "@aponiajs/platform-core";
+import { readBootDiagnostics, type AponiaBootDiagnostics } from "@aponiajs/common";
+import { getApplicationContainer } from "@aponiajs/core";
 import { createHandlers } from "../../src/server/devtools-server.ts";
 import type { DevtoolsHandlers } from "../../src/interfaces/devtools-server.interface.ts";
 import type { LogStream } from "../../src/logging/log-tap.ts";

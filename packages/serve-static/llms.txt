@@ -1,0 +1,15 @@
+# @aponiajs/serve-static
+
+> Nest-compatible `ServeStaticModule` for AponiaJS, serving static directories and SPA fallback routes across Elysia, Hono, and H3 via `RequestLifecycleHook`.
+
+## Key exports
+
+- `ServeStaticModule.forRoot(options)`
+- `ServeStaticModule.forRootAsync(options)`
+- `ServeStaticModuleOptions`
+- `ServeStaticModuleAsyncOptions`
+
+## Links
+
+- [Package README](./README.md)
+- [Published packages](../../docs/reference/packages.md)

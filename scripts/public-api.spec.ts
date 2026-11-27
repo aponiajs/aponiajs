@@ -64,12 +64,12 @@ describe("public API freeze", () => {
   test("collects the surface of every published module package", async () => {
     const surfaces = await collectPublicApi();
     const auth = surfaces.find((surface) => surface.name === "@aponiajs/auth");
-    const metrics = surfaces.find((surface) => surface.name === "@aponiajs/metrics");
+    const cache = surfaces.find((surface) => surface.name === "@aponiajs/cache");
 
     expect(surfaces.map((surface) => surface.name)).not.toContain("create-aponia");
     expect(auth?.exports).toContainEqual({ name: "AUTH_USER", kind: "value" });
     expect(auth?.exports).toContainEqual({ name: "AuthModuleOptions", kind: "type" });
-    expect(metrics?.exports).toContainEqual({ name: "MetricsRegistry", kind: "value" });
+    expect(cache?.exports).toContainEqual({ name: "CacheService", kind: "value" });
   });
 
   test("describes additions, removals, kind changes, and unpublished packages", () => {

@@ -93,15 +93,15 @@ describe("documentation claims", () => {
     const packages = await workspace();
 
     expect(published).toHaveLength(6);
-    expect(unpublished).toHaveLength(33);
+    expect(unpublished).toHaveLength(29);
     expect([...published, ...unpublished].sort()).toEqual(packages.publishable);
-    expect(packages.publishable).toHaveLength(39);
+    expect(packages.publishable).toHaveLength(35);
     expect(packages.privatePackages).toEqual(["aponiajs"]);
 
-    expect(document).toContain("39 publishable packages");
+    expect(document).toContain("35 publishable packages");
     expect(document).toContain("1 private facade");
     expect(document).toContain("Six are on npm today");
-    expect(document).toContain("33 belong to the unreleased");
+    expect(document).toContain("29 belong to the unreleased");
   });
 
   test("the library sample states the workspace version", async () => {

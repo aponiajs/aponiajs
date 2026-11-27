@@ -47,12 +47,10 @@
   },
   "dependencies": {
     "@aponiajs/common": "workspace:*",
-    "@aponiajs/core": "workspace:*",
-    "@aponiajs/platform-core": "workspace:*"
+    "@aponiajs/core": "workspace:*"
   },
   "devDependencies": {
     "@aponiajs/cli": "workspace:*",
-    "@aponiajs/platform-core": "workspace:*",
     "@aponiajs/platform-elysia": "workspace:*",
     "@aponiajs/platform-h3": "workspace:*",
     "@aponiajs/platform-hono": "workspace:*",

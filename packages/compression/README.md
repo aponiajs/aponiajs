@@ -9,6 +9,8 @@ bun add @aponiajs/compression@alpha
 
 ## Use it
 
+### Register the module
+
 ```ts
 import { Module } from "@aponiajs/common";
 import { CompressionModule } from "@aponiajs/compression";
@@ -19,8 +21,59 @@ import { CompressionModule } from "@aponiajs/compression";
 export class AppModule {}
 ```
 
-The policy negotiates `Accept-Encoding`, preferring Brotli when both encodings
-are accepted, and leaves responses under the threshold untouched.
+### Use it in a controller
+
+```ts
+import { Controller, Get } from "@aponiajs/common";
+
+@Controller("reports")
+export class ReportsController {
+  @Get()
+  read() {
+    return { rows: Array.from({ length: 200 }, (_, index) => ({ id: index })) };
+  }
+}
+```
+
+No service is injected; this package contributes a policy/endpoint. The policy
+negotiates `Accept-Encoding`, preferring Brotli when both encodings are
+accepted, and leaves responses under the threshold untouched. A compressible
+body above `thresholdBytes` answers with `content-encoding` and an appended
+`vary: Accept-Encoding`.
+
+### Async registration
+
+`CompressionModule.forRootAsync` accepts a factory, a class, or an existing
+provider, and a factory may answer a Promise:
+
+```ts
+CompressionModule.forRootAsync({
+  useFactory: async () => ({ thresholdBytes: 2_048 }),
+});
+```
+
+```ts
+import { Injectable } from "@aponiajs/common";
+
+@Injectable()
+class CompressionSettings {
+  create() {
+    return { thresholdBytes: 2_048 };
+  }
+}
+
+CompressionModule.forRootAsync({ useClass: CompressionSettings });
+```
+
+```ts
+@Module({ providers: [CompressionSettings], exports: [CompressionSettings] })
+class CompressionSettingsModule {}
+
+CompressionModule.forRootAsync({
+  imports: [CompressionSettingsModule],
+  useExisting: CompressionSettings,
+});
+```
 
 ## Options
 

@@ -1,9 +1,9 @@
 import { expect, test } from "bun:test";
 import { Module, defineConfiguration } from "@aponiajs/common";
 import { AponiaFactory as ElysiaFactory } from "@aponiajs/platform-elysia";
-import { createPlatformFactory } from "@aponiajs/platform-core";
-import { h3Adapter } from "@aponiajs/platform-h3";
-import { honoAdapter } from "@aponiajs/platform-hono";
+
+import { AponiaFactory as H3AponiaFactory } from "@aponiajs/platform-h3";
+import { AponiaFactory as HonoAponiaFactory } from "@aponiajs/platform-hono";
 import { toFetchHandler } from "@aponiajs/serverless";
 import { z } from "zod";
 import { GraphQLModule } from "../src/index.ts";
@@ -79,8 +79,8 @@ async function observe(
 
 test("the same GraphQL registration answers identically on every platform", async () => {
   const elysia = await ElysiaFactory.create(ElysiaModule, { logger: false });
-  const hono = await createPlatformFactory(honoAdapter()).create(HonoModule, { logger: false });
-  const h3 = await createPlatformFactory(h3Adapter()).create(H3Module, { logger: false });
+  const hono = await HonoAponiaFactory.create(HonoModule, { logger: false });
+  const h3 = await H3AponiaFactory.create(H3Module, { logger: false });
 
   try {
     const answers = {
