@@ -1,4 +1,4 @@
-import { statSync, readFileSync } from "node:fs";
+import { closeSync, fstatSync, openSync, readFileSync } from "node:fs";
 import { extname } from "node:path";
 import {
   AponiaError,
@@ -175,8 +175,10 @@ function matchesRenderPath(pathname: string, renderPath: string | RegExp): boole
 }
 
 function tryReadFileResponse(filePath: string, headOnly: boolean): Response | undefined {
+  let fd: number | undefined;
   try {
-    const stat = statSync(filePath);
+    fd = openSync(filePath, "r");
+    const stat = fstatSync(fd);
     if (!stat.isFile()) {
       return undefined;
     }
@@ -185,8 +187,12 @@ function tryReadFileResponse(filePath: string, headOnly: boolean): Response | un
     if (headOnly) {
       return new Response(null, { status: 200, headers });
     }
-    return new Response(readFileSync(filePath), { status: 200, headers });
+    return new Response(readFileSync(fd), { status: 200, headers });
   } catch {
     return undefined;
+  } finally {
+    if (fd !== undefined) {
+      closeSync(fd);
+    }
   }
 }
