@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/mapped-types",
-  "version": "1.0.0-beta.65",
+  "version": "1.0.0",
   "description": "Mapped DTO type helpers (PartialType, PickType, OmitType, IntersectionType) for AponiaJS validation models.",
   "keywords": [
     "aponia",

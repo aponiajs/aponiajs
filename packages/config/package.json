@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/config",
-  "version": "1.0.0-beta.65",
+  "version": "1.0.0",
   "description": "Configuration module for AponiaJS with .env loading, variable expansion, namespaces, and schema validation.",
   "keywords": [
     "aponia",

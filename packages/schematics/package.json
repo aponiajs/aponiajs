@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/schematics",
-  "version": "1.0.0-beta.65",
+  "version": "1.0.0",
   "description": "Nest-shaped schematic collection for Aponia projects.",
   "keywords": [
     "aponia",

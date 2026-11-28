@@ -6,6 +6,14 @@ All notable changes to this project are recorded here. The format follows
 notes for every published tag; this file records the changes a reader needs when
 moving between releases.
 
+## 1.0.0
+
+First stable 1.0.0 release published under `latest` across all 39 AponiaJS
+packages, including Elysia/Hono/H3 platforms, enterprise observability
+(`@aponiajs/metrics`, `@aponiajs/opentelemetry`), distributed Redis stores
+(`@aponiajs/redis`), API idempotency (`@aponiajs/idempotency`), HTTP resilience,
+`aponia dev` update & advisory notifications, and CodeQL-gated releases.
+
 ## 1.0.0-beta.65
 
 Security hardening (CodeQL fixes + CodeQL release gate in `publish.yml`),
