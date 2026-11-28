@@ -6,6 +6,14 @@ All notable changes to this project are recorded here. The format follows
 notes for every published tag; this file records the changes a reader needs when
 moving between releases.
 
+## 1.0.0-beta.65
+
+Security hardening (CodeQL fixes + CodeQL release gate in `publish.yml`),
+`aponia dev` update & dangerous-patch advisory notifier, enterprise packages
+(`@aponiajs/metrics`, `@aponiajs/opentelemetry`, `@aponiajs/idempotency`,
+`@aponiajs/redis`), HTTP resilience (`OriginCircuitBreaker`, `BulkheadLimiter`),
+`CronLockStore`, and latest dependency updates.
+
 ## 1.0.0-beta.64 — unreleased
 
 The development line. Nothing in this line is published on npm yet; the registry
