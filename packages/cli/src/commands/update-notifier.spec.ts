@@ -186,6 +186,17 @@ describe("aponia dev update & dangerous-patch notifier", () => {
       expect(updated!.updates).toHaveLength(1);
       const updateBanner = formatUpdateAdvisoryBanner(updated!);
       expect(updateBanner).toContain("1.0.0 -> 2.0.0");
+
+      // Alpha channel + missing package.json directory
+      const missingDir = join(dir, "nonexistent");
+      const alphaResult = await checkForUpdatesAndAdvisories({
+        cwd: missingDir,
+        cachePath: join(dir, "alpha-cache.json"),
+        cliVersion: "1.0.0-alpha.1",
+        fetch: stableFetch,
+        now: () => 999_999_999,
+      });
+      expect(alphaResult!.updates[0]!.latestVersion).toBe("2.0.0");
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

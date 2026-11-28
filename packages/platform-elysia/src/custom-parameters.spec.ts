@@ -311,11 +311,34 @@ describe("Custom parameter decorators in @aponiajs/platform-elysia", () => {
       readAll(
         @Headers() hdrs: Record<string, unknown>,
         @Headers("__proto__") proto: unknown,
-      ): { hasHdr: boolean; protoUndefined: boolean } {
+        @Ip() ip: unknown,
+        @HostParam("0") hostLabel: string,
+        @Cookie("c") cookieVal: unknown,
+        @Req() req: Request,
+      ): {
+        hasHdr: boolean;
+        protoUndefined: boolean;
+        hostLabel: string;
+        hasReq: boolean;
+        ipType: string;
+        cookieVal: unknown;
+      } {
         return {
           hasHdr: typeof hdrs === "object" && hdrs !== null,
           protoUndefined: proto === undefined,
+          hostLabel,
+          hasReq: req instanceof Request,
+          ipType: typeof ip,
+          cookieVal: cookieVal ?? null,
         };
+      }
+
+      @Get("async-multi")
+      async readAsync(
+        @Headers("x-a") xa: string,
+        @Query("n", ParseIntPipe) n: number,
+      ): Promise<{ xa: string; n: number }> {
+        return { xa, n };
       }
     }
     @Module({ controllers: [PipedStripController] })
@@ -324,7 +347,20 @@ describe("Custom parameter decorators in @aponiajs/platform-elysia", () => {
       logger: false,
       pipes: [{ transform: (v: unknown) => v }],
     });
-    const r8 = await stripApp.handle(new Request("http://localhost/piped-strip"));
-    expect(await r8.json()).toEqual({ hasHdr: true, protoUndefined: true });
+    const r8 = await stripApp.handle(new Request("http://api.localhost/piped-strip"));
+    expect(await r8.json()).toEqual({
+      hasHdr: true,
+      protoUndefined: true,
+      hostLabel: "api",
+      hasReq: true,
+      ipType: "undefined",
+      cookieVal: null,
+    });
+    const r9 = await stripApp.handle(
+      new Request("http://api.localhost/piped-strip/async-multi?n=7", {
+        headers: { "x-a": "ok" },
+      }),
+    );
+    expect(await r9.json()).toEqual({ xa: "ok", n: 7 });
   });
 });

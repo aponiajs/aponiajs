@@ -129,6 +129,12 @@ export function extractParameterValue(
   if (property === undefined) {
     return source;
   }
+  if (
+    (kind === "body" || kind === "query" || kind === "params" || kind === "headers") &&
+    (property === "__proto__" || property === "constructor" || property === "prototype")
+  ) {
+    return undefined;
+  }
   if (typeof source === "object" && source !== null) {
     const val = (source as Record<string, unknown>)[property];
     if (kind === "cookie") {
@@ -440,87 +446,7 @@ export function compileRouteHandler(
 }
 
 function extractPipedParameter(context: RouteContext, plan: ParameterExecutionPlan): unknown {
-  let source: unknown;
-  switch (plan.kind) {
-    case "body":
-      source = context.body;
-      break;
-    case "query":
-      source = context.query;
-      break;
-    case "params":
-      source = context.params;
-      break;
-    case "headers":
-      source = context.headers;
-      break;
-    case "cookie":
-      source = context.cookie;
-      break;
-    case "ip": {
-      const server = (
-        context as unknown as {
-          readonly server?: {
-            requestIP?(request: Request): { readonly address?: string } | null;
-          };
-        }
-      ).server;
-      source = server?.requestIP?.(context.request)?.address;
-      break;
-    }
-    case "host":
-      source = new URL(context.request.url).host;
-      break;
-    case "store":
-      source = (context as unknown as { readonly store?: unknown }).store;
-      break;
-    case "request":
-      source = context.request;
-      break;
-    case "set":
-      source = context.set;
-      break;
-    case "status":
-      source = (context as unknown as { readonly status?: unknown }).status;
-      break;
-    case "context":
-      return context;
-    case "custom":
-      return plan.factory?.(plan.data, context);
-  }
-
-  if (
-    plan.kind === "body" ||
-    plan.kind === "query" ||
-    plan.kind === "params" ||
-    plan.kind === "headers"
-  ) {
-    if (plan.property === undefined) {
-      return stripDangerousKeys(source);
-    }
-    if (
-      plan.property === "__proto__" ||
-      plan.property === "constructor" ||
-      plan.property === "prototype"
-    ) {
-      return undefined;
-    }
-  }
-
-  if (plan.kind === "host" && plan.property !== undefined) {
-    return typeof source === "string" ? (source.split(".")[0] ?? "") : "";
-  }
-  if (plan.property === undefined) {
-    return source;
-  }
-  if (source === null || typeof source !== "object") {
-    return undefined;
-  }
-  const value = (source as Record<string, unknown>)[plan.property];
-  if (plan.kind === "cookie") {
-    return (value as { readonly value?: unknown } | undefined)?.value;
-  }
-  return value;
+  return extractParameterValue(context, plan.kind, plan.property, plan.factory, plan.data);
 }
 
 function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
