@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/cqrs",
-  "version": "1.0.0-beta.64",
+  "version": "1.0.0-beta.65",
   "description": "Nest-compatible CQRS module (CommandBus, QueryBus, EventBus, Saga, AggregateRoot) for AponiaJS.",
   "keywords": [
     "aponia",

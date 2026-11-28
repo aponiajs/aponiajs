@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/serve-static",
-  "version": "1.0.0-beta.64",
+  "version": "1.0.0-beta.65",
   "description": "Nest-compatible ServeStaticModule for serving static files and SPAs in AponiaJS.",
   "keywords": [
     "aponia",

@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/redis",
-  "version": "1.0.0-beta.64",
+  "version": "1.0.0-beta.65",
   "description": "Redis client lifecycle and distributed store implementations for AponiaJS cache, rate-limit, session, auth, idempotency, and cron.",
   "keywords": [
     "aponia",

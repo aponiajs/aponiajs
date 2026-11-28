@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/opentelemetry",
-  "version": "1.0.0-beta.64",
+  "version": "1.0.0-beta.65",
   "description": "Opt-in OpenTelemetry distributed tracing, W3C traceparent propagation, and span lifecycle for an Aponia application.",
   "keywords": [
     "aponia",

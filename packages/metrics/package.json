@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/metrics",
-  "version": "1.0.0-beta.64",
+  "version": "1.0.0-beta.65",
   "description": "Zero-dependency Prometheus metrics exposition, HTTP histograms, and runtime gauges for an Aponia application.",
   "keywords": [
     "aponia",

@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/idempotency",
-  "version": "1.0.0-beta.64",
+  "version": "1.0.0-beta.65",
   "description": "Idempotency-Key deduplication, in-flight conflict protection, and response replay for an Aponia application.",
   "keywords": [
     "aponia",

@@ -1,6 +1,6 @@
 {
   "name": "@aponiajs/terminus",
-  "version": "1.0.0-beta.64",
+  "version": "1.0.0-beta.65",
   "description": "Nest-compatible Terminus health checks and indicators for AponiaJS.",
   "keywords": [
     "aponia",
