@@ -1,0 +1,90 @@
+{
+  "nodes": [
+    {
+      "id": "packages_h3_readme_aponiajs_h3",
+      "label": "@aponiajs/h3 Package Documentation",
+      "file_type": "document",
+      "source_file": "packages/h3/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_h3_readme_toh3handler",
+      "label": "toH3Handler",
+      "file_type": "concept",
+      "source_file": "packages/h3/README.md",
+      "source_location": "line 18",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_h3_readme_aponiajs_platform_h3",
+      "label": "@aponiajs/platform-h3",
+      "file_type": "concept",
+      "source_file": "packages/h3/README.md",
+      "source_location": "line 5",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_h3_readme_aponiajs_h3",
+      "target": "packages_h3_readme_toh3handler",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/h3/README.md",
+      "source_location": "line 18",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_h3_readme_aponiajs_h3",
+      "target": "packages_h3_readme_aponiajs_platform_h3",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/h3/README.md",
+      "source_location": "line 5",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_h3_readme_toh3handler",
+      "target": "packages_h3_agents_tofetchhandler",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/h3/README.md",
+      "source_location": "line 27",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_h3_readme_aponiajs_h3",
+      "target": "packages_hono_readme_aponiajs_hono",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/h3/README.md",
+      "source_location": "line 5",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_h3_readme_toh3handler",
+      "target": "packages_hono_readme_createhonoapp",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "packages/h3/README.md",
+      "source_location": "line 18",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -1,0 +1,39 @@
+{
+  "nodes": [
+    {
+      "id": "docs_learn_08_native_plugins_chapter",
+      "label": "Learn 08: Native Plugins",
+      "file_type": "document",
+      "source_file": "docs/learn/08-native-plugins.md",
+      "source_location": "lines 1-53",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_learn_08_native_plugins_define_plugin",
+      "label": "definePlugin & PluginModule.registerAsync",
+      "file_type": "concept",
+      "source_file": "docs/learn/08-native-plugins.md",
+      "source_location": "lines 13-51",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_learn_08_native_plugins_define_plugin",
+      "target": "agents_native_plugin_context_types",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/learn/08-native-plugins.md",
+      "source_location": "lines 15-48",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

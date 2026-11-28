@@ -1,0 +1,189 @@
+{
+  "nodes": [
+    {
+      "id": "docs_services_auth_aponiajs_auth",
+      "label": "@aponiajs/auth",
+      "file_type": "concept",
+      "source_file": "docs/services/auth.md",
+      "source_location": "L1-L10",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_auth_authmodule",
+      "label": "AuthModule",
+      "file_type": "concept",
+      "source_file": "docs/services/auth.md",
+      "source_location": "L8, L44-L59",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Accepts exactly one of jwt or oidc per registration because options determine the provider set."
+    },
+    {
+      "id": "docs_services_auth_authguard",
+      "label": "AuthGuard, RolesGuard, and PermissionsGuard",
+      "file_type": "concept",
+      "source_file": "docs/services/auth.md",
+      "source_location": "L13-L39, L61-L82",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_auth_jwtservice",
+      "label": "JwtService",
+      "file_type": "concept",
+      "source_file": "docs/services/auth.md",
+      "source_location": "L36-L38, L98-L104, L132-L136",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_auth_oidcservice",
+      "label": "OidcService",
+      "file_type": "concept",
+      "source_file": "docs/services/auth.md",
+      "source_location": "L41-L59",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_auth_refreshtokenservice",
+      "label": "RefreshTokenService",
+      "file_type": "concept",
+      "source_file": "docs/services/auth.md",
+      "source_location": "L105-L157",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Stores SHA-256 digests and detects OAuth refresh-token replay via atomic consume(idHash) and bounded consumed-token tombstones to revoke the whole token family without unbounded memory growth."
+    },
+    {
+      "id": "docs_services_auth_revocationservice",
+      "label": "RevocationService",
+      "file_type": "concept",
+      "source_file": "docs/services/auth.md",
+      "source_location": "L127-L136, L146-L157",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_auth_passwordservice",
+      "label": "PasswordService",
+      "file_type": "concept",
+      "source_file": "docs/services/auth.md",
+      "source_location": "L38-L39",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_auth_key_rotation",
+      "label": "JWT Key Rotation via kid",
+      "file_type": "rationale",
+      "source_file": "docs/services/auth.md",
+      "source_location": "L83-L103",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Refuses unknown kid headers with 401 so removing a key retires all tokens it signed, while keeping default secret required for pre-rotation tokens without kid."
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_services_auth_authmodule",
+      "target": "docs_services_auth_aponiajs_auth",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/auth.md",
+      "source_location": "L3-L9",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_auth_authguard",
+      "target": "docs_services_auth_jwtservice",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/auth.md",
+      "source_location": "L33-L38, L78-L81",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_auth_authguard",
+      "target": "docs_services_auth_oidcservice",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/auth.md",
+      "source_location": "L53-L59, L80-L81",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_auth_authguard",
+      "target": "docs_services_auth_revocationservice",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/auth.md",
+      "source_location": "L127-L130",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_auth_authguard",
+      "target": "docs_reference_packages_aponiajs_security",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/auth.md",
+      "source_location": "L74-L76",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_auth_authguard",
+      "target": "docs_reference_packages_aponiajs_platform_core",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/auth.md",
+      "source_location": "L78-L81",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_auth_key_rotation",
+      "target": "docs_services_auth_jwtservice",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/auth.md",
+      "source_location": "L83-L103",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_auth_refreshtokenservice",
+      "target": "docs_reference_threat_model_residual_risks",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/services/auth.md",
+      "source_location": "L138-L160",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

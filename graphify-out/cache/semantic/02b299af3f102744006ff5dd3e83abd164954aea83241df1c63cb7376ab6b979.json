@@ -1,0 +1,113 @@
+{
+  "nodes": [
+    {
+      "id": "docs_platforms_elysia_compatibility_guide",
+      "label": "Elysia Compatibility",
+      "file_type": "document",
+      "source_file": "docs/platforms/elysia-compatibility.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_platforms_elysia_compatibility_exact_pin",
+      "label": "Exact Elysia Peer Pin (elysia@2.0.0-rc.4 & typebox@^1.4.6)",
+      "file_type": "rationale",
+      "rationale": "Exact peer pinning prevents caret ranges over prereleases from matching experimental Elysia releases like 2.0.0-exp.64 and prevents Bun from installing mismatched workspace copies.",
+      "source_file": "docs/platforms/elysia-compatibility.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_platforms_elysia_compatibility_unsupported_version",
+      "label": "UNSUPPORTED_ELYSIA_VERSION & routing/native-route.ts",
+      "file_type": "concept",
+      "rationale": "Centralizes Elysia 2 route(method, path, hook, handler) invocation in routing/native-route.ts so incompatible Elysia versions abort bootstrap cleanly with UNSUPPORTED_ELYSIA_VERSION.",
+      "source_file": "docs/platforms/elysia-compatibility.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_platforms_elysia_compatibility_migration_differences",
+      "label": "Elysia 1.4 to Elysia 2 Migration Deltas",
+      "file_type": "concept",
+      "source_file": "docs/platforms/elysia-compatibility.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_platforms_elysia_compatibility_guide",
+      "target": "docs_platforms_elysia_compatibility_exact_pin",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/elysia-compatibility.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_elysia_compatibility_guide",
+      "target": "docs_platforms_elysia_compatibility_unsupported_version",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/elysia-compatibility.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_elysia_compatibility_guide",
+      "target": "docs_platforms_elysia_compatibility_migration_differences",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/elysia-compatibility.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_elysia_compatibility_unsupported_version",
+      "target": "docs_learn_10_errors_aponiaerror",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/elysia-compatibility.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_elysia_compatibility_guide",
+      "target": "docs_platforms_native_plugins_guide",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/elysia-compatibility.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_elysia_compatibility_guide",
+      "target": "docs_platforms_eden_treaty_guide",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/elysia-compatibility.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

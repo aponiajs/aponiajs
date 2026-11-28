@@ -1,0 +1,17 @@
+{
+  "nodes": [
+    {
+      "id": "examples_mvc_src_layouts_app_app_layout",
+      "label": "MVC App Blade Layout",
+      "file_type": "document",
+      "source_file": "examples/mvc/src/layouts/app.html",
+      "source_location": "L1-L14",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [],
+  "hyperedges": []
+}

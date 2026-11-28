@@ -1,9 +1,8 @@
 # 02 · Install and generate
 
-**Use when:** starting a new application, or adding AponiaJS to an existing Bun
-project.
+**Use when:** starting a new application or adding AponiaJS to an existing Bun project.
 
-## A new application
+## New application
 
 ```bash
 bun add --global @aponiajs/cli
@@ -12,34 +11,33 @@ cd my-api
 bun run dev
 ```
 
-`bun create aponia my-api` reaches the same generator without a global install.
+`bun create aponia my-api` uses the same generator without a global install.
 
-## An existing project
+## Existing project
 
 ```bash
-bun add @aponiajs/common@alpha @aponiajs/platform-elysia@alpha elysia
+bun add @aponiajs/common @aponiajs/platform-elysia elysia@2.0.0-rc.4
 ```
 
-Every public package shares one version and is published to the `alpha` channel.
-`latest` is reserved for the first stable release, so the `@alpha` tag is
-required today.
+Every public package shares one synchronized `1.0.0` (`latest`) version. `elysia` is an exact peer and must be pinned.
 
-## What the generator writes
+## Generated layout
 
-`aponia new` follows Nest's flat starter layout:
+`aponia new` writes Nest's flat starter layout:
 
 ```text
 src/
-|-- app.controller.spec.ts
-|-- app.controller.ts
-|-- app.module.ts
-|-- app.service.ts
-`-- main.ts
-test/
-`-- app.e2e-spec.ts
+  app.module.ts
+  main.ts
+  app.controller.ts
+  app.service.ts
+  app.controller.spec.ts
+  config.ts
 ```
 
-Later resources get their own directory:
+`config.ts` declares configuration once. Read it back through `application.get(AppConfig)`.
+
+Generate later resources into their own directory:
 
 ```bash
 aponia generate module users
@@ -49,7 +47,6 @@ aponia g mo users
 aponia g res users
 ```
 
-A REST resource also writes `users.schema.ts`, which owns the route schemas the
-controller passes to its decorators and from which both DTOs derive their types.
+A REST resource also writes `users.model.ts` with separate `@Validation()` classes for create input, partial update input, and path parameters.
 
-Next: [03 · Modules](./03-modules.md) · Deep dive: [CLI reference](../cli.md)
+Next: [03 · Modules](./03-modules.md) · Deep dive: [CLI reference](../tooling/cli.md)

@@ -1,0 +1,62 @@
+{
+  "nodes": [
+    {
+      "id": "packages_session_agents_guide",
+      "label": "@aponiajs/session Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/session/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_session_agents_id_only_cookie",
+      "label": "HMAC-Signed Id-Only HttpOnly Session Cookie",
+      "file_type": "rationale",
+      "rationale": "Session cookies store only an HMAC-signed session id verified with timing-safe comparison while data remains in SessionStore; middleware installs cookie writers before the handler so mutations write immediately even on platforms whose middleware chain does not wrap the handler.",
+      "source_file": "packages/session/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_session_agents_regenerate_fixation",
+      "label": "Session Fixation Defence via regenerate()",
+      "file_type": "rationale",
+      "rationale": "regenerate() deletes the old session id before writing the new one so an id issued prior to login or privilege escalation cannot remain valid.",
+      "source_file": "packages/session/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_session_agents_id_only_cookie",
+      "target": "packages_session_readme_sessionservice",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/session/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_session_agents_regenerate_fixation",
+      "target": "packages_session_readme_sessionservice",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/session/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

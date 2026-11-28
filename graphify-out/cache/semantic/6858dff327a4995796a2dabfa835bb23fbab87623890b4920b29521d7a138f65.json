@@ -1,0 +1,40 @@
+{
+  "nodes": [
+    {
+      "id": "security_policy",
+      "label": "AponiaJS Security Policy",
+      "file_type": "document",
+      "source_file": "SECURITY.md",
+      "source_location": "lines 1-108",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "security_model_and_hardening",
+      "label": "AponiaJS Security Model & Deployment Hardening",
+      "file_type": "concept",
+      "rationale": "Combines module-graph isolation, RFC 9457 Problem Details, signed HttpOnly/Secure cookies, double-submit CSRF, SSRF-safe outbound HTTP, CodeQL scanning, and CycloneDX SBOM generation.",
+      "source_file": "SECURITY.md",
+      "source_location": "lines 49-108",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "agents_error_model",
+      "target": "security_model_and_hardening",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "SECURITY.md",
+      "source_location": "lines 54-58",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -1,0 +1,140 @@
+{
+  "nodes": [
+    {
+      "id": "docs_platforms_platform_parity_guide",
+      "label": "Platform Parity",
+      "file_type": "document",
+      "source_file": "docs/platforms/platform-parity.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_platforms_platform_parity_independence_invariant",
+      "label": "Platform Independence Invariant",
+      "file_type": "rationale",
+      "rationale": "Platforms depend only on @aponiajs/common, @aponiajs/core, @aponiajs/platform-core, and their own runtime peer, never on each other; enforced by scripts/platform-independence.spec.ts and platform-contract.ts.",
+      "source_file": "docs/platforms/platform-parity.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_platforms_platform_parity_capability_contract",
+      "label": "Neutral Plugin Capability Contract (HttpPolicy, RequestLifecycleHook, PlatformCapabilities)",
+      "file_type": "concept",
+      "rationale": "Plugins register neutral artifacts without branching on platform names; missing request-path capabilities fail boot atomically with UNSUPPORTED_PLATFORM_FEATURE before any route mounts.",
+      "source_file": "docs/platforms/platform-parity.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_platforms_platform_parity_shared_kernel_contracts",
+      "label": "Shared Platform Kernel Contracts",
+      "file_type": "concept",
+      "source_file": "docs/platforms/platform-parity.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_platforms_platform_parity_deliberate_deltas",
+      "label": "Elysia vs Hono/H3 Deliberate Deltas",
+      "file_type": "concept",
+      "source_file": "docs/platforms/platform-parity.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_platforms_platform_parity_guide",
+      "target": "docs_platforms_platform_parity_independence_invariant",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/platform-parity.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_platform_parity_guide",
+      "target": "docs_platforms_platform_parity_capability_contract",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/platform-parity.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_platform_parity_guide",
+      "target": "docs_platforms_platform_parity_shared_kernel_contracts",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/platform-parity.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_platform_parity_guide",
+      "target": "docs_platforms_platform_parity_deliberate_deltas",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/platform-parity.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_platform_parity_guide",
+      "target": "docs_platforms_adapters_guide",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/platform-parity.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_platform_parity_capability_contract",
+      "target": "docs_platforms_adapters_response_policies",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/platforms/platform-parity.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "aponia_multi_platform_architecture",
+      "label": "Multi-Platform Kernel & Adapter Architecture",
+      "nodes": [
+        "docs_platforms_adapters_platform_vs_delivery",
+        "docs_platforms_adapters_two_adapter_shapes",
+        "docs_platforms_platform_parity_independence_invariant",
+        "docs_platforms_platform_parity_capability_contract",
+        "docs_platforms_platform_parity_shared_kernel_contracts"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/platform-parity.md"
+    }
+  ]
+}

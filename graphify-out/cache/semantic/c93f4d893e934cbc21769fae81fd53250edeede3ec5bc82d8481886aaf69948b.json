@@ -1,0 +1,77 @@
+{
+  "nodes": [
+    {
+      "id": "packages_platform_h3_agents_guide",
+      "label": "@aponiajs/platform-h3 Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/platform-h3/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_h3_agents_createh3host",
+      "label": "createH3Host and H3 Runtime Binding",
+      "file_type": "concept",
+      "rationale": "Registers routes via app.on/app.all, mounts module middleware on H3, upgrades WebSocket gateways via crossws/defineWebSocketHandler, and starts Bun.serve on listen.",
+      "source_file": "packages/platform-h3/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_h3_agents_platform_independence",
+      "label": "H3 Platform Independence and Shared Surface",
+      "file_type": "rationale",
+      "rationale": "Depends only on common, core, and platform-core (never another platform) with h3 as peer dependency; delegates validation, enhancers, lifecycle, and version negotiation to platform-core.",
+      "source_file": "packages/platform-h3/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_platform_h3_agents_createh3host",
+      "target": "packages_platform_core_llms_platform_core",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-h3/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_h3_agents_platform_independence",
+      "target": "packages_platform_h3_agents_createh3host",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-h3/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "http_platform_adapters_shared_contract",
+      "label": "Shared HTTP Platform Adapter Contract",
+      "nodes": [
+        "packages_platform_core_llms_platform_core",
+        "packages_platform_elysia_agents_guide",
+        "packages_platform_h3_agents_createh3host",
+        "packages_platform_hono_agents_createhonohost"
+      ],
+      "relation": "implement",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-h3/AGENTS.md"
+    }
+  ]
+}

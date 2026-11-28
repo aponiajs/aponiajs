@@ -1,0 +1,109 @@
+{
+  "nodes": [
+    {
+      "id": "packages_h3_agents_agent_guide",
+      "label": "@aponiajs/h3 Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/h3/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_h3_agents_tofetchhandler",
+      "label": "toFetchHandler",
+      "file_type": "concept",
+      "source_file": "packages/h3/AGENTS.md",
+      "source_location": "line 17",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_h3_agents_aponiajs_serverless",
+      "label": "@aponiajs/serverless",
+      "file_type": "concept",
+      "source_file": "packages/h3/AGENTS.md",
+      "source_location": "line 7",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_h3_agents_thin_envelope_adapter",
+      "label": "H3 Thin Envelope Translation",
+      "file_type": "rationale",
+      "rationale": "Translates only the runtime request/response envelope via @aponiajs/serverless without adding a second route table, DI container, guard pipeline, or WebSocket emulation, keeping h3 as a peer dependency.",
+      "source_file": "packages/h3/AGENTS.md",
+      "source_location": "line 15",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_h3_agents_agent_guide",
+      "target": "packages_h3_agents_aponiajs_serverless",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/h3/AGENTS.md",
+      "source_location": "line 7",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_h3_agents_agent_guide",
+      "target": "packages_h3_agents_tofetchhandler",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/h3/AGENTS.md",
+      "source_location": "line 17",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_h3_agents_thin_envelope_adapter",
+      "target": "packages_h3_agents_tofetchhandler",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/h3/AGENTS.md",
+      "source_location": "line 15",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_h3_agents_thin_envelope_adapter",
+      "target": "packages_hono_agents_thin_envelope_adapter",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/h3/AGENTS.md",
+      "source_location": "line 15",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "thin_serverless_delivery_adapters",
+      "label": "Thin Serverless Delivery Adapters (H3 and Hono)",
+      "nodes": [
+        "packages_h3_readme_aponiajs_h3",
+        "packages_h3_readme_toh3handler",
+        "packages_hono_readme_aponiajs_hono",
+        "packages_hono_readme_createhonoapp",
+        "packages_h3_agents_tofetchhandler",
+        "packages_hono_agents_tofetchhandler"
+      ],
+      "relation": "form",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/h3/AGENTS.md"
+    }
+  ]
+}

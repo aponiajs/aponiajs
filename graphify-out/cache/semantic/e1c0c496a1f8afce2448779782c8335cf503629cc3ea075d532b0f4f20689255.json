@@ -1,0 +1,72 @@
+{
+  "nodes": [
+    {
+      "id": "docs_reference_support_support_and_release_lifetime",
+      "label": "Support and Release Lifetime",
+      "file_type": "document",
+      "source_file": "docs/reference/support.md",
+      "source_location": "L1-L96",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_reference_support_release_channels",
+      "label": "Forward-Only Release Channel Promotion",
+      "file_type": "rationale",
+      "source_file": "docs/reference/support.md",
+      "source_location": "L8-L28",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Promotes fixes forward only (release/alpha -> release/beta -> release/rc -> main) with no pre-1.0 LTS branch, matching single-maintainer capacity."
+    },
+    {
+      "id": "docs_reference_support_design_partner_gate",
+      "label": "Design Partner Gate (Wave 4 Hardening)",
+      "file_type": "rationale",
+      "source_file": "docs/reference/support.md",
+      "source_location": "L79-L96",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Gates Wave 4 compatibility expansion on evidence from real partner applications rather than speculative scope."
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_reference_support_release_channels",
+      "target": "docs_reference_support_support_and_release_lifetime",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/support.md",
+      "source_location": "L8-L28",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_support_design_partner_gate",
+      "target": "docs_reference_support_support_and_release_lifetime",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/support.md",
+      "source_location": "L79-L96",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_support_release_channels",
+      "target": "docs_reference_stability_stability_and_public_api",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/reference/support.md",
+      "source_location": "L10-L27",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

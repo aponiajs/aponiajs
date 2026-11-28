@@ -1,0 +1,13 @@
+# @aponiajs/opentelemetry
+
+> Opt-in OpenTelemetry distributed tracing, W3C `traceparent` propagation, and HTTP server span lifecycle over `@opentelemetry/api`.
+
+## What this package exports
+
+- `OpenTelemetryModule.forRoot(options?)` and `OpenTelemetryModule.forRootAsync(options)`
+- `OpenTelemetryService`: `getTracer()`, `currentSpan()`, `extractContext()`, `injectHeaders()`, `withSpan()`
+- `MODULE_OPTIONS_TOKEN`, `OPENTELEMETRY_OPTIONS`
+
+## Documentation
+
+- [Published packages](../../docs/reference/packages.md)

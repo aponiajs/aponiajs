@@ -1,0 +1,147 @@
+{
+  "nodes": [
+    {
+      "id": "packages_microservices_agents_agent_guide",
+      "label": "@aponiajs/microservices Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/microservices/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_microservices_agents_transport_seam",
+      "label": "Transport Seam",
+      "file_type": "concept",
+      "rationale": "Keeps the broker seam minimal (connect, publish bytes, subscribe, close) while envelope encoding, correlation, dispatch, and policy stay in client and server layers.",
+      "source_file": "packages/microservices/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_microservices_agents_microserviceclientsmodule",
+      "label": "MicroserviceClientsModule (ClientsModule)",
+      "file_type": "concept",
+      "rationale": "ConfigurableModuleBuilder registration providing MODULE_OPTIONS_TOKEN (MICROSERVICE_CLIENTS_MODULE_OPTIONS) and isGlobal extra, also exported as ClientsModule for Nest parity.",
+      "source_file": "packages/microservices/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_microservices_agents_cbor_v1_envelope",
+      "label": "CBOR v1 Envelope",
+      "file_type": "concept",
+      "source_file": "packages/microservices/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_microservices_agents_lazy_optional_sdk_invariant",
+      "label": "Lazy Optional Broker SDK Loading",
+      "file_type": "rationale",
+      "rationale": "Broker SDKs are imported only inside adapter default loaders via literal dynamic import so installing one broker does not fail when other peer SDKs are absent.",
+      "source_file": "packages/microservices/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_microservices_agents_no_provisioning_invariant",
+      "label": "Zero Infrastructure Provisioning Invariant",
+      "file_type": "rationale",
+      "rationale": "The framework provisions no topics, queues, exchanges, subscriptions, or dead-letter resources; reply destinations and server allowlists are exact operator configuration.",
+      "source_file": "packages/microservices/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_microservices_agents_sanitized_errors_invariant",
+      "label": "Sanitized Adapter Errors & Delivery Guarantees",
+      "file_type": "rationale",
+      "rationale": "Errors carry stable code, transport name, operation, and package name without leaking connection strings, credentials, topics, or payloads; no delivery claim beyond the protocol is made.",
+      "source_file": "packages/microservices/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_microservices_readme_broker_adapters",
+      "target": "packages_microservices_agents_transport_seam",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/microservices/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_microservices_agents_lazy_optional_sdk_invariant",
+      "target": "packages_microservices_readme_broker_adapters",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/microservices/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_microservices_agents_no_provisioning_invariant",
+      "target": "packages_microservices_readme_broker_adapters",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/microservices/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_microservices_agents_sanitized_errors_invariant",
+      "target": "packages_platform_core_agents_websocket_gateway_kernel",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "packages/microservices/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "microservices_messaging_runtime",
+      "label": "Microservices Transport, Envelope, and Client/Server Runtime",
+      "nodes": [
+        "packages_microservices_agents_transport_seam",
+        "packages_microservices_agents_cbor_v1_envelope",
+        "packages_microservices_readme_createmicroserviceserver",
+        "packages_microservices_readme_createmicroserviceclient",
+        "packages_microservices_agents_microserviceclientsmodule",
+        "packages_microservices_readme_inmemorytransport",
+        "packages_microservices_readme_broker_adapters"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/microservices/AGENTS.md"
+    }
+  ]
+}

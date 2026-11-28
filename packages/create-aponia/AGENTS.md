@@ -22,5 +22,5 @@ logic of its own, and must not grow any.
 ## Tests
 
 Covered indirectly through the CLI suite and
-`packages/cli/e2e/generated-application.e2e.ts`. Run
+`packages/cli/test/generated-application.e2e-spec.ts`. Run
 `bun run test:generated-app` when the entrypoint or its manifest changes.

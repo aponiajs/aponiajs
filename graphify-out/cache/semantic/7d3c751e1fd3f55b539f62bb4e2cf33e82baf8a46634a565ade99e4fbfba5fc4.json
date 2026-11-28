@@ -1,0 +1,162 @@
+{
+  "nodes": [
+    {
+      "id": "packages_store_redis_agents_guide",
+      "label": "@aponiajs/store-redis Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/store-redis/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_store_redis_agents_aponiajs_store_redis",
+      "label": "@aponiajs/store-redis",
+      "file_type": "concept",
+      "source_file": "packages/store-redis/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_store_redis_agents_redisratelimitstore",
+      "label": "RedisRateLimitStore",
+      "file_type": "concept",
+      "rationale": "Derives resetAt from live PTTL instead of Date.now() + windowMs so the RateLimit-Reset header does not slide forward on every hit.",
+      "source_file": "packages/store-redis/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_store_redis_agents_redisrefreshtokenstore",
+      "label": "RedisRefreshTokenStore",
+      "file_type": "concept",
+      "rationale": "consume() executes as one Lua round trip that reads, deletes, and keeps a family tombstone so token replay revokes the entire token family.",
+      "source_file": "packages/store-redis/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_store_redis_agents_scan_unlink",
+      "label": "SCAN and UNLINK Cleanup Pattern",
+      "file_type": "rationale",
+      "rationale": "clear() and family cleanup page with SCAN and delete with UNLINK when available, falling back to KEYS/DEL only for minimal clients so shared Redis instances are never blocked by KEYS.",
+      "source_file": "packages/store-redis/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_store_redis_agents_shared_client_close",
+      "label": "Idempotent Shared Redis Client Release",
+      "file_type": "rationale",
+      "rationale": "Every store exposes idempotent close() and Symbol.asyncDispose; releases its client unless closeClient: false, and quits a shared client exactly once on the first close().",
+      "source_file": "packages/store-redis/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_store_redis_agents_guide",
+      "target": "packages_store_redis_agents_aponiajs_store_redis",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/store-redis/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_store_redis_agents_aponiajs_store_redis",
+      "target": "packages_store_redis_agents_redisratelimitstore",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/store-redis/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_store_redis_agents_aponiajs_store_redis",
+      "target": "packages_store_redis_agents_redisrefreshtokenstore",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/store-redis/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_store_redis_agents_scan_unlink",
+      "target": "packages_store_redis_agents_aponiajs_store_redis",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/store-redis/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_store_redis_agents_shared_client_close",
+      "target": "packages_store_redis_agents_aponiajs_store_redis",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/store-redis/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_store_redis_agents_redisratelimitstore",
+      "target": "packages_rate_limit_readme_ratelimitstore",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/store-redis/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_store_redis_agents_aponiajs_store_redis",
+      "target": "packages_session_readme_sessionstore",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/store-redis/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "aponiajs_redis_backing_stores_ecosystem",
+      "label": "Redis Backing Stores for Framework Middleware",
+      "nodes": [
+        "packages_store_redis_agents_aponiajs_store_redis",
+        "packages_store_redis_agents_redisratelimitstore",
+        "packages_rate_limit_readme_ratelimitstore",
+        "packages_session_readme_sessionstore"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/store-redis/AGENTS.md"
+    }
+  ]
+}

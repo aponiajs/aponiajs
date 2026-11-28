@@ -1,0 +1,479 @@
+{
+  "nodes": [
+    {
+      "id": "docs_reference_packages_packages_catalog",
+      "label": "Published & Unreleased Packages Catalog",
+      "file_type": "document",
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L1-L64",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Documents the 34 publishable workspace packages and 1 private facade, separating the 6 packages currently on npm (@alpha / 0.6.0-alpha.N) from the 28 unreleased 1.0.0-beta.N packages."
+    },
+    {
+      "id": "docs_reference_packages_aponiajs_common",
+      "label": "@aponiajs/common",
+      "file_type": "concept",
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L102-L112",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_reference_packages_aponiajs_core",
+      "label": "@aponiajs/core",
+      "file_type": "concept",
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L114-L121",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_reference_packages_aponiajs_cache",
+      "label": "@aponiajs/cache",
+      "file_type": "concept",
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L123-L130",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Provides bounded process-local TTL caching with oldest-insertion eviction and a pluggable store contract; intentionally not a distributed cache, session store, or durable queue."
+    },
+    {
+      "id": "docs_reference_packages_aponiajs_compiler",
+      "label": "@aponiajs/compiler",
+      "file_type": "concept",
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L132-L142",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_reference_packages_aponiajs_compression",
+      "label": "@aponiajs/compression",
+      "file_type": "concept",
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L144-L149",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_reference_packages_aponiajs_events",
+      "label": "@aponiajs/events",
+      "file_type": "concept",
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L151-L157",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_reference_packages_aponiajs_rate_limit",
+      "label": "@aponiajs/rate-limit",
+      "file_type": "concept",
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L159-L166",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Uses route identity rather than client-supplied headers as the default rate-limit key to prevent spoofing unless a trusted proxy key function is supplied."
+    },
+    {
+      "id": "docs_reference_packages_aponiajs_http",
+      "label": "@aponiajs/http",
+      "file_type": "concept",
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L168-L174",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_reference_packages_aponiajs_platform_elysia",
+      "label": "@aponiajs/platform-elysia",
+      "file_type": "concept",
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L176-L187",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_reference_packages_aponiajs_platform_core",
+      "label": "@aponiajs/platform-core",
+      "file_type": "concept",
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L48",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_reference_packages_aponiajs_platform_h3",
+      "label": "@aponiajs/platform-h3",
+      "file_type": "concept",
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L49",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_reference_packages_aponiajs_platform_hono",
+      "label": "@aponiajs/platform-hono",
+      "file_type": "concept",
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L50",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_reference_packages_aponiajs_cron",
+      "label": "@aponiajs/cron",
+      "file_type": "concept",
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L189-L201",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Wraps croner with validated configuration and runtime-neutral registration without adding persistence, retries, or cross-process distributed locks."
+    },
+    {
+      "id": "docs_reference_packages_aponiajs_cors",
+      "label": "@aponiajs/cors",
+      "file_type": "concept",
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L203-L214",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Expresses CORS as a neutral HttpPolicy from validated configuration; RegExp or function origins are code rather than data and belong with raw plugins."
+    },
+    {
+      "id": "docs_reference_packages_aponiajs_testing",
+      "label": "@aponiajs/testing",
+      "file_type": "concept",
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L231-L243",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_reference_packages_aponiajs_security",
+      "label": "@aponiajs/security",
+      "file_type": "concept",
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L286-L293",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_reference_packages_aponiajs_session",
+      "label": "@aponiajs/session",
+      "file_type": "concept",
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L295-L301",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_reference_packages_aponiajs_store_redis",
+      "label": "@aponiajs/store-redis",
+      "file_type": "concept",
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L348-L354",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_reference_packages_aponiajs_view",
+      "label": "@aponiajs/view",
+      "file_type": "concept",
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L356-L361",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_reference_packages_aponiajs_serverless",
+      "label": "@aponiajs/serverless",
+      "file_type": "concept",
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L363-L371",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_reference_packages_superseded_delivery_adapters",
+      "label": "Superseded Delivery Adapters (@aponiajs/h3, @aponiajs/hono, @aponiajs/nitro)",
+      "file_type": "concept",
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L373-L425",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Superseded by @aponiajs/platform-h3 and @aponiajs/platform-hono for new applications; retained for mounting when an external runtime owns the server and forwards to application.handle. Nitro support is experimental."
+    },
+    {
+      "id": "docs_reference_packages_aponiajs_schematics",
+      "label": "@aponiajs/schematics",
+      "file_type": "concept",
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L382-L393",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_reference_packages_create_aponia",
+      "label": "create-aponia",
+      "file_type": "concept",
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L20, L406-L410",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_reference_packages_synchronized_versions",
+      "label": "Synchronized Workspace Versions",
+      "file_type": "rationale",
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L412-L419",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "All publishable workspace packages share a single Semantic Version and publish together so decorators and runtime packages cannot drift within an application."
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_reference_packages_packages_catalog",
+      "target": "docs_services_auth_aponiajs_auth",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L303-L312",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_packages_packages_catalog",
+      "target": "docs_services_database_aponiajs_database",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L325-L333",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_packages_packages_catalog",
+      "target": "docs_services_devtools_aponiajs_devtools",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L258-L273",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_packages_packages_catalog",
+      "target": "docs_services_graphql_aponiajs_graphql",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L216-L229",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_packages_packages_catalog",
+      "target": "docs_services_mcp_aponiajs_mcp",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L275-L284",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_packages_packages_catalog",
+      "target": "docs_services_microservices_aponiajs_microservices",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L335-L346",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_packages_packages_catalog",
+      "target": "docs_services_openapi_aponiajs_openapi",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L245-L256",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_packages_packages_catalog",
+      "target": "docs_services_queues_aponiajs_queue",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L314-L323",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_packages_packages_catalog",
+      "target": "docs_tooling_cli_aponiajs_cli",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L395-L410",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_packages_create_aponia",
+      "target": "docs_tooling_cli_aponia_new",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L406-L410",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_packages_aponiajs_schematics",
+      "target": "docs_tooling_cli_aponiajs_cli",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L382-L393",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_packages_aponiajs_cron",
+      "target": "docs_tooling_plugin_packages_authoring_a_plugin_package",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L201",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_packages_aponiajs_cors",
+      "target": "docs_tooling_plugin_packages_authoring_a_plugin_package",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L214",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_packages_aponiajs_store_redis",
+      "target": "docs_reference_packages_aponiajs_cache",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L350-L352",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_packages_aponiajs_store_redis",
+      "target": "docs_reference_packages_aponiajs_rate_limit",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L350-L352",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_packages_aponiajs_store_redis",
+      "target": "docs_reference_packages_aponiajs_session",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L350-L352",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_packages_aponiajs_store_redis",
+      "target": "docs_services_auth_refreshtokenservice",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L352",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_packages_aponiajs_store_redis",
+      "target": "docs_services_auth_revocationservice",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L352",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_packages_synchronized_versions",
+      "target": "docs_reference_packages_packages_catalog",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/packages.md",
+      "source_location": "L412-L419",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

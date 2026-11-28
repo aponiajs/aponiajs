@@ -1,0 +1,23 @@
+# @aponiajs/schematics
+
+> The Nest-shaped schematic collection an Aponia project names in `aponia-cli.json`.
+
+## What this package publishes
+
+- `collection.json`: the verified schematic names, aliases, factory paths, and schema paths.
+- `schema.json` per schematic: the options the CLI validates.
+- A plain-function factory per schematic: `(options) => { files }`.
+
+## Schematics
+
+`application`, `class|cl`, `controller|co`, `decorator|d`, `filter|f`,
+`gateway|ga`, `guard|gu`, `interceptor|itc`, `interface|itf`, `middleware|mi`,
+`module|mo`, `pipe|pi`, `provider|pr`, `service|s`, `resolver|r`,
+`configuration|config`, `library|lib`, `sub-app|app`, `resource|res`, and
+`upgrade|update`. There is no `enum`, `test`, or `dto` schematic.
+
+## Documentation
+
+- [Package README](README.md)
+- [Provenance](PROVENANCE.md)
+- [AponiaJS](https://github.com/aponiajs/aponiajs)

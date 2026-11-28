@@ -1,0 +1,28 @@
+{
+  "nodes": [
+    {
+      "id": "packages_core_readme_package",
+      "label": "@aponiajs/core Package README",
+      "file_type": "document",
+      "source_file": "packages/core/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_core_readme_package",
+      "target": "packages_common_readme_package",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/core/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

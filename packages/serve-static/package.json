@@ -1,0 +1,55 @@
+{
+  "name": "@aponiajs/serve-static",
+  "version": "1.0.0",
+  "description": "Nest-compatible ServeStaticModule for serving static files and SPAs in AponiaJS.",
+  "keywords": [
+    "aponia",
+    "aponiajs",
+    "bun",
+    "serve-static",
+    "static",
+    "typescript"
+  ],
+  "homepage": "https://github.com/aponiajs/aponiajs#readme",
+  "bugs": {
+    "url": "https://github.com/aponiajs/aponiajs/issues"
+  },
+  "license": "MIT",
+  "author": "AponiaJS contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aponiajs/aponiajs.git",
+    "directory": "packages/serve-static"
+  },
+  "files": [
+    "dist",
+    "llms.txt"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "bunx --bun vp pack",
+    "dev": "bunx --bun vp pack --watch",
+    "test": "bun test",
+    "test:vite-plus": "vp test",
+    "check": "bunx --bun vp check",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "@aponiajs/common": "workspace:*"
+  },
+  "devDependencies": {
+    "@aponiajs/cli": "workspace:*",
+    "@aponiajs/platform-elysia": "workspace:*",
+    "elysia": "2.0.0-rc.4"
+  },
+  "engines": {
+    "bun": ">=1.4.4"
+  }
+}

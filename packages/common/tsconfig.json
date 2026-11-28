@@ -8,12 +8,17 @@
     "resolveJsonModule": true,
     "types": ["bun"],
     "strict": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "noUnusedLocals": true,
     "declaration": true,
     "noEmit": true,
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "@aponiajs/common": ["./src/index.ts"]
+    }
   }
 }

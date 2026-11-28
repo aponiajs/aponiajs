@@ -1,0 +1,92 @@
+{
+  "nodes": [
+    {
+      "id": "packages_view_readme_aponiajs_view",
+      "label": "@aponiajs/view",
+      "file_type": "document",
+      "source_file": "packages/view/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_view_readme_viewmodule",
+      "label": "ViewModule",
+      "file_type": "concept",
+      "source_file": "packages/view/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_view_readme_viewservice",
+      "label": "ViewService",
+      "file_type": "concept",
+      "source_file": "packages/view/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_view_readme_bladeviewengine",
+      "label": "BladeViewEngine",
+      "file_type": "concept",
+      "source_file": "packages/view/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_view_readme_htmlviewengine",
+      "label": "HtmlViewEngine",
+      "file_type": "concept",
+      "source_file": "packages/view/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_view_readme_viewmodule",
+      "target": "packages_view_llms_view_module_options",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/view/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_view_readme_viewmodule",
+      "target": "packages_view_readme_viewservice",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/view/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_view_readme_viewmodule",
+      "target": "packages_view_llms_view_engine_token",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/view/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

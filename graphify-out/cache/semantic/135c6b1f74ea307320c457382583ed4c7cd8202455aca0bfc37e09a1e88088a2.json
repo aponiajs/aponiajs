@@ -1,0 +1,211 @@
+{
+  "nodes": [
+    {
+      "id": "packages_mcp_readme_pkg_doc",
+      "label": "@aponiajs/mcp README",
+      "file_type": "document",
+      "source_file": "packages/mcp/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_mcp_readme_tool_decorator",
+      "label": "@Tool Decorator",
+      "file_type": "concept",
+      "rationale": "Metadata-only decorator re-exported from @aponiajs/common; tools are dispatched via JSON-RPC on /mcp rather than controller HTTP routes.",
+      "source_file": "packages/mcp/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_mcp_readme_resource_decorator",
+      "label": "@Resource Decorator",
+      "file_type": "concept",
+      "source_file": "packages/mcp/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_mcp_readme_resourcetemplate_decorator",
+      "label": "@ResourceTemplate Decorator",
+      "file_type": "concept",
+      "source_file": "packages/mcp/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_mcp_readme_prompt_decorator",
+      "label": "@Prompt Decorator",
+      "file_type": "concept",
+      "source_file": "packages/mcp/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_mcp_readme_mcpcontext",
+      "label": "McpContext",
+      "file_type": "concept",
+      "source_file": "packages/mcp/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_mcp_readme_servemcpstdio",
+      "label": "serveMcpStdio",
+      "file_type": "code",
+      "rationale": "Serves MCP over stdio where stdout carries protocol frames and diagnostics belong on stderr.",
+      "source_file": "packages/mcp/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_mcp_readme_listenmcpstdio",
+      "label": "listenMcpStdio",
+      "file_type": "code",
+      "source_file": "packages/mcp/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_mcp_readme_mcp_enhancer_pipeline",
+      "label": "MCP Enhancer Execution Order",
+      "file_type": "rationale",
+      "rationale": "Every call runs guards -> interceptors before -> pipes (input bound as body) -> method -> interceptors after reversed -> filters on throw, with getType() returning 'mcp'.",
+      "source_file": "packages/mcp/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_mcp_readme_http_transport_guards",
+      "label": "MCP HTTP Transport Status Guards",
+      "file_type": "concept",
+      "rationale": "Refuses foreign Origin (403), oversized body (413), non-JSON content type (415), and non-POST methods (405) before dispatch.",
+      "source_file": "packages/mcp/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_mcp_readme_tool_decorator",
+      "target": "packages_mcp_readme_mcpcontext",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/mcp/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_mcp_readme_resource_decorator",
+      "target": "packages_mcp_readme_mcpcontext",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/mcp/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_mcp_readme_resourcetemplate_decorator",
+      "target": "packages_mcp_readme_mcpcontext",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/mcp/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_mcp_readme_prompt_decorator",
+      "target": "packages_mcp_readme_mcpcontext",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/mcp/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_mcp_readme_mcp_enhancer_pipeline",
+      "target": "packages_mcp_agents_mcpexecutioncontext",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/mcp/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_mcp_readme_http_transport_guards",
+      "target": "packages_mcp_agents_mcp_transport",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/mcp/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_mcp_readme_listenmcpstdio",
+      "target": "packages_mcp_readme_servemcpstdio",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/mcp/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_mcp_readme_mcp_enhancer_pipeline",
+      "target": "packages_platform_core_agents_run_order_contract",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/mcp/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_mcp_readme_http_transport_guards",
+      "target": "packages_platform_core_agents_request_pipeline",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "packages/mcp/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

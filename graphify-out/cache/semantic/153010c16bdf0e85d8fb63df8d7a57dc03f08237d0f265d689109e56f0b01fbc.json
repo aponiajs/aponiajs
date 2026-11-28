@@ -1,0 +1,82 @@
+{
+  "nodes": [
+    {
+      "id": "packages_hono_agents_agent_guide",
+      "label": "@aponiajs/hono Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/hono/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_hono_agents_tofetchhandler",
+      "label": "toFetchHandler",
+      "file_type": "concept",
+      "source_file": "packages/hono/AGENTS.md",
+      "source_location": "line 17",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_hono_agents_aponiajs_serverless",
+      "label": "@aponiajs/serverless",
+      "file_type": "concept",
+      "source_file": "packages/hono/AGENTS.md",
+      "source_location": "line 7",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_hono_agents_thin_envelope_adapter",
+      "label": "Hono Thin Envelope Translation",
+      "file_type": "rationale",
+      "rationale": "Translates only the runtime request/response envelope via @aponiajs/serverless without adding a second route table, DI container, guard pipeline, or WebSocket emulation, keeping hono as a peer dependency.",
+      "source_file": "packages/hono/AGENTS.md",
+      "source_location": "line 15",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_hono_agents_agent_guide",
+      "target": "packages_hono_agents_aponiajs_serverless",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/hono/AGENTS.md",
+      "source_location": "line 7",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_hono_agents_agent_guide",
+      "target": "packages_hono_agents_tofetchhandler",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/hono/AGENTS.md",
+      "source_location": "line 17",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_hono_agents_thin_envelope_adapter",
+      "target": "packages_hono_agents_tofetchhandler",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/hono/AGENTS.md",
+      "source_location": "line 15",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

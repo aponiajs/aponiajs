@@ -1,0 +1,40 @@
+{
+  "nodes": [
+    {
+      "id": "packages_aponiajs_agents_aponiajs_facade_guide",
+      "label": "aponiajs Package Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/aponiajs/AGENTS.md",
+      "source_location": "L1-L25",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_aponiajs_agents_reserved_public_facade",
+      "label": "Reserved Private aponiajs Facade",
+      "file_type": "concept",
+      "rationale": "Kept private and unpublished as a placeholder with synchronized workspace versioning until the framework API settles, when it will re-export @aponiajs/common, @aponiajs/core, and @aponiajs/platform-elysia by package name.",
+      "source_file": "packages/aponiajs/AGENTS.md",
+      "source_location": "L6-L20",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_aponiajs_agents_aponiajs_facade_guide",
+      "target": "packages_aponiajs_agents_reserved_public_facade",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/aponiajs/AGENTS.md",
+      "source_location": "L6-L20",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

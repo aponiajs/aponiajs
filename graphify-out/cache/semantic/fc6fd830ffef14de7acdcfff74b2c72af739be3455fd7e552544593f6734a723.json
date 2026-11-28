@@ -1,0 +1,40 @@
+{
+  "nodes": [
+    {
+      "id": "packages_aponiajs_claude_guide",
+      "label": "aponiajs CLAUDE.md Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/aponiajs/CLAUDE.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_aponiajs_claude_aponiajs_facade",
+      "label": "aponiajs Reserved Public Facade",
+      "file_type": "concept",
+      "rationale": "Stays private and unpublished with a placeholder export until it re-exports a settled API from @aponiajs/common, @aponiajs/core, and @aponiajs/platform-elysia via package names.",
+      "source_file": "packages/aponiajs/CLAUDE.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_aponiajs_claude_guide",
+      "target": "packages_aponiajs_claude_aponiajs_facade",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/aponiajs/CLAUDE.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

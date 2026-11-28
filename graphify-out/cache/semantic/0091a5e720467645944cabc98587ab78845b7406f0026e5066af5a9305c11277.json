@@ -1,0 +1,17 @@
+{
+  "nodes": [
+    {
+      "id": "docs_claude_md",
+      "label": "docs/CLAUDE.md (Symlink to docs/AGENTS.md)",
+      "file_type": "document",
+      "source_file": "docs/CLAUDE.md",
+      "source_location": "line 1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [],
+  "hyperedges": []
+}

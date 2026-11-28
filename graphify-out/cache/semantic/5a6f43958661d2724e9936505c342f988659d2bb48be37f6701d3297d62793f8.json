@@ -1,0 +1,138 @@
+{
+  "nodes": [
+    {
+      "id": "packages_rate_limit_agents_guide",
+      "label": "@aponiajs/rate-limit Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/rate-limit/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_rate_limit_agents_ratelimitmodule",
+      "label": "RateLimitModule (forRoot / forRootAsync)",
+      "file_type": "concept",
+      "rationale": "ConfigurableModuleBuilder registration with RATE_LIMIT_MODULE_OPTIONS and isGlobal extra; reports invalid configuration as AponiaError INVALID_RATE_LIMIT with frozen issue list.",
+      "source_file": "packages/rate-limit/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_rate_limit_agents_ratelimitguard",
+      "label": "RateLimitGuard and @RateLimit()",
+      "file_type": "concept",
+      "rationale": "Sets RateLimit-* headers before deciding and adds Retry-After on refusal, returning 429 Problem Details rather than 403.",
+      "source_file": "packages/rate-limit/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_rate_limit_agents_ratelimitservice",
+      "label": "RateLimitService",
+      "file_type": "concept",
+      "rationale": "Increments request bucket exactly once per request; guard never retries or double-increments on refusal.",
+      "source_file": "packages/rate-limit/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_rate_limit_agents_memoryratelimitstore",
+      "label": "RateLimitStore and MemoryRateLimitStore",
+      "file_type": "concept",
+      "rationale": "Requires positive integer maxKeys and evicts oldest insertion to avoid unbounded maps; clock is injectable for deterministic tests.",
+      "source_file": "packages/rate-limit/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_rate_limit_agents_default_route_key",
+      "label": "Default Route-Identity Rate Limit Key",
+      "file_type": "rationale",
+      "rationale": "Defaults to route identity rather than client-supplied headers (X-Forwarded-For, X-Real-IP) so trusted proxy extraction is an explicit application key-function decision.",
+      "source_file": "packages/rate-limit/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_rate_limit_agents_ratelimitmodule",
+      "target": "packages_rate_limit_agents_ratelimitservice",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/rate-limit/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_rate_limit_agents_ratelimitguard",
+      "target": "packages_rate_limit_agents_ratelimitservice",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/rate-limit/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_rate_limit_agents_ratelimitservice",
+      "target": "packages_rate_limit_agents_memoryratelimitstore",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/rate-limit/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_rate_limit_agents_default_route_key",
+      "target": "packages_rate_limit_agents_ratelimitguard",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/rate-limit/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_rate_limit_agents_ratelimitguard",
+      "target": "packages_platform_elysia_readme_httperror",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "packages/rate-limit/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_rate_limit_agents_memoryratelimitstore",
+      "target": "packages_queue_readme_memoryqueuestore",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "packages/rate-limit/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

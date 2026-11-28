@@ -1,0 +1,373 @@
+{
+  "nodes": [
+    {
+      "id": "packages_cron_agents_aponiajs_cron",
+      "label": "@aponiajs/cron",
+      "file_type": "concept",
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 8",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Runtime-neutral scheduling module over croner mirroring @nestjs/schedule without pretending to be a durable job queue."
+    },
+    {
+      "id": "packages_cron_agents_cronmodule",
+      "label": "CronModule",
+      "file_type": "concept",
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 17",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "ConfigurableModuleBuilder registration supporting only forRoot because it provides the configuration token it schedules, making registerAsync impossible."
+    },
+    {
+      "id": "packages_cron_agents_cronscheduler",
+      "label": "CronScheduler",
+      "file_type": "concept",
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 20",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Per-boot provider rather than module-level state so multiple applications built from one module class own independent handles and close() stops only its own boot's jobs."
+    },
+    {
+      "id": "packages_cron_agents_schedulerregistry",
+      "label": "SchedulerRegistry",
+      "file_type": "concept",
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 20",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cron_agents_schedulerorchestrator",
+      "label": "SchedulerOrchestrator",
+      "file_type": "concept",
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 20",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cron_agents_scheduleexplorer",
+      "label": "ScheduleExplorer",
+      "file_type": "concept",
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 20",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cron_agents_croner",
+      "label": "croner Engine",
+      "file_type": "concept",
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 11",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Constructed without a process-global name to avoid cross-boot collisions and given a copy of options so croner defaults never leak into job context."
+    },
+    {
+      "id": "packages_cron_agents_cron_decorator",
+      "label": "@Cron",
+      "file_type": "concept",
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 19",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cron_agents_interval_decorator",
+      "label": "@Interval",
+      "file_type": "concept",
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 19",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cron_agents_timeout_decorator",
+      "label": "@Timeout",
+      "file_type": "concept",
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 19",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cron_agents_schedule_timer",
+      "label": "SCHEDULE_TIMER",
+      "file_type": "concept",
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 41",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Injectable timer token replaced in tests for deterministic interval and timeout execution."
+    },
+    {
+      "id": "packages_cron_agents_schedule_module_options",
+      "label": "SCHEDULE_MODULE_OPTIONS",
+      "file_type": "concept",
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 54",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cron_agents_cronjoboptions",
+      "label": "CronJobOptions",
+      "file_type": "concept",
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 97",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Derived directly from croner's CronOptions so option additions, renames, or removals cannot silently drift."
+    },
+    {
+      "id": "packages_cron_agents_cronjob",
+      "label": "CronJob",
+      "file_type": "concept",
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 104",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Declares run as a method rather than a function property so bivariance under strictFunctionTypes accepts narrower typed option transforms."
+    },
+    {
+      "id": "packages_cron_agents_cronjobcontext",
+      "label": "CronJobContext",
+      "file_type": "concept",
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 138",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Frozen context carrying declared options to prevent one tick from mutating subsequent ticks."
+    },
+    {
+      "id": "packages_cron_agents_cronconfiguration",
+      "label": "CronConfiguration",
+      "file_type": "concept",
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 140",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Declares jobs under an object key rather than a bare array so additive configuration fields remain backwards-compatible."
+    },
+    {
+      "id": "packages_cron_agents_ambiguous_provider",
+      "label": "AMBIGUOUS_PROVIDER (Cron)",
+      "file_type": "concept",
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 85",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_cron_agents_aponiajs_cron",
+      "target": "packages_cron_agents_cronmodule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 17",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cron_agents_aponiajs_cron",
+      "target": "packages_cron_agents_croner",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 11",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cron_agents_cronmodule",
+      "target": "packages_cron_agents_cronscheduler",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 66",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cron_agents_cronmodule",
+      "target": "packages_cron_agents_schedule_module_options",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 53",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cron_agents_scheduleexplorer",
+      "target": "packages_cron_agents_schedulerorchestrator",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 30",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cron_agents_schedulerorchestrator",
+      "target": "packages_cron_agents_schedulerregistry",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 31",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cron_agents_scheduleexplorer",
+      "target": "packages_cron_agents_cron_decorator",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 30",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cron_agents_scheduleexplorer",
+      "target": "packages_cron_agents_interval_decorator",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 30",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cron_agents_scheduleexplorer",
+      "target": "packages_cron_agents_timeout_decorator",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 30",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cron_agents_interval_decorator",
+      "target": "packages_cron_agents_schedule_timer",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 40",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cron_agents_timeout_decorator",
+      "target": "packages_cron_agents_schedule_timer",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 40",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cron_agents_cronscheduler",
+      "target": "packages_cron_agents_croner",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 71",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cron_agents_cronscheduler",
+      "target": "packages_cron_agents_cronconfiguration",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 67",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cron_agents_cronconfiguration",
+      "target": "packages_cron_agents_cronjob",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 140",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cron_agents_cronjoboptions",
+      "target": "packages_cron_agents_croner",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 97",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cron_agents_cronmodule",
+      "target": "packages_cron_agents_ambiguous_provider",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 85",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cors_readme_corsmodule",
+      "target": "packages_cron_agents_cronmodule",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "packages/cron/AGENTS.md",
+      "source_location": "line 44",
+      "weight": 0.85
+    }
+  ],
+  "hyperedges": []
+}

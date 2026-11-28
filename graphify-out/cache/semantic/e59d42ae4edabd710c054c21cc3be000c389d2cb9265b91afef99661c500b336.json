@@ -1,0 +1,49 @@
+{
+  "nodes": [
+    {
+      "id": "packages_microservices_llms_summary",
+      "label": "@aponiajs/microservices llms.txt Summary",
+      "file_type": "document",
+      "source_file": "packages/microservices/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_microservices_llms_envelopecodecs",
+      "label": "encodeMicroserviceEnvelope & decodeMicroserviceEnvelope",
+      "file_type": "code",
+      "source_file": "packages/microservices/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_microservices_llms_summary",
+      "target": "packages_microservices_readme_pkg_doc",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/microservices/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_microservices_llms_envelopecodecs",
+      "target": "packages_microservices_agents_cbor_v1_envelope",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/microservices/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -1,0 +1,12 @@
+{
+  "name": "@aponiajs/api-docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "typedoc --options typedoc.json"
+  },
+  "devDependencies": {
+    "typedoc": "0.28.20",
+    "typescript": "6.0.3"
+  }
+}

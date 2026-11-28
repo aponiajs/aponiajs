@@ -1,0 +1,17 @@
+{
+  "nodes": [
+    {
+      "id": "github_workflows_ci_ci_workflow",
+      "label": "Main CI Workflow",
+      "file_type": "document",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L1-L251",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [],
+  "hyperedges": []
+}

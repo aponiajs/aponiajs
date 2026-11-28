@@ -1,0 +1,90 @@
+{
+  "nodes": [
+    {
+      "id": "packages_platform_elysia_llms_overview",
+      "label": "@aponiajs/platform-elysia llms.txt",
+      "file_type": "document",
+      "source_file": "packages/platform-elysia/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_elysia_llms_aponiaapplication",
+      "label": "AponiaApplication (platform-elysia)",
+      "file_type": "concept",
+      "source_file": "packages/platform-elysia/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_elysia_llms_provideconfiguration",
+      "label": "provideConfiguration and provideConfigurationAsync",
+      "file_type": "concept",
+      "source_file": "packages/platform-elysia/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_platform_elysia_llms_overview",
+      "target": "packages_platform_elysia_readme_guide",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-elysia/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_elysia_llms_overview",
+      "target": "packages_platform_elysia_llms_aponiaapplication",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-elysia/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_elysia_llms_overview",
+      "target": "packages_platform_elysia_llms_provideconfiguration",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-elysia/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_elysia_llms_overview",
+      "target": "packages_platform_elysia_readme_handlercontext",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-elysia/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_elysia_llms_overview",
+      "target": "packages_platform_elysia_readme_wrapelysiaplugin",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-elysia/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

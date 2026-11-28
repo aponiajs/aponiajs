@@ -1,9 +1,20 @@
 import { Module } from "@aponiajs/common";
+import { DevtoolsModule } from "@aponiajs/devtools";
+import { provideConfiguration } from "@aponiajs/platform-elysia";
 import { AppController } from "./app.controller.ts";
 import { AppService } from "./app.service.ts";
+import { AppConfig } from "./config.ts";
+import { appLogger } from "./logger.ts";
 
 @Module({
+  imports: [
+    DevtoolsModule.forRoot({
+      enabled: Bun.env.APONIA_DEVTOOLS === "true",
+      logger: appLogger,
+    }),
+  ],
+  providers: [provideConfiguration(AppConfig), AppService],
   controllers: [AppController],
-  providers: [AppService],
+  exports: [AppConfig],
 })
 export class AppModule {}

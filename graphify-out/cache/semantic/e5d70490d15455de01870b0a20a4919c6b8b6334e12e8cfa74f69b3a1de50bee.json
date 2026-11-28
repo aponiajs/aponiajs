@@ -1,0 +1,61 @@
+{
+  "nodes": [
+    {
+      "id": "scratch_nestjs_dx_parity_issues_07_config_package_design_config_module",
+      "label": "@aponiajs/config ConfigModule",
+      "file_type": "concept",
+      "rationale": "Match @nestjs/config DX using Standard Schema validation and ConfigurableModuleBuilder/moduleOptionsProviders while preventing unvalidated process.env leaks.",
+      "source_file": ".scratch/nestjs-dx-parity/issues/07-config-package-design.md",
+      "source_location": "L11",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_issues_07_config_package_design_config_service_and_register_as",
+      "label": "ConfigService, registerAs & ConfigType",
+      "file_type": "concept",
+      "source_file": ".scratch/nestjs-dx-parity/issues/07-config-package-design.md",
+      "source_location": "L12",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_issues_07_config_package_design_config_workspace_integration",
+      "label": "@aponiajs/config Workspace Integration",
+      "file_type": "concept",
+      "source_file": ".scratch/nestjs-dx-parity/issues/07-config-package-design.md",
+      "source_location": "L13",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "scratch_nestjs_dx_parity_issues_07_config_package_design_config_module",
+      "target": "scratch_nestjs_dx_parity_issues_01_property_injection_and_di_metadata_property_based_injection",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/issues/07-config-package-design.md",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_issues_07_config_package_design_config_service_and_register_as",
+      "target": "scratch_nestjs_dx_parity_issues_07_config_package_design_config_module",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/issues/07-config-package-design.md",
+      "source_location": "L11-L12",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

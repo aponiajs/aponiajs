@@ -1,0 +1,145 @@
+{
+  "nodes": [
+    {
+      "id": "docs_platforms_websockets_guide",
+      "label": "WebSocket Gateways",
+      "file_type": "document",
+      "source_file": "docs/platforms/websockets.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_platforms_websockets_gateway_model",
+      "label": "WebSocket Gateway Decorators & { event, data } Wire Protocol",
+      "file_type": "concept",
+      "rationale": "Adopts Nest gateway decorators over native WebSockets using JSON { event, data } frames without RxJS or Socket.IO namespace/room/acknowledgement emulation.",
+      "source_file": "docs/platforms/websockets.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_platforms_websockets_gateway_options_guards",
+      "label": "Gateway Options, Handshake Guards, Payload Bounds & Validation",
+      "file_type": "concept",
+      "rationale": "Elysia runs guards before HTTP upgrade (403) while Hono and H3 run guards on socket open (close 1008); invalid or oversized payloads return INVALID_WEBSOCKET_MESSAGE exception frames.",
+      "source_file": "docs/platforms/websockets.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_platforms_websockets_definewebsocketgateway",
+      "label": "defineWebSocketGateway Descriptor",
+      "file_type": "concept",
+      "source_file": "docs/platforms/websockets.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_platforms_websockets_platform_socket_surface",
+      "label": "GatewaySocket / GatewayServer vs ElysiaWS / WebSocketServerRef",
+      "file_type": "concept",
+      "source_file": "docs/platforms/websockets.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_platforms_websockets_gateway_lifecycle_errors",
+      "label": "Gateway Lifecycle (OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect) & Exception Frames",
+      "file_type": "concept",
+      "source_file": "docs/platforms/websockets.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_platforms_websockets_guide",
+      "target": "docs_platforms_websockets_gateway_model",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/websockets.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_websockets_guide",
+      "target": "docs_platforms_websockets_gateway_options_guards",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/websockets.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_websockets_guide",
+      "target": "docs_platforms_websockets_definewebsocketgateway",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/websockets.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_websockets_guide",
+      "target": "docs_platforms_websockets_platform_socket_surface",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/websockets.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_websockets_guide",
+      "target": "docs_platforms_websockets_gateway_lifecycle_errors",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/websockets.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_websockets_guide",
+      "target": "docs_platforms_platform_parity_guide",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/websockets.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_websockets_gateway_options_guards",
+      "target": "docs_platforms_platform_parity_deliberate_deltas",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/platforms/websockets.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

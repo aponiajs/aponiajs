@@ -1,0 +1,281 @@
+# Engineering Rules
+
+This file records repository-wide implementation and verification rules derived
+from the current AponiaJS codebase. `AGENTS.md` defines architecture, ownership,
+and workflow; this file defines the minimum evidence and coding discipline
+required for a change to be complete. Package-level `AGENTS.md` files may add
+stricter owner-specific requirements, but must not weaken these rules.
+
+The root `AGENTS.md` requires this file to be read completely at the start of
+every agent turn. Prior-turn memory or a cached summary is not a substitute.
+
+If documentation and enforcement disagree, fix both in the same change. A green
+test run never justifies bypassing an architectural contract.
+
+## Mandatory Test Coverage
+
+### Coverage floor and source completeness
+
+- Every executable framework source, release script, generator, template
+  behavior, and public example behavior must be covered by an appropriate test
+  lane.
+- `bun run test:coverage` is the primary coverage gate. Aggregate line coverage
+  must remain at or above 98%, function coverage at or above 95%, and every
+  package's line coverage at or above 95%.
+- The 95% threshold is a minimum safety floor, not a target. Do not lower it,
+  round around it, remove the gate, or exclude code merely to make CI pass.
+- Every runtime TypeScript source under `packages/*/src/**/*.ts` and every
+  executable `scripts/*.ts` file must appear in the LCOV report. The only
+  default exclusions are type-only `*.types.ts` and `*.interface.ts` files and
+  test specifications.
+- New runtime locations must be added to the source-completeness discovery in
+  `scripts/coverage-gate.ts` in the same change that introduces them.
+- Changed executable lines and functions are expected to have direct test
+  evidence. Aim for 100% coverage of touched executable code even when the
+  repository aggregate is already above the floor.
+- A narrow exception is allowed only when a path is genuinely unreachable,
+  platform-owned, or nondeterministic by contract. The pull request must name
+  the exact path, explain why direct coverage is impractical, and identify the
+  compensating test. Blanket coverage ignores are forbidden.
+- Line and function metrics do not replace branch reasoning. Until branch
+  coverage is enforced mechanically, tests must explicitly exercise each
+  meaningful decision outcome.
+
+### Required behavioral evidence
+
+For every behavior change, cover every applicable category:
+
+1. the successful path and returned contract;
+2. invalid input, rejection, and structured error behavior;
+3. empty, missing, duplicate, boundary, and ambiguous inputs;
+4. state reuse, isolation, lifecycle, and cleanup;
+5. synchronous, asynchronous, and Promise-returning behavior;
+6. compatibility across supported authoring or toolchain paths;
+7. the exact regression before the production fix is considered complete.
+
+Assertions must prove observable behavior. Tests that only execute code, only
+assert that it does not throw, or mirror implementation details without checking
+the public contract do not count as sufficient evidence.
+
+### Configurable module evidence
+
+A package that publishes a dynamic registration covers its synchronous literal
+and its asynchronous form. The asynchronous cases include a `useFactory` that
+returns a Promise, a `useClass` implementing the factory method, and
+`useExisting`; the synchronous cases include every option the package validates.
+The registration's structural contract — the module class as `module`, a frozen
+definition, an id and instance identity, and independent identities for two
+registrations — is asserted with the shared checks exported by
+`@aponiajs/testing`. Behavior is asserted by booting the package's real module;
+shape checks never replace that boot.
+
+`ConfigurableModuleBuilder` behavior is proven once in `packages/common` and once
+through a real platform boot, including `setClassMethodName`,
+`setFactoryMethodName`, `setExtras`, `alwaysTransient`, `MODULE_OPTIONS_TOKEN`,
+`forFeature`, and `provideInjectionTokensFrom`. A plugin package uses the shared
+`moduleOptionsProviders` lowering instead of a local copy of the async-options
+switch.
+
+### Test-lane ownership
+
+| Changed area                                | Required evidence                                                                                                             |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `@aponiajs/common` contracts and decorators | Focused Bun tests; Vite+ conformance when the public contract or emitted types change                                         |
+| `@aponiajs/core` graph and container        | Bun success, failure, ambiguity, visibility, cycle, and caching cases; mirrored Vite+ public conformance                      |
+| `@aponiajs/platform-elysia`                 | Tests through `AponiaFactory.create` and `application.handle`; Vite+ coverage for public types and supported runtime behavior |
+| `@aponiajs/cli` parsing and generation      | Focused Bun tests for planning, rendering, registration, writes, errors, and dry-run behavior                                 |
+| CLI templates, manifests, or packed output  | `bun run build` followed by `bun run test:generated-app`                                                                      |
+| Executable examples                         | Focused unit tests where useful and `bun run test:examples` for public behavior                                               |
+| Release scripts and workflows               | `scripts/*.spec.ts`, workflow guard tests, release verification, and `bun run release:dry-run` when package contents change   |
+| Documentation structure or required wording | The relevant guard specification when wording, links, ordering, or indexes are contractual                                    |
+| Type-only contracts                         | Compile-time assertions exercised by `bun run check` and the applicable Vite+ conformance lane                                |
+
+When a change crosses owners, satisfy every applicable row. One broad integration
+test must not replace focused failure and edge-case tests.
+
+### Test design and isolation
+
+- Prefer public entrypoints over private helpers. Exercise HTTP behavior through
+  `application.handle(new Request(...))` when a platform contract is involved.
+- Assert `AponiaError.code` and structured `details`; do not couple tests to
+  incidental message wording.
+- Name tests as complete behavioral statements. A failing test should identify
+  the broken contract without reading its body.
+- Keep tests deterministic and independent. Unit and conformance lanes must not
+  require external networks, fixed ports, wall-clock timing, or execution order.
+- Use temporary directories for filesystem cases and always clean them up.
+  Serialize only tests that intentionally share process-global state.
+- Mock external boundaries only when needed. Do not mock the Aponia component
+  whose behavior the test is intended to prove.
+- Prefer exact structural assertions over broad snapshots. Snapshots are
+  acceptable only when the complete serialized shape is itself the contract.
+- Keep compile-time assertions referenced so `bun run check` cannot silently
+  drop them as unused.
+- This workspace builds and publishes from `src/`, while the surveyed official
+  Nest libraries build from `lib/`. Mirror their naming and folder shape, not the
+  build root; `docs/build/migrating-from-nest.md` states the deviation so no
+  package half-migrates.
+
+### Required verification gates
+
+Before a change is submitted:
+
+1. run `bun run check`;
+2. run `bun run test:coverage`;
+3. run `bun run test:vite-plus`;
+4. run every additional lane selected by the ownership table;
+5. run `bun run release:dry-run` when published package contents change.
+
+Do not replace a required gate with a narrower command in final verification.
+Narrow commands are for iteration; the complete gates are the delivery evidence.
+
+## Current AponiaJS Coding Style
+
+These conventions were extracted from the current framework packages, release
+scripts, and tests. New code should look native to this repository.
+
+### TypeScript and modules
+
+- Use strict TypeScript, ESM, two-space indentation, semicolons, and the formatter
+  output produced by `bun run check`.
+- Use explicit `.ts` extensions for local imports. Cross-package imports go
+  through the public package name, never another package's private source path.
+- Keep type-only dependencies under `import type` or an inline `type` import
+  specifier so they cannot become runtime edges.
+- Do not use `any`. Narrow `unknown`, model closed unions, and use generic
+  constraints that preserve the caller's types.
+- Prefer `const` type parameters in public helpers when literal inference is
+  part of the API contract.
+
+### Ownership and file structure
+
+- Organize source by domain owner such as `routing/`, `scanner/`, `injector/`,
+  `generation/`, or `application/`; do not create miscellaneous utility or
+  package-wide type buckets.
+- Keep `src/index.ts` as the only public barrel. Implementation modules remain
+  private unless the package contract explicitly exports them.
+- Name a file with the Nest kind it implements: `<name>.module.ts`,
+  `.controller.ts`, `.service.ts`, `.guard.ts`, `.interceptor.ts`, `.pipe.ts`,
+  `.filter.ts`, `.middleware.ts`, `.gateway.ts`, `.strategy.ts`, `.decorator.ts`,
+  `.dto.ts`, `.entity.ts`, `.repository.ts`, `.provider.ts`, `.providers.ts`,
+  `.accessor.ts`, and `.explorer.ts`. One Nest kind per file; split a file that
+  exports two kinded classes. Keep a descriptive name where Nest's own core keeps
+  one (`scanner.ts`, `graph-compiler.ts`, `injector.ts`).
+- Co-locate type-only contracts as `interfaces/<name>.interface.ts` beside their
+  owning domain. A `*.types.ts` file remains only where the mirrored Nest package
+  has one. Use `*.constants.ts` only for values shared by runtime and type
+  modules.
+- Keep tests beside the source they exercise as `<name>.spec.ts`; the Vite+
+  lane lives in `test/*.conformance.ts`, and a lane that needs a live dependency
+  in `test/*.e2e-spec.ts`. Do not move a test to a kind suffix it does not have.
+- Keep orchestration functions thin. Parsing, planning, rendering,
+  transformation, filesystem writes, and runtime registration belong to focused
+  collaborators.
+
+### Contracts and immutability
+
+- Treat public API edits as contract changes. Preserve decorator and descriptor
+  authoring paths, native escape hatches, and the one-way dependency direction
+  `common` to `core` to each platform (`platform-elysia`, `platform-hono`, `platform-h3`).
+- Return frozen public descriptors, metadata, arrays, and inspection results.
+  Copy caller-owned collections before freezing them.
+- Prefer `readonly` contracts and pure functions. Local mutation is acceptable
+  for private caches, graph traversal, controlled builders, and performance
+  critical internals when ownership is clear.
+- Use `#private` class fields for internal state.
+- Make platform-specific casts and compatibility shims explicit at the narrowest
+  platform boundary.
+
+### Control flow and errors
+
+- Use descriptive verb-led function names and domain-specific variable names.
+- Prefer small functions, early returns, and exhaustive switches over deep
+  nesting or clever abstraction.
+- Apply KISS, DRY, and YAGNI. Extract repeated domain behavior, but do not create
+  speculative indirection.
+- Framework failures use `AponiaError` with a member of the closed
+  `AponiaErrorCode` union and frozen structured details.
+- CLI argument and generator-input mistakes use plain `Error` or `TypeError`.
+- Declarative authoring mistakes — a decorator factory called with an argument it
+  cannot accept — throw `TypeError` while the declaration is made, before any
+  descriptor exists. They are caller errors rather than framework runtime
+  failures, and `packages/common` tests pin that contract.
+- Preserve the original error when translating only a specific known failure;
+  rethrow unknown failures unchanged.
+
+### Dependencies, comments, and performance
+
+- Reuse maintained, typed, Bun-compatible libraries for general-purpose
+  behavior. Custom code is reserved for Aponia-specific contracts.
+- Comments explain why a constraint, workaround, or optimization exists. Do not
+  narrate obvious syntax.
+- Add JSDoc to public APIs and internal platform SPIs when ownership or usage is
+  not evident from the signature. Mark internal exported platform APIs with
+  `@internal`.
+- Keep lint suppressions local and explain the invariant that makes the
+  suppressed operation safe.
+- Runtime hot paths compile or cache reusable work during bootstrap. Avoid
+  per-request reflection, generic context mapping, and avoidable allocation.
+
+### Security, network, and privacy invariants
+
+- Outbound HTTP (both `@aponiajs/http` and CLI network checks) must enforce
+  bounded timeouts (`AbortSignal.timeout`), bounded response handling, and
+  explicit SSRF/endpoint boundaries.
+- Never use substring `.includes("<hostname>")` checks on URLs (which trigger
+  `js/incomplete-url-substring-sanitization`); always parse with `new URL(...)`
+  and compare `.hostname` (and `.pathname` where applicable) strictly.
+- Never interpolate expressions into `Function(...)` or dynamic code strings
+  (`js/bad-code-sanitization`); use pure TypeScript closures or compiled
+  property-free descriptors instead.
+- No package may be published to npm while CodeQL reports open alerts:
+  `.github/workflows/publish.yml` must gate `publish` on `needs: [codeql]`.
+- CLI background checks (such as `aponia dev` update and advisory checks) must
+  be non-blocking, locally cached (24h TTL), fail-silent when offline or timed
+  out, never transmit environment variables, tokens, or `private: true` package
+  names, and honor `--no-update-check`, `APONIA_NO_UPDATE_CHECK=1`, and
+  `CI=true`.
+- Version comparisons must follow SemVer precedence (including prerelease tags
+  such as `-alpha.N` and `-beta.N`) and must never recommend downgrading a
+  prerelease (`1.0.0-beta.N`) to an older `latest` tag.
+
+### Hot-path and artifact hygiene
+
+- Opt-in observability, security, and resilience features must attach via
+  `RequestLifecycleHook` or `HttpPolicy` so unconfigured applications pay zero
+  per-request overhead on `fastDispatch` / `staticDispatch`.
+- Never commit generated `.d.ts` files inside `packages/*/src/`, `coverage/`,
+  `dist/`, `.scratch/`, or temporary analysis directories.
+
+### Workspace parity and guard matrix
+
+When adding a publishable package, `AponiaErrorCode`, or public export, update
+all guarded surfaces in the same change:
+
+- `AGENTS.md` (package table and guide index) and `packages/<pkg>/AGENTS.md`
+  with `CLAUDE.md` and `GEMINI.md` symlinks;
+- `packages/<pkg>/llms.txt` and `packages/<pkg>/package.json` (`files` array);
+- `vite.config.ts` aliases and `scripts/workspace-versions.ts`;
+- `package.json` (`version:bump` and `release:dry-run`);
+- `scripts/source-layout.spec.ts` (when introducing a new package or owner directory);
+- `packages/cli/src/contracts/framework-contract.ts` (packages and `errorCodes`);
+- `docs/reference/packages.md`, `docs/reference/feature-status.md`, and
+  `docs/operations/releasing.md`;
+- `.github/workflows/publish.yml` and `.github/workflows/canary.yml`;
+- `bun run api:freeze` (`docs/public-api.json`) and `bun run docs:api`.
+
+## Definition of Done
+
+A change is complete only when:
+
+- ownership and dependency direction remain valid;
+- public descriptors and metadata remain immutable;
+- success, failure, edge, and regression behavior are tested;
+- changed runtime sources appear in coverage;
+- aggregate line coverage remains at least 98%, function coverage at least 95%,
+  and every package's line coverage at least 95%;
+- required Bun, Vite+, example, generated-app, and release lanes pass;
+- documentation and examples match public behavior;
+- no broad coverage exclusion, untyped escape, or unexplained lint suppression
+  was introduced;
+- `AGENTS.md`, package guides, and this file describe the same enforced reality.

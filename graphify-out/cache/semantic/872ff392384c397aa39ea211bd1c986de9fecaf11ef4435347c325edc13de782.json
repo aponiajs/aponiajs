@@ -1,0 +1,28 @@
+{
+  "nodes": [
+    {
+      "id": "github_workflows_docs_docs_workflow",
+      "label": "Documentation Site Workflow",
+      "file_type": "document",
+      "source_file": ".github/workflows/docs.yml",
+      "source_location": "L1-L60",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "github_workflows_docs_docs_workflow",
+      "target": "github_workflows_ci_ci_workflow",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".github/workflows/docs.yml",
+      "source_location": "L35-L36",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

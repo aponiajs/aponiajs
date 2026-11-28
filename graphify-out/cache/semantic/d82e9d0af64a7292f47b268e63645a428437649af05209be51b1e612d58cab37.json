@@ -1,0 +1,39 @@
+{
+  "nodes": [
+    {
+      "id": "packages_compression_readme_package",
+      "label": "@aponiajs/compression Package README",
+      "file_type": "document",
+      "source_file": "packages/compression/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_compression_readme_encoding_negotiation",
+      "label": "Accept-Encoding Negotiation (Brotli Preferred)",
+      "file_type": "concept",
+      "source_file": "packages/compression/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_compression_readme_encoding_negotiation",
+      "target": "packages_compression_readme_package",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/compression/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

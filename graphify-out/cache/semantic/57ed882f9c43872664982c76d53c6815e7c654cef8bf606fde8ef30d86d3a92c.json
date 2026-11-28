@@ -1,0 +1,78 @@
+{
+  "nodes": [
+    {
+      "id": "docs_learn_01_overview_chapter",
+      "label": "Learn 01: Overview",
+      "file_type": "document",
+      "source_file": "docs/learn/01-overview.md",
+      "source_location": "lines 1-48",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_learn_01_overview_boot_pipeline",
+      "label": "Metadata-to-Boot Compilation Pipeline",
+      "file_type": "concept",
+      "source_file": "docs/learn/01-overview.md",
+      "source_location": "lines 7-28",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_learn_01_overview_boot_pipeline",
+      "target": "agents_two_authoring_layers",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/learn/01-overview.md",
+      "source_location": "lines 7-42",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_learn_01_overview_boot_pipeline",
+      "target": "agents_dependency_direction",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/learn/01-overview.md",
+      "source_location": "lines 18-27",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_learn_01_overview_chapter",
+      "target": "docs_learn_02_install_and_generate_chapter",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/learn/01-overview.md",
+      "source_location": "line 48",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "learning_path_foundations_sequence",
+      "label": "AponiaJS Learning Path Chapters 01-08",
+      "nodes": [
+        "docs_learn_01_overview_chapter",
+        "docs_learn_02_install_and_generate_chapter",
+        "docs_learn_03_modules_chapter",
+        "docs_learn_04_providers_and_injection_chapter",
+        "docs_learn_05_controllers_and_routes_chapter",
+        "docs_learn_06_validation_chapter",
+        "docs_learn_07_request_parameters_chapter",
+        "docs_learn_08_native_plugins_chapter"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/learn/01-overview.md"
+    }
+  ]
+}

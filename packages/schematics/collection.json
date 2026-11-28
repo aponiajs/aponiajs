@@ -1,0 +1,124 @@
+{
+  "$schema": "./dist/lib/collection-schema.json",
+  "schematics": {
+    "application": {
+      "factory": "./dist/lib/application/application.factory.js#main",
+      "description": "Create an Aponia application.",
+      "schema": "./dist/lib/application/schema.json"
+    },
+    "class": {
+      "factory": "./dist/lib/class/class.factory.js#main",
+      "description": "Create a class.",
+      "schema": "./dist/lib/class/schema.json",
+      "aliases": ["cl"]
+    },
+    "controller": {
+      "factory": "./dist/lib/controller/controller.factory.js#main",
+      "description": "Create an Aponia controller.",
+      "schema": "./dist/lib/controller/schema.json",
+      "aliases": ["co"]
+    },
+    "decorator": {
+      "factory": "./dist/lib/decorator/decorator.factory.js#main",
+      "description": "Create a decorator.",
+      "schema": "./dist/lib/decorator/schema.json",
+      "aliases": ["d"]
+    },
+    "filter": {
+      "factory": "./dist/lib/filter/filter.factory.js#main",
+      "description": "Create an exception filter.",
+      "schema": "./dist/lib/filter/schema.json",
+      "aliases": ["f"]
+    },
+    "gateway": {
+      "factory": "./dist/lib/gateway/gateway.factory.js#main",
+      "description": "Create a WebSocket gateway.",
+      "schema": "./dist/lib/gateway/schema.json",
+      "aliases": ["ga"]
+    },
+    "guard": {
+      "factory": "./dist/lib/guard/guard.factory.js#main",
+      "description": "Create a guard.",
+      "schema": "./dist/lib/guard/schema.json",
+      "aliases": ["gu"]
+    },
+    "interceptor": {
+      "factory": "./dist/lib/interceptor/interceptor.factory.js#main",
+      "description": "Create an interceptor.",
+      "schema": "./dist/lib/interceptor/schema.json",
+      "aliases": ["itc"]
+    },
+    "interface": {
+      "factory": "./dist/lib/interface/interface.factory.js#main",
+      "description": "Create an interface.",
+      "schema": "./dist/lib/interface/schema.json",
+      "aliases": ["itf"]
+    },
+    "middleware": {
+      "factory": "./dist/lib/middleware/middleware.factory.js#main",
+      "description": "Create a middleware.",
+      "schema": "./dist/lib/middleware/schema.json",
+      "aliases": ["mi"]
+    },
+    "module": {
+      "factory": "./dist/lib/module/module.factory.js#main",
+      "description": "Create an Aponia module.",
+      "schema": "./dist/lib/module/schema.json",
+      "aliases": ["mo"]
+    },
+    "pipe": {
+      "factory": "./dist/lib/pipe/pipe.factory.js#main",
+      "description": "Create a pipe.",
+      "schema": "./dist/lib/pipe/schema.json",
+      "aliases": ["pi"]
+    },
+    "provider": {
+      "factory": "./dist/lib/provider/provider.factory.js#main",
+      "description": "Create a provider.",
+      "schema": "./dist/lib/provider/schema.json",
+      "aliases": ["pr"]
+    },
+    "service": {
+      "factory": "./dist/lib/service/service.factory.js#main",
+      "description": "Create a service.",
+      "schema": "./dist/lib/service/schema.json",
+      "aliases": ["s"]
+    },
+    "resolver": {
+      "factory": "./dist/lib/resolver/resolver.factory.js#main",
+      "description": "Create a GraphQL resolver.",
+      "schema": "./dist/lib/resolver/schema.json",
+      "aliases": ["r"]
+    },
+    "configuration": {
+      "factory": "./dist/lib/configuration/configuration.factory.js#main",
+      "description": "Create an Aponia CLI configuration.",
+      "schema": "./dist/lib/configuration/schema.json",
+      "aliases": ["config"]
+    },
+    "library": {
+      "factory": "./dist/lib/library/library.factory.js#main",
+      "description": "Create a workspace library.",
+      "schema": "./dist/lib/library/schema.json",
+      "aliases": ["lib"]
+    },
+    "sub-app": {
+      "factory": "./dist/lib/sub-app/sub-app.factory.js#main",
+      "description": "Create a workspace application.",
+      "schema": "./dist/lib/sub-app/schema.json",
+      "aliases": ["app"]
+    },
+    "resource": {
+      "factory": "./dist/lib/resource/resource.factory.js#main",
+      "description": "Create a resource.",
+      "schema": "./dist/lib/resource/schema.json",
+      "aliases": ["res"]
+    },
+    "upgrade": {
+      "factory": "./dist/lib/upgrade/upgrade.factory.js#main",
+      "description": "Upgrade the Aponia packages to the current release channel.",
+      "schema": "./dist/lib/upgrade/schema.json",
+      "aliases": ["update"]
+    }
+  }
+}

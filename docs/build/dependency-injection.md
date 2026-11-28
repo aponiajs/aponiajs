@@ -1,0 +1,372 @@
+# Dependency Injection
+
+Aponia resolves dependencies from a module graph that is compiled and validated
+before the application starts. Graph and bootstrap configuration failures are
+raised before the application listens. WebSocket message failures can also be
+raised later, while a connected client sends messages.
+
+## Providers
+
+A class listed in `providers` is registered under itself and constructed with
+its declared constructor dependencies:
+
+```ts
+import { Injectable, Module } from "@aponiajs/common";
+
+@Injectable()
+export class UserService {}
+
+@Module({ providers: [UserService] })
+export class UserModule {}
+```
+
+`@Injectable()` writes no metadata of its own. It exists so TypeScript emits the
+constructor parameter types that the platform reads.
+
+The descriptor helpers cover the remaining provider shapes and are also the
+hand-written alternative to decorators:
+
+```ts
+import {
+  createToken,
+  provideAlias,
+  provideClass,
+  provideFactory,
+  provideValue,
+} from "@aponiajs/common";
+
+const APP_NAME = createToken<string>("APP_NAME");
+const GREETING = createToken<string>("GREETING");
+
+provideValue(APP_NAME, "my-api");
+provideFactory(GREETING, [APP_NAME], (name) => `Hello from ${name}`);
+provideClass(UserService, [GREETING]);
+provideAlias(LEGACY_GREETING, GREETING);
+```
+
+- `provideValue` registers an existing value.
+- `provideFactory` calls the factory with the resolved `inject` tokens.
+- `provideClass(Class, inject)` constructs the class with the resolved `inject`
+  tokens, under the class's own token.
+- `provideClass(token, Class, inject)` binds that construction to a _different_
+  token, which is how one implementation stands behind a port without the port
+  naming a class: `provideClass(USERS_REPOSITORY, SqlUsersRepository, [Database])`.
+  The class is not reachable under its own token unless a second provider
+  declares it.
+- `provideAlias` points one token at another.
+
+A Nest-shaped object literal is accepted wherever a module declares providers:
+`{ provide, useClass, useValue, useFactory, useExisting, inject? }` lowers to
+one of the forms above. A decorated `useClass` without `inject` infers its
+constructor dependencies; a descriptor written by hand should state `inject`
+explicitly, because `defineModule` does not read decorator metadata.
+
+## Configurable modules
+
+`ConfigurableModuleBuilder` generates the registration pair a library module
+exposes: a synchronous method that stores literal options, an asynchronous
+method that builds the same options from the container, and the token both
+forms provide. The builder mirrors
+[`ConfigurableModuleBuilder`](https://github.com/nestjs/nest/blob/master/packages/common/module-utils/configurable-module.builder.ts)
+in Nest, including `setClassMethodName`, `setFactoryMethodName`, `setExtras`,
+`MODULE_OPTIONS_TOKEN`, `OPTIONS_TYPE`, and `ASYNC_OPTIONS_TYPE`.
+
+```ts
+import { ConfigurableModuleBuilder, Inject, Injectable, Module } from "@aponiajs/common";
+
+export interface GreetingOptions {
+  readonly prefix: string;
+  readonly isGlobal?: boolean;
+}
+
+const { ConfigurableModuleClass, MODULE_OPTIONS_TOKEN } = new ConfigurableModuleBuilder<
+  GreetingOptions,
+  "forRoot",
+  "create",
+  { readonly isGlobal: boolean }
+>()
+  .setClassMethodName("forRoot")
+  .setFactoryMethodName("create")
+  .setExtras({ isGlobal: false }, (definition, extras) => ({
+    ...definition,
+    global: extras.isGlobal,
+  }))
+  .build();
+
+@Injectable()
+export class GreetingService {
+  constructor(@Inject(MODULE_OPTIONS_TOKEN) readonly options: GreetingOptions) {}
+}
+
+@Module({ providers: [GreetingService], exports: [GreetingService] })
+export class GreetingModule extends ConfigurableModuleClass {}
+```
+
+An application registers it with literal options or with a container-built
+factory:
+
+```ts
+@Module({
+  imports: [
+    GreetingModule.forRoot({ prefix: "hello" }),
+    // or: GreetingModule.forRootAsync({ inject: [CONFIG], useFactory: (config) => config.greeting })
+  ],
+})
+export class AppModule {}
+```
+
+`forRootAsync` accepts the same three shapes Nest accepts. `useFactory` receives
+its `inject` tokens and may return the options object or a Promise for it.
+`useClass` and `useExisting` name a class implementing the factory method, whose
+method may also return a Promise. The boot awaits the result before any provider
+that injects `MODULE_OPTIONS_TOKEN` resolves, and a rejected factory refuses the
+boot with the same error it threw.
+
+`.setExtras` declares options that shape the module definition rather than the
+options object. The transform receives the generated `DynamicModule` and the
+merged extras, so `isGlobal`, route prefixes, or platform selection can be
+applied without putting those fields in the options token. `extraProviders`
+adds registration-specific providers beside the generated options provider.
+`forFeature` declares one named feature registration when a module contributes
+providers to an existing registration.
+
+## Scopes
+
+Aponia supports three provider lifetime scopes via the `Scope` object:
+
+```ts
+import { Injectable, Scope } from "@aponiajs/common";
+
+@Injectable({ scope: Scope.REQUEST })
+export class RequestContextTracker {}
+
+@Injectable({ scope: Scope.TRANSIENT })
+export class UniqueIdGenerator {}
+```
+
+- **`Scope.DEFAULT` (`"singleton"`)**: The default scope. Instantiated once per owning module, cached and shared across the application.
+- **`Scope.REQUEST` (`"request"`)**: Instantiated once per incoming request context. Cached for the duration of the request in connection with `RequestContextModule`. Outside of a request context, resolving a request-scoped provider raises `MISSING_REQUEST_CONTEXT`. The scope bubbles outward: a provider or controller that depends on request-scoped state is itself request-scoped, whatever its own declaration says, so it is constructed with the request that asks for it rather than refused.
+- **`Scope.TRANSIENT` (`"transient"`)**: A fresh instance is created on every injection or resolution.
+
+Descriptor providers also accept a trailing `scope` option:
+`provideClass(UniqueIdGenerator, [], { scope: Scope.TRANSIENT })`.
+
+### Request-scoped controllers
+
+A controller is request-scoped when it declares `@Injectable({ scope: Scope.REQUEST })`
+beside `@Controller()`, or when one of its constructor dependencies reaches a
+request-scoped provider. The platform constructs it once per request, so the
+controller instance can hold request state directly instead of reading it
+through `RequestContextService`.
+
+```ts
+@Injectable({ scope: Scope.REQUEST })
+@Controller("cart")
+export class CartController {
+  constructor(private readonly requestContext: RequestContextService) {}
+
+  @Get()
+  read() {
+    return this.requestContext.current()?.requestId;
+  }
+}
+```
+
+A request-scoped controller MUST declare its routes through decorators or
+route plans: a registration callback and a message pattern both close over one
+instance, so the boot refuses either with `INVALID_CONTROLLER`. Generated
+invokers close over one instance too, so `strictCodegen` refuses a
+request-scoped controller with `UNSAFE_CODE_GENERATION`. A WebSocket gateway
+must be singleton, and a gateway whose lifetime bubbles to request scope fails
+the boot with `INVALID_WEBSOCKET_GATEWAY`.
+
+The request context itself comes from `RequestContextModule`; without that
+registration a request-scoped provider or controller fails its first resolution
+with `MISSING_REQUEST_CONTEXT`.
+
+## Global Modules
+
+By default, modules are encapsulated. If a module provides utility services that should be accessible everywhere without needing explicit `imports` in every feature module, mark it with `@Global()`:
+
+```ts
+import { Global, Module } from "@aponiajs/common";
+
+@Global()
+@Module({
+  providers: [DatabaseService],
+  exports: [DatabaseService],
+})
+export class DatabaseModule {}
+```
+
+Exported providers from global modules are visible across the entire module graph. Hand-written descriptors declare `global: true` on `defineModule({ id: "db", global: true, ... })`.
+
+## Circular Dependencies
+
+When two modules or two providers mutually depend on each other, use `forwardRef()` to defer evaluation:
+
+```ts
+import { Module, forwardRef } from "@aponiajs/common";
+
+@Module({
+  imports: [forwardRef(() => AuthModule)],
+  providers: [UserService],
+  exports: [UserService],
+})
+export class UserModule {}
+```
+
+For circular provider dependencies, inject with `@Inject(forwardRef(() => Service))`:
+
+```ts
+import { Inject, Injectable, forwardRef } from "@aponiajs/common";
+
+@Injectable()
+export class UserService {
+  constructor(
+    @Inject(forwardRef(() => AuthService))
+    private readonly authService: AuthService,
+  ) {}
+}
+```
+
+The container resolves cyclic provider dependencies transparently using lazy Proxies once both instances are constructed.
+
+## Module references
+
+A provider that injects `ModuleRef` resolves tokens from the module that
+received it, not from the root. `get` reads the cached instance, `resolve`
+accepts a request context, and `create` instantiates a fresh provider without
+replacing the cached one:
+
+```ts
+import { Injectable, ModuleRef, type Token } from "@aponiajs/common";
+
+@Injectable()
+class PluginHost {
+  constructor(private readonly moduleRef: ModuleRef) {}
+
+  read<T>(token: Token<T>): T {
+    return this.moduleRef.get(token);
+  }
+
+  own<T>(token: Token<T>): T {
+    return this.moduleRef.create(token);
+  }
+}
+```
+
+A request-scoped provider needs the context for both `resolve` and `create`;
+every other lifetime produces a new instance from `create`. Use it when the
+caller must own the instance, such as a plugin that registers a worker.
+
+## Tokens
+
+A class is its own token. Anything else — a string, a configuration object, a
+function — needs an explicit token, because a type cannot be injected:
+
+```ts
+import { Controller, Get, Inject, createToken } from "@aponiajs/common";
+
+export const APP_NAME = createToken<string>("APP_NAME");
+
+@Controller()
+export class AppController {
+  constructor(@Inject(APP_NAME) private readonly appName: string) {}
+
+  @Get()
+  getName(): string {
+    return this.appName;
+  }
+}
+```
+
+`createToken<T>(description)` returns a frozen, unique token carrying its value
+type. The description is only used in diagnostics.
+
+Constructor dependencies follow the constructor that actually runs. A subclass
+that declares no constructor of its own runs the parent's, so it resolves the
+parent's reflected parameter types and its `@Inject()` tokens. A subclass that
+declares its own constructor reads its own metadata, and only the sources it
+does not declare fall back to the parent's.
+
+## Visibility
+
+A provider is private to its module until the module exports it, and an importer
+only sees what it imported:
+
+```ts
+import { Module } from "@aponiajs/common";
+
+@Module({
+  providers: [UserService, PasswordHasher],
+  exports: [UserService],
+})
+export class UserModule {}
+
+@Module({ imports: [UserModule], controllers: [AccountController] })
+export class AccountModule {}
+```
+
+`AccountModule` resolves `UserService` and cannot reach `PasswordHasher`.
+Resolution checks the module's own providers first, then the exports of the
+modules it imports. Two imports that resolve the token to different modules is an
+error rather than a silent winner; two that re-export one shared provider agree on
+it, because both reach the same declaring module.
+
+## Failures
+
+Framework diagnostics throw `AponiaError` with a stable `code` and frozen
+`details`, so assertions never depend on message text. WebSocket message failures
+are delivered in the gateway's `exception` envelope with the same stable code;
+they do not throw through the application HTTP error path.
+
+| Code                                  | Raised when                                                                 |
+| ------------------------------------- | --------------------------------------------------------------------------- |
+| `MODULE_CYCLE`                        | Module imports form a cycle                                                 |
+| `DUPLICATE_MODULE`                    | One module id belongs to two definitions                                    |
+| `DUPLICATE_PROVIDER`                  | A module declares the same token twice                                      |
+| `INVALID_EXPORT`                      | A module exports a token it cannot resolve                                  |
+| `AMBIGUOUS_PROVIDER`                  | Two imports resolve the token to different modules                          |
+| `MISSING_PROVIDER`                    | A dependency cannot be resolved (includes contextual hints in details)      |
+| `PROVIDER_CYCLE`                      | Providers depend on each other in a cycle                                   |
+| `MISSING_REQUEST_CONTEXT`             | A request-scoped provider is resolved outside an active request context     |
+| `UNSUPPORTED_PROVIDER_SCOPE`          | A provider declares an unsupported or unrecognized lifetime scope           |
+| `INVALID_PROVIDER`                    | A provider entry is not a provider descriptor this release can read         |
+| `UNRESOLVED_CONSTRUCTOR_DEPENDENCIES` | A class provider's constructor dependencies cannot be read                  |
+| `INVALID_MODULE`                      | A class is used as a module without `@Module()`                             |
+| `INVALID_CONTROLLER`                  | A controller is missing `@Controller()`, or a route handler is not callable |
+| `UNSUPPORTED_CONTROLLER`              | A controller cannot be mounted by the platform                              |
+| `DUPLICATE_ROUTE`                     | Two controllers claim one method and path                                   |
+| `INVALID_CONFIGURATION`               | A configuration's declaration or answer is not one this release can use     |
+| `INVALID_CONFIGURATION_VALUE`         | A configuration's value is refused by its own schema                        |
+| `INVALID_VALIDATION_MODEL`            | A route uses a class without `@Validation()`                                |
+| `INVALID_NATIVE_APPLICATION`          | `configureNative` returned a different Elysia instance                      |
+| `UNSUPPORTED_ELYSIA_VERSION`          | The installed Elysia does not expose the route API this platform calls      |
+| `APPLICATION_NOT_LISTENING`           | `getUrl()` is called before `listen()`                                      |
+| `UNSUPPORTED_ARGUMENT_HOST`           | An execution context is asked for an argument host it does not provide      |
+| `INVALID_WEBSOCKET_GATEWAY`           | A gateway declaration or lifecycle method is invalid                        |
+| `DUPLICATE_WEBSOCKET_GATEWAY`         | Two gateways claim the same path                                            |
+| `DUPLICATE_WEBSOCKET_HANDLER`         | One gateway declares the same message event more than once                  |
+| `INVALID_WEBSOCKET_MESSAGE`           | A received WebSocket message is not a valid `{ event, data }` envelope      |
+| `UNKNOWN_WEBSOCKET_EVENT`             | A client sends an event the gateway does not subscribe to                   |
+| `WEBSOCKET_HANDLER_ERROR`             | A message or lifecycle handler fails                                        |
+
+The first three WebSocket codes describe gateway declarations and are raised
+during bootstrap. The last three describe messages after a connection has
+opened; they are sent to the client through the gateway's `exception` envelope.
+
+```ts
+import { AponiaError } from "@aponiajs/common";
+
+try {
+  await AponiaFactory.create(AppModule);
+} catch (error) {
+  if (error instanceof AponiaError && error.code === "MISSING_PROVIDER") {
+    console.error(error.details);
+  }
+}
+```
+
+See the [architecture guide](./architecture-and-style.md) for the module,
+controller, and service conventions these rules support.

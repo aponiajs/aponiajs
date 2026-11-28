@@ -1,0 +1,115 @@
+{
+  "nodes": [
+    {
+      "id": "packages_schematics_agents_guide",
+      "label": "@aponiajs/schematics Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/schematics/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_schematics_agents_collection_json",
+      "label": "collection.json",
+      "file_type": "concept",
+      "source_file": "packages/schematics/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_schematics_agents_schematic_factory_contract",
+      "label": "Plain-Function Schematic Factory Contract",
+      "file_type": "rationale",
+      "rationale": "Defines factories as (options) => { files } without an @angular-devkit/schematics dependency so publishing or consuming third-party collections requires no Angular DevKit runtime.",
+      "source_file": "packages/schematics/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_schematics_agents_tmpl_exclusion",
+      "label": "Template .tmpl Suffix Exclusion",
+      "file_type": "rationale",
+      "rationale": "Every template carries a .tmpl suffix and src/lib/**/files/** is excluded from check lanes so <%= ... %> placeholders never reach tsc, Oxlint, or Oxfmt.",
+      "source_file": "packages/schematics/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_schematics_agents_upgrade_schematic",
+      "label": "upgrade / update Schematic",
+      "file_type": "concept",
+      "rationale": "Plans no files because @aponiajs/cli owns manifest rewriting and package installation using workspace version resolution; the factory exists so the update alias resolves uniformly.",
+      "source_file": "packages/schematics/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_schematics_agents_guide",
+      "target": "packages_schematics_agents_collection_json",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/schematics/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_schematics_agents_schematic_factory_contract",
+      "target": "packages_schematics_agents_collection_json",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/schematics/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_schematics_agents_tmpl_exclusion",
+      "target": "packages_schematics_agents_guide",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/schematics/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_schematics_agents_guide",
+      "target": "packages_schematics_agents_upgrade_schematic",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/schematics/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_schematics_agents_guide",
+      "target": "packages_schematics_provenance_doc",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/schematics/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

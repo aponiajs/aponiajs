@@ -1,0 +1,16 @@
+# @aponiajs/terminus
+
+> Nest-compatible Terminus health checks and indicators for AponiaJS (`TerminusModule`, `HealthCheckService`, `@HealthCheck()`, HTTP, memory, and disk indicators).
+
+## Key exports
+
+- `TerminusModule.forRoot(options)` / `TerminusModule.forRootAsync(options)`
+- `HealthCheckService`
+- `@HealthCheck()`
+- `HealthIndicatorService` / `HealthIndicator`
+- `HttpHealthIndicator` / `MemoryHealthIndicator` / `DiskHealthIndicator`
+
+## Links
+
+- [Package README](./README.md)
+- [Published packages](../../docs/reference/packages.md)

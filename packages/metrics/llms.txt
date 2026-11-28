@@ -1,0 +1,13 @@
+# @aponiajs/metrics
+
+> Zero-dependency Prometheus metrics exposition, HTTP request histograms, and runtime gauges for an AponiaJS application.
+
+## What this package exports
+
+- `MetricsModule.forRoot(options?)` and `MetricsModule.forRootAsync(options)`
+- `MetricsService`: `counter()`, `gauge()`, `histogram()`, `render()`, `reset()`
+- `MODULE_OPTIONS_TOKEN`, `METRICS_OPTIONS`, `PROMETHEUS_CONTENT_TYPE`, `DEFAULT_HTTP_BUCKETS`
+
+## Documentation
+
+- [Published packages](../../docs/reference/packages.md)

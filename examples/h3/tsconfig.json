@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["ESNext"],
+    "moduleDetection": "force",
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "types": ["bun"],
+    "strict": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "paths": {
+      "@aponiajs/common": ["../../packages/common/src/index.ts"],
+      "@aponiajs/core": ["../../packages/core/src/index.ts"],
+      "@aponiajs/platform-h3": ["../../packages/platform-h3/src/index.ts"]
+    }
+  },
+  "include": ["src", "test"]
+}

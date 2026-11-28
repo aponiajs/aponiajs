@@ -1,0 +1,135 @@
+{
+  "nodes": [
+    {
+      "id": "packages_common_readme_package",
+      "label": "@aponiajs/common Package README",
+      "file_type": "document",
+      "source_file": "packages/common/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_common_readme_route_validation",
+      "label": "Route Validation Models and Standard Schema Slots",
+      "file_type": "concept",
+      "source_file": "packages/common/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "@Validation() associates one validator with a class so Zod, ArkType, Valibot, or TypeBox validators reject invalid requests before handler code across body, query, params, headers, cookie, and response slots."
+    },
+    {
+      "id": "packages_common_readme_execution_enhancers",
+      "label": "Execution Enhancers (Guards, Interceptors, Filters)",
+      "file_type": "concept",
+      "source_file": "packages/common/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Method enhancers run after controller enhancers; guards return false for a Problem Details 403, interceptors split into interceptBefore/interceptAfter without next.handle(), and filters returning null/undefined decline to the next filter."
+    },
+    {
+      "id": "packages_common_readme_pipes_surface",
+      "label": "Built-In Transformation and Validation Pipes",
+      "file_type": "concept",
+      "source_file": "packages/common/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_common_readme_route_middleware",
+      "label": "Module-Configured Route Middleware",
+      "file_type": "concept",
+      "source_file": "packages/common/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_common_readme_websocket_gateways",
+      "label": "Platform-Neutral WebSocket Gateways",
+      "file_type": "concept",
+      "source_file": "packages/common/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_common_readme_route_validation",
+      "target": "packages_common_readme_package",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/common/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_common_readme_route_validation",
+      "target": "packages_common_agents_validator_schema_contract",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/common/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_common_readme_execution_enhancers",
+      "target": "packages_common_agents_execution_context",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/common/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_common_readme_pipes_surface",
+      "target": "packages_common_readme_package",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/common/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_common_readme_route_middleware",
+      "target": "packages_common_readme_package",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/common/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_common_readme_websocket_gateways",
+      "target": "packages_common_readme_package",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/common/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

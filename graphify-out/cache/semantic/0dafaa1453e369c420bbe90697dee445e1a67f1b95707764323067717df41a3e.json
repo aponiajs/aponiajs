@@ -1,0 +1,92 @@
+{
+  "nodes": [
+    {
+      "id": "docs_services_devtools_aponiajs_devtools",
+      "label": "@aponiajs/devtools",
+      "file_type": "concept",
+      "source_file": "docs/services/devtools.md",
+      "source_location": "L1-L28",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_devtools_devtoolsmodule",
+      "label": "DevtoolsModule",
+      "file_type": "concept",
+      "source_file": "docs/services/devtools.md",
+      "source_location": "L13-L28, L49-L57",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_devtools_devtools_endpoints",
+      "label": "/__devtools HTTP Inspection Endpoints",
+      "file_type": "concept",
+      "source_file": "docs/services/devtools.md",
+      "source_location": "L30-L47",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_devtools_neutral_boot_record",
+      "label": "Neutral Boot Record & Leaf Opt-In Design",
+      "file_type": "rationale",
+      "source_file": "docs/services/devtools.md",
+      "source_location": "L58-L98",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Projects exclusively from the platform-neutral boot record and RequestLifecycleHook instead of reading native route tables, enabling parity across Elysia, Hono, H3, and Web Fetch with explicitly documented degradations."
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_services_devtools_devtoolsmodule",
+      "target": "docs_services_devtools_aponiajs_devtools",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/devtools.md",
+      "source_location": "L13-L28",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_devtools_devtools_endpoints",
+      "target": "docs_services_devtools_devtoolsmodule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/devtools.md",
+      "source_location": "L30-L57",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_devtools_neutral_boot_record",
+      "target": "docs_services_devtools_aponiajs_devtools",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/devtools.md",
+      "source_location": "L58-L98",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_devtools_neutral_boot_record",
+      "target": "docs_tooling_plugin_packages_authoring_a_plugin_package",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/devtools.md",
+      "source_location": "L114",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

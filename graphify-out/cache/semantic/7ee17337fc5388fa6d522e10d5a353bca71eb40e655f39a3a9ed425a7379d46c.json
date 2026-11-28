@@ -1,0 +1,119 @@
+{
+  "nodes": [
+    {
+      "id": "packages_store_redis_readme_aponiajs_store_redis",
+      "label": "@aponiajs/store-redis",
+      "file_type": "document",
+      "source_file": "packages/store-redis/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_store_redis_readme_rediscachestore",
+      "label": "RedisCacheStore",
+      "file_type": "concept",
+      "source_file": "packages/store-redis/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_store_redis_readme_redisratelimitstore",
+      "label": "RedisRateLimitStore",
+      "file_type": "concept",
+      "source_file": "packages/store-redis/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_store_redis_readme_redissessionstore",
+      "label": "RedisSessionStore",
+      "file_type": "concept",
+      "source_file": "packages/store-redis/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_store_redis_readme_redisrevocationstore",
+      "label": "RedisRevocationStore",
+      "file_type": "concept",
+      "source_file": "packages/store-redis/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_store_redis_readme_redisrefreshtokenstore",
+      "label": "RedisRefreshTokenStore",
+      "file_type": "concept",
+      "source_file": "packages/store-redis/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_store_redis_readme_rediscachestore",
+      "target": "packages_store_redis_readme_aponiajs_store_redis",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/store-redis/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_store_redis_readme_redissessionstore",
+      "target": "packages_store_redis_readme_aponiajs_store_redis",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/store-redis/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_store_redis_readme_redisrevocationstore",
+      "target": "packages_store_redis_readme_aponiajs_store_redis",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/store-redis/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "redis_store_implementations",
+      "label": "Redis Store Implementations of Framework Store Contracts",
+      "nodes": [
+        "packages_store_redis_readme_rediscachestore",
+        "packages_store_redis_readme_redisratelimitstore",
+        "packages_store_redis_readme_redissessionstore",
+        "packages_store_redis_readme_redisrevocationstore",
+        "packages_store_redis_readme_redisrefreshtokenstore"
+      ],
+      "relation": "implement",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/store-redis/README.md"
+    }
+  ]
+}

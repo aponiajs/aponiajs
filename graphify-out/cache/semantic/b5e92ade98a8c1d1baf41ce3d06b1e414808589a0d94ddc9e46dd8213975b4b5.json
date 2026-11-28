@@ -1,0 +1,233 @@
+{
+  "nodes": [
+    {
+      "id": "packages_devtools_agents_aponiajs_devtools",
+      "label": "@aponiajs/devtools",
+      "file_type": "concept",
+      "source_file": "packages/devtools/AGENTS.md",
+      "source_location": "line 8",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Opt-in read-only runtime inspection surface mounted under /__devtools as a controller and lifecycle hook with zero platform imports."
+    },
+    {
+      "id": "packages_devtools_agents_devtoolsmodule",
+      "label": "DevtoolsModule",
+      "file_type": "concept",
+      "source_file": "packages/devtools/AGENTS.md",
+      "source_location": "line 16",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Registration is the sole opt-in switch; when enabled is false it mounts no provider, controller, or route and never reads environment variables."
+    },
+    {
+      "id": "packages_devtools_agents_devtoolsoptions",
+      "label": "DevtoolsOptions",
+      "file_type": "concept",
+      "source_file": "packages/devtools/AGENTS.md",
+      "source_location": "line 16",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_devtools_agents_boot_diagnostics",
+      "label": "BOOT_DIAGNOSTICS",
+      "file_type": "concept",
+      "source_file": "packages/devtools/AGENTS.md",
+      "source_location": "line 39",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Neutral boot record published by the platform so /graph, /routes, and /flow project identical payloads across Elysia, Hono, H3, and Web Fetch."
+    },
+    {
+      "id": "packages_devtools_agents_requestlifecyclehook",
+      "label": "RequestLifecycleHook (Devtools)",
+      "file_type": "concept",
+      "source_file": "packages/devtools/AGENTS.md",
+      "source_location": "line 43",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Stamps arrival in onRequest, writes response in onResponse, and records failures in onError while excluding /__devtools requests."
+    },
+    {
+      "id": "packages_devtools_agents_handledevtoolsrequest",
+      "label": "handleDevtoolsRequest",
+      "file_type": "concept",
+      "source_file": "packages/devtools/AGENTS.md",
+      "source_location": "line 17",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_devtools_agents_createhandlers",
+      "label": "createHandlers",
+      "file_type": "concept",
+      "source_file": "packages/devtools/AGENTS.md",
+      "source_location": "line 17",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_devtools_agents_cli_aot_dynamic_import",
+      "label": "@aponiajs/cli /aot Dynamic Import",
+      "file_type": "concept",
+      "source_file": "packages/devtools/AGENTS.md",
+      "source_location": "line 54",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Loaded via dynamic import only on the first /aot request and cached process-wide so unused devtools avoids CLI load overhead."
+    },
+    {
+      "id": "packages_devtools_agents_devtools_degradations",
+      "label": "Documented Devtools Degradations",
+      "file_type": "rationale",
+      "source_file": "packages/devtools/AGENTS.md",
+      "source_location": "line 48",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Native hooks and non-graph routes are absent from neutral records, non-GET requests through router return 404, request bodies are stored as raw text without state snapshots, and mappedExceptions is optional."
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_devtools_agents_aponiajs_devtools",
+      "target": "packages_devtools_agents_devtoolsmodule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/devtools/AGENTS.md",
+      "source_location": "line 16",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_devtools_agents_devtoolsmodule",
+      "target": "packages_devtools_agents_devtoolsoptions",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/devtools/AGENTS.md",
+      "source_location": "line 16",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_devtools_agents_devtoolsmodule",
+      "target": "packages_devtools_agents_requestlifecyclehook",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/devtools/AGENTS.md",
+      "source_location": "line 34",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_devtools_agents_devtoolsmodule",
+      "target": "packages_devtools_agents_boot_diagnostics",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/devtools/AGENTS.md",
+      "source_location": "line 39",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_devtools_agents_createhandlers",
+      "target": "packages_devtools_agents_boot_diagnostics",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/devtools/AGENTS.md",
+      "source_location": "line 17",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_devtools_agents_handledevtoolsrequest",
+      "target": "packages_devtools_agents_createhandlers",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/devtools/AGENTS.md",
+      "source_location": "line 17",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_devtools_agents_handledevtoolsrequest",
+      "target": "packages_devtools_agents_cli_aot_dynamic_import",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/devtools/AGENTS.md",
+      "source_location": "line 54",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_devtools_agents_devtools_degradations",
+      "target": "packages_devtools_agents_aponiajs_devtools",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/devtools/AGENTS.md",
+      "source_location": "line 48",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_create_aponia_agents_aponiajs_cli_delegation",
+      "target": "packages_devtools_agents_cli_aot_dynamic_import",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "packages/devtools/AGENTS.md",
+      "source_location": "line 55",
+      "weight": 0.75
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "platform_neutral_leaf_modules",
+      "label": "Platform-Neutral Leaf Feature Modules",
+      "nodes": [
+        "packages_cors_readme_corsmodule",
+        "packages_cron_agents_cronmodule",
+        "packages_database_agents_databasemodule",
+        "packages_devtools_agents_devtoolsmodule",
+        "packages_events_agents_eventemittermodule"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "packages/devtools/AGENTS.md"
+    },
+    {
+      "id": "devtools_inspection_pipeline",
+      "label": "Devtools Neutral Runtime Inspection Pipeline",
+      "nodes": [
+        "packages_devtools_agents_devtoolsmodule",
+        "packages_devtools_agents_boot_diagnostics",
+        "packages_devtools_agents_requestlifecyclehook",
+        "packages_devtools_agents_createhandlers",
+        "packages_devtools_agents_handledevtoolsrequest"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/devtools/AGENTS.md"
+    }
+  ]
+}

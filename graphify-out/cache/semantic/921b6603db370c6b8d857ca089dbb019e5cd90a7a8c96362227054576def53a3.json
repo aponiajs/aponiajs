@@ -1,0 +1,62 @@
+{
+  "nodes": [
+    {
+      "id": "roadmap_project_roadmap",
+      "label": "AponiaJS Project Roadmap",
+      "file_type": "document",
+      "source_file": "ROADMAP.md",
+      "source_location": "lines 1-158",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "roadmap_independent_platforms_architecture",
+      "label": "Independent HTTP Platforms (Elysia, Hono, H3) & Retired platform-nitro",
+      "file_type": "concept",
+      "rationale": "Elysia, Hono, and H3 depend only on common, core, and platform-core; platform-nitro was retired in favor of @aponiajs/nitro booting on @aponiajs/platform-h3.",
+      "source_file": "ROADMAP.md",
+      "source_location": "lines 71-86, 117-127",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "roadmap_non_goals",
+      "label": "AponiaJS Deliberate Non-Goals",
+      "file_type": "rationale",
+      "rationale": "Excludes a Node.js runtime track, class-validator/class-transformer, Socket.IO rooms, Express/Fastify MVC adapters, Prisma/TypeORM adapters, and built-in queue brokers.",
+      "source_file": "ROADMAP.md",
+      "source_location": "lines 147-158",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "roadmap_independent_platforms_architecture",
+      "target": "agents_dependency_direction",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "ROADMAP.md",
+      "source_location": "lines 73-76",
+      "weight": 1.0
+    },
+    {
+      "source": "roadmap_independent_platforms_architecture",
+      "target": "agents_platform_parity_capability_model",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "ROADMAP.md",
+      "source_location": "lines 103-110, 121-126",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

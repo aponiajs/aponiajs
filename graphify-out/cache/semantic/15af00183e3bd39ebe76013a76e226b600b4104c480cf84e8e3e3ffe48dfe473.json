@@ -1,0 +1,17 @@
+{
+  "nodes": [
+    {
+      "id": "github_dependabot_dependabot_config",
+      "label": "Dependabot Update Schedule",
+      "file_type": "document",
+      "source_file": ".github/dependabot.yml",
+      "source_location": "L1-L32",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [],
+  "hyperedges": []
+}

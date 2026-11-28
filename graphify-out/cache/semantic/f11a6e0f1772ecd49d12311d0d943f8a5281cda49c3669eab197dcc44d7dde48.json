@@ -1,0 +1,224 @@
+{
+  "nodes": [
+    {
+      "id": "packages_database_agents_aponiajs_database",
+      "label": "@aponiajs/database",
+      "file_type": "concept",
+      "source_file": "packages/database/AGENTS.md",
+      "source_location": "line 8",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Drizzle-first boundary providing transactions, single-table repositories, and SQL migrations without building a pool or picking a dialect."
+    },
+    {
+      "id": "packages_database_agents_drizzle_orm",
+      "label": "drizzle-orm",
+      "file_type": "concept",
+      "source_file": "packages/database/AGENTS.md",
+      "source_location": "line 29",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_database_agents_databasemodule",
+      "label": "DatabaseModule",
+      "file_type": "concept",
+      "source_file": "packages/database/AGENTS.md",
+      "source_location": "line 13",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "ConfigurableModuleBuilder registration supporting forRoot and forRootAsync, validating database, migrations, store, and lock eagerly with a total issue list."
+    },
+    {
+      "id": "packages_database_agents_database_module_options",
+      "label": "DATABASE_MODULE_OPTIONS",
+      "file_type": "concept",
+      "source_file": "packages/database/AGENTS.md",
+      "source_location": "line 21",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_database_agents_databaseservice",
+      "label": "DatabaseService",
+      "file_type": "concept",
+      "source_file": "packages/database/AGENTS.md",
+      "source_location": "line 14",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Keeps transaction() and transactionSync() distinct because synchronous drivers like Bun SQLite commit immediately when the callback returns."
+    },
+    {
+      "id": "packages_database_agents_createrepository",
+      "label": "createRepository",
+      "file_type": "concept",
+      "source_file": "packages/database/AGENTS.md",
+      "source_location": "line 15",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Copies and freezes returned rows so driver-owned row objects are never mutated or exposed."
+    },
+    {
+      "id": "packages_database_agents_migrationrunner",
+      "label": "MigrationRunner",
+      "file_type": "concept",
+      "source_file": "packages/database/AGENTS.md",
+      "source_location": "line 16",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Applies ordered SQL files during onModuleInit, verifies SHA-256 checksums, shares driver transactions when present, and stops at first failure without recording."
+    },
+    {
+      "id": "packages_database_agents_migrationlock",
+      "label": "MigrationLock",
+      "file_type": "concept",
+      "source_file": "packages/database/AGENTS.md",
+      "source_location": "line 45",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Application-supplied advisory lock acquired before reading applied migrations and released in finally without owning dialect-specific lock SQL."
+    },
+    {
+      "id": "packages_database_agents_invalid_database_options",
+      "label": "INVALID_DATABASE_OPTIONS",
+      "file_type": "concept",
+      "source_file": "packages/database/AGENTS.md",
+      "source_location": "line 50",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_database_agents_database_write_failed",
+      "label": "DATABASE_WRITE_FAILED",
+      "file_type": "concept",
+      "source_file": "packages/database/AGENTS.md",
+      "source_location": "line 51",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_database_agents_invalid_migration",
+      "label": "INVALID_MIGRATION",
+      "file_type": "concept",
+      "source_file": "packages/database/AGENTS.md",
+      "source_location": "line 52",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_database_agents_aponiajs_database",
+      "target": "packages_database_agents_drizzle_orm",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/database/AGENTS.md",
+      "source_location": "line 29",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_database_agents_aponiajs_database",
+      "target": "packages_database_agents_databasemodule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/database/AGENTS.md",
+      "source_location": "line 13",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_database_agents_databasemodule",
+      "target": "packages_database_agents_database_module_options",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/database/AGENTS.md",
+      "source_location": "line 21",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_database_agents_databasemodule",
+      "target": "packages_database_agents_databaseservice",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/database/AGENTS.md",
+      "source_location": "line 14",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_database_agents_migrationrunner",
+      "target": "packages_database_agents_migrationlock",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/database/AGENTS.md",
+      "source_location": "line 45",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_database_agents_databasemodule",
+      "target": "packages_database_agents_invalid_database_options",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/database/AGENTS.md",
+      "source_location": "line 50",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_database_agents_createrepository",
+      "target": "packages_database_agents_database_write_failed",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/database/AGENTS.md",
+      "source_location": "line 51",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_database_agents_migrationrunner",
+      "target": "packages_database_agents_invalid_migration",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/database/AGENTS.md",
+      "source_location": "line 42",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cron_agents_cronmodule",
+      "target": "packages_database_agents_databasemodule",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "packages/database/AGENTS.md",
+      "source_location": "line 20",
+      "weight": 0.75
+    }
+  ],
+  "hyperedges": []
+}

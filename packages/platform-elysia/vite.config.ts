@@ -7,17 +7,18 @@ export default defineConfig({
       "@aponiajs/core": new URL("../core/src/index.ts", import.meta.url).pathname,
     },
     globals: true,
-    include: ["tests-vp/**/*.conformance.ts"],
+    include: ["test/**/*.conformance.ts"],
   },
   pack: {
-    tsconfig: "tsconfig.build.json",
-    dts: {
-      tsgo: true,
-      tsconfig: "tsconfig.build.json",
+    entry: {
+      index: "src/index.ts",
+      register: "src/compiler/register.ts",
     },
+    tsconfig: "tsconfig.build.json",
+    dts: true,
     exports: true,
     deps: {
-      neverBundle: ["@aponiajs/common", "@aponiajs/core", "elysia"],
+      neverBundle: ["@aponiajs/common", "@aponiajs/core", "bun", "elysia"],
     },
   },
   lint: {

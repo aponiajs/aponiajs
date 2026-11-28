@@ -1,0 +1,72 @@
+{
+  "nodes": [
+    {
+      "id": "packages_platform_hono_agents_guide",
+      "label": "@aponiajs/platform-hono Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/platform-hono/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_hono_agents_createhonohost",
+      "label": "createHonoHost and Hono Runtime Binding",
+      "file_type": "concept",
+      "rationale": "Registers routes via app.on/app.all, mounts module middleware on Hono, upgrades WebSocket gateways via Hono's Bun adapter, and starts Bun.serve on listen.",
+      "source_file": "packages/platform-hono/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_hono_agents_platform_independence",
+      "label": "Hono Platform Independence and Shared Surface",
+      "file_type": "rationale",
+      "rationale": "Depends only on common, core, and platform-core (never another platform) with hono as peer dependency; delegates validation, enhancers, lifecycle, and version negotiation to platform-core.",
+      "source_file": "packages/platform-hono/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_platform_hono_agents_createhonohost",
+      "target": "packages_platform_core_llms_platform_core",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-hono/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_hono_agents_platform_independence",
+      "target": "packages_platform_hono_agents_createhonohost",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-hono/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_hono_agents_createhonohost",
+      "target": "packages_platform_h3_agents_createh3host",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/platform-hono/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

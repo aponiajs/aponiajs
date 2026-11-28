@@ -1,0 +1,8 @@
+{
+  "collection": "@aponiajs/schematics",
+  "sourceRoot": "src",
+  "entryFile": "main",
+  "language": "ts",
+  "generateOptions": { "spec": true },
+  "compilerOptions": { "deleteOutDir": true }
+}

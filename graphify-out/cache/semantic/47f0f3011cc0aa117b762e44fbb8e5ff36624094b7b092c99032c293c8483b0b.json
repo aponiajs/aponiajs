@@ -1,0 +1,100 @@
+{
+  "nodes": [
+    {
+      "id": "scratch_nestjs_dx_parity_issues_10_cli_templates_and_resource_dx_cli_new_starter_template",
+      "label": "aponia new NestJS-Idiomatic Starter Template",
+      "file_type": "concept",
+      "source_file": ".scratch/nestjs-dx-parity/issues/10-cli-templates-and-resource-dx.md",
+      "source_location": "L11",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_issues_10_cli_templates_and_resource_dx_cli_generate_resource_dx",
+      "label": "aponia generate resource DTO & Validation DX",
+      "file_type": "concept",
+      "source_file": ".scratch/nestjs-dx-parity/issues/10-cli-templates-and-resource-dx.md",
+      "source_location": "L12",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_issues_10_cli_templates_and_resource_dx_docs_and_guard_sync",
+      "label": "NestJS Parity Docs & Guard Synchronization",
+      "file_type": "document",
+      "source_file": ".scratch/nestjs-dx-parity/issues/10-cli-templates-and-resource-dx.md",
+      "source_location": "L13",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "scratch_nestjs_dx_parity_issues_10_cli_templates_and_resource_dx_cli_new_starter_template",
+      "target": "scratch_nestjs_dx_parity_issues_06_nest_aliases_and_testing_lifecycle_sync_create_nest_application",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/issues/10-cli-templates-and-resource-dx.md",
+      "source_location": "L5,L11",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_issues_10_cli_templates_and_resource_dx_cli_new_starter_template",
+      "target": "scratch_nestjs_dx_parity_issues_07_config_package_design_config_module",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/issues/10-cli-templates-and-resource-dx.md",
+      "source_location": "L5,L11",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_issues_10_cli_templates_and_resource_dx_cli_new_starter_template",
+      "target": "scratch_nestjs_dx_parity_issues_07_config_package_design_config_service_and_register_as",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/issues/10-cli-templates-and-resource-dx.md",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_issues_10_cli_templates_and_resource_dx_cli_generate_resource_dx",
+      "target": "scratch_nestjs_dx_parity_issues_05_pipes_uploads_and_serialization_pipe_exceptions_and_mapped_types",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/issues/10-cli-templates-and-resource-dx.md",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_issues_10_cli_templates_and_resource_dx_cli_generate_resource_dx",
+      "target": "scratch_nestjs_dx_parity_issues_08_openapi_and_ecosystem_aliases_openapi_swagger_surface",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/nestjs-dx-parity/issues/10-cli-templates-and-resource-dx.md",
+      "source_location": "L5,L12",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_issues_10_cli_templates_and_resource_dx_docs_and_guard_sync",
+      "target": "scratch_nestjs_dx_parity_map_nestjs_dx_parity_map",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/issues/10-cli-templates-and-resource-dx.md",
+      "source_location": "L13",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

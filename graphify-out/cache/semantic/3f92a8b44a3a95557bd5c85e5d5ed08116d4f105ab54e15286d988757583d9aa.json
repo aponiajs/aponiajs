@@ -1,0 +1,49 @@
+{
+  "nodes": [
+    {
+      "id": "packages_nitro_llms_summary",
+      "label": "@aponiajs/nitro llms.txt Summary",
+      "file_type": "document",
+      "source_file": "packages/nitro/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_nitro_llms_defineaponiahandler",
+      "label": "defineAponiaHandler",
+      "file_type": "code",
+      "source_file": "packages/nitro/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_nitro_llms_summary",
+      "target": "packages_nitro_readme_pkg_doc",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/nitro/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_nitro_llms_defineaponiahandler",
+      "target": "packages_nitro_readme_tonitrohandler",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/nitro/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

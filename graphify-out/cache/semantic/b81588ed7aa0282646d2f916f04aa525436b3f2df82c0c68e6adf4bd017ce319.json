@@ -1,0 +1,93 @@
+{
+  "nodes": [
+    {
+      "id": "docs_platforms_eden_treaty_guide",
+      "label": "End-to-End Types with Eden Treaty",
+      "file_type": "document",
+      "source_file": "docs/platforms/eden-treaty.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_platforms_eden_treaty_createnative",
+      "label": "AponiaFactory.createNative & @elysiajs/eden Treaty",
+      "file_type": "concept",
+      "rationale": "Returns the composed native Elysia instance so frontend clients import type App = typeof app without separate contracts, custom fetchers, or bundling server runtime code.",
+      "source_file": "docs/platforms/eden-treaty.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_platforms_eden_treaty_typed_descriptors",
+      "label": "Typed Descriptors & Generated Contracts (definePlugin, controller, defineController, defineControllerRoutes, ElysiaApplication)",
+      "file_type": "concept",
+      "source_file": "docs/platforms/eden-treaty.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_platforms_eden_treaty_static_inference_boundary",
+      "label": "Static Eden Type Inference Boundary",
+      "file_type": "rationale",
+      "rationale": "Decorator metadata and async plugin factories are discovered at runtime and omitted from static Eden types unless lowered by aponia build into descriptors.generated.ts, avoiding unsound type casts.",
+      "source_file": "docs/platforms/eden-treaty.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_platforms_eden_treaty_guide",
+      "target": "docs_platforms_eden_treaty_createnative",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/eden-treaty.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_eden_treaty_guide",
+      "target": "docs_platforms_eden_treaty_typed_descriptors",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/eden-treaty.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_eden_treaty_guide",
+      "target": "docs_platforms_eden_treaty_static_inference_boundary",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/eden-treaty.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_eden_treaty_guide",
+      "target": "docs_platforms_native_plugins_guide",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/eden-treaty.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

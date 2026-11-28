@@ -1,0 +1,92 @@
+{
+  "nodes": [
+    {
+      "id": "packages_auth_readme_doc",
+      "label": "@aponiajs/auth README",
+      "file_type": "document",
+      "source_file": "packages/auth/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_auth_readme_roles_permissions",
+      "label": "Roles, Permissions, Public, and RolesGuard",
+      "file_type": "concept",
+      "source_file": "packages/auth/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_auth_readme_token_transport",
+      "label": "Bearer Header and Cookie Token Transport",
+      "file_type": "concept",
+      "rationale": "Authorization header wins over token.cookieName when both are present; cookie-authenticated unsafe requests require CSRF protection via @aponiajs/security.",
+      "source_file": "packages/auth/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_auth_readme_key_rotation",
+      "label": "JWT Key Rotation",
+      "file_type": "concept",
+      "source_file": "packages/auth/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_auth_readme_doc",
+      "target": "packages_auth_agents_authmodule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/auth/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_auth_readme_doc",
+      "target": "packages_auth_readme_roles_permissions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/auth/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_auth_readme_doc",
+      "target": "packages_auth_readme_token_transport",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/auth/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_auth_readme_key_rotation",
+      "target": "packages_auth_agents_jwtservice",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/auth/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

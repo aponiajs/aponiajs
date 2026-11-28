@@ -1,0 +1,28 @@
+{
+  "nodes": [
+    {
+      "id": "packages_database_llms_database_llms_guide",
+      "label": "@aponiajs/database LLM Reference",
+      "file_type": "document",
+      "source_file": "packages/database/llms.txt",
+      "source_location": "line 1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_database_llms_database_llms_guide",
+      "target": "packages_database_readme_database_readme",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/database/llms.txt",
+      "source_location": "line 31",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

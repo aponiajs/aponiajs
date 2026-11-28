@@ -1,0 +1,28 @@
+{
+  "nodes": [
+    {
+      "id": "examples_gemini_examples_agent_guide",
+      "label": "Examples Agent Guide (GEMINI.md Alias)",
+      "file_type": "document",
+      "source_file": "examples/GEMINI.md",
+      "source_location": "L1-L33",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "examples_gemini_examples_agent_guide",
+      "target": "examples_agents_examples_agent_guide",
+      "relation": "semantically_similar_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "examples/GEMINI.md",
+      "source_location": "L1-L33",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

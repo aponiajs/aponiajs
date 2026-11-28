@@ -1,0 +1,181 @@
+{
+  "nodes": [
+    {
+      "id": "packages_platform_core_readme_pkg_doc",
+      "label": "@aponiajs/platform-core README",
+      "file_type": "document",
+      "source_file": "packages/platform-core/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_core_readme_aponiafactory",
+      "label": "AponiaFactory",
+      "file_type": "code",
+      "source_file": "packages/platform-core/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_core_readme_staticrouteexecutioncontext",
+      "label": "StaticRouteExecutionContext",
+      "file_type": "code",
+      "rationale": "Compiles one immutable prototype per route and calls fork(context) per request so concurrent requests never share mutable state.",
+      "source_file": "packages/platform-core/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_core_readme_compileunrolledguards",
+      "label": "compileUnrolledGuards",
+      "file_type": "code",
+      "source_file": "packages/platform-core/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_core_readme_pipe_resolution",
+      "label": "resolvePipe & resolveApplicationPipe",
+      "file_type": "code",
+      "rationale": "resolveApplicationPipe propagates MISSING_PROVIDER from the root module while resolvePipe keeps an empty-constructor fallback only for route-level pipes with no declared dependencies.",
+      "source_file": "packages/platform-core/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_core_readme_httperror",
+      "label": "HttpError & httpErrors",
+      "file_type": "code",
+      "source_file": "packages/platform-core/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_core_readme_createhttpkernel",
+      "label": "createHttpKernel",
+      "file_type": "code",
+      "source_file": "packages/platform-core/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_core_readme_createmiddlewareconsumer",
+      "label": "createMiddlewareConsumer",
+      "file_type": "code",
+      "source_file": "packages/platform-core/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_core_readme_createversionnegotiator",
+      "label": "createVersionNegotiator",
+      "file_type": "code",
+      "rationale": "Compiles one shared version negotiation table from booted routes so every platform applies version routing identically before its native router runs.",
+      "source_file": "packages/platform-core/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_core_readme_compilerootmodule",
+      "label": "compileRootModule",
+      "file_type": "code",
+      "source_file": "packages/platform-core/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_core_readme_artifact_selectors",
+      "label": "selectRootModuleDescriptor & selectInvokerArtifact",
+      "file_type": "code",
+      "source_file": "packages/platform-core/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_platform_core_readme_createhttpkernel",
+      "target": "packages_platform_core_agents_run_order_contract",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-core/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_core_readme_compileunrolledguards",
+      "target": "packages_platform_core_readme_staticrouteexecutioncontext",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-core/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_core_readme_createhttpkernel",
+      "target": "packages_platform_core_readme_pipe_resolution",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/platform-core/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_core_readme_createhttpkernel",
+      "target": "packages_platform_core_readme_httperror",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-core/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_core_readme_compilerootmodule",
+      "target": "packages_platform_core_readme_artifact_selectors",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "packages/platform-core/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -1,0 +1,60 @@
+{
+  "nodes": [
+    {
+      "id": "docs_readme_index",
+      "label": "AponiaJS Documentation Root Index (docs/README.md)",
+      "file_type": "document",
+      "source_file": "docs/README.md",
+      "source_location": "lines 1-129",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_readme_authoritative_artifacts",
+      "label": "Authoritative Contract Hierarchy (Barrels/Tests > aponia manifest > public-api.json > Docs)",
+      "file_type": "rationale",
+      "rationale": "Defines precedence when documentation and implementation disagree so prose never overrides tested barrels or the machine-readable manifest.",
+      "source_file": "docs/README.md",
+      "source_location": "lines 92-104",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_readme_index",
+      "target": "docs_agent_readme_surface",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/README.md",
+      "source_location": "lines 38, 64, 103",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_readme_index",
+      "target": "docs_agents_guide",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/README.md",
+      "source_location": "line 122",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_readme_authoritative_artifacts",
+      "target": "docs_agent_readme_surface",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/README.md",
+      "source_location": "lines 96-104",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

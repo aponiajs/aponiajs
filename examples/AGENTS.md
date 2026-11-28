@@ -6,8 +6,9 @@ Read the [repository guide](../AGENTS.md) first.
 
 One runnable application per topic, each named after what it demonstrates:
 `basic`, `multiple-routers`, `dependency-injection`, `validation`,
-`request-parameters`, `native-plugins`, `descriptors`. `examples/README.md` is
-the index, with the port and command for each.
+`request-parameters`, `native-plugins`, `descriptors`, `websockets`, `files`,
+`lifecycle`, `configuration`, `devtools`, `eden-treaty`, `reference`, `mcp`.
+`examples/README.md` is the index, with the port and command for each.
 
 Every example keeps the same shape — `src/app.module.ts`, `src/main.ts`,
 `test/application.ts` for the request helpers, `test/*.e2e-spec.ts` for the
@@ -18,7 +19,7 @@ generator.
 ## Invariants
 
 - An example is an application built _with_ the framework, so it follows the
-  application conventions in [`docs/architecture-and-style.md`](../docs/architecture-and-style.md),
+  application conventions in [`docs/build/architecture-and-style.md`](../docs/build/architecture-and-style.md),
   not the framework-repository layout.
 - Examples import workspace packages by package name, resolved through workspace
   links. Never reach into another package's `src/`.

@@ -1,0 +1,40 @@
+{
+  "nodes": [
+    {
+      "id": "packages_create_aponia_agents_create_aponia",
+      "label": "create-aponia",
+      "file_type": "concept",
+      "source_file": "packages/create-aponia/AGENTS.md",
+      "source_location": "line 8",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Thin bun create aponia entrypoint delegating directly to @aponiajs/cli with no schematic logic or extra runtime dependencies."
+    },
+    {
+      "id": "packages_create_aponia_agents_aponiajs_cli_delegation",
+      "label": "@aponiajs/cli Generator Delegation",
+      "file_type": "concept",
+      "source_file": "packages/create-aponia/AGENTS.md",
+      "source_location": "line 14",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_create_aponia_agents_create_aponia",
+      "target": "packages_create_aponia_agents_aponiajs_cli_delegation",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/create-aponia/AGENTS.md",
+      "source_location": "line 9",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

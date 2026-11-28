@@ -1,0 +1,136 @@
+{
+  "nodes": [
+    {
+      "id": "packages_openapi_agents_agent_guide",
+      "label": "@aponiajs/openapi Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/openapi/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_openapi_agents_buildopenapidocument",
+      "label": "buildOpenApiDocument",
+      "file_type": "code",
+      "rationale": "Walks container controllers to lower compiled route plans into an OpenAPI description (omitting ALL, OPTIONS, HEAD, and WebSocket gateways) without enforcing or validating requests.",
+      "source_file": "packages/openapi/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_openapi_agents_openapi_info_contract",
+      "label": "OpenApiInfo & OpenApiConfiguration Contract",
+      "file_type": "concept",
+      "rationale": "Declares info ({ title, version, description? }) so additive top-level fields fit later without breaking the shape; requires title/version and serves absent description as empty rather than a placeholder.",
+      "source_file": "packages/openapi/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_openapi_agents_single_registration_invariant",
+      "label": "One OpenApiModule Registration Invariant",
+      "file_type": "rationale",
+      "rationale": "The module provides and exports the configuration token itself to avoid a module cycle; two registrations with distinct keys cause AMBIGUOUS_PROVIDER on read-back, while shared keys raise DUPLICATE_MODULE.",
+      "source_file": "packages/openapi/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_openapi_agents_path_typeerror_vs_config_error",
+      "label": "Mount Path TypeError vs Configuration AponiaError",
+      "file_type": "rationale",
+      "rationale": "Non-absolute mount paths are source-level programming mistakes (TypeError during registration), whereas invalid configuration values throw AponiaError(INVALID_CONFIGURATION_VALUE) with total issue reporting.",
+      "source_file": "packages/openapi/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_openapi_readme_openapimodule",
+      "target": "packages_openapi_agents_buildopenapidocument",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/openapi/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_openapi_agents_buildopenapidocument",
+      "target": "packages_openapi_agents_openapi_info_contract",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/openapi/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_openapi_agents_single_registration_invariant",
+      "target": "packages_openapi_readme_openapimodule",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/openapi/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_openapi_agents_path_typeerror_vs_config_error",
+      "target": "packages_openapi_readme_openapimodule",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/openapi/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_openapi_agents_buildopenapidocument",
+      "target": "packages_platform_core_agents_websocket_gateway_kernel",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "packages/openapi/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_openapi_agents_buildopenapidocument",
+      "target": "packages_platform_core_readme_compilerootmodule",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "packages/openapi/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_openapi_agents_single_registration_invariant",
+      "target": "packages_platform_core_agents_app_pseudo_providers",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "packages/openapi/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

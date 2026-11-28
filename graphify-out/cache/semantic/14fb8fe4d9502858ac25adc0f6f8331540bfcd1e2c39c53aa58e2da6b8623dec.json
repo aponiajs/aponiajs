@@ -1,0 +1,81 @@
+{
+  "nodes": [
+    {
+      "id": "packages_schematics_readme_aponiajs_schematics",
+      "label": "@aponiajs/schematics",
+      "file_type": "concept",
+      "source_file": "packages/schematics/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_schematics_readme_schematicfactory",
+      "label": "SchematicFactory",
+      "file_type": "concept",
+      "source_file": "packages/schematics/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_schematics_readme_build_pipeline",
+      "label": "Schematics Dist Asset Copy Build",
+      "file_type": "rationale",
+      "rationale": "Build emits TypeScript into dist/ and copies every schema.json and template file beside it so collection.json relative paths resolve in the published package.",
+      "source_file": "packages/schematics/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_schematics_readme_aponiajs_schematics",
+      "target": "packages_schematics_agents_collection_json",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/schematics/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_schematics_readme_aponiajs_schematics",
+      "target": "packages_schematics_readme_schematicfactory",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/schematics/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_schematics_readme_aponiajs_schematics",
+      "target": "packages_schematics_provenance_doc",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/schematics/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_schematics_readme_build_pipeline",
+      "target": "packages_schematics_agents_collection_json",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/schematics/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

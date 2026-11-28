@@ -1,0 +1,238 @@
+{
+  "nodes": [
+    {
+      "id": "scripts_agents_scripts_agent_guide",
+      "label": "scripts Agent Guide",
+      "file_type": "document",
+      "source_file": "scripts/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scripts_agents_version_to_channel_mapping",
+      "label": "Version-Derived Distribution Channel Mapping",
+      "file_type": "rationale",
+      "rationale": "npm distribution tags are derived strictly from SemVer (stable->latest, -alpha.N->alpha, -beta.N->beta, -rc.N->rc, -canary.*->canary) and mapped 1:1 to persistent release branches so prereleases can never take latest.",
+      "source_file": "scripts/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scripts_agents_release_script_entry_pattern",
+      "label": "Testable Release Script Entry Pattern",
+      "file_type": "rationale",
+      "rationale": "Release scripts keep if (import.meta.main) as a single call to an exported returning function so scripts/*.spec.ts covers the entry body directly while reserving subprocess tests for exit code and terminal output.",
+      "source_file": "scripts/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scripts_agents_github_output_append",
+      "label": "Append-Only GITHUB_OUTPUT Writing",
+      "file_type": "rationale",
+      "rationale": "Release scripts append to GITHUB_OUTPUT directly instead of read-then-rewrite so missing or unwritable directories fail instead of being silently ignored.",
+      "source_file": "scripts/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scripts_agents_docs_site_builder",
+      "label": "Static Documentation Site Builder",
+      "file_type": "concept",
+      "source_file": "scripts/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scripts_agents_cli_runtime_surface_guard",
+      "label": "CLI Runtime Surface Alignment Guard",
+      "file_type": "rationale",
+      "rationale": "cli-runtime-surface.spec.ts inspects @aponiajs/common source and platform-elysia artifact shapes to ensure @aponiajs/cli's hand-copied static analysis accounts for every decorator, metadata key, and token kind.",
+      "source_file": "scripts/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scripts_agents_package_llms_guard",
+      "label": "Published Package llms.txt Guard",
+      "file_type": "concept",
+      "source_file": "scripts/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scripts_agents_toolchain_config_guard",
+      "label": "Toolchain & Decorator Transpiler Config Guard",
+      "file_type": "rationale",
+      "rationale": "toolchain-config.spec.ts requires experimentalDecorators and emitDecoratorMetadata in every package tsconfig.json because Bun reads transpiler config from cwd, and pins one Bun version from packageManager across mise.toml, workflows, starter manifest, and README.",
+      "source_file": "scripts/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scripts_agents_source_layout_guard",
+      "label": "Domain-First Source Layout Guard",
+      "file_type": "concept",
+      "source_file": "scripts/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scripts_agents_documentation_guards",
+      "label": "Documentation Integrity & Link Guards",
+      "file_type": "concept",
+      "source_file": "scripts/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "scripts_agents_version_to_channel_mapping",
+      "target": "scripts_agents_scripts_agent_guide",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "scripts/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_agents_release_script_entry_pattern",
+      "target": "scripts_agents_scripts_agent_guide",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "scripts/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_agents_github_output_append",
+      "target": "scripts_agents_scripts_agent_guide",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "scripts/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_agents_docs_site_builder",
+      "target": "scripts_agents_documentation_guards",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "scripts/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_agents_cli_runtime_surface_guard",
+      "target": "scripts_agents_scripts_agent_guide",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "scripts/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_agents_package_llms_guard",
+      "target": "packages_store_redis_llms_store_redis_llms",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "scripts/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_agents_package_llms_guard",
+      "target": "packages_testing_llms_testing_llms",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "scripts/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_agents_package_llms_guard",
+      "target": "packages_view_llms_view_llms",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "scripts/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_agents_toolchain_config_guard",
+      "target": "scripts_agents_scripts_agent_guide",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "scripts/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_agents_source_layout_guard",
+      "target": "scripts_agents_scripts_agent_guide",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "scripts/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "ci_guard_enforcement_suite",
+      "label": "Workspace CI Guard Enforcement Suite",
+      "nodes": [
+        "scripts_agents_cli_runtime_surface_guard",
+        "scripts_agents_package_llms_guard",
+        "scripts_agents_toolchain_config_guard",
+        "scripts_agents_source_layout_guard",
+        "scripts_agents_documentation_guards"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "scripts/AGENTS.md"
+    }
+  ]
+}

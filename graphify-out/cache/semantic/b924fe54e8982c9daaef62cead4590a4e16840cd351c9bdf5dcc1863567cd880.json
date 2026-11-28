@@ -1,0 +1,94 @@
+{
+  "nodes": [
+    {
+      "id": "docs_services_microservices_aponiajs_microservices",
+      "label": "@aponiajs/microservices",
+      "file_type": "concept",
+      "source_file": "docs/services/microservices.md",
+      "source_location": "L1-L45",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_microservices_pattern_decorators",
+      "label": "@MessagePattern and @EventPattern",
+      "file_type": "concept",
+      "source_file": "docs/services/microservices.md",
+      "source_location": "L3-L45, L216-L218",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_microservices_cbor_wire_contract",
+      "label": "CBOR v1 Wire Envelope & Bounds",
+      "file_type": "concept",
+      "source_file": "docs/services/microservices.md",
+      "source_location": "L70-L102, L213-L215",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_microservices_transport_adapters",
+      "label": "Microservice Broker Adapters & InMemoryTransport",
+      "file_type": "concept",
+      "source_file": "docs/services/microservices.md",
+      "source_location": "L46-L69, L131-L179",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Keeps each broker SDK as an optional peer loaded only inside connect() over an SDK-neutral 4-method Transport seam, never provisioning broker topology or leaking credentials."
+    },
+    {
+      "id": "docs_services_microservices_target_and_reply_allowlist",
+      "label": "Target Isolation & Reply Destination Allowlist",
+      "file_type": "rationale",
+      "source_file": "docs/services/microservices.md",
+      "source_location": "L180-L193, L206-L212",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Uses target checks to isolate shared brokers and replyDestinations exact allowlists to prevent untrusted producers from redirecting replies to arbitrary queues."
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_services_microservices_pattern_decorators",
+      "target": "docs_services_microservices_aponiajs_microservices",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/microservices.md",
+      "source_location": "L3-L45",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_microservices_transport_adapters",
+      "target": "docs_services_microservices_cbor_wire_contract",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/microservices.md",
+      "source_location": "L59-L102",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_microservices_target_and_reply_allowlist",
+      "target": "docs_services_microservices_transport_adapters",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/microservices.md",
+      "source_location": "L180-L193",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

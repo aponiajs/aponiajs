@@ -1,5 +1,5 @@
 import { Module } from "@aponiajs/common";
-import { ElysiaPluginModule } from "@aponiajs/platform-elysia";
+import { PluginModule } from "@aponiajs/platform-elysia";
 import { Elysia } from "elysia";
 import { REQUEST_BUDGET, SettingsModule } from "./settings.module.ts";
 
@@ -9,7 +9,7 @@ import { REQUEST_BUDGET, SettingsModule } from "./settings.module.ts";
  */
 @Module({
   imports: [
-    ElysiaPluginModule.registerAsync({
+    PluginModule.registerAsync({
       key: "budget",
       imports: [SettingsModule],
       inject: [REQUEST_BUDGET],

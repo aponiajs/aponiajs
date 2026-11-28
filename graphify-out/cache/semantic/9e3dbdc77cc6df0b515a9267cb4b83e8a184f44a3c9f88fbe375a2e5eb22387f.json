@@ -1,0 +1,52 @@
+{
+  "nodes": [
+    {
+      "id": "scratch_nestjs_dx_parity_issues_01_property_injection_and_di_metadata_property_based_injection",
+      "label": "Property-Based DI (@Inject and @Optional)",
+      "file_type": "concept",
+      "rationale": "Support NestJS property injection on class fields including Scope.REQUEST bubbling, forwardRef, subclass inheritance, and ModuleRef.create() while keeping common <- core one-way dependency and frozen descriptors.",
+      "source_file": ".scratch/nestjs-dx-parity/issues/01-property-injection-and-di-metadata.md",
+      "source_location": "L10",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_issues_01_property_injection_and_di_metadata_undeclared_enhancer_di_resolution",
+      "label": "Undeclared Enhancer & Pipe DI Resolution",
+      "file_type": "concept",
+      "rationale": "Auto-instantiate undeclared classes passed to @UseGuards, @UseInterceptors, @UsePipes, @UseFilters, @Param, and APP_GUARD using the controller's module DI scope while reusing declared providers when present.",
+      "source_file": ".scratch/nestjs-dx-parity/issues/01-property-injection-and-di-metadata.md",
+      "source_location": "L11",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_issues_01_property_injection_and_di_metadata_reflector_and_discovery_api",
+      "label": "Reflector.createDecorator & DiscoveryService API",
+      "file_type": "concept",
+      "source_file": ".scratch/nestjs-dx-parity/issues/01-property-injection-and-di-metadata.md",
+      "source_location": "L12",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_issues_01_property_injection_and_di_metadata_forwardref_module_reexports",
+      "label": "forwardRef Module Re-exports",
+      "file_type": "concept",
+      "source_file": ".scratch/nestjs-dx-parity/issues/01-property-injection-and-di-metadata.md",
+      "source_location": "L13",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [],
+  "hyperedges": []
+}

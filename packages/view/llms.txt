@@ -1,0 +1,22 @@
+# @aponiajs/view
+
+> Laravel-style Blade view rendering for AponiaJS, with layouts, sections, components, slots, props, and dot-notation lookup.
+
+## Exports
+
+- `ViewModule.forRoot({ defaultEngine: "blade" | "html", rootDir?, shared?, engine?, cache?, isGlobal? })`; `register({...})` is the deprecated alias and `forRootAsync` accepts the three Nest shapes. It is global by default.
+- `MODULE_OPTIONS_TOKEN` (`VIEW_MODULE_OPTIONS`): the options token the registration provides and exports.
+- `ViewService`: `render(template, data, options?)` and `share(key, value)`
+- `BladeViewEngine`: `@extends`, `@section`, `@yield`, `@include`, `<x-component>`, `{{ }}`, `{!! !!}`, `@if`, `@foreach`
+- `HtmlViewEngine`: zero-dependency token substitution with HTML escaping
+- Blade and HTML interpolation treat rendered values as data; a value is never
+  scanned again as template source
+- `VIEW_ENGINE`: the injection token from `@aponiajs/common`
+- Types: `ViewEngine`, `ViewModuleOptions`, `BladeViewEngineOptions`
+
+## Documentation
+
+- [Package README](./README.md)
+- [Views guide](../../docs/build/views.md)
+- [npm](https://www.npmjs.com/package/@aponiajs/view)
+

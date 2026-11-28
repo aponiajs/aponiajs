@@ -1,0 +1,743 @@
+{
+  "nodes": [
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_json",
+      "label": "package.json",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L1"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_name",
+      "label": "name",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L2"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_version",
+      "label": "version",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L3"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_private",
+      "label": "private",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L4"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_type",
+      "label": "type",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L5"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_scripts",
+      "label": "scripts",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L6"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_scripts_dev",
+      "label": "dev",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L7"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_scripts_start",
+      "label": "start",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L8"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_scripts_start_dev",
+      "label": "start:dev",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L9"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_scripts_start_debug",
+      "label": "start:debug",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L10"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_scripts_start_prod",
+      "label": "start:prod",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L11"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_scripts_build",
+      "label": "build",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L12"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_scripts_format",
+      "label": "format",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L13"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_scripts_lint",
+      "label": "lint",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L14"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_scripts_check",
+      "label": "check",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L15"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_scripts_test",
+      "label": "test",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L16"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_scripts_test_watch",
+      "label": "test:watch",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L17"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_scripts_test_cov",
+      "label": "test:cov",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L18"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_scripts_test_debug",
+      "label": "test:debug",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L19"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_scripts_test_e2e",
+      "label": "test:e2e",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L20"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_scripts_inspect",
+      "label": "inspect",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L21"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_dependencies",
+      "label": "dependencies",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L23"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_dependencies_aponiajs_common",
+      "label": "@aponiajs/common",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L24"
+    },
+    {
+      "id": "ref_aponiajs_common",
+      "label": "@aponiajs/common",
+      "file_type": "concept",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L24"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_dependencies_aponiajs_devtools",
+      "label": "@aponiajs/devtools",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L25"
+    },
+    {
+      "id": "ref_aponiajs_devtools",
+      "label": "@aponiajs/devtools",
+      "file_type": "concept",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L25"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_dependencies_aponiajs_platform_elysia",
+      "label": "@aponiajs/platform-elysia",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L26"
+    },
+    {
+      "id": "ref_aponiajs_platform_elysia",
+      "label": "@aponiajs/platform-elysia",
+      "file_type": "concept",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L26"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_dependencies_elysia",
+      "label": "elysia",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L27"
+    },
+    {
+      "id": "ref_elysia",
+      "label": "elysia",
+      "file_type": "concept",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L27"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_dependencies_zod",
+      "label": "zod",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L28"
+    },
+    {
+      "id": "ref_zod",
+      "label": "zod",
+      "file_type": "concept",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L28"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_devdependencies",
+      "label": "devDependencies",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L30"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_devdependencies_aponiajs_cli",
+      "label": "@aponiajs/cli",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L31"
+    },
+    {
+      "id": "ref_aponiajs_cli",
+      "label": "@aponiajs/cli",
+      "file_type": "concept",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L31"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_devdependencies_aponiajs_testing",
+      "label": "@aponiajs/testing",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L32"
+    },
+    {
+      "id": "ref_aponiajs_testing",
+      "label": "@aponiajs/testing",
+      "file_type": "concept",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L32"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_devdependencies_types_bun",
+      "label": "@types/bun",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L33"
+    },
+    {
+      "id": "ref_types_bun",
+      "label": "@types/bun",
+      "file_type": "concept",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L33"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_devdependencies_typescript",
+      "label": "typescript",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L34"
+    },
+    {
+      "id": "ref_typescript",
+      "label": "typescript",
+      "file_type": "concept",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L34"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_devdependencies_vite_plus",
+      "label": "vite-plus",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L35"
+    },
+    {
+      "id": "ref_vite_plus",
+      "label": "vite-plus",
+      "file_type": "concept",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L35"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_engines",
+      "label": "engines",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L37"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_engines_bun",
+      "label": "bun",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L38"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_package_packagemanager",
+      "label": "packageManager",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L40"
+    }
+  ],
+  "edges": [
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_json",
+      "target": "$graphify-root$_packages_cli_templates_application_package_name",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_json",
+      "target": "$graphify-root$_packages_cli_templates_application_package_version",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_json",
+      "target": "$graphify-root$_packages_cli_templates_application_package_private",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_json",
+      "target": "$graphify-root$_packages_cli_templates_application_package_type",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_json",
+      "target": "$graphify-root$_packages_cli_templates_application_package_scripts",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_scripts",
+      "target": "$graphify-root$_packages_cli_templates_application_package_scripts_dev",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_scripts",
+      "target": "$graphify-root$_packages_cli_templates_application_package_scripts_start",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_scripts",
+      "target": "$graphify-root$_packages_cli_templates_application_package_scripts_start_dev",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_scripts",
+      "target": "$graphify-root$_packages_cli_templates_application_package_scripts_start_debug",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_scripts",
+      "target": "$graphify-root$_packages_cli_templates_application_package_scripts_start_prod",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_scripts",
+      "target": "$graphify-root$_packages_cli_templates_application_package_scripts_build",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_scripts",
+      "target": "$graphify-root$_packages_cli_templates_application_package_scripts_format",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_scripts",
+      "target": "$graphify-root$_packages_cli_templates_application_package_scripts_lint",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_scripts",
+      "target": "$graphify-root$_packages_cli_templates_application_package_scripts_check",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_scripts",
+      "target": "$graphify-root$_packages_cli_templates_application_package_scripts_test",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_scripts",
+      "target": "$graphify-root$_packages_cli_templates_application_package_scripts_test_watch",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_scripts",
+      "target": "$graphify-root$_packages_cli_templates_application_package_scripts_test_cov",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_scripts",
+      "target": "$graphify-root$_packages_cli_templates_application_package_scripts_test_debug",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_scripts",
+      "target": "$graphify-root$_packages_cli_templates_application_package_scripts_test_e2e",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_scripts",
+      "target": "$graphify-root$_packages_cli_templates_application_package_scripts_inspect",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_json",
+      "target": "$graphify-root$_packages_cli_templates_application_package_dependencies",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_dependencies",
+      "target": "$graphify-root$_packages_cli_templates_application_package_dependencies_aponiajs_common",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_json",
+      "target": "ref_aponiajs_common",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L24",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_dependencies",
+      "target": "$graphify-root$_packages_cli_templates_application_package_dependencies_aponiajs_devtools",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_json",
+      "target": "ref_aponiajs_devtools",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L25",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_dependencies",
+      "target": "$graphify-root$_packages_cli_templates_application_package_dependencies_aponiajs_platform_elysia",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_json",
+      "target": "ref_aponiajs_platform_elysia",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L26",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_dependencies",
+      "target": "$graphify-root$_packages_cli_templates_application_package_dependencies_elysia",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_json",
+      "target": "ref_elysia",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L27",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_dependencies",
+      "target": "$graphify-root$_packages_cli_templates_application_package_dependencies_zod",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_json",
+      "target": "ref_zod",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L28",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_json",
+      "target": "$graphify-root$_packages_cli_templates_application_package_devdependencies",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_devdependencies",
+      "target": "$graphify-root$_packages_cli_templates_application_package_devdependencies_aponiajs_cli",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_json",
+      "target": "ref_aponiajs_cli",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L31",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_devdependencies",
+      "target": "$graphify-root$_packages_cli_templates_application_package_devdependencies_aponiajs_testing",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_json",
+      "target": "ref_aponiajs_testing",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L32",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_devdependencies",
+      "target": "$graphify-root$_packages_cli_templates_application_package_devdependencies_types_bun",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_json",
+      "target": "ref_types_bun",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L33",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_devdependencies",
+      "target": "$graphify-root$_packages_cli_templates_application_package_devdependencies_typescript",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_json",
+      "target": "ref_typescript",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L34",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_devdependencies",
+      "target": "$graphify-root$_packages_cli_templates_application_package_devdependencies_vite_plus",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_json",
+      "target": "ref_vite_plus",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L35",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_json",
+      "target": "$graphify-root$_packages_cli_templates_application_package_engines",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_engines",
+      "target": "$graphify-root$_packages_cli_templates_application_package_engines_bun",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_package_json",
+      "target": "$graphify-root$_packages_cli_templates_application_package_packagemanager",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/package.json",
+      "source_location": "L40",
+      "weight": 1.0
+    }
+  ]
+}

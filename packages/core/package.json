@@ -1,7 +1,18 @@
 {
   "name": "@aponiajs/core",
-  "version": "0.6.0-alpha.12",
+  "version": "1.0.0",
   "description": "Module graph and dependency injection runtime for Aponia.",
+  "keywords": [
+    "aponia",
+    "aponiajs",
+    "bun",
+    "container",
+    "dependency-injection",
+    "elysia",
+    "ioc",
+    "module-graph",
+    "typescript"
+  ],
   "homepage": "https://github.com/aponiajs/aponiajs#readme",
   "bugs": {
     "url": "https://github.com/aponiajs/aponiajs/issues"
@@ -14,7 +25,8 @@
     "directory": "packages/core"
   },
   "files": [
-    "dist"
+    "dist",
+    "llms.txt"
   ],
   "type": "module",
   "exports": {
@@ -33,6 +45,10 @@
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
-    "@aponiajs/common": "workspace:*"
+    "@aponiajs/common": "workspace:*",
+    "@aponiajs/compiler": "workspace:*"
+  },
+  "engines": {
+    "bun": ">=1.4.4"
   }
 }

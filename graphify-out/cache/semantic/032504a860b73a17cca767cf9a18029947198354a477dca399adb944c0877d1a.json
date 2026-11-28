@@ -1,0 +1,194 @@
+{
+  "nodes": [
+    {
+      "id": "packages_graphql_agents_agent_guide",
+      "label": "@aponiajs/graphql Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/graphql/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_graphql_agents_graphql_yoga",
+      "label": "graphql-yoga",
+      "file_type": "concept",
+      "source_file": "packages/graphql/AGENTS.md",
+      "source_location": "line 9",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_graphql_agents_httppolicy",
+      "label": "HttpPolicy",
+      "file_type": "concept",
+      "source_file": "packages/graphql/AGENTS.md",
+      "source_location": "line 11",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_graphql_agents_buildgraphqlpolicy",
+      "label": "buildGraphQLPolicy",
+      "file_type": "concept",
+      "source_file": "packages/graphql/AGENTS.md",
+      "source_location": "line 40",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_graphql_agents_graphqlschemaoptions",
+      "label": "GraphQLSchemaOptions",
+      "file_type": "concept",
+      "source_file": "packages/graphql/AGENTS.md",
+      "source_location": "line 46",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_graphql_agents_no_schema_boundary",
+      "label": "No-Schema Adapter Boundary",
+      "file_type": "rationale",
+      "rationale": "The package only contributes module registration, validated path configuration, and a neutral HttpPolicy delegating to graphql-yoga; it intentionally avoids schema-first or code-first decorators.",
+      "source_file": "packages/graphql/AGENTS.md",
+      "source_location": "line 25",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_graphql_agents_path_pair_invariant",
+      "label": "GraphQL Path Pair Invariant",
+      "file_type": "rationale",
+      "rationale": "Yoga requires graphqlEndpoint while the policy route matches path; setting only one causes 404 responses, so buildGraphQLPolicy sets both from the single validated path field.",
+      "source_file": "packages/graphql/AGENTS.md",
+      "source_location": "line 36",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_graphql_agents_request_policy_precedence",
+      "label": "Request Policy Precedence Before Routing",
+      "file_type": "rationale",
+      "rationale": "Serving GraphQL via HttpPolicy executes before controller routing across platforms and methods, preventing DUPLICATE_ROUTE errors while excluding controller enhancers such as guards and filters.",
+      "source_file": "packages/graphql/AGENTS.md",
+      "source_location": "line 55",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_graphql_agents_agent_guide",
+      "target": "packages_graphql_agents_graphql_yoga",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/graphql/AGENTS.md",
+      "source_location": "line 9",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_graphql_agents_agent_guide",
+      "target": "packages_graphql_agents_httppolicy",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/graphql/AGENTS.md",
+      "source_location": "line 11",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_graphql_agents_buildgraphqlpolicy",
+      "target": "packages_graphql_agents_httppolicy",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/graphql/AGENTS.md",
+      "source_location": "line 40",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_graphql_agents_buildgraphqlpolicy",
+      "target": "packages_graphql_agents_graphql_yoga",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/graphql/AGENTS.md",
+      "source_location": "line 28",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_graphql_agents_graphqlschemaoptions",
+      "target": "packages_graphql_agents_graphql_yoga",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/graphql/AGENTS.md",
+      "source_location": "line 46",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_graphql_agents_no_schema_boundary",
+      "target": "packages_graphql_agents_graphql_yoga",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/graphql/AGENTS.md",
+      "source_location": "line 25",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_graphql_agents_path_pair_invariant",
+      "target": "packages_graphql_agents_buildgraphqlpolicy",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/graphql/AGENTS.md",
+      "source_location": "line 36",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_graphql_agents_request_policy_precedence",
+      "target": "packages_graphql_agents_httppolicy",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/graphql/AGENTS.md",
+      "source_location": "line 55",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "graphql_policy_endpoint_architecture",
+      "label": "GraphQL Validated Request-Policy Architecture",
+      "nodes": [
+        "packages_graphql_readme_graphqlmodule",
+        "packages_graphql_readme_graphqlconfiguration",
+        "packages_graphql_agents_buildgraphqlpolicy",
+        "packages_graphql_agents_httppolicy",
+        "packages_graphql_agents_path_pair_invariant"
+      ],
+      "relation": "implement",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/graphql/AGENTS.md"
+    }
+  ]
+}

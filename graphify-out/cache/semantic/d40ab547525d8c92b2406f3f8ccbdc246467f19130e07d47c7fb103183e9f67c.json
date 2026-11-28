@@ -1,0 +1,207 @@
+{
+  "nodes": [
+    {
+      "id": "docs_tooling_cli_aponiajs_cli",
+      "label": "@aponiajs/cli",
+      "file_type": "concept",
+      "source_file": "docs/tooling/cli.md",
+      "source_location": "L1-L16",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_tooling_cli_aponia_new",
+      "label": "aponia new & Starter Project Layout",
+      "file_type": "concept",
+      "source_file": "docs/tooling/cli.md",
+      "source_location": "L19-L41, L226-L255, L388-L494",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Defaults to Bun-first TypeScript (.ts imports, bun test, devtools opt-in, flat Nest-shaped starter layout) while supporting --type esm (vitest) and --type cjs (jest) Nest compatibility modes."
+    },
+    {
+      "id": "docs_tooling_cli_aponia_generate",
+      "label": "aponia generate & Schematic Catalog",
+      "file_type": "concept",
+      "source_file": "docs/tooling/cli.md",
+      "source_location": "L147-L387",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_tooling_cli_aponia_build",
+      "label": "aponia build & buildPlugin()",
+      "file_type": "concept",
+      "source_file": "docs/tooling/cli.md",
+      "source_location": "L543-L565, L709-L784",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_tooling_cli_invokers_generated",
+      "label": "Generated Route Invokers (invokers.generated.ts)",
+      "file_type": "concept",
+      "source_file": "docs/tooling/cli.md",
+      "source_location": "L566-L595",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Emits literal route invokers at build time to eliminate runtime new Function compilation, falling back gracefully on version mismatch or unprovable handlers."
+    },
+    {
+      "id": "docs_tooling_cli_descriptors_generated",
+      "label": "Generated Module Descriptors (descriptors.generated.ts)",
+      "file_type": "rationale",
+      "source_file": "docs/tooling/cli.md",
+      "source_location": "L596-L708",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Lowers static @Module/@Controller/@Injectable/@WebSocketGateway/@Validation declarations into data descriptors; declines DynamicModule calls (e.g. .forRoot()) whole and falls back to decorator lowering at boot."
+    },
+    {
+      "id": "docs_tooling_cli_aponia_cli_json",
+      "label": "aponia-cli.json Workspace Configuration",
+      "file_type": "concept",
+      "source_file": "docs/tooling/cli.md",
+      "source_location": "L104-L146",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_tooling_cli_aponia_manifest",
+      "label": "aponia manifest & aponia agent init",
+      "file_type": "concept",
+      "source_file": "docs/tooling/cli.md",
+      "source_location": "L525-L542",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_tooling_cli_validation_model_class",
+      "label": "One-Schema @Validation Model Class Pattern",
+      "file_type": "rationale",
+      "source_file": "docs/tooling/cli.md",
+      "source_location": "L302-L372",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Pairs each Standard Schema validator with a dedicated @Validation class and InferValidatorOutput interface so fields are declared once and create/update/params stay distinct."
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_tooling_cli_aponia_new",
+      "target": "docs_tooling_cli_aponiajs_cli",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/tooling/cli.md",
+      "source_location": "L19-L41, L388-L494",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_tooling_cli_aponia_new",
+      "target": "docs_services_devtools_devtoolsmodule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/tooling/cli.md",
+      "source_location": "L457, L474-L482",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_tooling_cli_aponia_generate",
+      "target": "docs_reference_packages_aponiajs_schematics",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/tooling/cli.md",
+      "source_location": "L205-L216",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_tooling_cli_aponia_generate",
+      "target": "docs_tooling_cli_validation_model_class",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/tooling/cli.md",
+      "source_location": "L302-L372",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_tooling_cli_aponia_build",
+      "target": "docs_tooling_cli_invokers_generated",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/tooling/cli.md",
+      "source_location": "L566-L595, L733",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_tooling_cli_aponia_build",
+      "target": "docs_tooling_cli_descriptors_generated",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/tooling/cli.md",
+      "source_location": "L596-L708, L733",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_tooling_cli_aponia_cli_json",
+      "target": "docs_tooling_cli_aponiajs_cli",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/tooling/cli.md",
+      "source_location": "L104-L146",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_tooling_cli_aponia_generate",
+      "target": "docs_tooling_libraries_authoring_a_library",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/tooling/cli.md",
+      "source_location": "L520-L522",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "static_build_and_cli_pipeline",
+      "label": "Aponia CLI Build, Codegen & Library Packaging Pipeline",
+      "nodes": [
+        "docs_tooling_cli_aponiajs_cli",
+        "docs_tooling_cli_aponia_build",
+        "docs_tooling_cli_invokers_generated",
+        "docs_tooling_cli_descriptors_generated",
+        "docs_tooling_libraries_aponia_library_json",
+        "docs_tooling_libraries_aponia_library_check"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/tooling/cli.md"
+    }
+  ]
+}

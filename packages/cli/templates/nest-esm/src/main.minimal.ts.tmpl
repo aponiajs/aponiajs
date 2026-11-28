@@ -1,0 +1,16 @@
+import { Controller, Get, Module } from "@aponiajs/common";
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+
+@Controller()
+class AppController {
+  @Get()
+  getGreeting(): string {
+    return "Hello from {{PROJECT_NAME}}!";
+  }
+}
+
+@Module({ controllers: [AppController] })
+class AppModule {}
+
+const application = await AponiaFactory.create(AppModule, { logger: false });
+await application.listen(Number(process.env.PORT ?? 3000));

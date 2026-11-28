@@ -1,0 +1,17 @@
+{
+  "nodes": [
+    {
+      "id": "changelog_changelog",
+      "label": "Changelog (1.0.0-beta.64 unreleased / 0.6.0-alpha.39 published)",
+      "file_type": "document",
+      "source_file": "CHANGELOG.md",
+      "source_location": "lines 1-19",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [],
+  "hyperedges": []
+}

@@ -1,0 +1,58 @@
+# @aponiajs/cors
+
+> Answer cross-origin requests for an Aponia application, with the policy read from a validated configuration. The policy is a neutral `HttpPolicy` the shared request pipeline runs, so the same registration answers the same headers and preflight on every platform.
+
+**The matching rules are the shared pipeline's.** This package contributes two things: a module the policy is declared in, so it is a graph node in the compiled graph and in devtools, and a validated configuration the policy comes from. A missing origin, a malformed list, or a wildcard paired with credentialed requests is a refused boot with a code and an issue list rather than a response nobody inspected.
+
+**A pattern or predicate origin is code, not data.** `CorsConfiguration.origins` is a list of exact origin strings. An origin that is a `RegExp` or a `(request) => boolean` function belongs in the raw Elysia plugin, mounted through `PluginModule` or the factory's `plugins` option.
+
+## What this package exports
+
+```ts
+import { CorsModule } from "@aponiajs/cors";
+import type { CorsConfiguration, CorsModuleOptions } from "@aponiajs/cors";
+```
+
+- `CorsModule` — `CorsModule.forRoot(options)` returns the `DynamicModule` an application's `imports` accepts; `register` is the deprecated beta alias.
+- `CorsConfiguration` — the value the module validates and exports: `origins` (required, non-empty), `methods`, `allowedHeaders`, `exposeHeaders`, `credentials`, `maxAge`, and `preflight`.
+- `CorsModuleOptions` — `configuration`, `source`, and `key`.
+
+## Declaring a policy
+
+```ts
+import { Module } from "@aponiajs/common";
+import { CorsModule } from "@aponiajs/cors";
+import { CorsConfig } from "./config.ts";
+
+const cors = CorsModule.forRoot({ configuration: CorsConfig });
+
+@Module({ imports: [cors], controllers: [WidgetsController] })
+export class AppModule {}
+```
+
+`key` defaults to `"cors"`, and two registrations sharing one are refused as `DUPLICATE_MODULE`.
+
+## The defaults this package states
+
+`origins` is required, and `credentials` defaults to `false`. Reflecting any `Origin` while answering `Access-Control-Allow-Credentials: true` would ship `Access-Control-Allow-Origin: <any site>` beside the credential header; an application that wants credentialed requests asks for them, and `origins: ["*"]` together with `credentials: true` is refused at boot because a browser rejects that pair.
+
+Omitted `methods`, `allowedHeaders`, and `exposeHeaders` echo the request, and `maxAge` defaults to `5`. `preflight: false` stops the policy answering `OPTIONS`, so a preflight falls through to the application's route table while the headers still apply.
+
+## One registration per application
+
+Two registrations under distinct keys produce two graph nodes and two policies in the pipeline. Equal policies answer the same headers twice; different policies answer as a union, so a request from either policy's origins is allowed. One registration per application is the supported shape.
+
+## `aponia build`
+
+A registration is a `DynamicModule`, not a `@Module()` class the build can read from source, so a module whose `imports` name one is declined and the descriptor artifact holds nothing for it. The application still boots: the platform lowers such a root from its decorators, and the policy answers. Mounting the raw Elysia plugin through `AponiaApplicationOptions.plugins` keeps the artifact and gives up the module and its validation.
+
+## Errors
+
+`AponiaError` with `INVALID_CONFIGURATION_VALUE`, carrying `{ configuration, issues }`, when the schema rejects the value, when the value it produced has no usable `origins`, when any field is the wrong shape, or when `"*"` is combined with `credentials: true`. The issue list is total: every field that fails is reported at once. `INVALID_CONFIGURATION` covers a declaration that is not a Standard Schema or whose validation answers asynchronously.
+
+## Links
+
+- [Package README](./README.md)
+- [Plugin package authoring](../../docs/tooling/plugin-packages.md)
+- [Platform parity](../../docs/platforms/platform-parity.md)
+- [Published packages](../../docs/reference/packages.md)

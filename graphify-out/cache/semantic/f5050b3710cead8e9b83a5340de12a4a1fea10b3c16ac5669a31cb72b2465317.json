@@ -1,0 +1,81 @@
+{
+  "nodes": [
+    {
+      "id": "docs_services_openapi_aponiajs_openapi",
+      "label": "@aponiajs/openapi",
+      "file_type": "concept",
+      "source_file": "docs/services/openapi.md",
+      "source_location": "L1-L8",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_openapi_openapimodule",
+      "label": "OpenApiModule",
+      "file_type": "concept",
+      "source_file": "docs/services/openapi.md",
+      "source_location": "L24-L86",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_openapi_openapi_non_validating",
+      "label": "Describe-Only OpenAPI Document & Inlined Schemas",
+      "file_type": "rationale",
+      "source_file": "docs/services/openapi.md",
+      "source_location": "L9-L23, L87-L113",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Projects strictly from compiled route plans with schemas inlined (empty components.schemas) and does not validate requests or execute callbacks."
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_services_openapi_openapimodule",
+      "target": "docs_services_openapi_aponiajs_openapi",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/openapi.md",
+      "source_location": "L24-L48",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_openapi_openapi_non_validating",
+      "target": "docs_services_openapi_openapimodule",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/openapi.md",
+      "source_location": "L9-L23, L87-L113",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_openapi_openapimodule",
+      "target": "docs_tooling_cli_descriptors_generated",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/openapi.md",
+      "source_location": "L43-L47",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_openapi_openapi_non_validating",
+      "target": "docs_services_devtools_neutral_boot_record",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/services/openapi.md",
+      "source_location": "L106-L109",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

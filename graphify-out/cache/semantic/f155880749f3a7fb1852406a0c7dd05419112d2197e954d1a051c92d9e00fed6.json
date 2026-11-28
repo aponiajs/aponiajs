@@ -1,0 +1,49 @@
+{
+  "nodes": [
+    {
+      "id": "docs_learn_02_install_and_generate_chapter",
+      "label": "Learn 02: Install and Generate",
+      "file_type": "document",
+      "source_file": "docs/learn/02-install-and-generate.md",
+      "source_location": "lines 1-52",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_learn_02_install_and_generate_starter_layout",
+      "label": "CLI Starter Layout & Resource Model Generation",
+      "file_type": "concept",
+      "source_file": "docs/learn/02-install-and-generate.md",
+      "source_location": "lines 24-50",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_learn_02_install_and_generate_chapter",
+      "target": "docs_learn_03_modules_chapter",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/learn/02-install-and-generate.md",
+      "source_location": "line 52",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_learn_02_install_and_generate_starter_layout",
+      "target": "docs_learn_06_validation_one_schema_model",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/learn/02-install-and-generate.md",
+      "source_location": "line 50",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

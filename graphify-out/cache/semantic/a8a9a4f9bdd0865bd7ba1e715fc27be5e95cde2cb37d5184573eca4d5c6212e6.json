@@ -1,0 +1,125 @@
+{
+  "nodes": [
+    {
+      "id": "docs_services_database_aponiajs_database",
+      "label": "@aponiajs/database",
+      "file_type": "concept",
+      "source_file": "docs/services/database.md",
+      "source_location": "L1-L26",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_database_databasemodule",
+      "label": "DatabaseModule",
+      "file_type": "concept",
+      "source_file": "docs/services/database.md",
+      "source_location": "L16, L93-L96",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_database_databaseservice",
+      "label": "DatabaseService",
+      "file_type": "concept",
+      "source_file": "docs/services/database.md",
+      "source_location": "L23-L49",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_database_createrepository",
+      "label": "createRepository",
+      "file_type": "concept",
+      "source_file": "docs/services/database.md",
+      "source_location": "L51-L89",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_database_migrationrunner",
+      "label": "MigrationRunner & loadMigrations",
+      "file_type": "concept",
+      "source_file": "docs/services/database.md",
+      "source_location": "L90-L129",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Runs ordered .sql migrations during onModuleInit with SHA-256 drift detection (INVALID_MIGRATION) and application-supplied advisory locks since the package owns no dialect SQL."
+    },
+    {
+      "id": "docs_services_database_drizzle_boundary",
+      "label": "Drizzle-First Boundary & Transaction Lifetime Guard",
+      "file_type": "rationale",
+      "source_file": "docs/services/database.md",
+      "source_location": "L3-L49",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Builds no pool and picks no dialect so Drizzle queries stay native, while guarding transaction handles with compiler lifetimes that throw STALE_LIFETIME if escaped."
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_services_database_databasemodule",
+      "target": "docs_services_database_aponiajs_database",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/database.md",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_database_createrepository",
+      "target": "docs_services_database_databaseservice",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/database.md",
+      "source_location": "L65-L67",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_database_migrationrunner",
+      "target": "docs_services_database_databasemodule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/database.md",
+      "source_location": "L93-L102",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_database_drizzle_boundary",
+      "target": "docs_reference_packages_aponiajs_compiler",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/services/database.md",
+      "source_location": "L47-L49",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_database_drizzle_boundary",
+      "target": "docs_services_database_aponiajs_database",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/database.md",
+      "source_location": "L3-L49",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

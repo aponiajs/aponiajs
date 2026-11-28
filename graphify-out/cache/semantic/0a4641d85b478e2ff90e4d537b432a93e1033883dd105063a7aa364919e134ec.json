@@ -1,0 +1,51 @@
+{
+  "nodes": [
+    {
+      "id": "packages_compression_agents_guide",
+      "label": "@aponiajs/compression Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/compression/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Leaf package contributing a runtime-neutral HttpPolicy so the shared request pipeline runs identical response compression across all platforms."
+    },
+    {
+      "id": "packages_compression_agents_policy_invariants",
+      "label": "Asynchronous Response Compression Policy Invariants",
+      "file_type": "rationale",
+      "source_file": "packages/compression/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Compresses asynchronously (never *Sync) only compressible MIME types above thresholdBytes, skips HEAD/204/206/304 and pre-encoded responses, appends Vary: Accept-Encoding without dropping existing values, and throws INVALID_COMPRESSION_OPTIONS on bad configuration."
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_compression_agents_policy_invariants",
+      "target": "packages_compression_agents_guide",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/compression/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_compression_agents_policy_invariants",
+      "target": "packages_common_agents_aponia_error_union",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/compression/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

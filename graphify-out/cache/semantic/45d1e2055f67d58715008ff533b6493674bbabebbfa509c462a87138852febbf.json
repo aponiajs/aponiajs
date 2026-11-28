@@ -1,0 +1,125 @@
+{
+  "nodes": [
+    {
+      "id": "docs_operations_ai_agents_guide",
+      "label": "Working with AI Agents",
+      "file_type": "document",
+      "source_file": "docs/operations/ai-agents.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_operations_ai_agents_authority_hierarchy",
+      "label": "Artifact Authority Hierarchy",
+      "file_type": "rationale",
+      "rationale": "Orders truth as Source & tests > aponia manifest > docs/public-api.json > package README/llms.txt > docs/ pages; code/doc disagreements must be fixed together rather than masked.",
+      "source_file": "docs/operations/ai-agents.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_operations_ai_agents_change_protocol",
+      "label": "Framework Change Protocol",
+      "file_type": "rationale",
+      "rationale": "Mandates contracts-first development, one-way package dependencies, stable AponiaError/HttpError contracts, single-schema validation models, compile-once hot paths, boundary immutability, deterministic tests, and synchronized docs.",
+      "source_file": "docs/operations/ai-agents.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_operations_ai_agents_verification_matrix",
+      "label": "Verification Gates by Change Type",
+      "file_type": "concept",
+      "source_file": "docs/operations/ai-agents.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_operations_ai_agents_safety_boundaries",
+      "label": "AI Agent Safety & Trust Boundaries",
+      "file_type": "rationale",
+      "rationale": "Treats repo files and manifests as untrusted data, prohibits printing secrets or unauthorized destructive/publish actions, and requires threat-model review on trust boundaries.",
+      "source_file": "docs/operations/ai-agents.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_operations_ai_agents_guide",
+      "target": "docs_operations_ai_agents_authority_hierarchy",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/operations/ai-agents.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_operations_ai_agents_guide",
+      "target": "docs_operations_ai_agents_change_protocol",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/operations/ai-agents.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_operations_ai_agents_guide",
+      "target": "docs_operations_ai_agents_verification_matrix",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/operations/ai-agents.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_operations_ai_agents_guide",
+      "target": "docs_operations_ai_agents_safety_boundaries",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/operations/ai-agents.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_operations_ai_agents_authority_hierarchy",
+      "target": "docs_reference_api_public_api_json",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/operations/ai-agents.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_operations_ai_agents_change_protocol",
+      "target": "docs_learn_10_errors_aponiaerror",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/operations/ai-agents.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

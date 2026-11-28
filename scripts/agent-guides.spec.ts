@@ -6,11 +6,41 @@ const guideDirectories = [
   "examples",
   "scripts",
   "packages/aponiajs",
+  "packages/auth",
+  "packages/cache",
   "packages/cli",
   "packages/common",
+  "packages/compiler",
+  "packages/compression",
+  "packages/config",
   "packages/core",
+  "packages/cors",
+  "packages/cqrs",
   "packages/create-aponia",
+  "packages/cron",
+  "packages/database",
+  "packages/devtools",
+  "packages/events",
+  "packages/graphql",
+  "packages/http",
+  "packages/mapped-types",
+  "packages/mcp",
+  "packages/microservices",
+  "packages/serverless",
+  "packages/nitro",
+  "packages/openapi",
   "packages/platform-elysia",
+  "packages/platform-h3",
+  "packages/platform-hono",
+  "packages/queue",
+  "packages/rate-limit",
+  "packages/security",
+  "packages/schematics",
+  "packages/serve-static",
+  "packages/session",
+  "packages/terminus",
+  "packages/testing",
+  "packages/view",
 ] as const;
 
 const rootGuide = await Bun.file("AGENTS.md").text();
@@ -24,8 +54,15 @@ describe("agent guides", () => {
 
   test("the repository guide indexes every one of them", () => {
     for (const directory of guideDirectories) {
-      expect(rootGuide).toContain(`(${directory}/AGENTS.md)`);
+      expect(rootGuide).toContain(`(./${directory}/AGENTS.md)`);
     }
+  });
+
+  test("loads the repository rules on every agent turn", async () => {
+    expect(await Bun.file("RULES.md").exists()).toBe(true);
+    expect(rootGuide).toContain("At the start of every agent turn");
+    expect(rootGuide).toContain("Read [`RULES.md`](./RULES.md) completely");
+    expect(rootGuide).toContain("Do not rely on memory from a previous turn");
   });
 
   test("each guide points back at the repository guide", async () => {

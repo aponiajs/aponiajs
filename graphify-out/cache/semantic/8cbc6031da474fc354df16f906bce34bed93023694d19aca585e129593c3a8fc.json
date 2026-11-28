@@ -1,0 +1,60 @@
+{
+  "nodes": [
+    {
+      "id": "contributing_guide",
+      "label": "Contributing Guide (CONTRIBUTING.md)",
+      "file_type": "document",
+      "source_file": "CONTRIBUTING.md",
+      "source_location": "lines 1-66",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "contributing_release_channels",
+      "label": "Synchronized Release Channels (release/alpha, release/beta, release/rc, main)",
+      "file_type": "concept",
+      "rationale": "Every push raises the synchronized workspace version via bun run version:* so manifests and bun.lock never drift.",
+      "source_file": "CONTRIBUTING.md",
+      "source_location": "lines 10-28",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "contributing_guide",
+      "target": "agents_repository_guidelines",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CONTRIBUTING.md",
+      "source_location": "lines 7-8",
+      "weight": 1.0
+    },
+    {
+      "source": "contributing_guide",
+      "target": "rules_verification_gates",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CONTRIBUTING.md",
+      "source_location": "lines 29-40",
+      "weight": 1.0
+    },
+    {
+      "source": "contributing_guide",
+      "target": "security_policy",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CONTRIBUTING.md",
+      "source_location": "lines 63-66",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -14,5 +14,5 @@ This package is the `bun create` entrypoint and delegates to the published
 [`@aponiajs/cli`](https://www.npmjs.com/package/@aponiajs/cli) generator.
 
 [npm package](https://www.npmjs.com/package/create-aponia) ·
-[complete CLI guide](../../docs/cli.md) ·
-[complete package catalog](../../docs/packages.md)
+[complete CLI guide](../../docs/tooling/cli.md) ·
+[complete package catalog](../../docs/reference/packages.md)

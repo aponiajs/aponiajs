@@ -1,5 +1,5 @@
 import { Injectable } from "@aponiajs/common";
-import type { CreateItem } from "./item.schema.ts";
+import type { CreateItem } from "./item.model.ts";
 
 export interface StoredItem extends CreateItem {
   readonly id: string;
@@ -11,7 +11,11 @@ export class ItemStore {
   readonly #items = new Map<string, StoredItem>();
 
   create(item: CreateItem): StoredItem {
-    const created: StoredItem = { id: String(this.#items.size + 1), ...item };
+    const created: StoredItem = {
+      id: String(this.#items.size + 1),
+      name: item.name,
+      quantity: item.quantity,
+    };
     this.#items.set(created.id, created);
     return created;
   }

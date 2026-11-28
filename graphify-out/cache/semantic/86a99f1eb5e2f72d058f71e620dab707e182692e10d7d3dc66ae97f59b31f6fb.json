@@ -1,0 +1,135 @@
+{
+  "nodes": [
+    {
+      "id": "packages_session_readme_aponiajs_session",
+      "label": "@aponiajs/session",
+      "file_type": "concept",
+      "source_file": "packages/session/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_session_readme_sessionmodule",
+      "label": "SessionModule",
+      "file_type": "concept",
+      "source_file": "packages/session/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_session_readme_sessionservice",
+      "label": "SessionService",
+      "file_type": "concept",
+      "source_file": "packages/session/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_session_readme_session_decorator",
+      "label": "@Session()",
+      "file_type": "concept",
+      "source_file": "packages/session/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_session_readme_sessionstore",
+      "label": "SessionStore",
+      "file_type": "concept",
+      "source_file": "packages/session/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_session_readme_memorysessionstore",
+      "label": "MemorySessionStore",
+      "file_type": "concept",
+      "rationale": "Bounded process-local session store (default maxSessions 10,000) with lazy expiry and oldest-insertion eviction; distributed deployments supply a shared SessionStore.",
+      "source_file": "packages/session/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_session_readme_invalid_session_options",
+      "label": "INVALID_SESSION_OPTIONS",
+      "file_type": "concept",
+      "source_file": "packages/session/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_session_readme_aponiajs_session",
+      "target": "packages_session_readme_sessionmodule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/session/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_session_readme_sessionservice",
+      "target": "packages_session_readme_sessionstore",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/session/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_session_readme_session_decorator",
+      "target": "packages_session_readme_sessionservice",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "packages/session/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_session_readme_memorysessionstore",
+      "target": "packages_session_readme_sessionstore",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/session/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_session_readme_sessionmodule",
+      "target": "packages_session_readme_invalid_session_options",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/session/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

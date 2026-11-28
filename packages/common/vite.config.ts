@@ -3,12 +3,10 @@ import { defineConfig } from "vite-plus";
 export default defineConfig({
   test: {
     globals: true,
-    include: ["tests-vp/**/*.conformance.ts"],
+    include: ["test/**/*.conformance.ts"],
   },
   pack: {
-    dts: {
-      tsgo: true,
-    },
+    dts: true,
     exports: true,
   },
   lint: {

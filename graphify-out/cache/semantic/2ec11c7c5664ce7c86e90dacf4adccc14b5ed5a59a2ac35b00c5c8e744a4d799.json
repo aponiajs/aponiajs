@@ -1,0 +1,71 @@
+{
+  "nodes": [
+    {
+      "id": "packages_testing_llms_testing_llms",
+      "label": "@aponiajs/testing llms.txt",
+      "file_type": "document",
+      "source_file": "packages/testing/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_testing_llms_testapplication",
+      "label": "TestApplication",
+      "file_type": "concept",
+      "source_file": "packages/testing/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_testing_llms_testapplicationbuilder",
+      "label": "TestApplicationBuilder",
+      "file_type": "concept",
+      "source_file": "packages/testing/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_testing_llms_testserver",
+      "label": "TestServer",
+      "file_type": "concept",
+      "source_file": "packages/testing/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_testing_readme_createtestapplication",
+      "target": "packages_testing_llms_testapplicationbuilder",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/testing/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_testing_llms_testing_llms",
+      "target": "packages_testing_readme_aponiajs_testing",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/testing/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

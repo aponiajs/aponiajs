@@ -1,0 +1,35 @@
+# Changelog
+
+All notable changes to this project are recorded here. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project follows
+[Semantic Versioning](https://semver.org). GitHub Releases carry the generated
+notes for every published tag; this file records the changes a reader needs when
+moving between releases.
+
+## 1.0.0
+
+First stable 1.0.0 release published under `latest` across all 39 AponiaJS
+packages, including Elysia/Hono/H3 platforms, enterprise observability
+(`@aponiajs/metrics`, `@aponiajs/opentelemetry`), distributed Redis stores
+(`@aponiajs/redis`), API idempotency (`@aponiajs/idempotency`), HTTP resilience,
+`aponia dev` update & advisory notifications, and CodeQL-gated releases.
+
+## 1.0.0-beta.65
+
+Security hardening (CodeQL fixes + CodeQL release gate in `publish.yml`),
+`aponia dev` update & dangerous-patch advisory notifier, enterprise packages
+(`@aponiajs/metrics`, `@aponiajs/opentelemetry`, `@aponiajs/idempotency`,
+`@aponiajs/redis`), HTTP resilience (`OriginCircuitBreaker`, `BulkheadLimiter`),
+`CronLockStore`, and latest dependency updates.
+
+## 1.0.0-beta.64 — unreleased
+
+The development line. Nothing in this line is published on npm yet; the registry
+serves the `0.6.0-alpha.N` line for the six packages listed in
+[Packages](./docs/reference/packages.md#on-npm-today). Changes between the published alpha
+and this line are recorded in the repository history and in the pull requests
+that carried them.
+
+## 0.6.0-alpha.39
+
+The newest published alpha. See the GitHub Release for the generated notes.

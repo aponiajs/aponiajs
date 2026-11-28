@@ -1,0 +1,18 @@
+{
+  "nodes": [
+    {
+      "id": "docs_agent_readme_surface",
+      "label": "Machine-Readable Agent Surface (aponia manifest, library check, agent init)",
+      "file_type": "document",
+      "rationale": "Exposes framework contracts via CLI without reading source; MCP serving lives in @aponiajs/mcp inside the app's module graph so authorization stays app-owned.",
+      "source_file": "docs/agent/README.md",
+      "source_location": "lines 1-43",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [],
+  "hyperedges": []
+}

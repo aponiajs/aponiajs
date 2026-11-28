@@ -1,0 +1,125 @@
+{
+  "nodes": [
+    {
+      "id": "docs_platforms_native_plugins_guide",
+      "label": "Native Elysia Plugins",
+      "file_type": "document",
+      "source_file": "docs/platforms/native-plugins.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_platforms_native_plugins_defineplugin",
+      "label": "definePlugin & PluginModule.register / registerAsync",
+      "file_type": "concept",
+      "rationale": "Identifies native Elysia plugins in the module graph by key so shared imports mount once and conflicting plugins raise DUPLICATE_MODULE; registerAsync resolves config via DI.",
+      "source_file": "docs/platforms/native-plugins.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_platforms_native_plugins_plugins_option",
+      "label": "AponiaApplicationOptions.plugins Escape Hatch",
+      "file_type": "concept",
+      "rationale": "Mounts boot-time or DynamicModule plugins directly on the root application before controllers, outside the module graph and inspection artifacts, ignoring undefined entries.",
+      "source_file": "docs/platforms/native-plugins.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_platforms_native_plugins_handlercontext",
+      "label": "HandlerContext & Application AppContext Alias",
+      "file_type": "concept",
+      "rationale": "Avoids ambient declaration merging so plugin context types apply only where explicitly paired rather than leaking globally across compilations.",
+      "source_file": "docs/platforms/native-plugins.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_platforms_native_plugins_configurenative",
+      "label": "configureNative Escape Hatch",
+      "file_type": "concept",
+      "source_file": "docs/platforms/native-plugins.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_platforms_native_plugins_guide",
+      "target": "docs_platforms_native_plugins_defineplugin",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/native-plugins.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_native_plugins_guide",
+      "target": "docs_platforms_native_plugins_plugins_option",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/native-plugins.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_native_plugins_guide",
+      "target": "docs_platforms_native_plugins_handlercontext",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/native-plugins.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_native_plugins_guide",
+      "target": "docs_platforms_native_plugins_configurenative",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/native-plugins.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_native_plugins_defineplugin",
+      "target": "docs_platforms_eden_treaty_typed_descriptors",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/platforms/native-plugins.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_native_plugins_guide",
+      "target": "docs_platforms_eden_treaty_guide",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/native-plugins.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

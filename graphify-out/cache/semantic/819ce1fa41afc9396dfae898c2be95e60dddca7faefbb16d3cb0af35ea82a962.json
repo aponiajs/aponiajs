@@ -1,0 +1,49 @@
+{
+  "nodes": [
+    {
+      "id": "examples_native_plugins_readme_native_plugins_example",
+      "label": "Native Plugins Example",
+      "file_type": "document",
+      "source_file": "examples/native-plugins/README.md",
+      "source_location": "L1-L23",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "examples_native_plugins_readme_define_plugin",
+      "label": "definePlugin and registerAsync Native Elysia Plugins",
+      "file_type": "concept",
+      "source_file": "examples/native-plugins/README.md",
+      "source_location": "L3-L21",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "examples_native_plugins_readme_native_plugins_example",
+      "target": "examples_native_plugins_readme_define_plugin",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "examples/native-plugins/README.md",
+      "source_location": "L3-L21",
+      "weight": 1.0
+    },
+    {
+      "source": "examples_native_plugins_readme_define_plugin",
+      "target": "examples_request_parameters_readme_request_parameters_example",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "examples/native-plugins/README.md",
+      "source_location": "L5-L5",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

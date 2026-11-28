@@ -1,0 +1,408 @@
+# Packages
+
+AponiaJS ships 39 publishable packages from this repository and 1 private facade
+(`aponiajs`), which is not published. All 39 publishable packages ship together
+on npm under the `latest` tag (`1.0.0`).
+
+## Published packages
+
+Install directly from npm with `bun add` (or `bun create aponia` for the
+project generator).
+
+| Package                     | What it adds                                                       | Install                                               |
+| --------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------- |
+| `@aponiajs/common`          | Decorators, descriptors, tokens, errors, WebSockets                | `bun add @aponiajs/common`                            |
+| `@aponiajs/compiler`        | Scoped lifetimes, borrow views, and typestate                      | `bun add @aponiajs/compiler`                          |
+| `@aponiajs/core`            | Module graph, visibility, scopes, and DI container                 | `bun add @aponiajs/core`                              |
+| `@aponiajs/platform-elysia` | Default Elysia HTTP platform, routes, plugins, and WebSockets      | `bun add @aponiajs/platform-elysia elysia@2.0.0-rc.4` |
+| `@aponiajs/platform-h3`     | AponiaJS on the H3 runtime                                         | `bun add @aponiajs/platform-h3`                       |
+| `@aponiajs/platform-hono`   | AponiaJS on the Hono runtime                                       | `bun add @aponiajs/platform-hono`                     |
+| `@aponiajs/cli`             | `aponia new`, `aponia generate`, library checks, and MCP tooling   | `bun add --global @aponiajs/cli`                      |
+| `@aponiajs/schematics`      | Nest-shaped schematic collection for the CLI                       | `bun add @aponiajs/schematics`                        |
+| `create-aponia`             | `bun create aponia` project generator entrypoint                   | `bun create aponia <name>`                            |
+| `@aponiajs/testing`         | Test application builder and provider overrides                    | `bun add --dev @aponiajs/testing`                     |
+| `@aponiajs/devtools`        | Opt-in runtime devtools served by the application                  | `bun add @aponiajs/devtools`                          |
+| `@aponiajs/auth`            | JWT, OIDC, refresh rotation, revocation, and RBAC                  | `bun add @aponiajs/auth`                              |
+| `@aponiajs/cache`           | Bounded TTL cache with a pluggable store                           | `bun add @aponiajs/cache`                             |
+| `@aponiajs/compression`     | Brotli and gzip response compression                               | `bun add @aponiajs/compression`                       |
+| `@aponiajs/config`          | Nest-style `.env`, namespaces, and validated config                | `bun add @aponiajs/config`                            |
+| `@aponiajs/cors`            | Cross-origin policy from validated configuration                   | `bun add @aponiajs/cors`                              |
+| `@aponiajs/cqrs`            | `CommandBus`, `QueryBus`, `EventBus`, `@Saga`, `AggregateRoot`     | `bun add @aponiajs/cqrs`                              |
+| `@aponiajs/cron`            | Scheduled jobs from validated configuration                        | `bun add @aponiajs/cron`                              |
+| `@aponiajs/database`        | Drizzle boundary, repositories, and SQL migrations                 | `bun add @aponiajs/database`                          |
+| `@aponiajs/events`          | Typed in-process events with ordered handlers                      | `bun add @aponiajs/events`                            |
+| `@aponiajs/graphql`         | GraphQL endpoint adapter                                           | `bun add @aponiajs/graphql`                           |
+| `@aponiajs/http`            | SSRF-safe outbound HTTP client with circuit breaker and bulkhead   | `bun add @aponiajs/http`                              |
+| `@aponiajs/idempotency`     | `Idempotency-Key` deduplication, conflict guard, and replay        | `bun add @aponiajs/idempotency`                       |
+| `@aponiajs/mapped-types`    | `PartialType`, `PickType`, `OmitType`, `IntersectionType`          | `bun add @aponiajs/mapped-types`                      |
+| `@aponiajs/mcp`             | Model Context Protocol endpoint adapter                            | `bun add @aponiajs/mcp`                               |
+| `@aponiajs/metrics`         | Zero-dep Prometheus metrics, HTTP histograms, and runtime gauges   | `bun add @aponiajs/metrics`                           |
+| `@aponiajs/microservices`   | Message patterns and nine broker transports                        | `bun add @aponiajs/microservices`                     |
+| `@aponiajs/nitro`           | Nitro delivery adapter                                             | `bun add @aponiajs/nitro`                             |
+| `@aponiajs/openapi`         | OpenAPI document for an application's routes                       | `bun add @aponiajs/openapi`                           |
+| `@aponiajs/opentelemetry`   | OpenTelemetry tracing, W3C `traceparent`, and server spans         | `bun add @aponiajs/opentelemetry`                     |
+| `@aponiajs/queue`           | In-process jobs, retries, dead letters, and outbox                 | `bun add @aponiajs/queue`                             |
+| `@aponiajs/rate-limit`      | Fixed-window rate limiting guard and store                         | `bun add @aponiajs/rate-limit`                        |
+| `@aponiajs/redis`           | Redis client and distributed stores for cache/auth/rate-limit/cron | `bun add @aponiajs/redis`                             |
+| `@aponiajs/security`        | Security headers and signed CSRF                                   | `bun add @aponiajs/security`                          |
+| `@aponiajs/serve-static`    | Static file and SPA serving via `ServeStaticModule`                | `bun add @aponiajs/serve-static`                      |
+| `@aponiajs/serverless`      | Web Fetch and AWS Lambda adapters                                  | `bun add @aponiajs/serverless`                        |
+| `@aponiajs/session`         | Signed session cookies and store                                   | `bun add @aponiajs/session`                           |
+| `@aponiajs/terminus`        | `TerminusModule`, `HealthCheckService`, and health indicators      | `bun add @aponiajs/terminus`                          |
+| `@aponiajs/view`            | Blade views, components, slots, and shared data                    | `bun add @aponiajs/view`                              |
+
+The reserved `aponiajs` facade is private in this workspace and is not
+published. Do not install it yet.
+
+## Application packages
+
+A decorated HTTP application normally imports `@aponiajs/common` and
+`@aponiajs/platform-elysia`, with Elysia installed as the platform peer:
+
+```bash
+bun add @aponiajs/common @aponiajs/platform-elysia elysia@2.0.0-rc.4
+```
+
+```ts
+import { Controller, Get, Module } from "@aponiajs/common";
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+
+@Controller()
+class AppController {
+  @Get()
+  hello(): string {
+    return "Hello, AponiaJS!";
+  }
+}
+
+@Module({ controllers: [AppController] })
+class AppModule {}
+
+async function bootstrap(): Promise<void> {
+  const application = await AponiaFactory.create(AppModule);
+  await application.listen(3000);
+}
+
+await bootstrap();
+```
+
+Every section below describes a package in this repository. A section for a
+package in the second table is documentation of the source, not an install
+instruction: its page appears in the documentation site and its README is in the
+repository, and it reaches npm only when the beta line publishes.
+
+### `@aponiajs/common`
+
+The platform-neutral public authoring API:
+
+- module, controller, route, injection, and logging contracts;
+- `@Module()`, `@Controller()`, `@Validation()`, HTTP method decorators,
+  `@Injectable()`, `@Inject()`, and WebSocket gateway decorators;
+- provider helpers and explicit injection tokens.
+
+[Package README](../../packages/common/README.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/common)
+
+### `@aponiajs/core`
+
+The module graph and dependency injection runtime. Most HTTP applications
+receive it transitively through `@aponiajs/platform-elysia`; framework adapters
+and standalone container integrations may install it directly.
+
+[Package README](../../packages/core/README.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/core)
+
+### `@aponiajs/cache`
+
+Bounded application caching with TTL, a prefixed key space, and a small
+pluggable store contract. The default memory store is process-local and capped;
+it evicts the oldest insertion. It is not a distributed cache, a session store,
+or a durable queue.
+
+[Package README](../../packages/cache/README.md)
+
+### `@aponiajs/compiler`
+
+Compiler-grade invariants at runtime: revocable lifetimes, deep readonly and
+exclusive borrow views, a FIFO async reader/writer lock, immutable typestate
+machines, and linear consumption. `scope.guard` binds methods and getters to the
+target, so a class instance with `#private` fields works before its lifetime
+ends and throws `STALE_LIFETIME` after. Views cover plain objects and arrays;
+`Map`, `Set`, `Date`, and class instances are readonly at the type level only.
+
+[Package README](../../packages/compiler/README.md) ·
+[Compiler invariants](../build/invariants.md)
+
+### `@aponiajs/compression`
+
+Brotli and gzip response compression with a size threshold, `Accept-Encoding`
+negotiation, safe skips, and `Vary: Accept-Encoding`.
+
+[Package README](../../packages/compression/README.md)
+
+### `@aponiajs/events`
+
+Typed in-process events with ordered awaitable handlers and `@OnEvent()`
+listeners. Delivery is local to the process; durable delivery belongs to a queue
+or outbox.
+
+[Package README](../../packages/events/README.md)
+
+### `@aponiajs/rate-limit`
+
+Fixed-window request limiting with a route guard, per-route overrides, standard
+`RateLimit-*` headers, and a bounded pluggable store. The default key is the
+route identity, not a client-supplied header; a trusted proxy supplies its own
+key function.
+
+[Package README](../../packages/rate-limit/README.md)
+
+### `@aponiajs/http`
+
+SSRF-safe outbound HTTP with timeouts, bounded responses, redirect
+re-validation, idempotent retries, and Standard Schema response validation.
+Private, loopback, link-local, and metadata addresses are blocked by default.
+
+[Package README](../../packages/http/README.md)
+
+### `@aponiajs/platform-elysia`
+
+The Elysia adapter, application lifecycle, decorated route mapper, native
+WebSocket gateway runtime, and native plugin escape hatch.
+`AponiaFactory.createNative` exposes a statically composed module as the exact
+Elysia application type for native tooling and Eden Treaty. `elysia` is a peer
+dependency and must be installed by the application.
+
+[Package README](../../packages/platform-elysia/README.md) ·
+[Eden Treaty](../platforms/eden-treaty.md) ·
+[WebSockets](../platforms/websockets.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/platform-elysia)
+
+### `@aponiajs/cron`
+
+Declare scheduled jobs in a module, with the jobs read from a validated
+configuration. The engine is
+[croner](https://github.com/hexagon/croner), which the package owns as a
+dependency: AponiaJS contributes a module a registration belongs in and a
+configuration the jobs are validated through, and no scheduling features of its
+own. It has no persistence, no retries, no cross-process coordination, and no
+distributed lock — a cron expression in one process runs in that process. The
+registration is runtime-neutral and runs on every platform.
+
+[Package README](../../packages/cron/README.md) ·
+[Authoring a plugin package](../tooling/plugin-packages.md)
+
+### `@aponiajs/cors`
+
+Answer cross-origin requests for an application's routes, with the policy read
+from a validated configuration. The policy is a neutral `HttpPolicy` the shared
+request pipeline runs, so the same registration answers the same headers and
+preflight on every platform, and the package has no HTTP-runtime dependency. It
+carries one boundary worth stating: an origin that is a `RegExp` or a function
+is code rather than data, so it is not expressible through a configuration and
+belongs with the raw plugin.
+
+[Package README](../../packages/cors/README.md) ·
+[Authoring a plugin package](../tooling/plugin-packages.md)
+
+### `@aponiajs/graphql`
+
+Serve a GraphQL endpoint for an application's queries, with the mount path read
+from a validated configuration. The endpoint is a neutral `HttpPolicy` built on
+GraphQL Yoga: AponiaJS contributes a module the registration lives in and a
+configuration the path is validated through, and no schema of its own. The
+schema is the application's — `typeDefs` plus `resolvers`, or a prebuilt
+`GraphQLSchema` — returned from an injected factory so resolvers close over
+providers. The module sets both the policy's `path` and Yoga's
+`graphqlEndpoint` from the one declared value, which is what makes a non-default
+endpoint answer instead of returning `404`.
+
+[Package README](../../packages/graphql/README.md) ·
+[Authoring a plugin package](../tooling/plugin-packages.md)
+
+### `@aponiajs/testing`
+
+Boot an application for a test with `createTestApplication`, replace one provider
+for one boot, and tear the boot down without leaking a listener. It adds no test
+runner and no mocking framework: every `test` and `expect` stays the runner's, and
+`overrideProvider` replaces a provider's descriptor in the compiled module graph
+rather than intercepting modules. A token no module in the graph provides is
+refused at build time with `MISSING_PROVIDER`, and asserting a request needs no
+socket — `application.handle(new Request(...))` reaches the real route table. The
+one real port it can bind exists for the WebSocket case that needs one.
+
+[Package README](../../packages/testing/README.md) ·
+[Testing applications](../build/testing.md)
+
+### `@aponiajs/openapi`
+
+Serve an OpenAPI document for an application's own routes, with the document's
+`title`, `version`, and `description` read from a validated configuration. The
+document is built from the compiled route plans and served by a controller on
+the application's own route table, so the same registration answers on every
+platform and the package has no HTTP-runtime dependency. The document describes
+the routes; it does not validate requests, generate clients, or serve an API
+console — only a small HTML index beside the JSON document.
+
+[Package README](../../packages/openapi/README.md) ·
+[OpenAPI](../services/openapi.md)
+
+### `@aponiajs/devtools`
+
+The opt-in devtools surface for a running application: an HTTP API mounted on the
+application's own route table under `/__devtools`, on the address the application
+already answers, that reports the compiled graph,
+the routes the application answers, the stages each route passes through, the log
+stream, the requests that reached the record and what answered them, and
+what a build decided about the project's invokers. It is a leaf package — nothing
+in the framework depends on it — and it is enabled by an application's own
+registration, never by an environment variable the framework reads to decide.
+An application that declares its configuration does read one, through
+`provideConfiguration`; that read is the application's, not the framework's.
+
+[Package README](../../packages/devtools/README.md) ·
+[Devtools guide](../services/devtools.md) ·
+[npm](https://www.npmjs.com/package/@aponiajs/devtools)
+
+### `@aponiajs/mcp`
+
+Model Context Protocol endpoint mounted from the official
+`@modelcontextprotocol/sdk` server. The package contributes a module
+registration, a validated endpoint policy with an Origin and `authorize` gate,
+and the lifecycle that closes stateful sessions. It implements no protocol
+engine of its own.
+
+[Package README](../../packages/mcp/README.md) ·
+[MCP guide](../services/mcp.md)
+
+### `@aponiajs/security`
+
+Conservative response headers by default and opt-in signed double-submit CSRF
+protection for cookie-based routes. The CSRF cookie is readable by the
+application's own client; every unsafe request must echo the signed token in the
+configured header.
+
+[Package README](../../packages/security/README.md)
+
+### `@aponiajs/session`
+
+Signed session cookies, a request-scoped `SessionService`, and a bounded
+pluggable store. The cookie carries a signed id, never session data, and is
+`HttpOnly`.
+
+[Package README](../../packages/session/README.md)
+
+### `@aponiajs/auth`
+
+Bearer JWT authentication, OpenID Connect discovery, role and permission
+guards, request-scoped current user, refresh-token rotation, access-token
+revocation, and Bun-native password hashing. A registration states a local JWT
+secret or an OIDC issuer; the package mounts no route, and its built-in refresh
+and revocation stores are bounded and process-local.
+
+[Package README](../../packages/auth/README.md) ·
+[Authentication guide](../services/auth.md)
+
+### `@aponiajs/queue`
+
+An in-process job queue with bounded retries, exponential backoff, a dead
+letter queue, and idempotent enqueue, plus a transactional outbox that records
+messages and delivers them after the transaction. Both stores are
+process-local; a broker and a durable outbox table are needed beyond one
+instance.
+
+[Package README](../../packages/queue/README.md) ·
+[Jobs and outbox guide](../services/queues.md)
+
+### `@aponiajs/database`
+
+A Drizzle-first database boundary. The application constructs its Drizzle
+database; the module owns the transaction boundary, a typed repository over one
+table, and ordered SQL migrations the service applies during initialization.
+The package builds no pool and picks no dialect.
+
+[Package README](../../packages/database/README.md) ·
+[Database guide](../services/database.md)
+
+### `@aponiajs/microservices`
+
+Message-pattern handlers and transports. `@MessagePattern()` answers a
+request/response call, `@EventPattern()` observes fire-and-forget events, and
+`AponiaFactory.create` starts every configured transport after the graph is
+initialized. The package ships a CBOR v1 client and server runtime, an in-memory
+reference transport, and optional broker adapters for NATS, MQTT, RabbitMQ,
+Kafka, Redis Streams, SQS, Pub/Sub, and Service Bus. Each broker SDK is an
+optional peer installed only by the services that use it.
+
+[Package README](../../packages/microservices/README.md) ·
+[Microservices guide](../services/microservices.md)
+
+### `@aponiajs/view`
+
+Laravel-style Blade template rendering with layouts, sections, includes,
+components, slots, prop binding, shared view data, and dot-notation lookup.
+
+[Package README](../../packages/view/README.md)
+
+### `@aponiajs/serverless`
+
+Adapters for function and edge runtimes. `toFetchHandler` binds the application
+as a Web Fetch handler for a worker runtime, and `createLambdaHandler` answers
+AWS Lambda API Gateway proxy events in both payload versions, translating
+headers, cookies, query strings, and base64 bodies.
+
+[Package README](../../packages/serverless/README.md) ·
+[Deployment guide](../operations/deployment.md)
+
+### `@aponiajs/nitro`
+
+Delivery adapter that mounts an Aponia application inside Nitro.
+It forwards the runtime request to `application.handle`, so the compiled
+container, routes, guards, validation, and filters stay in charge. Nitro support
+is experimental while its current release is an RC.
+
+[Adapters guide](../platforms/adapters.md) · [Deployment guide](../operations/deployment.md)
+
+### `@aponiajs/schematics`
+
+The Nest-shaped schematic collection `aponia-cli.json` names. It publishes
+`collection.json`, one `schema.json` per schematic, and a plain-function factory
+per schematic. The templates are copied from the pinned `@nestjs/schematics`
+release recorded in the package's `PROVENANCE.md`; `@aponiajs/cli` resolves the
+collection for `--collection` and `aponia add`, while its built-in generation
+renders Aponia-native sources.
+
+[Package README](../../packages/schematics/README.md) ·
+[CLI guide](../tooling/cli.md) ·
+[Provenance](../../packages/schematics/PROVENANCE.md)
+
+## Project creation and CLI
+
+Install the published CLI globally with Bun and invoke its `aponia` binary
+directly:
+
+```bash
+bun add --global @aponiajs/cli
+aponia new my-api
+aponia --version
+```
+
+The global CLI and the separately published `create-aponia` entrypoint call the
+same project generator. See the
+[complete CLI guide](../tooling/cli.md), the
+[`@aponiajs/cli` npm page](https://www.npmjs.com/package/@aponiajs/cli), and the
+[`create-aponia` npm page](https://www.npmjs.com/package/create-aponia).
+
+## Synchronized versions
+
+Every workspace package shares one
+[Semantic Version](https://semver.org), and a release publishes the publishable
+packages together.
+Avoid mixing AponiaJS package versions within one application. See
+[Releasing npm Packages](../operations/releasing.md) for the version gate and publication
+flow.
+
+`@aponiajs/nitro` is a delivery adapter for Nitro. New applications boot on
+`@aponiajs/platform-h3`, `@aponiajs/platform-hono`, or `@aponiajs/platform-elysia`;
+a delivery adapter is mounted only when the runtime owns the server and forwards
+requests to `application.handle`.

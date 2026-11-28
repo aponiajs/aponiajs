@@ -1,0 +1,28 @@
+{
+  "nodes": [
+    {
+      "id": "packages_serverless_claude_guide",
+      "label": "@aponiajs/serverless CLAUDE.md (symlink to AGENTS.md)",
+      "file_type": "document",
+      "source_file": "packages/serverless/CLAUDE.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_serverless_claude_guide",
+      "target": "packages_serverless_agents_guide",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/serverless/CLAUDE.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

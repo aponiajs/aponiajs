@@ -1,0 +1,227 @@
+# @aponiajs/http
+
+SSRF-safe outbound HTTP for AponiaJS, with timeouts, bounded responses, redirect
+re-validation, and Standard Schema response validation.
+
+```bash
+bun add @aponiajs/http@alpha
+```
+
+## Use it
+
+### Register the module
+
+`forRoot` registers app-wide defaults and no client; `register` creates one
+client. A client with no `name` is injected as `HttpClient`/`HttpService`.
+
+```ts
+import { Module } from "@aponiajs/common";
+import { HttpModule } from "@aponiajs/http";
+
+@Module({
+  imports: [
+    HttpModule.forRoot({ timeoutMs: 5_000 }),
+    HttpModule.register({ baseUrl: "https://api.github.com" }),
+  ],
+})
+export class AppModule {}
+```
+
+### Use it in a controller
+
+```ts
+import { Controller, Get, Param } from "@aponiajs/common";
+import { HttpService } from "@aponiajs/http";
+
+@Controller("repos")
+export class ReposController {
+  constructor(private readonly http: HttpService) {}
+
+  @Get(":owner/:name")
+  async find(@Param("owner") owner: string, @Param("name") name: string) {
+    const { data } = await this.http.get<{ full_name: string }>(`/repos/${owner}/${name}`);
+    return data;
+  }
+}
+```
+
+### Use it in a service
+
+```ts
+import { Injectable } from "@aponiajs/common";
+import { HttpService } from "@aponiajs/http";
+
+@Injectable()
+export class PaymentsService {
+  constructor(private readonly http: HttpService) {}
+
+  charge(orderId: string) {
+    return this.http.post("https://payments.example.com/charges", {
+      json: { orderId },
+      idempotencyKey: `charge:${orderId}`,
+    });
+  }
+}
+```
+
+### Async registration
+
+`forRootAsync` resolves the app-wide defaults; `registerAsync` resolves one
+client and takes the same `name` extra.
+
+```ts
+HttpModule.forRootAsync({
+  useFactory: () => ({ timeoutMs: 5_000 }),
+});
+
+HttpModule.registerAsync({
+  name: "github",
+  useFactory: () => ({ baseUrl: "https://api.github.com" }),
+});
+```
+
+`useClass` constructs the factory class; `useExisting` aliases an
+already-registered provider. The root form reads
+`createHttpClientModuleOptions()`, and the client form reads
+`createHttpClientOptions()`.
+
+```ts
+import { Injectable } from "@aponiajs/common";
+import { HttpModule } from "@aponiajs/http";
+
+@Injectable()
+class HttpOptionsFactory {
+  createHttpClientModuleOptions() {
+    return { timeoutMs: 5_000 };
+  }
+
+  createHttpClientOptions() {
+    return { baseUrl: "https://api.github.com" };
+  }
+}
+
+HttpModule.forRootAsync({ useClass: HttpOptionsFactory });
+HttpModule.registerAsync({ name: "github", useClass: HttpOptionsFactory });
+HttpModule.forRootAsync({ useExisting: HttpOptionsFactory });
+```
+
+### Multiple registrations
+
+`forRoot` is declared once; every named `register` adds one client under its
+`HttpClient:<name>` token.
+
+```ts
+import { Injectable, Module } from "@aponiajs/common";
+import { HttpClient, HttpModule, InjectHttpClient } from "@aponiajs/http";
+
+@Module({
+  imports: [
+    HttpModule.forRoot({ headers: { "user-agent": "api" } }),
+    HttpModule.register({ name: "github", baseUrl: "https://api.github.com" }),
+    HttpModule.register({ name: "billing", baseUrl: "https://billing.example.com" }),
+  ],
+})
+export class AppModule {}
+
+@Injectable()
+class GithubService {
+  constructor(@InjectHttpClient("github") private readonly client: HttpClient) {}
+}
+```
+
+## Secure defaults
+
+- Only `http:` and `https:` URLs are allowed.
+- URLs carrying credentials are refused.
+- `localhost`, `.localhost`, metadata hostnames, loopback, private,
+  link-local, carrier-grade NAT, multicast, and reserved addresses are blocked.
+  NAT64 (`64:ff9b::/96`), IPv4-translated (`::ffff:0:0/96`), and deprecated
+  IPv4-compatible IPv6 forms are blocked too.
+- Every hostname is resolved before the request, and every resolved address is
+  checked. A hostname that resolves to a blocked address is refused.
+- The validated address is pinned for the connection, with the original
+  hostname in `Host` and TLS SNI, so a second DNS answer cannot rebind the
+  connection to a private address.
+- Every redirect is re-validated. A redirect with a request body is not followed.
+- A redirect that changes origin drops `Authorization`, `Cookie`, and
+  `Proxy-Authorization` before the next hop.
+- `Host` is never supplied by the caller.
+- Responses are bounded; the default is 1 MiB.
+- Requests time out, including the response body; the default is 10 seconds.
+- Retries apply only to `GET`, `HEAD`, `OPTIONS`, `PUT`, and `DELETE`.
+
+`allowPrivateNetworks: true` is the explicit opt-out for a trusted internal
+deployment. Do not enable it for a client that accepts user-supplied URLs.
+
+## Options
+
+| Option                 | Default  | Meaning                                      |
+| ---------------------- | -------- | -------------------------------------------- |
+| `baseUrl`              | —        | Base URL for relative requests.              |
+| `headers`              | `{}`     | Headers sent with every request.             |
+| `timeoutMs`            | `10_000` | Request timeout.                             |
+| `retries`              | `0`      | Retries for idempotent methods.              |
+| `retryDelayMs`         | `100`    | Base delay between retries.                  |
+| `maxResponseBytes`     | `1 MiB`  | Response body limit.                         |
+| `maxRedirects`         | `3`      | Redirect limit.                              |
+| `allowPrivateNetworks` | `false`  | Explicit SSRF opt-out.                       |
+| `fetch`                | global   | Fetch implementation, for tests or adapters. |
+| `resolveAddresses`     | DNS      | Hostname resolver, for tests or adapters.    |
+| `pinResolvedAddress`   | `true`   | Connect to the validated address.            |
+| `isGlobal`             | `false`  | Makes the registration's exports global.     |
+
+The registration is split as `@nestjs/http-client` splits it: `forRoot` /
+`forRootAsync` register app-wide defaults and **no client**; `register` /
+`registerAsync` create one client each. Without a name the client is injected as
+`HttpClient`/`HttpService`; with one, use `@InjectHttpClient("github")` or
+`getHttpClientToken("github")`. [Multiple registrations](#multiple-registrations)
+shows both forms together.
+
+An interceptor is a class (`HttpClientInterceptor`), an instance, or a
+function. Classes are passed beside `useFactory` for an async registration so
+the container can create them; an instance and a function may also be returned
+by the factory. The chain wraps the same SSRF-safe send, so an interceptor
+cannot skip address validation or the response bound.
+
+## Request options
+
+`method`, `headers`, `query`, `json`, `body`, `timeoutMs`, `retries`,
+`redirect` (`follow`, `error`, `manual`), `maxRedirects`, `maxResponseBytes`,
+`signal`, `validator`, `throwOnError`, and `idempotencyKey`.
+
+`idempotencyKey` sends an `Idempotency-Key` header and makes a retry safe for a
+method the client does not retry by default, including `POST`. A retryable
+answer that carries `Retry-After` waits for that value (seconds or an HTTP date,
+capped at 30 seconds) instead of the exponential delay.
+
+`validator` is a Standard Schema. A response that does not match it fails with
+`HTTP_CLIENT_INVALID_RESPONSE`, and the error carries the issue messages without
+the response body.
+
+## Limits
+
+- This is an outbound client, not a server or a proxy.
+- DNS rebinding is closed by pinning the validated address for the connection.
+  The pinning uses Bun's `tls.serverName` and `proxy: false` fetch extensions;
+  a custom `fetch` must honor the `Host` header and those options, or the
+  application must supply a `fetch` that pins the address itself and set
+  `pinResolvedAddress: false`.
+- The package retries a non-idempotent method only when the request states an
+  `idempotencyKey`; it never replays a request body across a redirect, and it
+  never exposes a response body on error.
+
+## Bootstrap
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+
+const application = await AponiaFactory.create(AppModule);
+await application.listen(Number(Bun.env.PORT ?? 3000));
+```
+
+## Documentation
+
+- [Published packages](../../docs/reference/packages.md)
+- [AponiaJS architecture](../../docs/build/architecture-and-style.md)
+- [npm](https://www.npmjs.com/package/@aponiajs/http)

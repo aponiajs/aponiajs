@@ -1,0 +1,3762 @@
+{
+  "version": 1,
+  "moves": [
+    {
+      "from": "packages/aponiajs/tests-vp/index.conformance.ts",
+      "to": "packages/aponiajs/test/index.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/aponiajs/tests/index.test.ts",
+      "to": "packages/aponiajs/src/index.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/audit/src/module/audit-module.ts",
+      "to": "packages/audit/src/module/audit.module.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/audit/src/module/audit.types.ts",
+      "to": "packages/audit/src/interfaces/audit.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/audit/src/service/audit-service.ts",
+      "to": "packages/audit/src/service/audit.service.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/audit/src/store/memory-audit-store.ts",
+      "to": "packages/audit/src/store/memory-audit.store.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/audit/src/store/memory-audit-store.types.ts",
+      "to": "packages/audit/src/interfaces/memory-audit-store.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/audit/tests-vp/audit.conformance.ts",
+      "to": "packages/audit/test/audit.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/audit/tests/audit-async.test.ts",
+      "to": "packages/audit/src/module/audit-async.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/audit/tests/audit-module.test.ts",
+      "to": "packages/audit/src/module/audit-module.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/audit/tests/audit-registration.test.ts",
+      "to": "packages/audit/src/module/audit-registration.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/auth/src/authentication/auth.constants.ts",
+      "to": "packages/auth/src/auth.constants.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/auth/src/authentication/auth.guard.ts",
+      "to": "packages/auth/src/auth.guard.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/auth/src/authentication/auth.service.ts",
+      "to": "packages/auth/src/auth.service.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/auth/src/authentication/claims.ts",
+      "to": "packages/auth/src/claims.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/auth/src/authentication/current-user.decorator.ts",
+      "to": "packages/auth/src/current-user.decorator.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/auth/src/authentication/token-verifier.types.ts",
+      "to": "packages/auth/src/interfaces/token-verifier.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/auth/src/authorization/authorization.decorators.ts",
+      "to": "packages/auth/src/authorization.decorator.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/auth/src/authorization/permissions.guard.ts",
+      "to": "packages/auth/src/permissions.guard.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/auth/src/jwt/jwt.service.ts",
+      "to": "packages/auth/src/jwt.service.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/auth/src/module/auth-module.ts",
+      "to": "packages/auth/src/auth.module.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/auth/src/module/auth.module-definition.ts",
+      "to": "packages/auth/src/auth.module-definition.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/auth/src/module/auth.types.ts",
+      "to": "packages/auth/src/interfaces/auth.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/auth/src/oidc/oidc.service.ts",
+      "to": "packages/auth/src/oidc.service.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/auth/src/oidc/oidc.types.ts",
+      "to": "packages/auth/src/interfaces/oidc.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/auth/src/password/password.service.ts",
+      "to": "packages/auth/src/password/password-hasher.service.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/auth/src/refresh/memory-refresh-token-store.ts",
+      "to": "packages/auth/src/memory-refresh-token.store.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/auth/src/refresh/refresh-token.service.ts",
+      "to": "packages/auth/src/refresh-token.service.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/auth/src/refresh/refresh-token.types.ts",
+      "to": "packages/auth/src/interfaces/refresh-token.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/auth/src/revocation/memory-revocation-store.ts",
+      "to": "packages/auth/src/memory-revocation.store.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/auth/src/revocation/revocation.service.ts",
+      "to": "packages/auth/src/revocation.service.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/auth/src/revocation/revocation.types.ts",
+      "to": "packages/auth/src/interfaces/revocation.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/auth/tests-vp/auth.conformance.ts",
+      "to": "packages/auth/test/auth.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/auth/tests/auth-current-user.test.ts",
+      "to": "packages/auth/src/auth-current-user.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/auth/tests/auth-module.test.ts",
+      "to": "packages/auth/src/auth-module.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/auth/tests/auth-registration.test.ts",
+      "to": "packages/auth/src/auth-registration.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/auth/tests/jwt-rotation.test.ts",
+      "to": "packages/auth/src/jwt-rotation.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/auth/tests/oidc.test.ts",
+      "to": "packages/auth/src/oidc.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/auth/tests/platform-parity.test.ts",
+      "to": "packages/auth/src/platform-parity.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/auth/tests/refresh-token.test.ts",
+      "to": "packages/auth/src/refresh-token.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/auth/tests/shared-stores.test.ts",
+      "to": "packages/auth/src/shared-stores.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/auth/tests/token-transport.test.ts",
+      "to": "packages/auth/src/token-transport.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cache/src/module/cache-module.constants.ts",
+      "to": "packages/cache/src/cache.constants.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cache/src/module/cache-module.ts",
+      "to": "packages/cache/src/cache.module.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cache/src/module/cache-module.types.ts",
+      "to": "packages/cache/src/interfaces/cache-module.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cache/src/module/cache.module-definition.ts",
+      "to": "packages/cache/src/cache.module-definition.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cache/src/service/cache-service.ts",
+      "to": "packages/cache/src/cache.service.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cache/src/service/cache-service.types.ts",
+      "to": "packages/cache/src/interfaces/cache-service.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cache/src/store/cache-store.types.ts",
+      "to": "packages/cache/src/interfaces/cache-store.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cache/src/store/memory-cache-store.ts",
+      "to": "packages/cache/src/memory-cache.store.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cache/src/store/memory-cache-store.types.ts",
+      "to": "packages/cache/src/interfaces/memory-cache-store.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cache/tests-vp/cache.conformance.ts",
+      "to": "packages/cache/test/cache.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/cache/tests/cache-async.test.ts",
+      "to": "packages/cache/src/cache-async.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cache/tests/cache-module.test.ts",
+      "to": "packages/cache/src/cache-module.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cache/tests/cache-registration.test.ts",
+      "to": "packages/cache/src/cache-registration.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cache/tests/memory-cache-store.test.ts",
+      "to": "packages/cache/src/memory-cache-store.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/e2e/generated-application.e2e.ts",
+      "to": "packages/cli/test/generated-application.e2e-spec.ts",
+      "category": "e2e"
+    },
+    {
+      "from": "packages/cli/src/bundler/aponia-build-plugin.types.ts",
+      "to": "packages/cli/src/interfaces/aponia-build-plugin.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cli/src/commands/command.types.ts",
+      "to": "packages/cli/src/interfaces/command.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cli/src/generation/build-project-analysis.types.ts",
+      "to": "packages/cli/src/interfaces/build-project-analysis.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cli/src/generation/cli-configuration.types.ts",
+      "to": "packages/cli/src/interfaces/cli-configuration.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cli/src/generation/component-names.types.ts",
+      "to": "packages/cli/src/interfaces/component-names.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cli/src/generation/controller-invokers.types.ts",
+      "to": "packages/cli/src/interfaces/controller-invokers.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cli/src/generation/controller-routes.types.ts",
+      "to": "packages/cli/src/interfaces/controller-routes.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cli/src/generation/descriptor-emitter.types.ts",
+      "to": "packages/cli/src/interfaces/descriptor-emitter.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cli/src/generation/invoker-generator.types.ts",
+      "to": "packages/cli/src/interfaces/invoker-generator.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cli/src/generation/module-descriptors.types.ts",
+      "to": "packages/cli/src/interfaces/module-descriptors.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cli/src/generation/module-registration.types.ts",
+      "to": "packages/cli/src/interfaces/module-registration.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cli/src/generation/project-generator.types.ts",
+      "to": "packages/cli/src/interfaces/project-generator.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cli/src/generation/schematic.types.ts",
+      "to": "packages/cli/src/interfaces/schematic.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cli/src/generation/source-imports.types.ts",
+      "to": "packages/cli/src/interfaces/source-imports.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cli/src/library/check-library.types.ts",
+      "to": "packages/cli/src/interfaces/check-library.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cli/tests/agent-init.test.ts",
+      "to": "packages/cli/src/agent-init.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/argument-parsing.test.ts",
+      "to": "packages/cli/src/argument-parsing.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/arguments.test.ts",
+      "to": "packages/cli/src/commands/arguments.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/build-plugin.test.ts",
+      "to": "packages/cli/src/build-plugin.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/cli-configuration-branches.test.ts",
+      "to": "packages/cli/src/generation/cli-configuration-branches.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/component-names.test.ts",
+      "to": "packages/cli/src/generation/component-names.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/controller-invokers.test.ts",
+      "to": "packages/cli/src/generation/controller-invokers.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/controller-routes.test.ts",
+      "to": "packages/cli/src/generation/controller-routes.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/descriptor-artifact-freshness.integration.test.ts",
+      "to": "packages/cli/src/descriptor-artifact-freshness.integration.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/descriptor-emitter.test.ts",
+      "to": "packages/cli/src/generation/descriptor-emitter.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/dev-command.test.ts",
+      "to": "packages/cli/src/dev-command.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/file-scanner.test.ts",
+      "to": "packages/cli/src/generation/file-scanner.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/flag-values.test.ts",
+      "to": "packages/cli/src/flag-values.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/generated-descriptors-enhancers.integration.test.ts",
+      "to": "packages/cli/src/generated-descriptors-enhancers.integration.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/generated-descriptors.integration.test.ts",
+      "to": "packages/cli/src/generated-descriptors.integration.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/generated-invokers.integration.test.ts",
+      "to": "packages/cli/src/generated-invokers.integration.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/generated-source-formatter.test.ts",
+      "to": "packages/cli/src/generation/generated-source-formatter.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/invoker-generator.test.ts",
+      "to": "packages/cli/src/generation/invoker-generator.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/library-catalog.test.ts",
+      "to": "packages/cli/src/library-catalog.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/library-check.test.ts",
+      "to": "packages/cli/src/library-check.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/library-integrations.test.ts",
+      "to": "packages/cli/src/library-integrations.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/manifest.test.ts",
+      "to": "packages/cli/src/manifest.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/mcp-generator.test.ts",
+      "to": "packages/cli/src/generation/mcp-generator.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/module-descriptors.test.ts",
+      "to": "packages/cli/src/generation/module-descriptors.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/module-registration-edges.test.ts",
+      "to": "packages/cli/src/generation/module-registration-edges.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/module-registration.test.ts",
+      "to": "packages/cli/src/generation/module-registration.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/nest-surface.test.ts",
+      "to": "packages/cli/src/nest-surface.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/plugin-generator.test.ts",
+      "to": "packages/cli/src/plugin-generator.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/project-configuration-decisions.test.ts",
+      "to": "packages/cli/src/generation/project-configuration-decisions.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/project-configuration.test.ts",
+      "to": "packages/cli/src/generation/project-configuration.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/project-generator-edges.test.ts",
+      "to": "packages/cli/src/generation/project-generator-edges.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/project-generator.test.ts",
+      "to": "packages/cli/src/generation/project-generator.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/run-cli-edges.test.ts",
+      "to": "packages/cli/src/commands/run-cli-edges.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/run-cli.test.ts",
+      "to": "packages/cli/src/commands/run-cli.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/schematic-collection.test.ts",
+      "to": "packages/cli/src/generation/schematic-collection.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/schematic-generator-decisions.test.ts",
+      "to": "packages/cli/src/generation/schematic-generator-decisions.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/schematic-generator.test.ts",
+      "to": "packages/cli/src/generation/schematic-generator.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/schematic-registration-path.test.ts",
+      "to": "packages/cli/src/schematic-registration-path.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/source-imports.test.ts",
+      "to": "packages/cli/src/generation/source-imports.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cli/tests/starter-artifact-freshness.test.ts",
+      "to": "packages/cli/src/starter-artifact-freshness.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/src/configuration/configuration.types.ts",
+      "to": "packages/common/src/interfaces/configuration.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/controllers/controller.types.ts",
+      "to": "packages/common/src/interfaces/controller.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/decorators/decorators.types.ts",
+      "to": "packages/common/src/interfaces/decorators.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/enhancers/class-serializer-interceptor.ts",
+      "to": "packages/common/src/enhancers/class-serializer.interceptor.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/enhancers/enhancer-decorators.ts",
+      "to": "packages/common/src/enhancers/enhancer.decorator.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/enhancers/enhancer-decorators.types.ts",
+      "to": "packages/common/src/interfaces/enhancer-decorators.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/enhancers/enhancer.types.ts",
+      "to": "packages/common/src/interfaces/enhancer.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/errors/aponia-error.ts",
+      "to": "packages/common/src/exceptions/aponia-error.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/errors/aponia-error.types.ts",
+      "to": "packages/common/src/exceptions/aponia-error.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/exceptions/built-in-exceptions.ts",
+      "to": "packages/common/src/exceptions/built-in.exception.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/exceptions/http-exception.ts",
+      "to": "packages/common/src/exceptions/http.exception.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/exceptions/intrinsic-exception.ts",
+      "to": "packages/common/src/exceptions/intrinsic.exception.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/lifecycle/lifecycle.types.ts",
+      "to": "packages/common/src/interfaces/lifecycle.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/logging/console-logger.ts",
+      "to": "packages/common/src/services/console-logger.service.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/logging/log-value.ts",
+      "to": "packages/common/src/services/log-value.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/logging/logger-observer.ts",
+      "to": "packages/common/src/services/logger-observer.service.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/logging/logger-token.ts",
+      "to": "packages/common/src/services/logger-token.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/logging/logger.types.ts",
+      "to": "packages/common/src/interfaces/logger.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/mcp/mcp-decorators.ts",
+      "to": "packages/common/src/mcp/mcp.decorator.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/mcp/mcp.types.ts",
+      "to": "packages/common/src/interfaces/mcp.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/microservices/microservice.types.ts",
+      "to": "packages/common/src/interfaces/microservice.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/middleware/middleware.types.ts",
+      "to": "packages/common/src/interfaces/middleware.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/modules/configurable-module.ts",
+      "to": "packages/common/src/module-utils/configurable-module.builder.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/modules/forward-ref.types.ts",
+      "to": "packages/common/src/interfaces/forward-ref.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/modules/module-async-options.ts",
+      "to": "packages/common/src/module-utils/module-async-options.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/modules/module.types.ts",
+      "to": "packages/common/src/interfaces/module.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/pipes/built-in-pipes.ts",
+      "to": "packages/common/src/pipes/built-in.pipe.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/pipes/pipe-decorators.ts",
+      "to": "packages/common/src/pipes/pipe.decorator.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/pipes/pipe.types.ts",
+      "to": "packages/common/src/interfaces/pipe.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/providers/provider.types.ts",
+      "to": "packages/common/src/interfaces/provider.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/routing/custom-parameter.types.ts",
+      "to": "packages/common/src/interfaces/custom-parameter.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/routing/response-metadata.types.ts",
+      "to": "packages/common/src/interfaces/response-metadata.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/routing/route-parameters.types.ts",
+      "to": "packages/common/src/interfaces/route-parameters.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/routing/route-schema.types.ts",
+      "to": "packages/common/src/interfaces/route-schema.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/routing/validation.types.ts",
+      "to": "packages/common/src/interfaces/validation.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/tokens/token.types.ts",
+      "to": "packages/common/src/interfaces/token.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/websockets/websocket-gateway.ts",
+      "to": "packages/common/src/websockets/websocket.gateway.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/src/websockets/websocket-gateway.types.ts",
+      "to": "packages/common/src/interfaces/websocket-gateway.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/common/tests-vp/apply-decorators.conformance.ts",
+      "to": "packages/common/test/apply-decorators.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/common/tests-vp/configurable-module.conformance.ts",
+      "to": "packages/common/test/configurable-module.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/common/tests-vp/contracts.conformance.ts",
+      "to": "packages/common/test/contracts.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/common/tests-vp/dto.conformance.ts",
+      "to": "packages/common/test/dto.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/common/tests-vp/enhancer-contracts.conformance.ts",
+      "to": "packages/common/test/enhancer-contracts.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/common/tests-vp/enhancer-decorators.conformance.ts",
+      "to": "packages/common/test/enhancer-decorators.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/common/tests-vp/exceptions.conformance.ts",
+      "to": "packages/common/test/exceptions.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/common/tests-vp/pipes.conformance.ts",
+      "to": "packages/common/test/pipes.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/common/tests-vp/reflector.conformance.ts",
+      "to": "packages/common/test/reflector.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/common/tests-vp/validation.conformance.ts",
+      "to": "packages/common/test/validation.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/common/tests-vp/versioning.conformance.ts",
+      "to": "packages/common/test/versioning.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/common/tests-vp/websocket-gateway.conformance.ts",
+      "to": "packages/common/test/websocket-gateway.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/common/tests/apply-decorators.test.ts",
+      "to": "packages/common/src/decorators/apply-decorators.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/async-context.test.ts",
+      "to": "packages/common/src/async-context/async-context.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/configurable-module.test.ts",
+      "to": "packages/common/src/module-utils/configurable-module.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/configuration.test.ts",
+      "to": "packages/common/src/configuration/configuration.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/console-logger.test.ts",
+      "to": "packages/common/src/services/console-logger.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/contracts.test.ts",
+      "to": "packages/common/src/contracts.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/custom-parameter.test.ts",
+      "to": "packages/common/src/routing/custom-parameter.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/decorator-metadata.test.ts",
+      "to": "packages/common/src/enhancers/decorator-metadata.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/deprecation.test.ts",
+      "to": "packages/common/src/routing/deprecation.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/dto.test.ts",
+      "to": "packages/common/src/routing/dto.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/enhancer-decorators.test.ts",
+      "to": "packages/common/src/enhancers/enhancer-decorators.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/exceptions.test.ts",
+      "to": "packages/common/src/exceptions/exceptions.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/log-value.test.ts",
+      "to": "packages/common/src/services/log-value.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/logger-observer.test.ts",
+      "to": "packages/common/src/services/logger-observer.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/pipes.test.ts",
+      "to": "packages/common/src/pipes/pipes.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/provider-descriptors.test.ts",
+      "to": "packages/common/src/provider-descriptors.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/reflector.test.ts",
+      "to": "packages/common/src/enhancers/reflector.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/response-metadata.test.ts",
+      "to": "packages/common/src/routing/response-metadata.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/response-serializer.test.ts",
+      "to": "packages/common/src/routing/response-serializer.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/route-parameters.test.ts",
+      "to": "packages/common/src/routing/route-parameters.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/route-schema.test.ts",
+      "to": "packages/common/src/routing/route-schema.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/schema-combinators.test.ts",
+      "to": "packages/common/src/routing/schema-combinators.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/sse.test.ts",
+      "to": "packages/common/src/routing/sse.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/token.property.test.ts",
+      "to": "packages/common/src/tokens/token.property.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/validation.test.ts",
+      "to": "packages/common/src/pipes/validation.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/versioning.test.ts",
+      "to": "packages/common/src/routing/versioning.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/view.test.ts",
+      "to": "packages/common/src/routing/view.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/websocket-gateway.test.ts",
+      "to": "packages/common/src/websockets/websocket-gateway.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/common/tests/websocket-metadata.test.ts",
+      "to": "packages/common/src/websockets/websocket-metadata.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/compiler/src/borrow/borrow.types.ts",
+      "to": "packages/compiler/src/interfaces/borrow.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/compiler/src/lifetime/lifetime.types.ts",
+      "to": "packages/compiler/src/interfaces/lifetime.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/compiler/src/typestate/typestate.types.ts",
+      "to": "packages/compiler/src/interfaces/typestate.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/compiler/tests-vp/compiler.conformance.ts",
+      "to": "packages/compiler/test/compiler.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/compiler/tests/borrow.test.ts",
+      "to": "packages/compiler/src/borrow/borrow.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/compiler/tests/core-guard.test.ts",
+      "to": "packages/compiler/src/core-guard.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/compiler/tests/lifetime.test.ts",
+      "to": "packages/compiler/src/lifetime/lifetime.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/compiler/tests/request-lifetime.integration.test.ts",
+      "to": "packages/compiler/src/request-lifetime.integration.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/compiler/tests/shared-state.test.ts",
+      "to": "packages/compiler/src/shared/shared-state.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/compiler/tests/typestate.test.ts",
+      "to": "packages/compiler/src/typestate/typestate.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/compression/src/module/compression-module.ts",
+      "to": "packages/compression/src/module/compression.module.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/compression/src/module/compression.types.ts",
+      "to": "packages/compression/src/interfaces/compression.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/compression/src/policy/compression-policy.ts",
+      "to": "packages/compression/src/policy/compression.policy.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/compression/tests-vp/compression.conformance.ts",
+      "to": "packages/compression/test/compression.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/compression/tests/compression-async.test.ts",
+      "to": "packages/compression/src/module/compression-async.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/compression/tests/compression-branches.test.ts",
+      "to": "packages/compression/src/module/compression-branches.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/compression/tests/compression-module.test.ts",
+      "to": "packages/compression/src/module/compression-module.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/core/src/container/container.ts",
+      "to": "packages/core/src/injector/container.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/core/src/graph/dependencies.ts",
+      "to": "packages/core/src/scanner/dependencies.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/core/src/graph/diagnostic-formatter.ts",
+      "to": "packages/core/src/scanner/diagnostic-formatter.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/core/src/graph/graph-compiler.ts",
+      "to": "packages/core/src/scanner/graph-compiler.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/core/src/graph/graph.types.ts",
+      "to": "packages/core/src/interfaces/graph.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/core/src/graph/module-graph.ts",
+      "to": "packages/core/src/scanner/module-graph.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/core/tests-vp/context.conformance.ts",
+      "to": "packages/core/test/context.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/core/tests-vp/core.conformance.ts",
+      "to": "packages/core/test/core.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/core/tests-vp/diagnostic-formatter.conformance.ts",
+      "to": "packages/core/test/diagnostic-formatter.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/core/tests/async-providers.test.ts",
+      "to": "packages/core/src/async-providers.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/core/tests/container.test.ts",
+      "to": "packages/core/src/injector/container.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/core/tests/context-parity.test.ts",
+      "to": "packages/core/src/context-parity.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/core/tests/core.test.ts",
+      "to": "packages/core/src/core.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/core/tests/diagnostic-formatter.test.ts",
+      "to": "packages/core/src/scanner/diagnostic-formatter.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/core/tests/graph-compiler.test.ts",
+      "to": "packages/core/src/scanner/graph-compiler.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/core/tests/graph-inspection.test.ts",
+      "to": "packages/core/src/scanner/graph-inspection.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/core/tests/module-graph.test.ts",
+      "to": "packages/core/src/scanner/module-graph.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/core/tests/predefined-providers.test.ts",
+      "to": "packages/core/src/predefined-providers.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/core/tests/provider-scopes.test.ts",
+      "to": "packages/core/src/provider-scopes.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cors/src/module/cors-module.ts",
+      "to": "packages/cors/src/module/cors.module.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cors/src/module/cors-module.types.ts",
+      "to": "packages/cors/src/interfaces/cors-module.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cors/src/policy/cors-policy.ts",
+      "to": "packages/cors/src/policy/cors.policy.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cors/src/policy/cors-policy.types.ts",
+      "to": "packages/cors/src/interfaces/cors-policy.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cors/tests-vp/cors.conformance.ts",
+      "to": "packages/cors/test/cors.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/cors/tests/cors-module.test.ts",
+      "to": "packages/cors/src/module/cors-module.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cors/tests/generated-descriptors.test.ts",
+      "to": "packages/cors/src/generated-descriptors.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/create-aponia/tests/entrypoint.test.ts",
+      "to": "packages/create-aponia/test/entrypoint.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cron/src/module/cron-module.ts",
+      "to": "packages/cron/src/cron.module.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cron/src/module/cron-module.types.ts",
+      "to": "packages/cron/src/interfaces/cron-module.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cron/src/module/cron.module-definition.ts",
+      "to": "packages/cron/src/cron.module-definition.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cron/src/schedule.constants.ts",
+      "to": "packages/cron/src/cron.constants.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cron/src/scheduler/cron-scheduler.types.ts",
+      "to": "packages/cron/src/interfaces/cron-scheduler.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cron/src/scheduler/schedule-explorer.ts",
+      "to": "packages/cron/src/scheduler/schedule.explorer.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cron/src/scheduler/schedule.types.ts",
+      "to": "packages/cron/src/interfaces/schedule.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cron/src/scheduler/scheduler-registry.ts",
+      "to": "packages/cron/src/scheduler/scheduler.registry.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/cron/tests-vp/cron.conformance.ts",
+      "to": "packages/cron/test/cron.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/cron/tests/cron-module.test.ts",
+      "to": "packages/cron/src/cron-module.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cron/tests/cron-registration.test.ts",
+      "to": "packages/cron/src/cron-registration.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cron/tests/cron-registry.test.ts",
+      "to": "packages/cron/src/cron-registry.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/cron/tests/platform-parity.test.ts",
+      "to": "packages/cron/src/platform-parity.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/database/src/database/database.service.ts",
+      "to": "packages/database/src/database.service.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/database/src/database/database.types.ts",
+      "to": "packages/database/src/interfaces/database.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/database/src/migration/memory-migration-store.ts",
+      "to": "packages/database/src/migration/memory-migration.store.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/database/src/migration/migration.types.ts",
+      "to": "packages/database/src/interfaces/migration.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/database/src/module/database-module.ts",
+      "to": "packages/database/src/database.module.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/database/src/module/database-module.types.ts",
+      "to": "packages/database/src/interfaces/database-module.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/database/src/module/database.module-definition.ts",
+      "to": "packages/database/src/database.module-definition.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/database/src/repository/repository.types.ts",
+      "to": "packages/database/src/interfaces/repository.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/database/tests-vp/database.conformance.ts",
+      "to": "packages/database/test/database.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/database/tests/database-async.test.ts",
+      "to": "packages/database/src/database-async.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/database/tests/database-registration.test.ts",
+      "to": "packages/database/src/database-registration.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/database/tests/database.test.ts",
+      "to": "packages/database/src/database.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/database/tests/live-postgres.e2e-spec.ts",
+      "to": "packages/database/test/live-postgres.e2e-spec.ts",
+      "category": "e2e"
+    },
+    {
+      "from": "packages/devtools/src/buffer/ring-buffer.types.ts",
+      "to": "packages/devtools/src/interfaces/ring-buffer.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/devtools/src/endpoints/aot.types.ts",
+      "to": "packages/devtools/src/interfaces/aot.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/devtools/src/endpoints/flow.types.ts",
+      "to": "packages/devtools/src/interfaces/flow.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/devtools/src/endpoints/inspection.types.ts",
+      "to": "packages/devtools/src/interfaces/inspection.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/devtools/src/endpoints/linkable-graph.types.ts",
+      "to": "packages/devtools/src/interfaces/linkable-graph.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/devtools/src/endpoints/payloads.types.ts",
+      "to": "packages/devtools/src/interfaces/payloads.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/devtools/src/logging/log-buffer.types.ts",
+      "to": "packages/devtools/src/interfaces/log-buffer.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/devtools/src/module/devtools-module.ts",
+      "to": "packages/devtools/src/module/devtools.module.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/devtools/src/module/devtools-module.types.ts",
+      "to": "packages/devtools/src/interfaces/devtools-module.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/devtools/src/requests/request-buffer.types.ts",
+      "to": "packages/devtools/src/interfaces/request-buffer.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/devtools/src/server/devtools-server.types.ts",
+      "to": "packages/devtools/src/interfaces/devtools-server.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/devtools/src/source/source-resolver.ts",
+      "to": "packages/devtools/src/source/source.resolver.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/devtools/src/source/source-resolver.types.ts",
+      "to": "packages/devtools/src/interfaces/source-resolver.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/devtools/tests-vp/devtools.conformance.ts",
+      "to": "packages/devtools/test/devtools.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/devtools/tests/aot.test.ts",
+      "to": "packages/devtools/src/endpoints/aot.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/devtools/tests/devtools-logger-seam.test.ts",
+      "to": "packages/devtools/src/module/devtools-logger-seam.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/devtools/tests/devtools-module.test.ts",
+      "to": "packages/devtools/src/module/devtools-module.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/devtools/tests/fixtures/sample-source.ts",
+      "to": "packages/devtools/test/fixtures/sample-source.ts",
+      "category": "e2e"
+    },
+    {
+      "from": "packages/devtools/tests/graph.test.ts",
+      "to": "packages/devtools/src/endpoints/graph.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/devtools/tests/linkable-graph.test.ts",
+      "to": "packages/devtools/src/endpoints/linkable-graph.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/devtools/tests/logs.test.ts",
+      "to": "packages/devtools/src/endpoints/logs.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/devtools/tests/one-line.test.ts",
+      "to": "packages/devtools/src/logging/one-line.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/devtools/tests/requests.test.ts",
+      "to": "packages/devtools/src/endpoints/requests.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/devtools/tests/server.test.ts",
+      "to": "packages/devtools/src/server/server.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/devtools/tests/source-resolver.test.ts",
+      "to": "packages/devtools/src/source/source-resolver.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/devtools/tests/support/boot.ts",
+      "to": "packages/devtools/test/support/boot.ts",
+      "category": "e2e"
+    },
+    {
+      "from": "packages/devtools/tests/ui-page.test.ts",
+      "to": "packages/devtools/src/server/ui-page.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/events/src/emitter/event-emitter.ts",
+      "to": "packages/events/src/event-emitter.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/events/src/emitter/event-emitter.types.ts",
+      "to": "packages/events/src/interfaces/event-emitter.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/events/src/listener/on-event.ts",
+      "to": "packages/events/src/decorators/on-event.decorator.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/events/src/listener/on-event.types.ts",
+      "to": "packages/events/src/interfaces/on-event.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/events/src/module/event-emitter-module.ts",
+      "to": "packages/events/src/events.module.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/events/src/module/events.constants.ts",
+      "to": "packages/events/src/events.constants.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/events/tests-vp/events.conformance.ts",
+      "to": "packages/events/test/events.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/events/tests/event-emitter-module.test.ts",
+      "to": "packages/events/src/event-emitter-module.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/events/tests/event-emitter.test.ts",
+      "to": "packages/events/src/event-emitter.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/events/tests/events-registration.test.ts",
+      "to": "packages/events/src/events-registration.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/graphql/src/endpoint/graphql-endpoint.types.ts",
+      "to": "packages/graphql/src/interfaces/graphql-endpoint.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/graphql/src/module/graphql-module.ts",
+      "to": "packages/graphql/src/graphql.module.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/graphql/src/module/graphql-module.types.ts",
+      "to": "packages/graphql/src/interfaces/graphql-module.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/graphql/tests-vp/graphql.conformance.ts",
+      "to": "packages/graphql/test/graphql.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/graphql/tests/generated-descriptors.test.ts",
+      "to": "packages/graphql/src/generated-descriptors.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/graphql/tests/graphql-module.test.ts",
+      "to": "packages/graphql/src/graphql-module.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/h3/tests-vp/h3.conformance.ts",
+      "to": "packages/h3/test/h3.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/h3/tests/adapter.test.ts",
+      "to": "packages/h3/src/adapter.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/hono/tests-vp/hono.conformance.ts",
+      "to": "packages/hono/test/hono.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/hono/tests/adapter.test.ts",
+      "to": "packages/hono/src/adapter.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/http/src/client/http-client.types.ts",
+      "to": "packages/http/src/interfaces/http-client.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/http/src/client/http-service.ts",
+      "to": "packages/http/src/http-client.service.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/http/src/client/http-service.types.ts",
+      "to": "packages/http/src/interfaces/http-service.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/http/src/client/inject-http-client.decorator.ts",
+      "to": "packages/http/src/inject-http-client.decorator.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/http/src/module/http-module.constants.ts",
+      "to": "packages/http/src/http-client.constants.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/http/src/module/http-module.ts",
+      "to": "packages/http/src/http.module.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/http/src/module/http-options.ts",
+      "to": "packages/http/src/http-client.providers.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/http/src/module/http.module-definition.ts",
+      "to": "packages/http/src/http.module-definition.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/http/tests-vp/http.conformance.ts",
+      "to": "packages/http/test/http.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/http/tests/http-async.test.ts",
+      "to": "packages/http/src/http-async.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/http/tests/http-registration.test.ts",
+      "to": "packages/http/src/http-registration.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/http/tests/http-service-branches.test.ts",
+      "to": "packages/http/src/http-service-branches.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/http/tests/http-service.test.ts",
+      "to": "packages/http/src/http-service.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/http/tests/ssrf-branches.test.ts",
+      "to": "packages/http/src/security/ssrf-branches.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/idempotency/src/module/idempotency-module.ts",
+      "to": "packages/idempotency/src/module/idempotency.module.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/idempotency/src/module/idempotency-module.types.ts",
+      "to": "packages/idempotency/src/interfaces/idempotency-module.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/idempotency/src/runtime/idempotency-policy.ts",
+      "to": "packages/idempotency/src/runtime/idempotency.policy.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/idempotency/src/store/idempotency-store.types.ts",
+      "to": "packages/idempotency/src/interfaces/idempotency-store.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/idempotency/src/store/memory-idempotency-store.ts",
+      "to": "packages/idempotency/src/store/memory-idempotency.store.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/idempotency/tests-vp/idempotency.conformance.ts",
+      "to": "packages/idempotency/test/idempotency.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/idempotency/tests/idempotency-async.test.ts",
+      "to": "packages/idempotency/src/module/idempotency-async.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/idempotency/tests/idempotency.test.ts",
+      "to": "packages/idempotency/src/module/idempotency.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/mcp/src/discovery/mcp-plan.types.ts",
+      "to": "packages/mcp/src/interfaces/mcp-plan.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/mcp/src/execution/mcp-context.types.ts",
+      "to": "packages/mcp/src/interfaces/mcp-context.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/mcp/src/module/mcp-controller.ts",
+      "to": "packages/mcp/src/module/mcp.controller.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/mcp/src/module/mcp-module.ts",
+      "to": "packages/mcp/src/module/mcp.module.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/mcp/src/module/mcp-module.types.ts",
+      "to": "packages/mcp/src/interfaces/mcp-module.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/mcp/tests-vp/mcp.conformance.ts",
+      "to": "packages/mcp/test/mcp.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/mcp/tests/mcp-async.test.ts",
+      "to": "packages/mcp/src/module/mcp-async.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/mcp/tests/mcp-internals.test.ts",
+      "to": "packages/mcp/src/module/mcp-internals.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/mcp/tests/mcp-nest.test.ts",
+      "to": "packages/mcp/src/module/mcp-nest.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/metrics/src/module/metrics-module.constants.ts",
+      "to": "packages/metrics/src/metrics.constants.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/metrics/src/module/metrics-module.ts",
+      "to": "packages/metrics/src/metrics.module.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/metrics/src/registry/metrics-registry.ts",
+      "to": "packages/metrics/src/registry/metrics.registry.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/metrics/src/registry/metrics.types.ts",
+      "to": "packages/metrics/src/interfaces/metrics.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/metrics/src/runtime/metrics-controller.ts",
+      "to": "packages/metrics/src/metrics.controller.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/metrics/src/runtime/metrics-exception.filter.ts",
+      "to": "packages/metrics/src/metrics.filter.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/metrics/src/runtime/metrics-instrumentation.ts",
+      "to": "packages/metrics/src/metrics-instrumentation.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/metrics/src/runtime/metrics-plugin.types.ts",
+      "to": "packages/metrics/src/metrics-plugin.types.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/metrics/tests-vp/metrics.conformance.ts",
+      "to": "packages/metrics/test/metrics.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/metrics/tests/metrics-async.test.ts",
+      "to": "packages/metrics/src/metrics-async.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/metrics/tests/metrics-plugin-options.test.ts",
+      "to": "packages/metrics/src/metrics-plugin-options.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/metrics/tests/metrics-plugin.test.ts",
+      "to": "packages/metrics/src/metrics-plugin.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/metrics/tests/metrics-registry.test.ts",
+      "to": "packages/metrics/src/metrics-registry.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/microservices/src/brokers/azure-service-bus/azure-service-bus-transport.types.ts",
+      "to": "packages/microservices/src/interfaces/azure-service-bus-transport.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/microservices/src/brokers/kafka/kafka-transport.types.ts",
+      "to": "packages/microservices/src/interfaces/kafka-transport.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/microservices/src/brokers/mqtt/mqtt-transport.types.ts",
+      "to": "packages/microservices/src/interfaces/mqtt-transport.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/microservices/src/brokers/nats/nats-transport.types.ts",
+      "to": "packages/microservices/src/interfaces/nats-transport.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/microservices/src/brokers/pubsub/pubsub-transport.types.ts",
+      "to": "packages/microservices/src/interfaces/pubsub-transport.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/microservices/src/brokers/rabbitmq/rabbitmq-transport.types.ts",
+      "to": "packages/microservices/src/interfaces/rabbitmq-transport.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/microservices/src/brokers/redis/redis-transport.types.ts",
+      "to": "packages/microservices/src/interfaces/redis-transport.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/microservices/src/brokers/sqs/sqs-transport.types.ts",
+      "to": "packages/microservices/src/interfaces/sqs-transport.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/microservices/src/client/microservice-client.types.ts",
+      "to": "packages/microservices/src/interfaces/microservice-client.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/microservices/src/envelope/microservice-envelope.types.ts",
+      "to": "packages/microservices/src/interfaces/microservice-envelope.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/microservices/src/module/microservice-clients-module.ts",
+      "to": "packages/microservices/src/module/microservice-clients.module.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/microservices/src/module/microservice-clients-module.types.ts",
+      "to": "packages/microservices/src/interfaces/microservice-clients-module.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/microservices/src/server/microservice-server.types.ts",
+      "to": "packages/microservices/src/interfaces/microservice-server.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/microservices/src/transport/transport.types.ts",
+      "to": "packages/microservices/src/interfaces/transport.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/microservices/tests-vp/microservices.conformance.ts",
+      "to": "packages/microservices/test/microservices.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/microservices/tests/broker-azure-service-bus.test.ts",
+      "to": "packages/microservices/src/broker-azure-service-bus.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/microservices/tests/broker-kafka.test.ts",
+      "to": "packages/microservices/src/broker-kafka.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/microservices/tests/broker-mqtt.test.ts",
+      "to": "packages/microservices/src/broker-mqtt.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/microservices/tests/broker-nats.test.ts",
+      "to": "packages/microservices/src/broker-nats.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/microservices/tests/broker-pubsub.test.ts",
+      "to": "packages/microservices/src/broker-pubsub.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/microservices/tests/broker-rabbitmq.test.ts",
+      "to": "packages/microservices/src/broker-rabbitmq.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/microservices/tests/broker-redis.test.ts",
+      "to": "packages/microservices/src/broker-redis.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/microservices/tests/broker-sqs.test.ts",
+      "to": "packages/microservices/src/broker-sqs.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/microservices/tests/brokers.e2e-spec.ts",
+      "to": "packages/microservices/test/brokers.e2e-spec.ts",
+      "category": "e2e"
+    },
+    {
+      "from": "packages/microservices/tests/envelope.property.test.ts",
+      "to": "packages/microservices/src/envelope.property.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/microservices/tests/grpc-transport.test.ts",
+      "to": "packages/microservices/src/brokers/grpc/grpc-transport.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/microservices/tests/microservice-client-server.test.ts",
+      "to": "packages/microservices/src/client/microservice-client-server.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/microservices/tests/microservice-envelope.test.ts",
+      "to": "packages/microservices/src/envelope/microservice-envelope.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/microservices/tests/microservice-module.test.ts",
+      "to": "packages/microservices/src/client/microservice-module.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/microservices/tests/microservices-async.test.ts",
+      "to": "packages/microservices/src/microservices-async.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/microservices/tests/microservices-registration.test.ts",
+      "to": "packages/microservices/src/microservices-registration.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/microservices/tests/microservices.test.ts",
+      "to": "packages/microservices/src/microservices.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/nitro/tests-vp/nitro.conformance.ts",
+      "to": "packages/nitro/test/nitro.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/nitro/tests/adapter.test.ts",
+      "to": "packages/nitro/src/adapter.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/openapi/src/document/openapi-controller.ts",
+      "to": "packages/openapi/src/document/openapi.controller.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/openapi/src/document/openapi-document.types.ts",
+      "to": "packages/openapi/src/interfaces/openapi-document.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/openapi/src/module/openapi-module.ts",
+      "to": "packages/openapi/src/openapi.module.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/openapi/src/module/openapi-module.types.ts",
+      "to": "packages/openapi/src/interfaces/openapi-module.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/openapi/tests-vp/openapi.conformance.ts",
+      "to": "packages/openapi/test/openapi.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/openapi/tests/generated-descriptors.test.ts",
+      "to": "packages/openapi/src/generated-descriptors.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/openapi/tests/openapi-module.test.ts",
+      "to": "packages/openapi/src/openapi-module.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/openapi/tests/served-document.ts",
+      "to": "packages/openapi/test/served-document.ts",
+      "category": "e2e"
+    },
+    {
+      "from": "packages/opentelemetry/src/module/opentelemetry-module.ts",
+      "to": "packages/opentelemetry/src/module/opentelemetry.module.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/opentelemetry/src/module/opentelemetry-module.types.ts",
+      "to": "packages/opentelemetry/src/interfaces/opentelemetry-module.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/opentelemetry/src/tracing/opentelemetry-policy.ts",
+      "to": "packages/opentelemetry/src/tracing/opentelemetry.policy.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/opentelemetry/src/tracing/opentelemetry-tracing.types.ts",
+      "to": "packages/opentelemetry/src/interfaces/opentelemetry-tracing.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/opentelemetry/tests-vp/opentelemetry.conformance.ts",
+      "to": "packages/opentelemetry/test/opentelemetry.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/opentelemetry/tests/opentelemetry-module.test.ts",
+      "to": "packages/opentelemetry/src/module/opentelemetry-module.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/opentelemetry/tests/support/tracer.ts",
+      "to": "packages/opentelemetry/test/support/tracer.ts",
+      "category": "e2e"
+    },
+    {
+      "from": "packages/platform-core/src/application/application.types.ts",
+      "to": "packages/platform-core/src/interfaces/application.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/application/bootstrap-resolvers.ts",
+      "to": "packages/platform-core/src/application/bootstrap.resolver.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/artifacts/invoker-artifact.types.ts",
+      "to": "packages/platform-core/src/interfaces/invoker-artifact.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/artifacts/module-descriptor-artifact.types.ts",
+      "to": "packages/platform-core/src/interfaces/module-descriptor-artifact.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/capabilities/platform-capabilities.types.ts",
+      "to": "packages/platform-core/src/interfaces/platform-capabilities.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/errors/http-error.ts",
+      "to": "packages/platform-core/src/exceptions/http-error.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/errors/http-error.types.ts",
+      "to": "packages/platform-core/src/interfaces/http-error.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/errors/http-status.ts",
+      "to": "packages/platform-core/src/exceptions/http-status.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/health/health.types.ts",
+      "to": "packages/platform-core/src/interfaces/health.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/host/platform-host.types.ts",
+      "to": "packages/platform-core/src/interfaces/platform-host.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/kernel/kernel.types.ts",
+      "to": "packages/platform-core/src/interfaces/kernel.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/kernel/request-hooks.types.ts",
+      "to": "packages/platform-core/src/interfaces/request-hooks.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/middleware/middleware-consumer.types.ts",
+      "to": "packages/platform-core/src/interfaces/middleware-consumer.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/modules/module-compiler.types.ts",
+      "to": "packages/platform-core/src/interfaces/module-compiler.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/modules/module-import-resolver.ts",
+      "to": "packages/platform-core/src/modules/module-import.resolver.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/pipes/pipe-resolver.ts",
+      "to": "packages/platform-core/src/pipes/pipe.resolver.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/pipes/pipe-resolver.types.ts",
+      "to": "packages/platform-core/src/interfaces/pipe-resolver.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/plugins/enhancer-plugin.ts",
+      "to": "packages/platform-core/src/platform/enhancer-plugin.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/plugins/platform-module.ts",
+      "to": "packages/platform-core/src/platform/platform-module.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/plugins/platform-module.types.ts",
+      "to": "packages/platform-core/src/platform/platform-module.types.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/plugins/plugin-builder.types.ts",
+      "to": "packages/platform-core/src/platform/plugin-builder.types.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/plugins/service-plugin.ts",
+      "to": "packages/platform-core/src/platform/service-plugin.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/policy/http-policy.ts",
+      "to": "packages/platform-core/src/policy/http.policy.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/policy/http-policy.types.ts",
+      "to": "packages/platform-core/src/interfaces/http-policy.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/request-context/request-context-module.ts",
+      "to": "packages/platform-core/src/request-context/request-context.module.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/request-context/request-context-service.ts",
+      "to": "packages/platform-core/src/request-context/request-context.service.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/request-context/request-context.types.ts",
+      "to": "packages/platform-core/src/interfaces/request-context.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/routing/compiled-route.types.ts",
+      "to": "packages/platform-core/src/interfaces/compiled-route.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/routing/content-disposition.types.ts",
+      "to": "packages/platform-core/src/interfaces/content-disposition.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/routing/route-handler.types.ts",
+      "to": "packages/platform-core/src/interfaces/route-handler.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/routing/route-plan.types.ts",
+      "to": "packages/platform-core/src/interfaces/route-plan.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/routing/static-assets.types.ts",
+      "to": "packages/platform-core/src/interfaces/static-assets.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/routing/version-negotiation.types.ts",
+      "to": "packages/platform-core/src/interfaces/version-negotiation.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/security/auth-guard.ts",
+      "to": "packages/platform-core/src/security/auth.guard.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/security/roles-guard.ts",
+      "to": "packages/platform-core/src/security/roles.guard.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/security/security.types.ts",
+      "to": "packages/platform-core/src/interfaces/security.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/src/websockets/gateway.types.ts",
+      "to": "packages/platform-core/src/interfaces/gateway.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-core/tests-vp/platform-core.conformance.ts",
+      "to": "packages/platform-core/test/platform-core.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-core/tests/bootstrap-resolvers.test.ts",
+      "to": "packages/platform-core/src/application/bootstrap-resolvers.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-core/tests/configuration-loader.test.ts",
+      "to": "packages/platform-core/src/configuration/configuration-loader.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-core/tests/content-disposition.test.ts",
+      "to": "packages/platform-core/src/routing/content-disposition.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-core/tests/cookies.test.ts",
+      "to": "packages/platform-core/src/kernel/cookies.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-core/tests/fixtures/fake-host.ts",
+      "to": "packages/platform-core/test/fixtures/fake-host.ts",
+      "category": "e2e"
+    },
+    {
+      "from": "packages/platform-core/tests/gateway-boot.test.ts",
+      "to": "packages/platform-core/src/application/gateway-boot.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-core/tests/gateway-dispatch-primitives.test.ts",
+      "to": "packages/platform-core/src/websockets/gateway-dispatch-primitives.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-core/tests/guard-fast-abort.test.ts",
+      "to": "packages/platform-core/src/guard-fast-abort.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-core/tests/http-kernel.test.ts",
+      "to": "packages/platform-core/src/kernel/http-kernel.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-core/tests/http-policy.test.ts",
+      "to": "packages/platform-core/src/policy/http-policy.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-core/tests/kernel-branches.test.ts",
+      "to": "packages/platform-core/src/kernel-branches.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-core/tests/kernel-io.test.ts",
+      "to": "packages/platform-core/src/kernel-io.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-core/tests/module-compiler.test.ts",
+      "to": "packages/platform-core/src/modules/module-compiler.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-core/tests/nest-parity.test.ts",
+      "to": "packages/platform-core/src/nest-parity.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-core/tests/pipe-resolver.test.ts",
+      "to": "packages/platform-core/src/pipes/pipe-resolver.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-core/tests/platform-boot-parity.test.ts",
+      "to": "packages/platform-core/src/platform/platform-boot-parity.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-core/tests/platform-boot.test.ts",
+      "to": "packages/platform-core/src/platform/platform-boot.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-core/tests/platform-factory.test.ts",
+      "to": "packages/platform-core/src/platform/platform-factory.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-core/tests/platform-module.test.ts",
+      "to": "packages/platform-core/src/platform/platform-module.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-core/tests/platform-neutral-contract.test.ts",
+      "to": "packages/platform-core/src/platform/platform-neutral-contract.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-core/tests/platform-primitives.test.ts",
+      "to": "packages/platform-core/src/platform/platform-primitives.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-core/tests/route-compilation.test.ts",
+      "to": "packages/platform-core/src/routing/route-compilation.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-core/tests/static-assets.test.ts",
+      "to": "packages/platform-core/src/routing/static-assets.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-core/tests/static-execution-context.test.ts",
+      "to": "packages/platform-core/src/enhancers/static-execution-context.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-core/tests/support/platform-contract.ts",
+      "to": "packages/platform-core/test/support/platform-contract.ts",
+      "category": "e2e"
+    },
+    {
+      "from": "packages/platform-core/tests/unified-factory.test.ts",
+      "to": "packages/platform-core/src/unified-factory.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-core/tests/version-negotiation.test.ts",
+      "to": "packages/platform-core/src/routing/version-negotiation.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-core/tests/websocket-gateway.test.ts",
+      "to": "packages/platform-core/src/websocket-gateway.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/src/application/aponia-factory.ts",
+      "to": "packages/platform-elysia/src/application/aponia.factory.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-elysia/src/application/application-bootstrap.types.ts",
+      "to": "packages/platform-elysia/src/interfaces/application-bootstrap.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-elysia/src/application/application-diagnostics.types.ts",
+      "to": "packages/platform-elysia/src/interfaces/application-diagnostics.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-elysia/src/application/application-health.types.ts",
+      "to": "packages/platform-elysia/src/interfaces/application-health.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-elysia/src/application/application-surface.types.ts",
+      "to": "packages/platform-elysia/src/interfaces/application-surface.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-elysia/src/application/application.types.ts",
+      "to": "packages/platform-elysia/src/interfaces/application.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-elysia/src/application/elysia-adapter.ts",
+      "to": "packages/platform-elysia/src/adapters/elysia-adapter.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-elysia/src/application/native-application.types.ts",
+      "to": "packages/platform-elysia/src/interfaces/native-application.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-elysia/src/controllers/controller.types.ts",
+      "to": "packages/platform-elysia/src/interfaces/controller.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-elysia/src/controllers/enhancer-resolver.ts",
+      "to": "packages/platform-elysia/src/controllers/enhancer.resolver.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-elysia/src/errors/default-exception-filter.ts",
+      "to": "packages/platform-elysia/src/exceptions/default-exception.filter.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-elysia/src/inspection/application-inspection.types.ts",
+      "to": "packages/platform-elysia/src/interfaces/application-inspection.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-elysia/src/plugins/plugin-module.ts",
+      "to": "packages/platform-elysia/src/plugins/plugin.module.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-elysia/src/request-context/request-context.types.ts",
+      "to": "packages/platform-elysia/src/interfaces/request-context.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-elysia/src/routing/download-file.types.ts",
+      "to": "packages/platform-elysia/src/interfaces/download-file.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-elysia/src/routing/http-policy.ts",
+      "to": "packages/platform-elysia/src/routing/http.policy.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-elysia/src/routing/route-compiler.types.ts",
+      "to": "packages/platform-elysia/src/interfaces/route-compiler.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-elysia/src/routing/route-context.types.ts",
+      "to": "packages/platform-elysia/src/interfaces/route-context.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-elysia/src/routing/route-eden.types.ts",
+      "to": "packages/platform-elysia/src/interfaces/route-eden.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-elysia/src/routing/route-hook-builder.ts",
+      "to": "packages/platform-elysia/src/routing/route-hook.builder.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-elysia/src/websockets/gateway-plan.types.ts",
+      "to": "packages/platform-elysia/src/interfaces/gateway-plan.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-elysia/src/websockets/websocket-gateway.ts",
+      "to": "packages/platform-elysia/src/websockets/websocket.gateway.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-elysia/src/websockets/websocket-gateway.types.ts",
+      "to": "packages/platform-elysia/src/interfaces/websocket-gateway.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/platform-elysia/tests-vp/auth-guards.conformance.ts",
+      "to": "packages/platform-elysia/test/auth-guards.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-elysia/tests-vp/configuration.conformance.ts",
+      "to": "packages/platform-elysia/test/configuration.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-elysia/tests-vp/custom-parameters.conformance.ts",
+      "to": "packages/platform-elysia/test/custom-parameters.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-elysia/tests-vp/deprecation.conformance.ts",
+      "to": "packages/platform-elysia/test/deprecation.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-elysia/tests-vp/download-file.conformance.ts",
+      "to": "packages/platform-elysia/test/download-file.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-elysia/tests-vp/eden.conformance.ts",
+      "to": "packages/platform-elysia/test/eden.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-elysia/tests-vp/global-module.conformance.ts",
+      "to": "packages/platform-elysia/test/global-module.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-elysia/tests-vp/global-prefix.conformance.ts",
+      "to": "packages/platform-elysia/test/global-prefix.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-elysia/tests-vp/injected-logger.conformance.ts",
+      "to": "packages/platform-elysia/test/injected-logger.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-elysia/tests-vp/inspection.conformance.ts",
+      "to": "packages/platform-elysia/test/inspection.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-elysia/tests-vp/lifecycle.conformance.ts",
+      "to": "packages/platform-elysia/test/lifecycle.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-elysia/tests-vp/middleware.conformance.ts",
+      "to": "packages/platform-elysia/test/middleware.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-elysia/tests-vp/module-descriptor-artifact.conformance.ts",
+      "to": "packages/platform-elysia/test/module-descriptor-artifact.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-elysia/tests-vp/native-route.conformance.ts",
+      "to": "packages/platform-elysia/test/native-route.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-elysia/tests-vp/pipes.conformance.ts",
+      "to": "packages/platform-elysia/test/pipes.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-elysia/tests-vp/platform.conformance.ts",
+      "to": "packages/platform-elysia/test/platform.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-elysia/tests-vp/plugin-builder.conformance.ts",
+      "to": "packages/platform-elysia/test/plugin-builder.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-elysia/tests-vp/production-lifecycle.conformance.ts",
+      "to": "packages/platform-elysia/test/production-lifecycle.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-elysia/tests-vp/reflector-provider.conformance.ts",
+      "to": "packages/platform-elysia/test/reflector-provider.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-elysia/tests-vp/request-context.conformance.ts",
+      "to": "packages/platform-elysia/test/request-context.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-elysia/tests-vp/route-invokers.conformance.ts",
+      "to": "packages/platform-elysia/test/route-invokers.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-elysia/tests-vp/route-plan.conformance.ts",
+      "to": "packages/platform-elysia/test/route-plan.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-elysia/tests-vp/route-surface.conformance.ts",
+      "to": "packages/platform-elysia/test/route-surface.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-elysia/tests-vp/route-uniqueness.conformance.ts",
+      "to": "packages/platform-elysia/test/route-uniqueness.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-elysia/tests-vp/versioning.conformance.ts",
+      "to": "packages/platform-elysia/test/versioning.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-elysia/tests-vp/websocket-gateway.conformance.ts",
+      "to": "packages/platform-elysia/test/websocket-gateway.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-elysia/tests/application-context.test.ts",
+      "to": "packages/platform-elysia/src/application/application-context.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/application-diagnostics.test.ts",
+      "to": "packages/platform-elysia/src/application/application-diagnostics.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/application-enhancers.test.ts",
+      "to": "packages/platform-elysia/src/application-enhancers.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/application-factory.test.ts",
+      "to": "packages/platform-elysia/src/application/application-factory.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/application-plugins.test.ts",
+      "to": "packages/platform-elysia/src/application-plugins.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/ast-sync-analyzer.test.ts",
+      "to": "packages/platform-elysia/src/routing/ast-sync-analyzer.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/async-dynamic-modules.test.ts",
+      "to": "packages/platform-elysia/src/async-dynamic-modules.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/auth-guards.test.ts",
+      "to": "packages/platform-elysia/src/auth-guards.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/bootstrap-edge.test.ts",
+      "to": "packages/platform-elysia/src/bootstrap-edge.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/compiler-register.test.ts",
+      "to": "packages/platform-elysia/src/modules/compiler-register.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/configurable-module.test.ts",
+      "to": "packages/platform-elysia/src/configurable-module.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/configuration.test.ts",
+      "to": "packages/platform-elysia/src/configuration/configuration.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/controller-registration.test.ts",
+      "to": "packages/platform-elysia/src/controller-registration.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/custom-parameters.test.ts",
+      "to": "packages/platform-elysia/src/custom-parameters.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/default-logger.test.ts",
+      "to": "packages/platform-elysia/src/exceptions/default-logger.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/deprecation.test.ts",
+      "to": "packages/platform-elysia/src/deprecation.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/download-file.test.ts",
+      "to": "packages/platform-elysia/src/routing/download-file.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/dynamic-module.test.ts",
+      "to": "packages/platform-elysia/src/dynamic-module.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/eden-contract.test.ts",
+      "to": "packages/platform-elysia/src/eden-contract.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/elysia-bridge-plugin.test.ts",
+      "to": "packages/platform-elysia/src/plugins/elysia-bridge-plugin.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/enhancer-concurrency.test.ts",
+      "to": "packages/platform-elysia/src/controllers/enhancer-concurrency.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/enhancer-plugin.test.ts",
+      "to": "packages/platform-elysia/src/controllers/enhancer-plugin.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/enhancer-resolution.test.ts",
+      "to": "packages/platform-elysia/src/controllers/enhancer-resolution.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/exception-filters.test.ts",
+      "to": "packages/platform-elysia/src/exception-filters.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/fixtures/shutdown-signal-app.ts",
+      "to": "packages/platform-elysia/test/fixtures/shutdown-signal-app.ts",
+      "category": "e2e"
+    },
+    {
+      "from": "packages/platform-elysia/tests/gateway-edge.test.ts",
+      "to": "packages/platform-elysia/src/gateway-edge.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/global-enhancers.test.ts",
+      "to": "packages/platform-elysia/src/global-enhancers.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/global-module.test.ts",
+      "to": "packages/platform-elysia/src/global-module.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/global-prefix.test.ts",
+      "to": "packages/platform-elysia/src/global-prefix.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/graceful-shutdown.test.ts",
+      "to": "packages/platform-elysia/src/graceful-shutdown.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/guard-fast-abort.test.ts",
+      "to": "packages/platform-elysia/src/guard-fast-abort.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/guards.test.ts",
+      "to": "packages/platform-elysia/src/guards.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/health-probes.test.ts",
+      "to": "packages/platform-elysia/src/health-probes.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/http-adapter-host.test.ts",
+      "to": "packages/platform-elysia/src/routing/http-adapter-host.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/http-error.test.ts",
+      "to": "packages/platform-elysia/src/routing/http-error.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/http-methods.test.ts",
+      "to": "packages/platform-elysia/src/routing/http-methods.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/http-policy-native.test.ts",
+      "to": "packages/platform-elysia/src/routing/http-policy-native.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/injected-logger.test.ts",
+      "to": "packages/platform-elysia/src/injected-logger.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/inspection.test.ts",
+      "to": "packages/platform-elysia/src/inspection/inspection.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/interceptors.test.ts",
+      "to": "packages/platform-elysia/src/interceptors.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/lazy-module-loader.test.ts",
+      "to": "packages/platform-elysia/src/application/lazy-module-loader.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/lifecycle.test.ts",
+      "to": "packages/platform-elysia/src/lifecycle.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/middleware-pipeline.test.ts",
+      "to": "packages/platform-elysia/src/middleware/middleware-pipeline.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/middleware.test.ts",
+      "to": "packages/platform-elysia/src/middleware/middleware.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/module-compiler-edge.test.ts",
+      "to": "packages/platform-elysia/src/modules/module-compiler-edge.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/module-descriptor-artifact.test.ts",
+      "to": "packages/platform-elysia/src/module-descriptor-artifact.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/native-route.test.ts",
+      "to": "packages/platform-elysia/src/routing/native-route.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/nest-shaped-application.test.ts",
+      "to": "packages/platform-elysia/src/nest-shaped-application.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/pipes-integration.test.ts",
+      "to": "packages/platform-elysia/src/pipes-integration.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/platform-conformance.test.ts",
+      "to": "packages/platform-elysia/src/platform-conformance.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/platform.test.ts",
+      "to": "packages/platform-elysia/src/platform.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/plugin-context.test.ts",
+      "to": "packages/platform-elysia/src/plugins/plugin-context.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/plugin-definition.test.ts",
+      "to": "packages/platform-elysia/src/plugins/plugin-definition.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/reflector-provider.test.ts",
+      "to": "packages/platform-elysia/src/reflector-provider.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/request-context-header.test.ts",
+      "to": "packages/platform-elysia/src/request-context/request-context-header.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/request-context.test.ts",
+      "to": "packages/platform-elysia/src/request-context/request-context.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/request-scoped-controller.test.ts",
+      "to": "packages/platform-elysia/src/request-scoped-controller.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/request-scoped-enhancers.test.ts",
+      "to": "packages/platform-elysia/src/request-scoped-enhancers.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/response-serializer.test.ts",
+      "to": "packages/platform-elysia/src/response-serializer.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/route-argument-arity.test.ts",
+      "to": "packages/platform-elysia/src/route-argument-arity.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/route-dispatch.test.ts",
+      "to": "packages/platform-elysia/src/route-dispatch.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/route-enhancers.test.ts",
+      "to": "packages/platform-elysia/src/route-enhancers.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/route-handler-shape.test.ts",
+      "to": "packages/platform-elysia/src/route-handler-shape.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/route-invokers.test.ts",
+      "to": "packages/platform-elysia/src/route-invokers.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/route-parameters.test.ts",
+      "to": "packages/platform-elysia/src/route-parameters.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/route-path.property.test.ts",
+      "to": "packages/platform-elysia/src/route-path.property.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/route-plan.test.ts",
+      "to": "packages/platform-elysia/src/route-plan.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/route-schema.test.ts",
+      "to": "packages/platform-elysia/src/route-schema.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/route-surface.test.ts",
+      "to": "packages/platform-elysia/src/route-surface.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/route-uniqueness.test.ts",
+      "to": "packages/platform-elysia/src/modules/route-uniqueness.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/service-plugin.test.ts",
+      "to": "packages/platform-elysia/src/plugins/service-plugin.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/sse.test.ts",
+      "to": "packages/platform-elysia/src/sse.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/static-assets.test.ts",
+      "to": "packages/platform-elysia/src/routing/static-assets.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/strict-codegen.test.ts",
+      "to": "packages/platform-elysia/src/strict-codegen.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/unmounted-route-enhancers.test.ts",
+      "to": "packages/platform-elysia/src/unmounted-route-enhancers.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/validation-edge.test.ts",
+      "to": "packages/platform-elysia/src/validation-edge.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/validation-model.test.ts",
+      "to": "packages/platform-elysia/src/validation-model.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/versioning.test.ts",
+      "to": "packages/platform-elysia/src/application/versioning.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/websocket-gateway.test.ts",
+      "to": "packages/platform-elysia/src/websockets/websocket-gateway.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/websocket-guards.test.ts",
+      "to": "packages/platform-elysia/src/websockets/websocket-guards.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/websocket-validation.test.ts",
+      "to": "packages/platform-elysia/src/websockets/websocket-validation.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-elysia/tests/zero-arg-invoker.test.ts",
+      "to": "packages/platform-elysia/src/zero-arg-invoker.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-h3/tests-vp/platform-h3.conformance.ts",
+      "to": "packages/platform-h3/test/platform-h3.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-h3/tests/download-file.test.ts",
+      "to": "packages/platform-h3/src/routing/download-file.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-h3/tests/h3-middleware.test.ts",
+      "to": "packages/platform-h3/src/host/h3-middleware.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-h3/tests/h3-surface.test.ts",
+      "to": "packages/platform-h3/src/h3-surface.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-h3/tests/h3-without-crossws.test.ts",
+      "to": "packages/platform-h3/src/h3-without-crossws.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-h3/tests/http-policy-listener.test.ts",
+      "to": "packages/platform-h3/src/http-policy-listener.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-h3/tests/platform-conformance.test.ts",
+      "to": "packages/platform-h3/src/platform-conformance.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-h3/tests/platform-h3.test.ts",
+      "to": "packages/platform-h3/src/platform-h3.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-h3/tests/static-assets.test.ts",
+      "to": "packages/platform-h3/src/static-assets.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-hono/tests-vp/platform-hono.conformance.ts",
+      "to": "packages/platform-hono/test/platform-hono.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/platform-hono/tests/download-file.test.ts",
+      "to": "packages/platform-hono/src/routing/download-file.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-hono/tests/hono-middleware.test.ts",
+      "to": "packages/platform-hono/src/host/hono-middleware.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-hono/tests/hono-surface.test.ts",
+      "to": "packages/platform-hono/src/hono-surface.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-hono/tests/hono-without-adapter.test.ts",
+      "to": "packages/platform-hono/src/hono-without-adapter.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-hono/tests/http-policy-listener.test.ts",
+      "to": "packages/platform-hono/src/http-policy-listener.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-hono/tests/platform-conformance.test.ts",
+      "to": "packages/platform-hono/src/platform-conformance.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-hono/tests/platform-hono.test.ts",
+      "to": "packages/platform-hono/src/platform-hono.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/platform-hono/tests/static-assets.test.ts",
+      "to": "packages/platform-hono/src/static-assets.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/queue/src/module/queue-module.ts",
+      "to": "packages/queue/src/queue.module.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/queue/src/module/queue-module.types.ts",
+      "to": "packages/queue/src/interfaces/queue-module.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/queue/src/module/queue.module-definition.ts",
+      "to": "packages/queue/src/queue.module-definition.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/queue/src/outbox/outbox-service.ts",
+      "to": "packages/queue/src/outbox/outbox.service.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/queue/src/outbox/outbox.types.ts",
+      "to": "packages/queue/src/interfaces/outbox.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/queue/src/outbox/sqlite-outbox-store.ts",
+      "to": "packages/queue/src/outbox/sqlite-outbox.store.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/queue/src/processors/processor-explorer.ts",
+      "to": "packages/queue/src/processors/processor.explorer.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/queue/src/queue/memory-queue-store.ts",
+      "to": "packages/queue/src/queue/memory-queue.store.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/queue/src/queue/queue-job.types.ts",
+      "to": "packages/queue/src/interfaces/queue-job.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/queue/src/queue/queue-service.ts",
+      "to": "packages/queue/src/queue/queue.service.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/queue/src/queue/queue-service.types.ts",
+      "to": "packages/queue/src/interfaces/queue-service.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/queue/src/queue/queue-store.types.ts",
+      "to": "packages/queue/src/interfaces/queue-store.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/queue/tests-vp/queue.conformance.ts",
+      "to": "packages/queue/test/queue.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/queue/tests/outbox-store.test.ts",
+      "to": "packages/queue/src/outbox/outbox-store.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/queue/tests/outbox.test.ts",
+      "to": "packages/queue/src/outbox/outbox.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/queue/tests/queue-async.test.ts",
+      "to": "packages/queue/src/queue-async.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/queue/tests/queue-context.test.ts",
+      "to": "packages/queue/src/queue-context.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/queue/tests/queue-module.test.ts",
+      "to": "packages/queue/src/queue-module.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/queue/tests/queue-processor.test.ts",
+      "to": "packages/queue/src/queue-processor.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/queue/tests/queue-registration.test.ts",
+      "to": "packages/queue/src/queue-registration.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/queue/tests/queue-service.test.ts",
+      "to": "packages/queue/src/queue-service.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/queue/tests/queue-store.test.ts",
+      "to": "packages/queue/src/queue-store.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/rate-limit/src/module/rate-limit-module.ts",
+      "to": "packages/rate-limit/src/module/rate-limit.module.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/rate-limit/src/module/rate-limit.types.ts",
+      "to": "packages/rate-limit/src/module/rate-limit.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/rate-limit/src/store/memory-rate-limit-store.ts",
+      "to": "packages/rate-limit/src/store/memory-rate-limit.store.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/rate-limit/src/store/memory-rate-limit-store.types.ts",
+      "to": "packages/rate-limit/src/store/memory-rate-limit-store.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/rate-limit/src/store/rate-limit-store.types.ts",
+      "to": "packages/rate-limit/src/store/rate-limit-store.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/rate-limit/tests-vp/rate-limit.conformance.ts",
+      "to": "packages/rate-limit/test/rate-limit.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/rate-limit/tests/memory-rate-limit-store.test.ts",
+      "to": "packages/rate-limit/src/store/memory-rate-limit-store.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/rate-limit/tests/platform-parity.test.ts",
+      "to": "packages/rate-limit/src/platform-parity.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/rate-limit/tests/rate-limit-async.test.ts",
+      "to": "packages/rate-limit/src/guard/rate-limit-async.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/rate-limit/tests/rate-limit-guard.test.ts",
+      "to": "packages/rate-limit/src/guard/rate-limit-guard.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/rate-limit/tests/rate-limit-registration.test.ts",
+      "to": "packages/rate-limit/src/guard/rate-limit-registration.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/schematics/src/lib/schematic-factory.ts",
+      "to": "packages/schematics/src/lib/schematic.factory.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/schematics/tests/collection.test.ts",
+      "to": "packages/schematics/src/lib/collection.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/schematics/tests/factory-branches.test.ts",
+      "to": "packages/schematics/src/factory-branches.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/schematics/tests/factory.test.ts",
+      "to": "packages/schematics/src/factory.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/security/src/module/security-module.ts",
+      "to": "packages/security/src/module/security.module.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/security/src/module/security.types.ts",
+      "to": "packages/security/src/interfaces/security.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/security/src/policy/security-policy.ts",
+      "to": "packages/security/src/policy/security.policy.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/security/tests-vp/security.conformance.ts",
+      "to": "packages/security/test/security.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/security/tests/security-async.test.ts",
+      "to": "packages/security/src/module/security-async.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/security/tests/security-module.test.ts",
+      "to": "packages/security/src/module/security-module.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/serverless/src/fetch/fetch-handler.ts",
+      "to": "packages/serverless/src/fetch/fetch.handler.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/serverless/src/lambda/lambda-handler.ts",
+      "to": "packages/serverless/src/lambda/lambda.handler.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/serverless/src/lambda/lambda.types.ts",
+      "to": "packages/serverless/src/interfaces/lambda.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/serverless/tests-vp/serverless.conformance.ts",
+      "to": "packages/serverless/test/serverless.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/serverless/tests/serverless.test.ts",
+      "to": "packages/serverless/src/serverless.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/session/src/middleware/session-middleware.ts",
+      "to": "packages/session/src/middleware/session.middleware.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/session/src/module/session-module.ts",
+      "to": "packages/session/src/module/session.module.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/session/src/module/session.types.ts",
+      "to": "packages/session/src/interfaces/session.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/session/src/service/session-service.ts",
+      "to": "packages/session/src/service/session.service.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/session/src/store/memory-session-store.ts",
+      "to": "packages/session/src/store/memory-session.store.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/session/src/store/memory-session-store.types.ts",
+      "to": "packages/session/src/interfaces/memory-session-store.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/session/tests-vp/session.conformance.ts",
+      "to": "packages/session/test/session.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/session/tests/memory-session-store.test.ts",
+      "to": "packages/session/src/store/memory-session-store.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/session/tests/session-async.test.ts",
+      "to": "packages/session/src/module/session-async.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/session/tests/session-module.test.ts",
+      "to": "packages/session/src/module/session-module.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/store-redis/src/common/redis.types.ts",
+      "to": "packages/store-redis/src/interfaces/redis.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/store-redis/src/stores/redis-auth-stores.ts",
+      "to": "packages/store-redis/src/stores/redis-auth.store.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/store-redis/src/stores/redis-cache-store.ts",
+      "to": "packages/store-redis/src/stores/redis-cache.store.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/store-redis/src/stores/redis-idempotency-store.ts",
+      "to": "packages/store-redis/src/stores/redis-idempotency.store.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/store-redis/src/stores/redis-rate-limit-store.ts",
+      "to": "packages/store-redis/src/stores/redis-rate-limit.store.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/store-redis/src/stores/redis-session-store.ts",
+      "to": "packages/store-redis/src/stores/redis-session.store.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/store-redis/tests-vp/store-redis.conformance.ts",
+      "to": "packages/store-redis/test/store-redis.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/store-redis/tests/live-redis.e2e-spec.ts",
+      "to": "packages/store-redis/test/live-redis.e2e-spec.ts",
+      "category": "e2e"
+    },
+    {
+      "from": "packages/store-redis/tests/store-redis-registration.test.ts",
+      "to": "packages/store-redis/src/store-redis-registration.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/store-redis/tests/store-redis.test.ts",
+      "to": "packages/store-redis/src/stores/store-redis.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/tenancy/src/guard/tenant.guard.ts",
+      "to": "packages/tenancy/src/tenant.guard.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/tenancy/src/module/tenancy-module.ts",
+      "to": "packages/tenancy/src/tenancy.module.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/tenancy/src/module/tenancy.constants.ts",
+      "to": "packages/tenancy/src/tenancy.constants.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/tenancy/src/module/tenancy.module-definition.ts",
+      "to": "packages/tenancy/src/tenancy.module-definition.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/tenancy/src/module/tenancy.types.ts",
+      "to": "packages/tenancy/src/interfaces/tenancy.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/tenancy/src/service/tenant.constants.ts",
+      "to": "packages/tenancy/src/tenant.constants.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/tenancy/src/service/tenant.service.ts",
+      "to": "packages/tenancy/src/tenant.service.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/tenancy/tests-vp/tenancy.conformance.ts",
+      "to": "packages/tenancy/test/tenancy.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/tenancy/tests/platform-parity.test.ts",
+      "to": "packages/tenancy/src/platform-parity.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/tenancy/tests/tenancy-async.test.ts",
+      "to": "packages/tenancy/src/tenancy-async.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/tenancy/tests/tenancy-module.test.ts",
+      "to": "packages/tenancy/src/tenancy-module.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/tenancy/tests/tenancy-registration.test.ts",
+      "to": "packages/tenancy/src/tenancy-registration.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/testing/src/application/platform-test-application.types.ts",
+      "to": "packages/testing/src/interfaces/platform-test-application.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/testing/src/application/test-application-builder.ts",
+      "to": "packages/testing/src/application/test-application.builder.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/testing/src/application/test-application-builder.types.ts",
+      "to": "packages/testing/src/interfaces/test-application-builder.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/testing/src/application/test-application.types.ts",
+      "to": "packages/testing/src/interfaces/test-application.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/testing/src/application/testing-module.ts",
+      "to": "packages/testing/src/application/test.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/testing/src/application/testing-module.types.ts",
+      "to": "packages/testing/src/interfaces/testing-module.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/testing/src/overrides/provider-overrides.types.ts",
+      "to": "packages/testing/src/interfaces/provider-overrides.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/testing/tests-vp/plugin-conformance.conformance.ts",
+      "to": "packages/testing/test/plugin-conformance.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/testing/tests-vp/testing.conformance.ts",
+      "to": "packages/testing/test/testing.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/testing/tests/enhancer-overrides.test.ts",
+      "to": "packages/testing/src/enhancer-overrides.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/testing/tests/fixtures.ts",
+      "to": "packages/testing/test/fixtures.ts",
+      "category": "e2e"
+    },
+    {
+      "from": "packages/testing/tests/gateway.test.ts",
+      "to": "packages/testing/src/gateway.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/testing/tests/platform-test-application.test.ts",
+      "to": "packages/testing/src/application/platform-test-application.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/testing/tests/plugin-conformance.test.ts",
+      "to": "packages/testing/src/conformance/plugin-conformance.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/testing/tests/provider-overrides.test.ts",
+      "to": "packages/testing/src/overrides/provider-overrides.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/testing/tests/test-application.test.ts",
+      "to": "packages/testing/src/application/test-application.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/testing/tests/testing-module-parity.test.ts",
+      "to": "packages/testing/src/testing-module-parity.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/testing/tests/testing-module.test.ts",
+      "to": "packages/testing/src/testing-module.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/view/src/module/view-module.ts",
+      "to": "packages/view/src/module/view.module.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/view/src/module/view-service.ts",
+      "to": "packages/view/src/module/view.service.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/view/src/module/view.types.ts",
+      "to": "packages/view/src/interfaces/view.interface.ts",
+      "category": "source"
+    },
+    {
+      "from": "packages/view/tests-vp/view.conformance.ts",
+      "to": "packages/view/test/view.conformance.ts",
+      "category": "conformance"
+    },
+    {
+      "from": "packages/view/tests/blade.test.ts",
+      "to": "packages/view/src/engines/blade.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/view/tests/view-async.test.ts",
+      "to": "packages/view/src/module/view-async.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/view/tests/view-helper.test.ts",
+      "to": "packages/view/src/module/view-helper.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/view/tests/view-registration.test.ts",
+      "to": "packages/view/src/module/view-registration.spec.ts",
+      "category": "test"
+    },
+    {
+      "from": "packages/view/tests/view.test.ts",
+      "to": "packages/view/src/module/view.spec.ts",
+      "category": "test"
+    }
+  ],
+  "directoryMoves": [
+    {
+      "from": "packages/platform-elysia/src/errors",
+      "to": "packages/platform-elysia/src/exceptions"
+    },
+    {
+      "from": "packages/platform-core/src/plugins",
+      "to": "packages/platform-core/src/platform"
+    },
+    {
+      "from": "packages/platform-core/src/errors",
+      "to": "packages/platform-core/src/exceptions"
+    },
+    {
+      "from": "packages/auth/src/authentication",
+      "to": "packages/auth/src"
+    },
+    {
+      "from": "packages/auth/src/authorization",
+      "to": "packages/auth/src"
+    },
+    {
+      "from": "packages/database/src/database",
+      "to": "packages/database/src"
+    },
+    {
+      "from": "packages/events/src/listener",
+      "to": "packages/events/src"
+    },
+    {
+      "from": "packages/auth/src/revocation",
+      "to": "packages/auth/src"
+    },
+    {
+      "from": "packages/tenancy/src/service",
+      "to": "packages/tenancy/src"
+    },
+    {
+      "from": "packages/metrics/src/runtime",
+      "to": "packages/metrics/src"
+    },
+    {
+      "from": "packages/database/src/module",
+      "to": "packages/database/src"
+    },
+    {
+      "from": "packages/common/src/logging",
+      "to": "packages/common/src/services"
+    },
+    {
+      "from": "packages/core/src/container",
+      "to": "packages/core/src/injector"
+    },
+    {
+      "from": "packages/events/src/emitter",
+      "to": "packages/events/src"
+    },
+    {
+      "from": "packages/tenancy/src/module",
+      "to": "packages/tenancy/src"
+    },
+    {
+      "from": "packages/metrics/src/module",
+      "to": "packages/metrics/src"
+    },
+    {
+      "from": "packages/openapi/src/module",
+      "to": "packages/openapi/src"
+    },
+    {
+      "from": "packages/graphql/src/module",
+      "to": "packages/graphql/src"
+    },
+    {
+      "from": "packages/common/src/errors",
+      "to": "packages/common/src/exceptions"
+    },
+    {
+      "from": "packages/cache/src/service",
+      "to": "packages/cache/src"
+    },
+    {
+      "from": "packages/events/src/module",
+      "to": "packages/events/src"
+    },
+    {
+      "from": "packages/tenancy/src/guard",
+      "to": "packages/tenancy/src"
+    },
+    {
+      "from": "packages/cache/src/module",
+      "to": "packages/cache/src"
+    },
+    {
+      "from": "packages/auth/src/refresh",
+      "to": "packages/auth/src"
+    },
+    {
+      "from": "packages/queue/src/module",
+      "to": "packages/queue/src"
+    },
+    {
+      "from": "packages/cache/src/store",
+      "to": "packages/cache/src"
+    },
+    {
+      "from": "packages/cron/src/module",
+      "to": "packages/cron/src"
+    },
+    {
+      "from": "packages/http/src/module",
+      "to": "packages/http/src"
+    },
+    {
+      "from": "packages/http/src/client",
+      "to": "packages/http/src"
+    },
+    {
+      "from": "packages/auth/src/module",
+      "to": "packages/auth/src"
+    },
+    {
+      "from": "packages/core/src/graph",
+      "to": "packages/core/src/scanner"
+    },
+    {
+      "from": "packages/auth/src/oidc",
+      "to": "packages/auth/src"
+    },
+    {
+      "from": "packages/auth/src/jwt",
+      "to": "packages/auth/src"
+    }
+  ],
+  "typeOnlyExceptions": [
+    "packages/metrics/src/runtime/metrics-plugin.types.ts",
+    "packages/platform-core/src/plugins/platform-module.types.ts",
+    "packages/platform-core/src/plugins/plugin-builder.types.ts",
+    "packages/platform-elysia/src/plugins/plugin-builder.types.ts",
+    "packages/platform-elysia/src/plugins/plugin.types.ts",
+    "packages/schematics/src/lib/schematic.types.ts"
+  ]
+}

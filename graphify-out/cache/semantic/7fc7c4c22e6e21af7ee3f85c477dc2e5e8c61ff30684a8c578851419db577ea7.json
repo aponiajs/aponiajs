@@ -1,0 +1,114 @@
+{
+  "nodes": [
+    {
+      "id": "docs_reference_stability_stability_and_public_api",
+      "label": "Stability and the Public API",
+      "file_type": "document",
+      "source_file": "docs/reference/stability.md",
+      "source_location": "L1-L120",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_reference_stability_compatibility_contract",
+      "label": "Toolchain & Peer Compatibility Contract",
+      "file_type": "concept",
+      "source_file": "docs/reference/stability.md",
+      "source_location": "L18-L32",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Pins Bun 1.4.5, Elysia 2.0.0-rc.4, TypeBox ^1.4.6, and TypeScript experimentalDecorators/emitDecoratorMetadata because omitting decorator compiler options yields silently empty route plans and 404s."
+    },
+    {
+      "id": "docs_reference_stability_public_api_snapshot",
+      "label": "Frozen Public API Snapshot (docs/public-api.json)",
+      "file_type": "rationale",
+      "source_file": "docs/reference/stability.md",
+      "source_location": "L64-L78",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Freezing barrel export names and kinds via api:freeze/api:verify makes every public surface change explicitly reviewable and ties it to documentation updates."
+    },
+    {
+      "id": "docs_reference_stability_deprecation_policy",
+      "label": "Deprecation and Removal Policy",
+      "file_type": "rationale",
+      "source_file": "docs/reference/stability.md",
+      "source_location": "L79-L90",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Deprecated exports stay exported with @deprecated JSDoc and replacement guidance without runtime deprecation warnings, keeping runtime behavior clean while signaling migrations via types and docs."
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_reference_stability_stability_and_public_api",
+      "target": "docs_reference_threat_model_threat_model",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/stability.md",
+      "source_location": "L117-L118",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_stability_stability_and_public_api",
+      "target": "docs_tooling_cli_aponia_manifest",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/stability.md",
+      "source_location": "L38, L44",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_stability_stability_and_public_api",
+      "target": "docs_tooling_libraries_aponia_library_json",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/stability.md",
+      "source_location": "L43",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_stability_public_api_snapshot",
+      "target": "docs_reference_stability_stability_and_public_api",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/stability.md",
+      "source_location": "L64-L78",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_stability_deprecation_policy",
+      "target": "docs_reference_stability_stability_and_public_api",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/stability.md",
+      "source_location": "L79-L90",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_stability_compatibility_contract",
+      "target": "docs_reference_packages_aponiajs_platform_elysia",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/stability.md",
+      "source_location": "L20-L31",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

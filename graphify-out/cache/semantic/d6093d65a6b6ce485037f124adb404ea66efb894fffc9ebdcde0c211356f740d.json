@@ -1,0 +1,176 @@
+{
+  "nodes": [
+    {
+      "id": "packages_cors_agents_guide",
+      "label": "@aponiajs/cors Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/cors/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Leaf package providing CorsModule and a neutral HttpPolicy built from @aponiajs/platform-core CORS helpers so response headers and preflight behave identically across platforms."
+    },
+    {
+      "id": "packages_cors_agents_data_only_configuration_boundary",
+      "label": "Data-Only CorsConfiguration Boundary",
+      "file_type": "rationale",
+      "source_file": "packages/cors/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "CorsConfiguration.origins accepts only exact origin strings (no RegExp or predicate functions) because environment sources cannot supply non-data values; callers needing patterns or predicates mount the raw Elysia plugin."
+    },
+    {
+      "id": "packages_cors_agents_safe_cors_defaults",
+      "label": "Fail-Closed CORS Defaults and Wildcard Rejection",
+      "file_type": "rationale",
+      "source_file": "packages/cors/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Requires explicit origins, defaults credentials to false (unlike @elysia/cors), and rejects wildcard '*' paired with credentials: true at boot time rather than pushing a browser error to clients."
+    },
+    {
+      "id": "packages_cors_agents_total_validation_contract",
+      "label": "Total Configuration Issue Reporting",
+      "file_type": "rationale",
+      "source_file": "packages/cors/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Every configuration refusal throws AponiaError INVALID_CONFIGURATION_VALUE with { configuration, issues } reporting all failing fields at once rather than stopping at the first error."
+    },
+    {
+      "id": "packages_cors_agents_pure_seed_and_dedup",
+      "label": "Pure Options Filling and Registration Deduplication",
+      "file_type": "rationale",
+      "source_file": "packages/cors/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "The guard populates every field (never passing undefined) so Elysia's { name, seed } identity collapses equal policies to one native mount, rejects duplicate keys with DUPLICATE_MODULE, and mounts distinct policies as a union."
+    },
+    {
+      "id": "packages_cors_agents_self_provided_configuration",
+      "label": "Self-Provided Exported CorsConfig",
+      "file_type": "rationale",
+      "source_file": "packages/cors/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "CorsModule provides and exports its own configuration token rather than importing it from the application to avoid a module cycle while preserving application.get(CorsConfig)."
+    },
+    {
+      "id": "packages_cors_agents_descriptor_artifact_limitation",
+      "label": "Boot-Time Policy Resolution vs Descriptor Artifacts",
+      "file_type": "concept",
+      "source_file": "packages/cors/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Because the CORS policy is constructed from container-resolved configuration inside a boot, no policy value is exported into aponia build descriptor artifacts."
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_cors_agents_data_only_configuration_boundary",
+      "target": "packages_cors_agents_guide",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cors/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cors_agents_safe_cors_defaults",
+      "target": "packages_cors_agents_guide",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cors/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cors_agents_total_validation_contract",
+      "target": "packages_common_agents_aponia_error_union",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cors/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cors_agents_pure_seed_and_dedup",
+      "target": "packages_cors_agents_guide",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cors/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cors_agents_self_provided_configuration",
+      "target": "packages_cors_agents_guide",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cors/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cors_agents_descriptor_artifact_limitation",
+      "target": "packages_cors_agents_guide",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cors/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_compression_agents_guide",
+      "target": "packages_cors_agents_guide",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "packages/cors/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "neutral_http_policy_leaf_modules",
+      "label": "Runtime-Neutral HttpPolicy Leaf Modules",
+      "nodes": [
+        "packages_compression_agents_guide",
+        "packages_cors_agents_guide",
+        "packages_compression_agents_policy_invariants",
+        "packages_cors_agents_data_only_configuration_boundary"
+      ],
+      "relation": "implement",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "packages/cors/AGENTS.md"
+    }
+  ]
+}

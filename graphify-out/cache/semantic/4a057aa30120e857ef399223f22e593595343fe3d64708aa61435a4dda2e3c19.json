@@ -1,0 +1,28 @@
+{
+  "nodes": [
+    {
+      "id": "packages_hono_llms_aponiajs_hono_summary",
+      "label": "@aponiajs/hono llms.txt Summary",
+      "file_type": "document",
+      "source_file": "packages/hono/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_hono_llms_aponiajs_hono_summary",
+      "target": "packages_hono_readme_aponiajs_hono",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/hono/llms.txt",
+      "source_location": "line 18",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

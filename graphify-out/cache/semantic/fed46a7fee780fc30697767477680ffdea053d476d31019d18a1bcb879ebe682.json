@@ -1,0 +1,40 @@
+{
+  "nodes": [
+    {
+      "id": "packages_cli_templates_nest_esm_readme_template",
+      "label": "Nest-Compatible ESM Application Template",
+      "file_type": "document",
+      "source_file": "packages/cli/templates/nest-esm/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Targets ESM TypeScript projects where relative imports require .js extensions, contrasting with the Bun-first default template that uses .ts extensions and bun test."
+    },
+    {
+      "id": "packages_cli_templates_nest_esm_readme_aponia_cli_json",
+      "label": "aponia-cli.json Configuration",
+      "file_type": "concept",
+      "source_file": "packages/cli/templates/nest-esm/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_cli_templates_nest_esm_readme_template",
+      "target": "packages_cli_templates_nest_esm_readme_aponia_cli_json",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cli/templates/nest-esm/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

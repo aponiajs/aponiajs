@@ -1,0 +1,100 @@
+import { pascalCase } from "change-case";
+import type { GenerateSchematic, ResourceTransport } from "../interfaces/command.interface.ts";
+import type { ComponentNames } from "../interfaces/component-names.interface.ts";
+import type { ModuleRegistrationKind } from "../interfaces/module-registration.interface.ts";
+import type {
+  ComponentSchematic,
+  PendingFile,
+  SchematicDefinition,
+} from "../interfaces/schematic.interface.ts";
+
+export const schematicDefinitions: Readonly<Record<ComponentSchematic, SchematicDefinition>> = {
+  class: { defaultFlat: true, spec: true, suffix: "" },
+  controller: {
+    defaultFlat: false,
+    spec: true,
+    suffix: "controller",
+    registration: "controllers",
+  },
+  decorator: { defaultFlat: true, spec: false, suffix: "decorator" },
+  filter: { defaultFlat: true, spec: true, suffix: "filter", registration: "providers" },
+  gateway: { defaultFlat: true, spec: true, suffix: "gateway", registration: "providers" },
+  guard: { defaultFlat: true, spec: true, suffix: "guard", registration: "providers" },
+  interface: { defaultFlat: true, spec: false, suffix: "interface" },
+  interceptor: { defaultFlat: true, spec: true, suffix: "interceptor", registration: "providers" },
+  middleware: { defaultFlat: true, spec: true, suffix: "middleware", registration: "providers" },
+  mcp: { defaultFlat: false, spec: true, suffix: "tools" },
+  module: { defaultFlat: false, spec: false, suffix: "module", registration: "imports" },
+  pipe: { defaultFlat: true, spec: true, suffix: "pipe", registration: "providers" },
+  provider: { defaultFlat: true, spec: true, suffix: "", registration: "providers" },
+  resolver: {
+    defaultFlat: false,
+    spec: true,
+    suffix: "resolver",
+    registration: "providers",
+  },
+  service: {
+    defaultFlat: false,
+    spec: true,
+    suffix: "service",
+    registration: "providers",
+  },
+};
+
+export function classSuffix(schematic: ComponentSchematic): string {
+  if (schematic === "class" || schematic === "provider" || schematic === "interface") {
+    return "";
+  }
+  return pascalCase(schematic);
+}
+
+export function symbolFor(schematic: GenerateSchematic, names: ComponentNames): string {
+  if (schematic === "resource") {
+    return `${names.className}Module`;
+  }
+  return `${names.className}${classSuffix(schematic as ComponentSchematic)}`;
+}
+
+export function registrationFor(schematic: GenerateSchematic): ModuleRegistrationKind | undefined {
+  if (schematic === "resource") {
+    return "imports";
+  }
+  if (
+    schematic === "app" ||
+    schematic === "application" ||
+    schematic === "configuration" ||
+    schematic === "upgrade" ||
+    schematic === "library" ||
+    schematic === "plugin"
+  ) {
+    return undefined;
+  }
+  return schematicDefinitions[schematic as ComponentSchematic].registration;
+}
+
+export function primaryFile(
+  files: readonly PendingFile[],
+  schematic: GenerateSchematic,
+): PendingFile {
+  const expectedSuffix =
+    schematic === "resource"
+      ? ".module.ts"
+      : schematicDefinitions[schematic as ComponentSchematic].suffix
+        ? `.${schematicDefinitions[schematic as ComponentSchematic].suffix}.ts`
+        : ".ts";
+  return files.find(
+    (file) => file.path.endsWith(expectedSuffix) && !file.path.endsWith(".spec.ts"),
+  )!;
+}
+
+export function resourceTransportStem(
+  type: ResourceTransport,
+): "controller" | "gateway" | "resolver" {
+  if (type === "ws") {
+    return "gateway";
+  }
+  if (type.startsWith("graphql")) {
+    return "resolver";
+  }
+  return "controller";
+}

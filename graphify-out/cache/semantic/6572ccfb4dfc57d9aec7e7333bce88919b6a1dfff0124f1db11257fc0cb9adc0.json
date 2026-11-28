@@ -1,0 +1,96 @@
+{
+  "nodes": [
+    {
+      "id": "packages_security_agents_guide",
+      "label": "@aponiajs/security Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/security/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_security_agents_http_policy",
+      "label": "Neutral Global HttpPolicy Integration",
+      "file_type": "rationale",
+      "rationale": "Response-header and CSRF policies are neutral HttpPolicy values run globally by the shared platform-core request pipeline; headers apply in the response phase (including missing routes) and CSRF runs before routing.",
+      "source_file": "packages/security/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_security_agents_timing_safe_equal",
+      "label": "Timing-Safe CSRF Verification and Redacted Errors",
+      "file_type": "rationale",
+      "rationale": "HMAC-signed CSRF token signatures are compared with timingSafeEqual rather than === to prevent timing side-channels, and refusals return 403 Problem Details without token, cookie, secret, or stack details.",
+      "source_file": "packages/security/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_security_agents_http_policy",
+      "target": "packages_security_readme_securitymodule",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/security/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_security_agents_timing_safe_equal",
+      "target": "packages_security_readme_double_submit_csrf",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/security/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_security_agents_guide",
+      "target": "packages_security_llms_invalid_security_options",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/security/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_security_agents_timing_safe_equal",
+      "target": "packages_session_agents_id_only_cookie",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "packages/security/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "aponiajs_hmac_signed_cookie_security_pattern",
+      "label": "HMAC-Signed Cookie Verification Pattern",
+      "nodes": [
+        "packages_security_readme_double_submit_csrf",
+        "packages_security_agents_timing_safe_equal",
+        "packages_session_agents_id_only_cookie"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "packages/security/AGENTS.md"
+    }
+  ]
+}

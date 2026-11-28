@@ -1,0 +1,39 @@
+{
+  "nodes": [
+    {
+      "id": "examples_multiple_routers_readme_multiple_routers_example",
+      "label": "Multiple Routers Example",
+      "file_type": "document",
+      "source_file": "examples/multiple-routers/README.md",
+      "source_location": "L1-L19",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "examples_multiple_routers_readme_shared_catalog_singleton",
+      "label": "Shared CatalogService Singleton Across Controllers",
+      "file_type": "concept",
+      "source_file": "examples/multiple-routers/README.md",
+      "source_location": "L3-L3",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "examples_multiple_routers_readme_multiple_routers_example",
+      "target": "examples_multiple_routers_readme_shared_catalog_singleton",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "examples/multiple-routers/README.md",
+      "source_location": "L3-L3",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

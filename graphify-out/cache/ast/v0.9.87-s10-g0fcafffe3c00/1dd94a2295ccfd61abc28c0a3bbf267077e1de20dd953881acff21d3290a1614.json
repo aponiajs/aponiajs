@@ -1,0 +1,1629 @@
+{
+  "nodes": [
+    {
+      "id": "$graphify-root$_packages_schematics_collection_json",
+      "label": "collection.json",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L1"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_schema",
+      "label": "$schema",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L2"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_schematics",
+      "label": "schematics",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L3"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_schematics_application",
+      "label": "application",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L4"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_application_factory",
+      "label": "factory",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L5"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_application_description",
+      "label": "description",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L6"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_application_schema",
+      "label": "schema",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L7"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_schematics_class",
+      "label": "class",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L9"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_class_factory",
+      "label": "factory",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L10"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_class_description",
+      "label": "description",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L11"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_class_schema",
+      "label": "schema",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L12"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_class_aliases",
+      "label": "aliases",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L13"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_schematics_controller",
+      "label": "controller",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L15"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_controller_factory",
+      "label": "factory",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L16"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_controller_description",
+      "label": "description",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L17"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_controller_schema",
+      "label": "schema",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L18"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_controller_aliases",
+      "label": "aliases",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L19"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_schematics_decorator",
+      "label": "decorator",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L21"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_decorator_factory",
+      "label": "factory",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L22"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_decorator_description",
+      "label": "description",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L23"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_decorator_schema",
+      "label": "schema",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L24"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_decorator_aliases",
+      "label": "aliases",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L25"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_schematics_filter",
+      "label": "filter",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L27"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_filter_factory",
+      "label": "factory",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L28"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_filter_description",
+      "label": "description",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L29"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_filter_schema",
+      "label": "schema",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L30"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_filter_aliases",
+      "label": "aliases",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L31"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_schematics_gateway",
+      "label": "gateway",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L33"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_gateway_factory",
+      "label": "factory",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L34"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_gateway_description",
+      "label": "description",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L35"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_gateway_schema",
+      "label": "schema",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L36"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_gateway_aliases",
+      "label": "aliases",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L37"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_schematics_guard",
+      "label": "guard",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L39"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_guard_factory",
+      "label": "factory",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L40"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_guard_description",
+      "label": "description",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L41"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_guard_schema",
+      "label": "schema",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L42"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_guard_aliases",
+      "label": "aliases",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L43"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_schematics_interceptor",
+      "label": "interceptor",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L45"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_interceptor_factory",
+      "label": "factory",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L46"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_interceptor_description",
+      "label": "description",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L47"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_interceptor_schema",
+      "label": "schema",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L48"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_interceptor_aliases",
+      "label": "aliases",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L49"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_schematics_interface",
+      "label": "interface",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L51"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_interface_factory",
+      "label": "factory",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L52"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_interface_description",
+      "label": "description",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L53"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_interface_schema",
+      "label": "schema",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L54"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_interface_aliases",
+      "label": "aliases",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L55"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_schematics_middleware",
+      "label": "middleware",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L57"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_middleware_factory",
+      "label": "factory",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L58"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_middleware_description",
+      "label": "description",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L59"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_middleware_schema",
+      "label": "schema",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L60"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_middleware_aliases",
+      "label": "aliases",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L61"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_schematics_module",
+      "label": "module",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L63"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_module_factory",
+      "label": "factory",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L64"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_module_description",
+      "label": "description",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L65"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_module_schema",
+      "label": "schema",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L66"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_module_aliases",
+      "label": "aliases",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L67"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_schematics_pipe",
+      "label": "pipe",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L69"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_pipe_factory",
+      "label": "factory",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L70"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_pipe_description",
+      "label": "description",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L71"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_pipe_schema",
+      "label": "schema",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L72"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_pipe_aliases",
+      "label": "aliases",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L73"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_schematics_provider",
+      "label": "provider",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L75"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_provider_factory",
+      "label": "factory",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L76"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_provider_description",
+      "label": "description",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L77"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_provider_schema",
+      "label": "schema",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L78"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_provider_aliases",
+      "label": "aliases",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L79"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_schematics_service",
+      "label": "service",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L81"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_service_factory",
+      "label": "factory",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L82"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_service_description",
+      "label": "description",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L83"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_service_schema",
+      "label": "schema",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L84"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_service_aliases",
+      "label": "aliases",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L85"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_schematics_resolver",
+      "label": "resolver",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L87"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_resolver_factory",
+      "label": "factory",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L88"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_resolver_description",
+      "label": "description",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L89"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_resolver_schema",
+      "label": "schema",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L90"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_resolver_aliases",
+      "label": "aliases",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L91"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_schematics_configuration",
+      "label": "configuration",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L93"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_configuration_factory",
+      "label": "factory",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L94"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_configuration_description",
+      "label": "description",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L95"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_configuration_schema",
+      "label": "schema",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L96"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_configuration_aliases",
+      "label": "aliases",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L97"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_schematics_library",
+      "label": "library",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L99"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_library_factory",
+      "label": "factory",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L100"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_library_description",
+      "label": "description",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L101"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_library_schema",
+      "label": "schema",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L102"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_library_aliases",
+      "label": "aliases",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L103"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_schematics_sub_app",
+      "label": "sub-app",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L105"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_sub_app_factory",
+      "label": "factory",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L106"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_sub_app_description",
+      "label": "description",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L107"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_sub_app_schema",
+      "label": "schema",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L108"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_sub_app_aliases",
+      "label": "aliases",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L109"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_schematics_resource",
+      "label": "resource",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L111"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_resource_factory",
+      "label": "factory",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L112"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_resource_description",
+      "label": "description",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L113"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_resource_schema",
+      "label": "schema",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L114"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_resource_aliases",
+      "label": "aliases",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L115"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_schematics_upgrade",
+      "label": "upgrade",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L117"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_upgrade_factory",
+      "label": "factory",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L118"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_upgrade_description",
+      "label": "description",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L119"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_upgrade_schema",
+      "label": "schema",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L120"
+    },
+    {
+      "id": "$graphify-root$_packages_schematics_collection_upgrade_aliases",
+      "label": "aliases",
+      "file_type": "code",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L121"
+    }
+  ],
+  "edges": [
+    {
+      "source": "$graphify-root$_packages_schematics_collection_json",
+      "target": "$graphify-root$_packages_schematics_collection_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_json",
+      "target": "$graphify-root$_packages_schematics_collection_schematics",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics",
+      "target": "$graphify-root$_packages_schematics_collection_schematics_application",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_application",
+      "target": "$graphify-root$_packages_schematics_collection_application_factory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_application",
+      "target": "$graphify-root$_packages_schematics_collection_application_description",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_application",
+      "target": "$graphify-root$_packages_schematics_collection_application_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics",
+      "target": "$graphify-root$_packages_schematics_collection_schematics_class",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_class",
+      "target": "$graphify-root$_packages_schematics_collection_class_factory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_class",
+      "target": "$graphify-root$_packages_schematics_collection_class_description",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_class",
+      "target": "$graphify-root$_packages_schematics_collection_class_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_class",
+      "target": "$graphify-root$_packages_schematics_collection_class_aliases",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics",
+      "target": "$graphify-root$_packages_schematics_collection_schematics_controller",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_controller",
+      "target": "$graphify-root$_packages_schematics_collection_controller_factory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_controller",
+      "target": "$graphify-root$_packages_schematics_collection_controller_description",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_controller",
+      "target": "$graphify-root$_packages_schematics_collection_controller_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_controller",
+      "target": "$graphify-root$_packages_schematics_collection_controller_aliases",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics",
+      "target": "$graphify-root$_packages_schematics_collection_schematics_decorator",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_decorator",
+      "target": "$graphify-root$_packages_schematics_collection_decorator_factory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_decorator",
+      "target": "$graphify-root$_packages_schematics_collection_decorator_description",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_decorator",
+      "target": "$graphify-root$_packages_schematics_collection_decorator_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_decorator",
+      "target": "$graphify-root$_packages_schematics_collection_decorator_aliases",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics",
+      "target": "$graphify-root$_packages_schematics_collection_schematics_filter",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_filter",
+      "target": "$graphify-root$_packages_schematics_collection_filter_factory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_filter",
+      "target": "$graphify-root$_packages_schematics_collection_filter_description",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_filter",
+      "target": "$graphify-root$_packages_schematics_collection_filter_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_filter",
+      "target": "$graphify-root$_packages_schematics_collection_filter_aliases",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics",
+      "target": "$graphify-root$_packages_schematics_collection_schematics_gateway",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_gateway",
+      "target": "$graphify-root$_packages_schematics_collection_gateway_factory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_gateway",
+      "target": "$graphify-root$_packages_schematics_collection_gateway_description",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_gateway",
+      "target": "$graphify-root$_packages_schematics_collection_gateway_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_gateway",
+      "target": "$graphify-root$_packages_schematics_collection_gateway_aliases",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics",
+      "target": "$graphify-root$_packages_schematics_collection_schematics_guard",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_guard",
+      "target": "$graphify-root$_packages_schematics_collection_guard_factory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_guard",
+      "target": "$graphify-root$_packages_schematics_collection_guard_description",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_guard",
+      "target": "$graphify-root$_packages_schematics_collection_guard_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_guard",
+      "target": "$graphify-root$_packages_schematics_collection_guard_aliases",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L43",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics",
+      "target": "$graphify-root$_packages_schematics_collection_schematics_interceptor",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L45",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_interceptor",
+      "target": "$graphify-root$_packages_schematics_collection_interceptor_factory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_interceptor",
+      "target": "$graphify-root$_packages_schematics_collection_interceptor_description",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_interceptor",
+      "target": "$graphify-root$_packages_schematics_collection_interceptor_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_interceptor",
+      "target": "$graphify-root$_packages_schematics_collection_interceptor_aliases",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L49",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics",
+      "target": "$graphify-root$_packages_schematics_collection_schematics_interface",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L51",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_interface",
+      "target": "$graphify-root$_packages_schematics_collection_interface_factory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L52",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_interface",
+      "target": "$graphify-root$_packages_schematics_collection_interface_description",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L53",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_interface",
+      "target": "$graphify-root$_packages_schematics_collection_interface_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L54",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_interface",
+      "target": "$graphify-root$_packages_schematics_collection_interface_aliases",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L55",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics",
+      "target": "$graphify-root$_packages_schematics_collection_schematics_middleware",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L57",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_middleware",
+      "target": "$graphify-root$_packages_schematics_collection_middleware_factory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L58",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_middleware",
+      "target": "$graphify-root$_packages_schematics_collection_middleware_description",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L59",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_middleware",
+      "target": "$graphify-root$_packages_schematics_collection_middleware_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L60",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_middleware",
+      "target": "$graphify-root$_packages_schematics_collection_middleware_aliases",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L61",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics",
+      "target": "$graphify-root$_packages_schematics_collection_schematics_module",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L63",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_module",
+      "target": "$graphify-root$_packages_schematics_collection_module_factory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L64",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_module",
+      "target": "$graphify-root$_packages_schematics_collection_module_description",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_module",
+      "target": "$graphify-root$_packages_schematics_collection_module_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L66",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_module",
+      "target": "$graphify-root$_packages_schematics_collection_module_aliases",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L67",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics",
+      "target": "$graphify-root$_packages_schematics_collection_schematics_pipe",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L69",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_pipe",
+      "target": "$graphify-root$_packages_schematics_collection_pipe_factory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L70",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_pipe",
+      "target": "$graphify-root$_packages_schematics_collection_pipe_description",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L71",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_pipe",
+      "target": "$graphify-root$_packages_schematics_collection_pipe_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L72",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_pipe",
+      "target": "$graphify-root$_packages_schematics_collection_pipe_aliases",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L73",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics",
+      "target": "$graphify-root$_packages_schematics_collection_schematics_provider",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L75",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_provider",
+      "target": "$graphify-root$_packages_schematics_collection_provider_factory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_provider",
+      "target": "$graphify-root$_packages_schematics_collection_provider_description",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L77",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_provider",
+      "target": "$graphify-root$_packages_schematics_collection_provider_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L78",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_provider",
+      "target": "$graphify-root$_packages_schematics_collection_provider_aliases",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L79",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics",
+      "target": "$graphify-root$_packages_schematics_collection_schematics_service",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L81",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_service",
+      "target": "$graphify-root$_packages_schematics_collection_service_factory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L82",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_service",
+      "target": "$graphify-root$_packages_schematics_collection_service_description",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L83",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_service",
+      "target": "$graphify-root$_packages_schematics_collection_service_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L84",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_service",
+      "target": "$graphify-root$_packages_schematics_collection_service_aliases",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L85",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics",
+      "target": "$graphify-root$_packages_schematics_collection_schematics_resolver",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L87",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_resolver",
+      "target": "$graphify-root$_packages_schematics_collection_resolver_factory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L88",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_resolver",
+      "target": "$graphify-root$_packages_schematics_collection_resolver_description",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L89",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_resolver",
+      "target": "$graphify-root$_packages_schematics_collection_resolver_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L90",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_resolver",
+      "target": "$graphify-root$_packages_schematics_collection_resolver_aliases",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L91",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics",
+      "target": "$graphify-root$_packages_schematics_collection_schematics_configuration",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L93",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_configuration",
+      "target": "$graphify-root$_packages_schematics_collection_configuration_factory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L94",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_configuration",
+      "target": "$graphify-root$_packages_schematics_collection_configuration_description",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L95",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_configuration",
+      "target": "$graphify-root$_packages_schematics_collection_configuration_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L96",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_configuration",
+      "target": "$graphify-root$_packages_schematics_collection_configuration_aliases",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L97",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics",
+      "target": "$graphify-root$_packages_schematics_collection_schematics_library",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L99",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_library",
+      "target": "$graphify-root$_packages_schematics_collection_library_factory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L100",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_library",
+      "target": "$graphify-root$_packages_schematics_collection_library_description",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L101",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_library",
+      "target": "$graphify-root$_packages_schematics_collection_library_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L102",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_library",
+      "target": "$graphify-root$_packages_schematics_collection_library_aliases",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L103",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics",
+      "target": "$graphify-root$_packages_schematics_collection_schematics_sub_app",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L105",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_sub_app",
+      "target": "$graphify-root$_packages_schematics_collection_sub_app_factory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L106",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_sub_app",
+      "target": "$graphify-root$_packages_schematics_collection_sub_app_description",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L107",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_sub_app",
+      "target": "$graphify-root$_packages_schematics_collection_sub_app_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L108",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_sub_app",
+      "target": "$graphify-root$_packages_schematics_collection_sub_app_aliases",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L109",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics",
+      "target": "$graphify-root$_packages_schematics_collection_schematics_resource",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L111",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_resource",
+      "target": "$graphify-root$_packages_schematics_collection_resource_factory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L112",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_resource",
+      "target": "$graphify-root$_packages_schematics_collection_resource_description",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L113",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_resource",
+      "target": "$graphify-root$_packages_schematics_collection_resource_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L114",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_resource",
+      "target": "$graphify-root$_packages_schematics_collection_resource_aliases",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L115",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics",
+      "target": "$graphify-root$_packages_schematics_collection_schematics_upgrade",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L117",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_upgrade",
+      "target": "$graphify-root$_packages_schematics_collection_upgrade_factory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L118",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_upgrade",
+      "target": "$graphify-root$_packages_schematics_collection_upgrade_description",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L119",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_upgrade",
+      "target": "$graphify-root$_packages_schematics_collection_upgrade_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L120",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_schematics_collection_schematics_upgrade",
+      "target": "$graphify-root$_packages_schematics_collection_upgrade_aliases",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/schematics/collection.json",
+      "source_location": "L121",
+      "weight": 1.0
+    }
+  ]
+}

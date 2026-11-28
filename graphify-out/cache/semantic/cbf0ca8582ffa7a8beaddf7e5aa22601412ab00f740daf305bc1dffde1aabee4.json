@@ -1,0 +1,62 @@
+{
+  "nodes": [
+    {
+      "id": "scratch_nestjs_dx_parity_issues_03_callhandler_interceptor_contract_zero_rxjs_callstream",
+      "label": "Zero-RxJS CallStream & CallHandler Contract",
+      "file_type": "concept",
+      "rationale": "Provide a lightweight CallStream<T> implementing both PromiseLike<T> and .pipe()/.subscribe() with built-in @aponiajs/common operators (tap, map, catchError, timeout, of, throwError, lastValueFrom) to match NestInterceptor DX without requiring rxjs at runtime.",
+      "source_file": ".scratch/nestjs-dx-parity/issues/03-callhandler-interceptor-contract.md",
+      "source_location": "L10",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_issues_03_callhandler_interceptor_contract_mixed_interceptor_composition",
+      "label": "Mixed NestInterceptor & interceptBefore/After Composition",
+      "file_type": "concept",
+      "source_file": ".scratch/nestjs-dx-parity/issues/03-callhandler-interceptor-contract.md",
+      "source_location": "L11",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_issues_03_callhandler_interceptor_contract_elysia_sucrose_preservation",
+      "label": "Elysia Sucrose Static Compilation Preservation",
+      "file_type": "rationale",
+      "rationale": "Routes without any intercept() interceptor retain zero-overhead Elysia static compilation in route-hook.builder.ts and http-kernel.ts, wrapping only routes that opt into intercept().",
+      "source_file": ".scratch/nestjs-dx-parity/issues/03-callhandler-interceptor-contract.md",
+      "source_location": "L12",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "scratch_nestjs_dx_parity_issues_03_callhandler_interceptor_contract_elysia_sucrose_preservation",
+      "target": "scratch_nestjs_dx_parity_issues_03_callhandler_interceptor_contract_mixed_interceptor_composition",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/issues/03-callhandler-interceptor-contract.md",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_issues_03_callhandler_interceptor_contract_mixed_interceptor_composition",
+      "target": "scratch_nestjs_dx_parity_issues_03_callhandler_interceptor_contract_zero_rxjs_callstream",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/issues/03-callhandler-interceptor-contract.md",
+      "source_location": "L10-L11",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

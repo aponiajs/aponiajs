@@ -1,0 +1,187 @@
+{
+  "nodes": [
+    {
+      "id": "packages_compiler_agents_guide",
+      "label": "@aponiajs/compiler Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/compiler/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Provides runtime enforcement of compiler-grade invariants (revocable lifetimes, exclusive mutation views, typestate, linear consumption) with node:async_hooks scoped only to borrow identity and zero HTTP imports."
+    },
+    {
+      "id": "packages_compiler_agents_scoped_handle",
+      "label": "Scoped Handle Isolation",
+      "file_type": "rationale",
+      "source_file": "packages/compiler/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Scoped<T> is non-assignable to T so raw values cannot leak past scope exit; get() checks scope liveness and moveOut() transfers ownership while revoking the handle."
+    },
+    {
+      "id": "packages_compiler_agents_scope_guard",
+      "label": "scope.guard Revocation Proxy",
+      "file_type": "concept",
+      "source_file": "packages/compiler/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Forwards via Reflect.get(target, property, target) and Reflect.apply(method, target, args) so #private fields and WeakMap-backed state work, trading identity preservation and nested guarding and leaving non-configurable non-writable data properties unwrapped due to proxy invariants."
+    },
+    {
+      "id": "packages_compiler_agents_rwcell_vs_asyncrwlock",
+      "label": "RwCell Fail-Fast vs AsyncRwLock Fair Queueing",
+      "file_type": "rationale",
+      "source_file": "packages/compiler/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "RwCell fails fast with BORROW_CONFLICT on ordinary contention, while AsyncRwLock runs readers concurrently, queues writers, holds later readers behind queued writers to prevent writer starvation, and detects nested self-reentrancy immediately via AsyncLocalStorage BorrowContext."
+    },
+    {
+      "id": "packages_compiler_agents_revocable_views",
+      "label": "Deep Revocable Read and Exclusive Views",
+      "file_type": "concept",
+      "source_file": "packages/compiler/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Plain objects and arrays share one revocation state (throwing STALE_LIFETIME after release and READONLY_VIEW on read-view writes), whereas Map, Set, Date, and class instances pass by reference and are readonly at the type level only."
+    },
+    {
+      "id": "packages_compiler_agents_typestate_machine",
+      "label": "Immutable Typestate State Machine",
+      "file_type": "concept",
+      "source_file": "packages/compiler/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "transition() returns a new immutable machine; invalid static chains fail in tsc while dynamic events and unknown hydrated states throw INVALID_STATE_TRANSITION."
+    },
+    {
+      "id": "packages_compiler_agents_linear_consumption",
+      "label": "Runtime Linear Consumption (Owned and once)",
+      "file_type": "rationale",
+      "source_file": "packages/compiler/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Because TypeScript lacks linear types, Owned.consume() and once() enforce single consumption at runtime by throwing CONSUMED_STATE on reuse and implementing both dispose symbols."
+    },
+    {
+      "id": "packages_compiler_agents_compiler_failure_codes",
+      "label": "Compiler Invariant Failure Codes",
+      "file_type": "concept",
+      "source_file": "packages/compiler/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_compiler_agents_scoped_handle",
+      "target": "packages_compiler_agents_guide",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/compiler/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_compiler_agents_scope_guard",
+      "target": "packages_compiler_agents_scoped_handle",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/compiler/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_compiler_agents_rwcell_vs_asyncrwlock",
+      "target": "packages_compiler_agents_revocable_views",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/compiler/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_compiler_agents_typestate_machine",
+      "target": "packages_compiler_agents_guide",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/compiler/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_compiler_agents_linear_consumption",
+      "target": "packages_compiler_agents_guide",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/compiler/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_compiler_agents_compiler_failure_codes",
+      "target": "packages_common_agents_aponia_error_union",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/compiler/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_common_agents_async_context_exit_registry",
+      "target": "packages_compiler_agents_rwcell_vs_asyncrwlock",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "packages/compiler/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "compiler_runtime_safety_invariants",
+      "label": "Compiler-Grade Runtime Safety Invariants",
+      "nodes": [
+        "packages_compiler_agents_scoped_handle",
+        "packages_compiler_agents_rwcell_vs_asyncrwlock",
+        "packages_compiler_agents_typestate_machine",
+        "packages_compiler_agents_linear_consumption"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/compiler/AGENTS.md"
+    }
+  ]
+}

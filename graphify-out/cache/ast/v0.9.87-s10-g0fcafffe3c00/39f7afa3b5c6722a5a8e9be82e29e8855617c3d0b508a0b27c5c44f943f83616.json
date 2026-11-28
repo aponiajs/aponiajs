@@ -1,0 +1,717 @@
+{
+  "nodes": [
+    {
+      "id": "$graphify-root$_tsconfig_json",
+      "label": "tsconfig.json",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L1"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_compileroptions",
+      "label": "compilerOptions",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L2"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_compileroptions_target",
+      "label": "target",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L3"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_compileroptions_module",
+      "label": "module",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L4"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_compileroptions_moduleresolution",
+      "label": "moduleResolution",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L5"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_compileroptions_paths",
+      "label": "paths",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L6"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_view",
+      "label": "@aponiajs/view",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L7"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_testing",
+      "label": "@aponiajs/testing",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L8"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_store_redis",
+      "label": "@aponiajs/store-redis",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L9"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_session",
+      "label": "@aponiajs/session",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L10"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_schematics",
+      "label": "@aponiajs/schematics",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L11"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_serverless",
+      "label": "@aponiajs/serverless",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L12"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_security",
+      "label": "@aponiajs/security",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L13"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_rate_limit",
+      "label": "@aponiajs/rate-limit",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L14"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_queue",
+      "label": "@aponiajs/queue",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L15"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_openapi",
+      "label": "@aponiajs/openapi",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L16"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_nitro",
+      "label": "@aponiajs/nitro",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L17"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_microservices",
+      "label": "@aponiajs/microservices",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L18"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_mcp",
+      "label": "@aponiajs/mcp",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L19"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_http",
+      "label": "@aponiajs/http",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L20"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_hono",
+      "label": "@aponiajs/hono",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L21"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_h3",
+      "label": "@aponiajs/h3",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L22"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_graphql",
+      "label": "@aponiajs/graphql",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L23"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_events",
+      "label": "@aponiajs/events",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L24"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_devtools",
+      "label": "@aponiajs/devtools",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L25"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_database",
+      "label": "@aponiajs/database",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L26"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_cron",
+      "label": "@aponiajs/cron",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L27"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_cors",
+      "label": "@aponiajs/cors",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L28"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_compression",
+      "label": "@aponiajs/compression",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L29"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_compiler",
+      "label": "@aponiajs/compiler",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L30"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_cli",
+      "label": "@aponiajs/cli",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L31"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_cache",
+      "label": "@aponiajs/cache",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L32"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_auth",
+      "label": "@aponiajs/auth",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L33"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_common",
+      "label": "@aponiajs/common",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L34"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_core",
+      "label": "@aponiajs/core",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L35"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_platform_core",
+      "label": "@aponiajs/platform-core",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L36"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_platform_h3",
+      "label": "@aponiajs/platform-h3",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L37"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_platform_hono",
+      "label": "@aponiajs/platform-hono",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L38"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_paths_aponiajs_platform_elysia",
+      "label": "@aponiajs/platform-elysia",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L39"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_compileroptions_experimentaldecorators",
+      "label": "experimentalDecorators",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L41"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_compileroptions_emitdecoratormetadata",
+      "label": "emitDecoratorMetadata",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L42"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_compileroptions_allowimportingtsextensions",
+      "label": "allowImportingTsExtensions",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L43"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_compileroptions_verbatimmodulesyntax",
+      "label": "verbatimModuleSyntax",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L44"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_compileroptions_strict",
+      "label": "strict",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L45"
+    },
+    {
+      "id": "$graphify-root$_tsconfig_compileroptions_noemit",
+      "label": "noEmit",
+      "file_type": "code",
+      "source_file": "tsconfig.json",
+      "source_location": "L46"
+    }
+  ],
+  "edges": [
+    {
+      "source": "$graphify-root$_tsconfig_json",
+      "target": "$graphify-root$_tsconfig_compileroptions",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions",
+      "target": "$graphify-root$_tsconfig_compileroptions_target",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions",
+      "target": "$graphify-root$_tsconfig_compileroptions_module",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions",
+      "target": "$graphify-root$_tsconfig_compileroptions_moduleresolution",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions",
+      "target": "$graphify-root$_tsconfig_compileroptions_paths",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_view",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_testing",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_store_redis",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_session",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_schematics",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_serverless",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_security",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_rate_limit",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_queue",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_openapi",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_nitro",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_microservices",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_mcp",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_http",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_hono",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_h3",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_graphql",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_events",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_devtools",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_database",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_cron",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_cors",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_compression",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_compiler",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_cli",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_cache",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_auth",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_common",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_core",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_platform_core",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_platform_h3",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_platform_hono",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_tsconfig_paths_aponiajs_platform_elysia",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions",
+      "target": "$graphify-root$_tsconfig_compileroptions_experimentaldecorators",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions",
+      "target": "$graphify-root$_tsconfig_compileroptions_emitdecoratormetadata",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions",
+      "target": "$graphify-root$_tsconfig_compileroptions_allowimportingtsextensions",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L43",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions",
+      "target": "$graphify-root$_tsconfig_compileroptions_verbatimmodulesyntax",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L44",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions",
+      "target": "$graphify-root$_tsconfig_compileroptions_strict",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L45",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_tsconfig_compileroptions",
+      "target": "$graphify-root$_tsconfig_compileroptions_noemit",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tsconfig.json",
+      "source_location": "L46",
+      "weight": 1.0
+    }
+  ]
+}

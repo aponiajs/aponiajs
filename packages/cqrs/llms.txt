@@ -1,0 +1,17 @@
+# @aponiajs/cqrs
+
+> Nest-compatible CQRS module for AponiaJS (`CommandBus`, `QueryBus`, `EventBus`, `@Saga()`, `AggregateRoot`) using Promises and `AsyncIterable` streams without RxJS.
+
+## Key exports
+
+- `CqrsModule` (`forRoot()`)
+- `CommandBus` / `@CommandHandler(Command)` / `ICommandHandler`
+- `QueryBus` / `@QueryHandler(Query)` / `IQueryHandler`
+- `EventBus` / `@EventsHandler(...Events)` / `IEventHandler`
+- `@Saga()` / `ISaga`
+- `AggregateRoot` / `EventPublisher`
+
+## Links
+
+- [Package README](./README.md)
+- [Published packages](../../docs/reference/packages.md)

@@ -1,0 +1,353 @@
+{
+  "nodes": [
+    {
+      "id": "packages_cli_agents_guide",
+      "label": "@aponiajs/cli Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cli_agents_runcli",
+      "label": "runCli",
+      "file_type": "concept",
+      "rationale": "Prints CREATE/UPDATE/DECLINED change lines and returns an exit code without throwing.",
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cli_agents_controller_routes",
+      "label": "controller-routes.ts Source Analysis",
+      "file_type": "concept",
+      "rationale": "Pure ts-morph static analysis recognizing only @aponiajs/common decorators and returning frozen route and merged enhancer metadata in declaration order.",
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cli_agents_controller_invokers",
+      "label": "controller-invokers.ts Emitter",
+      "file_type": "concept",
+      "rationale": "Emits proven route invokers keyed by handler property key and declines unprovable handlers onto the platform compile path so partial generation stays valid.",
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cli_agents_module_descriptors",
+      "label": "module-descriptors.ts Source Analysis",
+      "file_type": "concept",
+      "rationale": "Analyzes @Module, @Injectable, @WebSocketGateway, and @Validation classes statically and folds module-private const declarations recursively while reporting unreadable declarations.",
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cli_agents_descriptor_emitter",
+      "label": "descriptor-emitter.ts",
+      "file_type": "concept",
+      "rationale": "Emits the module graph as defineModule, defineControllerRoutes, and defineWebSocketGateway whole-or-declined so a module never ships missing routes or enhancers.",
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cli_agents_invoker_generator",
+      "label": "invoker-generator.ts (aponia build)",
+      "file_type": "concept",
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cli_agents_aponia_build_plugin",
+      "label": "buildPlugin (aponia-build-plugin.ts)",
+      "file_type": "concept",
+      "rationale": "Runs generateInvokers in Bun's onStart hook so invokers.generated.ts and descriptors.generated.ts are regenerated before Bun resolves any import.",
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cli_agents_generated_source_formatter",
+      "label": "generated-source-formatter.ts",
+      "file_type": "concept",
+      "rationale": "Prefers a project's own vite-plus/fmt and falls back to exact-pinned oxfmt so committed generated modules pass vp check deterministically.",
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cli_agents_starter_artifact_freshness",
+      "label": "Starter Artifact Freshness Guard",
+      "file_type": "concept",
+      "rationale": "Regenerates starter sources and fails if committed invokers/descriptors differ, preventing silent cold-start regressions.",
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cli_agents_generate_library_plugin",
+      "label": "generateLibrary and generatePlugin",
+      "file_type": "concept",
+      "rationale": "Share one template builder for workspace libraries and platform-neutral HTTP plugins declaring requirePlatformCapabilities without importing any HTTP runtime.",
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cli_agents_framework_contract",
+      "label": "Framework Contract (aponia manifest)",
+      "file_type": "concept",
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cli_agents_init_agent",
+      "label": "initAgent (aponia agent init)",
+      "file_type": "concept",
+      "rationale": "Idempotently installs AGENTS.md marker blocks, CLAUDE.md/GEMINI.md relative symlinks, and client skill files without exposing command execution.",
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cli_agents_library_catalog",
+      "label": "Curated Library Catalog (aponia library search)",
+      "file_type": "concept",
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cli_agents_no_observe",
+      "label": "--no-observe Flag and Documentation Rewriter",
+      "file_type": "concept",
+      "rationale": "Removes @aponiajs/devtools registration, dependency, and devtools documentation sections from generated starters.",
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_cli_agents_guide",
+      "target": "packages_cli_agents_runcli",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cli_agents_controller_invokers",
+      "target": "packages_cli_agents_controller_routes",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cli_agents_descriptor_emitter",
+      "target": "packages_cli_agents_module_descriptors",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cli_agents_descriptor_emitter",
+      "target": "packages_cli_agents_controller_routes",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cli_agents_invoker_generator",
+      "target": "packages_cli_agents_controller_invokers",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cli_agents_invoker_generator",
+      "target": "packages_cli_agents_descriptor_emitter",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cli_agents_invoker_generator",
+      "target": "packages_cli_agents_generated_source_formatter",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cli_agents_aponia_build_plugin",
+      "target": "packages_cli_agents_invoker_generator",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cli_agents_starter_artifact_freshness",
+      "target": "packages_cli_agents_invoker_generator",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cli_agents_guide",
+      "target": "packages_cli_agents_generate_library_plugin",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cli_agents_guide",
+      "target": "packages_cli_agents_framework_contract",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cli_agents_guide",
+      "target": "packages_cli_agents_init_agent",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cli_agents_guide",
+      "target": "packages_cli_agents_library_catalog",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cli_agents_no_observe",
+      "target": "packages_cli_templates_application_agents_devtools_tradeoff",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cli/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "aponia_build_static_lowering_pipeline",
+      "label": "aponia build Static Analysis and Codegen Pipeline",
+      "nodes": [
+        "packages_cli_agents_controller_routes",
+        "packages_cli_agents_controller_invokers",
+        "packages_cli_agents_module_descriptors",
+        "packages_cli_agents_descriptor_emitter",
+        "packages_cli_agents_generated_source_formatter",
+        "packages_cli_agents_invoker_generator"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cli/AGENTS.md"
+    },
+    {
+      "id": "cli_project_template_variants",
+      "label": "CLI Application Starter Template Variants",
+      "nodes": [
+        "packages_cli_templates_application_agents_guide",
+        "packages_cli_templates_nest_cjs_agents_guide",
+        "packages_cli_templates_nest_esm_agents_guide"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cli/AGENTS.md"
+    }
+  ]
+}

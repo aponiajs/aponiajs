@@ -1,0 +1,30 @@
+# @aponiajs/mcp
+
+> A Nest-style Model Context Protocol server for AponiaJS. Tools, resources, resources templates, and prompts are decorated provider methods, discovered when the endpoint mounts and served through the official `@modelcontextprotocol/server` SDK.
+
+## What this package exports
+
+- `McpModule` — `forRoot(options)` and `forRootAsync({ imports, inject, useFactory })`.
+- `Tool`, `Resource`, `ResourceTemplate`, `Prompt` — method decorators.
+- `McpContext` — the second argument of every decorated method.
+- `McpExecutionContext` — the execution context a guard, interceptor, pipe, or filter receives.
+- `serveMcpStdio` and `listenMcpStdio` — the stdio entrypoints.
+
+## Where the behavior lives
+
+- [McpModule](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/module/mcp.module.ts): the registration, options, and platform adapters.
+- [Discovery](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/discovery/mcp-discovery.ts): walks the graph, reads decorator metadata, and refuses duplicates.
+- [Execution](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/execution/mcp-invoker.ts): guards, interceptors, pipes, filters, and the method call.
+- [Runtime](https://github.com/aponiajs/aponiajs/blob/release/alpha/packages/mcp/src/transport/mcp-runtime.ts): one SDK server per request, the Origin and Host gate, and the body bound.
+
+## Use it
+
+```ts
+@Module({
+  imports: [McpModule.forRoot({ name: "app", version: "1.0.0" })],
+  providers: [OrdersTools],
+})
+export class AppModule {}
+```
+
+[Package README](./README.md) · [MCP guide](../../docs/services/mcp.md)

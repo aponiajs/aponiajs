@@ -1,0 +1,60 @@
+{
+  "nodes": [
+    {
+      "id": "llms_aponiajs_index",
+      "label": "AponiaJS llms.txt Overview",
+      "file_type": "document",
+      "source_file": "llms.txt",
+      "source_location": "L1-L28",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "llms_framework_contracts",
+      "label": "AponiaJS Machine-Readable Contracts",
+      "file_type": "concept",
+      "source_file": "llms.txt",
+      "source_location": "L18-L22",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "llms_security_posture",
+      "label": "AponiaJS Agent and HTTP Security Posture",
+      "file_type": "concept",
+      "source_file": "llms.txt",
+      "source_location": "L24-L28",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "llms_aponiajs_index",
+      "target": "llms_framework_contracts",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "llms.txt",
+      "source_location": "L18-L22",
+      "weight": 1.0
+    },
+    {
+      "source": "llms_aponiajs_index",
+      "target": "llms_security_posture",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "llms.txt",
+      "source_location": "L24-L28",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

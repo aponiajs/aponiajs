@@ -1,0 +1,17 @@
+{
+  "nodes": [
+    {
+      "id": "examples_files_public_index_static_assets_page",
+      "label": "Files Example Static Index Page",
+      "file_type": "document",
+      "source_file": "examples/files/public/index.html",
+      "source_location": "L1-L12",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [],
+  "hyperedges": []
+}

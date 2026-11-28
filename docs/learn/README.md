@@ -1,26 +1,24 @@
 # Learning Path
 
-An ordered walkthrough of AponiaJS. Each chapter states when it applies, shows
-the smallest working code, and points at the reference document that covers the
-same ground in depth. Read them in order the first time; jump by number
-afterwards.
+A short, ordered guide to AponiaJS. Read it in order once, then use the reference pages for details.
 
-| Chapter                                                         | Answers                                                     |
-| --------------------------------------------------------------- | ----------------------------------------------------------- |
-| [01 · Overview](./01-overview.md)                               | What AponiaJS is, and the two authoring layers behind it    |
-| [02 · Install and generate](./02-install-and-generate.md)       | How to start a project and what the generator produces      |
-| [03 · Modules](./03-modules.md)                                 | How code is grouped and what a module exposes               |
-| [04 · Providers and injection](./04-providers-and-injection.md) | How dependencies are declared and resolved                  |
-| [05 · Controllers and routes](./05-controllers-and-routes.md)   | How a request reaches a method                              |
-| [06 · Validation](./06-validation.md)                           | How invalid requests are rejected before the handler        |
-| [07 · Request parameters](./07-request-parameters.md)           | How to take one piece of the request instead of the context |
-| [08 · Native plugins](./08-native-plugins.md)                   | How to use an Elysia plugin and keep its types              |
-| [09 · Logging](./09-logging.md)                                 | What the framework prints, and how to replace it            |
-| [10 · Errors](./10-errors.md)                                   | Which failures are raised, when, and how to assert on them  |
-| [11 · Testing](./11-testing.md)                                 | How to exercise a real application without a port           |
-| [12 · Releasing](./12-releasing.md)                             | How a change reaches npm, for contributors                  |
+| Chapter                                                         | Topic                                   |
+| --------------------------------------------------------------- | --------------------------------------- |
+| [01 · Overview](./01-overview.md)                               | What AponiaJS is and how it works       |
+| [02 · Install and generate](./02-install-and-generate.md)       | Create a project and generate code      |
+| [03 · Modules](./03-modules.md)                                 | Group features and control visibility   |
+| [04 · Providers and injection](./04-providers-and-injection.md) | Declare and resolve dependencies        |
+| [05 · Controllers and routes](./05-controllers-and-routes.md)   | Map HTTP requests to methods            |
+| [06 · Request parameters](./06-request-parameters.md)           | Read one part of the request            |
+| [07 · Validation](./07-validation.md)                           | Reject invalid input before the handler |
+| [08 · Enhancers](./08-enhancers.md)                             | Guard, wrap, and filter routes          |
+| [09 · Files](./09-files.md)                                     | Upload and download files               |
+| [10 · Lifecycle](./10-lifecycle.md)                             | Run code on startup and shutdown        |
+| [11 · Errors](./11-errors.md)                                   | Handle HTTP and framework failures      |
+| [12 · Logging](./12-logging.md)                                 | Read or replace framework logs          |
+| [13 · Native plugins](./13-native-plugins.md)                   | Reuse Elysia plugins with types         |
+| [14 · Devtools](./14-devtools.md)                               | Inspect the compiled application        |
+| [15 · Testing](./15-testing.md)                                 | Exercise an application without a port  |
+| [16 · Releasing](./16-releasing.md)                             | Publish a change to npm                 |
 
-Reference documents live one directory up: [architecture and style](../architecture-and-style.md),
-[dependency injection](../dependency-injection.md),
-[native plugins](../native-plugins.md), [logging](../logging.md),
-[testing](../testing.md), [CLI](../cli.md), [releasing](../releasing.md).
+Deep references: [architecture](../build/architecture-and-style.md), [dependency injection](../build/dependency-injection.md), [testing](../build/testing.md), [CLI](../tooling/cli.md).

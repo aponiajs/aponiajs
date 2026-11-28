@@ -1,0 +1,71 @@
+{
+  "nodes": [
+    {
+      "id": "packages_cli_readme_doc",
+      "label": "@aponiajs/cli README",
+      "file_type": "document",
+      "source_file": "packages/cli/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cli_readme_schematics_catalog",
+      "label": "Aponia Schematic Catalog and Resource Transports",
+      "file_type": "concept",
+      "source_file": "packages/cli/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cli_readme_rest_model_pattern",
+      "label": "REST CRUD Model Pattern",
+      "file_type": "rationale",
+      "rationale": "REST CRUD generates <name>.model.ts with separate @Validation classes for create bodies, update bodies, and path parameters instead of DTO files.",
+      "source_file": "packages/cli/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_cli_readme_doc",
+      "target": "packages_cli_agents_aponia_build_plugin",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cli/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cli_readme_doc",
+      "target": "packages_cli_readme_schematics_catalog",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cli/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cli_readme_rest_model_pattern",
+      "target": "packages_cli_readme_schematics_catalog",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cli/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "$id": "SchematicsAponiaConfiguration",
+  "title": "Aponia CLI Configuration Options Schema",
+  "type": "object",
+  "properties": {
+    "sourceRoot": {
+      "type": "string",
+      "default": "src",
+      "description": "The source root directory."
+    },
+    "entryFile": {
+      "type": "string",
+      "default": "main",
+      "description": "The entry file name."
+    },
+    "language": {
+      "type": "string",
+      "description": "The project language (ts/js)."
+    },
+    "collection": {
+      "type": "string",
+      "default": "@aponiajs/schematics",
+      "description": "The schematic collection the CLI reads."
+    },
+    "monorepo": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the project is a multi-project workspace."
+    },
+    "path": {
+      "type": "string",
+      "format": "path",
+      "description": "The path the configuration file is written to."
+    },
+    "format": {
+      "type": "boolean",
+      "default": false,
+      "description": "Format generated files if a formatter is available."
+    }
+  },
+  "required": []
+}

@@ -1,0 +1,82 @@
+{
+  "nodes": [
+    {
+      "id": "docs_platforms_introspection_guide",
+      "label": "Inspecting an Application",
+      "file_type": "document",
+      "source_file": "docs/platforms/introspection.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_platforms_introspection_inspectaponiaapplication",
+      "label": "inspectAponiaApplication & AponiaApplicationInspection",
+      "file_type": "concept",
+      "rationale": "Compiles the graph without constructing providers or controllers so inspection is side-effect-free, frozen, JSON-serializable, and deterministic; callback-defined routes are omitted because they require executing callbacks.",
+      "source_file": "docs/platforms/introspection.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_platforms_introspection_descriptor_artifact_selection",
+      "label": "Descriptor & Invoker Artifact Resolution in Inspection",
+      "file_type": "concept",
+      "rationale": "Uses the same selector as bootstrap and falls back to lowering decorated classes when an artifact is missing or mismatched.",
+      "source_file": "docs/platforms/introspection.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_platforms_introspection_guide",
+      "target": "docs_platforms_introspection_inspectaponiaapplication",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/introspection.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_introspection_guide",
+      "target": "docs_platforms_introspection_descriptor_artifact_selection",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/introspection.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_introspection_inspectaponiaapplication",
+      "target": "docs_learn_10_errors_aponiaerror",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/introspection.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_introspection_descriptor_artifact_selection",
+      "target": "docs_platforms_eden_treaty_typed_descriptors",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/platforms/introspection.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

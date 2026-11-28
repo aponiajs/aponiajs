@@ -1,0 +1,354 @@
+# @aponiajs/cron
+
+```bash
+bun add @aponiajs/cron
+```
+
+Declare scheduled jobs in an Aponia module, with the jobs read from a validated
+configuration.
+
+## Use it
+
+### Register the module
+
+Register the module in the application that owns the schedule, and keep the
+jobs in the validated configuration:
+
+```ts
+import { Module } from "@aponiajs/common";
+import { CronModule } from "@aponiajs/cron";
+import { CronConfig } from "./config.ts";
+
+const scheduler = CronModule.forRoot({ configuration: CronConfig });
+
+@Module({ imports: [scheduler] })
+export class AppModule {}
+```
+
+The scheduler starts when the module mounts, before the application listens, and
+stops when the application closes. A job's `run` closes over the module's own
+providers, so scheduling stays inside the application rather than beside it.
+
+### Use it in a controller
+
+```ts
+import { Controller, Get } from "@aponiajs/common";
+import { SchedulerRegistry } from "@aponiajs/cron";
+
+@Controller("jobs")
+export class JobsController {
+  constructor(private readonly registry: SchedulerRegistry) {}
+
+  @Get()
+  list() {
+    return [...this.registry.getCronJobs().keys()];
+  }
+}
+```
+
+### Use it in a service
+
+```ts
+import { Injectable } from "@aponiajs/common";
+import { Cron, SchedulerRegistry } from "@aponiajs/cron";
+
+@Injectable()
+export class ReportsService {
+  constructor(private readonly registry: SchedulerRegistry) {}
+
+  @Cron("0 * * * *", { name: "hourly-report" })
+  async hourly(): Promise<void> {
+    // build the report
+  }
+
+  scheduled(): boolean {
+    return this.registry.doesExist("cron", "hourly-report");
+  }
+}
+```
+
+The class that carries `@Cron`, `@Interval`, or `@Timeout` must be a provider of
+a module that imports the registration.
+
+### Async registration
+
+`CronModule` does not support an asynchronous registration. The module provides
+the configuration token it schedules, and a factory result cannot name that
+token before the registration is built, so `CronModule.registerAsync` refuses
+with `INVALID_CONFIGURATION_VALUE`. Declare the configuration in `forRoot`.
+
+## Bootstrap
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+
+const application = await AponiaFactory.create(AppModule);
+await application.listen(Number(Bun.env.PORT ?? 3000));
+```
+
+## Declaring a scheduler
+
+`CronModule.forRoot` returns a `DynamicModule`, which is what an `imports`
+entry accepts:
+
+```ts
+import { Module } from "@aponiajs/common";
+import { CronModule } from "@aponiajs/cron";
+import { CronConfig } from "./config.ts";
+
+const scheduler = CronModule.forRoot({ configuration: CronConfig });
+
+@Module({ imports: [scheduler] })
+export class AppModule {}
+```
+
+Both spellings mount the same module, and neither is lowered into the descriptor
+artifact `aponia build` writes. `aponia build` lowers an `imports` entry only
+when it is a single identifier naming a declaration read from the project's own
+source, and `CronModule.forRoot({ ... })` returns a `DynamicModule` — a runtime
+value rather than such a declaration — so the module that names it is reported
+as `DECLINED` and left out of `descriptors.generated.ts` in every spelling,
+inline or held in a `const`. The scheduler still mounts and the application
+still boots; what is given up is the declared-graph boot, described in
+[the CLI reference](../../docs/tooling/cli.md#module-descriptors).
+
+## The validated configuration
+
+The jobs come from a configuration the application declares and the module
+validates, not from an object literal:
+
+```ts
+import { defineConfiguration } from "@aponiajs/common";
+import { z } from "zod";
+
+export const CronConfig = defineConfiguration(
+  z
+    .object({
+      CRON_PATTERN: z.string().min(1).default("*/5 * * * * *"),
+      CRON_TIMEZONE: z.string().min(1).default("UTC"),
+      INVOICE_BATCH: z.coerce.number().int().positive().default(100),
+    })
+    .transform(({ CRON_PATTERN, CRON_TIMEZONE, INVOICE_BATCH }) => ({
+      jobs: [
+        {
+          name: "invoices",
+          pattern: CRON_PATTERN,
+          options: { timezone: CRON_TIMEZONE, protect: true },
+          run: ({ options }) => sendInvoices({ batch: INVOICE_BATCH, protect: options.protect }),
+        },
+        {
+          name: "heartbeat",
+          pattern: "*/10 * * * * *",
+          run: () => log("alive"),
+        },
+      ],
+    })),
+  "cron.config",
+);
+```
+
+What that shape buys is the two failure modes it removes. A `CRON_PATTERN` an
+operator mistyped is refused by the schema before any job exists, so the boot
+fails with `INVALID_CONFIGURATION_VALUE` and a list of the fields that were
+wrong — rather than a `Cron` constructor throwing from inside a plugin's state
+function, or, for a pattern croner happens to tolerate as an impossible date, a
+job that silently never runs.
+
+The jobs themselves are not configuration data: `run` is a function, and no
+schema validates a function out of the environment. What the schema validates is
+the parameters, and the transform that reads them builds the jobs around them —
+which is why the example above can hand a job a number parsed from an
+environment variable while the job's `run` stays a closure over the
+application's own services.
+
+`CronModule.forRoot` provides this token itself, from `process.env`, and
+exports it, so the application can read the same validated value back:
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { AppModule } from "./app.module.ts";
+import { CronConfig } from "./config.ts";
+
+const application = await AponiaFactory.create(AppModule);
+application.get(CronConfig); // the value the scheduler scheduled
+```
+
+`source` overrides what the schema validates — a literal record instead of the
+environment — which is what a test uses:
+
+```ts
+const scheduler = CronModule.forRoot({
+  configuration: CronConfig,
+  source: { CRON_PATTERN: "*/1 * * * * *" },
+});
+```
+
+`key` names the module's identity and defaults to `"cron"`. Two registrations
+that share one are one module identity, which the graph refuses as a duplicate
+rather than quietly scheduling one set of jobs twice. One registration per
+application is the shape this module supports: two of them mount and run, but
+both are the `CronScheduler` token, so reading one back raises
+`AMBIGUOUS_PROVIDER`.
+
+## A job
+
+```ts
+interface CronJob<TOptions extends CronJobOptions = CronJobOptions> {
+  readonly name: string;
+  readonly pattern: string;
+  readonly options?: TOptions;
+  run(context: CronJobContext<TOptions>): unknown;
+}
+
+interface CronJobContext<TOptions extends CronJobOptions = CronJobOptions> {
+  readonly name: string;
+  readonly pattern: string;
+  readonly options: TOptions;
+}
+```
+
+- **`name`** is the job's identity in the scheduler. It must be a non-empty
+  string, and the scheduler checks that before it mounts anything.
+- **`pattern`** is a cron expression, an ISO 8601 time, or a date, exactly as
+  croner accepts it. Six fields include seconds; five do not. It must be a
+  non-empty string.
+- **`options`** is forwarded to croner untouched: `timezone`, `maxRuns`,
+  `protect`, `paused`, `startAt`, `stopAt`, `utcOffset`, `interval`,
+  `legacyMode`, `context`, `catch`, `kill`, and `unref`. The type is derived from
+  croner's own `CronOptions` rather than restated here, so it cannot drift from
+  the engine.
+- **`run`** is called once per tick, with a frozen context carrying the job's own
+  name, pattern, and the options this package forwarded. It may be asynchronous;
+  its return value is ignored.
+
+`protect: true` is the option worth knowing about first: it skips a tick while
+the previous one is still running, which is what keeps a job slower than its own
+pattern from piling up.
+
+### `run` receives a context
+
+A job is called with a frozen `CronJobContext` carrying its own name, its
+pattern, and the options it declared. The options are the declaration, not the
+object the engine was handed: croner fills its own defaults into the object it
+receives, and a job reading those would see options it never wrote.
+
+## Lifecycle
+
+Jobs start when the module mounts — while the application is being built, before
+anything listens — and are ended when the application closes:
+
+```ts
+const application = await AponiaFactory.create(AppModule);
+await application.listen(3000);
+
+// later
+await application.close(); // every job this boot scheduled has stopped
+```
+
+`close()` ends them through the module's `CronScheduler`, which runs its
+`onApplicationShutdown` hook. That works whether or not the application ever
+listened, and it is per boot: one registration declared by one module class is
+one `DynamicModule`, so two applications built from it in one process hold two
+schedulers, and stopping one leaves the other's jobs running. Reaching the
+scheduler is how an application reads back what a boot scheduled:
+
+```ts
+import { AponiaFactory } from "@aponiajs/platform-elysia";
+import { CronScheduler } from "@aponiajs/cron";
+import { AppModule } from "./app.module.ts";
+
+const application = await AponiaFactory.create(AppModule);
+const scheduler = application.get(CronScheduler);
+
+scheduler.jobs; // the jobs the configuration produced
+scheduler.scheduled; // the names the engine actually has
+```
+
+## Errors
+
+A configuration this package refuses raises `AponiaError` with:
+
+- `INVALID_CONFIGURATION_VALUE` when the schema rejects the value — the
+  environment a deployment supplied, or a `source` a test passed — or when the
+  value the schema produced is not a list of jobs. Both cases carry
+  `{ configuration, issues }`, so one shape covers a refusal wherever it landed.
+- `INVALID_CONFIGURATION` when the declaration is not a Standard Schema, or its
+  validation answers asynchronously, both of which `provideConfiguration`
+  already refuses for any configuration.
+
+A job's own throw is not one of these. It is the engine's, it is not retried,
+and `options.catch` is how a job asks croner to survive one.
+
+## Native escape hatch
+
+The module above is the supported path. The engine remains available when the module's validation or graph node is not wanted.
+
+**AponiaJS adds no scheduling features on top of the engine.** The engine is
+[croner](https://github.com/hexagon/croner), which this package owns as a
+dependency. What this package contributes is exactly two things:
+
+- a module a registration belongs in, so a scheduler is declared in an
+  application's `imports` the way every other module is, and so what it
+  scheduled is part of the compiled graph;
+- a validated configuration the jobs are read from, so a malformed value is a
+  refused boot with a code and an issue list rather than a throw while the
+  scheduler starts.
+
+Everything else — the patterns, the options, the timing, the throw behaviour of
+a job — is croner's. **A reader who wants the raw engine should use
+[croner](https://github.com/hexagon/croner) directly**: nothing here is
+unavailable there, and constructing a `Cron` yourself costs one line. The module
+is runtime-neutral, so the same registration runs on every Aponia platform.
+
+**This is not a job queue.** There is no persistence: a job that did not run
+because the process was down did not run, and nothing replays it. There are no
+retries: a `run` that throws is the engine's business, and the default is that
+the throw escapes the timer rather than being retried or recorded. There is no
+cross-process coordination and no distributed lock: two instances of an
+application running the same registration both run the same jobs, at the same
+moment, once each. **A cron expression in one process runs in that process.** A
+user who assumes otherwise will lose data, and no option here changes that — a
+scheduler for work that must happen exactly once across a fleet is a different
+package, and this one deliberately does not pretend to be it.
+
+## Scheduled methods and the registry
+
+The choreography surface mirrors `@nestjs/schedule`:
+
+```ts
+import { Cron, Interval, Timeout } from "@aponiajs/cron";
+
+@Injectable()
+class Reports {
+  @Cron("0 * * * *", { name: "hourly-report" })
+  hourly(): void {}
+
+  @Interval("poll", 30_000)
+  poll(): void {}
+
+  @Timeout("warmup", 5_000)
+  warmup(): void {}
+}
+```
+
+The class must be a provider of a module that imports the registration.
+`SchedulerRegistry` exposes `getCronJob`, `getInterval`, `getTimeout`,
+`addCronJob`, `addInterval`, `addTimeout`, `deleteCronJob`, `deleteInterval`,
+`deleteTimeout`, `getCronJobs`, `getIntervals`, `getTimeouts`, and
+`doesExist`. The module options `cronJobs`, `intervals`, and `timeouts` default
+to true and switch each kind off.
+
+## Registration contract
+
+`CronModule.forRoot` is a `ConfigurableModuleBuilder` definition: `key` and
+`isGlobal` (default true) are definition-shaping extras and it provides and
+exports `MODULE_OPTIONS_TOKEN` (`SCHEDULE_MODULE_OPTIONS`). There is no
+asynchronous form: the module provides the configuration token it schedules,
+which a factory result cannot name before the registration is built. `register`
+remains as the deprecated alias.
+
+## Requirements
+
+[croner](https://github.com/hexagon/croner) is the one runtime dependency beyond
+AponiaJS itself and is installed with this package. No HTTP runtime is required.

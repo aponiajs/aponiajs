@@ -1,0 +1,48 @@
+{
+  "nodes": [
+    {
+      "id": "packages_queue_llms_overview",
+      "label": "@aponiajs/queue llms.txt",
+      "file_type": "document",
+      "source_file": "packages/queue/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_queue_llms_overview",
+      "target": "packages_queue_readme_guide",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/queue/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_queue_llms_overview",
+      "target": "packages_queue_agents_queueservice",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/queue/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_queue_llms_overview",
+      "target": "packages_queue_agents_outboxservice",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/queue/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

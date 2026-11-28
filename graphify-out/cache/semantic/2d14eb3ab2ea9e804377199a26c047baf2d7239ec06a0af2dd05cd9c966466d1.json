@@ -1,0 +1,62 @@
+{
+  "nodes": [
+    {
+      "id": "packages_openapi_readme_pkg_doc",
+      "label": "@aponiajs/openapi README",
+      "file_type": "document",
+      "source_file": "packages/openapi/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_openapi_readme_openapimodule",
+      "label": "OpenApiModule",
+      "file_type": "concept",
+      "rationale": "Exposes synchronous forRoot (and deprecated register) without forRootAsync because configuration validates synchronously and compiled routes are only observable during boot.",
+      "source_file": "packages/openapi/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_openapi_readme_inline_schema_projection",
+      "label": "Inlined Schema Projection & Empty components.schemas",
+      "file_type": "concept",
+      "rationale": "Every declared route schema (body, query, params, headers, cookie, response) is inlined into its operation with empty components.schemas; @Deprecated() sets deprecated: true.",
+      "source_file": "packages/openapi/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_openapi_readme_inline_schema_projection",
+      "target": "packages_openapi_agents_buildopenapidocument",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/openapi/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_openapi_readme_pkg_doc",
+      "target": "packages_platform_core_readme_pkg_doc",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/openapi/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

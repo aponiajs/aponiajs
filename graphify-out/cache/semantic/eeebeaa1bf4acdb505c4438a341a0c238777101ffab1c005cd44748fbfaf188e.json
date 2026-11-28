@@ -1,0 +1,28 @@
+{
+  "nodes": [
+    {
+      "id": "packages_h3_llms_aponiajs_h3_summary",
+      "label": "@aponiajs/h3 llms.txt Summary",
+      "file_type": "document",
+      "source_file": "packages/h3/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_h3_llms_aponiajs_h3_summary",
+      "target": "packages_h3_readme_aponiajs_h3",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/h3/llms.txt",
+      "source_location": "line 17",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -1,0 +1,100 @@
+import { expect, test } from "bun:test";
+import { Module, type DynamicModule, type ModuleImport } from "@aponiajs/common";
+import { createContainer } from "@aponiajs/core";
+import { Elysia } from "elysia";
+import { PluginModule, compileRootModule } from "./index.ts";
+
+@Module({})
+class DynamicTestModule {}
+
+test("rejects self-referencing and two-node dynamic module cycles", () => {
+  const selfImports: ModuleImport[] = [];
+  const self = createDynamicModule("SelfDynamicModule", selfImports);
+  selfImports.push(self);
+
+  expect(() => compileRootModule(self)).toThrow(expect.objectContaining({ code: "MODULE_CYCLE" }));
+
+  const firstImports: ModuleImport[] = [];
+  const secondImports: ModuleImport[] = [];
+  const first = createDynamicModule("FirstDynamicModule", firstImports);
+  const second = createDynamicModule("SecondDynamicModule", secondImports);
+  firstImports.push(second);
+  secondImports.push(first);
+
+  expect(() => compileRootModule(first)).toThrow(expect.objectContaining({ code: "MODULE_CYCLE" }));
+});
+
+test("keeps static and separately configured instances of one module class", () => {
+  const first = PluginModule.register(new Elysia(), {
+    key: "compiler-first",
+  });
+  const second = PluginModule.register(new Elysia(), {
+    key: "compiler-second",
+  });
+  const root = createDynamicModule("ConfiguredInstancesRoot", [PluginModule, first, second]);
+
+  const graph = createContainer(compileRootModule(root)).graph;
+
+  expect(graph.modules.map((module) => module.id)).toEqual([
+    "PluginModule",
+    "PluginModule[compiler-first]",
+    "PluginModule[compiler-second]",
+    "ConfiguredInstancesRoot",
+  ]);
+});
+
+test("rejects two configured modules with the same stable key", () => {
+  const first = PluginModule.register(new Elysia(), {
+    key: "compiler-duplicate",
+  });
+  const second = PluginModule.register(new Elysia(), {
+    key: "compiler-duplicate",
+  });
+  const root = createDynamicModule("DuplicateConfiguredRoot", [first, second]);
+
+  expect(() => createContainer(compileRootModule(root))).toThrow(
+    expect.objectContaining({ code: "DUPLICATE_MODULE" }),
+  );
+});
+
+test("rejects empty and whitespace-only stable keys", () => {
+  expect(() => PluginModule.register(new Elysia(), { key: "" })).toThrow(
+    "Elysia plugin module key must not be empty.",
+  );
+  expect(() => PluginModule.register(new Elysia(), { key: "   " })).toThrow(
+    "Elysia plugin module key must not be empty.",
+  );
+});
+
+test("carries global: true from a dynamic registration", () => {
+  const definition = compileRootModule({
+    module: DynamicTestModule,
+    id: "DynamicTestModule",
+    instanceId: Symbol("DynamicTestModule"),
+    global: true,
+  });
+
+  expect(definition.global).toBe(true);
+});
+
+test("accepts an undecorated class in a dynamic registration", () => {
+  class UndecoratedModule {}
+
+  const definition = compileRootModule({
+    module: UndecoratedModule,
+    id: "UndecoratedModule",
+    instanceId: Symbol("UndecoratedModule"),
+  });
+
+  expect(definition.id).toBe("UndecoratedModule");
+  expect(definition.providers).toEqual([]);
+});
+
+function createDynamicModule(id: string, imports: readonly ModuleImport[]): DynamicModule {
+  return {
+    module: DynamicTestModule,
+    id,
+    instanceId: Symbol(id),
+    imports,
+  };
+}

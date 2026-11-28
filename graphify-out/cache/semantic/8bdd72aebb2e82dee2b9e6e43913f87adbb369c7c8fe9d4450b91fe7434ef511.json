@@ -1,0 +1,28 @@
+{
+  "nodes": [
+    {
+      "id": "scripts_claude_scripts_agent_guide",
+      "label": "scripts Agent Guide (CLAUDE.md Alias)",
+      "file_type": "document",
+      "source_file": "scripts/CLAUDE.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "scripts_claude_scripts_agent_guide",
+      "target": "scripts_agents_scripts_agent_guide",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "scripts/CLAUDE.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

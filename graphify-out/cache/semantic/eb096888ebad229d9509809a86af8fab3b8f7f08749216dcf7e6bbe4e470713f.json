@@ -1,0 +1,137 @@
+{
+  "nodes": [
+    {
+      "id": "packages_events_agents_aponiajs_events",
+      "label": "@aponiajs/events",
+      "file_type": "concept",
+      "source_file": "packages/events/AGENTS.md",
+      "source_location": "line 8",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "In-process typed event emitter without retries, persistence, or at-least-once delivery; durable delivery belongs in a queue package."
+    },
+    {
+      "id": "packages_events_agents_eventemittermodule",
+      "label": "EventEmitterModule",
+      "file_type": "concept",
+      "source_file": "packages/events/AGENTS.md",
+      "source_location": "line 14",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_events_agents_eventemitter",
+      "label": "EventEmitter",
+      "file_type": "concept",
+      "source_file": "packages/events/AGENTS.md",
+      "source_location": "line 13",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Preserves registration order, passes payloads by reference without cloning or validating, and executes every handler before reporting aggregated failures."
+    },
+    {
+      "id": "packages_events_agents_onevent_decorator",
+      "label": "@OnEvent",
+      "file_type": "concept",
+      "source_file": "packages/events/AGENTS.md",
+      "source_location": "line 16",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Records metadata only without constructing or subscribing anything; EventEmitter.bind(instance) binds decorated methods."
+    },
+    {
+      "id": "packages_events_agents_event_emitter_module_options",
+      "label": "EVENT_EMITTER_MODULE_OPTIONS",
+      "file_type": "concept",
+      "source_file": "packages/events/AGENTS.md",
+      "source_location": "line 39",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_events_agents_event_handler_error",
+      "label": "EVENT_HANDLER_ERROR",
+      "file_type": "concept",
+      "source_file": "packages/events/AGENTS.md",
+      "source_location": "line 29",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Aggregates all handler failures into one AponiaError with a frozen failure list without exposing stack traces or causes."
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_events_agents_aponiajs_events",
+      "target": "packages_events_agents_eventemittermodule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/events/AGENTS.md",
+      "source_location": "line 14",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_events_agents_eventemittermodule",
+      "target": "packages_events_agents_eventemitter",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/events/AGENTS.md",
+      "source_location": "line 13",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_events_agents_eventemittermodule",
+      "target": "packages_events_agents_event_emitter_module_options",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/events/AGENTS.md",
+      "source_location": "line 39",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_events_agents_eventemitter",
+      "target": "packages_events_agents_onevent_decorator",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/events/AGENTS.md",
+      "source_location": "line 35",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_events_agents_eventemitter",
+      "target": "packages_events_agents_event_handler_error",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/events/AGENTS.md",
+      "source_location": "line 29",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cron_readme_not_a_job_queue",
+      "target": "packages_events_agents_aponiajs_events",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "packages/events/AGENTS.md",
+      "source_location": "line 24",
+      "weight": 0.85
+    }
+  ],
+  "hyperedges": []
+}

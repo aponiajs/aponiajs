@@ -1,0 +1,109 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "$id": "SchematicsNestApplication",
+  "title": "Nest Application Options Schema",
+  "type": "object",
+  "properties": {
+    "name": {
+      "oneOf": [{ "type": "string" }, { "type": "number" }],
+      "description": "The name of the application.",
+      "$default": {
+        "$source": "argv",
+        "index": 0
+      },
+      "x-prompt": "What name would you like to use for the new project?"
+    },
+    "author": {
+      "type": "string",
+      "description": "Nest application author.",
+      "default": ""
+    },
+    "description": {
+      "type": "string",
+      "description": "Nest application description.",
+      "default": ""
+    },
+    "directory": {
+      "type": "string",
+      "description": "Nest application destination directory."
+    },
+    "strict": {
+      "type": "boolean",
+      "description": "With TypeScript strict mode.",
+      "default": true
+    },
+    "version": {
+      "type": "string",
+      "description": "Nest application version.",
+      "default": "0.0.1"
+    },
+    "type": {
+      "type": "string",
+      "description": "Nest application module type (CJS or ESM).",
+      "enum": ["cjs", "esm"],
+      "default": "esm",
+      "x-prompt": {
+        "message": "Which module system would you like to use?",
+        "type": "list",
+        "items": [
+          {
+            "value": "esm",
+            "label": "ESM (ES Modules)         [ with vitest ]"
+          },
+          { "value": "cjs", "label": "CJS (CommonJS)           [ with jest ]" }
+        ]
+      }
+    },
+    "language": {
+      "type": "string",
+      "description": "Nest application language."
+    },
+    "packageManager": {
+      "type": "string",
+      "description": "Nest application package manager."
+    },
+    "dependencies": {
+      "type": "string",
+      "description": "Nest application dependencies."
+    },
+    "devDependencies": {
+      "type": "string",
+      "description": "Nest application development dependencies."
+    },
+    "spec": {
+      "type": "boolean",
+      "default": true,
+      "description": "Specifies if a spec file is generated."
+    },
+    "specFileSuffix": {
+      "type": "string",
+      "default": "spec",
+      "description": "Specifies the file suffix of spec files."
+    },
+    "format": {
+      "type": "boolean",
+      "default": false,
+      "description": "Format generated files using Prettier if available."
+    },
+    "observe": {
+      "type": "boolean",
+      "default": false,
+      "description": "Preconfigure the application with @nestjs/observe."
+    },
+    "minimal": {
+      "type": "boolean",
+      "default": false,
+      "description": "Generate an application whose code is one file, src/main.ts."
+    },
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["all", "agents", "claude", "cursor"]
+      },
+      "default": [],
+      "description": "The targets nest new installed the official NestJS agent skills for (npx @nestjs/skills add --agent), so AGENTS.md can give the command that updates them: agents, claude, cursor or all. Empty: AGENTS.md doesn't mention skills."
+    }
+  },
+  "required": ["name"]
+}

@@ -1,0 +1,13 @@
+# @aponiajs/idempotency
+
+> `Idempotency-Key` deduplication, in-flight conflict protection, payload mismatch detection, and response replay for an AponiaJS application.
+
+## What this package exports
+
+- `IdempotencyModule.forRoot(options?)` and `IdempotencyModule.forRootAsync(options)`
+- `MemoryIdempotencyStore`: bounded process-local store
+- `IdempotencyStore`, `MODULE_OPTIONS_TOKEN`, `IDEMPOTENCY_STORE`, `IDEMPOTENCY_OPTIONS`
+
+## Documentation
+
+- [Published packages](../../docs/reference/packages.md)

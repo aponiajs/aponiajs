@@ -1,0 +1,62 @@
+# @aponiajs/graphql
+
+> Serve a GraphQL endpoint for an Aponia application, with the mount path read from a validated configuration. `graphql-yoga` owns the schema execution; AponiaJS contributes a module and a neutral request policy that delegates the declared path to yoga's fetch handler — the path is stated once and set as yoga's `graphqlEndpoint` — and no schema of its own.
+
+**This package serves no schema.** Every field, resolver result, and error shape is `graphql-yoga`'s. Its contribution is a module the endpoint is declared in — so it is a graph node, in the compiled graph and in devtools — and a validated configuration holding one field, `path`. The schema is the application's: `typeDefs` plus `resolvers`, or a prebuilt `GraphQLSchema`, returned from `useFactory` where resolvers can close over injected providers. The endpoint is an `HttpPolicy`: the policy answers the declared path before routing, so a controller at the same path is reached only for paths the policy declines.
+
+## What this package exports
+
+```ts
+import { GraphQLModule } from "@aponiajs/graphql";
+import type {
+  GraphQLConfiguration,
+  GraphQLModuleOptions,
+  GraphQLSchemaOptions,
+} from "@aponiajs/graphql";
+```
+
+- `GraphQLModule` — `GraphQLModule.forRoot(options)` returns the `DynamicModule` an application's `imports` accepts; `register` is the deprecated beta alias.
+- `GraphQLConfiguration` — the value the module validates and exports: `path` (required, a non-empty string beginning with `/`).
+- `GraphQLModuleOptions` — `configuration`, `imports`, `inject`, `useFactory`, `source`, and `key`.
+- `GraphQLSchemaOptions` — yoga's options minus `graphqlEndpoint`, which the configuration supplies.
+
+## Declaring an endpoint
+
+```ts
+import { Module } from "@aponiajs/common";
+import { GraphQLModule } from "@aponiajs/graphql";
+import { GraphQLConfig } from "./config.ts";
+
+const graphql = GraphQLModule.forRoot({
+  configuration: GraphQLConfig,
+  inject: [UserService],
+  useFactory: (users) => ({
+    typeDefs: `type Query { users: [String] }`,
+    resolvers: { Query: { users: () => users.all() } },
+  }),
+});
+
+@Module({ imports: [graphql] })
+export class AppModule {}
+```
+
+`key` defaults to `"graphql"`, and two registrations sharing one are refused as `DUPLICATE_MODULE`.
+
+## What never reaches the endpoint
+
+The endpoint is a request policy, so it runs on every platform and answers every method at the declared path. Two registrations under distinct keys each contribute a policy; the first one's `onRequest` answers a matching request. Reading the shared configuration token back from two imports raises `AMBIGUOUS_PROVIDER`, so one registration per application is the supported shape.
+
+## `aponia build`
+
+A registration is a `DynamicModule`, not a `@Module()` class the build can read from source, so a module whose `imports` name one is declined and the descriptor artifact holds nothing for it. The application still boots: the platform lowers such a root from its decorators, and the endpoint answers.
+
+## Errors
+
+`AponiaError` with `INVALID_CONFIGURATION_VALUE`, carrying `{ configuration, issues }`, when the schema rejects the value or when the value it produced has no usable `path`. `INVALID_CONFIGURATION` covers a declaration that is not a Standard Schema or whose validation answers asynchronously.
+
+## Links
+
+- [Package README](./README.md)
+- [GraphQL Yoga on npm](https://www.npmjs.com/package/graphql-yoga)
+- [Plugin package authoring](../../docs/tooling/plugin-packages.md)
+- [Published packages](../../docs/reference/packages.md)

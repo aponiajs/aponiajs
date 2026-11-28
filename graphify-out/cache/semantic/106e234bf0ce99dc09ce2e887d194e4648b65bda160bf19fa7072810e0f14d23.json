@@ -1,0 +1,71 @@
+{
+  "nodes": [
+    {
+      "id": "scratch_nestjs_dx_parity_issues_04_middleware_and_execution_context_middleware_parity",
+      "label": "NestMiddleware, Functional Middleware & RequestMethod",
+      "file_type": "concept",
+      "source_file": ".scratch/nestjs-dx-parity/issues/04-middleware-and-execution-context.md",
+      "source_location": "L11",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_issues_04_middleware_and_execution_context_arguments_host_and_response_facade",
+      "label": "ArgumentsHost & HttpArgumentsHost Response Facade",
+      "file_type": "concept",
+      "source_file": ".scratch/nestjs-dx-parity/issues/04-middleware-and-execution-context.md",
+      "source_location": "L12",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_issues_04_middleware_and_execution_context_create_param_decorator_and_binding",
+      "label": "createParamDecorator & Parameter Binding Alignment",
+      "file_type": "concept",
+      "source_file": ".scratch/nestjs-dx-parity/issues/04-middleware-and-execution-context.md",
+      "source_location": "L13",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_issues_04_middleware_and_execution_context_base_exception_filter",
+      "label": "BaseExceptionFilter",
+      "file_type": "concept",
+      "source_file": ".scratch/nestjs-dx-parity/issues/04-middleware-and-execution-context.md",
+      "source_location": "L14",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "scratch_nestjs_dx_parity_issues_04_middleware_and_execution_context_create_param_decorator_and_binding",
+      "target": "scratch_nestjs_dx_parity_issues_02_controller_options_and_route_decorators_httpstatus_and_session_bridge",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/issues/04-middleware-and-execution-context.md",
+      "source_location": "L5,L13",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_issues_04_middleware_and_execution_context_arguments_host_and_response_facade",
+      "target": "scratch_nestjs_dx_parity_issues_02_controller_options_and_route_decorators_redirect_res_versioning_and_prefix",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/issues/04-middleware-and-execution-context.md",
+      "source_location": "L5,L12",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

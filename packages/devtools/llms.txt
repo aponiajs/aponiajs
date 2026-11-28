@@ -1,0 +1,43 @@
+# @aponiajs/devtools
+
+> The opt-in devtools surface for a running AponiaJS application. A disabled registration mounts nothing; an enabled one mounts a controller under `/__devtools` on the application's own address and records requests through a neutral lifecycle hook, so it answers the same way on every platform.
+
+Registration is the opt-in and `enabled` is the switch; the framework never reads an environment variable to choose its own behaviour.
+
+```ts
+@Module({ imports: [DevtoolsModule.forRoot({ enabled: Bun.env.NODE_ENV !== "production" })] })
+export class AppModule {}
+```
+
+## What it serves
+
+| Path | Answers |
+| --- | --- |
+| `/__devtools` | the HTML page |
+| `/__devtools/meta` | the contract version, the boot release, and the artifact stamps |
+| `/__devtools/graph` | the compiled modules, providers, controllers, routes, and gateways |
+| `/__devtools/routes` | every compiled plan and callback route the boot recorded |
+| `/__devtools/flow` | each route's stages: validation, guards, interceptors, binding, handler, filters |
+| `/__devtools/aot` | the build verdict for the project, when the record carries one |
+| `/__devtools/logs` | the bounded log stream, read from a cursor |
+| `/__devtools/requests` | the bounded request record, read from a cursor |
+
+## What is neutral
+
+- The surface is a controller; there is no native plugin and no platform package in this source.
+- `/routes`, `/flow`, and `/graph` are built from the neutral boot record (`BOOT_DIAGNOSTICS`) the platform publishes: compiled plans, callback routes, enhancers, interceptor halves, and gateway plans.
+- The request record is filled by a `RequestLifecycleHook` (`onRequest`, `onResponse`, `onError`).
+- `authorize` is checked before every endpoint; a false answer is `401` with `cache-control: no-store`.
+
+## Documented degradations
+
+- **Native contributed hooks are not reported.** A plugin's `derive`, `resolve`, `transform`, `beforeHandle`, or `afterHandle` declaration is not part of the neutral record, so `/flow` publishes the route's compiled plan stages and no contributed-hook stage.
+- **A route mounted outside the graph is not reported.** `/routes` and `/flow` describe the plans and callback routes the boot recorded; a route mounted directly on a native application is absent.
+- **A non-`GET` request through the router is `404`.** The surface mounts explicit routes; the dispatcher still answers `405` when it is asked directly.
+- **Request bodies are recorded as the text that arrived**, not as the parsed value; `store` and request-scoped `state` snapshots are not recorded.
+- **A mapped exception message is only available when the platform publishes one**; the neutral record carries `mappedExceptions` where the boot has it.
+
+## Related
+
+- [Plugin package authoring](../../docs/tooling/plugin-packages.md)
+- [Platform parity](../../docs/platforms/platform-parity.md)

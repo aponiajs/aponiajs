@@ -1,50 +1,47 @@
 # 01 · Overview
 
-**Use when:** you are meeting AponiaJS for the first time, or deciding whether a
-change belongs in the decorator layer or the runtime.
+**Use when:** starting with AponiaJS or deciding where a change belongs.
 
-AponiaJS is a Nest-shaped application framework for Bun that compiles down to
-plain Elysia. You write modules, controllers, and services; the framework
-validates the dependency graph before the server listens and mounts every
-controller as a native Elysia plugin.
+AponiaJS is a TypeScript framework for Bun. Applications are made of modules, providers, and controllers. Elysia is the default HTTP platform; Hono, H3, and Nitro are supported too.
 
-## Two authoring layers
+## How it works
 
-Decorators are a thin metadata surface. The runtime consumes immutable
-descriptors.
+Decorators only write metadata. The runtime lowers that metadata into frozen descriptors, validates the module graph, and mounts native routes.
 
 ```text
-@Module / @Controller / @Get      -> reflect-metadata entries
-compileRootModule                 -> frozen ModuleDefinition / ControllerDefinition / Provider
-createContainer + compileModuleGraph -> validated graph, singleton container
-AponiaFactory.create              -> a running Elysia application
+@Module / @Controller / @Get  ->  reflect-metadata
+compileRootModule             ->  ModuleDefinition / ControllerDefinition / Provider
+compileModuleGraph            ->  validated graph
+AponiaFactory.create          ->  running application
 ```
 
-`@aponiajs/common` holds the decorators and contracts, `@aponiajs/core` holds the
-graph and container and never sees a decorator, and `@aponiajs/platform-elysia`
-lowers one into the other. Dependencies run one way:
-`common ← core ← platform-elysia`.
+Each package owns one layer:
 
-Descriptors are also a public API. An application can call `defineModule`,
-`defineElysiaController`, and the `provide*` helpers and skip decorators
-entirely. Both paths stay supported.
+| Package                     | Owns                                   |
+| --------------------------- | -------------------------------------- |
+| `@aponiajs/common`          | Decorators, tokens, contracts, errors  |
+| `@aponiajs/core`            | Module graph and dependency injection  |
+| `@aponiajs/platform-elysia` | Elysia routes, plugins, and WebSockets |
 
-## What exists today
+Dependencies point one way: `common` → `core` → platform packages (`platform-elysia`, `platform-hono`, `platform-h3`).
 
-Implemented: decorated modules and HTTP controllers, Standard Schema route
-validation, request parameter decorators, singleton dependency injection,
-class/value/factory/alias providers, explicit tokens, module imports and
-exports, lifecycle, structured logging, generators, and native Elysia escape
-hatches.
+## Descriptors are public API
 
-Not implemented yet: guards, interceptors, middleware, exception filters,
-Problem Details errors, non-singleton scopes, testing modules, OpenAPI,
-authentication, WebSockets, microservice transports. Check
-[`ROADMAP.md`](../../ROADMAP.md) before assuming a feature exists.
+Decorators are optional. `defineModule`, `defineController`, and the `provide*` helpers build the same descriptors by hand.
 
-Every chapter that follows has a runnable counterpart in
-[`examples/`](../../examples/README.md): one application per topic, each with
-end-to-end tests asserting what the chapter describes.
+```ts
+import { defineModule, provideClass } from "@aponiajs/common";
 
-Next: [02 · Install and generate](./02-install-and-generate.md) ·
-Deep dive: [architecture and style](../architecture-and-style.md)
+export const UsersModule = defineModule({
+  id: "UsersModule",
+  providers: [provideClass(UsersService, [])],
+});
+```
+
+Both authoring paths stay supported.
+
+## Errors happen at boot
+
+The compiler rejects duplicate modules, import cycles, duplicate providers, invalid exports, and unresolved dependencies before the application listens. Failures throw `AponiaError` with a stable `code`.
+
+Next: [02 · Install and generate](./02-install-and-generate.md) · Deep dive: [architecture and style](../build/architecture-and-style.md)

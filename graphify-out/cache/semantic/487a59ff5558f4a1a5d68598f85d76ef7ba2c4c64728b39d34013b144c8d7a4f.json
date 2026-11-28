@@ -1,0 +1,131 @@
+{
+  "nodes": [
+    {
+      "id": "docs_tooling_plugin_packages_authoring_a_plugin_package",
+      "label": "Authoring a Plugin Package Guide",
+      "file_type": "document",
+      "source_file": "docs/tooling/plugin-packages.md",
+      "source_location": "L1-L31",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_tooling_plugin_packages_plugin_contract_p1_p8",
+      "label": "Plugin Package Contract (Rules P1-P8)",
+      "file_type": "rationale",
+      "source_file": "docs/tooling/plugin-packages.md",
+      "source_location": "L15-L52",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Enforces forRoot/forRootAsync registration, closed AponiaError codes with frozen issues, Nest-shaped layout, runtime neutrality without adapters/, idempotent teardown, and zero mutable module-level state."
+    },
+    {
+      "id": "docs_tooling_plugin_packages_neutral_plugin_builders",
+      "label": "Neutral Plugin Authoring Builders",
+      "file_type": "concept",
+      "source_file": "docs/tooling/plugin-packages.md",
+      "source_location": "L128-L197",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_tooling_plugin_packages_one_registration_per_app",
+      "label": "Module Identity Key & One Registration Per Application",
+      "file_type": "rationale",
+      "source_file": "docs/tooling/plugin-packages.md",
+      "source_location": "L198-L219",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Derives instanceId from key so colliding keys fail with DUPLICATE_MODULE and two keyed registrations exporting one token fail with AMBIGUOUS_PROVIDER."
+    },
+    {
+      "id": "docs_tooling_plugin_packages_conformance_kit",
+      "label": "Plugin Testing Conformance Kit",
+      "file_type": "concept",
+      "source_file": "docs/tooling/plugin-packages.md",
+      "source_location": "L53-L72",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_tooling_plugin_packages_plugin_contract_p1_p8",
+      "target": "docs_tooling_plugin_packages_authoring_a_plugin_package",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/tooling/plugin-packages.md",
+      "source_location": "L15-L52",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_tooling_plugin_packages_neutral_plugin_builders",
+      "target": "docs_reference_packages_aponiajs_platform_core",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/tooling/plugin-packages.md",
+      "source_location": "L128-L145",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_tooling_plugin_packages_conformance_kit",
+      "target": "docs_reference_packages_aponiajs_testing",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/tooling/plugin-packages.md",
+      "source_location": "L53-L71",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_tooling_plugin_packages_one_registration_per_app",
+      "target": "docs_tooling_plugin_packages_authoring_a_plugin_package",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/tooling/plugin-packages.md",
+      "source_location": "L198-L219",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_tooling_plugin_packages_authoring_a_plugin_package",
+      "target": "docs_tooling_cli_descriptors_generated",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/tooling/plugin-packages.md",
+      "source_location": "L239-L271",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "neutral_plugin_ecosystem",
+      "label": "Runtime-Neutral Plugin Module Standard",
+      "nodes": [
+        "docs_tooling_plugin_packages_plugin_contract_p1_p8",
+        "docs_tooling_plugin_packages_neutral_plugin_builders",
+        "docs_services_devtools_neutral_boot_record",
+        "docs_services_graphql_graphql_yoga_policy",
+        "docs_services_openapi_openapimodule",
+        "docs_services_mcp_mcpmodule"
+      ],
+      "relation": "implement",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/tooling/plugin-packages.md"
+    }
+  ]
+}

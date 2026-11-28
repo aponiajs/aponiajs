@@ -1,0 +1,28 @@
+{
+  "nodes": [
+    {
+      "id": "packages_microservices_gemini_agent_guide",
+      "label": "@aponiajs/microservices GEMINI.md Guide Alias",
+      "file_type": "document",
+      "source_file": "packages/microservices/GEMINI.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_microservices_gemini_agent_guide",
+      "target": "packages_microservices_agents_agent_guide",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/microservices/GEMINI.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

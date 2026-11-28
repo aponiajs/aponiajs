@@ -1,0 +1,113 @@
+{
+  "nodes": [
+    {
+      "id": "docs_services_queues_aponiajs_queue",
+      "label": "@aponiajs/queue",
+      "file_type": "concept",
+      "source_file": "docs/services/queues.md",
+      "source_location": "L1-L4",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_queues_queuemodule",
+      "label": "QueueModule",
+      "file_type": "concept",
+      "source_file": "docs/services/queues.md",
+      "source_location": "L27-L33, L109-L111, L131",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_queues_queueservice",
+      "label": "QueueService",
+      "file_type": "concept",
+      "source_file": "docs/services/queues.md",
+      "source_location": "L11-L73",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_queues_outboxservice",
+      "label": "OutboxService & SqliteOutboxStore",
+      "file_type": "concept",
+      "source_file": "docs/services/queues.md",
+      "source_location": "L74-L106, L126-L134",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_queues_durable_backlog_boundary",
+      "label": "Durable Backlog vs Distributed Broker Boundary",
+      "file_type": "rationale",
+      "source_file": "docs/services/queues.md",
+      "source_location": "L107-L134",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Hydrates stored running jobs as pending and validates transitions via INVALID_STATE_TRANSITION, serving one consumer's backlog rather than multi-consumer claiming."
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_services_queues_queuemodule",
+      "target": "docs_services_queues_aponiajs_queue",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/queues.md",
+      "source_location": "L27-L33",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_queues_queueservice",
+      "target": "docs_services_queues_queuemodule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/queues.md",
+      "source_location": "L11-L73",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_queues_outboxservice",
+      "target": "docs_services_database_databaseservice",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/queues.md",
+      "source_location": "L76-L97",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_queues_durable_backlog_boundary",
+      "target": "docs_services_queues_queueservice",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/queues.md",
+      "source_location": "L107-L134",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_queues_durable_backlog_boundary",
+      "target": "docs_services_microservices_aponiajs_microservices",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "docs/services/queues.md",
+      "source_location": "L113-L115, L132-L133",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

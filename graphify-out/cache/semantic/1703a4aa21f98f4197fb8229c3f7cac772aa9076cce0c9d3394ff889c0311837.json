@@ -1,0 +1,71 @@
+{
+  "nodes": [
+    {
+      "id": "docs_services_graphql_aponiajs_graphql",
+      "label": "@aponiajs/graphql",
+      "file_type": "concept",
+      "source_file": "docs/services/graphql.md",
+      "source_location": "L1-L8",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_graphql_graphqlmodule",
+      "label": "GraphQLModule",
+      "file_type": "concept",
+      "source_file": "docs/services/graphql.md",
+      "source_location": "L15-L68, L77-L96",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_graphql_graphql_yoga_policy",
+      "label": "GraphQL Yoga Neutral HttpPolicy Precedence",
+      "file_type": "rationale",
+      "source_file": "docs/services/graphql.md",
+      "source_location": "L46-L75",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Sets both policy path and Yoga graphqlEndpoint from one validated configuration value and runs before routing so resolvers inject container providers and non-default endpoints never 404."
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_services_graphql_graphqlmodule",
+      "target": "docs_services_graphql_aponiajs_graphql",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/graphql.md",
+      "source_location": "L20-L31",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_graphql_graphql_yoga_policy",
+      "target": "docs_services_graphql_graphqlmodule",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/graphql.md",
+      "source_location": "L46-L75",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_graphql_graphqlmodule",
+      "target": "docs_tooling_cli_descriptors_generated",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/graphql.md",
+      "source_location": "L85-L88",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

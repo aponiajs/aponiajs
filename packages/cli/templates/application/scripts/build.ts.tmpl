@@ -1,0 +1,28 @@
+import { buildPlugin } from "@aponiajs/cli";
+
+/**
+ * Bundles the application into `dist`.
+ *
+ * Registering `buildPlugin` also regenerates `src/invokers.generated.ts`
+ * and `src/descriptors.generated.ts` before the bundler resolves anything, so a
+ * bundle can never carry an artifact an earlier build left behind. Both files
+ * are committed; `aponia build` writes the same ones without bundling.
+ *
+ * `bun run dev`, `bun start`, and `bun test` read the sources directly and need
+ * nothing from a build: a `bunfig.toml` preload registers the platform's
+ * in-memory compiler, so they lower the decorated graph and compile their routes.
+ * `scripts/inspect.ts` reads the descriptor artifact this build writes.
+ */
+const result = await Bun.build({
+  entrypoints: ["./src/main.ts"],
+  outdir: "./dist",
+  target: "bun",
+  plugins: [buildPlugin()],
+});
+
+if (!result.success) {
+  for (const log of result.logs) {
+    console.error(log);
+  }
+  process.exit(1);
+}
