@@ -75,7 +75,7 @@ export async function runCli(arguments_: readonly string[]): Promise<number> {
     }
 
     if (command.command === "dev") {
-      return await runDevServer(command.entry);
+      return await runDevServer(command.entry, { updateCheck: command.updateCheck });
     }
 
     if (command.command === "start") {

@@ -217,6 +217,45 @@ scripts, and tests. New code should look native to this repository.
 - Runtime hot paths compile or cache reusable work during bootstrap. Avoid
   per-request reflection, generic context mapping, and avoidable allocation.
 
+### Security, network, and privacy invariants
+
+- Outbound HTTP (both `@aponiajs/http` and CLI network checks) must enforce
+  bounded timeouts (`AbortSignal.timeout`), bounded response handling, and
+  explicit SSRF/endpoint boundaries.
+- CLI background checks (such as `aponia dev` update and advisory checks) must
+  be non-blocking, locally cached (24h TTL), fail-silent when offline or timed
+  out, never transmit environment variables, tokens, or `private: true` package
+  names, and honor `--no-update-check`, `APONIA_NO_UPDATE_CHECK=1`, and
+  `CI=true`.
+- Version comparisons must follow SemVer precedence (including prerelease tags
+  such as `-alpha.N` and `-beta.N`) and must never recommend downgrading a
+  prerelease (`1.0.0-beta.N`) to an older `latest` tag.
+
+### Hot-path and artifact hygiene
+
+- Opt-in observability, security, and resilience features must attach via
+  `RequestLifecycleHook` or `HttpPolicy` so unconfigured applications pay zero
+  per-request overhead on `fastDispatch` / `staticDispatch`.
+- Never commit generated `.d.ts` files inside `packages/*/src/`, `coverage/`,
+  `dist/`, `.scratch/`, or temporary analysis directories.
+
+### Workspace parity and guard matrix
+
+When adding a publishable package, `AponiaErrorCode`, or public export, update
+all guarded surfaces in the same change:
+
+- `AGENTS.md` (package table and guide index) and `packages/<pkg>/AGENTS.md`
+  with `CLAUDE.md` and `GEMINI.md` symlinks;
+- `packages/<pkg>/llms.txt` and `packages/<pkg>/package.json` (`files` array);
+- `vite.config.ts` aliases and `scripts/workspace-versions.ts`;
+- `package.json` (`version:bump` and `release:dry-run`);
+- `scripts/source-layout.spec.ts` (when introducing a new package or owner directory);
+- `packages/cli/src/contracts/framework-contract.ts` (packages and `errorCodes`);
+- `docs/reference/packages.md`, `docs/reference/feature-status.md`, and
+  `docs/operations/releasing.md`;
+- `.github/workflows/publish.yml` and `.github/workflows/canary.yml`;
+- `bun run api:freeze` (`docs/public-api.json`) and `bun run docs:api`.
+
 ## Definition of Done
 
 A change is complete only when:
@@ -225,7 +264,8 @@ A change is complete only when:
 - public descriptors and metadata remain immutable;
 - success, failure, edge, and regression behavior are tested;
 - changed runtime sources appear in coverage;
-- aggregate line and function coverage remain at least 95%;
+- aggregate line coverage remains at least 98%, function coverage at least 95%,
+  and every package's line coverage at least 95%;
 - required Bun, Vite+, example, generated-app, and release lanes pass;
 - documentation and examples match public behavior;
 - no broad coverage exclusion, untyped escape, or unexplained lint suppression

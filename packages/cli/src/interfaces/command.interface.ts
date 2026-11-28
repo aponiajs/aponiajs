@@ -210,6 +210,8 @@ export interface DevCommandOptions {
   readonly command: "dev";
   /** The entrypoint to run; defaults to `src/main.ts`. */
   readonly entry: string;
+  /** Whether to check npm and OSV for updates/advisories; defaults to `true`. */
+  readonly updateCheck?: boolean;
 }
 
 /** The `aponia manifest` command. */

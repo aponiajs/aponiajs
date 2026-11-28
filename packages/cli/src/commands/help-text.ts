@@ -11,6 +11,7 @@ Usage:
   aponia info [options]
   aponia add <package> [options]
   aponia dev [entry] [options]
+      --no-update-check          Skip update and security advisory checks
   aponia library check [path] [options]
   aponia library new <name> [options]
   aponia library publish [path] [options]

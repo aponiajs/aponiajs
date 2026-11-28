@@ -358,11 +358,13 @@ function parseDevCommand(arguments_: readonly string[]): DevCommandOptions {
     throw new Error(`Unexpected argument "${extra[0]}".`);
   }
 
-  assertKnownOptions(parsed, ["entry"]);
+  assertKnownOptions(parsed, ["entry", "update-check"]);
 
+  const updateCheck = readBooleanOption(parsed, "update-check", true);
   return {
     command: "dev",
     entry: positional ?? readStringOption(parsed, "entry") ?? "src/main.ts",
+    ...(updateCheck ? {} : { updateCheck: false }),
   };
 }
 
@@ -514,6 +516,7 @@ const valueLessOptions = [
   "swc",
   "tsc",
   "type-check",
+  "update-check",
   "watch",
   "webpack",
 ] as const;
