@@ -263,5 +263,23 @@ describe("RedisModule & Distributed Stores", () => {
     await rt.clear();
     await ownedService.onModuleDestroy();
     expect(mock.quitCalls).toBe(1);
+
+    // Exercise RedisIdempotencyStore race retry branches (set NX returns null, get returns null)
+    let setAttempt = 0;
+    const raceClient: RedisClientLike = {
+      async get() {
+        return null;
+      },
+      async set() {
+        setAttempt += 1;
+        return setAttempt === 2 ? "OK" : null;
+      },
+      async del() {
+        return 1;
+      },
+    };
+    const raceIdem = new RedisIdempotencyStore(raceClient);
+    expect(await raceIdem.acquire("race-ok", 5_000, "h")).toEqual({ state: "acquired" });
+    expect(await raceIdem.acquire("race-lost", 5_000, "h")).toEqual({ state: "in_flight" });
   });
 });

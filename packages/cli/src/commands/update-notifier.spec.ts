@@ -24,6 +24,15 @@ describe("aponia dev update & dangerous-patch notifier", () => {
     expect(compareSemver("1.0.0-beta.65", "1.0.0-beta.64")).toBeGreaterThan(0);
     expect(compareSemver("1.0.0", "1.0.0-beta.64")).toBeGreaterThan(0);
     expect(compareSemver("1.0.0-alpha.1", "1.0.0-beta.1")).toBeLessThan(0);
+    expect(compareSemver("1.0.0-beta.1", "1.0.0-alpha.1")).toBeGreaterThan(0);
+    expect(compareSemver("1.0.0-beta", "1.0.0-beta.1")).toBeLessThan(0);
+    expect(compareSemver("1.0.0-beta.1", "1.0.0-beta")).toBeGreaterThan(0);
+    expect(compareSemver("1.0.0-1", "1.0.0-alpha")).toBeLessThan(0);
+    expect(compareSemver("1.0.0-alpha", "1.0.0-1")).toBeGreaterThan(0);
+    expect(compareSemver("1.0.0-beta.1", "1.0.0")).toBeLessThan(0);
+    expect(compareSemver("1.1.0", "1.0.0")).toBeGreaterThan(0);
+    expect(compareSemver("1.0.1", "1.0.0")).toBeGreaterThan(0);
+    expect(compareSemver("invalid", "1.0.0")).toBe(0);
     expect(compareSemver("1.0.0", "1.0.0")).toBe(0);
     expect(defaultUpdateCachePath()).toContain("update-check.json");
   });
@@ -187,16 +196,40 @@ describe("aponia dev update & dangerous-patch notifier", () => {
       const updateBanner = formatUpdateAdvisoryBanner(updated!);
       expect(updateBanner).toContain("1.0.0 -> 2.0.0");
 
-      // Alpha channel + missing package.json directory
+      // Alpha channel + missing package.json directory + corrupt cache recovery
       const missingDir = join(dir, "nonexistent");
+      const alphaCache = join(dir, "alpha-cache.json");
+      writeFileSync(alphaCache, "{ bad json");
       const alphaResult = await checkForUpdatesAndAdvisories({
         cwd: missingDir,
-        cachePath: join(dir, "alpha-cache.json"),
+        cachePath: alphaCache,
         cliVersion: "1.0.0-alpha.1",
         fetch: stableFetch,
         now: () => 999_999_999,
       });
       expect(alphaResult!.updates[0]!.latestVersion).toBe("2.0.0");
+
+      // Channel tag where both latest and alpha exist and latest > alpha
+      const dualTagFetch = (async (input: string | URL | Request) => {
+        const parsedUrl = new URL(
+          typeof input === "string" ? input : input instanceof URL ? input.href : input.url,
+        );
+        if (parsedUrl.hostname === "registry.npmjs.org") {
+          return new Response(
+            JSON.stringify({ "dist-tags": { latest: "3.0.0", alpha: "1.0.0-alpha.2" } }),
+            { status: 200 },
+          );
+        }
+        return new Response(JSON.stringify({ results: [] }), { status: 200 });
+      }) as unknown as typeof fetch;
+      const dualResult = await checkForUpdatesAndAdvisories({
+        cwd: missingDir,
+        cachePath: join(dir, "dual-cache.json"),
+        cliVersion: "1.0.0-alpha.1",
+        fetch: dualTagFetch,
+        now: () => 999_999_999,
+      });
+      expect(dualResult!.updates[0]!.latestVersion).toBe("3.0.0");
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
