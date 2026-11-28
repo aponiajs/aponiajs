@@ -76,7 +76,7 @@ request's credentials automatically, so unsafe requests need the CSRF policy
 from `@aponiajs/security`; `SameSite` alone is not a substitute.
 
 `@aponiajs/platform-elysia` also exports a base `AuthGuard` from
-`@aponiajs/platform-core`. That base guard refuses every token until a subclass
+`@aponiajs/common`. That base guard refuses every token until a subclass
 overrides `validateToken`; use the `@aponiajs/auth` guard for verified JWT or
 OIDC authentication.
 

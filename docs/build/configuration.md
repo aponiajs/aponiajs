@@ -226,7 +226,7 @@ it.
 
 - [Dependency injection](./dependency-injection.md): the token and visibility
   rules a configuration inherits.
-- [Errors](../learn/10-errors.md): the closed code union the two failures join.
+- [Errors](../learn/11-errors.md): the closed code union the two failures join.
 - [CLI reference](../tooling/cli.md): the starter's `src/config.ts` and what the
   generator writes around it.
 - [The configuration example](../../examples/configuration/README.md): the declaration, the

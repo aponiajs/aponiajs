@@ -1,0 +1,38 @@
+{
+  "nodes": [
+    {
+      "id": "examples_mvc_src_articles_views_index_blade_articles_index_view",
+      "label": "Articles Index Blade View",
+      "file_type": "document",
+      "source_file": "examples/mvc/src/articles/views/index.blade.html",
+      "source_location": "L1-L12",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "examples_mvc_src_articles_views_index_blade_articles_index_view",
+      "target": "examples_mvc_src_layouts_app_app_layout",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "examples/mvc/src/articles/views/index.blade.html",
+      "source_location": "L1-L1",
+      "weight": 1.0
+    },
+    {
+      "source": "examples_mvc_src_articles_views_index_blade_articles_index_view",
+      "target": "examples_mvc_src_articles_views_detail_blade_article_detail_view",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "examples/mvc/src/articles/views/index.blade.html",
+      "source_location": "L7-L7",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

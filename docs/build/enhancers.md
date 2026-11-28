@@ -467,8 +467,8 @@ mapping to `exception-filters.test.ts`; the mounts that run none of it to
 `unmounted-route-enhancers.test.ts`; resolution and precedence to
 `enhancer-resolution.test.ts` and `global-enhancers.test.ts`; the decorators to
 `packages/common/src/enhancers/enhancer-decorators.spec.ts`. The
-[enhancers chapter](../learn/13-enhancers.md) is the short walkthrough.
+[enhancers chapter](../learn/08-enhancers.md) is the short walkthrough.
 
 [native plugin guide](../platforms/native-plugins.md) ·
 [WebSocket gateways](../platforms/websockets.md) ·
-[errors chapter](../learn/10-errors.md)
+[errors chapter](../learn/11-errors.md)

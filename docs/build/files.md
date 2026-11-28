@@ -117,7 +117,7 @@ returned value is what the platform streams, so range requests and content-type
 detection stay Elysia's. On Hono and H3 the same helper is exported and returns a
 `Response` whose body is `Bun.file(path)`; import it from
 `@aponiajs/platform-hono` or `@aponiajs/platform-h3`. The header encoding is the
-shared `contentDisposition` in `@aponiajs/platform-core`, so the name is identical
+shared `contentDisposition` in `@aponiajs/common`, so the name is identical
 on every platform.
 The name follows RFC 6266 with the RFC 8187 extended parameter — `filename*`
 carries the real name UTF-8 percent-encoded, and a quoted ASCII fallback carries a

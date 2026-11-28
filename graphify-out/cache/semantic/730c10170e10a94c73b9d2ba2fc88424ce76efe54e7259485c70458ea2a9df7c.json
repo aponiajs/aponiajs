@@ -1,0 +1,102 @@
+{
+  "nodes": [
+    {
+      "id": "docs_services_mcp_aponiajs_mcp",
+      "label": "@aponiajs/mcp",
+      "file_type": "concept",
+      "source_file": "docs/services/mcp.md",
+      "source_location": "L1-L9",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_mcp_mcpmodule",
+      "label": "McpModule",
+      "file_type": "concept",
+      "source_file": "docs/services/mcp.md",
+      "source_location": "L28-L37",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_mcp_mcp_decorators",
+      "label": "MCP Primitive Decorators (@Tool, @Resource, @ResourceTemplate, @Prompt)",
+      "file_type": "concept",
+      "source_file": "docs/services/mcp.md",
+      "source_location": "L39-L53",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_mcp_mcp_enhancer_pipeline",
+      "label": "MCP Enhancer Pipeline & McpExecutionContext",
+      "file_type": "concept",
+      "source_file": "docs/services/mcp.md",
+      "source_location": "L55-L73",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_services_mcp_mcp_transports",
+      "label": "MCP HTTP & stdio Transports",
+      "file_type": "concept",
+      "source_file": "docs/services/mcp.md",
+      "source_location": "L74-L106",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_services_mcp_mcpmodule",
+      "target": "docs_services_mcp_aponiajs_mcp",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/mcp.md",
+      "source_location": "L28-L37",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_mcp_mcpmodule",
+      "target": "docs_services_mcp_mcp_decorators",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/mcp.md",
+      "source_location": "L39-L53",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_mcp_mcp_enhancer_pipeline",
+      "target": "docs_services_mcp_mcpmodule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/mcp.md",
+      "source_location": "L55-L73",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_mcp_mcp_transports",
+      "target": "docs_services_mcp_mcpmodule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/mcp.md",
+      "source_location": "L74-L106",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -1,0 +1,397 @@
+{
+  "nodes": [
+    {
+      "id": "$graphify-root$_packages_http_tsconfig_json",
+      "label": "tsconfig.json",
+      "file_type": "code",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L1"
+    },
+    {
+      "id": "$graphify-root$_packages_http_tsconfig_compileroptions",
+      "label": "compilerOptions",
+      "file_type": "code",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L2"
+    },
+    {
+      "id": "$graphify-root$_packages_http_tsconfig_compileroptions_target",
+      "label": "target",
+      "file_type": "code",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L3"
+    },
+    {
+      "id": "$graphify-root$_packages_http_tsconfig_compileroptions_lib",
+      "label": "lib",
+      "file_type": "code",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L4"
+    },
+    {
+      "id": "$graphify-root$_packages_http_tsconfig_compileroptions_moduledetection",
+      "label": "moduleDetection",
+      "file_type": "code",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L5"
+    },
+    {
+      "id": "$graphify-root$_packages_http_tsconfig_compileroptions_module",
+      "label": "module",
+      "file_type": "code",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L6"
+    },
+    {
+      "id": "$graphify-root$_packages_http_tsconfig_compileroptions_moduleresolution",
+      "label": "moduleResolution",
+      "file_type": "code",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L7"
+    },
+    {
+      "id": "$graphify-root$_packages_http_tsconfig_compileroptions_resolvejsonmodule",
+      "label": "resolveJsonModule",
+      "file_type": "code",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L8"
+    },
+    {
+      "id": "$graphify-root$_packages_http_tsconfig_compileroptions_types",
+      "label": "types",
+      "file_type": "code",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L9"
+    },
+    {
+      "id": "$graphify-root$_packages_http_tsconfig_compileroptions_strict",
+      "label": "strict",
+      "file_type": "code",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L10"
+    },
+    {
+      "id": "$graphify-root$_packages_http_tsconfig_compileroptions_experimentaldecorators",
+      "label": "experimentalDecorators",
+      "file_type": "code",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L11"
+    },
+    {
+      "id": "$graphify-root$_packages_http_tsconfig_compileroptions_emitdecoratormetadata",
+      "label": "emitDecoratorMetadata",
+      "file_type": "code",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L12"
+    },
+    {
+      "id": "$graphify-root$_packages_http_tsconfig_compileroptions_nounusedlocals",
+      "label": "noUnusedLocals",
+      "file_type": "code",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L13"
+    },
+    {
+      "id": "$graphify-root$_packages_http_tsconfig_compileroptions_declaration",
+      "label": "declaration",
+      "file_type": "code",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L14"
+    },
+    {
+      "id": "$graphify-root$_packages_http_tsconfig_compileroptions_noemit",
+      "label": "noEmit",
+      "file_type": "code",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L15"
+    },
+    {
+      "id": "$graphify-root$_packages_http_tsconfig_compileroptions_allowimportingtsextensions",
+      "label": "allowImportingTsExtensions",
+      "file_type": "code",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L16"
+    },
+    {
+      "id": "$graphify-root$_packages_http_tsconfig_compileroptions_isolatedmodules",
+      "label": "isolatedModules",
+      "file_type": "code",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L17"
+    },
+    {
+      "id": "$graphify-root$_packages_http_tsconfig_compileroptions_verbatimmodulesyntax",
+      "label": "verbatimModuleSyntax",
+      "file_type": "code",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L18"
+    },
+    {
+      "id": "$graphify-root$_packages_http_tsconfig_compileroptions_skiplibcheck",
+      "label": "skipLibCheck",
+      "file_type": "code",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L19"
+    },
+    {
+      "id": "$graphify-root$_packages_http_tsconfig_compileroptions_paths",
+      "label": "paths",
+      "file_type": "code",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L20"
+    },
+    {
+      "id": "$graphify-root$_packages_http_tsconfig_paths_aponiajs_cli",
+      "label": "@aponiajs/cli",
+      "file_type": "code",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L21"
+    },
+    {
+      "id": "$graphify-root$_packages_http_tsconfig_paths_aponiajs_common",
+      "label": "@aponiajs/common",
+      "file_type": "code",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L22"
+    },
+    {
+      "id": "$graphify-root$_packages_http_tsconfig_paths_aponiajs_core",
+      "label": "@aponiajs/core",
+      "file_type": "code",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L23"
+    },
+    {
+      "id": "$graphify-root$_packages_http_tsconfig_paths_aponiajs_platform_elysia",
+      "label": "@aponiajs/platform-elysia",
+      "file_type": "code",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L24"
+    },
+    {
+      "id": "$graphify-root$_packages_http_tsconfig_paths_aponiajs_testing",
+      "label": "@aponiajs/testing",
+      "file_type": "code",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L25"
+    }
+  ],
+  "edges": [
+    {
+      "source": "$graphify-root$_packages_http_tsconfig_json",
+      "target": "$graphify-root$_packages_http_tsconfig_compileroptions",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_http_tsconfig_compileroptions",
+      "target": "$graphify-root$_packages_http_tsconfig_compileroptions_target",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_http_tsconfig_compileroptions",
+      "target": "$graphify-root$_packages_http_tsconfig_compileroptions_lib",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_http_tsconfig_compileroptions",
+      "target": "$graphify-root$_packages_http_tsconfig_compileroptions_moduledetection",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_http_tsconfig_compileroptions",
+      "target": "$graphify-root$_packages_http_tsconfig_compileroptions_module",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_http_tsconfig_compileroptions",
+      "target": "$graphify-root$_packages_http_tsconfig_compileroptions_moduleresolution",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_http_tsconfig_compileroptions",
+      "target": "$graphify-root$_packages_http_tsconfig_compileroptions_resolvejsonmodule",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_http_tsconfig_compileroptions",
+      "target": "$graphify-root$_packages_http_tsconfig_compileroptions_types",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_http_tsconfig_compileroptions",
+      "target": "$graphify-root$_packages_http_tsconfig_compileroptions_strict",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_http_tsconfig_compileroptions",
+      "target": "$graphify-root$_packages_http_tsconfig_compileroptions_experimentaldecorators",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_http_tsconfig_compileroptions",
+      "target": "$graphify-root$_packages_http_tsconfig_compileroptions_emitdecoratormetadata",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_http_tsconfig_compileroptions",
+      "target": "$graphify-root$_packages_http_tsconfig_compileroptions_nounusedlocals",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_http_tsconfig_compileroptions",
+      "target": "$graphify-root$_packages_http_tsconfig_compileroptions_declaration",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_http_tsconfig_compileroptions",
+      "target": "$graphify-root$_packages_http_tsconfig_compileroptions_noemit",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_http_tsconfig_compileroptions",
+      "target": "$graphify-root$_packages_http_tsconfig_compileroptions_allowimportingtsextensions",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_http_tsconfig_compileroptions",
+      "target": "$graphify-root$_packages_http_tsconfig_compileroptions_isolatedmodules",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_http_tsconfig_compileroptions",
+      "target": "$graphify-root$_packages_http_tsconfig_compileroptions_verbatimmodulesyntax",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_http_tsconfig_compileroptions",
+      "target": "$graphify-root$_packages_http_tsconfig_compileroptions_skiplibcheck",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_http_tsconfig_compileroptions",
+      "target": "$graphify-root$_packages_http_tsconfig_compileroptions_paths",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_http_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_packages_http_tsconfig_paths_aponiajs_cli",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_http_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_packages_http_tsconfig_paths_aponiajs_common",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_http_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_packages_http_tsconfig_paths_aponiajs_core",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_http_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_packages_http_tsconfig_paths_aponiajs_platform_elysia",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_http_tsconfig_compileroptions_paths",
+      "target": "$graphify-root$_packages_http_tsconfig_paths_aponiajs_testing",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/http/tsconfig.json",
+      "source_location": "L25",
+      "weight": 1.0
+    }
+  ]
+}

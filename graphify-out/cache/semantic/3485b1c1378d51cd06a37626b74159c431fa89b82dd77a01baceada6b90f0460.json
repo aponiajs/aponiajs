@@ -1,0 +1,81 @@
+{
+  "nodes": [
+    {
+      "id": "examples_descriptors_readme_descriptors_example",
+      "label": "Descriptors Example",
+      "file_type": "document",
+      "source_file": "examples/descriptors/README.md",
+      "source_location": "L1-L28",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "examples_descriptors_readme_descriptor_authoring",
+      "label": "Decorator-Free Descriptor Authoring",
+      "file_type": "concept",
+      "source_file": "examples/descriptors/README.md",
+      "source_location": "L3-L6",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "examples_descriptors_readme_problem_details",
+      "label": "RFC 9457 Problem Details Error Response",
+      "file_type": "concept",
+      "source_file": "examples/descriptors/README.md",
+      "source_location": "L8-L9",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "examples_descriptors_readme_invalid_controller",
+      "label": "INVALID_CONTROLLER Failure Contract",
+      "file_type": "concept",
+      "source_file": "examples/descriptors/README.md",
+      "source_location": "L24-L26",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "examples_descriptors_readme_descriptors_example",
+      "target": "examples_descriptors_readme_descriptor_authoring",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "examples/descriptors/README.md",
+      "source_location": "L3-L6",
+      "weight": 1.0
+    },
+    {
+      "source": "examples_descriptors_readme_descriptors_example",
+      "target": "examples_descriptors_readme_problem_details",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "examples/descriptors/README.md",
+      "source_location": "L8-L9",
+      "weight": 1.0
+    },
+    {
+      "source": "examples_descriptors_readme_descriptors_example",
+      "target": "examples_descriptors_readme_invalid_controller",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "examples/descriptors/README.md",
+      "source_location": "L24-L26",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

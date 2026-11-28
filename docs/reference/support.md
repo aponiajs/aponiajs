@@ -7,13 +7,13 @@ it supplies are its own.
 
 ## Channels and support windows
 
-| Channel           | When it is supported                       | Fix policy                                                         |
-| ----------------- | ------------------------------------------ | ------------------------------------------------------------------ |
-| `alpha`           | Today's published line (`0.6.0-alpha.N`)   | Security and critical correctness fixes on the newest release only |
-| `beta`            | From the first published `1.0.0-beta.N`    | Security fixes on the newest release of the channel                |
-| `rc`              | From the first published release candidate | Security fixes until the stable release ships                      |
-| `latest` (stable) | From `1.0.0`                               | Security fixes on the newest patch; the previous minor for 90 days |
-| `canary`          | Never                                      | CI-only previews; no support promise                               |
+| Channel           | When it is supported                    | Fix policy                                                         |
+| ----------------- | --------------------------------------- | ------------------------------------------------------------------ |
+| `latest` (stable) | Current line (`1.0.0`)                  | Security fixes on the newest patch; the previous minor for 90 days |
+| `rc`              | Active release candidate (`X.Y.Z-rc.N`) | Security fixes until the stable release ships                      |
+| `beta`            | Active beta preview (`X.Y.Z-beta.N`)    | Security fixes on the newest release of the channel                |
+| `alpha`           | Active alpha preview (`X.Y.Z-alpha.N`)  | Security and critical correctness fixes on the newest release only |
+| `canary`          | Never                                   | CI-only previews; no support promise                               |
 
 Before `1.0.0`, the framework is pre-release: a fix lands on the channel that
 came next in the promotion order, and an older alpha or beta is not patched.

@@ -1,0 +1,17 @@
+{
+  "nodes": [
+    {
+      "id": "code_of_conduct_contributor_covenant",
+      "label": "Code of Conduct (Contributor Covenant v2.1)",
+      "file_type": "document",
+      "source_file": "CODE_OF_CONDUCT.md",
+      "source_location": "lines 1-42",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [],
+  "hyperedges": []
+}

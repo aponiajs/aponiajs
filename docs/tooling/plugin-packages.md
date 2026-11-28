@@ -127,7 +127,7 @@ next reader meets.
 
 ## Standard plugin authoring builders
 
-A package contributes through the neutral contract in `@aponiajs/platform-core`:
+A package contributes through the neutral contract in `@aponiajs/common`:
 
 | Builder                                  | Contributes                                                                     |
 | ---------------------------------------- | ------------------------------------------------------------------------------- |
@@ -151,12 +151,14 @@ them in one registration:
 
 ```ts
 // packages/widgets/src/widgets.module.ts
-import { Module, dynamicModule, type DynamicModule } from "@aponiajs/common";
 import {
+  Module,
+  dynamicModule,
   provideConfiguration,
   provideHttpPolicyAsync,
   requirePlatformCapabilities,
-} from "@aponiajs/platform-core";
+  type DynamicModule,
+} from "@aponiajs/common";
 import { WidgetsController } from "./widgets.controller.ts";
 import { buildWidgetsPolicy } from "./widgets.policy.ts";
 import type { WidgetsModuleOptions } from "./interfaces/widgets.interface.ts";
@@ -285,7 +287,6 @@ export default defineConfig({
     alias: {
       "@aponiajs/common": new URL("../common/src/index.ts", import.meta.url).pathname,
       "@aponiajs/core": new URL("../core/src/index.ts", import.meta.url).pathname,
-      "@aponiajs/platform-core": new URL("../platform-core/src/index.ts", import.meta.url).pathname,
     },
     globals: true,
     include: ["test/**/*.conformance.ts"],
@@ -295,7 +296,7 @@ export default defineConfig({
     dts: true,
     exports: true,
     deps: {
-      neverBundle: ["@aponiajs/common", "@aponiajs/platform-core"],
+      neverBundle: ["@aponiajs/common", "@aponiajs/core"],
     },
   },
   lint: { options: { typeAware: true, typeCheck: true } },

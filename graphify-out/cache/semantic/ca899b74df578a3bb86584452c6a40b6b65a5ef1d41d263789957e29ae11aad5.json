@@ -1,0 +1,28 @@
+{
+  "nodes": [
+    {
+      "id": "github_workflows_codeql_codeql_workflow",
+      "label": "CodeQL Security Workflow",
+      "file_type": "document",
+      "source_file": ".github/workflows/codeql.yml",
+      "source_location": "L1-L61",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "github_workflows_codeql_codeql_workflow",
+      "target": "github_codeql_codeql_config_codeql_config",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".github/workflows/codeql.yml",
+      "source_location": "L56",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

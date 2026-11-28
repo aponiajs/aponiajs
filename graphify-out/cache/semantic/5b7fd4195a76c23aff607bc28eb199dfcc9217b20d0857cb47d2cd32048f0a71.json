@@ -1,0 +1,17 @@
+{
+  "nodes": [
+    {
+      "id": "examples_serverless_readme_serverless_example",
+      "label": "Serverless Delivery Example",
+      "file_type": "document",
+      "source_file": "examples/serverless/README.md",
+      "source_location": "L1-L15",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [],
+  "hyperedges": []
+}

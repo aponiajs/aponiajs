@@ -1,0 +1,225 @@
+{
+  "nodes": [
+    {
+      "id": "agents_repository_guidelines",
+      "label": "AponiaJS Repository Guidelines (AGENTS.md)",
+      "file_type": "document",
+      "source_file": "AGENTS.md",
+      "source_location": "line 1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "agents_two_authoring_layers",
+      "label": "Two Authoring Layers (Decorators vs Frozen Descriptors)",
+      "file_type": "rationale",
+      "rationale": "Decorators write reflect-metadata entries only; compileRootModule lowers classes into frozen descriptors so @aponiajs/core never imports reflect-metadata and hand-written descriptors remain fully supported.",
+      "source_file": "AGENTS.md",
+      "source_location": "lines 182-201",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "agents_dependency_direction",
+      "label": "One-Way Package Dependency Direction (common -> core -> platform-core -> platform)",
+      "file_type": "rationale",
+      "rationale": "Enforces runtime neutrality in common, core, and platform-core so no HTTP or Bun API leaks downward and platforms stay thin adapters.",
+      "source_file": "AGENTS.md",
+      "source_location": "lines 203-211",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "agents_module_graph_visibility",
+      "label": "Module Graph & Visibility Rules (compileModuleGraph / ModuleGraph.locate)",
+      "file_type": "concept",
+      "rationale": "Validates duplicate module identity, import cycles, duplicate tokens, invalid exports, and unresolved dependencies eagerly at compile time; enforces export visibility and throws AMBIGUOUS_PROVIDER on conflicting imports while allowing diamonds.",
+      "source_file": "AGENTS.md",
+      "source_location": "lines 213-234",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "agents_configurable_module_builder",
+      "label": "ConfigurableModuleBuilder & moduleOptionsProviders",
+      "file_type": "concept",
+      "rationale": "Provides immutable Nest-compatible dynamic module generation and a single shared async lowering (useFactory, useClass, useExisting) so plugin packages never duplicate async-options wiring.",
+      "source_file": "AGENTS.md",
+      "source_location": "lines 236-256",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "agents_bootstrap_order",
+      "label": "AponiaFactory.create 8-Step Bootstrap Order",
+      "file_type": "concept",
+      "source_file": "AGENTS.md",
+      "source_location": "lines 258-298",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "agents_route_validation_contract",
+      "label": "Route Validation Contract (Standard Schema & TypeBox ValidatorSchema)",
+      "file_type": "concept",
+      "rationale": "Uses one-schema-per-class @Validation models and structural ValidatorSchema matching so @aponiajs/common only needs typebox as a type-only dependency.",
+      "source_file": "AGENTS.md",
+      "source_location": "lines 300-342",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "agents_websocket_gateway_contract",
+      "label": "WebSocket Gateway Envelope & Provider-Based Lifecycle",
+      "file_type": "concept",
+      "rationale": "Uses a documented { event, data } JSON envelope over native WebSockets and resolves gateway singletons through the module container rather than constructing a separate gateway container.",
+      "source_file": "AGENTS.md",
+      "source_location": "lines 344-383",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "agents_native_plugin_context_types",
+      "label": "HandlerContext & definePlugin Type Projection",
+      "file_type": "concept",
+      "rationale": "Explicitly links erased PluginModule imports into handler types without ambient declaration merging, which would leak across compilations.",
+      "source_file": "AGENTS.md",
+      "source_location": "lines 385-430",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "agents_error_model",
+      "label": "AponiaError & RFC 9457 Problem Details HttpError",
+      "file_type": "concept",
+      "rationale": "Uses a closed AponiaErrorCode union with frozen details for framework failures and RFC 9457 application/problem+json HttpError responses that never leak stacks or causes.",
+      "source_file": "AGENTS.md",
+      "source_location": "lines 432-463",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "agents_platform_parity_capability_model",
+      "label": "Explicit Platform Parity via requirePlatformCapabilities",
+      "file_type": "rationale",
+      "rationale": "Feature packages contribute runtime-neutral artifacts and declare required capabilities; boot rejects missing capabilities with UNSUPPORTED_PLATFORM_FEATURE instead of shipping platform allowlists.",
+      "source_file": "AGENTS.md",
+      "source_location": "lines 544-553",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "agents_domain_first_nest_layout",
+      "label": "Domain-First Nest-Shaped Source Layout",
+      "file_type": "rationale",
+      "rationale": "Organizes package source under domain directories with one Nest kind suffix per file and builds from src/ rather than Nest's lib/.",
+      "source_file": "AGENTS.md",
+      "source_location": "lines 73-94",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "claude_claude_md",
+      "target": "agents_repository_guidelines",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "AGENTS.md",
+      "source_location": "lines 95-97",
+      "weight": 1.0
+    },
+    {
+      "source": "gemini_gemini_md",
+      "target": "agents_repository_guidelines",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "AGENTS.md",
+      "source_location": "lines 95-97",
+      "weight": 1.0
+    },
+    {
+      "source": "agents_repository_guidelines",
+      "target": "rules_engineering_rules",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "AGENTS.md",
+      "source_location": "lines 12-19",
+      "weight": 1.0
+    },
+    {
+      "source": "agents_native_plugin_context_types",
+      "target": "scratch_nestjs_dx_parity_research_performance_sucrose_static_analysis",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "AGENTS.md",
+      "source_location": "lines 420-430",
+      "weight": 1.0
+    },
+    {
+      "source": "agents_two_authoring_layers",
+      "target": "agents_bootstrap_order",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "AGENTS.md",
+      "source_location": "lines 193-201, 260-291",
+      "weight": 1.0
+    },
+    {
+      "source": "agents_module_graph_visibility",
+      "target": "agents_bootstrap_order",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "AGENTS.md",
+      "source_location": "lines 215-234, 265-271",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "aponiajs_core_architecture_contracts",
+      "label": "AponiaJS Core Architecture Contracts",
+      "nodes": [
+        "agents_two_authoring_layers",
+        "agents_dependency_direction",
+        "agents_module_graph_visibility",
+        "agents_bootstrap_order",
+        "agents_platform_parity_capability_model"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "AGENTS.md"
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "nodes": [
+    {
+      "id": "scratch_nestjs_dx_parity_issues_08_openapi_and_ecosystem_aliases_openapi_swagger_surface",
+      "label": "@aponiajs/openapi SwaggerModule, DocumentBuilder & @Api* Decorators",
+      "file_type": "concept",
+      "source_file": ".scratch/nestjs-dx-parity/issues/08-openapi-and-ecosystem-aliases.md",
+      "source_location": "L11",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_issues_08_openapi_and_ecosystem_aliases_ecosystem_aliases",
+      "label": "Ecosystem Compatibility Aliases (EventEmitter2, Throttler, JwtModule)",
+      "file_type": "concept",
+      "source_file": ".scratch/nestjs-dx-parity/issues/08-openapi-and-ecosystem-aliases.md",
+      "source_location": "L12",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "scratch_nestjs_dx_parity_issues_08_openapi_and_ecosystem_aliases_openapi_swagger_surface",
+      "target": "scratch_nestjs_dx_parity_issues_02_controller_options_and_route_decorators_controller_options_and_host_matching",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/issues/08-openapi-and-ecosystem-aliases.md",
+      "source_location": "L5,L11",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_issues_08_openapi_and_ecosystem_aliases_openapi_swagger_surface",
+      "target": "scratch_nestjs_dx_parity_issues_05_pipes_uploads_and_serialization_pipe_exceptions_and_mapped_types",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/issues/08-openapi-and-ecosystem-aliases.md",
+      "source_location": "L5,L11",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_issues_08_openapi_and_ecosystem_aliases_ecosystem_aliases",
+      "target": "scratch_nestjs_dx_parity_issues_07_config_package_design_config_module",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/issues/08-openapi-and-ecosystem-aliases.md",
+      "source_location": "L5",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

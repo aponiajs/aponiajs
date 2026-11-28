@@ -1,0 +1,144 @@
+{
+  "nodes": [
+    {
+      "id": "packages_platform_core_llms_platform_core",
+      "label": "@aponiajs/platform-core",
+      "file_type": "document",
+      "source_file": "packages/platform-core/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_core_llms_staticrouteexecutioncontext",
+      "label": "StaticRouteExecutionContext",
+      "file_type": "concept",
+      "rationale": "Forked per request so concurrent requests never share mutable execution context state.",
+      "source_file": "packages/platform-core/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_core_llms_compileunrolledguards",
+      "label": "compileUnrolledGuards and compileGuardsHook",
+      "file_type": "concept",
+      "source_file": "packages/platform-core/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_core_llms_resolveapplicationpipe",
+      "label": "Pipe Resolution and Execution (resolvePipe, resolveApplicationPipe, executePipes)",
+      "file_type": "concept",
+      "rationale": "Route-level pipes resolve without a container; application-level pipes resolve through the root module and fail with MISSING_PROVIDER when unreachable.",
+      "source_file": "packages/platform-core/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_core_llms_createmiddlewareconsumer",
+      "label": "createMiddlewareConsumer",
+      "file_type": "concept",
+      "source_file": "packages/platform-core/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_core_llms_request_run_order",
+      "label": "Fixed Request Lifecycle Run Order",
+      "file_type": "rationale",
+      "rationale": "Fixed run order: middleware, guards and interceptor before halves, handler, interceptor after halves reversed, filters most-specific-first.",
+      "source_file": "packages/platform-core/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_platform_core_llms_platform_core",
+      "target": "packages_platform_core_llms_staticrouteexecutioncontext",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-core/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_core_llms_platform_core",
+      "target": "packages_platform_core_llms_compileunrolledguards",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-core/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_core_llms_platform_core",
+      "target": "packages_platform_core_llms_resolveapplicationpipe",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-core/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_core_llms_platform_core",
+      "target": "packages_platform_core_llms_createmiddlewareconsumer",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-core/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_core_llms_request_run_order",
+      "target": "packages_platform_core_llms_platform_core",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-core/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "request_execution_enhancer_pipeline",
+      "label": "Request Execution Enhancer Pipeline",
+      "nodes": [
+        "packages_platform_core_llms_staticrouteexecutioncontext",
+        "packages_platform_core_llms_compileunrolledguards",
+        "packages_platform_core_llms_resolveapplicationpipe",
+        "packages_platform_core_llms_createmiddlewareconsumer",
+        "packages_platform_core_llms_request_run_order",
+        "packages_platform_elysia_agents_default_exception_filter",
+        "packages_platform_elysia_agents_execution_context_fork"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-core/llms.txt"
+    }
+  ]
+}

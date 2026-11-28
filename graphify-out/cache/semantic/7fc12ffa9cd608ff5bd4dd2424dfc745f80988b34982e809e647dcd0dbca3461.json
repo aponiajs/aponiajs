@@ -1,0 +1,83 @@
+{
+  "nodes": [
+    {
+      "id": "packages_serverless_agents_guide",
+      "label": "@aponiajs/serverless Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/serverless/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_serverless_agents_serverlessapplication",
+      "label": "ServerlessApplication",
+      "file_type": "concept",
+      "source_file": "packages/serverless/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_serverless_agents_envelope_translation",
+      "label": "Pure Gateway Envelope Translation",
+      "file_type": "rationale",
+      "rationale": "Translates API Gateway v1/v2 events and Web Fetch without adding authentication, CORS, timeouts, or graceful shutdown; preserves binary bodies via fatal UTF-8 validation and base64 fallback, and strips bodies on GET/HEAD.",
+      "source_file": "packages/serverless/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_serverless_agents_set_cookie_separation",
+      "label": "Set-Cookie Gateway Header Separation",
+      "file_type": "rationale",
+      "rationale": "Separates set-cookie into v2 cookies array or v1 multiValueHeaders['set-cookie'] and removes it from headers because both API Gateway payload versions drop duplicate header names.",
+      "source_file": "packages/serverless/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_serverless_agents_guide",
+      "target": "packages_serverless_agents_serverlessapplication",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/serverless/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_serverless_agents_envelope_translation",
+      "target": "packages_serverless_readme_createlambdahandler",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/serverless/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_serverless_agents_set_cookie_separation",
+      "target": "packages_serverless_readme_createlambdahandler",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/serverless/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

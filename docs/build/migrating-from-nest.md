@@ -191,8 +191,7 @@ with such an import refuses with `INVALID_MODULE`.
 positionally or as an option:
 
 ```ts
-import { AponiaFactory } from "@aponiajs/platform-core";
-import { honoAdapter } from "@aponiajs/platform-hono";
+import { AponiaFactory, honoAdapter } from "@aponiajs/platform-hono";
 
 const app = await AponiaFactory.create(AppModule, honoAdapter());
 await app.listen(3000);
@@ -384,7 +383,7 @@ once: `HttpStatus.CREATED` is `201`, and `@HttpStatus()` still names the
 platform's response-status parameter. Nest has no parameter decorator with that
 name, so this is the one namespace collision recorded here.
 
-`HttpError` stays the RFC 9457 subclass in `platform-core` and is re-exported
+`HttpError` stays the RFC 9457 subclass in `@aponiajs/common` and is re-exported
 from `@aponiajs/platform-elysia`. A migrated `HttpException` is accepted by the
 default boundary through its `status` and `getResponse()` members; a filter that
 wants Problem Details catches it and answers `HttpError`.

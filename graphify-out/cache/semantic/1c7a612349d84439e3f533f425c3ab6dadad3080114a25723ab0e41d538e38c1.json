@@ -1,0 +1,116 @@
+{
+  "nodes": [
+    {
+      "id": "packages_testing_readme_aponiajs_testing",
+      "label": "@aponiajs/testing",
+      "file_type": "document",
+      "source_file": "packages/testing/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_testing_readme_createtestapplication",
+      "label": "createTestApplication",
+      "file_type": "concept",
+      "source_file": "packages/testing/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_testing_readme_test_createtestingmodule",
+      "label": "Test.createTestingModule",
+      "file_type": "concept",
+      "source_file": "packages/testing/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_testing_readme_wrapplatformapplication",
+      "label": "wrapPlatformApplication",
+      "file_type": "concept",
+      "rationale": "Platform-neutral test wrapper providing handle, get, idempotent close(), and Symbol.asyncDispose for Hono, H3, and Nitro boots.",
+      "source_file": "packages/testing/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_testing_readme_overridepipe_route_rewrite",
+      "label": "overridePipe Route Plan Rewrite",
+      "file_type": "rationale",
+      "rationale": "Route-level pipe classes are constructed directly by the platform rather than resolved from the container, so overridePipe rewrites compiled route plans and refuses useFactory/useExisting with INVALID_PIPE.",
+      "source_file": "packages/testing/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_testing_readme_testing_non_goals",
+      "label": "Testing Kit Boundary (Non-Runner, Non-Mock, Non-In-Memory)",
+      "file_type": "rationale",
+      "rationale": "@aponiajs/testing adds no test runner, mocking framework, or synthetic HTTP server; handle() executes the real route table and container with no socket bound.",
+      "source_file": "packages/testing/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_testing_readme_overridepipe_route_rewrite",
+      "target": "packages_testing_llms_testapplicationbuilder",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/testing/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_testing_readme_testing_non_goals",
+      "target": "packages_testing_readme_aponiajs_testing",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/testing/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_testing_readme_test_createtestingmodule",
+      "target": "packages_testing_readme_aponiajs_testing",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/testing/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_testing_readme_wrapplatformapplication",
+      "target": "packages_store_redis_claude_idempotent_shared_close",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "packages/testing/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

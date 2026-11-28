@@ -18,7 +18,7 @@ Import `RequestContextModule.forRoot(options?)` into your root module:
 
 ```ts
 import { Module } from "@aponiajs/common";
-import { RequestContextModule } from "@aponiajs/platform-core";
+import { RequestContextModule } from "@aponiajs/core";
 
 @Module({
   imports: [RequestContextModule.forRoot()],

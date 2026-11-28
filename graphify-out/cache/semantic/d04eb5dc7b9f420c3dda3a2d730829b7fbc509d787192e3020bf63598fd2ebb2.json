@@ -1,0 +1,58 @@
+{
+  "nodes": [
+    {
+      "id": "packages_rate_limit_llms_summary",
+      "label": "@aponiajs/rate-limit llms.txt",
+      "file_type": "document",
+      "source_file": "packages/rate-limit/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_rate_limit_llms_summary",
+      "target": "packages_rate_limit_readme_aponiajs_rate_limit",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/rate-limit/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_rate_limit_llms_summary",
+      "target": "packages_rate_limit_readme_ratelimitmodule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/rate-limit/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_rate_limit_llms_summary",
+      "target": "packages_rate_limit_readme_ratelimitguard",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/rate-limit/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_rate_limit_llms_summary",
+      "target": "packages_rate_limit_readme_memoryratelimitstore",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/rate-limit/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

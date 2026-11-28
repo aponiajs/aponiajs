@@ -1,0 +1,114 @@
+{
+  "nodes": [
+    {
+      "id": "packages_security_readme_aponiajs_security",
+      "label": "@aponiajs/security",
+      "file_type": "concept",
+      "source_file": "packages/security/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_security_readme_securitymodule",
+      "label": "SecurityModule",
+      "file_type": "concept",
+      "source_file": "packages/security/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_security_readme_getcspnonce",
+      "label": "getCspNonce",
+      "file_type": "concept",
+      "rationale": "Replaces {nonce} in CSP headers with a fresh per-request nonce and exposes the same value for that request only when the policy includes the {nonce} placeholder.",
+      "source_file": "packages/security/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_security_readme_double_submit_csrf",
+      "label": "Opt-In Signed Double-Submit CSRF",
+      "file_type": "rationale",
+      "rationale": "CSRF is opt-in because it is only meaningful for cookie-based sessions; the cookie is intentionally HttpOnly: false so client code can echo the HMAC-signed nonce in x-csrf-token.",
+      "source_file": "packages/security/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_security_readme_default_security_headers",
+      "label": "Default Security Headers Policy",
+      "file_type": "concept",
+      "source_file": "packages/security/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_security_readme_aponiajs_security",
+      "target": "packages_security_readme_securitymodule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/security/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_security_readme_aponiajs_security",
+      "target": "packages_security_readme_getcspnonce",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/security/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_security_readme_securitymodule",
+      "target": "packages_security_readme_default_security_headers",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/security/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_security_readme_double_submit_csrf",
+      "target": "packages_security_readme_securitymodule",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/security/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_security_readme_aponiajs_security",
+      "target": "packages_rate_limit_readme_aponiajs_rate_limit",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/security/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

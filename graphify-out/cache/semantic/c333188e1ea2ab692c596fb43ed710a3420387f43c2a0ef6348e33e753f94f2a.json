@@ -1,0 +1,92 @@
+{
+  "nodes": [
+    {
+      "id": "packages_cli_templates_application_agents_guide",
+      "label": "Application Starter Template Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/cli/templates/application/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cli_templates_application_agents_appmodule",
+      "label": "Starter AppModule and Flat Layout",
+      "file_type": "concept",
+      "source_file": "packages/cli/templates/application/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cli_templates_application_agents_devtools_tradeoff",
+      "label": "Starter Devtools Registration Tradeoff",
+      "file_type": "rationale",
+      "rationale": "Importing DevtoolsModule.forRoot in AppModule places devtools in the module graph and shares the logger, causing aponia build to decline AppModule's descriptor so inspection falls back to the decorated graph.",
+      "source_file": "packages/cli/templates/application/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cli_templates_application_agents_appconfig",
+      "label": "AppConfig (src/config.ts)",
+      "file_type": "concept",
+      "source_file": "packages/cli/templates/application/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_cli_templates_application_agents_guide",
+      "target": "packages_cli_templates_application_agents_appmodule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cli/templates/application/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cli_templates_application_agents_guide",
+      "target": "packages_cli_templates_application_agents_appconfig",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cli/templates/application/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cli_templates_application_agents_devtools_tradeoff",
+      "target": "packages_cli_templates_application_agents_appmodule",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cli/templates/application/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cli_templates_application_agents_devtools_tradeoff",
+      "target": "packages_cli_agents_descriptor_emitter",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/cli/templates/application/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

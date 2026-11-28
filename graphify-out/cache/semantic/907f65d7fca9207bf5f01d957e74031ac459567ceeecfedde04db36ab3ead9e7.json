@@ -1,0 +1,117 @@
+{
+  "nodes": [
+    {
+      "id": "scratch_nestjs_dx_parity_issues_09_transport_enhancers_rpc_ws_microservice_enhancers",
+      "label": "Microservice RPC/Event Enhancer Pipeline",
+      "file_type": "concept",
+      "source_file": ".scratch/nestjs-dx-parity/issues/09-transport-enhancers-rpc-ws.md",
+      "source_location": "L11",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_issues_09_transport_enhancers_rpc_ws_websocket_gateway_enhancers",
+      "label": "WebSocket Gateway Enhancer Pipeline",
+      "file_type": "concept",
+      "source_file": ".scratch/nestjs-dx-parity/issues/09-transport-enhancers-rpc-ws.md",
+      "source_location": "L12",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_issues_09_transport_enhancers_rpc_ws_shared_enhancer_pipeline_seam",
+      "label": "Shared @aponiajs/platform-core Enhancer Pipeline Seam",
+      "file_type": "concept",
+      "source_file": ".scratch/nestjs-dx-parity/issues/09-transport-enhancers-rpc-ws.md",
+      "source_location": "L13",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "scratch_nestjs_dx_parity_issues_09_transport_enhancers_rpc_ws_microservice_enhancers",
+      "target": "scratch_nestjs_dx_parity_issues_09_transport_enhancers_rpc_ws_shared_enhancer_pipeline_seam",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/issues/09-transport-enhancers-rpc-ws.md",
+      "source_location": "L11-L13",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_issues_09_transport_enhancers_rpc_ws_websocket_gateway_enhancers",
+      "target": "scratch_nestjs_dx_parity_issues_09_transport_enhancers_rpc_ws_shared_enhancer_pipeline_seam",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/issues/09-transport-enhancers-rpc-ws.md",
+      "source_location": "L12-L13",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_issues_09_transport_enhancers_rpc_ws_shared_enhancer_pipeline_seam",
+      "target": "scratch_nestjs_dx_parity_issues_01_property_injection_and_di_metadata_undeclared_enhancer_di_resolution",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/issues/09-transport-enhancers-rpc-ws.md",
+      "source_location": "L5,L11-L13",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_issues_09_transport_enhancers_rpc_ws_shared_enhancer_pipeline_seam",
+      "target": "scratch_nestjs_dx_parity_issues_03_callhandler_interceptor_contract_mixed_interceptor_composition",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/issues/09-transport-enhancers-rpc-ws.md",
+      "source_location": "L5,L11-L13",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_issues_09_transport_enhancers_rpc_ws_shared_enhancer_pipeline_seam",
+      "target": "scratch_nestjs_dx_parity_issues_04_middleware_and_execution_context_arguments_host_and_response_facade",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/issues/09-transport-enhancers-rpc-ws.md",
+      "source_location": "L5,L11-L13",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_issues_09_transport_enhancers_rpc_ws_shared_enhancer_pipeline_seam",
+      "target": "scratch_nestjs_dx_parity_issues_05_pipes_uploads_and_serialization_pipe_exceptions_and_mapped_types",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/issues/09-transport-enhancers-rpc-ws.md",
+      "source_location": "L5,L11-L13",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "nestjs_transport_enhancer_execution",
+      "label": "Cross-Transport NestJS Enhancer Execution (HTTP, WebSocket, RPC)",
+      "nodes": [
+        "scratch_nestjs_dx_parity_issues_01_property_injection_and_di_metadata_undeclared_enhancer_di_resolution",
+        "scratch_nestjs_dx_parity_issues_03_callhandler_interceptor_contract_mixed_interceptor_composition",
+        "scratch_nestjs_dx_parity_issues_04_middleware_and_execution_context_arguments_host_and_response_facade",
+        "scratch_nestjs_dx_parity_issues_09_transport_enhancers_rpc_ws_shared_enhancer_pipeline_seam",
+        "scratch_nestjs_dx_parity_issues_09_transport_enhancers_rpc_ws_microservice_enhancers",
+        "scratch_nestjs_dx_parity_issues_09_transport_enhancers_rpc_ws_websocket_gateway_enhancers"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/issues/09-transport-enhancers-rpc-ws.md"
+    }
+  ]
+}

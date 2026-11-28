@@ -21,10 +21,9 @@ Each package owns one layer:
 | --------------------------- | -------------------------------------- |
 | `@aponiajs/common`          | Decorators, tokens, contracts, errors  |
 | `@aponiajs/core`            | Module graph and dependency injection  |
-| `@aponiajs/platform-core`   | Runtime-neutral HTTP primitives        |
 | `@aponiajs/platform-elysia` | Elysia routes, plugins, and WebSockets |
 
-Dependencies point one way: `common` → `core` → `platform-core` → platform packages.
+Dependencies point one way: `common` → `core` → platform packages (`platform-elysia`, `platform-hono`, `platform-h3`).
 
 ## Descriptors are public API
 

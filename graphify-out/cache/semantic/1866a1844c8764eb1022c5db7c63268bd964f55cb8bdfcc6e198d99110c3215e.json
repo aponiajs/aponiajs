@@ -1,0 +1,92 @@
+{
+  "nodes": [
+    {
+      "id": "docs_reference_feature_status_guide",
+      "label": "Feature Status",
+      "file_type": "document",
+      "source_file": "docs/reference/feature-status.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_reference_feature_status_npm_release_split",
+      "label": "Development Line vs Published npm Alpha/Latest Split",
+      "file_type": "concept",
+      "rationale": "Distinguishes source/test completeness across all 34 packages on 1.0.0-beta.N from what npm currently serves (6 packages on 0.6.0-alpha.N / 0.5.0).",
+      "source_file": "docs/reference/feature-status.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_reference_feature_status_known_gaps",
+      "label": "Documented Framework Known Gaps",
+      "file_type": "concept",
+      "rationale": "Documents explicit scope limits: no automatic broker topic/queue provisioning, process-local default stores, no Express/Fastify MVC adapters, no Socket.IO emulation, partial MCP 2026-07-28 support, and opt-in strictCodegen.",
+      "source_file": "docs/reference/feature-status.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_reference_feature_status_guide",
+      "target": "docs_reference_feature_status_npm_release_split",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/feature-status.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_feature_status_guide",
+      "target": "docs_reference_feature_status_known_gaps",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/feature-status.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_feature_status_npm_release_split",
+      "target": "docs_operations_releasing_dependency_order",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/reference/feature-status.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_feature_status_known_gaps",
+      "target": "docs_operations_deployment_state_ownership",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/reference/feature-status.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_feature_status_known_gaps",
+      "target": "docs_platforms_websockets_gateway_model",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/reference/feature-status.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

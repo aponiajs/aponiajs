@@ -1,0 +1,50 @@
+{
+  "nodes": [
+    {
+      "id": "packages_compiler_readme_package",
+      "label": "@aponiajs/compiler Package README",
+      "file_type": "document",
+      "source_file": "packages/compiler/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_compiler_readme_shared_state_service",
+      "label": "SharedStateService Encapsulation",
+      "file_type": "concept",
+      "source_file": "packages/compiler/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "provideSharedState exposes only read, write, readAsync, and writeAsync on SharedStateService so application state has no raw mutable handle by default."
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_compiler_readme_shared_state_service",
+      "target": "packages_compiler_readme_package",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/compiler/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_compiler_readme_shared_state_service",
+      "target": "packages_compiler_agents_rwcell_vs_asyncrwlock",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/compiler/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

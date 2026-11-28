@@ -1,0 +1,104 @@
+{
+  "nodes": [
+    {
+      "id": "docs_learn_10_errors_guide",
+      "label": "10 \u00b7 Errors",
+      "file_type": "document",
+      "source_file": "docs/learn/10-errors.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_learn_10_errors_httperror",
+      "label": "HttpError & httpErrors Problem Details Factories",
+      "file_type": "concept",
+      "rationale": "Deliberately thrown application HTTP errors serialize as application/problem+json while keeping server-side cause private, preventing extension overwrites of standard members, and leaving Elysia native 422 validation responses intact.",
+      "source_file": "docs/learn/10-errors.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_learn_10_errors_unhandled_error_mapping",
+      "label": "Default 500 Problem Details Mapping (ExceptionsHandler)",
+      "file_type": "rationale",
+      "rationale": "Unhandled errors return 500 application/problem+json with INTERNAL_SERVER_ERROR without sending the thrown value to the client; throwing filters are logged and treated as declining.",
+      "source_file": "docs/learn/10-errors.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_learn_10_errors_aponiaerror",
+      "label": "AponiaError & Closed Error Code Union",
+      "file_type": "concept",
+      "rationale": "Framework diagnostics throw AponiaError with a code from a closed union and frozen details during graph compilation and route mounting before listen(), so callers assert on error.code instead of message text.",
+      "source_file": "docs/learn/10-errors.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_learn_09_logging_geturl",
+      "target": "docs_learn_10_errors_aponiaerror",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/learn/10-errors.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_learn_10_errors_guide",
+      "target": "docs_learn_10_errors_httperror",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/learn/10-errors.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_learn_10_errors_guide",
+      "target": "docs_learn_10_errors_unhandled_error_mapping",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/learn/10-errors.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_learn_10_errors_guide",
+      "target": "docs_learn_10_errors_aponiaerror",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/learn/10-errors.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_learn_10_errors_guide",
+      "target": "docs_learn_11_testing_guide",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/learn/10-errors.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

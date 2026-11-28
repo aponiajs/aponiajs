@@ -1,0 +1,50 @@
+{
+  "nodes": [
+    {
+      "id": "scratch_nestjs_dx_parity_issues_02_controller_options_and_route_decorators_post_201_default_status",
+      "label": "@Post() Default 201 Created Status",
+      "file_type": "concept",
+      "source_file": ".scratch/nestjs-dx-parity/issues/02-controller-options-and-route-decorators.md",
+      "source_location": "L10",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_issues_02_controller_options_and_route_decorators_controller_options_and_host_matching",
+      "label": "ControllerOptions, Host Matching & Multi-Path Routes",
+      "file_type": "concept",
+      "source_file": ".scratch/nestjs-dx-parity/issues/02-controller-options-and-route-decorators.md",
+      "source_location": "L11",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_issues_02_controller_options_and_route_decorators_httpstatus_and_session_bridge",
+      "label": "HttpStatus Value+Type Export & @Session() Bridge",
+      "file_type": "concept",
+      "source_file": ".scratch/nestjs-dx-parity/issues/02-controller-options-and-route-decorators.md",
+      "source_location": "L12",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_issues_02_controller_options_and_route_decorators_redirect_res_versioning_and_prefix",
+      "label": "@Redirect(), @Res(), Global Prefix & Versioning",
+      "file_type": "concept",
+      "source_file": ".scratch/nestjs-dx-parity/issues/02-controller-options-and-route-decorators.md",
+      "source_location": "L13",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [],
+  "hyperedges": []
+}

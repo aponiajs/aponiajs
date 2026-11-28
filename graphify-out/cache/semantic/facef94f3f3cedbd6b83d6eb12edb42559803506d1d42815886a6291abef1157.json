@@ -1,0 +1,127 @@
+{
+  "nodes": [
+    {
+      "id": "packages_store_redis_claude_store_redis_agent_guide",
+      "label": "@aponiajs/store-redis Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/store-redis/CLAUDE.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_store_redis_claude_scan_unlink_cleanup",
+      "label": "SCAN/UNLINK Keyspace Cleanup",
+      "file_type": "rationale",
+      "rationale": "clear() and family cleanup page with SCAN and delete with UNLINK when available, falling back to KEYS/DEL only for a minimal client, so KEYS is never called on a shared Redis instance when scan is available.",
+      "source_file": "packages/store-redis/CLAUDE.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_store_redis_claude_live_pttl_reset",
+      "label": "Live PTTL Rate-Limit Reset",
+      "file_type": "rationale",
+      "rationale": "RedisRateLimitStore derives resetAt from live PTTL instead of Date.now() + windowMs so RateLimit-Reset and Retry-After headers do not slide forward on every hit.",
+      "source_file": "packages/store-redis/CLAUDE.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_store_redis_claude_lua_refresh_rotation",
+      "label": "Single-Trip Lua Refresh Rotation",
+      "file_type": "rationale",
+      "rationale": "RedisRefreshTokenStore.consume executes read, delete, and family tombstone creation in one Lua round trip so a token replay revokes the entire family.",
+      "source_file": "packages/store-redis/CLAUDE.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_store_redis_claude_idempotent_shared_close",
+      "label": "Idempotent Shared Client Disposal",
+      "file_type": "rationale",
+      "rationale": "Every store exposes idempotent close() and Symbol.asyncDispose; a shared client is released once unless closeClient: false is stated, and cache writes without a lifetime persist without EX.",
+      "source_file": "packages/store-redis/CLAUDE.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_store_redis_claude_live_redis_e2e",
+      "label": "Live Redis E2E Test Lane",
+      "file_type": "concept",
+      "source_file": "packages/store-redis/CLAUDE.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_store_redis_claude_scan_unlink_cleanup",
+      "target": "packages_store_redis_claude_store_redis_agent_guide",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/store-redis/CLAUDE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_store_redis_claude_live_pttl_reset",
+      "target": "packages_store_redis_readme_redisratelimitstore",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/store-redis/CLAUDE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_store_redis_claude_lua_refresh_rotation",
+      "target": "packages_store_redis_readme_redisrefreshtokenstore",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/store-redis/CLAUDE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_store_redis_claude_idempotent_shared_close",
+      "target": "packages_store_redis_readme_aponiajs_store_redis",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/store-redis/CLAUDE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_store_redis_claude_live_redis_e2e",
+      "target": "packages_store_redis_claude_store_redis_agent_guide",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/store-redis/CLAUDE.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -1,0 +1,112 @@
+{
+  "nodes": [
+    {
+      "id": "packages_serverless_llms_summary",
+      "label": "@aponiajs/serverless llms.txt",
+      "file_type": "document",
+      "source_file": "packages/serverless/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_serverless_llms_lambdahttpeventv1",
+      "label": "LambdaHttpEventV1",
+      "file_type": "concept",
+      "source_file": "packages/serverless/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_serverless_llms_lambdahttpeventv2",
+      "label": "LambdaHttpEventV2",
+      "file_type": "concept",
+      "source_file": "packages/serverless/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_serverless_llms_lambdahttpresultv1",
+      "label": "LambdaHttpResultV1",
+      "file_type": "concept",
+      "source_file": "packages/serverless/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_serverless_llms_lambdahttpresultv2",
+      "label": "LambdaHttpResultV2",
+      "file_type": "concept",
+      "source_file": "packages/serverless/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_serverless_llms_summary",
+      "target": "packages_serverless_readme_aponiajs_serverless",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/serverless/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_serverless_llms_summary",
+      "target": "packages_serverless_llms_lambdahttpeventv1",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/serverless/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_serverless_llms_summary",
+      "target": "packages_serverless_llms_lambdahttpeventv2",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/serverless/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_serverless_llms_summary",
+      "target": "packages_serverless_llms_lambdahttpresultv1",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/serverless/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_serverless_llms_summary",
+      "target": "packages_serverless_llms_lambdahttpresultv2",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/serverless/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

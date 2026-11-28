@@ -1,0 +1,169 @@
+{
+  "nodes": [
+    {
+      "id": "docs_operations_deployment_guide",
+      "label": "Deploying an AponiaJS Application",
+      "file_type": "document",
+      "source_file": "docs/operations/deployment.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_operations_deployment_atomic_boot",
+      "label": "Atomic Boot Contract",
+      "file_type": "rationale",
+      "rationale": "Migrations, config validation, module init, route mounting, gateway registration, and bootstrap finish before opening the port so a half-configured app never serves traffic.",
+      "source_file": "docs/operations/deployment.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_operations_deployment_state_ownership",
+      "label": "Process-Local Stores vs Multi-Instance State Ownership",
+      "file_type": "concept",
+      "rationale": "Built-in stores for sessions, rate limits, cache, auth refresh/revocation, and queue/outbox are process-local by default; multi-replica deployments must explicitly configure shared stores or sticky routing.",
+      "source_file": "docs/operations/deployment.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_operations_deployment_health_probes",
+      "label": "Health & Readiness Probes (/health/live, /health/ready)",
+      "file_type": "concept",
+      "rationale": "On Elysia, health: true mounts unguarded application/health+json probes outside the module graph; readiness flips to 503 on close() before draining while Hono/H3/Nitro leave probes to application routes.",
+      "source_file": "docs/operations/deployment.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_operations_deployment_graceful_shutdown",
+      "label": "Graceful Shutdown Sequence & shutdownSignals",
+      "file_type": "concept",
+      "rationale": "Opt-in SIGTERM/SIGINT handling runs close() (readiness fail -> beforeApplicationShutdown -> drain -> reverse onModuleDestroy -> onApplicationShutdown) and re-raises the signal; a second signal hard-stops.",
+      "source_file": "docs/operations/deployment.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_operations_deployment_config_secrets",
+      "label": "Boot-Time Configuration Validation & Immutability",
+      "file_type": "concept",
+      "rationale": "Declared source replaces process env without implicit merge or per-request reload; schema failures raise INVALID_CONFIGURATION_VALUE.",
+      "source_file": "docs/operations/deployment.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_operations_deployment_observability",
+      "label": "Observability Baseline (@aponiajs/request-context & x-request-id)",
+      "file_type": "concept",
+      "source_file": "docs/operations/deployment.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_operations_deployment_guide",
+      "target": "docs_operations_deployment_atomic_boot",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/operations/deployment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_operations_deployment_guide",
+      "target": "docs_operations_deployment_state_ownership",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/operations/deployment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_operations_deployment_guide",
+      "target": "docs_operations_deployment_health_probes",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/operations/deployment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_operations_deployment_guide",
+      "target": "docs_operations_deployment_graceful_shutdown",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/operations/deployment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_operations_deployment_guide",
+      "target": "docs_operations_deployment_config_secrets",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/operations/deployment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_operations_deployment_guide",
+      "target": "docs_operations_deployment_observability",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/operations/deployment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_operations_deployment_guide",
+      "target": "docs_platforms_adapters_guide",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/operations/deployment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_operations_deployment_observability",
+      "target": "docs_learn_14_devtools_module",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/operations/deployment.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

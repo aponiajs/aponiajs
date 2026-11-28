@@ -1,16 +1,13 @@
 # Stability and the Public API
 
-The **published** framework is on the `0.6.0-alpha.N` line. The source in this
-repository targets the `1.0.0-beta.N` development line, which is not published
-under `@beta` yet; one release publishes the whole package set together. Before
-`1.0.0` the public API may still change; the release notes and the frozen
-snapshot make each change reviewable. From `1.0.0`, a breaking change requires a
-major version.
+The published framework is on the `1.0.0` (`latest`) line. One release
+publishes all 39 publishable packages together. From `1.0.0`, the public API
+follows semantic versioning: a breaking change requires a major version, while
+additive exports and backward-compatible fixes ship in minor or patch releases.
 
-The alpha line is the installable channel today. The beta line becomes the
-supported channel only when it is published; a document that names a `@beta`
-install command is describing that future release, not the current registry
-state.
+Pre-release channels (`beta`, `rc`, `alpha`) may be cut from their release
+branches when preparing upcoming versions, while `latest` remains the default
+install channel.
 
 This page states what is considered public, how a change is classified, and the
 evidence a change must carry.

@@ -1,0 +1,1509 @@
+{
+  "nodes": [
+    {
+      "id": "$graphify-root$_packages_microservices_package_json",
+      "label": "package.json",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L1"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_name",
+      "label": "name",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L2"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_version",
+      "label": "version",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L3"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_description",
+      "label": "description",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L4"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_keywords",
+      "label": "keywords",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L5"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_homepage",
+      "label": "homepage",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L21"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_bugs",
+      "label": "bugs",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L22"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_bugs_url",
+      "label": "url",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L23"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_license",
+      "label": "license",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L25"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_author",
+      "label": "author",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L26"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_repository",
+      "label": "repository",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L27"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_repository_type",
+      "label": "type",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L28"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_repository_url",
+      "label": "url",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L29"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_repository_directory",
+      "label": "directory",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L30"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_files",
+      "label": "files",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L32"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_type",
+      "label": "type",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L36"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_exports",
+      "label": "exports",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L37"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_exports_package_json",
+      "label": "./package.json",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L39"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_publishconfig",
+      "label": "publishConfig",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L41"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_publishconfig_access",
+      "label": "access",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L42"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_scripts",
+      "label": "scripts",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L44"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_scripts_build",
+      "label": "build",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L45"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_scripts_dev",
+      "label": "dev",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L46"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_scripts_test",
+      "label": "test",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L47"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_scripts_test_vite_plus",
+      "label": "test:vite-plus",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L48"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_scripts_check",
+      "label": "check",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L49"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_scripts_prepublishonly",
+      "label": "prepublishOnly",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L50"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_dependencies",
+      "label": "dependencies",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L52"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_dependencies_aponiajs_common",
+      "label": "@aponiajs/common",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L53"
+    },
+    {
+      "id": "ref_aponiajs_common",
+      "label": "@aponiajs/common",
+      "file_type": "concept",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L53"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_dependencies_cborg",
+      "label": "cborg",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L54"
+    },
+    {
+      "id": "ref_cborg",
+      "label": "cborg",
+      "file_type": "concept",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L54"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_devdependencies",
+      "label": "devDependencies",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L56"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_devdependencies_aponiajs_platform_elysia",
+      "label": "@aponiajs/platform-elysia",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L57"
+    },
+    {
+      "id": "ref_aponiajs_platform_elysia",
+      "label": "@aponiajs/platform-elysia",
+      "file_type": "concept",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L57"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_devdependencies_aponiajs_testing",
+      "label": "@aponiajs/testing",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L58"
+    },
+    {
+      "id": "ref_aponiajs_testing",
+      "label": "@aponiajs/testing",
+      "file_type": "concept",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L58"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_devdependencies_aws_sdk_client_sqs",
+      "label": "@aws-sdk/client-sqs",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L59"
+    },
+    {
+      "id": "ref_aws_sdk_client_sqs",
+      "label": "@aws-sdk/client-sqs",
+      "file_type": "concept",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L59"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_devdependencies_azure_service_bus",
+      "label": "@azure/service-bus",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L60"
+    },
+    {
+      "id": "ref_azure_service_bus",
+      "label": "@azure/service-bus",
+      "file_type": "concept",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L60"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_devdependencies_google_cloud_pubsub",
+      "label": "@google-cloud/pubsub",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L61"
+    },
+    {
+      "id": "ref_google_cloud_pubsub",
+      "label": "@google-cloud/pubsub",
+      "file_type": "concept",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L61"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_devdependencies_grpc_grpc_js",
+      "label": "@grpc/grpc-js",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L62"
+    },
+    {
+      "id": "ref_grpc_grpc_js",
+      "label": "@grpc/grpc-js",
+      "file_type": "concept",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L62"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_devdependencies_elysia",
+      "label": "elysia",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L63"
+    },
+    {
+      "id": "ref_elysia",
+      "label": "elysia",
+      "file_type": "concept",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L63"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_devdependencies_kafkajs",
+      "label": "kafkajs",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L64"
+    },
+    {
+      "id": "ref_kafkajs",
+      "label": "kafkajs",
+      "file_type": "concept",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L64"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_devdependencies_mqtt",
+      "label": "mqtt",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L65"
+    },
+    {
+      "id": "ref_mqtt",
+      "label": "mqtt",
+      "file_type": "concept",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L65"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_devdependencies_nats",
+      "label": "nats",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L66"
+    },
+    {
+      "id": "ref_nats",
+      "label": "nats",
+      "file_type": "concept",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L66"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_devdependencies_rabbitmq_client",
+      "label": "rabbitmq-client",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L67"
+    },
+    {
+      "id": "ref_rabbitmq_client",
+      "label": "rabbitmq-client",
+      "file_type": "concept",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L67"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_devdependencies_redis",
+      "label": "redis",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L68"
+    },
+    {
+      "id": "ref_redis",
+      "label": "redis",
+      "file_type": "concept",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L68"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_peerdependencies",
+      "label": "peerDependencies",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L70"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_peerdependencies_aws_sdk_client_sqs",
+      "label": "@aws-sdk/client-sqs",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L71"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_peerdependencies_azure_service_bus",
+      "label": "@azure/service-bus",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L72"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_peerdependencies_google_cloud_pubsub",
+      "label": "@google-cloud/pubsub",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L73"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_peerdependencies_grpc_grpc_js",
+      "label": "@grpc/grpc-js",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L74"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_peerdependencies_kafkajs",
+      "label": "kafkajs",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L75"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_peerdependencies_mqtt",
+      "label": "mqtt",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L76"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_peerdependencies_nats",
+      "label": "nats",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L77"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_peerdependencies_rabbitmq_client",
+      "label": "rabbitmq-client",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L78"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_peerdependencies_redis",
+      "label": "redis",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L79"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_peerdependenciesmeta",
+      "label": "peerDependenciesMeta",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L81"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_peerdependenciesmeta_mqtt",
+      "label": "mqtt",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L82"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_mqtt_optional",
+      "label": "optional",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L83"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_peerdependenciesmeta_nats",
+      "label": "nats",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L85"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_nats_optional",
+      "label": "optional",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L86"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_peerdependenciesmeta_kafkajs",
+      "label": "kafkajs",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L88"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_kafkajs_optional",
+      "label": "optional",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L89"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_peerdependenciesmeta_rabbitmq_client",
+      "label": "rabbitmq-client",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L91"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_rabbitmq_client_optional",
+      "label": "optional",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L92"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_peerdependenciesmeta_redis",
+      "label": "redis",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L94"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_redis_optional",
+      "label": "optional",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L95"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_peerdependenciesmeta_aws_sdk_client_sqs",
+      "label": "@aws-sdk/client-sqs",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L97"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_aws_sdk_client_sqs_optional",
+      "label": "optional",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L98"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_peerdependenciesmeta_google_cloud_pubsub",
+      "label": "@google-cloud/pubsub",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L100"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_google_cloud_pubsub_optional",
+      "label": "optional",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L101"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_peerdependenciesmeta_azure_service_bus",
+      "label": "@azure/service-bus",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L103"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_azure_service_bus_optional",
+      "label": "optional",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L104"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_peerdependenciesmeta_grpc_grpc_js",
+      "label": "@grpc/grpc-js",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L106"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_grpc_grpc_js_optional",
+      "label": "optional",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L107"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_engines",
+      "label": "engines",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L110"
+    },
+    {
+      "id": "$graphify-root$_packages_microservices_package_engines_bun",
+      "label": "bun",
+      "file_type": "code",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L111"
+    }
+  ],
+  "edges": [
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "$graphify-root$_packages_microservices_package_name",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "$graphify-root$_packages_microservices_package_version",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "$graphify-root$_packages_microservices_package_description",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "$graphify-root$_packages_microservices_package_keywords",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "$graphify-root$_packages_microservices_package_homepage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "$graphify-root$_packages_microservices_package_bugs",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_bugs",
+      "target": "$graphify-root$_packages_microservices_package_bugs_url",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "$graphify-root$_packages_microservices_package_license",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "$graphify-root$_packages_microservices_package_author",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "$graphify-root$_packages_microservices_package_repository",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_repository",
+      "target": "$graphify-root$_packages_microservices_package_repository_type",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_repository",
+      "target": "$graphify-root$_packages_microservices_package_repository_url",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_repository",
+      "target": "$graphify-root$_packages_microservices_package_repository_directory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "$graphify-root$_packages_microservices_package_files",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "$graphify-root$_packages_microservices_package_type",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "$graphify-root$_packages_microservices_package_exports",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_exports",
+      "target": "$graphify-root$_packages_microservices_package_exports_package_json",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "$graphify-root$_packages_microservices_package_publishconfig",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_publishconfig",
+      "target": "$graphify-root$_packages_microservices_package_publishconfig_access",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "$graphify-root$_packages_microservices_package_scripts",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L44",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_scripts",
+      "target": "$graphify-root$_packages_microservices_package_scripts_build",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L45",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_scripts",
+      "target": "$graphify-root$_packages_microservices_package_scripts_dev",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_scripts",
+      "target": "$graphify-root$_packages_microservices_package_scripts_test",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_scripts",
+      "target": "$graphify-root$_packages_microservices_package_scripts_test_vite_plus",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_scripts",
+      "target": "$graphify-root$_packages_microservices_package_scripts_check",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L49",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_scripts",
+      "target": "$graphify-root$_packages_microservices_package_scripts_prepublishonly",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L50",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "$graphify-root$_packages_microservices_package_dependencies",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L52",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_dependencies",
+      "target": "$graphify-root$_packages_microservices_package_dependencies_aponiajs_common",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L53",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "ref_aponiajs_common",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L53",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_dependencies",
+      "target": "$graphify-root$_packages_microservices_package_dependencies_cborg",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L54",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "ref_cborg",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L54",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "$graphify-root$_packages_microservices_package_devdependencies",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_devdependencies",
+      "target": "$graphify-root$_packages_microservices_package_devdependencies_aponiajs_platform_elysia",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L57",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "ref_aponiajs_platform_elysia",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L57",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_devdependencies",
+      "target": "$graphify-root$_packages_microservices_package_devdependencies_aponiajs_testing",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L58",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "ref_aponiajs_testing",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L58",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_devdependencies",
+      "target": "$graphify-root$_packages_microservices_package_devdependencies_aws_sdk_client_sqs",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L59",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "ref_aws_sdk_client_sqs",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L59",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_devdependencies",
+      "target": "$graphify-root$_packages_microservices_package_devdependencies_azure_service_bus",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L60",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "ref_azure_service_bus",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L60",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_devdependencies",
+      "target": "$graphify-root$_packages_microservices_package_devdependencies_google_cloud_pubsub",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L61",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "ref_google_cloud_pubsub",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L61",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_devdependencies",
+      "target": "$graphify-root$_packages_microservices_package_devdependencies_grpc_grpc_js",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L62",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "ref_grpc_grpc_js",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L62",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_devdependencies",
+      "target": "$graphify-root$_packages_microservices_package_devdependencies_elysia",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L63",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "ref_elysia",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L63",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_devdependencies",
+      "target": "$graphify-root$_packages_microservices_package_devdependencies_kafkajs",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L64",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "ref_kafkajs",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L64",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_devdependencies",
+      "target": "$graphify-root$_packages_microservices_package_devdependencies_mqtt",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "ref_mqtt",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L65",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_devdependencies",
+      "target": "$graphify-root$_packages_microservices_package_devdependencies_nats",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L66",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "ref_nats",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L66",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_devdependencies",
+      "target": "$graphify-root$_packages_microservices_package_devdependencies_rabbitmq_client",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L67",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "ref_rabbitmq_client",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L67",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_devdependencies",
+      "target": "$graphify-root$_packages_microservices_package_devdependencies_redis",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L68",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "ref_redis",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L68",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "$graphify-root$_packages_microservices_package_peerdependencies",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L70",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_peerdependencies",
+      "target": "$graphify-root$_packages_microservices_package_peerdependencies_aws_sdk_client_sqs",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L71",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "ref_aws_sdk_client_sqs",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L71",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_peerdependencies",
+      "target": "$graphify-root$_packages_microservices_package_peerdependencies_azure_service_bus",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L72",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "ref_azure_service_bus",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L72",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_peerdependencies",
+      "target": "$graphify-root$_packages_microservices_package_peerdependencies_google_cloud_pubsub",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L73",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "ref_google_cloud_pubsub",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L73",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_peerdependencies",
+      "target": "$graphify-root$_packages_microservices_package_peerdependencies_grpc_grpc_js",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L74",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "ref_grpc_grpc_js",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L74",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_peerdependencies",
+      "target": "$graphify-root$_packages_microservices_package_peerdependencies_kafkajs",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L75",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "ref_kafkajs",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L75",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_peerdependencies",
+      "target": "$graphify-root$_packages_microservices_package_peerdependencies_mqtt",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "ref_mqtt",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L76",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_peerdependencies",
+      "target": "$graphify-root$_packages_microservices_package_peerdependencies_nats",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L77",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "ref_nats",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L77",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_peerdependencies",
+      "target": "$graphify-root$_packages_microservices_package_peerdependencies_rabbitmq_client",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L78",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "ref_rabbitmq_client",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L78",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_peerdependencies",
+      "target": "$graphify-root$_packages_microservices_package_peerdependencies_redis",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L79",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "ref_redis",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L79",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "$graphify-root$_packages_microservices_package_peerdependenciesmeta",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L81",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_peerdependenciesmeta",
+      "target": "$graphify-root$_packages_microservices_package_peerdependenciesmeta_mqtt",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L82",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_peerdependenciesmeta_mqtt",
+      "target": "$graphify-root$_packages_microservices_package_mqtt_optional",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L83",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_peerdependenciesmeta",
+      "target": "$graphify-root$_packages_microservices_package_peerdependenciesmeta_nats",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L85",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_peerdependenciesmeta_nats",
+      "target": "$graphify-root$_packages_microservices_package_nats_optional",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L86",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_peerdependenciesmeta",
+      "target": "$graphify-root$_packages_microservices_package_peerdependenciesmeta_kafkajs",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L88",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_peerdependenciesmeta_kafkajs",
+      "target": "$graphify-root$_packages_microservices_package_kafkajs_optional",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L89",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_peerdependenciesmeta",
+      "target": "$graphify-root$_packages_microservices_package_peerdependenciesmeta_rabbitmq_client",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L91",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_peerdependenciesmeta_rabbitmq_client",
+      "target": "$graphify-root$_packages_microservices_package_rabbitmq_client_optional",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L92",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_peerdependenciesmeta",
+      "target": "$graphify-root$_packages_microservices_package_peerdependenciesmeta_redis",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L94",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_peerdependenciesmeta_redis",
+      "target": "$graphify-root$_packages_microservices_package_redis_optional",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L95",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_peerdependenciesmeta",
+      "target": "$graphify-root$_packages_microservices_package_peerdependenciesmeta_aws_sdk_client_sqs",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L97",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_peerdependenciesmeta_aws_sdk_client_sqs",
+      "target": "$graphify-root$_packages_microservices_package_aws_sdk_client_sqs_optional",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L98",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_peerdependenciesmeta",
+      "target": "$graphify-root$_packages_microservices_package_peerdependenciesmeta_google_cloud_pubsub",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L100",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_peerdependenciesmeta_google_cloud_pubsub",
+      "target": "$graphify-root$_packages_microservices_package_google_cloud_pubsub_optional",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L101",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_peerdependenciesmeta",
+      "target": "$graphify-root$_packages_microservices_package_peerdependenciesmeta_azure_service_bus",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L103",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_peerdependenciesmeta_azure_service_bus",
+      "target": "$graphify-root$_packages_microservices_package_azure_service_bus_optional",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L104",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_peerdependenciesmeta",
+      "target": "$graphify-root$_packages_microservices_package_peerdependenciesmeta_grpc_grpc_js",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L106",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_peerdependenciesmeta_grpc_grpc_js",
+      "target": "$graphify-root$_packages_microservices_package_grpc_grpc_js_optional",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L107",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_json",
+      "target": "$graphify-root$_packages_microservices_package_engines",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L110",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_microservices_package_engines",
+      "target": "$graphify-root$_packages_microservices_package_engines_bun",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/microservices/package.json",
+      "source_location": "L111",
+      "weight": 1.0
+    }
+  ]
+}

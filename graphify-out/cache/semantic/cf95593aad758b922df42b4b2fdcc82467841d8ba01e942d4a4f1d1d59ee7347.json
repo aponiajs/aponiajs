@@ -1,0 +1,168 @@
+{
+  "nodes": [
+    {
+      "id": "packages_platform_elysia_readme_guide",
+      "label": "@aponiajs/platform-elysia README",
+      "file_type": "document",
+      "source_file": "packages/platform-elysia/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_elysia_readme_aponiafactory",
+      "label": "AponiaFactory (platform-elysia)",
+      "file_type": "concept",
+      "source_file": "packages/platform-elysia/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_elysia_readme_websocket_gateway",
+      "label": "Elysia WebSocket Gateways and defineWebSocketGateway",
+      "file_type": "concept",
+      "source_file": "packages/platform-elysia/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_elysia_readme_eden_treaty",
+      "label": "AponiaFactory.createNative and Eden Treaty Inference",
+      "file_type": "concept",
+      "source_file": "packages/platform-elysia/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_elysia_readme_controller_facade",
+      "label": "controller(...) and defineControllerRoutes",
+      "file_type": "concept",
+      "source_file": "packages/platform-elysia/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_elysia_readme_httperror",
+      "label": "HttpError, httpError, and httpErrors (RFC 9457)",
+      "file_type": "concept",
+      "source_file": "packages/platform-elysia/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_elysia_readme_downloadfile",
+      "label": "downloadFile (platform-elysia)",
+      "file_type": "concept",
+      "source_file": "packages/platform-elysia/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_elysia_readme_validation_models",
+      "label": "Named @Validation() Models and InferValidatorOutput",
+      "file_type": "concept",
+      "source_file": "packages/platform-elysia/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_elysia_readme_handlercontext",
+      "label": "HandlerContext, definePlugin, and PluginModule",
+      "file_type": "concept",
+      "rationale": "Explicitly passes Elysia plugin types (~Singleton and ~Ephemeral, excluding ~Volatile) into decorated handlers because decorator compilation erases imported plugin types.",
+      "source_file": "packages/platform-elysia/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_elysia_readme_wrapelysiaplugin",
+      "label": "wrapElysiaPlugin",
+      "file_type": "concept",
+      "source_file": "packages/platform-elysia/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_platform_elysia_readme_guide",
+      "target": "packages_platform_elysia_agents_guide",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/platform-elysia/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_elysia_readme_aponiafactory",
+      "target": "packages_platform_elysia_agents_bootstrap_order",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/platform-elysia/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_elysia_readme_eden_treaty",
+      "target": "packages_platform_elysia_readme_aponiafactory",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-elysia/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_elysia_readme_controller_facade",
+      "target": "packages_platform_elysia_agents_native_route",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/platform-elysia/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_elysia_readme_httperror",
+      "target": "packages_platform_elysia_agents_default_exception_filter",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-elysia/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

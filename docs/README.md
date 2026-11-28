@@ -5,24 +5,26 @@ AponiaJS applications. It is written for two readers at once: an engineer who
 needs the exact contract, and a coding agent that needs the same contract in a
 form it can apply without guessing.
 
-The npm registry currently serves the `0.6.0-alpha.N` line. The source in this
-repository targets the `1.0.0-beta.N` development line, which is not published
-under `@beta` yet. Every page describes the source in this repository; install
-commands name `@alpha` until the beta line ships. When a page and the published
-code disagree, the code, its tests, and `docs/public-api.json` are the record;
-fix the page in the same change that changes the behavior. The
-[package catalog](./reference/packages.md) is the one place that states which
-packages are installable today.
+All 39 publishable packages ship together on npm under the `1.0.0` (`latest`)
+release. When a page and the published code disagree, the code, its tests, and
+`docs/public-api.json` are the record; fix the page in the same change that
+changes the behavior. The [package catalog](./reference/packages.md) lists
+every installable package and its install command.
 
 ## Reading order
 
-1. [Learning path](./learn/README.md) for a first pass through the framework.
-2. [Architecture and style](./build/architecture-and-style.md) before changing
-   application structure or framework internals.
-3. The task map below for the capability being used.
-4. [Stability](./reference/stability.md) before depending on a public export.
-5. [Working with AI agents](./operations/ai-agents.md) when an agent will
-   implement, review, or document the change.
+1. **Getting started**: [01 · Overview](./learn/01-overview.md) and
+   [02 · Install and generate](./learn/02-install-and-generate.md), or the full
+   [Learning path](./learn/README.md) for a first pass through the framework.
+2. **Core architecture**: [Architecture and style](./build/architecture-and-style.md)
+   and [Dependency injection](./build/dependency-injection.md) before changing
+   application structure or module boundaries.
+3. **By task**: use the task map below for the platform, service, or tooling
+   capability being added.
+4. **Before depending on an export**: [Stability](./reference/stability.md) and
+   [Support](./reference/support.md).
+5. **Working with AI agents**: [Working with AI agents](./operations/ai-agents.md)
+   when an agent will implement, review, or document a change.
 
 ## Categories
 
@@ -39,35 +41,35 @@ packages are installable today.
 
 ## Find the page by task
 
-| Task                                           | Start with                                                                                                                                          |
-| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Create and run a project                       | [Install and generate](./learn/02-install-and-generate.md), [CLI](./tooling/cli.md)                                                                 |
-| Run on Hono, H3, Nitro, or another runtime     | [HTTP platforms and delivery adapters](./platforms/adapters.md), [Platform parity](./platforms/platform-parity.md)                                  |
-| Check the supported Elysia version             | [Elysia compatibility](./platforms/elysia-compatibility.md), [Package catalog](./reference/packages.md)                                             |
-| Serve WebSocket gateways                       | [WebSocket gateways](./platforms/websockets.md)                                                                                                     |
-| Mount an Elysia plugin                         | [Native Elysia plugins](./platforms/native-plugins.md), [Plugin packages](./tooling/plugin-packages.md)                                             |
-| Use Eden Treaty types                          | [End-to-end types with Eden Treaty](./platforms/eden-treaty.md)                                                                                     |
-| Inspect a compiled application                 | [Inspecting an application](./platforms/introspection.md)                                                                                           |
-| Model modules, providers, and visibility       | [Dependency injection](./build/dependency-injection.md), [Modules](./learn/03-modules.md)                                                           |
-| Define HTTP routes, parameters, and validation | [Controllers and routes](./learn/05-controllers-and-routes.md), [Validation](./learn/06-validation.md)                                              |
-| Guard, wrap, or map failures                   | [Execution enhancers](./build/enhancers.md)                                                                                                         |
-| Authenticate users and protect sessions        | [Authentication](./services/auth.md), [Threat model](./reference/threat-model.md)                                                                   |
-| Add security headers and CSRF protection       | [Package catalog](./reference/packages.md), [Threat model](./reference/threat-model.md)                                                             |
-| Call another service safely                    | [Package catalog](./reference/packages.md), [Threat model](./reference/threat-model.md)                                                             |
-| Work with files and downloads                  | [Files](./build/files.md)                                                                                                                           |
-| Render Blade views or HTML templates           | [Views and HTML templates](./build/views.md)                                                                                                        |
-| Persist data and run migrations                | [Database](./services/database.md)                                                                                                                  |
-| Enforce lifetimes, mutation, and typestate     | [Compiler invariants](./build/invariants.md), [Request context](./build/request-context.md)                                                         |
-| Run background work                            | [Jobs and the outbox](./services/queues.md), [Microservices](./services/microservices.md)                                                           |
-| Observe a running service                      | [Logging](./build/logging.md), [Devtools](./services/devtools.md)                                                                                   |
-| Deploy, scale, and drain                       | [Deployment](./operations/deployment.md), [Lifecycle](./build/lifecycle.md), [Configuration](./build/configuration.md)                              |
-| Expose OpenAPI, GraphQL, or MCP                | [OpenAPI](./services/openapi.md), [MCP](./services/mcp.md), [Agent surface](./agent/README.md)                                                      |
-| Look up an exported name                       | [API reference](./reference/api.md)                                                                                                                 |
-| Test an application                            | [Testing](./build/testing.md)                                                                                                                       |
-| Author or publish a library                    | [Libraries](./tooling/libraries.md), [Plugin packages](./tooling/plugin-packages.md), [Releasing](./operations/releasing.md)                        |
-| Check support and fix timelines                | [Support and release lifetime](./reference/support.md)                                                                                              |
-| Change the framework itself                    | [Architecture and style](./build/architecture-and-style.md), [Stability](./reference/stability.md), [Feature status](./reference/feature-status.md) |
-| Move an application from NestJS                | [Migrating from NestJS](./build/migrating-from-nest.md)                                                                                             |
+| Task                                           | Start with                                                                                                                                                     |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Create and run a project                       | [Install and generate](./learn/02-install-and-generate.md), [CLI](./tooling/cli.md)                                                                            |
+| Run on Hono, H3, Nitro, or another runtime     | [HTTP platforms and delivery adapters](./platforms/adapters.md), [Platform parity](./platforms/platform-parity.md)                                             |
+| Check the supported Elysia version             | [Elysia compatibility](./platforms/elysia-compatibility.md), [Package catalog](./reference/packages.md)                                                        |
+| Serve WebSocket gateways                       | [WebSocket gateways](./platforms/websockets.md)                                                                                                                |
+| Mount an Elysia plugin                         | [Native Elysia plugins](./platforms/native-plugins.md), [Plugin packages](./tooling/plugin-packages.md)                                                        |
+| Use Eden Treaty types                          | [End-to-end types with Eden Treaty](./platforms/eden-treaty.md)                                                                                                |
+| Inspect a compiled application                 | [Inspecting an application](./platforms/introspection.md)                                                                                                      |
+| Model modules, providers, and visibility       | [Dependency injection](./build/dependency-injection.md), [Modules](./learn/03-modules.md)                                                                      |
+| Define HTTP routes, parameters, and validation | [Controllers and routes](./learn/05-controllers-and-routes.md), [Request parameters](./learn/06-request-parameters.md), [Validation](./learn/07-validation.md) |
+| Guard, wrap, or map failures                   | [Execution enhancers](./build/enhancers.md)                                                                                                                    |
+| Authenticate users and protect sessions        | [Authentication](./services/auth.md), [Threat model](./reference/threat-model.md)                                                                              |
+| Add security headers and CSRF protection       | [Package catalog](./reference/packages.md), [Threat model](./reference/threat-model.md)                                                                        |
+| Call another service safely                    | [Package catalog](./reference/packages.md), [Threat model](./reference/threat-model.md)                                                                        |
+| Work with files and downloads                  | [Files](./build/files.md)                                                                                                                                      |
+| Render Blade views or HTML templates           | [Views and HTML templates](./build/views.md)                                                                                                                   |
+| Persist data and run migrations                | [Database](./services/database.md)                                                                                                                             |
+| Enforce lifetimes, mutation, and typestate     | [Compiler invariants](./build/invariants.md), [Request context](./build/request-context.md)                                                                    |
+| Run background work                            | [Jobs and the outbox](./services/queues.md), [Microservices](./services/microservices.md)                                                                      |
+| Observe a running service                      | [Logging](./build/logging.md), [Devtools](./services/devtools.md)                                                                                              |
+| Deploy, scale, and drain                       | [Deployment](./operations/deployment.md), [Lifecycle](./build/lifecycle.md), [Configuration](./build/configuration.md)                                         |
+| Expose OpenAPI, GraphQL, or MCP                | [OpenAPI](./services/openapi.md), [MCP](./services/mcp.md), [Agent surface](./agent/README.md)                                                                 |
+| Look up an exported name                       | [API reference](./reference/api.md)                                                                                                                            |
+| Test an application                            | [Testing](./build/testing.md)                                                                                                                                  |
+| Author or publish a library                    | [Libraries](./tooling/libraries.md), [Plugin packages](./tooling/plugin-packages.md), [Releasing](./operations/releasing.md)                                   |
+| Check support and fix timelines                | [Support and release lifetime](./reference/support.md)                                                                                                         |
+| Change the framework itself                    | [Architecture and style](./build/architecture-and-style.md), [Stability](./reference/stability.md), [Feature status](./reference/feature-status.md)            |
+| Move an application from NestJS                | [Migrating from NestJS](./build/migrating-from-nest.md)                                                                                                        |
 
 ## What a page in this set guarantees
 

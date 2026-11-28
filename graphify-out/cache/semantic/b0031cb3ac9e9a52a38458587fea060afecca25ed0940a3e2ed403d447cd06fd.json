@@ -1,0 +1,82 @@
+{
+  "nodes": [
+    {
+      "id": "docs_learn_14_devtools_guide",
+      "label": "14 \u00b7 Devtools",
+      "file_type": "document",
+      "source_file": "docs/learn/14-devtools.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_learn_14_devtools_module",
+      "label": "@aponiajs/devtools (DevtoolsModule.forRoot)",
+      "file_type": "concept",
+      "rationale": "Reports from the neutral boot record with zero platform package imports so the same registration works across Elysia, Hono, H3, and serverless Fetch; mounts nothing when enabled is false.",
+      "source_file": "docs/learn/14-devtools.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_learn_14_devtools_endpoints",
+      "label": "Devtools Endpoints (/__devtools/meta, graph, routes, flow, aot, logs, requests)",
+      "file_type": "concept",
+      "rationale": "Explicitly scopes reporting to compiled plans and neutral boot records, omitting native plugin hooks (derive/resolve/beforeHandle) and routes mounted outside the module graph.",
+      "source_file": "docs/learn/14-devtools.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_learn_14_devtools_guide",
+      "target": "docs_learn_14_devtools_module",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/learn/14-devtools.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_learn_14_devtools_guide",
+      "target": "docs_learn_14_devtools_endpoints",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/learn/14-devtools.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_learn_14_devtools_module",
+      "target": "docs_platforms_platform_parity_capability_contract",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/learn/14-devtools.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_learn_14_devtools_guide",
+      "target": "docs_learn_15_files_guide",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/learn/14-devtools.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

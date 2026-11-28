@@ -1,0 +1,151 @@
+{
+  "nodes": [
+    {
+      "id": "docs_reference_threat_model_threat_model",
+      "label": "AponiaJS Threat Model",
+      "file_type": "document",
+      "source_file": "docs/reference/threat-model.md",
+      "source_location": "L1-L79",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_reference_threat_model_trust_boundaries",
+      "label": "Framework Trust Boundaries",
+      "file_type": "rationale",
+      "source_file": "docs/reference/threat-model.md",
+      "source_location": "L7-L20",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Partitions defenses across five boundaries: client-to-application, application-to-dependency, application-to-outbound-service, application-to-operator-surfaces, and process-to-shared-state."
+    },
+    {
+      "id": "docs_reference_threat_model_ssrf_defense",
+      "label": "SSRF Outbound Control",
+      "file_type": "concept",
+      "source_file": "docs/reference/threat-model.md",
+      "source_location": "L31-L32, L77-L78",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_reference_threat_model_residual_risks",
+      "label": "Threat Model Residual Risks",
+      "file_type": "rationale",
+      "source_file": "docs/reference/threat-model.md",
+      "source_location": "L39-L69",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Explicitly documents what the framework leaves to deployments: path-rewrite versioning remaining URI-reachable, process-local stores, fixed-window bursts, password policy, edge WAF, microservice caller auth, and serverless gateway auth."
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_reference_threat_model_threat_model",
+      "target": "docs_services_devtools_aponiajs_devtools",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/threat-model.md",
+      "source_location": "L35, L74",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_threat_model_threat_model",
+      "target": "docs_services_mcp_aponiajs_mcp",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/threat-model.md",
+      "source_location": "L36, L74",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_threat_model_threat_model",
+      "target": "docs_services_auth_aponiajs_auth",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/threat-model.md",
+      "source_location": "L25-L26",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_threat_model_threat_model",
+      "target": "docs_services_microservices_aponiajs_microservices",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/threat-model.md",
+      "source_location": "L58-L62",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_threat_model_threat_model",
+      "target": "docs_reference_packages_aponiajs_serverless",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/threat-model.md",
+      "source_location": "L63-L66",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_threat_model_ssrf_defense",
+      "target": "docs_reference_packages_aponiajs_http",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/threat-model.md",
+      "source_location": "L31-L32, L77-L78",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_threat_model_trust_boundaries",
+      "target": "docs_reference_threat_model_threat_model",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/threat-model.md",
+      "source_location": "L7-L20",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_reference_threat_model_residual_risks",
+      "target": "docs_reference_threat_model_threat_model",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/reference/threat-model.md",
+      "source_location": "L39-L69",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "process_local_store_boundary",
+      "label": "Bounded Process-Local Stores Replaced by Shared/Redis Adapters",
+      "nodes": [
+        "docs_reference_threat_model_residual_risks",
+        "docs_reference_packages_aponiajs_store_redis",
+        "docs_reference_packages_aponiajs_cache",
+        "docs_reference_packages_aponiajs_rate_limit",
+        "docs_reference_packages_aponiajs_session",
+        "docs_services_auth_refreshtokenservice",
+        "docs_services_queues_durable_backlog_boundary"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/reference/threat-model.md"
+    }
+  ]
+}

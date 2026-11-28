@@ -3,7 +3,7 @@
 A progressive TypeScript framework for building efficient, reliable, and scalable server-side applications.
 
 [![CI](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml/badge.svg)](https://github.com/aponiajs/aponiajs/actions/workflows/ci.yml)
-[![CLI npm version](https://img.shields.io/npm/v/%40aponiajs%2Fcli/alpha?label=CLI)](https://www.npmjs.com/package/@aponiajs/cli)
+[![CLI npm version](https://img.shields.io/npm/v/%40aponiajs%2Fcli?label=CLI)](https://www.npmjs.com/package/@aponiajs/cli)
 [![Bun](https://img.shields.io/badge/Bun-1.4.5-black)](https://bun.sh)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 
@@ -16,7 +16,7 @@ Requires Bun 1.4.5 or later. Decorator-based applications need `experimentalDeco
 ## Installation
 
 ```bash
-bun add --global @aponiajs/cli@alpha
+bun add --global @aponiajs/cli
 aponia new my-api
 cd my-api
 bun run dev
@@ -27,7 +27,7 @@ The application listens on `http://localhost:3000`.
 For an existing Bun project:
 
 ```bash
-bun add @aponiajs/common@alpha @aponiajs/platform-elysia@alpha elysia@2.0.0-rc.4
+bun add @aponiajs/common @aponiajs/platform-elysia elysia@2.0.0-rc.4
 ```
 
 ## Quick start
@@ -60,7 +60,7 @@ const application = await AponiaFactory.create(AppModule);
 await application.listen(3000);
 ```
 
-`AponiaFactory` from `@aponiajs/platform-elysia` boots the default platform. Another runtime takes its adapter as the second argument: `AponiaFactory.create(AppModule, honoAdapter())` with `AponiaFactory` from `@aponiajs/platform-core`.
+`AponiaFactory` from `@aponiajs/platform-elysia` boots the default platform. Another runtime boots through its own platform package (`@aponiajs/platform-hono` or `@aponiajs/platform-h3`), e.g. `AponiaFactory.create(AppModule)` from `@aponiajs/platform-hono`.
 
 ## Documentation
 
@@ -81,13 +81,11 @@ The framework ships as focused packages with explicit dependencies:
 - **Services**: `@aponiajs/auth`, `@aponiajs/cache`, `@aponiajs/compression`, `@aponiajs/database`, `@aponiajs/events`, `@aponiajs/http`, `@aponiajs/queue`, `@aponiajs/rate-limit`, `@aponiajs/security`, `@aponiajs/session`.
 - **Delivery**: `@aponiajs/microservices`, `@aponiajs/serverless`, `@aponiajs/nitro`.
 
-All packages share one synchronized release version. See the [package catalog](./docs/reference/packages.md) for what is installable today.
+All packages share one synchronized release version. See the [package catalog](./docs/reference/packages.md) for the complete list.
 
 ## Release status
 
-npm currently serves the `0.6.0-alpha.N` line for `@aponiajs/common`, `@aponiajs/core`, `@aponiajs/platform-elysia`, `@aponiajs/cli`, `create-aponia`, and `@aponiajs/devtools`. The source targets `1.0.0-beta.N`, which is not published yet.
-
-The framework is pre-1.0 and not production ready. Pin an exact version and review the [stability policy](./docs/reference/stability.md) before deploying.
+All 39 publishable packages ship together on npm under `latest` (`1.0.0`). See the [stability policy](./docs/reference/stability.md) and [support policy](./docs/reference/support.md) for compatibility guarantees and release channels.
 
 ## Support
 

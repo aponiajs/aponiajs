@@ -189,8 +189,12 @@ On Hono, H3, and Nitro the socket is a `GatewaySocket` and the server reference
 is a `GatewayServer`:
 
 ```ts
-import { WebSocketServer, type OnGatewayInit } from "@aponiajs/common";
-import type { GatewayServer, GatewaySocket } from "@aponiajs/platform-core";
+import {
+  WebSocketServer,
+  type GatewayServer,
+  type GatewaySocket,
+  type OnGatewayInit,
+} from "@aponiajs/common";
 
 @WebSocketGateway("/events")
 export class EventsGateway implements OnGatewayInit<GatewayServer> {
@@ -267,10 +271,11 @@ build-time compiler is the path to decorator-wide Eden inference.
 import {
   WebSocketGateway,
   WebSocketServer,
+  type GatewayServer,
+  type GatewaySocket,
   type OnGatewayDisconnect,
   type OnGatewayInit,
 } from "@aponiajs/common";
-import type { GatewayServer, GatewaySocket } from "@aponiajs/platform-core";
 
 @WebSocketGateway("/events")
 export class EventsGateway
@@ -371,7 +376,7 @@ callback; return a `WsResponse` instead.
 
 ```bash
 bun test packages/platform-elysia/src/websockets/websocket-gateway.spec.ts
-bun test packages/platform-core/src/websocket-gateway.spec.ts
+bun test packages/common/src/websockets/websocket-gateway.spec.ts
 bun run example:websockets
 ```
 

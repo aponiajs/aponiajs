@@ -1,0 +1,276 @@
+{
+  "nodes": [
+    {
+      "id": "packages_auth_agents_guide",
+      "label": "@aponiajs/auth Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/auth/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_auth_agents_authmodule",
+      "label": "AuthModule",
+      "file_type": "concept",
+      "rationale": "ConfigurableModuleBuilder definition with one arm where isGlobal and globalGuard default to true; registerAsync is refused because the jwt/oidc arm decides which verifier provider exists.",
+      "source_file": "packages/auth/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_auth_agents_authguard",
+      "label": "AuthGuard",
+      "file_type": "concept",
+      "rationale": "Extracts bearer or cookie token, verifies signature and jti revocation, calls AuthService.enter, and writes user and frozen session onto RouteContext.",
+      "source_file": "packages/auth/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_auth_agents_authservice",
+      "label": "AuthService",
+      "file_type": "concept",
+      "rationale": "Reads RequestContextService rather than private AsyncLocalStorage because the guard runs in a different async context than the route handler.",
+      "source_file": "packages/auth/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_auth_agents_jwtservice",
+      "label": "JwtService",
+      "file_type": "concept",
+      "rationale": "Signs and verifies tokens through jose with issuer, audience, and algorithm checks, kid-based key selection, minimum 32-character secret, and automatic jti minting.",
+      "source_file": "packages/auth/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_auth_agents_oidcservice",
+      "label": "OidcService",
+      "file_type": "concept",
+      "rationale": "Reads provider discovery document, pins configured issuer, and verifies tokens against cached published key sets.",
+      "source_file": "packages/auth/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_auth_agents_permissionsguard",
+      "label": "PermissionsGuard",
+      "file_type": "concept",
+      "rationale": "Authorization guard preserving the distinction between 401 authentication errors and 403 Problem Details authorization errors.",
+      "source_file": "packages/auth/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_auth_agents_refreshtokenservice",
+      "label": "RefreshTokenService",
+      "file_type": "concept",
+      "rationale": "Issues and rotates opaque refresh tokens storing only SHA-256 digests; atomic consume detects token reuse, throws INVALID_REFRESH_TOKEN, and revokes the token family.",
+      "source_file": "packages/auth/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_auth_agents_revocationservice",
+      "label": "RevocationService",
+      "file_type": "concept",
+      "rationale": "Tracks revoked access-token jti claims until expiry in a bounded process-local store or custom shared store.",
+      "source_file": "packages/auth/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_auth_agents_passwordhasherservice",
+      "label": "PasswordHasherService",
+      "file_type": "concept",
+      "rationale": "Delegates password hashing and verification to Bun.password instead of hand-rolling a KDF.",
+      "source_file": "packages/auth/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_auth_agents_tombstone_cap_invariant",
+      "label": "Refresh Store Tombstone Cap",
+      "file_type": "rationale",
+      "rationale": "Consumed-token tombstones share MemoryRefreshTokenStore's record cap so rotation loops cannot grow memory without bound or degrade store scans.",
+      "source_file": "packages/auth/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_auth_agents_current_user_session",
+      "label": "@CurrentUser and @CurrentSession Decorators",
+      "file_type": "concept",
+      "rationale": "Read authenticated user and frozen session from RouteContext and return null on @Public() routes or outside a request.",
+      "source_file": "packages/auth/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_auth_agents_guide",
+      "target": "packages_auth_agents_authmodule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/auth/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_auth_agents_authmodule",
+      "target": "packages_auth_agents_authguard",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/auth/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_auth_agents_authmodule",
+      "target": "packages_auth_agents_jwtservice",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/auth/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_auth_agents_authmodule",
+      "target": "packages_auth_agents_oidcservice",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/auth/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_auth_agents_authguard",
+      "target": "packages_auth_agents_jwtservice",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/auth/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_auth_agents_authguard",
+      "target": "packages_auth_agents_revocationservice",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/auth/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_auth_agents_authguard",
+      "target": "packages_auth_agents_authservice",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/auth/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_auth_agents_current_user_session",
+      "target": "packages_auth_agents_authguard",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/auth/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_auth_agents_authguard",
+      "target": "packages_auth_agents_permissionsguard",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/auth/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_auth_agents_tombstone_cap_invariant",
+      "target": "packages_auth_agents_refreshtokenservice",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/auth/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_auth_agents_guide",
+      "target": "packages_auth_agents_passwordhasherservice",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/auth/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "auth_token_verification_and_session_flow",
+      "label": "AuthGuard Token Verification and Request Context Flow",
+      "nodes": [
+        "packages_auth_agents_authguard",
+        "packages_auth_agents_jwtservice",
+        "packages_auth_agents_revocationservice",
+        "packages_auth_agents_authservice",
+        "packages_auth_agents_current_user_session"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/auth/AGENTS.md"
+    }
+  ]
+}

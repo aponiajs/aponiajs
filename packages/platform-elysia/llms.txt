@@ -48,7 +48,7 @@ Decorated modules, controllers, gateways, and `@Validation()` models are the nor
 - [Testing an application](../../docs/build/testing.md): asserting through `application.handle(new Request(...))` without a port.
 - [Lifecycle](../../docs/build/lifecycle.md): the five moments a provider can hook, what the framework does when one fails, stopping on a signal, and the readiness and liveness probes.
 - [Controllers and routes](../../docs/learn/05-controllers-and-routes.md): how a request reaches a controller method.
-- [Native plugins](../../docs/learn/08-native-plugins.md): the short walkthrough of mounting an Elysia plugin.
-- [Logging](../../docs/learn/09-logging.md): what the framework prints, and how to replace it.
-- [Testing](../../docs/learn/11-testing.md): exercising a real application without a port.
+- [Logging](../../docs/learn/12-logging.md): what the framework prints, and how to replace it.
+- [Native plugins](../../docs/learn/13-native-plugins.md): the short walkthrough of mounting an Elysia plugin.
+- [Testing](../../docs/learn/15-testing.md): exercising a real application without a port.
 - [Published packages](../../docs/reference/packages.md): the npm catalog and install commands.

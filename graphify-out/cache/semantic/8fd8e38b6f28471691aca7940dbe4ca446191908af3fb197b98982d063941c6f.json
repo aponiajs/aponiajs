@@ -1,0 +1,49 @@
+{
+  "nodes": [
+    {
+      "id": "packages_queue_readme_guide",
+      "label": "@aponiajs/queue README",
+      "file_type": "document",
+      "source_file": "packages/queue/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_queue_readme_memoryqueuestore",
+      "label": "MemoryQueueStore",
+      "file_type": "concept",
+      "source_file": "packages/queue/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_queue_readme_guide",
+      "target": "packages_platform_elysia_readme_aponiafactory",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/queue/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_queue_readme_memoryqueuestore",
+      "target": "packages_queue_agents_backlog_not_broker",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/queue/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

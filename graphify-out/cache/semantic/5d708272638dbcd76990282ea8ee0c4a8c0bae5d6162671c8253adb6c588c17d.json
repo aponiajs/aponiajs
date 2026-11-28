@@ -1,0 +1,28 @@
+{
+  "nodes": [
+    {
+      "id": "github_issue_template_bug_report_bug_report_template",
+      "label": "Bug Report Issue Template",
+      "file_type": "document",
+      "source_file": ".github/ISSUE_TEMPLATE/bug_report.yml",
+      "source_location": "L1-L38",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "github_issue_template_bug_report_bug_report_template",
+      "target": "github_issue_template_config_issue_template_config",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".github/ISSUE_TEMPLATE/bug_report.yml",
+      "source_location": "L6-L10",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

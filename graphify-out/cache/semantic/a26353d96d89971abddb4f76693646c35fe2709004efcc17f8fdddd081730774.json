@@ -1,0 +1,81 @@
+{
+  "nodes": [
+    {
+      "id": "scratch_nestjs_dx_parity_issues_06_nest_aliases_and_testing_lifecycle_core_and_platform_nest_aliases",
+      "label": "Core & Platform NestJS Aliases (NestFactory, INestApplication)",
+      "file_type": "concept",
+      "source_file": ".scratch/nestjs-dx-parity/issues/06-nest-aliases-and-testing-lifecycle.md",
+      "source_location": "L11",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_issues_06_nest_aliases_and_testing_lifecycle_sync_create_nest_application",
+      "label": "Synchronous TestingModule.createNestApplication() & Deferred init()",
+      "file_type": "concept",
+      "rationale": "Create the application synchronously while sharing TestingModule container instances so app.useGlobal* and setGlobalPrefix can be configured before await app.init(), preserving backward compatibility with createAponiaApplication().",
+      "source_file": ".scratch/nestjs-dx-parity/issues/06-nest-aliases-and-testing-lifecycle.md",
+      "source_location": "L12",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_issues_06_nest_aliases_and_testing_lifecycle_testing_shutdown_and_mocker_parity",
+      "label": "TestingModule Shutdown Lifecycle & Mocker Parity",
+      "file_type": "concept",
+      "source_file": ".scratch/nestjs-dx-parity/issues/06-nest-aliases-and-testing-lifecycle.md",
+      "source_location": "L13",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "scratch_nestjs_dx_parity_issues_06_nest_aliases_and_testing_lifecycle_core_and_platform_nest_aliases",
+      "target": "scratch_nestjs_dx_parity_issues_03_callhandler_interceptor_contract_zero_rxjs_callstream",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/issues/06-nest-aliases-and-testing-lifecycle.md",
+      "source_location": "L5,L11",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_issues_06_nest_aliases_and_testing_lifecycle_core_and_platform_nest_aliases",
+      "target": "scratch_nestjs_dx_parity_issues_04_middleware_and_execution_context_middleware_parity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/issues/06-nest-aliases-and-testing-lifecycle.md",
+      "source_location": "L5,L11",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_issues_06_nest_aliases_and_testing_lifecycle_sync_create_nest_application",
+      "target": "scratch_nestjs_dx_parity_issues_02_controller_options_and_route_decorators_redirect_res_versioning_and_prefix",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/issues/06-nest-aliases-and-testing-lifecycle.md",
+      "source_location": "L5,L12",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_issues_06_nest_aliases_and_testing_lifecycle_testing_shutdown_and_mocker_parity",
+      "target": "scratch_nestjs_dx_parity_issues_01_property_injection_and_di_metadata_forwardref_module_reexports",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/issues/06-nest-aliases-and-testing-lifecycle.md",
+      "source_location": "L5,L13",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -1,0 +1,49 @@
+{
+  "nodes": [
+    {
+      "id": "packages_create_aponia_llms_create_aponia_bin",
+      "label": "bin/create-aponia.ts",
+      "file_type": "code",
+      "source_file": "packages/create-aponia/llms.txt",
+      "source_location": "line 9",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_create_aponia_llms_runcli",
+      "label": "runCli",
+      "file_type": "concept",
+      "source_file": "packages/create-aponia/llms.txt",
+      "source_location": "line 9",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_create_aponia_llms_create_aponia_bin",
+      "target": "packages_create_aponia_llms_runcli",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/create-aponia/llms.txt",
+      "source_location": "line 9",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_create_aponia_llms_create_aponia_bin",
+      "target": "packages_create_aponia_agents_create_aponia",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/create-aponia/llms.txt",
+      "source_location": "line 9",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

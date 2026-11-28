@@ -1,0 +1,39 @@
+{
+  "nodes": [
+    {
+      "id": "examples_dependency_injection_readme_di_example",
+      "label": "Dependency Injection Example",
+      "file_type": "document",
+      "source_file": "examples/dependency-injection/README.md",
+      "source_location": "L1-L19",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "examples_dependency_injection_readme_provider_visibility_and_failures",
+      "label": "Provider Kinds, Private Visibility & Graph Compile Failures",
+      "file_type": "concept",
+      "source_file": "examples/dependency-injection/README.md",
+      "source_location": "L3-L17",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "examples_dependency_injection_readme_provider_visibility_and_failures",
+      "target": "examples_dependency_injection_readme_di_example",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "examples/dependency-injection/README.md",
+      "source_location": "L3-L17",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

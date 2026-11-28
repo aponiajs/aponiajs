@@ -1,0 +1,28 @@
+{
+  "nodes": [
+    {
+      "id": "packages_platform_h3_llms_overview",
+      "label": "@aponiajs/platform-h3 llms.txt",
+      "file_type": "document",
+      "source_file": "packages/platform-h3/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_platform_h3_llms_overview",
+      "target": "packages_platform_h3_readme_toh3platformhandler",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-h3/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

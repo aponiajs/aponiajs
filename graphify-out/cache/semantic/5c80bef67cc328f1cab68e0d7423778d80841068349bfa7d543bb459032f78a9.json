@@ -1,0 +1,149 @@
+{
+  "nodes": [
+    {
+      "id": "packages_cache_agents_guide",
+      "label": "@aponiajs/cache Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/cache/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cache_agents_cachemodule",
+      "label": "CacheModule",
+      "file_type": "concept",
+      "rationale": "ConfigurableModuleBuilder registration exporting CacheService, MODULE_OPTIONS_TOKEN, and the Nest-compatible CACHE_MANAGER alias.",
+      "source_file": "packages/cache/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cache_agents_cacheservice",
+      "label": "CacheService",
+      "file_type": "concept",
+      "rationale": "Application-level cache storing references by prefixed key where undefined deletes/misses and missing TTL means no expiry.",
+      "source_file": "packages/cache/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cache_agents_single_flight_wrap",
+      "label": "Single-Flight CacheService.wrap",
+      "file_type": "rationale",
+      "rationale": "Concurrent misses per key share one factory execution and rejection to prevent stampedes; failed runs leave no cached entry so subsequent calls retry.",
+      "source_file": "packages/cache/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cache_agents_memorycachestore",
+      "label": "MemoryCacheStore",
+      "file_type": "concept",
+      "rationale": "Bounded process-local store with oldest-insertion eviction and lazy expiry without per-entry timers.",
+      "source_file": "packages/cache/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cache_agents_cacheinterceptor",
+      "label": "CacheInterceptor",
+      "file_type": "concept",
+      "rationale": "Writes cacheable GET responses only and cannot replay responses because Aponia's interceptor contract has no next.handle(); read-through uses CacheService.wrap.",
+      "source_file": "packages/cache/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cache_agents_cache_decorators",
+      "label": "@CacheKey and @CacheTTL Decorators",
+      "file_type": "concept",
+      "source_file": "packages/cache/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_cache_agents_guide",
+      "target": "packages_cache_agents_cachemodule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cache/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cache_agents_cachemodule",
+      "target": "packages_cache_agents_cacheservice",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cache/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cache_agents_single_flight_wrap",
+      "target": "packages_cache_agents_cacheservice",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cache/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cache_agents_cacheservice",
+      "target": "packages_cache_agents_memorycachestore",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cache/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cache_agents_cacheinterceptor",
+      "target": "packages_cache_agents_cache_decorators",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cache/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cache_agents_cacheinterceptor",
+      "target": "packages_cache_agents_cacheservice",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cache/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

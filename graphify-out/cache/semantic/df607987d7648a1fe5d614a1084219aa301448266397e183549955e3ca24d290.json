@@ -1,0 +1,110 @@
+{
+  "nodes": [
+    {
+      "id": "scratch_nestjs_dx_parity_map_nestjs_dx_parity_map",
+      "label": "NestJS 1:1 DI & DX Parity Map",
+      "file_type": "document",
+      "source_file": ".scratch/nestjs-dx-parity/map.md",
+      "source_location": "L1-L44",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_map_compatibility_posture",
+      "label": "NestJS 1:1 Compatibility Posture",
+      "file_type": "rationale",
+      "rationale": "Achieve 1:1 NestJS DX and API parity via compatible aliases and closing behavioral gaps while preserving Aponia's Bun/Elysia strengths: Standard Schema validation, zero-RxJS runtime, Elysia sucrose static compilation on non-intercept() routes, and descriptor authoring via defineModule/defineController.",
+      "source_file": ".scratch/nestjs-dx-parity/map.md",
+      "source_location": "L14",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_map_out_of_scope_boundaries",
+      "label": "NestJS Parity Out-of-Scope Boundaries",
+      "file_type": "rationale",
+      "rationale": "Exclude mandatory rxjs, class-validator, class-transformer, Express/Fastify MVC adapters, Node.js runtime track, and Socket.IO namespaces/rooms/acks to avoid bloat and preserve Bun/Elysia static compilation and descriptor authoring.",
+      "source_file": ".scratch/nestjs-dx-parity/map.md",
+      "source_location": "L38-L44",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "scratch_nestjs_dx_parity_map_compatibility_posture",
+      "target": "scratch_nestjs_dx_parity_map_nestjs_dx_parity_map",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/map.md",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_map_out_of_scope_boundaries",
+      "target": "scratch_nestjs_dx_parity_map_nestjs_dx_parity_map",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/map.md",
+      "source_location": "L38-L44",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_map_compatibility_posture",
+      "target": "scratch_nestjs_dx_parity_issues_03_callhandler_interceptor_contract_elysia_sucrose_preservation",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/map.md",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_map_compatibility_posture",
+      "target": "scratch_nestjs_dx_parity_issues_03_callhandler_interceptor_contract_zero_rxjs_callstream",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/map.md",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_map_out_of_scope_boundaries",
+      "target": "scratch_nestjs_dx_parity_issues_05_pipes_uploads_and_serialization_serialization_decorators",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/map.md",
+      "source_location": "L41",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "nestjs_dx_parity_foundation",
+      "label": "NestJS 1:1 DX Parity Architecture Across Aliases, Config, OpenAPI, and CLI",
+      "nodes": [
+        "scratch_nestjs_dx_parity_map_nestjs_dx_parity_map",
+        "scratch_nestjs_dx_parity_map_compatibility_posture",
+        "scratch_nestjs_dx_parity_map_out_of_scope_boundaries",
+        "scratch_nestjs_dx_parity_issues_06_nest_aliases_and_testing_lifecycle_core_and_platform_nest_aliases",
+        "scratch_nestjs_dx_parity_issues_07_config_package_design_config_module",
+        "scratch_nestjs_dx_parity_issues_08_openapi_and_ecosystem_aliases_openapi_swagger_surface",
+        "scratch_nestjs_dx_parity_issues_10_cli_templates_and_resource_dx_cli_new_starter_template"
+      ],
+      "relation": "form",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/nestjs-dx-parity/map.md"
+    }
+  ]
+}

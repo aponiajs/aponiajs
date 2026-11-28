@@ -1,0 +1,70 @@
+{
+  "nodes": [
+    {
+      "id": "examples_mcp_readme_mcp_example",
+      "label": "MCP Example",
+      "file_type": "document",
+      "source_file": "examples/mcp/README.md",
+      "source_location": "L1-L37",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "examples_mcp_readme_orders_tools",
+      "label": "OrdersTools @Tool Provider",
+      "file_type": "concept",
+      "source_file": "examples/mcp/README.md",
+      "source_location": "L3-L24",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "examples_mcp_readme_api_key_guard",
+      "label": "ApiKeyGuard MCP Token Protection",
+      "file_type": "concept",
+      "source_file": "examples/mcp/README.md",
+      "source_location": "L26-L37",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "examples_mcp_readme_mcp_example",
+      "target": "examples_mcp_readme_orders_tools",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "examples/mcp/README.md",
+      "source_location": "L3-L24",
+      "weight": 1.0
+    },
+    {
+      "source": "examples_mcp_readme_mcp_example",
+      "target": "examples_mcp_readme_api_key_guard",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "examples/mcp/README.md",
+      "source_location": "L26-L37",
+      "weight": 1.0
+    },
+    {
+      "source": "examples_mcp_readme_mcp_example",
+      "target": "llms_aponiajs_index",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "examples/mcp/README.md",
+      "source_location": "L3-L5",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

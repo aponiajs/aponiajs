@@ -1,0 +1,102 @@
+{
+  "nodes": [
+    {
+      "id": "packages_security_llms_summary",
+      "label": "@aponiajs/security llms.txt",
+      "file_type": "document",
+      "source_file": "packages/security/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_security_llms_securityheadersoptions",
+      "label": "SecurityHeadersOptions",
+      "file_type": "concept",
+      "source_file": "packages/security/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_security_llms_csrfoptions",
+      "label": "CsrfOptions",
+      "file_type": "concept",
+      "source_file": "packages/security/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_security_llms_securitymoduleoptions",
+      "label": "SecurityModuleOptions",
+      "file_type": "concept",
+      "source_file": "packages/security/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_security_llms_invalid_security_options",
+      "label": "INVALID_SECURITY_OPTIONS",
+      "file_type": "concept",
+      "source_file": "packages/security/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_security_llms_summary",
+      "target": "packages_security_readme_aponiajs_security",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/security/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_security_llms_securitymoduleoptions",
+      "target": "packages_security_llms_securityheadersoptions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/security/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_security_llms_securitymoduleoptions",
+      "target": "packages_security_llms_csrfoptions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/security/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_security_llms_summary",
+      "target": "packages_security_llms_invalid_security_options",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/security/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -1,0 +1,113 @@
+{
+  "nodes": [
+    {
+      "id": "docs_learn_11_testing_guide",
+      "label": "11 \u00b7 Testing",
+      "file_type": "document",
+      "source_file": "docs/learn/11-testing.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_learn_11_testing_in_process_handle",
+      "label": "In-Process Request Testing via application.handle",
+      "file_type": "rationale",
+      "rationale": "Exercises the real module graph, container, and routes via Request/Response without binding a network port.",
+      "source_file": "docs/learn/11-testing.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_learn_11_testing_aponia_testing_kit",
+      "label": "@aponiajs/testing (createTestApplication)",
+      "file_type": "concept",
+      "rationale": "Rewrites the compiled graph in memory for provider overrides so the module class stays untouched and boots share nothing, while leaving test and expect to the test runner.",
+      "source_file": "docs/learn/11-testing.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_learn_11_testing_dual_test_lanes",
+      "label": "Bun Spec Lane & Vite+ Conformance Lane",
+      "file_type": "concept",
+      "source_file": "docs/learn/11-testing.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_learn_11_testing_guide",
+      "target": "docs_learn_11_testing_in_process_handle",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/learn/11-testing.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_learn_11_testing_guide",
+      "target": "docs_learn_11_testing_aponia_testing_kit",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/learn/11-testing.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_learn_11_testing_guide",
+      "target": "docs_learn_11_testing_dual_test_lanes",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/learn/11-testing.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_learn_11_testing_in_process_handle",
+      "target": "docs_learn_10_errors_aponiaerror",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/learn/11-testing.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_learn_11_testing_in_process_handle",
+      "target": "docs_learn_09_logging_loggerservice",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/learn/11-testing.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_learn_11_testing_guide",
+      "target": "docs_learn_12_releasing_guide",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/learn/11-testing.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

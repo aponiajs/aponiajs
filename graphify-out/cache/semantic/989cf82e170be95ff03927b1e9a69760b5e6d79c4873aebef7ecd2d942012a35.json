@@ -1,0 +1,32 @@
+{
+  "nodes": [
+    {
+      "id": "github_workflows_publish_publish_workflow",
+      "label": "Publish npm Packages Workflow",
+      "file_type": "document",
+      "source_file": ".github/workflows/publish.yml",
+      "source_location": "L1-L201",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [],
+  "hyperedges": [
+    {
+      "id": "npm_release_and_ci_pipeline",
+      "label": "AponiaJS CI, Verification, and npm Provenance Release Pipeline",
+      "nodes": [
+        "github_workflows_ci_ci_workflow",
+        "github_workflows_release_release_workflow",
+        "github_workflows_publish_publish_workflow",
+        "github_workflows_canary_canary_workflow"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".github/workflows/publish.yml"
+    }
+  ]
+}

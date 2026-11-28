@@ -1,0 +1,185 @@
+{
+  "nodes": [
+    {
+      "id": "packages_common_agents_guide",
+      "label": "@aponiajs/common Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/common/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Defines @aponiajs/common as the platform-neutral contract layer with reflect-metadata as its sole runtime dependency and zero Elysia, HTTP, or Bun runtime APIs."
+    },
+    {
+      "id": "packages_common_agents_metadata_only_decorators",
+      "label": "Metadata-Only Decorator Surface",
+      "file_type": "rationale",
+      "source_file": "packages/common/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Decorators only record reflect-metadata entries under Symbol.for('aponia.*.metadata') keys and never construct graphs, routes, or containers; @Injectable() stays a no-op solely for emitDecoratorMetadata."
+    },
+    {
+      "id": "packages_common_agents_own_vs_inherited_metadata",
+      "label": "Own-Only Metadata vs Inherited Constructor Dependencies",
+      "file_type": "rationale",
+      "source_file": "packages/common/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Module, controller, enhancer, and validation metadata use Reflect.getOwnMetadata so subclasses do not inherit parent metadata, whereas design:paramtypes and @Inject() use Reflect.getMetadata so subclasses without a constructor resolve parent constructor tokens."
+    },
+    {
+      "id": "packages_common_agents_validator_schema_contract",
+      "label": "ValidatorSchema Structural Contract",
+      "file_type": "concept",
+      "source_file": "packages/common/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Matches TypeBox 1 builders structurally (~kind, ~refine, ~codec, ~unsafe) with typebox StaticDecode imported type-only so Elysia t schemas arrive without adding a runtime dependency."
+    },
+    {
+      "id": "packages_common_agents_async_context_exit_registry",
+      "label": "Registered Async-Context Exit Boundary",
+      "file_type": "rationale",
+      "source_file": "packages/common/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Runtimes owning an AsyncLocalStorage register their exit callback via registerAsyncContextExit so background work can call runOutsideAsyncContexts without common importing runtime async-context APIs."
+    },
+    {
+      "id": "packages_common_agents_provider_scope_model",
+      "label": "Provider Scope and Durability Model",
+      "file_type": "concept",
+      "source_file": "packages/common/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Uses Nest numeric Scope values (DEFAULT=0, TRANSIENT=1, REQUEST=2) while normalizing legacy string scopes once, groups durable REQUEST providers by ContextIdStrategy parent id, and rejects unknown scopes with UNSUPPORTED_PROVIDER_SCOPE."
+    },
+    {
+      "id": "packages_common_agents_httpstatus_namespace_deviation",
+      "label": "HttpStatus Dual Namespace Deviation",
+      "file_type": "rationale",
+      "source_file": "packages/common/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "HttpStatus serves as both Nest's numeric status map and the @HttpStatus() response-status parameter decorator, documented in docs/build/migrating-from-nest.md as the one namespace deviation."
+    },
+    {
+      "id": "packages_common_agents_execution_context",
+      "label": "Single-Transport ExecutionContext",
+      "file_type": "concept",
+      "source_file": "packages/common/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Carries route class, handler, and mounted { method, path } on ArgumentsHost; omits getType() and Nest per-transport dispatch because only one HTTP transport exists."
+    },
+    {
+      "id": "packages_common_agents_aponia_error_union",
+      "label": "Closed AponiaError Code Union",
+      "file_type": "concept",
+      "source_file": "packages/common/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Framework failures must throw AponiaError with a code from the closed union rather than bare Error instances."
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_common_agents_metadata_only_decorators",
+      "target": "packages_common_agents_guide",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/common/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_common_agents_own_vs_inherited_metadata",
+      "target": "packages_common_agents_metadata_only_decorators",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/common/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_common_agents_validator_schema_contract",
+      "target": "packages_common_agents_guide",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/common/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_common_agents_async_context_exit_registry",
+      "target": "packages_common_agents_guide",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/common/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_common_agents_provider_scope_model",
+      "target": "packages_common_agents_aponia_error_union",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/common/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_common_agents_httpstatus_namespace_deviation",
+      "target": "packages_common_agents_guide",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/common/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_common_agents_execution_context",
+      "target": "packages_common_agents_guide",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/common/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

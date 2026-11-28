@@ -1,0 +1,72 @@
+{
+  "nodes": [
+    {
+      "id": "packages_cors_gemini_httppolicy",
+      "label": "HttpPolicy (CORS)",
+      "file_type": "concept",
+      "source_file": "packages/cors/GEMINI.md",
+      "source_location": "line 9",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Neutral policy built from @aponiajs/platform-core CORS helpers so the shared request pipeline answers identical headers and preflight responses across platforms."
+    },
+    {
+      "id": "packages_cors_gemini_cors_guard_normalization",
+      "label": "CORS Guard Option Normalization",
+      "file_type": "rationale",
+      "source_file": "packages/cors/GEMINI.md",
+      "source_location": "line 65",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Guard fills every field including defaults so the options object is a pure function of validated input and determines deterministic plugin identity."
+    },
+    {
+      "id": "packages_cors_gemini_cors_conformance_tests",
+      "label": "CORS Bun and Vite+ Test Lanes",
+      "file_type": "document",
+      "source_file": "packages/cors/GEMINI.md",
+      "source_location": "line 95",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_cors_readme_corsmodule",
+      "target": "packages_cors_gemini_httppolicy",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cors/GEMINI.md",
+      "source_location": "line 9",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cors_gemini_cors_guard_normalization",
+      "target": "packages_cors_gemini_httppolicy",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cors/GEMINI.md",
+      "source_location": "line 65",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cors_gemini_cors_conformance_tests",
+      "target": "packages_cors_readme_corsconfiguration",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cors/GEMINI.md",
+      "source_location": "line 43",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

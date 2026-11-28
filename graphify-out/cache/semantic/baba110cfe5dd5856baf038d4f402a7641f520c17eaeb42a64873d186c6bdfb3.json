@@ -1,0 +1,271 @@
+{
+  "nodes": [
+    {
+      "id": "scratch_nestjs_dx_parity_research_performance_research_dossier",
+      "label": "AponiaJS Maximum-Performance & Zero-Waste Execution Research",
+      "file_type": "document",
+      "source_file": ".scratch/nestjs-dx-parity/research-performance.md",
+      "source_location": "line 1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_research_performance_tiered_elysia_compilation",
+      "label": "Tiered Elysia Route Compilation Matrix (Tier 0 / Tier 1 / Tier 2)",
+      "file_type": "rationale",
+      "rationale": "Compile-at-boot specialization lets bare routes match raw Elysia bound speed (4.60M ops/s) while keeping sync enhancers on Elysia's sync tail lane and avoiding RxJS allocation unless .pipe() is invoked.",
+      "source_file": ".scratch/nestjs-dx-parity/research-performance.md",
+      "source_location": "lines 152-176",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_research_performance_sucrose_static_analysis",
+      "label": "Elysia sucrose Static Analysis",
+      "file_type": "concept",
+      "rationale": "Elysia scans handler source text to infer read fields (query, headers, body, cookie, set); passing whole context to external helpers triggers allAccessed eager materialization.",
+      "source_file": ".scratch/nestjs-dx-parity/research-performance.md",
+      "source_location": "line 83",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_research_performance_withroutememory_bottleneck",
+      "label": "E1: Unconditional withRouteMemory Transform Hook",
+      "file_type": "concept",
+      "rationale": "Injecting a transform hook onto every decorated route disqualifies Elysia inlineBareRoute and writes to a WeakMap per request even when no observer package reads matchedRouteOf.",
+      "source_file": ".scratch/nestjs-dx-parity/research-performance.md",
+      "source_location": "lines 116, 177-180",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_research_performance_per_route_error_filter_bottleneck",
+      "label": "E2: Unconditional Per-Route Default Error Filter",
+      "file_type": "concept",
+      "rationale": "Attaching defaultFilter to every route's error hook sets hasErrorHook=true in Elysia, forcing responseMode='set' instead of 'compact'.",
+      "source_file": ".scratch/nestjs-dx-parity/research-performance.md",
+      "source_location": "lines 117, 160",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_research_performance_handle_promise_wrapper_bottleneck",
+      "label": "E3: AponiaApplication.handle() Promise Wrapper",
+      "file_type": "concept",
+      "rationale": "Wrapping nativeApplication.handle with a .then check and .finally callback even when releaseRequest is undefined reduces bare route throughput by 16.0% (2.36M vs 2.81M ops/s).",
+      "source_file": ".scratch/nestjs-dx-parity/research-performance.md",
+      "source_location": "lines 118, 228",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_research_performance_async_hooks_bottleneck",
+      "label": "E4: Always-Async beforeHandle/afterHandle & Double Fork",
+      "file_type": "concept",
+      "rationale": "Declaring beforeHandle and afterHandle unconditionally async forces tail=false and Promise allocation on sync guards/interceptors (-27.0% guarded, -47.0% intercepted).",
+      "source_file": ".scratch/nestjs-dx-parity/research-performance.md",
+      "source_location": "lines 119, 166-168",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_research_performance_piped_route_async_bottleneck",
+      "label": "E5: Piped Route Async Closure & Context Boxing",
+      "file_type": "concept",
+      "rationale": "Piped routes fall back to async (context) calling extractParameterValue(context, ...), breaking sucrose inference and making POST /piped 30.5% slower than schema-validated POST /json.",
+      "source_file": ".scratch/nestjs-dx-parity/research-performance.md",
+      "source_location": "lines 120, 169",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_research_performance_global_onrequest_bottleneck",
+      "label": "E6: Global onRequest/onAfterResponse Disabling Bun Static Promotion",
+      "file_type": "concept",
+      "rationale": "Registering global onRequest hooks forces eager Context allocation and materializeSetHeaders before route matching and disables Bun.serve native static response promotion.",
+      "source_file": ".scratch/nestjs-dx-parity/research-performance.md",
+      "source_location": "lines 88-89, 121",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_research_performance_typebox_compile_optimization",
+      "label": "C1: TypeBox Compile(schema).Parse vs Interpreted Value.Parse",
+      "file_type": "concept",
+      "rationale": "Replacing interpreted typebox/value Convert+Parse+structuredClone (623k ops/s) with typebox/compile Compile(schema).Parse (40.07M ops/s) yields a 64.3x speedup.",
+      "source_file": ".scratch/nestjs-dx-parity/research-performance.md",
+      "source_location": "lines 92-96, 130, 184-188",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_research_performance_platform_core_kernel_overhead",
+      "label": "C2-C5: Platform-Core/Hono/H3 Eager Context, Interpreted rou3 & Double Response",
+      "file_type": "concept",
+      "rationale": "Eager context freezing, per-request guard unrolling, interpreted rou3 findRoute, and double Response construction explain the 4.71x Hono and 4.86x H3 gap vs raw runtimes.",
+      "source_file": ".scratch/nestjs-dx-parity/research-performance.md",
+      "source_location": "lines 126-134, 195-209",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_research_performance_zero_rxjs_callhandler",
+      "label": "Zero-RxJS CallHandler Fast Path",
+      "file_type": "rationale",
+      "rationale": "Making CallHandler.handle() a PromiseLike thenable avoids Observable and operator-array allocations unless user code calls .pipe().",
+      "source_file": ".scratch/nestjs-dx-parity/research-performance.md",
+      "source_location": "lines 170-175",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_research_performance_compiled_class_serializer",
+      "label": "Compiled ClassSerializerInterceptor Plan",
+      "file_type": "concept",
+      "rationale": "Precompiling @Exclude/@Expose/@Transform metadata into a WeakMap<Constructor, CompiledSerializerPlan> avoids per-request Reflect lookups and Object.entries allocations.",
+      "source_file": ".scratch/nestjs-dx-parity/research-performance.md",
+      "source_location": "lines 143, 189-193",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_research_performance_request_scope_bubbling",
+      "label": "NestJS Scope.REQUEST Bubbling & Subtree Scoping",
+      "file_type": "concept",
+      "rationale": "Scope.REQUEST bubbles up the dependency graph; isolating AsyncLocalStorage and request-scope wrapping to reachable subtrees prevents a 71.2% penalty on singleton routes.",
+      "source_file": ".scratch/nestjs-dx-parity/research-performance.md",
+      "source_location": "lines 106, 136, 144, 217-221",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "scratch_nestjs_dx_parity_research_performance_research_dossier",
+      "target": "rules_verification_gates",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/research-performance.md",
+      "source_location": "lines 247-252",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_research_performance_tiered_elysia_compilation",
+      "target": "scratch_nestjs_dx_parity_research_performance_withroutememory_bottleneck",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/research-performance.md",
+      "source_location": "lines 156-162",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_research_performance_tiered_elysia_compilation",
+      "target": "scratch_nestjs_dx_parity_research_performance_per_route_error_filter_bottleneck",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/research-performance.md",
+      "source_location": "line 160",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_research_performance_tiered_elysia_compilation",
+      "target": "scratch_nestjs_dx_parity_research_performance_async_hooks_bottleneck",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/research-performance.md",
+      "source_location": "lines 163-168",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_research_performance_piped_route_async_bottleneck",
+      "target": "scratch_nestjs_dx_parity_research_performance_sucrose_static_analysis",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/research-performance.md",
+      "source_location": "lines 83, 120, 169",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_research_performance_zero_rxjs_callhandler",
+      "target": "scratch_nestjs_dx_parity_research_performance_tiered_elysia_compilation",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/research-performance.md",
+      "source_location": "lines 170-175",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_research_performance_request_scope_bubbling",
+      "target": "scratch_nestjs_dx_parity_research_performance_global_onrequest_bottleneck",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/research-performance.md",
+      "source_location": "lines 217-221",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_research_performance_typebox_compile_optimization",
+      "target": "agents_route_validation_contract",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/nestjs-dx-parity/research-performance.md",
+      "source_location": "lines 184-188",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "elysia_hot_path_bottlenecks",
+      "label": "Verified Elysia Hot-Path Bottlenecks",
+      "nodes": [
+        "scratch_nestjs_dx_parity_research_performance_withroutememory_bottleneck",
+        "scratch_nestjs_dx_parity_research_performance_per_route_error_filter_bottleneck",
+        "scratch_nestjs_dx_parity_research_performance_handle_promise_wrapper_bottleneck",
+        "scratch_nestjs_dx_parity_research_performance_async_hooks_bottleneck",
+        "scratch_nestjs_dx_parity_research_performance_piped_route_async_bottleneck",
+        "scratch_nestjs_dx_parity_research_performance_global_onrequest_bottleneck"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/research-performance.md"
+    }
+  ]
+}

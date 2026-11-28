@@ -1,0 +1,59 @@
+{
+  "nodes": [
+    {
+      "id": "examples_basic_readme_basic_example",
+      "label": "Basic Example",
+      "file_type": "document",
+      "source_file": "examples/basic/README.md",
+      "source_location": "L1-L45",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "examples_basic_readme_greeting_module_flow",
+      "label": "GreetingModule Request Flow",
+      "file_type": "concept",
+      "source_file": "examples/basic/README.md",
+      "source_location": "L12-L44",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "examples_basic_readme_greeting_module_flow",
+      "target": "docs_reference_packages_aponiajs_common",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "examples/basic/README.md",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "examples_basic_readme_greeting_module_flow",
+      "target": "docs_reference_packages_aponiajs_core",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "examples/basic/README.md",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "examples_basic_readme_greeting_module_flow",
+      "target": "docs_reference_packages_aponiajs_platform_elysia",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "examples/basic/README.md",
+      "source_location": "L7-L8",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

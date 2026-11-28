@@ -1,0 +1,83 @@
+{
+  "nodes": [
+    {
+      "id": "rules_engineering_rules",
+      "label": "AponiaJS Engineering Rules (RULES.md)",
+      "file_type": "document",
+      "source_file": "RULES.md",
+      "source_location": "line 1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "rules_coverage_floors",
+      "label": "Mandatory Test Coverage Floors (98% Lines, 95% Functions, 95% Per-Package)",
+      "file_type": "rationale",
+      "rationale": "Requires every runtime TypeScript source and executable script to appear in LCOV without broad exclusions, backed by branch-level behavioral evidence.",
+      "source_file": "RULES.md",
+      "source_location": "lines 15-59",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "rules_verification_gates",
+      "label": "Required Verification Gates (check, test:coverage, test:vite-plus, test:examples, release:dry-run)",
+      "file_type": "concept",
+      "source_file": "RULES.md",
+      "source_location": "lines 119-130",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "rules_immutability_and_error_conventions",
+      "label": "Contract Immutability & Authoring Error Discipline",
+      "file_type": "rationale",
+      "rationale": "Freezes public descriptors, forbids any, uses #private fields, and throws TypeError synchronously on invalid decorator calls while using AponiaError for runtime failures.",
+      "source_file": "RULES.md",
+      "source_location": "lines 137-205",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "rules_engineering_rules",
+      "target": "agents_repository_guidelines",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "RULES.md",
+      "source_location": "lines 4-10",
+      "weight": 1.0
+    },
+    {
+      "source": "rules_coverage_floors",
+      "target": "rules_engineering_rules",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "RULES.md",
+      "source_location": "lines 15-59",
+      "weight": 1.0
+    },
+    {
+      "source": "rules_verification_gates",
+      "target": "rules_coverage_floors",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "RULES.md",
+      "source_location": "lines 119-128",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

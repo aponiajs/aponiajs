@@ -1,0 +1,157 @@
+{
+  "nodes": [
+    {
+      "id": "packages_microservices_readme_pkg_doc",
+      "label": "@aponiajs/microservices README",
+      "file_type": "document",
+      "source_file": "packages/microservices/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_microservices_readme_createmicroserviceserver",
+      "label": "createMicroserviceServer",
+      "file_type": "code",
+      "rationale": "Validates envelope target before dispatch and reply destination against an allowlist before publishing; translates thrown handler errors to MESSAGE_HANDLER_ERROR.",
+      "source_file": "packages/microservices/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_microservices_readme_createmicroserviceclient",
+      "label": "createMicroserviceClient",
+      "file_type": "code",
+      "rationale": "Correlates send replies by request ID, bounds pending calls, and rejects on timeout; emit waits only for broker acceptance.",
+      "source_file": "packages/microservices/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_microservices_readme_inmemorytransport",
+      "label": "InMemoryTransport",
+      "file_type": "code",
+      "rationale": "Reusable process-local reference transport for tests and modular monoliths.",
+      "source_file": "packages/microservices/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_microservices_readme_microservicecallerror",
+      "label": "MicroserviceCallError",
+      "file_type": "code",
+      "source_file": "packages/microservices/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_microservices_readme_broker_adapters",
+      "label": "Microservice Broker Adapters",
+      "file_type": "concept",
+      "rationale": "Supports NATS, MQTT 5, RabbitMQ, Kafka, Redis Streams, AWS SQS, Google Pub/Sub, and Azure Service Bus with terminal close semantics and per-protocol settlement behavior.",
+      "source_file": "packages/microservices/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_microservices_readme_createmicroserviceserver",
+      "target": "packages_microservices_agents_transport_seam",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/microservices/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_microservices_readme_createmicroserviceclient",
+      "target": "packages_microservices_agents_transport_seam",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/microservices/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_microservices_agents_microserviceclientsmodule",
+      "target": "packages_microservices_readme_createmicroserviceclient",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/microservices/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_microservices_readme_inmemorytransport",
+      "target": "packages_microservices_agents_transport_seam",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/microservices/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_microservices_agents_sanitized_errors_invariant",
+      "target": "packages_microservices_readme_microservicecallerror",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/microservices/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_microservices_readme_createmicroserviceserver",
+      "target": "packages_microservices_agents_cbor_v1_envelope",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/microservices/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_microservices_readme_createmicroserviceclient",
+      "target": "packages_microservices_agents_cbor_v1_envelope",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/microservices/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_microservices_readme_createmicroserviceserver",
+      "target": "packages_platform_core_readme_aponiafactory",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/microservices/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

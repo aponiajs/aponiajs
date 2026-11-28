@@ -1,0 +1,17 @@
+{
+  "nodes": [
+    {
+      "id": "github_workflows_brokers_brokers_workflow",
+      "label": "Broker Transports CI Workflow",
+      "file_type": "document",
+      "source_file": ".github/workflows/brokers.yml",
+      "source_location": "L1-L98",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [],
+  "hyperedges": []
+}

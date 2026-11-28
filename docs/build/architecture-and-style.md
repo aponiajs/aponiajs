@@ -25,29 +25,29 @@ portability and type safety:
 These rules are enforced by the code layout, the tests, or the framework
 contract. A change that weakens one is a redesign, not a refactor.
 
-| Invariant                           | What it means                                                                                                         | Evidence                                         |
-| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| Two authoring layers stay supported | Decorators write metadata; hand-written descriptors are an equal authoring path                                       | Focused tests for both paths                     |
-| Dependencies point inward           | `common` ← `core` ← `platform-core` ← the platform packages; no Elysia, Hono, H3, Nitro, HTTP, or Bun API in `common` | Package manifests, type checks, review           |
-| Descriptors are immutable           | Public definitions, metadata, and inspection results are frozen                                                       | Tests assert `Object.isFrozen` where contractual |
-| Failures are structured             | Framework failures use `AponiaError` codes; HTTP failures use Problem Details                                         | Tests assert codes and details, not messages     |
-| Routes compile once                 | Invokers and gateway plans are built during bootstrap; no per-request reflection                                      | Route and gateway tests                          |
-| The platform stays replaceable      | Application code depends on Aponia contracts, not on Elysia internals beyond the documented escape hatch              | Import boundaries and package tests              |
-| Documentation ships with behavior   | Every public change updates its page, package README, and `llms.txt`                                                  | Documentation guards and review                  |
+| Invariant                           | What it means                                                                                            | Evidence                                         |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| Two authoring layers stay supported | Decorators write metadata; hand-written descriptors are an equal authoring path                          | Focused tests for both paths                     |
+| Dependencies point inward           | `common` ← `core` ← the platform packages; no Elysia, Hono, H3, Nitro, HTTP, or Bun API in `common`      | Package manifests, type checks, review           |
+| Descriptors are immutable           | Public definitions, metadata, and inspection results are frozen                                          | Tests assert `Object.isFrozen` where contractual |
+| Failures are structured             | Framework failures use `AponiaError` codes; HTTP failures use Problem Details                            | Tests assert codes and details, not messages     |
+| Routes compile once                 | Invokers and gateway plans are built during bootstrap; no per-request reflection                         | Route and gateway tests                          |
+| The platform stays replaceable      | Application code depends on Aponia contracts, not on Elysia internals beyond the documented escape hatch | Import boundaries and package tests              |
+| Documentation ships with behavior   | Every public change updates its page, package README, and `llms.txt`                                     | Documentation guards and review                  |
 
 ## Where to change what
 
-| Change                                            | Owned by                                                                              |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| A decorator or metadata key                       | `packages/common/src/` and the descriptor compiler                                    |
-| Graph, visibility, scopes, or provider cache      | `packages/core/src/scanner` and `packages/core/src/injector`                          |
-| Route lowering, parameter binding, or hooks       | `packages/platform-elysia/src/routing` and `packages/platform-core/src/routing`       |
-| Native plugin typing or module registration       | `packages/platform-elysia/src/plugins`                                                |
-| WebSocket gateway compilation or dispatch         | `packages/platform-core/src/websockets` and `packages/platform-elysia/src/websockets` |
-| Route execution, validation, or the host contract | `packages/platform-core/src/kernel` and `packages/platform-core/src/host`             |
-| Generator output, templates, or CLI parsing       | `packages/cli/src` and `packages/cli/templates`                                       |
-| A publishable package surface                     | The package's `src/index.ts`, README, `llms.txt`, and docs page                       |
-| Release or documentation policy                   | `RULES.md`, `docs/AGENTS.md`, and the matching guard specification                    |
+| Change                                            | Owned by                                                                       |
+| ------------------------------------------------- | ------------------------------------------------------------------------------ |
+| A decorator or metadata key                       | `packages/common/src/` and the descriptor compiler                             |
+| Graph, visibility, scopes, or provider cache      | `packages/core/src/scanner` and `packages/core/src/injector`                   |
+| Route lowering, parameter binding, or hooks       | `packages/platform-elysia/src/routing` and `packages/common/src/routing`       |
+| Native plugin typing or module registration       | `packages/platform-elysia/src/plugins`                                         |
+| WebSocket gateway compilation or dispatch         | `packages/common/src/websockets` and `packages/platform-elysia/src/websockets` |
+| Route execution, validation, or the host contract | `packages/common/src/kernel` and `packages/common/src/host`                    |
+| Generator output, templates, or CLI parsing       | `packages/cli/src` and `packages/cli/templates`                                |
+| A publishable package surface                     | The package's `src/index.ts`, README, `llms.txt`, and docs page                |
+| Release or documentation policy                   | `RULES.md`, `docs/AGENTS.md`, and the matching guard specification             |
 
 ## Application structure
 
@@ -154,42 +154,41 @@ from `lib/`. The naming and folder shape are mirrored; the build root is not, an
 
 The current package boundaries are:
 
-| Package                     | Source domains                                                                                                                                                                                             |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@aponiajs/common`          | async-context, configuration, decorators, enhancers, exceptions, interfaces, mcp, microservices, modules, module-utils, pipes, providers, routing, services, tokens, websockets                            |
-| `@aponiajs/core`            | hooks, injector, interfaces, scanner, `constants.ts`                                                                                                                                                       |
-| `@aponiajs/compiler`        | borrow, interfaces, lifetime, shared, typestate                                                                                                                                                            |
-| `@aponiajs/cache`           | decorators, interceptors, interfaces                                                                                                                                                                       |
-| `@aponiajs/compression`     | interfaces, module, policy                                                                                                                                                                                 |
-| `@aponiajs/events`          | decorators, interfaces                                                                                                                                                                                     |
-| `@aponiajs/http`            | interfaces, security                                                                                                                                                                                       |
-| `@aponiajs/rate-limit`      | guard, module, service, store                                                                                                                                                                              |
-| `@aponiajs/security`        | interfaces, module, policy                                                                                                                                                                                 |
-| `@aponiajs/session`         | interfaces, middleware, module, policy, service, store                                                                                                                                                     |
-| `@aponiajs/auth`            | interfaces, password, plus `<name>.ts` kinds at the root                                                                                                                                                   |
-| `@aponiajs/platform-elysia` | adapters, application, compiler, configuration, controllers, exceptions, inspection, interfaces, microservices, middleware, modules, plugins, request-context, routing, websockets                         |
-| `@aponiajs/platform-core`   | application, artifacts, capabilities, configuration, enhancers, exceptions, health, host, interfaces, kernel, middleware, modules, pipes, platform, policy, request-context, routing, security, websockets |
-| `@aponiajs/platform-hono`   | application, host, routing                                                                                                                                                                                 |
-| `@aponiajs/platform-h3`     | application, host, routing                                                                                                                                                                                 |
-| `@aponiajs/cli`             | agent, bundler, commands, contracts, generation, interfaces, library                                                                                                                                       |
-| `@aponiajs/schematics`      | `lib/<schematic>/` collections                                                                                                                                                                             |
-| `@aponiajs/cors`            | interfaces, module, policy                                                                                                                                                                                 |
-| `@aponiajs/cron`            | decorators, interfaces, scheduler                                                                                                                                                                          |
-| `@aponiajs/devtools`        | buffer, endpoints, interfaces, logging, module, requests, server, source                                                                                                                                   |
-| `@aponiajs/graphql`         | endpoint, interfaces                                                                                                                                                                                       |
-| `@aponiajs/mcp`             | discovery, execution, interfaces, module, transport                                                                                                                                                        |
-| `@aponiajs/testing`         | application, conformance, interfaces, overrides                                                                                                                                                            |
-| `@aponiajs/openapi`         | document, interfaces                                                                                                                                                                                       |
-| `@aponiajs/queue`           | decorators, hosts, interfaces, outbox, processors, queue                                                                                                                                                   |
-| `@aponiajs/database`        | interfaces, migration, repository                                                                                                                                                                          |
-| `@aponiajs/microservices`   | brokers, client, envelope, interfaces, module, server, transport                                                                                                                                           |
-| `@aponiajs/view`            | engines, helper, interfaces, module                                                                                                                                                                        |
-| `@aponiajs/serverless`      | fetch, interfaces, lambda                                                                                                                                                                                  |
-| `@aponiajs/config`          | interfaces, utils                                                                                                                                                                                          |
-| `@aponiajs/cqrs`            | buses, decorators, interfaces                                                                                                                                                                              |
-| `@aponiajs/mapped-types`    | interfaces                                                                                                                                                                                                 |
-| `@aponiajs/serve-static`    | interfaces                                                                                                                                                                                                 |
-| `@aponiajs/terminus`        | health-check, health-indicators, interfaces                                                                                                                                                                |
+| Package                     | Source domains                                                                                                                                                                     |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@aponiajs/common`          | async-context, configuration, decorators, enhancers, exceptions, interfaces, mcp, microservices, modules, module-utils, pipes, providers, routing, services, tokens, websockets    |
+| `@aponiajs/core`            | hooks, injector, interfaces, scanner, `constants.ts`                                                                                                                               |
+| `@aponiajs/compiler`        | borrow, interfaces, lifetime, shared, typestate                                                                                                                                    |
+| `@aponiajs/cache`           | decorators, interceptors, interfaces                                                                                                                                               |
+| `@aponiajs/compression`     | interfaces, module, policy                                                                                                                                                         |
+| `@aponiajs/events`          | decorators, interfaces                                                                                                                                                             |
+| `@aponiajs/http`            | interfaces, security                                                                                                                                                               |
+| `@aponiajs/rate-limit`      | guard, module, service, store                                                                                                                                                      |
+| `@aponiajs/security`        | interfaces, module, policy                                                                                                                                                         |
+| `@aponiajs/session`         | interfaces, middleware, module, policy, service, store                                                                                                                             |
+| `@aponiajs/auth`            | interfaces, password, plus `<name>.ts` kinds at the root                                                                                                                           |
+| `@aponiajs/platform-elysia` | adapters, application, compiler, configuration, controllers, exceptions, inspection, interfaces, microservices, middleware, modules, plugins, request-context, routing, websockets |
+| `@aponiajs/platform-hono`   | application, host, routing                                                                                                                                                         |
+| `@aponiajs/platform-h3`     | application, host, routing                                                                                                                                                         |
+| `@aponiajs/cli`             | agent, bundler, commands, contracts, generation, interfaces, library                                                                                                               |
+| `@aponiajs/schematics`      | `lib/<schematic>/` collections                                                                                                                                                     |
+| `@aponiajs/cors`            | interfaces, module, policy                                                                                                                                                         |
+| `@aponiajs/cron`            | decorators, interfaces, scheduler                                                                                                                                                  |
+| `@aponiajs/devtools`        | buffer, endpoints, interfaces, logging, module, requests, server, source                                                                                                           |
+| `@aponiajs/graphql`         | endpoint, interfaces                                                                                                                                                               |
+| `@aponiajs/mcp`             | discovery, execution, interfaces, module, transport                                                                                                                                |
+| `@aponiajs/testing`         | application, conformance, interfaces, overrides                                                                                                                                    |
+| `@aponiajs/openapi`         | document, interfaces                                                                                                                                                               |
+| `@aponiajs/queue`           | decorators, hosts, interfaces, outbox, processors, queue                                                                                                                           |
+| `@aponiajs/database`        | interfaces, migration, repository                                                                                                                                                  |
+| `@aponiajs/microservices`   | brokers, client, envelope, interfaces, module, server, transport                                                                                                                   |
+| `@aponiajs/view`            | engines, helper, interfaces, module                                                                                                                                                |
+| `@aponiajs/serverless`      | fetch, interfaces, lambda                                                                                                                                                          |
+| `@aponiajs/config`          | interfaces, utils                                                                                                                                                                  |
+| `@aponiajs/cqrs`            | buses, decorators, interfaces                                                                                                                                                      |
+| `@aponiajs/mapped-types`    | interfaces                                                                                                                                                                         |
+| `@aponiajs/serve-static`    | interfaces                                                                                                                                                                         |
+| `@aponiajs/terminus`        | health-check, health-indicators, interfaces                                                                                                                                        |
 
 Keep package tests at `src/**/*.spec.ts`, Vite+ conformance tests at
 `test/*.conformance.ts`, and a live-dependency lane at `test/*.e2e-spec.ts`;

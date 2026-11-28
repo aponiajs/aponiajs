@@ -1,0 +1,70 @@
+{
+  "nodes": [
+    {
+      "id": "docs_agents_guide",
+      "label": "Documentation Directory Agent Guide (docs/AGENTS.md)",
+      "file_type": "document",
+      "source_file": "docs/AGENTS.md",
+      "source_location": "lines 1-155",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_agents_page_standard_and_guards",
+      "label": "Contract-First Page Standard & Automated Docs Guards",
+      "file_type": "rationale",
+      "rationale": "Maintains single-index reachability, valid internal anchors, accurate package claims, and static site generation via docs:build and scripts/docs-*.spec.ts.",
+      "source_file": "docs/AGENTS.md",
+      "source_location": "lines 24-137",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_claude_md",
+      "target": "docs_agents_guide",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/AGENTS.md",
+      "source_location": "lines 154-155",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_gemini_md",
+      "target": "docs_agents_guide",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/AGENTS.md",
+      "source_location": "lines 154-155",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_agents_guide",
+      "target": "agents_repository_guidelines",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/AGENTS.md",
+      "source_location": "line 3",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_agents_guide",
+      "target": "docs_readme_index",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/AGENTS.md",
+      "source_location": "lines 7, 56",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

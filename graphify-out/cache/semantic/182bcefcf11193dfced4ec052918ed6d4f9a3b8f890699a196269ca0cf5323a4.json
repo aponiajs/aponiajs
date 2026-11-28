@@ -1,0 +1,40 @@
+{
+  "nodes": [
+    {
+      "id": "packages_nitro_readme_pkg_doc",
+      "label": "@aponiajs/nitro README",
+      "file_type": "document",
+      "source_file": "packages/nitro/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_nitro_readme_tonitrohandler",
+      "label": "toNitroHandler",
+      "file_type": "code",
+      "rationale": "Superseded by @aponiajs/platform-h3 for new applications because Nitro serves an H3 application natively; forwards requests to application.handle and excludes WebSockets.",
+      "source_file": "packages/nitro/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_nitro_readme_tonitrohandler",
+      "target": "packages_platform_core_agents_aponia_http_application",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "packages/nitro/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -1,0 +1,128 @@
+{
+  "nodes": [
+    {
+      "id": "packages_database_agents_memorymigrationstore",
+      "label": "MemoryMigrationStore",
+      "file_type": "concept",
+      "source_file": "packages/database/README.md",
+      "source_location": "line 157",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Process-local default migration store; real deployments supply a durable store backed by a database migration table."
+    },
+    {
+      "id": "packages_database_readme_loadmigrations",
+      "label": "loadMigrations",
+      "file_type": "concept",
+      "source_file": "packages/database/README.md",
+      "source_location": "line 151",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_database_readme_databasemoduleoptions",
+      "label": "DatabaseModuleOptions",
+      "file_type": "concept",
+      "source_file": "packages/database/README.md",
+      "source_location": "line 112",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_database_readme_database_readme",
+      "label": "@aponiajs/database README",
+      "file_type": "document",
+      "source_file": "packages/database/README.md",
+      "source_location": "line 1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_database_agents_databasemodule",
+      "target": "packages_database_readme_databasemoduleoptions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/database/README.md",
+      "source_location": "line 112",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_database_agents_databaseservice",
+      "target": "packages_database_agents_createrepository",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/database/README.md",
+      "source_location": "line 69",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_database_agents_databaseservice",
+      "target": "packages_database_agents_migrationrunner",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/database/README.md",
+      "source_location": "line 159",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_database_agents_migrationrunner",
+      "target": "packages_database_agents_memorymigrationstore",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/database/README.md",
+      "source_location": "line 157",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_database_agents_migrationrunner",
+      "target": "packages_database_readme_loadmigrations",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/database/README.md",
+      "source_location": "line 151",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_database_readme_database_readme",
+      "target": "packages_database_agents_aponiajs_database",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/database/README.md",
+      "source_location": "line 1",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "database_migration_pipeline",
+      "label": "Database Ordered SQL Migration Pipeline",
+      "nodes": [
+        "packages_database_agents_databasemodule",
+        "packages_database_agents_migrationrunner",
+        "packages_database_agents_memorymigrationstore",
+        "packages_database_agents_migrationlock",
+        "packages_database_readme_loadmigrations"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/database/README.md"
+    }
+  ]
+}

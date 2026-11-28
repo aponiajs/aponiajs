@@ -1,0 +1,17 @@
+{
+  "nodes": [
+    {
+      "id": "examples_nitro_readme_nitro_example",
+      "label": "Nitro Delivery Example",
+      "file_type": "document",
+      "source_file": "examples/nitro/README.md",
+      "source_location": "L1-L15",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [],
+  "hyperedges": []
+}

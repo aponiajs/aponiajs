@@ -1,0 +1,70 @@
+{
+  "nodes": [
+    {
+      "id": "packages_hono_readme_aponiajs_hono",
+      "label": "@aponiajs/hono Package Documentation",
+      "file_type": "document",
+      "source_file": "packages/hono/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_hono_readme_createhonoapp",
+      "label": "createHonoApp",
+      "file_type": "concept",
+      "source_file": "packages/hono/README.md",
+      "source_location": "line 18",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_hono_readme_aponiajs_platform_hono",
+      "label": "@aponiajs/platform-hono",
+      "file_type": "concept",
+      "source_file": "packages/hono/README.md",
+      "source_location": "line 5",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_hono_readme_aponiajs_hono",
+      "target": "packages_hono_readme_createhonoapp",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/hono/README.md",
+      "source_location": "line 18",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_hono_readme_aponiajs_hono",
+      "target": "packages_hono_readme_aponiajs_platform_hono",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/hono/README.md",
+      "source_location": "line 5",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_hono_readme_createhonoapp",
+      "target": "packages_hono_agents_tofetchhandler",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/hono/README.md",
+      "source_location": "line 25",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

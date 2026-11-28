@@ -30,7 +30,7 @@ the external security review: a reviewer can trace every claim to code and tests
 | Request floods and brute force    | Fixed-window rate limiting with standard headers and `Retry-After`                                      | [`rate-limit`](../../packages/rate-limit/AGENTS.md)           |
 | SSRF through user-supplied URLs   | Scheme, credential, hostname, and address checks; validated address pinned; every redirect re-validated | [`http`](../../packages/http/AGENTS.md)                       |
 | Oversized responses               | Bounded response body read with a hard limit                                                            | [`http`](../../packages/http/AGENTS.md)                       |
-| Leaked internals in errors        | Problem Details without stack or cause; unexpected failures become `500`                                | [`errors`](../learn/10-errors.md)                             |
+| Leaked internals in errors        | Problem Details without stack or cause; unexpected failures become `500`                                | [`errors`](../learn/11-errors.md)                             |
 | Ambiguous dependency resolution   | Graph compile rejects duplicates, cycles, unexported tokens, and ambiguity                              | [`dependency-injection.md`](../build/dependency-injection.md) |
 | Unauthorized devtools access      | Opt-in registration, disabled in production by configuration                                            | [`devtools.md`](../services/devtools.md)                      |
 | Agent tools that mutate a project | MCP is read-only by default; write and exec need explicit flags                                         | [`mcp.md`](../services/mcp.md)                                |

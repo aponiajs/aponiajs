@@ -1,0 +1,136 @@
+{
+  "nodes": [
+    {
+      "id": "docs_platforms_adapters_guide",
+      "label": "HTTP Platforms and Delivery Adapters",
+      "file_type": "document",
+      "source_file": "docs/platforms/adapters.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_platforms_adapters_platform_vs_delivery",
+      "label": "Platform vs Delivery Adapter Distinction",
+      "file_type": "rationale",
+      "rationale": "Platforms (platform-elysia, platform-hono, platform-h3) boot the module graph and own routing, whereas delivery adapters (serverless, hono, h3, nitro) translate envelopes and forward requests to an already-booted application without a second DI or route table.",
+      "source_file": "docs/platforms/adapters.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_platforms_adapters_two_adapter_shapes",
+      "label": "KernelAdapter vs ApplicationAdapter",
+      "file_type": "concept",
+      "rationale": "KernelAdapter (Hono, H3) lowers the graph via createPlatformFactory and mounts routes on its router; ApplicationAdapter (Elysia) retains its native executor to preserve native validation, plugins, HandlerContext, and Eden types.",
+      "source_file": "docs/platforms/adapters.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_platforms_adapters_aponia_application_contract",
+      "label": "AponiaApplicationContract",
+      "file_type": "concept",
+      "source_file": "docs/platforms/adapters.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_platforms_adapters_delivery_packages",
+      "label": "Delivery Adapters (createHonoApp, toH3Handler, toNitroHandler, @aponiajs/serverless)",
+      "file_type": "concept",
+      "source_file": "docs/platforms/adapters.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_platforms_adapters_response_policies",
+      "label": "Boundary Response Policies (cors, securityHeaders, etag, compression)",
+      "file_type": "concept",
+      "rationale": "Run at the request/response boundary on every platform without reading the container; compression is gzip-only and ETag is SHA-1 by deliberate design.",
+      "source_file": "docs/platforms/adapters.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_platforms_adapters_guide",
+      "target": "docs_platforms_adapters_platform_vs_delivery",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/adapters.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_adapters_guide",
+      "target": "docs_platforms_adapters_two_adapter_shapes",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/adapters.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_adapters_guide",
+      "target": "docs_platforms_adapters_aponia_application_contract",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/adapters.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_adapters_guide",
+      "target": "docs_platforms_adapters_delivery_packages",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/adapters.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_adapters_guide",
+      "target": "docs_platforms_adapters_response_policies",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/adapters.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_platforms_adapters_guide",
+      "target": "docs_platforms_platform_parity_guide",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/platforms/adapters.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

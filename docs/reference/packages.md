@@ -1,68 +1,55 @@
 # Packages
 
 AponiaJS ships 39 publishable packages from this repository and 1 private facade
-(`aponiajs`), which is not published. **Six are on npm today**; the other
-33 belong to the unreleased `1.0.0-beta.N` line and cannot be installed until that line is published.
-The registry serves the older `0.6.0-alpha.N` line for the six.
+(`aponiajs`), which is not published. All 39 publishable packages ship together
+on npm under the `latest` tag (`1.0.0`).
 
-## On npm today
+## Published packages
 
-Install with the `@alpha` tag. A tagless install resolves the `latest` tag,
-which is the previous stable line rather than this source, so every command
-below names the channel.
+Install directly from npm with `bun add` (or `bun create aponia` for the
+project generator).
 
-| Package                     | Registry                                                       | Install                                                     |
-| --------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------- |
-| `@aponiajs/common`          | [npm](https://www.npmjs.com/package/@aponiajs/common)          | `bun add @aponiajs/common@alpha`                            |
-| `@aponiajs/core`            | [npm](https://www.npmjs.com/package/@aponiajs/core)            | `bun add @aponiajs/core@alpha`                              |
-| `@aponiajs/platform-elysia` | [npm](https://www.npmjs.com/package/@aponiajs/platform-elysia) | `bun add @aponiajs/platform-elysia@alpha elysia@2.0.0-rc.4` |
-| `@aponiajs/cli`             | [npm](https://www.npmjs.com/package/@aponiajs/cli)             | `bun add --global @aponiajs/cli@alpha`                      |
-| `create-aponia`             | [npm](https://www.npmjs.com/package/create-aponia)             | `bun create aponia@alpha <name>`                            |
-| `@aponiajs/devtools`        | [npm](https://www.npmjs.com/package/@aponiajs/devtools)        | `bun add @aponiajs/devtools@alpha`                          |
-
-`@aponiajs/devtools` currently carries a prerelease under its `latest` tag, so
-name `@alpha` explicitly. The other five serve a stable `0.5.0` under `latest`.
-
-## Not on npm yet
-
-These packages exist in this repository and ship with `1.0.0-beta.N`. An install
-command naming one of them answers `404` until that line is published.
-
-| Package                   | What it adds                                                       |
-| ------------------------- | ------------------------------------------------------------------ |
-| `@aponiajs/auth`          | JWT, OIDC, refresh rotation, revocation, and RBAC                  |
-| `@aponiajs/cache`         | Bounded TTL cache with a pluggable store                           |
-| `@aponiajs/compiler`      | Scoped lifetimes, borrow views, and typestate                      |
-| `@aponiajs/compression`   | Brotli and gzip response compression                               |
-| `@aponiajs/cors`          | Cross-origin policy from validated configuration                   |
-| `@aponiajs/database`      | Drizzle boundary, repositories, and SQL migrations                 |
-| `@aponiajs/events`        | Typed in-process events with ordered handlers                      |
-| `@aponiajs/graphql`       | GraphQL endpoint adapter                                           |
-| `@aponiajs/http`          | SSRF-safe outbound HTTP client                                     |
-| `@aponiajs/mcp`           | Model Context Protocol endpoint adapter                            |
-| `@aponiajs/microservices` | Message patterns and nine broker transports                        |
-| `@aponiajs/nitro`         | Nitro delivery adapter                                             |
-| `@aponiajs/openapi`       | OpenAPI document for an application's routes                       |
-| `@aponiajs/platform-h3`   | AponiaJS on the H3 runtime                                         |
-| `@aponiajs/platform-hono` | AponiaJS on the Hono runtime                                       |
-| `@aponiajs/queue`         | In-process jobs, retries, dead letters, and outbox                 |
-| `@aponiajs/rate-limit`    | Fixed-window rate limiting guard and store                         |
-| `@aponiajs/security`      | Security headers and signed CSRF                                   |
-| `@aponiajs/schematics`    | Nest-shaped schematic collection for the CLI                       |
-| `@aponiajs/serverless`    | Web Fetch and AWS Lambda adapters                                  |
-| `@aponiajs/session`       | Signed session cookies and store                                   |
-| `@aponiajs/testing`       | Test application builder and provider overrides                    |
-| `@aponiajs/view`          | Blade views, components, slots, and shared data                    |
-| `@aponiajs/cron`          | Scheduled jobs from validated configuration                        |
-| `@aponiajs/config`        | Nest-style `.env`, namespaces, and validated config                |
-| `@aponiajs/cqrs`          | `CommandBus`, `QueryBus`, `EventBus`, `@Saga`, `AggregateRoot`     |
-| `@aponiajs/mapped-types`  | `PartialType`, `PickType`, `OmitType`, `IntersectionType`          |
-| `@aponiajs/serve-static`  | Static file and SPA serving via `ServeStaticModule`                |
-| `@aponiajs/terminus`      | `TerminusModule`, `HealthCheckService`, health indicators          |
-| `@aponiajs/metrics`       | Zero-dep Prometheus metrics, HTTP histograms, runtime gauges       |
-| `@aponiajs/opentelemetry` | OpenTelemetry tracing, W3C `traceparent`, and server spans         |
-| `@aponiajs/idempotency`   | `Idempotency-Key` deduplication, conflict guard, and replay        |
-| `@aponiajs/redis`         | Redis client and distributed stores for cache/auth/rate-limit/cron |
+| Package                     | What it adds                                                       | Install                                               |
+| --------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------- |
+| `@aponiajs/common`          | Decorators, descriptors, tokens, errors, WebSockets                | `bun add @aponiajs/common`                            |
+| `@aponiajs/compiler`        | Scoped lifetimes, borrow views, and typestate                      | `bun add @aponiajs/compiler`                          |
+| `@aponiajs/core`            | Module graph, visibility, scopes, and DI container                 | `bun add @aponiajs/core`                              |
+| `@aponiajs/platform-elysia` | Default Elysia HTTP platform, routes, plugins, and WebSockets      | `bun add @aponiajs/platform-elysia elysia@2.0.0-rc.4` |
+| `@aponiajs/platform-h3`     | AponiaJS on the H3 runtime                                         | `bun add @aponiajs/platform-h3`                       |
+| `@aponiajs/platform-hono`   | AponiaJS on the Hono runtime                                       | `bun add @aponiajs/platform-hono`                     |
+| `@aponiajs/cli`             | `aponia new`, `aponia generate`, library checks, and MCP tooling   | `bun add --global @aponiajs/cli`                      |
+| `@aponiajs/schematics`      | Nest-shaped schematic collection for the CLI                       | `bun add @aponiajs/schematics`                        |
+| `create-aponia`             | `bun create aponia` project generator entrypoint                   | `bun create aponia <name>`                            |
+| `@aponiajs/testing`         | Test application builder and provider overrides                    | `bun add --dev @aponiajs/testing`                     |
+| `@aponiajs/devtools`        | Opt-in runtime devtools served by the application                  | `bun add @aponiajs/devtools`                          |
+| `@aponiajs/auth`            | JWT, OIDC, refresh rotation, revocation, and RBAC                  | `bun add @aponiajs/auth`                              |
+| `@aponiajs/cache`           | Bounded TTL cache with a pluggable store                           | `bun add @aponiajs/cache`                             |
+| `@aponiajs/compression`     | Brotli and gzip response compression                               | `bun add @aponiajs/compression`                       |
+| `@aponiajs/config`          | Nest-style `.env`, namespaces, and validated config                | `bun add @aponiajs/config`                            |
+| `@aponiajs/cors`            | Cross-origin policy from validated configuration                   | `bun add @aponiajs/cors`                              |
+| `@aponiajs/cqrs`            | `CommandBus`, `QueryBus`, `EventBus`, `@Saga`, `AggregateRoot`     | `bun add @aponiajs/cqrs`                              |
+| `@aponiajs/cron`            | Scheduled jobs from validated configuration                        | `bun add @aponiajs/cron`                              |
+| `@aponiajs/database`        | Drizzle boundary, repositories, and SQL migrations                 | `bun add @aponiajs/database`                          |
+| `@aponiajs/events`          | Typed in-process events with ordered handlers                      | `bun add @aponiajs/events`                            |
+| `@aponiajs/graphql`         | GraphQL endpoint adapter                                           | `bun add @aponiajs/graphql`                           |
+| `@aponiajs/http`            | SSRF-safe outbound HTTP client with circuit breaker and bulkhead   | `bun add @aponiajs/http`                              |
+| `@aponiajs/idempotency`     | `Idempotency-Key` deduplication, conflict guard, and replay        | `bun add @aponiajs/idempotency`                       |
+| `@aponiajs/mapped-types`    | `PartialType`, `PickType`, `OmitType`, `IntersectionType`          | `bun add @aponiajs/mapped-types`                      |
+| `@aponiajs/mcp`             | Model Context Protocol endpoint adapter                            | `bun add @aponiajs/mcp`                               |
+| `@aponiajs/metrics`         | Zero-dep Prometheus metrics, HTTP histograms, and runtime gauges   | `bun add @aponiajs/metrics`                           |
+| `@aponiajs/microservices`   | Message patterns and nine broker transports                        | `bun add @aponiajs/microservices`                     |
+| `@aponiajs/nitro`           | Nitro delivery adapter                                             | `bun add @aponiajs/nitro`                             |
+| `@aponiajs/openapi`         | OpenAPI document for an application's routes                       | `bun add @aponiajs/openapi`                           |
+| `@aponiajs/opentelemetry`   | OpenTelemetry tracing, W3C `traceparent`, and server spans         | `bun add @aponiajs/opentelemetry`                     |
+| `@aponiajs/queue`           | In-process jobs, retries, dead letters, and outbox                 | `bun add @aponiajs/queue`                             |
+| `@aponiajs/rate-limit`      | Fixed-window rate limiting guard and store                         | `bun add @aponiajs/rate-limit`                        |
+| `@aponiajs/redis`           | Redis client and distributed stores for cache/auth/rate-limit/cron | `bun add @aponiajs/redis`                             |
+| `@aponiajs/security`        | Security headers and signed CSRF                                   | `bun add @aponiajs/security`                          |
+| `@aponiajs/serve-static`    | Static file and SPA serving via `ServeStaticModule`                | `bun add @aponiajs/serve-static`                      |
+| `@aponiajs/serverless`      | Web Fetch and AWS Lambda adapters                                  | `bun add @aponiajs/serverless`                        |
+| `@aponiajs/session`         | Signed session cookies and store                                   | `bun add @aponiajs/session`                           |
+| `@aponiajs/terminus`        | `TerminusModule`, `HealthCheckService`, and health indicators      | `bun add @aponiajs/terminus`                          |
+| `@aponiajs/view`            | Blade views, components, slots, and shared data                    | `bun add @aponiajs/view`                              |
 
 The reserved `aponiajs` facade is private in this workspace and is not
 published. Do not install it yet.
@@ -73,7 +60,7 @@ A decorated HTTP application normally imports `@aponiajs/common` and
 `@aponiajs/platform-elysia`, with Elysia installed as the platform peer:
 
 ```bash
-bun add @aponiajs/common@alpha @aponiajs/platform-elysia@alpha elysia@2.0.0-rc.4
+bun add @aponiajs/common @aponiajs/platform-elysia elysia@2.0.0-rc.4
 ```
 
 ```ts
@@ -395,7 +382,7 @@ Install the published CLI globally with Bun and invoke its `aponia` binary
 directly:
 
 ```bash
-bun add --global @aponiajs/cli@alpha
+bun add --global @aponiajs/cli
 aponia new my-api
 aponia --version
 ```

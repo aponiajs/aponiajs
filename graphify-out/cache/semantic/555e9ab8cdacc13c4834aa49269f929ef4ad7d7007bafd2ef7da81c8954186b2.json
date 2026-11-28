@@ -1,0 +1,142 @@
+{
+  "nodes": [
+    {
+      "id": "docs_learn_13_enhancers_guide",
+      "label": "13 \u00b7 Enhancers",
+      "file_type": "document",
+      "source_file": "docs/learn/13-enhancers.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_learn_13_enhancers_canactivate_guard",
+      "label": "Guard (CanActivate)",
+      "file_type": "concept",
+      "rationale": "Compiles into beforeHandle; returning false rejects with 403 Problem Details while throwing routes to exception filters.",
+      "source_file": "docs/learn/13-enhancers.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_learn_13_enhancers_interceptor",
+      "label": "Interceptor (interceptBefore / interceptAfter)",
+      "file_type": "concept",
+      "rationale": "Compiles into beforeHandle/afterHandle; interceptBefore cannot short-circuit and returning undefined from interceptAfter leaves the handler result unchanged.",
+      "source_file": "docs/learn/13-enhancers.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_learn_13_enhancers_exception_filter",
+      "label": "ExceptionFilter (@Catch)",
+      "file_type": "concept",
+      "rationale": "Compiles into a route-local error array matched by instanceof most-specific-first; first non-null/non-undefined answer wins.",
+      "source_file": "docs/learn/13-enhancers.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_learn_13_enhancers_provider_registration",
+      "label": "Container-Resolved Enhancer Registration",
+      "file_type": "rationale",
+      "rationale": "Enhancers named in @UseGuards/@UseInterceptors/@UseFilters must appear in a reachable module's providers or boot fails with MISSING_PROVIDER; registerRoutes and buildPlugin callbacks bypass platform enhancers.",
+      "source_file": "docs/learn/13-enhancers.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_learn_13_enhancers_guide",
+      "target": "docs_learn_13_enhancers_canactivate_guard",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/learn/13-enhancers.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_learn_13_enhancers_guide",
+      "target": "docs_learn_13_enhancers_interceptor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/learn/13-enhancers.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_learn_13_enhancers_guide",
+      "target": "docs_learn_13_enhancers_exception_filter",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/learn/13-enhancers.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_learn_13_enhancers_guide",
+      "target": "docs_learn_13_enhancers_provider_registration",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/learn/13-enhancers.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_learn_13_enhancers_exception_filter",
+      "target": "docs_learn_10_errors_unhandled_error_mapping",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/learn/13-enhancers.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_learn_13_enhancers_guide",
+      "target": "docs_learn_14_devtools_guide",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/learn/13-enhancers.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "aponia_request_execution_and_error_flow",
+      "label": "Request Enhancer & Error Handling Pipeline",
+      "nodes": [
+        "docs_learn_13_enhancers_canactivate_guard",
+        "docs_learn_13_enhancers_interceptor",
+        "docs_learn_13_enhancers_exception_filter",
+        "docs_learn_10_errors_httperror",
+        "docs_learn_10_errors_unhandled_error_mapping"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/learn/13-enhancers.md"
+    }
+  ]
+}

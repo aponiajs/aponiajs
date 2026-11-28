@@ -1,0 +1,252 @@
+{
+  "nodes": [
+    {
+      "id": "packages_testing_agents_testing_agent_guide",
+      "label": "@aponiajs/testing Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/testing/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_testing_agents_descriptor_override_rewrite",
+      "label": "Compiled Descriptor Override Rewrite",
+      "file_type": "rationale",
+      "rationale": "An override rewrites compiled ModuleDefinition descriptors via applyProviderOverrides and passes the rewritten root to AponiaFactory.create, keeping @aponiajs/platform-elysia unaware of @aponiajs/testing with no platform seam needed.",
+      "source_file": "packages/testing/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_testing_agents_missing_provider_refusal",
+      "label": "Compile-Time MISSING_PROVIDER Refusal",
+      "file_type": "rationale",
+      "rationale": "An override for a token no reachable module provides raises MISSING_PROVIDER with { token } from compile() so a test never passes against the real dependency while assuming it was replaced.",
+      "source_file": "packages/testing/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_testing_agents_diamond_memoization",
+      "label": "Diamond Graph Override Memoization",
+      "file_type": "rationale",
+      "rationale": "applyProviderOverrides memoizes one rewritten ModuleDefinition per original object so diamond module graphs do not produce two definitions sharing one identity and fail compileModuleGraph with DUPLICATE_MODULE.",
+      "source_file": "packages/testing/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_testing_agents_no_override_passthrough",
+      "label": "No-Override Factory Passthrough",
+      "file_type": "rationale",
+      "rationale": "When nothing is overridden, compile() passes the root straight to AponiaFactory.create so diagnostics preserve decorated versus declared graph reporting.",
+      "source_file": "packages/testing/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_testing_agents_configure_native_exclusion",
+      "label": "Exclusion of configureNative on TestApplicationOptions",
+      "file_type": "rationale",
+      "rationale": "TestApplication erases TNativeApplication to AnyElysia, so TestApplicationOptions omits configureNative rather than accepting a type parameter that the wrapper discards.",
+      "source_file": "packages/testing/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_testing_agents_default_silent_logger",
+      "label": "Default Silent Test Logger",
+      "file_type": "rationale",
+      "rationale": "logger defaults to false (the only option difference from AponiaFactory) because startup output is unwanted noise in test reports.",
+      "source_file": "packages/testing/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_testing_agents_ephemeral_port_zero",
+      "label": "Direct Port-0 Binding in listen()",
+      "file_type": "rationale",
+      "rationale": "listen() binds port 0 and reads the port from getUrl() instead of reserving and closing an ephemeral port first, preventing race-condition test flakes; used only when WebSocket upgrades need a real socket.",
+      "source_file": "packages/testing/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_testing_agents_explicit_override_inject",
+      "label": "Explicit inject Tokens on Test Overrides",
+      "file_type": "rationale",
+      "rationale": "useFactory and useClass state inject tokens explicitly because hand-written test stubs have no @Inject() or design:paramtypes metadata to inspect.",
+      "source_file": "packages/testing/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_testing_agents_plugin_conformance_helpers",
+      "label": "Plugin Structural Conformance Helpers",
+      "file_type": "concept",
+      "source_file": "packages/testing/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_testing_agents_vite_plus_node_lane",
+      "label": "Vite+ Node Conformance Lane Constraint",
+      "file_type": "rationale",
+      "rationale": "The Vite+ lane runs on Node where Elysia 2 has no listen() adapter, so test/*.conformance.ts exercises handle() without sockets while real-port cases live in the Bun lane.",
+      "source_file": "packages/testing/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_testing_agents_descriptor_override_rewrite",
+      "target": "packages_testing_llms_testapplicationbuilder",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/testing/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_testing_agents_missing_provider_refusal",
+      "target": "packages_testing_agents_descriptor_override_rewrite",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/testing/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_testing_agents_diamond_memoization",
+      "target": "packages_testing_agents_descriptor_override_rewrite",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/testing/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_testing_agents_no_override_passthrough",
+      "target": "packages_testing_llms_testapplicationbuilder",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/testing/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_testing_agents_configure_native_exclusion",
+      "target": "packages_testing_llms_testapplication",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/testing/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_testing_agents_default_silent_logger",
+      "target": "packages_testing_readme_createtestapplication",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/testing/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_testing_agents_ephemeral_port_zero",
+      "target": "packages_testing_llms_testserver",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/testing/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_testing_agents_explicit_override_inject",
+      "target": "packages_testing_llms_testapplicationbuilder",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/testing/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_testing_agents_plugin_conformance_helpers",
+      "target": "packages_testing_agents_testing_agent_guide",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/testing/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_testing_agents_vite_plus_node_lane",
+      "target": "packages_testing_agents_testing_agent_guide",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/testing/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "testing_override_design_principles",
+      "label": "Testing Kit Graph-Rewrite Override Principles",
+      "nodes": [
+        "packages_testing_agents_descriptor_override_rewrite",
+        "packages_testing_agents_missing_provider_refusal",
+        "packages_testing_agents_diamond_memoization",
+        "packages_testing_agents_no_override_passthrough"
+      ],
+      "relation": "form",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "packages/testing/AGENTS.md"
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "nodes": [
+    {
+      "id": "packages_devtools_readme_devtools_endpoints",
+      "label": "/__devtools HTTP API",
+      "file_type": "concept",
+      "source_file": "packages/devtools/README.md",
+      "source_location": "line 61",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_devtools_readme_devtools_readme",
+      "label": "@aponiajs/devtools README",
+      "file_type": "document",
+      "source_file": "packages/devtools/README.md",
+      "source_location": "line 1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_devtools_agents_handledevtoolsrequest",
+      "target": "packages_devtools_readme_devtools_endpoints",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/devtools/README.md",
+      "source_location": "line 100",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_devtools_readme_devtools_readme",
+      "target": "packages_devtools_agents_aponiajs_devtools",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/devtools/README.md",
+      "source_location": "line 1",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cors_gemini_httppolicy",
+      "target": "packages_devtools_agents_requestlifecyclehook",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "packages/devtools/README.md",
+      "source_location": "line 83",
+      "weight": 0.85
+    }
+  ],
+  "hyperedges": []
+}

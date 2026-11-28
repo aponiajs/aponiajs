@@ -1,0 +1,248 @@
+{
+  "nodes": [
+    {
+      "id": "packages_rate_limit_readme_aponiajs_rate_limit",
+      "label": "@aponiajs/rate-limit",
+      "file_type": "concept",
+      "source_file": "packages/rate-limit/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_rate_limit_readme_ratelimitmodule",
+      "label": "RateLimitModule",
+      "file_type": "concept",
+      "rationale": "ConfigurableModuleBuilder definition providing and exporting RATE_LIMIT_MODULE_OPTIONS, supporting forRoot and forRootAsync (useFactory, useClass, useExisting) while keeping register/registerAsync as deprecated aliases.",
+      "source_file": "packages/rate-limit/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_rate_limit_readme_ratelimitguard",
+      "label": "RateLimitGuard",
+      "file_type": "concept",
+      "rationale": "Consumes one token per request via RateLimitService, emits RateLimit-Limit/Remaining/Reset headers on allowed responses, and throws a 429 Problem Details refusal with Retry-After when exhausted.",
+      "source_file": "packages/rate-limit/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_rate_limit_readme_ratelimit",
+      "label": "@RateLimit()",
+      "file_type": "concept",
+      "source_file": "packages/rate-limit/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_rate_limit_readme_ratelimitservice",
+      "label": "RateLimitService",
+      "file_type": "concept",
+      "source_file": "packages/rate-limit/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_rate_limit_readme_ratelimitstore",
+      "label": "RateLimitStore",
+      "file_type": "concept",
+      "source_file": "packages/rate-limit/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_rate_limit_readme_memoryratelimitstore",
+      "label": "MemoryRateLimitStore",
+      "file_type": "concept",
+      "rationale": "Process-local fixed-window store bounded by maxKeys (default 10,000) that evicts the oldest insertion; multi-process deployments must supply a shared RateLimitStore.",
+      "source_file": "packages/rate-limit/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_rate_limit_readme_route_identity_default_key",
+      "label": "Route Identity Default Bucket Key",
+      "file_type": "rationale",
+      "rationale": "Default bucket key uses route identity instead of X-Forwarded-For or other client-supplied headers because direct clients can spoof headers; custom key functions are only supplied when behind a trusted proxy.",
+      "source_file": "packages/rate-limit/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_rate_limit_readme_429_problem_details",
+      "label": "429 Problem Details Refusal with Retry-After",
+      "file_type": "rationale",
+      "rationale": "Returns 429 Problem Details and Retry-After in whole seconds when the bucket is exhausted so clients wait for the reset window instead of retrying blindly.",
+      "source_file": "packages/rate-limit/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_rate_limit_readme_invalid_rate_limit",
+      "label": "INVALID_RATE_LIMIT",
+      "file_type": "concept",
+      "source_file": "packages/rate-limit/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_rate_limit_readme_rate_limit_module_options",
+      "label": "RATE_LIMIT_MODULE_OPTIONS",
+      "file_type": "concept",
+      "source_file": "packages/rate-limit/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_rate_limit_readme_aponiajs_rate_limit",
+      "target": "packages_rate_limit_readme_ratelimitmodule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/rate-limit/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_rate_limit_readme_ratelimitmodule",
+      "target": "packages_rate_limit_readme_rate_limit_module_options",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/rate-limit/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_rate_limit_readme_ratelimitmodule",
+      "target": "packages_rate_limit_readme_invalid_rate_limit",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/rate-limit/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_rate_limit_readme_ratelimitguard",
+      "target": "packages_rate_limit_readme_ratelimitservice",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/rate-limit/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_rate_limit_readme_ratelimitguard",
+      "target": "packages_rate_limit_readme_ratelimit",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/rate-limit/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_rate_limit_readme_429_problem_details",
+      "target": "packages_rate_limit_readme_ratelimitguard",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/rate-limit/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_rate_limit_readme_route_identity_default_key",
+      "target": "packages_rate_limit_readme_ratelimitmodule",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/rate-limit/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_rate_limit_readme_memoryratelimitstore",
+      "target": "packages_rate_limit_readme_ratelimitstore",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/rate-limit/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_rate_limit_readme_ratelimitservice",
+      "target": "packages_rate_limit_readme_ratelimitstore",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/rate-limit/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_rate_limit_readme_memoryratelimitstore",
+      "target": "packages_session_readme_memorysessionstore",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "packages/rate-limit/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "aponiajs_bounded_in_memory_store_pattern",
+      "label": "Bounded Process-Local In-Memory Store Pattern",
+      "nodes": [
+        "packages_rate_limit_readme_memoryratelimitstore",
+        "packages_rate_limit_readme_ratelimitstore",
+        "packages_session_readme_memorysessionstore",
+        "packages_session_readme_sessionstore"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "packages/rate-limit/README.md"
+    }
+  ]
+}

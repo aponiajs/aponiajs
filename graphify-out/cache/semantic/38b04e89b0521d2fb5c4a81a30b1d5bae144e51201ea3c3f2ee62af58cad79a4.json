@@ -1,0 +1,50 @@
+{
+  "nodes": [
+    {
+      "id": "examples_lifecycle_readme_lifecycle_example",
+      "label": "Lifecycle Example",
+      "file_type": "document",
+      "source_file": "examples/lifecycle/README.md",
+      "source_location": "L1-L23",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "examples_lifecycle_readme_instance_lifecycle_hooks",
+      "label": "Instance-Resolved Start and Stop Lifecycle Hooks",
+      "file_type": "concept",
+      "rationale": "Because the framework reads lifecycle hook methods directly from the provider instance without decorators or explicit registration, decorated and descriptor-registered providers behave identically.",
+      "source_file": "examples/lifecycle/README.md",
+      "source_location": "L3-L5",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "examples_lifecycle_readme_lifecycle_example",
+      "target": "examples_lifecycle_readme_instance_lifecycle_hooks",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "examples/lifecycle/README.md",
+      "source_location": "L3-L5",
+      "weight": 1.0
+    },
+    {
+      "source": "examples_lifecycle_readme_instance_lifecycle_hooks",
+      "target": "examples_descriptors_readme_descriptor_authoring",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "examples/lifecycle/README.md",
+      "source_location": "L3-L5",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

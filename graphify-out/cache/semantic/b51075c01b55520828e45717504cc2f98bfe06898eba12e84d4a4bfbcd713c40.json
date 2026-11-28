@@ -1,0 +1,40 @@
+{
+  "nodes": [
+    {
+      "id": "examples_configuration_readme_configuration_example",
+      "label": "Configuration Example",
+      "file_type": "document",
+      "source_file": "examples/configuration/README.md",
+      "source_location": "L1-L33",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "examples_configuration_readme_appconfig_validation",
+      "label": "AppConfig Single-Validation Pattern",
+      "file_type": "concept",
+      "source_file": "examples/configuration/README.md",
+      "source_location": "L3-L33",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Validates PORT and SERVICE_NAME once at boot via AppConfig so malformed values fail with INVALID_CONFIGURATION_VALUE rather than passing NaN to listen()."
+    }
+  ],
+  "edges": [
+    {
+      "source": "examples_configuration_readme_appconfig_validation",
+      "target": "examples_configuration_readme_configuration_example",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "examples/configuration/README.md",
+      "source_location": "L3-L11",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

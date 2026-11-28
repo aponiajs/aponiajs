@@ -146,4 +146,4 @@ export class UsersController {
 }
 ```
 
-Next: [06 · Validation](./06-validation.md) · Deep dive: [architecture and style](../build/architecture-and-style.md)
+Next: [06 · Request parameters](./06-request-parameters.md) · Deep dive: [architecture and style](../build/architecture-and-style.md)

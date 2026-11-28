@@ -1,0 +1,43 @@
+{
+  "nodes": [
+    {
+      "id": "examples_mvc_readme_mvc_example",
+      "label": "MVC & HTMX Example",
+      "file_type": "document",
+      "source_file": "examples/mvc/README.md",
+      "source_location": "L1-L19",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "examples_mvc_readme_mvc_example",
+      "target": "examples_mvc_src_articles_views_index_blade_articles_index_view",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "examples/mvc/README.md",
+      "source_location": "L6-L6",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "mvc_blade_template_hierarchy",
+      "label": "MVC Blade Template Hierarchy",
+      "nodes": [
+        "examples_mvc_readme_mvc_example",
+        "examples_mvc_src_layouts_app_app_layout",
+        "examples_mvc_src_articles_views_index_blade_articles_index_view",
+        "examples_mvc_src_articles_views_detail_blade_article_detail_view"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "examples/mvc/README.md"
+    }
+  ]
+}

@@ -1,0 +1,141 @@
+{
+  "nodes": [
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_aponia_cli_json",
+      "label": "aponia-cli.json",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/aponia-cli.json",
+      "source_location": "L1"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_aponia_cli_collection",
+      "label": "collection",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/aponia-cli.json",
+      "source_location": "L2"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_aponia_cli_sourceroot",
+      "label": "sourceRoot",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/aponia-cli.json",
+      "source_location": "L3"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_aponia_cli_entryfile",
+      "label": "entryFile",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/aponia-cli.json",
+      "source_location": "L4"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_aponia_cli_language",
+      "label": "language",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/aponia-cli.json",
+      "source_location": "L5"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_aponia_cli_generateoptions",
+      "label": "generateOptions",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/aponia-cli.json",
+      "source_location": "L6"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_aponia_cli_generateoptions_spec",
+      "label": "spec",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/aponia-cli.json",
+      "source_location": "L6"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_aponia_cli_compileroptions",
+      "label": "compilerOptions",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/aponia-cli.json",
+      "source_location": "L7"
+    },
+    {
+      "id": "$graphify-root$_packages_cli_templates_application_aponia_cli_compileroptions_deleteoutdir",
+      "label": "deleteOutDir",
+      "file_type": "code",
+      "source_file": "packages/cli/templates/application/aponia-cli.json",
+      "source_location": "L7"
+    }
+  ],
+  "edges": [
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_aponia_cli_json",
+      "target": "$graphify-root$_packages_cli_templates_application_aponia_cli_collection",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/aponia-cli.json",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_aponia_cli_json",
+      "target": "$graphify-root$_packages_cli_templates_application_aponia_cli_sourceroot",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/aponia-cli.json",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_aponia_cli_json",
+      "target": "$graphify-root$_packages_cli_templates_application_aponia_cli_entryfile",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/aponia-cli.json",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_aponia_cli_json",
+      "target": "$graphify-root$_packages_cli_templates_application_aponia_cli_language",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/aponia-cli.json",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_aponia_cli_json",
+      "target": "$graphify-root$_packages_cli_templates_application_aponia_cli_generateoptions",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/aponia-cli.json",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_aponia_cli_generateoptions",
+      "target": "$graphify-root$_packages_cli_templates_application_aponia_cli_generateoptions_spec",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/aponia-cli.json",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_aponia_cli_json",
+      "target": "$graphify-root$_packages_cli_templates_application_aponia_cli_compileroptions",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/aponia-cli.json",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_packages_cli_templates_application_aponia_cli_compileroptions",
+      "target": "$graphify-root$_packages_cli_templates_application_aponia_cli_compileroptions_deleteoutdir",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/cli/templates/application/aponia-cli.json",
+      "source_location": "L7",
+      "weight": 1.0
+    }
+  ]
+}

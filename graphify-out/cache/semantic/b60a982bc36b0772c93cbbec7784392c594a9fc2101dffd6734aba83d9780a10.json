@@ -1,0 +1,156 @@
+{
+  "nodes": [
+    {
+      "id": "packages_http_readme_aponiajs_http",
+      "label": "@aponiajs/http Package Documentation",
+      "file_type": "document",
+      "source_file": "packages/http/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_http_readme_httpmodule",
+      "label": "HttpModule",
+      "file_type": "concept",
+      "source_file": "packages/http/README.md",
+      "source_location": "line 19",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_http_readme_httpclient",
+      "label": "HttpClient / HttpService",
+      "file_type": "concept",
+      "source_file": "packages/http/README.md",
+      "source_location": "line 34",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_http_readme_injecthttpclient",
+      "label": "@InjectHttpClient Decorator",
+      "file_type": "concept",
+      "source_file": "packages/http/README.md",
+      "source_location": "line 115",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_http_readme_gethttpclienttoken",
+      "label": "getHttpClientToken",
+      "file_type": "concept",
+      "source_file": "packages/http/README.md",
+      "source_location": "line 177",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_http_readme_httpclientinterceptor",
+      "label": "HttpClientInterceptor",
+      "file_type": "concept",
+      "source_file": "packages/http/README.md",
+      "source_location": "line 180",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_http_readme_http_client_invalid_response",
+      "label": "HTTP_CLIENT_INVALID_RESPONSE",
+      "file_type": "concept",
+      "source_file": "packages/http/README.md",
+      "source_location": "line 198",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_http_readme_split_registration_pattern",
+      "label": "Split forRoot and register Registration Pattern",
+      "file_type": "rationale",
+      "rationale": "Mirrors @nestjs/http-client by splitting app-wide defaults (forRoot/forRootAsync registering no client) from per-client creation (register/registerAsync under HttpClient or HttpClient:<name>).",
+      "source_file": "packages/http/README.md",
+      "source_location": "line 173",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_http_readme_aponiajs_http",
+      "target": "packages_http_readme_httpmodule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/http/README.md",
+      "source_location": "line 19",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_http_readme_httpmodule",
+      "target": "packages_http_readme_httpclient",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/http/README.md",
+      "source_location": "line 15",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_http_readme_injecthttpclient",
+      "target": "packages_http_readme_gethttpclienttoken",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/http/README.md",
+      "source_location": "line 176",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_http_readme_httpclientinterceptor",
+      "target": "packages_http_readme_httpclient",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/http/README.md",
+      "source_location": "line 183",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_http_readme_httpclient",
+      "target": "packages_http_readme_http_client_invalid_response",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/http/README.md",
+      "source_location": "line 198",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_http_readme_split_registration_pattern",
+      "target": "packages_http_readme_httpmodule",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/http/README.md",
+      "source_location": "line 173",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

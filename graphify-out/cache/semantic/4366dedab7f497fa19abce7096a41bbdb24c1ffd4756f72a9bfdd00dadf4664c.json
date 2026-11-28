@@ -1,0 +1,192 @@
+{
+  "nodes": [
+    {
+      "id": "packages_cors_readme_aponiajs_cors",
+      "label": "@aponiajs/cors",
+      "file_type": "concept",
+      "source_file": "packages/cors/README.md",
+      "source_location": "line 1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Leaf package contributing CORS module registration and validated configuration over @aponiajs/platform-core HttpPolicy."
+    },
+    {
+      "id": "packages_cors_readme_corsmodule",
+      "label": "CorsModule",
+      "file_type": "concept",
+      "source_file": "packages/cors/README.md",
+      "source_location": "line 18",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Provides and exports its own configuration token so the importing application avoids a module cycle; defaults key to 'cors' and supports one registration per application."
+    },
+    {
+      "id": "packages_cors_readme_corsconfiguration",
+      "label": "CorsConfiguration",
+      "file_type": "concept",
+      "source_file": "packages/cors/README.md",
+      "source_location": "line 101",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Requires origins as exact strings and defaults credentials to false so permissive origin reflection with credentials is never silently served; refuses '*' paired with credentials: true at boot."
+    },
+    {
+      "id": "packages_cors_readme_corsconfig",
+      "label": "CorsConfig",
+      "file_type": "concept",
+      "source_file": "packages/cors/README.md",
+      "source_location": "line 87",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cors_readme_pluginmodule",
+      "label": "PluginModule / @elysia/cors Escape Hatch",
+      "file_type": "concept",
+      "source_file": "packages/cors/README.md",
+      "source_location": "line 228",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Native escape hatch for RegExp or function origin predicates that environment-backed configuration data cannot express."
+    },
+    {
+      "id": "packages_cors_readme_aponia_build_decline",
+      "label": "aponia build DynamicModule Decline",
+      "file_type": "rationale",
+      "source_file": "packages/cors/README.md",
+      "source_location": "line 174",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "DynamicModule registrations are runtime values rather than static @Module() declarations, so aponia build declines importing modules from descriptors.generated.ts and the platform lowers from decorators instead."
+    },
+    {
+      "id": "packages_cors_readme_invalid_configuration_value",
+      "label": "INVALID_CONFIGURATION_VALUE (CORS)",
+      "file_type": "concept",
+      "source_file": "packages/cors/README.md",
+      "source_location": "line 196",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Reports a total issue list naming every invalid configuration field in one boot failure rather than stopping on the first error."
+    },
+    {
+      "id": "packages_cors_readme_duplicate_module",
+      "label": "DUPLICATE_MODULE (CORS)",
+      "file_type": "concept",
+      "source_file": "packages/cors/README.md",
+      "source_location": "line 76",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_cors_readme_invalid_configuration",
+      "label": "INVALID_CONFIGURATION (CORS)",
+      "file_type": "concept",
+      "source_file": "packages/cors/README.md",
+      "source_location": "line 204",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_cors_readme_aponiajs_cors",
+      "target": "packages_cors_readme_corsmodule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cors/README.md",
+      "source_location": "line 18",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cors_readme_corsmodule",
+      "target": "packages_cors_readme_corsconfiguration",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cors/README.md",
+      "source_location": "line 121",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cors_readme_corsmodule",
+      "target": "packages_cors_readme_corsconfig",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cors/README.md",
+      "source_location": "line 21",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cors_readme_aponia_build_decline",
+      "target": "packages_cors_readme_corsmodule",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cors/README.md",
+      "source_location": "line 176",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cors_readme_corsmodule",
+      "target": "packages_cors_readme_pluginmodule",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cors/README.md",
+      "source_location": "line 210",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cors_readme_corsconfiguration",
+      "target": "packages_cors_readme_invalid_configuration_value",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cors/README.md",
+      "source_location": "line 195",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cors_readme_corsmodule",
+      "target": "packages_cors_readme_duplicate_module",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cors/README.md",
+      "source_location": "line 75",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_cors_readme_corsmodule",
+      "target": "packages_cors_readme_invalid_configuration",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/cors/README.md",
+      "source_location": "line 204",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

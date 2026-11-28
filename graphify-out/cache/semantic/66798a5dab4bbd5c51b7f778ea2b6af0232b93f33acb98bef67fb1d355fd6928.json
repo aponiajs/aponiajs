@@ -1,0 +1,71 @@
+{
+  "nodes": [
+    {
+      "id": "packages_platform_hono_readme_guide",
+      "label": "@aponiajs/platform-hono README",
+      "file_type": "document",
+      "source_file": "packages/platform-hono/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_hono_readme_honoadapter",
+      "label": "honoAdapter and AponiaFactory (platform-hono)",
+      "file_type": "concept",
+      "source_file": "packages/platform-hono/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_hono_readme_tohonoplatformhandler",
+      "label": "toHonoPlatformHandler",
+      "file_type": "concept",
+      "rationale": "Middleware dispatcher that answers Aponia-owned routes and lets unmatched requests continue through the host Hono app without returning 404.",
+      "source_file": "packages/platform-hono/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_platform_hono_readme_guide",
+      "target": "packages_platform_elysia_readme_guide",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-hono/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_hono_readme_honoadapter",
+      "target": "packages_platform_hono_agents_createhonohost",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/platform-hono/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_hono_readme_tohonoplatformhandler",
+      "target": "packages_platform_h3_readme_toh3platformhandler",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/platform-hono/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

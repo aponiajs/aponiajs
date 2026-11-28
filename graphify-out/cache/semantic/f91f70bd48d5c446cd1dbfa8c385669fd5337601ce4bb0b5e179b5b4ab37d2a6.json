@@ -1,0 +1,92 @@
+{
+  "nodes": [
+    {
+      "id": "docs_learn_09_logging_guide",
+      "label": "09 \u00b7 Logging",
+      "file_type": "document",
+      "source_file": "docs/learn/09-logging.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_learn_09_logging_loggerservice",
+      "label": "LoggerService & Bootstrap Logger Configuration",
+      "file_type": "concept",
+      "rationale": "Log levels cascade so log includes warn, error, and fatal; tests pass logger: false to keep output quiet while custom loggers implement log, fatal, error, and warn.",
+      "source_file": "docs/learn/09-logging.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_learn_09_logging_bootstrap_log_actors",
+      "label": "Bootstrap Log Actors (AponiaFactory, InstanceLoader, RoutesResolver, RouterExplorer, AponiaApplication)",
+      "file_type": "concept",
+      "source_file": "docs/learn/09-logging.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_learn_09_logging_geturl",
+      "label": "application.getUrl() & APPLICATION_NOT_LISTENING",
+      "file_type": "concept",
+      "source_file": "docs/learn/09-logging.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_learn_09_logging_guide",
+      "target": "docs_learn_09_logging_loggerservice",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/learn/09-logging.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_learn_09_logging_guide",
+      "target": "docs_learn_09_logging_bootstrap_log_actors",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/learn/09-logging.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_learn_09_logging_guide",
+      "target": "docs_learn_09_logging_geturl",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/learn/09-logging.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_learn_09_logging_guide",
+      "target": "docs_learn_10_errors_guide",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/learn/09-logging.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

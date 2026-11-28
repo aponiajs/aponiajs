@@ -45,7 +45,7 @@ once. A delivery adapter is not a platform and keeps the narrower surface below.
   types are part of its contract.
 
 A new platform implements one of these shapes and passes the shared conformance
-contract in `packages/platform-core/test/support/platform-contract.ts`.
+contract in `packages/common/test/support/platform-contract.ts`.
 
 ## Platforms
 
@@ -67,8 +67,7 @@ argument, the way `NestFactory.create(AppModule, new FastifyAdapter())` takes
 one, or the `adapter` field of the options object:
 
 ```ts
-import { AponiaFactory } from "@aponiajs/platform-core";
-import { honoAdapter } from "@aponiajs/platform-hono";
+import { AponiaFactory, honoAdapter } from "@aponiajs/platform-hono";
 
 const application = await AponiaFactory.create(AppModule, honoAdapter(), {
   prefix: "/api",

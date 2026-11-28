@@ -1,0 +1,354 @@
+{
+  "nodes": [
+    {
+      "id": "$graphify-root$_examples_validation_package_json",
+      "label": "package.json",
+      "file_type": "code",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L1"
+    },
+    {
+      "id": "$graphify-root$_examples_validation_package_name",
+      "label": "name",
+      "file_type": "code",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L2"
+    },
+    {
+      "id": "$graphify-root$_examples_validation_package_version",
+      "label": "version",
+      "file_type": "code",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L3"
+    },
+    {
+      "id": "$graphify-root$_examples_validation_package_private",
+      "label": "private",
+      "file_type": "code",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L4"
+    },
+    {
+      "id": "$graphify-root$_examples_validation_package_type",
+      "label": "type",
+      "file_type": "code",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L5"
+    },
+    {
+      "id": "$graphify-root$_examples_validation_package_scripts",
+      "label": "scripts",
+      "file_type": "code",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L6"
+    },
+    {
+      "id": "$graphify-root$_examples_validation_package_scripts_dev",
+      "label": "dev",
+      "file_type": "code",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L7"
+    },
+    {
+      "id": "$graphify-root$_examples_validation_package_scripts_start",
+      "label": "start",
+      "file_type": "code",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L8"
+    },
+    {
+      "id": "$graphify-root$_examples_validation_package_scripts_build",
+      "label": "build",
+      "file_type": "code",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L9"
+    },
+    {
+      "id": "$graphify-root$_examples_validation_package_scripts_test",
+      "label": "test",
+      "file_type": "code",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L10"
+    },
+    {
+      "id": "$graphify-root$_examples_validation_package_scripts_check",
+      "label": "check",
+      "file_type": "code",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L11"
+    },
+    {
+      "id": "$graphify-root$_examples_validation_package_dependencies",
+      "label": "dependencies",
+      "file_type": "code",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L13"
+    },
+    {
+      "id": "$graphify-root$_examples_validation_package_dependencies_aponiajs_common",
+      "label": "@aponiajs/common",
+      "file_type": "code",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L14"
+    },
+    {
+      "id": "ref_aponiajs_common",
+      "label": "@aponiajs/common",
+      "file_type": "concept",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L14"
+    },
+    {
+      "id": "$graphify-root$_examples_validation_package_dependencies_aponiajs_core",
+      "label": "@aponiajs/core",
+      "file_type": "code",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L15"
+    },
+    {
+      "id": "ref_aponiajs_core",
+      "label": "@aponiajs/core",
+      "file_type": "concept",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L15"
+    },
+    {
+      "id": "$graphify-root$_examples_validation_package_dependencies_aponiajs_platform_elysia",
+      "label": "@aponiajs/platform-elysia",
+      "file_type": "code",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L16"
+    },
+    {
+      "id": "ref_aponiajs_platform_elysia",
+      "label": "@aponiajs/platform-elysia",
+      "file_type": "concept",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L16"
+    },
+    {
+      "id": "$graphify-root$_examples_validation_package_dependencies_elysia",
+      "label": "elysia",
+      "file_type": "code",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L17"
+    },
+    {
+      "id": "ref_elysia",
+      "label": "elysia",
+      "file_type": "concept",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L17"
+    },
+    {
+      "id": "$graphify-root$_examples_validation_package_dependencies_zod",
+      "label": "zod",
+      "file_type": "code",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L18"
+    },
+    {
+      "id": "ref_zod",
+      "label": "zod",
+      "file_type": "concept",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L18"
+    }
+  ],
+  "edges": [
+    {
+      "source": "$graphify-root$_examples_validation_package_json",
+      "target": "$graphify-root$_examples_validation_package_name",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_examples_validation_package_json",
+      "target": "$graphify-root$_examples_validation_package_version",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_examples_validation_package_json",
+      "target": "$graphify-root$_examples_validation_package_private",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_examples_validation_package_json",
+      "target": "$graphify-root$_examples_validation_package_type",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_examples_validation_package_json",
+      "target": "$graphify-root$_examples_validation_package_scripts",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_examples_validation_package_scripts",
+      "target": "$graphify-root$_examples_validation_package_scripts_dev",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_examples_validation_package_scripts",
+      "target": "$graphify-root$_examples_validation_package_scripts_start",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_examples_validation_package_scripts",
+      "target": "$graphify-root$_examples_validation_package_scripts_build",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_examples_validation_package_scripts",
+      "target": "$graphify-root$_examples_validation_package_scripts_test",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_examples_validation_package_scripts",
+      "target": "$graphify-root$_examples_validation_package_scripts_check",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_examples_validation_package_json",
+      "target": "$graphify-root$_examples_validation_package_dependencies",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_examples_validation_package_dependencies",
+      "target": "$graphify-root$_examples_validation_package_dependencies_aponiajs_common",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_examples_validation_package_json",
+      "target": "ref_aponiajs_common",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L14",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_examples_validation_package_dependencies",
+      "target": "$graphify-root$_examples_validation_package_dependencies_aponiajs_core",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_examples_validation_package_json",
+      "target": "ref_aponiajs_core",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L15",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_examples_validation_package_dependencies",
+      "target": "$graphify-root$_examples_validation_package_dependencies_aponiajs_platform_elysia",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_examples_validation_package_json",
+      "target": "ref_aponiajs_platform_elysia",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L16",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_examples_validation_package_dependencies",
+      "target": "$graphify-root$_examples_validation_package_dependencies_elysia",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_examples_validation_package_json",
+      "target": "ref_elysia",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L17",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "$graphify-root$_examples_validation_package_dependencies",
+      "target": "$graphify-root$_examples_validation_package_dependencies_zod",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_examples_validation_package_json",
+      "target": "ref_zod",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "examples/validation/package.json",
+      "source_location": "L18",
+      "weight": 1.0,
+      "context": "import"
+    }
+  ]
+}

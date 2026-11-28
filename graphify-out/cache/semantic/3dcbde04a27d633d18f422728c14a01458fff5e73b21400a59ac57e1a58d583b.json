@@ -1,0 +1,209 @@
+{
+  "nodes": [
+    {
+      "id": "packages_mcp_agents_agent_guide",
+      "label": "@aponiajs/mcp Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/mcp/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_mcp_agents_mcpmodule",
+      "label": "McpModule",
+      "file_type": "concept",
+      "rationale": "Owns forRoot, forRootAsync, options, and the generated HTTP controller while delegating protocol implementation to @modelcontextprotocol/server v2.",
+      "source_file": "packages/mcp/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_mcp_agents_mcp_discovery",
+      "label": "MCP Discovery",
+      "file_type": "concept",
+      "rationale": "Discovery is a boot decision: duplicate tool or prompt names, invalid names, or out-of-graph include entries throw before the endpoint serves a request.",
+      "source_file": "packages/mcp/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_mcp_agents_mcpexecutioncontext",
+      "label": "McpExecutionContext",
+      "file_type": "concept",
+      "rationale": "Enhancers are explicit (module options, class decorators, method decorators in order) and HTTP globals from AponiaFactory.create are not inherited automatically.",
+      "source_file": "packages/mcp/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_mcp_agents_mcp_transport",
+      "label": "MCP Transport & Origin/Host Gate",
+      "file_type": "concept",
+      "rationale": "Builds one SDK server per request and per stdio connection for stateless serving, enforces Origin allowlist and Host/body bounds, supports path: false for stdio-only apps, and closes once via McpRuntimeShutdown.",
+      "source_file": "packages/mcp/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_mcp_agents_sdk_only_protocol_invariant",
+      "label": "SDK-Only Protocol Implementation Invariant",
+      "file_type": "rationale",
+      "rationale": "No JSON-RPC or tool registry lives in @aponiajs/mcp; @modelcontextprotocol/server v2 is the sole wire protocol implementation.",
+      "source_file": "packages/mcp/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_mcp_agents_readmcpruntime",
+      "label": "readMcpRuntime",
+      "file_type": "code",
+      "rationale": "Reads the runtime from the boot's container reference so the stdio entrypoint remains runtime-neutral.",
+      "source_file": "packages/mcp/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_mcp_agents_mcpruntimeshutdown",
+      "label": "McpRuntimeShutdown",
+      "file_type": "code",
+      "source_file": "packages/mcp/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_mcp_agents_mcpmodule",
+      "target": "packages_mcp_agents_mcp_discovery",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/mcp/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_mcp_agents_mcpmodule",
+      "target": "packages_mcp_agents_mcp_transport",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/mcp/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_mcp_agents_sdk_only_protocol_invariant",
+      "target": "packages_mcp_agents_mcp_transport",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/mcp/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_mcp_agents_readmcpruntime",
+      "target": "packages_mcp_readme_servemcpstdio",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/mcp/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_mcp_agents_mcpruntimeshutdown",
+      "target": "packages_mcp_agents_mcp_transport",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/mcp/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_mcp_agents_mcpmodule",
+      "target": "packages_platform_core_readme_aponiafactory",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/mcp/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_mcp_agents_mcpexecutioncontext",
+      "target": "packages_platform_core_readme_staticrouteexecutioncontext",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "packages/mcp/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_mcp_agents_mcpmodule",
+      "target": "packages_microservices_agents_microserviceclientsmodule",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "packages/mcp/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_mcp_agents_mcpmodule",
+      "target": "packages_openapi_readme_openapimodule",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "packages/mcp/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "mcp_endpoint_primitives_and_pipeline",
+      "label": "MCP Primitives, Execution, and Transport Surface",
+      "nodes": [
+        "packages_mcp_agents_mcpmodule",
+        "packages_mcp_readme_tool_decorator",
+        "packages_mcp_readme_resource_decorator",
+        "packages_mcp_readme_resourcetemplate_decorator",
+        "packages_mcp_readme_prompt_decorator",
+        "packages_mcp_agents_mcpexecutioncontext",
+        "packages_mcp_agents_mcp_transport"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/mcp/AGENTS.md"
+    }
+  ]
+}

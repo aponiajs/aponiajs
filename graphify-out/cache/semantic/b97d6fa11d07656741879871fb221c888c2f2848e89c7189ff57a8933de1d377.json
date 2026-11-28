@@ -1,0 +1,17 @@
+{
+  "nodes": [
+    {
+      "id": "github_issue_template_feature_request_feature_request_template",
+      "label": "Feature Request Issue Template",
+      "file_type": "document",
+      "source_file": ".github/ISSUE_TEMPLATE/feature_request.yml",
+      "source_location": "L1-L26",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [],
+  "hyperedges": []
+}

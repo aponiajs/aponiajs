@@ -1,0 +1,173 @@
+{
+  "nodes": [
+    {
+      "id": "docs_operations_releasing_guide",
+      "label": "Releasing npm Packages",
+      "file_type": "document",
+      "source_file": "docs/operations/releasing.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_operations_releasing_dependency_order",
+      "label": "34-Package Dependency-Ordered Publish Pipeline",
+      "file_type": "concept",
+      "rationale": "Publishes 34 workspace packages in strict dependency order while keeping the aponiajs facade private until stable public API.",
+      "source_file": "docs/operations/releasing.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_operations_releasing_version_policy",
+      "label": "1.0.0-beta.N & SemVer Prerelease Policy",
+      "file_type": "rationale",
+      "rationale": "Release line is 1.0.0-beta.N with bumpp managing synchronized bumps; release:verify enforces that prereleases never take latest and stable releases require explicit sign-off.",
+      "source_file": "docs/operations/releasing.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_operations_releasing_branch_mapping",
+      "label": "Release Branches & Promotion Flow (release/alpha -> release/beta -> release/rc -> main)",
+      "file_type": "concept",
+      "source_file": "docs/operations/releasing.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_operations_releasing_canary_flow",
+      "label": "Canary Builds (X.Y.Z-canary.<stamp>.<sha>)",
+      "file_type": "concept",
+      "source_file": "docs/operations/releasing.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_operations_releasing_sbom",
+      "label": "CycloneDX 1.5 SBOM Generation (release:sbom)",
+      "file_type": "concept",
+      "rationale": "Derives component list and integrity hashes from bun.lock rather than manifests so the SBOM deterministically captures what was installed.",
+      "source_file": "docs/operations/releasing.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_operations_releasing_trusted_publishing",
+      "label": "npm OIDC Trusted Publishing (publish.yml)",
+      "file_type": "concept",
+      "source_file": "docs/operations/releasing.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_operations_releasing_guide",
+      "target": "docs_operations_releasing_dependency_order",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/operations/releasing.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_operations_releasing_guide",
+      "target": "docs_operations_releasing_version_policy",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/operations/releasing.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_operations_releasing_guide",
+      "target": "docs_operations_releasing_branch_mapping",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/operations/releasing.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_operations_releasing_guide",
+      "target": "docs_operations_releasing_canary_flow",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/operations/releasing.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_operations_releasing_guide",
+      "target": "docs_operations_releasing_sbom",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/operations/releasing.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_operations_releasing_guide",
+      "target": "docs_operations_releasing_trusted_publishing",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/operations/releasing.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_learn_12_releasing_distribution_channels",
+      "target": "docs_operations_releasing_branch_mapping",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/operations/releasing.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "aponia_release_and_governance_pipeline",
+      "label": "Synchronized Release & Agent Governance Pipeline",
+      "nodes": [
+        "docs_operations_releasing_dependency_order",
+        "docs_operations_releasing_version_policy",
+        "docs_operations_releasing_branch_mapping",
+        "docs_operations_releasing_sbom",
+        "docs_operations_ai_agents_change_protocol"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/operations/releasing.md"
+    }
+  ]
+}

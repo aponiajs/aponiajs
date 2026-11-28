@@ -1,0 +1,17 @@
+{
+  "nodes": [
+    {
+      "id": "examples_microservices_readme_microservices_example",
+      "label": "Microservices Example",
+      "file_type": "document",
+      "source_file": "examples/microservices/README.md",
+      "source_location": "L1-L15",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [],
+  "hyperedges": []
+}

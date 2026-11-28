@@ -215,7 +215,7 @@ expect(await response.json()).toEqual({
 });
 ```
 
-The [errors chapter](../learn/10-errors.md) covers every default factory and
+The [errors chapter](../learn/11-errors.md) covers every default factory and
 custom extension.
 
 ## Unit testing a service

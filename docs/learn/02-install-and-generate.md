@@ -5,21 +5,21 @@
 ## New application
 
 ```bash
-bun add --global @aponiajs/cli@alpha
+bun add --global @aponiajs/cli
 aponia new my-api
 cd my-api
 bun run dev
 ```
 
-`bun create aponia@alpha my-api` uses the same generator without a global install.
+`bun create aponia my-api` uses the same generator without a global install.
 
 ## Existing project
 
 ```bash
-bun add @aponiajs/common@alpha @aponiajs/platform-elysia@alpha elysia@2.0.0-rc.4
+bun add @aponiajs/common @aponiajs/platform-elysia elysia@2.0.0-rc.4
 ```
 
-Every public package shares one version. The published line is `0.6.0-alpha.N`, so install with `@alpha`. `elysia` is an exact peer and must be pinned.
+Every public package shares one synchronized `1.0.0` (`latest`) version. `elysia` is an exact peer and must be pinned.
 
 ## Generated layout
 

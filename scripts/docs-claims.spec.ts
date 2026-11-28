@@ -86,22 +86,18 @@ describe("documentation claims", () => {
     expect([...stated].sort()).toEqual(expected);
   });
 
-  test("the package catalog counts match the workspace and npm split", async () => {
+  test("the package catalog counts match the workspace and npm latest release", async () => {
     const document = await Bun.file(join(repositoryRoot, "docs/reference/packages.md")).text();
-    const published = packageNames(section(document, "## On npm today"));
-    const unpublished = packageNames(section(document, "## Not on npm yet"));
+    const published = packageNames(section(document, "## Published packages"));
     const packages = await workspace();
 
-    expect(published).toHaveLength(6);
-    expect(unpublished).toHaveLength(33);
-    expect([...published, ...unpublished].sort()).toEqual(packages.publishable);
+    expect([...published].sort()).toEqual(packages.publishable);
     expect(packages.publishable).toHaveLength(39);
     expect(packages.privatePackages).toEqual(["aponiajs"]);
 
     expect(document).toContain("39 publishable packages");
     expect(document).toContain("1 private facade");
-    expect(document).toContain("Six are on npm today");
-    expect(document).toContain("33 belong to the unreleased");
+    expect(document).toContain("All 39 publishable packages ship together");
   });
 
   test("the library sample states the workspace version", async () => {

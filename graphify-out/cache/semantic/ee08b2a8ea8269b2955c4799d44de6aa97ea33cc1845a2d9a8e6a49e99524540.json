@@ -1,0 +1,71 @@
+{
+  "nodes": [
+    {
+      "id": "scratch_nestjs_dx_parity_issues_05_pipes_uploads_and_serialization_serialization_decorators",
+      "label": "Built-in @Exclude/@Expose/@Transform & ClassSerializerInterceptor",
+      "file_type": "concept",
+      "rationale": "Implement NestJS serialization decorators directly in @aponiajs/common without adding class-transformer as a runtime dependency.",
+      "source_file": ".scratch/nestjs-dx-parity/issues/05-pipes-uploads-and-serialization.md",
+      "source_location": "L11",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_issues_05_pipes_uploads_and_serialization_file_upload_validators_and_interceptors",
+      "label": "File Upload Validators & Multipart Interceptors",
+      "file_type": "concept",
+      "source_file": ".scratch/nestjs-dx-parity/issues/05-pipes-uploads-and-serialization.md",
+      "source_location": "L12",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scratch_nestjs_dx_parity_issues_05_pipes_uploads_and_serialization_pipe_exceptions_and_mapped_types",
+      "label": "Built-in Pipe Exceptions & Mapped Types",
+      "file_type": "concept",
+      "source_file": ".scratch/nestjs-dx-parity/issues/05-pipes-uploads-and-serialization.md",
+      "source_location": "L13",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "scratch_nestjs_dx_parity_issues_05_pipes_uploads_and_serialization_file_upload_validators_and_interceptors",
+      "target": "scratch_nestjs_dx_parity_issues_03_callhandler_interceptor_contract_zero_rxjs_callstream",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/issues/05-pipes-uploads-and-serialization.md",
+      "source_location": "L5,L12",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_issues_05_pipes_uploads_and_serialization_pipe_exceptions_and_mapped_types",
+      "target": "scratch_nestjs_dx_parity_issues_01_property_injection_and_di_metadata_undeclared_enhancer_di_resolution",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/nestjs-dx-parity/issues/05-pipes-uploads-and-serialization.md",
+      "source_location": "L5,L13",
+      "weight": 1.0
+    },
+    {
+      "source": "scratch_nestjs_dx_parity_issues_05_pipes_uploads_and_serialization_serialization_decorators",
+      "target": "scratch_nestjs_dx_parity_issues_03_callhandler_interceptor_contract_mixed_interceptor_composition",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/nestjs-dx-parity/issues/05-pipes-uploads-and-serialization.md",
+      "source_location": "L5,L11",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

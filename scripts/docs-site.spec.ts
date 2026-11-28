@@ -136,7 +136,7 @@ describe("documentation site", () => {
   test("chains the learning path and labels each page", async () => {
     const path = await readFile(join(outputRoot, "learn", "README.html"), "utf8");
     const first = await readFile(join(outputRoot, "learn", "01-overview.html"), "utf8");
-    const last = await readFile(join(outputRoot, "learn", "16-lifecycle.html"), "utf8");
+    const last = await readFile(join(outputRoot, "learn", "16-releasing.html"), "utf8");
 
     expect(path).not.toContain('class="previous"');
     expect(path).toContain('href="/learn/01-overview.html"');

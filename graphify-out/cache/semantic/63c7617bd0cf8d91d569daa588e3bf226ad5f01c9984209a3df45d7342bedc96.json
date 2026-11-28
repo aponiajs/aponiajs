@@ -1,0 +1,92 @@
+{
+  "nodes": [
+    {
+      "id": "examples_devtools_readme_devtools_example",
+      "label": "Devtools Example",
+      "file_type": "document",
+      "source_file": "examples/devtools/README.md",
+      "source_location": "L1-L51",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "examples_devtools_readme_devtools_module",
+      "label": "DevtoolsModule.forRoot Registration",
+      "file_type": "concept",
+      "source_file": "examples/devtools/README.md",
+      "source_location": "L3-L16",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "examples_devtools_readme_devtools_endpoints",
+      "label": "Devtools Introspection Endpoints",
+      "file_type": "concept",
+      "source_file": "examples/devtools/README.md",
+      "source_location": "L29-L38",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "examples_devtools_readme_shared_route_table",
+      "label": "Self-Hosted Devtools Shared Route Table",
+      "file_type": "rationale",
+      "rationale": "Serving devtools as a controller and neutral request lifecycle hook inside the application's own route table ensures platform parity and lets application routes override devtools paths, while making ENABLE_DEVTOOLS=false mandatory in production because /requests records headers and bodies without warning.",
+      "source_file": "examples/devtools/README.md",
+      "source_location": "L18-L27",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "examples_devtools_readme_devtools_example",
+      "target": "examples_devtools_readme_devtools_module",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "examples/devtools/README.md",
+      "source_location": "L3-L16",
+      "weight": 1.0
+    },
+    {
+      "source": "examples_devtools_readme_devtools_module",
+      "target": "examples_devtools_readme_devtools_endpoints",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "examples/devtools/README.md",
+      "source_location": "L29-L38",
+      "weight": 1.0
+    },
+    {
+      "source": "examples_devtools_readme_shared_route_table",
+      "target": "examples_devtools_readme_devtools_module",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "examples/devtools/README.md",
+      "source_location": "L18-L27",
+      "weight": 1.0
+    },
+    {
+      "source": "examples_devtools_readme_devtools_module",
+      "target": "llms_security_posture",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.65,
+      "source_file": "examples/devtools/README.md",
+      "source_location": "L25-L27",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

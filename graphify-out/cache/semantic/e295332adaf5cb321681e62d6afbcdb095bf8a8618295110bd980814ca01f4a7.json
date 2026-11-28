@@ -1,0 +1,227 @@
+{
+  "nodes": [
+    {
+      "id": "packages_core_agents_guide",
+      "label": "@aponiajs/core Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/core/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Consumes frozen descriptors only and never imports reflect-metadata or decorator logic so hand-written descriptor APIs remain first-class; depends solely on @aponiajs/common."
+    },
+    {
+      "id": "packages_core_agents_eager_graph_compilation",
+      "label": "Eager Module Graph Compilation",
+      "file_type": "rationale",
+      "source_file": "packages/core/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "compileModuleGraph validates module identity (instanceId ?? id), import cycles, duplicate tokens, unknown provider shapes, unresolvable exports, and missing dependencies before any instance exists."
+    },
+    {
+      "id": "packages_core_agents_module_visibility_rules",
+      "label": "Module Encapsulation and Diamond Resolution",
+      "file_type": "concept",
+      "source_file": "packages/core/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "ModuleGraph.locate checks own providers, then exporting imports, then predefined tokens; unexported providers are hidden, conflicting imports throw AMBIGUOUS_PROVIDER, and diamond re-exports of one shared provider agree."
+    },
+    {
+      "id": "packages_core_agents_post_order_and_lifecycle_ordering",
+      "label": "Post-Order Mounting and Lifecycle Ordering",
+      "file_type": "concept",
+      "source_file": "packages/core/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_core_agents_container_lifetimes_and_bubbling",
+      "label": "Container Lifetimes and Request-Scope Bubbling",
+      "file_type": "concept",
+      "source_file": "packages/core/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "AponiaContainer caches singletons per module, request instances per active context id, and instantiates transients fresh; request scope bubbles outward along the injection chain and forwardRef cycles resolve via lazy proxies."
+    },
+    {
+      "id": "packages_core_agents_predefined_tokens_and_moduleref",
+      "label": "Predefined Tokens and ModuleRef Lookup",
+      "file_type": "concept",
+      "source_file": "packages/core/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_core_agents_context_id_durability",
+      "label": "ContextIdFactory and Durable Provider Trees",
+      "file_type": "concept",
+      "source_file": "packages/core/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_core_agents_app_enhancer_multi_providers",
+      "label": "Exempt APP_* Multi-Provider Tokens",
+      "file_type": "rationale",
+      "source_file": "packages/core/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "ModuleGraph.providersFor retains every declaration under the four APP_* tokens because they are exempt from the duplicate-token rule."
+    },
+    {
+      "id": "packages_core_agents_platform_internal_spis",
+      "label": "Platform Internal Container SPIs",
+      "file_type": "concept",
+      "source_file": "packages/core/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "resolveModuleProvider, getProviderDependencies, and createInModule stay @internal for platform adapters while AponiaContainer.get() enforces root-module visibility."
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_core_agents_guide",
+      "target": "packages_common_agents_guide",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/core/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_common_agents_metadata_only_decorators",
+      "target": "packages_core_agents_guide",
+      "relation": "rationale_for",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/core/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_core_agents_eager_graph_compilation",
+      "target": "packages_core_agents_guide",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/core/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_core_agents_module_visibility_rules",
+      "target": "packages_core_agents_eager_graph_compilation",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/core/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_core_agents_post_order_and_lifecycle_ordering",
+      "target": "packages_core_agents_module_visibility_rules",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/core/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_core_agents_container_lifetimes_and_bubbling",
+      "target": "packages_common_agents_provider_scope_model",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/core/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_core_agents_context_id_durability",
+      "target": "packages_core_agents_container_lifetimes_and_bubbling",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/core/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_core_agents_predefined_tokens_and_moduleref",
+      "target": "packages_core_agents_container_lifetimes_and_bubbling",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/core/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_core_agents_app_enhancer_multi_providers",
+      "target": "packages_core_agents_module_visibility_rules",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/core/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_core_agents_platform_internal_spis",
+      "target": "packages_core_agents_guide",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/core/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "descriptor_metadata_authoring_split",
+      "label": "Metadata-Only Decorators to Descriptor Runtime Split",
+      "nodes": [
+        "packages_common_agents_metadata_only_decorators",
+        "packages_core_agents_guide",
+        "packages_common_readme_package",
+        "packages_core_readme_package"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/core/AGENTS.md"
+    }
+  ]
+}

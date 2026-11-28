@@ -1,21 +1,15 @@
 # Feature Status
 
-This page records the completeness of each package in the **development line**
-(the source in this repository), not what npm serves. A feature is complete only
-when its package, public API, Bun tests (and Vite+ conformance when the package
-ships a runtime import surface), documentation, and release manifest all exist.
-Complete describes the implementation and its test lanes; it is not a claim that
-the package is published or that its stores are production-grade.
+This page records the completeness of each package in the `1.0.0` (`latest`)
+release. A feature is complete only when its package, public API, Bun tests
+(and Vite+ conformance when the package ships a runtime import surface),
+documentation, and release manifest all exist. Complete describes the
+implementation and its test lanes; distributed stores (`@aponiajs/redis`,
+`@aponiajs/database`) or external brokers should still be backed appropriately
+for production workloads.
 
-The npm registry's `alpha` tag serves all six published packages on the
-`0.6.0-alpha.N` line: `@aponiajs/common`, `@aponiajs/core`,
-`@aponiajs/platform-elysia`, `@aponiajs/cli`, `create-aponia`, and
-`@aponiajs/devtools`. The `latest` tag serves the older stable `0.5.0` for five
-of them and `0.6.0-alpha.26` for `@aponiajs/devtools`. The other 28 packages have
-never been published, and the `1.0.0-beta.N` line described here is not
-published under `@beta` yet. A row marked Complete is evidence about this
-source, not a promise that the same package is installable from npm today.
-See [Packages](./packages.md) for the live split.
+All 39 publishable packages ship together under `1.0.0` (`latest`). See
+[Packages](./packages.md) for the complete package catalog and install commands.
 
 The delivery adapter `@aponiajs/nitro`
 is complete and superseded: it translates a runtime envelope to

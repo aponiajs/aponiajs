@@ -1,0 +1,177 @@
+{
+  "nodes": [
+    {
+      "id": "packages_queue_agents_guide",
+      "label": "@aponiajs/queue Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/queue/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_queue_agents_queuemodule",
+      "label": "QueueModule (forRoot / forRootAsync)",
+      "file_type": "concept",
+      "rationale": "ConfigurableModuleBuilder registration validating queue bounds, outbox bounds, and store shapes upfront with total INVALID_QUEUE_OPTIONS issue lists.",
+      "source_file": "packages/queue/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_queue_agents_queueservice",
+      "label": "QueueService",
+      "file_type": "concept",
+      "source_file": "packages/queue/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_queue_agents_retry_deadletter_policy",
+      "label": "Deterministic Retry, Timeout, Idempotency, and Bounded Dead-Letter Policy",
+      "file_type": "rationale",
+      "rationale": "Uses injectable clock/timer for deterministic backoffMs * 2^(attempts - 1), cooperative AbortController timeouts (QUEUE_JOB_TIMEOUT), bounded maxDeadLetters eviction, and runOutsideAsyncContexts isolation.",
+      "source_file": "packages/queue/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_queue_agents_outboxservice",
+      "label": "OutboxService and SqliteOutboxStore",
+      "file_type": "concept",
+      "rationale": "Delivers recorded messages in order and stops at the first sink rejection (keeping it at front) so the next flush retries in order.",
+      "source_file": "packages/queue/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_queue_agents_backlog_not_broker",
+      "label": "Durable Backlog vs Distributed Broker Boundary",
+      "file_type": "rationale",
+      "rationale": "Supplied QueueStore persists job backlog across restarts (hydrating running jobs as pending and flushing tracked writes) for one consumer, rather than acting as a cross-process claiming broker.",
+      "source_file": "packages/queue/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_queue_agents_shutdown_sequence",
+      "label": "Queue Shutdown Sequence (drain -> close -> flush)",
+      "file_type": "rationale",
+      "rationale": "onModuleDestroy drains due jobs first, then aborts in-flight work via close(), and finally flushes tracked store writes.",
+      "source_file": "packages/queue/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_queue_agents_processor_surface",
+      "label": "Processor Surface (@Processor, WorkerHost, @InjectQueue, JOB_REF, ProcessorExplorer)",
+      "file_type": "concept",
+      "rationale": "Maps BullMQ-shaped processor names (AponiaQueue_<name>) onto in-process QueueService handlers without broker worker subscriptions or lock renewals.",
+      "source_file": "packages/queue/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_queue_agents_queuemodule",
+      "target": "packages_queue_agents_queueservice",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/queue/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_queue_agents_queuemodule",
+      "target": "packages_queue_agents_outboxservice",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/queue/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_queue_agents_retry_deadletter_policy",
+      "target": "packages_queue_agents_queueservice",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/queue/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_queue_agents_backlog_not_broker",
+      "target": "packages_queue_agents_queueservice",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/queue/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_queue_agents_shutdown_sequence",
+      "target": "packages_queue_agents_queueservice",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/queue/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_queue_agents_processor_surface",
+      "target": "packages_queue_agents_queueservice",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/queue/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "queue_reliability_and_durability_mechanisms",
+      "label": "In-Process Queue Reliability and Durability Design",
+      "nodes": [
+        "packages_queue_agents_queueservice",
+        "packages_queue_agents_retry_deadletter_policy",
+        "packages_queue_agents_outboxservice",
+        "packages_queue_agents_backlog_not_broker",
+        "packages_queue_agents_shutdown_sequence"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/queue/AGENTS.md"
+    }
+  ]
+}

@@ -1,0 +1,143 @@
+{
+  "nodes": [
+    {
+      "id": "packages_http_agents_agent_guide",
+      "label": "@aponiajs/http Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/http/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_http_agents_http_client_module_options",
+      "label": "HTTP_CLIENT_MODULE_OPTIONS",
+      "file_type": "concept",
+      "source_file": "packages/http/AGENTS.md",
+      "source_location": "line 23",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_http_agents_module_options_token",
+      "label": "MODULE_OPTIONS_TOKEN",
+      "file_type": "concept",
+      "source_file": "packages/http/AGENTS.md",
+      "source_location": "line 24",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_http_agents_ssrf_policy",
+      "label": "SSRF Protection Policy",
+      "file_type": "rationale",
+      "rationale": "Allows only http/https without URL credentials, blocks private/loopback/link-local/metadata/NAT64/IPv4-translated ranges, resolves and checks every DNS address, pins the validated IP with Host and TLS SNI to stop DNS rebinding, and re-validates redirects.",
+      "source_file": "packages/http/AGENTS.md",
+      "source_location": "line 31",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_http_agents_idempotent_retry_policy",
+      "label": "Idempotent and Keyed Retry Policy",
+      "file_type": "rationale",
+      "rationale": "Only idempotent methods retry by default; POST and PATCH retry solely when an idempotencyKey is supplied so request bodies are never replayed unkeyed, and Retry-After overrides backoff up to 30 seconds.",
+      "source_file": "packages/http/AGENTS.md",
+      "source_location": "line 47",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_http_agents_bounded_redacted_responses",
+      "label": "Bounded Responses and Redacted Errors",
+      "file_type": "rationale",
+      "rationale": "Timeouts cover the entire body read and responses are size-bounded (1 MiB default), while AponiaError details use safeUrl and omit response bodies, query strings, and credentials.",
+      "source_file": "packages/http/AGENTS.md",
+      "source_location": "line 44",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_http_agents_agent_guide",
+      "target": "packages_http_agents_http_client_module_options",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/http/AGENTS.md",
+      "source_location": "line 23",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_http_agents_agent_guide",
+      "target": "packages_http_agents_module_options_token",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/http/AGENTS.md",
+      "source_location": "line 24",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_http_agents_ssrf_policy",
+      "target": "packages_http_readme_httpclient",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/http/AGENTS.md",
+      "source_location": "line 31",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_http_agents_idempotent_retry_policy",
+      "target": "packages_http_readme_httpclient",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/http/AGENTS.md",
+      "source_location": "line 47",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_http_agents_bounded_redacted_responses",
+      "target": "packages_http_readme_httpclient",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/http/AGENTS.md",
+      "source_location": "line 44",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "http_ssrf_defense_pipeline",
+      "label": "Outbound HTTP SSRF and Bounded Retry Pipeline",
+      "nodes": [
+        "packages_http_readme_httpmodule",
+        "packages_http_readme_httpclient",
+        "packages_http_readme_httpclientinterceptor",
+        "packages_http_agents_ssrf_policy",
+        "packages_http_agents_idempotent_retry_policy",
+        "packages_http_agents_bounded_redacted_responses"
+      ],
+      "relation": "implement",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/http/AGENTS.md"
+    }
+  ]
+}

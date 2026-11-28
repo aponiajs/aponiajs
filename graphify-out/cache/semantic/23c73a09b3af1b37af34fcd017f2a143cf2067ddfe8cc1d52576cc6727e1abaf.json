@@ -1,0 +1,98 @@
+{
+  "nodes": [
+    {
+      "id": "docs_services_readme_services_index",
+      "label": "Services Documentation Index",
+      "file_type": "document",
+      "source_file": "docs/services/README.md",
+      "source_location": "L1-L27",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_services_readme_services_index",
+      "target": "docs_services_auth_aponiajs_auth",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/README.md",
+      "source_location": "L12, L23",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_readme_services_index",
+      "target": "docs_services_queues_aponiajs_queue",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/README.md",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_readme_services_index",
+      "target": "docs_services_database_aponiajs_database",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/README.md",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_readme_services_index",
+      "target": "docs_services_graphql_aponiajs_graphql",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/README.md",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_readme_services_index",
+      "target": "docs_services_microservices_aponiajs_microservices",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/README.md",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_readme_services_index",
+      "target": "docs_services_mcp_aponiajs_mcp",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/README.md",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_readme_services_index",
+      "target": "docs_services_openapi_aponiajs_openapi",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/README.md",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_services_readme_services_index",
+      "target": "docs_services_devtools_aponiajs_devtools",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/services/README.md",
+      "source_location": "L19",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

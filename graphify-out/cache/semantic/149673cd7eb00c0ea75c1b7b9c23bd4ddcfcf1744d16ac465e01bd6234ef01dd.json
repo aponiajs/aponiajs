@@ -1,0 +1,59 @@
+{
+  "nodes": [
+    {
+      "id": "readme_aponiajs_overview",
+      "label": "AponiaJS README & Quick Start",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "lines 1-111",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_aponiajs_framework",
+      "label": "AponiaJS Framework",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "lines 1-85",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "readme_aponiajs_overview",
+      "target": "docs_readme_index",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "line 67",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_aponiajs_overview",
+      "target": "security_policy",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "line 95",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_aponiajs_overview",
+      "target": "rules_engineering_rules",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "line 96",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

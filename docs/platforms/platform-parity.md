@@ -17,7 +17,7 @@ contribute without naming a platform.
 The three platforms are independent. Each depends on `@aponiajs/common`,
 `@aponiajs/core`, and its own runtime peer, and no
 platform depends on another. `scripts/platform-independence.spec.ts` enforces
-that, and `packages/platform-core/test/support/platform-contract.ts` runs the
+that, and `packages/common/test/support/platform-contract.ts` runs the
 same behavioral cases on every platform in both test lanes.
 
 ## The capability contract
@@ -142,4 +142,4 @@ bun run test:vite-plus
 
 The conformance lane runs on Node and never calls `listen`; the Bun lane boots
 each platform and answers real requests through it. Both lanes run the shared
-contract in `packages/platform-core/test/support/platform-contract.ts`.
+contract in `packages/common/test/support/platform-contract.ts`.

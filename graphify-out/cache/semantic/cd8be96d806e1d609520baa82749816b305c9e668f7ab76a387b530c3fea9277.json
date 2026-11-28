@@ -1,0 +1,70 @@
+{
+  "nodes": [
+    {
+      "id": "packages_mcp_llms_summary",
+      "label": "@aponiajs/mcp llms.txt Summary",
+      "file_type": "document",
+      "source_file": "packages/mcp/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_mcp_llms_mcp_invoker",
+      "label": "mcp-invoker",
+      "file_type": "code",
+      "source_file": "packages/mcp/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_mcp_llms_mcp_runtime",
+      "label": "mcp-runtime",
+      "file_type": "code",
+      "source_file": "packages/mcp/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_mcp_llms_summary",
+      "target": "packages_mcp_readme_pkg_doc",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/mcp/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_mcp_llms_mcp_invoker",
+      "target": "packages_mcp_readme_mcp_enhancer_pipeline",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/mcp/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_mcp_llms_mcp_runtime",
+      "target": "packages_mcp_agents_mcp_transport",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/mcp/llms.txt",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

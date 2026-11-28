@@ -1,0 +1,103 @@
+{
+  "nodes": [
+    {
+      "id": "examples_files_readme_files_example",
+      "label": "Files Example",
+      "file_type": "document",
+      "source_file": "examples/files/README.md",
+      "source_location": "L1-L40",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "examples_files_readme_multipart_file_validation",
+      "label": "Multipart File Validation Boundaries",
+      "file_type": "concept",
+      "rationale": "Measuring both working multipart shapes (t.File(), t.Files(), t.Form(), minSize/maxSize) and the whole-body t.File() 422 refusal clarifies the boundary readers reach for first.",
+      "source_file": "examples/files/README.md",
+      "source_location": "L3-L23",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "examples_files_readme_rfc8187_download",
+      "label": "RFC 8187 File Download Headers",
+      "file_type": "concept",
+      "source_file": "examples/files/README.md",
+      "source_location": "L25-L30",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "examples_files_readme_native_static_assets",
+      "label": "Bun Native Directory Static Assets",
+      "file_type": "concept",
+      "rationale": "Mounting public/ under /assets/* via configureNative delegates static serving to Bun at server startup, trading Problem Details 404 formatting for Bun's bare 404.",
+      "source_file": "examples/files/README.md",
+      "source_location": "L32-L38",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "examples_files_readme_files_example",
+      "target": "examples_files_readme_multipart_file_validation",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "examples/files/README.md",
+      "source_location": "L3-L23",
+      "weight": 1.0
+    },
+    {
+      "source": "examples_files_readme_files_example",
+      "target": "examples_files_readme_rfc8187_download",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "examples/files/README.md",
+      "source_location": "L25-L30",
+      "weight": 1.0
+    },
+    {
+      "source": "examples_files_readme_files_example",
+      "target": "examples_files_readme_native_static_assets",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "examples/files/README.md",
+      "source_location": "L32-L38",
+      "weight": 1.0
+    },
+    {
+      "source": "examples_files_readme_native_static_assets",
+      "target": "examples_files_public_index_static_assets_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "examples/files/README.md",
+      "source_location": "L34-L34",
+      "weight": 1.0
+    },
+    {
+      "source": "examples_files_readme_native_static_assets",
+      "target": "examples_descriptors_readme_problem_details",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "examples/files/README.md",
+      "source_location": "L37-L38",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

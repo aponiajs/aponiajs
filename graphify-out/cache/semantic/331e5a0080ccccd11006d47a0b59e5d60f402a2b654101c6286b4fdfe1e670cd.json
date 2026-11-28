@@ -1,0 +1,59 @@
+{
+  "nodes": [
+    {
+      "id": "packages_events_llms_aponiajs_events_summary",
+      "label": "@aponiajs/events llms.txt Summary",
+      "file_type": "document",
+      "source_file": "packages/events/llms.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_events_llms_geteventhandlers",
+      "label": "getEventHandlers",
+      "file_type": "concept",
+      "source_file": "packages/events/llms.txt",
+      "source_location": "line 10",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_events_llms_aponiajs_events_summary",
+      "target": "packages_events_readme_aponiajs_events",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/events/llms.txt",
+      "source_location": "line 23",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_events_llms_aponiajs_events_summary",
+      "target": "packages_events_llms_geteventhandlers",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/events/llms.txt",
+      "source_location": "line 10",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_events_llms_geteventhandlers",
+      "target": "packages_events_readme_onevent",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/events/llms.txt",
+      "source_location": "line 10",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

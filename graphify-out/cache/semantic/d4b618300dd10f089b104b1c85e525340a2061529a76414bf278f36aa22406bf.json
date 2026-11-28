@@ -1,0 +1,28 @@
+{
+  "nodes": [
+    {
+      "id": "packages_auth_claude_guide",
+      "label": "@aponiajs/auth CLAUDE.md",
+      "file_type": "document",
+      "source_file": "packages/auth/CLAUDE.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_auth_claude_guide",
+      "target": "packages_auth_agents_guide",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/auth/CLAUDE.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

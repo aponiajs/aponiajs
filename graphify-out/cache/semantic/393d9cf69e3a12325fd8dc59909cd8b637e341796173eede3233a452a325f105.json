@@ -1,0 +1,265 @@
+{
+  "nodes": [
+    {
+      "id": "packages_platform_core_agents_agent_guide",
+      "label": "@aponiajs/platform-core Agent Guide",
+      "file_type": "document",
+      "source_file": "packages/platform-core/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_core_agents_no_http_runtime_import",
+      "label": "No HTTP Runtime Import Invariant",
+      "file_type": "rationale",
+      "rationale": "platform-core must not import elysia, hono, h3, nitro, or Bun server APIs so every HTTP platform shares runtime-neutral primitives over RouteContext.",
+      "source_file": "packages/platform-core/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_core_agents_request_pipeline",
+      "label": "RequestPipeline & Response Policies",
+      "file_type": "concept",
+      "rationale": "Compiles CORS preflight, security headers, ETag, and compression into one RequestPipeline shared by handle and listen so native fetch hosts cannot bypass policies.",
+      "source_file": "packages/platform-core/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_core_agents_static_assets",
+      "label": "Static Asset Resolution (resolveStaticAssetPath & answerStaticAsset)",
+      "file_type": "code",
+      "rationale": "Owns path prefix, index, traversal refusal, and response headers before middleware and routes without enhancers; host supplies only the file opener.",
+      "source_file": "packages/platform-core/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_core_agents_aponia_http_application",
+      "label": "AponiaHttpApplication & AponiaApplicationSurfaceConfig",
+      "file_type": "concept",
+      "rationale": "Provides the shared Nest application surface across Elysia, Hono, and H3 via mergeApplicationSurfaceOptions; refuses post-init surface mutations with INVALID_CONFIGURATION.",
+      "source_file": "packages/platform-core/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_core_agents_platform_capabilities",
+      "label": "Platform Capability Contract (requirePlatformCapabilities)",
+      "file_type": "concept",
+      "rationale": "Feature packages contribute neutral artifacts and state required capabilities; boot refuses missing request-path capabilities with UNSUPPORTED_PLATFORM_FEATURE instead of per-platform allowlists.",
+      "source_file": "packages/platform-core/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_core_agents_run_order_contract",
+      "label": "Shared Enhancer Run Order Contract",
+      "file_type": "rationale",
+      "rationale": "Fixes runtime execution order across platforms: middleware -> guards and interceptor before halves -> handler -> interceptor after halves reversed -> filters most-specific-first.",
+      "source_file": "packages/platform-core/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_core_agents_collectlifecyclecalls",
+      "label": "collectLifecycleCalls",
+      "file_type": "code",
+      "rationale": "Orders lifecycle hooks by module distance (deepest imports and globals first, root last; reversed with reverseModules on shutdown) while excluding request-scoped and transient instances.",
+      "source_file": "packages/platform-core/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_core_agents_app_pseudo_providers",
+      "label": "APP_* Pseudo-Providers",
+      "file_type": "concept",
+      "rationale": "Exempt from duplicate-token checks, execute in declaration order, resolve in the declaring module without empty-constructor fallback (raising MISSING_PROVIDER if missing), and disallow direct token lookup.",
+      "source_file": "packages/platform-core/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_core_agents_httpadapterhost",
+      "label": "HttpAdapterHost",
+      "file_type": "code",
+      "source_file": "packages/platform-core/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "packages_platform_core_agents_websocket_gateway_kernel",
+      "label": "Shared WebSocket Gateway Dispatch",
+      "file_type": "concept",
+      "rationale": "Speaks Nest surface (@MessageBody, @ConnectedSocket, @WebSocketServer), encodes frames as { event, data } JSON, and emits exception frames without stack or cause.",
+      "source_file": "packages/platform-core/AGENTS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_platform_core_agents_no_http_runtime_import",
+      "target": "packages_platform_core_agents_agent_guide",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-core/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_core_agents_aponia_http_application",
+      "target": "packages_platform_core_readme_aponiafactory",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-core/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_core_readme_aponiafactory",
+      "target": "packages_platform_core_agents_request_pipeline",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-core/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_core_readme_aponiafactory",
+      "target": "packages_platform_core_agents_platform_capabilities",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-core/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_core_readme_createmiddlewareconsumer",
+      "target": "packages_platform_core_agents_run_order_contract",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-core/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_core_readme_createversionnegotiator",
+      "target": "packages_platform_core_agents_request_pipeline",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "packages/platform-core/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_core_agents_static_assets",
+      "target": "packages_platform_core_agents_request_pipeline",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-core/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_core_agents_collectlifecyclecalls",
+      "target": "packages_platform_core_readme_aponiafactory",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "packages/platform-core/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_core_agents_app_pseudo_providers",
+      "target": "packages_platform_core_readme_pipe_resolution",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-core/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_core_agents_httpadapterhost",
+      "target": "packages_platform_core_agents_aponia_http_application",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-core/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "packages_platform_core_agents_no_http_runtime_import",
+      "target": "packages_nitro_readme_pkg_doc",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-core/AGENTS.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "platform_core_shared_http_pipeline",
+      "label": "Platform-Core Runtime-Neutral HTTP Pipeline",
+      "nodes": [
+        "packages_platform_core_readme_aponiafactory",
+        "packages_platform_core_agents_aponia_http_application",
+        "packages_platform_core_agents_request_pipeline",
+        "packages_platform_core_readme_createhttpkernel",
+        "packages_platform_core_readme_staticrouteexecutioncontext",
+        "packages_platform_core_readme_createversionnegotiator",
+        "packages_platform_core_agents_platform_capabilities"
+      ],
+      "relation": "implement",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "packages/platform-core/AGENTS.md"
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "nodes": [
+    {
+      "id": "docs_tooling_readme_tooling_index",
+      "label": "Tooling Documentation Index",
+      "file_type": "document",
+      "source_file": "docs/tooling/README.md",
+      "source_location": "L1-L22",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_tooling_readme_tooling_index",
+      "target": "docs_tooling_cli_aponiajs_cli",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/tooling/README.md",
+      "source_location": "L11, L17",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_tooling_readme_tooling_index",
+      "target": "docs_tooling_libraries_authoring_a_library",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/tooling/README.md",
+      "source_location": "L12, L18",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_tooling_readme_tooling_index",
+      "target": "docs_tooling_plugin_packages_authoring_a_plugin_package",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/tooling/README.md",
+      "source_location": "L13, L19",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

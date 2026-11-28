@@ -1,0 +1,92 @@
+{
+  "nodes": [
+    {
+      "id": "docs_tooling_libraries_authoring_a_library",
+      "label": "Authoring a Library Guide",
+      "file_type": "document",
+      "source_file": "docs/tooling/libraries.md",
+      "source_location": "L1-L78",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_tooling_libraries_aponia_library_json",
+      "label": "aponia.library.json Library Contract",
+      "file_type": "concept",
+      "source_file": "docs/tooling/libraries.md",
+      "source_location": "L195-L228",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_tooling_libraries_configurable_module_registration",
+      "label": "ConfigurableModuleBuilder & forRoot/forRootAsync Standard",
+      "file_type": "rationale",
+      "source_file": "docs/tooling/libraries.md",
+      "source_location": "L79-L150",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Standardizes library options through ConfigurableModuleBuilder and moduleOptionsProviders (useFactory/useClass/useExisting) while naming upstream Nest mirrors and explicit deviations."
+    },
+    {
+      "id": "docs_tooling_libraries_aponia_library_check",
+      "label": "aponia library check / publish / search",
+      "file_type": "concept",
+      "source_file": "docs/tooling/libraries.md",
+      "source_location": "L229-L259",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_tooling_libraries_aponia_library_json",
+      "target": "docs_tooling_libraries_authoring_a_library",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/tooling/libraries.md",
+      "source_location": "L195-L228",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_tooling_libraries_aponia_library_check",
+      "target": "docs_tooling_libraries_aponia_library_json",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/tooling/libraries.md",
+      "source_location": "L229-L243",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_tooling_libraries_configurable_module_registration",
+      "target": "docs_tooling_libraries_authoring_a_library",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/tooling/libraries.md",
+      "source_location": "L79-L150",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_tooling_libraries_authoring_a_library",
+      "target": "docs_tooling_plugin_packages_authoring_a_plugin_package",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/tooling/libraries.md",
+      "source_location": "L182-L183, L226",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}
