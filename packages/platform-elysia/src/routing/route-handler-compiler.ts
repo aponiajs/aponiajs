@@ -439,12 +439,56 @@ export function compileRouteHandler(
   return factory;
 }
 
-function pipedParameterExpression(plan: ParameterExecutionPlan): string {
-  const parameterMeta: RouteParameterMetadata = {
-    index: plan.index,
-    kind: plan.kind,
-    ...(plan.property === undefined ? {} : { property: plan.property }),
-  };
+function extractPipedParameter(context: RouteContext, plan: ParameterExecutionPlan): unknown {
+  let source: unknown;
+  switch (plan.kind) {
+    case "body":
+      source = context.body;
+      break;
+    case "query":
+      source = context.query;
+      break;
+    case "params":
+      source = context.params;
+      break;
+    case "headers":
+      source = context.headers;
+      break;
+    case "cookie":
+      source = context.cookie;
+      break;
+    case "ip": {
+      const server = (
+        context as unknown as {
+          readonly server?: {
+            requestIP?(request: Request): { readonly address?: string } | null;
+          };
+        }
+      ).server;
+      source = server?.requestIP?.(context.request)?.address;
+      break;
+    }
+    case "host":
+      source = new URL(context.request.url).host;
+      break;
+    case "store":
+      source = (context as unknown as { readonly store?: unknown }).store;
+      break;
+    case "request":
+      source = context.request;
+      break;
+    case "set":
+      source = context.set;
+      break;
+    case "status":
+      source = (context as unknown as { readonly status?: unknown }).status;
+      break;
+    case "context":
+      return context;
+    case "custom":
+      return plan.factory?.(plan.data, context);
+  }
+
   if (
     plan.kind === "body" ||
     plan.kind === "query" ||
@@ -452,17 +496,31 @@ function pipedParameterExpression(plan: ParameterExecutionPlan): string {
     plan.kind === "headers"
   ) {
     if (plan.property === undefined) {
-      return `strip(${contextSource(parameterMeta)})`;
+      return stripDangerousKeys(source);
     }
     if (
       plan.property === "__proto__" ||
       plan.property === "constructor" ||
       plan.property === "prototype"
     ) {
-      return "undefined";
+      return undefined;
     }
   }
-  return parameterExpression(parameterMeta);
+
+  if (plan.kind === "host" && plan.property !== undefined) {
+    return typeof source === "string" ? (source.split(".")[0] ?? "") : "";
+  }
+  if (plan.property === undefined) {
+    return source;
+  }
+  if (source === null || typeof source !== "object") {
+    return undefined;
+  }
+  const value = (source as Record<string, unknown>)[plan.property];
+  if (plan.kind === "cookie") {
+    return (value as { readonly value?: unknown } | undefined)?.value;
+  }
+  return value;
 }
 
 function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
@@ -484,82 +542,66 @@ function compilePipedRouteHandler(
   argumentCount: number,
   possiblyAsync: boolean,
 ): (context: RouteContext) => unknown {
-  const isDenseSingle = parameterPlans.length === 1 && argumentCount === 1;
-  if (isDenseSingle) {
+  if (parameterPlans.length === 1 && argumentCount === 1) {
     const plan0 = parameterPlans[0]!;
-    const raw0 = pipedParameterExpression(plan0);
     if (plan0.pipes.length === 0) {
+      const raw0 = parameterExpression({
+        index: plan0.index,
+        kind: plan0.kind,
+        ...(plan0.property === undefined ? {} : { property: plan0.property }),
+      });
       return compileRouteHandler(raw0, possiblyAsync)(handler, instance);
     }
-    const source = possiblyAsync
-      ? `async (context)=>await handler.call(instance,await execPipes(plans[0].pipes,${raw0},plans[0].metadata))`
-      : `(context)=>thenOrCall(execPipes(plans[0].pipes,${raw0},plans[0].metadata),(v0)=>handler.call(instance,v0))`;
-    // oxlint-disable-next-line typescript/no-implied-eval
-    const factory = Function(
-      "handler",
-      "instance",
-      "strip",
-      "execPipes",
-      "thenOrCall",
-      "plans",
-      `"use strict";return ${source}`,
-    ) as (
-      h: typeof handler,
-      i: unknown,
-      s: typeof stripDangerousKeys,
-      e: typeof executePipesSyncOrAsync,
-      t: typeof thenOrCall,
-      p: readonly ParameterExecutionPlan[],
-    ) => (context: RouteContext) => unknown;
-    return factory(
-      handler,
-      instance,
-      stripDangerousKeys,
-      executePipesSyncOrAsync,
-      thenOrCall,
-      parameterPlans,
-    );
+    if (possiblyAsync) {
+      return async (context: RouteContext) => {
+        const v0 = await executePipesSyncOrAsync(
+          plan0.pipes,
+          extractPipedParameter(context, plan0),
+          plan0.metadata,
+        );
+        return await handler.call(instance, v0);
+      };
+    }
+    return (context: RouteContext) =>
+      thenOrCall(
+        executePipesSyncOrAsync(plan0.pipes, extractPipedParameter(context, plan0), plan0.metadata),
+        (v0) => handler.call(instance, v0),
+      );
   }
 
-  const slotExprs = Array.from({ length: argumentCount }, () => "undefined");
-  for (let i = 0; i < parameterPlans.length; i++) {
-    const plan = parameterPlans[i]!;
-    const rawExpr = pipedParameterExpression(plan);
-    slotExprs[plan.index] =
-      plan.pipes.length > 0
-        ? `${possiblyAsync ? "await " : ""}execPipes(plans[${i}].pipes,${rawExpr},plans[${i}].metadata)`
-        : rawExpr;
+  if (possiblyAsync) {
+    return async (context: RouteContext) => {
+      const args = Array.from<unknown>({ length: argumentCount });
+      for (let i = 0; i < parameterPlans.length; i += 1) {
+        const plan = parameterPlans[i]!;
+        const raw = extractPipedParameter(context, plan);
+        args[plan.index] =
+          plan.pipes.length > 0
+            ? await executePipesSyncOrAsync(plan.pipes, raw, plan.metadata)
+            : raw;
+      }
+      return await handler.call(instance, ...args);
+    };
   }
 
-  const source = possiblyAsync
-    ? `async (context)=>await handler.call(instance,${slotExprs.join(",")})`
-    : `(context)=>{const args=[${slotExprs.join(",")}];for(let i=0;i<args.length;i++){if(isPromiseLike(args[i])){return Promise.all(args).then((resolved)=>handler.call(instance,...resolved));}}return handler.call(instance,...args);}`;
-
-  // oxlint-disable-next-line typescript/no-implied-eval
-  const factory = Function(
-    "handler",
-    "instance",
-    "strip",
-    "execPipes",
-    "isPromiseLike",
-    "plans",
-    `"use strict";return ${source}`,
-  ) as (
-    h: typeof handler,
-    i: unknown,
-    s: typeof stripDangerousKeys,
-    e: typeof executePipesSyncOrAsync,
-    pCheck: typeof isPromiseLike,
-    p: readonly ParameterExecutionPlan[],
-  ) => (context: RouteContext) => unknown;
-  return factory(
-    handler,
-    instance,
-    stripDangerousKeys,
-    executePipesSyncOrAsync,
-    isPromiseLike,
-    parameterPlans,
-  );
+  return (context: RouteContext) => {
+    const args = Array.from<unknown>({ length: argumentCount });
+    let hasPromise = false;
+    for (let i = 0; i < parameterPlans.length; i += 1) {
+      const plan = parameterPlans[i]!;
+      const raw = extractPipedParameter(context, plan);
+      const value =
+        plan.pipes.length > 0 ? executePipesSyncOrAsync(plan.pipes, raw, plan.metadata) : raw;
+      if (isPromiseLike(value)) {
+        hasPromise = true;
+      }
+      args[plan.index] = value;
+    }
+    if (hasPromise) {
+      return Promise.all(args).then((resolved) => handler.call(instance, ...resolved));
+    }
+    return handler.call(instance, ...args);
+  };
 }
 
 /**

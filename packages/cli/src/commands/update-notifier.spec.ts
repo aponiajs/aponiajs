@@ -47,8 +47,13 @@ describe("aponia dev update & dangerous-patch notifier", () => {
       let fetchCalls = 0;
       const mockFetch = (async (input: string | URL | Request) => {
         fetchCalls += 1;
-        const url = String(input);
-        if (url.includes("registry.npmjs.org/%40aponiajs%2Fcli")) {
+        const parsedUrl = new URL(
+          typeof input === "string" ? input : input instanceof URL ? input.href : input.url,
+        );
+        if (
+          parsedUrl.hostname === "registry.npmjs.org" &&
+          parsedUrl.pathname === "/%40aponiajs%2Fcli"
+        ) {
           return new Response(
             JSON.stringify({
               "dist-tags": { latest: "0.5.0", beta: "1.0.0-beta.65" },
@@ -61,7 +66,10 @@ describe("aponia dev update & dangerous-patch notifier", () => {
             { status: 200 },
           );
         }
-        if (url.includes("registry.npmjs.org/%40aponiajs%2Fcore")) {
+        if (
+          parsedUrl.hostname === "registry.npmjs.org" &&
+          parsedUrl.pathname === "/%40aponiajs%2Fcore"
+        ) {
           return new Response(
             JSON.stringify({
               "dist-tags": { latest: "0.5.0", beta: "1.0.0-beta.64" },
@@ -69,7 +77,7 @@ describe("aponia dev update & dangerous-patch notifier", () => {
             { status: 200 },
           );
         }
-        if (url.includes("api.osv.dev/v1/querybatch")) {
+        if (parsedUrl.hostname === "api.osv.dev" && parsedUrl.pathname === "/v1/querybatch") {
           return new Response(
             JSON.stringify({
               results: [
@@ -157,9 +165,10 @@ describe("aponia dev update & dangerous-patch notifier", () => {
       writeFileSync(join(dir, "package.json"), "{ invalid json");
       writeFileSync(cachePath, JSON.stringify({ checkedAt: 0, report: report! }));
       const stableFetch = (async (input: string | URL | Request) => {
-        const url =
-          typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-        if (url.includes("registry.npmjs.org")) {
+        const parsedUrl = new URL(
+          typeof input === "string" ? input : input instanceof URL ? input.href : input.url,
+        );
+        if (parsedUrl.hostname === "registry.npmjs.org") {
           return new Response(JSON.stringify({ "dist-tags": { latest: "2.0.0" } }), {
             status: 200,
           });

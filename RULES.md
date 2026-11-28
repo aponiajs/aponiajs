@@ -222,6 +222,14 @@ scripts, and tests. New code should look native to this repository.
 - Outbound HTTP (both `@aponiajs/http` and CLI network checks) must enforce
   bounded timeouts (`AbortSignal.timeout`), bounded response handling, and
   explicit SSRF/endpoint boundaries.
+- Never use substring `.includes("<hostname>")` checks on URLs (which trigger
+  `js/incomplete-url-substring-sanitization`); always parse with `new URL(...)`
+  and compare `.hostname` (and `.pathname` where applicable) strictly.
+- Never interpolate expressions into `Function(...)` or dynamic code strings
+  (`js/bad-code-sanitization`); use pure TypeScript closures or compiled
+  property-free descriptors instead.
+- No package may be published to npm while CodeQL reports open alerts:
+  `.github/workflows/publish.yml` must gate `publish` on `needs: [codeql]`.
 - CLI background checks (such as `aponia dev` update and advisory checks) must
   be non-blocking, locally cached (24h TTL), fail-silent when offline or timed
   out, never transmit environment variables, tokens, or `private: true` package
