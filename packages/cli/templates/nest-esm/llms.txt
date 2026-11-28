@@ -12,8 +12,8 @@ rules, are in [`AGENTS.md`](./AGENTS.md).
 - [Architecture and style](https://github.com/aponiajs/aponiajs/blob/main/docs/build/architecture-and-style.md): application layout, naming, and expected patterns
 - [Modules and dependency injection](https://github.com/aponiajs/aponiajs/blob/main/docs/build/dependency-injection.md): tokens, visibility, providers, and the error codes raised on failure
 - [Controllers and routes](https://github.com/aponiajs/aponiajs/blob/main/docs/learn/05-controllers-and-routes.md): declaring routes and reading request input
-- [Validation](https://github.com/aponiajs/aponiajs/blob/main/docs/learn/06-validation.md): route schemas and one-schema-per-class validation models
-- [Errors](https://github.com/aponiajs/aponiajs/blob/main/docs/learn/10-errors.md): the closed error-code union and HTTP problem responses
+- [Validation](https://github.com/aponiajs/aponiajs/blob/main/docs/learn/07-validation.md): route schemas and one-schema-per-class validation models
+- [Errors](https://github.com/aponiajs/aponiajs/blob/main/docs/learn/11-errors.md): the closed error-code union and HTTP problem responses
 - [CLI reference](https://github.com/aponiajs/aponiajs/blob/main/docs/tooling/cli.md): the full schematic catalog, aliases, and options
 
 ## Packages
