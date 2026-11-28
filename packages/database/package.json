@@ -53,7 +53,7 @@
     "@aponiajs/platform-elysia": "workspace:*",
     "@aponiajs/testing": "workspace:*",
     "@types/pg": "^8.23.1",
-    "elysia": "2.0.0-rc.4",
+    "elysia": "2.0.0-rc.5",
     "pg": "^8.23.1"
   },
   "engines": {

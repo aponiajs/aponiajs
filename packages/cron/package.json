@@ -46,14 +46,14 @@
   },
   "dependencies": {
     "@aponiajs/common": "workspace:*",
-    "croner": "6.0.7"
+    "croner": "11.0.1"
   },
   "devDependencies": {
     "@aponiajs/platform-elysia": "workspace:*",
     "@aponiajs/platform-h3": "workspace:*",
     "@aponiajs/platform-hono": "workspace:*",
     "@aponiajs/testing": "workspace:*",
-    "elysia": "2.0.0-rc.4",
+    "elysia": "2.0.0-rc.5",
     "zod": "^4.6.6"
   },
   "engines": {

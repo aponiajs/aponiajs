@@ -54,15 +54,15 @@
     "@aponiajs/platform-h3": "workspace:*",
     "@aponiajs/platform-hono": "workspace:*",
     "@aponiajs/serverless": "workspace:*",
-    "elysia": "2.0.0-rc.4",
+    "elysia": "2.0.0-rc.5",
     "h3": "^2.0.8",
-    "hono": "^4.13.17",
+    "hono": "^4.13.22",
     "zod": "^4.6.6"
   },
   "peerDependencies": {
-    "elysia": "2.0.0-rc.4",
+    "elysia": "2.0.0-rc.5",
     "h3": "^2.0.8",
-    "hono": "^4.13.17",
+    "hono": "^4.13.22",
     "zod": "^4.2.0"
   },
   "peerDependenciesMeta": {

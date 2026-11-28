@@ -51,32 +51,32 @@
   },
   "dependencies": {
     "@aponiajs/common": "workspace:*",
-    "cborg": "6.2.1"
+    "cborg": "7.0.0"
   },
   "devDependencies": {
     "@aponiajs/platform-elysia": "workspace:*",
     "@aponiajs/testing": "workspace:*",
-    "@aws-sdk/client-sqs": "3.1165.0",
+    "@aws-sdk/client-sqs": "3.1177.0",
     "@azure/service-bus": "7.10.0",
     "@google-cloud/pubsub": "6.4.1",
     "@grpc/grpc-js": "1.14.7",
-    "elysia": "2.0.0-rc.4",
+    "elysia": "2.0.0-rc.5",
     "kafkajs": "2.2.4",
     "mqtt": "5.16.1",
     "nats": "2.29.3",
-    "rabbitmq-client": "5.1.0",
-    "redis": "6.3.1"
+    "rabbitmq-client": "5.2.0",
+    "redis": "6.4.0"
   },
   "peerDependencies": {
-    "@aws-sdk/client-sqs": "3.1165.0",
+    "@aws-sdk/client-sqs": "3.1177.0",
     "@azure/service-bus": "7.10.0",
     "@google-cloud/pubsub": "6.4.1",
     "@grpc/grpc-js": "1.14.7",
     "kafkajs": "2.2.4",
     "mqtt": "5.16.1",
     "nats": "2.29.3",
-    "rabbitmq-client": "5.1.0",
-    "redis": "6.3.1"
+    "rabbitmq-client": "5.2.0",
+    "redis": "6.4.0"
   },
   "peerDependenciesMeta": {
     "mqtt": {

@@ -47,10 +47,10 @@
     "@aponiajs/core": "workspace:*"
   },
   "devDependencies": {
-    "hono": "^4.13.17"
+    "hono": "^4.13.22"
   },
   "peerDependencies": {
-    "hono": "^4.13.17"
+    "hono": "^4.13.22"
   },
   "peerDependenciesMeta": {
     "hono": {

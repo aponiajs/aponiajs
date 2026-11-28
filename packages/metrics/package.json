@@ -51,7 +51,7 @@
     "@aponiajs/platform-h3": "workspace:*",
     "@aponiajs/platform-hono": "workspace:*",
     "@aponiajs/testing": "workspace:*",
-    "elysia": "2.0.0-rc.4"
+    "elysia": "2.0.0-rc.5"
   },
   "engines": {
     "bun": ">=1.4.4"

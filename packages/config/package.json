@@ -47,8 +47,8 @@
   "devDependencies": {
     "@aponiajs/cli": "workspace:*",
     "@aponiajs/platform-elysia": "workspace:*",
-    "elysia": "2.0.0-rc.4",
-    "typebox": "^1.4.6",
+    "elysia": "2.0.0-rc.5",
+    "typebox": "^1.4.7",
     "zod": "^4.6.6"
   },
   "engines": {
