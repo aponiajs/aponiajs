@@ -2,6 +2,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { resolveDistribution } from "./distribution-tag.ts";
 import { verifyRelease } from "./verify-release.ts";
 import { versionedWorkspacePaths } from "./workspace-versions.ts";
 
@@ -34,21 +35,30 @@ function verifyWithBaseVersion(baseVersion: string) {
 describe("release version gate", () => {
   test("validates the current workspace through the testable release contract", async () => {
     const output: string[] = [];
+    const expected = resolveDistribution(currentVersion);
+    const expectedTagLine =
+      expected.aliases.length > 0
+        ? `Distribution tag: ${expected.tag} (alias: ${expected.aliases.join(", ")}).`
+        : `Distribution tag: ${expected.tag}.`;
 
     await verifyRelease({
       baseVersion: "0.0.0",
-      releaseTag: "beta",
+      releaseTag: expected.tag,
       releaseVersion: currentVersion,
       log: (message) => output.push(message),
     });
 
     expect(output).toEqual([
       `Verified synchronized release version ${currentVersion}.`,
-      "Distribution tag: beta (alias: next).",
+      expectedTagLine,
     ]);
   });
 
   test("rejects invalid expected versions and release tags", async () => {
+    const expected = resolveDistribution(currentVersion);
+    const wrongTag = expected.tag === "latest" ? "beta" : "latest";
+    const allowedList = [expected.tag, ...expected.aliases].join(", ");
+
     expect(
       verifyRelease({
         releaseVersion: "v9.9.9",
@@ -57,10 +67,10 @@ describe("release version gate", () => {
     ).rejects.toThrow("Release version 9.9.9 does not match workspace version");
     expect(
       verifyRelease({
-        releaseTag: "latest",
+        releaseTag: wrongTag,
         log: () => {},
       }),
-    ).rejects.toThrow("may only be published under: beta, next");
+    ).rejects.toThrow(`may only be published under: ${allowedList}`);
     expect(
       verifyRelease({
         baseVersion: "not-semver",

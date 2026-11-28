@@ -83,7 +83,7 @@ describe("the upgrade generator", () => {
     );
 
     await Bun.write(join(root, "package.json"), JSON.stringify({ name: "sample" }));
-    expect(upgradeAponiaPackages(root, { ...options, tag: "latest" })).rejects.toThrow(
+    expect(upgradeAponiaPackages(root, { ...options, tag: "canary" })).rejects.toThrow(
       "does not match this release.",
     );
   });
